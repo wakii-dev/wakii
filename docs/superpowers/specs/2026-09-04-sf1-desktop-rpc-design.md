@@ -2,7 +2,8 @@
 
 Parent spec: `2026-09-04-superpowers-android.md` rev 3 (§3b contracts PINNED).
 Context pack: `docs/superpowers/contexts/sf-1.md`.
-Status: rev 2 — spec-critic round 1 FIX-P0-FIRST đã fix (self-answered autonomous run).
+Status: rev 3 — spec-critic round 1 FIX-P0-FIRST đã fix; round 2 PROCEED; rev 3 amend
+adaptation 3 (storyList null-group) theo plan-critic round 1 + REQUIREMENT-GAP batch 2 lên epic.
 
 ## Scope
 
@@ -70,12 +71,20 @@ con đường khả thi khác, nhưng §3b đã pin result-field nên không dù
    - Listener gọi SAU khi SAVEPOINT RELEASE xong (không emit trước commit).
    - Derivation lỗi (catalog throw, join fail) → try/catch trong listener wrapper:
      fields null, vẫn dispatch với title — KHÔNG throw ngược vào store path.
-3. **storyList enumeration: MỘT nguồn duy nhất = runtime worktree catalog**
-   (cùng nguồn với derivation — tránh story derivable-mà-không-list).
+3. **storyList enumeration: MỘT nguồn duy nhất = các workspace runtime-registered**
+   (managed worktrees qua `listManagedWorktrees`/`listResolvedWorktrees` + folder
+   workspaces qua runtime store `getFolderWorkspaces()` — quyết định nguồn cuối
+   thuộc exit criteria task derivation-probe; MỌI consumer — storyList, storyDetail,
+   notification routing — dùng chung nguồn này; tránh story derivable-mà-không-list).
    `resolveWorkspaceDocsRoot` (global-latest-mtime, hardcode `~/orca/workspaces` +
    `/opt/homebrew/bin/orca` — vi phạm cross-platform rule) KHÔNG dùng cho enumeration.
-   Worktree trong catalog → entry với worktreeId; bracket file ngoài catalog →
-   entry worktreeId null ("khác"). Probe catalog API của `ctx.runtime` lúc implement.
+   **Amendment rev 3 (plan-critic):** §3b định nghĩa `worktreeId: null` = "ngoài
+   worktree đăng ký (nhóm 'khác')" — v1 storyList chỉ enumerate workspace
+   registered nên entries thực tế luôn mang id; `worktreeId: null` giữ trong
+   contract như defensive slot (không population path v1 — quét FS ngoài registry
+   đòi hỏi docs-root convention vi phạm cross-platform rule). Delta này đã flag
+   lên epic FI-305 (REQUIREMENT-GAP batch 2). Nhóm "khác" THẬT vẫn tồn tại ở
+   storyDetail gates (gates worktreeId null) — SF-3 surface không bị mất.
 4. **Routing-field derivation scan bracket**: worktreeId → path (từ catalog) →
    `docs/superpowers/brackets/*.md`: đúng 1 bracket → storyId; ≥2 → mtime mới nhất;
    0/không path → null.
@@ -86,7 +95,7 @@ con đường khả thi khác, nhưng §3b đã pin result-field nên không dù
 |---|---|---|
 | Contract types | `src/shared/superpowers/story-rpc-contract.ts` | §3b TS types + error codes + notification payload types |
 | Bracket parser (shared) | `src/main/superpowers/bracket-file-parse.ts` | parse story heading + SF sections + Tier/linear/Depends on/Tasks; output khớp launcher plugin heading-level |
-| RPC methods | `src/main/runtime/rpc/methods/superpowers.ts` (+ index.ts register) | storyList / storyDetail / gateResolve |
+| RPC methods | `src/main/runtime/rpc/methods/superpowers-story-list.ts` + `superpowers-story-detail.ts` + `superpowers-gate-resolve.ts` (+ index.ts register mỗi file 1 array — pattern orchestration-*.ts) | storyList / storyDetail / gateResolve — 3 file RIÊNG để chạy song song không xung đột (plan-critic P0-1) |
 | Gate store | `decision-gate-store.ts` | + `resolveGateIfPending` + transition listener hook |
 | Notification | `runtime-mobile-notification-controller.ts` | source union +2; payload `{gateId, storyId: string\|null, worktreeId: string\|null, title}` |
 | Allowlist | `runtime-rpc-mobile-method-allowlist.ts` + `mobile-rpc-allowlist.test.ts` | +3 entries + enforcement regression |
