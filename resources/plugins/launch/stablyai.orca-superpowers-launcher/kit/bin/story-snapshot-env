@@ -1,0 +1,38 @@
+#!/bin/bash
+# story-snapshot-env — chụp trạng thái môi trường trước/sau thay đổi lớn
+# Usage: story-snapshot-env [tag]     # tag mặc định = timestamp
+#        story-snapshot-env diff <t1> <t2>  # so sánh 2 snapshot
+set -u
+DIR="/tmp/story-snapshots"
+mkdir -p "$DIR"
+
+CMD="${1:-snap}"
+case "$CMD" in
+  snap)
+    TAG="${2:-$(date +%H%M%S)}"
+    ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+    OUT="$DIR/env-$TAG.md"
+    cat > "$OUT" << EOF
+# Environment: $TAG
+time: $(date '+%Y-%m-%d %H:%M:%S')
+branch: $(git branch --show-current 2>/dev/null)
+head: $(git log --oneline -1 2>/dev/null | head -c 60)
+dirty: $(git status --short 2>/dev/null | grep -cv "^??")
+servers: $(lsof -iTCP -sTCP:LISTEN -P 2>/dev/null | grep -c node)
+ports: $(lsof -iTCP -sTCP:LISTEN -P 2>/dev/null | awk 'NR>1{print $9}' | sort -u | tr '\n' ' ')
+db_users: $(sqlite3 "$ROOT/server/prisma/prisma/dev.db" "SELECT count(*) FROM User;" 2>/dev/null || echo "?")
+db_orders: $(sqlite3 "$ROOT/server/prisma/prisma/dev.db" "SELECT count(*) FROM Order;" 2>/dev/null || echo "?")
+node_procs: $(pgrep -c node 2>/dev/null || echo 0)
+sf_worktrees: $(ls -d "$HOME"/orca/workspaces/*/sf-* 2>/dev/null | wc -l | tr -d ' ')
+kit_version: $(grep '"version"' "$HOME/Documents/story-team-kit/kit.json" 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+[^"]*')
+EOF
+    echo "Snapshot: $OUT"
+    ;;
+  diff)
+    F1="$DIR/env-$2.md"; F2="$DIR/env-$3.md"
+    [ -f "$F1" ] && [ -f "$F2" ] && diff "$F1" "$F2" || echo "file không tồn tại"
+    ;;
+  *)
+    echo "usage: story-snapshot-env [tag] | diff <t1> <t2>"
+    ;;
+esac

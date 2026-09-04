@@ -1,0 +1,161 @@
+#!/bin/bash
+# story-validate — kiểm bracket file theo STRICT format (story-workflow)
+# (tool hóa CREATE bước 9 — bắt lỗi bracket NGAY lúc viết thay vì phát hiện
+#  lúc Story tab render. Bài học: parser im lặng = lỗi trôi đến tier sau.)
+#
+# Kiểm:
+#   H1  Header `# Story: <ID> — <title>`
+#   H2  `Destination: story/<epic-id>-<slug>` (WARN nếu thiếu)
+#   SF  Mỗi block `## SF-N <name>` đủ: Tier (số), linear (rỗng @CREATE hoặc
+#       <TEAM>-<số>), What (không rỗng), Depends on (`—` hoặc SF-x hợp lệ),
+#       Tasks (slash-separated không rỗng), Design (optional: mock-prototype|
+#       figma|none)
+#   G1  Deps trỏ tới SF tồn tại; không self-dep
+#   G2  Không cycle; Tier của SF = 1 + max(Tier các deps) khi có deps
+#   G3  Không trùng SF-N, không trùng linear ID giữa các SF
+#
+# Verdict: OK · INVALID (có FAIL). WARN không chặn.
+#
+# Usage: story-validate <bracket-file> [--json]
+# Exit: 0 hợp lệ · 1 có FAIL · 2 usage/lỗi đọc file
+set -u
+
+FILE=""
+JSON_OUT=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --json) JSON_OUT=1 ;;
+    -*) echo "Unknown: $1"; exit 2 ;;
+    *) FILE="$1" ;;
+  esac
+  shift
+done
+[ -n "$FILE" ] && [ -f "$FILE" ] || { echo "Usage: story-validate <bracket-file> [--json]"; exit 2; }
+
+python3 - "$FILE" "$JSON_OUT" <<'PYEOF'
+import re, sys, json
+
+path, json_out = sys.argv[1], sys.argv[2] == "1"
+try:
+    text = open(path, encoding="utf-8").read()
+except Exception as e:
+    print(json.dumps({"verdict": "INVALID", "errors": [f"FAIL: cannot read file: {e}"]}) if json_out else f"FAIL: cannot read file: {e}")
+    sys.exit(1)
+
+fails, warns = [], []
+def fail(msg): fails.append(msg)
+def warn(msg): warns.append(msg)
+
+lines = text.splitlines()
+
+# H1 — header
+header = next((l for l in lines if l.startswith("# Story:")), None)
+if not header or not re.match(r"^# Story: [A-Z]+-\d+ — .+", header):
+    fail(f"H1: header `# Story: <ID> — <title>` thiếu/sai định dạng (got: {header!r})")
+
+# H2 — destination
+dest = next((l for l in lines if l.startswith("Destination:")), None)
+if not dest:
+    warn("H2: thiếu `Destination: story/<epic-id>-<slug>` — APPROVE sẽ không biết tên nhánh đích")
+elif not re.match(r"^Destination: story/[a-z0-9-]+-[a-z0-9-]+$", dest):
+    warn(f"H2: Destination không khớp `story/<epic-id>-<slug>` (got: {dest!r})")
+
+# Parse SF blocks
+sf_re = re.compile(r"^## (SF-(\d+))\s+(.*)$")
+sfs, current = {}, None
+for i, l in enumerate(lines, 1):
+    m = sf_re.match(l)
+    if m:
+        current = {"name": m.group(1), "num": int(m.group(2)), "title": m.group(3),
+                   "line": i, "fields": {}}
+        sfs[m.group(1)] = current
+    elif current is not None:
+        fm = re.match(r"^(Tier|linear|What|Depends on|Tasks|Design):\s*(.*)$", l)
+        if fm:
+            current["fields"][fm.group(1)] = fm.group(2).strip()
+        elif l.startswith("## "):
+            current = None  # section khác — không còn thuộc SF block
+
+if not sfs:
+    fail("SF: không có block `## SF-N <name>` nào")
+
+# Per-SF field checks
+for name, sf in sfs.items():
+    ln, f = sf["line"], sf["fields"]
+    if "Tier" not in f or not re.match(r"^\d+$", f["Tier"]):
+        fail(f"{name} (line {ln}): `Tier:` thiếu hoặc không phải số nguyên")
+    if "linear" not in f:
+        fail(f"{name} (line {ln}): thiếu trường `linear:` (rỗng nếu CREATE, ID nếu đã approve)")
+    elif f["linear"] and not re.match(r"^[A-Z]+-\d+$", f["linear"]):
+        fail(f"{name} (line {ln}): `linear:` không khớp `<TEAM>-<số>` (got: {f['linear']!r})")
+    if "What" not in f or not f["What"]:
+        fail(f"{name} (line {ln}): `What:` thiếu hoặc rỗng")
+    if "Depends on" not in f:
+        fail(f"{name} (line {ln}): thiếu `Depends on:` (ghi `—` nếu tier 0)")
+    if "Tasks" not in f or not f["Tasks"]:
+        fail(f"{name} (line {ln}): `Tasks:` thiếu hoặc rỗng (slash-separated)")
+    elif "/" not in f["Tasks"]:
+        warn(f"{name} (line {ln}): `Tasks:` chỉ có 1 task không có `/` — SF < 6 tasks nên gộp (rubric SF-scope)")
+    if "Design" in f and f["Design"] not in ("mock-prototype", "figma", "none", ""):
+        fail(f"{name} (line {ln}): `Design:` chỉ nhận mock-prototype|figma|none (got: {f['Design']!r})")
+
+# G3 — duplicates
+nums = [sf["num"] for sf in sfs.values()]
+for n in set(n for n in nums if nums.count(n) > 1):
+    fail(f"G3: SF-{n} xuất hiện {nums.count(n)} lần")
+linears = [sf["fields"].get("linear") for sf in sfs.values() if sf["fields"].get("linear")]
+for lid in set(l for l in linears if linears.count(l) > 1):
+    fail(f"G3: linear ID {lid} dùng cho nhiều SF")
+
+# G1/G2 — deps, tiers, cycles
+def norm_dep(d):
+    d = d.strip().rstrip(",")
+    if re.match(r"^SF\d+$", d):        # "SF1" → "SF-1"
+        d = "SF-" + d[2:]
+    return d
+
+def parse_deps(sf):
+    raw = sf["fields"].get("Depends on", "—")
+    if raw in ("—", "-", ""):
+        return []
+    return [norm_dep(d) for d in raw.split(",") if norm_dep(d)]
+
+def tier(sf):
+    t = sf["fields"].get("Tier", "")
+    return int(t) if re.match(r"^\d+$", t) else None
+
+for name, sf in sfs.items():
+    deps = parse_deps(sf)
+    for d in deps:
+        if d not in sfs:
+            fail(f"G1: {name} depends on {d} nhưng {d} không tồn tại trong bracket")
+        elif d == name:
+            fail(f"G1: {name} depends on chính nó")
+    if deps and tier(sf) is not None:
+        dep_tiers = [tier(sfs[d]) for d in deps if d in sfs and tier(sfs[d]) is not None]
+        if dep_tiers and tier(sf) != max(dep_tiers) + 1:
+            warn(f"G2: {name} Tier={tier(sf)} nhưng max(Tier deps)={max(dep_tiers)} — Tier nên = 1 + max (derived)")
+
+# cycle detection (DFS)
+state = {}
+def visit(name, stack):
+    if state.get(name) == 2: return
+    if state.get(name) == 1:
+        fail(f"G2: dependency cycle: {' → '.join(stack + [name])}")
+        return
+    state[name] = 1
+    deps = [d for d in parse_deps(sfs[name]) if d in sfs]
+    for d in deps: visit(d, stack + [name])
+    state[name] = 2
+for n in sfs: visit(n, [])
+
+result = {"verdict": "INVALID" if fails else "OK",
+          "sf_count": len(sfs), "fails": fails, "warns": warns}
+if json_out:
+    print(json.dumps(result, ensure_ascii=False))
+else:
+    for m in fails: print(m)
+    for m in warns: print(f"WARN: {m}")
+    print(f"{'OK' if not fails else 'INVALID'} — {len(sfs)} SF, {len(fails)} FAIL, {len(warns)} WARN")
+sys.exit(1 if fails else 0)
+PYEOF

@@ -1,0 +1,63 @@
+#!/bin/bash
+# story-memory-index-hook — post-pass incremental index cho graph memory (FI-190).
+# Watchdog (--with-index) gọi hook này sau mỗi pass: đọc watermark git của repo
+# hiện tại từ ~/.story-memory.state → chạy `story-memory index --since <hash>` →
+# ghi đúng 1 audit line vào ~/.story-memory.log. CLI tự cập nhật watermark sau index.
+#
+# FAIL-SAFE trên hết: CLI chưa cài (SF-3 chưa ship) / chết / lỗi → hook vẫn
+# exit 0 — KHÔNG BAO GIỜ đổi exit code của caller (pass watchdog phải sống
+# bất kể index thế nào). Chỉ lỗi cú pháp mới exit 2.
+#
+# Env override (cho test):
+#   STORY_MEMORY_BIN       CLI story-memory (env → cạnh hook → ~/.claude/bin)
+#   STORY_MEMORY_STATE     watermark file  (default ~/.story-memory.state)
+#   STORY_MEMORY_LOG       audit log       (default ~/.story-memory.log)
+#   STORY_MEMORY_INDEX_LOG log output CLI  (default ~/.story-memory-index.log —
+#                          log riêng để output index không nhiễu log watchdog)
+set -u
+
+[ $# -eq 0 ] || { echo "usage: story-memory-index-hook (không nhận tham số)" >&2; exit 2; }
+
+DIR="$(cd "$(dirname "$0")" && pwd)"
+STORY_MEMORY_STATE="${STORY_MEMORY_STATE:-$HOME/.story-memory.state}"
+STORY_MEMORY_LOG="${STORY_MEMORY_LOG:-$HOME/.story-memory.log}"
+STORY_MEMORY_INDEX_LOG="${STORY_MEMORY_INDEX_LOG:-$HOME/.story-memory-index.log}"
+
+# resolve CLI như RESUME của watchdog: env → cạnh hook → ~/.claude/bin
+BIN="${STORY_MEMORY_BIN:-}"
+[ -n "$BIN" ] || BIN="$DIR/story-memory"
+[ -x "$BIN" ] || BIN="$HOME/.claude/bin/story-memory"
+
+# watermark: dòng `git:<repo>|<short-hash>` cho repo chứa hook; repo = basename
+# toplevel, không gọi được git → literal "default"
+top=$(git -C "$DIR" rev-parse --show-toplevel 2>/dev/null || true)
+repo="default"
+[ -n "$top" ] && repo="$(basename "$top")"
+last="0"
+if [ -f "$STORY_MEMORY_STATE" ]; then
+  # awk exact field match ($1 == "git:<repo>") — không regex, repo chứa metachars không match sai
+  w=$(awk -F'|' -v k="git:$repo" '$1==k {print $2; exit}' "$STORY_MEMORY_STATE")
+  [ -n "$w" ] && last="$w"
+fi
+
+ts=$(date '+%Y-%m-%dT%H:%M:%S')
+status="ok"
+triples="+0 triples"
+
+if [ ! -x "$BIN" ]; then
+  # CLI chưa có — trạng thái HỢP LÝ đầu chu kỳ (SF-3 chưa ship), vẫn ghi audit
+  status="cli-missing"
+else
+  # subshell: CLI chết cũng không kéo theo hook; stdout+stderr append vào log riêng
+  out=$( "$BIN" index --since "$last" 2>&1 )
+  rc=$?
+  [ -n "$out" ] && printf '%s\n' "$out" >> "$STORY_MEMORY_INDEX_LOG"
+  t=$(printf '%s\n' "$out" | grep -oE '\+[0-9]+ triples' | head -1)
+  [ -n "$t" ] && triples="$t"
+  [ "$rc" -eq 0 ] || status="error"
+fi
+
+# audit: mỗi lần chạy = đúng 1 dòng
+echo "$ts | watchdog | $triples | status=$status" >> "$STORY_MEMORY_LOG"
+echo "story-memory-index-hook: $triples (since=$last) — status=$status"
+exit 0

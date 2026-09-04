@@ -1,0 +1,271 @@
+#!/bin/bash
+# story-resume — chẩn đoán 3 tầng + resume SF stalled (tool hóa story-workflow LAUNCH/RESUME)
+#
+# Stall-check 3 tầng (KHÔNG kết luận vội — bài học story 3 stall 12 ngày):
+#   1. Commits: git log còn ra commit mới trong stall-window?
+#   2. Terminal: agent sống không? (⠂ = busy · ✳ = idle · không có = cold)
+#   3. Chỉ resume khi tĩnh hẳn: commits stale VÀ terminal idle/cold.
+#      Idle Claude session GIỮ context — resume = gửi input mới, không restart lại từ đầu.
+#
+# Usage:
+#   story-resume                    diagnose MỌI sf-* worktree (bảng + verdict)
+#   story-resume <sf-name>          diagnose 1 SF + in resume plan (prompt sẵn sàng)
+#   story-resume <sf-name> --send   diagnose + THỰC SỰ gửi resume prompt
+#   story-resume --check            machine-readable: <sf>|<verdict>|<detail>
+#   Options: --repo <path> · --stall-hours N (default 2)
+#
+# Verdicts: RUNNING (commits mới) · BUSY (terminal đang chạy) · STALLED (idle, resume
+# được — giữ context) · STALLED-COLD (không terminal, phải tạo mới) · DONE (Linear)
+set -u
+
+ORCA_BIN="${ORCA_BIN:-/opt/homebrew/bin/orca}"
+[ -x "$ORCA_BIN" ] || ORCA_BIN="/Applications/Orca.app/Contents/Resources/bin/orca"
+ORCA_DEV="$HOME/Library/Application Support/orca-dev"
+ORCA_PROD="$HOME/Library/Application Support/orca"
+STALL_HOURS=2
+SEND=0
+CHECK=0
+SF_ARG=""
+REPO="${REPO:-$PWD}"
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --send) SEND=1 ;;
+    --check) CHECK=1 ;;
+    --stall-hours) STALL_HOURS="$2"; shift ;;
+    --repo) REPO="$2"; shift ;;
+    -*) echo "Unknown: $1"; exit 2 ;;
+    *) SF_ARG="$1" ;;
+  esac
+  shift
+done
+
+# orca CLI với runtime dev-trước-prod-sau (story worktrees sống ở dev runtime)
+orca() {
+  ORCA_USER_DATA_PATH="$ORCA_DEV" "$ORCA_BIN" "$@" 2>/dev/null \
+    || ORCA_USER_DATA_PATH="$ORCA_PROD" "$ORCA_BIN" "$@" 2>/dev/null \
+    || return 1
+}
+
+# ── Tầng 2: terminal status cho 1 worktree — từ title symbol trong terminal list
+#    (⠂/braille = busy · ✳ = idle) — rẻ hơn read từng terminal
+term_status() { # $1 = sf-name → in "BUSY <handle>" | "IDLE <handle>" | "NONE"
+  orca terminal list --json | python3 -c "
+import json, sys
+raw = sys.stdin.read()
+if not raw.strip():
+    print('UNKNOWN'); sys.exit(0)   # orca fail — KHÔNG kết luận gì
+try: d = json.loads(raw)
+except: print('UNKNOWN'); sys.exit(0)
+spinner = set('⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏⠂⠛✳')
+target = '$1'
+best = 'NONE'
+for t in d.get('result', {}).get('terminals', []):
+    wt = (t.get('worktreeId') or '').split('/')[-1]
+    if wt != target: continue
+    title = t.get('title') or ''
+    h = t.get('handle') or ''
+    if '⠂' in title or any(c in '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏' for c in title):
+        print(f'BUSY {h}'); sys.exit(0)
+    if '✳' in title: best = f'IDLE {h}'
+    elif title.strip().lower() in ('zsh', 'bash', 'sh'):
+        print(f'SHELL {h}'); sys.exit(0)  # pane sống, Claude session CHẾT (app crash)
+    elif title.strip() and best == 'NONE': best = f'IDLE {h}'  # có terminal = session sống
+print(best)"
+}
+
+# ── Bracket context cho SF: linear ID + destination + context file
+sf_meta() { # $1 = worktree path → in "<linear-id>|<destination>|<context-file>"
+  wt="$1"; sf=$(basename "$wt")
+  linear=""; dest=""
+  for bf in "$wt"/docs/superpowers/brackets/*.md; do
+    [ -f "$bf" ] || continue
+    [ -z "$dest" ] && dest=$(grep -m1 '^Destination:' "$bf" | sed 's/Destination: //')
+    # section `## SF-N ...` theo prefix SF number (header "SF-1 Foundation" ≠ worktree "sf-1-foundation")
+    sfnum=$(echo "$sf" | cut -d- -f1-2 | tr 'a-z' 'A-Z')
+    linear=$(awk -v sfx="$sfnum" '
+      $0 ~ "^## " sfx "([ :]|$)" { in_sf = 1; next }
+      /^## SF-/ { in_sf = 0 }
+      in_sf && /linear:/ { gsub(/.*linear: /,""); print; exit }' "$bf" 2>/dev/null)
+    [ -n "$linear" ] && break
+  done
+  # context pack: sf-1-foundation → khớp contexts/sf-1*.md
+  prefix=$(echo "$sf" | cut -d- -f1-2)
+  ctx=$(ls "$wt"/docs/superpowers/contexts/${prefix}*.md 2>/dev/null | head -1)
+  echo "${linear}|${dest}|${ctx}"
+}
+
+# ── Diagnose 1 SF → verdict
+diagnose() { # $1 = worktree path → in "<sf>|<verdict>|<detail>"
+  wt="$1"; sf=$(basename "$wt")
+  last_ct=$(cd "$wt" && git log -1 --format=%ct 2>/dev/null) || last_ct=0
+  now=$(date +%s); age_h=$(( (now - ${last_ct:-0}) / 3600 ))
+  ts=$(term_status "$sf"); tstate="${ts%% *}"; thandle="${ts#* }"
+
+  # TÍN HIỆU 4 (2026-08-29 đêm: Orca terminal-stream chết cho session mới —
+  # agents chạy ngoài Orca qua nohup): log session tươi = đang làm, ưu tiên
+  # trước mọi check terminal
+  # PROCESS là sự thật (#1). Log-mtime chỉ là tín hiệu phụ và chỉ tin được
+  # khi RẤT tươi (<120s — đang ghi thật; -p buffer khiến mtime cũ vô nghĩa:
+  # bài học 29/8 trưa: log 43' cũ + process đã thoát → ghi nhầm RUNNING)
+  if pgrep -fq "claude.*$sf" 2>/dev/null; then
+    echo "$sf|RUNNING-EXT|process claude sống"; return
+  fi
+  alog="$wt/.agent-session.log"
+  if [ -f "$alog" ]; then
+    alog_age=$(( $(date +%s) - $(stat -f %m "$alog") ))
+    if [ "$alog_age" -lt 120 ]; then
+      echo "$sf|RUNNING-EXT|log đang ghi (${alog_age}s)"; return
+    fi
+  fi
+  # SHELL pane = KHÔNG có agent, kể cả khi commits còn fresh — crash ngay sau
+  # commit vẫn là chết (bài học 2026-08-28: dev app chết ngay sau merge-commit,
+  # commits 0h che mất agent-chết suốt stall-window)
+  if [ "$tstate" = "SHELL" ]; then
+    echo "$sf|STALLED-SHELL|pane là bare shell — agent chết (app crash?), commit cuối ${age_h}h"
+    return
+  fi
+  # NONE-thật (list đọc được, không pane nào) = agent vắng mặt — kể cả commits
+  # fresh (bài học 23:59 28/8: post-restart mọi terminal mất, commits 0h che mất
+  # 3 agents chết). UNKNOWN (orca fail) thì KHÔNG đụng.
+  if [ "$tstate" = "NONE" ]; then
+    echo "$sf|STALLED-COLD|không terminal (post-restart?) — agent vắng, commit cuối ${age_h}h"
+    return
+  fi
+  if [ "$age_h" -lt "$STALL_HOURS" ]; then
+    echo "$sf|RUNNING|commit ${age_h}h trước (trong stall-window)"
+    return
+  fi
+  case "$tstate" in
+    BUSY) echo "$sf|BUSY|terminal đang chạy, ${age_h}h không commit (agent đang làm)";;
+    IDLE) echo "$sf|STALLED|terminal idle + ${age_h}h không commit";;
+    NONE) echo "$sf|STALLED-COLD|không terminal + ${age_h}h không commit";;
+  esac
+}
+
+# ── Resume prompt (template từ resume SF-1 2026-08-28 — đã chạy thật)
+build_prompt() { # $1 = worktree path; in prompt text
+  wt="$1"; sf=$(basename "$wt")
+  IFS='|' read -r linear dest ctx <<< "$(sf_meta "$wt")"
+  [ -z "$linear" ] && linear="<SF-ISSUE>"
+  [ -z "$dest" ] && dest="story/<branch-xem-bracket>"
+  plan=""; ticks=0; total=0
+  for pf in "$wt"/docs/superpowers/plans/*.md; do
+    [ -f "$pf" ] || continue
+    case "$(basename "$pf")" in *"$sf"*|*"$(echo "$sf" | cut -d- -f1-2)"*|*"$(echo "$sf" | cut -d- -f1-2 | tr -d '-')"*) plan="$pf"
+      # grep -c in "0" + exit 1 khi 0 match — KHÔNG '|| echo 0' (thành 2 dòng)
+      ticks=$(grep -c '^\- \[x\]' "$pf" 2>/dev/null); ticks=${ticks:-0}
+      open_t=$(grep -c '^\- \[ \]' "$pf" 2>/dev/null); open_t=${open_t:-0}
+      total=$(( ticks + open_t ))
+      break ;;
+    esac
+  done
+  brk=$(ls "$wt"/docs/superpowers/brackets/*.md 2>/dev/null | head -1)
+  ctx_line="${ctx:-docs/superpowers/contexts/$(echo "$sf" | cut -d- -f1-2).md}"
+  plan_line="${plan:+Plan: ${ticks}/${total} tasks đã xong — tiếp task kế tiếp.}"
+  # ── Memory auto-inject (SF-3 — optional layer, fail-safe tuyệt đối: story-memory
+  # absent/lỗi/không match → mem_inject rỗng → prompt y nguyên, resume không bị ảnh hưởng)
+  mem_inject=""
+  if command -v story-memory >/dev/null 2>&1; then
+    mem_inject=$(story-memory inject "resume $sf ($linear) story bracket $(basename "${brk:-<bracket>}") $ctx_line" 2>/dev/null) || mem_inject=""
+  fi
+  cat <<PROMPT
+RESUME $sf ($linear) — stall detected, resume theo story-workflow protocol:
+1. ĐỌC TRƯỚC: $ctx_line + bracket $(basename "${brk:-<bracket>}"). Epic đã trả lời mọi câu — KHÔNG re-analyze. Có REQUIREMENT-GAP / GAP-ANSWER mới trên epic comments → đọc trước khi tiếp.
+2. git log cho biết đã đi tới đâu. ${plan_line:-Xác định phase hiện tại rồi tiếp tục.}
+3. COMPLETE-RUN CHECKLIST (không dừng trước bước 5): (1) code+tests (2) tick plan file (3) code-reviewer APPROVED (4) MERGE vào $dest — merge-ngược + ancestor-guard (4b) chạy ~/.claude/bin/story-verify <sf> — phải sạch mới tiếp (5) RỒI MỚI $linear Done.
+4. Shell rules: servers nohup > log; probes cmd > log; echo \$? — KHÔNG pipe head/tail. orca CLI: JSON parse python3, multiline --body-file.
+5. Blocked 2 lần cùng nguyên nhân → báo cụ thể, không lặp. API error SSL/cert → đợi 30s, tự retry tối đa 3 lần.
+PROMPT
+  if [ -n "$mem_inject" ]; then printf '\n%s\n' "$mem_inject"; fi
+}
+
+# ── Gửi resume
+do_send() { # $1 = worktree path, $2 = verdict
+  wt="$1"; sf=$(basename "$wt")
+  ts=$(term_status "$sf"); tstate="${ts%% *}"; thandle="${ts#* }"
+  prompt=$(build_prompt "$wt")
+  # terminal send --text: newline → \n literal, giữ 1 payload (verified 2026-08-28)
+  prompt1=$(printf '%s' "$prompt" | python3 -c "import sys; print(sys.stdin.read().strip().replace(chr(10), '\\\\n'))")
+  if [ "$tstate" = "IDLE" ]; then
+    echo "→ terminal send (giữ context) handle=${thandle}"
+    orca terminal send --terminal "$thandle" --text "$prompt1" --enter --json \
+      && echo "SENT ✓" || { echo "SEND FAIL — read-back:"; term_status "$sf"; return 1; }
+  elif [ "$tstate" = "SHELL" ]; then
+    echo "→ pane bare-shell: launch claude (bypass mode — khớp Orca-native, tránh permission-wall) rồi gửi prompt"
+    orca terminal send --terminal "$thandle" --text "claude --dangerously-skip-permissions" --enter --json >/dev/null
+    sleep 20   # đợi Claude CLI boot + ❯ prompt sẵn sàng
+    orca terminal send --terminal "$thandle" --text "$prompt1" --enter --json \
+      && echo "SENT ✓ (relaunched)" || { echo "SEND FAIL sau relaunch — check pane thủ công"; return 1; }
+  else
+    echo "→ terminal create mới trong $sf (timeout-error vẫn có thể tạo được — verify sau)"
+    orca terminal create --worktree "path:$wt" --title "Resume $sf" --command "claude" --json
+    sleep 8
+    ts2=$(term_status "$sf"); th2="${ts2#* }"
+    if [ "${ts2%% *}" = "NONE" ]; then echo "CREATE FAIL (không thấy terminal sau 8s) — tạo tay trong Orca"; return 1; fi
+    orca terminal send --terminal "$th2" --text "$prompt" --enter --json && echo "SENT ✓ (terminal mới)"
+  fi
+}
+
+# ═══ MAIN ═══
+# mọi sf-* worktree (chú ý: .git trong worktree là FILE — detect bằng rev-parse)
+WTS=()
+for ws in "$HOME"/orca/workspaces/*/; do
+  for wt in "$ws"sf-*/; do
+    [ -d "$wt" ] && git -C "$wt" rev-parse --git-dir >/dev/null 2>&1 && WTS+=("${wt%/}")
+  done
+done
+[ ${#WTS[@]} -eq 0 ] && { [ $CHECK = 1 ] && exit 0 || echo "Không có sf-* worktree nào."; exit 0; }
+
+# lọc theo SF_ARG nếu có
+if [ -n "$SF_ARG" ]; then
+  FILTERED=()
+  for wt in "${WTS[@]}"; do case "$(basename "$wt")" in *"$SF_ARG"*) FILTERED+=("$wt");; esac; done
+  [ ${#FILTERED[@]} -eq 0 ] && { echo "Không thấy worktree khớp: $SF_ARG"; exit 2; }
+  WTS=("${FILTERED[@]}")
+fi
+
+RESULTS=()
+for wt in "${WTS[@]}"; do RESULTS+=("$(diagnose "$wt")"); done
+
+if [ $CHECK = 1 ]; then
+  for r in "${RESULTS[@]}"; do echo "$r"; done
+  exit 0
+fi
+
+echo "═══ SF DIAGNOSIS (stall-window: ${STALL_HOURS}h) ═══"
+i=0
+for r in "${RESULTS[@]}"; do
+  IFS='|' read -r sf verdict detail <<< "$r"
+  icon="●"; case "$verdict" in STALLED*) icon="⚠";; esac
+  printf '  %s %-22s %-14s %s\n' "$icon" "$sf" "$verdict" "$detail"
+  eval "WT_$i=\"${WTS[$i]}\""  # bash 3.2: map index → worktree
+  i=$((i+1))
+done
+
+# hành động: --send (chỉ với STALLED — RUNNING/BUSY từ chối, an toàn)
+if [ $SEND = 1 ]; then
+  [ -z "$SF_ARG" ] && { echo ""; echo "--send cần tên SF cụ thể: story-resume <sf> --send"; exit 2; }
+  i=0
+  for r in "${RESULTS[@]}"; do
+    IFS='|' read -r sf verdict detail <<< "$r"
+    case "$verdict" in
+      STALLED*) echo ""; do_send "$(eval "echo \$WT_$i")" "$verdict" ;;
+      *) echo "Từ chối gửi: $verdict — chỉ resume STALLED."; exit 1 ;;
+    esac
+    i=$((i+1))
+  done
+else
+  # in resume plan (không gửi) cho SF stalled đầu tiên
+  i=0
+  for r in "${RESULTS[@]}"; do
+    IFS='|' read -r sf verdict detail <<< "$r"
+    case "$verdict" in STALLED*)
+      wtv=$(eval "echo \$WT_$i")
+      echo ""; echo "── RESUME PLAN cho $sf (gửi: story-resume $sf --send) ──"
+      build_prompt "$wtv"
+      break ;;
+    esac
+    i=$((i+1))
+  done
+fi

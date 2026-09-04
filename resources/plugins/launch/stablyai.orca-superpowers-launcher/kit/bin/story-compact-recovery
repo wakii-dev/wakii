@@ -1,0 +1,54 @@
+#!/bin/bash
+# story-compact-recovery — SessionStart hook (matcher: compact)
+# Sau MỖI lần compaction, inject lời nhắc khôi phục story state vào context.
+#
+# Sinh từ session 2026-09-03: session dài (orchestration multi-agent) bị compact
+# giữa chừng — bracket/plan file là state trên disk sống sót qua compact, nhưng
+# agent phải được NHẮC đọc lại, không thì tiếp tục bằng summary mờ (rủi ro redo
+# task đã xong / quên GAP-ANSWER mới).
+#
+# Hành vi: scan CLAUDE_PROJECT_DIR (hoặc cwd) — có story artifacts → output
+# recovery checklist; không có → im lặng (exit 0, output rỗng = không inject gì).
+# Đọc-only, không bao giờ sửa file.
+#
+# Cài hook (settings.json):
+#   hooks.SessionStart += { matcher: "compact", hooks: [{ type: command,
+#   command: "~/.claude/bin/story-compact-recovery" }] }
+set -u
+DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
+BRACKETS="$DIR/docs/superpowers/brackets"
+PLANS="$DIR/docs/superpowers/plans"
+
+# Gom story artifacts hiện có
+bracket_files=""
+if [ -d "$BRACKETS" ]; then
+  bracket_files=$(ls -t "$BRACKETS"/*.md 2>/dev/null || true)
+fi
+
+plan_info=""
+if [ -d "$PLANS" ]; then
+  for p in $(ls -t "$PLANS"/*.md 2>/dev/null || true); do
+    open=$(grep -cE '^- \[ \]' "$p" 2>/dev/null || echo 0)
+    [ "$open" -gt 0 ] && plan_info+="- Plan: $p ($open steps chưa tick)
+"
+  done
+fi
+
+# Không có gì story-related → im lặng
+if [ -z "$bracket_files" ] && [ -z "$plan_info" ]; then
+  exit 0
+fi
+
+echo "POST-COMPACT RECOVERY (story-workflow) — state sống trên disk, đọc lại TRƯỚC khi tiếp tục:"
+if [ -n "$bracket_files" ]; then
+  echo "1. Bracket file (mới nhất trước):"
+  echo "$bracket_files" | head -3 | sed 's/^/   - /'
+  echo "   → kiểm linear: IDs còn khớp sub-issues, SF nào Done/In-Progress"
+fi
+if [ -n "$plan_info" ]; then
+  echo "2. Plan files còn steps mở:"
+  printf '%s' "$plan_info" | sed 's/^/   /'
+fi
+echo "3. Linear epic: đọc audit comment MỚI NHẤT + GAP-ANSWER trước khi launch/resume SF"
+echo "4. KHÔNG redo task đã xong · KHÔNG re-analyze (analyze-once) · tick plan [-]→[x] sau mỗi task"
+exit 0

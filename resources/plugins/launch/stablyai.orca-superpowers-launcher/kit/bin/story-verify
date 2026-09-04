@@ -1,0 +1,241 @@
+#!/bin/bash
+# story-verify — enforce COMPLETE-RUN CHECKLIST 5 bước TRƯỚC khi Linear Done
+# (tool hóa bước kiểm của story-workflow — chống "Done sớm": tick Done mà chưa merge)
+#
+# 5 bước (thứ tự cố định — B5 chỉ hợp lệ khi B1-B4 pass):
+#   B1 CODE+TESTS   — có commit code thật (ngoài CREATE/APPROVE/plan) + file test
+#   B2 PLAN TICKED  — plan file còn 0 task [ ] chưa tick
+#   B3 REVIEW       — Linear comments có VERDICT APPROVED (code-reviewer)
+#   B4 MERGED       — HEAD của SF là ancestor của nhánh đích (story/<dest>)
+#   B5 LINEAR DONE  — issue state = Done
+#
+# Verdict: COMPLETE (đủ 5) · READY-TO-DONE (B1-B4 pass, còn B5) · INCOMPLETE (thiếu
+# bước trước) · VIOLATION (Done nhưng B1-B4 fail — Done sớm) · NOT-LAUNCHED (chưa
+# có worktree). Story-level: mọi SF COMPLETE → STORY-COMPLETE (user merge main).
+#
+# Usage: story-verify [<sf-name>] [--json]
+# Exit: 0 sạch/ready · 1 có INCOMPLETE · 2 có VIOLATION
+set -u
+
+ORCA_BIN="${ORCA_BIN:-/opt/homebrew/bin/orca}"
+[ -x "$ORCA_BIN" ] || ORCA_BIN="/Applications/Orca.app/Contents/Resources/bin/orca"
+ORCA_DEV="$HOME/Library/Application Support/orca-dev"
+ORCA_PROD="$HOME/Library/Application Support/orca"
+JSON_OUT=0
+SF_ARG=""
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --json) JSON_OUT=1 ;;
+    -*) echo "Unknown: $1"; exit 2 ;;
+    *) SF_ARG="$1" ;;
+  esac
+  shift
+done
+
+orca() {
+  # capture rồi mới forward — dev-path error JSON (exit 1) không được lẫn vào
+  # stdout của prod, nếu không json.load downstream fail trên output ghép đôi
+  local out
+  out=$(ORCA_USER_DATA_PATH="$ORCA_DEV" "$ORCA_BIN" "$@" 2>/dev/null) \
+    && { printf '%s' "$out"; return 0; }
+  out=$(ORCA_USER_DATA_PATH="$ORCA_PROD" "$ORCA_BIN" "$@" 2>/dev/null) \
+    && { printf '%s' "$out"; return 0; }
+  return 1
+}
+
+# linear state + comments cho 1 issue → in "<state>|<approved 0/1>"
+# orca CLI trước; keychain hỏng (bài học FI-187) → GraphQL fallback cùng
+# key file như watchdog (~/.claude/.linear-key, chmod 600)
+linear_meta() {
+  local out
+  out=$(orca linear issue "$1" --comments --json 2>/dev/null | python3 -c "
+import json, sys, re
+try: r = json.load(sys.stdin)['result']
+except: print('unknown|0'); sys.exit(0)
+iss = r.get('issue') or {}
+st = (iss.get('state') or {}).get('name', '?')
+# orca CLI: comments nằm ở result.comments (NGANG HÀNG issue) — không
+# phải issue.comments (bug 30/8: đọc nhầm chỗ → B3 FAIL dù verdict có)
+cs = r.get('comments')
+nodes = cs.get('nodes', []) if isinstance(cs, dict) else (cs or [])
+approved = 0
+for c in nodes:
+    body = (c.get('body') or '') if isinstance(c, dict) else str(c)
+    if re.search(r'VERDICT[^\n]{0,40}APPROVED', body, re.I): approved = 1
+print(f'{st}|{approved}')" 2>/dev/null || echo "unknown|0")
+  case "$out" in unknown\|*) ;; *) echo "$out"; return ;; esac
+  # GraphQL fallback
+  local key="${LINEAR_API_KEY:-}"
+  if [ -z "$key" ] && [ -f "$HOME/.claude/.linear-key" ]; then
+    key=$(head -1 "$HOME/.claude/.linear-key" | tr -d '[:space:]')
+  fi
+  [ -z "$key" ] && { echo "unknown|0"; return; }
+  curl -s -m 15 -X POST https://api.linear.app/graphql \
+    -H "Authorization: $key" -H "Content-Type: application/json" \
+    -d "{\"query\":\"query{issue(id:\\\"$1\\\"){state{name} comments(first:50){nodes{body}}}}\"}" 2>/dev/null \
+    | python3 -c "
+import json, sys, re
+try: d = json.load(sys.stdin)['data']['issue']
+except: print('unknown|0'); sys.exit(0)
+st = (d.get('state') or {}).get('name', '?')
+approved = 0
+for c in (d.get('comments') or {}).get('nodes', []):
+    if re.search(r'VERDICT[^\n]{0,40}APPROVED', c.get('body') or '', re.I): approved = 1
+print(f'{st}|{approved}')" 2>/dev/null || echo "unknown|0"
+}
+
+verify_sf() { # $1 worktree → in "<sf>|<verdict>|<detail>|<b1>|<b2>|<b3>|<b4>|<b5>"
+  wt="$1"; sf=$(basename "$wt")
+
+  # meta từ bracket (linear ID + destination) — cùng logic story-resume
+  linear=""; dest=""
+  # ƯU TIÊU orca worktree metadata (linked issue + base branch) — bracket glob
+  # chỉ là fallback (repo nhiều bracket → glob-first chọn nhầm story cũ)
+  mline=$(printf '%s\n' "$WT_META" | grep -F "$wt|" | head -1)
+  if [ -n "$mline" ]; then
+    linear=$(printf '%s' "$mline" | cut -d'|' -f2)
+    dest=$(printf '%s' "$mline" | cut -d'|' -f3)
+  fi
+  if [ -z "$linear" ] || [ -z "$dest" ]; then
+  for bf in "$wt"/docs/superpowers/brackets/*.md; do
+    [ -f "$bf" ] || continue
+    [ -z "$dest" ] && dest=$(grep -m1 '^Destination:' "$bf" | sed 's/Destination: //')
+    sfnum=$(echo "$sf" | cut -d- -f1-2 | tr 'a-z' 'A-Z')
+    linear=$(awk -v sfx="$sfnum" '
+      $0 ~ "^## " sfx "([ :]|$)" { in_sf = 1; next }
+      /^## SF-/ { in_sf = 0 }
+      in_sf && /linear:/ { gsub(/.*linear: /,""); print; exit }' "$bf" 2>/dev/null)
+    [ -n "$linear" ] && break
+  done
+  fi
+
+  # B1 code+tests — commit code thật ngoài CREATE/APPROVE/plan + file test
+  # (grep -c in "0" + exit 1 khi 0 match — KHÔNG dùng '|| echo 0' sẽ thành 2 dòng)
+  code_commits=$(git -C "$wt" log --format=%s 2>/dev/null | grep -cvE '^(story (CREATE|APPROVE)|Initial|plan)'); code_commits=${code_commits:-0}
+  test_files=$(git -C "$wt" ls-files 2>/dev/null | grep -cE '(test|spec)\.'); test_files=${test_files:-0}
+  if   [ "$code_commits" -gt 0 ] && [ "$test_files" -gt 0 ]; then b1="PASS"
+  elif [ "$code_commits" -gt 0 ]; then b1="WARN"; else b1="FAIL"; fi
+
+  # B2 plan ticked — còn bao nhiêu task [ ]?
+  # (chấp nhận cả "sf-3" lẫn "sf3" — agents đặt tên plan không đồng nhất dash)
+  plan=""; open_tasks=0
+  local p1=$(echo "$sf" | cut -d- -f1-2); local p2=$(echo "$p1" | tr -d '-')
+  for pf in "$wt"/docs/superpowers/plans/*.md; do
+    [ -f "$pf" ] || continue
+    case "$(basename "$pf")" in *"$p1"*|*"$p2"*) plan="$pf"; break ;; esac
+  done
+  if [ -n "$plan" ]; then
+    open_tasks=$(grep -c '^\- \[ \]' "$plan" 2>/dev/null); open_tasks=${open_tasks:-0}
+    [ "$open_tasks" -eq 0 ] && b2="PASS" || b2="FAIL"
+  else b2="WARN"; fi
+
+  # B3 review APPROVED (từ Linear comments)
+  if [ -n "$linear" ] && [ "$linear" != "unknown" ]; then
+    IFS='|' read -r lstate approved <<< "$(linear_meta "$linear")"
+    if [ "$approved" = 1 ]; then b3="PASS"
+    else
+      # fallback: verdict kẹt OUTBOX (bài học SF-1 19:48: reviewer viết file
+      # xong nhưng chưa post lên Linear — B3 FAIL mù dù review ĐÃ xong)
+      sfp=$(echo "$sf" | cut -d- -f1-2)
+      ob=$(grep -l "VERDICT: APPROVED" /tmp/story/*/code-reviewer-"$sfp"*.md 2>/dev/null | head -1)
+      b3="FAIL"
+      [ -n "$ob" ] && { b3="OUTBOX"; OB_NOTE="verdict trong $ob — CHƯA post lên Linear (agent cần post + Done)"; }
+    fi
+  else lstate="unknown"; approved=0; b3="UNKNOWN"; fi
+
+  # B4 merged — HEAD là ancestor của nhánh đích (cùng object store mọi worktree)
+  if [ -n "$dest" ] && git -C "$wt" rev-parse --verify -q "$dest" >/dev/null; then
+    git -C "$wt" merge-base --is-ancestor HEAD "$dest" 2>/dev/null && b4="PASS" || b4="FAIL"
+  else b4="FAIL"; fi
+
+  # B5 Linear Done
+  [ "$lstate" = "Done" ] && b5="PASS" || b5="PENDING"
+
+  # verdict tổng
+  core_fail=$(printf '%s\n%s\n%s\n' "$b1" "$b2" "$b4" | grep -c '^FAIL')
+  if   [ "$b5" = "PASS" ] && [ "$core_fail" -gt 0 ]; then verdict="VIOLATION"
+  elif [ "$b5" = "PASS" ] && [ "$b3" = "FAIL" ]; then verdict="VIOLATION"
+  elif [ "$core_fail" -gt 0 ] || [ "$b3" = "FAIL" ] || [ "$b3" = "OUTBOX" ]; then verdict="INCOMPLETE"
+  elif [ "$b5" = "PASS" ]; then verdict="COMPLETE"
+  else verdict="READY-TO-DONE"; fi
+  detail="code:${code_commits}c tests:${test_files}f plan:${open_tasks} open review:${linear:-?} dest:${dest:-?}"
+
+  echo "$sf|$verdict|$detail|$b1|$b2|$b3|$b4|$b5"
+}
+
+# ═══ MAIN ═══
+# worktree → linked Linear issue + base branch (orca metadata — NGUỒN ĐÚNG khi
+# repo chứa NHIỀU bracket của các story khác nhau. Bug 2/9 FI-246: glob bracket
+# lấy file đầu alphabetically (fi233) → B3/B4/B5 đọc nhầm story cũ → VIOLATION ảo)
+WT_META=$(orca worktree list --json 2>/dev/null | python3 -c "
+import json, sys
+try: wts = json.load(sys.stdin)['result']['worktrees']
+except Exception: wts = []
+for w in wts:
+    p = (w.get('git') or {}).get('path') or w.get('path') or ''
+    li = w.get('linkedLinearIssue') or ''
+    br = w.get('baseRef') or ''
+    if p: print(p + '|' + li + '|' + br)
+") || WT_META=""
+
+WTS=()
+for ws in "$HOME"/orca/workspaces/*/; do
+  for wt in "$ws"sf-*/; do
+    [ -d "$wt" ] && git -C "$wt" rev-parse --git-dir >/dev/null 2>&1 && WTS+=("${wt%/}")
+  done
+done
+[ ${#WTS[@]} -eq 0 ] && { echo "Không có sf-* worktree nào."; exit 0; }
+if [ -n "$SF_ARG" ]; then
+  FILTERED=()
+  for wt in "${WTS[@]}"; do case "$(basename "$wt")" in *"$SF_ARG"*) FILTERED+=("$wt");; esac; done
+  [ ${#FILTERED[@]} -eq 0 ] && { echo "Không thấy worktree khớp: $SF_ARG"; exit 2; }
+  WTS=("${FILTERED[@]}")
+fi
+
+ROWS=(); EXIT=0
+for wt in "${WTS[@]}"; do ROWS+=("$(verify_sf "$wt")"); done
+
+if [ "$JSON_OUT" = 1 ]; then
+  echo "["
+  first=1
+  for r in "${ROWS[@]}"; do
+    IFS='|' read -r sf verdict detail b1 b2 b3 b4 b5 <<< "$r"
+    [ $first = 0 ] && echo ","
+    printf '  {"sf":"%s","verdict":"%s","steps":{"code_tests":"%s","plan_ticked":"%s","review":"%s","merged":"%s","linear_done":"%s"},"detail":"%s"}' \
+      "$sf" "$verdict" "$b1" "$b2" "$b3" "$b4" "$b5" "$detail"
+    first=0
+  done
+  echo ""
+  echo "]"
+else
+  echo "═══ COMPLETE-RUN VERIFY ═══ (B1 code+tests · B2 plan · B3 review · B4 merge · B5 Done)"
+  for r in "${ROWS[@]}"; do
+    IFS='|' read -r sf verdict detail b1 b2 b3 b4 b5 <<< "$r"
+    icon="●"; case "$verdict" in VIOLATION) icon="🚨";; INCOMPLETE) icon="○";; COMPLETE) icon="✓";; READY-TO-DONE) icon="▶";; esac
+    printf '  %s %-22s %-14s [B1:%s B2:%s B3:%s B4:%s B5:%s]\n' "$icon" "$sf" "$verdict" "$b1" "$b2" "$b3" "$b4" "$b5"
+    printf '      %s\n' "$detail"
+    [ -n "${OB_NOTE:-}" ] && printf '      ⚠ %s\n' "$OB_NOTE"; OB_NOTE=""
+  done
+  # story-level summary
+  all_done=1; incomplete=0; violation=0
+  for r in "${ROWS[@]}"; do
+    v=$(echo "$r" | cut -d'|' -f2)
+    case "$v" in
+      COMPLETE) ;;
+      VIOLATION) violation=1; all_done=0 ;;
+      *) incomplete=1; all_done=0 ;;
+    esac
+  done
+  echo ""
+  if [ "$all_done" = 1 ]; then
+    echo "STORY-COMPLETE ✓ — mọi SF đủ 5 bước. User merge main được."
+  elif [ "$violation" = 1 ]; then
+    echo "🚨 VIOLATION — có SF Done nhưng thiếu bước trước. Xử lý trước mọi việc khác."
+    EXIT=2
+  else
+    echo "Chưa hoàn thành — xem bước FAIL đầu tiên mỗi SF (thứ tự bước là thứ tự sửa)."
+    EXIT=1
+  fi
+fi
+exit $EXIT

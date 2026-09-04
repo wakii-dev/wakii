@@ -1,0 +1,66 @@
+#!/bin/bash
+# story-visual-regress — so screenshot hiện tại vs baseline (Figma captures)
+# Usage: story-visual-regress --baseline <dir> --current <dir> [--threshold 5]
+set -u
+BASELINE=""; CURRENT=""; THRESHOLD=5
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --baseline) BASELINE="$2"; shift 2 ;;
+    --current) CURRENT="$2"; shift 2 ;;
+    --threshold) THRESHOLD="$2"; shift 2 ;;
+    *) shift ;;
+  esac
+done
+[ -z "$BASELINE" ] || [ -z "$CURRENT" ] && { echo "usage: story-visual-regress --baseline <dir> --current <dir>"; exit 2; }
+
+echo "═══ VISUAL REGRESSION ═══"
+FAIL=0
+python3 - "$BASELINE" "$CURRENT" "$THRESHOLD" <<'PYEOF'
+import sys, os, glob
+from PIL import Image, ImageChops
+import numpy as np
+
+baseline_dir, current_dir, threshold = sys.argv[1], sys.argv[2], float(sys.argv[3])
+results = []
+
+for base_img in sorted(glob.glob(os.path.join(baseline_dir, "*.png"))):
+    name = os.path.basename(base_img)
+    # Tìm matching current screenshot
+    current_img = None
+    for pattern in [name, name.replace('-official', ''), name.replace('official', 'final')]:
+        p = os.path.join(current_dir, pattern)
+        if os.path.exists(p):
+            current_img = p
+            break
+    if not current_img:
+        # Try any image in current dir
+        currents = glob.glob(os.path.join(current_dir, "*.png"))
+        if currents:
+            current_img = currents[0]
+
+    if not current_img:
+        print(f"  ⚠ {name}: không tìm thấy screenshot hiện tại")
+        continue
+
+    try:
+        a = Image.open(base_img).convert('RGB')
+        b = Image.open(current_img).convert('RGB')
+        if a.size != b.size:
+            b = b.resize(a.size, Image.LANCZOS)
+        diff = ImageChops.difference(a, b)
+        arr = np.asarray(diff, dtype=np.int16).max(axis=2)
+        pct = (arr > 24).mean() * 100
+        status = "✓" if pct <= threshold else "❌"
+        if pct > threshold:
+            results.append(1)
+        print(f"  {status} {name}: {pct:.1f}% (ngưỡng {threshold}%)")
+    except Exception as e:
+        print(f"  ⚠ {name}: {e}")
+
+if results:
+    print(f"\n🚨 {len(results)} screenshots vượt ngưỡng — cần review")
+    sys.exit(1)
+else:
+    print(f"\n✓ Visual regression PASS")
+    sys.exit(0)
+PYEOF

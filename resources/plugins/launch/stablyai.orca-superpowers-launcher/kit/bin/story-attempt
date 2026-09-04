@@ -1,0 +1,39 @@
+#!/bin/bash
+# story-attempt — track debugging attempts, chặn lặp cùng cách fail
+# Sau 3 lần cùng approach → BUỘC đổi hướng
+# Usage: story-attempt log "<approach>" "<result>"
+#        story-attempt show
+#        story-attempt reset
+set -u
+DIR="${STORY_ATTEMPT_DIR:-/tmp/story-attempts}"
+mkdir -p "$DIR"
+FILE="$DIR/$(date +%Y%m%d).log"
+
+CMD="${1:-show}"
+case "$CMD" in
+  log)
+    APPROACH="$2"; RESULT="$3"
+    echo "$(date +%H:%M:%S)|$APPROACH|$RESULT" >> "$FILE"
+    COUNT=$(grep -c "|$APPROACH|" "$FILE" 2>/dev/null)
+    echo "Attempt #$COUNT: $APPROACH → $RESULT"
+    if [ "$COUNT" -ge 3 ]; then
+      echo ""
+      echo "⚠⚠⚠ ĐÃ THỬ '$APPROACH' $COUNT LẦN — CÁCH NÀY KHÔNG WORK ⚠⚠⚠"
+      echo "  BUỘC đổi hướng — KHÔNG thử lần $((COUNT+1)) cùng cách:"
+      echo "  (a) Hỏi user — có thể thiếu context ta không biết"
+      echo "  (b) Debug sâu — đọc FULL error, trace root cause (3 WHY)"
+      echo "  (c) Restart sạch hoàn toàn (reboot nếu cần)"
+      echo "  (d) Bỏ qua tạm — làm phần khác, quay lại sau với đầu óc tươi"
+      exit 2
+    fi
+    ;;
+  show)
+    [ -f "$FILE" ] && cat "$FILE" | column -t -s'|' || echo "(chưa có attempts hôm nay)"
+    ;;
+  reset)
+    rm -f "$FILE"; echo "reset"
+    ;;
+  *)
+    echo "usage: story-attempt log|show|reset"; exit 1
+    ;;
+esac

@@ -1,0 +1,142 @@
+#!/usr/bin/env python3
+"""story-memory-fuse — fusion rules SF-1 §4.4 cho docs/superpowers/memory/*.md:
+triple trùng S|P|O → collapse 1 dòng giữ ts=min; provenance trùng nguyên dòng →
+dedupe, các dòng KHÁC nhau cùng triple-ref → giữ ĐẦY ĐỦ (union nguồn); entity
+trùng nguyên dòng → dedupe, CÙNG id KHÁC nội dung → refuse (exit 2 — curator
+resolve, không tự chọn). Rewrite byte-canonical như roundtrip (giữ vị trí dòng
+#/blank, LF thuần, \\n cuối) — idempotent (chạy lần 2 = no-op). STORY_MEMORY_DIR
+override cho test; --dry-run chỉ report không ghi."""
+import sys
+import importlib.util
+import pathlib
+
+# SourceFileLoader ghi bytecode cache → tránh rác bin/__pycache__ trong repo user
+sys.dont_write_bytecode = True
+
+# import parser SF-1 (SEP/parse_file/MEM) qua importlib — không copy logic format.
+# File bin không có đuôi .py → spec_from_file_location không tự suy ra loader,
+# phải cấp SourceFileLoader tường minh (spec sẽ là None nếu thiếu).
+import importlib.machinery
+_ppath = pathlib.Path(__file__).resolve().parent / "story-memory-parse"
+_spec = importlib.util.spec_from_file_location(
+    "story_memory_parse", _ppath,
+    loader=importlib.machinery.SourceFileLoader("story_memory_parse", str(_ppath)))
+smp = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(smp)
+
+SEP, MEM = smp.SEP, smp.MEM
+
+def rewrite(fname, emit):
+    """Rebuild kiểu roundtrip: dòng #/blank giữ nguyên vị trí, data line thứ i
+    (0-based theo thứ tự file) thay bằng emit[i] — None = bỏ dòng (collapse/
+    dedupe). Trả về nội dung mới dạng canonical."""
+    raw = (MEM / fname).read_bytes().decode("utf-8")
+    lines = raw[:-1].split("\n") if raw else []
+    rebuilt, i = [], 0
+    for line in lines:
+        if not line.strip() or line.startswith("#"):
+            rebuilt.append(line)
+        else:
+            if emit[i] is not None:
+                rebuilt.append(SEP.join(emit[i]))
+            i += 1
+    return "\n".join(rebuilt) + "\n"
+
+def main():
+    args = sys.argv[1:]
+    dry = "--dry-run" in args
+    if dry:
+        args.remove("--dry-run")
+    if args:
+        sys.exit("usage: story-memory-fuse [--dry-run]")
+
+    for fname in ("entities.md", "triples.md", "provenance.md"):
+        if not (MEM / fname).is_file():
+            sys.exit(f"FUSE FAIL: thiếu {MEM / fname}")
+
+    # canonical precheck (mirror cmd_roundtrip của parser, chạy cho CẢ 3 file
+    # TRƯỚC khi ghi file đầu tiên — all-or-nothing): file thiếu \n cuối / chứa
+    # \r → FAIL exit 1 KHÔNG ghi file nào, không tự "sửa" canonical khi fuse
+    # (file 0 byte cũng rơi vào nhánh thiếu \n cuối). Fuse assuming input đã
+    # qua parser — TS_RE / source-type enum là việc enforcement của parser,
+    # không duplicate check ở đây.
+    for name, fname in (("entities", "entities.md"), ("triples", "triples.md"),
+                        ("provenance", "provenance.md")):
+        raw = (MEM / fname).read_bytes().decode("utf-8")
+        fail = None
+        if not raw.endswith("\n"):
+            fail = "thiếu ký tự \\n cuối file"
+        elif "\r" in raw:
+            fail = "chứa \\r (CRLF?) — canonical là LF thuần"
+        if fail:
+            sys.exit(f"FUSE FAIL {name} ({fname} — {fail})")
+
+    errs = []
+    ents, e1 = smp.parse_file(MEM / "entities.md", 4); errs += e1
+    tris, e2 = smp.parse_file(MEM / "triples.md", 4); errs += e2
+    provs, e3 = smp.parse_file(MEM / "provenance.md", 5); errs += e3
+    if errs:
+        print("FUSE FAIL (format lỗi — chưa fuse được gì):")
+        for e in errs: print(" -", e)
+        sys.exit(1)
+
+    # entity: exact-duplicate nguyên dòng → dedupe; cùng id KHÁC nội dung → CONFLICT
+    ent_emit, seen, by_id, n_ent = [], set(), {}, 0
+    conflict = None
+    for row in ents:
+        line, eid = SEP.join(row), row[0]
+        if eid in by_id and by_id[eid] != line:
+            conflict = conflict or (eid, by_id[eid], line)
+            ent_emit.append(None)
+        elif line in seen:
+            n_ent += 1; ent_emit.append(None)
+        else:
+            seen.add(line); by_id.setdefault(eid, line); ent_emit.append(row)
+    if conflict:
+        eid, a, b = conflict
+        print(f"FUSE REFUSE (entity cùng id '{eid}' KHÁC nội dung — curator resolve, KHÔNG ghi file nào):")
+        print(f"  {a}")
+        print(f"  {b}")
+        sys.exit(2)
+
+    # triple: group theo S|P|O → giữ 1 dòng tại vị trí xuất hiện đầu, ts=min
+    # (so chuỗi YYYY-MM-DD — merge policy SF-1 §4.4); các dòng còn lại bỏ đi
+    tri_emit = [None] * len(tris)
+    groups = {}
+    for i, row in enumerate(tris):
+        groups.setdefault(SEP.join(row[:3]), []).append(i)
+    n_tri = 0
+    for key, idxs in groups.items():
+        if len(idxs) == 1:
+            tri_emit[idxs[0]] = tris[idxs[0]]
+        else:
+            tss = [tris[i][3] for i in idxs]
+            tri_emit[idxs[0]] = tris[idxs[0]][:3] + [min(tss)]
+            n_tri += 1
+            print(f"collapse triple: {key} | {min(tss)}  (gộp từ: {', '.join(tss)})")
+
+    # provenance: exact-duplicate nguyên dòng → dedupe; khác nhau cùng
+    # triple-ref → giữ ĐẦY ĐỦ (union nguồn)
+    prov_emit, pseen, n_prov = [], set(), 0
+    for row in provs:
+        line = SEP.join(row)
+        if line in pseen:
+            n_prov += 1; prov_emit.append(None)
+        else:
+            pseen.add(line); prov_emit.append(row)
+
+    plan = (("entities.md", ent_emit), ("triples.md", tri_emit), ("provenance.md", prov_emit))
+    changed = [(f, rewrite(f, emit)) for f, emit in plan]
+    changed = [(f, new) for f, new in changed
+               if new != (MEM / f).read_bytes().decode("utf-8")]
+
+    if not changed:
+        print(f"FUSE no-op: collapse {n_tri} triple, dedupe {n_prov} provenance, dedupe {n_ent} entity")
+        return
+    if not dry:
+        for fname, new in changed:
+            (MEM / fname).write_bytes(new.encode("utf-8"))
+    print(f"FUSE OK{' (dry-run — không ghi)' if dry else ''}: "
+          f"collapse {n_tri} triple, dedupe {n_prov} provenance, dedupe {n_ent} entity")
+
+if __name__ == "__main__":
+    main()

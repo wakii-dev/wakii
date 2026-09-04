@@ -1,0 +1,86 @@
+#!/bin/bash
+# story-skill-lint — structural integrity check cho story-workflow SKILL.md
+# Sinh từ regression thật 2026-09-03: mất bước 7-8 (spec-critic/plan-critic)
+# trong CREATE pipeline không ai biết cho tới review đối chiếu backup.
+#
+# 4 lớp check (mỗi lớp bắt 1 loại bug đã xảy ra):
+#   1. Step numbering — dãy bước trong CREATE phải liên tục (bắt 6→9 nhảy)
+#   2. Pointer resolve 2 chiều — references/*.md nhắc ↔ tồn tại (bắt pointer đứt/dead file)
+#   3. Tool refs — mọi ~/.claude/bin/story-* nhắc trong skill phải executable (bắt dead tool)
+#   4. Naming rule — story-base chỉ được nhắc kèm ngữ cảnh phủ định (bất biến nhánh đích)
+#
+# Usage: story-skill-lint [skill-dir]   (default: ~/.claude/skills/story-workflow)
+# Exit: 0 = CLEAN · 1 = VIOLATIONS
+set -u
+
+SKILL_DIR="${1:-$HOME/.claude/skills/story-workflow}"
+SKILL_MD="$SKILL_DIR/SKILL.md"
+REFS="$SKILL_DIR/references"
+fail=0
+
+ok()   { printf '  ✓ %s\n' "$*"; }
+bad()  { printf '  ✗ %s\n' "$*"; fail=1; }
+
+[ -f "$SKILL_MD" ] || { bad "SKILL.md không tồn tại: $SKILL_MD"; exit 1; }
+echo "story-skill-lint: $SKILL_DIR"
+
+# ── Check 1: step numbering trong CREATE liên tục ──
+# Trích số bước: dòng bắt đầu "N." HOẶC dạng gộp "7. ... → 8. ..." (same line)
+NUMS=$(awk '/^### CREATE/{f=1;next} f&&/^### /{exit} f' "$SKILL_MD" \
+  | grep -oE '(^[0-9]+\.|→ [0-9]+\.)' | grep -oE '[0-9]+' | sort -n | uniq)
+if [ -z "$NUMS" ]; then
+  bad "CREATE: không trích được step nào (heading đổi tên?)"
+else
+  MAX=$(echo "$NUMS" | tail -1)
+  EXPECT=$(seq 1 "$MAX")
+  if [ "$NUMS" = "$EXPECT" ]; then
+    ok "step numbering 1..$MAX liên tục"
+  else
+    MISSING=$(comm -23 <(echo "$EXPECT") <(echo "$NUMS") | tr '\n' ' ')
+    bad "CREATE thiếu bước: $MISSING (có: $(echo $NUMS | tr '\n' ' '))"
+  fi
+fi
+
+# ── Check 2: pointers references/ resolve 2 chiều ──
+if [ -d "$REFS" ]; then
+  MENTIONED=$(grep -oE 'references/[a-z0-9-]+\.md' "$SKILL_MD" | sort -u | sed 's|references/||')
+  BROKEN=0
+  for r in $MENTIONED; do
+    [ -f "$REFS/$r" ] || { bad "pointer đứt: references/$r được nhắc nhưng không tồn tại"; BROKEN=1; }
+  done
+  [ "$BROKEN" = 0 ] && ok "$(echo "$MENTIONED" | wc -l | tr -d ' ') pointer references/ đều resolve"
+  DEAD=0
+  for f in "$REFS"/*.md; do
+    base=$(basename "$f")
+    grep -q "$base" "$SKILL_MD" || { bad "dead file: references/$base không được nhắc ở SKILL.md"; DEAD=1; }
+  done
+  [ "$DEAD" = 0 ] && ok "không có dead file trong references/"
+else
+  bad "thư mục references/ không tồn tại"
+fi
+
+# ── Check 3: tool refs ~/.claude/bin/story-* executable ──
+TOOLS=$(cat "$SKILL_MD" "$REFS"/*.md 2>/dev/null \
+  | grep -oE 'bin/story-[a-z0-9-]+' | sort -u | sed 's|bin/||')
+MISSING_TOOLS=0
+for t in $TOOLS; do
+  [ -x "$HOME/.claude/bin/$t" ] || { bad "tool ref chết: $t được nhắc trong skill nhưng không có/không executable ở ~/.claude/bin"; MISSING_TOOLS=1; }
+done
+[ "$MISSING_TOOLS" = 0 ] && ok "$(echo "$TOOLS" | wc -l | tr -d ' ') tool refs đều executable"
+
+# ── Check 4: story-base chỉ trong ngữ cảnh phủ định ──
+LEGACY=$(grep -n 'story-base' "$SKILL_MD" "$REFS"/*.md 2>/dev/null \
+  | grep -v 'KHÔNG\|legacy\|KHÔNG dùng' || true)
+if [ -n "$LEGACY" ]; then
+  bad "story-base xuất hiện KHÔNG kèm ngữ cảnh phủ định:"
+  echo "$LEGACY" | sed 's/^/      /'
+else
+  ok "naming rule: story-base chỉ trong ngữ cảnh phủ định (hoặc vắng)"
+fi
+
+if [ "$fail" = 1 ]; then
+  echo "RESULT: VIOLATIONS"
+  exit 1
+fi
+echo "RESULT: CLEAN"
+exit 0

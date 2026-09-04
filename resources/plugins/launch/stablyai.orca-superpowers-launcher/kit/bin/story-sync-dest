@@ -1,0 +1,41 @@
+#!/bin/bash
+# story-sync-dest — đưa meta commits từ main vào nhánh đích, AN TOÀN.
+# Wrapper của cụm if/else trong story-workflow (bài học 21:57 tối 28/8:
+# branch -f tay không guard đè mất 2 SF merges — reflog cứu 60s, nhưng
+# 60s đó không nên tồn tại). PM/agents KHÔNG gõ branch -f trực tiếp nữa.
+#
+# Usage: story-sync-dest <dest-branch> [--repo <path>]
+set -u
+DEST="${1:?usage: story-sync-dest <dest-branch> [--repo <path>]}"
+shift
+REPO=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --repo) REPO="$2"; shift ;;
+  esac
+  shift
+done
+REPO="${REPO:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+cd "$REPO" || exit 2
+
+if git merge-base --is-ancestor "$DEST" main 2>/dev/null; then
+  # đích chưa chứa SF merges → fast-forward an toàn
+  git branch -f "$DEST" main
+  echo "✓ fast-forward $DEST → $(git log --oneline -1 --format='%h' "$DEST")"
+elif git merge-base --is-ancestor main "$DEST" 2>/dev/null; then
+  echo "✓ $DEST đã chứa main — không cần gì (tip $(git log --oneline -1 --format='%h' "$DEST"))"
+else
+  # đích ĐANG chứa SF merges → merge main vào đích qua temp worktree
+  # (KHÔNG BAO GIỜ branch -f ở nhánh này — mất SF merges)
+  TMP=$(mktemp -d)/dest-sync
+  git worktree add "$TMP" "$DEST" 2>&1 | tail -1
+  if git -C "$TMP" merge main --no-edit -m "merge: sync story meta từ main vào $DEST" 2>&1 | tail -1; then
+    git worktree remove "$TMP" 2>/dev/null; git worktree prune
+    echo "✓ merge main → $DEST (tip $(git log --oneline -1 --format='%h' "$DEST"))"
+  else
+    git -C "$TMP" merge --abort 2>/dev/null
+    git worktree remove --force "$TMP" 2>/dev/null; git worktree prune
+    echo "✗ conflict khi merge — resolve thủ công trong worktree tạm:"; exit 1
+  fi
+fi
+git merge-base --is-ancestor main "$DEST" && echo "✓ verify: main ⊆ $DEST" || { echo "✗ VERIFY FAIL — main vẫn ngoài $DEST!"; exit 1; }

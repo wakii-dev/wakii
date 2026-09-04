@@ -1,0 +1,2 @@
+# oxfmt: bundled plugins are vendored verbatim — formatting them breaks the content hash
+resources/plugins/launch/

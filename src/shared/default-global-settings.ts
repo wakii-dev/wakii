@@ -178,7 +178,9 @@ export function buildDefaultSettings(args: {
     terminalModelQueryAuthority: true,
     defaultTuiAgent: null,
     disabledTuiAgents: [...DEFAULT_DISABLED_TUI_AGENTS],
-    pluginSystemEnabled: false,
+    // Wakii fork: bundled plugins (superpowers-launcher + kit self-install) là
+    // phần lõi — bật plugin system mặc định thay vì false như upstream.
+    pluginSystemEnabled: true,
     disabledPlugins: [],
     pluginConsents: {},
     devPluginPaths: [],

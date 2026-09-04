@@ -10,7 +10,12 @@
     "restriction": "off",
     "nursery": "off"
   },
-  "jsPlugins": [{ "name": "react-doctor", "specifier": "oxlint-plugin-react-doctor" }],
+  "jsPlugins": [
+    {
+      "name": "react-doctor",
+      "specifier": "oxlint-plugin-react-doctor"
+    }
+  ],
   "rules": {
     "react-doctor/effect-needs-cleanup": "warn",
     "react-doctor/no-array-index-as-key": "warn",
@@ -25,5 +30,5 @@
     "react-doctor/zustand-no-mutating-state": "warn",
     "react-doctor/zustand-no-whole-store-destructure": "warn"
   },
-  "ignorePatterns": ["**/node_modules", "**/dist", "**/out"]
+  "ignorePatterns": ["**/node_modules", "**/dist", "**/out", "resources/plugins/launch"]
 }

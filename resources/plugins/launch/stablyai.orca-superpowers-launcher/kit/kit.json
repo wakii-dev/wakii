@@ -1,0 +1,136 @@
+{
+  "name": "story-team-kit",
+  "version": "2.1.0",
+  "description": "9-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới.",
+  "requires": {
+    "claude-code": ">=2.0",
+    "external": {
+      "orca-app": "Orca app (worktrees, gates, Linear, orchestration) — cung cấp sẵn skills: orca-cli, orchestration, orca-linear trong orca/skills/",
+      "superpowers-plugin": "claude plugin install superpowers@superpowers-marketplace",
+      "local-superpowers-launcher": "git clone https://github.com/VuHoi/local.superpowers-launcher (private) — panel điều khiển, cần kit này + 2 mục trên"
+    },
+    "optional": {
+      "huashu-design": "designer skill (32MB, cài qua --with-designer)"
+    }
+  },
+  "skills": [
+    {
+      "name": "orca-superpowers-workflow",
+      "role": "base workflow — 6 phases, principles, token contracts"
+    },
+    {
+      "name": "story-workflow",
+      "role": "epic bracket orchestration — kế thừa base workflow"
+    },
+    {
+      "name": "orca-bridge",
+      "role": "5 bridges superpowers ↔ orca CLI: worktree+Linear link, decision gate, task DAG, review lifecycle, status sync (first-party — orca app KHÔNG ship)"
+    },
+    {
+      "name": "bridge-router",
+      "role": "router — chọn bridge đúng khi không rõ (entry point → orca-bridge)"
+    },
+    {
+      "name": "writing-plans-linear",
+      "role": "viết plans + push Linear subtasks"
+    },
+    {
+      "name": "brainstorm",
+      "role": "ý tưởng → validated spec"
+    },
+    {
+      "name": "execute-plan",
+      "role": "thực thi plan dispatched qua orchestration"
+    },
+    {
+      "name": "prompt-master",
+      "role": "viết prompt cho AI tools (LLM/Cursor/Midjourney) — tiện ích chung, ngoài story pipeline (IDEA-BRIEF đã nhúng vào story-workflow CREATE)"
+    },
+    {
+      "name": "figma-orientation",
+      "role": "P8.0 — router đọc Figma đúng cách"
+    },
+    {
+      "name": "image-to-code",
+      "role": "P8.5 — component chất lượng cao từ ảnh"
+    },
+    {
+      "name": "gpt-taste",
+      "role": "P8.6 — UX review sau implement"
+    },
+    {
+      "name": "design-taste-frontend",
+      "role": "P8.6 — anti-slop frontend review"
+    },
+    {
+      "name": "mock-prototype",
+      "role": "3-hướng prototype → artifact links → user gate → hand-off"
+    },
+    {
+      "name": "post-task-ritual",
+      "role": "Phase 5 learning step — 7 steps: problems→solutions→patterns→update→index-memory→clear"
+    },
+    {
+      "name": "graph-engineering",
+      "role": "KG + task-graph methodology (vendored MIT, upstream codejunkie99/graph-engineering) — ontology, extraction, fusion, GraphRAG; dạy + dùng",
+      "license": "MIT (upstream — giữ LICENSE-upstream + NOTICE khi phân phối)"
+    },
+    {
+      "name": "web-design-guidelines",
+      "role": "105 rules UI review engine (a11y/focus/forms/animation) — P8 F7/F8 heuristic layer (vendored MIT, vercel-labs)",
+      "license": "MIT (LICENSE-upstream trong skill)"
+    },
+    {
+      "name": "frontend-design",
+      "role": "Tư duy design chủ đích + chống AI-slop (3 default looks, signature element, copy-as-design) — Apache-2.0, anthropics",
+      "license": "Apache-2.0 (LICENSE-upstream trong skill)"
+    }
+  ],
+  "agents": [
+    {
+      "name": "task-executor",
+      "color": "green",
+      "role": "Dev — implements SF tasks"
+    },
+    {
+      "name": "designer",
+      "color": "magenta",
+      "role": "3-direction drafts → user gate → hand-off spec"
+    },
+    {
+      "name": "code-reviewer",
+      "color": "cyan",
+      "role": "Tester — reviews diffs, VERDICT format"
+    },
+    {
+      "name": "verifier",
+      "color": "orange",
+      "role": "independent PASS/PARTIAL/FAIL"
+    },
+    {
+      "name": "spec-critic",
+      "color": "purple",
+      "role": "adversarial spec review"
+    },
+    {
+      "name": "plan-critic",
+      "color": "magenta",
+      "role": "adversarial plan + DAG review"
+    },
+    {
+      "name": "phase0-impact-analyst",
+      "color": "blue",
+      "role": "10-dimension impact analysis"
+    },
+    {
+      "name": "security-audit",
+      "color": "red",
+      "role": "OWASP surface"
+    },
+    {
+      "name": "rollback-fixer",
+      "color": "yellow",
+      "role": "safe revert specialist"
+    }
+  ]
+}

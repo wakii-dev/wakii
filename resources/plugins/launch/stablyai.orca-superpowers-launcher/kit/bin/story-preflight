@@ -1,0 +1,97 @@
+#!/bin/bash
+# story-preflight — chạy TRƯỚC khi bắt đầu code
+# Chặn: sai branch, tree dirty, deps thiếu. Cảnh báo: server chết, DB trống, .env thiếu.
+# Per-project: tùy chỉnh qua `.story-preflight.conf` ở repo root (KEY=VALUE, sourced):
+#   PREFLIGHT_PORT=8080                        # port health check (mặc định 3001)
+#   PREFLIGHT_HEALTH_PATH=/api/health          # path check (mặc định /api/health)
+#   PREFLIGHT_DB=apps/server/prisma/dev.db     # path TÍNH TỪ repo root
+#   PREFLIGHT_DB_QUERY="SELECT count(*) FROM User;"
+#   PREFLIGHT_DB_LABEL="users"                 # nhãn hiển thị count (mặc định "rows")
+#   PREFLIGHT_NODE_MODULES=0                   # tắt check node_modules (mặc định 1)
+#   PREFLIGHT_ENV_FILE=apps/server/.env        # path .env (mặc định server/.env)
+#   PREFLIGHT_PKG_MGR=npm                      # hint cài deps (mặc định pnpm)
+# Usage: story-preflight [--branch <name>] [--port <n>] [--db <path>]
+set -u
+ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
+BRANCH="${BRANCH:-$(git branch --show-current 2>/dev/null)}"
+
+# ── per-project config (repo root, sourced — mọi biến đều optional + override
+#    bằng flag CLI ở dưới; file không có/malformed thì cứ chạy mặc định)
+CONF=""
+[ -n "$ROOT" ] && [ -f "$ROOT/.story-preflight.conf" ] && CONF="$ROOT/.story-preflight.conf"
+[ -n "$CONF" ] && . "$CONF" 2>/dev/null
+
+PORT="${PORT:-${PREFLIGHT_PORT:-3001}}"
+DB="${DB:-}"
+[ -z "$DB" ] && [ -n "$ROOT" ] && [ -n "${PREFLIGHT_DB:-}" ] && DB="$ROOT/$PREFLIGHT_DB"
+[ -z "$DB" ] && DB="${ROOT:-}/server/prisma/prisma/dev.db"
+HEALTH_PATH="${PREFLIGHT_HEALTH_PATH:-/api/health}"
+DB_QUERY="${PREFLIGHT_DB_QUERY:-SELECT count(*) FROM User;}"
+DB_LABEL="${PREFLIGHT_DB_LABEL:-rows}"
+CHECK_NM="${PREFLIGHT_NODE_MODULES:-1}"
+ENV_FILE="${PREFLIGHT_ENV_FILE:-server/.env}"
+PKG_MGR="${PREFLIGHT_PKG_MGR:-pnpm}"
+FAIL=0
+
+echo "═══ PRE-FLIGHT CHECK ═══"
+[ -n "$CONF" ] && echo "  config: $CONF"
+
+# 1. Đúng branch?
+CUR=$(git branch --show-current 2>/dev/null)
+if [ "$CUR" = "$BRANCH" ] || [ -z "$BRANCH" ]; then
+  echo "✓ Branch: $CUR"
+else
+  echo "❌ Branch: đang '$CUR', cần '$BRANCH'"; FAIL=1
+fi
+
+# 2. Working tree sạch?
+DIRTY=$(git status --short 2>/dev/null | grep -cv "^??")
+if [ "$DIRTY" = "0" ]; then
+  echo "✓ Working tree sạch"
+else
+  echo "❌ $DIRTY files dirty — commit/stash trước"; FAIL=1
+fi
+
+# 3. Server sống?
+if curl -s -m 3 "http://127.0.0.1:$PORT$HEALTH_PATH" 2>/dev/null | grep -q "ok\|data"; then
+  echo "✓ Server :$PORT sống"
+else
+  echo "⚠ Server :$PORT không respond (có thể chưa start — không chặn)"
+fi
+
+# 4. DB có data?
+if [ -f "$DB" ]; then
+  COUNT=$(sqlite3 "$DB" "$DB_QUERY" 2>/dev/null)
+  if [ "${COUNT:-0}" -gt 0 ] 2>/dev/null; then
+    echo "✓ DB: $COUNT $DB_LABEL"
+  else
+    echo "⚠ DB trống hoặc không đọc được ($DB)"
+  fi
+else
+  echo "⚠ DB file không tồn tại: $DB"
+fi
+
+# 5. Dependencies?
+if [ "$CHECK_NM" = "1" ]; then
+  if [ -d "$ROOT/node_modules" ]; then
+    echo "✓ node_modules"
+  else
+    echo "❌ node_modules thiếu — chạy $PKG_MGR install"; FAIL=1
+  fi
+fi
+
+# 6. .env tồn tại?
+if [ -f "$ROOT/$ENV_FILE" ]; then
+  echo "✓ $ENV_FILE"
+else
+  echo "⚠ $ENV_FILE thiếu — copy từ .env.example"
+fi
+
+echo ""
+if [ "$FAIL" = "1" ]; then
+  echo "🚫 PRE-FLIGHT FAIL — fix trước khi code"
+  exit 1
+else
+  echo "✓ PRE-FLIGHT PASS — bắt đầu code"
+  exit 0
+fi

@@ -1,0 +1,2022 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Superpowers</title>
+    <style>
+      :root { color-scheme: dark; }
+      body {
+        margin: 0;
+        padding: 14px;
+        font-family: system-ui, -apple-system, sans-serif;
+        font-size: 13px;
+        color: var(--foreground, #ddd);
+        background: var(--background, transparent);
+      }
+      h1 { font-size: 14px; margin: 0 0 4px; }
+      p.muted { margin: 0 0 12px; color: var(--muted-foreground, #999); font-size: 12px; }
+      .ctx-line { margin-bottom: 12px; color: var(--muted-foreground, #999); font-size: 11px; }
+      label {
+        display: block;
+        margin: 10px 0 4px;
+        color: var(--muted-foreground, #999);
+        font-size: 11px;
+      }
+      textarea, input, select {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 7px;
+        border: 1px solid var(--border, #555);
+        border-radius: 6px;
+        background: var(--secondary, #1f1f1f);
+        color: var(--foreground, #ddd);
+        font: inherit;
+      }
+      textarea { min-height: 60px; resize: vertical; }
+      button {
+        display: block;
+        width: 100%;
+        margin-top: 12px;
+        padding: 9px 10px;
+        border: 1px solid var(--border, #555);
+        border-radius: 6px;
+        background: var(--primary, #2563eb);
+        color: var(--primary-foreground, #fff);
+        cursor: pointer;
+        font: inherit;
+      }
+      button:disabled { opacity: 0.45; cursor: not-allowed; }
+      .row { display: flex; gap: 6px; margin-top: 10px; }
+      .row > * { flex: 1; margin-top: 0; }
+      .status { margin-top: 14px; min-height: 1.4em; color: var(--muted-foreground, #999); white-space: pre-wrap; }
+      code {
+        background: var(--secondary, #2a2a2a);
+        padding: 1px 4px;
+        border-radius: 3px;
+        font-size: 11px;
+      }
+      /* hide cascaded sub-fields by default; JS unhides the matching one */
+      .field { display: none; }
+      .field.show { display: block; }
+      .radio-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+      .radio-opt { display: flex; align-items: flex-start; gap: 8px; padding: 8px; border: 1px solid var(--border, #444); border-radius: 6px; cursor: pointer; margin: 0; }
+      .radio-opt:hover { border-color: var(--primary, #2563eb); }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .tab-btn { padding: 5px 12px; border: 1px solid var(--border, #444); border-radius: 7px; background: var(--secondary, #1f1f1f); color: var(--foreground, #ddd); font-size: 12px; cursor: pointer; }
+      .tab-btn.active { border-color: var(--primary, #2563eb); color: var(--primary, #6ba1f8); font-weight: 600; }
+      .radio-opt input[type="radio"] { margin-top: 3px; width: auto; }
+      .radio-opt small { color: var(--muted-foreground, #999); }
+      .mode-opt { display: flex; align-items: center; gap: 8px; margin: 6px 0; padding: 4px 0; font-size: 12px; }
+      .mode-opt input[type="checkbox"], .mode-opt input[type="number"] { width: auto; }
+      .mode-opt input[type="number"] { width: 50px; }
+      button.small { padding: 5px 8px; font-size: 11px; }
+      button.secondary { background: var(--secondary, #2a2a2a); color: var(--foreground, #ddd); }
+    </style>
+  </head>
+  <body>
+    <h1 style="margin: 0 0 2px;">Superpowers Workflow</h1>
+    <p class="muted" style="margin: 0 0 8px;">Control deck for the <code>orca-superpowers-workflow</code> — prompt is typed into the terminal below.</p>
+
+    <!-- Shared context row (both tabs): worktree + terminal target -->
+    <div class="row" style="justify-content: space-between; align-items: center; margin-bottom: 6px;">
+      <div id="ctx-line" class="ctx-line" style="margin-bottom: 0;">Loading worktree…</div>
+      <select id="terminal-select" title="Pick which terminal receives the prompt (cả 2 tab)" style="width: auto; min-width: 100px;"></select>
+    </div>
+
+    <!-- Tab bar: Workflow | Story -->
+    <div id="tab-bar" style="display: flex; gap: 4px; margin-bottom: 8px;">
+      <button id="tab-workflow" class="tab-btn active" type="button">⚡ Workflow</button>
+      <button id="tab-story" class="tab-btn" type="button">🌳 Story</button>
+    </div>
+
+    <!-- ================= STORY TAB MARKUP (hidden by default) ================= -->
+    <div id="story-tab" style="display: none; flex: 1; min-height: 0; display: none; flex-direction: column;">
+      
+      
+
+      <textarea id="story-idea" placeholder="## What
+Mô tả story (feature lớn) — markdown
+
+## Figma (mỗi dòng 1 link)
+- https://www.figma.com/design/...
+
+## Code refs (file agent nên đọc trước)
+- src/..." style="margin-top: 8px; min-height: 90px; width: 100%; box-sizing: border-box; padding: 7px 9px; border: 1px solid var(--border, #444); border-radius: 7px; background: var(--secondary, #1f1f1f); color: var(--foreground, #ddd); font-family: ui-monospace, Menlo, monospace; font-size: 11px; line-height: 1.45; resize: vertical;" maxlength="2600"></textarea>
+      <details style="margin-top: 6px; border: 1px solid var(--border, #444); border-radius: 7px; padding: 4px 8px; font-size: 11px;">
+        <summary style="cursor: pointer; color: var(--muted-foreground, #999);">⚙ SF ceremony (chi phí fixed mỗi SF)</summary>
+        <label class="mode-opt" title="SF ≤4 tasks: bracket What/Tasks coi là plan — bỏ plan file riêng + plan-critic (tiết kiệm lớn nhất)">
+          <input type="checkbox" id="sf-thin-plan" checked />
+          <span><b>SF-script</b> — SF nhỏ bỏ plan-đầy (dùng bracket làm plan mỏng)</span>
+        </label>
+        <label class="mode-opt" title="Epic CREATE sinh kèm sf-context/&lt;SF-N&gt;.md — SF đọc slice sẵn thay tự tổng hợp từ bracket+epic+comments">
+          <input type="checkbox" id="sf-context-pack" checked />
+          <span><b>Context pack</b> — slice sẵn context từng SF khi CREATE</span>
+        </label>
+        <label class="mode-opt" title="SF nhỏ gộp audit 1 comment cuối thay comment từng phase">
+          <input type="checkbox" id="sf-batch-audit" checked />
+          <span><b>Batch audit</b> — SF nhỏ gộp audit comments</span>
+        </label>
+        <label class="mode-opt" title="Mục tiêu 8-15 tasks/SF, gộp SF nhỏ cùng loại; pattern task lặp >=2 SF -> tách lên tier 0 hoặc gộp. Hạn chế duplicate overhead">
+          <input type="checkbox" id="sf-bigger-scope" checked />
+          <span><b>Scope lớn</b> — SF 8-15 tasks, chống duplicate patterns</span>
+        </label>
+        <label class="mode-opt" title="Watchdog chạy KHÔNG giới hạn vòng tới khi story COMPLETE/BLOCKED — tự resume SF ngắt, tự launch tier mới, tự merge hộ, tự dọn. KHÔNG cần nhắn 'tiếp tục'">
+          <input type="checkbox" id="sf-auto-complete" checked />
+          <span><b>🤖 Auto hoàn thành</b> — chạy tới STORY-COMPLETE không cần tiếp tục</span>
+        </label>
+        <div class="mode-opt" style="gap: 6px;">
+          <span><b>🎨 Sáng tạo:</b></span>
+          <select id="sf-creativity" title="Độ tự do sáng tạo của agents khi thực thi SF — ảnh hưởng cả CREATE (chia SF) và LAUNCH (implement)" style="flex: 1; padding: 2px 6px; border: 1px solid var(--border, #444); border-radius: 5px; background: var(--secondary, #1f1f1f); color: var(--foreground, #ddd); font-size: 11px;">
+            <option value="strict" title="Bám sát spec/bracket từng chữ — chỉ làm đúng cái ghi ra">🔒 Strict — theo spec từng chữ</option>
+            <option value="balanced" selected title="Spec là khung; chi tiết chưa ghi agent tự quyết hợp lý + flag trong notes">⚖️ Balanced — khung + tự do chi tiết</option>
+            <option value="creative" title="Spec là điểm khởi đầu; agent được đề xuất cải thiện, thử hướng tốt hơn (vẫn giữ acceptance)">🎨 Creative — được đề xuất cải thiện</option>
+          </select>
+        </div>
+      </details>
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 6px;">
+        <button id="story-create" style="padding: 7px 6px; border: 1px solid var(--primary, #2563eb); border-radius: 7px; background: var(--primary, #2563eb); color: var(--primary-foreground, #fff); font-size: 11px; font-weight: 600; cursor: pointer;">🚀 Create story</button>
+        <button id="story-approve" style="padding: 7px 6px; border: 1px solid #22c55e; border-radius: 7px; background: transparent; color: #22c55e; font-size: 11px; font-weight: 600; cursor: pointer;">✓ Approve story</button>
+        <button id="story-launch" style="padding: 7px 6px; border: 1px solid #eab308; border-radius: 7px; background: transparent; color: #eab308; font-size: 11px; font-weight: 600; cursor: pointer;">▶ Launch SFs</button>
+      </div>
+
+      <div class="row" style="margin-top: 12px; gap: 6px; position: relative;">
+        <input id="story-pick" autocomplete="off" placeholder="Story — gõ filename hoặc ID (vd: nextjs / 151)…"
+               style="flex:1; padding: 5px 9px; border: 1px solid var(--border, #444); border-radius: 7px; background: var(--secondary, #1f1f1f); color: var(--foreground, #ddd); font-size: 12px;" />
+        <div id="story-dd" style="display:none; position:absolute; top:34px; left:0; right:44px; z-index:30; max-height:240px; overflow-y:auto; border:1px solid var(--border,#555); border-radius:8px; background:var(--card,#1a1a1a); box-shadow:0 6px 20px rgba(0,0,0,.5);"></div>
+        <button id="story-add-node" class="btn" style="padding: 5px 8px;" title="Thêm SF node mới vào bracket (ghi .md qua worker)">＋</button>
+        <button id="story-share" class="btn" style="padding: 5px 8px;" title="Share bracket: copy markdown + tải PNG">⤓</button>
+        <button id="story-load" class="btn" style="padding: 5px 10px;">↻</button>
+      </div>
+      <div id="story-status" class="muted" style="font-size: 11px; margin-top: 4px;">chưa load</div>
+      <div id="story-canvas" style="flex: 2 1 auto; min-height: 320px; margin-top: 14px; overflow: hidden; border: 1px solid var(--border, #444); border-radius: 8px; background: var(--secondary, #191919); cursor: grab; position: relative;">
+        <svg id="story-svg" xmlns="http://www.w3.org/2000/svg" style="display:none; width: 100%; height: 100%;">
+          <g id="story-graph"></g>
+        </svg>
+        <div id="story-placeholder" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--muted-foreground,#777); font-size:12px; text-align:center; padding: 20px;">
+          Bracket view — Load để dựng sơ đồ từ story<br>(epic + sub-issues + plan tiers)
+        </div>
+      </div>
+      <div id="story-inspector" style="display:none; margin-top: 14px; padding: 8px 10px; border: 1px solid var(--border, #444); border-radius: 8px; background: var(--card, #1f1f1f);"></div>
+
+      <!-- Story Ops: stall-check + DoD 5 bước từ kit CLIs (worker chạy hộ qua story.ops.request) -->
+      <div id="story-ops" style="margin-top: 8px; padding: 8px 10px; border: 1px solid var(--border, #444); border-radius: 8px; background: var(--card, #1f1f1f);">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:11px; font-weight:700; letter-spacing:.5px;">🛠 Story Ops</span>
+          <span style="font-size:9px; color:var(--muted-foreground,#888);" title="B1 code+tests · B2 plan · B3 review · B4 merge · B5 Done">[5 bước DoD]</span>
+          <span id="story-ops-at" class="muted" style="font-size:10px; flex:1;"></span>
+          <button id="story-ops-refresh" class="btn secondary" style="padding:3px 8px; font-size:10px;">↻</button>
+          <button id="story-ops-launch" class="btn secondary" style="padding:3px 8px; font-size:10px; border-color:#eab308; color:#eab308;" title="Launch mọi SF sẵn sàng (deps Done, đã approve, chưa có worktree) — như cron --launch-next nhưng bấm tay">▶ Launch next</button>
+          <button id="story-ops-stats" class="btn secondary" style="padding:3px 8px; font-size:10px;" title="story-stats: cycle-time + commits + events per SF">📊 Stats</button>
+          <button id="story-ops-watchdog" class="btn secondary" style="padding:3px 8px; font-size:10px;" title="1 pass diagnose + notify stall mới (không auto-resume)">🐕 Watchdog</button>
+          <button id="story-ops-verify" class="btn secondary" style="padding:3px 8px; font-size:10px;" title="Run story-verify (5 bước DoD + B0 browser test)">✅ Verify</button>
+          <button id="story-ops-attempts" class="btn secondary" style="padding:3px 8px; font-size:10px;" title="story-attempt show — attempt log hôm nay (3 lần cùng approach = phải đổi hướng)">🔁 Attempts</button>
+        </div>
+        <div style="display:flex; gap:6px; margin-top:6px; align-items:center;">
+          <input id="story-ops-gap" placeholder="GAP-ANSWER: trả lời câu hỏi của SFs ngay тут (post lên epic đang xem)…"
+                 style="flex:1; padding:4px 8px; border:1px solid var(--border,#444); border-radius:6px; background:var(--secondary,#1f1f1f); color:var(--foreground,#ddd); font-size:11px;" />
+          <button id="story-ops-gap-send" class="btn secondary" style="padding:4px 8px; font-size:10px;" title="Post GAP-ANSWER lên epic của story đang mở">Gửi</button>
+        </div>
+        <div style="display:flex; gap:6px; margin-top:6px; align-items:center;">
+          <input id="story-ops-memory" placeholder="🧠 Memory query: team đã học gì về… (stall, merge conflict, flaky test…)"
+                 style="flex:1; padding:4px 8px; border:1px solid var(--border,#444); border-radius:6px; background:var(--secondary,#1f1f1f); color:var(--foreground,#ddd); font-size:11px;" />
+          <button id="story-ops-memory-send" class="btn secondary" style="padding:4px 8px; font-size:10px;" title="story-memory query — tra graph memory (patterns + provenance)">Query</button>
+          <button id="story-ops-memory-stats" class="btn secondary" style="padding:4px 8px; font-size:10px;" title="story-memory stats — entity/triple counts">📊</button>
+        </div>
+        <div style="display:flex; gap:6px; margin-top:6px; align-items:center;">
+          <input id="story-ops-vr-base" placeholder="baseline dir (Figma captures)…"
+                 style="flex:1; min-width:90px; padding:4px 8px; border:1px solid var(--border,#444); border-radius:6px; background:var(--secondary,#1f1f1f); color:var(--foreground,#ddd); font-size:11px;" />
+          <input id="story-ops-vr-cur" placeholder="current dir (screenshots)…"
+                 style="flex:1; min-width:90px; padding:4px 8px; border:1px solid var(--border,#444); border-radius:6px; background:var(--secondary,#1f1f1f); color:var(--foreground,#ddd); font-size:11px;" />
+          <button id="story-ops-vr-send" class="btn secondary" style="padding:4px 8px; font-size:10px;" title="story-visual-regress — so screenshot vs baseline">Visual diff</button>
+        </div>
+        <div id="story-complete-banner" style="display:none; margin-top:6px; padding:6px 10px; border:1px solid #22c55e; border-radius:7px; background:rgba(34,197,94,.08); font-size:11px;"></div>
+        <div id="story-gap-queue" style="margin-top:6px;"></div>
+        <div id="story-ops-rows" style="margin-top:6px; font-size:11px;"></div>
+        <div id="story-ops-result" class="muted" style="font-size:10px; margin-top:4px; white-space:pre-wrap; max-height:90px; overflow-y:auto;"></div>
+      </div>
+    
+    </div>
+
+    <div id="workflow-tab">
+    <!-- Mode selector: 3 primary intents (radio, all visible) -->
+    <label>What do you want to do?</label>
+    <div class="radio-group">
+      <label class="radio-opt">
+        <input type="radio" name="intent" value="new" checked />
+        <span><strong>New feature</strong><br><small>Build from idea, full Phase 0-5</small></span>
+      </label>
+      <label class="radio-opt">
+        <input type="radio" name="intent" value="continue" />
+        <span><strong>Continue work</strong><br><small>Resume from plan (empty = agent lists, or paste plan path)</small></span>
+      </label>
+      <label class="radio-opt">
+        <input type="radio" name="intent" value="quick" />
+        <span><strong>Quick fix</strong><br><small>Trivial change, skip Phase 0</small></span>
+      </label>
+    </div>
+
+    <!-- Feature description (markdown) — for new + quick modes -->
+    <div id="field-idea" class="field show">
+      <label for="idea">Feature description (markdown — multiple Figma links, code refs, image paths OK)</label>
+      <textarea id="idea" placeholder="## What
+Tech blog: markdown posts, post list, single-post view, tag filter, dark/light theme, static gen.
+
+## Figma (one per line, optional explanation after)
+- Home: https://www.figma.com/design/<file>/<node>  — list view with excerpts
+
+## Code refs (paths the agent should read first)
+- existing: src/components/Header.tsx
+
+## Images (local file paths — agent reads them)
+- /Users/mac/screens/home.png" style="min-height: 180px; font-family: ui-monospace, Menlo, monospace; font-size: 11px; line-height: 1.5;" maxlength="2400"></textarea>
+      <div style="text-align: right; margin-top: 2px;"><span id="byte-counter" class="muted" style="font-size: 11px;">0B / 4096</span></div>
+    </div>
+
+    <!-- Continue hint — shown only for continue mode -->
+    <div id="field-continue" class="field">
+      <p class="muted" style="margin: 6px 0;">Leave description empty to auto-load latest plan, or paste a plan path like <code>docs/superpowers/plans/x.md</code> in the description above. Agent will list plans + ask you to pick if empty.</p>
+    </div>
+
+    <!-- Modes (visible directly, not collapsed) -->
+    <label style="margin-top: 14px;">Modes</label>
+    <label class="mode-opt">
+      <input type="checkbox" id="autonomous" />
+      <span><strong>Autonomous</strong> — run end-to-end, self-approve gates</span>
+    </label>
+    <label class="mode-opt">
+      <input type="checkbox" id="polish" checked />
+      <span><strong>Refine idea</strong> (prompt-master) — uncheck to skip</span>
+    </label>
+    <label class="mode-opt">
+      <input type="checkbox" id="simplify" checked />
+      <span><strong>Simplify code</strong> — review each task's code (reuse/quality/efficiency)</span>
+    </label>
+    <label class="mode-opt">
+      <input type="checkbox" id="audit-log" checked />
+      <span><strong>Linear audit log</strong> — comment after every phase/task (skill default ON)</span>
+    </label>
+    <label class="mode-opt">
+      <input type="checkbox" id="mindset-browser" checked />
+      <span><strong>Mindset Browser</strong> — mở browser, tự đi flow, chụp screenshot trước khi nói "xong" (Mindset 0)</span>
+    </label>
+    <label class="mode-opt">
+      <input type="checkbox" id="plan-only" />
+      <span><strong>Plan only</strong> — stop at PLAN READY, no code</span>
+    </label>
+
+    <!-- Subagents grid (3 cols). All 9 default ON; user unchecks to skip. -->
+    <label style="margin-top: 14px;">Subagents <span style="font-size: 10px; color: var(--muted-foreground, #999);">(all on by default — uncheck to skip)</span></label>
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 4px;">
+      <label class="mode-opt" title="Force phase0-impact-analyst at Phase 0">
+        <input type="checkbox" id="phase0-analyst" checked />
+        <span style="color: #3b82f6;">■</span>
+        <span><strong>P0 analyst</strong></span>
+      </label>
+      <label class="mode-opt" title="Dispatch designer agent for UI/visual surfaces (huashu-design — 3 hướng draft + user gate + hand-off spec, trước khi Dev code)">
+        <input type="checkbox" id="designer" checked />
+        <span style="color: #d946ef;">■</span>
+        <span><strong>Designer</strong></span>
+      </label>
+      <label class="mode-opt" title="Force spec-critic gate at Phase 2→3">
+        <input type="checkbox" id="spec-critic" checked />
+        <span style="color: #a855f7;">■</span>
+        <span><strong>Spec critic</strong></span>
+      </label>
+      <label class="mode-opt" title="Force plan-critic gate at Phase 3→4">
+        <input type="checkbox" id="plan-critic" checked />
+        <span style="color: #22c55e;">■</span>
+        <span><strong>Plan critic</strong></span>
+      </label>
+      <label class="mode-opt" title="Force code-reviewer between every Phase 4 task">
+        <input type="checkbox" id="code-reviewer" checked />
+        <span style="color: #06b6d4;">■</span>
+        <span><strong>Code reviewer</strong></span>
+      </label>
+      <label class="mode-opt" title="Force verifier even though it's MANDATORY at Phase 5 (redundant but explicit)">
+        <input type="checkbox" id="verifier" checked />
+        <span style="color: #f97316;">■</span>
+        <span><strong>Verifier</strong></span>
+      </label>
+      <label class="mode-opt" title="Force security-audit even when OWASP surface not auto-detected">
+        <input type="checkbox" id="security-audit" checked />
+        <span style="color: #ef4444;">■</span>
+        <span><strong>Security</strong></span>
+      </label>
+      <label class="mode-opt" title="Prefer dispatch rollback-fixer (vs inline) when any rollback is needed">
+        <input type="checkbox" id="rollback-fixer" checked />
+        <span style="color: #eab308;">■</span>
+        <span><strong>Rollback fixer</strong></span>
+      </label>
+      <label class="mode-opt" title="Phase 4 tasks chạy qua task-executor agent (Dev — plan → code → tests → commit atomic), không inline">
+        <input type="checkbox" id="task-executor" checked />
+        <span style="color: #22c55e;">■</span>
+        <span><strong>Dev executor</strong></span>
+      </label>
+    </div>
+    <label class="mode-opt">
+      Subagents (multi-dim analysis):
+      <input type="number" id="subagents" min="1" max="10" value="1" style="width: 50px; margin-left: 6px;" />
+      <span style="font-size: 10px; color: var(--muted-foreground, #999);">1-10</span>
+    </label>
+    <label class="mode-opt" style="display: flex; align-items: center; gap: 6px;">
+      <span><strong>Execute (Phase 4)</strong> — how tasks run:</span>
+      <select id="execute-mode" style="width: auto; min-width: 130px;">
+        <option value="delegate" selected>Delegate (Orca worker-start)</option>
+        <option value="inline">Inline (I do it)</option>
+        <option value="superpowers">Superpowers (executing-plans)</option>
+      </select>
+    </label>
+
+    <!-- Primary action row: Execute + Copy -->
+    <div class="row" style="margin-top: 10px; gap: 6px;">
+      <button id="execute" style="min-width: 100px;">Start</button>
+      <button id="copy-prompt" class="secondary" title="Copy the composed prompt to clipboard — paste manually if Execute fails to reach the terminal">Copy</button>
+    </div>
+
+    <!-- Other actions (gate/phase/status) — below primary, secondary tier -->
+    <details style="margin-top: 14px;">
+      <summary style="cursor: pointer; color: var(--muted-foreground, #999); font-size: 12px;">Other (Status / Resolve gate / Jump phase)</summary>
+      <div style="margin-top: 8px;">
+        <div class="row">
+          <button class="secondary small" data-action="status">Status</button>
+          <button class="secondary small" data-action="resolve">Resolve gate</button>
+          <button class="secondary small" data-action="phase">Jump phase</button>
+        </div>
+        <div id="field-status" class="field" style="margin-top: 8px;">
+          <p class="muted" style="margin: 0;">Click Status to print current workflow state in terminal.</p>
+        </div>
+        <div id="field-resolve" class="field">
+          <input id="gate-id" type="text" placeholder="gate_xxxxxxxxxxxx" style="margin-top: 6px;" />
+          <select id="resolution" style="margin-top: 6px;">
+            <option value="approved">approved</option>
+            <option value="rejected">rejected</option>
+          </select>
+        </div>
+        <div id="field-phase" class="field">
+          <select id="phase" style="margin-top: 6px;">
+            <option value="Init">Init</option>
+            <option value="Spec">Spec</option>
+            <option value="Plan">Plan</option>
+            <option value="Exec">Exec</option>
+            <option value="Done">Done</option>
+          </select>
+        </div>
+      </div>
+    </details>
+
+    <div id="status-line" class="status" style="margin-top: 10px;"></div>
+
+  <script>
+    (function runPanelScript() {
+      'use strict'
+      // Orca's srcdoc iframe may parse this script BEFORE the body is ready, causing
+      // getElementById to return undefined and crash the whole script (leaving all
+      // button listeners unwired). Guard: if DOM not ready, wait for DOMContentLoaded
+      // then re-run this whole function.
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', runPanelScript)
+        return
+      }
+
+      // --- panel <-> host bridge -------------------------------------------------
+      // The panel is a sandboxed iframe. The only actions it can request are
+      // the 3 in PLUGIN_PANEL_ACTIONS: workspace.readContext, terminal.sendText,
+      // notifications.show. Every workflow interaction is expressed as a prompt
+      // string typed into the terminal via terminal.sendText.
+
+      var seq = 0
+      var pending = {}
+      var statusEl = document.getElementById('status-line')
+      var ctxLine = document.getElementById('ctx-line')
+      var executeBtn = document.getElementById('execute')
+      var ctxTerminals = []
+
+      function call(action, params) {
+        return new Promise(function (resolve) {
+          var requestId = 'req-' + ++seq
+          pending[requestId] = resolve
+          window.parent.postMessage(
+            { type: 'orca-panel-action', requestId: requestId, action: action, params: params || {} },
+            '*'
+          )
+        })
+      }
+      window.addEventListener('message', function (event) {
+        var data = event.data
+        if (!data || data.type !== 'orca-panel-action-result') return
+        var resolve = pending[data.requestId]
+        if (!resolve) return
+        delete pending[data.requestId]
+        resolve(data)
+      })
+
+      function setStatus(msg) { statusEl.textContent = msg || '' }
+
+      // Load worktree context once so we know the terminal id to type into.
+      function loadContext() {
+        ctxLine.textContent = 'Loading worktree…'
+        return call('workspace.readContext').then(function (result) {
+          if (!result || !result.ok || !result.value) {
+            ctxLine.textContent = 'no focused worktree — open a worktree in Orca'
+            ctxTerminals = []
+            populateTerminalSelect()
+            return null
+          }
+          var v = result.value
+          ctxTerminals = v.terminals || []
+          ctxLine.textContent = v.displayName + ' · ' + v.branch
+          populateTerminalSelect()
+          return v
+        }, function (err) {
+          // readContext rejected (worker down, daemon error, bridge failure) — surface it
+          ctxLine.textContent = 'load error: ' + ((err && err.message) || 'unknown')
+          ctxTerminals = []
+          populateTerminalSelect()
+          return null
+        })
+      }
+
+      // Populate the terminal dropdown from ctxTerminals; keep current selection if still present.
+      var selectedTerminalId = null
+      function populateTerminalSelect() {
+        var sel = document.getElementById('terminal-select')
+        sel.innerHTML = ''
+        if (!ctxTerminals.length) {
+          var opt = document.createElement('option')
+          opt.value = ''; opt.textContent = 'no terminal'
+          sel.appendChild(opt)
+          sel.disabled = true
+          selectedTerminalId = null
+          return
+        }
+        sel.disabled = false
+        // Keep selection if still present, else default to first
+        var stillPresent = ctxTerminals.some(function (t) { return String(t.id) === String(selectedTerminalId) })
+        if (!stillPresent) selectedTerminalId = ctxTerminals[0].id
+        ctxTerminals.forEach(function (t) {
+          var opt = document.createElement('option')
+          opt.value = t.id; opt.textContent = 'terminal: ' + t.id
+          if (String(t.id) === String(selectedTerminalId)) opt.selected = true
+          sel.appendChild(opt)
+        })
+      }
+      document.getElementById('terminal-select').addEventListener('change', function (e) {
+        selectedTerminalId = e.target.value
+      })
+
+      // Auto-refresh context when panel regains focus (user switched away then back,
+      // or opened a terminal after panel mount). Catches stale state without polling.
+      window.addEventListener('focus', function () { loadContext() })
+      window.addEventListener('pageshow', function () { loadContext() })
+
+      // Send a prompt string to the first terminal. The agent there handles it.
+      function sendPrompt(text) {
+        if (ctxTerminals.length === 0) {
+          setStatus('Open a terminal in this worktree first.')
+          return Promise.resolve(false)
+        }
+        // Use selected terminal (from dropdown), fall back to first if unset.
+        var tid = selectedTerminalId != null ? selectedTerminalId : ctxTerminals[0].id
+        // Runtime guard: Orca terminal.sendText rejects prompts > 4096 bytes
+        // with invalid_params. maxLength on the idea caps user input, but mode
+        // directives + UTF-8 multi-byte can still push total over the wall.
+        // Measure bytes (not chars) and abort before send if over.
+        var bytes = 0
+        for (var i = 0; i < text.length; i++) {
+          var c = text.charCodeAt(i)
+          if (c < 0x80) bytes += 1
+          else if (c < 0x800) bytes += 2
+          else if (c >= 0xD800 && c <= 0xDBFF) { bytes += 4; i++ } // surrogate pair (emoji etc)
+          else bytes += 3
+        }
+        if (bytes > 4096) {
+          setStatus('Prompt ' + bytes + 'B > 4096 limit — shorten idea or uncheck modes.')
+          return Promise.resolve(false)
+        }
+        setStatus('Typing into ' + tid + '…')
+        return call('terminal.sendText', { terminalId: tid, text: text, enter: true }).then(function (r) {
+          if (r && r.ok && r.value && r.value.accepted) {
+            setStatus('Sent: ' + (text.length > 60 ? text.slice(0, 60) + '…' : text))
+            return true
+          }
+          var reason = (r && (r.errorCode || (r.error && (r.error.code || r.error.message)))) || 'unknown'
+          setStatus('send failed: ' + reason)
+          return false
+        })
+      }
+
+      // --- prompt builders (mirror main.mjs so worker + panel agree) ------------
+      var SKILL = 'orca-superpowers-workflow'
+      // POLICY MOVED TO SKILL.md (v1.3):
+      //   - COMMENT_AUDIT  → Principle 7 (default ON; opt-out via "audit-log: off" token)
+      //   - FIGMA          → Principle 8 (auto-triggers when description has figma.com URL)
+      //   - AUTONOMOUS self-review → Principle 3 (skill-default)
+      // Prompt now carries only: idea + short mode flags. Audit/figma/autonomous
+      // policy lives in the skill; the prompt just toggles them on/off.
+      //
+      // Polish: pre-processing layer — invoke prompt-master before the workflow.
+      var POLISH_DIRECTIVE = '\nPre-step: invoke the prompt-master skill to refine the raw idea above into a sharp feature brief (extract task/input/output/constraints/audience/success criteria; ask up to 3 clarifying questions if intent is ambiguous; output one tight brief). Use that brief as workflow input, not the raw idea.'
+      // Simplify: per-task code review (Phase 4 loop).
+      var SIMPLIFY_DIRECTIVE = '\nAfter each Phase 4 task: invoke the simplify skill on the changed code (reuse/quality/efficiency); fix issues before the next task.'
+      // Plan-only: STOP at PLAN READY, no code.
+      var PLAN_ONLY_DIRECTIVE = '\nPLAN-ONLY: run Phase 0 (impact + multi-dim review) + Phase 1 (Linear issue, In Progress) + Phase 2 (brainstorm until all plan-template unknowns resolved). STOP before Phase 3. TEMPLATE AUTO-PICK: >3 sub-features OR >10 tasks → Epic Plan Template (decompose + dep graph + cross-cutting + explore-once → loop depth-first, cap 4 parallel); else 7-section. If unsure decompose, ask. After Phase 2 print "PLAN READY: <ISSUE_ID>" + draft plan for review.'
+      // Quick-fix: skip Phase 0 threshold (trivial change).
+      var QUICK_FIX_DIRECTIVE = '\nQUICK-FIX: the change meets ALL four canonical Phase 0 skip conditions (see SKILL.md Phase 0 Threshold for the authoritative list — currently: ≤1 file, ≤10 lines, no contract/schema/config/shared-utility, no second-order effects; do NOT duplicate here, refer to SKILL.md). Skip Phase 0/1/2/3 — no impact analysis, no Linear issue, no brainstorm, no plan. Implement directly, verify, commit. If ANY condition fails, STOP and tell me to use the full workflow instead — do NOT force Quick-fix on a change that needs Phase 0. Do NOT create Linear noise for trivial fixes.'
+      // Subagents: multi-dim analysis (read-only).
+      var SUBAGENT_DIRECTIVE = '\nMulti-dim subagent analysis: spawn <n> subagents (Agent tool), one per dimension round-robin (functional/architecture/data/performance/security/backward-compat/UX/maintenance/operational/business). Each returns assessment + risk + alternative. Synthesize into Phase 0 / Phase 4 gate decision. Read-only — no code writes.'
+      // Audit opt-out token — flips Principle 7 OFF for this run.
+      var AUDIT_OFF_TOKEN = '\naudit-log: off'
+      // Execute-mode tokens (Phase 4) — emit when user picks a non-default mode.
+      // delegate = Orca worker-start (default, Orca-native). inline = agent executes all tasks
+      // itself. superpowers = invoke the superpowers executing-plans skill for Phase 4.
+      var EXECUTE_INLINE_TOKEN = '\nExecute mode: inline — do all Phase 4 tasks yourself, do NOT delegate via worker-start.'
+      var EXECUTE_DELEGATE_TOKEN = '\nExecute mode: delegate — prefer `orca orchestration worker-start` for Phase 4 tasks (isolation + concurrency cap). Use inline only for tasks too small to warrant a worker.'
+      var EXECUTE_SUPERPOWERS_TOKEN = '\nExecute mode: superpowers — for Phase 4, invoke the `superpowers:executing-plans` skill to drive task execution (it handles its own task loop + verification). Still use `orca orchestration gate-create` for gates between tasks.'
+      // Autonomous mode flag — skill Principle 3 binds on this signal.
+      var MINDSET_BROWSER_TOKEN = '\nMindset 0: BROWSER LÀM VIỆC — TRƯỚC khi nói \"xong\": TÔI mở browser (orca tab create), TÔI đi trọn flow, TÔI chụp screenshot. CLI chỉ cho git/tests/servers. DOM query KHÔNG thay thế screenshot. Screenshot fail → nói thật + nhờ user xác nhận.'
+      var AUTONOMOUS_TOKEN = '\nAutonomous mode: ON.'
+      // Agent-forcing tokens — each makes its agent gate MANDATORY regardless of mode/task-size.
+      // Tokens are the ONLY wire from these checkboxes to the skill's phase-gate paragraphs.
+      var PHASE0_ANALYST_TOKEN = '\nPhase 0 analyst: ON. (MANDATORY dispatch phase0-impact-analyst at Phase 0, even for small changes.)'
+      var SPEC_CRITIC_TOKEN = '\nSpec critic: ON. (MANDATORY dispatch spec-critic at the Phase 2→3 gate.)'
+      var PLAN_CRITIC_TOKEN = '\nPlan critic: ON. (MANDATORY dispatch plan-critic at the Phase 3→4 gate, even for <5-task plans.)'
+      var CODE_REVIEWER_TOKEN = '\nCode review: ON. (MANDATORY dispatch code-reviewer between every Phase 4 task, before gate-resolve.)'
+      var VERIFIER_TOKEN = '\nVerifier: ON. (Explicit re-affirm verifier dispatch at Phase 5 — already MANDATORY by default; this token makes intent visible in the prompt.)'
+      var SECURITY_AUDIT_TOKEN = '\nSecurity audit: ON. (Force security-audit dispatch regardless of OWASP-surface auto-detection.)'
+      var ROLLBACK_FIXER_TOKEN = '\nRollback fixer: ON. (Prefer dispatching rollback-fixer agent for ANY rollback, even single-commit Quick-fix reverts; default is inline for small reverts.)'
+      var DESIGNER_TOKEN = '\nDesigner: ON. (SF/task có UI surface → dispatch designer agent TRƯỚC khi Dev code: 3 hướng HTML draft → USER GATE bắt buộc → hand-off spec. Designer KHÔNG code production.)'
+      var TASK_EXECUTOR_TOKEN = '\nDev executor: ON. (Phase 4 tasks chạy qua task-executor agent — plan → code → tests → commit atomic; KHÔNG inline trừ task quá nhỏ. Executor KHÔNG tự mở scope, KHÔNG tự review code mình.)'
+      // Story mode — create one Linear sub-issue per plan task (Phase 3 output),
+      // turning the parent issue into a trackable story (Stories tab).
+      var STORY_DIRECTIVE = '\nStory mode: ON. Structure the Linear issue as a STORY — after the plan is finalized (Phase 3), create one sub-issue per plan task under the parent issue (via `orca linear create` + `--parent-id`, or `orca linear save-issue` with parent), so the parent issue becomes a trackable story with subtasks. The Stories tab tracks parent-issue progress from these sub-issues. Each sub-issue: title = task title, description = task spec slice, state Todo. Audit-log sub-issue identifiers in the Phase 3 Linear comment.'
+      function buildSubagentDirective(n) {
+        if (!n || n < 2) return ''
+        return SUBAGENT_DIRECTIVE.replace(/<n>/g, String(n))
+      }
+      function executeToken(mode) {
+        if (mode === 'inline') return EXECUTE_INLINE_TOKEN
+        if (mode === 'superpowers') return EXECUTE_SUPERPOWERS_TOKEN
+        if (mode === 'delegate') return EXECUTE_DELEGATE_TOKEN  // default select value; still emits to reinforce skill-default Orca preference
+        return ''  // unknown/undefined mode → no override, skill uses its default
+      }
+      // Agent-forcing token helper — emits tokens only for ticked agent checkboxes
+      // AND only for phases the prompt will actually reach.
+      // `scope`: 'all' = Phase 0-5 (start/plan), 'p4' = Phase 4+ only (continue/quick-fix).
+      function agentTokens(agents, scope) {
+        if (!agents) return ''
+        var out = ''
+        if (scope === 'all') {
+          if (agents.phase0) out += PHASE0_ANALYST_TOKEN
+          if (agents.spec) out += SPEC_CRITIC_TOKEN
+          if (agents.plan) out += PLAN_CRITIC_TOKEN
+        }
+        // code-reviewer applies to all scopes (Phase 4 runs in every mode except where skipped)
+        if (agents.code) out += CODE_REVIEWER_TOKEN
+        // designer + dev executor are Phase 4 concerns → all scopes (P4 runs in every mode)
+        if (agents.designer) out += DESIGNER_TOKEN
+        if (agents.dev) out += TASK_EXECUTOR_TOKEN
+        // P5 + rollback apply to all scopes (P5 always reached; rollback reactive)
+        if (agents.verifier) out += VERIFIER_TOKEN
+        if (agents.security) out += SECURITY_AUDIT_TOKEN
+        if (agents.rollback) out += ROLLBACK_FIXER_TOKEN
+        return out
+      }
+      function startPrompt(idea, autonomous, polish, subagents, simplify, auditOn, mindsetBrowser, executeMode, agents, story) {
+        var t = (idea || '').trim()
+        var base = t ? 'Use the ' + SKILL + ' skill to build: ' + t : 'Use the ' + SKILL + ' skill'
+        var out = base + (polish === false ? '' : POLISH_DIRECTIVE)
+        if (simplify !== false) out += SIMPLIFY_DIRECTIVE
+        if (subagents && subagents > 1) out += buildSubagentDirective(subagents)
+        if (autonomous) out += AUTONOMOUS_TOKEN
+        if (auditOn === false) out += AUDIT_OFF_TOKEN  // default ON in skill; only flag when off
+        if (mindsetBrowser !== false) out += MINDSET_BROWSER_TOKEN
+        if (story) out += STORY_DIRECTIVE
+        out += executeToken(executeMode)
+        out += agentTokens(agents, 'all')
+        return out
+      }
+      function planPrompt(idea, autonomous, polish, simplify, auditOn, executeMode, agents, story) {
+        var t = (idea || '').trim()
+        var base = t ? 'Use the ' + SKILL + ' skill to build: ' + t : 'Use the ' + SKILL + ' skill'
+        var out = base + (polish === false ? '' : POLISH_DIRECTIVE) + PLAN_ONLY_DIRECTIVE
+        if (simplify !== false) out += SIMPLIFY_DIRECTIVE
+        if (autonomous) out += AUTONOMOUS_TOKEN
+        if (auditOn === false) out += AUDIT_OFF_TOKEN
+        if (story) out += STORY_DIRECTIVE
+        out += executeToken(executeMode)
+        out += agentTokens(agents, 'all')
+        return out
+      }
+      // Continue an existing plan (path provided). Agent reads plan file,
+      // resumes from Phase 3 (plan-writing already done) → Phase 4 execute.
+      function continuePlanPrompt(planPath, autonomous, executeMode, agents) {
+        var out = LOAD_CONTEXT + 'Then: read the plan at ' + planPath +
+          ' and continue the ' + SKILL + ' workflow from there — Phase 3 plan-writing was done, proceed to Phase 4 (execute) and beyond. If the plan file does not exist or is incomplete, tell me before doing anything.'
+        if (autonomous) out += AUTONOMOUS_TOKEN
+        out += executeToken(executeMode)
+        out += agentTokens(agents, 'p4')
+        return out
+      }
+      // Empty idea + Start mode → agent AUTO-LOADS plan for active Linear issue.
+      // If plan exists → continue Phase 4. If no plan / no active run → ask for new feature.
+      function continueOrNewPrompt(autonomous, executeMode, agents) {
+        var out = LOAD_CONTEXT + 'Then: AUTO-LOAD the plan for the active run if one exists — find the plan matching the current Linear issue (in docs/superpowers/plans/<date>-<feature>-plan.md, or read from the Linear issue body), continue the ' + SKILL + ' workflow from Phase 4 (execute). If NO plan exists yet OR there is no active run, ask me to describe a new feature and wait — do NOT start any work.'
+        if (autonomous) out += AUTONOMOUS_TOKEN
+        out += executeToken(executeMode)
+        out += agentTokens(agents, 'p4')
+        return out
+      }
+      // Load-context directive: prepended to any action that assumes prior
+      // workflow state (resume/status/gate). Start doesn't need it (new run).
+      // Forces the agent to derive context from durable state (orchestration
+      // run/task/gate) instead of relying on conversation memory, which may
+      // be empty after a fresh terminal, restart, or compaction.
+      var LOAD_CONTEXT = 'First load current workflow context by running:\n' +
+        '  orca orchestration run-current --json\n' +
+        '  orca orchestration task-list --json\n' +
+        '  orca orchestration gate-list --json\n' +
+        'If a plan was posted to a Linear issue, read its body too.\n' +
+        'If context is incomplete or ambiguous, ask me before proceeding.\n'
+      function resumePrompt(hint) {
+        var t = (hint || '').trim()
+        return LOAD_CONTEXT + 'Then: Continue the ' + SKILL + ' workflow' + (t ? ': ' + t : '')
+      }
+      // Quick fix: skip Phase 0 threshold (trivial change), proceed directly.
+      function quickFixPrompt(idea, autonomous, polish, subagents, simplify, executeMode, agents) {
+        var t = (idea || '').trim()
+        var base = t ? 'Use the ' + SKILL + ' skill to build: ' + t : 'Use the ' + SKILL + ' skill'
+        var out = base + (polish === false ? '' : POLISH_DIRECTIVE) + QUICK_FIX_DIRECTIVE
+        if (simplify !== false) out += SIMPLIFY_DIRECTIVE
+        if (subagents && subagents > 1) out += buildSubagentDirective(subagents)
+        if (autonomous) out += AUTONOMOUS_TOKEN
+        // Quick-fix tasks are trivial (≤1 file, ≤10 lines) → worker-start overhead rarely worth it; default to inline regardless of executeMode, but honor explicit delegate.
+        if (executeMode === 'delegate') out += EXECUTE_DELEGATE_TOKEN
+        // Quick-fix has no Linear issue → audit-log doesn't apply (skill Principle 7 already exempts it).
+        // Only code-reviewer token applies (Phase 0-3 skipped; spec/plan/phase0 meaningless here).
+        out += agentTokens(agents, 'p4')
+        return out
+      }
+      function statusPrompt() {
+        return LOAD_CONTEXT + 'Then: summarize the current ' + SKILL + ' workflow state — active phase, task progress, and any pending gates.'
+      }
+      function gatePrompt(gateId, resolution) {
+        return LOAD_CONTEXT + 'Then: ' +
+          'Resolve gate ' + gateId + ' as ' + resolution +
+          ' via: orca orchestration gate-resolve --id ' + gateId + ' --resolution ' + resolution +
+          '. Confirm the gate still exists and is pending first; if already resolved or missing, tell me.'
+      }
+
+      // --- radio intent: New / Continue / Quick --------------------------------
+      var intentEls = document.querySelectorAll('input[name="intent"]')
+      function getIntent() {
+        for (var i = 0; i < intentEls.length; i++) if (intentEls[i].checked) return intentEls[i].value
+        return 'new'
+      }
+      // Other-actions sub-fields (status/resolve/phase) toggle via Other buttons.
+      var activeOther = null
+      function showOther(name) {
+        // Toggle: clicking same button again hides it.
+        if (activeOther === name) {
+          document.getElementById('field-' + name).classList.remove('show')
+          activeOther = null
+          executeBtn.disabled = false
+          return
+        }
+        // Hide all, show chosen.
+        ['status', 'resolve', 'phase'].forEach(function (n) {
+          document.getElementById('field-' + n).classList.remove('show')
+        })
+        document.getElementById('field-' + name).classList.add('show')
+        activeOther = name
+        // When an "Other" panel is open, execute button runs that action.
+        executeBtn.textContent = 'Execute ' + name
+        executeBtn.disabled = false
+      }
+
+      function updateButtonLabel() {
+        if (activeOther) return // Other action owns the button
+        var intent = getIntent()
+        var planOnly = document.getElementById('plan-only').checked
+        var storyEl = document.getElementById('story')
+        var story = storyEl ? storyEl.checked : false
+        if (intent === 'continue') executeBtn.textContent = 'Continue'
+        else if (planOnly) executeBtn.textContent = 'Plan'
+        else if (intent === 'quick') executeBtn.textContent = 'Quick fix'
+        else executeBtn.textContent = 'Start'
+        executeBtn.className = planOnly ? 'secondary' : ''
+      }
+
+      // --- execute: build prompt based on intent (or active Other action) ------
+      // buildPrompt: shared logic — returns the composed prompt string, or null if input is invalid.
+      // Used by execute() (sends to terminal) and copyPrompt() (copies to clipboard).
+      function buildPrompt() {
+        var autonomous = document.getElementById('autonomous').checked
+        var polishChecked = document.getElementById('polish').checked
+        var polish = polishChecked ? undefined : false  // default on; uncheck → opt-out
+        var simplifyChecked = document.getElementById('simplify').checked
+        var simplify = simplifyChecked ? undefined : false  // default on; uncheck → opt-out
+        var auditOn = document.getElementById('audit-log').checked  // default on; uncheck → opt-out (skill Principle 7)
+        var planOnly = document.getElementById('plan-only').checked
+        var subagents = parseInt(document.getElementById('subagents').value, 10) || 1
+        if (subagents < 1) subagents = 1
+        if (subagents > 10) subagents = 10
+        var executeMode = (document.getElementById('execute-mode')||{}).value||'delegate'  // delegate (default) / inline / superpowers
+        var idea = document.getElementById('idea').value
+        var trimmed = (idea || '').trim()
+        var isPlanPath = /^docs\/superpowers\/plans\/.+\.(md|MD)$/.test(trimmed)
+        // Agent-forcing checkboxes (9 total — full kit team; all default ON; user unchecks to skip).
+        var agents = {
+          phase0: document.getElementById('phase0-analyst').checked,
+          designer: document.getElementById('designer').checked,
+          spec: document.getElementById('spec-critic').checked,
+          plan: document.getElementById('plan-critic').checked,
+          code: document.getElementById('code-reviewer').checked,
+          verifier: document.getElementById('verifier').checked,
+          security: document.getElementById('security-audit').checked,
+          rollback: document.getElementById('rollback-fixer').checked,
+          dev: document.getElementById('task-executor').checked
+        }
+
+        // If an "Other" action is active, build that prompt.
+        if (activeOther === 'status') return statusPrompt()
+        if (activeOther === 'phase') return resumePrompt('continue from ' + document.getElementById('phase').value + ' phase')
+        if (activeOther === 'resolve') {
+          var id = document.getElementById('gate-id').value.trim()
+          if (!id) { setStatus('Paste a gate id first.'); return null }
+          var resolution = document.getElementById('resolution').value
+          return gatePrompt(id, resolution)
+        }
+
+        var intent = getIntent()
+        if (intent === 'continue') {
+          // Continue: path → continue plan; empty → agent lists; prose → resume
+          if (isPlanPath) return continuePlanPrompt(trimmed, autonomous, executeMode, agents)
+          else if (trimmed === '') return continueOrNewPrompt(autonomous, executeMode, agents)
+          else return resumePrompt(trimmed)
+        } else if (intent === 'quick') {
+          // Quick fix: skip Phase 0 threshold, direct start. No Linear issue → audit-log N/A.
+          return quickFixPrompt(idea, autonomous, polish, subagents, simplify, executeMode, agents)
+        }
+        // New feature.
+        if (planOnly) return planPrompt(idea, autonomous, polish, simplify, auditOn, executeMode, agents, story)
+        if (isPlanPath) return continuePlanPrompt(trimmed, autonomous, executeMode, agents)
+        if (trimmed === '') return continueOrNewPrompt(autonomous, executeMode, agents)
+        return startPrompt(idea, autonomous, polish, subagents, simplify, auditOn, mindsetBrowser, executeMode, agents, story)
+      }
+
+      function execute() {
+        var text = buildPrompt()
+        if (text === null) return Promise.resolve(false)
+        return sendPrompt(text)
+      }
+
+      // Copy the composed prompt to clipboard — fallback when Execute can't reach the terminal.
+      function copyPrompt() {
+        var text = buildPrompt()
+        if (text === null) return
+        // navigator.clipboard may be unavailable in sandboxed iframe without allow-scripts; fallback to execCommand.
+        function done() { setStatus('Prompt copied (' + text.length + ' chars) — paste into the worktree terminal.') }
+        function fail() { setStatus('Copy failed — select the prompt from status and copy manually.') }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done, function () {
+            // Fallback: temp textarea + execCommand
+            fallbackCopy(text) ? done() : fail()
+          })
+        } else {
+          fallbackCopy(text) ? done() : fail()
+        }
+      }
+
+      // Fallback copy for sandboxed environments without async clipboard API.
+      function fallbackCopy(text) {
+        try {
+          var ta = document.createElement('textarea')
+          ta.value = text
+          ta.style.position = 'fixed'
+          ta.style.opacity = '0'
+          document.body.appendChild(ta)
+          ta.select()
+          var ok = document.execCommand('copy')
+          document.body.removeChild(ta)
+          return ok
+        } catch (e) { return false }
+      }
+
+      // --- wiring ---------------------------------------------------------------
+      intentEls.forEach(function (el) { el.addEventListener('change', function () {
+        // Show idea field for new/quick, continue hint for continue
+        var intent = getIntent()
+        document.getElementById('field-idea').classList.add('show') // idea field always available
+        document.getElementById('field-continue').classList.toggle('show', intent === 'continue')
+        // Close Other if open
+        if (activeOther) { document.getElementById('field-' + activeOther).classList.remove('show'); activeOther = null }
+        updateButtonLabel()
+        setStatus('')
+      }) })
+      document.getElementById('plan-only').addEventListener('change', updateButtonLabel)
+      // Other buttons toggle their sub-field.
+      document.querySelectorAll('button[data-action]').forEach(function (btn) {
+        btn.addEventListener('click', function () { showOther(btn.getAttribute('data-action')) })
+      })
+
+      executeBtn.addEventListener('click', execute)
+      var copyBtn = document.getElementById('copy-prompt')
+      copyBtn.addEventListener('click', copyPrompt)
+
+      // --- boot ------------------------------------------------------------------
+      updateButtonLabel()
+      // Task template dropdown removed (kept panel minimal).
+
+
+      // === Feature 4: Byte estimate counter ===
+      function utf8Bytes(s) {
+        var b = 0
+        for (var i = 0; i < s.length; i++) {
+          var c = s.charCodeAt(i)
+          if (c < 0x80) b += 1
+          else if (c < 0x800) b += 2
+          else if (c >= 0xD800 && c <= 0xDBFF) { b += 4; i++ }
+          else b += 3
+        }
+        return b
+      }
+      function updateByteCounter() {
+        var text = buildPrompt() || ''
+        var bytes = utf8Bytes(text)
+        var el = document.getElementById('byte-counter')
+        el.textContent = bytes + 'B / 4096'
+        el.style.color = bytes > 4000 ? '#ef4444' : (bytes > 3500 ? '#f59e0b' : 'var(--muted-foreground, #999)')
+      }
+      document.getElementById('idea').addEventListener('input', updateByteCounter)
+      // Update counter on mode change too
+      ['autonomous', 'polish', 'simplify', 'audit-log', 'plan-only', 'subagents', 'execute-mode'].forEach(function (id) {
+        var el = document.getElementById(id)
+        if (el) el.addEventListener('change', updateByteCounter)
+      })
+
+      // Preview feature removed (caused runtime issues in sandbox).
+
+      // Preset + history features removed (caused runtime crashes + CSP/sandbox friction).
+      // Agent-side pattern (terminal history + Linear issue state) covers the same needs.
+
+      // Update counter once on init.
+      updateByteCounter()
+      loadContext()
+    })()
+
+    // ================= STORY TAB =================
+    ;(() => {
+      // ---- Tab switching ----
+      var tabW = document.getElementById('tab-workflow')
+      var tabS = document.getElementById('tab-story')
+      var paneW = document.getElementById('workflow-tab')
+      var paneS = document.getElementById('story-tab')
+      function switchTab(which) {
+        var isStory = which === 'story'
+        tabW.classList.toggle('active', !isStory)
+        tabS.classList.toggle('active', isStory)
+        paneW.style.display = isStory ? 'none' : ''
+        paneS.style.display = isStory ? 'flex' : 'none'
+      }
+      tabW.addEventListener('click', () => switchTab('workflow'))
+      tabS.addEventListener('click', () => switchTab('story'))
+
+      // ---- Bridge call helper (same protocol as workflow tab) ----
+      var seq = 0
+      var pending = {}
+      function call(action, params) {
+        return new Promise((resolve) => {
+          var requestId = 'story-req-' + (++seq)
+          pending[requestId] = resolve
+          window.parent.postMessage({ type: 'orca-panel-action', requestId, action, params }, '*')
+        })
+      }
+      window.addEventListener('message', (event) => {
+        var d = event.data
+        if (!d || d.type !== 'orca-panel-action-result') return
+        var resolve = pending[d.requestId]
+        if (!resolve) return
+        delete pending[d.requestId]
+        resolve(d)
+      })
+
+      // ---- Plan markdown parser → bracket graph ----
+      // Expects plan sections like:
+      //   ## SF-2 Adapter + Mock / ## Task 2 (SF-2) — title
+      //   "Tier: N" or "(SF-x)" / "Depends on: SF-1" lines
+      function parsePlan(md, children) {
+        var branches = []   // {id:'SF-1', title, tier, deps:[], tasks:[], state}
+        var childMap = {}
+        ;(children || []).forEach(c => { childMap[c.identifier] = c })
+        var lines = md.split('\n')
+        var cur = null
+        var tierTable = {}   // "SF-1" -> tier from table rows | SF | .. |
+        for (var i = 0; i < lines.length; i++) {
+          var L = lines[i]
+          // tier table rows: | SF-1 Types | ... — extract leading SF id + col position as tier hint
+          var trow = L.match(/^\|\s*(SF-\d+)\s*\|/)
+          if (trow) { if (!(trow[1] in tierTable)) tierTable[trow[1]] = Object.keys(tierTable).length }
+          var h = L.match(/^#{1,3}\s+(?:Task\s+\d+\s*\(?\s*)?(SF-\d+)\s*\)?\s*[)—-]?\s*(.*)$/)
+          if (h) {
+            cur = { id: h[1], title: h[2] || h[1], tier: null, deps: [], tasks: [], state: null }
+            branches.push(cur)
+            continue
+          }
+          var t2 = L.match(/^#{1,3}\s+Task\s+(\d+)\s*[)—-]\s*(.+)$/)
+          if (t2 && branches.length) {
+            branches[branches.length - 1].tasks.push('T' + t2[1] + ' ' + t2[2].split('—')[0].trim())
+            cur = null
+            continue
+          }
+          if (cur) {
+            var tm = L.match(/^\s*Tier:\s*(\d+)/i)
+            if (tm) cur.tier = parseInt(tm[1], 10)
+            // Tasks: a / b / c — field slash-separated (format story-workflow v2;
+            // parser cũ chỉ hiểu '### Task N' subheader → 0 tasks trên bracket ICT-2)
+            var tsm = L.match(/^\s*Tasks:\s*(.+)$/)
+            if (tsm) {
+              tsm[1].split('/').forEach(function (x) {
+                var tt = x.trim()
+                if (tt && tt !== '—' && cur.tasks.indexOf(tt) < 0) cur.tasks.push(tt)
+              })
+            }
+            var lm = L.match(/^\s*linear:\s*([A-Za-z]+-\d+)/i)
+            if (lm) cur.linear = lm[1]          // match trực tiếp children theo ID
+            var dm = L.match(/^\s*(?:Depends on|\*\*Depends on\*\*):\s*(.+)$/i)
+            if (dm) {
+              ;(dm[1].match(/SF-\d+/g) || []).forEach(d => { if (d !== cur.id) cur.deps.push(d) })
+            }
+          }
+        }
+        // Assign tiers: explicit > table order > derive from deps (longest path)
+        var byId = {}
+        branches.forEach(b => { byId[b[0] === undefined ? b.id : b.id] = b; byId[b.id] = b })
+        function depthOf(b, guard) {
+          if (b.tier != null) return b.tier
+          guard = guard || new Set()
+          if (guard.has(b.id)) return 0
+          guard.add(b.id)
+          var d = 0
+          b.deps.forEach(dep => { var db = byId[dep]; if (db) d = Math.max(d, depthOf(db, guard) + 1) })
+          return d
+        }
+        branches.forEach(b => { if (b.tier == null && tierTable[b.id] != null) b.tier = tierTable[b.id] })
+        branches.forEach(b => { b.tier = depthOf(b) })
+        // Attach Linear child state — ỔN ĐỊNH: match CHÍNH XÁC theo linear ID
+        // trước. Fallback heuristic (title) chỉ khi ĐÚNG 1 ứng viên chưa có
+        // state — trước đây regex rộng ghép state nhầm node khi children đổi
+        // thứ tự → node đổi màu/state giữa các lần refresh.
+        function mkState(c) { return c.state ? c.state : { name: c.stateName, type: c.stateType, color: c.stateColor } }
+        ;(children || []).forEach(c => {
+          var byLinear = branches.find(b => b.linear === c.identifier)
+          if (byLinear) { byLinear.state = mkState(c); byLinear.linearId = c.identifier; return }
+          var re = new RegExp(c.identifier + '|' + c.title.slice(0, 24).replace(/[.*+?^\${}()|[\]\\]/g, '\\$&'), 'i')
+          var cands = branches.filter(b => !b.state && (re.test(b.title) || re.test(b.id)))
+          if (cands.length === 1) { cands[0].state = mkState(c); cands[0].linearId = c.identifier }
+        })
+        return branches
+      }
+
+      // ---- State → color ----
+      function stateColor(b) {
+        if (!b.state) return 'var(--muted-foreground, #999)'
+        var t = (b.state.type || b.state.stateType || '') + ''
+        if (t === 'completed') return '#22c55e'
+        if (t === 'started') return '#eab308'
+        if (t === 'canceled') return '#ef4444'
+        return 'var(--muted-foreground, #999)'
+      }
+
+      // ---- Bracket renderer (SVG, vertical tiers) ----
+      // useMemo(key, deps, compute): vanilla memo — chỉ recompute khi deps đổi.
+      // Layout bracket phụ thuộc (story, tier/DAG shape) chứ không phải state
+      // agent chạy mỗi 15-60s → memo bỏ qua render lại + fitView giật view.
+      var memoStore = {}
+      function useMemo(key, deps, compute) {
+        var sig = JSON.stringify(deps)
+        var hit = memoStore[key]
+        if (hit && hit.sig === sig) return hit.val
+        var val = compute()
+        memoStore[key] = { sig: sig, val: val }
+        return val
+      }
+      var customPos = {}    // node drag offsets — id → {dx,dy} (reset khi layout đổi)
+      var customPosKey = null
+      var curBracket = null // {branches, story, file} — cho node editor + share
+      var lastDragMoved = null // suppress click ngay sau drag
+      var view = { x: 0, y: 0, k: 1 }
+      var graph = null
+      var lastFitKey = null // geometry signature of the last fitView — skip when unchanged
+      // Layout constants — mỗi tier tự tính width riêng nên node KHÔNG BAO GIỜ
+      // đè nhau (spacing = NODE_W + GAP_X >= NODE_W luôn luôn).
+      var NODE_W = 148, NODE_H = 44, GAP_X = 40, COL_H = 108, ORIGIN_H = 72, MARGIN = 24
+      function computeLayout(branches) {
+        var tiers = {}
+        var maxTier = 0
+        branches.forEach(b => { var t = b.tier || 0; (tiers[t] = tiers[t] || []).push(b); if (t > maxTier) maxTier = t })
+        // W = width của tier đông nhất (đủ chỗ cho từng node + gap)
+        var maxRow = 1
+        Object.keys(tiers).forEach(t => { maxRow = Math.max(maxRow, tiers[t].length) })
+        var W = Math.max(360, maxRow * NODE_W + (maxRow - 1) * GAP_X + 2 * MARGIN)
+        var H = ORIGIN_H + (maxTier + 1) * COL_H + MARGIN
+        // positions: từng tier centered ngang, tier đều nhau theo dọc
+        var pos = {}
+        Object.keys(tiers).sort((a, b) => a - b).forEach(t => {
+          var arr = tiers[t]
+          var rowW = arr.length * NODE_W + (arr.length - 1) * GAP_X
+          var offX = (W - rowW) / 2
+          arr.forEach((b, i) => {
+            pos[b.id] = { x: offX + i * (NODE_W + GAP_X), y: ORIGIN_H + parseInt(t, 10) * COL_H }
+          })
+        })
+        return { tiers: tiers, pos: pos, W: W, H: H, maxTier: maxTier }
+      }
+      function renderBracket(branches, story) {
+        var svg = document.getElementById('story-svg')
+        var gEl = document.getElementById('story-graph')
+        var ph = document.getElementById('story-placeholder')
+        if (!branches || !branches.length) { svg.style.display = 'none'; if (ph) ph.style.display = ''; curBracket = null; return }
+        svg.style.display = ''
+        if (ph) ph.style.display = 'none'
+        // Layout (memoized): chỉ phụ thuộc story + tier/DAG shape — KHÔNG phụ
+        // thuộc state/agent/heartbeat nên refresh định kỳ không recompute.
+        var layoutSig = branches.map(b => b.id + '@' + (b.tier || 0) + '=' + (b.deps || []).join('+')).join('|')
+        var layout = useMemo('bracket:' + (story.identifier || story.id || '?'), [
+          story.identifier, layoutSig
+        ], () => computeLayout(branches))
+        var tiers = layout.tiers, W = layout.W, H = layout.H
+        // customPos (drag-drop): offset per node — RESET khi cấu trúc bracket đổi
+        // (tier/deps khác → offset cũ lệch vị trí). P = pos + offset (bản copy,
+        // không đụng layout memoized).
+        var posKey = (story.identifier || story.id || '?') + '|' + layoutSig
+        if (posKey !== customPosKey) { customPosKey = posKey; customPos = {} }
+        var pos = {}
+        branches.forEach(b => {
+          var q = layout.pos[b.id]; if (!q) return
+          var o = customPos[b.id]
+          pos[b.id] = o ? { x: q.x + o.dx, y: q.y + o.dy } : { x: q.x, y: q.y }
+        })
+        // viewBox = canvas pixel space (no browser auto-scaling); the <g> transform
+        // owns ALL pan/zoom/centering. W/H stay as content-space bounds.
+        var host0 = document.getElementById('story-canvas')
+        svg.setAttribute('viewBox', '0 0 ' + (host0.clientWidth || 1) + ' ' + (host0.clientHeight || 1))
+        svg.setAttribute('width', '100%')
+        svg.setAttribute('height', '100%')
+        svg.setAttribute('preserveAspectRatio', 'none')
+        var byId = {}
+        branches.forEach(b => byId[b.id] = b)
+        // edges first (below nodes)
+        var edges = ''
+        branches.forEach(b => {
+          b.deps.forEach(dep => {
+            var from = pos[dep], to = pos[b.id]
+            if (!from || !to) return
+            var x1 = from.x + NODE_W / 2, y1 = from.y + NODE_H
+            var x2 = to.x + NODE_W / 2, y2 = to.y
+            var midY = y1 + (y2 - y1) * 0.45
+            edges += '<path d="M ' + x1 + ' ' + y1 + ' V ' + midY + ' H ' + x2 + ' V ' + y2 +
+              '" fill="none" stroke="' + stateColor(b) + '" stroke-opacity="0.55" stroke-width="1.5" data-edge="' + b.id + '"/>'
+          })
+        })
+        // origin (story) node at top center
+        var origin = '<g data-node="__story">' +
+          '<rect x="' + (W / 2 - 84) + '" y="0" width="168" height="40" rx="8" fill="var(--card, #1f1f1f)" stroke="var(--primary, #2563eb)" stroke-width="2"/>' +
+          '<text x="' + (W / 2) + '" y="16" text-anchor="middle" font-size="11" font-weight="700" fill="var(--foreground, #ddd)">' + esc(story.identifier || '') + '</text>' +
+          '<text x="' + (W / 2) + '" y="30" text-anchor="middle" font-size="9" fill="var(--muted-foreground, #999)">' + esc((story.title || '').slice(0, 30)) + '</text>' +
+          '</g>'
+        // tier 0 edges from origin
+        ;(tiers[0] || []).forEach(b => {
+          var to = pos[b.id]
+          if (!to) return
+          var x1 = W / 2, y1 = 40, x2 = to.x + NODE_W / 2, y2 = to.y
+          var midY = y1 + (y2 - y1) * 0.5
+          edges += '<path d="M ' + x1 + ' ' + y1 + ' V ' + midY + ' H ' + x2 + ' V ' + y2 + '" fill="none" stroke="' + stateColor(b) + '" stroke-opacity="0.55" stroke-width="1.5"/>'
+        })
+        // nodes — status sub-issue ỔN ĐỊNH: state luôn là badge riêng (không bị
+        // agent/progress đè — trước đây line2 đổi qua lại giữa state và tiến độ
+        // mỗi lần refresh làm node "nhấp nháy" thông tin)
+        var nodes = ''
+        branches.forEach(b => {
+          var p = pos[b.id]
+          var col = stateColor(b)
+          var done = b.state && ((b.state.type || b.state.stateType) === 'completed')
+          // agent activity: match worktree sf-N-* với SF-N node
+          var wtKey = (b.id || '').toLowerCase()
+          var agent = (storyTasks.agents || []).find(a => (a.worktree || '').toLowerCase().indexOf(wtKey.replace('sf-', 'sf-')) === 0)
+          var prog = (storyTasks.progress || {})[agent ? agent.worktree : '']
+          var line2 = b.tasks.length + ' tasks'
+          if (prog && !done && prog.cur) {
+            line2 = '▶ ' + prog.cur.slice(0, 24) + ' · ' + (prog.est ? '~' : '') + prog.pct + '%'
+          } else if (agent && !done) {
+            var t = (agent.title || '').replace(/^[⠂⠐✳·]\s*/, '').slice(0, 26)
+            line2 = '⠂ ' + t
+            if (prog) line2 += ' · ' + (prog.est ? '~' : '') + prog.pct + '%'
+          } else if (prog && !done) {
+            line2 += ' · ' + prog.pct + '%'
+          }
+          // state badge — LUÔN hiển thị khi có linked issue, ổn định giữa refresh
+          var stName = b.state ? (b.state.name || b.state.stateName || '') : ''
+          var badge = ''
+          if (stName) {
+            var bw = Math.min(72, stName.length * 5 + 12)
+            badge = '<rect x="' + (p.x + NODE_W - bw - 6) + '" y="' + (p.y - 8) + '" width="' + bw + '" height="14" rx="7" fill="var(--card, #1f1f1f)" stroke="' + col + '" stroke-opacity="0.8" stroke-width="1"/>' +
+              '<text x="' + (p.x + NODE_W - 6 - bw / 2) + '" y="' + (p.y + 3) + '" text-anchor="middle" font-size="7.5" font-weight="700" fill="' + col + '">' + esc(stName.slice(0, 12)) + '</text>'
+          }
+          // ops heartbeat: góc DƯỚI-PHẢI (tránh đè badge state ở trên)
+          var nn2 = (b.id.match(/SF-(\d+)/) || [])[1]
+          var opsRow = nn2 ? ((storyOpsData && storyOpsData.sfs) || []).find(function (r) { return (r.sf || '').toLowerCase().indexOf('sf-' + nn2.toLowerCase() + '-') === 0 }) : null
+          var dot = ''
+          if (opsRow && !done) {
+            if (opsRow.dod === 'VIOLATION') dot = '<text x="' + (p.x + NODE_W - 10) + '" y="' + (p.y + NODE_H - 8) + '" font-size="10" text-anchor="end">🚨</text>'
+            else if (opsRow.commitAge != null && opsRow.commitAge < 300) dot = '<circle cx="' + (p.x + NODE_W - 9) + '" cy="' + (p.y + NODE_H - 9) + '" r="3.2" fill="#22c55e"><animate attributeName="opacity" values="1;.35;1" dur="1.6s" repeatCount="indefinite"/></circle>'
+            else if (opsRow.commitAge != null && opsRow.commitAge < 1800) dot = '<circle cx="' + (p.x + NODE_W - 9) + '" cy="' + (p.y + NODE_H - 9) + '" r="3.2" fill="#eab308"/>'
+          }
+          nodes += '<g data-node="' + b.id + '" class="story-node" cursor="pointer">' +
+            '<rect x="' + p.x + '" y="' + p.y + '" width="' + NODE_W + '" height="' + NODE_H + '" rx="9" fill="var(--card, #1f1f1f)" stroke="' + col + '" stroke-width="' + (done ? 2 : 1.25) + '" stroke-opacity="0.9"/>' +
+            '<text x="' + (p.x + 8) + '" y="' + (p.y + 16) + '" font-size="10" font-weight="600" fill="var(--foreground, #ddd)">' + esc(b.id + ' · ' + (b.title || '').slice(0, 16)) + '</text>' +
+            '<text x="' + (p.x + 8) + '" y="' + (p.y + 32) + '" font-size="8.5" fill="' + col + '">' + esc(line2.slice(0, 34)) + '</text>' +
+            badge + dot +
+            '</g>'
+        })
+        curBracket = { branches: branches, story: story, file: graph && graph.bracketFile }
+        gEl.innerHTML = edges + origin + nodes
+        // content bbox across ALL nodes (SF + origin)
+        var bb = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity }
+        function bbAdd(x1, y1, x2, y2) {
+          bb.minX = Math.min(bb.minX, x1); bb.minY = Math.min(bb.minY, y1)
+          bb.maxX = Math.max(bb.maxX, x2); bb.maxY = Math.max(bb.maxY, y2)
+        }
+        branches.forEach(b => { var q = pos[b.id]; if (q) bbAdd(q.x, q.y, q.x + NODE_W, q.y + NODE_H) })
+        bbAdd(W / 2 - 84, 0, W / 2 + 84, 40)
+        // fitView chỉ khi geometry/host THẬT SỰ đổi — không re-center mỗi lần
+        // refresh 15-60s (view bị giật về giữa khi user đang pan/zoom)
+        var hostNow = document.getElementById('story-canvas')
+        var fitKey = JSON.stringify([bb, W, H, hostNow.clientWidth, hostNow.clientHeight])
+        if (fitKey !== lastFitKey) { lastFitKey = fitKey; fitView(W, H, bb) }
+        // click + drag handlers
+        gEl.querySelectorAll('[data-node]').forEach(el => {
+          var id = el.getAttribute('data-node')
+          if (id !== '__story') attachNodeDrag(el, id, branches)
+          el.addEventListener('click', () => {
+            if (lastDragMoved) { lastDragMoved = null; return } // click ngay sau drag = không mở inspector
+            var bid = el.getAttribute('data-node')
+            showInspector(bid === '__story' ? story : branches.find(x => x.id === bid))
+            gEl.querySelectorAll('[data-edge]').forEach(e2 => e2.setAttribute('stroke-opacity', e2.getAttribute('data-edge') === bid ? '1' : '0.25'))
+          })
+        })
+      }
+
+      // ---- Node drag-drop ----
+      // Kéo tự do (lưu offset — không ghi file). Thả gần row tier khác → hỏi
+      // đổi Tier thật trong bracket file (qua node editor).
+      function attachNodeDrag(el, id, branches) {
+        var host = document.getElementById('story-canvas')
+        el.addEventListener('mousedown', (e) => {
+          e.stopPropagation(); e.preventDefault()
+          var b = branches.find(x => x.id === id); if (!b) return
+          var start = { x: e.clientX, y: e.clientY }
+          var base = customPos[id] || { dx: 0, dy: 0 }
+          var moved = false
+          function onMove(ev) {
+            var dx = (ev.clientX - start.x) / view.k, dy = (ev.clientY - start.y) / view.k
+            if (Math.abs(ev.clientX - start.x) + Math.abs(ev.clientY - start.y) > 4) { moved = true; lastDragMoved = true }
+            el.setAttribute('transform', 'translate(' + dx + ',' + dy + ')')
+            el._dragDelta = { dx: base.dx + dx, dy: base.dy + dy }
+          }
+          function onUp(ev) {
+            window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp)
+            var d = el._dragDelta || base
+            delete el._dragDelta
+            if (!moved) { el.removeAttribute('transform'); return }
+            customPos[id] = d
+            // snap tier: thả vào row khác → đề nghị đổi Tier trong file
+            // (curBranchPos đã cộng offset d — không cộng dy lần nữa)
+            var p0 = curBranchPos(id)
+            var newTier = Math.max(0, Math.round((p0.y - ORIGIN_H) / COL_H))
+            if (newTier !== (b.tier || 0)) {
+              if (confirm(b.id + ' → tier ' + newTier + '? (ghi vào bracket file)')) {
+                openNodeEditor(b, String(newTier))
+              }
+            }
+            // re-render để vị trí + edge khớp offset mới
+            if (curBracket) renderBracket(curBracket.branches, curBracket.story)
+          }
+          window.addEventListener('mousemove', onMove)
+          window.addEventListener('mouseup', onUp)
+        })
+      }
+      function curBranchPos(id) {
+        // pos hiện tại của node (layout + offset cũ) — dùng cho snap tier
+        var b = curBracket.branches.find(x => x.id === id); if (!b) return { x: 0, y: 0 }
+        var lay = useMemo('bracket:' + (curBracket.story.identifier || '?'), [
+          curBracket.story.identifier,
+          curBracket.branches.map(x => x.id + '@' + (x.tier || 0) + '=' + (x.deps || []).join('+')).join('|')
+        ], () => computeLayout(curBracket.branches))
+        var q = lay.pos[id] || { x: 0, y: 0 }
+        var o = customPos[id] || { dx: 0, dy: 0 }
+        return { x: q.x, y: q.y + o.dy }
+      }
+
+      var lastFit = null // last render's fit params — reused on resize/dblclick
+      function fitView(W, H, bbox) {
+        lastFit = { W, H, bbox }
+        var host = document.getElementById('story-canvas')
+        var cw = host.clientWidth || 1, ch = host.clientHeight || 1
+        var minX = 0, minY = 0, maxX = W, maxY = H
+        if (bbox) { minX = bbox.minX; minY = bbox.minY; maxX = bbox.maxX; maxY = bbox.maxY }
+        var bw = Math.max(1, maxX - minX), bh = Math.max(1, maxY - minY)
+        // Fit WIDTH exactly (never crop sides), floor 0.85; vertical centers
+        // and pans when tall. This is what a bracket wants: full horizontal
+        // spread visible, rows scroll.
+        var k = Math.max(0.85, cw / bw)
+        var cx = (minX + maxX) / 2, cy = (minY + maxY) / 2
+        view = { x: cw / 2 - cx * k, y: ch / 2 - cy * k, k: k }
+        applyView()
+      }
+      function applyView() {
+        document.getElementById('story-graph').setAttribute('transform', 'translate(' + view.x + ',' + view.y + ') scale(' + view.k + ')')
+      }
+
+      // pan/zoom
+      ;(() => {
+        var host = document.getElementById('story-canvas')
+        var drag = null
+        host.addEventListener('mousedown', (e) => { drag = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y }; e.preventDefault() })
+        window.addEventListener('mousemove', (e) => {
+          if (!drag) return
+          view.x = drag.vx + (e.clientX - drag.x)
+          view.y = drag.vy + (e.clientY - drag.y)
+          applyView()
+        })
+        window.addEventListener('mouseup', () => { drag = null })
+        host.addEventListener('wheel', (e) => {
+          e.preventDefault()
+          var factor = e.deltaY < 0 ? 1.12 : 0.89
+          view.k = Math.min(2.2, Math.max(0.4, view.k * factor))
+          applyView()
+        }, { passive: false })
+      })()
+
+      function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') }
+
+      // ---- Inspector ----
+      function showInspector(item) {
+        var el = document.getElementById('story-inspector')
+        if (!item) { el.style.display = 'none'; return }
+        el.style.display = ''
+        var isStory = item.identifier != null
+        var title = isStory ? (item.identifier + ' · ' + item.title) : (item.id + ' · ' + item.title)
+        var stateLine = isStory
+          ? ((item.done || 0) + '/' + (item.total || 0) + ' sub-issues done')
+          : ('state: ' + (item.state ? (item.state.name || item.state.stateName || '?') : 'no linked issue') +
+             ' · deps: ' + (item.deps && item.deps.length ? item.deps.join(', ') : '—'))
+        if (!isStory) {
+          var wtKey2 = (item.id || '').toLowerCase()
+          var ag = (storyTasks.agents || []).find(a => (a.worktree || '').toLowerCase().indexOf(wtKey2) === 0)
+          if (ag) stateLine += '<br>⠂ đang làm: ' + esc((ag.title || '').replace(/^[⠂⠐✳·]\s*/, ''))
+          var pr = (storyTasks.progress || {})[ag ? ag.worktree : '']
+          if (pr) stateLine += '<br>plan: ' + esc(pr.plan) + ' — ' + pr.done + '/' + pr.total + ' steps (' + pr.pct + '%)'
+          if (pr && pr.cur) stateLine += '<br>▶ đang chạy: <b>' + esc(pr.cur) + '</b>'
+        }
+        var tasks = (!isStory && item.tasks && item.tasks.length)
+          ? '<div style="margin-top:6px; font-size:10px; color:var(--muted-foreground,#999);">' + item.tasks.map(esc).join('<br>') + '</div>'
+          : ''
+        var link = (isStory || (item.state && item.url)) ? '<a href="#" id="insp-link" style="color:var(--primary,#2563eb); font-size:11px;">Open in Linear ↗</a>' : ''
+        var editBtns = (!isStory && item.id && /^SF-\d+$/.test(item.id))
+          ? '<span style="margin-left:10px;"><button id="insp-edit" class="btn secondary" style="padding:2px 8px; font-size:10px;">✎ Edit</button> ' +
+            '<button id="insp-del" class="btn secondary" style="padding:2px 8px; font-size:10px; border-color:#ef4444; color:#ef4444;">🗑 Delete</button></span>'
+          : ''
+        el.innerHTML = '<div style="font-weight:600; font-size:12px;">' + esc(title.slice(0, 80)) + '</div>' +
+          '<div style="font-size:10px; color:var(--muted-foreground,#999); margin-top:2px;">' + esc(stateLine) + '</div>' + tasks + link + editBtns
+        var lk = document.getElementById('insp-link')
+        if (lk) lk.addEventListener('click', (ev) => {
+          ev.preventDefault()
+          var url = item.url || (item.state && item.state.url)
+          if (url) call('notifications.show', { title: 'Story', body: url })
+        })
+        var eb = document.getElementById('insp-edit')
+        if (eb) eb.addEventListener('click', () => openNodeEditor(item))
+        var db = document.getElementById('insp-del')
+        if (db) db.addEventListener('click', () => {
+          if (confirm('Xoá ' + item.id + ' khỏi bracket file?')) bracketDeleteNode(item.id)
+        })
+      }
+
+      // ---- Bracket file editing (add/edit/delete node → ghi .md qua worker) ----
+      // Host chỉ có fileRead — ghi đi qua story.ops.request action 'bracket-save'
+      // (main.mjs resolve storyScanRoots + writeFile). Panel update optimistic:
+      // parse + render ngay từ md mới, worker ghi đĩa ≤3s.
+      function sfBlocks(lines) {
+        var res = [], cur = null
+        for (var i = 0; i < lines.length; i++) {
+          var m = lines[i].match(/^##\s+(SF-\d+)/)
+          if (m) { if (cur) cur.end = i; cur = { id: m[1], start: i, end: lines.length }; res.push(cur) }
+        }
+        return res
+      }
+      function setSegLine(seg, re, text) {
+        for (var i = 0; i < seg.length; i++) { if (re.test(seg[i])) { seg[i] = text; return } }
+        seg.push(text)
+      }
+      function nextSfId(lines) {
+        var max = 0
+        sfBlocks(lines).forEach(b => { var n = parseInt(b.id.replace('SF-', ''), 10); if (n > max) max = n })
+        return 'SF-' + (max + 1)
+      }
+      function bracketApply(fields) { // fields: {id, title, tier, deps, tasks} — có sẵn = edit, mới = add
+        if (!graph || !graph.planMarkdown) return
+        var lines = graph.planMarkdown.split('\n')
+        var blocks = sfBlocks(lines)
+        var blk = null
+        for (var i = 0; i < blocks.length; i++) { if (blocks[i].id === fields.id) { blk = blocks[i]; break } }
+        var seg
+        if (blk) {
+          seg = lines.splice(blk.start, blk.end - blk.start)
+        } else {
+          seg = ['## ' + fields.id + ' ' + (fields.title || fields.id), 'Tier: ' + (fields.tier || 0),
+                 'linear: —', 'What: —', 'Depends on: —', 'Tasks: —']
+          if (lines.length && lines[lines.length - 1].trim() !== '') seg.unshift('')
+        }
+        seg[0] = '## ' + fields.id + ' ' + (fields.title || fields.id)
+        setSegLine(seg, /^\s*Tier:/i, 'Tier: ' + (fields.tier || 0))
+        setSegLine(seg, /^\s*(?:\*\*)?Depends on/i, 'Depends on: ' + (fields.deps || '—'))
+        setSegLine(seg, /^\s*(?:\*\*)?Tasks:/i, 'Tasks: ' + (fields.tasks || '—'))
+        lines = lines.concat(seg)
+        saveBracketMd(lines.join('\n'))
+      }
+      function bracketDeleteNode(id) {
+        if (!graph || !graph.planMarkdown) return
+        var lines = graph.planMarkdown.split('\n')
+        var blocks = sfBlocks(lines)
+        var blk = null
+        for (var i = 0; i < blocks.length; i++) { if (blocks[i].id === id) { blk = blocks[i]; break } }
+        if (!blk) return
+        // dọn deps trỏ tới node bị xoá — tránh edge ma
+        lines = lines.slice(0, blk.start).concat(lines.slice(blk.end))
+          .map(L => L.replace(new RegExp('(,?\\s*)' + id + '\\b', 'g'), ''))
+        saveBracketMd(lines.join('\n'))
+      }
+      function saveBracketMd(newMd) {
+        graph.planMarkdown = newMd
+        var st = document.getElementById('story-status')
+        call('storage.set', { key: 'story.ops.request', value: { action: 'bracket-save', file: graph.bracketFile, content: newMd, at: Date.now() } })
+        if (st) st.textContent = 'bracket ' + graph.bracketFile + ' đang ghi đĩa… (worker ≤3s)'
+        if (curBracket) {
+          var branches = parsePlan(newMd, graph.children || [])
+          renderBracket(branches, curBracket.story)
+        }
+      }
+
+      // ---- Node editor form (add/edit SF) ----
+      function openNodeEditor(b, tierPrefill) {
+        var el = document.getElementById('story-inspector')
+        el.style.display = ''
+        var isNew = !b
+        var id = b ? b.id : nextSfId((graph && graph.planMarkdown || '').split('\n'))
+        var vTitle = b ? (b.title || '') : ''
+        var vTier = tierPrefill != null ? tierPrefill : (b ? (b.tier || 0) : 0)
+        var vDeps = b && b.deps && b.deps.length ? b.deps.join(', ') : ''
+        var vTasks = b && b.tasks && b.tasks.length ? b.tasks.join(' / ') : ''
+        var inp = 'width:100%; padding:3px 6px; border:1px solid var(--border,#444); border-radius:5px; background:var(--secondary,#1f1f1f); color:var(--foreground,#ddd); font-size:11px;'
+        el.innerHTML = '<div style="font-weight:600; font-size:12px; margin-bottom:6px;">' + (isNew ? '＋ Thêm ' + id : '✎ Sửa ' + id) + '</div>' +
+          '<div style="display:grid; grid-template-columns:64px 1fr; gap:4px 6px; align-items:center; font-size:11px;">' +
+          '<span>Title</span><input id="ne-title" style="' + inp + '" value="' + esc(vTitle) + '" placeholder="tên SF"/>' +
+          '<span>Tier</span><input id="ne-tier" type="number" min="0" style="' + inp + '" value="' + esc(String(vTier)) + '"/>' +
+          '<span>Deps</span><input id="ne-deps" style="' + inp + '" value="' + esc(vDeps) + '" placeholder="SF-1, SF-2 (phẩy cách)"/>' +
+          '<span>Tasks</span><input id="ne-tasks" style="' + inp + '" value="' + esc(vTasks) + '" placeholder="task một / task hai (slash cách)"/>' +
+          '</div>' +
+          '<div style="margin-top:8px; display:flex; gap:6px;">' +
+          '<button id="ne-save" style="padding:4px 12px; border:1px solid #22c55e; border-radius:6px; background:transparent; color:#22c55e; font-size:11px; font-weight:600; cursor:pointer;">💾 Save</button>' +
+          '<button id="ne-cancel" class="btn secondary" style="padding:4px 12px; font-size:11px;">Huỷ</button></div>'
+        document.getElementById('ne-save').addEventListener('click', () => {
+          bracketApply({
+            id: id,
+            title: document.getElementById('ne-title').value.trim(),
+            tier: Math.max(0, parseInt(document.getElementById('ne-tier').value, 10) || 0),
+            deps: (document.getElementById('ne-deps').value.match(/SF-\d+/gi) || []).join(', '),
+            tasks: document.getElementById('ne-tasks').value.trim()
+          })
+        })
+        document.getElementById('ne-cancel').addEventListener('click', () => {
+          if (curBracket) renderBracket(curBracket.branches, curBracket.story)
+        })
+        document.getElementById('ne-title').focus()
+      }
+
+      // ---- Share bracket: copy markdown + xuất PNG ----
+      function shareBracket() {
+        if (!graph || !graph.planMarkdown) return
+        var st = document.getElementById('story-status')
+        try { navigator.clipboard.writeText(graph.planMarkdown); if (st) st.textContent = 'đã copy bracket markdown vào clipboard' } catch (e) { /* clipboard blocked */ }
+        var svg = document.getElementById('story-svg')
+        if (!svg || svg.style.display === 'none') return
+        // var(--x, fallback) không resolve trong SVG standalone → thay bằng fallback
+        var xml = new XMLSerializer().serializeToString(svg)
+        xml = xml
+          .replace(/var\(--card, #1f1f1f\)/g, '#1f1f1f')
+          .replace(/var\(--foreground, #ddd\)/g, '#ddd')
+          .replace(/var\(--muted-foreground, #999\)/g, '#999')
+          .replace(/var\(--primary, #2563eb\)/g, '#2563eb')
+          .replace(/var\(--secondary, #191919\)/g, '#191919')
+          .replace(/var\(--border, #444\)/g, '#444')
+        var img = new Image()
+        img.onload = function () {
+          var c = document.createElement('canvas')
+          c.width = svg.clientWidth || 800; c.height = svg.clientHeight || 600
+          var ctx = c.getContext('2d')
+          ctx.fillStyle = '#191919'; ctx.fillRect(0, 0, c.width, c.height)
+          ctx.drawImage(img, 0, 0, c.width, c.height)
+          c.toBlob(function (blob) {
+            if (!blob) return
+            var a = document.createElement('a')
+            a.href = URL.createObjectURL(blob)
+            a.download = (graph.bracketFile || 'bracket').replace(/\.md$/, '') + '.png'
+            a.click()
+            setTimeout(function () { URL.revokeObjectURL(a.href) }, 4000)
+            if (st) st.textContent = 'đã copy markdown + tải PNG'
+          })
+        }
+        img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml)
+      }
+
+      // ---- Story picker: custom dropdown từ worker data (storage story.list)
+      // — worker quét docs/superpowers/brackets, parse linear+title rồi ghi
+      // story.list; panel chỉ storage.get (flow đúng của panel sandbox —
+      // thấy FEATURE-REQUEST-panel-filesystem.md Option D).
+      var storyFiles = [] // [{name, linear, title}]
+      function refreshStoryList() {
+        return call('storage.get', { key: 'story.list' }).then((r) => {
+          if (!r.ok) { document.getElementById('story-status').textContent = 'story.list: ' + (r.error || r.errorCode); return null }
+          var list = r.value && r.value.value !== undefined ? r.value.value : r.value
+          storyFiles = ((list && list.stories) || []).map(st => ({
+            name: st.file, linear: st.linear, title: st.title
+          }))
+          var pick = document.getElementById('story-pick')
+          // Chỉ set placeholder/value lúc ĐẦU (chưa chạm) — KHÔNG reset khi
+          // refresh định kỳ (user đang gõ dở / đã chọn sẽ không bị xóa)
+          if (!pick.dataset.touched) {
+            var lastPick = null
+            try { lastPick = localStorage.getItem('story.lastPick') } catch (e) {}
+            pick.value = ''
+            pick.dataset.file = ''
+            pick.placeholder = lastPick
+              ? 'Chọn story… (lần trước: ' + lastPick + ')'
+              : 'Chọn story… (gõ filename hoặc ID)'
+          }
+          return { files: storyFiles }
+        })
+      }
+      function renderDd(filter) {
+        var dd = document.getElementById('story-dd')
+        if (!dd) return
+        var q = (filter || '').toLowerCase().trim()
+        var hits = storyFiles.filter(st => !q ||
+          st.name.toLowerCase().includes(q) ||
+          (st.linear || '').toLowerCase().includes(q) ||
+          st.title.toLowerCase().includes(q))
+        if (!hits.length) { dd.style.display = 'none'; dd.innerHTML = ''; return }
+        dd.innerHTML = hits.map(st =>
+          '<div class="dd-item" data-file="' + esc(st.name) + '" data-linear="' + esc(st.linear || '') + '" style="padding:6px 10px;cursor:pointer;display:flex;justify-content:space-between;gap:8px;font-size:12px;border-bottom:1px solid var(--border,#333);">' +
+            '<span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><b style="color:var(--primary,#6ba1f8)">' + esc(st.linear || '—') + '</b> ' + esc(st.title) + '</span>' +
+            '<span style="color:var(--muted-foreground,#777);font-size:10px;flex-shrink:0;">' + esc(st.name) + '</span>' +
+          '</div>').join('')
+        dd.style.display = 'block'
+        dd.querySelectorAll('.dd-item').forEach(el => {
+          el.addEventListener('mousedown', (ev) => {
+            ev.preventDefault() // không để input blur trước khi chọn
+            var pick = document.getElementById('story-pick')
+            pick.value = el.getAttribute('data-linear') || el.getAttribute('data-file')
+            pick.dataset.file = el.getAttribute('data-file')
+            pick.dataset.touched = '1'
+            try { localStorage.setItem('story.lastPick', pick.value) } catch (e) {}
+            dd.style.display = 'none'
+            loadBracketFromFile(el.getAttribute('data-file'))
+          })
+          el.addEventListener('mouseenter', () => { el.style.background = 'var(--secondary,#2a2a2a)' })
+          el.addEventListener('mouseleave', () => { el.style.background = '' })
+        })
+      }
+      ;(() => {
+        var pick = document.getElementById('story-pick')
+        var dd = document.getElementById('story-dd')
+        pick.addEventListener('focus', () => renderDd(pick.value))
+        pick.addEventListener('input', () => {
+          pick.dataset.touched = '1'
+          renderDd(pick.value)
+        })
+        pick.addEventListener('blur', () => setTimeout(() => { dd.style.display = 'none' }, 150))
+        pick.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            var q = pick.value.toLowerCase().trim()
+            var hit = storyFiles.find(st => (st.linear || '').toLowerCase() === q)
+              || storyFiles.find(st => st.name.toLowerCase() === q + '.md')
+              || storyFiles.find(st => st.name.toLowerCase().includes(q) || (st.linear || '').toLowerCase().includes(q))
+            if (hit) {
+              pick.value = hit.linear || hit.name
+              pick.dataset.file = hit.name
+              dd.style.display = 'none'
+              loadBracketFromFile(hit.name)
+            }
+          }
+          if (e.key === 'Escape') dd.style.display = 'none'
+        })
+      })()
+      document.getElementById('story-pick').addEventListener('input', function () {
+        this.dataset.touched = '1'
+      })
+      document.getElementById('story-pick').addEventListener('change', function () {
+        // chỉ chạy khi user tự gõ hết + blur (dropdown path đã tự xử lý)
+        var val = this.value.trim()
+        if (!val) return
+        var norm = val.toUpperCase()
+        var hit = storyFiles.find(st => st.linear === norm)
+          || storyFiles.find(st => (st.linear || '').endsWith('-' + val))
+          || storyFiles.find(st => st.name === val || st.name === val + '.md')
+        if (hit) { this.dataset.file = hit.name; loadBracketFromFile(hit.name) }
+      })
+      // Đọc bracket file trực tiếp → parse + render NGAY trong panel (không worker round-trip)
+      var loadSeq = 0
+      function loadBracketFromFile(name, childrenOverride) {
+        var seq = ++loadSeq // race guard: chỉ request MỚI NHẤT được render
+        var status = document.getElementById('story-status')
+        status.textContent = 'đọc ' + name + '…'
+        // Loading UI: canvas hiện chữ Loading… cho tới khi render xong
+        var ph = document.getElementById('story-placeholder')
+        var svg = document.getElementById('story-svg')
+        svg.style.display = 'none'
+        if (ph) {
+          ph.style.display = ''
+          ph.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;gap:8px;">' +
+            '<div style="width:22px;height:22px;border:2px solid var(--primary,#2563eb);border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></div>' +
+            '<div style="font-size:12px;color:var(--muted-foreground,#999);">Loading… ' + esc(name) + '</div></div>'
+        }
+        call('workspace.fileRead', { dir: 'brackets', name }).then((r) => {
+          if (seq !== loadSeq) return // stale response — request mới hơn đã thắng
+          if (!r.ok) { status.textContent = 'fileRead: ' + (r.error || r.errorCode); return }
+          var md = (r.value && r.value.content) || ''
+          var epic = (md.match(/^#\s+Story:\s*([A-Za-z]+-\d+)/m) || [])[1]
+          var render = (children) => {
+            if (seq !== loadSeq) return
+            graph = { story: { identifier: epic, title: ((md.match(/^#\s+Story:\s*[A-Za-z]+-\d+\s*[—–-]\s*(.+)$/m) || [])[1] || '').trim() }, children: children || [], planMarkdown: md, bracketFile: name }
+            var branches = parsePlan(md, children || [])
+            var done = (children || []).filter(c => (c.stateType || (c.state && c.state.type)) === 'completed').length
+            renderBracket(branches, { identifier: epic, title: graph.story.title, done, total: (children || []).length })
+            status.textContent = (epic || name) + ' · ' + (children || []).length + ' sub-issues · ' + new Date().toLocaleTimeString()
+            lastTasksStamp = null // ép re-render khi tasks data tới
+          }
+          if (childrenOverride) { render(childrenOverride); return }
+          // báo worker story đang xem + lấy states theo epic:
+          call('storage.set', { key: 'story.viewed', value: { epic, file: name, at: Date.now() } })
+          var key = 'story.states.' + epic
+          call('storage.get', { key }).then((r2) => {
+            var cached = r2.ok ? (r2.value && r2.value.value !== undefined ? r2.value.value : r2.value) : null
+            var fresh = cached && cached.epic === epic && cached.children && cached.children.length
+              ? cached.children : null
+            if (fresh) { render(fresh); return }
+            render([]) // vẽ khung trước — worker poll storyStates sẽ đổ states,
+                       // panel poll 8s thấy storage mới tự re-render
+          })
+        })
+      }
+
+      // ---- Load: worker writes snapshot → panel reads storage ----
+      document.getElementById('story-add-node').addEventListener('click', () => {
+        if (!graph || !graph.planMarkdown) {
+          document.getElementById('story-status').textContent = 'load một bracket trước khi thêm node'
+          return
+        }
+        openNodeEditor(null)
+      })
+      document.getElementById('story-share').addEventListener('click', () => shareBracket())
+      document.getElementById('story-load').addEventListener('click', () => {
+        refreshStoryList().then(() => {
+          var pick = document.getElementById('story-pick')
+          if (pick.dataset.file) { loadBracketFromFile(pick.dataset.file); return }
+          var v = pick.value.trim()
+          var hit = storyFiles.find(st => st.linear === v.toUpperCase() || st.name === v)
+          if (hit) loadBracketFromFile(hit.name); else loadStory()
+        })
+      })
+      function loadStory(wantLinear) {
+        var status = document.getElementById('story-status')
+        status.textContent = 'loading…'
+        call('storage.get', { key: 'story.snapshot' }).then((r) => {
+          if (!r.ok) { status.textContent = 'storage read failed: ' + (r.error || r.errorCode); return }
+          var snap = r.value && r.value.value !== undefined ? r.value.value : r.value
+          if (!snap || !snap.story) { status.textContent = 'no story data — run "Superpowers: Story List/Load" command (⌘J) once, or check worktree issue link'; return }
+          // if user asked for another story than snapshot holds → note it
+          if (wantLinear && snap.story.identifier !== wantLinear) {
+            status.textContent = 'đang chờ worker nạp ' + wantLinear + ' (snapshot hiện: ' + snap.story.identifier + ')…'
+          }
+          graph = snap
+          var branches = parsePlan(snap.planMarkdown || '', snap.children || [])
+          var done = (snap.children || []).filter(c => (c.stateType || c.state?.type) === 'completed').length
+          renderBracket(branches, { identifier: snap.story.identifier, title: snap.story.title, done, total: (snap.children || []).length })
+          status.textContent = snap.story.identifier + ' · ' + (snap.children ? snap.children.length : 0) + ' sub-issues · ' + new Date(snap.fetchedAt).toLocaleTimeString()
+        })
+      }
+      // ---- Create story: epic pipeline prompt → terminal ----
+      document.getElementById('story-create').addEventListener('click', () => {
+        var idea = document.getElementById('story-idea').value.trim()
+        var status = document.getElementById('story-status')
+        if (!idea) { status.textContent = 'gõ mô tả story trước khi Create'; return }
+        var terminalId = document.getElementById('terminal-select')?.value
+        if (!terminalId) { status.textContent = 'chưa có terminal — mở terminal trong worktree trước'; return }
+        var biggerScope = document.getElementById('sf-bigger-scope')?.checked
+        var scopeLine = biggerScope
+          ? '\n\nSF-SCOPE: LỚN — mỗi SF mục tiêu 8-15 tasks (1 nhóm component hoàn chỉnh, KHÔNG tách nhỏ hơn 6 tasks). CHỐNG DUPLICATE: liệt kê tasks mọi SF trước khi chốt — pattern lặp (reveal/tilt/probe/i18n port...) xuất hiện >=2 SF -> tách thành shared work tier 0 HOẶC gộp các SF đó. 2 SF co >=50% tasks cùng loại -> gộp làm một.'
+          : ''
+        var ctxPack = document.getElementById('sf-context-pack')?.checked
+        var packLine = ctxPack ? '\n\nSF-COST: context-pack ON — khi viết bracket, sinh KÈM docs/superpowers/contexts/sf-<N>.md mỗi SF (slice sẵn: spec slice + touch map + interface contract + dep states + files). SF agents đọc file này thay tự tổng hợp từ bracket+epic+comments.' : ''
+        var creativity = document.getElementById('sf-creativity')?.value || 'balanced'
+        var creativeLine = ''
+        if (creativity === 'strict') {
+          creativeLine = '\n\nCREATIVITY: STRICT — spec/bracket là hợp đồng từng chữ. Không thêm, không suy diễn, không \"cải thiện\". Thấy chỗ nên cải thiện → flag trong notes, KHÔNG tự làm.'
+        } else if (creativity === 'creative') {
+          creativeLine = '\n\nCREATIVITY: CREATIVE — spec là điểm khởi điểm. Agent được chủ động đề xuất + thử hướng tốt hơn (giải pháp, cấu trúc, UX) miễn giữ acceptance; mọi cải thiện phải ghi rationale vào audit.'
+        } else {
+          creativeLine = '\n\nCREATIVITY: BALANCED — spec là khung cứng (acceptance + boundary không đổi); chi tiết chưa ghi agent tự quyết hợp lý theo conventions, flag quyết định lớn trong notes.'
+        }
+        var prompt = 'Use the story-workflow skill to CREATE A STORY:\n' + idea +
+          '\n(run the full CREATE pipeline: prompt-master, P0 analyst 10 chiều, Figma Principle 8, đọc source code thật, rubric C1-C5/V1-V3, brainstorm, spec-critic, plan-critic; ghi bracket file docs/superpowers/brackets/ (gồm dòng \"Destination: story/<epic-id>-<slug>\" ngay sau header); CHẠY `story-validate <bracket-file>` — phải OK trước khi in STORY-READY, INVALID → sửa theo fails[] rồi chạy lại; tạo epic issue; in STORY-READY rồi STOP chờ approve; TEAM: dùng đúng 9 agents — SF visual-heavy note design-first qua designer)' + packLine + creativeLine + scopeLine
+        call('terminal.sendText', { terminalId, text: prompt, enter: true }).then((r) => {
+          if (r.ok) {
+            status.textContent = 'prompt epic đã gửi — agent đang phân tích. Sau STORY-READY: ⌘J chạy "Superpowers: Story Load" rồi ↻'
+            // Auto: refresh list shortly after send so the new bracket file appears
+            setTimeout(() => refreshStoryList(), 20000)
+            setTimeout(() => { refreshStoryList() }, 60000)
+          } else {
+            status.textContent = 'send failed: ' + (r.error || r.errorCode)
+          }
+        })
+      })
+
+      // ---- Approve story: materialize sub-issues + DAG + nhánh đích story/<epic>-<slug> ----
+      document.getElementById('story-approve').addEventListener('click', () => {
+        var status = document.getElementById('story-status')
+        var terminalId = document.getElementById('terminal-select')?.value
+        if (!terminalId) { status.textContent = 'chưa có terminal — mở terminal trong worktree trước'; return }
+        var linear = document.getElementById('story-pick').value.trim()
+        if (!linear) { status.textContent = 'chọn story (autocomplete) trước khi Approve'; return }
+        var prompt = 'Use the story-workflow skill APPROVE phase for story ' + linear + ':\n' +
+          '- bracket file: docs/superpowers/brackets/ (tìm đúng story ' + linear + ')\n' +
+          '- IDEMPOTENT: SF nào đã có linear: <ID> trong bracket → SKIP (chỉ tạo SF còn trống)\n' +
+          '- tạo sub-issue: orca linear create --title "[SF-N] ..." --team <team> --parent ' + linear + ' --label Feature --priority <theo complexity> --estimate <theo task count> --body "<Tier/Depends on/Bracket/What/Tasks>" (LƯU Ý: flag là --body, KHÔNG phải --description; KHÔNG dùng relation add --parent)\n' +
+          '- ghi linear: <ID> ngược vào bracket file\n' +
+          '- tạo NHÁNH ĐÍCH story/' + linear.toLowerCase().replace(/[^a-z0-9]+/g,'-') + '-<slug-từ-title>' + ' từ main (nếu chưa có) — mọi SF fork từ đây và merge về đây, KHÔNG đụng main\n' +
+          '- orchestration run-create + task-create per SF, --deps theo bracket Depends on (SF nhiều deps: deps list JSON)\n' +
+          '- mọi lệnh phải check .ok trong output JSON; FAIL → in error.message, dừng\n' +
+          '- audit comment lên epic. Xong in: STORY-APPROVED + danh sách SF→issue.'
+        call('terminal.sendText', { terminalId, text: prompt, enter: true }).then((r) => {
+          status.textContent = r.ok ? 'approve prompt đã gửi — theo dõi terminal. Xong: ↻ Load để thấy linear IDs trên bracket' : 'send failed: ' + (r.error || r.errorCode)
+        })
+      })
+
+      // ---- Launch SFs: dispatch tier-ready SFs as workflow runs ----
+      document.getElementById('story-launch').addEventListener('click', () => {
+        var status = document.getElementById('story-status')
+        var terminalId = document.getElementById('terminal-select')?.value
+        if (!terminalId) { status.textContent = 'chưa có terminal — mở terminal trong worktree trước'; return }
+        var linear = document.getElementById('story-pick').value.trim()
+        if (!linear) { status.textContent = 'chọn story trước khi Launch'; return }
+        var autoComplete = document.getElementById('sf-auto-complete')?.checked
+        var thinPlan = document.getElementById('sf-thin-plan')?.checked
+        var batchAudit = document.getElementById('sf-batch-audit')?.checked
+        var creativityL = document.getElementById('sf-creativity')?.value || 'balanced'
+        var creativeLineL = creativityL === 'strict'
+          ? 'CREATIVITY: STRICT — SF prompts ghi: làm ĐÚNG spec/bracket, không thêm/suy diễn; cải thiện đề xuất → notes.'
+          : creativityL === 'creative'
+            ? 'CREATIVITY: CREATIVE — SF prompts ghi: spec là khởi điểm, được đề xuất hướng tốt hơn (giữ acceptance), ghi rationale audit.'
+            : 'CREATIVITY: BALANCED — SF prompts ghi: khung cứng + chi tiết tự quyết hợp lý + flag quyết lớn.'
+        var autoLine = autoComplete
+          ? '\nAUTO-HOÀN-THÀNH: ON — watchdog chạy KHÔNG GIỚI HẠN vòng tới STORY-COMPLETE (mọi SF Done + merged đích + Epic Done + dọn worktrees + mở PR story: push đích + `gh pr create --base main` theo pr-playbook, 1 PR/story; thiếu remote/gh auth → ghi READY-FOR-MANUAL-MERGE + lý do vào Epic audit comment, KHÔNG chặn) hoặc BLOCKED. Người dùng KHÔNG cần nhắn tiếp tục. 3 vòng không tiến triển → 1 resume thử → BLOCKED exit.'
+          : '\nAUTO-HOÀN-THÀNH: OFF — watchdog max 10 vòng (kiểu cũ), người chủ động đôn tiếp.'
+        var costLine = autoLine + '\nSF-COST SETTINGS: ' +
+          (thinPlan ? 'SF-script ON — SF ≤4 tasks: bracket What/Tasks là plan mỏng, KHÔNG plan file riêng, bỏ plan-critic SF đó. ' : 'SF-script OFF. ') +
+          (batchAudit ? 'batch-audit ON — SF nhỏ: 1 audit comment cuối thay comment từng phase. ' : 'batch-audit OFF. ') +
+          creativeLineL
+        var prompt = 'Use the story-workflow skill LAUNCH phase for story ' + linear + ':\n' +
+          '- đọc bracket file + orchestration task-list\n' +
+          '- với MỖI SF có deps Done (tier sẵn sàng) mà chưa có worktree:\n' +
+          '    orca worktree create --name sf-<n>-<slug> --linear-issue <SF-ID> --base-branch story/<epic>-<slug> (nhánh đích của story) --agent claude --prompt "<SF workflow prompt theo EXECUTE MODEL trong skill>" --no-parent\n' +
+          '- từng SF là MỘT run đầy đủ orca-superpowers-workflow (tier theo cỡ SF)\n' +
+          '- TEAM 9 AGENTS (mọi SF prompt phải nêu đúng vai): designer (SF visual — huashu-design, 3 hướng + user gate + hand-off designs/<sf>-direction.md) · task-executor (Dev — COMPLETE-RUN 5 bước: code → tick plan → code-reviewer APPROVED → merge đích với ancestor-guard → Done) · code-reviewer (Tester — VERDICT 1 dòng) · verifier (PASS/PARTIAL/FAIL) · spec-critic · plan-critic · phase0-impact-analyst · security-audit (surface) · rollback-fixer. Report format mỗi agent là contract — thiếu verdict = coi như chưa chạy.\n' +
+          '- QUAN TRỌNG — SF prompt PHẢI chứa complete-run checklist từ skill: merge vào NHÁNH ĐÍCH (story/<epic>-<slug>) TRƯỚC khi set issue Done (Linear Done trước merge = run INCOMPLETE)\n' +
+          '- tôn trọng cap 4 song song. In danh sách đã launch.\n' +
+          '- SAU KHI launch xong: CHẠY /goal WATCHDOG theo skill (cú pháp claude "/goal ..." trong WATCHDOG section - condition: mọi SF Done + rev-list 0 + verify đích + worktrees dọn + Epic Done + PR story đã mở (push đích + gh pr create theo references/pr-playbook.md; fail-safe READY-FOR-MANUAL-MERGE nếu thiếu remote/gh), chứng minh bằng output lệnh thật, bound 40 turns). /goal tự kéo turn kế sau mỗi turn (evaluator model kiểm) - KHÔNG cần người nhắn tiếp tục. Dừng ở NHÁNH ĐÍCH — agent mở PR nhưng KHÔNG TỰ merge main (merge là human gate).' + costLine
+        call('terminal.sendText', { terminalId, text: prompt, enter: true }).then((r) => {
+          status.textContent = r.ok ? 'launch prompt đã gửi — SF agents đang spawn trong worktree riêng' : 'send failed: ' + (r.error || r.errorCode)
+        })
+      })
+
+      // Re-center when canvas resizes — reuse last rendered bbox
+      ;(() => {
+        var host = document.getElementById('story-canvas')
+        if (host && window.ResizeObserver) {
+          new ResizeObserver(() => {
+            if (lastFit) fitView(lastFit.W, lastFit.H, lastFit.bbox)
+          }).observe(host)
+        }
+      })()
+
+      document.getElementById('story-canvas').addEventListener('dblclick', () => {
+        if (lastFit) fitView(lastFit.W, lastFit.H, lastFit.bbox)
+      })
+
+      // Agent activity + progress: tự tính từ FS (không phụ thuộc worker poll!)
+      // - progress: đọc plan file SF worktree qua workspace.fileRead → đếm [x]/[ ]
+      // - agents: vẫn từ worker story.tasks (terminal titles — chỉ worker lấy được)
+      var storyTasks = { agents: [], progress: {} }
+      var lastTasksStamp = null
+      var planCache = {} // worktree → {done,total,pct,est}
+      function fsProgressFor(branches) {
+        // branches: từ parsePlan — map SF-N → sf-<n>-<slug> worktree qua bracket Tasks
+        // (worktree naming: sf-<số>-<slug từ title>)
+        var out = {}
+        branches.forEach(b => {
+          var n = (b.id.match(/SF-(\d+)/) || [])[1]
+          if (!n) return
+          // tìm plan file khớp sf<n> trong fileList... cần dir listing worktree —
+          // dùng heuristic: đọc mọi file fileList contexts? KHÔNG — dùng cách khác:
+          // scan storyFiles + các SF worktree pattern qua fileList dirs không có.
+          // → worker đã làm tốt phần scan; panel chỉ OVERRIDE khi worker stale.
+        })
+        return out
+      }
+      function refreshStoryTasks() {
+        // progress: TỰ LẤY qua workspace.planProgress (main process — không worker,
+        // hết lazy-death). agents: vẫn worker storage (terminal titles).
+        var pp = call('workspace.planProgress', {})
+        var st = call('storage.get', { key: 'story.tasks' })
+        return Promise.all([pp, st]).then(([rp, r]) => {
+          if (rp && rp.ok) {
+            var prog = (rp.value && rp.value.progress) || {}
+            storyTasks.progress = prog
+          }
+          if (!r.ok) { maybeRerender(); return }
+          var t = (r.value && r.value.value !== undefined ? r.value.value : r.value)
+          if (!t) { maybeRerender(); return }
+          storyTasks.agents = t.agents || []
+          // worker story.tasks có 'cur' (task đang chạy) — merge đè entries host-method
+          if (t.progress) storyTasks.progress = Object.assign({}, storyTasks.progress, t.progress)
+          // re-render khi agents đổi (progress re-render cùng lúc)
+          var stamp = t.fetchedAt || ''
+          if (stamp && stamp !== lastTasksStamp) {
+            lastTasksStamp = stamp
+            rerenderIfViewing()
+          } else { maybeRerender() }
+        })
+      }
+      function maybeRerender() {
+        // progress đổi (planProgress) nhưng agents không → vẫn re-render nhẹ
+        if (progressChanged()) rerenderIfViewing()
+      }
+      var lastProgSig = ''
+      function progressChanged() {
+        var sig = JSON.stringify(storyTasks.progress || {})
+        if (sig !== lastProgSig) { lastProgSig = sig; return true }
+        return false
+      }
+      // States poll: children theo epic đang xem cũng tự đổ (story không có
+      // agent chạy thì tasks stamp không đổi — states là trigger riêng)
+      var lastStatesStamp = null
+      function refreshStoryStates() {
+        var pick = document.getElementById('story-pick')
+        var epic = pick && pick.value ? pick.value.trim().toUpperCase() : ''
+        if (!epic || !/^[A-Z]+-\d+$/.test(epic)) return Promise.resolve()
+        return call('storage.get', { key: 'story.states.' + epic }).then((r) => {
+          if (!r.ok) return
+          var st = (r.value && r.value.value !== undefined ? r.value.value : r.value)
+          if (!st || !st.children) return
+          var stamp = st.fetchedAt || ''
+          if (stamp && stamp !== lastStatesStamp && st.children.length) {
+            lastStatesStamp = stamp
+            rerenderIfViewing(st.children)
+          }
+        })
+      }
+      function rerenderIfViewing(childrenOverride) {
+        var pick = document.getElementById('story-pick')
+        if (pick && pick.dataset.file) loadBracketFromFile(pick.dataset.file, childrenOverride)
+      }
+      refreshStoryTasks()
+      refreshStoryStates()
+      setInterval(refreshStoryTasks, 8000)
+      setInterval(refreshStoryStates, 10000)
+
+      // ---- Story Ops (kit CLIs qua worker): poll story.ops + gửi request ----
+      function opsVerdictColor(v) {
+        if (/^RUNNING/.test(v)) return 'color:#22c55e;'
+        if (/^BUSY/.test(v)) return 'color:#14b8a6;'
+        if (/^STALLED/.test(v)) return 'color:#ef4444;font-weight:700;'
+        if (/^DONE|^COMPLETE/.test(v)) return 'color:#86efac;'
+        return 'color:var(--muted-foreground,#888);'
+      }
+      function opsStepChip(state) {
+        var bg = '#3f3f46', fg = '#a1a1aa', label = '·'
+        if (state === 'PASS') { bg = '#14532d'; fg = '#86efac'; label = '✓' }
+        else if (state === 'FAIL') { bg = '#7f1d1d'; fg = '#fca5a5'; label = '✗' }
+        else if (state === 'WARN' || state === 'UNKNOWN') { label = '?' }
+        else if (state === 'PENDING') { label = '…' }
+        return '<span style="padding:0 4px;border-radius:3px;font-size:9px;background:' + bg + ';color:' + fg + ';">' + label + '</span>'
+      }
+      var storyOpsData = null
+      function refreshStoryOps() {
+        call('storage.get', { key: 'story.ops' }).then(function (r) {
+          var v = r && r.value
+          storyOpsData = v || null
+          var el = document.getElementById('story-ops-rows')
+          if (!el) return
+          var at = document.getElementById('story-ops-at')
+          if (!v || !v.sfs || !v.sfs.length) {
+            el.innerHTML = '<span class="muted" style="font-size:10px;">' + ((v && v.error) ? v.error : 'không có sf-* worktree') + '</span>'
+            if (at) at.textContent = ''
+            return
+          }
+          if (at && v.fetchedAt) at.textContent = new Date(v.fetchedAt).toLocaleTimeString()
+          // COMPLETE banner
+          var cb = document.getElementById('story-complete-banner')
+          if (cb) {
+            if (v.complete && v.complete.length) {
+              cb.style.display = 'block'
+              cb.innerHTML = v.complete.map(function (c, i) {
+                return '🏁 <b>STORY-COMPLETE</b>: ' + (c.title || c.epic) +
+                  ' <button class="btn secondary story-close-btn" data-close-epic="' + c.epic + '" style="padding:2px 8px;font-size:10px;border-color:#22c55e;color:#22c55e;">✓ Close (epic Done)</button>' +
+                  ' <span class="muted">PR story chờ bạn review + merge (agent không tự merge main)</span>'
+              }).join('<br>')
+              var cbtns = cb.querySelectorAll('.story-close-btn')
+              for (var ci = 0; ci < cbtns.length; ci++) {
+                cbtns[ci].onclick = function () {
+                  call('storage.set', { key: 'story.ops.request', value: { action: 'close', epic: this.getAttribute('data-close-epic'), at: Date.now() } })
+                  var rs2 = document.getElementById('story-ops-result'); if (rs2) rs2.textContent = '→ closing ' + this.getAttribute('data-close-epic') + '…'
+                }
+              }
+            } else cb.style.display = 'none'
+          }
+          // GAP QUEUE
+          var gq = document.getElementById('story-gap-queue')
+          if (gq) {
+            var gaps = v.gaps || []
+            gq.innerHTML = gaps.length
+              ? '<div style="font-size:10px;font-weight:700;color:#eab308;margin-top:2px;">⚠ REQUIREMENT-GAP đang chờ bạn (' + gaps.length + ')</div>' +
+                gaps.map(function (g, i) {
+                  return '<div style="display:flex;gap:6px;align-items:center;padding:2px 0;font-size:10px;">' +
+                    '<span style="min-width:52px;color:#eab308;">' + g.epic + '</span>' +
+                    '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (g.snippet || '').replace(/"/g, '&quot;') + '">' + (g.snippet || '') + '</span>' +
+                    '<input data-gap-epic="' + g.epic + '" placeholder="trả lời…" style="width:110px;padding:2px 6px;border:1px solid var(--border,#444);border-radius:5px;background:var(--secondary,#1f1f1f);color:var(--foreground,#ddd);font-size:10px;">' +
+                    '<button class="btn secondary" data-gap-send="' + g.epic + '" style="padding:2px 7px;font-size:10px;">Gửi</button></div>'
+                }).join('')
+              : ''
+            var sends = gq.querySelectorAll('[data-gap-send]')
+            for (var gi = 0; gi < sends.length; gi++) {
+              sends[gi].onclick = function () {
+                var ep = this.getAttribute('data-gap-send')
+                var inp = gq.querySelector('input[data-gap-epic="' + ep + '"]')
+                if (!inp || !inp.value.trim()) return
+                call('storage.set', { key: 'story.ops.request', value: { action: 'gap-answer', epic: ep, text: inp.value.trim(), at: Date.now() } })
+                var rs3 = document.getElementById('story-ops-result'); if (rs3) rs3.textContent = '→ GAP-ANSWER → ' + ep + '…'
+                inp.value = ''
+              }
+            }
+          }
+          el.innerHTML = v.sfs.map(function (s) {
+            var steps = ''
+            if (s.steps) {
+              var order = ['code_tests', 'plan_ticked', 'review', 'merged', 'linear_done']
+              steps = ' ' + order.map(function (k) {
+                return '<span title="' + k + ': ' + (s.steps[k] || '?') + '">' + opsStepChip(s.steps[k]) + '</span>'
+              }).join(' ')
+            }
+            var dod = s.dod ? ' <span style="font-size:9px;color:var(--muted-foreground,#888);">DoD:' + s.dod + '</span>' : ''
+            var resumeBtn = /^STALLED/.test(s.verdict)
+              ? ' <button class="btn secondary" style="padding:1px 7px;font-size:10px;" data-ops-resume="' + s.sf + '">▶ resume</button>' : ''
+            return '<div style="display:flex;gap:6px;align-items:center;padding:2px 0;">' +
+              '<span style="min-width:150px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + s.sf + '">' + s.sf + '</span>' +
+              '<span style="font-size:10px;font-weight:600;' + opsVerdictColor(s.verdict) + '">' + s.verdict + '</span>' +
+              steps + dod +
+              (s.commitAge != null ? '<span style="font-size:9px;color:' + (s.commitAge < 300 ? '#22c55e' : (s.commitAge < 1800 ? '#eab308' : '#98a2b3')) + ';" title="' + (s.commitSubj || '') + '">⏱' + (s.commitAge < 90 ? s.commitAge + 's' : Math.round(s.commitAge / 60) + 'm') + '</span>' : '') +
+              (s.dirty ? '<span style="font-size:9px;color:#98a2b3;">+' + s.dirty + 'Δ</span>' : '') +
+              '<span class="muted" style="flex:1;font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (s.stallDetail || s.detail || '') + '">' + (s.commitSubj ? s.commitSubj + ' · ' : '') + (s.stallDetail || s.detail || '') + '</span>' +
+              resumeBtn + '</div>'
+          }).join('')
+          var btns = el.querySelectorAll('[data-ops-resume]')
+          for (var i = 0; i < btns.length; i++) {
+            btns[i].onclick = function () {
+              var sf = this.getAttribute('data-ops-resume')
+              call('storage.set', { key: 'story.ops.request', value: { action: 'resume', sf: sf, at: Date.now() } })
+              var rs = document.getElementById('story-ops-result')
+              if (rs) rs.textContent = '→ resume ' + sf + ' … (worker sẽ gửi prompt)'
+            }
+          }
+        })
+        call('storage.get', { key: 'story.ops.result' }).then(function (r) {
+          var v = r && r.value
+          var rs = document.getElementById('story-ops-result')
+          if (v && rs) {
+            // memory query/stats là output đọc — cho nhiều dòng thay 4 dòng tail
+            var isMem = v.action === 'memory-query' || v.action === 'memory-stats'
+            var lines = String(v.output || '').split('\n').filter(function (l) { return l.trim() })
+            var tail = isMem ? lines.slice(-30).join('\n') : lines.slice(-4).join(' | ')
+            rs.textContent = (v.ok ? '✓ ' : '✗ ') + (v.action || '') + (v.sf ? ' ' + v.sf : '') + ' — ' + tail
+            if (isMem) rs.style.maxHeight = '220px'
+            else rs.style.maxHeight = ''
+          }
+        })
+      }
+      var opsRefreshBtn = document.getElementById('story-ops-refresh')
+      if (opsRefreshBtn) opsRefreshBtn.onclick = function () {
+        call('storage.set', { key: 'story.ops.request', value: { action: 'refresh', at: Date.now() } })
+      }
+      var opsVfBtn = document.getElementById('story-ops-verify')
+      if (opsVfBtn) opsVfBtn.onclick = function () {
+        call('storage.set', { key: 'story.ops.request', value: { action: 'verify', at: Date.now() } })
+        var rs = document.getElementById('story-ops-result')
+        if (rs) rs.textContent = '→ running story-verify…'
+      }
+      var opsWdBtn = document.getElementById('story-ops-watchdog')
+      if (opsWdBtn) opsWdBtn.onclick = function () {
+        call('storage.set', { key: 'story.ops.request', value: { action: 'watchdog', at: Date.now() } })
+        var rs = document.getElementById('story-ops-result')
+        if (rs) rs.textContent = '→ watchdog pass…'
+      }
+      var opsLcBtn = document.getElementById('story-ops-launch')
+      if (opsLcBtn) opsLcBtn.onclick = function () {
+        call('storage.set', { key: 'story.ops.request', value: { action: 'launch', at: Date.now() } })
+        var rs = document.getElementById('story-ops-result')
+        if (rs) rs.textContent = '→ launch-next: kiểm tra SF sẵn sàng rồi fork + launch…'
+      }
+      var opsStBtn = document.getElementById('story-ops-stats')
+      if (opsStBtn) opsStBtn.onclick = function () {
+        call('storage.set', { key: 'story.ops.request', value: { action: 'stats', at: Date.now() } })
+        var rs = document.getElementById('story-ops-result')
+        if (rs) rs.textContent = '→ story-stats đang chạy…'
+      }
+      var opsMemBtn = document.getElementById('story-ops-memory-send')
+      if (opsMemBtn) opsMemBtn.onclick = function () {
+        var inp = document.getElementById('story-ops-memory')
+        var rs = document.getElementById('story-ops-result')
+        var q = inp && inp.value.trim()
+        if (!q) { if (rs) rs.textContent = 'nhập từ khóa memory query trước'; return }
+        call('storage.set', { key: 'story.ops.request', value: { action: 'memory-query', q: q, at: Date.now() } })
+        if (rs) rs.textContent = '→ story-memory query: "' + q + '"…'
+      }
+      var opsMemInp = document.getElementById('story-ops-memory')
+      if (opsMemInp) opsMemInp.onkeydown = function (e) {
+        if (e.key === 'Enter' && opsMemBtn) opsMemBtn.onclick()
+      }
+      var opsMemStBtn = document.getElementById('story-ops-memory-stats')
+      if (opsMemStBtn) opsMemStBtn.onclick = function () {
+        call('storage.set', { key: 'story.ops.request', value: { action: 'memory-stats', at: Date.now() } })
+        var rs = document.getElementById('story-ops-result')
+        if (rs) rs.textContent = '→ story-memory stats…'
+      }
+      var opsAttBtn = document.getElementById('story-ops-attempts')
+      if (opsAttBtn) opsAttBtn.onclick = function () {
+        call('storage.set', { key: 'story.ops.request', value: { action: 'attempts', at: Date.now() } })
+        var rs = document.getElementById('story-ops-result')
+        if (rs) rs.textContent = '→ attempt log hôm nay…'
+      }
+      var opsVrBtn = document.getElementById('story-ops-vr-send')
+      if (opsVrBtn) opsVrBtn.onclick = function () {
+        var b = document.getElementById('story-ops-vr-base')
+        var c = document.getElementById('story-ops-vr-cur')
+        var rs = document.getElementById('story-ops-result')
+        if (!b || !c || !b.value.trim() || !c.value.trim()) { if (rs) rs.textContent = 'nhập cả baseline + current dir trước'; return }
+        call('storage.set', { key: 'story.ops.request', value: { action: 'visual-regress', baseline: b.value.trim(), current: c.value.trim(), at: Date.now() } })
+        if (rs) rs.textContent = '→ visual-regress: ' + b.value.trim() + ' vs ' + c.value.trim() + '…'
+      }
+      var opsGapBtn = document.getElementById('story-ops-gap-send')
+      if (opsGapBtn) opsGapBtn.onclick = function () {
+        var inp = document.getElementById('story-ops-gap')
+        var rs = document.getElementById('story-ops-result')
+        if (!inp || !inp.value.trim()) { if (rs) rs.textContent = 'nhập câu trả lời trước'; return }
+        // epic của story đang xem (story.viewed do loadBracketFromFile ghi)
+        call('storage.get', { key: 'story.viewed' }).then(function (r) {
+          var v = r && r.value
+          var epic = v && v.epic && /[A-Za-z]+-\d+/.test(v.epic) ? v.epic : null
+          if (!epic) { if (rs) rs.textContent = 'mở 1 story trước (chọn từ dropdown) để biết epic'; return }
+          call('storage.set', { key: 'story.ops.request', value: { action: 'gap-answer', epic: epic, text: inp.value.trim(), at: Date.now() } })
+          if (rs) rs.textContent = '→ gửi GAP-ANSWER lên ' + epic + '…'
+          inp.value = ''
+        })
+      }
+      refreshStoryOps()
+      setInterval(refreshStoryOps, 15000)
+
+      // Panel mở: load LIST thôi (dropdown sẵn) — bracket trống chờ user chọn
+      refreshStoryList()
+      var ph0 = document.getElementById('story-placeholder')
+      if (ph0) ph0.innerHTML = 'Chọn story từ dropdown phía trên<br><span style="font-size:11px">bracket sẽ hiển thị tại đây</span>'
+      // NOTE: KHÔNG auto-load bằng loadStory() (đường snapshot cũ) ở đây —
+      // nó ghi đè bracket user đang xem bằng snapshot worker (bug FI-151 đè
+      // FI-169). Refresh duy nhất: refreshStoryTasks (8s) re-render đúng
+      // file đang chọn qua dataset.file; storyList refresh riêng 60s.
+      setInterval(() => { refreshStoryList() }, 60000)
+
+    })()
+    
+</script>
+
+  </body>
+</html>

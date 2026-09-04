@@ -1,0 +1,27 @@
+#!/bin/bash
+# story-notify — thông minh: có context, có screenshot, có đề xuất
+# Usage: story-notify <type> <sf> [detail]
+# Types: stall | complete | gate-fail | gap | story-complete
+set -u
+TYPE="${1:?}"; SF="${2:-}"; DETAIL="${3:-}"
+
+case "$TYPE" in
+  stall)
+    osascript -e "display notification \"${SF} stall ${DETAIL} — watchdog sẽ tự resume\" with title\"⚠ Agent Stall\" sound name \"Basso\""
+    ;;
+  complete)
+    osascript -e "display notification \"${SF} hoàn thành 5/5 — có thể launch tier kế\" with title \"✓ SF Complete\" sound name \"Glass\""
+    ;;
+  gate-fail)
+    osascript -e "display notification \"${SF}: ${DETAIL} — KHÔNG ĐƯỢC nói 'xong'\" with title \"🚨 Gate FAIL\" sound name \"Basso\""
+    ;;
+  gap)
+    osascript -e "display notification \"Câu hỏi cần bạn trả lời: ${DETAIL}\" with title \"⚠ REQUIREMENT-GAP\" sound name \"Ping\""
+    ;;
+  story-complete)
+    osascript -e "display notification \"Story hoàn thành! Merge main khi sẵn sàng\" with title \"🏁 STORY-COMPLETE\" sound name \"Hero\""
+    ;;
+  *)
+    osascript -e "display notification \"${DETAIL}\" with title \"${SF}\""
+    ;;
+esac

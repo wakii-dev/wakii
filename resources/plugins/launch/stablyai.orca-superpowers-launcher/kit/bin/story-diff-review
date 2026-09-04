@@ -1,0 +1,63 @@
+#!/bin/bash
+# story-diff-review — tự review diff TRƯỚC commit
+# Chặn: debug code, commented-out, secrets, files ngoài plan
+# Usage: story-diff-review (chạy trong worktree, check staged + unstaged)
+set -u
+ISSUES=0
+WARN=0
+
+echo "═══ DIFF SELF-REVIEW ═══"
+
+# Lấy diff (staged优先, fallback unstaged)
+DIFF=$(git diff --cached 2>/dev/null)
+[ -z "$DIFF" ] && DIFF=$(git diff 2>/dev/null)
+[ -z "$DIFF" ] && { echo "(không có diff — sạch)"; exit 0; }
+
+# 1. Debug code
+for PATTERN in "console\.log" "debugger" "fmt\.Print" "System\.out" "print(" ; do
+  FOUND=$(echo "$DIFF" | grep -c "^\+.*$PATTERN" 2>/dev/null)
+  [ "${FOUND:-0}" -gt 0 ] 2>/dev/null && {
+    echo "❌ Debug code '$PATTERN': $FOUND chỗ"; ISSUES=$((ISSUES+1))
+  }
+done
+
+# 2. Commented-out code
+COMMENTED=$(echo "$DIFF" | grep -cE "^\+\s*//.*[{}();]" 2>/dev/null)
+[ "${COMMENTED:-0}" -gt 0 ] 2>/dev/null && {
+  echo "⚠ Commented-out code: $COMMENTED dòng (chắc chắn cần?)"; WARN=$((WARN+1))
+}
+
+# 3. Possible secrets
+for PATTERN in 'password.*=.*["'"'"'][^"'"'"']+["'"'"']' 'api.?key.*=.*["'"'"'][^"'"'"']+["'"'"']' 'secret.*=.*["'"'"'][^"'"'"']+["'"'"']' 'lin_api_'; do
+  FOUND=$(echo "$DIFF" | grep -cE "^\+.*$PATTERN" 2>/dev/null)
+  [ "${FOUND:-0}" -gt 0 ] 2>/dev/null && {
+    echo "🚨 Possible secret in code: $FOUND chỗ"; ISSUES=$((ISSUES+1))
+  }
+done
+
+# 4. Files ngoài plan (check context packs + plans)
+for FILE in $(echo "$DIFF" | grep "^+++" | sed 's|^+++ b/||' | grep -v "^$" | head -20); do
+  IN_PLAN=$(grep -l "$FILE" docs/superpowers/contexts/*.md docs/superpowers/plans/*.md 2>/dev/null | head -1)
+  if [ -z "$IN_PLAN" ]; then
+    echo "⚠ File ngoài plan: $FILE"
+    WARN=$((WARN+1))
+  fi
+done
+
+# 5. Hardcoded colors (nên dùng tokens)
+COLORS=$(echo "$DIFF" | grep -cE '^\+.*#[0-9a-fA-F]{6}' 2>/dev/null)
+[ "${COLORS:-0}" -gt 3 ] 2>/dev/null && {
+  echo "⚠ $COLORS hardcoded hex colors (nên dùng tokens)"; WARN=$((WARN+1))
+}
+
+echo ""
+if [ "$ISSUES" -gt 0 ]; then
+  echo "🚫 $ISSUES BLOCKING issues — fix trước commit"
+  exit 1
+elif [ "$WARN" -gt 0 ]; then
+  echo "⚠ $WARN warnings (cảnh báo, không chặn)"
+  exit 0
+else
+  echo "✓ DIFF CLEAN — commit được"
+  exit 0
+fi

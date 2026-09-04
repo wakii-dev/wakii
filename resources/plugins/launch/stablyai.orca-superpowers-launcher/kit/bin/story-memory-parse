@@ -1,0 +1,124 @@
+#!/usr/bin/env python3
+"""story-memory-parse — validate/roundtrip cho docs/superpowers/memory/*.md
+Format: entities `id | type | name | attrs`; triples `s | rel | o | ts`;
+provenance `triple-ref | source-type | source-ref` (triple-ref = `s | rel | o`).
+Rule: tên/attrs/source-ref KHÔNG được chứa chuỗi " | " (separator)."""
+import os, sys, re, pathlib
+
+# STORY_MEMORY_DIR override cho tests (fixture dir) — mặc định là memory dir của repo.
+MEM = pathlib.Path(os.environ.get("STORY_MEMORY_DIR",
+                                  str(pathlib.Path(__file__).resolve().parent.parent / "docs/superpowers/memory")))
+SEP = " | "
+TS_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+SRC_TYPES = {"linear-comment", "git-commit", "file"}
+ID_PREFIX_TYPE = {"story": "Story", "sf": "SF", "pattern": "Pattern", "bug": "Bug",
+                  "decision": "Decision", "git": "Task", "task": "Task", "file": "File", "role": "Person"}
+
+def read_ontology_markers(onto):
+    """Đọc `<!-- parser-classes: ... -->` + `<!-- parser-literals: ... -->` từ ontology.md
+    (Task 2 emit) — single source of truth, KHÔNG hardcode class list trùng lặp."""
+    if not onto.exists():
+        sys.exit(f"ontology không tồn tại (thiếu {onto}) — cần kèm ontology.md khi override STORY_MEMORY_DIR")
+    text = onto.read_text(encoding="utf-8")
+    def grab(tag, default):
+        m = re.search(rf"<!--\s*parser-{tag}:\s*(.*?)\s*-->", text)
+        return {c.strip() for c in m.group(1).split(",") if c.strip()} if m else default
+    classes = grab("classes", set(ID_PREFIX_TYPE.values()))
+    classes = classes or set(ID_PREFIX_TYPE.values())  # marker rỗng → fallback prefix map
+    return classes, grab("literals", set())
+
+def parse_file(path, nfields):
+    rows, errs = [], []
+    for ln, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        if not line.strip() or line.startswith("#"):
+            continue
+        parts = [p.strip() for p in line.split(SEP)]
+        if len(parts) != nfields:
+            errs.append(f"{path.name}:{ln}: cần {nfields} trường, được {len(parts)}: {line!r}")
+            continue
+        rows.append(parts)
+    return rows, errs
+
+def load():
+    errs = []
+    ents, e1 = parse_file(MEM / "entities.md", 4); errs += e1
+    tris, e2 = parse_file(MEM / "triples.md", 4); errs += e2
+    provs, e3 = parse_file(MEM / "provenance.md", 5); errs += e3
+    return ents, tris, provs, errs
+
+def cmd_validate():
+    ents, tris, provs, errs = load()
+    classes, literals = read_ontology_markers(MEM / "ontology.md")
+    ids, tri_keys = [], []
+    for r in ents:
+        eid, etype, name, attrs = r
+        if not eid or not etype or not name: errs.append(f"entity thiếu trường: {r}")
+        if etype not in classes: errs.append(f"entity type không thuộc ontology: {etype} ({eid})")
+        pref = eid.split(":", 1)[0] if ":" in eid else ""
+        if ID_PREFIX_TYPE.get(pref) != etype:
+            errs.append(f"id prefix '{pref}' không khớp type {etype}: {eid}")
+        if eid in ids: errs.append(f"entity id trùng: {eid}")
+        ids.append(eid)
+        if attrs and not re.match(r"^[a-z_]+=.[^;]*(;[a-z_]+=[^;]*)*$", attrs):
+            errs.append(f"attrs sai dạng k=v;k=v: {eid}: {attrs}")
+    for r in tris:
+        s, rel, o, ts = r
+        if not s or not rel or not o: errs.append(f"triple thiếu trường: {r}")
+        key = SEP.join([s, rel, o])
+        if key in tri_keys: errs.append(f"triple trùng S|P|O (chưa fuse?): {key}")
+        tri_keys.append(key)
+        if not TS_RE.match(ts): errs.append(f"ts sai YYYY-MM-DD: {ts} ({key})")
+    idset, tri_key_set = set(ids), set(tri_keys)
+    prov_key_set = {SEP.join(p[:3]) for p in provs}
+    for r in provs:
+        key, styp, sref = SEP.join(r[:3]), r[3], r[4]
+        if styp not in SRC_TYPES: errs.append(f"source-type sai enum: {styp} ({key})")
+        if not sref: errs.append(f"source-ref rỗng ({key})")
+        if key not in tri_key_set: errs.append(f"provenance orphan (không có triple): {key}")
+    for key in tri_keys:
+        if key not in prov_key_set:
+            errs.append(f"TRIPLE THIẾU PROVENANCE (bị từ chối): {key}")
+    for r in tris:
+        s, rel, o, _ = r
+        if rel in literals: continue
+        for ref in (s, o):
+            if ref not in idset: errs.append(f"tham chiếu entity không tồn tại: {ref} ({SEP.join(r[:3])})")
+    if errs:
+        print("VALIDATE FAIL:"); [print(" -", e) for e in errs]; sys.exit(1)
+    print(f"OK: {len(ents)} entities, {len(tris)} triples, {len(provs)} provenance lines")
+
+def cmd_roundtrip():
+    ents, tris, provs, errs = load()
+    if errs:
+        print("ROUNDTRIP FAIL (format lỗi, xem validate):"); [print(" -", e) for e in errs]; sys.exit(1)
+    # So sánh BYTE THẬT với writer chuẩn. Lưu ý: Path.read_text() bật universal-newline
+    # (\r\n → \n) nên KHÔNG dùng — phải read_bytes() để \r sống sót qua bước so sánh.
+    # Dạng canonical bắt buộc: file kết thúc đúng 1 \n cuối, không chứa \r, mọi dòng
+    # dữ liệu serialize lại đúng SEP. Thiếu \n cuối / CRLF / spacing lệch → FAIL.
+    for name, fname, rows in [("entities", "entities.md", ents), ("triples", "triples.md", tris), ("provenance", "provenance.md", provs)]:
+        raw = (MEM / fname).read_bytes().decode("utf-8")
+        fail = None
+        if not raw.endswith("\n"):
+            fail = f"thiếu ký tự \\n cuối file"
+        elif "\r" in raw:
+            fail = f"chứa \\r (CRLF?) — canonical là LF thuần"
+        if fail:
+            print(f"ROUNDTRIP FAIL {name} ({fail}):"); sys.exit(1)
+        lines = raw[:-1].split("\n") if raw else []
+        rebuilt, i = [], 0
+        for line in lines:
+            if not line.strip() or line.startswith("#"):
+                rebuilt.append(line)
+            else:
+                rebuilt.append(SEP.join(rows[i])); i += 1
+        if "\n".join(rebuilt) + "\n" != raw:
+            print(f"ROUNDTRIP FAIL {name} (không byte-identical):")
+            import difflib
+            for d in difflib.unified_diff(lines, rebuilt, lineterm=""): print(" ", d)
+            sys.exit(1)
+    print("ROUNDTRIP OK: byte-identical")
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2 or sys.argv[1] not in ("validate", "roundtrip"):
+        sys.exit("usage: story-memory-parse {validate|roundtrip}")
+    (cmd_validate if sys.argv[1] == "validate" else cmd_roundtrip)()

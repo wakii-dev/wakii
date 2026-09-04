@@ -1,0 +1,58 @@
+#!/bin/bash
+# story-post-merge — verify SAU khi merge: tests + browser + agents
+# Usage: story-post-merge <dest-branch> [--port <n>] [--login user:pass]
+set -u
+DEST="${1:?usage: story-post-merge <dest-branch> [--port n]}"
+PORT=3001; LOGIN=""
+shift
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --port) PORT="$2"; shift 2 ;;
+    --login) LOGIN="$2"; shift 2 ;;
+    *) shift ;;
+  esac
+done
+
+FAIL=0
+echo "═══ POST-MERGE VERIFY: $DEST ═══"
+
+# 1. Tests trên nhánh đích
+echo "── Tests:"
+CUR_BRANCH=$(git branch --show-current)
+if [ "$CUR_BRANCH" != "$DEST" ]; then
+  echo "  (đang ở $CUR_BRANCH — checkout $DEST để test)"
+  git checkout "$DEST" 2>/dev/null | head -1
+fi
+cd server 2>/dev/null && npx vitest run --reporter=verbose 2>&1 | tail -3
+TESTS_OK=$?
+[ "$TESTS_OK" != "0" ] && { echo "❌ Tests FAIL trên $DEST"; FAIL=1; }
+cd ..
+
+# 2. Browser vẫn hoạt động (nếu có --login)
+if [ -n "$LOGIN" ]; then
+  echo "── Browser:"
+  ~/.claude/bin/story-test "http://localhost:$PORT" --login "$LOGIN" --flow "orders" 2>&1 | tail -3
+  [ $? != 0 ] && { echo "❌ Browser FAIL sau merge"; FAIL=1; }
+fi
+
+# 3. Agents vẫn sống
+echo "── Agents:"
+~/.claude/bin/story-resume --check 2>/dev/null | while IFS='|' read -r sf verdict detail; do
+  [ -n "$sf" ] || continue
+  case "$verdict" in
+    STALLED*) echo "  ⚠ $sf: $verdict (merge có thể ảnh hưởng?)";;
+    *) echo "  ✓ $sf: $verdict";;
+  esac
+done
+
+# Quay về branch cũ
+[ "$CUR_BRANCH" != "$DEST" ] && git checkout "$CUR_BRANCH" 2>/dev/null | head -1
+
+echo ""
+if [ "$FAIL" = "1" ]; then
+  echo "🚨 POST-MERGE FAIL — merge có thể đã vỡ gì. Investigate."
+  exit 1
+else
+  echo "✓ POST-MERGE PASS — merge an toàn"
+  exit 0
+fi

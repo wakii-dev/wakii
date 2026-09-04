@@ -1,0 +1,50 @@
+#!/bin/bash
+# story-top — một màn hình theo dõi MỌI agent đang chạy (Orca + ngoài Orca).
+# Chạy trong terminal riêng (Orca pane hoặc iTerm): watch-style tự refresh.
+#
+# Usage: story-top              # in 1 lần
+#        story-top --loop [10]  # tự refresh mỗi N giây (mặc định 10)
+set -u
+INTERVAL=10; LOOP=0
+while [ $# -gt 0 ]; do case "$1" in --loop) LOOP=1; [ $# -ge 2 ] && [[ "$2" =~ ^[0-9]+$ ]] && INTERVAL="$2" ;; esac; shift; done
+
+render() {
+  clear
+  echo "╔══════════════════════════════════════════════════════════════════════════╗"
+  echo "║  STORY TOP — $(date '+%H:%M:%S') · mọi stories, mọi agents, một màn     ║"
+  echo "╚══════════════════════════════════════════════════════════════════════════╝"
+  printf "%-24s %-13s %-10s %-11s %s\n" "SF" "VERDICT" "PLAN" "COMMIT" "HOẠT ĐỘNG CUỐI"
+  echo "────────────────────────────────────────────────────────────────────────────"
+  for ws in "$HOME"/orca/workspaces/*/; do
+    repo=$(basename "$ws")
+    for wt in "$ws"sf-*/; do
+      [ -d "$wt" ] || continue; [ -e "$wt/.git" ] || git -C "$wt" rev-parse --git-dir >/dev/null 2>&1 || continue
+      sf=$(basename "$wt")
+      # verdict: từ story-resume --check (nhanh: gọi hàm logic trực tiếp không — gọi CLI mỗi SF đắt;
+      # dùng tín hiệu nội bộ: process > log > git-age)
+      if pgrep -fq "claude.*$sf" 2>/dev/null; then v="RUNNING*"; vcol="\033[32m"
+      elif [ -f "$wt/.agent-session.log" ] && [ $(( $(date +%s) - $(stat -f %m "$wt/.agent-session.log") )) -lt 30 ]; then v="RUNNING"; vcol="\033[32m"
+      else
+        age=$(( $(date +%s) - $(stat -f %m "$wt/.git" 2>/dev/null || git -C "$wt" log -1 --format=%ct) ))
+        if [ "$age" -lt 7200 ]; then v="IDLE?"; vcol="\033[33m"; else v="STALE"; vcol="\033[31m"; fi
+      fi
+      # plan ticks (file plan mới nhất khớp sf)
+      p1=$(echo "$sf" | cut -d- -f1-2); p2=$(echo "$p1" | tr -d '-')
+      plan=""
+      for f in "$wt"/docs/superpowers/plans/*.md; do
+        [ -f "$f" ] || continue
+        case "$(basename "$f")" in *"$p1"*|*"$p2"*) plan="$f"; break ;; esac
+      done
+      ticks="—"; [ -n "$plan" ] && ticks="$(grep -c '^\- \[x\]' "$plan" 2>/dev/null)/$(($(grep -c '^\- \[x\]' "$plan" 2>/dev/null)+$(grep -c '^\- \[ \]' "$plan" 2>/dev/null)))"
+      # commit cuối + dirty
+      last=$(git -C "$wt" log -1 --format='%cr' 2>/dev/null | head -c 10)
+      dirty=$(git -C "$wt" status --short 2>/dev/null | grep -cv "^??\.agent" )
+      subj=$(git -C "$wt" log -1 --format='%s' 2>/dev/null | head -c 34)
+      printf "%-24s ${vcol}%-13s\033[0m %-10s %-11s %s (+%d dirty)\n" "${sf:0:24}" "$v" "$ticks" "$last" "$subj" "$dirty"
+    done
+  done
+  echo "────────────────────────────────────────────────────────────────────────────"
+  echo "RUNNING*=có process claude · RUNNING=log mới · IDLE?<2h chưa commit · legend: xong SF → story-verify"
+}
+
+if [ "$LOOP" = 1 ]; then while true; do render; sleep "$INTERVAL"; done; else render; fi

@@ -1,0 +1,115 @@
+{
+  "manifestVersion": 1,
+  "id": "orca-superpowers-launcher",
+  "publisher": "stablyai",
+  "name": "Orca Superpowers Launcher",
+  "version": "1.6.0",
+  "description": "Control deck panel for orca-superpowers-workflow. v1.6: 9-agent grid, PR story flow (gh pr create, 1 PR/story), Story Ops +memory/attempts/visual-regress, 5-gate completion, bracket editor (drag/add/edit/delete + share PNG/markdown) với layout memoized không chồng node.",
+  "engines": {
+    "orca": ">=1.4.0"
+  },
+  "pluginApi": 1,
+  "main": "main.mjs",
+  "contributes": {
+    "panels": [
+      {
+        "id": "superpowers",
+        "title": "Superpowers",
+        "icon": "zap",
+        "entry": "panel.html"
+      }
+    ],
+    "commands": [
+      {
+        "id": "superpowers.start",
+        "title": "Superpowers: Start Workflow",
+        "context": "worktree"
+      },
+      {
+        "id": "superpowers.storyOps",
+        "title": "Superpowers: Story Ops (stall + DoD verify)",
+        "context": "global"
+      },
+      {
+        "id": "superpowers.plan",
+        "title": "Superpowers: Plan (Phase 0-2)",
+        "context": "worktree"
+      },
+      {
+        "id": "superpowers.quickFix",
+        "title": "Superpowers: Quick Fix (skip Phase 0)",
+        "context": "worktree"
+      },
+      {
+        "id": "superpowers.continuePlan",
+        "title": "Superpowers: Continue Plan",
+        "context": "worktree"
+      },
+      {
+        "id": "superpowers.resume",
+        "title": "Superpowers: Resume Workflow",
+        "context": "worktree"
+      },
+      {
+        "id": "superpowers.status",
+        "title": "Superpowers: Print Status",
+        "context": "worktree"
+      },
+      {
+        "id": "superpowers.resolve",
+        "title": "Superpowers: Resolve Gate",
+        "context": "worktree"
+      },
+      {
+        "id": "superpowers.storyLoad",
+        "title": "Superpowers: Story Load (bracket data)",
+        "context": "worktree"
+      },
+      {
+        "id": "superpowers.storyList",
+        "title": "Superpowers: Story List (scan brackets)",
+        "context": "global"
+      },
+      {
+        "id": "superpowers.debugEnv",
+        "title": "Superpowers: Debug Worker Env",
+        "context": "global"
+      },
+      {
+        "id": "superpowers.storyTasks",
+        "title": "Superpowers: Story Tasks (agent activity)",
+        "context": "global"
+      },
+      {
+        "id": "superpowers.storyStates",
+        "title": "Superpowers: Story States (children by epic)",
+        "context": "global"
+      }
+    ],
+    "events": [
+      {
+        "on": "worktree.created"
+      },
+      {
+        "on": "agent.status.changed"
+      }
+    ]
+  },
+  "capabilities": [
+    {
+      "kind": "workspace:read"
+    },
+    {
+      "kind": "terminal:send"
+    },
+    {
+      "kind": "notifications:show"
+    },
+    {
+      "kind": "events:subscribe"
+    },
+    {
+      "kind": "storage"
+    }
+  ]
+}

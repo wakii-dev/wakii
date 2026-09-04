@@ -1,0 +1,127 @@
+#!/bin/bash
+# story-status — 30-giây nắm tình hình mọi story active
+# Cho bất kỳ session/máy nào: story nào đang chạy, SF nào Done/chạy/chờ,
+# worktree nào sống, có agent nào treo không. Không cần context trước đó.
+#
+# Usage: story-status [--json] [--repo <path>]
+#        story-status --tail   (+ section 4: mỗi SF đang làm gì — dòng
+#                               activity cuối từ terminal, thay vì mò tay)
+set -e
+TAIL="${1:-}"
+REPO="${REPO:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+ORCA_BIN="${ORCA_BIN:-/opt/homebrew/bin/orca}"
+# story worktrees sống ở DEV runtime — luôn thử dev trước, production sau
+ORCA_DEV="$HOME/Library/Application Support/orca-dev"
+ORCA_PROD="$HOME/Library/Application Support/orca"
+
+# 1. Bracket files = story registry — quét repo chính + mọi sf-* worktree
+#    (bracket thường do SF-1 author, nằm trong worktree của nó)
+BRACKETS=()
+for d in "$REPO" "$HOME"/orca/workspaces/*/* "$HOME"/orca/workspaces/*; do
+  bd="$d/docs/superpowers/brackets"
+  [ -d "$bd" ] && for f in "$bd"/*.md; do
+    [ -f "$f" ] && BRACKETS+=("$f")
+  done
+done
+# dedup theo filename — giữ bản MỚI NHẤT (bash 3.2 compatible, không -A)
+FINAL=()
+for f in "${BRACKETS[@]}"; do
+  n=$(basename "$f")
+  dup=""
+  for i in "${!FINAL[@]}"; do
+    if [ "$(basename "${FINAL[$i]}")" = "$n" ]; then
+      # có trùng — giữ file mới hơn
+      if [ "$f" -nt "${FINAL[$i]}" ]; then FINAL[$i]="$f"; fi
+      dup=1
+    fi
+  done
+  [ -z "$dup" ] && FINAL+=("$f")
+done
+[ ${#FINAL[@]} -eq 0 ] && { echo "No brackets found — không có story."; exit 0; }
+
+echo "═══ STORIES (from brackets/) ═══"
+for bf in "${FINAL[@]}"; do
+  [ -f "$bf" ] || continue
+  name=$(basename "$bf" .md)
+  epic=$(grep -m1 '^# Story:' "$bf" | sed 's/# Story: //')
+  dest=$(grep -m1 '^Destination:' "$bf" | sed 's/Destination: //')
+  sfs=$(grep -c '^## SF-' "$bf")
+
+  # Linear states cho SFs của story này (nếu có linear: IDs + orca auth)
+  states=""
+  for id in $(grep -oE 'linear: [A-Z]+-[0-9]+' "$bf" | awk '{print $2}'); do
+    st=$("$ORCA_BIN" linear issue "$id" --json 2>/dev/null \
+      | python3 -c "import json,sys;d=json.load(sys.stdin);print(d.get('result',{}).get('issue',{}).get('state',{}).get('name','?'))" 2>/dev/null || echo "?")
+    states="$states $id:$st"
+  done
+  # không auth → gọn thành 1 ghi chú thay vì dãy "?"
+  echo ""
+  echo "● $epic"
+  echo "  bracket: $name · $sfs SFs · đích: ${dest:-?}"
+  if echo "$states" | grep -q .; then
+    if echo "$states" | grep -qv ':' ; then :; fi
+    unknowns=$(echo "$states" | grep -o ':?' | wc -l | tr -d ' ')
+    total_sf=$(echo "$states" | wc -w | tr -d ' ')
+    if [ "$unknowns" = "$total_sf" ] && [ "$total_sf" -gt 0 ]; then
+      echo "  states: (Linear unavailable — $total_sf SFs, chạy orca open để auth)"
+    else
+      echo "  states:$states"
+    fi
+  fi
+done
+
+# 2. Worktrees sf-* đang sống
+echo ""
+echo "═══ ACTIVE SF WORKTREES ═══"
+found_wt=0
+for ws in "$HOME"/orca/workspaces/*/; do
+  for wt in "$ws"sf-*/; do
+    [ -d "$wt" ] || continue
+    found_wt=1
+    name=$(basename "$wt")
+    last=$(cd "$wt" && git log -1 --format='%ar — %s' 2>/dev/null | head -c 60)
+    echo "  $name: $last"
+  done
+done
+[ "$found_wt" = 0 ] && echo "  (không có — sạch)"
+
+# 3. Agents đang chạy (terminals với title trong sf-* worktrees)
+echo ""
+echo "═══ AGENTS (terminals) ═══"
+# thử dev runtime trước, fallback production
+TL=$(ORCA_USER_DATA_PATH="$ORCA_DEV" "$ORCA_BIN" terminal list --json 2>/dev/null \
+  || ORCA_USER_DATA_PATH="$ORCA_PROD" "$ORCA_BIN" terminal list --json 2>/dev/null \
+  || echo '{}')
+echo "$TL" | python3 -c "
+import json, sys
+try: d = json.load(sys.stdin)
+except: sys.exit(0)
+for t in d.get('result', {}).get('terminals', []):
+    wt = (t.get('worktreeId') or '').split('::')[1].split('/')[-1] if t.get('worktreeId') else ''
+    title = t.get('title') or ''
+    if wt.startswith('sf-') and title.strip():
+        print(f'  {wt}: {title.strip()[:70]}')" 2>/dev/null || echo "  (terminal list unavailable)"
+
+if [ "$TAIL" = "--tail" ]; then
+  echo ""
+  echo "═══ SF ACTIVITY (dòng cuối mỗi terminal) ═══"
+  TL=$(ORCA_USER_DATA_PATH="$ORCA_DEV" "$ORCA_BIN" terminal list --json 2>/dev/null \
+    || ORCA_USER_DATA_PATH="$ORCA_PROD" "$ORCA_BIN" terminal list --json 2>/dev/null \
+    || echo '{}')
+  echo "$TL" | python3 -c "
+import json, sys
+try: d = json.load(sys.stdin)
+except: sys.exit(0)
+for t in d.get('result', {}).get('terminals', []):
+    wt = (t.get('worktreeId') or '').split('/')[-1]
+    if wt.startswith('sf-') and (t.get('title') or '').strip():
+        print(wt + '\t' + t.get('handle'))" 2>/dev/null | while IFS=$'\t' read -r wt handle; do
+    last=$(ORCA_USER_DATA_PATH="$ORCA_DEV" "$ORCA_BIN" terminal read --terminal "$handle" --limit 30 2>/dev/null \
+      | grep -E "⏺|✔|Running…|Working" | tail -1 | sed 's/^[[:space:]]*//' | head -c 100)
+    [ -z "$last" ] && last="(không đọc được activity)"
+    printf '  %-38s %s\n' "$wt" "$last"
+  done
+fi
+
+echo ""
+echo "Tips: story-status [--repo <path>] · --tail: activity mỗi SF · bracket: cat <file ở trên>"

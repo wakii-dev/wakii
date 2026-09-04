@@ -1,0 +1,132 @@
+#!/bin/bash
+# story-launch — NGUỒN DUY NHẤT dựng SF launch prompt + tạo worktree.
+# PM / watchdog --launch-next / panel đều gọi tool này — hết nhân bản template
+# 3 chỗ (bài học 2026-08-28: gate 4b phải sửa 2 chỗ, launch tay viết lần 3).
+#
+# Usage:
+#   story-launch SF-2 [--repo <path>] [--dry-run]      # tự tìm bracket
+#   story-launch --sf SF-2 --bracket <file> [--dry-run] # caller đã có context
+# Validate: đã approve (có linear) · chưa Done · chưa có worktree · deps Done.
+set -u
+
+ORCA_BIN="${ORCA_BIN:-/opt/homebrew/bin/orca}"
+[ -x "$ORCA_BIN" ] || ORCA_BIN="/Applications/Orca.app/Contents/Resources/bin/orca"
+ORCA_DEV="$HOME/Library/Application Support/orca-dev"
+ORCA_PROD="$HOME/Library/Application Support/orca"
+orca() {
+  ORCA_USER_DATA_PATH="$ORCA_DEV" "$ORCA_BIN" "$@" 2>/dev/null \
+    || ORCA_USER_DATA_PATH="$ORCA_PROD" "$ORCA_BIN" "$@" 2>/dev/null || return 1
+}
+
+linear_state() { # $1 issue-id → state name ("" nếu không biết) — retry 1 lần
+  local key="${LINEAR_API_KEY:-}"
+  if [ -z "$key" ] && [ -f "$HOME/.claude/.linear-key" ]; then
+    key=$(head -1 "$HOME/.claude/.linear-key" | tr -d '[:space:]')
+  fi
+  [ -z "$key" ] && { echo ""; return; }
+  local st i
+  for i in 1 2; do
+    st=$(curl -s -m 10 -X POST https://api.linear.app/graphql \
+      -H "Authorization: $key" -H "Content-Type: application/json" \
+      -d "{\"query\":\"query{issue(id:\\\"$1\\\"){state{name}}}\"}" 2>/dev/null \
+      | python3 -c "import json,sys
+try: print(json.load(sys.stdin)['data']['issue']['state']['name'])
+except: print('')" 2>/dev/null)
+    [ -n "$st" ] && { echo "$st"; return; }
+    sleep 1
+  done
+  echo ""
+}
+
+SF_ARG=""; BRACKET=""; REPO_ARG=""; DRY_RUN=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --sf) SF_ARG="$2"; shift ;;
+    --bracket) BRACKET="$2"; shift ;;
+    --repo) REPO_ARG="$2"; shift ;;
+    --dry-run) DRY_RUN=1 ;;
+    *) SF_ARG="$1" ;;
+  esac
+  shift
+done
+[ -n "$SF_ARG" ] || { echo "usage: story-launch SF-N [--repo <path>] [--dry-run]"; exit 2; }
+SF_NUM=$(echo "$SF_ARG" | grep -oE 'SF-[0-9]+' || echo "$SF_ARG" | grep -oE 'sf-[0-9]+' | tr 'a-z' 'A-Z')
+[ -n "$SF_NUM" ] || { echo "không hiểu SF: $SF_ARG"; exit 2; }
+N=$(echo "$SF_NUM" | cut -d- -f2)
+
+# ── tìm bracket nếu chưa có
+if [ -z "$BRACKET" ]; then
+  roots=()
+  rl=$(orca repo list --json 2>/dev/null | python3 -c "
+import json,sys
+try:
+    for r in json.load(sys.stdin).get('result',{}).get('repos',[]):
+        if r.get('path'): print(r['path'])
+except: pass" 2>/dev/null)
+  while IFS= read -r p; do [ -n "$p" ] && roots+=("$p"); done <<< "$rl"
+  for p in "$HOME"/orca/projects/*; do [ -d "$p" ] && roots+=("$p"); done
+  [ -n "$REPO_ARG" ] && roots=("$REPO_ARG" "${roots[@]}")
+  for repo in "${roots[@]}"; do
+    for bf in "$repo"/docs/superpowers/brackets/*.md; do
+      [ -f "$bf" ] || continue
+      if grep -q "^## ${SF_NUM}[ :]" "$bf" 2>/dev/null; then BRACKET="$bf"; REPO="${repo%/}"; break 2; fi
+    done
+  done
+else
+  REPO="${REPO_ARG:-$(dirname "$(dirname "$(dirname "$(dirname "$BRACKET")")")")}"
+fi
+[ -f "$BRACKET" ] || { echo "không tìm thấy bracket chứa $SF_NUM"; exit 2; }
+REPOB=$(basename "$REPO")
+
+# ── parse SF section
+IFS='|' read -r TITLE LINEAR DEPS << EOF
+$(awk -v sfx="$SF_NUM" '
+  $0 ~ "^## " sfx "([ :]|$)" { in_sf = 1; t = $0; sub(/^## SF-[0-9]+ +/, "", t); title = t; next }
+  /^## / { in_sf = 0 }
+  in_sf && /^linear:/ { linear = $2 }
+  in_sf && /^Depends on:/ { sub(/^Depends on: */, ""); deps = $0 }
+  END { print title "|" linear "|" deps }' "$BRACKET")
+EOF
+DEST=$(grep -m1 '^Destination:' "$BRACKET" | sed 's/Destination: *//;s/ *$//')
+EPIC=$(grep -m1 '^# Story:' "$BRACKET" | sed 's/# Story: *//;s/ *—.*//;s/ *- .*//')
+[ -n "$LINEAR" ] || { echo "$SF_NUM chưa approve (không có linear ID) — không thuộc quyền launch"; exit 1; }
+
+# ── validate
+ST=$(linear_state "$LINEAR")
+[ "$ST" = "Done" ] && { echo "$SF_NUM ($LINEAR) đã Done — không launch lại"; exit 0; }
+WT=$(ls -d "$HOME"/orca/workspaces/"$REPOB"/sf-"$N"-* 2>/dev/null | head -1)
+[ -n "$WT" ] && { echo "$SF_NUM đã có worktree: $(basename "$WT")"; exit 0; }
+for d in $(echo "$DEPS" | tr ',' ' '); do
+  d=$(echo "$d" | tr -d ' ')
+  echo "$d" | grep -q '^SF-' || continue
+  dn=$(echo "$d" | sed 's/SF-//')
+  depid=$(awk -v dn="SF-$dn" '
+    $0 ~ "^## " dn "([ :]|$)" { in_sf = 1; next }
+    /^## / { in_sf = 0 }
+    in_sf && /^linear:/ { gsub(/.*linear: /,""); print; exit }' "$BRACKET")
+  [ -n "$depid" ] || { echo "chờ: dep $d chưa có linear ID"; exit 1; }
+  dst=$(linear_state "$depid")
+  [ "$dst" = "Done" ] || { echo "chờ: dep $d = $depid ($dst)"; exit 1; }
+done
+
+# ── prompt CHUẨN (nguồn duy nhất — mọi caller dùng bản này)
+BFILE=$(basename "$BRACKET")
+# slug: chỉ giữ từ ASCII ≥3 chữ (tiếng Việt strip hết dash-xấu — bài học
+# 'sf-5-print-convergence-v-n-n-bi-n-b'), fallback gọn
+SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/ /g' \
+  | tr ' ' '\n' | awk 'length($0)>=3' | head -3 | paste -sd- - | cut -c1-30)
+[ -n "$SLUG" ] || SLUG="sf-$N-convergence"
+STORY_DIR=$(basename "$BRACKET" .md)
+PACK="docs/superpowers/contexts/sf-$N.md"
+[ -f "$(dirname "$(dirname "$(dirname "$BRACKET")")")/contexts/$STORY_DIR/sf-$N.md" ] && PACK="docs/superpowers/contexts/$STORY_DIR/sf-$N.md"
+PROMPT="Use orca-superpowers-workflow skill for ONE sub-feature: $TITLE ($LINEAR). Story: $EPIC — READ FIRST: context pack $PACK (spec slice + touch map + ACCEPTANCE user-visible + boundary; frame Figma nào trỏ capture docs/superpowers/figma/<story>/<frame-id>.md) + bracket docs/superpowers/brackets/$BFILE. Epic đã trả lời mọi câu — KHÔNG re-ask; câu hỏi mới → REQUIREMENT-GAP comment lên epic. Run full Phase 0-5 cho SF này. Linear issue: $LINEAR (set In Progress at start). Worktree base: $DEST. GIỚI HẠN CỨNG: merge/ff CHỈ trong $DEST — TUYỆT ĐỐI KHÔNG đụng main (main là gate của USER; sf-2 FI-187 từng ff main 28/8 — vi phạm). COMPLETE run checklist theo thứ tự — KHÔNG dừng trước bước 5: (1) code+tests (2) tick plan file (2b) ROLLING REVIEW: mỗi 4-5 tasks dispatch code-reviewer ĐỘC LẬP trên diff nhóm đó — KHÔNG dồn 1 review lớn cuối SF (bài học FI-187: review dồn = agent đứng chờ 30+ phút) (2c-pre) ★ Chạy ~/.claude/bin/story-test http://localhost:<port> --login <user>:<pass> --flow <screens> → PHẢI exit 0 (PASS). Nếu FAIL → FIX trước khi tiếp. Sau khi PASS → touch .browser-test-passed trong worktree (marker cho story-verify B0).
+(2c) ★ RULE 0 — BROWSER VERIFY: MỞ APP trong browser (orca tab create --url http://localhost:<port> hoặc curl nếu chỉ API) → TỰ ĐI TRỌN FLOW (login/navigate/thao tác) → CHỤP SCREENSHOT → Nếu UI sai/không navigate/flow đứt → FIX TRƯỚC KHI TIẾP. KHÔNG ĐƯỢC nói "xong" khi chưa tự thấy nó hoạt động. (3) reviewer VERDICT APPROVED — post VERDICT comment lên $LINEAR (KHÔNG để kẹt outbox) (4) MERGE vào $DEST (merge-ngược + ancestor-guard) + audit comment merge-hash (4b) chạy ~/.claude/bin/story-verify sf-$N-$SLUG — sạch mới tiếp (5) RỒI MỚI $LINEAR Done. Cleanup: chỉ xoá worktree + NHÁNH SF mình — TUYỆT ĐỐI KHÔNG xoá $DEST (nhánh đích giữ làm audit; sf-2 FI-187 từng xoá nhánh đích 28/8 → cron launch-next chết 3 tick, phải recreate). Done TRƯỚC merge = INCOMPLETE. Linear: orca keychain có thể hỏng — fail Could not decrypt thì đọc key ~/.claude/.linear-key gọi GraphQL (Authorization: <key> header, POST https://api.linear.app/graphql). Shell: probes cmd > log; echo \$? — KHÔNG pipe head/tail. Blocked 2 lần cùng nguyên nhân → báo cụ thể. SSL/cert → đợi 30s retry tối đa 3 lần."
+
+if [ "$DRY_RUN" = 1 ]; then
+  echo "── DRY-RUN launch sf-$N-$SLUG ($LINEAR) từ $DEST"
+  echo "$PROMPT" | head -6; echo "..."; exit 0
+fi
+echo "── launch sf-$N-$SLUG ($LINEAR) ← $DEST"
+orca worktree create --name "sf-$N-$SLUG" --linear-issue "$LINEAR" \
+  --base-branch "$DEST" --agent claude --no-parent --prompt "$PROMPT" --json >/dev/null 2>&1 \
+  && echo "LAUNCHED ✓ sf-$N-$SLUG" || { echo "LAUNCH FAIL — read-back: worktree list"; exit 1; }

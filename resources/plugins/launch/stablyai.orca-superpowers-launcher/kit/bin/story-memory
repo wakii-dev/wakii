@@ -1,0 +1,321 @@
+#!/usr/bin/env python3
+"""story-memory — consumer layer cho graph memory của Story Team OS (CLI 5, SF-3 STOS-1)
+
+Memory files SF-1 (source-of-truth — CLI CHỈ ĐỌC, không bao giờ ghi ngược):
+  docs/superpowers/memory/{entities,triples,provenance}.md — 1 dòng = 1 record,
+  các trường cách nhau bằng " | " (entities: id|type|name|attrs · triples:
+  s|rel|o|ts · provenance: s|rel|o|source-type|source-ref).
+
+Subcommands:
+  index  [--repo <path>] [--since <watermark>]
+         Parse files → SQLite. Idempotent: chạy lại = rebuild sạch (DROP+CREATE).
+         --since KHÔNG lọc dữ liệu — chỉ update watermark state file.
+  query  "<tự nhiên>"          Keyword-tokenize → LIKE match entity + triple text,
+         in kèm provenance (v1 keyword, KHÔNG NLP/embedding; FTS5 = future).
+  inject "<task text>" [--top N]
+         Match keywords với graph → top-N patterns (default 3) + provenance,
+         format block sẵn để dính vào prompt. 0 match → in nothing, exit 0.
+  stats                          Entities theo type · triples theo relation ·
+         provenance coverage %.
+
+Env (cho tests / fixture): STORY_MEMORY_DIR (ghi đè memory dir — như
+story-memory-parse), STORY_MEMORY_DB (mặc định ~/.story-memory.db — disposable,
+xoá + index lại bất cứ lúc nào), STORY_MEMORY_STATE (mặc định
+~/.story-memory.state — đồng sở hữu watermark với SF-2 watchdog; CLI chỉ
+read-modify-write dòng since=/indexed_at=, giữ nguyên dòng khác).
+
+Precedence memory dir: STORY_MEMORY_DIR > --repo <path>/docs/superpowers/memory
+> repo của script này."""
+import os
+import sys
+import pathlib
+import argparse
+import sqlite3
+import datetime
+import re
+
+SEP = " | "
+DEFAULT_MEM = pathlib.Path(__file__).resolve().parent.parent / "docs/superpowers/memory"
+DEFAULT_DB = pathlib.Path.home() / ".story-memory.db"
+DEFAULT_STATE = pathlib.Path.home() / ".story-memory.state"
+
+
+def mem_dir(args) -> pathlib.Path:
+    if os.environ.get("STORY_MEMORY_DIR"):
+        return pathlib.Path(os.environ["STORY_MEMORY_DIR"])
+    if getattr(args, "repo", None):
+        return pathlib.Path(args.repo) / "docs/superpowers/memory"
+    return DEFAULT_MEM
+
+
+def db_path() -> pathlib.Path:
+    return pathlib.Path(os.environ.get("STORY_MEMORY_DB", str(DEFAULT_DB)))
+
+
+def state_path() -> pathlib.Path:
+    return pathlib.Path(os.environ.get("STORY_MEMORY_STATE", str(DEFAULT_STATE)))
+
+
+def parse_mem_file(path: pathlib.Path, nfields: int):
+    """Đọc 1 memory file theo format SF-1 — trả (rows, errs). Giống story-memory-parse:
+    skip dòng blank/`#`, split " | ", strip; sai số trường = lỗi (index từ chối)."""
+    rows, errs = [], []
+    if not path.exists():
+        return rows, [f"thiếu file: {path}"]
+    for ln, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        if not line.strip() or line.startswith("#"):
+            continue
+        parts = [p.strip() for p in line.split(SEP)]
+        if len(parts) != nfields:
+            errs.append(f"{path.name}:{ln}: cần {nfields} trường, được {len(parts)}: {line!r}")
+            continue
+        rows.append(parts)
+    return rows, errs
+
+
+def update_watermark(val: str):
+    """RMW state file — chỉ đụng dòng since=/indexed_at=, giữ nguyên dòng khác
+    (file đồng sở hữu với SF-2 watchdog watermark)."""
+    sp = state_path()
+    lines = []
+    if sp.exists():
+        lines = [l for l in sp.read_text(encoding="utf-8").splitlines()
+                 if l.strip() and not l.startswith(("since=", "indexed_at="))]
+    lines.append(f"since={val}")
+    lines.append(f"indexed_at={datetime.datetime.now().isoformat(timespec='seconds')}")
+    sp.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def connect_db():
+    """Mở DB — row_factory dict cho query code gọn. DB thiếu = lỗi caller xử lý."""
+    dbp = db_path()
+    if not dbp.exists():
+        print(f"story-memory: chưa có index ({dbp}) — chạy 'story-memory index' trước",
+              file=sys.stderr)
+        sys.exit(1)
+    con = sqlite3.connect(str(dbp))
+    con.row_factory = sqlite3.Row
+    return con
+
+
+def cmd_index(args):
+    mem = mem_dir(args)
+    ents, e1 = parse_mem_file(mem / "entities.md", 4)
+    tris, e2 = parse_mem_file(mem / "triples.md", 4)
+    provs, e3 = parse_mem_file(mem / "provenance.md", 5)
+    errs = e1 + e2 + e3
+    if errs:
+        print("INDEX FAIL (format sai — xem story-memory-parse validate):")
+        for e in errs:
+            print(" -", e)
+        sys.exit(1)
+
+    con = sqlite3.connect(str(db_path()))
+    try:
+        with con:  # 1 transaction — idempotent: DROP + CREATE + INSERT đầy đủ
+            con.executescript("""
+                DROP TABLE IF EXISTS entities;
+                DROP TABLE IF EXISTS triples;
+                DROP TABLE IF EXISTS provenance;
+                CREATE TABLE entities(
+                    id TEXT PRIMARY KEY, type TEXT NOT NULL, name TEXT NOT NULL, attrs TEXT);
+                CREATE TABLE triples(
+                    s TEXT NOT NULL, rel TEXT NOT NULL, o TEXT NOT NULL, ts TEXT);
+                CREATE INDEX idx_triples_s ON triples(s);
+                CREATE INDEX idx_triples_o ON triples(o);
+                CREATE TABLE provenance(
+                    s TEXT NOT NULL, rel TEXT NOT NULL, o TEXT NOT NULL,
+                    source_type TEXT NOT NULL, source_ref TEXT NOT NULL);
+                CREATE INDEX idx_prov_t ON provenance(s, rel, o);
+            """)
+            con.executemany("INSERT INTO entities VALUES (?,?,?,?)", ents)
+            con.executemany("INSERT INTO triples VALUES (?,?,?,?)", tris)
+            con.executemany("INSERT INTO provenance VALUES (?,?,?,?,?)", provs)
+    finally:
+        con.close()
+    print(f"index OK: {len(ents)} entities, {len(tris)} triples, "
+          f"{len(provs)} provenance → {db_path()}")
+    if args.since:
+        update_watermark(args.since)
+        print(f"watermark since={args.since} → {state_path()}")
+
+
+STOPWORDS = {
+    # EN phổ biến + VN chức năng — đủ dùng, không pretended NLP
+    "the", "and", "for", "with", "that", "this", "from", "into", "not", "are",
+    "was", "were", "has", "have", "had", "will", "would", "should", "could",
+    "của", "và", "cho", "là", "có", "không", "các", "những", "được", "bị",
+    "đã", "sẽ", "với", "để", "thì", "trong", "trên", "một", "này", "đó",
+    "gì", "nào", "khi", "ra", "về", "từ",
+}
+
+
+def tokenize(text: str):
+    r"""lowercase → split theo \W unicode → bỏ stopword/token ngắn (<3) và số thuần.
+    Trả RAW token — người dùng (LIKE qua like_any / python `in`) tự escape nếu cần."""
+    toks = []
+    for t in re.split(r"\W+", text.lower(), flags=re.UNICODE):
+        if len(t) >= 3 and not t.isdigit() and t not in STOPWORDS and t not in toks:
+            toks.append(t)
+    return toks
+
+
+def like_any(column: str, toks):
+    """(where_sql, params) — column LIKE ANY token. Escape %/_ + ESCAPE '\'."""
+    esc = [t.replace("%", r"\%").replace("_", r"\_") for t in toks]
+    where = " OR ".join(f"{column} LIKE ? ESCAPE '\\'" for _ in esc)
+    return where, [f"%{t}%" for t in esc]
+
+
+def cmd_query(args):
+    toks = tokenize(args.text)
+    if not toks:
+        print("không có keyword hợp lệ (token ≥3 ký tự, không stopword)")
+        return
+    con = connect_db()
+    try:
+        ew, ep = like_any("name", toks)
+        aw, ap = like_any("attrs", toks)
+        iw, ip = like_any("id", toks)
+        ents = con.execute(
+            f"SELECT * FROM entities WHERE {ew} OR {aw} OR {iw} ORDER BY id",
+            ep + ap + ip).fetchall()
+        tw, tp = like_any("(s || ' | ' || rel || ' | ' || o)", toks)
+        tris = con.execute(
+            f"SELECT DISTINCT t.* FROM triples t WHERE {tw} ORDER BY t.s, t.rel, t.o",
+            tp).fetchall()
+        provs = {}
+        for t in tris:
+            rows = con.execute(
+                "SELECT source_type, source_ref FROM provenance WHERE s=? AND rel=? AND o=?"
+                " ORDER BY source_type, source_ref", (t["s"], t["rel"], t["o"])).fetchall()
+            if rows:
+                provs[(t["s"], t["rel"], t["o"])] = rows
+    finally:
+        con.close()
+
+    if not ents and not tris:
+        print(f"không match: {args.text!r}")
+        return
+    if ents:
+        print(f"── entities ({len(ents)}) ──")
+        for e in ents:
+            print(f"[entity] {e['id']} | {e['type']} | {e['name']}")
+    if tris:
+        print(f"── triples ({len(tris)}) ──")
+        for t in tris:
+            print(f"[triple] {t['s']} | {t['rel']} | {t['o']} | {t['ts']}")
+            for p in provs.get((t["s"], t["rel"], t["o"]), []):
+                print(f"  ↳ {p['source_type']} {p['source_ref']}")
+
+
+def cmd_inject(args):
+    """Match keywords task-text với graph → top-N Pattern + provenance.
+    Scoring: entity match trực tiếp (name ×3, attrs/id ×1 mỗi token); pattern
+    candidates = patterns match trực tiếp + patterns 1-hop từ entity match
+    (qua triples s/o, mỗi neighbor đóng góp min(score,3)). Rank desc, id asc."""
+    toks = tokenize(args.text)
+    if not toks:
+        return
+    con = connect_db()
+    try:
+        ents = con.execute("SELECT id, type, name, attrs FROM entities").fetchall()
+        tris = con.execute("SELECT s, rel, o FROM triples").fetchall()
+        provs = con.execute(
+            "SELECT s, rel, o, source_type, source_ref FROM provenance"
+            " ORDER BY source_type, source_ref").fetchall()
+    finally:
+        con.close()
+
+    ent = {e["id"]: e for e in ents}
+    score = {}
+    for e in ents:
+        name = e["name"].lower()
+        attrs = (e["attrs"] or "").lower()
+        eid = e["id"].lower()
+        s = 3 * sum(t in name for t in toks) + sum(t in attrs for t in toks) \
+            + sum(t in eid for t in toks)
+        if s:
+            score[e["id"]] = s
+
+    pat_score = {}
+    for eid, s in score.items():
+        if ent[eid]["type"] == "Pattern":
+            pat_score[eid] = pat_score.get(eid, 0) + s
+    for t in tris:  # 1-hop: entity match → pattern đầu kia của triple
+        for endpoint, other in ((t["s"], t["o"]), (t["o"], t["s"])):
+            if endpoint in score and other in ent and ent[other]["type"] == "Pattern":
+                pat_score[other] = pat_score.get(other, 0) + min(score[endpoint], 3)
+
+    ranked = sorted(pat_score.items(), key=lambda kv: (-kv[1], kv[0]))[:max(args.top, 0)]
+    if not ranked:
+        return
+    print("## Patterns liên quan (từ memory graph)")
+    for pid, _sc in ranked:
+        e = ent[pid]
+        name = e["name"]
+        if len(name) > 80:
+            name = name[:77] + "…"
+        refs = []
+        for p in provs:
+            if p["s"] == pid or p["o"] == pid:
+                r = f"{p['source_type']} {p['source_ref']}"
+                if r not in refs:
+                    refs.append(r)
+            if len(refs) == 2:
+                break
+        src = " — src: " + " · ".join(refs) if refs else ""
+        print(f"- {pid.split(':', 1)[-1]} — {name}{src}")
+
+
+def cmd_stats(args):
+    con = connect_db()
+    try:
+        ents = con.execute("SELECT type, COUNT(*) n FROM entities GROUP BY type ORDER BY n DESC").fetchall()
+        tris = con.execute("SELECT rel, COUNT(*) n FROM triples GROUP BY rel ORDER BY n DESC").fetchall()
+        total_t = con.execute("SELECT COUNT(*) FROM triples").fetchone()[0]
+        covered = con.execute(
+            "SELECT COUNT(*) FROM triples t WHERE EXISTS "
+            "(SELECT 1 FROM provenance p WHERE p.s=t.s AND p.rel=t.rel AND p.o=t.o)"
+        ).fetchone()[0]
+        total_e = con.execute("SELECT COUNT(*) FROM entities").fetchone()[0]
+    finally:
+        con.close()
+    print(f"entities: {total_e}")
+    for r in ents:
+        print(f"  {r['type']}: {r['n']}")
+    print(f"triples: {total_t}")
+    for r in tris:
+        print(f"  {r['rel']}: {r['n']}")
+    pct = (100.0 * covered / total_t) if total_t else 0.0
+    print(f"provenance coverage: {covered}/{total_t} ({pct:.1f}%)")
+
+
+def main():
+    ap = argparse.ArgumentParser(prog="story-memory",
+                                 description="Graph memory query layer (SF-3 STOS-1)")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+
+    p = sub.add_parser("index", help="files → SQLite (idempotent full rebuild)")
+    p.add_argument("--repo", help="repo root chứa docs/superpowers/memory")
+    p.add_argument("--since", help="watermark — chỉ update state file, không lọc index")
+    p.set_defaults(fn=cmd_index)
+
+    p = sub.add_parser("query", help="keyword search + provenance")
+    p.add_argument("text", help="query tự nhiên (keyword tokenize)")
+    p.set_defaults(fn=cmd_query)
+
+    p = sub.add_parser("inject", help="top-N patterns cho task text, prompt-ready")
+    p.add_argument("text", help="task text (sf + bracket context)")
+    p.add_argument("--top", type=int, default=3, help="số pattern tối đa (default 3)")
+    p.set_defaults(fn=cmd_inject)
+
+    p = sub.add_parser("stats", help="counts + provenance coverage")
+    p.set_defaults(fn=cmd_stats)
+
+    args = ap.parse_args()
+    args.fn(args)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,362 @@
+#!/bin/bash
+# story-watchdog — self-sustainment loop cho stories (tool hóa STORY-WATCHDOG trong
+# story-workflow). Chạy 1 pass: diagnose mọi SF → notify khi stall MỚI → optionally
+# auto-resume. Đăng ký cron/loop để story không bao giờ stall 12 ngày không ai biết.
+#
+# Bài học vận hành (2/2 stories watchdog chết theo session): watchdog phải sống
+# NGOÀI Claude session — cron hoặc nohup loop. Script này được thiết kế cho cả hai.
+#
+# Usage:
+#   story-watchdog                      1 pass — diagnose + notify stall mới
+#   story-watchdog --auto-resume        1 pass + GỬI resume prompt cho SF stalled
+#   story-watchdog --with-index         1 pass + memory index hook (fail-safe — lỗi index không đổi exit code)
+#   story-watchdog --loop 30            tự lặp mỗi 30 phút (nohup pattern)
+#   story-watchdog --install-cron       đăng ký crontab entry (mỗi 30', idempotent)
+#   Options: --stall-hours N (default 2, pass xuống story-resume)
+#
+# Exit: 0 = mọi SF sống · 1 = có stalled (dù đã auto-resume — để cron wrapper biết)
+set -u
+
+DIR="$(cd "$(dirname "$0")" && pwd)"
+RESUME="${STORY_RESUME_BIN:-}"   # env override (test) — default giữ nguyên chain dưới
+[ -n "$RESUME" ] || RESUME="$DIR/story-resume"
+LAUNCH="$DIR/story-launch"
+[ -x "$LAUNCH" ] || LAUNCH="$HOME/.claude/bin/story-launch"
+[ -x "$RESUME" ] || RESUME="$HOME/.claude/bin/story-resume"
+[ -x "$RESUME" ] || { echo "story-resume không tìm thấy (cần nằm cạnh story-watchdog)"; exit 2; }
+# index hook chỉ cần khi --with-index — resolve sẵn, die muộn hơn (sau arg parse)
+IDX_HOOK="$DIR/story-memory-index-hook"
+[ -x "$IDX_HOOK" ] || IDX_HOOK="$HOME/.claude/bin/story-memory-index-hook"
+# validator gate cho launch-next (2 parser độc lập = drift lặng lẽ — giờ awk chỉ
+# chạy sau khi story-validate OK; bracket hỏng thì SKIP, không đoán)
+VALIDATE="$DIR/story-validate"
+[ -x "$VALIDATE" ] || VALIDATE="$HOME/.claude/bin/story-validate"
+
+# cron PATH tối giản — resolve production binary + runtime dev-trước-prod-sau
+ORCA_BIN="${ORCA_BIN:-/opt/homebrew/bin/orca}"
+[ -x "$ORCA_BIN" ] || ORCA_BIN="/usr/local/bin/orca"
+[ -x "$ORCA_BIN" ] || ORCA_BIN="/Applications/Orca.app/Contents/Resources/bin/orca"
+ORCA_DEV="$HOME/Library/Application Support/orca-dev"
+ORCA_PROD="$HOME/Library/Application Support/orca"
+orca() {
+  ORCA_USER_DATA_PATH="$ORCA_DEV" "$ORCA_BIN" "$@" 2>/dev/null \
+    || ORCA_USER_DATA_PATH="$ORCA_PROD" "$ORCA_BIN" "$@" 2>/dev/null \
+    || return 1
+}
+
+STATE_FILE="${STATE_FILE:-$HOME/.claude/.story-watchdog-state}"
+STALL_HOURS=2
+AUTO_RESUME=0
+WITH_INDEX=0
+LOOP_MIN=0
+LAUNCH_NEXT=0
+DRY_RUN=0
+
+notify() { # $1 title, $2 body — macOS notification (không chết khi thiếu osascript)
+  # escape \ và " — detail chứa quote không được giết osascript/đổi nghĩa chuỗi
+  command -v osascript >/dev/null 2>&1 || return 0
+  local t b
+  t=$(printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g')
+  b=$(printf '%s' "$2" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g')
+  osascript -e "display notification \"$b\" with title \"$t\"" >/dev/null 2>&1 || true
+}
+
+load_state() { # in state của sf ($1) từ lần trước
+  [ -f "$STATE_FILE" ] && grep -m1 "^$1|" "$STATE_FILE" | cut -d'|' -f2
+}
+
+save_state() { # $1 sf, $2 verdict
+  touch "$STATE_FILE"
+  grep -v "^$1|" "$STATE_FILE" > "$STATE_FILE.tmp" 2>/dev/null || true
+  echo "$1|$2|$(date +%s)" >> "$STATE_FILE.tmp"
+  mv "$STATE_FILE.tmp" "$STATE_FILE"
+}
+
+# ── Linear state qua GraphQL (fallback khi orca keychain chết — bài học FI-187)
+linear_state() { # $1 = issue-id → in state name ("" nếu không biết) — retry 1 lần
+  local key="${LINEAR_API_KEY:-}"
+  if [ -z "$key" ] && [ -f "$HOME/.claude/.linear-key" ]; then
+    key=$(head -1 "$HOME/.claude/.linear-key" | tr -d '[:space:]')
+  fi
+  [ -z "$key" ] && { echo ""; return; }
+  local st i
+  for i in 1 2; do
+    st=$(curl -s -m 10 -X POST https://api.linear.app/graphql \
+      -H "Authorization: $key" -H "Content-Type: application/json" \
+      -d "{\"query\":\"query{issue(id:\\\"$1\\\"){state{name}}}\"}" 2>/dev/null \
+      | python3 -c "import json,sys
+try: print(json.load(sys.stdin)['data']['issue']['state']['name'])
+except: print('')" 2>/dev/null)
+    [ -n "$st" ] && { echo "$st"; return; }
+    sleep 1
+  done
+  echo ""
+}
+
+# batch: 1 request GraphQL cho nhiều issue (tránh N+1 → Linear rate-limit khi 11 agents gọi cùng lúc)
+linear_states_batch() { # $@ = issue identifiers (FI-247...) → in "ID<TAB>state" mỗi dòng
+  local key="${LINEAR_API_KEY:-}"
+  if [ -z "$key" ] && [ -f "$HOME/.claude/.linear-key" ]; then
+    key=$(head -1 "$HOME/.claude/.linear-key" | tr -d '[:space:]')
+  fi
+  [ -z "$key" ] && return 0
+  [ $# -eq 0 ] && return 0
+  local ids_json
+  ids_json=$(printf '"%s",' "$@" | sed 's/,$//')
+  local resp i
+  for i in 1 2; do
+    resp=$(curl -s -m 15 -X POST https://api.linear.app/graphql \
+      -H "Authorization: $key" -H "Content-Type: application/json" \
+      -d "{\"query\":\"query{issues(filter:{identifier:{in:[$ids_json]}}){nodes{identifier state{name}}}}\"}" 2>/dev/null)
+    if echo "$resp" | grep -qi "rate limit\|429\|too many requests"; then
+      sleep 5
+      continue
+    fi
+    echo "$resp" | python3 -c "
+import json,sys
+try:
+    d = json.load(sys.stdin)
+    for n in (d.get('data') or {}).get('issues', {}).get('nodes', []):
+        st = (n.get('state') or {}).get('name', '')
+        print(n.get('identifier', '') + '\t' + st)
+except: pass" 2>/dev/null
+    return 0
+  done
+  return 0
+}
+
+# ── launch-next: bracket → SF chưa có worktree + deps Done → launch.
+#    Đây là mảnh đưa story TỰ TIẾN tier khi không có session nào sống.
+#    Chỉ launch SF trong bracket ĐÃ DUYỆT (có linear ID) — không tự ý mở scope.
+launch_next() { # DRY_RUN=1 → chỉ in kế hoạch
+  local launched=0
+  # cap launch mỗi pass — tránh nổ nhiều SF song song (rate limit, review dồn, port xung đột)
+  local max_launch="${STORY_WATCHDOG_MAX_LAUNCH:-2}"
+  local roots=()
+  local nroots=0
+  local rl
+  rl=$(orca repo list --json 2>/dev/null | python3 -c "
+import json,sys
+try:
+    for r in json.load(sys.stdin).get('result',{}).get('repos',[]):
+        p = r.get('path')
+        if p: print(p)
+except: pass" 2>/dev/null)
+  while IFS= read -r p; do [ -n "$p" ] && { roots+=("$p"); nroots=$((nroots+1)); }; done <<< "$rl"
+  for p in "$HOME"/orca/projects/*; do [ -d "$p" ] && { roots+=("$p"); nroots=$((nroots+1)); }; done
+  # bash 3.2 + set -u: mảng rỗng local crash khi expand — luôn guard bằng counter
+  [ "$nroots" -gt 0 ] || { [ "$DRY_RUN" = 1 ] && echo "  (không có repo nào — orca repo list rỗng)"; return 0; }
+  # dedup theo path thật (repo list + projects/* có thể trùng)
+  local SEEN="" r2 FILTERED=()
+  for r2 in ${roots[@]+"${roots[@]}"}; do
+    case "$SEEN" in *"|$r2|"*) continue ;; esac
+    SEEN="$SEEN|$r2|"; FILTERED+=("$r2")
+  done
+  roots=(${FILTERED[@]+"${FILTERED[@]}"})
+  for repo in ${roots[@]+"${roots[@]}"}; do
+    local bdir="$repo/docs/superpowers/brackets"
+    [ -d "$bdir" ] || continue
+    local repob=$(basename "$repo")
+    local bf
+    for bf in "$bdir"/*.md; do
+      [ -f "$bf" ] || continue
+      # ── validator gate: bracket phải story-validate OK trước khi awk parse ──
+      # (awk parser lỏng — format trôi nó im lặng; validator là nguồn sự thật.
+      #  Validator thiếu/hỏng → fail-closed: không launch gì cả, in cảnh báo 1 lần)
+      if [ ! -x "$VALIDATE" ]; then
+        echo "  ⚠ story-validate không tìm thấy — launch-next SKIP mọi bracket (fail-closed)"
+        return 0
+      fi
+      local vjson vverdict
+      vjson=$("$VALIDATE" "$bf" --json 2>/dev/null) || true
+      vverdict=$(printf '%s' "$vjson" | python3 -c "import json,sys
+try: print(json.load(sys.stdin).get('verdict',''))
+except: print('')" 2>/dev/null)
+      if [ "$vverdict" != "OK" ]; then
+        echo "  ⚠ skip $(basename "$bf") — story-validate: ${vverdict:-KHÔNG-ĐỌC-ĐƯỢC} (sửa bracket rồi cron pass kế sẽ launch)"
+        [ "$DRY_RUN" = 1 ] && printf '%s' "$vjson" | python3 -m json.tool 2>/dev/null | sed 's/^/    /'
+        continue
+      fi
+      local dest epic
+      dest=$(grep -m1 '^Destination:' "$bf" | sed 's/Destination: *//;s/ *$//')
+      epic=$(grep -m1 '^# Story:' "$bf" | sed 's/# Story: *\([A-Za-z]*-[0-9]*\).*/\1/')
+      [ -n "$dest" ] || continue
+      # các SF: "num|title|linear|deps" (deps = "SF-2, SF-3")
+      # 1 request duy nhất cho mọi issue của bracket (linear_state per-issue → rate-limit khi nhiều SF)
+      local state_map="" bid
+      bid=$(grep -oE 'linear: *[A-Za-z]+-[0-9]+' "$bf" | awk '{print $2}' | sort -u)
+      [ -n "$bid" ] && state_map=$(linear_states_batch $bid)
+      while IFS='|' read -r sfnum title linear deps; do
+        [ -n "$linear" ] || continue   # chưa APPROVE → không thuộc quyền launch
+        # SF đã Done = hoàn thành, không phải "chưa launch" (worktree đã dọn)
+        local ownst=$(printf '%s\n' "$state_map" | awk -v id="$linear" -F'\t' '$1==id{print $2}')
+        if [ "$ownst" = "Done" ]; then
+          [ "$DRY_RUN" = 1 ] && echo "  xong: $sfnum ($linear) — Done"
+          continue
+        fi
+        # đã có worktree sf-N-* chưa?
+        local n=$(echo "$sfnum" | sed 's/SF-//')
+        local wt=$(ls -d "$HOME"/orca/workspaces/"$repob"/sf-"$n"-* 2>/dev/null | head -1)
+        [ -n "$wt" ] && continue
+        # deps Done hết chưa?
+        local ok=1 why=""
+        local d
+        for d in $(echo "$deps" | tr ',' ' '); do
+          d=$(echo "$d" | tr -d ' ')
+          case "$d" in ""|—|—|*) ;; esac
+          echo "$d" | grep -q '^SF-' || continue
+          local dn=$(echo "$d" | sed 's/SF-//')
+          local depid=$(awk -v dn="SF-$dn" '
+            $0 ~ "^## " dn "([ :]|$)" { in_sf = 1; next }
+            /^## / { in_sf = 0 }
+            in_sf && /^linear:/ { gsub(/.*linear: /,""); print; exit }' "$bf")
+          [ -n "$depid" ] || { ok=0; why="$why $d(?id)"; continue; }
+          local st=$(printf '%s\n' "$state_map" | awk -v id="$depid" -F'\t' '$1==id{print $2}')
+          if [ "$st" != "Done" ]; then ok=0; why="$why $d=$st"; fi
+        done
+        local slug=$(echo "$title" | tr '[:upper:]' '[:lower:]' \
+          | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g' | cut -c1-30)
+        [ -n "$slug" ] || slug="sf"
+        if [ "$ok" != 1 ]; then
+          [ "$DRY_RUN" = 1 ] && echo "  chờ: $sfnum ($linear) — deps:$why"
+          continue
+        fi
+        if [ "$DRY_RUN" = 1 ]; then
+          echo "  SẴN SÀNG LAUNCH: sf-$n-$slug ($linear) ← bracket $repob · đích $dest"
+          continue
+        fi
+        if [ "$launched" -ge "$max_launch" ]; then
+          echo "  cap: sf-$n-$slug ($linear) sẵn sàng — đạt giới hạn $max_launch launch/pass, chờ pass kế (STORY_WATCHDOG_MAX_LAUNCH để tăng)"
+          continue
+        fi
+        local launch_out
+        if [ "$DRY_RUN" = 1 ]; then
+          launch_out=$("$LAUNCH" --sf "$sfnum" --bracket "$bf" --dry-run 2>&1 | head -3)
+        else
+          launch_out=$("$LAUNCH" --sf "$sfnum" --bracket "$bf" 2>&1)
+        fi
+        echo "$launch_out" | sed 's/^/    /'
+        if echo "$launch_out" | grep -q "LAUNCHED"; then
+          notify "story-watchdog ▶" "$sfnum launched — tier kế tự tiến"
+          launched=$((launched+1))
+        fi
+      done < <(awk '
+        function emit() { if (sf != "") print sf "|" title "|" linear "|" deps }
+        /^## / { if ($0 !~ /^## SF-/) { emit(); sf = ""; insf = 0; next } }
+        /^## SF-/ {
+          emit()
+          sf = $2
+          title = $0; sub(/^## SF-[0-9]+ +/, "", title)
+          linear = ""; deps = ""; insf = 1; next
+        }
+        insf && /^linear:/ { linear = $2 }
+        insf && /^Depends on:/ { sub(/^Depends on: */, ""); deps = $0 }
+        END { emit() }' "$bf")
+    done
+  done
+  return $launched
+}
+
+one_pass() {
+  local stalled=0
+  while IFS='|' read -r sf verdict detail; do
+    [ -n "$sf" ] || continue
+    prev=$(load_state "$sf")
+
+    case "$verdict" in
+      RUNNING|BUSY)
+        [ "$prev" = "STALLED" ] || [ "$prev" = "STALLED-COLD" ] && \
+          notify "story-watchdog" "$sf đã sống lại ($verdict)"
+        echo "$(date '+%H:%M') $sf: $verdict — $detail"
+        ;;
+      STALLED*)
+        stalled=1
+        if [ "$prev" != "$verdict" ]; then  # stall MỚI (transition) → notify
+          notify "story-watchdog ⚠" "$sf STALLED — $detail"
+          echo "$(date '+%H:%M') $sf: ⚠ $verdict (MỚI) — $detail"
+        else
+          echo "$(date '+%H:%M') $sf: ⚠ $verdict (đã biết) — $detail"
+        fi
+        if [ "$AUTO_RESUME" = 1 ]; then
+          echo "  → auto-resume:"
+          "$RESUME" "$sf" --send --stall-hours "$STALL_HOURS" 2>&1 | sed 's/^/    /'
+          # một resume mỗi pass là đủ — agent cần thời gian để bắt đầu
+          save_state "$sf" "RESUMED"
+          stalled=0  # đã hành động — pass này không tính là "còn stall"
+          break
+        fi
+        ;;
+    esac
+    save_state "$sf" "$verdict"
+  done < <("$RESUME" --check --stall-hours "$STALL_HOURS" 2>/dev/null)
+  # story tự TIẾN: SF deps Done hết → launch tier kế (kể cả không session nào sống)
+  if [ "$LAUNCH_NEXT" = 1 ] || [ "$DRY_RUN" = 1 ]; then
+    echo "── launch-next$( [ "$DRY_RUN" = 1 ] && echo ' (DRY-RUN)' ):"
+    launch_next
+  fi
+  # memory index (post-pass): subshell + || true — lỗi index KHÔNG đổi exit code pass
+  if [ "$WITH_INDEX" = 1 ]; then
+    ( "$IDX_HOOK" ) || true
+  fi
+  return $stalled
+}
+
+cron_next_entry() { # entry cron chuẩn — pure echo (test độc lập được, không đụng crontab)
+  echo "*/30 * * * * $HOME/.claude/bin/story-watchdog --auto-resume --with-index >> $HOME/.claude/story-watchdog.log 2>&1 # story-team-kit"
+}
+
+install_cron() {
+  local entry cur
+  entry=$(cron_next_entry)
+  cur=$(crontab -l 2>/dev/null || true)
+  if printf '%s\n' "$cur" | grep -qF "$entry"; then
+    echo "Cron entry đã tồn tại — không thêm nữa:"
+    printf '%s\n' "$cur" | grep "story-watchdog"
+    return 0
+  fi
+  if printf '%s\n' "$cur" | grep -q "story-watchdog"; then
+    # entry cũ (thiếu --with-index) → REPLACE idempotent: bỏ mọi dòng cũ, thêm mới — không đúp
+    { printf '%s\n' "$cur" | grep -v "story-watchdog"; echo "$entry"; } | crontab -
+    rc=$?
+    if [ "$rc" -ne 0 ]; then
+      echo "Không ghi được crontab (rc=$rc) — giữ nguyên entry cũ" >&2
+      return "$rc"
+    fi
+    echo "đã cập nhật cron entry thêm --with-index:"
+    crontab -l 2>/dev/null | grep "story-watchdog"
+    return 0
+  fi
+  (crontab -l 2>/dev/null; echo "$entry") | crontab - && \
+    echo "Đã đăng ký cron (mỗi 30', --auto-resume --with-index, log: ~/.claude/story-watchdog.log)"
+}
+
+# ═══ MAIN ═══
+# parse args SAU khi functions định nghĩa xong (--install-cron gọi được ngay)
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --auto-resume) AUTO_RESUME=1 ;;
+    --with-index) WITH_INDEX=1 ;;
+    --launch-next) LAUNCH_NEXT=1 ;;
+    --dry-run) DRY_RUN=1 ;;
+    --loop) LOOP_MIN="${2:-30}"; shift ;;
+    --stall-hours) STALL_HOURS="$2"; shift ;;
+    --install-cron) install_cron; exit $? ;;
+    *) echo "Unknown: $1"; exit 2 ;;
+  esac
+  shift
+done
+
+# die muộn: chỉ chặn khi --with-index THẬT SỰ dùng mà hook thiếu
+if [ "$WITH_INDEX" = 1 ] && [ ! -x "$IDX_HOOK" ]; then
+  echo "story-memory-index-hook không tìm thấy (cần nằm cạnh story-watchdog)"; exit 2
+fi
+
+if [ "$LOOP_MIN" -gt 0 ]; then
+  echo "story-watchdog loop — mỗi ${LOOP_MIN}ph (PID $$). Ctrl-C để dừng."
+  while true; do
+    one_pass
+    sleep $((LOOP_MIN * 60))
+  done
+else
+  one_pass
+fi

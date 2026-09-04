@@ -1,0 +1,105 @@
+#!/bin/bash
+# story-stats — số liệu vận hành per SF (ROI cho sales: cycle-time, khối lượng,
+# events sống sót). Nguồn: Linear GraphQL (timestamps) + worktree git/plan.
+# Không đo token (chưa có nguồn) — wall-clock + khối lượng là số bán được.
+#
+# Usage: story-stats [epic-id]     # không đối số = mọi bracket tìm thấy
+set -u
+exec python3 - "$@" <<'PYEOF'
+import json, os, re, subprocess, sys, urllib.request
+from datetime import datetime, timezone
+from pathlib import Path
+
+HOME = Path.home()
+KEY = os.environ.get("LINEAR_API_KEY", "")
+if not KEY and (HOME / ".claude/.linear-key").exists():
+    KEY = (HOME / ".claude/.linear-key").read_text().splitlines()[0].strip()
+
+def gql(q):
+    req = urllib.request.Request("https://api.linear.app/graphql",
+        data=json.dumps({"query": q}).encode(),
+        headers={"Authorization": KEY, "Content-Type": "application/json"})
+    return json.load(urllib.request.urlopen(req, timeout=15))
+
+def hrs(a, b):
+    if not a or not b: return None
+    dt = (datetime.fromisoformat(b.replace("Z", "+00:00"))
+          - datetime.fromisoformat(a.replace("Z", "+00:00"))).total_seconds() / 3600
+    return dt
+
+def fmt_h(h):
+    if h is None: return "—"
+    return f"{h:.1f}h" if h < 48 else f"{h/24:.1f}d"
+
+# bracket roots: orca repo list + ~/orca/projects (dedup)
+roots = set()
+try:
+    out = subprocess.run(["/opt/homebrew/bin/orca", "repo", "list", "--json"],
+                         capture_output=True, text=True, timeout=15,
+                         env={**os.environ, "ORCA_USER_DATA_PATH": str(HOME/"Library/Application Support/orca-dev")})
+    for r in json.loads(out.stdout).get("result", {}).get("repos", []):
+        if r.get("path"): roots.add(r["path"])
+except Exception: pass
+for p in (HOME / "orca/projects").glob("*"):
+    if p.is_dir(): roots.add(str(p))
+
+epic_filter = sys.argv[1] if len(sys.argv) > 1 else None
+rows = []
+for root in sorted(roots):
+    bdir = Path(root) / "docs/superpowers/brackets"
+    if not bdir.is_dir(): continue
+    repo = Path(root).name
+    for bf in sorted(bdir.glob("*.md")):
+        text = bf.read_text(errors="ignore")
+        # epic label: ID nếu có ("STOS-1"), không thì tên ("ICT-SUPPORT") — chỉ là nhãn
+        epic = ((re.search(r"^# Story:\s*([A-Za-z][\w-]*-\d+)", text, re.M) or [None, None])[1]
+                or (re.search(r"^# Story:\s*([^\n—–]+)", text, re.M) or [None, None])[1].strip()
+                or bf.stem)
+        if epic_filter and epic_filter not in (epic, bf.stem): continue
+        # SF sections → sfnum | linear | title
+        sfs = re.findall(r"^## (SF-\d+)[^\n]*\n(?:.*\n)*?linear:\s*([A-Za-z]+-\d+)", text, re.M)
+        if not sfs:  # chưa approve (linear trống)
+            continue
+        for sfnum, lid in sfs:
+            row = {"repo": repo, "epic": epic, "sf": sfnum, "linear": lid}
+            try:
+                d = gql(f'{{issue(id:"{lid}"){{createdAt startedAt completedAt state{{name}} estimate comments(first:50){{nodes{{body}}}}}}}}')["data"]["issue"]
+                row.update(state=d["state"]["name"], est=d.get("estimate"),
+                           wall=hrs(d["startedAt"], d["completedAt"]),
+                           events=len(d["comments"]["nodes"]))
+                row["age"] = hrs(d["startedAt"], datetime.now(timezone.utc).isoformat()) if d["startedAt"] and not d["completedAt"] else None
+            except Exception as e:
+                row.update(state=f"err:{str(e)[:20]}", wall=None, events=0)
+            # worktree counts (nếu còn sống; SF Done đã dọn → chỉ Linear)
+            wts = list((HOME / "orca/workspaces" / repo).glob(f"{sfnum.replace('SF-','sf-')}-*"))
+            if wts:
+                wt = wts[0]
+                try:
+                    log = subprocess.run(["git", "-C", str(wt), "log", "--format=%s"],
+                                         capture_output=True, text=True, timeout=10).stdout
+                    row["commits"] = sum(1 for l in log.splitlines()
+                                         if l and not re.match(r"^(story (CREATE|APPROVE)|Initial|plan)", l))
+                    plans = sorted((wt / "docs/superpowers/plans").glob("*.md"))
+                    pats = [sfnum.replace("SF-", "sf-"), sfnum.replace("-", "")]
+                    plan = next((p for p in plans if any(x in p.name for x in pats)), None)
+                    if plan:
+                        t = plan.read_text(errors="ignore")
+                        row["tasks"] = f"{t.count('- [x]')}/{t.count('- [x]')+t.count('- [ ]')}"
+                except Exception: pass
+            rows.append(row)
+
+if not rows:
+    print("Không tìm thấy SF nào (cần bracket đã approve + linear IDs)."); sys.exit(0)
+
+print(f"{'SF':<6} {'linear':<8} {'state':<12} {'wall':>7} {'tasks':>7} {'commits':>8} {'events':>7}  story")
+print("─" * 78)
+done = 0
+for r in rows:
+    wall = fmt_h(r.get("wall")) if r.get("wall") else (fmt_h(r.get("age")) + "*" if r.get("age") else "—")
+    print(f"{r['sf']:<6} {r['linear']:<8} {str(r.get('state','?'))[:12]:<12} {wall:>7} "
+          f"{str(r.get('tasks', r.get('est') or '—')):>7} {str(r.get('commits','—')):>8} {r.get('events',0):>7}  {r['epic']}")
+    if r.get("state") == "Done": done += 1
+print("─" * 78)
+print(f"{done}/{len(rows)} SF Done · wall = started→completed (incl stalls) · * = đang chạy · "
+      f"events = Linear comments (audit + review + gaps)")
+PYEOF
