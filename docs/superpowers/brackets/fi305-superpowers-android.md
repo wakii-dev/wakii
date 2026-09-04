@@ -3,7 +3,7 @@ Destination: story/fi305-superpowers-android
 
 ## SF-1 Desktop RPC foundation + gate notifications
 Tier: 0
-linear:
+linear: FI-306
 Design: none
 What: client mobile paired gọi được RPC để list stories (group per worktree), xem story detail kèm gates, và resolve gate pending; gate mở/đóng trên desktop đẩy notification mang đủ routing fields (gateId/storyId nullable/worktreeId/title); contract types (§3b spec) + fixture bracket sanitized commit vào location mobile import được — mobile code chống contract thật, không chống paper
 Depends on: —
@@ -11,7 +11,7 @@ Tasks: bracket-parse-shared-module / story-list-method / story-detail-method / g
 
 ## SF-2 Mobile story screens + Linear status
 Tier: 1
-linear:
+linear: FI-307
 Design: none
 What: mở app là thấy story list group theo worktree (parse error/unknown không crash), vào story thấy SF tiers + tiến độ + status; màn render từ cache ngay và tự refresh sau reconnect; SF status lấy từ Linear sub-issue khi connect, 'unknown' khi không
 Depends on: SF-1
@@ -19,7 +19,7 @@ Tasks: contract-conformance-smoke-test / host-scoped-story-routes-boundary-test 
 
 ## SF-3 Gate resolve UX + notification handling
 Tier: 1
-linear:
+linear: FI-308
 Design: none
 What: phone thấy pending gates (kể cả nhóm "khác" không map worktree), resolve được qua choice buttons (theo options) hoặc free-text + confirm dialog; gate-open/gate-closed events giữ pending list tươi kể cả qua reconnect; mọi lỗi resolve (đã resolved/timeout/offline) refresh state sạch, re-tap an toàn không side effect
 Depends on: SF-1
@@ -27,7 +27,7 @@ Tasks: contract-conformance-smoke-test / pending-gates-surface-other-group / res
 
 ## SF-4 Convergence QA + deep-link wiring
 Tier: 2
-linear:
+linear: FI-309
 Design: none
 What: flow đầu-cuối chạy thật trên Android: thấy story → gate mở → notification ≤5s → tap về đúng màn story/gate → resolve → agent trong terminal tiếp tục; desktop restart giữa chừng phone không trắng màn (cache + refresh ≤10s); old-build hiển thị notification lạ an toàn; security review surface mới sạch
 Depends on: SF-2, SF-3
