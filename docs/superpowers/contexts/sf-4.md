@@ -53,3 +53,10 @@ notifications docs).
   `story/fi305-superpowers-android`, PR do agent tạo, merge là quyền người
 - Device tasks CHẠY CHUỖI (một device-session) — không dispatch song song các
   task cần thiết bị
+
+## Device verify (meta 2026-09-04 — user cung cấp)
+Android emulator đã mở sẵn: id `emulator-5554` (Android 14 / SDK 34, ARM64) —
+device-session e2e chạy trên ĐÚNG thiết bị này, KHÔNG tự tạo emulator mới.
+App `mobile/` (expo): build+install `pnpm android`, dev server `pnpm start`.
+Bằng chứng e2e: `adb -s emulator-5554 exec-out screencap -p > /tmp/shot.png`
+tại từng bước flow (story list → gate → notification → resolve).
