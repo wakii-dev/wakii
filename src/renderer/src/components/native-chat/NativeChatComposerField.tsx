@@ -1,12 +1,9 @@
 import type { ClipboardEventHandler, KeyboardEventHandler, RefObject } from 'react'
 import { useLayoutEffect, useRef } from 'react'
-import { Image as ImageIcon, ImageOff, X } from 'lucide-react'
-import { translate } from '@/i18n/i18n'
+import { ImageOff } from 'lucide-react'
 import type { useImeEnterGestureOwnership } from '@/lib/ime-composition-keyboard-event'
 import { cn } from '@/lib/utils'
 import { NATIVE_FILE_DROP_TARGET } from '../../../../shared/native-file-drop'
-import { basename } from '@/lib/path'
-import { isNativeChatPastedImagePath } from './native-chat-image-paste'
 import type { ComposerAutocomplete, NativeChatPickerItem } from './native-chat-composer-state'
 import { NativeChatMentionHint, NativeChatPickerMenu } from './NativeChatAutocompleteMenus'
 import { NativeChatComposerActions } from './NativeChatComposerActions'
@@ -16,6 +13,7 @@ import type {
   SessionOptionsSurface
 } from '../../../../shared/native-chat-session-options'
 import type { NativeChatOptionPickerRequest } from './native-chat-composer-types'
+import { NativeChatImageAttachmentPreview } from './NativeChatImageAttachmentPreview'
 
 export type NativeChatComposerFieldProps = {
   textareaRef: RefObject<HTMLTextAreaElement | null>
@@ -57,7 +55,14 @@ export type NativeChatComposerFieldProps = {
 
 export type NativeChatComposerImageAttachment = {
   id: string
+  /** Empty while `pending`: the clipboard image has no agent-readable path yet. */
   path: string
+  connectionId?: string
+  /** Clipboard thumbnail (blob/data URL) rendered before — and after — the file
+   *  lands, so the chip never waits on a disk round-trip to show something. */
+  previewUrl?: string
+  /** True while the pasted image is still being written to disk or uploaded. */
+  pending?: boolean
 }
 
 /**
@@ -184,34 +189,13 @@ export function NativeChatComposerField({
             )}
           >
             {imageAttachments.length > 0 ? (
-              <div className="mb-2 flex flex-wrap gap-1.5 px-1">
+              <div className="mb-2 flex flex-wrap gap-2 px-1 pt-1.5">
                 {imageAttachments.map((attachment) => (
-                  <div
+                  <NativeChatImageAttachmentPreview
                     key={attachment.id}
-                    className="flex max-w-full items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1 text-xs text-muted-foreground"
-                    title={attachment.path}
-                  >
-                    <ImageIcon className="size-3.5 shrink-0" />
-                    <span className="max-w-56 truncate">
-                      {isNativeChatPastedImagePath(attachment.path)
-                        ? translate(
-                            'components.native-chat.composer.pastedImageLabel',
-                            'Pasted image'
-                          )
-                        : basename(attachment.path)}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => onRemoveImageAttachment(attachment.id)}
-                      aria-label={translate(
-                        'components.native-chat.composer.removeAttachment',
-                        'Remove attachment'
-                      )}
-                      className="flex size-4 shrink-0 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      <X className="size-3" />
-                    </button>
-                  </div>
+                    attachment={attachment}
+                    onRemove={onRemoveImageAttachment}
+                  />
                 ))}
               </div>
             ) : null}

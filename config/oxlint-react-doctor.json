@@ -30,5 +30,5 @@
     "react-doctor/zustand-no-mutating-state": "warn",
     "react-doctor/zustand-no-whole-store-destructure": "warn"
   },
-  "ignorePatterns": ["**/node_modules", "**/dist", "**/out", "resources/plugins/launch"]
+  "ignorePatterns": ["**/node_modules", "**/dist", "**/out", "cloud/**", "resources/plugins/launch"]
 }

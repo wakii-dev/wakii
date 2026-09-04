@@ -2,7 +2,9 @@ import * as path from 'node:path'
 import type { RequestContext } from './dispatcher'
 import { expandTilde } from './context'
 import { GitHandlerOperationContext } from './git-handler-operation-context'
-import { isUnsupportedWorktreeListZError, parseWorktreeList } from './git-handler-utils'
+import { isUnsupportedWorktreeListZError } from './git-handler-utils'
+import { parseWorktreeList } from '../shared/git-worktree-porcelain-parser'
+import type { GitWorktreeInfo } from '../shared/worktree/types'
 import {
   addWorktreeOp,
   areRelayWorktreePathsEqual,
@@ -91,11 +93,11 @@ export class GitHandlerWorktreeOperations extends GitHandlerOperationContext {
 
   private async normalizeMainWorktreePath(
     repoPath: string,
-    worktrees: Record<string, unknown>[]
-  ): Promise<Record<string, unknown>[]> {
+    worktrees: GitWorktreeInfo[]
+  ): Promise<GitWorktreeInfo[]> {
     const mainIndex = worktrees.findIndex((worktree) => worktree.isMainWorktree === true)
     const mainWorktree = worktrees[mainIndex]
-    const mainPath = typeof mainWorktree?.path === 'string' ? mainWorktree.path : ''
+    const mainPath = mainWorktree?.path ?? ''
     // Expand `~` so legacy tilde SSH repo paths match git's absolute path, sparing a rev-parse per poll.
     const resolvedRepoPath = expandTilde(repoPath)
     if (!mainPath || areRelayWorktreePathsEqual(mainPath, resolvedRepoPath)) {
@@ -119,37 +121,30 @@ export class GitHandlerWorktreeOperations extends GitHandlerOperationContext {
 
   async listWorktrees(params: Record<string, unknown>, context?: RequestContext) {
     const repoPath = params.repoPath as string
-    return this.gitCapabilities
-      .runWithFallback(
-        'worktree-list-z',
-        async () => {
-          const { stdout } = await this.git(['worktree', 'list', '--porcelain', '-z'], repoPath, {
-            signal: context?.signal
-          })
-          return this.normalizeMainWorktreePath(
-            repoPath,
-            parseWorktreeList(stdout, { nulDelimited: true })
-          )
-        },
-        async () => {
-          // Why: Git <2.36 lacks worktree-list `-z`, so fall back to the newline-block parser (loses newline-in-path safety).
-          try {
-            const { stdout } = await this.git(['worktree', 'list', '--porcelain'], repoPath, {
-              signal: context?.signal
-            })
-            const normalized = await this.normalizeMainWorktreePath(
-              repoPath,
-              parseWorktreeList(stdout)
-            )
-            // Why: Git <2.31 emits no `prunable` annotation, so probe each linked worktree's existence instead of trusting stale registrations (issue #8389).
-            return annotatePrunableWorktreesByExistence(normalized)
-          } catch {
-            return []
-          }
-        },
-        isUnsupportedWorktreeListZError
-      )
-      .catch(() => [])
+    return this.gitCapabilities.runWithFallback(
+      'worktree-list-z',
+      async () => {
+        const { stdout } = await this.git(['worktree', 'list', '--porcelain', '-z'], repoPath, {
+          signal: context?.signal
+        })
+        return this.normalizeMainWorktreePath(
+          repoPath,
+          parseWorktreeList(stdout, { nulDelimited: true })
+        )
+      },
+      async () => {
+        // Why: Git <2.36 lacks worktree-list `-z`, so fall back to the newline-block parser (loses newline-in-path safety).
+        // Why no catch (#14004): swallowing to `[]` would report an unreadable catalog as an authoritative
+        // empty one, and callers use that to authorize missing-worktree teardown. Let the failure propagate.
+        const { stdout } = await this.git(['worktree', 'list', '--porcelain'], repoPath, {
+          signal: context?.signal
+        })
+        const normalized = await this.normalizeMainWorktreePath(repoPath, parseWorktreeList(stdout))
+        // Why: Git <2.31 emits no `prunable` annotation, so probe each linked worktree's existence instead of trusting stale registrations (issue #8389).
+        return annotatePrunableWorktreesByExistence(normalized)
+      },
+      isUnsupportedWorktreeListZError
+    )
   }
 
   async addWorktree(params: Record<string, unknown>) {

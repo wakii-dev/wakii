@@ -178,7 +178,9 @@
     "**/node_modules",
     "**/dist",
     "**/out",
-    "tests/e2e/.cross-version-checkouts",
-    "resources/plugins/launch"
+    "cloud/**",
+    ".github/actions/cloud-sql-rollout-lease/**",
+    "resources/plugins/launch",
+    "tests/e2e/.cross-version-checkouts"
   ]
 }

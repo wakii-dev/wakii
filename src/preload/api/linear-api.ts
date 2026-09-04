@@ -126,4 +126,17 @@ export type LinearApi = {
   teamStates: (args: { teamId: string; workspaceId?: string }) => Promise<LinearWorkflowState[]>
   teamLabels: (args: { teamId: string; workspaceId?: string }) => Promise<LinearLabel[]>
   teamMembers: (args: { teamId: string; workspaceId?: string }) => Promise<LinearMember[]>
+  // Wakii fork: Stories tab — tạo custom view từ UI
+  createCustomView: (args: {
+    name: string
+    modelName?: 'issue' | 'project'
+    description?: string
+    color?: string
+    icon?: string
+    shared?: boolean
+    filters?: unknown
+    filterData?: unknown
+    teamId?: string
+    workspaceId?: string
+  }) => Promise<{ ok: true; customView: Record<string, unknown> } | { ok: false; error: string }>
 }
