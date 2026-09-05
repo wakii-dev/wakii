@@ -49,15 +49,19 @@ mobile/src/notifications/
   gate-notification-multi-host.test.ts  — multi-host/multi-root assertions (T5)
 mobile/scripts/mock-server-superpowers-handlers.ts — +notificationId vào pushGateEvent (T2, test infra, chỉ khi mock path dùng)
 mobile/src/host-screen/host-screen-header.tsx — +nút "Stories" cạnh Gates, cả 2 toolbar variant (T8 — owner requirement)
+mobile/src/superpowers/MobileStoryDetailScreen.tsx — pending gate rows pressable → resolve sheet reuse SF-3 (T9a — owner)
+mobile/src/superpowers/MobilePendingGatesScreen.tsx — story-linked rows → story detail link (T9b — owner)
 mobile/README.md                      — story screens + gates + deep-link (T7)
 docs/site/content/docs/mobile.mdx     — section story/gates (T7)
 docs/site/content/docs/notifications.mdx — section gate notifications + deep-link (T7)
 ```
 
-KHÔNG đụng: SF-2 screens (`stories.tsx`, `[...storyId].tsx`, `gates.tsx`,
-`MobileStoryDetailScreen*`, `story-detail-route.ts`) — **frozen cho wiring
-(T1-T5, T7); T6 được typo-level copy fix, ưu tiên `story-screen-copy.ts`/
-`gate-resolve-errors.ts`** (plan-critic P1 carve-out), `mobile/app/_layout.tsx`
+KHÔNG đụng: SF-2/SF-3 screens (`stories.tsx`, `[...storyId].tsx`, `gates.tsx`,
+`story-detail-route.ts`) — **frozen cho wiring (T1-T5, T7); T6 được typo-level
+copy fix, ưu tiên `story-screen-copy.ts`/`gate-resolve-errors.ts` (plan-critic
+P1 carve-out); T9 được owner-mandate sửa `MobileStoryDetailScreen.tsx` +
+`MobilePendingGatesScreen.tsx` (chỉ phần cross-link/resolve-sheet, không đụng
+data layer)**, `mobile/app/_layout.tsx`
 (golden-file test), desktop (`src/main/**`, `src/shared/**` — trừ QA-fix
 pre-authorized có review riêng), wire parser SF-2 (`parse-gate-transition-payload.ts`,
 `gate-transition-events.ts`), `mobile-notifications.ts`/catchup (watermark cấm đụng).
@@ -73,11 +77,12 @@ T1 deep-link-route-wiring ──┬─> T4 wire-compat-regression-unit-test
                             └──> T7 docs-update-mobile-notifications
 T6 strings-audit (independent)
 T8 stories-entry-button (independent — owner requirement 2026-09-05)
+T9 story-graph-cross-links (independent — owner requirement 2026-09-05)
 ```
 
-Thứ tự chạy (1 worktree — serial): **T1 → T8 → T4 → T5 → T3 → T6 → T7 → T2**
-(T8 ngay sau T1 — owner requirement, để T6 strings-audit phủ luôn label nút mới;
-T2 cuối để maximizing thời gian chờ user re-pair; T3 sau T4/T5 để review
+Thứ tự chạy (1 worktree — serial): **T1 → T8 → T9 → T4 → T5 → T3 → T6 → T7 → T2**
+(T8/T9 ngay sau T1 — owner requirements 2026-09-05, để T6 strings-audit phủ luôn
+copy mới; T2 cuối để maximizing thời gian chờ user re-pair; T3 sau T4/T5 để review
 trên state code cuối; T7 sau tests để docs mô tả hành vi đã verify).
 
 ### Task 1 — deep-link-route-wiring
@@ -95,6 +100,7 @@ trên state code cuối; T7 sau tests để docs mô tả hành vi đã verify).
 - [ ] Setup: dev server + build/install app lên emulator-5554 (mock hoặc real host per latch)
 - [ ] Seeding gates (PINNED — plan-critic P1): ≥1 gate từ LIVE agent story workflow (bắt buộc cho acceptance "agent trong terminal tiếp tục" + đo ≤5s — CLI/store gate không có agent chờ → chuỗi cụt); CLI/store gate chỉ dùng cho story parity thứ 2. Re-check latch SAU mock supplement: nếu user đã re-pair giữa task → chuyển sang full real-host chain
 - [ ] Chuỗi e2e (serialized, screencap mỗi bước vào /tmp/story/fi305/e2e/): story list thấy story → gate mở từ desktop → notification ≤5s (desktop dispatch log → logcat post, A2) → tap (cold-start probe TRƯỚC: kill app → tap; rồi warm tap) → đúng màn story + gate chip (testID) → resolve qua sheet → gate resolved → agent trong terminal worktree tiếp tục
+- [ ] OWNER GRAPH CHECKLIST (tiêu chí chốt Done — chạy trọn 1 lượt, screencap từng bước): (1) host screen → nút Stories (T8) → story list; (2) story list → tap story → detail (onOpenStory intact); (3) detail → gates section → tap pending gate → resolve sheet (T9a) → resolve; (4) notification gate-open/gate-closed tap → đúng story screen (deep-link commit 1e51d829d5); (5) Gates screen → gate row story-linked → mở đúng story detail (T9b); (6) cả graph liền mạch không dead-end
 - [ ] Desktop restart giữa chừng: phone cached render ngay (không trắng màn — A2 định nghĩa) + tươi ≤10s từ ws-reconnect
 - [ ] Parity ≥2 story: screencap pair phone vs desktop panel + checklist SF/gate states
 - [ ] Mock path (nếu dùng): +`notificationId` vào `pushGateEvent` (test infra 1 dòng) — coverage screens + gate push + resolve; KHÔNG bao giờ thay evidence ≤5s/parity/restart
@@ -143,6 +149,15 @@ trên state code cuối; T7 sau tests để docs mô tả hành vi đã verify).
 - Acceptance: nút thấy được cạnh Gates cả 2 variant, tap → `/h/<hostId>/stories` (owner thử được ngay)
 - Commit: `feat(FI-309): stories-entry-button`
 
+### Task 9 — story-graph-cross-links (owner requirement 2026-09-05 — BẮT BUỘC trước Done)
+- [ ] `MobileStoryDetailScreen.tsx`: gate rows PENDING trở thành pressable → mở `MobileGateResolveSheet` (REUSE component + `useMobileGateResolve` của SF-3 — không reimplement resolve UX); resolved/timeout rows giữ read-only (timeout read-only per spec §3b). Adapter nhỏ nếu shape `PendingGateRow` (sheet) khác contract gate (detail) — map tại chỗ, không đổi sheet
+- [ ] `MobilePendingGatesScreen.tsx`: gate row có `storyId` non-null → thêm affordance mở story detail `/h/<hostId>/stories/<storyId>` (reuse `createStoryDetailHref` pattern); gate 'khác' (storyId null) giữ nguyên resolve inline
+- [ ] Tests: 2 file mới colocated — `story-detail-gate-resolve.test.tsx` (press pending gate → sheet mở; resolve flow qua sheet vẫn confirm; không đụng resolved rows) + `pending-gates-story-link.test.tsx` (story-linked row → navigate đúng href; 'khác' không link) — mock expo-router theo pattern test SF-2/3 có sẵn
+- Verify: `pnpm --dir mobile typecheck` + `pnpm --dir mobile test src/superpowers` xanh
+- Files: `MobileStoryDetailScreen.tsx`, `MobilePendingGatesScreen.tsx`, 2 test files mới
+- Acceptance: graph (3) Detail → gates → resolve sheet + (5) GatesScreen → StoryDetail hoạt động; owner graph e2e checklist item 3+5 có code
+- Commit: `feat(FI-309): story-graph-cross-links`
+
 ## 4. Execution & review protocol
 
 - Mỗi task: `task-executor` agent (brief = task section + spec slice + decisions relevant) → commit atomic → `code-reviewer` trên diff task (verdict vào `/tmp/story/fi305/code-reviewer-<task>.md`) → APPROVED mới sang task kế; CHANGES-REQUESTED → fix ngay trong task (tối đa 2 vòng, sau đó escalate)
@@ -168,6 +183,7 @@ trên state code cuối; T7 sau tests để docs mô tả hành vi đã verify).
 | Strings audit (typo/missing, không i18n) | T6 audit report + fix commits (nếu có); tests vẫn xanh |
 | Docs cập nhật | T7 commits + file content (không có build check rẻ — reviewer đọc diff content) |
 | (Owner) Nút "Stories" host screen | T8 commit + screencap device (defer vào T2 nếu emulator bận); tap → /h/<hostId>/stories |
+| (Owner) Graph e2e checklist 6 bước | T2 serialized e2e — screencap từng bước + verdict từng item; T9 commit cho item 3+5 |
 | Deep-link wiring | T1 tests xanh + code review (unconditional) |
 
 ## 6. Merge + Done (checklist cuối — KHÔNG tick trong plan file, theo dõi qua Linear)

@@ -57,10 +57,18 @@ notifications docs).
 
 ## Boundary
 - KHÔNG thêm feature mới — chỉ wiring + verify + fix bug tìm thấy
-- **NGOẠI LỆ owner-mandated (2026-09-05):** screen Stories KHÔNG có entry point UI
+- **NGOẠI LỆ owner-mandated (2026-09-05):** (a) screen Stories KHÔNG có entry point UI
   (chỉ deep-link `orca://h/<hostId>/stories`) → BẮT BUỘC thêm 1 button/link
   "Stories" ở host screen cạnh nút Gates đã có (`host-screen-header.tsx`, cả 2
-  toolbar variant responsive) điều hướng `/h/<hostId>/stories` — trước khi set Done
+  toolbar variant responsive) điều hướng `/h/<hostId>/stories`; (b) LIÊN KẾT
+  navigation graph các story features — thiếu chỗ nào bổ sung chỗ đó (cross-link
+  GatesScreen ↔ StoryDetail, gate rows trong StoryDetail mở được resolve sheet
+  reuse SF-3) — trước khi set Done
+- **Owner graph e2e checklist (tiêu chí chốt Done):** (1) host → nút Stories;
+  (2) Story List → Detail (onOpenStory SF-2 intact); (3) Detail → gates section
+  → Gate Resolve Sheet; (4) notification gate tap → đúng story screen; (5)
+  GatesScreen ↔ StoryDetail cross-link 2 chiều; (6) cả graph chạy 1 lượt trên
+  device trong e2e serialized
 - Bug P0/P1 tìm trong QA → fix + ghi nhận; P2 → improvements-log, không scope-creep
 - KHÔNG tự merge vào `main` — story dừng ở nhánh đích
   `story/fi305-superpowers-android`, PR do agent tạo, merge là quyền người
