@@ -1,0 +1,210 @@
+import {
+  ActivityIndicator,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View
+} from 'react-native'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useRouter } from 'expo-router'
+import { ChevronLeft, RefreshCw } from 'lucide-react-native'
+import { useHostClient } from '../transport/host-client-hooks'
+import { colors, spacing } from '../theme/mobile-theme'
+import type { PendingGateRow } from './pending-gates-store'
+import { useMobilePendingGates } from './use-mobile-pending-gates'
+
+// T3 seam: resolve sheet lands later — rows are wired to this optional callback,
+// a no-op until the route passes a handler.
+export type MobilePendingGatesScreenProps = {
+  hostId: string
+  onGatePress?: (gate: PendingGateRow) => void
+}
+
+function formatGateCreatedAt(createdAt: number): string | null {
+  if (!createdAt) {
+    return null
+  }
+  return new Date(createdAt).toLocaleString()
+}
+
+export function MobilePendingGatesScreen({ hostId, onGatePress }: MobilePendingGatesScreenProps) {
+  const router = useRouter()
+  const insets = useSafeAreaInsets()
+  const { client, state: connState } = useHostClient(hostId)
+  const { sections, unavailable, refreshing, refresh } = useMobilePendingGates({
+    hostId,
+    client,
+    connected: connState === 'connected'
+  })
+  const connected = connState === 'connected'
+
+  return (
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <View style={styles.topRow}>
+        <Pressable
+          style={styles.backButton}
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+          hitSlop={8}
+        >
+          <ChevronLeft size={22} color={colors.textPrimary} />
+        </Pressable>
+        <View style={styles.titleWrap}>
+          <Text style={styles.heading}>Gates</Text>
+          <Text style={styles.subheading} numberOfLines={1}>
+            Pending decision gates on this host
+          </Text>
+        </View>
+        <Pressable
+          style={styles.iconButton}
+          onPress={refresh}
+          disabled={!client || refreshing || !connected}
+          accessibilityRole="button"
+          accessibilityLabel="Refresh gates"
+        >
+          {refreshing ? (
+            <ActivityIndicator size="small" color={colors.textSecondary} />
+          ) : (
+            <RefreshCw size={18} color={colors.textSecondary} />
+          )}
+        </Pressable>
+      </View>
+
+      <ScrollView
+        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + spacing.xl }]}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={refresh}
+            tintColor={colors.textSecondary}
+          />
+        }
+      >
+        {unavailable ? (
+          <View style={styles.banner}>
+            <Text style={styles.bannerText}>
+              Gate list unavailable — this host runs an older Orca desktop without gate sync. Update
+              the desktop app.
+            </Text>
+          </View>
+        ) : null}
+        {sections.map((section) => (
+          <View key={section.key} style={styles.section}>
+            <Text style={styles.sectionHeader}>{section.title}</Text>
+            <View style={styles.card}>
+              {section.rows.map((row, index) => (
+                <Pressable
+                  key={row.gateId}
+                  style={[styles.row, index > 0 && styles.rowBordered]}
+                  onPress={() => onGatePress?.(row)}
+                  accessibilityRole="button"
+                  accessibilityLabel={row.title}
+                >
+                  <Text style={styles.rowTitle} numberOfLines={2}>
+                    {row.title}
+                  </Text>
+                  {formatGateCreatedAt(row.createdAt) ? (
+                    <Text style={styles.rowMeta}>{formatGateCreatedAt(row.createdAt)}</Text>
+                  ) : null}
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        ))}
+        {!unavailable && sections.length === 0 ? (
+          <Text style={styles.emptyText}>
+            {connected ? 'No pending gates' : 'Connecting to host…'}
+          </Text>
+        ) : null}
+      </ScrollView>
+    </SafeAreaView>
+  )
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.bgBase
+  },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: spacing.sm
+  },
+  backButton: {
+    padding: spacing.xs
+  },
+  titleWrap: {
+    flex: 1,
+    minWidth: 0
+  },
+  heading: {
+    color: colors.textPrimary,
+    fontSize: 18,
+    fontWeight: '600'
+  },
+  subheading: {
+    color: colors.textSecondary,
+    fontSize: 12
+  },
+  iconButton: {
+    padding: spacing.xs
+  },
+  scroll: {
+    paddingHorizontal: spacing.md
+  },
+  banner: {
+    backgroundColor: colors.bgRaised,
+    borderColor: colors.borderSubtle,
+    borderWidth: 1,
+    borderRadius: 6,
+    padding: spacing.md,
+    marginBottom: spacing.md
+  },
+  bannerText: {
+    color: colors.statusAmber,
+    fontSize: 13
+  },
+  section: {
+    marginBottom: spacing.lg
+  },
+  sectionHeader: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: spacing.sm
+  },
+  card: {
+    backgroundColor: colors.bgPanel,
+    borderColor: colors.borderSubtle,
+    borderWidth: 1,
+    borderRadius: 6
+  },
+  row: {
+    padding: spacing.md,
+    gap: 2
+  },
+  rowBordered: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.borderSubtle
+  },
+  rowTitle: {
+    color: colors.textPrimary,
+    fontSize: 14
+  },
+  rowMeta: {
+    color: colors.textMuted,
+    fontSize: 12
+  },
+  emptyText: {
+    color: colors.textMuted,
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: spacing.xl
+  }
+})

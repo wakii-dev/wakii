@@ -108,7 +108,7 @@ Plan file tick `- [x]` sau mỗi task (checkbox CHỈ cho task steps).
   cross-contaminate); zero-stories edge (overlay cả-hai-absent qua primitive add); probe
   rule; reconcile KHÔNG gỡ overlay entry thiếu server evidence; parseError story không crash.
 - Exit: vitest pass; typecheck pass.
-- [ ] T2 done
+- [x] T2 done
 
 ### T3 — resolve-flow-options-freetext-confirm
 - `gate-resolve-request.ts`: plain `sendRequest('superpowers.gateResolve', {gateId, resolution})`
