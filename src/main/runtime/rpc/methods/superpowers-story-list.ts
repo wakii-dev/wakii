@@ -6,6 +6,7 @@ import { runtimeWorktreeIdsEqual } from '../../runtime-worktree-path-identity'
 import type { OrchestrationDb } from '../../orchestration/db'
 import { deriveWorktreeIdForGate } from '../../../superpowers/gate-worktree-derivation'
 import { parseBracketHeading, parseBracketSfs } from '../../../superpowers/bracket-file-parse'
+import { readSfStatuses } from '../../../superpowers/story-linear-status'
 import type {
   SuperpowersStoryListItem,
   SuperpowersStoryListResult
@@ -67,6 +68,21 @@ export function scanWorktreeBracketStories(worktreePath: string): BracketStorySc
 
 type StoryListRuntime = Pick<OrcaRuntimeService, 'listWorktreeCatalog' | 'getOrchestrationDb'>
 
+// The SF-1-frozen scanner drops raw text; re-read the bracket for `linear:` ids
+// in the same pass (spec-critic P0 pin) — no scanner change, no third parser.
+function readStoryLinearIds(worktreePath: string, storyId: string): string[] {
+  try {
+    const text = readFileSync(
+      join(worktreePath, 'docs', 'superpowers', 'brackets', storyId.slice('brackets/'.length)),
+      'utf8'
+    )
+    const sfs = parseBracketSfs(text)
+    return sfs === 'parse-error' ? [] : sfs.flatMap((sf) => (sf.linear ? [sf.linear] : []))
+  } catch {
+    return []
+  }
+}
+
 function countPendingGatesByWorktreeId(db: OrchestrationDb): Map<string, number> {
   const counts = new Map<string, number>()
   for (const gate of db.listGates({ status: 'pending' })) {
@@ -84,14 +100,20 @@ function countPendingGatesByWorktreeId(db: OrchestrationDb): Map<string, number>
 
 export async function listStoriesForRuntime(
   runtime: StoryListRuntime,
-  scanBrackets: BracketStoryScanner = scanWorktreeBracketStories
+  scanBrackets: BracketStoryScanner = scanWorktreeBracketStories,
+  opts?: { now?: () => number }
 ): Promise<SuperpowersStoryListItem[]> {
   const catalog = await runtime.listWorktreeCatalog()
   if (catalog.length === 0) {
     return []
   }
   const pendingGates = countPendingGatesByWorktreeId(runtime.getOrchestrationDb())
-  const stories: SuperpowersStoryListItem[] = []
+  const entries: {
+    worktree: (typeof catalog)[number]
+    scan: BracketStoryScan
+    pendingGates: number
+    linearIds: string[]
+  }[] = []
   for (const worktree of catalog) {
     for (const scan of scanBrackets(worktree.path)) {
       let pendingGatesForStory = 0
@@ -100,25 +122,37 @@ export async function listStoriesForRuntime(
           pendingGatesForStory += count
         }
       }
-      stories.push({
-        storyId: scan.storyId,
-        title: scan.title,
-        epicId: scan.epicId,
-        worktreeId: worktree.id,
-        workspaceName: worktree.displayName,
-        sfTotal: scan.sfTotal,
-        // SF status needs Linear reads (SF-2) — SF-1 hardcodes 'unknown'/0.
-        sfDone: 0,
+      entries.push({
+        worktree,
+        scan,
         pendingGates: pendingGatesForStory,
-        updatedAt: scan.updatedAt,
-        parseError: scan.parseError
+        linearIds: scan.parseError ? [] : readStoryLinearIds(worktree.path, scan.storyId)
       })
     }
   }
-  return stories.sort(
-    (a, b) =>
-      b.updatedAt - a.updatedAt || (a.storyId < b.storyId ? -1 : a.storyId > b.storyId ? 1 : 0)
+  // One batched Linear read per request (all stories' ids together); per-id
+  // failures degrade to 'unknown' inside the helper — never fails the method.
+  const sfStatuses = await readSfStatuses(
+    [...new Set(entries.flatMap((entry) => entry.linearIds))],
+    opts
   )
+  return entries
+    .map((entry) => ({
+      storyId: entry.scan.storyId,
+      title: entry.scan.title,
+      epicId: entry.scan.epicId,
+      worktreeId: entry.worktree.id,
+      workspaceName: entry.worktree.displayName,
+      sfTotal: entry.scan.sfTotal,
+      sfDone: entry.linearIds.filter((id) => sfStatuses.get(id) === 'done').length,
+      pendingGates: entry.pendingGates,
+      updatedAt: entry.scan.updatedAt,
+      parseError: entry.scan.parseError
+    }))
+    .sort(
+      (a, b) =>
+        b.updatedAt - a.updatedAt || (a.storyId < b.storyId ? -1 : a.storyId > b.storyId ? 1 : 0)
+    )
 }
 
 export const SUPERPOWERS_STORY_LIST_METHODS: RpcMethod[] = [
