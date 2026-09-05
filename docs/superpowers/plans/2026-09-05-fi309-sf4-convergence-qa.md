@@ -134,10 +134,10 @@ trên state code cuối; T7 sau tests để docs mô tả hành vi đã verify).
 - Commit: `feat(FI-309): strings-audit` (chỉ khi có fix; không fix → ghi report-only)
 
 ### Task 7 — docs-update-mobile-notifications
-- [ ] `mobile/README.md`: section story screens (list/detail/gates) + gate notifications + deep-link tap behavior
-- [ ] `docs/site/content/docs/mobile.mdx`: cập nhật feature section story/gates
-- [ ] `docs/site/content/docs/notifications.mdx`: section gate notifications + deep-link
-- [ ] Nội dung khớp behavior ĐÃ verify (D3/D6), không hứa hẹn feature chưa có
+- [x] `mobile/README.md`: section story screens (list/detail/gates) + gate notifications + deep-link tap behavior
+- [x] `docs/site/content/docs/mobile.mdx`: cập nhật feature section story/gates
+- [x] `docs/site/content/docs/notifications.mdx`: section gate notifications + deep-link
+- [x] Nội dung khớp behavior ĐÃ verify (D3/D6), không hứa hẹn feature chưa có
 - Acceptance: nội dung khớp code (reviewer đọc diff content — không có build check rẻ cho site docs)
 - Commit: `feat(FI-309): docs-update-mobile-notifications`
 
