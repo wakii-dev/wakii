@@ -36,6 +36,7 @@ function orcaBin() {
   const candidates = [
     '/opt/homebrew/bin/orca',
     '/usr/local/bin/orca',
+    '/Applications/Wakii.app/Contents/Resources/bin/orca',
     '/Applications/Orca.app/Contents/Resources/bin/orca'
   ]
   for (const c of candidates) {
@@ -213,8 +214,9 @@ async function sendToTerminal(orca, text, { terminalId } = {}) {
 // Stories live as bracket files under docs/superpowers/brackets/*.md.
 // Fallback source: issues-with-children from Linear (no bracket file yet).
 
-import { readFile, readdir, writeFile } from 'node:fs/promises'
+import { readFile, readdir, writeFile, unlink } from 'node:fs/promises'
 import { join, basename } from 'node:path'
+import { tmpdir } from 'node:os'
 
 async function worktreeRoot(orca) {
   try {
@@ -811,6 +813,12 @@ export default function activate(orca) {
   tasksTimer.unref?.()
   void collectStoryTasks()
 
+  // story.list: worker tự quét lúc start + mỗi 60s — panel chỉ đọc storage.
+  // Trước đây chỉ chạy qua command thủ công → autocomplete luôn rỗng.
+  void listStories(orca)
+  const listTimer = setInterval(() => { void listStories(orca) }, 60000)
+  listTimer.unref?.()
+
   // ---- Story Ops: poll request từ panel (resume/watchdog/refresh) + refresh 60s
   let lastOpsReqAt = 0
   const processOpsRequest = async () => {
@@ -820,7 +828,25 @@ export default function activate(orca) {
       if (req && req.at && req.at !== lastOpsReqAt) {
         lastOpsReqAt = req.at
         let result = null
-        if (req.action === 'resume' && typeof req.sf === 'string') {
+        if (req.action === 'refresh') {
+          result = await listStories(orca)
+        } else if (req.action === 'share-artifact' && typeof req.name === 'string' && req.name
+                   && !req.name.includes('..') && !req.name.includes('/') && typeof req.html === 'string' && req.html.length > 16) {
+          // Share bracket → HTML file → orca artifacts share (link public qua account)
+          const tmpHtml = join(tmpdir(), 'wakii-bracket-' + Date.now() + '.html')
+          await writeFile(tmpHtml, req.html, 'utf8')
+          result = await execFileAsync(orcaBin(), ['artifacts', 'share', tmpHtml])
+            .then(({ stdout }) => {
+              let url = null
+              try {
+                const parsed = JSON.parse(stdout)
+                url = parsed?.result?.url ?? parsed?.result?.shareUrl ?? parsed?.url ?? null
+              } catch { /* output không phải JSON — dùng raw */ }
+              return { ok: true, stdout: url ? 'artifact: ' + url : String(stdout).slice(0, 500) }
+            })
+            .catch((e) => ({ ok: false, error: String((e && (e.stderr || e.message)) || e).slice(0, 400) }))
+          await unlink(tmpHtml).catch(() => {})
+        } else if (req.action === 'resume' && typeof req.sf === 'string') {
           result = await runKit('story-resume', [req.sf, '--send'])
         } else if (req.action === 'watchdog') {
           // --with-index khớp cron mặc định kit — pass xong index memory (fail-safe)

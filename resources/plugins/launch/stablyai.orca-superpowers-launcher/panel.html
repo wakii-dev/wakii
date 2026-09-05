@@ -140,15 +140,21 @@ Mô tả story (feature lớn) — markdown
         <button id="story-launch" style="padding: 7px 6px; border: 1px solid #eab308; border-radius: 7px; background: transparent; color: #eab308; font-size: 11px; font-weight: 600; cursor: pointer;">▶ Launch SFs</button>
       </div>
 
-      <div class="row" style="margin-top: 12px; gap: 6px; position: relative;">
-        <input id="story-pick" autocomplete="off" placeholder="Story — gõ filename hoặc ID (vd: nextjs / 151)…"
-               style="flex:1; padding: 5px 9px; border: 1px solid var(--border, #444); border-radius: 7px; background: var(--secondary, #1f1f1f); color: var(--foreground, #ddd); font-size: 12px;" />
-        <div id="story-dd" style="display:none; position:absolute; top:34px; left:0; right:44px; z-index:30; max-height:240px; overflow-y:auto; border:1px solid var(--border,#555); border-radius:8px; background:var(--card,#1a1a1a); box-shadow:0 6px 20px rgba(0,0,0,.5);"></div>
-        <button id="story-add-node" class="btn" style="padding: 5px 8px;" title="Thêm SF node mới vào bracket (ghi .md qua worker)">＋</button>
-        <button id="story-share" class="btn" style="padding: 5px 8px;" title="Share bracket: copy markdown + tải PNG">⤓</button>
-        <button id="story-load" class="btn" style="padding: 5px 10px;">↻</button>
+      <!-- STORY PICK: dòng riêng full-width — command-line style -->
+      <div style="margin-top: 12px; position: relative;">
+        <div style="position:absolute; left:9px; top:50%; transform:translateY(-50%); color:var(--muted-foreground,#888); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; pointer-events:none;">⌕</div>
+        <input id="story-pick" autocomplete="off" placeholder="Chọn story — gõ filename hoặc ID (vd: fi305…)"
+               style="width:100%; box-sizing:border-box; padding: 6px 10px 6px 26px; border: 1px solid var(--border, #444); border-radius: 7px; background: var(--secondary, #1f1f1f); color: var(--foreground, #ddd); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px;" />
+        <div id="story-dd" style="display:none; position:absolute; top:36px; left:0; right:0; z-index:30; max-height:240px; overflow-y:auto; border:1px solid var(--border,#555); border-radius:8px; background:var(--card,#1a1a1a); box-shadow:0 6px 20px rgba(0,0,0,.5);"></div>
       </div>
-      <div id="story-status" class="muted" style="font-size: 11px; margin-top: 4px;">chưa load</div>
+      <!-- BRACKET header: trạng thái + tác vụ bracket -->
+      <div style="display:flex; align-items:center; gap:6px; margin-top:8px;">
+        <span style="font-size:10px; font-weight:700; letter-spacing:.8px; color:var(--muted-foreground,#888); text-transform:uppercase;">Bracket</span>
+        <div id="story-status" class="muted" style="font-size: 11px; flex:1;">Chọn story hoặc bấm ↻ để load</div>
+        <button id="story-add-node" class="btn" style="padding: 4px 8px;" title="Thêm SF node mới vào bracket (ghi .md qua worker)">＋</button>
+        <button id="story-share" class="btn" style="padding: 4px 8px;" title="Share bracket: publish HTML lên Orca artifacts (link public)">⤓</button>
+        <button id="story-load" class="btn" style="padding: 4px 10px;">↻</button>
+      </div>
       <div id="story-canvas" style="flex: 2 1 auto; min-height: 320px; margin-top: 14px; overflow: hidden; border: 1px solid var(--border, #444); border-radius: 8px; background: var(--secondary, #191919); cursor: grab; position: relative;">
         <svg id="story-svg" xmlns="http://www.w3.org/2000/svg" style="display:none; width: 100%; height: 100%;">
           <g id="story-graph"></g>
@@ -858,8 +864,9 @@ Tech blog: markdown posts, post list, single-post view, tag filter, dark/light t
         el.textContent = bytes + 'B'
         el.style.color = 'var(--muted-foreground, #999)'
       }
-      document.getElementById('idea').addEventListener('input', updateByteCounter)
-      // Update counter on mode change too
+      document.getElementById('idea').addEventListener('input', updateByteCounter);
+      // Update counter on mode change too. Chú ý: dòng dưới bắt đầu bằng `[` —
+      // thiếu `;` ở trên sẽ bị ASI parse thành property access → TypeError boot.
       ['autonomous', 'polish', 'simplify', 'audit-log', 'plan-only', 'subagents', 'execute-mode'].forEach(function (id) {
         var el = document.getElementById(id)
         if (el) el.addEventListener('change', updateByteCounter)
@@ -1414,40 +1421,42 @@ Tech blog: markdown posts, post list, single-post view, tag filter, dark/light t
         document.getElementById('ne-title').focus()
       }
 
-      // ---- Share bracket: copy markdown + xuất PNG ----
+      // ---- Share bracket: dựng HTML standalone → publish qua orca artifacts ----
+      function buildBracketHtml() {
+        var md = (graph && graph.planMarkdown) || ''
+        var esc = function (s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') }
+        var rows = esc(md).split('\n').map(function (line) {
+          if (/^# /.test(line)) return '<h1>' + line.slice(2) + '</h1>'
+          if (/^## /.test(line)) return '<h2>' + line.slice(3) + '</h2>'
+          if (/^(Tier|linear|Depends on|Design):/.test(line)) return '<div class="meta">' + line + '</div>'
+          if (/^What:/.test(line)) return '<p class="what">' + line + '</p>'
+          if (/^-\s\[[ x]\]/.test(line)) return '<div class="task">' + line + '</div>'
+          if (line.trim() === '') return ''
+          return '<p>' + line + '</p>'
+        }).join('\n')
+        return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
+          + '<title>Wakii bracket</title><style>'
+          + 'body{margin:0 auto;background:#161618;color:#ddd;font:14px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace;padding:36px 44px;max-width:860px}'
+          + 'h1{font-size:18px;color:#6ba1f8;border-bottom:1px solid #333;padding-bottom:10px}'
+          + 'h2{font-size:14px;color:#eab308;margin:26px 0 6px}'
+          + '.meta{color:#8a8a8a;font-size:12px}.what{color:#c8c8c8;margin:4px 0 14px}.task{color:#9eca9e}'
+          + '.foot{margin-top:36px;color:#666;font-size:11px;border-top:1px solid #2a2a2a;padding-top:10px}'
+          + '</style></head><body>' + rows + '<div class="foot">Wakii — story bracket</div></body></html>'
+      }
+
       function shareBracket() {
-        if (!graph || !graph.planMarkdown) return
         var st = document.getElementById('story-status')
-        try { navigator.clipboard.writeText(graph.planMarkdown); if (st) st.textContent = 'đã copy bracket markdown vào clipboard' } catch (e) { /* clipboard blocked */ }
-        var svg = document.getElementById('story-svg')
-        if (!svg || svg.style.display === 'none') return
-        // var(--x, fallback) không resolve trong SVG standalone → thay bằng fallback
-        var xml = new XMLSerializer().serializeToString(svg)
-        xml = xml
-          .replace(/var\(--card, #1f1f1f\)/g, '#1f1f1f')
-          .replace(/var\(--foreground, #ddd\)/g, '#ddd')
-          .replace(/var\(--muted-foreground, #999\)/g, '#999')
-          .replace(/var\(--primary, #2563eb\)/g, '#2563eb')
-          .replace(/var\(--secondary, #191919\)/g, '#191919')
-          .replace(/var\(--border, #444\)/g, '#444')
-        var img = new Image()
-        img.onload = function () {
-          var c = document.createElement('canvas')
-          c.width = svg.clientWidth || 800; c.height = svg.clientHeight || 600
-          var ctx = c.getContext('2d')
-          ctx.fillStyle = '#191919'; ctx.fillRect(0, 0, c.width, c.height)
-          ctx.drawImage(img, 0, 0, c.width, c.height)
-          c.toBlob(function (blob) {
-            if (!blob) return
-            var a = document.createElement('a')
-            a.href = URL.createObjectURL(blob)
-            a.download = (graph.bracketFile || 'bracket').replace(/\.md$/, '') + '.png'
-            a.click()
-            setTimeout(function () { URL.revokeObjectURL(a.href) }, 4000)
-            if (st) st.textContent = 'đã copy markdown + tải PNG'
-          })
+        if (!graph || !graph.planMarkdown) {
+          if (st) st.textContent = 'load story trước khi share'
+          return
         }
-        img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml)
+        var pick = document.getElementById('story-pick')
+        var name = (pick && pick.dataset && pick.dataset.file) || 'bracket'
+        call('storage.set', {
+          key: 'story.ops.request',
+          value: { action: 'share-artifact', name: name, html: buildBracketHtml(), at: Date.now() }
+        })
+        if (st) st.textContent = 'đang publish artifact… (URL sẽ hiện ở Story Ops)'
       }
 
       // ---- Story picker: custom dropdown từ worker data (storage story.list)
@@ -1600,13 +1609,22 @@ Tech blog: markdown posts, post list, single-post view, tag filter, dark/light t
       })
       document.getElementById('story-share').addEventListener('click', () => shareBracket())
       document.getElementById('story-load').addEventListener('click', () => {
-        refreshStoryList().then(() => {
-          var pick = document.getElementById('story-pick')
-          if (pick.dataset.file) { loadBracketFromFile(pick.dataset.file); return }
-          var v = pick.value.trim()
-          var hit = storyFiles.find(st => st.linear === v.toUpperCase() || st.name === v)
-          if (hit) loadBracketFromFile(hit.name); else loadStory()
-        })
+        // Yêu cầu worker quét lại brackets (storage story.list) trước khi đọc
+        call('storage.set', { key: 'story.ops.request', value: { action: 'refresh', at: Date.now() } })
+        var waitAndRead = function (attempt) {
+          refreshStoryList().then((list) => {
+            if ((!list || !list.files || !list.files.length) && attempt < 3) {
+              setTimeout(function () { waitAndRead(attempt + 1) }, 1500)
+              return
+            }
+            var pick = document.getElementById('story-pick')
+            if (pick.dataset.file) { loadBracketFromFile(pick.dataset.file); return }
+            var v = pick.value.trim()
+            var hit = storyFiles.find(st => st.linear === v.toUpperCase() || st.name === v)
+            if (hit) loadBracketFromFile(hit.name); else loadStory()
+          })
+        }
+        setTimeout(function () { waitAndRead(0) }, 1200)
       })
       function loadStory(wantLinear) {
         var status = document.getElementById('story-status')

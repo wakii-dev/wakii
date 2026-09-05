@@ -13,7 +13,20 @@ import type { PluginHostServices } from './plugin-host-method-bindings'
 
 const execFileAsync = promisify(execFileCb)
 
-async function resolveWorkspaceDocsRoot(_services: PluginHostServices): Promise<string | null> {
+async function resolveWorkspaceDocsRoot(services: PluginHostServices): Promise<string | null> {
+  // 0. Focused worktree wins: brackets của story sống trong worktree đang mở —
+  //    quét global theo mtime có thể chọn nhầm worktree stale khác.
+  try {
+    const context = await services.resolveActiveWorktreeContext()
+    if (context?.path) {
+      const docs = join(context.path, 'docs', 'superpowers')
+      if ((await stat(join(docs, 'brackets')).catch(() => null))?.isDirectory()) {
+        return docs
+      }
+    }
+  } catch {
+    /* focused worktree has no superpowers docs — fall through to the scan */
+  }
   const candidates: string[] = []
   // 1. Orca workspace trees: ~/orca/workspaces/<proj>/<wt>
   const wsBase = join(homedir(), 'orca', 'workspaces')
