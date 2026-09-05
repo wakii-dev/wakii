@@ -33,6 +33,8 @@ jobs:
 
       - name: Build Windows app
         run: pnpm run build:win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Collect artifacts
         shell: pwsh
