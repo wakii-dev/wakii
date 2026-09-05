@@ -33,7 +33,15 @@ if (process.argv[1] && resolve(process.argv[1]) === resolve(import.meta.filename
   console.log(`[build:mac] local update version ${identity.version}`)
   execFileSync(
     process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm',
-    ['exec', 'electron-builder', '--config', 'config/electron-builder.config.cjs', '--mac'],
+    [
+      'exec',
+      'electron-builder',
+      '--config',
+      'config/electron-builder.config.cjs',
+      '--mac',
+      '--publish',
+      'never'
+    ],
     {
       env: {
         ...process.env,
