@@ -20,6 +20,7 @@ import {
   supportsStructuredSessions
 } from './structured-agent-session-gate'
 import type { AgentSessionAttachParams } from '../../../native-chat/agent-session-wire/structured-agent-session-attach'
+import { createStructuredAgentSessionForWorktree } from './structured-agent-session-create'
 import { STRUCTURED_AGENT_SESSION_HOLD_METHODS } from './structured-agent-session-hold'
 import {
   AttachParams,
@@ -98,48 +99,18 @@ export const STRUCTURED_AGENT_SESSION_METHODS: RpcAnyMethod[] = [
         if (conflict) {
           return { ok: false, refusal: conflict }
         }
-        const resolved = await ctx.runtime.resolveStructuredAgentSessionCreateIntent(params)
-        const hostFingerprint = computeAgentSessionPayloadFingerprint({
-          method: 'agentSession.attach',
-          sessionId: params.envelope.sessionId,
-          fields: {
-            location: resolved.location,
-            provider: resolved.provider,
-            agent: resolved.agent,
-            accountHome: resolved.accountHome,
-            runtimeKind: resolved.runtimeKind,
-            expectedRuntimeFence: null
-          }
+        return createStructuredAgentSessionForWorktree({
+          runtime: ctx.runtime,
+          ensureHost: async () => {
+            await ensureHostInstalled(ctx)
+            return requireHost(ctx)
+          },
+          caller: callerFor(ctx),
+          envelope: params.envelope,
+          worktree: params.worktree,
+          agent: params.agent as 'claude' | 'codex',
+          activate: true
         })
-        await ensureHostInstalled(ctx)
-        const { agent: _resolvedAgent, provider: _resolvedProvider, ...resolvedAttach } = resolved
-        const attachParams: AgentSessionAttachParams = {
-          ...resolvedAttach,
-          provider: resolved.provider as 'claude' | 'codex',
-          agent: resolved.agent as 'claude' | 'codex',
-          envelope: { ...params.envelope, payloadFingerprint: hostFingerprint }
-        }
-        const result = await requireHost(ctx).attach(callerFor(ctx), attachParams)
-        if (result.ok) {
-          try {
-            await ctx.runtime.publishStructuredAgentSessionTab({
-              workspaceId: resolved.location.workspaceId,
-              sessionId: result.value.sessionId,
-              agent: resolved.agent as 'claude' | 'codex',
-              activate: true
-            })
-          } catch (error) {
-            console.warn('[agent-session] create committed before tab publication failed', error)
-            return {
-              ok: false,
-              refusal: {
-                code: 'agent_session_operation_unknown',
-                message: 'The chat may have been created, but its tab could not be confirmed.'
-              }
-            }
-          }
-        }
-        return result
       }
       return attachClientSuppliedLocation(params, ctx)
     }

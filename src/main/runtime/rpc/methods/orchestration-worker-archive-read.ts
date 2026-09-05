@@ -20,6 +20,8 @@ import {
   encodeWorkerOutputCursor
 } from '../../orchestration/worker-output-cursor'
 import { readWorkerTranscript } from '../../orchestration/worker-transcript-read'
+import type { WorkerStructuredJournalArchive } from '../../orchestration/structured-worker-journal-archive'
+import { readArchivedStructuredJournal } from './orchestration-structured-worker-lifecycle'
 
 const ARCHIVED_TERMINAL_PAGE_LINES = 2_000
 
@@ -41,6 +43,23 @@ export async function readArchivedWorkerOutput(args: {
       'archive_unavailable',
       `Dispatch ${args.dispatchId} was released without a preserved output archive.`
     )
+  }
+  if (archive.kind === 'structured_journal') {
+    if (args.source === 'terminal') {
+      throw new OrchestrationError(
+        'archive_unavailable',
+        `Dispatch ${args.dispatchId} preserved structured chat output only; terminal output was released.`
+      )
+    }
+    return readArchivedStructuredJournal({
+      dispatchId: args.dispatchId,
+      workerState: args.workerState,
+      resourceId: args.resource.id,
+      createdAt: archive.created_at,
+      archive: JSON.parse(archive.content) as WorkerStructuredJournalArchive,
+      ...(args.cursor === undefined ? {} : { cursor: args.cursor }),
+      ...(args.limit === undefined ? {} : { limit: args.limit })
+    })
   }
   if (archive.kind === 'transcript_pin') {
     if (args.source === 'terminal') {

@@ -1,8 +1,5 @@
 import { z } from 'zod'
-import {
-  ORCHESTRATION_WORKER_READ_SOURCES,
-  type OrchestrationWorkerReadResult
-} from '../../../../shared/orchestration-worker-output'
+import { ORCHESTRATION_WORKER_READ_SOURCES } from '../../../../shared/orchestration-worker-output'
 import { contextOnlyAbandonWarning } from '../../orchestration/context-only-dispatch-release'
 import { OrchestrationError } from '../../orchestration/orchestration-error'
 import { defineMethod, type RpcMethod } from '../core'
@@ -15,7 +12,9 @@ import {
   showContextOnlyWorker
 } from './orchestration-worker-observation'
 import { readArchivedWorkerOutput } from './orchestration-worker-archive-read'
-import { readLegacyFederatedTerminal } from './orchestration-worker-legacy-federated-read'
+import { readStructuredWorkerOutput } from './orchestration-structured-worker-lifecycle'
+import { releaseStructuredWorkerSession } from './orchestration-structured-worker-session'
+import { readFederatedWorkerOutput } from './orchestration-worker-legacy-federated-read'
 import { readExactWorkerOutput } from './orchestration-worker-output'
 import { exposeWorkerTerminalResource } from './orchestration-worker-release-completion'
 
@@ -158,39 +157,7 @@ export const ORCHESTRATION_WORKER_CONTROL_METHODS: RpcMethod[] = [
       const db = runtime.getOrchestrationDb()
       const federated = db.getFederatedDispatch(params.dispatch)
       if (federated) {
-        const server = resolvePinnedFederatedServer(runtime, federated)
-        try {
-          const remote = (await runtime.callOrchestrationWorkerServer(
-            server.environmentId,
-            'orchestration.federationReadOutput',
-            {
-              dispatchId: params.dispatch,
-              cursor: params.cursor,
-              limit: params.limit,
-              source: params.source
-            },
-            15_000
-          )) as { runtimeEpoch: string; output: OrchestrationWorkerReadResult }
-          return {
-            ...remote.output,
-            server: { environmentId: server.environmentId, name: server.name },
-            remoteRuntimeEpoch: remote.runtimeEpoch
-          }
-        } catch (error) {
-          if (!(error instanceof OrchestrationError) || error.code !== 'method_not_found') {
-            throw error
-          }
-          return readLegacyFederatedTerminal({
-            runtime,
-            server,
-            federated,
-            workerState: db.getWorkerDispatch(params.dispatch)?.state ?? 'unknown',
-            dispatchId: params.dispatch,
-            source: params.source,
-            cursor: params.cursor,
-            limit: params.limit
-          })
-        }
+        return readFederatedWorkerOutput({ runtime, db, federated, params })
       }
       const dispatch = db.getDispatchContextById(params.dispatch)
       const worker = db.getWorkerDispatch(params.dispatch)
@@ -225,6 +192,17 @@ export const ORCHESTRATION_WORKER_CONTROL_METHODS: RpcMethod[] = [
           'worker_identity_changed',
           `Worker Dispatch ${params.dispatch} no longer resolves to its exact process.`
         )
+      }
+      const structured = readStructuredWorkerOutput({
+        db,
+        dispatchId: params.dispatch,
+        workerState: worker?.state ?? 'unsupervised',
+        source: params.source,
+        cursor: params.cursor,
+        limit: params.limit
+      })
+      if (structured) {
+        return structured
       }
       const output = await readExactWorkerOutput({
         runtime,
@@ -265,6 +243,10 @@ export const ORCHESTRATION_WORKER_CONTROL_METHODS: RpcMethod[] = [
       const abandoned = runtime.getOrchestrationDb().abandonWorkerDispatch(params.dispatch)
       if (abandoned.disposition === 'context_only') {
         if (!abandoned.alreadySettled) {
+          // Abandon settles the Dispatch, so it owes the same hold release stop and release do.
+          // A surviving hold pins the provider child for the life of the app and makes host crash
+          // recovery respawn a worker nobody is waiting on.
+          releaseStructuredWorkerSession(params.dispatch, runtime)
           runtime.notifyMessageArrived(`dispatch:${params.dispatch}`, 'status')
         }
         return {
@@ -279,6 +261,7 @@ export const ORCHESTRATION_WORKER_CONTROL_METHODS: RpcMethod[] = [
       }
       const worker = abandoned.worker
       if (abandoned.disposition === 'abandoned') {
+        releaseStructuredWorkerSession(params.dispatch, runtime)
         runtime.notifyMessageArrived(`dispatch:${params.dispatch}`, 'status')
       }
       return {

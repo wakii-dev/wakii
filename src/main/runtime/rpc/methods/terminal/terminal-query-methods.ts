@@ -25,7 +25,10 @@ export const TERMINAL_QUERY_METHODS: RpcAnyMethod[] = [
     name: 'terminal.resolveActive',
     params: TerminalResolveActive,
     handler: async (params, { runtime }) => ({
-      handle: await runtime.resolveActiveTerminal(params.worktree)
+      handle: await runtime.resolveActiveTerminal(
+        params.worktree,
+        params.requireUnambiguous ? { requireUnambiguous: true } : {}
+      )
     })
   }),
   defineMethod({

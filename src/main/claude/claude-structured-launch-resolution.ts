@@ -4,6 +4,7 @@ import type { AgentSessionJournalIdentity } from '../../shared/agent-session-jou
 import { agentSessionProviderHandleChainHead } from '../../shared/agent-session-provider-handle'
 import { LOCAL_EXECUTION_HOST_ID } from '../../shared/execution-host'
 import { withCliRuntimeOnPath } from '../../shared/node-cli-command-resolution'
+import { structuredWorkerChildIdentityEnv } from '../runtime/structured-worker-child-identity-env'
 import {
   CLAUDE_AUTH_ENV_CONFLICT_MESSAGE,
   CLAUDE_AUTH_SWITCH_IN_PROGRESS_MESSAGE,
@@ -245,7 +246,9 @@ export function createClaudeStructuredLaunchResolver(
             platform: process.platform
           }
         ),
-        ...(overlay ? cloneDefinedEnv(overlay) : {})
+        ...(overlay ? cloneDefinedEnv(overlay) : {}),
+        // Only a dispatched structured worker gets these; an ordinary chat session gets none.
+        ...structuredWorkerChildIdentityEnv(record.sessionId)
       },
       { platform: process.platform }
     )

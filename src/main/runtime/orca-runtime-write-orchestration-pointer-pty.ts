@@ -30,7 +30,12 @@ export class OrcaRuntimeWithWriteOrchestrationPointerPty extends OrcaRuntimeWith
         const admission = agentSessionPtyWriteGate.admit(ptyId)
         if (!admission.admitted) {
           this.orchestrationPointerAdmissionByPtyId.delete(ptyId)
-          return this.ptyController?.write(ptyId, data) ?? false
+          // Refused means refused. Delegating to the controller only re-derives the same refusal
+          // one level down and reports `pty:writeUnavailable` to the renderer, whose handler runs
+          // transport RECOVERY — so a pointer that was declined on purpose, on a perfectly healthy
+          // pane, used to kick a user-input-failure flow on every redrive. A native-owned pane is
+          // served by the structured lane instead, which resolves before any byte is attempted.
+          return false
         }
         this.orchestrationPointerAdmissionByPtyId.set(ptyId, {
           sessionId: admission.sessionId,

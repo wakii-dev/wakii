@@ -5,7 +5,7 @@ import {
 } from '../pane-key-match'
 import type { OrchestrationDb } from '../orchestration-db'
 
-export function applySchemaMigrationsV13ToV30(this: OrchestrationDb, current: number): void {
+export function applySchemaMigrationsV13ToLatest(this: OrchestrationDb, current: number): void {
   if (current < 13 && !this.hasColumn('worker_dispatches', 'runtime_epoch')) {
     this.db.exec('ALTER TABLE worker_dispatches ADD COLUMN runtime_epoch TEXT')
   }
@@ -181,6 +181,33 @@ export function applySchemaMigrationsV13ToV30(this: OrchestrationDb, current: nu
           ON remote_dispatch_attachments(${REMOTE_ATTACHMENT_PANE_KEY_MATCH_SUFFIX_SQL})
           WHERE state IN ('starting', 'ready', 'start_unknown', 'stopping', 'stop_unknown')
             AND pane_key IS NOT NULL;
+      `)
+  }
+  if (current < 31) {
+    this.db.exec(`
+        CREATE TABLE IF NOT EXISTS structured_pointer_operations (
+          mailbox_handle    TEXT PRIMARY KEY,
+          session_id        TEXT NOT NULL,
+          operation_id      TEXT NOT NULL,
+          body_fingerprint  TEXT NOT NULL,
+          minted_at_ms      INTEGER NOT NULL
+        );
+      `)
+    // A CHECK constraint cannot be widened in place, so the archive table is rebuilt to admit the
+    // structured journal kind alongside the two PTY-era kinds.
+    this.db.exec(`
+        CREATE TABLE IF NOT EXISTS worker_terminal_archives_v31 (
+          dispatch_id   TEXT PRIMARY KEY,
+          resource_id   TEXT NOT NULL,
+          kind          TEXT NOT NULL CHECK(kind IN ('transcript_pin', 'terminal_tail', 'structured_journal')),
+          content       TEXT NOT NULL,
+          created_at    TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+        INSERT OR REPLACE INTO worker_terminal_archives_v31
+          (dispatch_id, resource_id, kind, content, created_at)
+          SELECT dispatch_id, resource_id, kind, content, created_at FROM worker_terminal_archives;
+        DROP TABLE worker_terminal_archives;
+        ALTER TABLE worker_terminal_archives_v31 RENAME TO worker_terminal_archives;
       `)
   }
   this.db.exec(`

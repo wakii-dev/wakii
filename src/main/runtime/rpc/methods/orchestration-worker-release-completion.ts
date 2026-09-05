@@ -1,28 +1,31 @@
 import type { OrchestrationDb } from '../../orchestration/db'
-import type {
-  WorkerTerminalArchiveRow,
-  WorkerTerminalArchiveStatus,
-  WorkerTerminalResourceRow,
-  WorkerTerminalRetainedReason
-} from '../../orchestration/worker-terminal-ownership'
 import {
-  captureWorkerOutputArchive,
-  type WorkerTerminalTailArchive
-} from '../../orchestration/worker-output-archive'
+  archiveSummary,
+  retainedReason,
+  summarizeStoredArchive,
+  type WorkerReleaseReceipt
+} from './orchestration-worker-release-receipts'
+export {
+  archiveSummary,
+  exposeWorkerTerminalResource,
+  type WorkerReleaseReceipt
+} from './orchestration-worker-release-receipts'
+import type {
+  WorkerTerminalArchiveKind,
+  WorkerTerminalArchiveStatus,
+  WorkerTerminalResourceRow
+} from '../../orchestration/worker-terminal-ownership'
+import { captureWorkerOutputArchive } from '../../orchestration/worker-output-archive'
 import type { OrcaRuntimeService } from '../../orca-runtime'
 import { describeUnconfirmedAgentStop } from '../../../../shared/pty-liveness-verdict'
 import { inspectWorkerTerminal } from './orchestration-worker-observation'
+import {
+  resolveStructuredWorkerForDispatch,
+  stopStructuredWorker
+} from './orchestration-structured-worker-lifecycle'
+import { isStructuredWorkerHandle } from '../../structured-worker-identity'
+import { structuredWorkerTerminalLeaseIsCurrent } from './orchestration-worker-release-receipts'
 import { orchestrationTimestampToMs } from './orchestration-worker-output'
-
-export type WorkerReleaseReceipt = {
-  dispatchId: string
-  state: 'released' | 'already_released' | 'retained' | 'release_pending' | 'release_unknown'
-  reason?: WorkerTerminalRetainedReason
-  processAction: 'closed_agent_terminal' | 'closed_exited_terminal' | 'none'
-  archive: { source: string | null; status: string | null } | null
-  recovery?: string
-  lastError?: string
-}
 
 type WorkerTerminalReleaseArgs = {
   runtime: OrcaRuntimeService
@@ -36,48 +39,6 @@ const activeReleaseByRuntime = new WeakMap<
   OrcaRuntimeService,
   Map<string, Promise<WorkerReleaseReceipt>>
 >()
-
-export function exposeWorkerTerminalResource(resource: WorkerTerminalResourceRow): {
-  id: string
-  ownershipState: string
-  releaseState: string
-  retainedReason: string | null
-  terminalHandle: string
-  worktreeId: string | null
-  originDispatchId: string
-  ownerDispatchId: string
-  releaseRequestedAt: string | null
-  releaseCompletedAt: string | null
-  releaseError: string | null
-  archive: { source: string | null; status: string | null }
-} {
-  return {
-    id: resource.id,
-    ownershipState: resource.ownership_state,
-    releaseState: resource.release_state,
-    retainedReason: resource.retained_reason,
-    terminalHandle: resource.terminal_handle,
-    worktreeId: resource.worktree_id,
-    originDispatchId: resource.origin_dispatch_id,
-    ownerDispatchId: resource.owner_dispatch_id,
-    releaseRequestedAt: resource.release_requested_at,
-    releaseCompletedAt: resource.release_completed_at,
-    releaseError: resource.release_error,
-    archive: { source: resource.archive_source, status: resource.archive_status }
-  }
-}
-
-export function archiveSummary(
-  resource: WorkerTerminalResourceRow | null
-): { source: string | null; status: string | null } | null {
-  if (!resource) {
-    return null
-  }
-  if (!resource.archive_source && !resource.archive_status) {
-    return null
-  }
-  return { source: resource.archive_source, status: resource.archive_status }
-}
 
 // Completes a durably requested release: re-prove exact identity, freeze output, close only the
 // exact agent terminal, settle. Shared between the RPC method and the startup reconciler.
@@ -106,6 +67,23 @@ async function completeWorkerTerminalReleaseOnce(
   args: WorkerTerminalReleaseArgs
 ): Promise<WorkerReleaseReceipt> {
   const { runtime, db, dispatchId, resource } = args
+  if (isStructuredWorkerHandle(resource.terminal_handle)) {
+    // Observation and archive capture both read the structured host, and after a restart nothing
+    // has installed it yet — the startup recovery reconciler runs exactly this path. Installing it
+    // here is what lets the release see the session instead of reporting it unreadable.
+    //
+    // NOT yet handled, and deliberately follow-up: rebinding a restarted runtime to a structured
+    // worker's hold and redrive subscription. Until that exists, a worker that survives a restart
+    // keeps no hold, so its child is evictable and its parked mail waits for the next arrival
+    // rather than a settle edge.
+    await runtime.ensureStructuredAgentSessionHost().catch((error: unknown) => {
+      console.warn(
+        '[orchestration] structured host install failed before release',
+        dispatchId,
+        error
+      )
+    })
+  }
   const worker = db.getWorkerDispatch(dispatchId)
   if (!worker || worker.agent_terminal_handle !== resource.terminal_handle) {
     const retained = db.revertWorkerTerminalReleaseToRetained(resource.id, 'identity_unproven')
@@ -169,16 +147,18 @@ async function completeWorkerTerminalReleaseOnce(
   const archive = db.getWorkerTerminalArchive(dispatchId)
   let archiveSource = resource.archive_source as 'transcript' | 'terminal' | null
   let archiveStatus: WorkerTerminalArchiveStatus | null = resource.archive_status
-  let capturedArchive: { kind: 'transcript_pin' | 'terminal_tail'; content: string } | undefined
+  let capturedArchive: { kind: WorkerTerminalArchiveKind; content: string } | undefined
+  const structured = resolveStructuredWorkerForDispatch(db, dispatchId)
   if (!archive) {
     const captured = await captureWorkerOutputArchive({
       runtime,
       dispatchId,
       terminalHandle: resource.terminal_handle,
-      attachedAtMs: orchestrationTimestampToMs(worker.created_at)
+      attachedAtMs: orchestrationTimestampToMs(worker.created_at),
+      structuredWorker: structured
     })
     capturedArchive = { kind: captured.kind, content: JSON.stringify(captured.content) }
-    archiveSource = captured.kind === 'transcript_pin' ? 'transcript' : 'terminal'
+    archiveSource = captured.kind === 'terminal_tail' ? 'terminal' : 'transcript'
     archiveStatus = captured.status
   } else {
     const stored = summarizeStoredArchive(archive)
@@ -213,6 +193,31 @@ async function completeWorkerTerminalReleaseOnce(
   }
 
   try {
+    if (structured) {
+      const stop = await stopStructuredWorker(structured, dispatchId, runtime)
+      if (!stop.stopped) {
+        const unknown = db.markWorkerTerminalReleaseUnknown(
+          resource.id,
+          stop.reason ?? 'The structured session close was not proven.'
+        )
+        return {
+          dispatchId,
+          state: 'release_unknown',
+          processAction: 'closed_agent_terminal',
+          archive: { source: archiveSource, status: archiveStatus },
+          lastError: unknown.release_error ?? stop.reason,
+          recovery: `Inspect with: orca orchestration worker-show --dispatch ${dispatchId} --json — then repeat worker-release with the same --retry-request.`
+        }
+      }
+      const settled = db.settleWorkerTerminalRelease(resource.id)
+      runtime.notifyMessageArrived(`dispatch:${dispatchId}`, 'status')
+      return {
+        dispatchId,
+        state: 'released',
+        processAction: 'closed_agent_terminal',
+        archive: archiveSummary(settled)
+      }
+    }
     const close = await runtime.closeTerminal(resource.terminal_handle)
     if (!close.ptyKilled) {
       const reason = describeUnconfirmedAgentStop(close)
@@ -268,6 +273,9 @@ function workerTerminalLeaseIsCurrent(
   resource: WorkerTerminalResourceRow
 ): boolean {
   const worker = db.getWorkerDispatch(dispatchId)
+  if (isStructuredWorkerHandle(resource.terminal_handle)) {
+    return structuredWorkerTerminalLeaseIsCurrent(db, dispatchId, worker, resource)
+  }
   const authority = runtime.getOrchestrationDispatchAuthority(resource.terminal_handle)
   return Boolean(
     worker?.agent_terminal_handle === resource.terminal_handle &&
@@ -280,26 +288,4 @@ function workerTerminalLeaseIsCurrent(
     }) &&
     !db.workerTerminalResourceHasIdentityConflict(resource.id)
   )
-}
-
-function summarizeStoredArchive(archive: WorkerTerminalArchiveRow): {
-  source: 'transcript' | 'terminal'
-  status: Extract<WorkerTerminalArchiveStatus, 'captured' | 'empty'>
-} {
-  if (archive.kind === 'transcript_pin') {
-    return { source: 'transcript', status: 'captured' }
-  }
-  const content = JSON.parse(archive.content) as WorkerTerminalTailArchive
-  const empty = content.lines.every((line) => line.trim() === '')
-  return { source: 'terminal', status: empty ? 'empty' : 'captured' }
-}
-
-function retainedReason(resource: WorkerTerminalResourceRow): WorkerTerminalRetainedReason {
-  if (resource.retained_reason) {
-    return resource.retained_reason as WorkerTerminalRetainedReason
-  }
-  if (resource.ownership_state === 'user_owned') {
-    return 'user_takeover'
-  }
-  return 'identity_unproven'
 }

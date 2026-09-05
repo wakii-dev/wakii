@@ -133,7 +133,9 @@ async function resolveImplicitOrchestrationSender(
   client: RuntimeClient
 ): Promise<string> {
   try {
-    return await getTerminalHandle(flags, cwd, client)
+    // Unambiguous: naming the sender is an identity claim, so an arbitrary pick would let this
+    // command speak as a sibling worker.
+    return await getTerminalHandle(flags, cwd, client, { requireUnambiguous: true })
   } catch (err) {
     if (!isNoActiveTerminalError(err)) {
       throw err

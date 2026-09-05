@@ -26,6 +26,8 @@ export const WorkerStartParams = z.object({
   effort: OptionalWorkerLaunchPreference,
   retryOf: OptionalString,
   timeoutMs: OptionalFiniteNumber,
+  // Opt-in: start the worker as a native-born structured chat session rather than a PTY agent.
+  structured: z.boolean().optional(),
   devMode: z.boolean().optional()
 })
 

@@ -29,6 +29,7 @@ import { attachDirectMailboxRouting } from './messages/direct-mailbox-routing'
 import { attachForeignDirectMailboxRouting } from './messages/foreign-direct-mailbox-routing'
 import { attachMessageInbox } from './messages/message-inbox'
 import { attachMessageInsert } from './messages/message-insert'
+import { attachStructuredPointerOperationStore } from './messages/structured-pointer-operation-store'
 import { attachMutationReceiptStore } from './mutation-receipts/mutation-receipt-store'
 import { attachQuestionThreads } from './questions/question-threads'
 import { attachOrchestrationReset } from './reset/orchestration-reset'
@@ -85,6 +86,7 @@ export function attachOrchestrationDbMethods(ctor: { prototype: object }): void 
   attachLegacyCoordinatorMailTakeover(ctor)
   attachRunDelivery(ctor)
   attachMessageInsert(ctor)
+  attachStructuredPointerOperationStore(ctor)
   attachMessageInbox(ctor)
   attachDirectMailboxRouting(ctor)
   attachForeignDirectMailboxRouting(ctor)

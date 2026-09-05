@@ -4,6 +4,10 @@ import type { RuntimeLeafRecord, RuntimePtyWorktreeRecord } from './runtime-term
 import { isTerminalLeafId, makePaneKey, parsePaneKey } from '../../shared/stable-pane-id'
 import { detectAgentStatusFromTitle, isClaudeManagementTitle } from '../../shared/agent-detection'
 import { recognizeAgentProcess } from '../../shared/agent-process-recognition'
+import { agentSessionPtyWriteGate } from './agent-session-pty-write-gate'
+import { resolveStructuredWorkerAuthority } from './structured-worker-authority'
+import { isSettledNativeOwner } from './orchestration/structured-session-pointer-delivery'
+import type { StructuredPointerTarget } from './orchestration/structured-mailbox-pointer-delivery'
 
 export class OrcaRuntimeWithGetPtyRecordForPaneKey extends OrcaRuntimeWithPruneMobileSessionTabGroupLayout {
   protected getPtyRecordForPaneKey(paneKey: string): RuntimePtyWorktreeRecord | null {
@@ -142,6 +146,67 @@ export class OrcaRuntimeWithGetPtyRecordForPaneKey extends OrcaRuntimeWithPruneM
 
   deliverPendingMessagesForHandle(handle: string, reservedTypes?: ReadonlySet<string>): void {
     this.orchestrationMailboxNotifications.deliverForHandle(handle, reservedTypes)
+  }
+
+  /** The structured idle edge: any journal movement is a chance to redrive parked mail. */
+  notifyStructuredSessionJournalActivity(sessionId: string): void {
+    this.orchestrationStructuredMailboxPointerDelivery.onTurnSettled(sessionId)
+  }
+
+  /** Settlement drops anything parked for the session; nothing will ever redrive it again. */
+  forgetStructuredSessionMail(sessionId: string): void {
+    this.orchestrationStructuredMailboxPointerDelivery.forgetSession(sessionId)
+  }
+
+  /**
+   * The session a mailbox must be nudged through, or null when a live PTY can take the bytes.
+   *
+   * DELIBERATELY only `dispatch:` mailboxes. `run:` mail is coordinator mail, and structured
+   * coordinators are out of scope: a coordinator blocks in `check --wait`, where a waiter preempts
+   * pointer delivery anyway. The asymmetry with the PTY lane — which serves both — is the scope
+   * line, not an oversight.
+   */
+  protected resolveStructuredMailboxTarget(mailboxHandle: string): StructuredPointerTarget | null {
+    if (!mailboxHandle.startsWith('dispatch:')) {
+      return null
+    }
+    const dispatchId = mailboxHandle.slice('dispatch:'.length)
+    const assignee = this._orchestrationDb?.getDispatchContextById?.(dispatchId)?.assignee_handle
+    if (!assignee) {
+      return null
+    }
+    const identity = resolveStructuredWorkerAuthority(assignee, this._orchestrationDb)?.identity
+    if (identity) {
+      return { sessionId: identity.sessionId, dispatchId }
+    }
+    return this.resolveAdoptedStructuredMailboxTarget(assignee, dispatchId)
+  }
+
+  /**
+   * A PTY-born worker whose pane was since adopted by native chat.
+   *
+   * Its bytes cannot land — every runtime write path re-admits through the same gate — so the
+   * pointer has to travel as a session turn instead. Only a SETTLED native owner qualifies: a
+   * mid-handoff lease may become a TUI again, and redirecting there races the takeover.
+   */
+  protected resolveAdoptedStructuredMailboxTarget(
+    assignee: string,
+    dispatchId: string
+  ): StructuredPointerTarget | null {
+    let ptyId: string | null | undefined
+    try {
+      ptyId = this.getLiveLeafForHandle(assignee).leaf.ptyId
+    } catch {
+      return null
+    }
+    if (!ptyId) {
+      return null
+    }
+    const admission = agentSessionPtyWriteGate.admit(ptyId)
+    if (admission.admitted || !isSettledNativeOwner(admission.refusal)) {
+      return null
+    }
+    return { sessionId: admission.refusal.sessionId, dispatchId, refusal: admission.refusal }
   }
 
   protected scheduleRestoredMessageRepoints(): void {

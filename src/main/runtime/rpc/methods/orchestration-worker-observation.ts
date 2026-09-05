@@ -2,6 +2,10 @@ import type { RuntimeTerminalInteractiveWait } from '../../../../shared/runtime-
 import type { OrcaRuntimeService } from '../../orca-runtime'
 import type { OrchestrationDb } from '../../orchestration/db'
 import { OrchestrationError } from '../../orchestration/orchestration-error'
+import {
+  observeStructuredWorker,
+  resolveStructuredWorkerForDispatch
+} from './orchestration-structured-worker-lifecycle'
 import type {
   DispatchContextRow,
   FederatedDispatchRow,
@@ -26,6 +30,24 @@ export async function inspectWorkerTerminal(
     worker?.agent_terminal_handle ?? db.getDispatchContextById(dispatchId)?.assignee_handle
   if (!terminalHandle) {
     return { terminal: null, exact: false, status: 'unattached' }
+  }
+  const structured = resolveStructuredWorkerForDispatch(db, dispatchId)
+  if (structured) {
+    // Exactness is the recorded pane and lineage, which the runtime getters answer from the
+    // structured registry; there is no terminal to show.
+    const exact = db.isDispatchProcessCurrent({
+      dispatchId,
+      paneKey: structured.paneKey,
+      processIncarnation: structured.processIncarnation
+    })
+    const observation = observeStructuredWorker(structured)
+    return {
+      terminal: null,
+      exact,
+      status: exact ? observation.status : 'identity_changed',
+      ...(exact && observation.reason ? { reason: observation.reason } : {}),
+      agentWait: null
+    }
   }
   const terminal = await runtime.showTerminal(terminalHandle).catch(() => null)
   if (!terminal) {

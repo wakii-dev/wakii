@@ -9,6 +9,10 @@ import {
   inspectWorkerTerminal,
   resolvePinnedFederatedServer
 } from './orchestration-worker-observation'
+import {
+  resolveStructuredWorkerForDispatch,
+  stopStructuredWorker
+} from './orchestration-structured-worker-lifecycle'
 
 const WorkerDispatchParams = z.object({ dispatch: requiredString('Missing --dispatch') })
 
@@ -148,6 +152,26 @@ export const ORCHESTRATION_WORKER_STOP_METHODS: RpcMethod[] = [
           ),
           'none'
         )
+      }
+      const structured = resolveStructuredWorkerForDispatch(db, params.dispatch)
+      if (structured) {
+        const stop = await stopStructuredWorker(structured, params.dispatch, runtime)
+        if (!stop.stopped) {
+          // Close is retried by the host; only a proven exit may settle the dispatch.
+          return unknownReceipt(
+            params.dispatch,
+            db.markWorkerStopUnknown(params.dispatch, stop.reason ?? 'The close was not proven.'),
+            'closed_agent_terminal'
+          )
+        }
+        const stopped = db.settleWorkerStop(params.dispatch)
+        runtime.notifyMessageArrived(`dispatch:${params.dispatch}`, 'status')
+        return {
+          dispatchId: params.dispatch,
+          state: stopped.state,
+          alreadySettled: false,
+          processAction: 'closed_agent_terminal'
+        }
       }
       try {
         const close = await runtime.closeTerminal(handle)

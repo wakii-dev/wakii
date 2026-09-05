@@ -1,4 +1,11 @@
-import type { ORCHESTRATION_WORKER_READ_SOURCES } from '../../../../shared/orchestration-worker-output'
+import type {
+  ORCHESTRATION_WORKER_READ_SOURCES,
+  OrchestrationWorkerReadResult,
+  OrchestrationWorkerReadSource
+} from '../../../../shared/orchestration-worker-output'
+import type { OrcaRuntimeService } from '../../orca-runtime'
+import type { OrchestrationDb } from '../../orchestration/db'
+import type { FederatedDispatchRow } from '../../orchestration/types'
 import type { RuntimeTerminalRead } from '../../../../shared/runtime-types'
 import { OrchestrationError } from '../../orchestration/orchestration-error'
 import {
@@ -6,7 +13,7 @@ import {
   decodeWorkerOutputCursor,
   encodeWorkerOutputCursor
 } from '../../orchestration/worker-output-cursor'
-import type { resolvePinnedFederatedServer } from './orchestration-worker-observation'
+import { resolvePinnedFederatedServer } from './orchestration-worker-observation'
 
 // Pre-structured-output servers only expose raw terminal reads; keep that path fenced and
 // cursor-scoped so an old peer never silently degrades a transcript cursor.
@@ -72,5 +79,53 @@ export async function readLegacyFederatedTerminal(args: {
     warnings: [],
     server: { environmentId: args.server.environmentId, name: args.server.name },
     remoteRuntimeEpoch: remote.runtimeEpoch
+  }
+}
+
+/** Current-protocol federated read, with the legacy terminal relay as the only fallback. */
+export async function readFederatedWorkerOutput(args: {
+  runtime: OrcaRuntimeService
+  db: OrchestrationDb
+  federated: FederatedDispatchRow
+  params: {
+    dispatch: string
+    cursor?: string | number
+    limit?: number
+    source?: OrchestrationWorkerReadSource
+  }
+}) {
+  const { runtime, db, federated, params } = args
+  const server = resolvePinnedFederatedServer(runtime, federated)
+  try {
+    const remote = (await runtime.callOrchestrationWorkerServer(
+      server.environmentId,
+      'orchestration.federationReadOutput',
+      {
+        dispatchId: params.dispatch,
+        cursor: params.cursor,
+        limit: params.limit,
+        source: params.source
+      },
+      15_000
+    )) as { runtimeEpoch: string; output: OrchestrationWorkerReadResult }
+    return {
+      ...remote.output,
+      server: { environmentId: server.environmentId, name: server.name },
+      remoteRuntimeEpoch: remote.runtimeEpoch
+    }
+  } catch (error) {
+    if (!(error instanceof OrchestrationError) || error.code !== 'method_not_found') {
+      throw error
+    }
+    return readLegacyFederatedTerminal({
+      runtime,
+      server,
+      federated,
+      workerState: db.getWorkerDispatch(params.dispatch)?.state ?? 'unknown',
+      dispatchId: params.dispatch,
+      source: params.source,
+      cursor: params.cursor,
+      limit: params.limit
+    })
   }
 }

@@ -6,6 +6,10 @@ import {
   redactWorkerTerminalLines
 } from './worker-transcript-payload'
 import { readWorkerTranscript } from './worker-transcript-read'
+import { captureStructuredWorkerArchive } from '../rpc/methods/orchestration-structured-worker-lifecycle'
+import type { WorkerStructuredJournalArchive } from './structured-worker-journal-archive'
+import type { StructuredWorkerIdentity } from '../structured-worker-identity'
+import type { WorkerTerminalArchiveKind } from './worker-terminal-ownership'
 
 // Bound the durable copy of raw terminal output; the tail end is the evidence that matters.
 const TERMINAL_ARCHIVE_MAX_CHARS = 262_144
@@ -43,6 +47,11 @@ export type WorkerOutputArchiveCapture =
       content: WorkerTranscriptSnapshotArchive
       status: 'captured'
     }
+  | {
+      kind: 'structured_journal'
+      content: WorkerStructuredJournalArchive
+      status: 'captured' | 'empty'
+    }
   | { kind: 'terminal_tail'; content: WorkerTerminalTailArchive; status: 'captured' | 'empty' }
 
 // Freezes an inspectable output source before the live PTY is closed. Prefers the exact
@@ -53,7 +62,20 @@ export async function captureWorkerOutputArchive(args: {
   dispatchId: string
   terminalHandle: string
   attachedAtMs: number
+  /** Present when the worker IS a structured session; its journal is the only output it has. */
+  structuredWorker?: StructuredWorkerIdentity | null
 }): Promise<WorkerOutputArchiveCapture> {
+  if (args.structuredWorker) {
+    const content = captureStructuredWorkerArchive(
+      args.structuredWorker,
+      args.structuredWorker.agent ?? 'claude'
+    )
+    return {
+      kind: 'structured_journal',
+      status: content.messages.length > 0 ? 'captured' : 'empty',
+      content
+    }
+  }
   const session = args.runtime.getExactWorkerProviderSession(args.terminalHandle, args.attachedAtMs)
   if (session) {
     const snapshot = await readWorkerTranscript({
@@ -140,3 +162,10 @@ export function boundArchiveLines(lines: string[]): { lines: string[]; truncated
   keptReversed.reverse()
   return { lines: keptReversed, truncated: true }
 }
+
+/** Errors at compile time if a capture kind is ever added that the durable row cannot store. */
+type AssertAssignable<TValue extends TBound, TBound> = TValue
+export type WorkerOutputArchiveCaptureKind = AssertAssignable<
+  WorkerOutputArchiveCapture['kind'],
+  WorkerTerminalArchiveKind
+>
