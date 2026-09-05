@@ -143,7 +143,7 @@ Plan file tick `- [x]` sau mỗi task (checkbox CHỈ cho task steps).
   `/tmp/story/fi305/device-t3-*.png`. Commit evidence-only nếu cần: `test(FI-308): device-verify-resolve-flow-evidence` (png không vào git — evidence ở outbox + Linear).
 - Exit T3: vitest pass (sheet tests + resolve request tests + primitives test).
 - Exit T3b: device evidence files tồn tại trong outbox + note vào plan §4.
-- [ ] T3 done · [ ] T3b device evidence done
+- [x] T3 done · [ ] T3b device evidence done
 
 ### T4 — resolve-error-states-safe-retry
 - `gate-resolve-errors.ts`: map taxonomy → user-visible: `gate_not_found` → gỡ khỏi list +

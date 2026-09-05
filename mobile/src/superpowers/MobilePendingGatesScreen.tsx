@@ -1,3 +1,4 @@
+import { useCallback, useRef, useState, type ComponentType } from 'react'
 import {
   ActivityIndicator,
   Pressable,
@@ -13,10 +14,11 @@ import { ChevronLeft, RefreshCw } from 'lucide-react-native'
 import { useHostClient } from '../transport/host-client-hooks'
 import { colors, spacing } from '../theme/mobile-theme'
 import type { PendingGateRow } from './pending-gates-store'
+import type { MobileGateResolveSheetProps } from './MobileGateResolveSheet'
+import { useMobileGateResolve } from './use-mobile-gate-resolve'
 import { useMobilePendingGates } from './use-mobile-pending-gates'
 
-// T3 seam: resolve sheet lands later — rows are wired to this optional callback,
-// a no-op until the route passes a handler.
+// T3 seam: rows invoke this optional callback before the built-in resolve sheet opens.
 export type MobilePendingGatesScreenProps = {
   hostId: string
   onGatePress?: (gate: PendingGateRow) => void
@@ -39,6 +41,32 @@ export function MobilePendingGatesScreen({ hostId, onGatePress }: MobilePendingG
     connected: connState === 'connected'
   })
   const connected = connState === 'connected'
+  const { submitGateResolution } = useMobileGateResolve({ hostId, client })
+  const [resolveGate, setResolveGate] = useState<PendingGateRow | null>(null)
+  const [resolveVisible, setResolveVisible] = useState(false)
+  const [ResolveSheet, setResolveSheet] =
+    useState<ComponentType<MobileGateResolveSheetProps> | null>(null)
+  const sheetLoadStartedRef = useRef(false)
+
+  // Why dynamic import: the sheet pulls BottomDrawer → reanimated, which cannot
+  // evaluate under the react-native test mocks (no TurboModuleRegistry) — a static
+  // import here would break the screen tests. Metro resolves it normally on device.
+  const openResolveSheet = useCallback((row: PendingGateRow) => {
+    setResolveGate(row)
+    setResolveVisible(true)
+    if (!sheetLoadStartedRef.current) {
+      sheetLoadStartedRef.current = true
+      void import('./MobileGateResolveSheet').then(
+        (module) => setResolveSheet(() => module.MobileGateResolveSheet),
+        () => {
+          // Sheet chunk failed to load — close the empty dialog instead of half-mounting.
+          sheetLoadStartedRef.current = false
+          setResolveVisible(false)
+          setResolveGate(null)
+        }
+      )
+    }
+  }, [])
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -99,7 +127,10 @@ export function MobilePendingGatesScreen({ hostId, onGatePress }: MobilePendingG
                 <Pressable
                   key={row.gateId}
                   style={[styles.row, index > 0 && styles.rowBordered]}
-                  onPress={() => onGatePress?.(row)}
+                  onPress={() => {
+                    onGatePress?.(row)
+                    openResolveSheet(row)
+                  }}
                   accessibilityRole="button"
                   accessibilityLabel={row.title}
                 >
@@ -120,6 +151,15 @@ export function MobilePendingGatesScreen({ hostId, onGatePress }: MobilePendingG
           </Text>
         ) : null}
       </ScrollView>
+
+      {ResolveSheet && resolveGate ? (
+        <ResolveSheet
+          visible={resolveVisible}
+          gate={resolveGate}
+          onClose={() => setResolveVisible(false)}
+          onResolve={submitGateResolution}
+        />
+      ) : null}
     </SafeAreaView>
   )
 }

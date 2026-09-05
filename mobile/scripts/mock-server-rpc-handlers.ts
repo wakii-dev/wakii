@@ -13,6 +13,7 @@ import { handleMockGitRequest } from './mock-server-git-state'
 import { handleMockAccountRequest } from './mock-server-account-rpc'
 import { handleMockNativeChatRequest } from './mock-server-native-chat-scenario'
 import { handleMockSessionTabsRequest } from './mock-server-session-tabs-fixture'
+import { handleMockSuperpowersRequest } from './mock-server-superpowers-handlers'
 import { handleMockTerminalRequest } from './mock-server-terminal-stream'
 import { createMockRepos, createMockWorktrees, readScenarioNumber } from './mobile-lag-scenario'
 
@@ -130,7 +131,8 @@ export function handleRequest(
     handleMockAccountRequest(request, respond, success, error) ||
     handleMockNativeChatRequest(request, respond, success, error, ws) ||
     handleMockSessionTabsRequest(request, respond, success, terminalListWorktreeId) ||
-    handleMockTerminalRequest(request, respond, success, ws, terminalListWorktreeId)
+    handleMockTerminalRequest(request, respond, success, ws, terminalListWorktreeId) ||
+    handleMockSuperpowersRequest(request, respond, success, ws)
   ) {
     return
   }
