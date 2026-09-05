@@ -1,0 +1,71 @@
+name: macOS build
+
+# Build the full macOS DMG (including the computer-use native module) on a
+# GitHub-hosted macOS runner (Xcode 16 available) and attach it to the
+# v1.4.198 release. Unsigned build (no signing secrets).
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [wakii-dev]
+    paths:
+      - ".github/workflows/macos-build.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: wakii-dev
+
+      - name: Select Xcode 16
+        run: |
+          ls /Applications | grep Xcode
+          sudo xcode-select -s /Applications/Xcode.app
+          xcodebuild -version
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Full chain — INCLUDING build:computer-macos (needs Swift 6 tools = Xcode 16)
+      - name: Build native helpers + app
+        run: |
+          pnpm run build:desktop
+          pnpm run build:computer-macos
+          pnpm run build:keyboard-layout-macos
+          pnpm run build:notification-status-macos
+          pnpm run ensure:electron-runtime
+          node config/scripts/build-mac-local.mjs
+
+      - name: Collect artifacts
+        run: |
+          mkdir -p dist/release
+          mv dist/orca-macos-arm64.dmg dist/Wakii-1.4.198-arm64.dmg || true
+          for f in dist/Wakii-1.4.198*.dmg dist/Wakii-1.4.198*.zip dist/latest-mac.yml; do
+            [ -e "$f" ] && cp "$f" dist/release/
+          done
+
+      - name: Upload to release v1.4.198
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd dist/release
+          for f in *; do
+            gh release upload v1.4.198 "$f" --repo wakii-dev/wakii --clobber
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wakii-macos
+          path: dist/release
