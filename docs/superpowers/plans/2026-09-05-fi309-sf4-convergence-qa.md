@@ -116,8 +116,8 @@ trên state code cuối; T7 sau tests để docs mô tả hành vi đã verify).
 - Commit: thường không có (review); fix nếu có findings
 
 ### Task 4 — wire-compat-regression-unit-test
-- [ ] New test `gate-notification-wire-compat.test.ts`: 4 assertion a-d (D6) trên STORED data; fixture = payload shape thật desktop gửi (both-or-neither, runtime-gate-transition-notifications.ts:92-100)
-- [ ] Test upgrade-degrade: stored data pre-SF-4 (không storyId) tap sau upgrade → legacy route, không crash
+- [x] New test `gate-notification-wire-compat.test.ts`: 4 assertion a-d (D6) trên STORED data; fixture = payload shape thật desktop gửi (both-or-neither, runtime-gate-transition-notifications.ts:92-100)
+- [x] Test upgrade-degrade: stored data pre-SF-4 (không storyId) tap sau upgrade → legacy route, không crash
 - Files: test mới (có thể +fixture module nếu fixture dài)
 - Acceptance: tests xanh; ratchet 800 dòng không chạm
 - Commit: `feat(FI-309): wire-compat-regression-unit-test`
