@@ -1,0 +1,60 @@
+name: Windows build
+
+# Build Wakii for Windows on a GitHub-hosted windows runner and attach the
+# installers to the v1.4.198 release. Unsigned build (no signing secrets).
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [wakii-dev]
+    paths:
+      - ".github/workflows/windows-build.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: wakii-dev
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Windows app
+        run: pnpm run build:win
+
+      - name: Collect artifacts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist/release | Out-Null
+          Get-ChildItem dist -File |
+            Where-Object { $_.Name -match '\.(exe|zip|blockmap)$' -or $_.Name -eq 'latest.yml' } |
+            Copy-Item -Destination dist/release
+
+      - name: Upload to release v1.4.198
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd dist/release
+          for f in *; do
+            gh release upload v1.4.198 "$f" --repo wakii-dev/wakii --clobber
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wakii-windows
+          path: dist/release
