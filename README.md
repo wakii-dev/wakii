@@ -152,8 +152,9 @@ System Settings → Privacy & Security):
 
 | Machine       | Asset                                                                                                                            |
 | ------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Apple Silicon | [Wakii.dmg](https://github.com/wakii-dev/wakii/releases/latest/download/Wakii.dmg)                                               |
-| Intel         | [Wakii-x64.dmg](https://github.com/wakii-dev/wakii/releases/latest/download/Wakii-x64.dmg)                                        |
+| Apple Silicon | [Wakii-1.4.198-arm64.dmg](https://github.com/wakii-dev/wakii/releases/download/v1.4.198/Wakii-1.4.198-arm64.dmg)                  |
+| Intel         | [Wakii-1.4.198-x64.dmg](https://github.com/wakii-dev/wakii/releases/download/v1.4.198/Wakii-1.4.198-x64.dmg)                      |
+| Android       | [app-release.apk](https://github.com/wakii-dev/wakii/releases/download/mobile-android-v0.0.48/app-release.apk)                    |
 
 Windows: first build pending — [build from source](#-developing) works
 everywhere.
