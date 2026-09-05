@@ -18,6 +18,7 @@ import {
   storyTierLabel
 } from './story-screen-copy'
 import { countDoneSfs, groupSfsByTier } from './story-detail-tiers'
+import { StoryStaleBanner } from './story-stale-banner'
 import { useMobileStoryDetail } from './use-mobile-story-detail'
 
 type Props = {
@@ -46,9 +47,14 @@ const GATE_STATUS_CHIP_COLORS: Record<
 }
 
 export function MobileStoryDetailScreen({ client, hostId, storyId, bottomInset = 0 }: Props) {
-  // notFound/stale banners are T9 — T6 keeps those states visually neutral and
-  // renders the detail whenever one exists (cached copy included).
-  const { detail, loading, refreshing, refresh } = useMobileStoryDetail({ client, hostId, storyId })
+  // T9: story_not_found raises the banner over the cached detail (kept rendering);
+  // a failed fetch (stale) stays neutral here — unreachable host is not evidence
+  // the story is gone. Nothing cached → neutral empty either way.
+  const { detail, notFound, loading, refreshing, refresh } = useMobileStoryDetail({
+    client,
+    hostId,
+    storyId
+  })
   const tierGroups = useMemo(() => (detail ? groupSfsByTier(detail.story.sfs) : []), [detail])
 
   if (!detail) {
@@ -74,6 +80,7 @@ export function MobileStoryDetailScreen({ client, hostId, storyId, bottomInset =
           />
         }
       >
+        {notFound ? <StoryStaleBanner onRefresh={refresh} /> : null}
         <Text style={styles.title}>
           {detail.story.title.trim().length > 0 ? detail.story.title : UNTITLED_STORY_TITLE}
         </Text>

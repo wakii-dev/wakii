@@ -8,6 +8,8 @@ import { storyRowKey } from './story-list-groups'
 import {
   PARSE_ERROR_ENTRY_LABEL,
   REFRESH_HINT,
+  STALE_STORY_BANNER_TEXT,
+  STALE_STORY_REFRESH_ACTION,
   STORY_LIST_TITLE,
   storyProgressLabel
 } from './story-screen-copy'
@@ -159,6 +161,8 @@ describe('MobileStoryListScreen', () => {
     expect(texts()).toContain(PARSE_ERROR_ENTRY_LABEL)
     expect(rowPressable(storyListItemParseError).disabled).toBe(true)
     const healthy = storyListHappyPath.stories[0]
+    // Malformed + healthy mix: the healthy entries still render next to the flag.
+    expect(texts()).toContain(healthy.title)
     expect(rowPressable(healthy).disabled).toBe(false)
     // The broken bracket's meaningless 0/0 progress is replaced by the flag.
     expect(texts()).not.toContain(storyProgressLabel(0, 0))
@@ -225,5 +229,63 @@ describe('MobileStoryListScreen', () => {
     expect(texts()).toContain(REFRESH_HINT)
     // Cold start / first-fetch-fail must still offer the pull gesture.
     expect(renderer!.root.findByType('RefreshControl').props.refreshing).toBe(false)
+  })
+
+  it('shows the stale banner over the last good list when a poll fails', async () => {
+    const sendRequest = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, result: storyListHappyPath })
+      .mockResolvedValueOnce({ ok: false })
+    await renderScreen(sendRequest)
+    expect(texts()).not.toContain(STALE_STORY_BANNER_TEXT)
+
+    await act(async () => {
+      renderer!.root.findByType('RefreshControl').props.onRefresh()
+      await flushMicrotasks()
+    })
+    const rendered = texts()
+    expect(rendered).toContain(STALE_STORY_BANNER_TEXT)
+    // Stale never hides the last good rows.
+    expect(rendered).toContain(storyListHappyPath.stories[0].title)
+    const action = renderer!.root.findByProps({ testID: 'stale-banner-refresh' })
+    expect(action.props.accessibilityLabel).toBe(STALE_STORY_REFRESH_ACTION)
+  })
+
+  it('refreshes from the stale banner button and clears the banner on recovery', async () => {
+    const sendRequest = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, result: storyListHappyPath })
+      .mockResolvedValueOnce({ ok: false })
+      .mockResolvedValueOnce({ ok: true, result: storyListHappyPath })
+    await renderScreen(sendRequest)
+    await act(async () => {
+      renderer!.root.findByType('RefreshControl').props.onRefresh()
+      await flushMicrotasks()
+    })
+    expect(texts()).toContain(STALE_STORY_BANNER_TEXT)
+
+    await act(async () => {
+      renderer!.root.findByProps({ testID: 'stale-banner-refresh' }).props.onPress()
+      await flushMicrotasks()
+    })
+    expect(sendRequest).toHaveBeenCalledTimes(3)
+    expect(texts()).not.toContain(STALE_STORY_BANNER_TEXT)
+  })
+
+  it('drops an entry removed between polls and keeps the remaining rows', async () => {
+    const sendRequest = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, result: storyListWithParseError })
+      .mockResolvedValueOnce({ ok: true, result: storyListHappyPath })
+    await renderScreen(sendRequest)
+    expect(renderer!.root.findAllByType('SectionRow')).toHaveLength(5)
+
+    await act(async () => {
+      renderer!.root.findByType('RefreshControl').props.onRefresh()
+      await flushMicrotasks()
+    })
+    expect(renderer!.root.findAllByType('SectionRow')).toHaveLength(4)
+    expect(() => rowPressable(storyListItemParseError)).toThrow()
+    expect(() => rowPressable(storyListHappyPath.stories[0])).not.toThrow()
   })
 })

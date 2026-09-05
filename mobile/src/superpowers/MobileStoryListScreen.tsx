@@ -20,6 +20,7 @@ import {
   storyProgressLabel
 } from './story-screen-copy'
 import { useMobileStoryList } from './use-mobile-story-list'
+import { StoryStaleBanner } from './story-stale-banner'
 
 type Props = {
   client: RpcClient | null
@@ -30,7 +31,7 @@ type Props = {
 }
 
 export function MobileStoryListScreen({ client, hostId, onOpenStory, bottomInset = 0 }: Props) {
-  const { stories, loading, refreshing, refresh } = useMobileStoryList({ client, hostId })
+  const { stories, stale, loading, refreshing, refresh } = useMobileStoryList({ client, hostId })
   const sections = useMemo(
     () =>
       groupStoriesByWorktree(stories).map((group) => ({
@@ -51,6 +52,12 @@ export function MobileStoryListScreen({ client, hostId, onOpenStory, bottomInset
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{STORY_LIST_TITLE}</Text>
+      {stale ? (
+        // Failed poll — the last good list keeps rendering under the banner.
+        <View style={styles.bannerWrap}>
+          <StoryStaleBanner onRefresh={refresh} />
+        </View>
+      ) : null}
       <SectionList
         sections={sections}
         keyExtractor={(story) => storyRowKey(story)}
@@ -139,6 +146,10 @@ const styles = StyleSheet.create({
   },
   list: {
     paddingTop: spacing.sm
+  },
+  bannerWrap: {
+    marginHorizontal: spacing.md,
+    marginTop: spacing.sm
   },
   sectionHeader: {
     flexDirection: 'row',

@@ -184,11 +184,11 @@ gộp theo đợt, ví dụ sau T8: `docs(FI-307): plan tick T1,T7,T8`).
 - **Files:** chỉnh `MobileStoryListScreen.tsx` / `MobileStoryDetailScreen.tsx` + hooks
   T3/T4 (stale state), tests mới.
 - **Steps:**
-  - [ ] Detail nhận `story_not_found` giữa 2 poll → stale banner + nút refresh,
+  - [x] Detail nhận `story_not_found` giữa 2 poll → stale banner + nút refresh,
         KHÔNG crash, KHÔNG trắng màn (cache cũ vẫn render dưới banner nếu có)
-  - [ ] List: entry biến mất giữa 2 poll → update list; entry parseError → flag
+  - [x] List: entry biến mất giữa 2 poll → update list; entry parseError → flag
         (đã có T5) + các entry khác vẫn hiển thị
-  - [ ] Tests: not-found banner path, removed-entry path, malformed+healthy mix
+  - [x] Tests: not-found banner path, removed-entry path, malformed+healthy mix
 - **Acceptance:** tests pass; behavior chứng minh bằng test (device check ở bước verify).
 
 ### T2 host-scoped-story-routes-boundary-test

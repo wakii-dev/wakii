@@ -11,6 +11,8 @@ import { MobileStoryDetailScreen } from './MobileStoryDetailScreen'
 import { storyDetailHappyPath } from './story-rpc-fixtures'
 import {
   GATES_SECTION_TITLE,
+  STALE_STORY_BANNER_TEXT,
+  STALE_STORY_REFRESH_ACTION,
   UNTITLED_STORY_TITLE,
   gatePendingCountLabel,
   gateStatusLabel,
@@ -44,6 +46,7 @@ vi.mock('react-native', () => ({
       return { remove: appState.remove }
     }
   },
+  Pressable: 'Pressable',
   RefreshControl: (props: { refreshing: boolean; onRefresh: () => void }) =>
     createElement('RefreshControl', props),
   ScrollView: ({
@@ -254,9 +257,43 @@ describe('MobileStoryDetailScreen', () => {
     await renderScreen(
       vi.fn().mockResolvedValue({ ok: true, result: { error: 'story_not_found' } })
     )
-    // Banner is T9 — no detail may be invented here, and the spinner must stop.
+    // No cached detail → no banner and nothing invented; the spinner must stop.
     expect(renderer!.root.findAllByType('ActivityIndicator')).toHaveLength(0)
+    expect(texts()).not.toContain(STALE_STORY_BANNER_TEXT)
     expect(texts()).not.toContain(storyDetailHappyPath.story.title)
+  })
+
+  it('raises the not-found banner over the persisted seed and keeps the cached content', async () => {
+    cache.loadStoryDetailSnapshot.mockResolvedValue({ detail: storyDetailHappyPath, savedAt: 7 })
+    await renderScreen(
+      vi.fn().mockResolvedValue({ ok: true, result: { error: 'story_not_found' } })
+    )
+    const rendered = texts()
+    expect(rendered).toContain(STALE_STORY_BANNER_TEXT)
+    // The cached story still renders underneath the banner — no blank screen.
+    expect(rendered).toContain(storyDetailHappyPath.story.title)
+    const action = renderer!.root.findByProps({ testID: 'stale-banner-refresh' })
+    expect(action.props.accessibilityRole).toBe('button')
+    expect(action.props.accessibilityLabel).toBe(STALE_STORY_REFRESH_ACTION)
+  })
+
+  it('refreshes from the not-found banner and recovers when the story returns', async () => {
+    cache.loadStoryDetailSnapshot.mockResolvedValue({ detail: storyDetailHappyPath, savedAt: 7 })
+    const sendRequest = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, result: { error: 'story_not_found' } })
+      .mockResolvedValueOnce({ ok: true, result: storyDetailHappyPath })
+    await renderScreen(sendRequest)
+    expect(texts()).toContain(STALE_STORY_BANNER_TEXT)
+
+    await act(async () => {
+      renderer!.root.findByProps({ testID: 'stale-banner-refresh' }).props.onPress()
+      await flushMicrotasks()
+    })
+    expect(sendRequest).toHaveBeenCalledTimes(2)
+    const rendered = texts()
+    expect(rendered).not.toContain(STALE_STORY_BANNER_TEXT)
+    expect(rendered).toContain(storyDetailHappyPath.story.title)
   })
 
   it('mounts RefreshControl wired to the hook pull state', async () => {
