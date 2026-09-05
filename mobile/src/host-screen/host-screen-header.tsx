@@ -1,5 +1,6 @@
 import { Pressable, Text, View } from 'react-native'
 import {
+  BookOpen,
   ChevronLeft,
   CircleHelp,
   Filter,
@@ -228,6 +229,22 @@ export function HostScreenHeader({ controller }: { controller: HostScreenControl
               />
             </Pressable>
 
+            <Pressable
+              style={[
+                styles.embeddedToolbarIconButton,
+                connState !== 'connected' && styles.toolbarIconDisabled
+              ]}
+              onPress={() => actions.navigateFromHostList(`/h/${hostId}/stories`)}
+              disabled={connState !== 'connected'}
+              accessibilityRole="button"
+              accessibilityLabel="Stories"
+            >
+              <BookOpen
+                size={16}
+                color={connState === 'connected' ? colors.textSecondary : colors.textMuted}
+              />
+            </Pressable>
+
             {floatingWorkspaceEnabled ? (
               <Pressable
                 style={[
@@ -346,6 +363,19 @@ export function HostScreenHeader({ controller }: { controller: HostScreenControl
             disabled={connState !== 'connected'}
           >
             <CircleHelp
+              size={16}
+              color={connState === 'connected' ? colors.textSecondary : colors.textMuted}
+            />
+          </Pressable>
+
+          <Pressable
+            style={styles.searchToggle}
+            onPress={() => actions.navigateFromHostList(`/h/${hostId}/stories`)}
+            disabled={connState !== 'connected'}
+            accessibilityRole="button"
+            accessibilityLabel="Stories"
+          >
+            <BookOpen
               size={16}
               color={connState === 'connected' ? colors.textSecondary : colors.textMuted}
             />
