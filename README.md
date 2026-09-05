@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://wakii.dev"><img src="https://img.shields.io/badge/web-wakii.dev-45E0A8?logo=safari&logoColor=45E0A8" alt="wakii.dev" /></a>
   <img src="https://img.shields.io/badge/9-agents-C026D3?style=flat" alt="9 agents" />
-  <img src="https://img.shields.io/badge/20-skills-8b5cf6?style=flat" alt="20 skills" />
+  <img src="https://img.shields.io/badge/13-public%20skills-8b5cf6?style=flat" alt="13 public skills" />
   <img src="https://img.shields.io/badge/license-MIT-08C?style=flat" alt="License: MIT" />
   <img src="https://img.shields.io/badge/macOS%20%7C%20Windows%20%7C%20Linux-4493F8?style=flat-square" alt="macOS, Windows, Linux" />
 </p>
@@ -15,6 +15,7 @@
   <a href="https://wakii.dev/docs/getting-started/">Docs</a> ·
   <a href="https://wakii.dev/skills/">Skills</a> ·
   <a href="https://wakii.dev/roadmap/">Roadmap</a> ·
+  <a href="https://github.com/wakii-dev/wakii/releases">Download</a> ·
   <a href="https://github.com/stablyai/orca">Upstream: stablyai/orca</a>
 </p>
 
@@ -142,6 +143,20 @@ Full wall with screenshots:
 | ----------- | ----------------------------------------------------------------------- |
 | `wakii-dev` | **default — Wakii development happens here**                            |
 | `main`      | mirrors `stablyai/orca` main, auto-synced daily by GitHub Action        |
+
+## 📦 Download
+
+macOS builds ship on [GitHub Releases](https://github.com/wakii-dev/wakii/releases)
+— unsigned, so right-click → **Open** on first launch (or allow it in
+System Settings → Privacy & Security):
+
+| Machine       | Asset                                                                                                                            |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Apple Silicon | [Wakii.dmg](https://github.com/wakii-dev/wakii/releases/latest/download/Wakii.dmg)                                               |
+| Intel         | [Wakii-x64.dmg](https://github.com/wakii-dev/wakii/releases/latest/download/Wakii-x64.dmg)                                        |
+
+Windows: first build pending — [build from source](#-developing) works
+everywhere.
 
 ## 🚀 Developing
 
