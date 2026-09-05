@@ -180,6 +180,41 @@ An old client against a new host ignores the key, as Rule 1 allows. New members 
 `RuntimeTerminalWaitBlockedReason` are also Rule 1: no consumer switches exhaustively on it,
 and both the CLI and worker-start interpolate it as an opaque string.
 
+## Notification sources `gate-open`/`gate-closed` + `superpowers.*` RPC methods (FI-305 SF-1)
+
+The runtime dispatches two new mobile notification sources, `gate-open` and `gate-closed`,
+when a decision gate is created or settled (`decision-gate-store.ts` emits the transition,
+`runtime-gate-transition-notifications.ts` turns it into a notification), and the
+notification payload carries two new optional fields, `gateId` and `storyId`.
+
+That is Rule 3 adjacent — the host starts publishing content on an existing path it
+previously did not — but it is safe, for a client-side reason rather than a codec one: old
+mobile clients have no `source` filter. They render a notification with an unknown source
+exactly like any other (the `title`/`body` pair), never read the unfamiliar `gateId` /
+`storyId` keys, and keep routing taps by the pre-existing `hostId`/`worktreeId` fields. New
+clients read `gateId` to dedupe and `storyId` to deep-link, treating both as optional, so
+Rule 1's precondition holds in both directions. This behavior is pinned by unit/integration
+tests; observing it end-to-end from a paired client over a real transport is SF-4 device-e2e
+scope, and there is no paired-device test in this slice.
+
+`storyId`, when derivable, is the bracket's path relative to `docs/superpowers/` —
+`brackets/<filename>.md`, extension included — the same identifier `superpowers.storyList`
+and `superpowers.storyDetail` return. When the gate's worktree is not in the resolved
+catalog, or the worktree has no `brackets/` directory, derivation degrades and both
+`worktreeId` and `storyId` are omitted; mobile groups those notifications under the
+unlinked ("khác") bucket.
+
+The three new methods — `superpowers.storyList`, `superpowers.storyDetail` and
+`superpowers.gateResolve` — need no protocol bump: `src/shared/protocol-version.ts` lists
+adding new RPC methods under its do-not-bump cases, and the protocol-compatibility section
+of `mobile/README.md` carries the same rule. All three are registered in the mobile RPC
+method allowlist, which is also where their enforcement tests live.
+
+One known duplicate: the CLI's `resolveGate` runs its UPDATE without a status guard, so
+resolving an already-resolved gate emits a second `gate-closed` notification. Harmless — the
+phone path (`superpowers.gateResolve`) is guarded on `status = 'pending'` and answers
+`gate_not_pending` without emitting — and mobile dedupes by `gateId` from SF-3 on.
+
 ## Known debt: JSON-RPC errors drop Node's string code
 
 An error raised on an SSH host crosses the relay as JSON-RPC, and

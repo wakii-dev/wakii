@@ -31,7 +31,8 @@ The Orca mobile companion is an iOS/Android app that pairs with your desktop Orc
 - Create a workspace from mobile with the same Smart source modes as desktop: Smart, GitHub, Linear, GitLab, Branch, and Name. With **multiple connected desktops**, **New Workspace** asks which host should create it first (one connected host skips the picker).
 - Open a host card's **⋯** menu for **Edit**, **Connect**, **Remove**, and related actions (long-press still works as a shortcut).
 - Edit a saved host's display name or connection address without re-pairing (for example when the desktop moves between home LAN and Tailscale).
-- Get push notifications when an agent finishes, mirroring [desktop notifications](/docs/notifications).
+- Get push notifications when an agent finishes or a story decision gate opens, mirroring [desktop notifications](/docs/notifications) — tapping a gate notification jumps straight to its story.
+- Follow a host's superpowers **stories** — progress, per-SF status by tier, pending decision gates — and resolve a gate from the phone.
 
 The mobile app is intentionally not a full editor — it's a remote control for the desktop you already have running.
 
@@ -68,6 +69,14 @@ If the paired desktop is too old, the launcher is disabled until you update desk
 ## Session tabs
 
 Long-press a tab in the session strip for tab actions, including **Close**, **Close Other Tabs**, **Close Tabs to the Left**, and **Close Tabs to the Right**. Bulk close skips dirty markdown tabs (mobile has no save prompt on close) and pinned tabs. For chat-capable agent tabs, the same long-press sheet can switch Chat UI ↔ terminal.
+
+## Stories and decision gates
+
+Hosts running superpowers stories show them under **Stories** in the host screen header (next to **Gates**):
+
+- The story list groups stories by worktree. Each row shows the epic, progress ("2/5 SF done"), and an amber badge with the number of pending gates; pull to refresh.
+- Tapping a story opens the detail view: a progress bar, SFs grouped by tier with status chips (Todo / In progress / Done), and the story's decision gates.
+- Pending gates resolve from the phone — in the story's gates section or from the **Gates** screen, which lists every pending gate on the host grouped by story (gates without a linked story sit under **Khác**, and story-linked rows link to the story detail). Pick one of the gate's options — or type a free-text resolution when the options aren't known — and confirm the dialog. If the gate was already handled on desktop, the phone says so instead of erroring.
 
 ## Account switcher
 

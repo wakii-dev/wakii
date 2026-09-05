@@ -240,6 +240,10 @@ export const MOBILE_RPC_METHOD_ALLOWLIST = new Set([
   'speech.models.list',
   'stats.summary',
   'status.get',
+  // Why: SF-1 FI-306 — story view + gate resolve từ phone paired.
+  'superpowers.gateResolve',
+  'superpowers.storyDetail',
+  'superpowers.storyList',
   'agentTeams.prepareLaunch',
   'agentTeams.tmuxCompat',
   'terminal.clearBuffer',

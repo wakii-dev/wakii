@@ -1,6 +1,7 @@
 import Database from '../../../sqlite/sync-database'
 import { attachOrchestrationDbMethods } from './attach-orchestration-db-methods'
 import { hardenOrchestrationDatabaseFiles } from './database-file-permissions'
+import type { GateTransitionListener } from './decision-gates/decision-gate-store'
 import type { OrchestrationDbMethods } from './orchestration-db-methods'
 import {
   createCoordinatorMailRoutingTrigger,
@@ -20,6 +21,10 @@ class OrchestrationDbCore {
   // per-terminal fan-out. Only createDispatchContext flips this false→true.
   hasAnyDispatchContextsCache: boolean | undefined
   localMutationCallerFingerprint: string | undefined
+
+  // Single-slot gate open/close subscriber (set via setGateTransitionListener);
+  // lets the phone RPC path observe transitions without polling the table.
+  gateTransitionListener: GateTransitionListener | undefined
 
   constructor(dbPath: (string & {}) | ':memory:') {
     this.db = new Database(dbPath)

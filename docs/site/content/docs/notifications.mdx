@@ -8,6 +8,14 @@ Orca runs agents, not just terminals, so it knows when an agent actually finishe
 
 When an agent transitions from working to idle, Orca fires a notification — system notification, sound, and a chip on the worktree.
 
+## Decision gate notifications
+
+When a superpowers story reaches a decision gate, the paired phone gets a push notification: one when the gate opens (the gate question is the title) and one when it's resolved (the resolution is the body).
+
+Tapping a gate notification that belongs to a story opens that story's screen in the mobile app — whether the gate just opened or was just resolved. Gates with no linked story fall back to the worktree session when one is known, or to the host screen.
+
+From the phone you can also resolve without waiting for desktop: open **Gates** from the host screen header (or a story's gates section), pick an option or type free text, and confirm. A gate that was already handled elsewhere reports that inline instead of failing — the desktop's pending guard makes a stale tap a safe no-op, so it can't double-resolve.
+
 ## Persistent bell
 
 The header bell shows unread notifications across all worktrees. Clicking a notification jumps to the matching worktree and pane.

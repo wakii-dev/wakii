@@ -22,7 +22,8 @@ const AUTH_TOKEN = 'mock-device-token'
 const serverKeyPair = loadOrCreateMockServerKeyPair(process.env.MOCK_SERVER_KEY_FILE)
 const serverPublicKeyB64 = Buffer.from(serverKeyPair.publicKey).toString('base64')
 
-const wss = new WebSocketServer({ port: PORT })
+// Loopback-only: the mock token is repo-public; the emulator reaches it via 10.0.2.2 (host loopback) / adb reverse
+const wss = new WebSocketServer({ port: PORT, host: '127.0.0.1' })
 
 // Why: each connection goes through an E2EE handshake before any RPC traffic.
 // The first message must be e2ee_hello (plaintext), then all subsequent
@@ -129,7 +130,7 @@ wss.on('connection', (ws) => {
   })
 })
 
-console.log(`[mock] Orca mock server listening on ws://localhost:${PORT}`)
+console.log(`[mock] Orca mock server listening on ws://127.0.0.1:${PORT} (loopback only)`)
 console.log(`[mock] Auth token: ${AUTH_TOKEN}`)
 console.log(`[mock] Server public key (base64): ${serverPublicKeyB64}`)
 console.log(

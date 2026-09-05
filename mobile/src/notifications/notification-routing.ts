@@ -2,11 +2,18 @@ import type { HostStackRouteTarget } from '../navigation/host-stack-navigation'
 import { mobileSessionRouteTarget } from '../session/mobile-session-route'
 import type { HostCredentialStatus } from '../transport/types'
 
-export type DesktopNotificationSource = 'agent-task-complete' | 'terminal-bell' | 'test'
+export type DesktopNotificationSource =
+  | 'agent-task-complete'
+  | 'terminal-bell'
+  | 'test'
+  | 'gate-open'
+  | 'gate-closed'
 
 export type DesktopNotificationEvent = {
   source: DesktopNotificationSource
   worktreeId?: string
+  storyId?: string
+  gateId?: string
   notificationId?: string
 }
 
@@ -14,6 +21,8 @@ export type LocalNotificationData = {
   source: DesktopNotificationSource
   hostId: string
   worktreeId?: string
+  storyId?: string
+  gateId?: string
   notificationId?: string
 }
 
@@ -36,6 +45,12 @@ export function buildLocalNotificationData(
   }
   if (event.worktreeId) {
     data.worktreeId = event.worktreeId
+  }
+  if (event.storyId) {
+    data.storyId = event.storyId
+  }
+  if (event.gateId) {
+    data.gateId = event.gateId
   }
   if (event.notificationId) {
     data.notificationId = event.notificationId
@@ -78,10 +93,21 @@ export function getNotificationNavigationTarget(
   }
 
   const worktreeId = readNonEmptyString(record.worktreeId)
+  // Gate taps with a story id land on the story screen; gateId rides as an inert param the story wrapper ignores.
+  const gateSource = record.source === 'gate-open' || record.source === 'gate-closed'
+  const storyId = gateSource ? readNonEmptyString(record.storyId) : null
+  const gateId = gateSource ? readNonEmptyString(record.gateId) : null
   const credentialStatus = options.credentialStatusByHostId?.get(hostId)
   return {
     hostId,
-    sessionTarget: worktreeId ? mobileSessionRouteTarget({ hostId, worktreeId }) : null,
+    sessionTarget: storyId
+      ? {
+          name: '[hostId]/stories/[...storyId]',
+          params: { hostId, storyId, ...(gateId ? { gateId } : {}) }
+        }
+      : worktreeId
+        ? mobileSessionRouteTarget({ hostId, worktreeId })
+        : null,
     ...(credentialStatus === 'missing'
       ? { credentialRecovery: 're-pair' as const }
       : credentialStatus === 'temporarily-unavailable'

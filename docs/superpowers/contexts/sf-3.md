@@ -48,3 +48,10 @@ desktop/CLI/timeout). Testable bằng fixture payloads (không cần route thậ
 - KHÔNG dùng `orchestration.gateResolve` hay `agentSession.respondTo*` cho gates
 - KHÔNG tự thêm confirm-bypass/quick-approve setting — mọi resolve qua confirm
   dialog (decision #6)
+
+## Device verify (meta 2026-09-04 — user cung cấp)
+Android emulator đã mở sẵn: id `emulator-5554` (Android 14 / SDK 34, ARM64) —
+DÙNG ĐÚNG thiết bị này, KHÔNG tự tạo emulator mới. App `mobile/` (expo):
+build+install `pnpm android`, dev server `pnpm start`. Rule 0: resolve flow
+(options / free-text + confirm) phải THẤY chạy thật trên emulator trước khi
+claim — `adb -s emulator-5554 exec-out screencap -p > /tmp/shot.png`.

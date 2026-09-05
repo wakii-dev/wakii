@@ -175,4 +175,33 @@ describe('mobile RPC allowlist', () => {
     expect(mobileRpcAllowlist().has('agentSession.attach')).toBe(false)
     expect(mobileRpcAllowlist().has('agentSession.requestHandoff')).toBe(false)
   })
+
+  it('allowlists exactly the three superpowers methods for mobile', () => {
+    // Why: SF-1 FI-306 — story view + gate resolve từ phone paired.
+    for (const method of [
+      'superpowers.storyList',
+      'superpowers.storyDetail',
+      'superpowers.gateResolve'
+    ]) {
+      expect(mobileRpcAllowlist().has(method)).toBe(true)
+      expect(ALL_RPC_METHODS.some((m) => m.name === method)).toBe(true)
+    }
+  })
+
+  it('blocks non-allowlisted superpowers surface (regression)', () => {
+    // orchestration.* and any other superpowers method must never reach mobile.
+    const allowlistedSuperpowers = [...mobileRpcAllowlist()].filter((m) =>
+      m.startsWith('superpowers.')
+    )
+    expect(allowlistedSuperpowers.sort()).toEqual([
+      'superpowers.gateResolve',
+      'superpowers.storyDetail',
+      'superpowers.storyList'
+    ])
+  })
+
+  it('never allowlists orchestration surface for mobile', () => {
+    // Why: story boundary — orchestration.* is desktop-only, mobile tokens must not reach it.
+    expect([...mobileRpcAllowlist()].filter((m) => m.startsWith('orchestration.'))).toEqual([])
+  })
 })
