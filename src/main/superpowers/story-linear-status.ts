@@ -30,7 +30,7 @@ export function mapLinearStateType(stateType: string): SuperpowersSfStatus {
 async function fetchSfStatus(id: string, now: () => number): Promise<SfStatusEntry> {
   try {
     const issue = await getIssue(id)
-    return { status: mapLinearStateType(issue?.state.type ?? ''), fetchedAt: now() }
+    return { status: mapLinearStateType(issue?.state?.type ?? ''), fetchedAt: now() }
   } catch {
     return { status: 'unknown', fetchedAt: now() }
   }
