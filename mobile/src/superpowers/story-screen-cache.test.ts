@@ -1,6 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { storyListHappyPath, storyListWithParseError } from './story-rpc-fixtures'
+import {
+  storyDetailHappyPath,
+  storyListHappyPath,
+  storyListWithParseError
+} from './story-rpc-fixtures'
 
 vi.mock('@react-native-async-storage/async-storage', () => ({
   default: {
@@ -120,5 +124,116 @@ describe('story screen cache', () => {
       stories: storyListHappyPath.stories
     })
     await expect(reloaded.loadStoryListSnapshot('host-2')).resolves.toBeNull()
+  })
+
+  it('loads a persisted detail snapshot for the host+story key', async () => {
+    vi.mocked(AsyncStorage.getItem).mockResolvedValue(
+      JSON.stringify({
+        lists: {},
+        details: {
+          'host-1:brackets/a.md': { detail: storyDetailHappyPath, savedAt: 7 }
+        }
+      })
+    )
+    const { loadStoryDetailSnapshot } = await importCache()
+
+    await expect(loadStoryDetailSnapshot('host-1', 'brackets/a.md')).resolves.toEqual({
+      detail: storyDetailHappyPath,
+      savedAt: 7
+    })
+  })
+
+  it('returns null for an unknown detail key and a malformed detail entry', async () => {
+    const { loadStoryDetailSnapshot } = await importCache()
+
+    vi.mocked(AsyncStorage.getItem).mockResolvedValue(JSON.stringify({ lists: {} }))
+    await expect(loadStoryDetailSnapshot('host-1', 'brackets/a.md')).resolves.toBeNull()
+
+    vi.mocked(AsyncStorage.getItem).mockResolvedValue(
+      JSON.stringify({
+        lists: {},
+        details: {
+          'host-1:brackets/a.md': { detail: { gates: [] }, savedAt: 7 },
+          'host-1:brackets/b.md': { savedAt: 7 }
+        }
+      })
+    )
+    await expect(loadStoryDetailSnapshot('host-1', 'brackets/a.md')).resolves.toBeNull()
+    await expect(loadStoryDetailSnapshot('host-1', 'brackets/b.md')).resolves.toBeNull()
+    await expect(loadStoryDetailSnapshot('host-1', 'brackets/missing.md')).resolves.toBeNull()
+  })
+
+  it('serves a saved detail from memory and keeps it across a list save', async () => {
+    const {
+      loadStoryDetailSnapshot,
+      loadStoryListSnapshot,
+      saveStoryDetailSnapshot,
+      saveStoryListSnapshot
+    } = await importCache()
+    saveStoryDetailSnapshot('host-1', 'brackets/a.md', storyDetailHappyPath)
+    saveStoryListSnapshot('host-1', storyListHappyPath.stories)
+
+    expect(AsyncStorage.getItem).not.toHaveBeenCalled()
+    await expect(loadStoryDetailSnapshot('host-1', 'brackets/a.md')).resolves.toMatchObject({
+      detail: storyDetailHappyPath
+    })
+    await expect(loadStoryListSnapshot('host-1')).resolves.toMatchObject({
+      stories: storyListHappyPath.stories
+    })
+  })
+
+  it('writes lists and details in one throttled payload under the same key', async () => {
+    const { saveStoryDetailSnapshot, saveStoryListSnapshot } = await importCache()
+    saveStoryDetailSnapshot('host-1', 'brackets/a.md', storyDetailHappyPath)
+    saveStoryListSnapshot('host-1', storyListHappyPath.stories)
+
+    await vi.advanceTimersByTimeAsync(250)
+
+    expect(AsyncStorage.setItem).toHaveBeenCalledTimes(1)
+    expect(String(vi.mocked(AsyncStorage.setItem).mock.calls[0][0])).toBe('orca:story-screen:v1')
+    const payload = JSON.parse(String(vi.mocked(AsyncStorage.setItem).mock.calls[0][1]))
+    expect(payload.lists['host-1'].stories).toEqual(storyListHappyPath.stories)
+    expect(payload.details['host-1:brackets/a.md'].detail).toEqual(storyDetailHappyPath)
+  })
+
+  it('merges details over storage at flush time so one session never drops another', async () => {
+    // Prior session persisted host-b's list + detail; this session saves host-a's
+    // detail without ever loading.
+    vi.mocked(AsyncStorage.getItem).mockResolvedValue(
+      JSON.stringify({
+        lists: { 'host-b': { stories: storyListWithParseError.stories, savedAt: 3 } },
+        details: {
+          'host-b:brackets/b.md': { detail: storyDetailHappyPath, savedAt: 3 }
+        }
+      })
+    )
+    const { saveStoryDetailSnapshot } = await importCache()
+    saveStoryDetailSnapshot('host-a', 'brackets/a.md', storyDetailHappyPath)
+
+    await vi.advanceTimersByTimeAsync(250)
+
+    expect(AsyncStorage.setItem).toHaveBeenCalledTimes(1)
+    const payload = JSON.parse(String(vi.mocked(AsyncStorage.setItem).mock.calls[0][1]))
+    expect(payload.details['host-a:brackets/a.md'].detail).toEqual(storyDetailHappyPath)
+    expect(payload.details['host-b:brackets/b.md'].detail).toEqual(storyDetailHappyPath)
+    expect(payload.lists['host-b'].stories).toEqual(storyListWithParseError.stories)
+  })
+
+  it('keeps detail snapshots isolated per host for the same storyId', async () => {
+    const { saveStoryDetailSnapshot } = await importCache()
+    saveStoryDetailSnapshot('host-1', 'brackets/a.md', storyDetailHappyPath)
+    await vi.advanceTimersByTimeAsync(250)
+
+    vi.mocked(AsyncStorage.getItem).mockResolvedValue(
+      String(vi.mocked(AsyncStorage.setItem).mock.calls[0][1])
+    )
+    vi.resetModules()
+    const reloaded = await importCache()
+    await expect(
+      reloaded.loadStoryDetailSnapshot('host-1', 'brackets/a.md')
+    ).resolves.toMatchObject({
+      detail: storyDetailHappyPath
+    })
+    await expect(reloaded.loadStoryDetailSnapshot('host-2', 'brackets/a.md')).resolves.toBeNull()
   })
 })

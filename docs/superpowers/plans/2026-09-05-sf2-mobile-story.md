@@ -134,15 +134,15 @@ gộp theo đợt, ví dụ sau T8: `docs(FI-307): plan tick T1,T7,T8`).
 - **Files:** `mobile/src/superpowers/story-detail-host-fetch.ts`, `mobile/src/superpowers/use-mobile-story-detail.ts`
   + tests; được phép chỉnh file T3 khi extract cơ chế dùng chung (edge T3→T4).
 - **Steps:**
-  - [ ] Cache keyed `hostId` + `storyId` (cùng pattern T3, cùng `story-screen-cache.ts`)
-  - [ ] `sendSingleFlightRequest(client, hostId, 'superpowers.storyDetail', { storyId })`
-  - [ ] `story_not_found` → state riêng (KHÔNG throw) cho T9 stale banner; loading/
+  - [x] Cache keyed `hostId` + `storyId` (cùng pattern T3, cùng `story-screen-cache.ts`)
+  - [x] `sendSingleFlightRequest(client, hostId, 'superpowers.storyDetail', { storyId })`
+  - [x] `story_not_found` → state riêng (KHÔNG throw) cho T9 stale banner; loading/
         error/refresh states
-  - [ ] Foreground poll + background dừng + reconnect refresh — extract dùng chung
+  - [x] Foreground poll + background dừng + reconnect refresh — extract dùng chung
         với T3 (không clone); interval 60s như list (lưu ý TTL desktop 30s < poll
         60s → mỗi poll vẫn 1 lượt Linear reads; TTL chỉ hấp thụ burst multi-surface
         — không overstate)
-  - [ ] Tests: cache-first, not-found state, poll lifecycle
+  - [x] Tests: cache-first, not-found state, poll lifecycle
 - **Acceptance:** tests pass; typecheck pass.
 
 ### T5 story-list-ui-group-worktree
