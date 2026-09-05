@@ -1,0 +1,39 @@
+name: Sync fork with upstream
+
+# Daily sync of wakii-dev/wakii main with stablyai/orca main.
+# Fast-forward only: if the histories diverge (Wakii-specific commits on main),
+# the job logs and exits cleanly instead of force-merging — resolve manually.
+
+on:
+  schedule:
+    - cron: "41 2 * * *" # daily ~02:41 UTC — sau khi upstream có worker chạy đêm
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Sync upstream
+        run: |
+          git remote add upstream https://github.com/stablyai/orca.git
+          git fetch upstream main
+          BEHIND=$(git rev-list --count main..upstream/main)
+          echo "upstream ahead by $BEHIND commits"
+          if [ "$BEHIND" -eq 0 ]; then
+            echo "Already up to date."
+            exit 0
+          fi
+          if git merge --ff-only upstream/main; then
+            git push origin main
+            echo "synced: fast-forwarded main to upstream/main"
+          else
+            echo "::warning::main diverged from upstream — fast-forward không thực hiện được, cần merge thủ công."
+          fi
