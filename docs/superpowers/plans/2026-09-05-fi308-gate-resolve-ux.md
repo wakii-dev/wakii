@@ -81,7 +81,7 @@ Plan file tick `- [x]` sau mỗi task (checkbox CHỈ cho task steps).
 - Smoke test: mọi fixture gán được cho đúng contract type (compile-time) + runtime assert
   shape invariants (vd error union chỉ 3 code; gate bắt buộc có gateId/title).
 - Exit: `pnpm exec vitest run src/superpowers/gate-conformance-smoke.test.ts` pass trong mobile/.
-- [ ] T1 done
+- [x] T1 done
 
 ### T2 — pending-gates-surface-other-group
 - `pending-gates-store.ts`: per-host Map; state = { gates: Map<gateId, GateRow>, lastSweepAt,
