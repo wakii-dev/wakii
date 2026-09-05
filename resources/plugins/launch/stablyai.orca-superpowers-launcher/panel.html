@@ -775,17 +775,22 @@ Tech blog: markdown posts, post list, single-post view, tag filter, dark/light t
       function copyPrompt() {
         var text = buildPrompt()
         if (text === null) return
-        // navigator.clipboard may be unavailable in sandboxed iframe without allow-scripts; fallback to execCommand.
+        // Why host API first: the panel iframe is sandbox="allow-scripts" only —
+        // navigator.clipboard and execCommand('copy') are blocked on its opaque origin.
         function done() { setStatus('Prompt copied (' + text.length + ' chars) — paste into the worktree terminal.') }
         function fail() { setStatus('Copy failed — select the prompt from status and copy manually.') }
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text).then(done, function () {
-            // Fallback: temp textarea + execCommand
+        call('clipboard.write', { text: text }).then(function (r) {
+          if (r && r.ok) { done(); return }
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done, function () {
+              fallbackCopy(text) ? done() : fail()
+            })
+          } else {
             fallbackCopy(text) ? done() : fail()
-          })
-        } else {
+          }
+        }, function () {
           fallbackCopy(text) ? done() : fail()
-        }
+        })
       }
 
       // Fallback copy for sandboxed environments without async clipboard API.
@@ -845,8 +850,8 @@ Tech blog: markdown posts, post list, single-post view, tag filter, dark/light t
         var text = buildPrompt() || ''
         var bytes = utf8Bytes(text)
         var el = document.getElementById('byte-counter')
-        el.textContent = bytes + 'B / 4096'
-        el.style.color = bytes > 4000 ? '#ef4444' : (bytes > 3500 ? '#f59e0b' : 'var(--muted-foreground, #999)')
+        el.textContent = bytes + 'B / 64K'
+        el.style.color = bytes > 63000 ? '#ef4444' : (bytes > 55000 ? '#f59e0b' : 'var(--muted-foreground, #999)')
       }
       document.getElementById('idea').addEventListener('input', updateByteCounter)
       // Update counter on mode change too

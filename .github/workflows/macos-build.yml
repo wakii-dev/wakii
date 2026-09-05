@@ -50,13 +50,15 @@ jobs:
           pnpm run ensure:electron-runtime
           node config/scripts/build-mac-local.mjs
 
-      - name: Collect artifacts
+      - name: Collect artifacts (arm64 + x64)
         run: |
           mkdir -p dist/release
           mv dist/orca-macos-arm64.dmg dist/Wakii-1.4.198-arm64.dmg || true
+          mv dist/orca-macos-x64.dmg dist/Wakii-1.4.198-x64.dmg || true
           for f in dist/Wakii-1.4.198*.dmg dist/Wakii-1.4.198*.zip dist/latest-mac.yml; do
             [ -e "$f" ] && cp "$f" dist/release/
           done
+          ls -la dist/release/
 
       - name: Upload to release v1.4.198
         env:

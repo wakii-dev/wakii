@@ -106,6 +106,9 @@
       "kind": "notifications:show"
     },
     {
+      "kind": "clipboard:write"
+    },
+    {
       "kind": "events:subscribe"
     },
     {

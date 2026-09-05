@@ -17,7 +17,9 @@ import type { PluginCapabilityKind } from './plugin-capabilities'
  * stability promises before then.
  */
 
-export const PANEL_ACTION_TEXT_MAX_LENGTH = 4096
+// Why 64K: prompts composed by story/workflow panels routinely exceed 4K; the
+// runtime's own hard input ceiling is 16 MiB, so this only bounds abuse.
+export const PANEL_ACTION_TEXT_MAX_LENGTH = 65536
 export const PLUGIN_WORKSPACE_TERMINAL_LIMIT = 50
 export const PLUGIN_WORKSPACE_LABEL_MAX_LENGTH = 512
 export const PLUGIN_TERMINAL_ID_MAX_LENGTH = 1024
@@ -57,6 +59,14 @@ const notificationsShowParams = z.object({
 })
 const notificationsShowResult = z.object({ delivered: z.boolean() })
 
+const clipboardWriteParams = z.object({
+  text: z
+    .string()
+    .min(1)
+    .max(1024 * 1024)
+})
+const clipboardWriteResult = z.object({ written: z.boolean() })
+
 const RESERVED_STORAGE_KEYS = new Set(['__proto__', 'prototype', 'constructor'])
 const storageKeySchema = z
   .string()
@@ -76,27 +86,39 @@ const workspaceFileListParams = z.object({
   dir: z.enum(['brackets', 'contexts']).default('brackets')
 })
 const workspaceFileListResult = z.object({
-  files: z.array(z.object({
-    name: z.string(),
-    linear: z.string().nullable(),
-    title: z.string(),
-    mtime: z.number()
-  })).max(200)
+  files: z
+    .array(
+      z.object({
+        name: z.string(),
+        linear: z.string().nullable(),
+        title: z.string(),
+        mtime: z.number()
+      })
+    )
+    .max(200)
 })
 const workspaceFileReadParams = z.object({
   dir: z.enum(['brackets', 'contexts']).default('brackets'),
   name: z.string().min(1).max(128)
 })
-const workspaceFileReadResult = z.object({ content: z.string().max(PLUGIN_STORAGE_VALUE_MAX_BYTES) })
+const workspaceFileReadResult = z.object({
+  content: z.string().max(PLUGIN_STORAGE_VALUE_MAX_BYTES)
+})
 
 // FORK-LOCAL: plan progress mọi SF worktree — panel gọi trực tiếp (main process,
 // KHÔNG qua worker lazy-spawn — hết vấn đề worker chết sau restart)
 const workspacePlanProgressParams = z.object({}).strict().optional()
 const workspacePlanProgressResult = z.object({
-  progress: z.record(z.string(), z.object({
-    plan: z.string(), done: z.number(), total: z.number(),
-    pct: z.number(), est: z.boolean().optional()
-  }))
+  progress: z.record(
+    z.string(),
+    z.object({
+      plan: z.string(),
+      done: z.number(),
+      total: z.number(),
+      pct: z.number(),
+      est: z.boolean().optional()
+    })
+  )
 })
 
 const storageGetResult = z.object({ value: pluginJsonValueSchema })
@@ -208,6 +230,16 @@ export const PLUGIN_HOST_API_V0: readonly PluginHostMethodSpec[] = [
     panel: true,
     params: notificationsShowParams,
     result: notificationsShowResult
+  }),
+  spec({
+    name: 'clipboard.write',
+    since: '1.4',
+    scope: 'desktop',
+    capability: 'clipboard:write',
+    mutation: true,
+    panel: true,
+    params: clipboardWriteParams,
+    result: clipboardWriteResult
   }),
   spec({
     name: 'storage.get',

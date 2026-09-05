@@ -76,6 +76,17 @@ export function bindPluginHostServices(input: {
       }
     },
     dispatchPluginNotification: (notification) => delegate.dispatchPluginNotification(notification),
+    writeClipboardText: async (text) => {
+      // Why dynamic: this module is also bound by headless serve, which has no
+      // Electron app — the capability gate plus this guard keep the method
+      // desktop-only without dragging electron into the serve import graph.
+      if (!process.versions.electron) {
+        throw new Error('clipboard_write_unsupported_on_this_host')
+      }
+      const { clipboard } = await import('electron')
+      clipboard.writeText(text)
+      return { written: true }
+    },
     storage: {
       get: (key, itemKey) => new PluginKvStore(pluginsDataDir, key, 'storage.json').get(itemKey),
       set: (key, itemKey, value) =>

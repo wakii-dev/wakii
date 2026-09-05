@@ -4,7 +4,8 @@ import { PROVEN_ABSENT_LEAF_PTY_TTL_MS } from './orca-runtime-core'
 import type { RuntimeTerminalSend } from '../../shared/runtime-types'
 import {
   assertTerminalInputWithinLimitWithYield,
-  buildTerminalSendPayload
+  buildTerminalSendPayload,
+  maybeWrapTerminalSendTextForTuiAgent
 } from './terminal-send-payload'
 import { buildAgentPromptPasteBytes } from '../../shared/agent-prompt-injection'
 
@@ -82,12 +83,18 @@ export class OrcaRuntimeWithControllerKnowsPtyIsLive extends OrcaRuntimeWithReso
       if (!pty.pty.connected) {
         throw new Error('terminal_not_writable')
       }
-      const payload = buildTerminalSendPayload(action)
+      // Why: TUI agents submit on newlines, so a raw multi-line send fragments.
+      // Wrap in bracketed paste so the text lands as one atomic paste.
+      const routedAction = maybeWrapTerminalSendTextForTuiAgent(
+        action,
+        this.getPtyAgent(pty.pty.ptyId)
+      )
+      const payload = buildTerminalSendPayload(routedAction)
       if (payload === null) {
         throw new Error('invalid_terminal_send')
       }
-      await assertTerminalInputWithinLimitWithYield(action.text)
-      await this.writeTerminalAction(pty.pty.ptyId, action, payload, options)
+      await assertTerminalInputWithinLimitWithYield(routedAction.text)
+      await this.writeTerminalAction(pty.pty.ptyId, routedAction, payload, options)
       return {
         handle,
         accepted: true,

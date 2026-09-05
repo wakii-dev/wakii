@@ -138,6 +138,10 @@ function summarizeParams(method: string, params: unknown): string {
       const title = typeof record.title === 'string' ? record.title : ''
       return `titleChars=${title.length}`
     }
+    case 'clipboard.write': {
+      const text = typeof record.text === 'string' ? record.text : ''
+      return `chars=${text.length}`
+    }
     case 'storage.set':
     case 'storage.delete':
     case 'secrets.set':
