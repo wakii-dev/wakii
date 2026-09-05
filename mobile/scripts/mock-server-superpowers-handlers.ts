@@ -76,6 +76,8 @@ function pushGateEvent(kind: 'gate-open' | 'gate-closed', gate: MockGate, succes
     title: gate.title,
     body: kind === 'gate-closed' ? (gate.resolution ?? '') : '',
     gateId: gate.gateId,
+    // Stable per gate+kind: restart-replays dedup on the id instead of seq:N.
+    notificationId: `gate-${gate.gateId}-${kind}`,
     // Both-or-neither (plan D1): a story-routed gate carries both keys, a
     // 'khác' gate carries neither — a lone key would misroute T5's reducer.
     ...(storyRouted ? { worktreeId: gate.worktreeId, storyId: MOCK_STORY_ID } : {}),
