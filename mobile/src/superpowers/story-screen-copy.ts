@@ -17,8 +17,13 @@ export const UNTITLED_STORY_TITLE = 'Untitled story'
 // normally always carry a registered worktree id)
 export const OTHER_WORKTREE_GROUP_TITLE = 'Other'
 
+// Detail's story_not_found banner — a deleted story is the only thing this can mean.
 export const STALE_STORY_BANNER_TEXT =
   'This story is no longer available on the host. It may have been moved or removed.'
+
+// List's failed-poll banner — a fetch failure (network, host down) is not evidence
+// any story was deleted, so the wording stays neutral (T9 review handoff).
+export const STALE_LIST_BANNER_TEXT = 'Could not refresh stories. Showing the last known list.'
 
 export const STALE_STORY_REFRESH_ACTION = 'Refresh'
 

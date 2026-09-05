@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { sfStatusLabel, storyProgressLabel } from './story-screen-copy'
+import {
+  STALE_LIST_BANNER_TEXT,
+  STALE_STORY_BANNER_TEXT,
+  sfStatusLabel,
+  storyProgressLabel
+} from './story-screen-copy'
 import type { SuperpowersSfStatus } from '../../../src/shared/superpowers/story-rpc-contract'
 
 describe('sfStatusLabel', () => {
@@ -17,5 +22,14 @@ describe('storyProgressLabel', () => {
 
   it('formats zero totals defensively', () => {
     expect(storyProgressLabel(0, 0)).toBe('0/0 SF done')
+  })
+})
+
+describe('stale banner copy', () => {
+  it('keeps the failed-poll list wording neutral and distinct from not-found', () => {
+    expect(STALE_LIST_BANNER_TEXT).not.toBe(STALE_STORY_BANNER_TEXT)
+    expect(STALE_LIST_BANNER_TEXT).toMatch(/^Could not refresh stories\./)
+    // A failed poll is not evidence a story was deleted.
+    expect(STALE_LIST_BANNER_TEXT).not.toMatch(/no longer available/)
   })
 })

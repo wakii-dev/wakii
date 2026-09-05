@@ -16,6 +16,7 @@ import { groupStoriesByWorktree, storyRowKey } from './story-list-groups'
 import {
   PARSE_ERROR_ENTRY_LABEL,
   REFRESH_HINT,
+  STALE_LIST_BANNER_TEXT,
   STORY_LIST_TITLE,
   storyProgressLabel
 } from './story-screen-copy'
@@ -55,7 +56,7 @@ export function MobileStoryListScreen({ client, hostId, onOpenStory, bottomInset
       {stale ? (
         // Failed poll — the last good list keeps rendering under the banner.
         <View style={styles.bannerWrap}>
-          <StoryStaleBanner onRefresh={refresh} />
+          <StoryStaleBanner message={STALE_LIST_BANNER_TEXT} onRefresh={refresh} />
         </View>
       ) : null}
       <SectionList

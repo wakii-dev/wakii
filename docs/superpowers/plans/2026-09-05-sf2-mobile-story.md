@@ -207,11 +207,16 @@ gộp theo đợt, ví dụ sau T8: `docs(FI-307): plan tick T1,T7,T8`).
 - **Files:** chỉnh `MobileStoryListScreen.tsx` / `MobileStoryDetailScreen.tsx` +
   tests render.
 - **Steps:**
-  - [ ] Wide layout: dùng `useResponsiveLayout` (precedent `app/h/[hostId]/index.tsx`)
+  - [x] Wide layout: dùng `useResponsiveLayout` (precedent `app/h/[hostId]/index.tsx`)
         — list/detail hiển thị hợp lý (probe pattern list+detail hiện có của tabs)
-  - [ ] Dark + light: CHỈ token/theme hiện có (không introduces màu/hex mới);
-        render test cả 2 scheme
-  - [ ] Grep self-check: không hex/rgb literal mới trong file mới
+        — probe kết luận: no-wide-specific-change needed (stack navigation precedent;
+        evidence: `app/h/_layout.tsx` đã giữ sidebar+detail split, story routes render
+        trong detail Stack như session/history — 0 dùng `isWideLayout`)
+  - [x] Dark + light: CHỈ token/theme hiện có (không introduces màu/hex mới);
+        render test cả 2 scheme (app dark-only static tokens — scheme render tests
+        pin cùng dark tokens dưới cả 2 OS scheme)
+  - [x] Grep self-check: không hex/rgb literal mới trong file mới (0 hits cả HEAD
+        lẫn working tree trên mọi file touched)
 - **Acceptance:** render tests light+dark pass; code-reviewer xác nhận không token mới.
 
 ## Verification protocol (sau T10 — KHÔNG phải checkbox)

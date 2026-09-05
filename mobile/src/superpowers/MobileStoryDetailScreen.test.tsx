@@ -26,7 +26,8 @@ import { normalizeStoryDetailRouteParams } from './story-detail-route'
 const appState = vi.hoisted(() => ({
   currentState: 'active',
   listener: null as ((state: string) => void) | null,
-  remove: vi.fn()
+  remove: vi.fn(),
+  colorScheme: 'dark' as string
 }))
 // The real fetch write-throughs via saveStoryDetailSnapshot — both halves of the
 // cache module must exist or the fetch's then-chain throws into 'unavailable'.
@@ -37,6 +38,10 @@ const cache = vi.hoisted(() => ({
 
 vi.mock('react-native', () => ({
   ActivityIndicator: 'ActivityIndicator',
+  Appearance: {
+    getColorScheme: () => appState.colorScheme,
+    addChangeListener: () => ({ remove: () => {} })
+  },
   AppState: {
     get currentState() {
       return appState.currentState
@@ -46,6 +51,7 @@ vi.mock('react-native', () => ({
       return { remove: appState.remove }
     }
   },
+  useColorScheme: () => appState.colorScheme,
   Pressable: 'Pressable',
   RefreshControl: (props: { refreshing: boolean; onRefresh: () => void }) =>
     createElement('RefreshControl', props),
@@ -70,6 +76,7 @@ describe('MobileStoryDetailScreen', () => {
 
   beforeEach(() => {
     appState.currentState = 'active'
+    appState.colorScheme = 'dark'
     cache.loadStoryDetailSnapshot.mockReset()
     cache.loadStoryDetailSnapshot.mockResolvedValue(null)
     cache.saveStoryDetailSnapshot.mockReset()
@@ -123,6 +130,25 @@ describe('MobileStoryDetailScreen', () => {
     const style = Array.isArray(text.props.style) ? text.props.style : [text.props.style]
     const colored = style.find((part) => part && typeof part === 'object' && 'color' in part)
     return (colored as { color?: string } | undefined)?.color
+  }
+
+  function textStyle(text: string): { color?: string } {
+    const node = renderer!.root.findAllByType('Text').find((node) => node.children.includes(text))
+    if (!node) {
+      throw new Error(`no Text rendering "${text}"`)
+    }
+    const style = Array.isArray(node.props.style) ? node.props.style : [node.props.style]
+    const colored = style.find((part) => part && typeof part === 'object' && 'color' in part)
+    return (colored ?? {}) as { color?: string }
+  }
+
+  function containerStyle(): { backgroundColor?: string } {
+    const style = renderer!.root.findAllByType('View')[0].props.style
+    const flat = Array.isArray(style) ? style : [style]
+    const filled = flat.find(
+      (part) => part && typeof part === 'object' && 'backgroundColor' in part
+    )
+    return (filled ?? {}) as { backgroundColor?: string }
   }
 
   function detailWith(
@@ -304,4 +330,21 @@ describe('MobileStoryDetailScreen', () => {
     expect(typeof refreshControl.onRefresh).toBe('function')
     expect(sendRequest).toHaveBeenCalledTimes(1)
   })
+
+  // The app reads no scheme API — graphite tokens are static (dark-only by
+  // design, app.json userInterfaceStyle: automatic). These pin that either OS
+  // scheme renders the same key elements with the same token colors.
+  it.each(['dark', 'light'] as const)(
+    'renders the detail with static dark tokens under the %s OS scheme',
+    async (scheme) => {
+      appState.colorScheme = scheme
+      await renderScreen(vi.fn().mockResolvedValue({ ok: true, result: storyDetailHappyPath }))
+      const rendered = texts()
+      expect(rendered).toContain(storyDetailHappyPath.story.title)
+      expect(textStyle(storyDetailHappyPath.story.title).color).toBe(colors.textPrimary)
+      expect(containerStyle().backgroundColor).toBe(colors.bgBase)
+      // Status chips keep their token colors under either scheme.
+      expect(chipColor('sf-chip:SF-1')).toBe(colors.statusGreen)
+    }
+  )
 })

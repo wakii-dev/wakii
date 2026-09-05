@@ -1,14 +1,21 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { colors, radii, spacing, typography } from '../theme/mobile-theme'
-import { STALE_STORY_BANNER_TEXT, STALE_STORY_REFRESH_ACTION } from './story-screen-copy'
+import { STALE_STORY_REFRESH_ACTION } from './story-screen-copy'
 
 // Shared warn banner for both story screens: the list's failed poll (stale flag,
-// T3) and the detail's story_not_found answer (T4). Cached content keeps
-// rendering underneath — the banner never replaces data. Existing tokens only.
-export function StoryStaleBanner({ onRefresh }: { onRefresh: () => void }) {
+// T3) and the detail's story_not_found answer (T4). The caller supplies the
+// message — a failed poll and a deleted story need different wording (T9 review).
+// Cached content keeps rendering underneath — the banner never replaces data.
+export function StoryStaleBanner({
+  message,
+  onRefresh
+}: {
+  message: string
+  onRefresh: () => void
+}) {
   return (
     <View style={styles.banner}>
-      <Text style={styles.message}>{STALE_STORY_BANNER_TEXT}</Text>
+      <Text style={styles.message}>{message}</Text>
       <Pressable
         testID="stale-banner-refresh"
         style={({ pressed }) => [styles.action, pressed && styles.actionPressed]}

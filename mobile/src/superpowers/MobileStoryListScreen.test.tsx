@@ -3,11 +3,13 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { RpcClient } from '../transport/rpc-client'
 import type { SuperpowersStoryListItem } from '../../../src/shared/superpowers/story-rpc-contract'
+import { colors } from '../theme/mobile-theme'
 import { MobileStoryListScreen } from './MobileStoryListScreen'
 import { storyRowKey } from './story-list-groups'
 import {
   PARSE_ERROR_ENTRY_LABEL,
   REFRESH_HINT,
+  STALE_LIST_BANNER_TEXT,
   STALE_STORY_BANNER_TEXT,
   STALE_STORY_REFRESH_ACTION,
   STORY_LIST_TITLE,
@@ -23,7 +25,8 @@ import {
 const appState = vi.hoisted(() => ({
   currentState: 'active',
   listener: null as ((state: string) => void) | null,
-  remove: vi.fn()
+  remove: vi.fn(),
+  colorScheme: 'dark' as string
 }))
 // The real fetch module write-throughs via saveStoryListSnapshot — both halves of
 // the cache module must exist or the fetch's then-chain throws into 'unavailable'.
@@ -34,6 +37,10 @@ const cache = vi.hoisted(() => ({
 
 vi.mock('react-native', () => ({
   ActivityIndicator: 'ActivityIndicator',
+  Appearance: {
+    getColorScheme: () => appState.colorScheme,
+    addChangeListener: () => ({ remove: () => {} })
+  },
   AppState: {
     get currentState() {
       return appState.currentState
@@ -43,6 +50,7 @@ vi.mock('react-native', () => ({
       return { remove: appState.remove }
     }
   },
+  useColorScheme: () => appState.colorScheme,
   Pressable: 'Pressable',
   RefreshControl: (props: { refreshing: boolean; onRefresh: () => void }) =>
     createElement('RefreshControl', props),
@@ -89,6 +97,7 @@ describe('MobileStoryListScreen', () => {
   let renderer: ReactTestRenderer | null = null
 
   beforeEach(() => {
+    appState.colorScheme = 'dark'
     cache.loadStoryListSnapshot.mockReset()
     cache.loadStoryListSnapshot.mockResolvedValue(null)
     cache.saveStoryListSnapshot.mockReset()
@@ -142,6 +151,25 @@ describe('MobileStoryListScreen', () => {
     onPress: () => void
   } {
     return renderer!.root.findByProps({ testID: `story-row:${storyRowKey(story)}` }).props
+  }
+
+  function textStyle(text: string): { color?: string } {
+    const node = renderer!.root.findAllByType('Text').find((node) => node.children.includes(text))
+    if (!node) {
+      throw new Error(`no Text rendering "${text}"`)
+    }
+    const style = Array.isArray(node.props.style) ? node.props.style : [node.props.style]
+    const colored = style.find((part) => part && typeof part === 'object' && 'color' in part)
+    return (colored ?? {}) as { color?: string }
+  }
+
+  function containerStyle(): { backgroundColor?: string } {
+    const style = renderer!.root.findAllByType('View')[0].props.style
+    const flat = Array.isArray(style) ? style : [style]
+    const filled = flat.find(
+      (part) => part && typeof part === 'object' && 'backgroundColor' in part
+    )
+    return (filled ?? {}) as { backgroundColor?: string }
   }
 
   it('renders one section per worktree with progress for healthy rows', async () => {
@@ -231,20 +259,22 @@ describe('MobileStoryListScreen', () => {
     expect(renderer!.root.findByType('RefreshControl').props.refreshing).toBe(false)
   })
 
-  it('shows the stale banner over the last good list when a poll fails', async () => {
+  it('shows the neutral stale banner over the last good list when a poll fails', async () => {
     const sendRequest = vi
       .fn()
       .mockResolvedValueOnce({ ok: true, result: storyListHappyPath })
       .mockResolvedValueOnce({ ok: false })
     await renderScreen(sendRequest)
-    expect(texts()).not.toContain(STALE_STORY_BANNER_TEXT)
+    expect(texts()).not.toContain(STALE_LIST_BANNER_TEXT)
 
     await act(async () => {
       renderer!.root.findByType('RefreshControl').props.onRefresh()
       await flushMicrotasks()
     })
     const rendered = texts()
-    expect(rendered).toContain(STALE_STORY_BANNER_TEXT)
+    expect(rendered).toContain(STALE_LIST_BANNER_TEXT)
+    // A failed poll is not a deleted story — the not-found wording never shows here.
+    expect(rendered).not.toContain(STALE_STORY_BANNER_TEXT)
     // Stale never hides the last good rows.
     expect(rendered).toContain(storyListHappyPath.stories[0].title)
     const action = renderer!.root.findByProps({ testID: 'stale-banner-refresh' })
@@ -262,14 +292,14 @@ describe('MobileStoryListScreen', () => {
       renderer!.root.findByType('RefreshControl').props.onRefresh()
       await flushMicrotasks()
     })
-    expect(texts()).toContain(STALE_STORY_BANNER_TEXT)
+    expect(texts()).toContain(STALE_LIST_BANNER_TEXT)
 
     await act(async () => {
       renderer!.root.findByProps({ testID: 'stale-banner-refresh' }).props.onPress()
       await flushMicrotasks()
     })
     expect(sendRequest).toHaveBeenCalledTimes(3)
-    expect(texts()).not.toContain(STALE_STORY_BANNER_TEXT)
+    expect(texts()).not.toContain(STALE_LIST_BANNER_TEXT)
   })
 
   it('drops an entry removed between polls and keeps the remaining rows', async () => {
@@ -288,4 +318,20 @@ describe('MobileStoryListScreen', () => {
     expect(() => rowPressable(storyListItemParseError)).toThrow()
     expect(() => rowPressable(storyListHappyPath.stories[0])).not.toThrow()
   })
+
+  // The app reads no scheme API — graphite tokens are static (dark-only by
+  // design, app.json userInterfaceStyle: automatic). These pin that either OS
+  // scheme renders the same key elements with the same token colors.
+  it.each(['dark', 'light'] as const)(
+    'renders the list with static dark tokens under the %s OS scheme',
+    async (scheme) => {
+      appState.colorScheme = scheme
+      await renderScreen(vi.fn().mockResolvedValue({ ok: true, result: storyListHappyPath }))
+      const rendered = texts()
+      expect(rendered).toContain(STORY_LIST_TITLE)
+      expect(rendered).toContain(storyListHappyPath.stories[0].title)
+      expect(textStyle(STORY_LIST_TITLE).color).toBe(colors.textPrimary)
+      expect(containerStyle().backgroundColor).toBe(colors.bgBase)
+    }
+  )
 })

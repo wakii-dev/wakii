@@ -9,6 +9,7 @@ import { colors, radii, spacing, typography } from '../theme/mobile-theme'
 import type { RpcClient } from '../transport/rpc-client'
 import {
   GATES_SECTION_TITLE,
+  STALE_STORY_BANNER_TEXT,
   UNTITLED_STORY_TITLE,
   gatePendingCountLabel,
   gateStatusLabel,
@@ -80,7 +81,9 @@ export function MobileStoryDetailScreen({ client, hostId, storyId, bottomInset =
           />
         }
       >
-        {notFound ? <StoryStaleBanner onRefresh={refresh} /> : null}
+        {notFound ? (
+          <StoryStaleBanner message={STALE_STORY_BANNER_TEXT} onRefresh={refresh} />
+        ) : null}
         <Text style={styles.title}>
           {detail.story.title.trim().length > 0 ? detail.story.title : UNTITLED_STORY_TITLE}
         </Text>
