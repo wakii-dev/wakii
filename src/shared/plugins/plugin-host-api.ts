@@ -52,6 +52,7 @@ const notificationsShowParams = z.object({
 })
 const notificationsShowResult = z.object({ delivered: z.boolean() })
 
+const RESERVED_STORAGE_KEYS = new Set(['__proto__', 'prototype', 'constructor'])
 const storageKeySchema = z
   .string()
   .min(1)
