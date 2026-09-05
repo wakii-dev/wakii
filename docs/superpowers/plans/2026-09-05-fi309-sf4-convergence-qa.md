@@ -123,7 +123,7 @@ trên state code cuối; T7 sau tests để docs mô tả hành vi đã verify).
 - Commit: `feat(FI-309): wire-compat-regression-unit-test`
 
 ### Task 5 — multi-root-multi-host-assertion
-- [ ] New test `gate-notification-multi-host.test.ts`: 3 assertion (D7) + story-linked blob của host A không route nhầm sang host B khi cả hai known
+- [x] New test `gate-notification-multi-host.test.ts`: 3 assertion (D7) + story-linked blob của host A không route nhầm sang host B khi cả hai known
 - Acceptance: tests xanh
 - Commit: `feat(FI-309): multi-root-multi-host-assertion`
 
