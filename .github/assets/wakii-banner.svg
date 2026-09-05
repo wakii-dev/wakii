@@ -1,0 +1,70 @@
+<svg width="1280" height="300" viewBox="0 0 1280 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Wakii — the agentic IDE with a built-in superpowers team">
+  <defs>
+    <linearGradient id="wbg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1020"/>
+      <stop offset="1" stop-color="#150b26"/>
+    </linearGradient>
+    <linearGradient id="wshine" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#a78bfa"/>
+      <stop offset="0.5" stop-color="#f0abfc"/>
+      <stop offset="1" stop-color="#67e8f9"/>
+      <animateTransform attributeName="gradientTransform" type="translate" from="-1 0" to="1 0" dur="3.4s" repeatCount="indefinite"/>
+    </linearGradient>
+    <linearGradient id="wline" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#6D28D9" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#f0abfc" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#67e8f9" stop-opacity="0"/>
+      <animateTransform attributeName="gradientTransform" type="translate" from="1 0" to="-1 0" dur="4.2s" repeatCount="indefinite"/>
+    </linearGradient>
+    <filter id="wglow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="7" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <pattern id="wgrid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#7c6cf01a" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <rect x="0" y="0" width="1280" height="300" fill="url(#wbg)"/>
+  <rect x="0" y="0" width="1280" height="300" fill="url(#wgrid)"/>
+
+  <!-- floating sparks -->
+  <circle cx="120" cy="70" r="5" fill="#f0abfc">
+    <animate attributeName="cy" values="70;52;70" dur="3.6s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.5;1;0.5" dur="3.6s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="236" cy="52" r="4" fill="#67e8f9">
+    <animate attributeName="cy" values="52;66;52" dur="4.4s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="1;0.4;1" dur="4.4s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="1052" cy="58" r="5" fill="#a78bfa">
+    <animate attributeName="cy" values="58;44;58" dur="3.9s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.6;1;0.6" dur="3.9s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="1164" cy="44" r="4" fill="#f0abfc">
+    <animate attributeName="cy" values="44;58;44" dur="4.8s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="1;0.5;1" dur="4.8s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="640" cy="34" r="3.5" fill="#67e8f9">
+    <animate attributeName="opacity" values="0.4;1;0.4" dur="2.9s" repeatCount="indefinite"/>
+  </circle>
+
+  <text x="640" y="128" text-anchor="middle" font-family="Ubuntu, Helvetica, Arial, sans-serif" font-size="88" font-weight="700" letter-spacing="22" fill="url(#wshine)" filter="url(#wglow)">WAKII</text>
+
+  <rect x="340" y="158" width="600" height="2.5" fill="url(#wline)"/>
+
+  <text x="640" y="196" text-anchor="middle" font-family="Ubuntu, Helvetica, Arial, sans-serif" font-size="21" fill="#c4b5fd">the agentic IDE with a built-in superpowers team</text>
+
+  <!-- nine agent dots -->
+  <g>
+    <circle cx="551" cy="232" r="5" fill="#f0abfc"><animate attributeName="opacity" values="0.25;1;0.25" dur="2.4s" begin="0s" repeatCount="indefinite"/></circle>
+    <circle cx="584" cy="232" r="5" fill="#a78bfa"><animate attributeName="opacity" values="0.25;1;0.25" dur="2.4s" begin="0.26s" repeatCount="indefinite"/></circle>
+    <circle cx="617" cy="232" r="5" fill="#67e8f9"><animate attributeName="opacity" values="0.25;1;0.25" dur="2.4s" begin="0.52s" repeatCount="indefinite"/></circle>
+    <circle cx="650" cy="232" r="5" fill="#f0abfc"><animate attributeName="opacity" values="0.25;1;0.25" dur="2.4s" begin="0.78s" repeatCount="indefinite"/></circle>
+    <circle cx="683" cy="232" r="5" fill="#a78bfa"><animate attributeName="opacity" values="0.25;1;0.25" dur="2.4s" begin="1.04s" repeatCount="indefinite"/></circle>
+    <circle cx="716" cy="232" r="5" fill="#67e8f9"><animate attributeName="opacity" values="0.25;1;0.25" dur="2.4s" begin="1.3s" repeatCount="indefinite"/></circle>
+    <circle cx="567" cy="252" r="5" fill="#67e8f9"><animate attributeName="opacity" values="0.25;1;0.25" dur="2.4s" begin="1.56s" repeatCount="indefinite"/></circle>
+    <circle cx="600" cy="252" r="5" fill="#f0abfc"><animate attributeName="opacity" values="0.25;1;0.25" dur="2.4s" begin="1.82s" repeatCount="indefinite"/></circle>
+    <circle cx="633" cy="252" r="5" fill="#a78bfa"><animate attributeName="opacity" values="0.25;1;0.25" dur="2.4s" begin="2.08s" repeatCount="indefinite"/></circle>
+  </g>
+</svg>
