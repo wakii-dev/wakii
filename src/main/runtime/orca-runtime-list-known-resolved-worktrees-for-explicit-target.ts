@@ -73,6 +73,11 @@ export class OrcaRuntimeWithListKnownResolvedWorktreesForExplicitTarget extends 
     return (await this.listResolvedWorktreeSnapshot()).worktrees
   }
 
+  /** Public 1:1 passthrough for consumers outside the mixin chain (superpowers RPC + gate notification routing); see gate-worktree-derivation.ts header. */
+  async listWorktreeCatalog(): Promise<ResolvedWorktree[]> {
+    return this.listResolvedWorktrees()
+  }
+
   protected async listResolvedWorktreeSnapshot(): Promise<ResolvedWorktreeSnapshot> {
     if (!this.store) {
       return { worktrees: [], platformByRepoId: new Map() }

@@ -22,6 +22,7 @@ import type { LegacyWorkerTerminalRecoveryPlan } from './orchestration/orchestra
 import type { LegacyWorkerTerminalRecoveryResult } from './runtime-legacy-worker-terminal-recovery-types'
 import { makePaneKey } from '../../shared/stable-pane-id'
 import { runtimeWorktreeIdsEqual } from './runtime-worktree-path-identity'
+import { wireGateTransitionNotifications } from './runtime-gate-transition-notifications'
 
 export class OrcaRuntimeWithFenceAutomationOwner extends OrcaRuntimeWithPtyForegroundProcessReads {
   protected fenceAutomationOwner(
@@ -155,6 +156,7 @@ export class OrcaRuntimeWithFenceAutomationOwner extends OrcaRuntimeWithPtyForeg
       this._orchestrationDb = new OrchestrationDb(dbPath)
       this.ensureOrchestrationFederationRelay()
       this.scheduleRestoredMessageRepoints()
+      this.wireGateTransitionNotificationsForDb(this._orchestrationDb)
     }
     return this._orchestrationDb
   }
@@ -165,6 +167,16 @@ export class OrcaRuntimeWithFenceAutomationOwner extends OrcaRuntimeWithPtyForeg
     this._orchestrationDb = db
     this.ensureOrchestrationFederationRelay()
     this.scheduleRestoredMessageRepoints()
+    this.wireGateTransitionNotificationsForDb(db)
+  }
+
+  // Both db attach points wire gate transitions; wiring is idempotent per db instance.
+  protected wireGateTransitionNotificationsForDb(db: OrchestrationDb): void {
+    wireGateTransitionNotifications({
+      db,
+      listCatalog: () => this.listResolvedWorktrees(),
+      dispatch: (event) => this.mobileNotifications.dispatch(event)
+    })
   }
 
   prepareLegacyWorkerTerminalRecovery(): LegacyWorkerTerminalRecoveryPlan {

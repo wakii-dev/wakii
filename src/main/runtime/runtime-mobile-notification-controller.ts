@@ -4,10 +4,13 @@ import { getRuntimeDesktopSurface } from './runtime-desktop-surface'
 
 export type MobileNotificationDispatchEvent = {
   type: 'notification'
-  source: 'agent-task-complete' | 'terminal-bell' | 'test' | 'plugin'
+  source: 'agent-task-complete' | 'terminal-bell' | 'test' | 'plugin' | 'gate-open' | 'gate-closed'
   title: string
   body: string
   worktreeId?: string
+  // Gate routing fields (gate-open/gate-closed); optional so old clients ignore them.
+  gateId?: string
+  storyId?: string
   notificationId?: string
   notificationSeq?: number
   notificationEpoch?: string
