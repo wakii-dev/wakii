@@ -1454,11 +1454,31 @@ Tech blog: markdown posts, post list, single-post view, tag filter, dark/light t
         }
         var pick = document.getElementById('story-pick')
         var name = (pick && pick.dataset && pick.dataset.file) || 'bracket'
+        var sentAt = Date.now()
         call('storage.set', {
           key: 'story.ops.request',
-          value: { action: 'share-artifact', name: name, html: buildBracketHtml(), at: Date.now() }
+          value: { action: 'share-artifact', name: name, html: buildBracketHtml(), at: sentAt }
         })
-        if (st) st.textContent = 'đang publish artifact… (URL sẽ hiện ở Story Ops)'
+        if (st) st.textContent = 'đang publish artifact…'
+        // Chờ worker publish xong rồi hiện URL ngay tại status + tự copy
+        var sentIso = new Date(sentAt).toISOString()
+        var poll = function () {
+          call('storage.get', { key: 'story.ops.result' }).then(function (r) {
+            var v = r && r.ok && r.value
+            var res = v && v.value !== undefined ? v.value : v
+            if (res && res.action === 'share-artifact' && res.at >= sentIso) {
+              if (res.ok) {
+                var url = (res.output || '').replace(/^artifact:\s*/, '').trim()
+                if (st) st.textContent = 'Đã share: ' + url
+                call('clipboard.write', { text: url }).then(function () {}, function () {})
+              } else if (st) st.textContent = 'share failed: ' + (res.output || res.error || '')
+              return
+            }
+            if (Date.now() - sentAt < 30000) setTimeout(poll, 1500)
+            else if (st) st.textContent = 'share chưa xong — xem kết quả ở Story Ops'
+          })
+        }
+        setTimeout(poll, 2500)
       }
 
       // ---- Story picker: custom dropdown từ worker data (storage story.list)

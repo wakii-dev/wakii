@@ -116,7 +116,10 @@ export function LinearAgentSkillSetupPrompt({
     setPreviousDismissStorageKey(localDismissStorageKey)
     setLocalDismissed(readLocalDismissed(localDismissStorageKey))
   }
-  const skill = useInstalledAgentSkillNames(LINEAR_AGENT_SKILL_NAMES, {
+  // FORK-LOCAL (Wakii): writing-plans-linear (kit skill) cũng bao phủ workflow
+  // Linear ticket — có nó là đủ, không hiện setup prompt nữa.
+  const watchedSkillNames: readonly string[] = [...LINEAR_AGENT_SKILL_NAMES, 'writing-plans-linear']
+  const skill = useInstalledAgentSkillNames(watchedSkillNames, {
     enabled: linked,
     discoveryTarget: skillDiscoveryTarget,
     sourceKinds: GLOBAL_AGENT_SKILL_SOURCE_KINDS
