@@ -33,15 +33,39 @@ import {
 const CUTOVER_RETRY_LIMIT = 2
 
 const STORY_LIST_KIND = 'superpowers.storyList'
-// Per-story kind: single-flight coalesces by kind and a trailing follow-up's params
-// win — one shared kind for different storyIds could hand a caller another story's
-// detail when two sweeps interleave.
-const storyDetailKind = (storyId: string): string => `superpowers.storyDetail:${storyId}`
+// Plain wire method: the desktop dispatcher is exact-match, so the story id must ride in
+// params — a colon-suffixed method 404s (method_not_found) on every real desktop.
+const STORY_DETAIL_METHOD = 'superpowers.storyDetail'
+
+// Per-story in-flight coalescing (storyDetail only — request-single-flight's coalescing
+// key doubles as its wire method, which is exactly what broke here). Keyed host+story so
+// concurrent sweeps for the same story share one wire request; different stories/hosts
+// never share results.
+const storyDetailInFlight = new Map<string, Promise<RpcResponse>>()
+
+function sendStoryDetail(deps: PendingGatesSweepDeps, storyId: string): Promise<RpcResponse> {
+  const key = `${deps.hostId}\u0000${storyId}`
+  const inFlight = storyDetailInFlight.get(key)
+  if (inFlight) {
+    return inFlight
+  }
+  const request = (
+    deps.send
+      ? deps.send(deps.client, deps.hostId, STORY_DETAIL_METHOD, { storyId })
+      : deps.client.sendRequest(STORY_DETAIL_METHOD, { storyId })
+  ).finally(() => {
+    if (storyDetailInFlight.get(key) === request) {
+      storyDetailInFlight.delete(key)
+    }
+  })
+  storyDetailInFlight.set(key, request)
+  return request
+}
 
 export type PendingGatesSweepSender = (
   client: RpcClient,
   hostId: string,
-  requestKind: string,
+  method: string,
   params?: unknown
 ) => Promise<RpcResponse>
 
@@ -102,9 +126,7 @@ export async function runPendingGatesSweep(deps: PendingGatesSweepDeps): Promise
   for (const story of targets) {
     let detailResponse: RpcResponse
     try {
-      detailResponse = await attemptWithCutoverRetry(() =>
-        send(deps.client, deps.hostId, storyDetailKind(story.storyId), { storyId: story.storyId })
-      )
+      detailResponse = await attemptWithCutoverRetry(() => sendStoryDetail(deps, story.storyId))
     } catch {
       markPendingGatesUnavailable(deps.hostId, true)
       return

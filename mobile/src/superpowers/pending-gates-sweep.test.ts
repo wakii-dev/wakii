@@ -300,4 +300,104 @@ describe('runPendingGatesSweep', () => {
         expect(getPendingGatesSnapshot('host-a').storyTitles.has('brackets/fi999.md')).toBe(false)
       })
   })
+
+  // Regression (device T3b): the sweep used to send its single-flight coalescing key
+  // 'superpowers.storyDetail:<storyId>' AS the wire method — the desktop dispatcher is
+  // exact-match, so every gates sweep 404'd and the list never rendered. These tests
+  // mock client.sendRequest itself (not the injected sender) to pin the wire contract.
+  describe('storyDetail wire contract', () => {
+    const makeClient = (script: (method: string) => Promise<RpcResponse>) => {
+      const sendRequest = vi.fn((method: string) => script(method))
+      return { client: { sendRequest } as unknown as RpcClient, sendRequest }
+    }
+
+    it('sends the plain wire method with {storyId} params (suffixed method 404s on real desktops)', async () => {
+      const { client, sendRequest } = makeClient((method) => {
+        if (method === 'superpowers.storyList') {
+          return Promise.resolve(STORY_LIST_OK)
+        }
+        if (method === 'superpowers.storyDetail') {
+          return Promise.resolve(STORY_DETAIL_OK)
+        }
+        return Promise.resolve(METHOD_NOT_FOUND)
+      })
+
+      await runPendingGatesSweep({ client, hostId: 'host-wire' })
+
+      expect(sendRequest).toHaveBeenCalledWith('superpowers.storyDetail', {
+        storyId: storyListItemNormal.storyId
+      })
+      expect(
+        sendRequest.mock.calls.filter(([method]) => method === 'superpowers.storyDetail')
+      ).toHaveLength(1)
+      // The old bug's signature: the unknown suffixed method drew method_not_found, which
+      // marked the host unavailable and blocked the gates list entirely.
+      expect(getPendingGatesSnapshot('host-wire').unavailable).toBe(false)
+    })
+
+    it('coalesces two concurrent sweeps for the same story into ONE storyDetail send', async () => {
+      let detailSends = 0
+      let resolveDetail!: (response: RpcResponse) => void
+      const detailPromise = new Promise<RpcResponse>((resolve) => {
+        resolveDetail = resolve
+      })
+      const { client } = makeClient((method) => {
+        if (method === 'superpowers.storyList') {
+          return Promise.resolve(STORY_LIST_OK)
+        }
+        detailSends += 1
+        return detailPromise
+      })
+
+      const first = runPendingGatesSweep({ client, hostId: 'host-dedupe' })
+      const second = runPendingGatesSweep({ client, hostId: 'host-dedupe' })
+      // Flush microtasks so both sweeps pass the list and reach the in-flight detail.
+      await new Promise<void>((resolve) => setTimeout(resolve, 0))
+
+      expect(detailSends).toBe(1)
+      resolveDetail(STORY_DETAIL_OK)
+      await Promise.all([first, second])
+      expect(getPendingGatesSnapshot('host-dedupe').unavailable).toBe(false)
+    })
+
+    it('never shares results across stories: concurrent sweeps for different stories send twice', async () => {
+      const storyA = { ...storyListItemNormal, storyId: 'brackets/ca.md', title: 'CA' }
+      const storyB = { ...storyListItemNormal, storyId: 'brackets/cb.md', title: 'CB' }
+      const detailFor = (storyId: string, gateId: string): RpcResponse => ({
+        id: 'd',
+        ok: true,
+        result: {
+          ...storyDetailResultNormal,
+          story: { ...storyDetailResultNormal.story, storyId },
+          gates: [{ ...storyDetailResultNormal.gates[0], gateId, title: gateId }]
+        },
+        _meta: { runtimeId: 'runtime-1' }
+      })
+      const hostA = makeClient((method) =>
+        method === 'superpowers.storyList'
+          ? Promise.resolve({ ...STORY_LIST_OK, result: { stories: [storyA] } })
+          : Promise.resolve(detailFor(storyA.storyId, 'gate-of-ca'))
+      )
+      const hostB = makeClient((method) =>
+        method === 'superpowers.storyList'
+          ? Promise.resolve({ ...STORY_LIST_OK, result: { stories: [storyB] } })
+          : Promise.resolve(detailFor(storyB.storyId, 'gate-of-cb'))
+      )
+
+      await Promise.all([
+        runPendingGatesSweep({ client: hostA.client, hostId: 'host-ca' }),
+        runPendingGatesSweep({ client: hostB.client, hostId: 'host-cb' })
+      ])
+
+      expect(
+        hostA.sendRequest.mock.calls.filter(([method]) => method === 'superpowers.storyDetail')
+      ).toHaveLength(1)
+      expect(
+        hostB.sendRequest.mock.calls.filter(([method]) => method === 'superpowers.storyDetail')
+      ).toHaveLength(1)
+      // Each host reconciled its OWN story's gate — no cross-story/cross-host transfer.
+      expect(gateIds('host-ca')).toEqual(['gate-of-ca'])
+      expect(gateIds('host-cb')).toEqual(['gate-of-cb'])
+    })
+  })
 })
