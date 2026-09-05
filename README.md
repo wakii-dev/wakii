@@ -154,7 +154,6 @@ MIT — same as upstream Orca. The bundled story-team kit originates from
 
 ## 👥 Contributors
 
-- **HoiVu** — author / product owner
-- **Claude** (Anthropic) — AI coding agent
-- **Kiro** (AWS) — AI coding agent
-- Upstream: [stablyai/orca](https://github.com/stablyai/orca/graphs/contributors) contributors
+<div align="center">
+  <img src=".github/assets/contributors.svg" width="100%" alt="Contributors: HoiVu — author; Claude (Anthropic) — AI coding agent; Kiro (AWS) — AI coding agent; stablyai/orca — upstream" />
+</div>
