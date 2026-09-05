@@ -40,6 +40,8 @@ jobs:
 
       # Full chain — INCLUDING build:computer-macos (needs Swift 6 tools = Xcode 16)
       - name: Build native helpers + app
+        env:
+          EP_PUBLISH: never # workflow uploads the DMG to the release itself
         run: |
           pnpm run build:desktop
           pnpm run build:computer-macos
