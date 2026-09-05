@@ -63,6 +63,15 @@ For the Android emulator, use `ws://10.0.2.2:6768`. For a physical phone, use th
 
 If the phone has a stale host entry, remove it from the app and pair again.
 
+## Stories, Gates, And Gate Notifications
+
+Hosts running superpowers stories surface them on mobile:
+
+- **Stories** button in the host screen header (next to **Gates**, in both toolbar variants; disabled while the host is disconnected) opens the story list for that host — stories grouped by worktree, each row showing epic, progress (`2/5 SF done`), and a pending-gate badge.
+- Tapping a story opens the detail screen: progress bar, SFs grouped by tier with per-SF status chips, and the story's decision gates.
+- **Gates** lists the host's pending decision gates grouped by story; gates with no linked story sit under `Khác`. Story-linked rows link to the story detail. Resolving happens in a bottom sheet — option buttons (or free text when the gate's options are unknown) with a confirm dialog before anything is sent. If the gate was already handled elsewhere, the phone shows an informational message; the desktop's pending guard makes a stale resolve a safe no-op.
+- Gate notifications deep-link: a `gate-open`/`gate-closed` notification carrying a story id opens that story's detail screen on tap; without a story id it falls back to the worktree session, or the host screen when no worktree is known. Routing lives in `src/notifications/notification-routing.ts`, pinned by the `src/notifications/gate-notification-*.test.ts` suites.
+
 ## Development Paths
 
 ### Android Phone
@@ -207,9 +216,12 @@ mobile/
 ├── app/                   # Expo Router screens (file-based routing)
 │   ├── _layout.tsx        # Root layout with navigation stack
 │   ├── index.tsx          # Home screen — paired hosts list
-│   └── pair-scan.tsx      # QR code scanning screen
+│   ├── pair-scan.tsx      # QR code scanning screen
+│   └── h/[hostId]/        # Host screens: story list/detail + gates
 ├── src/
 │   ├── terminal/          # Terminal WebView and xterm bridge
+│   ├── superpowers/       # Story list/detail + gate screens and state
+│   ├── notifications/     # Notification routing and deep-link targets
 │   └── transport/         # WebSocket RPC client
 ├── scripts/
 │   ├── test-subscribe.ts  # Desktop streaming repro without a phone
