@@ -44,13 +44,13 @@ gộp theo đợt, ví dụ sau T8: `docs(FI-307): plan tick T1,T7,T8`).
   `satisfies` shared contract types — deep-relative import
   `../../../src/shared/superpowers/story-rpc-contract`), `mobile/src/superpowers/story-rpc-conformance.test.ts`.
 - **Steps:**
-  - [ ] Fixtures: storyList happy path (≥2 workspace, 1 worktree 2 entry cùng group),
+  - [x] Fixtures: storyList happy path (≥2 workspace, 1 worktree 2 entry cùng group),
         entry parseError (`sfTotal: 0, parseError: true`), storyDetail (sfs nhiều tier
         + dependsOn + linear, gates pending/resolved/timeout + storyLinked
         true/false), error `{ error: 'story_not_found' }`
-  - [ ] Conformance test: mọi fixture parse/validate được, field-for-field khớp
+  - [x] Conformance test: mọi fixture parse/validate được, field-for-field khớp
         contract type (compile-time `satisfies` + runtime assertions)
-  - [ ] Export fixtures để T3/T4 test tái dùng
+  - [x] Export fixtures để T3/T4 test tái dùng
 - **Acceptance:** `cd mobile && pnpm test src/superpowers/story-rpc-conformance.test.ts`
   pass; `cd mobile && pnpm typecheck` pass.
 
