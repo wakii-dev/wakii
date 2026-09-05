@@ -27,31 +27,30 @@ agent** side-by-side, each in its own isolated git worktree.
 On top of that base, Wakii ships a complete **agentic workflow kit** that
 installs itself on first run — no setup, enabled by default.
 
-## 🤖 How the agents work
+## 🖼️ The product
 
-Wakii turns a one-line feature idea into merged, verified code through a
-**seven-stage pipeline**. Each stage is owned by a specialist agent, and the
-checks between stages are adversarial — a different agent attacks the work
-than the one who produced it.
+<table>
+<tr>
+<td width="50%"><img src=".github/assets/hero.png" alt="Wakii landing page" width="100%" /><p align="center"><sub><b>Landing</b> — wakii.dev</sub></p></td>
+<td width="50%"><img src=".github/assets/skills.png" alt="Wakii skills catalog" width="100%" /><p align="center"><sub><b>Skills catalog</b> — cell by cell</sub></p></td>
+</tr>
+</table>
 
-```
-idea → impact → plan → epic + SF bracket → parallel SFs → gates → 1 PR per story
-```
+## ⚙️ How the crew ships
 
-| # | Stage | Agent on duty | What happens |
-| - | ----- | ------------- | ------------ |
-| 1 | **Impact analysis** | `phase0-impact-analyst` | Before any code exists, it maps the blast radius: which files are touched, second-order effects across dimensions, and the realistic alternatives — so you approve a direction, not a guess. |
-| 2 | **Spec review** | `spec-critic` | Attacks the spec like an adversary: ambiguity, missing edge cases, unverifiable criteria. A spec survives only when the critic runs out of objections. |
-| 3 | **Plan + bracket** | `plan-critic` | Breaks the plan into bite-sized tasks (file, code, how to test — written for an engineer with zero context) and reviews the dependency graph between them. Large features become an **epic with sub-features** drawn as a live bracket canvas. |
-| 4 | **Parallel execution** | `task-executor` | Independent sub-features run **in parallel**, each in its own isolated worktree and branch. The executor implements tasks and commits atomically. |
-| 5 | **Code review** | `code-reviewer` | Reviews every diff for bugs, security issues and scope creep — P0 findings block the merge. |
-| 6 | **Verification** | `verifier` | Independent pass/fail on the finished work — **self-reports don't count**. Verdicts: `COMPLETE` · `READY-TO-DONE` · `INCOMPLETE` · `VIOLATION` · `NOT-LAUNCHED`. |
-| 7 | **One PR per story** | — | When every sub-feature's gates pass and the story verifies `COMPLETE`, everything collapses into a single clean PR. |
+<div align="center">
+  <img src=".github/assets/pipeline.svg" width="100%" alt="idea → impact → plan → bracket → parallel SFs → gates → PR" />
+</div>
 
-### 🚦 The gates (B0–B5)
+**One specialist per stage — and the checker is never the builder.** The
+impact-analyst maps the blast radius before code exists; the spec-critic and
+plan-critic attack the spec and the task DAG; task-executors implement
+independent sub-features in parallel worktrees; the code-reviewer and
+verifier hold the gates (self-reports don't count); the watchdog auto-resumes
+anything that stalls.
 
-Every sub-feature must clear all six gates — the checks are adversarial by
-design:
+<details>
+<summary><b>The gates (B0–B5) &amp; verdicts</b></summary>
 
 | Gate | Checks |
 | ---- | ------ |
@@ -62,25 +61,25 @@ design:
 | **B4** | Branch merged to the story branch |
 | **B5** | Linear issue set to Done |
 
-### 🐕 The watchdog
+Verifier verdicts: `COMPLETE` · `READY-TO-DONE` · `INCOMPLETE` ·
+`VIOLATION` · `NOT-LAUNCHED`.
 
-Stories stall — an agent hits a dead end, a review loops, a merge conflicts.
-The **watchdog** detects stalled sub-features and auto-resumes them from the
-last good state, so a long story never needs a babysitter.
+</details>
 
 ## 🧠 How skills work
 
-Skills are **packaged instruction sets** the agents load on demand —
-progressive disclosure instead of a bloated system prompt:
+Skills are **packaged instruction sets** loaded on demand — progressive
+disclosure instead of a bloated system prompt: name and one-line description
+stay cheap in context; the **full instructions load only when your task
+matches**. Skills compose — the story workflow is itself built from the
+planning and review skills below.
 
-1. Every skill is a `SKILL.md` file with frontmatter — its **name** and
-   **one-line description** are always visible to the agent (cheap).
-2. When the current task matches a description, the agent pulls the skill's
-   **full instructions into context** and follows them (accurate).
-3. Skills compose: the story workflow is itself built from the planning and
-   review skills below.
+<div align="center">
+  <img src=".github/assets/skills-chips.svg" width="100%" alt="13 public skills — /command chips by category" />
+</div>
 
-### The catalog — 13 public skills
+<details>
+<summary><b>Full catalog — command, what it does, how it works</b></summary>
 
 **Workflow — the idea-to-PR spine**
 
@@ -110,7 +109,21 @@ progressive disclosure instead of a bloated system prompt:
 | `/graph-engineering` | Knowledge graphs + agent orchestration, taught with examples | Ontology design, entity extraction, GraphRAG, parallel fan-out, verifier separation, the stop rule |
 | `/prompt-master` | One production-ready prompt for the tool you name | Extracts real intent, identifies the target tool, outputs a single optimized prompt with zero wasted tokens |
 
+</details>
+
+## ⚡ What the kit adds on top of Orca
+
+| ✨ | Highlight |
+| -- | --------- |
+| 🤖 | **9-agent story team** — adversarial specialists with checks-and-balances; self-approval never counts as a gate |
+| 🧠 | **20 bundled skills** — planning, review, design pipelines, machine-control platform skills |
+| 🛠️ | **24 `story-*` CLIs** — gate checks, stall watchdog, preflight, story tests |
+| 🎨 | **HoiVu branding** — rebranded UI, fork-local full plugin access |
+
 ## 🔀 Inherited from Orca (kept intact)
+
+<details>
+<summary><b>Feature wall</b></summary>
 
 - **Parallel worktrees** — fan one prompt across agents, merge the winner
 - **Terminal splits** — every agent gets a real terminal
@@ -118,7 +131,10 @@ progressive disclosure instead of a bloated system prompt:
 - **SSH worktrees · design mode · AI-diff annotation · drag-files-to-agents**
 - **Mobile companion** — steer agents from your phone
 
-Full feature wall: [upstream README](https://github.com/stablyai/orca#features).
+Full wall with screenshots:
+[upstream README](https://github.com/stablyai/orca#features).
+
+</details>
 
 ## 🌿 Branches
 
@@ -126,15 +142,6 @@ Full feature wall: [upstream README](https://github.com/stablyai/orca#features).
 | ----------- | ----------------------------------------------------------------------- |
 | `wakii-dev` | **default — Wakii development happens here**                            |
 | `main`      | mirrors `stablyai/orca` main, auto-synced daily by GitHub Action        |
-
-## 🖼️ The product
-
-<table>
-<tr>
-<td width="50%"><img src=".github/assets/hero.png" alt="Wakii landing page" width="100%" /><p align="center"><sub><b>Landing</b> — wakii.dev</sub></p></td>
-<td width="50%"><img src=".github/assets/skills.png" alt="Wakii skills catalog" width="100%" /><p align="center"><sub><b>Skills catalog</b> — cell by cell</sub></p></td>
-</tr>
-</table>
 
 ## 🚀 Developing
 
