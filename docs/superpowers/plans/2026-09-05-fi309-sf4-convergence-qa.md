@@ -211,3 +211,7 @@ trên state code cuối; T7 sau tests để docs mô tả hành vi đã verify).
 3. Comment merge hash lên FI-309
 4. Verifier đối chiếu ACCEPTANCE từng dòng (bảng trên) — mỗi dòng có evidence hoặc `BLOCKED-on-user-re-pair`
 5. Có task BLOCKED-on-re-pair → KHÔNG set Done; escalate epic comment cho watchdog. Không blocked → Done
+
+### Task 12 — home-stories-card (owner request 2026-09-06: Stories dưới Tasks) — DONE
+- MobileHomeStoriesCard (mirror Tasks card, BookOpen) dưới Tasks card trong footer; enabled theo primaryHost connected; tap → /h/<hostId>/stories; test mới
+- Commit: `634a6485f4` — review pending
