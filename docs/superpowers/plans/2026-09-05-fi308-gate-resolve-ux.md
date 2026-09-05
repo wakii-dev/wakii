@@ -221,18 +221,18 @@ Plan file tick `- [x]` sau mỗi task (checkbox CHỈ cho task steps).
   verify stash-repro) + `pnpm typecheck` + `oxlint` file touched. Test file ≤800 dòng
   mỗi file (ratchet) — tách file colocated thay vì kéo dài.
 - Exit: full mobile suite + typecheck + lint sạch; ACCEPTANCE matrix dưới điền xong evidence.
-- [ ] T7 done
+- [x] T7 done
 
-## 4. ACCEPTANCE → evidence mapping (verifier Phase 5 điền cột evidence)
+## 4. ACCEPTANCE → evidence mapping (cột evidence điền bởi T7 sweep `6f284656`+T7 commit; verifier Phase 5 đối chiếu)
 
 | # | ACCEPTANCE line (context pack) | Verified bằng |
 |---|-------------------------------|---------------|
-| A1 | Phone thấy đúng mọi pending gate trên host, đúng nhóm (story vs "khác") | T2 store tests (dedup, zero-stories edge) + device png list 2 nhóm (producer: T3b session) |
-| A2 | Resolve gate có options → bấm option + confirm → gate resolved, agent desktop nhận biết | Device png flow (mock server); server-side guard đã test SF-1 (`decision-gate-store.test.ts`); terminal evidence: mock server log resolve — (real-desktop e2e là SF-4) |
-| A3 | Resolve gate đã resolved/timeout → thông báo sạch + refresh, KHÔNG overwrite; gate-closed gỡ khỏi list | T4 tests (`gate_not_pending`, timeout); T5 remove test |
-| A4 | Mất mạng giữa confirm/response → UI không kẹt spinner; reconnect state đúng; re-tap an toàn (2 song song → 1 land) | T4 reject test + parallel test; T6 reconnect sweep test; device check T6 |
-| A5 | Free-text resolve với gate không options | Device png T3 (gate 'khác') + unit test |
-| A6 | Unit tests resolve flow + event handling chống fixture payloads | T1 fixtures + T7 sweep run pass |
+| A1 | Phone thấy đúng mọi pending gate trên host, đúng nhóm (story vs "khác") | Unit: `pending-gates-sweep.test.ts` 'details every story with pendingGates>0 and dedups the khác gate repeated in each detail' + 'two hosts swept with different data never cross-contaminate' (7cc67022/f2eeb5e2); `MobilePendingGatesScreen.test.tsx` 'renders the story group and the fixed Khác group with gate rows'. Device: `r56-01-list.png` (story 'FI-308 gate resolve UX' + 'Khác', 2 pending, không banner — session T5+T6, HEAD 6f284656) và `r2-01-list.png` (T3b run2, e7641b01) |
+| A2 | Resolve gate có options → bấm option + confirm → gate resolved, agent desktop nhận biết | Device: device-t3b-run2.md bước 4b — `r2-02-sheet-options.png` → `r2-03-confirm.png` → `r2-04-after-resolve.png`; mock log `mock-server-2.log` L42 `superpowers.gateResolve (rpc-18)`. Unit: `use-mobile-gate-resolve.test.tsx` 'submits via plain sendRequest and removes a resolved gate from the store'; `gate-resolve-request.test.ts` 'sends the pinned method with gateId/resolution params and a 15s timeout'. Server-side guard: SF-1 `decision-gate-store.test.ts` (real-desktop e2e = SF-4, Rule 0) |
+| A3 | Resolve gate đã resolved/timeout → thông báo sạch + refresh, KHÔNG overwrite; gate-closed gỡ khỏi list | Unit: `use-mobile-gate-resolve.test.tsx` 'removes the gate on gate_not_pending — benign race, raw outcome still returned' + 'keeps the gate on invalid_resolution and unknown taxonomy codes' (e2ffc722); `gate-resolve-errors.test.ts` per-code mapping; `gate-transition-events.test.ts` 'gate-closed removes the gate regardless of who resolved it' (1a70e50a); `pending-gates-reconnect-catchup.test.tsx` 'removes a gate resolved while offline (positive evidence) and adds one created offline' (6f284656). Device: `r56-02-gate-closed-removed.png` (push gate-closed live → row biến mất, không sweep) |
+| A4 | Mất mạng giữa confirm/response → UI không kẹt spinner; reconnect state đúng; re-tap an toàn (2 song song → 1 land) | Unit: `use-mobile-gate-resolve.test.tsx` 'A4: two parallel resolves race a server guard — exactly one lands, the loser gets gate_not_pending' + 'transport reject clears the in-flight guard with no auto-retry; a re-tap sends a fresh request' (e2ffc722); `pending-gates-reconnect-catchup.test.tsx` 'a reconnect storm (rapid connect/disconnect/connect) coalesces to exactly one sweep' + 'a resolve request rejected mid-disconnect stays stale until the reconnect sweep lands' (6f284656). Device: device-t56.md bước 5+6 (airplane-mode + mock restart) — `r56-05-reconnect-reconciled.png`, đúng 1 sweep reconcile, không pull-to-refresh tay |
+| A5 | Free-text resolve với gate không options | Device: device-t3b-run2.md bước 4c — `r2-05-sheet-freetext.png` → `r2-05b-freetext-typed.png` → `r2-05c-freetext-confirm.png` → `r2-06-after-resolve-2.png`; mock log L46 `superpowers.gateResolve (rpc-22)`. Unit: `MobileGateResolveSheet.test.tsx` 'renders a multiline TextInput without buttons when options are unknown' + 'keeps submit disabled while the free text is empty or whitespace only' + 'confirm send fires onResolve with the typed resolution and closes on success' (560050d0) |
+| A6 | Unit tests resolve flow + event handling chống fixture payloads | T1 fixtures `gate-conformance-fixtures.ts` + `gate-conformance-smoke.test.ts` (7cc67022); T7 sweep (commit này): FULL mobile vitest — 512 files, 511 pass, 4180 tests pass / 3 skipped / 1 fail = `src/mock-server-key-pair.test.ts` (pre-existing, unrelated, không thuộc SF-3); src/superpowers: 12 files / 120 tests pass; `pnpm typecheck` exit 0; `oxlint src/superpowers/` exit 0 |
 
 ## 5. Infra facts / gotchas (đã verify)
 

@@ -38,7 +38,7 @@ export function MobilePendingGatesScreen({ hostId, onGatePress }: MobilePendingG
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const { client, state: connState } = useHostClient(hostId)
-  const { sections, unavailable, refreshing, refresh } = useMobilePendingGates({
+  const { sections, unavailable, lastSweepAt, refreshing, refresh } = useMobilePendingGates({
     hostId,
     client,
     connected: connState === 'connected'
@@ -56,8 +56,10 @@ export function MobilePendingGatesScreen({ hostId, onGatePress }: MobilePendingG
   // the background sweep on settled-elsewhere races and a transient notice for
   // outcomes landing after the sheet was dismissed. Notice clears on refresh or the
   // next gate open (app pattern — no toast system).
-  const resolveVisibleRef = useRef(resolveVisible)
-  resolveVisibleRef.current = resolveVisible
+  // resolveVisibleRef is written at the open/close transition sites, not during
+  // render — an outcome landing between onClose's setState and the re-render commit
+  // must already see the sheet as closed (review T4 P2).
+  const resolveVisibleRef = useRef(false)
   const connectedRef = useRef(connected)
   connectedRef.current = connected
 
@@ -94,6 +96,7 @@ export function MobilePendingGatesScreen({ hostId, onGatePress }: MobilePendingG
   // import here would break the screen tests. Metro resolves it normally on device.
   const openResolveSheet = useCallback((row: PendingGateRow) => {
     setResolveGate(row)
+    resolveVisibleRef.current = true
     setResolveVisible(true)
     setNotice(null)
     if (!sheetLoadStartedRef.current) {
@@ -103,6 +106,7 @@ export function MobilePendingGatesScreen({ hostId, onGatePress }: MobilePendingG
         () => {
           // Sheet chunk failed to load — close the empty dialog instead of half-mounting.
           sheetLoadStartedRef.current = false
+          resolveVisibleRef.current = false
           setResolveVisible(false)
           setResolveGate(null)
         }
@@ -162,9 +166,13 @@ export function MobilePendingGatesScreen({ hostId, onGatePress }: MobilePendingG
         ) : null}
         {unavailable ? (
           <View style={styles.banner}>
-            <Text style={styles.bannerText}>
-              Gate list unavailable — this host runs an older Orca desktop without gate sync. Update
-              the desktop app.
+            {/* Distinct copy/tones (review T2 P2#4): a past successful sweep proves the
+                host HAS gate sync, so a later unavailable is transient; never-swept is
+                the old-desktop case. */}
+            <Text style={lastSweepAt === null ? styles.bannerText : styles.infoBannerText}>
+              {lastSweepAt === null
+                ? 'Gate list unavailable — this host runs an older Orca desktop without gate sync. Update the desktop app.'
+                : "Couldn't refresh the gate list — pull to retry."}
             </Text>
           </View>
         ) : null}
@@ -205,7 +213,10 @@ export function MobilePendingGatesScreen({ hostId, onGatePress }: MobilePendingG
         <ResolveSheet
           visible={resolveVisible}
           gate={resolveGate}
-          onClose={() => setResolveVisible(false)}
+          onClose={() => {
+            resolveVisibleRef.current = false
+            setResolveVisible(false)
+          }}
           onResolve={handleResolve}
         />
       ) : null}

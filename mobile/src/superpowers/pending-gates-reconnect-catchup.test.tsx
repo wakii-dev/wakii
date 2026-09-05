@@ -268,11 +268,14 @@ describe('missed-event window — the reconnect sweep repairs what replay missed
       })
     })
 
-    // Positive evidence is contract-backed: desktop storyDetail pushes EVERY
-    // db.listGates() gate with its status verbatim (superpowers-story-detail.ts:115-137)
-    // and the contract status union is 'pending' | 'resolved' | 'timeout'
-    // (story-rpc-contract.ts:46) — a sweep response showing status !== 'pending' is
-    // authoritative closure, not an accidental omission.
+    // Positive evidence is contract-backed: every gate a storyDetail response includes
+    // carries its status verbatim (superpowers-story-detail.ts:115-137) — but the
+    // response is NOT every db.listGates() gate (other-worktree gates are skipped,
+    // :124-126), and the contract status union is 'pending' | 'resolved' | 'timeout'
+    // (story-rpc-contract.ts:46). Status !== 'pending' is authoritative closure, not an
+    // accidental omission. (Plan T6's literal "sweep list without the gate → remove it"
+    // was superseded by this positive-evidence rule — absence alone is never removal
+    // evidence: pendingGates-0 stories are never swept, so absence is unobservable.)
     const rows = getPendingGatesSnapshot(HOST).gates
     expect(rows.map((row) => row.gateId)).toEqual(['gate-y'])
     expect(rows[0]).toMatchObject({

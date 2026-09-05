@@ -301,9 +301,15 @@ describe('two-step teardown (leak guard)', () => {
 describe('D10 passive-consumer guard', () => {
   it('the import list never touches the shared banner-delivery session or catch-up watermarks', () => {
     const source = readFileSync(new URL('./gate-transition-events.ts', import.meta.url), 'utf8')
-    // Structural check on the import statements (comments may name the banned
-    // symbols — the D10 header itself does); the module must never PULL them in.
-    const imports = source.split('\n').filter((line) => /^import[\s{.]/.test(line))
+    // Structural check on every import FORM — static imports, dynamic import(), and
+    // `export … from` re-exports (review T5 P2#1). Comments may name the banned
+    // symbols — the D10 header itself does; the module must never PULL them in.
+    const imports = source
+      .split('\n')
+      .filter(
+        (line) =>
+          /^import[\s{.]/.test(line) || /import\(/.test(line) || /^export[\s{].*\bfrom\b/.test(line)
+      )
     expect(imports.length).toBeGreaterThan(0)
     expect(imports.join('\n')).not.toMatch(
       /getHostNotificationSession|getMissedSince|\.\.\/notifications|notification-reconnect-catchup/

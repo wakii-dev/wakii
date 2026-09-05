@@ -245,6 +245,38 @@ describe('runPendingGatesSweep', () => {
     )
   })
 
+  it('marks unavailable (no throw) on a malformed success envelope: ok:true with a null result', () => {
+    // Review T2 P2#1: `list.stories` on a null result used to throw past the
+    // documented no-throw contract (the hook's catch masked it as a silent no-op).
+    const harness = makeHarness(() => ({ ...STORY_LIST_OK, result: null }))
+    return expect(
+      runPendingGatesSweep({ client: FAKE_CLIENT, hostId: 'host-a', send: harness.send })
+    )
+      .resolves.toBeUndefined()
+      .then(() => {
+        const snapshot = getPendingGatesSnapshot('host-a')
+        expect(snapshot.unavailable).toBe(true)
+        expect(snapshot.lastSweepAt).toBeNull()
+      })
+  })
+
+  it('marks unavailable (no throw) when a storyDetail success envelope carries a non-object result', () => {
+    // Same malformed-envelope class: `'error' in detail` throws on non-objects.
+    const harness = makeHarness((call) => {
+      if (call.kind === 'superpowers.storyList') {
+        return STORY_LIST_OK
+      }
+      return { ...STORY_DETAIL_OK, result: 'contract garbage' }
+    })
+    return expect(
+      runPendingGatesSweep({ client: FAKE_CLIENT, hostId: 'host-a', send: harness.send })
+    )
+      .resolves.toBeUndefined()
+      .then(() => {
+        expect(getPendingGatesSnapshot('host-a').unavailable).toBe(true)
+      })
+  })
+
   it('skips a story that answers story_not_found and still reconciles the rest', () => {
     const vanished = { ...storyListItemNormal, storyId: 'brackets/vanished.md' }
     const harness = makeHarness((call) => {
@@ -398,6 +430,64 @@ describe('runPendingGatesSweep', () => {
       // Each host reconciled its OWN story's gate — no cross-story/cross-host transfer.
       expect(gateIds('host-ca')).toEqual(['gate-of-ca'])
       expect(gateIds('host-cb')).toEqual(['gate-of-cb'])
+    })
+
+    it('pins the per-story coalescing key: concurrent different-story fetches send twice and complete independently', async () => {
+      // Review T2 P2#2: the `hostId\0storyId` in-flight key is load-bearing — a
+      // refactor to a shared (story-less) kind would coalesce sweep B's storyDetail
+      // onto sweep A's still-in-flight request: 1 send, B reconciling A's data.
+      const storyB = { ...storyListItemNormal, storyId: 'brackets/cb.md', title: 'CB' }
+      const detailFor = (storyId: string, gateId: string): RpcResponse => ({
+        id: 'd',
+        ok: true,
+        result: {
+          ...storyDetailResultNormal,
+          story: { ...storyDetailResultNormal.story, storyId },
+          gates: [{ ...storyDetailResultNormal.gates[0], gateId, title: gateId }]
+        },
+        _meta: { runtimeId: 'runtime-1' }
+      })
+      let listCalls = 0
+      const detailSends: string[] = []
+      let releaseA!: (response: RpcResponse) => void
+      const heldDetailA = new Promise<RpcResponse>((resolve) => {
+        releaseA = resolve
+      })
+      let releaseB!: (response: RpcResponse) => void
+      const heldDetailB = new Promise<RpcResponse>((resolve) => {
+        releaseB = resolve
+      })
+      const sendRequest = vi.fn((method: string, params?: { storyId?: string }) => {
+        if (method === 'superpowers.storyList') {
+          listCalls += 1
+          // The second sweep's list is a fresh (non-overlapping) call → different story.
+          return Promise.resolve({
+            ...STORY_LIST_OK,
+            result: { stories: [listCalls === 1 ? storyListItemNormal : storyB] }
+          })
+        }
+        detailSends.push(params?.storyId ?? '?')
+        return params?.storyId === storyListItemNormal.storyId ? heldDetailA : heldDetailB
+      })
+      const client = { sendRequest } as unknown as RpcClient
+      const drain = () => new Promise<void>((resolve) => setTimeout(resolve, 0))
+
+      const first = runPendingGatesSweep({ client, hostId: 'host-pin' })
+      await drain() // sweep A: list resolved, its storyDetail held on the wire
+      const second = runPendingGatesSweep({ client, hostId: 'host-pin' })
+      await drain() // sweep B: list [B] resolved, its storyDetail issued
+
+      // THE pin: B's detail must be a second send, not a coalesce onto A's request.
+      expect(detailSends).toEqual([storyListItemNormal.storyId, storyB.storyId])
+
+      releaseA(detailFor(storyListItemNormal.storyId, 'gate-of-a'))
+      await first
+      // Independent completion: A fully reconciled while B is still in flight.
+      expect(gateIds('host-pin')).toEqual(['gate-of-a'])
+      releaseB(detailFor(storyB.storyId, 'gate-of-b'))
+      await second
+      expect(gateIds('host-pin')).toEqual(['gate-of-a', 'gate-of-b'])
+      expect(getPendingGatesSnapshot('host-pin').unavailable).toBe(false)
     })
   })
 })

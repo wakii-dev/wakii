@@ -109,6 +109,12 @@ export async function runPendingGatesSweep(deps: PendingGatesSweepDeps): Promise
     markPendingGatesUnavailable(deps.hostId, true)
     return
   }
+  // Malformed success envelope (review T2 P2#1): ok:true with a null/non-object
+  // result must mark unavailable, not throw (no-throw contract).
+  if (listResponse.result === null || typeof listResponse.result !== 'object') {
+    markPendingGatesUnavailable(deps.hostId, true)
+    return
+  }
   const list = listResponse.result as SuperpowersStoryListResult
   const stories = Array.isArray(list.stories) ? list.stories : []
 
@@ -132,6 +138,11 @@ export async function runPendingGatesSweep(deps: PendingGatesSweepDeps): Promise
       return
     }
     if (!detailResponse.ok) {
+      markPendingGatesUnavailable(deps.hostId, true)
+      return
+    }
+    // Same malformed-envelope guard: `'error' in detail` throws on null/non-object.
+    if (detailResponse.result === null || typeof detailResponse.result !== 'object') {
       markPendingGatesUnavailable(deps.hostId, true)
       return
     }

@@ -20,6 +20,7 @@ const deps = vi.hoisted(() => {
     } | null
     storyListResponse: () => unknown
     storyDetailResponse: (method: string, params: unknown) => unknown
+    sheetProps: Record<string, unknown> | null
   } = {
     calls: [],
     connState: 'connected',
@@ -29,10 +30,20 @@ const deps = vi.hoisted(() => {
     },
     storyDetailResponse: () => {
       throw new Error('storyDetailResponse not scripted')
-    }
+    },
+    sheetProps: null
   }
   return { state }
 })
+
+// Stub the dynamically-imported sheet (real module pulls reanimated, which cannot
+// evaluate under the react-native mock) and capture its props for the T4-race test.
+vi.mock('./MobileGateResolveSheet', () => ({
+  MobileGateResolveSheet: (props: Record<string, unknown>) => {
+    deps.state.sheetProps = props
+    return null
+  }
+}))
 
 vi.mock('react-native', async () => {
   const React = await import('react')
@@ -72,6 +83,7 @@ vi.mock('../transport/host-client-hooks', () => ({
 }))
 
 import { storyDetailResultNormal, storyListResultNormal } from './gate-conformance-fixtures'
+import { colors } from '../theme/mobile-theme'
 
 const OK_ENVELOPE = (result: unknown) => ({ id: 'r1', ok: true, result, _meta: { runtimeId: 'r' } })
 const METHOD_NOT_FOUND_ENVELOPE = {
@@ -134,6 +146,7 @@ describe('MobilePendingGatesScreen', () => {
   beforeEach(() => {
     resetPendingGatesStoreForTests()
     deps.state.calls = []
+    deps.state.sheetProps = null
     deps.state.connState = 'connected'
     deps.state.client = {
       sendRequest: (method: string, params?: unknown) => {
@@ -179,6 +192,86 @@ describe('MobilePendingGatesScreen', () => {
     const texts = textContent(screen.renderer.root)
     expect(texts.some((text) => text.startsWith('Gate list unavailable'))).toBe(true)
     expect(texts).not.toContain('No pending gates')
+    // Old-desktop tone: amber warning (review T2 P2#4 — distinct from transient).
+    const bannerNode = screen.renderer.root
+      .findAllByType('Text')
+      .find(
+        (node) =>
+          typeof node.props.children === 'string' &&
+          node.props.children.startsWith('Gate list unavailable')
+      )
+    expect(bannerNode?.props.style).toEqual({ color: colors.statusAmber, fontSize: 13 })
+    screen.unmount()
+  })
+
+  it('shows the transient refresh-failure copy — not the old-desktop banner — once a sweep has succeeded', async () => {
+    let blip = false
+    scriptResponses(() =>
+      blip
+        ? Promise.reject(new Error('socket blip mid-refresh'))
+        : OK_ENVELOPE(storyListResultNormal)
+    )
+    const screen = renderScreen()
+    await screen.flush()
+
+    // First sweep succeeded → the host proved it has gate sync.
+    expect(textContent(screen.renderer.root)).toContain('FI-305 superpowers android')
+
+    blip = true
+    const refreshControl = screen.renderer.root.findAllByType('RefreshControl')[0]
+    await act(async () => {
+      refreshControl?.props.onRefresh()
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+    await screen.flush()
+
+    const texts = textContent(screen.renderer.root)
+    expect(texts).toContain("Couldn't refresh the gate list — pull to retry.")
+    expect(texts.some((text) => text.startsWith('Gate list unavailable'))).toBe(false)
+    // Transient tone: neutral info, not the amber old-desktop warning.
+    const bannerNode = screen.renderer.root
+      .findAllByType('Text')
+      .find(
+        (node) =>
+          typeof node.props.children === 'string' &&
+          node.props.children.startsWith("Couldn't refresh")
+      )
+    expect(bannerNode?.props.style).toEqual({ color: colors.textSecondary, fontSize: 13 })
+    screen.unmount()
+  })
+
+  it('an error outcome landing right after onClose still surfaces the screen notice (ref not render-lagged)', async () => {
+    scriptResponses(
+      () => OK_ENVELOPE(storyListResultNormal),
+      (method) =>
+        method === 'superpowers.gateResolve'
+          ? OK_ENVELOPE({ error: 'gate_not_pending' })
+          : OK_ENVELOPE(storyDetailResultNormal)
+    )
+    const screen = renderScreen()
+    await screen.flush()
+
+    const gateRow = screen.renderer.root
+      .findAllByType('Pressable')
+      .find((node) => node.props.accessibilityLabel === 'Approve SF-1 contract snapshot')
+    act(() => {
+      gateRow?.props.onPress()
+    })
+    await screen.flush() // mocked dynamic import resolves → sheet mounts
+
+    const sheetProps = deps.state.sheetProps
+    expect(sheetProps?.visible).toBe(true)
+
+    // onClose and the outcome settle in the same tick — before React commits the
+    // re-render; the notice must key off the ref set IN onClose (review T4 P2).
+    await act(async () => {
+      sheetProps?.onClose()
+      await sheetProps?.onResolve('gate-fi305-approve-sf1', 'approve')
+    })
+    await screen.flush()
+
+    expect(textContent(screen.renderer.root)).toContain('This gate was already handled elsewhere.')
     screen.unmount()
   })
 
