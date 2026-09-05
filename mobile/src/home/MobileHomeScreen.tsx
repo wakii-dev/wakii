@@ -76,6 +76,12 @@ export function MobileHomeScreen() {
     [data.primaryHost, openMobileTasks]
   )
 
+  const openStories = useCallback(() => {
+    if (data.primaryHost) {
+      data.router.push({ pathname: '/h/[hostId]/stories', params: { hostId: data.primaryHost.id } })
+    }
+  }, [data.primaryHost, data.router])
+
   function openHost(host: HostCatalogEntry): void {
     if (host.credentialStatus === 'missing') {
       data.router.push('/pair-scan')
@@ -137,6 +143,7 @@ export function MobileHomeScreen() {
               onOpenAccounts={openMobileAccounts}
               onOpenResume={openResume}
               onOpenTasks={openTasks}
+              onOpenStories={openStories}
               onPairDesktop={() => data.router.push('/pair-scan')}
             />
           }
