@@ -136,6 +136,7 @@ function createTerminalHarness(terminalHandles: string[]): {
       terminals: terminalHandles.map((handle) => ({ handle, title: null }))
     }),
     sendTerminal: vi.fn().mockResolvedValue({ accepted: true }),
+    sendTerminalAgentPrompt: vi.fn().mockResolvedValue({ accepted: true }),
     dispatchPluginNotification: vi.fn().mockResolvedValue({ delivered: true })
   }
   return {
@@ -195,13 +196,12 @@ describe('terminal.sendText explicit worktree routing', () => {
         PLUGIN_WORKSPACE_TERMINAL_LIMIT,
         { includeVisualLayouts: false }
       )
-      expect(delegate.sendTerminal).toHaveBeenCalledTimes(1)
-      expect(delegate.sendTerminal).toHaveBeenCalledWith(terminalId, {
-        text: 'echo hi',
-        enter: true
-      })
+      // Submit-carrying plugin sends ride the agent-prompt path (one atomic
+      // bracketed paste) — raw multi-line writes fragment in a TUI composer.
+      expect(delegate.sendTerminalAgentPrompt).toHaveBeenCalledTimes(1)
+      expect(delegate.sendTerminalAgentPrompt).toHaveBeenCalledWith(terminalId, 'echo hi')
       expect(vi.mocked(delegate.listTerminals).mock.invocationCallOrder[0]!).toBeLessThan(
-        vi.mocked(delegate.sendTerminal).mock.invocationCallOrder[0]!
+        vi.mocked(delegate.sendTerminalAgentPrompt).mock.invocationCallOrder[0]!
       )
     }
   )
@@ -238,7 +238,7 @@ describe('terminal.sendText explicit worktree routing', () => {
 describe('terminal.sendText under a refusing agent-session lease', () => {
   it('reports who holds the session instead of an accepted-looking result', async () => {
     const { delegate, services } = createTerminalHarness(['terminal:local:one'])
-    vi.mocked(delegate.sendTerminal).mockRejectedValue(
+    vi.mocked(delegate.sendTerminalAgentPrompt).mockRejectedValue(
       new AgentSessionPtyWriteRefusedError({
         code: 'agent_session_conflict',
         sessionId: 'session-alpha-1',
@@ -262,6 +262,6 @@ describe('terminal.sendText under a refusing agent-session lease', () => {
     const outcome = await sendTerminalText(services, 'terminal:local:one')
 
     expect(outcome).toEqual({ ok: true, value: { accepted: true } })
-    expect(delegate.sendTerminal).toHaveBeenCalledTimes(1)
+    expect(delegate.sendTerminalAgentPrompt).toHaveBeenCalledTimes(1)
   })
 })

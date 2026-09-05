@@ -25,6 +25,7 @@ export type PluginRuntimeDelegate = {
     handle: string,
     action: { text?: string; enter?: boolean }
   ): Promise<{ accepted: boolean }>
+  sendTerminalAgentPrompt(handle: string, prompt: string): Promise<{ accepted: boolean }>
   dispatchPluginNotification(input: {
     pluginId: string
     title: string
@@ -64,6 +65,14 @@ export function bindPluginHostServices(input: {
     },
     sendTerminalText: async (terminalId, action) => {
       try {
+        // Why: panel prompts target agent TUIs. The agent-prompt path writes the
+        // whole prompt as ONE atomic bracketed paste and waits for the composer
+        // to settle before submitting — a raw multi-line write reaches the agent
+        // as one fragment per newline (the composer submits on every newline).
+        if (action.enter === true && typeof delegate.sendTerminalAgentPrompt === 'function') {
+          const agentResult = await delegate.sendTerminalAgentPrompt(terminalId, action.text)
+          return { accepted: agentResult.accepted }
+        }
         const result = await delegate.sendTerminal(terminalId, action)
         return { accepted: result.accepted }
       } catch (error) {
