@@ -1,15 +1,27 @@
 import { mkdtempSync, mkdirSync, rmSync, utimesSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { OrchestrationDb } from '../../orchestration/db'
 import type { OrcaRuntimeService } from '../../orca-runtime'
 import type { ResolvedWorktree } from '../../runtime-worktree-path-identity'
+import { resetSfStatusCacheForTests } from '../../../superpowers/story-linear-status'
 import {
   listStoriesForRuntime,
   scanWorktreeBracketStories,
   SUPERPOWERS_STORY_LIST_METHODS
 } from './superpowers-story-list'
+
+const linearGetStatus = vi.fn()
+const linearGetIssue = vi.fn()
+
+vi.mock('../../../linear/client', () => ({
+  getStatus: (...args: unknown[]) => linearGetStatus(...args)
+}))
+
+vi.mock('../../../linear/linear-issue-lookups', () => ({
+  getIssue: (...args: unknown[]) => linearGetIssue(...args)
+}))
 
 const VALID_BRACKET = [
   '# Story: FI-305 — Superpowers on Android',
@@ -63,6 +75,13 @@ function seedPendingGateOnWorktree(
 }
 
 describe('superpowers.storyList', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    resetSfStatusCacheForTests()
+    // SF-1 world: Linear absent → sfDone 0 everywhere.
+    linearGetStatus.mockReturnValue({ connected: false })
+  })
+
   it('registers the method with null params', () => {
     expect(SUPERPOWERS_STORY_LIST_METHODS).toHaveLength(1)
     expect(SUPERPOWERS_STORY_LIST_METHODS[0]?.name).toBe('superpowers.storyList')
@@ -207,6 +226,86 @@ describe('superpowers.storyList', () => {
     } as unknown as Parameters<(typeof SUPERPOWERS_STORY_LIST_METHODS)[0]['handler']>[1])
 
     expect(result).toEqual({ stories: [] })
+  })
+
+  describe('sfDone via Linear statuses (desktop join)', () => {
+    let root: string | null = null
+
+    beforeEach(() => {
+      root = null
+    })
+
+    afterEach(() => {
+      if (root) {
+        rmSync(root, { recursive: true, force: true })
+        root = null
+      }
+    })
+
+    function makeBracketWorktree(files: Record<string, string>): string {
+      root = mkdtempSync(join(tmpdir(), 'orca-story-list-sfdone-'))
+      const bracketsDir = join(root, 'docs', 'superpowers', 'brackets')
+      mkdirSync(bracketsDir, { recursive: true })
+      for (const [name, content] of Object.entries(files)) {
+        writeFileSync(join(bracketsDir, name), content)
+      }
+      return root
+    }
+
+    it('counts sfDone from Linear statuses by re-reading bracket linear ids', async () => {
+      const db = new OrchestrationDb(':memory:')
+      const wtPath = makeBracketWorktree({ 'story.md': VALID_BRACKET })
+      const runtime = makeRuntime([makeCatalogEntry(`repo::${wtPath}`, wtPath, 'wt')], db)
+      linearGetStatus.mockReturnValue({ connected: true })
+      linearGetIssue.mockResolvedValue({ state: { name: 'Done', type: 'completed', color: '' } })
+
+      const stories = await listStoriesForRuntime(runtime)
+
+      expect(stories).toHaveLength(1)
+      expect(stories[0]).toMatchObject({ storyId: 'brackets/story.md', sfTotal: 2, sfDone: 1 })
+      // Only the SF with linear: is read; SF-2 contributes nothing.
+      expect(linearGetIssue).toHaveBeenCalledTimes(1)
+      expect(linearGetIssue).toHaveBeenCalledWith('FI-306')
+    })
+
+    it('makes zero Linear reads when no SF carries linear:', async () => {
+      const db = new OrchestrationDb(':memory:')
+      const noLinear = '# Story: FI-1 — Plain\n\n## SF-1 A\nTier: 1\nWhat: x\nDepends on: —\n'
+      const wtPath = makeBracketWorktree({ 'plain.md': noLinear })
+      const runtime = makeRuntime([makeCatalogEntry(`repo::${wtPath}`, wtPath, 'wt')], db)
+      linearGetStatus.mockReturnValue({ connected: true })
+
+      const stories = await listStoriesForRuntime(runtime)
+
+      expect(stories[0]).toMatchObject({ sfTotal: 1, sfDone: 0 })
+      expect(linearGetIssue).not.toHaveBeenCalled()
+    })
+
+    it('keeps sfDone 0 on per-issue Linear failure without failing the method', async () => {
+      const db = new OrchestrationDb(':memory:')
+      const wtPath = makeBracketWorktree({ 'story.md': VALID_BRACKET })
+      const runtime = makeRuntime([makeCatalogEntry(`repo::${wtPath}`, wtPath, 'wt')], db)
+      linearGetStatus.mockReturnValue({ connected: true })
+      linearGetIssue.mockRejectedValue(new Error('linear down'))
+
+      const stories = await listStoriesForRuntime(runtime)
+
+      expect(stories[0]).toMatchObject({ sfDone: 0, sfTotal: 2, parseError: false })
+    })
+
+    it('serves two polls within the TTL from one Linear pass', async () => {
+      const db = new OrchestrationDb(':memory:')
+      const wtPath = makeBracketWorktree({ 'story.md': VALID_BRACKET })
+      const runtime = makeRuntime([makeCatalogEntry(`repo::${wtPath}`, wtPath, 'wt')], db)
+      linearGetStatus.mockReturnValue({ connected: true })
+      linearGetIssue.mockResolvedValue({ state: { name: 'Done', type: 'completed', color: '' } })
+      const clock = { now: () => 7_000 }
+
+      await listStoriesForRuntime(runtime, scanWorktreeBracketStories, clock)
+      await listStoriesForRuntime(runtime, scanWorktreeBracketStories, clock)
+
+      expect(linearGetIssue).toHaveBeenCalledTimes(1)
+    })
   })
 
   describe('scanWorktreeBracketStories (fs scanner)', () => {

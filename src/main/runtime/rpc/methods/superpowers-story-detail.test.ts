@@ -1,11 +1,23 @@
 import { mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { OrchestrationDb } from '../../orchestration/db'
 import type { OrcaRuntimeService } from '../../orca-runtime'
 import type { ResolvedWorktree } from '../../runtime-worktree-path-identity'
-import { SUPERPOWERS_STORY_DETAIL_METHODS } from './superpowers-story-detail'
+import { resetSfStatusCacheForTests } from '../../../superpowers/story-linear-status'
+import { SUPERPOWERS_STORY_DETAIL_METHODS, resolveStoryDetail } from './superpowers-story-detail'
+
+const linearGetStatus = vi.fn()
+const linearGetIssue = vi.fn()
+
+vi.mock('../../../linear/client', () => ({
+  getStatus: (...args: unknown[]) => linearGetStatus(...args)
+}))
+
+vi.mock('../../../linear/linear-issue-lookups', () => ({
+  getIssue: (...args: unknown[]) => linearGetIssue(...args)
+}))
 
 const VALID_BRACKET = [
   '# Story: FI-305 — Superpowers on Android',
@@ -98,6 +110,13 @@ async function callStoryDetail(runtime: OrcaRuntimeService, storyId: string): Pr
 
 describe('superpowers.storyDetail', () => {
   let roots: string[] = []
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    resetSfStatusCacheForTests()
+    // SF-1 world: Linear absent → every status 'unknown'.
+    linearGetStatus.mockReturnValue({ connected: false })
+  })
 
   afterEach(() => {
     for (const root of roots) {
@@ -335,5 +354,59 @@ describe('superpowers.storyDetail', () => {
     }
 
     expect(result.gates[0]).toMatchObject({ gateId: 'gate_bad_opts', options: [] })
+  })
+
+  it('reads Linear status for sfs carrying linear: when connected', async () => {
+    const db = new OrchestrationDb(':memory:')
+    const wtPath = track(
+      makeBracketWorktree('orca-story-detail-linear', { 'story.md': VALID_BRACKET })
+    )
+    const runtime = makeRuntime([makeCatalogEntry(`repo::${wtPath}`, wtPath, 'wt')], db)
+    linearGetStatus.mockReturnValue({ connected: true })
+    linearGetIssue.mockResolvedValue({ state: { name: 'Done', type: 'completed', color: '' } })
+
+    const result = await resolveStoryDetail(runtime, 'brackets/story.md')
+
+    expect(result).not.toHaveProperty('error')
+    if (!('error' in result)) {
+      expect(result.story.sfs[0]).toMatchObject({ linear: 'FI-306', status: 'done' })
+      // SF-2 has no linear: → unknown without a Linear read.
+      expect(result.story.sfs[1]).toMatchObject({ linear: null, status: 'unknown' })
+    }
+    expect(linearGetIssue).toHaveBeenCalledTimes(1)
+    expect(linearGetIssue).toHaveBeenCalledWith('FI-306')
+  })
+
+  it('degrades a per-issue Linear failure to unknown without failing the method', async () => {
+    const db = new OrchestrationDb(':memory:')
+    const wtPath = track(
+      makeBracketWorktree('orca-story-detail-linear-err', { 'story.md': VALID_BRACKET })
+    )
+    const runtime = makeRuntime([makeCatalogEntry(`repo::${wtPath}`, wtPath, 'wt')], db)
+    linearGetStatus.mockReturnValue({ connected: true })
+    linearGetIssue.mockRejectedValue(new Error('linear down'))
+
+    const result = await resolveStoryDetail(runtime, 'brackets/story.md')
+
+    expect(result).not.toHaveProperty('error')
+    if (!('error' in result)) {
+      expect(result.story.sfs[0]).toMatchObject({ status: 'unknown' })
+    }
+  })
+
+  it('serves two polls within the TTL from one Linear pass', async () => {
+    const db = new OrchestrationDb(':memory:')
+    const wtPath = track(
+      makeBracketWorktree('orca-story-detail-ttl', { 'story.md': VALID_BRACKET })
+    )
+    const runtime = makeRuntime([makeCatalogEntry(`repo::${wtPath}`, wtPath, 'wt')], db)
+    linearGetStatus.mockReturnValue({ connected: true })
+    linearGetIssue.mockResolvedValue({ state: { name: 'Done', type: 'completed', color: '' } })
+    const clock = { now: () => 5_000 }
+
+    await resolveStoryDetail(runtime, 'brackets/story.md', clock)
+    await resolveStoryDetail(runtime, 'brackets/story.md', clock)
+
+    expect(linearGetIssue).toHaveBeenCalledTimes(1)
   })
 })

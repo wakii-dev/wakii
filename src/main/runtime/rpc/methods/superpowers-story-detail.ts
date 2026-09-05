@@ -7,6 +7,7 @@ import type { OrcaRuntimeService } from '../../orca-runtime'
 import { runtimeWorktreeIdsEqual } from '../../runtime-worktree-path-identity'
 import { deriveWorktreeIdForGate } from '../../../superpowers/gate-worktree-derivation'
 import { parseBracketSfs } from '../../../superpowers/bracket-file-parse'
+import { readSfStatuses } from '../../../superpowers/story-linear-status'
 import { scanWorktreeBracketStories, type BracketStoryScan } from './superpowers-story-list'
 import type {
   SuperpowersStoryDetailError,
@@ -46,7 +47,8 @@ function gateCreatedAtMs(createdAt: string): number {
 
 export async function resolveStoryDetail(
   runtime: StoryDetailRuntime,
-  storyId: string
+  storyId: string,
+  opts?: { now?: () => number }
 ): Promise<SuperpowersStoryDetailResult | SuperpowersStoryDetailError> {
   const catalog = await runtime.listWorktreeCatalog()
   let match: {
@@ -93,10 +95,16 @@ export async function resolveStoryDetail(
     // vanished between scan and read → empty sfs/destination, scan fields survive
   }
   const parsedSfs = match.scan.parseError ? [] : parseBracketSfs(text)
-  const sfs = (Array.isArray(parsedSfs) ? parsedSfs : []).map((sf) => ({
+  const sfBase = Array.isArray(parsedSfs) ? parsedSfs : []
+  // One batched read per request; per-id failures degrade to 'unknown' inside
+  // the helper, so Linear problems never fail the method.
+  const sfStatuses = await readSfStatuses(
+    sfBase.flatMap((sf) => (sf.linear ? [sf.linear] : [])),
+    opts
+  )
+  const sfs = sfBase.map((sf) => ({
     ...sf,
-    // Linear status read is SF-2 — SF-1 hardcodes 'unknown'.
-    status: 'unknown' as const
+    status: sf.linear ? (sfStatuses.get(sf.linear) ?? 'unknown') : 'unknown'
   }))
 
   const story: SuperpowersStoryDetailResult['story'] = {

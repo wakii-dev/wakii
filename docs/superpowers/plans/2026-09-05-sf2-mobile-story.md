@@ -63,31 +63,31 @@ gộp theo đợt, ví dụ sau T8: `docs(FI-307): plan tick T1,T7,T8`).
   **conditional** (nếu probe (a) cần resolve identifier): query mới trong
   `src/main/linear/<tên-theo-nội-dung>.ts` — KHÔNG nhét vào story-linear-status.ts.
 - **Steps:**
-  - [ ] PROBE-GATE (phase0 risk #2): bracket ghi `linear: FI-306` là **identifier**;
+  - [x] PROBE-GATE (phase0 risk #2): bracket ghi `linear: FI-306` là **identifier**;
         `getIssue` (`linear-issue-lookups.ts:33-64`) gọi SDK `entry.client.issue(id)`.
         Probe `issue(id:)` có nhận identifier không / cần resolve bước nào trong
         `src/main/linear/` (query mới = internal change, không phải wire change).
         KHÔNG code theo nhớ.
-  - [ ] PROBE (c) rate-limit: helper reuse limiter max-4 (`linear-request-concurrency.ts`
+  - [x] PROBE (c) rate-limit: helper reuse limiter max-4 (`linear-request-concurrency.ts`
         — choke chung với mobile tasks screens); đọc chi phí mỗi refresh: N ids
         (N = số SF có `linear:`) qua limiter
-  - [ ] Helper `readSfStatuses(linearIds, opts?) => Map<id, SuperpowersSfStatus>`:
+  - [x] Helper `readSfStatuses(linearIds, opts?) => Map<id, SuperpowersSfStatus>`:
         gom ĐỦ ids mỗi request (v1 budget spec); **TTL cache 30s** — module-level
         Map DÙNG CHUNG cả 2 method, key = linear identifier, resolution
         identifier→UUID cache cùng entry/cùng TTL; inject `now: () => number`
         (default `Date.now`) cho test deterministic; aliased batch query chỉ làm
         nếu probe thấy rẻ + trả lời được per-workspace vs single-workspace
         (`getClients()` multi-entry — `getIssue` hiện iterate clients per-id, đã OK)
-  - [ ] Mapping `state.type` (giá trị đã biết): completed→done, started→in-progress,
+  - [x] Mapping `state.type` (giá trị đã biết): completed→done, started→in-progress,
         unstarted/backlog→todo; **default branch bắt buộc: giá trị khác/rỗng/không
         nhận diện được → 'unknown'** (không crash, không đoán); `canceled`→'unknown'
         (quyết định spec rev 3); fallback khác (không connect / lỗi / id null / 404)
         → 'unknown' per-id — method KHÔNG BAO GIỜ fail vì Linear
-  - [ ] storyList data path (spec-critic P0 — pin): **re-read bracket text + gọi
+  - [x] storyList data path (spec-critic P0 — pin): **re-read bracket text + gọi
         `parseBracketSfs` lấy linear ids trong cùng pass hiện có** — KHÔNG đổi
         `BracketStoryScan`/`scanWorktreeBracketStories` (SF-1 frozen), KHÔNG parser
         thứ ba. `sfDone` = đếm 'done' của SF có `linear:`
-  - [ ] Tests: unit `story-linear-status.test.ts` (mapping + TTL qua inject `now`)
+  - [x] Tests: unit `story-linear-status.test.ts` (mapping + TTL qua inject `now`)
         + cả 2 method test (connected map đúng, không connect, thiếu `linear:`,
         per-issue lỗi, 2 poll ≤ TTL → 1 lượt reads)
 - **Acceptance:** `pnpm tc` pass; `pnpm test src/main/runtime/rpc/methods/superpowers-story-detail.test.ts
