@@ -27,65 +27,88 @@ agent** side-by-side, each in its own isolated git worktree.
 On top of that base, Wakii ships a complete **agentic workflow kit** that
 installs itself on first run — no setup, enabled by default.
 
-## ⚡ What the kit adds
+## 🤖 How the agents work
 
-<table>
-<tr>
-<td width="50%" valign="top">
+Wakii turns a one-line feature idea into merged, verified code through a
+**seven-stage pipeline**. Each stage is owned by a specialist agent, and the
+checks between stages are adversarial — a different agent attacks the work
+than the one who produced it.
 
-### 🤖 The 9-agent story team
+```
+idea → impact → plan → epic + SF bracket → parallel SFs → gates → 1 PR per story
+```
 
-Every story run is staffed by nine specialists with adversarial
-checks-and-balances — **self-approval never counts as a gate**:
+| # | Stage | Agent on duty | What happens |
+| - | ----- | ------------- | ------------ |
+| 1 | **Impact analysis** | `phase0-impact-analyst` | Before any code exists, it maps the blast radius: which files are touched, second-order effects across dimensions, and the realistic alternatives — so you approve a direction, not a guess. |
+| 2 | **Spec review** | `spec-critic` | Attacks the spec like an adversary: ambiguity, missing edge cases, unverifiable criteria. A spec survives only when the critic runs out of objections. |
+| 3 | **Plan + bracket** | `plan-critic` | Breaks the plan into bite-sized tasks (file, code, how to test — written for an engineer with zero context) and reviews the dependency graph between them. Large features become an **epic with sub-features** drawn as a live bracket canvas. |
+| 4 | **Parallel execution** | `task-executor` | Independent sub-features run **in parallel**, each in its own isolated worktree and branch. The executor implements tasks and commits atomically. |
+| 5 | **Code review** | `code-reviewer` | Reviews every diff for bugs, security issues and scope creep — P0 findings block the merge. |
+| 6 | **Verification** | `verifier` | Independent pass/fail on the finished work — **self-reports don't count**. Verdicts: `COMPLETE` · `READY-TO-DONE` · `INCOMPLETE` · `VIOLATION` · `NOT-LAUNCHED`. |
+| 7 | **One PR per story** | — | When every sub-feature's gates pass and the story verifies `COMPLETE`, everything collapses into a single clean PR. |
 
-`impact-analyst` → `spec-critic` → `plan-critic` →
-`task-executor` → `code-reviewer` → `verifier` →
-`security-audit` · `rollback-fixer` · `designer`
+### 🚦 The gates (B0–B5)
 
-[Meet the crew →](https://wakii.dev/docs/agents-and-kit/)
+Every sub-feature must clear all six gates — the checks are adversarial by
+design:
 
-</td>
-<td width="50%" valign="top">
+| Gate | Checks |
+| ---- | ------ |
+| **B0** | Browser test — the agent actually opened the app and walked the flow |
+| **B1** | Code + tests pass |
+| **B2** | Plan checkboxes ticked |
+| **B3** | Independent review done |
+| **B4** | Branch merged to the story branch |
+| **B5** | Linear issue set to Done |
 
-### 🧠 20 bundled skills
+### 🐕 The watchdog
 
-The skills agents load on demand: brainstorming, writing & executing plans,
-code review, story management, design pipelines — plus platform skills that
-control your machine and tools.
+Stories stall — an agent hits a dead end, a review loops, a merge conflicts.
+The **watchdog** detects stalled sub-features and auto-resumes them from the
+last good state, so a long story never needs a babysitter.
 
-[Skills catalog →](https://wakii.dev/skills/)
+## 🧠 How skills work
 
-</td>
-</tr>
-<tr>
-<td width="50%" valign="top">
+Skills are **packaged instruction sets** the agents load on demand —
+progressive disclosure instead of a bloated system prompt:
 
-### 🛠️ 24 `story-*` CLIs
+1. Every skill is a `SKILL.md` file with frontmatter — its **name** and
+   **one-line description** are always visible to the agent (cheap).
+2. When the current task matches a description, the agent pulls the skill's
+   **full instructions into context** and follows them (accurate).
+3. Skills compose: the story workflow is itself built from the planning and
+   review skills below.
 
-`story-verify` (gate checks) · `story-watchdog` (stall detection) ·
-`story-preflight` · `story-test` — the whole story-ops toolbox, installed to
-`~/.claude/bin/`.
+### The catalog — 13 public skills
 
-</td>
-<td width="50%" valign="top">
+**Workflow — the idea-to-PR spine**
 
-### 🎨 HoiVu branding
+| Command | What it does | How it works |
+| ------- | ------------ | ------------ |
+| `/brainstorm` | Turns a rough idea into a validated spec + implementation plan | Explores intent through clarifying questions, challenges assumptions, then produces the spec — optionally publishing the plan to Linear and isolating a worktree |
+| `/writing-plans-linear` | Plans detailed enough for an engineer with zero context | Decomposes the spec into bite-sized tasks (files, code, how to test) and publishes to Linear for team visibility |
+| `/story-workflow` | Runs large features as epic + sub-feature brackets | Analyzes once at epic level, writes a bracket file with dependencies, launches each sub-feature as an isolated workflow |
+| `/orca-superpowers-workflow` | The end-to-end pipeline in one command | Impact analysis → Linear issue → spec → plan → task DAG → gated execution → verification, auto-activating the Orca bridges at every transition |
 
-Rebranded UI with fork-local full plugin access — every capability of the
-upstream app, wired for the Wakii workflow.
+**Design — from brief to shipped UI**
 
-</td>
-</tr>
-</table>
+| Command | What it does | How it works |
+| ------- | ------------ | ------------ |
+| `/frontend-design` | UI that reads as intentional, never templated | Approaches each brief like a design lead — grounds the design in the subject before writing a line |
+| `/gpt-taste` | Breaks the statistical biases of AI-generated design | Enforces layout randomization, AIDA structure, editorial typography, gapless bento grids, strict GSAP ScrollTriggers |
+| `/design-taste-frontend` | Anti-slop review of UI that is already built | Audit-first pass: reads the brief, infers intent, checks the built UI against taste rules contextually |
+| `/image-to-code` | One reference image → a real component | Reads the image like an art director (hierarchy, spacing, tokens), then produces code against it as a fidelity target |
+| `/mock-prototype` | Three HTML design directions to pick from | Drafts 3 directions, hosts each on an unlisted link, waits for your pick, polishes the chosen one |
+| `/web-design-guidelines` | 105 concrete web interface rules, enforced in code | Heuristic engine (vendored from vercel-labs, MIT) covering accessibility, focus, forms, animation, layout |
 
-## 🖼️ The product
+**Reference & tooling**
 
-<table>
-<tr>
-<td width="50%"><img src=".github/assets/hero.png" alt="Wakii landing page" width="100%" /><p align="center"><sub><b>Landing</b> — wakii.dev</sub></p></td>
-<td width="50%"><img src=".github/assets/skills.png" alt="Wakii skills catalog" width="100%" /><p align="center"><sub><b>Skills catalog</b> — 21 skills, cell by cell</sub></p></td>
-</tr>
-</table>
+| Command | What it does | How it works |
+| ------- | ------------ | ------------ |
+| `/figma-orientation` | Routes any Figma task to the right skill or MCP call | Loads first on Figma work, reads what you actually want, then routes — before you guess wrong |
+| `/graph-engineering` | Knowledge graphs + agent orchestration, taught with examples | Ontology design, entity extraction, GraphRAG, parallel fan-out, verifier separation, the stop rule |
+| `/prompt-master` | One production-ready prompt for the tool you name | Extracts real intent, identifies the target tool, outputs a single optimized prompt with zero wasted tokens |
 
 ## 🔀 Inherited from Orca (kept intact)
 
@@ -103,6 +126,15 @@ Full feature wall: [upstream README](https://github.com/stablyai/orca#features).
 | ----------- | ----------------------------------------------------------------------- |
 | `wakii-dev` | **default — Wakii development happens here**                            |
 | `main`      | mirrors `stablyai/orca` main, auto-synced daily by GitHub Action        |
+
+## 🖼️ The product
+
+<table>
+<tr>
+<td width="50%"><img src=".github/assets/hero.png" alt="Wakii landing page" width="100%" /><p align="center"><sub><b>Landing</b> — wakii.dev</sub></p></td>
+<td width="50%"><img src=".github/assets/skills.png" alt="Wakii skills catalog" width="100%" /><p align="center"><sub><b>Skills catalog</b> — cell by cell</sub></p></td>
+</tr>
+</table>
 
 ## 🚀 Developing
 
