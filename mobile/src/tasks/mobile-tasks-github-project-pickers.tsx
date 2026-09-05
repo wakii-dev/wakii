@@ -309,7 +309,7 @@ export function renderMobileTasksGitHubProjectViewPicker(model: ConnectionPresen
       onSelect={(viewId) => {
         const view = githubProjectViews.find((candidate) => candidate.id === viewId)
         if (view && view.layout !== 'TABLE_LAYOUT') {
-          setGithubProjectError("Orca doesn't support this GitHub Project layout yet.")
+          setGithubProjectError("Wakii doesn't support this GitHub Project layout yet.")
           return
         }
         if (pendingGitHubProjectViewSelection) {

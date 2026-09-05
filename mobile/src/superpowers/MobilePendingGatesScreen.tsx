@@ -172,7 +172,7 @@ export function MobilePendingGatesScreen({ hostId, onGatePress }: MobilePendingG
                 the old-desktop case. */}
             <Text style={lastSweepAt === null ? styles.bannerText : styles.infoBannerText}>
               {lastSweepAt === null
-                ? 'Gate list unavailable — this host runs an older Orca desktop without gate sync. Update the desktop app.'
+                ? 'Gate list unavailable — this host runs an older Wakii desktop without gate sync. Update the desktop app.'
                 : "Couldn't refresh the gate list — pull to retry."}
             </Text>
           </View>

@@ -7,6 +7,7 @@ import type { HostProfile } from '../transport/types'
 import type { HomeResumeCard } from '../worktree/home-resume-card'
 import { MobileHomeAccountUsageCards } from './MobileHomeAccountUsageCards'
 import { MobileHomeResumeCard } from './MobileHomeResumeCard'
+import { MobileHomeStoriesCard } from './MobileHomeStoriesCard'
 import { MobileHomeTasksCard } from './MobileHomeTasksCard'
 
 export function MobileHomeListFooter(props: {
@@ -19,6 +20,7 @@ export function MobileHomeListFooter(props: {
   onOpenAccounts: (hostId: string) => void
   onOpenResume: (card: HomeResumeCard) => void
   onOpenTasks: (provider?: TaskProvider) => void
+  onOpenStories: () => void
   onPairDesktop: () => void
 }) {
   return (
@@ -34,6 +36,11 @@ export function MobileHomeListFooter(props: {
         enabled={props.primaryHost != null}
         providers={props.primaryTaskProviders}
         onOpen={props.onOpenTasks}
+      />
+      <MobileHomeStoriesCard
+        enabled={props.primaryHost != null}
+        hostName={props.primaryHost?.name ?? null}
+        onOpen={props.onOpenStories}
       />
       <MobileHomeQuickActions
         connectedHosts={props.connectedHosts}

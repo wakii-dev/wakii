@@ -212,7 +212,7 @@ export function useMobileTasksProjectLoadingActions(model: TaskPaginationActions
           return
         }
         if (explicitView && explicitView.layout !== 'TABLE_LAYOUT') {
-          throw new Error("Orca doesn't support this GitHub Project layout yet.")
+          throw new Error("Wakii doesn't support this GitHub Project layout yet.")
         }
         if (!explicitView && !rememberedView) {
           // Why: desktop asks which Project view to open the first time a project

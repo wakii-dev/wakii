@@ -242,7 +242,7 @@ export function useMobileTasksRuntimeHydration(model: ClientSettingsActionsModel
         setMergeMethodTaskItem(null)
         setMergeMethodProjectRow(null)
         resetWorkspaceCreateState()
-        setError('Update Orca desktop to use Tasks on mobile.')
+        setError('Update Wakii desktop to use Tasks on mobile.')
         setTaskStateHydrated(false)
         return
       }

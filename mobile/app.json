@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Orca",
+    "name": "Wakii",
     "slug": "orca-mobile",
     "version": "0.0.48",
     "orientation": "default",
@@ -18,9 +18,9 @@
       "bundleIdentifier": "com.stably.orca.mobile",
       "buildNumber": "1",
       "infoPlist": {
-        "NSLocalNetworkUsageDescription": "Orca connects to the desktop app on your LAN.",
-        "NSMicrophoneUsageDescription": "Allow Orca to record voice dictation and transcribe it on your paired desktop.",
-        "NSPhotoLibraryUsageDescription": "Allow Orca to attach photos from your library to a terminal session on your paired desktop.",
+        "NSLocalNetworkUsageDescription": "Wakii connects to the desktop app on your LAN.",
+        "NSMicrophoneUsageDescription": "Allow Wakii to record voice dictation and transcribe it on your paired desktop.",
+        "NSPhotoLibraryUsageDescription": "Allow Wakii to attach photos from your library to a terminal session on your paired desktop.",
         "NSAppTransportSecurity": {
           "NSAllowsLocalNetworking": true,
           "NSExceptionDomains": {
@@ -90,15 +90,15 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow Orca to use the camera for QR code scanning.",
-          "microphonePermission": "Allow Orca to use your microphone for voice dictation sent to your paired desktop for transcription.",
+          "cameraPermission": "Allow Wakii to use the camera for QR code scanning.",
+          "microphonePermission": "Allow Wakii to use your microphone for voice dictation sent to your paired desktop for transcription.",
           "recordAudioAndroid": false
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow Orca to attach photos from your library to a terminal session on your paired desktop."
+          "photosPermission": "Allow Wakii to attach photos from your library to a terminal session on your paired desktop."
         }
       ],
       [

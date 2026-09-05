@@ -1,6 +1,6 @@
 import { Settings } from 'lucide-react-native'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
-import { OrcaLogo } from '../components/OrcaLogo'
+import { WakiiLogo } from '../components/WakiiLogo'
 import { colors, spacing } from '../theme/mobile-theme'
 
 export function MobileHomeTopBar({ onOpenSettings }: { onOpenSettings: () => void }) {
@@ -8,9 +8,9 @@ export function MobileHomeTopBar({ onOpenSettings }: { onOpenSettings: () => voi
     <View style={styles.topBar}>
       <View style={styles.brandLockup}>
         <View style={styles.logoMark}>
-          <OrcaLogo size={18} />
+          <WakiiLogo size={18} />
         </View>
-        <Text style={styles.brandName}>Orca</Text>
+        <Text style={styles.brandName}>Wakii</Text>
       </View>
       <Pressable
         style={({ pressed }) => [styles.iconButton, pressed && styles.iconButtonPressed]}

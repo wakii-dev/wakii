@@ -118,7 +118,7 @@ export function useMobileSessionStartup(scope: MobileSessionKeyboardStateModel) 
     void (async () => {
       const reportActivationOutcome = (response: RpcSuccess | null): void => {
         if (!disposed && response && headlessActivationNeedsHostRenderer(response.result)) {
-          showToast('Open Orca on the host to wake sleeping agents.', 3000)
+          showToast('Open Wakii on the host to wake sleeping agents.', 3000)
         }
       }
       if (client && created !== '1' && !isFloatingWorkspaceRoute) {

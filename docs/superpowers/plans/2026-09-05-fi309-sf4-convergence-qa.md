@@ -158,11 +158,11 @@ trên state code cuối; T7 sau tests để docs mô tả hành vi đã verify).
 - Commit: `feat(FI-309): story-screens-back-button`
 
 ### Task 11 — wakii-rebrand-mobile (owner requirement 2026-09-06 — ĐÃ CHỐT qua AskUserQuestion: brand=Wakii, logo từ wakii-site, scope=mobile only)
-- [ ] New `mobile/src/components/WakiiLogo.tsx`: inline SVG theo `wakii-icon.svg` (The Monogram 128×128 — dark tile gradient #131A17→#04140D + mint #45E0A8 + dot #D7E2DD, đọc nguyên văn từ /Users/hoivu/Desktop/projects/wakii-site/public/wakii-icon.svg), same Props pattern {size, color?} như OrcaLogo; react-native-svg linearGradient cho tile
-- [ ] Swap usages: `app/_layout.tsx` (headerTitle), `src/home/MobileHomeTopBar.tsx`, `app/mobile-onboarding.tsx`, `app/about.tsx` (logo + brandName "Orca"→"Wakii"); xóa `OrcaLogo.tsx` nếu hết usage (own-your-orphans) + cập nhật test mocks
-- [ ] Visible "Orca"→"Wakii": app.json `"name"`, iOS usage descriptions + android camera/mic permission texts (expo config). **CẤM đổi**: scheme `orca` (deep-link vỡ), slug, package/bundleIdentifier, và mọi "orca" là DATA (tên repo/worktree user). Phân biệt: chỉ đổi BRAND strings
-- [ ] App icon + splash: cần PNG raster — thử `qlmanage -t -s 1024` (macOS) rasterize wakii-icon.svg → mobile/assets/icon.png + splash-icon.png (backup cũ trước); nếu tool không có/kết quả xấu → GIỮ icon cũ, ghi follow-up cần PNG từ user
-- [ ] Launcher label hiện tại trên emulator KHÔNG đổi (baked trong dev-client APK) — chỉ ảnh hưởng install mới; ghi note cho owner
+- [x] New `mobile/src/components/WakiiLogo.tsx`: inline SVG theo `wakii-icon.svg` (The Monogram 128×128 — dark tile gradient #131A17→#04140D + mint #45E0A8 + dot #D7E2DD, đọc nguyên văn từ /Users/hoivu/Desktop/projects/wakii-site/public/wakii-icon.svg), same Props pattern {size, color?} như OrcaLogo; react-native-svg linearGradient cho tile
+- [x] Swap usages: `app/_layout.tsx` (headerTitle), `src/home/MobileHomeTopBar.tsx`, `app/mobile-onboarding.tsx`, `app/about.tsx` (logo + brandName "Orca"→"Wakii"); xóa `OrcaLogo.tsx` nếu hết usage (own-your-orphans) + cập nhật test mocks
+- [x] Visible "Orca"→"Wakii": app.json `"name"`, iOS usage descriptions + android camera/mic permission texts (expo config). **CẤM đổi**: scheme `orca` (deep-link vỡ), slug, package/bundleIdentifier, và mọi "orca" là DATA (tên repo/worktree user). Phân biệt: chỉ đổi BRAND strings
+- [x] App icon + splash: cần PNG raster — thử `qlmanage -t -s 1024` (macOS) rasterize wakii-icon.svg → mobile/assets/icon.png + splash-icon.png (backup cũ trước); nếu tool không có/kết quả xấu → GIỮ icon cũ, ghi follow-up cần PNG từ user
+- [x] Launcher label hiện tại trên emulator KHÔNG đổi (baked trong dev-client APK) — chỉ ảnh hưởng install mới; ghi note cho owner
 - Verify: `pnpm --dir mobile typecheck` + `pnpm --dir mobile test src/` toàn bộ mobile tests xanh; screencap header mới trên device (sau khi T2-continuation xong — reload bundle)
 - Dispatch: CHỈ sau khi T2-continuation xong (hot-reload conflict)
 - Commit: `feat(FI-309): wakii-rebrand-mobile`
@@ -211,3 +211,7 @@ trên state code cuối; T7 sau tests để docs mô tả hành vi đã verify).
 3. Comment merge hash lên FI-309
 4. Verifier đối chiếu ACCEPTANCE từng dòng (bảng trên) — mỗi dòng có evidence hoặc `BLOCKED-on-user-re-pair`
 5. Có task BLOCKED-on-re-pair → KHÔNG set Done; escalate epic comment cho watchdog. Không blocked → Done
+
+### Task 12 — home-stories-card (owner request 2026-09-06: Stories dưới Tasks) — DONE
+- MobileHomeStoriesCard (mirror Tasks card, BookOpen) dưới Tasks card trong footer; enabled theo primaryHost connected; tap → /h/<hostId>/stories; test mới
+- Commit: `634a6485f4` — review pending

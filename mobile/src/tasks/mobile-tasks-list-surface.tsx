@@ -28,7 +28,7 @@ export function renderMobileTasksListSurface(model: ConnectionPresentationModel)
   return !tasksSupported ? (
     tasksUnsupported ? (
       <View style={styles.centered}>
-        <Text style={styles.emptyText}>Update Orca desktop</Text>
+        <Text style={styles.emptyText}>Update Wakii desktop</Text>
         <Text style={styles.centeredHint}>
           This mobile Tasks view needs a newer desktop runtime.
         </Text>
