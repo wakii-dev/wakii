@@ -1,7 +1,7 @@
 name: Windows build
 
 # Build Wakii for Windows on a GitHub-hosted windows runner and attach the
-# installers to the v1.4.198 release. Unsigned build (no signing secrets).
+# installers to the v1.4.199 release. Unsigned build (no signing secrets).
 
 on:
   workflow_dispatch:
@@ -44,14 +44,14 @@ jobs:
             Where-Object { $_.Name -match '\.(exe|zip|blockmap)$' -or $_.Name -eq 'latest.yml' } |
             Copy-Item -Destination dist/release
 
-      - name: Upload to release v1.4.198
+      - name: Upload to release v1.4.199
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd dist/release
           for f in *; do
-            gh release upload v1.4.198 "$f" --repo wakii-dev/wakii --clobber
+            gh release upload v1.4.199 "$f" --repo wakii-dev/wakii --clobber
           done
 
       - uses: actions/upload-artifact@v4

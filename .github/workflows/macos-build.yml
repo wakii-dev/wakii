@@ -2,7 +2,7 @@ name: macOS build
 
 # Build the full macOS DMG (including the computer-use native module) on a
 # GitHub-hosted macOS runner (Xcode 16 available) and attach it to the
-# v1.4.198 release. Unsigned build (no signing secrets).
+# v1.4.199 release. Unsigned build (no signing secrets).
 
 on:
   workflow_dispatch:
@@ -60,13 +60,13 @@ jobs:
           done
           ls -la dist/release/
 
-      - name: Upload to release v1.4.198
+      - name: Upload to release v1.4.199
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd dist/release
           for f in *; do
-            gh release upload v1.4.198 "$f" --repo wakii-dev/wakii --clobber
+            gh release upload v1.4.199 "$f" --repo wakii-dev/wakii --clobber
           done
 
       - uses: actions/upload-artifact@v4
