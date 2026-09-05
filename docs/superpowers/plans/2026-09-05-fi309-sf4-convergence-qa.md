@@ -108,10 +108,10 @@ trên state code cuối; T7 sau tests để docs mô tả hành vi đã verify).
 - Commit: `feat(FI-309): device-session-e2e-serialized` (chỉ khi có code/mock change; evidence-only thì ghi trong report)
 
 ### Task 3 — security-review-allowlist-guard (review-only, agent security-auditor)
-- [ ] Review surface mới: 3 method allowlist (`superpowers.storyList/storyDetail/gateResolve`) — đúng 3, không thừa
-- [ ] Review `resolveGateIfPending` conditional UPDATE + paired-scope enforcement + double-resolve race test tồn tại (SF-1) hoặc flag
-- [ ] Review deep-link routing mới: không inject route ngoài expected; stored-data fields không vào log; không credentials trong tray data
-- [ ] Verdict PASS/P0-findings; P0 → fix task riêng (pre-authorized, có review)
+- [x] Review surface mới: 3 method allowlist (`superpowers.storyList/storyDetail/gateResolve`) — đúng 3, không thừa
+- [x] Review `resolveGateIfPending` conditional UPDATE + paired-scope enforcement + double-resolve race test tồn tại (SF-1) hoặc flag
+- [x] Review deep-link routing mới: không inject route ngoài expected; stored-data fields không vào log; không credentials trong tray data
+- [x] Verdict PASS/P0-findings; P0 → fix task riêng (pre-authorized, có review)
 - Acceptance: verdict theo A2 a-e, evidence = report `/tmp/story/fi305/security-auditor.md`
 - Commit: thường không có (review); fix nếu có findings
 
