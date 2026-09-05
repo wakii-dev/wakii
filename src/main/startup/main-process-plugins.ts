@@ -6,6 +6,7 @@ import { PluginMarketplaceService } from '../plugins/plugin-marketplace-service'
 import { PluginMarketplaceInstaller } from '../plugins/plugin-marketplace-installer'
 import { PluginBundledBootstrapCoordinator } from '../plugins/plugin-bundled-bootstrap-coordinator'
 import { getPluginsDataDir } from '../plugins/plugin-discovery'
+import { PluginKvStore } from '../plugins/plugin-storage-store'
 import { resolveBundledPluginRoot } from '../plugins/plugin-bundled-bootstrap'
 import { resolvePluginHostEntryPath } from '../plugins/plugin-host-process'
 import { applyPluginConsent, applyPluginEnablement } from '../plugins/plugin-enablement'
@@ -119,6 +120,12 @@ export async function initializeMainProcessPlugins(runtime: OrcaRuntimeService):
   })
   // Lazy kernel: initialize() only discovers manifests — no worker forks, no
   // panel reads. Zero plugin code runs before an explicit trigger.
+  function ensureStoryOpsWorker(): void {
+    // invokeCommand vừa ensure worker vừa chạy storyList (refresh luôn story.list)
+    void state.pluginService
+      ?.invokeCommand(STORY_OPS_PLUGIN_KEY, 'superpowers.storyList')
+      .catch(() => undefined)
+  }
   void state.pluginService
     .initialize()
     .then(() => {
@@ -126,8 +133,38 @@ export async function initializeMainProcessPlugins(runtime: OrcaRuntimeService):
         durationMs: Number((performance.now() - pluginSystemStartupStartedAt).toFixed(2)),
         installedPlugins: state.pluginService?.getDiscovered().length ?? 0
       })
+      ensureStoryOpsWorker()
     })
     .catch((error) => console.warn('[plugins] failed to initialize plugin service:', error))
+
+  // FORK-LOCAL (Wakii): worker của bundled launcher là lazy-spawn — Story Ops
+  // bấm lúc worker chưa sống thì request nằm im trong storage. Ensure worker
+  // ngay lúc start + pump: request ops mới đáp xuống cũng đánh thức worker.
+  const STORY_OPS_PLUGIN_KEY = 'stablyai.orca-superpowers-launcher'
+  const storyOpsStorage = new PluginKvStore(
+    getPluginsDataDir(app.getPath('userData')),
+    STORY_OPS_PLUGIN_KEY,
+    'storage.json'
+  )
+  let lastSeenOpsAt: string | number | null = null
+  state.pluginService.onChanged(() => {
+    if (state.pluginService?.findValidPlugin(STORY_OPS_PLUGIN_KEY)) {
+      ensureStoryOpsWorker()
+    }
+  })
+  const storyOpsPumpTimer = setInterval(() => {
+    try {
+      const req = storyOpsStorage.get('story.ops.request') as { at?: string | number } | null
+      const at = req?.at ?? null
+      if (at && at !== lastSeenOpsAt) {
+        lastSeenOpsAt = at
+        ensureStoryOpsWorker()
+      }
+    } catch {
+      /* storage chưa có — bỏ qua */
+    }
+  }, 2000)
+  storyOpsPumpTimer.unref?.()
   if (app.isPackaged && store.getSettings().pluginSystemEnabled === true) {
     void state.pluginKillListService
       .refresh()

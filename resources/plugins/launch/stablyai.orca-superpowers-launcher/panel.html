@@ -152,7 +152,7 @@ Mô tả story (feature lớn) — markdown
         <span style="font-size:10px; font-weight:700; letter-spacing:.8px; color:var(--muted-foreground,#888); text-transform:uppercase;">Bracket</span>
         <span style="flex:1;"></span>
         <button id="story-add-node" class="btn" style="padding: 4px 8px;" title="Thêm SF node mới vào bracket (ghi .md qua worker)">＋</button>
-        <button id="story-share" class="btn" style="padding: 4px 8px;" title="Share bracket: gửi prompt cho agent — vẽ HTML diagram + orca artifacts share">⤓</button>
+        <button id="story-share" class="btn" style="padding: 4px 8px;" title="Share bracket: publish HTML diagram (tier ladder) lên Orca artifacts — link public tự copy">⤓</button>
         <button id="story-load" class="btn" style="padding: 4px 10px;">↻</button>
       </div>
       <!-- Status: hàng riêng ngay trên canvas -->
@@ -1504,25 +1504,31 @@ Tech blog: markdown posts, post list, single-post view, tag filter, dark/light t
         }
         var pick = document.getElementById('story-pick')
         var name = (pick && pick.dataset && pick.dataset.file) || 'bracket'
-        var terminalId = document.getElementById('terminal-select')?.value
-        if (!terminalId) {
-          if (st) st.textContent = 'chưa có terminal — mở terminal trong worktree trước'
-          return
-        }
-        // Share = giao việc cho agent trong worktree: nó đọc bracket, vẽ HTML
-        // dạng diagram (không text thuần) rồi publish qua orca artifacts.
-        var prompt = 'Share bracket này ra artifact công khai:\n'
-          + '- File: docs/superpowers/brackets/' + name + ' (đang mở trong panel Story)\n'
-          + '- Tạo 1 file HTML standalone VẼ bracket dạng diagram — KHÔNG show markdown thuần:\n'
-          + '  epic node ở trên, SF nodes xếp theo cột Tier (0,1,2…), cạnh deps vẽ mũi tên,\n'
-          + '  mỗi node: SF id + linear ID + title + số tasks, màu accent theo tier, nền tối.\n'
-          + '  Dùng SVG/CSS thuần trong 1 file duy nhất, không cần build tool.\n'
-          + '- Xong chạy: orca artifacts share <file.html> rồi in URL artifact ra output.'
-        call('terminal.sendText', { terminalId, text: prompt, enter: true }).then((r) => {
-          if (st) st.textContent = r.ok
-            ? 'đã gửi yêu cầu share cho agent — theo dõi terminal, URL sẽ do agent in ra'
-            : 'send failed: ' + (r.error || r.errorCode)
+        var sentAt = Date.now()
+        call('storage.set', {
+          key: 'story.ops.request',
+          value: { action: 'share-artifact', name: name, html: buildBracketHtml(), at: sentAt }
         })
+        if (st) st.textContent = 'đang publish artifact…'
+        // Chờ worker publish xong rồi hiện URL ngay tại status + tự copy
+        var sentIso = new Date(sentAt).toISOString()
+        var poll = function () {
+          call('storage.get', { key: 'story.ops.result' }).then(function (r) {
+            var v = r && r.ok && r.value
+            var res = v && v.value !== undefined ? v.value : v
+            if (res && res.action === 'share-artifact' && res.at >= sentIso) {
+              if (res.ok) {
+                var url = (res.output || '').replace(/^artifact:\s*/, '').trim()
+                if (st) st.textContent = 'Đã share: ' + url
+                call('clipboard.write', { text: url }).then(function () {}, function () {})
+              } else if (st) st.textContent = 'share failed: ' + (res.output || res.error || '')
+              return
+            }
+            if (Date.now() - sentAt < 30000) setTimeout(poll, 1500)
+            else if (st) st.textContent = 'share chưa xong — xem kết quả ở Story Ops'
+          })
+        }
+        setTimeout(poll, 2500)
       }
 
       // ---- Story picker: custom dropdown từ worker data (storage story.list)
