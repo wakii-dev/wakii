@@ -147,15 +147,17 @@ Mô tả story (feature lớn) — markdown
                style="width:100%; box-sizing:border-box; padding: 6px 10px 6px 26px; border: 1px solid var(--border, #444); border-radius: 7px; background: var(--secondary, #1f1f1f); color: var(--foreground, #ddd); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px;" />
         <div id="story-dd" style="display:none; position:absolute; top:36px; left:0; right:0; z-index:30; max-height:240px; overflow-y:auto; border:1px solid var(--border,#555); border-radius:8px; background:var(--card,#1a1a1a); box-shadow:0 6px 20px rgba(0,0,0,.5);"></div>
       </div>
-      <!-- BRACKET header: trạng thái + tác vụ bracket -->
+      <!-- BRACKET header: label + tác vụ bracket -->
       <div style="display:flex; align-items:center; gap:6px; margin-top:8px;">
         <span style="font-size:10px; font-weight:700; letter-spacing:.8px; color:var(--muted-foreground,#888); text-transform:uppercase;">Bracket</span>
-        <div id="story-status" class="muted" style="font-size: 11px; flex:1;">Chọn story hoặc bấm ↻ để load</div>
+        <span style="flex:1;"></span>
         <button id="story-add-node" class="btn" style="padding: 4px 8px;" title="Thêm SF node mới vào bracket (ghi .md qua worker)">＋</button>
         <button id="story-share" class="btn" style="padding: 4px 8px;" title="Share bracket: publish HTML lên Orca artifacts (link public)">⤓</button>
         <button id="story-load" class="btn" style="padding: 4px 10px;">↻</button>
       </div>
-      <div id="story-canvas" style="flex: 2 1 auto; min-height: 320px; margin-top: 14px; overflow: hidden; border: 1px solid var(--border, #444); border-radius: 8px; background: var(--secondary, #191919); cursor: grab; position: relative;">
+      <!-- Status: hàng riêng ngay trên canvas -->
+      <div id="story-status" class="muted" style="font-size: 11px; margin-top: 8px;">Chọn story hoặc bấm ↻ để load</div>
+      <div id="story-canvas" style="flex: 2 1 auto; min-height: 320px; margin-top: 6px; overflow: hidden; border: 1px solid var(--border, #444); border-radius: 8px; background: var(--secondary, #191919); cursor: grab; position: relative;">
         <svg id="story-svg" xmlns="http://www.w3.org/2000/svg" style="display:none; width: 100%; height: 100%;">
           <g id="story-graph"></g>
         </svg>
