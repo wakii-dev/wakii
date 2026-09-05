@@ -722,6 +722,10 @@ Tech blog: markdown posts, post list, single-post view, tag filter, dark/light t
         if (subagents < 1) subagents = 1
         if (subagents > 10) subagents = 10
         var executeMode = (document.getElementById('execute-mode')||{}).value||'delegate'  // delegate (default) / inline / superpowers
+        // FIX: story + mindsetBrowser phải đọc trong scope buildPrompt — trước đây
+        // reference rỗng khiến startPrompt ném ReferenceError, Start/Copy chết.
+        var story = document.getElementById('story') ? document.getElementById('story').checked : false
+        var mindsetBrowser = document.getElementById('mindset-browser') ? document.getElementById('mindset-browser').checked : true
         var idea = document.getElementById('idea').value
         var trimmed = (idea || '').trim()
         var isPlanPath = /^docs\/superpowers\/plans\/.+\.(md|MD)$/.test(trimmed)
