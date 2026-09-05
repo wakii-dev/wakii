@@ -17,9 +17,9 @@ async function resolveWorkspaceDocsRoot(services: PluginHostServices): Promise<s
   // 0. Focused worktree wins: brackets của story sống trong worktree đang mở —
   //    quét global theo mtime có thể chọn nhầm worktree stale khác.
   try {
-    const context = await services.resolveActiveWorktreeContext()
-    if (context?.path) {
-      const docs = join(context.path, 'docs', 'superpowers')
+    const focused = await services.resolveFocusedWorktreePath()
+    if (focused) {
+      const docs = join(focused, 'docs', 'superpowers')
       if ((await stat(join(docs, 'brackets')).catch(() => null))?.isDirectory()) {
         return docs
       }

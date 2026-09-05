@@ -27,6 +27,7 @@ type HostCallAdapter = (request: unknown, viaPanel: boolean) => Promise<PluginPa
 
 function createServices(): PluginHostServices {
   return {
+    resolveFocusedWorktreePath: vi.fn().mockResolvedValue(null),
     resolveActiveWorktreeContext: vi.fn().mockResolvedValue({
       worktreeId: WORKTREE_ID,
       branch: 'main',

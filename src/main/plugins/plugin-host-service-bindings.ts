@@ -85,6 +85,12 @@ export function bindPluginHostServices(input: {
       }
     },
     dispatchPluginNotification: (notification) => delegate.dispatchPluginNotification(notification),
+    resolveFocusedWorktreePath: async () => {
+      // Host-internal: the full context (with path) stays behind the facade;
+      // workspace docs resolution needs the real path, panels never see it.
+      const context = await delegate.resolveActiveWorktreeContext()
+      return context?.path ?? null
+    },
     writeClipboardText: async (text) => {
       // Why dynamic: this module is also bound by headless serve, which has no
       // Electron app — the capability gate plus this guard keep the method

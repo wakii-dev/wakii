@@ -6,6 +6,7 @@ const TERMINAL_ID = 'term_1'
 
 function makeDelegate() {
   return {
+    resolveFocusedWorktreePath: vi.fn().mockResolvedValue(null),
     resolveActiveWorktreeContext: vi.fn().mockResolvedValue({
       worktreeId: WORKTREE_ID,
       branch: 'main',

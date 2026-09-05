@@ -19,6 +19,8 @@ export type PluginWorktreeContext = {
  *  over runtime services; relay policy and conformance tests bind fakes. */
 export type PluginHostServices = {
   resolveActiveWorktreeContext(): Promise<PluginWorktreeContext | null>
+  /** Host-internal full path of the focused worktree (never projected to panels). */
+  resolveFocusedWorktreePath(): Promise<string | null>
   listWorktreeTerminals(worktreeId: string): Promise<{ id: string }[]>
   sendTerminalText(
     terminalId: string,
