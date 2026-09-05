@@ -1,5 +1,16 @@
 import { useCallback, useMemo, useRef, useState, type ComponentType } from 'react'
-import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native'
+import {
+  ActivityIndicator,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View
+} from 'react-native'
+import { useRouter } from 'expo-router'
+import { ChevronLeft } from 'lucide-react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import type {
   SuperpowersSfStatus,
   SuperpowersStoryDetailSf
@@ -42,6 +53,7 @@ const SF_STATUS_CHIP_COLORS: Record<SuperpowersSfStatus, string> = {
 type ScreenNotice = { message: string; tone: GateResolveErrorTone }
 
 export function MobileStoryDetailScreen({ client, hostId, storyId, bottomInset = 0 }: Props) {
+  const router = useRouter()
   // T9: story_not_found raises the banner over the cached detail (kept rendering);
   // a failed fetch (stale) stays neutral here — unreachable host is not evidence
   // the story is gone. Nothing cached → neutral empty either way.
@@ -131,7 +143,19 @@ export function MobileStoryDetailScreen({ client, hostId, storyId, bottomInset =
   const done = countDoneSfs(detail.story.sfs)
   const total = detail.story.sfs.length
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Minimal back affordance — the title stays in the body, no header duplication. */}
+      <View style={styles.backRow}>
+        <Pressable
+          style={styles.backButton}
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+          hitSlop={8}
+        >
+          <ChevronLeft size={22} color={colors.textPrimary} />
+        </Pressable>
+      </View>
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: spacing.lg + bottomInset }]}
         refreshControl={
@@ -202,7 +226,7 @@ export function MobileStoryDetailScreen({ client, hostId, storyId, bottomInset =
           onResolve={handleResolve}
         />
       ) : null}
-    </View>
+    </SafeAreaView>
   )
 }
 
@@ -230,6 +254,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bgBase
+  },
+  backRow: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm
+  },
+  backButton: {
+    padding: spacing.xs
   },
   scroll: {
     paddingHorizontal: spacing.md,

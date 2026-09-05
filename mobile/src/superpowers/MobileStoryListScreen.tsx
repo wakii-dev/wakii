@@ -8,7 +8,9 @@ import {
   Text,
   View
 } from 'react-native'
-import { Bell } from 'lucide-react-native'
+import { useRouter } from 'expo-router'
+import { Bell, ChevronLeft } from 'lucide-react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import type { SuperpowersStoryListItem } from '../../../src/shared/superpowers/story-rpc-contract'
 import { colors, radii, spacing, typography } from '../theme/mobile-theme'
 import type { RpcClient } from '../transport/rpc-client'
@@ -32,6 +34,7 @@ type Props = {
 }
 
 export function MobileStoryListScreen({ client, hostId, onOpenStory, bottomInset = 0 }: Props) {
+  const router = useRouter()
   const { stories, stale, loading, refreshing, refresh } = useMobileStoryList({ client, hostId })
   const sections = useMemo(
     () =>
@@ -51,8 +54,24 @@ export function MobileStoryListScreen({ client, hostId, onOpenStory, bottomInset
     )
   }
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>{STORY_LIST_TITLE}</Text>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <View style={styles.topRow}>
+        <Pressable
+          style={styles.backButton}
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+          hitSlop={8}
+        >
+          <ChevronLeft size={22} color={colors.textPrimary} />
+        </Pressable>
+        <View style={styles.titleWrap}>
+          <Text style={styles.heading}>{STORY_LIST_TITLE}</Text>
+          <Text style={styles.subheading} numberOfLines={1}>
+            Stories across this host's worktrees
+          </Text>
+        </View>
+      </View>
       {stale ? (
         // Failed poll — the last good list keeps rendering under the banner.
         <View style={styles.bannerWrap}>
@@ -87,7 +106,7 @@ export function MobileStoryListScreen({ client, hostId, onOpenStory, bottomInset
           />
         }
       />
-    </View>
+    </SafeAreaView>
   )
 }
 
@@ -138,12 +157,28 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.bgBase
   },
-  title: {
-    color: colors.textPrimary,
-    fontSize: typography.titleSize,
-    fontWeight: '700',
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: spacing.md,
-    paddingTop: spacing.md
+    paddingVertical: spacing.sm,
+    gap: spacing.sm
+  },
+  backButton: {
+    padding: spacing.xs
+  },
+  titleWrap: {
+    flex: 1,
+    minWidth: 0
+  },
+  heading: {
+    color: colors.textPrimary,
+    fontSize: 18,
+    fontWeight: '600'
+  },
+  subheading: {
+    color: colors.textSecondary,
+    fontSize: 12
   },
   list: {
     paddingTop: spacing.sm

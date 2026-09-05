@@ -140,7 +140,12 @@ vi.mock('react-native', () => ({
   Text: 'Text',
   View: 'View'
 }))
-vi.mock('lucide-react-native', () => ({ Bell: 'Bell' }))
+vi.mock('expo-router', () => ({ useRouter: () => ({ back: () => {}, push: () => {} }) }))
+vi.mock('lucide-react-native', () => ({ Bell: 'Bell', ChevronLeft: 'ChevronLeft' }))
+vi.mock('react-native-safe-area-context', () => ({
+  SafeAreaView: 'SafeAreaView',
+  useSafeAreaInsets: () => ({ bottom: 0, left: 0, right: 0, top: 0 })
+}))
 vi.mock('./story-screen-cache', () => ({
   loadStoryListSnapshot: cache.loadStoryListSnapshot,
   saveStoryListSnapshot: cache.saveStoryListSnapshot,

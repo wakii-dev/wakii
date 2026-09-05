@@ -66,6 +66,12 @@ vi.mock('react-native', () => ({
   Text: 'Text',
   View: 'View'
 }))
+vi.mock('expo-router', () => ({ useRouter: () => ({ back: () => {} }) }))
+vi.mock('lucide-react-native', () => ({ ChevronLeft: 'ChevronLeft' }))
+vi.mock('react-native-safe-area-context', () => ({
+  SafeAreaView: 'SafeAreaView',
+  useSafeAreaInsets: () => ({ bottom: 0, left: 0, right: 0, top: 0 })
+}))
 vi.mock('./story-screen-cache', () => ({
   loadStoryDetailSnapshot: cache.loadStoryDetailSnapshot,
   saveStoryDetailSnapshot: cache.saveStoryDetailSnapshot
@@ -143,11 +149,17 @@ describe('MobileStoryDetailScreen', () => {
   }
 
   function containerStyle(): { backgroundColor?: string } {
-    const style = renderer!.root.findAllByType('View')[0].props.style
-    const flat = Array.isArray(style) ? style : [style]
-    const filled = flat.find(
-      (part) => part && typeof part === 'object' && 'backgroundColor' in part
-    )
+    // The screen root is now a SafeAreaView, so scan it alongside plain Views.
+    const nodes = [
+      ...renderer!.root.findAllByType('SafeAreaView'),
+      ...renderer!.root.findAllByType('View')
+    ]
+    const filled = nodes
+      .flatMap((node) => {
+        const style = node.props.style
+        return Array.isArray(style) ? style : [style]
+      })
+      .find((part) => part && typeof part === 'object' && 'backgroundColor' in part)
     return (filled ?? {}) as { backgroundColor?: string }
   }
 
@@ -236,11 +248,12 @@ describe('MobileStoryDetailScreen', () => {
     expect(chipColor('gate-chip:gate-orchestrate-002')).toBe(colors.statusGreen)
     expect(chipColor('gate-chip:gate-orchestrate-003')).toBe(colors.textMuted)
     // Resolved/timeout rows stay read-only (spec §3b). Pin the full button
-    // inventory: the pending gate row is the screen's ONLY pressable in this
-    // state (the stale-banner refresh renders only under not-found).
+    // inventory: the T10 back affordance plus the pending gate row are the
+    // screen's ONLY pressables in this state (the stale-banner refresh renders
+    // only under not-found).
     expect(
       renderer!.root.findAllByType('Pressable').map((node) => node.props.accessibilityLabel)
-    ).toEqual([storyDetailHappyPath.gates[0].title])
+    ).toEqual(['Back', storyDetailHappyPath.gates[0].title])
   })
 
   it('falls back to the untitled title and hides progress and gates for a parseError detail', async () => {

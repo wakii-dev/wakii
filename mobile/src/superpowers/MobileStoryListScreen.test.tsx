@@ -87,7 +87,12 @@ vi.mock('react-native', () => ({
   Text: 'Text',
   View: 'View'
 }))
-vi.mock('lucide-react-native', () => ({ Bell: 'Bell' }))
+vi.mock('lucide-react-native', () => ({ Bell: 'Bell', ChevronLeft: 'ChevronLeft' }))
+vi.mock('expo-router', () => ({ useRouter: () => ({ back: () => {} }) }))
+vi.mock('react-native-safe-area-context', () => ({
+  SafeAreaView: 'SafeAreaView',
+  useSafeAreaInsets: () => ({ bottom: 0, left: 0, right: 0, top: 0 })
+}))
 vi.mock('./story-screen-cache', () => ({
   loadStoryListSnapshot: cache.loadStoryListSnapshot,
   saveStoryListSnapshot: cache.saveStoryListSnapshot
@@ -164,11 +169,17 @@ describe('MobileStoryListScreen', () => {
   }
 
   function containerStyle(): { backgroundColor?: string } {
-    const style = renderer!.root.findAllByType('View')[0].props.style
-    const flat = Array.isArray(style) ? style : [style]
-    const filled = flat.find(
-      (part) => part && typeof part === 'object' && 'backgroundColor' in part
-    )
+    // The screen root is now a SafeAreaView, so scan it alongside plain Views.
+    const nodes = [
+      ...renderer!.root.findAllByType('SafeAreaView'),
+      ...renderer!.root.findAllByType('View')
+    ]
+    const filled = nodes
+      .flatMap((node) => {
+        const style = node.props.style
+        return Array.isArray(style) ? style : [style]
+      })
+      .find((part) => part && typeof part === 'object' && 'backgroundColor' in part)
     return (filled ?? {}) as { backgroundColor?: string }
   }
 
