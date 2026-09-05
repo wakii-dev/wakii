@@ -230,7 +230,7 @@ Tech blog: markdown posts, post list, single-post view, tag filter, dark/light t
 
 ## Images (local file paths — agent reads them)
 - /Users/mac/screens/home.png" style="min-height: 180px; font-family: ui-monospace, Menlo, monospace; font-size: 11px; line-height: 1.5;" maxlength="2400"></textarea>
-      <div style="text-align: right; margin-top: 2px;"><span id="byte-counter" class="muted" style="font-size: 11px;">0B / 4096</span></div>
+      <div style="text-align: right; margin-top: 2px;"><span id="byte-counter" class="muted" style="font-size: 11px;">0B</span></div>
     </div>
 
     <!-- Continue hint — shown only for continue mode -->
@@ -850,8 +850,9 @@ Tech blog: markdown posts, post list, single-post view, tag filter, dark/light t
         var text = buildPrompt() || ''
         var bytes = utf8Bytes(text)
         var el = document.getElementById('byte-counter')
-        el.textContent = bytes + 'B / 64K'
-        el.style.color = bytes > 63000 ? '#ef4444' : (bytes > 55000 ? '#f59e0b' : 'var(--muted-foreground, #999)')
+        // Chỉ hiển thị thông tin — prompt không có limit (runtime chịu tới 16MB).
+        el.textContent = bytes + 'B'
+        el.style.color = 'var(--muted-foreground, #999)'
       }
       document.getElementById('idea').addEventListener('input', updateByteCounter)
       // Update counter on mode change too

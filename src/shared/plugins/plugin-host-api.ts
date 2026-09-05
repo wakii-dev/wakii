@@ -17,9 +17,8 @@ import type { PluginCapabilityKind } from './plugin-capabilities'
  * stability promises before then.
  */
 
-// Why 64K: prompts composed by story/workflow panels routinely exceed 4K; the
-// runtime's own hard input ceiling is 16 MiB, so this only bounds abuse.
-export const PANEL_ACTION_TEXT_MAX_LENGTH = 65536
+// Cap = runtime ceiling 16 MiB — plugin facade thêm 0 limit riêng.
+export const PANEL_ACTION_TEXT_MAX_LENGTH = 16 * 1024 * 1024
 export const PLUGIN_WORKSPACE_TERMINAL_LIMIT = 50
 export const PLUGIN_WORKSPACE_LABEL_MAX_LENGTH = 512
 export const PLUGIN_TERMINAL_ID_MAX_LENGTH = 1024
@@ -32,13 +31,7 @@ const workspaceReadContextResult = z
     /** Terminals of the focused worktree, so callers can address a specific
      *  terminal id — the API has no "active terminal" write target. */
     terminals: z
-      .array(
-        z
-          .object({
-            id: z.string().min(1).max(PLUGIN_TERMINAL_ID_MAX_LENGTH)
-          })
-          .strict()
-      )
+      .array(z.object({ id: z.string().min(1).max(PLUGIN_TERMINAL_ID_MAX_LENGTH) }).strict())
       .max(PLUGIN_WORKSPACE_TERMINAL_LIMIT)
   })
   .strict()
@@ -59,15 +52,6 @@ const notificationsShowParams = z.object({
 })
 const notificationsShowResult = z.object({ delivered: z.boolean() })
 
-const clipboardWriteParams = z.object({
-  text: z
-    .string()
-    .min(1)
-    .max(1024 * 1024)
-})
-const clipboardWriteResult = z.object({ written: z.boolean() })
-
-const RESERVED_STORAGE_KEYS = new Set(['__proto__', 'prototype', 'constructor'])
 const storageKeySchema = z
   .string()
   .min(1)
@@ -238,8 +222,8 @@ export const PLUGIN_HOST_API_V0: readonly PluginHostMethodSpec[] = [
     capability: 'clipboard:write',
     mutation: true,
     panel: true,
-    params: clipboardWriteParams,
-    result: clipboardWriteResult
+    params: z.object({ text: z.string().max(1024 * 1024) }),
+    result: z.object({ written: z.boolean() })
   }),
   spec({
     name: 'storage.get',
