@@ -70,6 +70,7 @@ describe('gate notification routing', () => {
           source: 'gate-open',
           hostId: 'host-1',
           storyId,
+          gateId: 'gate-1',
           worktreeId: 'repo::/tmp/wt'
         })
       ).toEqual({
@@ -117,6 +118,31 @@ describe('gate notification routing', () => {
         name: '[hostId]/session/[worktreeId]',
         params: { hostId: 'host-1', worktreeId: 'repo::/tmp/wt' }
       }
+    })
+  })
+
+  it('keeps a non-gate source on the worktree route even when it carries a story id', () => {
+    // Story routing is gate-source-only: a stray/legacy blob with storyId must never misroute.
+    expect(
+      getNotificationNavigationTarget({
+        source: 'agent-task-complete',
+        hostId: 'host-1',
+        worktreeId: 'repo::/tmp/wt',
+        storyId: 'story-1'
+      })
+    ).toEqual({
+      hostId: 'host-1',
+      sessionTarget: {
+        name: '[hostId]/session/[worktreeId]',
+        params: { hostId: 'host-1', worktreeId: 'repo::/tmp/wt' }
+      }
+    })
+  })
+
+  it('omits story and gate keys from banner data when the event carries none', () => {
+    expect(buildLocalNotificationData({ source: 'agent-task-complete' }, 'host-1')).toEqual({
+      source: 'agent-task-complete',
+      hostId: 'host-1'
     })
   })
 
