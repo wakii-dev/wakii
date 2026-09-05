@@ -21,10 +21,11 @@ T1 (conformance) ─┬─→ T3 (list data) ─┤      └─→ T10 (responsi
 T7 (desktop Linear read) — độc lập
 ```
 
-Edges:
+Edges (plan-critic round 1: +T3→T4):
 - T1 → T3, T4 (fixtures + contract types)
 - T8 → T5, T6 (strings convention)
-- T3 → T5, T9; T4 → T6, T9
+- T3 → T4, T5, T9 (T4 dùng chung cơ chế T3 — extract, không clone)
+- T4 → T6, T9
 - T5, T6 → T2, T9, T10
 - T7 độc lập (desktop)
 
@@ -34,7 +35,7 @@ dependency đúng):** T1 → T7 → T8 → T3 → T4 → T5 → T6 → T9 → T2
 Mỗi task: 1 executor agent + code-reviewer review diff TRƯỚC task kế. Commit atomic
 `feat(FI-307): <task-name>` (file `docs/**` thêm vào bằng `git add -f`). Sau mỗi task:
 tick checkbox task này trong file plan này (đủ cho panel progress; commit plan tick
-gộp theo wave: `docs(FI-307): plan tick T1-T4`).
+gộp theo đợt, ví dụ sau T8: `docs(FI-307): plan tick T1,T7,T8`).
 
 ## Tasks
 
@@ -55,22 +56,28 @@ gộp theo wave: `docs(FI-307): plan tick T1-T4`).
 
 ### T7 linear-subissue-status-read-desktop
 - **Files:** `src/main/superpowers/story-linear-status.ts` (mới — read + TTL cache +
-  state map), `src/main/runtime/rpc/methods/superpowers-story-detail.ts` (thay
-  hardcode `'unknown'` dòng ~99), `src/main/runtime/rpc/methods/superpowers-story-list.ts`
-  (tính `sfDone` — thay hardcode `0` dòng ~110), mở rộng cả 2 test file.
+  state map) + `story-linear-status.test.ts` (unit riêng — mapping + TTL là logic
+  thuần), `src/main/runtime/rpc/methods/superpowers-story-detail.ts` (thay hardcode
+  `'unknown'` dòng ~99), `src/main/runtime/rpc/methods/superpowers-story-list.ts`
+  (tính `sfDone` — thay hardcode `0` dòng ~110), mở rộng cả 2 test method file;
+  **conditional** (nếu probe (a) cần resolve identifier): query mới trong
+  `src/main/linear/<tên-theo-nội-dung>.ts` — KHÔNG nhét vào story-linear-status.ts.
 - **Steps:**
   - [ ] PROBE-GATE (phase0 risk #2): bracket ghi `linear: FI-306` là **identifier**;
         `getIssue` (`linear-issue-lookups.ts:33-64`) gọi SDK `entry.client.issue(id)`.
         Probe `issue(id:)` có nhận identifier không / cần resolve bước nào trong
         `src/main/linear/` (query mới = internal change, không phải wire change).
         KHÔNG code theo nhớ.
+  - [ ] PROBE (c) rate-limit: helper reuse limiter max-4 (`linear-request-concurrency.ts`
+        — choke chung với mobile tasks screens); đọc chi phí mỗi refresh: N ids
+        (N = số SF có `linear:`) qua limiter
   - [ ] Helper `readSfStatuses(linearIds, opts?) => Map<id, SuperpowersSfStatus>`:
-        gom ĐỦ ids mỗi request (v1 budget spec); reuse `linear-issue-lookups.ts` +
-        limiter max-4; **TTL cache 30s** — module-level Map DÙNG CHUNG cả 2 method,
-        key = linear identifier, resolution identifier→UUID cache cùng entry/cùng
-        TTL; inject `now: () => number` (default `Date.now`) cho test deterministic;
-        aliased batch query chỉ làm nếu probe thấy rẻ + trả lời được per-workspace
-        vs single-workspace (`getClients()` multi-entry)
+        gom ĐỦ ids mỗi request (v1 budget spec); **TTL cache 30s** — module-level
+        Map DÙNG CHUNG cả 2 method, key = linear identifier, resolution
+        identifier→UUID cache cùng entry/cùng TTL; inject `now: () => number`
+        (default `Date.now`) cho test deterministic; aliased batch query chỉ làm
+        nếu probe thấy rẻ + trả lời được per-workspace vs single-workspace
+        (`getClients()` multi-entry — `getIssue` hiện iterate clients per-id, đã OK)
   - [ ] Mapping `state.type` (giá trị đã biết): completed→done, started→in-progress,
         unstarted/backlog→todo; **default branch bắt buộc: giá trị khác/rỗng/không
         nhận diện được → 'unknown'** (không crash, không đoán); `canceled`→'unknown'
@@ -80,9 +87,9 @@ gộp theo wave: `docs(FI-307): plan tick T1-T4`).
         `parseBracketSfs` lấy linear ids trong cùng pass hiện có** — KHÔNG đổi
         `BracketStoryScan`/`scanWorktreeBracketStories` (SF-1 frozen), KHÔNG parser
         thứ ba. `sfDone` = đếm 'done' của SF có `linear:`
-  - [ ] Tests (cả 2 method file): connected map đúng, không connect, thiếu `linear:`,
-        per-issue lỗi, TTL 30s qua inject `now` (2 poll ≤ TTL → 1 lượt reads),
-        mapping từng state.type đã biết + giá trị lạ/rỗng → 'unknown'
+  - [ ] Tests: unit `story-linear-status.test.ts` (mapping + TTL qua inject `now`)
+        + cả 2 method test (connected map đúng, không connect, thiếu `linear:`,
+        per-issue lỗi, 2 poll ≤ TTL → 1 lượt reads)
 - **Acceptance:** `pnpm tc` pass; `pnpm test src/main/runtime/rpc/methods/superpowers-story-detail.test.ts
   src/main/runtime/rpc/methods/superpowers-story-list.test.ts` pass. Linear-only theo
   contract (`linear:` là Linear id — §3b không có khái niệm GitHub/GitLab tương đương).
@@ -96,8 +103,9 @@ gộp theo wave: `docs(FI-307): plan tick T1-T4`).
   - [ ] Tập strings screen cần: title list/detail, section 'khác', stale banner,
         status labels (todo/in-progress/done/unknown), progress, refresh/pull hint,
         parseError entry label
-- **Acceptance:** copy module tồn tại + type-safe; KHÔNG thêm i18n dep vào
-  `mobile/package.json`; decision ghi 1 dòng vào task report.
+- **Acceptance:** copy module tồn tại + type-safe (`cd mobile && pnpm typecheck`
+  pass); KHÔNG thêm i18n dep vào `mobile/package.json`; decision ghi 1 dòng vào
+  task report.
 
 ### T3 story-list-data-module-cache-reconnect
 - **Files:** `mobile/src/superpowers/story-list-host-fetch.ts`, `mobile/src/superpowers/story-screen-cache.ts`,
@@ -112,8 +120,10 @@ gộp theo wave: `docs(FI-307): plan tick T1-T4`).
         cache write chỉ khi `response.ok`)
   - [ ] Hook theo pattern `mobile/src/worktree/host-worktree-refresh.ts` (đã verify
         phase0): AppState gate — background KHÔNG poll, foreground resume + refresh
-        ngay; interval foreground **60s** (precedent `host-worktree-refresh.ts:45`);
-        clientEvents `'ready'` → refetch sau reconnect
+        ngay; interval foreground **60s** — CHÚ Ý citation (plan-critic): constant
+        đúng tham chiếu là `REPO_METADATA_REFRESH_MS` (60s, cùng file); KHÔNG copy
+        `WORKTREE_REFRESH_MS` (3s — dành cho worktree ps, sẽ giết Linear rate-limit
+        nếu dùng cho storyList); clientEvents `'ready'` → refetch sau reconnect
   - [ ] Pull-to-refresh handler expose cho T5 (RefreshControl — precedent
         `mobile/src/host-screen/host-workspace-list.tsx`)
   - [ ] Tests: cache-first render (persisted seed), refetch sau reconnect ('ready'),
@@ -122,15 +132,16 @@ gộp theo wave: `docs(FI-307): plan tick T1-T4`).
 
 ### T4 story-detail-data-module
 - **Files:** `mobile/src/superpowers/story-detail-host-fetch.ts`, `mobile/src/superpowers/use-mobile-story-detail.ts`
-  + tests.
+  + tests; được phép chỉnh file T3 khi extract cơ chế dùng chung (edge T3→T4).
 - **Steps:**
   - [ ] Cache keyed `hostId` + `storyId` (cùng pattern T3, cùng `story-screen-cache.ts`)
   - [ ] `sendSingleFlightRequest(client, hostId, 'superpowers.storyDetail', { storyId })`
   - [ ] `story_not_found` → state riêng (KHÔNG throw) cho T9 stale banner; loading/
         error/refresh states
-  - [ ] Foreground poll + background dừng + reconnect refresh — dùng chung cơ chế
-        T3 nếu extract được (không clone); interval 60s như list (desktop TTL cache
-        30s hấp thụ chi phí Linear join)
+  - [ ] Foreground poll + background dừng + reconnect refresh — extract dùng chung
+        với T3 (không clone); interval 60s như list (lưu ý TTL desktop 30s < poll
+        60s → mỗi poll vẫn 1 lượt Linear reads; TTL chỉ hấp thụ burst multi-surface
+        — không overstate)
   - [ ] Tests: cache-first, not-found state, poll lifecycle
 - **Acceptance:** tests pass; typecheck pass.
 
@@ -146,7 +157,11 @@ gộp theo wave: `docs(FI-307): plan tick T1-T4`).
   - [ ] Entry row: title, epicId, tiến độ sfDone/sfTotal, pendingGates badge,
         parseError entry → row flag lỗi (KHÔNG crash, KHÔNG ẩn các story healthy)
   - [ ] Tap entry → navigate detail route `stories/[...storyId]` (catch-all —
-        PROBE catch-all behavior trước; fallback query-param nếu có trở ngại thật)
+        PROBE 3 câu trước khi commit: (1) `[...storyId]` match storyId chứa `/`;
+        (2) tương tác file-as-layout `stories.tsx` + dir `stories/` (app chưa có
+        precedent file+dir cùng tên — `files/`, `session/`, `history/` đều dir
+        trần); (3) encoding storyId khi navigate; fallback query-param nếu có
+        trở ngại thật)
   - [ ] Component test: grouping, parseError row, healthy rows vẫn hiển thị, nav params
 - **Acceptance:** `cd mobile && pnpm test` (file mới) + `pnpm typecheck` pass; route
   pass `mobile/src/expo-route-module-boundary.test.ts`.
@@ -213,10 +228,13 @@ gộp theo wave: `docs(FI-307): plan tick T1-T4`).
    exec-out screencap -p > /tmp/story/fi305/sf2-device-*.png`; nếu build/emulator
    không khả dụng sau probe → ghi rõ trong verifier report (không claim).
 5. verifier agent đối chiếu ACCEPTANCE 6 dòng context pack — từng dòng 1 evidence.
-   Lưu ý dòng 1: parity = data storyList khớp bracket files thật (fixture test +
-   output check) — KHÔNG so "desktop panel" (superpowers không có UI desktop,
-   phase0 risk #6). Dòng 3: behavior + unit test chứng minh; con số ≤10s verify
-   device-level thuộc SF-4 theo spec §4.
+   Lưu ý dòng 1: parity = data storyList khớp bracket files thật — evidence cụ thể:
+   conformance/fixture test T1 + list method test với temp bracket tree (pattern
+   test hiện có của `superpowers-story-list.test.ts`) + device check nếu khả dụng —
+   KHÔNG so "desktop panel" (superpowers không có UI desktop, phase0 risk #6; note
+   này sẽ được push lên epic để SF-4 không re-litigate criterion §5). Dòng 3:
+   behavior + unit test chứng minh; con số ≤10s verify device-level thuộc SF-4
+   theo spec §4.
 6. security-auditor review: story routes boundary + mobile surface (3 method có sẵn,
    không thêm allowlist, không resolve UI).
 7. doc-writer: ghi note wire-compat (không wire change — mobile consumes existing
