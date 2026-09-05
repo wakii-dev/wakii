@@ -6,6 +6,18 @@ import type { OrchestrationDb } from '../orchestration-db'
 
 // ── Decision Gates ──
 
+export type GateTransitionEvent =
+  | { kind: 'open'; gate: DecisionGateRow }
+  | { kind: 'closed'; gate: DecisionGateRow }
+export type GateTransitionListener = (event: GateTransitionEvent) => void
+
+export function setGateTransitionListener(
+  this: OrchestrationDb,
+  listener: GateTransitionListener
+): void {
+  this.gateTransitionListener = listener
+}
+
 export function createGate(
   this: OrchestrationDb,
   gate: {
@@ -16,6 +28,7 @@ export function createGate(
   }
 ): DecisionGateRow {
   this.db.exec('SAVEPOINT create_gate')
+  let created: DecisionGateRow | undefined
   try {
     const active = this.db
       .prepare(
@@ -73,16 +86,24 @@ export function createGate(
       )
     this.completeActiveDispatchesForTask(gate.taskId)
     this.db.prepare("UPDATE tasks SET status = 'blocked' WHERE id = ?").run(gate.taskId)
-    const created = this.db.prepare('SELECT * FROM decision_gates WHERE id = ?').get(id) as
+    created = this.db.prepare('SELECT * FROM decision_gates WHERE id = ?').get(id) as
       | DecisionGateRow
       | undefined
     this.db.exec('RELEASE create_gate')
-    return created as DecisionGateRow
   } catch (error) {
     this.db.exec('ROLLBACK TO create_gate')
     this.db.exec('RELEASE create_gate')
     throw error
   }
+  // Emit after RELEASE: a throwing listener must not ROLLBACK a released savepoint.
+  if (created) {
+    try {
+      this.gateTransitionListener?.({ kind: 'open', gate: created })
+    } catch {
+      /* notification failure must not break gate creation */
+    }
+  }
+  return created as DecisionGateRow
 }
 
 export function resolveGate(
@@ -98,6 +119,7 @@ export function resolveGate(
   }
 
   this.db.exec('SAVEPOINT resolve_gate')
+  let resolved: DecisionGateRow | undefined
   try {
     this.db
       .prepare(
@@ -105,28 +127,85 @@ export function resolveGate(
       )
       .run(resolution, gateId)
     this.updateTaskStatus(gate.task_id, 'ready')
-    const resolved = this.db.prepare('SELECT * FROM decision_gates WHERE id = ?').get(gateId) as
+    resolved = this.db.prepare('SELECT * FROM decision_gates WHERE id = ?').get(gateId) as
       | DecisionGateRow
       | undefined
     this.db.exec('RELEASE resolve_gate')
-    return resolved
   } catch (error) {
     this.db.exec('ROLLBACK TO resolve_gate')
     this.db.exec('RELEASE resolve_gate')
     throw error
   }
+  // Emit after RELEASE: a throwing listener must not ROLLBACK a released savepoint.
+  if (resolved) {
+    try {
+      this.gateTransitionListener?.({ kind: 'closed', gate: resolved })
+    } catch {
+      /* notification failure must not break gate resolution */
+    }
+  }
+  return resolved
+}
+
+export function resolveGateIfPending(
+  this: OrchestrationDb,
+  gateId: string,
+  resolution: string
+): DecisionGateRow | undefined {
+  this.db.exec('SAVEPOINT resolve_gate_if_pending')
+  let resolved: DecisionGateRow | undefined
+  try {
+    // Why: phone path — chỉ land khi còn pending, không overwrite CLI resolution.
+    const result = this.db
+      .prepare(
+        "UPDATE decision_gates SET status = 'resolved', resolution = ?, resolved_at = datetime('now') WHERE id = ? AND status = 'pending'"
+      )
+      .run(resolution, gateId)
+    if (result.changes > 0) {
+      resolved = this.db.prepare('SELECT * FROM decision_gates WHERE id = ?').get(gateId) as
+        | DecisionGateRow
+        | undefined
+      if (resolved) {
+        this.updateTaskStatus(resolved.task_id, 'ready')
+      }
+    }
+    this.db.exec('RELEASE resolve_gate_if_pending')
+  } catch (error) {
+    this.db.exec('ROLLBACK TO resolve_gate_if_pending')
+    this.db.exec('RELEASE resolve_gate_if_pending')
+    throw error
+  }
+  // Emit NGOÀI try/catch của savepoint (plan-critic P1: listener throw sau RELEASE
+  // vào catch cũ → ROLLBACK savepoint đã release → "no such savepoint" crash store
+  // path). Wrapper riêng nuốt throw listener (test: listener throw không lan store).
+  if (resolved) {
+    try {
+      this.gateTransitionListener?.({ kind: 'closed', gate: resolved })
+    } catch {
+      /* notification failure must not break gate resolution */
+    }
+  }
+  return resolved
 }
 
 export function timeoutGate(this: OrchestrationDb, gateId: string): DecisionGateRow | undefined {
-  this.db
+  const result = this.db
     .prepare(
       // Why: without the status guard a late timeout overwrites a gate the user already resolved.
       "UPDATE decision_gates SET status = 'timeout', resolved_at = datetime('now') WHERE id = ? AND status = 'pending'"
     )
     .run(gateId)
-  return this.db.prepare('SELECT * FROM decision_gates WHERE id = ?').get(gateId) as
+  const timedOut = this.db.prepare('SELECT * FROM decision_gates WHERE id = ?').get(gateId) as
     | DecisionGateRow
     | undefined
+  if (result.changes > 0 && timedOut) {
+    try {
+      this.gateTransitionListener?.({ kind: 'closed', gate: timedOut })
+    } catch {
+      /* notification failure must not break gate resolution */
+    }
+  }
+  return timedOut
 }
 
 export function listGates(
@@ -162,17 +241,21 @@ export function getGate(this: OrchestrationDb, id: string): DecisionGateRow | un
 export type DecisionGateStoreMethods = {
   createGate: typeof createGate
   resolveGate: typeof resolveGate
+  resolveGateIfPending: typeof resolveGateIfPending
   timeoutGate: typeof timeoutGate
   listGates: typeof listGates
   getGate: typeof getGate
+  setGateTransitionListener: typeof setGateTransitionListener
 }
 
 export function attachDecisionGateStore(ctor: { prototype: object }): void {
   Object.assign(ctor.prototype, {
     createGate,
     resolveGate,
+    resolveGateIfPending,
     timeoutGate,
     listGates,
-    getGate
+    getGate,
+    setGateTransitionListener
   })
 }
