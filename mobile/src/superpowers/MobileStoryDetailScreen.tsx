@@ -132,11 +132,31 @@ export function MobileStoryDetailScreen({ client, hostId, storyId, bottomInset =
     refresh()
   }, [refresh])
 
+  // Minimal back affordance — the title stays in the body, no header duplication.
+  // Rendered in the empty/loading branch too: an uncached deep-link or unreachable
+  // host must still offer the way back (owner symptom).
+  const backRow = (
+    <View style={styles.backRow}>
+      <Pressable
+        style={styles.backButton}
+        onPress={() => router.back()}
+        accessibilityRole="button"
+        accessibilityLabel="Back"
+        hitSlop={8}
+      >
+        <ChevronLeft size={22} color={colors.textPrimary} />
+      </Pressable>
+    </View>
+  )
+
   if (!detail) {
     return (
-      <View style={styles.state}>
-        {loading ? <ActivityIndicator color={colors.textSecondary} /> : null}
-      </View>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        {backRow}
+        <View style={styles.state}>
+          {loading ? <ActivityIndicator color={colors.textSecondary} /> : null}
+        </View>
+      </SafeAreaView>
     )
   }
 
@@ -144,18 +164,7 @@ export function MobileStoryDetailScreen({ client, hostId, storyId, bottomInset =
   const total = detail.story.sfs.length
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Minimal back affordance — the title stays in the body, no header duplication. */}
-      <View style={styles.backRow}>
-        <Pressable
-          style={styles.backButton}
-          onPress={() => router.back()}
-          accessibilityRole="button"
-          accessibilityLabel="Back"
-          hitSlop={8}
-        >
-          <ChevronLeft size={22} color={colors.textPrimary} />
-        </Pressable>
-      </View>
+      {backRow}
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: spacing.lg + bottomInset }]}
         refreshControl={

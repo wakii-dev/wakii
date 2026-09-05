@@ -46,32 +46,40 @@ export function MobileStoryListScreen({ client, hostId, onOpenStory, bottomInset
     [stories]
   )
 
+  const header = (
+    <View style={styles.topRow}>
+      <Pressable
+        style={styles.backButton}
+        onPress={() => router.back()}
+        accessibilityRole="button"
+        accessibilityLabel="Back"
+        hitSlop={8}
+      >
+        <ChevronLeft size={22} color={colors.textPrimary} />
+      </Pressable>
+      <View style={styles.titleWrap}>
+        <Text style={styles.heading}>{STORY_LIST_TITLE}</Text>
+        <Text style={styles.subheading} numberOfLines={1}>
+          Stories across this host's worktrees
+        </Text>
+      </View>
+    </View>
+  )
+  // Owner symptom: an uncached deep-link or unreachable host must still show the
+  // header/back — the spinner rides below it, never alone.
   if (loading) {
     return (
-      <View style={styles.state}>
-        <ActivityIndicator color={colors.textSecondary} />
-      </View>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        {header}
+        <View style={styles.state}>
+          <ActivityIndicator color={colors.textSecondary} />
+        </View>
+      </SafeAreaView>
     )
   }
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.topRow}>
-        <Pressable
-          style={styles.backButton}
-          onPress={() => router.back()}
-          accessibilityRole="button"
-          accessibilityLabel="Back"
-          hitSlop={8}
-        >
-          <ChevronLeft size={22} color={colors.textPrimary} />
-        </Pressable>
-        <View style={styles.titleWrap}>
-          <Text style={styles.heading}>{STORY_LIST_TITLE}</Text>
-          <Text style={styles.subheading} numberOfLines={1}>
-            Stories across this host's worktrees
-          </Text>
-        </View>
-      </View>
+      {header}
       {stale ? (
         // Failed poll — the last good list keeps rendering under the banner.
         <View style={styles.bannerWrap}>

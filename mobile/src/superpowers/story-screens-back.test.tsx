@@ -158,4 +158,37 @@ describe('story screens back affordances (T10)', () => {
     })
     expect(router.back).toHaveBeenCalledTimes(1)
   })
+
+  // Owner symptom: a pending/failed first fetch (uncached deep-link, unreachable
+  // host) lands on the early-return branch — the back affordance must survive it.
+  it('story list keeps the header and back button visible while the fetch is pending', async () => {
+    await act(async () => {
+      renderer = create(
+        createElement(MobileStoryListScreen, {
+          client: fakeClient(vi.fn().mockImplementation(() => new Promise(() => {}))),
+          hostId: 'host-1',
+          bottomInset: 0,
+          onOpenStory: () => {}
+        })
+      )
+      await flushMicrotasks()
+    })
+    expect(texts()).toContain(STORY_LIST_TITLE)
+    expect(findBack()).toBeDefined()
+  })
+
+  it('story detail keeps the back button visible while the fetch is pending', async () => {
+    await act(async () => {
+      renderer = create(
+        createElement(MobileStoryDetailScreen, {
+          client: fakeClient(vi.fn().mockImplementation(() => new Promise(() => {}))),
+          hostId: 'host-1',
+          storyId: storyDetailHappyPath.story.storyId,
+          bottomInset: 0
+        })
+      )
+      await flushMicrotasks()
+    })
+    expect(findBack()).toBeDefined()
+  })
 })
