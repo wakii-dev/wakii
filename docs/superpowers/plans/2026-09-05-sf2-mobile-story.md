@@ -150,19 +150,19 @@ gộp theo đợt, ví dụ sau T8: `docs(FI-307): plan tick T1,T7,T8`).
   boundary), `mobile/src/superpowers/MobileStoryListScreen.tsx`, `mobile/src/superpowers/story-list-groups.ts`
   (group logic thuần để test) + tests.
 - **Steps:**
-  - [ ] Group per worktree: section theo `worktreeId` (header = `workspaceName`;
+  - [x] Group per worktree: section theo `worktreeId` (header = `workspaceName`;
         `worktreeId: null` defensive → nhóm trung tính — phase0: v1 thực tế luôn
         có id); nhiều entry cùng worktree cùng group; giữ thứ tự server
         (`updatedAt` desc)
-  - [ ] Entry row: title, epicId, tiến độ sfDone/sfTotal, pendingGates badge,
+  - [x] Entry row: title, epicId, tiến độ sfDone/sfTotal, pendingGates badge,
         parseError entry → row flag lỗi (KHÔNG crash, KHÔNG ẩn các story healthy)
-  - [ ] Tap entry → navigate detail route `stories/[...storyId]` (catch-all —
+  - [x] Tap entry → navigate detail route `stories/[...storyId]` (catch-all —
         PROBE 3 câu trước khi commit: (1) `[...storyId]` match storyId chứa `/`;
         (2) tương tác file-as-layout `stories.tsx` + dir `stories/` (app chưa có
         precedent file+dir cùng tên — `files/`, `session/`, `history/` đều dir
         trần); (3) encoding storyId khi navigate; fallback query-param nếu có
         trở ngại thật)
-  - [ ] Component test: grouping, parseError row, healthy rows vẫn hiển thị, nav params
+  - [x] Component test: grouping, parseError row, healthy rows vẫn hiển thị, nav params
 - **Acceptance:** `cd mobile && pnpm test` (file mới) + `pnpm typecheck` pass; route
   pass `mobile/src/expo-route-module-boundary.test.ts`.
 

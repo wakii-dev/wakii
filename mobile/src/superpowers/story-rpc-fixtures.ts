@@ -84,6 +84,37 @@ export const storyListWithParseError = {
   stories: [...storyListHappyPath.stories, storyListItemParseError]
 } satisfies SuperpowersStoryListResult
 
+// Same bracket name in several worktrees is BY DESIGN (host-side list does not
+// dedup) — rows must stay distinct via their worktree-scoped keys.
+export const storyListDuplicateStoryIdAcrossWorktrees = {
+  stories: [
+    {
+      storyId: 'brackets/fi307-sf2-mobile-story.md',
+      title: 'SF-2 Mobile story screens + Linear status',
+      epicId: 'FI-307',
+      worktreeId: 'wt-orca-main',
+      workspaceName: 'orca',
+      sfTotal: 4,
+      sfDone: 1,
+      pendingGates: 0,
+      updatedAt: 1757000060000,
+      parseError: false
+    },
+    {
+      storyId: 'brackets/fi307-sf2-mobile-story.md',
+      title: 'SF-2 Mobile story screens + Linear status',
+      epicId: 'FI-307',
+      worktreeId: 'wt-atlas-fi307',
+      workspaceName: 'atlas',
+      sfTotal: 4,
+      sfDone: 0,
+      pendingGates: 1,
+      updatedAt: 1757000055000,
+      parseError: false
+    }
+  ]
+} satisfies SuperpowersStoryListResult
+
 export const storyDetailHappyPath = {
   story: {
     storyId: 'brackets/fi307-sf2-mobile-story.md',
