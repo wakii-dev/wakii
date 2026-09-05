@@ -47,3 +47,10 @@ trước, KHÔNG thêm i18n library.
 - KHÔNG đổi contract §3b — nếu phát hiện contract thiếu → REQUIREMENT-GAP comment
   lên epic, không tự vá shape
 - KHÔNG poll khi app background; KHÔNG thêm file-watcher
+
+## Device verify (meta 2026-09-04 — user cung cấp)
+Android emulator đã mở sẵn: id `emulator-5554` (Android 14 / SDK 34, ARM64) —
+DÙNG ĐÚNG thiết bị này, KHÔNG tự tạo emulator mới. App `mobile/` (expo):
+build+install `pnpm android`, dev server `pnpm start`. Rule 0: THẤY màn chạy
+thật trên emulator trước khi claim — `adb -s emulator-5554 exec-out screencap
+-p > /tmp/shot.png`.
