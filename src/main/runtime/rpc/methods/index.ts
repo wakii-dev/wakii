@@ -46,6 +46,7 @@ import { AGENT_SESSION_METHODS } from './agent-session'
 import { STRUCTURED_AGENT_SESSION_METHODS } from './structured-agent-session'
 import { SUPERPOWERS_STORY_LIST_METHODS } from './superpowers-story-list'
 import { SUPERPOWERS_STORY_DETAIL_METHODS } from './superpowers-story-detail'
+import { SUPERPOWERS_GATE_RESOLVE_METHODS } from './superpowers-gate-resolve'
 import { ARTIFACT_METHODS } from './artifacts'
 import { AGENT_HOOK_METHODS } from './agent-hooks'
 
@@ -101,5 +102,6 @@ export const ALL_RPC_METHODS: readonly RpcAnyMethod[] = [
   ...PAIRING_METHODS,
   ...UPDATER_METHODS,
   ...SUPERPOWERS_STORY_LIST_METHODS,
-  ...SUPERPOWERS_STORY_DETAIL_METHODS
+  ...SUPERPOWERS_STORY_DETAIL_METHODS,
+  ...SUPERPOWERS_GATE_RESOLVE_METHODS
 ]
