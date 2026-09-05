@@ -1423,27 +1423,77 @@ Tech blog: markdown posts, post list, single-post view, tag filter, dark/light t
         document.getElementById('ne-title').focus()
       }
 
-      // ---- Share bracket: dựng HTML standalone → publish qua orca artifacts ----
+      // ---- Share bracket: vẽ diagram SVG (tier ladder) → HTML → orca artifacts ----
       function buildBracketHtml() {
-        var md = (graph && graph.planMarkdown) || ''
-        var esc = function (s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') }
-        var rows = esc(md).split('\n').map(function (line) {
-          if (/^# /.test(line)) return '<h1>' + line.slice(2) + '</h1>'
-          if (/^## /.test(line)) return '<h2>' + line.slice(3) + '</h2>'
-          if (/^(Tier|linear|Depends on|Design):/.test(line)) return '<div class="meta">' + line + '</div>'
-          if (/^What:/.test(line)) return '<p class="what">' + line + '</p>'
-          if (/^-\s\[[ x]\]/.test(line)) return '<div class="task">' + line + '</div>'
-          if (line.trim() === '') return ''
-          return '<p>' + line + '</p>'
-        }).join('\n')
+        var branches = (graph && graph.branches) || []
+        var story = (graph && graph.story) || {}
+        var TIER_COLORS = ['#6ba1f8', '#eab308', '#34d399', '#d946ef', '#f97316', '#22d3ee']
+        var NODE_W = 250, NODE_H = 96, COL_GAP = 72, ROW_GAP = 22, M = 56
+        var tiers = {}
+        branches.forEach(function (b) {
+          var t = b.tier == null ? 0 : b.tier
+          if (!tiers[t]) tiers[t] = []
+          tiers[t].push(b)
+        })
+        var tierKeys = Object.keys(tiers).map(Number).sort(function (a, b) { return a - b })
+        var maxRows = 1
+        tierKeys.forEach(function (t) { maxRows = Math.max(maxRows, tiers[t].length) })
+        var W = M * 2 + tierKeys.length * (NODE_W + COL_GAP) - COL_GAP
+        var H = M * 2 + 46 + maxRows * (NODE_H + ROW_GAP) - ROW_GAP
+        var pos = {}
+        tierKeys.forEach(function (t, ti) {
+          tiers[t].forEach(function (b, ri) {
+            pos[b.id] = { x: M + ti * (NODE_W + COL_GAP), y: M + 46 + ri * (NODE_H + ROW_GAP), tier: t, ci: ti % TIER_COLORS.length }
+          })
+        })
+        var edgesSvg = ''
+        branches.forEach(function (b) {
+          (b.deps || []).forEach(function (d) {
+            var a = pos[d], z = pos[b.id]
+            if (!a || !z) return
+            var x1 = a.x + NODE_W, y1 = a.y + NODE_H / 2, x2 = z.x, y2 = z.y + NODE_H / 2
+            var mx = (x1 + x2) / 2
+            edgesSvg += '<path d="M' + x1 + ' ' + y1 + ' C ' + mx + ' ' + y1 + ', ' + mx + ' ' + y2 + ', ' + x2 + ' ' + y2 + '" fill="none" stroke="#4b5563" stroke-width="1.6" marker-end="url(#arr)"/>'
+          })
+        })
+        var nodesSvg = ''
+        branches.forEach(function (b) {
+          var p = pos[b.id]
+          if (!p) return
+          var c = TIER_COLORS[p.ci]
+          nodesSvg += '<g>'
+            + '<rect x="' + p.x + '" y="' + p.y + '" width="' + NODE_W + '" height="' + NODE_H + '" rx="10" fill="#1d1d20" stroke="' + c + '" stroke-width="1.5"/>'
+            + '<rect x="' + p.x + '" y="' + p.y + '" width="5" height="' + NODE_H + '" rx="2.5" fill="' + c + '"/>'
+            + '<text x="' + (p.x + 16) + '" y="' + (p.y + 26) + '" fill="' + c + '" font-size="12.5" font-weight="700" font-family="ui-monospace,Menlo,monospace">' + esc(b.id) + '</text>'
+            + (b.linear ? '<text x="' + (p.x + NODE_W - 14) + '" y="' + (p.y + 26) + '" fill="#8a8a8a" font-size="10.5" text-anchor="end" font-family="ui-monospace,Menlo,monospace">' + esc(b.linear) + '</text>' : '')
+            + '<text x="' + (p.x + 16) + '" y="' + (p.y + 48) + '" fill="#e5e5e5" font-size="12.5">' + esc((b.title || '').slice(0, 32)) + '</text>'
+            + '<text x="' + (p.x + 16) + '" y="' + (p.y + 68) + '" fill="#8a8a8a" font-size="10.5">Tier ' + p.tier + ' · ' + (b.tasks || []).length + ' tasks</text>'
+            + ((b.deps && b.deps.length) ? '<text x="' + (p.x + 16) + '" y="' + (p.y + 84) + '" fill="#6b6b6b" font-size="10">deps: ' + esc(b.deps.join(', ')) + '</text>' : '')
+            + '</g>'
+        })
+        var headersSvg = ''
+        tierKeys.forEach(function (t, ti) {
+          headersSvg += '<text x="' + (M + ti * (NODE_W + COL_GAP)) + '" y="' + (M + 26) + '" fill="#8a8a8a" font-size="11" font-weight="700" letter-spacing="1.5" font-family="ui-monospace,Menlo,monospace">TIER ' + t + '</text>'
+        })
+        var svg = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;height:auto;">'
+          + '<defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#4b5563"/></marker></defs>'
+          + '<rect x="0" y="0" width="' + W + '" height="' + H + '" rx="12" fill="#191919"/>'
+          + headersSvg + edgesSvg + nodesSvg
+          + '</svg>'
         return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
-          + '<title>Wakii bracket</title><style>'
-          + 'body{margin:0 auto;background:#161618;color:#ddd;font:14px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace;padding:36px 44px;max-width:860px}'
-          + 'h1{font-size:18px;color:#6ba1f8;border-bottom:1px solid #333;padding-bottom:10px}'
-          + 'h2{font-size:14px;color:#eab308;margin:26px 0 6px}'
-          + '.meta{color:#8a8a8a;font-size:12px}.what{color:#c8c8c8;margin:4px 0 14px}.task{color:#9eca9e}'
-          + '.foot{margin-top:36px;color:#666;font-size:11px;border-top:1px solid #2a2a2a;padding-top:10px}'
-          + '</style></head><body>' + rows + '<div class="foot">Wakii — story bracket</div></body></html>'
+          + '<title>Wakii bracket — ' + esc(story.identifier || '') + '</title><style>'
+          + 'body{margin:0 auto;background:#111113;color:#ddd;font:14px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace;padding:36px 44px;max-width:1100px}'
+          + 'h1{font-size:17px;color:#6ba1f8;margin:0 0 4px}'
+          + '.sub{color:#8a8a8a;font-size:12px;margin-bottom:22px}'
+          + 'details{margin-top:24px}summary{cursor:pointer;color:#8a8a8a;font-size:12px}'
+          + 'pre{background:#191919;border:1px solid #2a2a2a;border-radius:10px;padding:16px;overflow-x:auto;font-size:11.5px;line-height:1.6;color:#bbb;white-space:pre-wrap}'
+          + '.foot{margin-top:28px;color:#666;font-size:11px}'
+          + '</style></head><body>'
+          + '<h1>' + esc(story.identifier || 'Bracket') + (story.title ? ' — ' + esc(story.title) : '') + '</h1>'
+          + '<div class="sub">Wakii story bracket · ' + branches.length + ' SF</div>'
+          + svg
+          + '<details><summary>Bracket markdown</summary><pre>' + esc(graph && graph.planMarkdown || '') + '</pre></details>'
+          + '<div class="foot">Wakii — story bracket</div></body></html>'
       }
 
       function shareBracket() {
@@ -1601,6 +1651,7 @@ Tech blog: markdown posts, post list, single-post view, tag filter, dark/light t
             if (seq !== loadSeq) return
             graph = { story: { identifier: epic, title: ((md.match(/^#\s+Story:\s*[A-Za-z]+-\d+\s*[—–-]\s*(.+)$/m) || [])[1] || '').trim() }, children: children || [], planMarkdown: md, bracketFile: name }
             var branches = parsePlan(md, children || [])
+            graph.branches = branches
             var done = (children || []).filter(c => (c.stateType || (c.state && c.state.type)) === 'completed').length
             renderBracket(branches, { identifier: epic, title: graph.story.title, done, total: (children || []).length })
             status.textContent = (epic || name) + ' · ' + (children || []).length + ' sub-issues · ' + new Date().toLocaleTimeString()
