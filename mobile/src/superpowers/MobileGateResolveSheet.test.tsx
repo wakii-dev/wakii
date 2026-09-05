@@ -10,6 +10,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { removePendingGate, resetPendingGatesStoreForTests } from './pending-gates-store'
 import type { PendingGateRow } from './pending-gates-store'
 import { MobileGateResolveSheet, type MobileGateResolveSheetProps } from './MobileGateResolveSheet'
+import { colors } from '../theme/mobile-theme'
 
 const deps = vi.hoisted(() => {
   const state: {
@@ -323,7 +324,63 @@ describe('MobileGateResolveSheet', () => {
 
     expect(sheet.renderer.root.findAllByType('ActivityIndicator')).toHaveLength(0)
     expect(optionButtons(sheet.renderer.root)[0]?.props.disabled).toBe(false)
-    expect(textContent(sheet.renderer.root)).toContain('Gate error: gate_not_pending')
+    expect(textContent(sheet.renderer.root)).toContain('This gate was already handled elsewhere.')
+    expect(sheet.onClose).not.toHaveBeenCalled()
+  })
+
+  it('renders gate_not_pending info with the neutral tone, not the warning color', async () => {
+    const sheet = renderSheet()
+    sheet.onResolve.mockResolvedValue({ kind: 'taxonomy', code: 'gate_not_pending' })
+    act(() => {
+      optionButtons(sheet.renderer.root)[0]?.props.onPress()
+    })
+    pressAlertButton('Resolve')
+    await flush()
+
+    const messageNode = sheet.renderer.root
+      .findAllByType('Text')
+      .find((node) => node.props.children === 'This gate was already handled elsewhere.')
+    expect(messageNode).toBeDefined()
+    expect(messageNode?.props.style.color).toBe(colors.textSecondary)
+  })
+
+  it('invalid_resolution keeps the sheet open with the resolution text editable', async () => {
+    const sheet = renderSheet({ gate: optionsGate({ options: [] }) })
+    sheet.onResolve.mockResolvedValue({ kind: 'taxonomy', code: 'invalid_resolution' })
+    const input = sheet.renderer.root.findAllByType('TextInput')[0]
+    act(() => {
+      input?.props.onChangeText('ship it')
+    })
+    const submit = sheet.renderer.root
+      .findAllByType('Pressable')
+      .find((node) => node.props.accessibilityLabel === 'Submit resolution')
+    act(() => {
+      submit?.props.onPress()
+    })
+    pressAlertButton('Resolve')
+    await flush()
+
+    expect(textContent(sheet.renderer.root)).toContain(
+      'The desktop rejected this resolution — edit it and try again.'
+    )
+    expect(sheet.onClose).not.toHaveBeenCalled()
+    const inputAfter = sheet.renderer.root.findAllByType('TextInput')[0]
+    expect(inputAfter?.props.editable).toBe(true)
+    expect(inputAfter?.props.value).toBe('ship it')
+  })
+
+  it('unknown taxonomy code shows the generic forward-compat copy (D11)', async () => {
+    const sheet = renderSheet()
+    sheet.onResolve.mockResolvedValue({ kind: 'taxonomy', code: 'gate_reborn_v9' })
+    act(() => {
+      optionButtons(sheet.renderer.root)[0]?.props.onPress()
+    })
+    pressAlertButton('Resolve')
+    await flush()
+
+    expect(textContent(sheet.renderer.root)).toContain(
+      'The desktop reported an unknown gate error — refreshing for the latest state.'
+    )
     expect(sheet.onClose).not.toHaveBeenCalled()
   })
 
@@ -382,7 +439,7 @@ describe('MobileGateResolveSheet', () => {
     ])
   })
 
-  it('surfaces the taxonomy code from gate_not_pending fixtures', async () => {
+  it('maps the gate_not_pending fixture code to the neutral handled-elsewhere copy', async () => {
     const sheet = renderSheet({ gate: optionsGate({ options: [] }) })
     sheet.onResolve.mockResolvedValue({
       kind: 'taxonomy',
@@ -401,7 +458,7 @@ describe('MobileGateResolveSheet', () => {
     pressAlertButton('Resolve')
     await flush()
 
-    expect(textContent(sheet.renderer.root)).toContain('Gate error: gate_not_pending')
+    expect(textContent(sheet.renderer.root)).toContain('This gate was already handled elsewhere.')
   })
 })
 
@@ -519,10 +576,62 @@ describe('MobilePendingGatesScreen resolve-sheet integration', () => {
     })
   })
 
-  it('gate_not_pending outcome renders in the sheet without getting stuck', async () => {
+  it('gate_not_pending server-guard race: row removed, exactly one sweep, neutral info in sheet', async () => {
+    // Race simulation: the gate renders from a stale sweep, another device settles
+    // it, our resolve loses the server's conditional-UPDATE guard — and the
+    // outcome-triggered sweep (server truth, gate filtered out) must not resurrect it.
+    const settledGateIds = new Set<string>()
+    deps.state.storyListResponse = () => OK_ENVELOPE(storyListResultNormal)
+    deps.state.storyDetailResponse = () =>
+      OK_ENVELOPE({
+        ...storyDetailResultNormal,
+        gates: storyDetailResultNormal.gates.filter((gate) => !settledGateIds.has(gate.gateId))
+      })
+    deps.state.gateResolveResponse = () => OK_ENVELOPE(gateResolveErrorGateNotPending)
+    const renderer = renderScreen()
+    await flush()
+    gateRow(renderer, 'Approve SF-1 contract snapshot')
+
+    settledGateIds.add('gate-fi305-approve-sf1')
+    const storyListCallsBefore = deps.state.calls.filter(
+      (call) => call.method === 'superpowers.storyList'
+    ).length
+    act(() => {
+      gateRow(renderer, 'Approve SF-1 contract snapshot').props.onPress()
+    })
+    await flush()
+    act(() => {
+      optionButtons(renderer.root)
+        .find((node) => node.props.accessibilityLabel === 'Resolve: approve')
+        ?.props.onPress()
+    })
+    pressAlertButton('Resolve')
+    await flush()
+
+    expect(textContent(renderer.root)).toContain('This gate was already handled elsewhere.')
+    expect(renderer.root.findAllByType('ActivityIndicator')).toHaveLength(0)
+    // Race outcome removes the gate, and the triggered sweep keeps it out.
+    expect(
+      renderer.root
+        .findAllByType('Pressable')
+        .find((node) => node.props.accessibilityLabel === 'Approve SF-1 contract snapshot')
+    ).toBeUndefined()
+    expect(deps.state.calls.filter((call) => call.method === 'superpowers.storyList').length).toBe(
+      storyListCallsBefore + 1
+    )
+    act(() => {
+      renderer.unmount()
+    })
+  })
+
+  it('transport reject after the sheet was dismissed: stale notice on the screen, no retry, no sweep', async () => {
     deps.state.storyListResponse = () => OK_ENVELOPE(storyListResultNormal)
     deps.state.storyDetailResponse = () => OK_ENVELOPE(storyDetailResultNormal)
-    deps.state.gateResolveResponse = () => OK_ENVELOPE(gateResolveErrorGateNotPending)
+    let reject!: (error: unknown) => void
+    deps.state.gateResolveResponse = () =>
+      new Promise((_resolve, rej) => {
+        reject = rej
+      })
     const renderer = renderScreen()
     await flush()
 
@@ -538,8 +647,30 @@ describe('MobilePendingGatesScreen resolve-sheet integration', () => {
     pressAlertButton('Resolve')
     await flush()
 
-    expect(textContent(renderer.root)).toContain('Gate error: gate_not_pending')
-    expect(renderer.root.findAllByType('ActivityIndicator')).toHaveLength(0)
+    const storyListCallsBefore = deps.state.calls.filter(
+      (call) => call.method === 'superpowers.storyList'
+    ).length
+    // User swipes the sheet away mid-flight, then the ws drop surfaces.
+    act(() => {
+      renderer.root.findAllByType('BottomDrawer')[0]?.props.onClose()
+    })
+    await act(async () => {
+      reject(new Error('ws drop'))
+    })
+    await flush()
+
+    // No auto-retry (one send only) and no sweep — recovery is pull-to-refresh.
+    expect(
+      deps.state.calls.filter((call) => call.method === 'superpowers.gateResolve')
+    ).toHaveLength(1)
+    expect(deps.state.calls.filter((call) => call.method === 'superpowers.storyList').length).toBe(
+      storyListCallsBefore
+    )
+    expect(textContent(renderer.root)).toContain('Resolve failed — check the connection and retry.')
+    const noticeNode = renderer.root
+      .findAllByType('Text')
+      .find((node) => node.props.children === 'Resolve failed — check the connection and retry.')
+    expect(noticeNode?.props.style.color).toBe(colors.statusAmber)
     act(() => {
       renderer.unmount()
     })

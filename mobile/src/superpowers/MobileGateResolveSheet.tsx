@@ -11,6 +11,7 @@ import {
 import { ArrowUp } from 'lucide-react-native'
 import { BottomDrawer } from '../components/BottomDrawer'
 import { colors, radii, spacing, typography } from '../theme/mobile-theme'
+import { gateResolveErrorHandling, type GateResolveErrorTone } from './gate-resolve-errors'
 import type { GateResolveOutcome } from './gate-resolve-request'
 import type { PendingGateRow } from './pending-gates-store'
 
@@ -39,6 +40,7 @@ export function MobileGateResolveSheet({
   const [resolutionText, setResolutionText] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [outcomeMessage, setOutcomeMessage] = useState<string | null>(null)
+  const [outcomeTone, setOutcomeTone] = useState<GateResolveErrorTone>('warning')
   const submittingRef = useRef(false)
 
   const [wasVisible, setWasVisible] = useState(visible)
@@ -48,6 +50,7 @@ export function MobileGateResolveSheet({
       setGateSnapshot(gate)
       setResolutionText('')
       setOutcomeMessage(null)
+      setOutcomeTone('warning')
       submittingRef.current = false
       setSubmitting(false)
     }
@@ -72,14 +75,14 @@ export function MobileGateResolveSheet({
         onClose()
         return
       }
-      // T4 owns the detailed error UX — the sheet only needs to exit submitting.
-      setOutcomeMessage(
-        outcome === null
-          ? 'Resolve did not start — try again.'
-          : outcome.kind === 'taxonomy'
-            ? `Gate error: ${outcome.code}`
-            : 'Resolve failed — check the connection and retry.'
-      )
+      if (outcome === null) {
+        setOutcomeTone('warning')
+        setOutcomeMessage('Resolve did not start — try again.')
+        return
+      }
+      const handling = gateResolveErrorHandling(outcome)
+      setOutcomeTone(handling.tone)
+      setOutcomeMessage(handling.message)
     } finally {
       submittingRef.current = false
       setSubmitting(false)
@@ -146,7 +149,11 @@ export function MobileGateResolveSheet({
           </View>
         )}
         {submitting ? <ActivityIndicator size="small" color={colors.textSecondary} /> : null}
-        {outcomeMessage ? <Text style={styles.outcomeText}>{outcomeMessage}</Text> : null}
+        {outcomeMessage ? (
+          <Text style={outcomeTone === 'info' ? styles.outcomeInfoText : styles.outcomeText}>
+            {outcomeMessage}
+          </Text>
+        ) : null}
       </View>
     </BottomDrawer>
   )
@@ -217,6 +224,10 @@ const styles = StyleSheet.create({
   },
   outcomeText: {
     color: colors.statusAmber,
+    fontSize: typography.metaSize
+  },
+  outcomeInfoText: {
+    color: colors.textSecondary,
     fontSize: typography.metaSize
   }
 })

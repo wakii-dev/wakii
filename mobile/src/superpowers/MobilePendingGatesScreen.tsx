@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router'
 import { ChevronLeft, RefreshCw } from 'lucide-react-native'
 import { useHostClient } from '../transport/host-client-hooks'
 import { colors, spacing } from '../theme/mobile-theme'
+import { gateResolveErrorHandling, type GateResolveErrorTone } from './gate-resolve-errors'
 import type { PendingGateRow } from './pending-gates-store'
 import type { MobileGateResolveSheetProps } from './MobileGateResolveSheet'
 import { useMobileGateResolve } from './use-mobile-gate-resolve'
@@ -31,6 +32,8 @@ function formatGateCreatedAt(createdAt: number): string | null {
   return new Date(createdAt).toLocaleString()
 }
 
+type ScreenNotice = { message: string; tone: GateResolveErrorTone }
+
 export function MobilePendingGatesScreen({ hostId, onGatePress }: MobilePendingGatesScreenProps) {
   const router = useRouter()
   const insets = useSafeAreaInsets()
@@ -44,9 +47,47 @@ export function MobilePendingGatesScreen({ hostId, onGatePress }: MobilePendingG
   const { submitGateResolution } = useMobileGateResolve({ hostId, client })
   const [resolveGate, setResolveGate] = useState<PendingGateRow | null>(null)
   const [resolveVisible, setResolveVisible] = useState(false)
+  const [notice, setNotice] = useState<ScreenNotice | null>(null)
   const [ResolveSheet, setResolveSheet] =
     useState<ComponentType<MobileGateResolveSheetProps> | null>(null)
   const sheetLoadStartedRef = useRef(false)
+
+  // Outcome plumbing (plan D7): the resolve hook owns store removal; the screen adds
+  // the background sweep on settled-elsewhere races and a transient notice for
+  // outcomes landing after the sheet was dismissed. Notice clears on refresh or the
+  // next gate open (app pattern — no toast system).
+  const resolveVisibleRef = useRef(resolveVisible)
+  resolveVisibleRef.current = resolveVisible
+  const connectedRef = useRef(connected)
+  connectedRef.current = connected
+
+  const handleResolve = useCallback(
+    async (gateId: string, resolution: string) => {
+      const outcome = await submitGateResolution(gateId, resolution)
+      if (!outcome || outcome.kind === 'success') {
+        if (outcome) {
+          setNotice(null)
+        }
+        return outcome
+      }
+      const handling = gateResolveErrorHandling(outcome)
+      // Sweep only while connected — a dropped socket would fail the sweep and
+      // mis-flag the host unavailable; reconnect re-sweeps.
+      if (handling.refreshAfter && connectedRef.current) {
+        refresh()
+      }
+      if (!resolveVisibleRef.current) {
+        setNotice({ message: handling.message, tone: handling.tone })
+      }
+      return outcome
+    },
+    [submitGateResolution, refresh]
+  )
+
+  const handleRefresh = useCallback(() => {
+    setNotice(null)
+    refresh()
+  }, [refresh])
 
   // Why dynamic import: the sheet pulls BottomDrawer → reanimated, which cannot
   // evaluate under the react-native test mocks (no TurboModuleRegistry) — a static
@@ -54,6 +95,7 @@ export function MobilePendingGatesScreen({ hostId, onGatePress }: MobilePendingG
   const openResolveSheet = useCallback((row: PendingGateRow) => {
     setResolveGate(row)
     setResolveVisible(true)
+    setNotice(null)
     if (!sheetLoadStartedRef.current) {
       sheetLoadStartedRef.current = true
       void import('./MobileGateResolveSheet').then(
@@ -88,7 +130,7 @@ export function MobilePendingGatesScreen({ hostId, onGatePress }: MobilePendingG
         </View>
         <Pressable
           style={styles.iconButton}
-          onPress={refresh}
+          onPress={handleRefresh}
           disabled={!client || refreshing || !connected}
           accessibilityRole="button"
           accessibilityLabel="Refresh gates"
@@ -106,11 +148,18 @@ export function MobilePendingGatesScreen({ hostId, onGatePress }: MobilePendingG
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={refresh}
+            onRefresh={handleRefresh}
             tintColor={colors.textSecondary}
           />
         }
       >
+        {notice ? (
+          <View style={styles.banner}>
+            <Text style={notice.tone === 'info' ? styles.infoBannerText : styles.bannerText}>
+              {notice.message}
+            </Text>
+          </View>
+        ) : null}
         {unavailable ? (
           <View style={styles.banner}>
             <Text style={styles.bannerText}>
@@ -157,7 +206,7 @@ export function MobilePendingGatesScreen({ hostId, onGatePress }: MobilePendingG
           visible={resolveVisible}
           gate={resolveGate}
           onClose={() => setResolveVisible(false)}
-          onResolve={submitGateResolution}
+          onResolve={handleResolve}
         />
       ) : null}
     </SafeAreaView>
@@ -208,6 +257,10 @@ const styles = StyleSheet.create({
   },
   bannerText: {
     color: colors.statusAmber,
+    fontSize: 13
+  },
+  infoBannerText: {
+    color: colors.textSecondary,
     fontSize: 13
   },
   section: {

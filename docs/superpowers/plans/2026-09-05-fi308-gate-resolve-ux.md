@@ -156,7 +156,7 @@ Plan file tick `- [x]` sau mỗi task (checkbox CHỈ cho task steps).
   confirm-response → spinner tắt, state sạch; re-tap sau lỗi không side effect (mock assert
   2 independent requests, server guard quyết định).
 - Exit: vitest pass.
-- [ ] T4 done
+- [x] T4 done
 
 ### T5 — gate-events-pending-list-handling
 - `parse-gate-transition-payload.ts`: absent-key→null + present-null + unknown-extra-fields
