@@ -223,7 +223,7 @@ describe('MobileStoryDetailScreen', () => {
     expect(chipColor('sf-chip:SF-2')).toBe(colors.statusAmber)
   })
 
-  it('renders gates passively with a pending count and no tap targets', async () => {
+  it('renders gates with a pending count; only pending rows are pressable (T9)', async () => {
     await renderScreen(vi.fn().mockResolvedValue({ ok: true, result: storyDetailHappyPath }))
     const rendered = texts()
     expect(rendered).toContain(GATES_SECTION_TITLE)
@@ -235,8 +235,22 @@ describe('MobileStoryDetailScreen', () => {
     expect(chipColor('gate-chip:gate-orchestrate-001')).toBe(colors.statusAmber)
     expect(chipColor('gate-chip:gate-orchestrate-002')).toBe(colors.statusGreen)
     expect(chipColor('gate-chip:gate-orchestrate-003')).toBe(colors.textMuted)
-    // Passive: no Pressable (and no button role) anywhere on the detail screen.
-    expect(renderer!.root.findAllByType('Pressable')).toHaveLength(0)
+    // Resolved/timeout rows stay read-only (spec §3b) — the pending row is the
+    // screen's only button besides the stale-banner refresh action.
+    const pressables = renderer!.root.findAllByType('Pressable')
+    expect(pressables.map((node) => node.props.accessibilityLabel)).toEqual(
+      expect.arrayContaining([storyDetailHappyPath.gates[0].title])
+    )
+    expect(
+      pressables.filter(
+        (node) => node.props.accessibilityLabel === storyDetailHappyPath.gates[1].title
+      )
+    ).toHaveLength(0)
+    expect(
+      pressables.filter(
+        (node) => node.props.accessibilityLabel === storyDetailHappyPath.gates[2].title
+      )
+    ).toHaveLength(0)
   })
 
   it('falls back to the untitled title and hides progress and gates for a parseError detail', async () => {

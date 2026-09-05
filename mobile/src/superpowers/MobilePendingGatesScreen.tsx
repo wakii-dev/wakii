@@ -10,12 +10,13 @@ import {
 } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
-import { ChevronLeft, RefreshCw } from 'lucide-react-native'
+import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react-native'
 import { useHostClient } from '../transport/host-client-hooks'
 import { colors, spacing } from '../theme/mobile-theme'
 import { gateResolveErrorHandling, type GateResolveErrorTone } from './gate-resolve-errors'
 import type { PendingGateRow } from './pending-gates-store'
 import type { MobileGateResolveSheetProps } from './MobileGateResolveSheet'
+import { createStoryDetailHref } from './story-detail-route'
 import { useMobileGateResolve } from './use-mobile-gate-resolve'
 import { useMobilePendingGates } from './use-mobile-pending-gates'
 
@@ -180,25 +181,42 @@ export function MobilePendingGatesScreen({ hostId, onGatePress }: MobilePendingG
           <View key={section.key} style={styles.section}>
             <Text style={styles.sectionHeader}>{section.title}</Text>
             <View style={styles.card}>
-              {section.rows.map((row, index) => (
-                <Pressable
-                  key={row.gateId}
-                  style={[styles.row, index > 0 && styles.rowBordered]}
-                  onPress={() => {
-                    onGatePress?.(row)
-                    openResolveSheet(row)
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel={row.title}
-                >
-                  <Text style={styles.rowTitle} numberOfLines={2}>
-                    {row.title}
-                  </Text>
-                  {formatGateCreatedAt(row.createdAt) ? (
-                    <Text style={styles.rowMeta}>{formatGateCreatedAt(row.createdAt)}</Text>
-                  ) : null}
-                </Pressable>
-              ))}
+              {section.rows.map((row, index) => {
+                const storyId = row.storyId
+                return (
+                  <Pressable
+                    key={row.gateId}
+                    style={[styles.row, index > 0 && styles.rowBordered]}
+                    onPress={() => {
+                      onGatePress?.(row)
+                      openResolveSheet(row)
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={row.title}
+                  >
+                    <Text style={styles.rowTitle} numberOfLines={2}>
+                      {row.title}
+                    </Text>
+                    {formatGateCreatedAt(row.createdAt) ? (
+                      <Text style={styles.rowMeta}>{formatGateCreatedAt(row.createdAt)}</Text>
+                    ) : null}
+                    {storyId ? (
+                      <Pressable
+                        style={styles.storyLink}
+                        hitSlop={8}
+                        onPress={() => router.push(createStoryDetailHref({ hostId, storyId }))}
+                        accessibilityRole="button"
+                        accessibilityLabel="Open story"
+                      >
+                        <Text style={styles.storyLinkText} numberOfLines={1}>
+                          {section.title}
+                        </Text>
+                        <ChevronRight size={14} color={colors.textSecondary} />
+                      </Pressable>
+                    ) : null}
+                  </Pressable>
+                )
+              })}
             </View>
           </View>
         ))}
@@ -303,6 +321,17 @@ const styles = StyleSheet.create({
   },
   rowMeta: {
     color: colors.textMuted,
+    fontSize: 12
+  },
+  storyLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 2,
+    marginTop: spacing.xs
+  },
+  storyLinkText: {
+    color: colors.textSecondary,
     fontSize: 12
   },
   emptyText: {

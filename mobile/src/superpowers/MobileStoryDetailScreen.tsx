@@ -1,5 +1,13 @@
-import { useMemo } from 'react'
-import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { useCallback, useMemo, useRef, useState, type ComponentType } from 'react'
+import {
+  ActivityIndicator,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View
+} from 'react-native'
 import type {
   SuperpowersSfStatus,
   SuperpowersStoryDetailResult,
@@ -7,6 +15,9 @@ import type {
 } from '../../../src/shared/superpowers/story-rpc-contract'
 import { colors, radii, spacing, typography } from '../theme/mobile-theme'
 import type { RpcClient } from '../transport/rpc-client'
+import type { MobileGateResolveSheetProps } from './MobileGateResolveSheet'
+import type { PendingGateRow } from './pending-gates-store'
+import { useMobileGateResolve } from './use-mobile-gate-resolve'
 import {
   GATES_SECTION_TITLE,
   STALE_STORY_BANNER_TEXT,
@@ -47,6 +58,21 @@ const GATE_STATUS_CHIP_COLORS: Record<
   timeout: colors.textMuted
 }
 
+// Contract gate → sheet row (T9): detail responses always carry options, and the
+// storyId mapping mirrors the sweep reconcile's storyLinked rule in pending-gates-store.
+function toPendingGateRow(
+  gate: SuperpowersStoryDetailResult['gates'][number],
+  storyId: string
+): PendingGateRow {
+  return {
+    ...gate,
+    status: 'pending',
+    storyId: gate.storyLinked ? storyId : null,
+    source: 'sweep',
+    optionsKnown: true
+  }
+}
+
 export function MobileStoryDetailScreen({ client, hostId, storyId, bottomInset = 0 }: Props) {
   // T9: story_not_found raises the banner over the cached detail (kept rendering);
   // a failed fetch (stale) stays neutral here — unreachable host is not evidence
@@ -57,6 +83,43 @@ export function MobileStoryDetailScreen({ client, hostId, storyId, bottomInset =
     storyId
   })
   const tierGroups = useMemo(() => (detail ? groupSfsByTier(detail.story.sfs) : []), [detail])
+  // Pending gates reuse the SF-3 resolve sheet + hook. hostId is always set once a
+  // detail exists (the fetch requires it) — '' only flows into an unused store key.
+  const { submitGateResolution } = useMobileGateResolve({ hostId: hostId ?? '', client })
+  const [resolveGate, setResolveGate] = useState<PendingGateRow | null>(null)
+  const [resolveVisible, setResolveVisible] = useState(false)
+  const [ResolveSheet, setResolveSheet] =
+    useState<ComponentType<MobileGateResolveSheetProps> | null>(null)
+  const sheetLoadStartedRef = useRef(false)
+
+  // Why dynamic import: same reanimated-under-test-mocks reason as the gates screen.
+  const openResolveSheet = useCallback((row: PendingGateRow) => {
+    setResolveGate(row)
+    setResolveVisible(true)
+    if (!sheetLoadStartedRef.current) {
+      sheetLoadStartedRef.current = true
+      void import('./MobileGateResolveSheet').then(
+        (module) => setResolveSheet(() => module.MobileGateResolveSheet),
+        () => {
+          // Sheet chunk failed to load — close the empty dialog instead of half-mounting.
+          sheetLoadStartedRef.current = false
+          setResolveVisible(false)
+          setResolveGate(null)
+        }
+      )
+    }
+  }, [])
+
+  const handleResolve = useCallback(
+    async (gateId: string, resolution: string) => {
+      const outcome = await submitGateResolution(gateId, resolution)
+      if (outcome?.kind === 'success') {
+        refresh() // the gate row flips to resolved on the refetch, not on the next poll
+      }
+      return outcome
+    },
+    [submitGateResolution, refresh]
+  )
 
   if (!detail) {
     return (
@@ -115,8 +178,21 @@ export function MobileStoryDetailScreen({ client, hostId, storyId, bottomInset =
             ))}
           </View>
         ))}
-        {detail.gates.length > 0 ? <GateSection gates={detail.gates} /> : null}
+        {detail.gates.length > 0 ? (
+          <GateSection
+            gates={detail.gates}
+            onGatePress={(gate) => openResolveSheet(toPendingGateRow(gate, detail.story.storyId))}
+          />
+        ) : null}
       </ScrollView>
+      {ResolveSheet && resolveGate ? (
+        <ResolveSheet
+          visible={resolveVisible}
+          gate={resolveGate}
+          onClose={() => setResolveVisible(false)}
+          onResolve={handleResolve}
+        />
+      ) : null}
     </View>
   )
 }
@@ -141,7 +217,13 @@ function SfRow({ sf }: { sf: SuperpowersStoryDetailSf }) {
   )
 }
 
-function GateSection({ gates }: { gates: SuperpowersStoryDetailResult['gates'] }) {
+function GateSection({
+  gates,
+  onGatePress
+}: {
+  gates: SuperpowersStoryDetailResult['gates']
+  onGatePress: (gate: SuperpowersStoryDetailResult['gates'][number]) => void
+}) {
   const pending = gates.filter((gate) => gate.status === 'pending').length
   return (
     <View style={styles.gateSection}>
@@ -157,16 +239,43 @@ function GateSection({ gates }: { gates: SuperpowersStoryDetailResult['gates'] }
         </Text>
       </View>
       {gates.map((gate) => (
-        <View key={gate.gateId} style={styles.gateRow}>
-          <Text style={styles.gateTitle}>{gate.title}</Text>
-          <View testID={`gate-chip:${gate.gateId}`} style={styles.chip}>
-            <Text style={[styles.chipText, { color: GATE_STATUS_CHIP_COLORS[gate.status] }]}>
-              {gateStatusLabel(gate.status)}
-            </Text>
-          </View>
-        </View>
+        <GateRow key={gate.gateId} gate={gate} onPress={onGatePress} />
       ))}
     </View>
+  )
+}
+
+// Only pending gates are resolvable here (T9); resolved/timeout stay read-only
+// (spec §3b — timeout is terminal).
+function GateRow({
+  gate,
+  onPress
+}: {
+  gate: SuperpowersStoryDetailResult['gates'][number]
+  onPress: (gate: SuperpowersStoryDetailResult['gates'][number]) => void
+}) {
+  const content = (
+    <>
+      <Text style={styles.gateTitle}>{gate.title}</Text>
+      <View testID={`gate-chip:${gate.gateId}`} style={styles.chip}>
+        <Text style={[styles.chipText, { color: GATE_STATUS_CHIP_COLORS[gate.status] }]}>
+          {gateStatusLabel(gate.status)}
+        </Text>
+      </View>
+    </>
+  )
+  if (gate.status !== 'pending') {
+    return <View style={styles.gateRow}>{content}</View>
+  }
+  return (
+    <Pressable
+      style={styles.gateRow}
+      accessibilityRole="button"
+      accessibilityLabel={gate.title}
+      onPress={() => onPress(gate)}
+    >
+      {content}
+    </Pressable>
   )
 }
 

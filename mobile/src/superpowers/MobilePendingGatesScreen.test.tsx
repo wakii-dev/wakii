@@ -71,6 +71,7 @@ vi.mock('expo-router', () => ({
 
 vi.mock('lucide-react-native', () => ({
   ChevronLeft: 'ChevronLeft',
+  ChevronRight: 'ChevronRight',
   RefreshCw: 'RefreshCw'
 }))
 
