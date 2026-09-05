@@ -82,6 +82,6 @@ function encodeBase64Url(value: Uint8Array): string {
 
 function requireNativeSecretStore(): void {
   if (Platform.OS === 'web') {
-    throw new Error('Orca Relay upgrade state requires a native secret store')
+    throw new Error('Wakii Relay upgrade state requires a native secret store')
   }
 }

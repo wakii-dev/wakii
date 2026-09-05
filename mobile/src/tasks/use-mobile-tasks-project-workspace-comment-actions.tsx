@@ -39,7 +39,7 @@ export function useMobileTasksProjectWorkspaceCommentActions(model: WorkspaceCre
       const kind = projectRowType(row)
       const repo = findProjectRowRepo(row)
       if (!kind || !row.content.number || !row.content.url) {
-        setError('Add the project item repository to Orca before creating a workspace.')
+        setError('Add the project item repository to Wakii before creating a workspace.')
         return
       }
       if (!repo) {
