@@ -157,6 +157,16 @@ trên state code cuối; T7 sau tests để docs mô tả hành vi đã verify).
 - Dispatch: CHỈ sau khi T2 xong (Metro hot-reload giữa e2e sẽ phá evidence chain)
 - Commit: `feat(FI-309): story-screens-back-button`
 
+### Task 11 — wakii-rebrand-mobile (owner requirement 2026-09-06 — ĐÃ CHỐT qua AskUserQuestion: brand=Wakii, logo từ wakii-site, scope=mobile only)
+- [ ] New `mobile/src/components/WakiiLogo.tsx`: inline SVG theo `wakii-icon.svg` (The Monogram 128×128 — dark tile gradient #131A17→#04140D + mint #45E0A8 + dot #D7E2DD, đọc nguyên văn từ /Users/hoivu/Desktop/projects/wakii-site/public/wakii-icon.svg), same Props pattern {size, color?} như OrcaLogo; react-native-svg linearGradient cho tile
+- [ ] Swap usages: `app/_layout.tsx` (headerTitle), `src/home/MobileHomeTopBar.tsx`, `app/mobile-onboarding.tsx`, `app/about.tsx` (logo + brandName "Orca"→"Wakii"); xóa `OrcaLogo.tsx` nếu hết usage (own-your-orphans) + cập nhật test mocks
+- [ ] Visible "Orca"→"Wakii": app.json `"name"`, iOS usage descriptions + android camera/mic permission texts (expo config). **CẤM đổi**: scheme `orca` (deep-link vỡ), slug, package/bundleIdentifier, và mọi "orca" là DATA (tên repo/worktree user). Phân biệt: chỉ đổi BRAND strings
+- [ ] App icon + splash: cần PNG raster — thử `qlmanage -t -s 1024` (macOS) rasterize wakii-icon.svg → mobile/assets/icon.png + splash-icon.png (backup cũ trước); nếu tool không có/kết quả xấu → GIỮ icon cũ, ghi follow-up cần PNG từ user
+- [ ] Launcher label hiện tại trên emulator KHÔNG đổi (baked trong dev-client APK) — chỉ ảnh hưởng install mới; ghi note cho owner
+- Verify: `pnpm --dir mobile typecheck` + `pnpm --dir mobile test src/` toàn bộ mobile tests xanh; screencap header mới trên device (sau khi T2-continuation xong — reload bundle)
+- Dispatch: CHỈ sau khi T2-continuation xong (hot-reload conflict)
+- Commit: `feat(FI-309): wakii-rebrand-mobile`
+
 ### Task 9 — story-graph-cross-links (owner requirement 2026-09-05 — BẮT BUỘC trước Done)
 - [x] `MobileStoryDetailScreen.tsx`: gate rows PENDING trở thành pressable → mở `MobileGateResolveSheet` (REUSE component + `useMobileGateResolve` của SF-3 — không reimplement resolve UX); resolved/timeout rows giữ read-only (timeout read-only per spec §3b). Adapter nhỏ nếu shape `PendingGateRow` (sheet) khác contract gate (detail) — map tại chỗ, không đổi sheet
 - [x] `MobilePendingGatesScreen.tsx`: gate row có `storyId` non-null → thêm affordance mở story detail `/h/<hostId>/stories/<storyId>` (reuse `createStoryDetailHref` pattern); gate 'khác' (storyId null) giữ nguyên resolve inline
