@@ -175,4 +175,28 @@ describe('MobileStoryDetailScreen gate resolve (T9)', () => {
       storyId: storyDetailHappyPath.story.storyId
     })
   })
+
+  it('surfaces a screen notice when a failed outcome lands after the sheet was dismissed', async () => {
+    sendRequest = vi.fn((method: string) => {
+      if (method === 'superpowers.gateResolve') {
+        return Promise.resolve({ ok: true, result: { error: 'gate_not_pending' } })
+      }
+      return Promise.resolve({ ok: true, result: storyDetailHappyPath })
+    })
+    await renderScreen()
+    await openSheet()
+
+    // Drag-dismiss (ref flips in onClose) before the outcome settles — the sheet
+    // can no longer show it, so the screen must (gates-screen parity).
+    await act(async () => {
+      sheet.props!.onClose()
+      await sheet.props!.onResolve(PENDING.gateId, 'approve')
+    })
+
+    const rendered = renderer!.root
+      .findAllByType('Text')
+      .flatMap((node) => node.children)
+      .filter((child): child is string => typeof child === 'string')
+    expect(rendered).toContain('This gate was already handled elsewhere.')
+  })
 })

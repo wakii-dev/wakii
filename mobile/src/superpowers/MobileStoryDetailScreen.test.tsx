@@ -235,22 +235,12 @@ describe('MobileStoryDetailScreen', () => {
     expect(chipColor('gate-chip:gate-orchestrate-001')).toBe(colors.statusAmber)
     expect(chipColor('gate-chip:gate-orchestrate-002')).toBe(colors.statusGreen)
     expect(chipColor('gate-chip:gate-orchestrate-003')).toBe(colors.textMuted)
-    // Resolved/timeout rows stay read-only (spec §3b) — the pending row is the
-    // screen's only button besides the stale-banner refresh action.
-    const pressables = renderer!.root.findAllByType('Pressable')
-    expect(pressables.map((node) => node.props.accessibilityLabel)).toEqual(
-      expect.arrayContaining([storyDetailHappyPath.gates[0].title])
-    )
+    // Resolved/timeout rows stay read-only (spec §3b). Pin the full button
+    // inventory: the pending gate row is the screen's ONLY pressable in this
+    // state (the stale-banner refresh renders only under not-found).
     expect(
-      pressables.filter(
-        (node) => node.props.accessibilityLabel === storyDetailHappyPath.gates[1].title
-      )
-    ).toHaveLength(0)
-    expect(
-      pressables.filter(
-        (node) => node.props.accessibilityLabel === storyDetailHappyPath.gates[2].title
-      )
-    ).toHaveLength(0)
+      renderer!.root.findAllByType('Pressable').map((node) => node.props.accessibilityLabel)
+    ).toEqual([storyDetailHappyPath.gates[0].title])
   })
 
   it('falls back to the untitled title and hides progress and gates for a parseError detail', async () => {

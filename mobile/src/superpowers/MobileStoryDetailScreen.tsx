@@ -1,35 +1,25 @@
 import { useCallback, useMemo, useRef, useState, type ComponentType } from 'react'
-import {
-  ActivityIndicator,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View
-} from 'react-native'
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native'
 import type {
   SuperpowersSfStatus,
-  SuperpowersStoryDetailResult,
   SuperpowersStoryDetailSf
 } from '../../../src/shared/superpowers/story-rpc-contract'
 import { colors, radii, spacing, typography } from '../theme/mobile-theme'
 import type { RpcClient } from '../transport/rpc-client'
+import { gateResolveErrorHandling, type GateResolveErrorTone } from './gate-resolve-errors'
 import type { MobileGateResolveSheetProps } from './MobileGateResolveSheet'
 import type { PendingGateRow } from './pending-gates-store'
 import { useMobileGateResolve } from './use-mobile-gate-resolve'
 import {
-  GATES_SECTION_TITLE,
   STALE_STORY_BANNER_TEXT,
   UNTITLED_STORY_TITLE,
-  gatePendingCountLabel,
-  gateStatusLabel,
   sfStatusLabel,
   storyDependsLabel,
   storyProgressLabel,
   storyTierLabel
 } from './story-screen-copy'
 import { countDoneSfs, groupSfsByTier } from './story-detail-tiers'
+import { GateSection, toPendingGateRow } from './story-detail-gate-section'
 import { StoryStaleBanner } from './story-stale-banner'
 import { useMobileStoryDetail } from './use-mobile-story-detail'
 
@@ -49,29 +39,7 @@ const SF_STATUS_CHIP_COLORS: Record<SuperpowersSfStatus, string> = {
   unknown: colors.textMuted
 }
 
-const GATE_STATUS_CHIP_COLORS: Record<
-  SuperpowersStoryDetailResult['gates'][number]['status'],
-  string
-> = {
-  pending: colors.statusAmber,
-  resolved: colors.statusGreen,
-  timeout: colors.textMuted
-}
-
-// Contract gate → sheet row (T9): detail responses always carry options, and the
-// storyId mapping mirrors the sweep reconcile's storyLinked rule in pending-gates-store.
-function toPendingGateRow(
-  gate: SuperpowersStoryDetailResult['gates'][number],
-  storyId: string
-): PendingGateRow {
-  return {
-    ...gate,
-    status: 'pending',
-    storyId: gate.storyLinked ? storyId : null,
-    source: 'sweep',
-    optionsKnown: true
-  }
-}
+type ScreenNotice = { message: string; tone: GateResolveErrorTone }
 
 export function MobileStoryDetailScreen({ client, hostId, storyId, bottomInset = 0 }: Props) {
   // T9: story_not_found raises the banner over the cached detail (kept rendering);
@@ -88,14 +56,23 @@ export function MobileStoryDetailScreen({ client, hostId, storyId, bottomInset =
   const { submitGateResolution } = useMobileGateResolve({ hostId: hostId ?? '', client })
   const [resolveGate, setResolveGate] = useState<PendingGateRow | null>(null)
   const [resolveVisible, setResolveVisible] = useState(false)
+  const [notice, setNotice] = useState<ScreenNotice | null>(null)
   const [ResolveSheet, setResolveSheet] =
     useState<ComponentType<MobileGateResolveSheetProps> | null>(null)
   const sheetLoadStartedRef = useRef(false)
+  // Outcome plumbing (gates-screen parity): resolveVisibleRef is written at the
+  // open/close transition sites, not during render — an outcome landing between
+  // onClose's setState and the re-render commit must already see the sheet as closed.
+  const resolveVisibleRef = useRef(false)
+  const clientRef = useRef(client)
+  clientRef.current = client
 
   // Why dynamic import: same reanimated-under-test-mocks reason as the gates screen.
   const openResolveSheet = useCallback((row: PendingGateRow) => {
     setResolveGate(row)
+    resolveVisibleRef.current = true
     setResolveVisible(true)
+    setNotice(null)
     if (!sheetLoadStartedRef.current) {
       sheetLoadStartedRef.current = true
       void import('./MobileGateResolveSheet').then(
@@ -103,6 +80,7 @@ export function MobileStoryDetailScreen({ client, hostId, storyId, bottomInset =
         () => {
           // Sheet chunk failed to load — close the empty dialog instead of half-mounting.
           sheetLoadStartedRef.current = false
+          resolveVisibleRef.current = false
           setResolveVisible(false)
           setResolveGate(null)
         }
@@ -113,13 +91,34 @@ export function MobileStoryDetailScreen({ client, hostId, storyId, bottomInset =
   const handleResolve = useCallback(
     async (gateId: string, resolution: string) => {
       const outcome = await submitGateResolution(gateId, resolution)
-      if (outcome?.kind === 'success') {
+      if (!outcome) {
+        return null
+      }
+      if (outcome.kind === 'success') {
         refresh() // the gate row flips to resolved on the refetch, not on the next poll
+        setNotice(null)
+        return outcome
+      }
+      const handling = gateResolveErrorHandling(outcome)
+      // Settled-elsewhere races: refetch so the row leaves 'pending' — only with a
+      // live client; a dead one would fail the fetch and mis-flag the story stale.
+      if (handling.refreshAfter && clientRef.current) {
+        refresh()
+      }
+      // BottomDrawer is drag-dismissible — a failed outcome landing after dismissal
+      // would render into the hidden sheet; surface it as a screen notice instead.
+      if (!resolveVisibleRef.current) {
+        setNotice({ message: handling.message, tone: handling.tone })
       }
       return outcome
     },
     [submitGateResolution, refresh]
   )
+
+  const handleRefresh = useCallback(() => {
+    setNotice(null)
+    refresh()
+  }, [refresh])
 
   if (!detail) {
     return (
@@ -138,12 +137,19 @@ export function MobileStoryDetailScreen({ client, hostId, storyId, bottomInset =
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={refresh}
+            onRefresh={handleRefresh}
             tintColor={colors.textSecondary}
             colors={[colors.textSecondary]}
           />
         }
       >
+        {notice ? (
+          <View style={styles.banner}>
+            <Text style={notice.tone === 'info' ? styles.infoBannerText : styles.bannerText}>
+              {notice.message}
+            </Text>
+          </View>
+        ) : null}
         {notFound ? (
           <StoryStaleBanner message={STALE_STORY_BANNER_TEXT} onRefresh={refresh} />
         ) : null}
@@ -189,7 +195,10 @@ export function MobileStoryDetailScreen({ client, hostId, storyId, bottomInset =
         <ResolveSheet
           visible={resolveVisible}
           gate={resolveGate}
-          onClose={() => setResolveVisible(false)}
+          onClose={() => {
+            resolveVisibleRef.current = false
+            setResolveVisible(false)
+          }}
           onResolve={handleResolve}
         />
       ) : null}
@@ -217,68 +226,6 @@ function SfRow({ sf }: { sf: SuperpowersStoryDetailSf }) {
   )
 }
 
-function GateSection({
-  gates,
-  onGatePress
-}: {
-  gates: SuperpowersStoryDetailResult['gates']
-  onGatePress: (gate: SuperpowersStoryDetailResult['gates'][number]) => void
-}) {
-  const pending = gates.filter((gate) => gate.status === 'pending').length
-  return (
-    <View style={styles.gateSection}>
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>{GATES_SECTION_TITLE}</Text>
-        <Text
-          style={[
-            styles.gatePending,
-            { color: pending > 0 ? colors.statusAmber : colors.textMuted }
-          ]}
-        >
-          {gatePendingCountLabel(pending)}
-        </Text>
-      </View>
-      {gates.map((gate) => (
-        <GateRow key={gate.gateId} gate={gate} onPress={onGatePress} />
-      ))}
-    </View>
-  )
-}
-
-// Only pending gates are resolvable here (T9); resolved/timeout stay read-only
-// (spec §3b — timeout is terminal).
-function GateRow({
-  gate,
-  onPress
-}: {
-  gate: SuperpowersStoryDetailResult['gates'][number]
-  onPress: (gate: SuperpowersStoryDetailResult['gates'][number]) => void
-}) {
-  const content = (
-    <>
-      <Text style={styles.gateTitle}>{gate.title}</Text>
-      <View testID={`gate-chip:${gate.gateId}`} style={styles.chip}>
-        <Text style={[styles.chipText, { color: GATE_STATUS_CHIP_COLORS[gate.status] }]}>
-          {gateStatusLabel(gate.status)}
-        </Text>
-      </View>
-    </>
-  )
-  if (gate.status !== 'pending') {
-    return <View style={styles.gateRow}>{content}</View>
-  }
-  return (
-    <Pressable
-      style={styles.gateRow}
-      accessibilityRole="button"
-      accessibilityLabel={gate.title}
-      onPress={() => onPress(gate)}
-    >
-      {content}
-    </Pressable>
-  )
-}
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -288,6 +235,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingTop: spacing.md,
     gap: spacing.sm
+  },
+  banner: {
+    backgroundColor: colors.bgRaised,
+    borderColor: colors.borderSubtle,
+    borderWidth: 1,
+    borderRadius: radii.row,
+    padding: spacing.md
+  },
+  bannerText: {
+    color: colors.statusAmber,
+    fontSize: typography.metaSize
+  },
+  infoBannerText: {
+    color: colors.textSecondary,
+    fontSize: typography.metaSize
   },
   title: {
     color: colors.textPrimary,
@@ -380,32 +342,6 @@ const styles = StyleSheet.create({
   chipText: {
     fontSize: typography.metaSize,
     fontWeight: '600'
-  },
-  gateSection: {
-    marginTop: spacing.sm,
-    gap: spacing.xs
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm
-  },
-  gatePending: {
-    fontSize: typography.metaSize
-  },
-  gateRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.bgPanel,
-    borderRadius: radii.row,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 2
-  },
-  gateTitle: {
-    flex: 1,
-    color: colors.textPrimary,
-    fontSize: typography.bodySize
   },
   state: {
     flex: 1,
