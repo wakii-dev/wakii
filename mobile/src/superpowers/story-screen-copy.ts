@@ -1,4 +1,7 @@
-import type { SuperpowersSfStatus } from '../../../src/shared/superpowers/story-rpc-contract'
+import type {
+  SuperpowersSfStatus,
+  SuperpowersStoryDetailResult
+} from '../../../src/shared/superpowers/story-rpc-contract'
 
 // UI copy for the story list (T5) + detail (T6) screens, centralized per the
 // hosted-review-copy.ts precedent so status casing and progress format stay
@@ -40,4 +43,33 @@ export function sfStatusLabel(status: SuperpowersSfStatus): string {
 
 export function storyProgressLabel(sfDone: number, sfTotal: number): string {
   return `${sfDone}/${sfTotal} SF done`
+}
+
+// Detail screen (T6)
+export function storyTierLabel(tier: number): string {
+  return `Tier ${tier}`
+}
+
+// 'depends: SF-1, SF-2' — null hides the line for an empty dependsOn
+export function storyDependsLabel(dependsOn: string[]): string | null {
+  return dependsOn.length > 0 ? `depends: ${dependsOn.join(', ')}` : null
+}
+
+// Gates render passively — count + list only; resolve UI is SF-3
+export const GATES_SECTION_TITLE = 'Gates'
+
+export function gatePendingCountLabel(count: number): string {
+  return `${count} pending`
+}
+
+type GateStatus = SuperpowersStoryDetailResult['gates'][number]['status']
+
+const GATE_STATUS_LABELS: Record<GateStatus, string> = {
+  pending: 'Pending',
+  resolved: 'Resolved',
+  timeout: 'Timeout'
+}
+
+export function gateStatusLabel(status: GateStatus): string {
+  return GATE_STATUS_LABELS[status]
 }

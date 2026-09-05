@@ -170,14 +170,14 @@ gộp theo đợt, ví dụ sau T8: `docs(FI-307): plan tick T1,T7,T8`).
 - **Files:** `mobile/app/h/[hostId]/stories/[...storyId].tsx` (route catch-all, khớp
   nav T5), `mobile/src/superpowers/MobileStoryDetailScreen.tsx` + tests.
 - **Steps:**
-  - [ ] Header story: title, epicId, workspaceName, destination (nếu có)
-  - [ ] SF list: nhóm/order by tier, mỗi SF: name + title + dependsOn + status chip
+  - [x] Header story: title, epicId, workspaceName, destination (nếu có)
+  - [x] SF list: nhóm/order by tier, mỗi SF: name + title + dependsOn + status chip
         (todo/in-progress/done theo token hiện có; 'unknown' = chip trung tính —
         không đoán, không treo; canceled hiển thị 'unknown' theo mapping)
-  - [ ] Progress tổng: sfDone/sfTotal (progress bar/token hiện có)
-  - [ ] Gates: hiển thị THỤ ĐỘNG (số pending + danh sách title/status) — KHÔNG
+  - [x] Progress tổng: sfDone/sfTotal (progress bar/token hiện có)
+  - [x] Gates: hiển thị THỤ ĐỘNG (số pending + danh sách title/status) — KHÔNG
         resolve UI (boundary SF-3)
-  - [ ] Component test: tier grouping, progress calc, chip 'unknown', gates passive
+  - [x] Component test: tier grouping, progress calc, chip 'unknown', gates passive
 - **Acceptance:** tests + typecheck + boundary pass; không có nút/flow resolve.
 
 ### T9 stale-malformed-handling
