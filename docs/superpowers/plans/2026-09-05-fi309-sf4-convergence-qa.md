@@ -128,8 +128,8 @@ trên state code cuối; T7 sau tests để docs mô tả hành vi đã verify).
 - Commit: `feat(FI-309): multi-root-multi-host-assertion`
 
 ### Task 6 — strings-audit
-- [ ] Sweep D10 surfaces: liệt kê user-visible strings, check typo/spacing/casing consistency với story-screen-copy.ts conventions
-- [ ] Fix typo/thiếu (nếu có) — mỗi fix 1 dòng, không refactor copy architecture
+- [x] Sweep D10 surfaces: liệt kê user-visible strings, check typo/spacing/casing consistency với story-screen-copy.ts conventions
+- [x] Fix typo/thiếu (nếu có) — mỗi fix 1 dòng, không refactor copy architecture
 - Acceptance: audit report (đã check gì, sửa gì) trong task report; tests vẫn xanh
 - Commit: `feat(FI-309): strings-audit` (chỉ khi có fix; không fix → ghi report-only)
 
