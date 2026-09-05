@@ -98,9 +98,9 @@ gộp theo đợt, ví dụ sau T8: `docs(FI-307): plan tick T1,T7,T8`).
 - **Files:** `mobile/src/superpowers/story-screen-copy.ts` (mới — copy module theo
   precedent `mobile/src/source-control/hosted-review-copy.ts`).
 - **Steps:**
-  - [ ] Probe convention hiện có: grep cách screens lấy strings (inline trong
+  - [x] Probe convention hiện có: grep cách screens lấy strings (inline trong
         component vs copy module) — chốt 1 cách cho cả SF-2
-  - [ ] Tập strings screen cần: title list/detail, section 'khác', stale banner,
+  - [x] Tập strings screen cần: title list/detail, section 'khác', stale banner,
         status labels (todo/in-progress/done/unknown), progress, refresh/pull hint,
         parseError entry label
 - **Acceptance:** copy module tồn tại + type-safe (`cd mobile && pnpm typecheck`
