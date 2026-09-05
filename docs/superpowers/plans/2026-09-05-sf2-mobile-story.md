@@ -111,22 +111,22 @@ gộp theo đợt, ví dụ sau T8: `docs(FI-307): plan tick T1,T7,T8`).
 - **Files:** `mobile/src/superpowers/story-list-host-fetch.ts`, `mobile/src/superpowers/story-screen-cache.ts`,
   `mobile/src/superpowers/use-mobile-story-list.ts` + tests colocated.
 - **Steps:**
-  - [ ] Cache persisted AsyncStorage versioned (chốt Alt 3-B — pattern
+  - [x] Cache persisted AsyncStorage versioned (chốt Alt 3-B — pattern
         `mobile/src/cache/home-snapshot-cache.ts`: throttle write + versioned key)
         keyed `hostId`; lỗi response KHÔNG xóa cache (giữ data cũ + flag stale,
         pattern `markUnavailable` của `home-host-worktree-fetch.ts`)
-  - [ ] Fetch qua `sendSingleFlightRequest(client, hostId, 'superpowers.storyList', {})`
+  - [x] Fetch qua `sendSingleFlightRequest(client, hostId, 'superpowers.storyList', {})`
         — pattern `home-host-worktree-fetch.ts` (cutover retry cap 2, disposed guard,
         cache write chỉ khi `response.ok`)
-  - [ ] Hook theo pattern `mobile/src/worktree/host-worktree-refresh.ts` (đã verify
+  - [x] Hook theo pattern `mobile/src/worktree/host-worktree-refresh.ts` (đã verify
         phase0): AppState gate — background KHÔNG poll, foreground resume + refresh
         ngay; interval foreground **60s** — CHÚ Ý citation (plan-critic): constant
         đúng tham chiếu là `REPO_METADATA_REFRESH_MS` (60s, cùng file); KHÔNG copy
         `WORKTREE_REFRESH_MS` (3s — dành cho worktree ps, sẽ giết Linear rate-limit
         nếu dùng cho storyList); clientEvents `'ready'` → refetch sau reconnect
-  - [ ] Pull-to-refresh handler expose cho T5 (RefreshControl — precedent
+  - [x] Pull-to-refresh handler expose cho T5 (RefreshControl — precedent
         `mobile/src/host-screen/host-workspace-list.tsx`)
-  - [ ] Tests: cache-first render (persisted seed), refetch sau reconnect ('ready'),
+  - [x] Tests: cache-first render (persisted seed), refetch sau reconnect ('ready'),
         background không poll, cutover retry, stale-flag giữ cache
 - **Acceptance:** `cd mobile && pnpm test src/superpowers/` (file mới) pass; typecheck pass.
 
