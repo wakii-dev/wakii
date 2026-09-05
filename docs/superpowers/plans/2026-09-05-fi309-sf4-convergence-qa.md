@@ -150,9 +150,9 @@ trên state code cuối; T7 sau tests để docs mô tả hành vi đã verify).
 - Commit: `feat(FI-309): stories-entry-button`
 
 ### Task 10 — story-screens-back-button (owner-reported QA fix 2026-09-05)
-- [ ] `MobileStoryListScreen.tsx`: thêm topRow header MIRROR pattern Gates screen (MobilePendingGatesScreen.tsx:120-130): backButton ChevronLeft 22 + `router.back()` + a11y "Back" + hitSlop 8; heading "Stories" + subheading ngắn (tone khớp "Pending decision gates on this host")
-- [ ] `MobileStoryDetailScreen.tsx`: thêm back affordance TỐI THIỂU (back button row, KHÔNG nhân đôi title đã có trong body) — cùng pattern
-- [ ] Test mới colocated `story-screens-back.test.tsx`: cả 2 screen expose nút back (a11y "Back") + router.back() được gọi; mock expo-router theo pattern test hiện có
+- [x] `MobileStoryListScreen.tsx`: thêm topRow header MIRROR pattern Gates screen (MobilePendingGatesScreen.tsx:120-130): backButton ChevronLeft 22 + `router.back()` + a11y "Back" + hitSlop 8; heading "Stories" + subheading ngắn (tone khớp "Pending decision gates on this host")
+- [x] `MobileStoryDetailScreen.tsx`: thêm back affordance TỐI THIỂU (back button row, KHÔNG nhân đôi title đã có trong body) — cùng pattern
+- [x] Test mới colocated `story-screens-back.test.tsx`: cả 2 screen expose nút back (a11y "Back") + router.back() được gọi; mock expo-router theo pattern test hiện có
 - Verify: `pnpm --dir mobile typecheck` + `pnpm --dir mobile test src/superpowers src/notifications` xanh
 - Dispatch: CHỈ sau khi T2 xong (Metro hot-reload giữa e2e sẽ phá evidence chain)
 - Commit: `feat(FI-309): story-screens-back-button`
