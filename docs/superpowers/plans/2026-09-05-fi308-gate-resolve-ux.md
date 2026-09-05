@@ -207,7 +207,7 @@ Plan file tick `- [x]` sau mỗi task (checkbox CHỈ cho task steps).
 - Device check: toggle offline trên emulator (hoặc ngắt mock server socket) → reconnect →
   list đúng; evidence png vào outbox (dùng app session T3b).
 - Exit: vitest pass + device evidence tồn tại trong outbox.
-- [ ] T6 done
+- [x] T6 done
 
 ### T7 — resolve-unit-tests
 - Consolidated sweep chống fixtures T1: toàn bộ resolve flow + event handling; bổ sung

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { RpcClient } from '../transport/rpc-client'
-import { startGateTransitionEvents } from './gate-transition-events'
+import { SWEEP_DEBOUNCE_MS, startGateTransitionEvents } from './gate-transition-events'
 import { runPendingGatesSweep } from './pending-gates-sweep'
 import {
   getPendingGatesSnapshot,
@@ -85,12 +85,24 @@ export function useMobilePendingGates(params: {
       })
   }, [hostId])
 
-  // The sweep is the reconcile authority — run it on mount and whenever the host
-  // (re)connects or the client instance is replaced (reconnect deep-trigger is T6).
+  // The sweep is the reconcile authority — run it whenever the host (re)connects or
+  // the client instance is replaced. First connect for a client sweeps immediately;
+  // later transitions into 'connected' are reconnects, debounced (same budget as the
+  // T5 event sweep) so a reconnect storm coalesces to one — the transport already
+  // replays the stream subscription on reconnect (rpc-client-stream-registry.ts
+  // replayAfterAuthentication), this sweep only repairs the replay-window gaps.
+  const connectedClientRef = useRef<RpcClient | null>(null)
   useEffect(() => {
-    if (client && connected) {
-      refresh()
+    if (!client || !connected) {
+      return
     }
+    if (connectedClientRef.current !== client) {
+      connectedClientRef.current = client
+      refresh()
+      return
+    }
+    const timer = setTimeout(refresh, SWEEP_DEBOUNCE_MS)
+    return () => clearTimeout(timer)
   }, [client, connected, refresh])
 
   // Event liveness (plan T5/D10): a passive second notifications stream mutates the
