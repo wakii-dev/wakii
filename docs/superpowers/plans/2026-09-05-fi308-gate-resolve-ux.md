@@ -187,7 +187,7 @@ Plan file tick `- [x]` sau mỗi task (checkbox CHỈ cho task steps).
   của subscription gốc — verify trên emulator với mock trigger (session T3b chạy sẵn app);
   evidence png + note vào outbox.
 - Exit: vitest pass + device evidence tồn tại trong outbox.
-- [ ] T5 done
+- [x] T5 done
 
 ### T6 — reconnect-catchup-verification
 - Reconnect signal (symbols đã verify tồn tại — plan-critic P2): `client.onStateChange`

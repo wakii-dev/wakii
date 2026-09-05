@@ -20,7 +20,10 @@ const deps = vi.hoisted(() => {
       buttons: { text?: string; onPress?: () => void }[]
     }[]
     calls: { method: string; params: unknown }[]
-    client: { sendRequest: (method: string, params?: unknown) => Promise<unknown> } | null
+    client: {
+      sendRequest: (method: string, params?: unknown) => Promise<unknown>
+      subscribe: () => () => void
+    } | null
     storyListResponse: () => unknown
     storyDetailResponse: (method: string, params: unknown) => unknown
     gateResolveResponse: () => unknown
@@ -477,7 +480,9 @@ describe('MobilePendingGatesScreen resolve-sheet integration', () => {
           return Promise.resolve(deps.state.gateResolveResponse())
         }
         return Promise.resolve(deps.state.storyDetailResponse(method, params))
-      }
+      },
+      // The hook also starts the passive gate-events consumer (plan T5).
+      subscribe: () => () => {}
     }
   })
 

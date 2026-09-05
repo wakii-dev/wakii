@@ -142,7 +142,9 @@ describe('useMobilePendingGates', () => {
       sendRequest: (method: string) => {
         calls.push(method)
         return Promise.resolve(respond(method))
-      }
+      },
+      // The hook also starts the passive gate-events consumer (plan T5).
+      subscribe: () => () => {}
     } as unknown as RpcClient
     return { client, calls }
   }
@@ -215,7 +217,8 @@ describe('useMobilePendingGates', () => {
           })
         }
         return Promise.resolve(STORY_DETAIL_OK)
-      }
+      },
+      subscribe: () => () => {}
     } as unknown as RpcClient
 
     const probe = mountProbe(client, true)
@@ -258,5 +261,50 @@ describe('useMobilePendingGates', () => {
       KHAC_SECTION_TITLE
     ])
     probe.unmount()
+  })
+
+  it('starts the passive gate-events consumer per client and tears it down on unmount', async () => {
+    const calls: { method: string; params: unknown }[] = []
+    let disposes = 0
+    let emit: ((data: unknown) => void) | null = null
+    const client = {
+      sendRequest: (method: string, params?: unknown) => {
+        calls.push({ method, params })
+        return Promise.resolve(STORY_LIST_OK)
+      },
+      subscribe: (_method: string, _params: unknown, onData: (data: unknown) => void) => {
+        emit = onData
+        return () => {
+          disposes += 1
+          emit = null
+        }
+      }
+    } as unknown as RpcClient
+
+    const probe = mountProbe(client, true)
+    expect(calls.filter((call) => call.method === 'superpowers.storyList')).toHaveLength(1)
+
+    act(() => {
+      emit?.({ type: 'ready', subscriptionId: 'sub-hook-1' })
+      emit?.({
+        type: 'notification',
+        source: 'gate-open',
+        gateId: 'gate-hook-event',
+        title: 'Event-sourced row'
+      })
+    })
+    expect(getPendingGatesSnapshot(HOST).gates.map((row) => row.gateId)).toContain(
+      'gate-hook-event'
+    )
+
+    probe.unmount()
+    await act(async () => {
+      await Promise.resolve()
+    })
+    expect(disposes).toBe(1)
+    expect(calls).toContainEqual({
+      method: 'notifications.unsubscribe',
+      params: { subscriptionId: 'sub-hook-1' }
+    })
   })
 })

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { RpcClient } from '../transport/rpc-client'
+import { startGateTransitionEvents } from './gate-transition-events'
 import { runPendingGatesSweep } from './pending-gates-sweep'
 import {
   getPendingGatesSnapshot,
@@ -91,6 +92,16 @@ export function useMobilePendingGates(params: {
       refresh()
     }
   }, [client, connected, refresh])
+
+  // Event liveness (plan T5/D10): a passive second notifications stream mutates the
+  // store between sweeps; its debounced re-sweep reuses refresh. The transport
+  // queues the subscribe until connected and replays it after a reconnect.
+  useEffect(() => {
+    if (!client) {
+      return
+    }
+    return startGateTransitionEvents({ client, hostId, sweep: refresh })
+  }, [client, hostId, refresh])
 
   return {
     sections: buildPendingGateSections(snapshot),

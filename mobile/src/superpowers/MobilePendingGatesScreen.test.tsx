@@ -14,7 +14,10 @@ const deps = vi.hoisted(() => {
     connState: string
     // Stable identity across renders — a fresh object per call would re-fire the
     // screen's sweep effect forever (the hang this mock exists to avoid).
-    client: { sendRequest: (method: string, params?: unknown) => Promise<unknown> } | null
+    client: {
+      sendRequest: (method: string, params?: unknown) => Promise<unknown>
+      subscribe: () => () => void
+    } | null
     storyListResponse: () => unknown
     storyDetailResponse: (method: string, params: unknown) => unknown
   } = {
@@ -139,7 +142,9 @@ describe('MobilePendingGatesScreen', () => {
           return Promise.resolve(deps.state.storyListResponse())
         }
         return Promise.resolve(deps.state.storyDetailResponse(method, params))
-      }
+      },
+      // The hook also starts the passive gate-events consumer (plan T5).
+      subscribe: () => () => {}
     }
   })
 
