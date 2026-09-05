@@ -211,10 +211,15 @@ Plan file tick `- [x]` sau mỗi task (checkbox CHỈ cho task steps).
 
 ### T7 — resolve-unit-tests
 - Consolidated sweep chống fixtures T1: toàn bộ resolve flow + event handling; bổ sung
-  test hụt (đếm coverage theo ACCEPTANCE matrix dưới). Chạy FULL `pnpm exec vitest run`
-  trong mobile/ (baseline sạch — không có known-fail mobile) + `pnpm typecheck` (baseline
-  exit 0) + `oxlint` file touched. Test file ≤800 dòng mỗi file (ratchet) — tách file
-  colocated thay vì kéo dài.
+  test hụt (đếm coverage theo ACCEPTANCE matrix dưới). **Riders từ review T2 (P2
+  non-blocking):** (1) `pending-gates-sweep.ts:88-89` thêm object-ness guard cho
+  `ok:true` + null/non-object result → markUnavailable (hiện throw vi phạm no-throw
+  contract) + test; (2) pin test per-story single-flight kind `superpowers.storyDetail:<storyId>`
+  (chống refactor về shared kind); (3) banner copy `MobilePendingGatesScreen.tsx:88-91`
+  tách rõ transient sweep-fail vs old-desktop. Chạy FULL `pnpm exec vitest run`
+  trong mobile/ (known-fail duy nhất: `mock-server-key-pair.test.ts` pre-existing, đã
+  verify stash-repro) + `pnpm typecheck` + `oxlint` file touched. Test file ≤800 dòng
+  mỗi file (ratchet) — tách file colocated thay vì kéo dài.
 - Exit: full mobile suite + typecheck + lint sạch; ACCEPTANCE matrix dưới điền xong evidence.
 - [ ] T7 done
 
