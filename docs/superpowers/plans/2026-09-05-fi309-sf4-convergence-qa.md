@@ -86,11 +86,11 @@ copy mới; T2 cuối để maximizing thời gian chờ user re-pair; T3 sau T4
 trên state code cuối; T7 sau tests để docs mô tả hành vi đã verify).
 
 ### Task 1 — deep-link-route-wiring
-- [ ] Extend `DesktopNotificationSource` + `'gate-open' | 'gate-closed'` (import type từ contract nếu phù hợp — KHÔNG đổi `src/shared`)
-- [ ] `NotificationEvent` (local-notification-scheduling.ts) + `LocalNotificationData` + `buildLocalNotificationData`: passthrough `gateId`/`storyId` khi non-empty
-- [ ] `getNotificationNavigationTarget`: branch `source: gate-*` + `storyId` non-empty → `sessionTarget` = story route target `{name: '[hostId]/stories/[...storyId]', params: {hostId, storyId, ...(gateId ? {gateId} : {})}}`; else chuỗi cũ
-- [ ] `use-open-notification-route.ts`: xác nhận precedence không đổi (recovery → sessionTarget → host); chỉ sửa nếu type bắt buộc
-- [ ] New test `gate-notification-routing.test.ts`: story-linked open/closed → story target; storyId null → worktree/host fallback; gateId absent/coerced; recovery precedence với gate payload; stored data thiếu keys → legacy; fields lạ ignore; story đã xóa giữa notification và tap → story route vẫn mở (screen tự hiện notFound banner — P2 insurance)
+- [x] Extend `DesktopNotificationSource` + `'gate-open' | 'gate-closed'` (import type từ contract nếu phù hợp — KHÔNG đổi `src/shared`)
+- [x] `NotificationEvent` (local-notification-scheduling.ts) + `LocalNotificationData` + `buildLocalNotificationData`: passthrough `gateId`/`storyId` khi non-empty
+- [x] `getNotificationNavigationTarget`: branch `source: gate-*` + `storyId` non-empty → `sessionTarget` = story route target `{name: '[hostId]/stories/[...storyId]', params: {hostId, storyId, ...(gateId ? {gateId} : {})}}`; else chuỗi cũ
+- [x] `use-open-notification-route.ts`: xác nhận precedence không đổi (recovery → sessionTarget → host); chỉ sửa nếu type bắt buộc
+- [x] New test `gate-notification-routing.test.ts`: story-linked open/closed → story target; storyId null → worktree/host fallback; gateId absent/coerced; recovery precedence với gate payload; stored data thiếu keys → legacy; fields lạ ignore; story đã xóa giữa notification và tap → story route vẫn mở (screen tự hiện notFound banner — P2 insurance)
 - Files: notification-routing.ts (+ local-notification-scheduling.ts type), use-open-notification-route.ts (nếu cần), test mới
 - Acceptance: unit tests xanh; `pnpm --dir mobile typecheck` + `pnpm --dir mobile test src/notifications` sạch; không đụng screen/layout/desktop
 - Commit: `feat(FI-309): deep-link-route-wiring`
@@ -142,17 +142,17 @@ trên state code cuối; T7 sau tests để docs mô tả hành vi đã verify).
 - Commit: `feat(FI-309): docs-update-mobile-notifications`
 
 ### Task 8 — stories-entry-button (owner requirement 2026-09-05 — BẮT BUỘC trước Done)
-- [ ] `mobile/src/host-screen/host-screen-header.tsx`: thêm 1 nút icon "Stories" NGAY CẠNH nút Gates trong CẢ HAI toolbar variant (embedded ~line 215-229 + standard ~line 343-352) — copy đúng pattern Gates: Pressable + cùng style class của variant đó (`embeddedToolbarIconButton` / `searchToggle`), `onPress={() => actions.navigateFromHostList(\`/h/${hostId}/stories\`)}`, `disabled={connState !== 'connected'}`, `accessibilityRole="button"`, `accessibilityLabel="Stories"`, lucide icon `BookOpen` (size 16, color pattern như Gates)
-- [ ] Không đụng logic khác của header; không thêm state mới
-- [ ] Verify: `pnpm --dir mobile typecheck` + `pnpm --dir mobile test src/notifications src/superpowers` xanh (không có unit test precedent cho header — visual evidence qua adb screencap khi emulator khả dụng: button render, disabled khi disconnected; nếu emulator bận device-session → defer visual vào T2, ghi rõ)
+- [x] `mobile/src/host-screen/host-screen-header.tsx`: thêm 1 nút icon "Stories" NGAY CẠNH nút Gates trong CẢ HAI toolbar variant (embedded ~line 215-229 + standard ~line 343-352) — copy đúng pattern Gates: Pressable + cùng style class của variant đó (`embeddedToolbarIconButton` / `searchToggle`), `onPress={() => actions.navigateFromHostList(\`/h/${hostId}/stories\`)}`, `disabled={connState !== 'connected'}`, `accessibilityRole="button"`, `accessibilityLabel="Stories"`, lucide icon `BookOpen` (size 16, color pattern như Gates)
+- [x] Không đụng logic khác của header; không thêm state mới
+- [x] Verify: `pnpm --dir mobile typecheck` + `pnpm --dir mobile test src/notifications src/superpowers` xanh (không có unit test precedent cho header — visual evidence qua adb screencap khi emulator khả dụng: button render, disabled khi disconnected; nếu emulator bận device-session → defer visual vào T2, ghi rõ)
 - Files: host-screen-header.tsx (+ import icon)
 - Acceptance: nút thấy được cạnh Gates cả 2 variant, tap → `/h/<hostId>/stories` (owner thử được ngay)
 - Commit: `feat(FI-309): stories-entry-button`
 
 ### Task 9 — story-graph-cross-links (owner requirement 2026-09-05 — BẮT BUỘC trước Done)
-- [ ] `MobileStoryDetailScreen.tsx`: gate rows PENDING trở thành pressable → mở `MobileGateResolveSheet` (REUSE component + `useMobileGateResolve` của SF-3 — không reimplement resolve UX); resolved/timeout rows giữ read-only (timeout read-only per spec §3b). Adapter nhỏ nếu shape `PendingGateRow` (sheet) khác contract gate (detail) — map tại chỗ, không đổi sheet
-- [ ] `MobilePendingGatesScreen.tsx`: gate row có `storyId` non-null → thêm affordance mở story detail `/h/<hostId>/stories/<storyId>` (reuse `createStoryDetailHref` pattern); gate 'khác' (storyId null) giữ nguyên resolve inline
-- [ ] Tests: 2 file mới colocated — `story-detail-gate-resolve.test.tsx` (press pending gate → sheet mở; resolve flow qua sheet vẫn confirm; không đụng resolved rows) + `pending-gates-story-link.test.tsx` (story-linked row → navigate đúng href; 'khác' không link) — mock expo-router theo pattern test SF-2/3 có sẵn
+- [x] `MobileStoryDetailScreen.tsx`: gate rows PENDING trở thành pressable → mở `MobileGateResolveSheet` (REUSE component + `useMobileGateResolve` của SF-3 — không reimplement resolve UX); resolved/timeout rows giữ read-only (timeout read-only per spec §3b). Adapter nhỏ nếu shape `PendingGateRow` (sheet) khác contract gate (detail) — map tại chỗ, không đổi sheet
+- [x] `MobilePendingGatesScreen.tsx`: gate row có `storyId` non-null → thêm affordance mở story detail `/h/<hostId>/stories/<storyId>` (reuse `createStoryDetailHref` pattern); gate 'khác' (storyId null) giữ nguyên resolve inline
+- [x] Tests: 2 file mới colocated — `story-detail-gate-resolve.test.tsx` (press pending gate → sheet mở; resolve flow qua sheet vẫn confirm; không đụng resolved rows) + `pending-gates-story-link.test.tsx` (story-linked row → navigate đúng href; 'khác' không link) — mock expo-router theo pattern test SF-2/3 có sẵn
 - Verify: `pnpm --dir mobile typecheck` + `pnpm --dir mobile test src/superpowers` xanh
 - Files: `MobileStoryDetailScreen.tsx`, `MobilePendingGatesScreen.tsx`, 2 test files mới
 - Acceptance: graph (3) Detail → gates → resolve sheet + (5) GatesScreen → StoryDetail hoạt động; owner graph e2e checklist item 3+5 có code
