@@ -1,0 +1,131 @@
+name: Fork Release Cut
+
+# Why: single entry point for cutting releases on this fork. Upstream's
+# release-cut.yml is guarded to stablyai/orca, so this mirrors the flow here:
+# version bump → annotated tag → GitHub Release with notes → dispatch the
+# mac/windows/android builds that upload their artifacts to the release.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact version to cut (e.g. 1.4.199); must be greater than the latest vX tag
+        required: true
+        type: string
+      ref:
+        description: Branch to release from
+        required: false
+        default: wakii-dev
+        type: string
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: fork-release-cut
+  cancel-in-progress: false
+
+jobs:
+  cut:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.cut.outputs.version }}
+      tag: ${{ steps.cut.outputs.tag }}
+      ref: ${{ steps.cut.outputs.ref }}
+      mobile_version: ${{ steps.cut.outputs.mobile_version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 0
+
+      - name: Validate version
+        id: cut
+        env:
+          VERSION: ${{ inputs.version }}
+          REF: ${{ inputs.ref }}
+        run: |
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Version must be bare X.Y.Z, got: $VERSION"; exit 1
+          fi
+          latest=$(git tag --sort=-v:refname | grep -E '^v[0-9]' | head -1)
+          if [ "$(printf '%s\nv%s\n' "$latest" "$VERSION" | sort -V | tail -1)" != "v$VERSION" ]; then
+            echo "v$VERSION must be greater than $latest"; exit 1
+          fi
+          if git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
+            echo "tag v$VERSION already exists"; exit 1
+          fi
+          mobile_version=$(node -p "require('./mobile/app.json').expo.version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          echo "ref=$REF" >> "$GITHUB_OUTPUT"
+          echo "mobile_version=$mobile_version" >> "$GITHUB_OUTPUT"
+
+      - name: Bump package.json version
+        run: |
+          node -e "
+            const fs = require('fs');
+            const p = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            p.version = '${{ steps.cut.outputs.version }}';
+            fs.writeFileSync('package.json', JSON.stringify(p, null, 2) + '\n');
+          "
+          git config user.name "wakii-dev release bot"
+          git config user.email "release@wakii-dev.local"
+          git add package.json
+          git commit -m "release: bump wakii-dev to ${{ steps.cut.outputs.version }}"
+
+      - name: Tag and push
+        run: |
+          git tag -a "${{ steps.cut.outputs.tag }}" -m "Wakii ${{ steps.cut.outputs.version }}"
+          git push origin "HEAD:${{ steps.cut.outputs.ref }}"
+          git push origin "refs/tags/${{ steps.cut.outputs.tag }}"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.cut.outputs.version }}
+          TAG: ${{ steps.cut.outputs.tag }}
+          REF: ${{ inputs.ref }}
+        run: |
+          prev=$(git tag --sort=-v:refname | grep -E '^v[0-9]' | sed -n 2p)
+          {
+            echo "# ⚡ Wakii $VERSION"
+            echo
+            echo "> The agentic IDE with a built-in superpowers team — cut from \`$REF\`."
+            echo
+            echo "## ✨ Changes since $prev"
+            echo
+            git log --oneline "$prev..$TAG" | sed 's/^/- /'
+          } > notes.md
+          gh release create "$TAG" --title "Wakii $VERSION" --notes-file notes.md --latest
+
+  dispatch-builds:
+    needs: cut
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch macOS build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run macos-build.yml --repo wakii-dev/wakii \
+            --ref "${{ needs.cut.outputs.ref }}" \
+            -f release_tag="${{ needs.cut.outputs.tag }}"
+
+      - name: Dispatch Windows build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run windows-build.yml --repo wakii-dev/wakii \
+            --ref "${{ needs.cut.outputs.ref }}" \
+            -f release_tag="${{ needs.cut.outputs.tag }}"
+
+      - name: Dispatch Android build (APK attached to release)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run mobile-android-release.yml --repo wakii-dev/wakii \
+            --ref "${{ needs.cut.outputs.ref }}" \
+            -f release_version="${{ needs.cut.outputs.mobile_version }}" \
+            -f publish_github_release=false \
+            -f attach_release_tag="${{ needs.cut.outputs.tag }}"

@@ -2,10 +2,15 @@ name: macOS build
 
 # Build the full macOS DMG (including the computer-use native module) on a
 # GitHub-hosted macOS runner (Xcode 16 available) and attach it to the
-# v1.4.199 release. Unsigned build (no signing secrets).
+# release matching the built version. Unsigned build (no signing secrets).
 
 on:
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Release tag to upload to (default v<package.json version>)
+        required: false
+        type: string
   push:
     branches: [wakii-dev]
     paths:
@@ -21,6 +26,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: wakii-dev
+
+      - name: Resolve release tag
+        run: |
+          TAG="${{ inputs.release_tag }}"
+          [ -n "$TAG" ] || TAG="v$(node -p "require('./package.json').version")"
+          echo "RELEASE_TAG=$TAG" >> "$GITHUB_ENV"
+          echo "RELEASE_VERSION=${TAG#v}" >> "$GITHUB_ENV"
 
       - name: Select Xcode 16
         run: |
@@ -53,20 +65,20 @@ jobs:
       - name: Collect artifacts (arm64 + x64)
         run: |
           mkdir -p dist/release
-          mv dist/orca-macos-arm64.dmg dist/Wakii-1.4.198-arm64.dmg || true
-          mv dist/orca-macos-x64.dmg dist/Wakii-1.4.198-x64.dmg || true
-          for f in dist/Wakii-1.4.198*.dmg dist/Wakii-1.4.198*.zip dist/latest-mac.yml; do
+          mv dist/orca-macos-arm64.dmg "dist/Wakii-$RELEASE_VERSION-arm64.dmg" || true
+          mv dist/orca-macos-x64.dmg "dist/Wakii-$RELEASE_VERSION-x64.dmg" || true
+          for f in dist/Wakii-*.dmg dist/Wakii-*.zip dist/latest-mac.yml; do
             [ -e "$f" ] && cp "$f" dist/release/
           done
           ls -la dist/release/
 
-      - name: Upload to release v1.4.199
+      - name: Upload to release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd dist/release
           for f in *; do
-            gh release upload v1.4.199 "$f" --repo wakii-dev/wakii --clobber
+            gh release upload "$RELEASE_TAG" "$f" --repo wakii-dev/wakii --clobber
           done
 
       - uses: actions/upload-artifact@v4
