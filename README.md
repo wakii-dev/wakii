@@ -155,9 +155,9 @@ System Settings → Privacy & Security):
 | Apple Silicon | [Wakii-1.4.198-arm64.dmg](https://github.com/wakii-dev/wakii/releases/download/v1.4.198/Wakii-1.4.198-arm64.dmg)                  |
 | Intel         | [Wakii-1.4.198-x64.dmg](https://github.com/wakii-dev/wakii/releases/download/v1.4.198/Wakii-1.4.198-x64.dmg)                      |
 | Android       | [app-release.apk](https://github.com/wakii-dev/wakii/releases/download/mobile-android-v0.0.48/app-release.apk)                    |
+| Windows       | [orca-windows-setup.exe](https://github.com/wakii-dev/wakii/releases/download/v1.4.198/orca-windows-setup.exe)                     |
 
-Windows: first build pending — [build from source](#-developing) works
-everywhere.
+Build from source ([guide](#-developing)) works everywhere.
 
 ## 🚀 Developing
 
