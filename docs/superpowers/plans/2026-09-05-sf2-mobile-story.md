@@ -195,11 +195,11 @@ gộp theo đợt, ví dụ sau T8: `docs(FI-307): plan tick T1,T7,T8`).
 - **Files:** `mobile/src/superpowers/story-routes-host-scope.test.ts` (structure test
   đọc `mobile/app/` — pattern `expo-route-module-boundary.test.ts`).
 - **Steps:**
-  - [ ] Test: story routes TỒN TẠI dưới `app/h/[hostId]/stories*` và KHÔNG có route
+  - [x] Test: story routes TỒN TẠI dưới `app/h/[hostId]/stories*` và KHÔNG có route
         story ngoài host scope (`app/stories*` phải không tồn tại)
-  - [ ] Test: screen components nhận `hostId` từ route params (không singleton host)
+  - [x] Test: screen components nhận `hostId` từ route params (không singleton host)
         — assert qua render test với 2 hostId khác nhau cho 2 render khác nhau
-  - [ ] Chạy full `expo-route-module-boundary.test.ts` trong verify
+  - [x] Chạy full `expo-route-module-boundary.test.ts` trong verify
 - **Acceptance:** `cd mobile && pnpm test src/superpowers/story-routes-host-scope.test.ts
   src/expo-route-module-boundary.test.ts` pass.
 
