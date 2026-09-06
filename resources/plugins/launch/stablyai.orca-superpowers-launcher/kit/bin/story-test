@@ -17,7 +17,11 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-ORCA_BIN="${ORCA_BIN:-/opt/homebrew/bin/orca}"
+ORCA_BIN="${ORCA_BIN:-}"
+[ -x "$ORCA_BIN" ] || ORCA_BIN="$(command -v orca 2>/dev/null)"
+[ -x "$ORCA_BIN" ] || ORCA_BIN="/opt/homebrew/bin/orca"
+[ -x "$ORCA_BIN" ] || ORCA_BIN="/usr/local/bin/orca"
+[ -x "$ORCA_BIN" ] || ORCA_BIN="/Applications/Wakii.app/Contents/Resources/bin/orca"
 [ -x "$ORCA_BIN" ] || ORCA_BIN="/Applications/Orca.app/Contents/Resources/bin/orca"
 ORCA_DEV="$HOME/Library/Application Support/orca-dev"
 export ORCA_USER_DATA_PATH="$ORCA_DEV"
