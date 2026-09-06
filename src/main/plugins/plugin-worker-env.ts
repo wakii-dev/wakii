@@ -5,6 +5,8 @@
  * diverges from the sidecar precedent, which spreads the full process.env.
  */
 
+import { existsSync } from 'node:fs'
+
 const WORKER_ENV_ALLOWLIST = [
   'PATH',
   'HOME',
@@ -47,6 +49,19 @@ export function buildPluginWorkerEnv(
       env[key === 'SYSTEMROOT' ? 'SystemRoot' : key] = value
     }
   }
+  // FORK-LOCAL (Wakii): kit CLIs (story-verify/watchdog…) resolve the app CLI
+  // through ORCA_BIN with a hardcoded /opt/homebrew fallback — pin the real
+  // binary so those calls never exit 127 on machines without that path.
+  const baseOrcaBin = platform === 'win32' ? windowsLookup.get('ORCA_BIN') : baseEnv.ORCA_BIN
+  env.ORCA_BIN =
+    baseOrcaBin ??
+    [
+      '/usr/local/bin/orca',
+      '/opt/homebrew/bin/orca',
+      '/Applications/Wakii.app/Contents/Resources/bin/orca',
+      '/Applications/Orca.app/Contents/Resources/bin/orca'
+    ].find((candidate) => existsSync(candidate)) ??
+    '/usr/local/bin/orca'
   env.ELECTRON_RUN_AS_NODE = '1'
   return env
 }

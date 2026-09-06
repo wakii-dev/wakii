@@ -8,14 +8,32 @@ describe('buildPluginWorkerEnv', () => {
         { PATH: '/safe', path: '/wrong', HOME: '/home', NODE_OPTIONS: '--inspect' },
         'linux'
       )
-    ).toEqual({ PATH: '/safe', HOME: '/home', ELECTRON_RUN_AS_NODE: '1' })
+    ).toEqual({
+      PATH: '/safe',
+      HOME: '/home',
+      ELECTRON_RUN_AS_NODE: '1',
+      ORCA_BIN: '/usr/local/bin/orca'
+    })
   })
 
   it('matches Windows environment keys case-insensitively', () => {
     expect(buildPluginWorkerEnv({ Path: 'C:\\safe', systemroot: 'C:\\Windows' }, 'win32')).toEqual({
       PATH: 'C:\\safe',
       SystemRoot: 'C:\\Windows',
-      ELECTRON_RUN_AS_NODE: '1'
+      ELECTRON_RUN_AS_NODE: '1',
+      ORCA_BIN: '/usr/local/bin/orca'
     })
+  })
+})
+
+describe('ORCA_BIN injection', () => {
+  it('pins ORCA_BIN to the first existing app CLI', () => {
+    const env = buildPluginWorkerEnv({ PATH: '/usr/bin' })
+    expect(env.ORCA_BIN).toBe('/usr/local/bin/orca')
+  })
+
+  it('respects a caller-provided ORCA_BIN', () => {
+    const env = buildPluginWorkerEnv({ PATH: '/usr/bin', ORCA_BIN: '/custom/orca' })
+    expect(env.ORCA_BIN).toBe('/custom/orca')
   })
 })
