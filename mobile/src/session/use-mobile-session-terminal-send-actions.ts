@@ -64,7 +64,7 @@ export function useMobileSessionTerminalSendActions(scope: MobileSessionTerminal
     getSendCompletionGeneration
   )
 
-  async function handleSend() {
+  async function handleSend(sendOptions?: { textTransform?: (draft: string) => string }) {
     // Why: the return key still submits while offline; hold the composed text instead of firing a doomed RPC (#6713).
     if (!client || !activeHandle || sendingRef.current || !canSend) {
       return
@@ -72,7 +72,11 @@ export function useMobileSessionTerminalSendActions(scope: MobileSessionTerminal
     sendingRef.current = true
 
     const draft = bufferedTerminalDraftState.input
-    const text = normalizeTerminalTextInput(draft)
+    // Why: transform applies to the SENT text only — draft tracking and rejection
+    // restore always work on the raw user-typed draft.
+    const text = normalizeTerminalTextInput(
+      sendOptions?.textTransform ? sendOptions.textTransform(draft) : draft
+    )
     const bufferedDraftSend = bufferedTerminalDraftState.beginBufferedTerminalDraftSend(
       activeHandle,
       draft

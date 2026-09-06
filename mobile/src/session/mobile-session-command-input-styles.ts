@@ -165,6 +165,29 @@ export const mobileSessionCommandInputStyles = StyleSheet.create({
     gap: spacing.sm
   },
 
+  storyModeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    height: 34,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radii.input,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    backgroundColor: colors.bgRaised
+  },
+  storyModeChipActive: {
+    borderColor: colors.accentBlue,
+    backgroundColor: colors.accentBlue
+  },
+  storyModeChipText: {
+    fontSize: 12,
+    color: colors.textSecondary
+  },
+  storyModeChipTextActive: {
+    color: colors.onAccent
+  },
+
   liveInputFocusTarget: {
     flex: 1,
     minHeight: 34,

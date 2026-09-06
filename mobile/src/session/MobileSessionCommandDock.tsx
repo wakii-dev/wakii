@@ -1,7 +1,7 @@
+import { useState } from 'react'
 import { View, Text, ScrollView, TextInput, Pressable, Platform } from 'react-native'
 import {
   ArrowUp,
-  ChevronDown,
   ChevronsRight,
   Keyboard as KeyboardIcon,
   Monitor,
@@ -14,14 +14,20 @@ import {
   getTerminalCommandKeyboardType,
   getTerminalLiveInputKeyboardType
 } from '../terminal/terminal-keyboard-type'
+import { MobileKeyboardDismissKey } from './MobileKeyboardDismissKey'
+import { MobileStoryModeChip } from './MobileStoryModeChip'
 import { MobileTerminalLiveInputStatus } from './MobileTerminalLiveInputStatus'
 import { MobileTerminalInputActions } from './MobileTerminalInputActions'
 import { isTerminalPhoneDisplayMode } from './mobile-session-route-helpers'
+import { formatStoryPrompt } from './story-prompt-format'
 import { colors } from '../theme/mobile-theme'
 import { styles } from './mobile-session-styles'
 import type { MobileSessionController } from './use-mobile-session-controller'
 
 export function MobileSessionCommandDock({ controller }: { controller: MobileSessionController }) {
+  // Why: buffered-input affordance — ON means the composed text is sent wrapped
+  // as a create-story prompt instead of a raw terminal command.
+  const [storyMode, setStoryMode] = useState(false)
   const {
     insets,
     bufferedTerminalDraftState,
@@ -82,30 +88,7 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
       >
         {/* Accessory keys */}
         <View style={styles.accessoryBar}>
-          {/* Why: fixed keyboard escape hatch; outside ScrollView + shortcut path so it can't scroll away or be hidden (#5106). */}
-          {keyboardLift > 0 && (
-            <Pressable
-              style={({ pressed }) => [
-                styles.keyboardDismissKey,
-                pressed && styles.accessoryKeyPressed
-              ]}
-              onPress={dismissSoftwareKeyboard}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="Dismiss keyboard"
-              accessibilityHint="Hides the software keyboard and keeps the current terminal session open."
-            >
-              <View style={styles.keyboardDismissGlyph}>
-                <KeyboardIcon size={15} color={colors.textSecondary} strokeWidth={2} />
-                <ChevronDown
-                  size={10}
-                  color={colors.textSecondary}
-                  strokeWidth={2.5}
-                  style={styles.keyboardDismissChevron}
-                />
-              </View>
-            </Pressable>
-          )}
+          {keyboardLift > 0 && <MobileKeyboardDismissKey onDismiss={dismissSoftwareKeyboard} />}
           {/* Why: default tap handling makes the first accessory-key tap dismiss the keyboard and get swallowed (#5106). */}
           <ScrollView
             style={styles.accessoryScroll}
@@ -329,6 +312,10 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
           </View>
         ) : (
           <View style={styles.inputBar}>
+            <MobileStoryModeChip
+              active={storyMode}
+              onToggle={() => setStoryMode((value) => !value)}
+            />
             <TextInput
               ref={commandInputRef}
               // Why: Android caches IME inputType at mount, so toggling autocomplete must remount there; iOS updates in place.
@@ -343,7 +330,7 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
               value={bufferedTerminalDraftState.input}
               // Why: iOS kills active dictation/IME if JS writes a value differing from native text; store raw, normalize at send.
               onChangeText={bufferedTerminalDraftState.setInput}
-              placeholder="Type a command…"
+              placeholder={storyMode ? 'Describe the story to build…' : 'Type a command…'}
               placeholderTextColor={colors.textMuted}
               autoCapitalize="none"
               autoCorrect={autocompleteEnabled}
@@ -356,7 +343,9 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
               blurOnSubmit={false}
               // Why: composing is local — an outage must not lock the field or discard typed text (#6713).
               editable={canCompose}
-              onSubmitEditing={() => void handleSend()}
+              onSubmitEditing={() =>
+                void handleSend(storyMode ? { textTransform: formatStoryPrompt } : undefined)
+              }
             />
             <MobileTerminalInputActions
               canSend={canSend}
@@ -376,8 +365,10 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
             <Pressable
               style={[styles.sendButton, !canSend && styles.sendButtonDisabled]}
               disabled={!canSend}
-              onPress={() => void handleSend()}
-              accessibilityLabel="Send command"
+              onPress={() =>
+                void handleSend(storyMode ? { textTransform: formatStoryPrompt } : undefined)
+              }
+              accessibilityLabel={storyMode ? 'Send story prompt' : 'Send command'}
             >
               <ArrowUp size={18} color={colors.textSecondary} strokeWidth={2.5} />
             </Pressable>
