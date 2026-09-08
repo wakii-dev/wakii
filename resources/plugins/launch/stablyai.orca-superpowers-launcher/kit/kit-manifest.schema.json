@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://github.com/VuHoi/story-team-kit/kit-manifest.schema.json",
   "title": "story-team-kit manifest (kit.json)",
-  "description": "Máy-đọc-được manifest của story-team-kit. Lưu ý terminology: `provides` ở đây KHÔNG liên quan `capabilities` của orca-plugin.json (tránh collision tên). provides[] 49 entries = 26 full contracts (17 skill + 9 agent) + 23 bin minimal. bin = upstream 25 TRỪ story-dashboard-server + story-dashboard.html (sync-loại có chủ đích — sync-kit.sh remove khi vendor). Schema này là doc/CI artifact — runtime installer KHÔNG parse schema, validator tự viết trong installKit (SF-2).",
+  "description": "Máy-đọc-được manifest của story-team-kit. Lưu ý terminology: `provides` ở đây KHÔNG liên quan `capabilities` của orca-plugin.json (tránh collision tên). provides[] 51 entries = 26 full contracts (17 skill + 9 agent) + 25 bin minimal (23 upstream-sync TRỪ story-dashboard-server + story-dashboard.html, + 2 fork-local wakii-skill-import/wakii-skill-export; wakii-skill-import có thể thêm skill community nữa → số entry tăng theo). Schema này là doc/CI artifact — runtime installer KHÔNG parse schema, validator tự viết trong installKit (SF-2).",
   "type": "object",
   "required": ["name", "version", "description", "provides"],
   "properties": {
@@ -33,7 +33,7 @@
     },
     "fullContract": {
       "type": "object",
-      "description": "Capability có contract đầy đủ — skill hoặc agent. owner = single-author kit (\"wakii\"). KHÔNG có per-entry version (kit-level version là duy nhất).",
+      "description": "Capability có contract đầy đủ — skill hoặc agent. owner = \"wakii\" (kit author) hoặc \"community/<nguồn>\" (skill import qua wakii-skill-import). KHÔNG có per-entry version (kit-level version là duy nhất).",
       "required": ["name", "type", "inputs", "outputs", "owner"],
       "additionalProperties": false,
       "properties": {
@@ -50,7 +50,7 @@
           "minLength": 1,
           "description": "1 dòng verdict/report format."
         },
-        "owner": { "const": "wakii" }
+        "owner": { "type": "string", "pattern": "^wakii$|^community/[a-z0-9][a-z0-9-]*$" }
       }
     },
     "binEntry": {
