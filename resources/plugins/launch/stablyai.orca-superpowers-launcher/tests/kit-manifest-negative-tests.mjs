@@ -188,6 +188,22 @@ await runCase('[f] missing-kitjson', async () => {
   check('[f]', 'KHÔNG ghi marker', !existsSync(join(root, '.story-team-kit-version')))
 })
 
+// [g] notification fail → orca.log fallback (spec: fire-and-forget .catch)
+await runCase('[g] toast-fallback', async () => {
+  const kitRoot = tempDir('g-kit')
+  const root = tempDir('g-root')
+  buildValidKit(kitRoot)
+  writeFileSync(join(kitRoot, 'kit.json'), '{oops not json') // malformed → fail path
+  const orca = mockOrca({ toastFails: true })
+  const r = await installKit(orca, { root, kitRoot })
+  await sleep(20)
+  check('[g]', 'return false (blocked)', r === false, `got ${r}`)
+  check('[g]', 'KHÔNG notify (toast chết)', orca.calls.notifications.length === 0, `got ${orca.calls.notifications.length}`)
+  check('[g]', 'fallback log đúng 1 dòng', orca.calls.logs.length === 1, `got ${orca.calls.logs.length}`)
+  check('[g]', 'log nói blocked + malformed', (orca.calls.logs[0] || '').includes('blocked') && (orca.calls.logs[0] || '').includes('malformed'))
+  check('[g]', 'KHÔNG copy', !existsSync(join(root, 'skills')))
+})
+
 // [+ control dương] kit hợp lệ → copy + marker + 0 notify
 await runCase('[+] valid-control', async () => {
   const kitRoot = tempDir('p-kit')
