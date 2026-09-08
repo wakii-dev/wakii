@@ -1,0 +1,260 @@
+#!/usr/bin/env node
+// wakii-skill-import — import 1 skill chuẩn Claude (thư mục có SKILL.md) vào
+// story-team-kit. Ghi nguồn gốc vào kit.json provides[] (owner
+// community/<nguồn>) + bump version patch → installKit() re-copy lần activate
+// sau (marker lệch version).
+//
+// Fail-loud: kiểm tra HẾT (SKILL.md, frontmatter name+description, collide
+// với name đã có trong provides[]/trên đĩa, kit.json parse được) TRƯỚC khi
+// copy — không sửa nửa vời. Lỗi giữa chừng khi ghi kit.json → rollback thư
+// mục đã copy (giữ bất biến 2 chiều provides ↔ đĩa của validator installKit).
+//
+// Usage:
+//   wakii-skill-import <skill-dir> --kit <kit-dir> [--source <nguồn>]
+//                      [--inputs "a, b"] [--outputs "mô tả"] [--json]
+//   wakii-skill-import --selftest
+//
+// Kit dir: --kit <dir> hoặc env WAKII_KIT_DIR — KHÔNG default ~/.claude.
+// Entry mới: inputs[] mặc định = [description] (điều kiện kích hoạt), outputs
+// mặc định = description; override bằng --inputs / --outputs.
+//
+// Exit: 0 import xong · 1 fail (skill hỏng / collide / kit.json hỏng) · 2 usage
+'use strict'
+
+const fs = require('node:fs')
+const os = require('node:os')
+const path = require('node:path')
+
+const NAME_RE = /^[a-z0-9][a-z0-9-]*$/
+const VERSION_RE = /^\d+\.\d+\.\d+$/
+
+// ---- arg parsing -----------------------------------------------------------
+function parseArgs(argv) {
+  const opts = { inputs: null, outputs: null, source: null, kit: null, json: false, selftest: false, help: false, sourceDir: null }
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i]
+    if (a === '--selftest') opts.selftest = true
+    else if (a === '-h' || a === '--help') opts.help = true
+    else if (a === '--json') opts.json = true
+    else if (a === '--kit') opts.kit = argv[++i]
+    else if (a === '--source') opts.source = argv[++i]
+    else if (a === '--inputs') opts.inputs = argv[++i]
+    else if (a === '--outputs') opts.outputs = argv[++i]
+    else if (a === '-') die('Usage: wakii-skill-import <skill-dir> --kit <kit-dir> [--source <nguồn>] [--json] | --selftest', 2)
+    else if (a.startsWith('--')) die(`Unknown flag: ${a}`, 2)
+    else if (opts.sourceDir !== null) die('Chỉ nhận 1 <skill-dir>', 2)
+    else opts.sourceDir = a
+  }
+  return opts
+}
+
+function die(msg, code) {
+  console.error(`wakii-skill-import: ${msg}`)
+  process.exit(code)
+}
+
+// ---- frontmatter (đủ dùng: key: value + block scalar >- / |) ---------------
+function parseFrontmatter(text) {
+  const m = text.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/)
+  if (!m) return { error: 'SKILL.md thiếu frontmatter block `---` mở/đóng ở đầu file' }
+  const data = {}
+  const lines = m[1].split(/\r?\n/)
+  for (let i = 0; i < lines.length; i++) {
+    const km = lines[i].match(/^([A-Za-z][\w-]*):\s*(.*)$/)
+    if (!km) continue
+    const key = km[1]
+    let val = km[2].trim()
+    if (/^[>|][>|+-]?\s*$/.test(val)) {
+      const parts = []
+      while (i + 1 < lines.length && (/^\s/.test(lines[i + 1]) || lines[i + 1] === '')) {
+        i++
+        if (lines[i] !== '') parts.push(lines[i].trim())
+      }
+      val = parts.join(' ')
+    }
+    if (val !== '') data[key] = val.replace(/\s+/g, ' ').trim()
+  }
+  return { data }
+}
+
+// ---- kit manifest ----------------------------------------------------------
+function readKitManifest(kitRoot) {
+  const manifestPath = path.join(kitRoot, 'kit.json')
+  if (!fs.existsSync(manifestPath)) return { error: `không thấy ${manifestPath}` }
+  let manifest
+  try {
+    manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
+  } catch (err) {
+    return { error: `kit.json hỏng (không parse được JSON): ${err.message}` }
+  }
+  if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) return { error: 'kit.json không phải object' }
+  if (!Array.isArray(manifest.provides)) return { error: 'kit.json thiếu provides[] (mảng)' }
+  if (typeof manifest.version !== 'string' || !VERSION_RE.test(manifest.version)) {
+    return { error: `kit.json version "${manifest.version}" không khớp \\d+.\\d+.\\d+` }
+  }
+  return { manifest, manifestPath }
+}
+
+function bumpPatch(version) {
+  const [maj, min, pat] = version.split('.').map(Number)
+  return `${maj}.${min}.${pat + 1}`
+}
+
+function sanitizeSource(raw) {
+  return String(raw || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'unknown'
+}
+
+function copyTree(src, dst) {
+  fs.cpSync(src, dst, { recursive: true })
+}
+
+// ---- import core (tách khỏi IO exit để --selftest gọi trực tiếp) ----------
+function runImport({ sourceDir, kitRoot, sourceName, inputsFlag, outputsFlag }) {
+  if (!sourceDir) return { ok: false, code: 2, error: 'thiếu <skill-dir>' }
+  if (!kitRoot) return { ok: false, code: 2, error: 'thiếu kit dir — dùng --kit <dir> hoặc env WAKII_KIT_DIR' }
+  const src = path.resolve(sourceDir)
+  if (!fs.existsSync(src) || !fs.statSync(src).isDirectory()) {
+    return { ok: false, code: 1, error: `thư mục nguồn không tồn tại: ${src}` }
+  }
+
+  // 1. SKILL.md + frontmatter
+  const skillMd = path.join(src, 'SKILL.md')
+  if (!fs.existsSync(skillMd) || !fs.statSync(skillMd).isFile()) {
+    return { ok: false, code: 1, error: `không thấy SKILL.md trong ${src} — không phải skill chuẩn Claude` }
+  }
+  const fm = parseFrontmatter(fs.readFileSync(skillMd, 'utf8'))
+  if (fm.error) return { ok: false, code: 1, error: fm.error }
+  const name = fm.data.name
+  const description = fm.data.description
+  if (!name) return { ok: false, code: 1, error: 'frontmatter thiếu `name:`' }
+  if (!NAME_RE.test(name)) return { ok: false, code: 1, error: `frontmatter name "${name}" không khớp ${NAME_RE}` }
+  if (!description) return { ok: false, code: 1, error: 'frontmatter thiếu `description:`' }
+
+  // 2. kit manifest — đọc trước khi đụng đĩa
+  const kit = readKitManifest(kitRoot)
+  if (kit.error) return { ok: false, code: 1, error: kit.error }
+  const manifest = kit.manifest
+
+  // 3. collision — provides[] (mọi type) + đĩa
+  const providedNames = new Set(manifest.provides.map((e) => (e && typeof e === 'object' ? e.name : null)).filter(Boolean))
+  if (providedNames.has(name)) {
+    const hit = manifest.provides.find((e) => e.name === name)
+    return { ok: false, code: 1, error: `collide: "${name}" đã có trong provides[] (type ${hit.type}) — đổi frontmatter name hoặc dùng skill khác` }
+  }
+  const diskClash = ['skills', 'agents', 'bin'].some((d) => {
+    const p = path.join(kitRoot, d, d === 'skills' ? name : d === 'agents' ? `${name}.md` : name)
+    return fs.existsSync(p)
+  })
+  if (diskClash) return { ok: false, code: 1, error: `collide: "${name}" đã tồn tại trên đĩa kit nhưng không có entry provides — kit lệch 2 chiều, sửa kit trước` }
+
+  // 4. entry + owner
+  const owner = `community/${sanitizeSource(sourceName)}`
+  const splitList = (s) => String(s).split(',').map((x) => x.trim()).filter(Boolean)
+  const entry = {
+    name,
+    type: 'skill',
+    inputs: inputsFlag ? splitList(inputsFlag) : [description],
+    outputs: outputsFlag ? outputsFlag.replace(/\s+/g, ' ').trim() : description,
+    owner
+  }
+  if (!entry.inputs.length) return { ok: false, code: 2, error: '--inputs rỗng sau khi tách dấu phẩy' }
+
+  // 5. copy rồi ghi kit.json (fail giữa chừng → rollback copy)
+  const dest = path.join(kitRoot, 'skills', name)
+  const oldVersion = manifest.version
+  try {
+    copyTree(src, dest)
+  } catch (err) {
+    return { ok: false, code: 1, error: `copy ${src} → ${dest} thất bại: ${err.message}` }
+  }
+  const manifestPath = kit.manifestPath
+  try {
+    manifest.provides.push(entry)
+    manifest.version = bumpPatch(oldVersion)
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n')
+  } catch (err) {
+    try { fs.rmSync(dest, { recursive: true, force: true }) } catch { /* rollback best-effort */ }
+    return { ok: false, code: 1, error: `ghi kit.json thất bại (đã rollback thư mục copy): ${err.message}` }
+  }
+
+  return { ok: true, name, dest, entry, oldVersion, newVersion: manifest.version, renamed: path.basename(src) !== name ? path.basename(src) : null }
+}
+
+// ---- selftest — temp kit + fixture, KHÔNG đụng kit thật --------------------
+function selfTest() {
+  const kitSource = path.join(__dirname, '..')
+  if (!fs.existsSync(path.join(kitSource, 'kit.json'))) {
+    return { ok: false, code: 1, error: `selftest cần chạy trong kit (không thấy ${kitSource}/kit.json)` }
+  }
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'wakii-skill-import-selftest-'))
+  const failures = []
+  const check = (label, cond) => { if (!cond) failures.push(label) }
+  try {
+    const kitRoot = path.join(tmp, 'kit')
+    fs.mkdirSync(path.join(kitRoot, 'skills'), { recursive: true })
+    fs.copyFileSync(path.join(kitSource, 'kit.json'), path.join(kitRoot, 'kit.json'))
+    const baseCount = readKitManifest(kitRoot).manifest.provides.length
+
+    const fixture = path.join(tmp, 'fixture-src')
+    fs.mkdirSync(path.join(fixture, 'refs'), { recursive: true })
+    fs.writeFileSync(path.join(fixture, 'SKILL.md'), '---\nname: selftest-fixture\ndescription: fixture skill cho selftest của wakii-skill-import\n---\n\n# fixture\n')
+    fs.writeFileSync(path.join(fixture, 'refs', 'note.md'), 'note\n')
+
+    const r1 = runImport({ sourceDir: fixture, kitRoot, sourceName: 'Selftest Src', inputsFlag: null, outputsFlag: null })
+    check('A1: import fixture thành công', r1.ok === true)
+    const after = readKitManifest(kitRoot)
+    check('A2: provides +1', after.manifest.provides.length === baseCount + 1)
+    const entry = after.manifest.provides.find((e) => e.name === 'selftest-fixture')
+    check('A3: entry skill + owner community', !!entry && entry.type === 'skill' && entry.owner === 'community/selftest-src')
+    check('A4: version bump patch', r1.ok && r1.newVersion === bumpPatch(r1.oldVersion) && r1.newVersion !== r1.oldVersion)
+    check('A5: SKILL.md copied', fs.existsSync(path.join(kitRoot, 'skills', 'selftest-fixture', 'SKILL.md')))
+    check('A6: copy recursive', fs.existsSync(path.join(kitRoot, 'skills', 'selftest-fixture', 'refs', 'note.md')))
+
+    const r2 = runImport({ sourceDir: fixture, kitRoot, sourceName: 'selftest', inputsFlag: null, outputsFlag: null })
+    check('B1: re-import collide → fail', r2.ok === false && r2.code === 1)
+    check('B2: provides không đổi sau collide', readKitManifest(kitRoot).manifest.provides.length === baseCount + 1)
+
+    const noSkill = path.join(tmp, 'no-skill')
+    fs.mkdirSync(noSkill)
+    const r3 = runImport({ sourceDir: noSkill, kitRoot, sourceName: 'x', inputsFlag: null, outputsFlag: null })
+    check('C1: thiếu SKILL.md → fail', r3.ok === false && r3.code === 1)
+
+    const badKit = path.join(tmp, 'bad-kit')
+    fs.mkdirSync(badKit)
+    fs.writeFileSync(path.join(badKit, 'kit.json'), '{ không phải json')
+    const r4 = runImport({ sourceDir: fixture, kitRoot: badKit, sourceName: 'x', inputsFlag: null, outputsFlag: null })
+    check('D1: kit.json hỏng → fail', r4.ok === false && r4.code === 1)
+  } finally {
+    try { fs.rmSync(tmp, { recursive: true, force: true }) } catch { /* tmp */ }
+  }
+  return failures.length ? { ok: false, code: 1, error: `selftest FAIL: ${failures.join('; ')}` } : { ok: true }
+}
+
+// ---- main ------------------------------------------------------------------
+function main() {
+  const opts = parseArgs(process.argv.slice(2))
+  if (opts.help) {
+    console.log('Usage: wakii-skill-import <skill-dir> --kit <kit-dir> [--source <nguồn>] [--inputs "a, b"] [--outputs "mô tả"] [--json]\n       wakii-skill-import --selftest\nExit: 0 ok · 1 fail · 2 usage')
+    return
+  }
+  if (opts.selftest) {
+    const r = selfTest()
+    if (!r.ok) die(r.error, r.code)
+    console.log('SELFTEST PASS — import fixture ✓ provides+1 ✓ collide chặn ✓ thiếu SKILL.md chặn ✓ kit.json hỏng chặn ✓')
+    return
+  }
+  if (!opts.kit && !process.env.WAKII_KIT_DIR) die('thiếu kit dir — dùng --kit <dir> hoặc env WAKII_KIT_DIR', 2)
+  const kitRoot = path.resolve(opts.kit || process.env.WAKII_KIT_DIR)
+  const r = runImport({ sourceDir: opts.sourceDir, kitRoot, sourceName: opts.source, inputsFlag: opts.inputs, outputsFlag: opts.outputs })
+  if (!r.ok) die(r.error, r.code)
+  const lines = [
+    `imported: ${r.name}${r.renamed ? ` (từ thư mục ${r.renamed}, theo frontmatter name)` : ''}`,
+    `dest:     ${r.dest}`,
+    `owner:    ${r.entry.owner}`,
+    `version:  ${r.oldVersion} → ${r.newVersion} (installKit sẽ re-copy lần activate sau)`
+  ]
+  if (opts.json) console.log(JSON.stringify({ ok: true, name: r.name, dest: r.dest, entry: r.entry, oldVersion: r.oldVersion, newVersion: r.newVersion }, null, 2))
+  else console.log(lines.join('\n'))
+}
+
+main()
