@@ -24,7 +24,7 @@
 import directives from './directives.json' with { type: 'json' }
 import { execFile as execFileCb } from 'node:child_process'
 import { promisify } from 'node:util'
-import { accessSync, readFileSync, existsSync, mkdirSync, readdirSync, cpSync, rmSync, writeFileSync, chmodSync } from 'node:fs'
+import { accessSync, readFileSync, existsSync, mkdirSync, readdirSync, cpSync, rmSync, writeFileSync, chmodSync, statSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 const execFileAsync = promisify(execFileCb)
 
@@ -601,6 +601,91 @@ async function postCloseStory(epic) {
   } catch (err) { return { ok: false, error: err.message } }
 }
 
+// ---- Kit manifest pre-flight (fail-loud) ----
+// Zero-dep (không ajv): schema tay + two-way provides ↔ đĩa. Chạy MỖI lần
+// activate, TRƯỚC marker early-return — kit hỏng phải được biết ngay, không
+// chết lặng lẽ. Trả mảng problems (rỗng = hợp lệ).
+const KIT_ENTRY_TYPES = ['skill', 'agent', 'bin']
+
+function kitEntryLabel(e) {
+  if (e && typeof e === 'object' && typeof e.name === 'string') return e.name
+  return JSON.stringify(e)?.slice(0, 40) || '(entry rỗng)'
+}
+
+// Đĩa→predicate: skills/ = dir có SKILL.md; agents/ = file *.md; bin/ = file thường.
+function kitDiskEntry(kitRoot, type, name) {
+  try {
+    if (type === 'skill') {
+      return statSync(join(kitRoot, 'skills', name)).isDirectory()
+        && statSync(join(kitRoot, 'skills', name, 'SKILL.md')).isFile()
+    }
+    if (type === 'agent') return statSync(join(kitRoot, 'agents', `${name}.md`)).isFile()
+    if (type === 'bin') return statSync(join(kitRoot, 'bin', name)).isFile()
+  } catch { /* không tồn tại */ }
+  return false
+}
+
+// Toàn bộ entry mà đĩa cung cấp — dotfiles + bracket-template.md ngoài scope manifest.
+function kitDiskEntries(kitRoot) {
+  const found = new Set()
+  try {
+    for (const d of readdirSync(join(kitRoot, 'skills'), { withFileTypes: true })) {
+      if (d.name.startsWith('.') || !d.isDirectory()) continue
+      try { if (statSync(join(kitRoot, 'skills', d.name, 'SKILL.md')).isFile()) found.add(`skill:${d.name}`) } catch { /* không SKILL.md */ }
+    }
+  } catch { /* không có skills/ */ }
+  try {
+    for (const f of readdirSync(join(kitRoot, 'agents'), { withFileTypes: true })) {
+      if (f.name.startsWith('.') || !f.isFile() || !f.name.endsWith('.md') || f.name === 'bracket-template.md') continue
+      found.add(`agent:${f.name.replace(/\.md$/, '')}`)
+    }
+  } catch { /* không có agents/ */ }
+  try {
+    for (const f of readdirSync(join(kitRoot, 'bin'), { withFileTypes: true })) {
+      if (f.name.startsWith('.') || !f.isFile()) continue
+      found.add(`bin:${f.name}`)
+    }
+  } catch { /* không có bin/ */ }
+  return found
+}
+
+function validateKitManifest(manifest, kitRoot) {
+  if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) {
+    return ['kit.json không phải object']
+  }
+  const problems = []
+  if (typeof manifest.version !== 'string' || !manifest.version.trim()) problems.push('kit.json thiếu version')
+  if (!Array.isArray(manifest.provides)) return problems.concat(['kit.json thiếu provides[] (mảng)'])
+  const declared = new Set()
+  for (const e of manifest.provides) {
+    const label = kitEntryLabel(e)
+    if (!e || typeof e !== 'object' || Array.isArray(e)) {
+      problems.push(`provides entry không hợp lệ: ${label}`)
+      continue
+    }
+    if (typeof e.name !== 'string' || !e.name.trim()) problems.push(`entry ${label}: thiếu name`)
+    if (!KIT_ENTRY_TYPES.includes(e.type)) problems.push(`entry ${label}: type phải thuộc skill|agent|bin (nhận ${JSON.stringify(e.type ?? null)})`)
+    if ((e.type === 'skill' || e.type === 'agent')) {
+      if (!Array.isArray(e.inputs) || e.inputs.length === 0 || !e.inputs.every(x => typeof x === 'string' && x.trim())) {
+        problems.push(`entry ${label} (${e.type}): thiếu inputs[] (mảng string)`)
+      }
+      if (typeof e.outputs !== 'string' || !e.outputs.trim()) problems.push(`entry ${label} (${e.type}): thiếu outputs (string)`)
+      if (typeof e.owner !== 'string' || !e.owner.trim()) problems.push(`entry ${label} (${e.type}): thiếu owner`)
+    } else if (e.type === 'bin' && (typeof e.description !== 'string' || !e.description.trim())) {
+      problems.push(`entry ${label} (bin): thiếu description`)
+    }
+    if (typeof e.name === 'string' && e.name && KIT_ENTRY_TYPES.includes(e.type)) declared.add(`${e.type}:${e.name}`)
+  }
+  for (const e of manifest.provides) {
+    if (!e || typeof e !== 'object' || typeof e.name !== 'string' || !KIT_ENTRY_TYPES.includes(e.type)) continue
+    if (!kitDiskEntry(kitRoot, e.type, e.name)) problems.push(`entry ${e.name} (${e.type}): không thấy trên đĩa`)
+  }
+  for (const key of kitDiskEntries(kitRoot)) {
+    if (!declared.has(key)) problems.push(`trên đĩa nhưng không có entry provides: ${key}`)
+  }
+  return problems
+}
+
 // ---- Kit self-install (bundle built-in Wakii) ----
 // sync-kit.sh vendor story-team-kit vào kit/ cạnh main.mjs. Khi worker kích
 // hoạt, chép skills/agents/bin vào ~/.claude/ — build Wakii xong là full chức
@@ -616,6 +701,12 @@ export function installKit(orca, { root, kitRoot: kitRootOverride } = {}) {
     const manifestPath = join(kitRoot, 'kit.json')
     if (!existsSync(manifestPath)) return true // không bundle kit — bỏ qua (plugin chạy riêng vẫn OK)
     const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
+    // Pre-flight TRƯỚC marker early-return: validate mỗi activate, marker chỉ skip copy.
+    const problems = validateKitManifest(manifest, kitRoot)
+    if (problems.length) {
+      orca.log('story-team-kit manifest INVALID (blocked, không copy): ' + problems.join(' | '))
+      return false
+    }
     const claude = root || join(process.env.HOME || '', '.claude')
     const marker = join(claude, '.story-team-kit-version')
     if (existsSync(marker) && readFileSync(marker, 'utf8').trim() === String(manifest.version)) return true
