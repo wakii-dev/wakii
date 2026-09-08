@@ -1,0 +1,373 @@
+#!/usr/bin/env node
+// wakii-mcp-server — READ-ONLY MCP stdio server quanh story-workflow (wakii-dev/wakii#5)
+//
+// Zero-dep: chỉ Node builtins — KHÔNG @modelcontextprotocol/sdk. Extensionless + không
+// package.json "type" phía trên → luôn parse là CommonJS (cả trong kit lẫn ~/.claude/bin).
+// Transport: newline-delimited JSON-RPC 2.0 (MCP spec) trên stdin/stdout; log → stderr.
+//
+// Expose đúng 4 tool ĐỌC: bracket read · gate-list · watchdog status · task-list.
+// Server KHÔNG BAO GIỜ chạy mutation CLI (gate-resolve, task-update, worktree, resume --send…).
+//
+// MCP client config: { "mcpServers": { "wakii-story": { "command": "<kit>/bin/wakii-mcp-server" } } }
+'use strict';
+
+const { spawn } = require('node:child_process');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+
+const BIN_DIR = __dirname;
+const KIT_ROOT = path.dirname(BIN_DIR);
+const SERVER_NAME = 'wakii-story-mcp';
+const LATEST_PROTOCOL_VERSION = '2025-06-18';
+const TOOL_TIMEOUT_MS = 30_000;
+const OUTPUT_CAP = 10 * 1024 * 1024; // chặn OOM nếu CLI đề stdout bất tận
+
+// ── kit.json → serverInfo.version ─────────────────────────────────────────────
+function kitVersion() {
+  try {
+    return String(JSON.parse(fs.readFileSync(path.join(KIT_ROOT, 'kit.json'), 'utf8')).version || '0.0.0');
+  } catch {
+    return '0.0.0';
+  }
+}
+
+// ── orca CLI: chuỗi fallback y hệt kit bash CLIs (ORCA_BIN → PATH → known paths) ──
+function isExecutable(p) {
+  try {
+    fs.accessSync(p, fs.constants.X_OK);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function which(bin) {
+  for (const dir of (process.env.PATH || '').split(path.delimiter)) {
+    if (!dir) continue;
+    const p = path.join(dir, bin);
+    if (isExecutable(p)) return p;
+  }
+  return null;
+}
+
+function resolveOrca() {
+  if (process.env.ORCA_BIN && isExecutable(process.env.ORCA_BIN)) return process.env.ORCA_BIN;
+  const onPath = which('orca');
+  if (onPath) return onPath;
+  const known = [
+    '/opt/homebrew/bin/orca',
+    '/usr/local/bin/orca',
+    path.join('/Applications', 'Wakii.app', 'Contents', 'Resources', 'bin', 'orca'),
+    path.join('/Applications', 'Orca.app', 'Contents', 'Resources', 'bin', 'orca'),
+  ];
+  return known.find(isExecutable) || 'orca';
+}
+
+// runtime dev-trước-prod-sau (story state sống ở dev runtime — như wrapper orca() của kit)
+function orcaRuntimes() {
+  const appSupport = path.join(os.homedir(), 'Library', 'Application Support');
+  return [path.join(appSupport, 'orca-dev'), path.join(appSupport, 'orca')];
+}
+
+// ── spawn chung: timeout 30s, mọi lỗi → {ok:false} — server không bao giờ crash ──
+const liveChildren = new Set();
+
+function runCommand(cmd, args, opts = {}) {
+  return new Promise((resolve) => {
+    const env = { ...process.env, ...(opts.env || {}) };
+    let child;
+    try {
+      child = spawn(cmd, args, {
+        cwd: opts.cwd || process.cwd(),
+        env,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+    } catch (err) {
+      return resolve({ ok: false, code: null, stdout: '', stderr: String((err && err.message) || err) });
+    }
+    liveChildren.add(child);
+    child.once('close', () => liveChildren.delete(child));
+    let stdout = '';
+    let stderr = '';
+    let timedOut = false;
+    let settled = false;
+    const done = (result) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      clearTimeout(hardKill);
+      resolve(result);
+    };
+    const timer = setTimeout(() => {
+      timedOut = true;
+      try {
+        child.kill('SIGTERM');
+      } catch {}
+    }, opts.timeoutMs || TOOL_TIMEOUT_MS);
+    const hardKill = setTimeout(() => {
+      try {
+        child.kill('SIGKILL');
+      } catch {}
+    }, (opts.timeoutMs || TOOL_TIMEOUT_MS) + 3000);
+    child.stdout.on('data', (d) => {
+      if (stdout.length < OUTPUT_CAP) stdout += d;
+    });
+    child.stderr.on('data', (d) => {
+      if (stderr.length < OUTPUT_CAP) stderr += d;
+    });
+    child.on('error', (err) => done({ ok: false, code: null, stdout, stderr: String((err && err.message) || err) }));
+    child.on('close', (code) => done({ ok: code === 0 && !timedOut, code, stdout, stderr, timedOut }));
+  });
+}
+
+async function runOrca(orcaArgs, cwd) {
+  const bin = resolveOrca();
+  let last = null;
+  for (const userData of orcaRuntimes()) {
+    last = await runCommand(bin, orcaArgs, { cwd, env: { ORCA_USER_DATA_PATH: userData } });
+    if (last.ok) return last;
+  }
+  return last;
+}
+
+// ── tool results ──────────────────────────────────────────────────────────────
+const ok = (text) => ({ isError: false, text });
+const err = (text) => ({ isError: true, text });
+
+// path rỗng → quét docs/superpowers/brackets/*.md dưới cwd; path là file hoặc dir đều được
+function readBrackets(args) {
+  const raw = typeof args.path === 'string' ? args.path.trim() : '';
+  const target = raw ? path.resolve(process.cwd(), raw) : path.join(process.cwd(), 'docs', 'superpowers', 'brackets');
+  let st;
+  try {
+    st = fs.statSync(target);
+  } catch {
+    return err(`Not found: ${target}`);
+  }
+  let files;
+  if (st.isDirectory()) {
+    files = fs
+      .readdirSync(target)
+      .filter((f) => f.endsWith('.md'))
+      .sort()
+      .map((f) => path.join(target, f));
+    if (files.length === 0) return ok(`No bracket files (*.md) in ${target}`);
+  } else {
+    files = [target];
+  }
+  const parts = files.map((f) => {
+    const body = fs.readFileSync(f, 'utf8');
+    return files.length > 1 ? `===== ${f} =====\n${body}` : body;
+  });
+  return ok(parts.join('\n\n'));
+}
+
+// story-resume cùng bin dir (kit) — fallback bản cài ~/.claude/bin; CHỈ --check, không --send
+function resolveStoryResume() {
+  const sibling = path.join(BIN_DIR, 'story-resume');
+  if (fs.existsSync(sibling)) return sibling;
+  const installed = path.join(os.homedir(), '.claude', 'bin', 'story-resume');
+  if (fs.existsSync(installed)) return installed;
+  return null;
+}
+
+async function watchdogStatus() {
+  const script = resolveStoryResume();
+  if (!script) return err(`story-resume not found (looked in ${BIN_DIR} and ~/.claude/bin)`);
+  const r = await runCommand(script, ['--check']);
+  if (r.timedOut) return err(`timed out after 30s: story-resume --check`);
+  if (!r.ok) {
+    return err(`story-resume --check failed (exit ${r.code}): ${(r.stderr || r.stdout || '(no output)').trim().slice(-500)}`);
+  }
+  const lines = r.stdout
+    .split('\n')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return ok(lines.length ? lines.join('\n') : '(no sf-* worktrees found — nothing to watchdog)');
+}
+
+async function runOrcaTool(orcaArgs, args) {
+  let cwd = process.cwd();
+  if (typeof args.cwd === 'string' && args.cwd.trim()) {
+    cwd = path.resolve(process.cwd(), args.cwd.trim());
+    if (!fs.existsSync(cwd)) return err(`cwd not found: ${cwd}`);
+  }
+  const r = await runOrca(orcaArgs, cwd);
+  if (r.timedOut) return err(`timed out after 30s: orca ${orcaArgs.join(' ')}`);
+  if (!r.ok) {
+    return err(`orca ${orcaArgs.join(' ')} failed (exit ${r.code}): ${(r.stderr || r.stdout || '(no output)').trim().slice(-500)}`);
+  }
+  return ok(r.stdout.trim() || '{}');
+}
+
+// ── 4 tool READ-ONLY — danh sách này là toàn bộ khả năng của server ──────────
+const TOOLS = [
+  {
+    name: 'story_bracket_read',
+    description:
+      'Read Wakii story bracket file(s) — the tier-bracket doc for a story (Linear epic + SF sub-issues, phases, gates, destinations). READ-ONLY. No path: reads every docs/superpowers/brackets/*.md under the server cwd. A directory path reads all *.md in it; a file path reads that file.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        path: {
+          type: 'string',
+          description: 'Bracket file or directory (absolute or relative to server cwd). Empty/omitted → scan docs/superpowers/brackets/*.md.',
+        },
+      },
+    },
+    run: (args) => Promise.resolve(readBrackets(args)),
+  },
+  {
+    name: 'story_gate_list',
+    description:
+      'List Wakii decision gates as JSON — runs `orca orchestration gate-list --json`. READ-ONLY: never resolves or creates gates.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        cwd: { type: 'string', description: 'Working directory passed to the orca CLI (default: server cwd).' },
+      },
+    },
+    run: (args) => runOrcaTool(['orchestration', 'gate-list', '--json'], args),
+  },
+  {
+    name: 'story_watchdog_status',
+    description:
+      'Story watchdog stall diagnosis — runs `story-resume --check`, one `<sf>|<verdict>|<detail>` line per sf-* worktree (verdicts: RUNNING, RUNNING-EXT, BUSY, STALLED, STALLED-COLD, STALLED-SHELL). READ-ONLY: never resumes or sends prompts.',
+    inputSchema: { type: 'object', properties: {} },
+    run: () => watchdogStatus(),
+  },
+  {
+    name: 'story_task_list',
+    description:
+      'List Wakii task-DAG tasks as JSON — runs `orca orchestration task-list --json`. READ-ONLY: never updates task status.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        cwd: { type: 'string', description: 'Working directory passed to the orca CLI (default: server cwd).' },
+      },
+    },
+    run: (args) => runOrcaTool(['orchestration', 'task-list', '--json'], args),
+  },
+];
+
+// ── JSON-RPC 2.0 / MCP framing ────────────────────────────────────────────────
+const resultResponse = (id, result) => ({ jsonrpc: '2.0', id, result });
+const errorResponse = (id, code, message) => ({ jsonrpc: '2.0', id, error: { code, message } });
+
+function send(msg) {
+  process.stdout.write(JSON.stringify(msg) + '\n');
+}
+
+async function handleOne(msg) {
+  if (!msg || typeof msg !== 'object' || msg.jsonrpc !== '2.0' || typeof msg.method !== 'string') {
+    return msg && msg.id !== undefined && msg.id !== null ? errorResponse(msg.id, -32600, 'Invalid Request') : null;
+  }
+  const isNotification = msg.id === undefined || msg.id === null;
+  const params = msg.params && typeof msg.params === 'object' ? msg.params : {};
+  try {
+    switch (msg.method) {
+      case 'initialize':
+        if (isNotification) return null;
+        // echo version client hỏi (spec: server support thì trả đúng version đó)
+        return resultResponse(msg.id, {
+          protocolVersion: typeof params.protocolVersion === 'string' ? params.protocolVersion : LATEST_PROTOCOL_VERSION,
+          capabilities: { tools: {} },
+          serverInfo: { name: SERVER_NAME, version: kitVersion() },
+          instructions:
+            'READ-ONLY story-workflow surface: bracket read, gate list, watchdog status, task list. Mutation CLIs (gate-resolve, task-update, worktree, resume --send) are intentionally not exposed.',
+        });
+      case 'ping':
+        return isNotification ? null : resultResponse(msg.id, {});
+      case 'tools/list':
+        return isNotification
+          ? null
+          : resultResponse(msg.id, {
+              tools: TOOLS.map((t) => ({ name: t.name, description: t.description, inputSchema: t.inputSchema })),
+            });
+      case 'tools/call': {
+        if (isNotification) return null;
+        const tool = TOOLS.find((t) => t.name === params.name);
+        if (!tool) return errorResponse(msg.id, -32602, `Unknown tool: ${params.name}`);
+        const args = params.arguments && typeof params.arguments === 'object' ? params.arguments : {};
+        try {
+          const r = await tool.run(args);
+          const result = { content: [{ type: 'text', text: r.text }] };
+          if (r.isError) result.isError = true;
+          return resultResponse(msg.id, result);
+        } catch (e) {
+          return resultResponse(msg.id, {
+            content: [{ type: 'text', text: String((e && e.message) || e) }],
+            isError: true,
+          });
+        }
+      }
+      default:
+        if (msg.method.startsWith('notifications/')) return null; // initialized/cancelled/… — ignore
+        return isNotification ? null : errorResponse(msg.id, -32601, `Method not found: ${msg.method}`);
+    }
+  } catch (e) {
+    return isNotification ? null : errorResponse(msg.id, -32603, `Internal error: ${String((e && e.message) || e)}`);
+  }
+}
+
+async function handleLine(line) {
+  let parsed;
+  try {
+    parsed = JSON.parse(line);
+  } catch {
+    return send(errorResponse(null, -32700, 'Parse error'));
+  }
+  const messages = Array.isArray(parsed) ? parsed : [parsed];
+  const responses = [];
+  for (const m of messages) responses.push(await handleOne(m));
+  const present = responses.filter(Boolean);
+  if (!present.length) return;
+  send(Array.isArray(parsed) ? present : present[0]);
+}
+
+// ── main loop — stdout chỉ chứa JSON-RPC, mọi thứ khác ra stderr ──────────────
+process.stdout.on('error', () => process.exit(0)); // EPIPE khi client đóng
+let pending = 0;
+let stdinClosed = false;
+let closing = false;
+function maybeExit() {
+  // EOF không cắt request đang bay — đợi trả xong (tối đa 1 chu kỳ timeout tool)
+  if (stdinClosed && pending === 0 && !closing) {
+    closing = true;
+    process.exit(0);
+  }
+}
+let buffer = '';
+process.stdin.setEncoding('utf8');
+process.stdin.on('data', (chunk) => {
+  buffer += chunk;
+  let idx;
+  while ((idx = buffer.indexOf('\n')) >= 0) {
+    const line = buffer.slice(0, idx);
+    buffer = buffer.slice(idx + 1);
+    if (!line.trim()) continue;
+    pending++;
+    void handleLine(line)
+      .catch(() => {})
+      .finally(() => {
+        pending--;
+        maybeExit();
+      });
+  }
+});
+process.stdin.on('end', () => {
+  stdinClosed = true;
+  maybeExit();
+  setTimeout(() => process.exit(0), TOOL_TIMEOUT_MS + 5000).unref();
+});
+process.on('SIGTERM', () => shutdown());
+process.on('SIGINT', () => shutdown());
+function shutdown() {
+  for (const c of liveChildren) {
+    try {
+      c.kill('SIGKILL');
+    } catch {}
+  }
+  process.exit(0);
+}
