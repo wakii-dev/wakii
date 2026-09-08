@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/VuHoi/story-team-kit/kit-manifest.schema.json",
+  "title": "story-team-kit manifest (kit.json)",
+  "description": "Máy-đọc-được manifest của story-team-kit. Lưu ý terminology: `provides` ở đây KHÔNG liên quan `capabilities` của orca-plugin.json (tránh collision tên). provides[] 49 entries = 26 full contracts (17 skill + 9 agent) + 23 bin minimal. bin = upstream 25 TRỪ story-dashboard-server + story-dashboard.html (sync-loại có chủ đích — sync-kit.sh remove khi vendor). Schema này là doc/CI artifact — runtime installer KHÔNG parse schema, validator tự viết trong installKit (SF-2).",
+  "type": "object",
+  "required": ["name", "version", "description", "provides"],
+  "properties": {
+    "name": { "const": "story-team-kit" },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "description": { "type": "string", "minLength": 1 },
+    "requires": {
+      "type": "object",
+      "properties": {
+        "claude-code": { "type": "string" },
+        "external": { "type": "object", "additionalProperties": { "type": "string" } },
+        "optional": { "type": "object", "additionalProperties": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "provides": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/providesEntry" }
+    }
+  },
+  "definitions": {
+    "providesEntry": {
+      "oneOf": [
+        { "$ref": "#/definitions/fullContract" },
+        { "$ref": "#/definitions/binEntry" }
+      ]
+    },
+    "fullContract": {
+      "type": "object",
+      "description": "Capability có contract đầy đủ — skill hoặc agent. owner = single-author kit (\"wakii\"). KHÔNG có per-entry version (kit-level version là duy nhất).",
+      "required": ["name", "type", "inputs", "outputs", "owner"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+        "type": { "enum": ["skill", "agent"] },
+        "inputs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Danh sách key inputs (khái niệm, không path)."
+        },
+        "outputs": {
+          "type": "string",
+          "minLength": 1,
+          "description": "1 dòng verdict/report format."
+        },
+        "owner": { "const": "wakii" }
+      }
+    },
+    "binEntry": {
+      "type": "object",
+      "description": "Bin script — manifest minimal (name + description 1 dòng).",
+      "required": ["name", "type", "description"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+        "type": { "const": "bin" },
+        "description": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

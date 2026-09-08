@@ -1,6 +1,6 @@
 {
   "name": "story-team-kit",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "description": "9-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới.",
   "requires": {
     "claude-code": ">=2.0",
@@ -13,124 +13,380 @@
       "huashu-design": "designer skill (32MB, cài qua --with-designer)"
     }
   },
-  "skills": [
+  "provides": [
     {
       "name": "orca-superpowers-workflow",
-      "role": "base workflow — 6 phases, principles, token contracts"
+      "type": "skill",
+      "inputs": [
+        "feature work trong orca-managed project"
+      ],
+      "outputs": "6-phase pipeline spec→plan→execute→review→verify với orca infra (worktree/DAG/gates/Linear sync) tự động",
+      "owner": "wakii"
     },
     {
       "name": "story-workflow",
-      "role": "epic bracket orchestration — kế thừa base workflow"
+      "type": "skill",
+      "inputs": [
+        "idea description",
+        "constraints",
+        "success criteria"
+      ],
+      "outputs": "epic bracket + Linear SFs + STORY-COMPLETE report",
+      "owner": "wakii"
     },
     {
       "name": "orca-bridge",
-      "role": "5 bridges superpowers ↔ orca CLI: worktree+Linear link, decision gate, task DAG, review lifecycle, status sync (first-party — orca app KHÔNG ship)"
+      "type": "skill",
+      "inputs": [
+        "superpowers skill đang chạy",
+        "orca CLI"
+      ],
+      "outputs": "bridge action: worktree+Linear link, decision gate, task DAG, review coordination, status sync",
+      "owner": "wakii"
     },
     {
       "name": "bridge-router",
-      "role": "router — chọn bridge đúng khi không rõ (entry point → orca-bridge)"
+      "type": "skill",
+      "inputs": [
+        "workflow moment",
+        "current skill context"
+      ],
+      "outputs": "bridge selection (worktree/gate/DAG/review/status-sync) + route reason",
+      "owner": "wakii"
     },
     {
       "name": "writing-plans-linear",
-      "role": "viết plans + push Linear subtasks"
+      "type": "skill",
+      "inputs": [
+        "spec.md",
+        "current Linear issue"
+      ],
+      "outputs": "plan.md + Linear subtasks per milestone (Write/Publish modes)",
+      "owner": "wakii"
     },
     {
       "name": "brainstorm",
-      "role": "ý tưởng → validated spec"
+      "type": "skill",
+      "inputs": [
+        "feature idea",
+        "constraints",
+        "success criteria"
+      ],
+      "outputs": "validated spec.md + implementation plan (optional Linear publish + worktree)",
+      "owner": "wakii"
     },
     {
       "name": "execute-plan",
-      "role": "thực thi plan dispatched qua orchestration"
+      "type": "skill",
+      "inputs": [
+        "implementation plan",
+        "orchestration dispatch",
+        "worktree"
+      ],
+      "outputs": "implemented tasks + atomic commits + gate/task updates",
+      "owner": "wakii"
     },
     {
       "name": "prompt-master",
-      "role": "viết prompt cho AI tools (LLM/Cursor/Midjourney) — tiện ích chung, ngoài story pipeline (IDEA-BRIEF đã nhúng vào story-workflow CREATE)"
+      "type": "skill",
+      "inputs": [
+        "prompt goal",
+        "target AI tool"
+      ],
+      "outputs": "optimized prompt cho tool đó",
+      "owner": "wakii"
     },
     {
       "name": "figma-orientation",
-      "role": "P8.0 — router đọc Figma đúng cách"
+      "type": "skill",
+      "inputs": [
+        "figma-related intent"
+      ],
+      "outputs": "đúng Figma skill/tool route (implement-design / use / generate-* / code-connect / MCP)",
+      "owner": "wakii"
     },
     {
       "name": "image-to-code",
-      "role": "P8.5 — component chất lượng cao từ ảnh"
+      "type": "skill",
+      "inputs": [
+        "design reference image",
+        "target stack"
+      ],
+      "outputs": "code component riêng lẻ khớp ảnh (section-specific, không cards-in-cards)",
+      "owner": "wakii"
     },
     {
       "name": "gpt-taste",
-      "role": "P8.6 — UX review sau implement"
+      "type": "skill",
+      "inputs": [
+        "UI requirement",
+        "page structure goal"
+      ],
+      "outputs": "<design_plan> block (RNG/AIDA/hero-math/bento) + UI code theo đúng plan",
+      "owner": "wakii"
     },
     {
       "name": "design-taste-frontend",
-      "role": "P8.6 — anti-slop frontend review"
+      "type": "skill",
+      "inputs": [
+        "built UI diff",
+        "design intent"
+      ],
+      "outputs": "anti-slop audit findings + strict pre-flight verdict",
+      "owner": "wakii"
     },
     {
       "name": "mock-prototype",
-      "role": "3-hướng prototype → artifact links → user gate → hand-off"
+      "type": "skill",
+      "inputs": [
+        "design request"
+      ],
+      "outputs": "3 hướng HTML prototype → unlisted artifact links → user chọn → final hand-off",
+      "owner": "wakii"
     },
     {
       "name": "post-task-ritual",
-      "role": "Phase 5 learning step — 7 steps: problems→solutions→patterns→update→index-memory→clear"
+      "type": "skill",
+      "inputs": [
+        "completed workflow log"
+      ],
+      "outputs": "skill update + memory index + cleared log (7 steps)",
+      "owner": "wakii"
     },
     {
       "name": "graph-engineering",
-      "role": "KG + task-graph methodology (vendored MIT, upstream codejunkie99/graph-engineering) — ontology, extraction, fusion, GraphRAG; dạy + dùng",
-      "license": "MIT (upstream — giữ LICENSE-upstream + NOTICE khi phân phối)"
+      "type": "skill",
+      "inputs": [
+        "domain corpus hoặc orchestration goal"
+      ],
+      "outputs": "KG ontology/extraction/fusion design hoặc task graph (fan-out, verifier separation, stop rule)",
+      "owner": "wakii"
     },
     {
       "name": "web-design-guidelines",
-      "role": "105 rules UI review engine (a11y/focus/forms/animation) — P8 F7/F8 heuristic layer (vendored MIT, vercel-labs)",
-      "license": "MIT (LICENSE-upstream trong skill)"
+      "type": "skill",
+      "inputs": [
+        "UI code/diff"
+      ],
+      "outputs": "violations report theo 105 rules (a11y, focus, forms, animation, layout, content)",
+      "owner": "wakii"
     },
     {
       "name": "frontend-design",
-      "role": "Tư duy design chủ đích + chống AI-slop (3 default looks, signature element, copy-as-design) — Apache-2.0, anthropics",
-      "license": "Apache-2.0 (LICENSE-upstream trong skill)"
-    }
-  ],
-  "agents": [
+      "type": "skill",
+      "inputs": [
+        "UI cần build/reshape",
+        "aesthetic context"
+      ],
+      "outputs": "aesthetic direction — typography, signature element, chống template defaults",
+      "owner": "wakii"
+    },
     {
       "name": "task-executor",
-      "color": "green",
-      "role": "Dev — implements SF tasks"
+      "type": "agent",
+      "inputs": [
+        "plan task",
+        "context pack",
+        "worktree"
+      ],
+      "outputs": "DONE <task-id> | BLOCKED <reason> report",
+      "owner": "wakii"
     },
     {
       "name": "designer",
-      "color": "magenta",
-      "role": "3-direction drafts → user gate → hand-off spec"
+      "type": "agent",
+      "inputs": [
+        "SF slice có UI/visual",
+        "style refs"
+      ],
+      "outputs": "3 hướng HTML draft → user chọn → hand-off spec (DESIGN-BLOCKED khi thiếu)",
+      "owner": "wakii"
     },
     {
       "name": "code-reviewer",
-      "color": "cyan",
-      "role": "Tester — reviews diffs, VERDICT format"
+      "type": "agent",
+      "inputs": [
+        "diff of completed task",
+        "spec slice"
+      ],
+      "outputs": "VERDICT: APPROVED | CHANGES-REQUESTED | REJECT-AND-REVERT + P0/P1/P2 findings",
+      "owner": "wakii"
     },
     {
       "name": "verifier",
-      "color": "orange",
-      "role": "independent PASS/PARTIAL/FAIL"
+      "type": "agent",
+      "inputs": [
+        "gate criteria",
+        "implementation",
+        "evidence"
+      ],
+      "outputs": "VERDICT: PASS — <bằng chứng> | PARTIAL | FAIL + Gate Status",
+      "owner": "wakii"
     },
     {
       "name": "spec-critic",
-      "color": "purple",
-      "role": "adversarial spec review"
+      "type": "agent",
+      "inputs": [
+        "spec.md",
+        "requirements context"
+      ],
+      "outputs": "VERDICT: PROCEED | FIX-P0-FIRST + P0/P1/P2 critique report",
+      "owner": "wakii"
     },
     {
       "name": "plan-critic",
-      "color": "magenta",
-      "role": "adversarial plan + DAG review"
+      "type": "agent",
+      "inputs": [
+        "plan.md",
+        "task DAG"
+      ],
+      "outputs": "VERDICT: PROCEED | FIX-P0-FIRST + P0/P1/P2 critique report",
+      "owner": "wakii"
     },
     {
       "name": "phase0-impact-analyst",
-      "color": "blue",
-      "role": "10-dimension impact analysis"
+      "type": "agent",
+      "inputs": [
+        "feature idea",
+        "files in scope"
+      ],
+      "outputs": "5-section impact analysis (framing, touch map, second-order, alternatives, risks) — IMPACT-BLOCKED khi thiếu",
+      "owner": "wakii"
     },
     {
       "name": "security-audit",
-      "color": "red",
-      "role": "OWASP surface"
+      "type": "agent",
+      "inputs": [
+        "code surface",
+        "threat context"
+      ],
+      "outputs": "VERDICT: CLEAN | FINDINGS — P0/P1/P2 counts + top finding",
+      "owner": "wakii"
     },
     {
       "name": "rollback-fixer",
-      "color": "yellow",
-      "role": "safe revert specialist"
+      "type": "agent",
+      "inputs": [
+        "diverged/abandoned state",
+        "last known-good ref"
+      ],
+      "outputs": "ROLLBACK-DONE: reverted <commits> | ROLLBACK-BLOCKED: <lý do> + audit trail",
+      "owner": "wakii"
+    },
+    {
+      "name": "story-attempt",
+      "type": "bin",
+      "description": "track debugging attempts — chặn lặp cùng cách fail (3 lần cùng approach → buộc đổi hướng)"
+    },
+    {
+      "name": "story-compact-recovery",
+      "type": "bin",
+      "description": "SessionStart hook (matcher: compact) — inject lời nhắc khôi phục story state sau mỗi lần compaction"
+    },
+    {
+      "name": "story-diff-review",
+      "type": "bin",
+      "description": "tự review diff trước commit — chặn debug code, commented-out code, secrets, files ngoài plan"
+    },
+    {
+      "name": "story-launch",
+      "type": "bin",
+      "description": "nguồn duy nhất dựng SF launch prompt + tạo worktree — PM/watchdog/panel đều gọi"
+    },
+    {
+      "name": "story-memory",
+      "type": "bin",
+      "description": "consumer layer graph memory — đọc docs/superpowers/memory/{entities,triples,provenance}.md (CLI chỉ đọc)"
+    },
+    {
+      "name": "story-memory-fuse",
+      "type": "bin",
+      "description": "fusion rules cho memory files — dedupe triple/provenance, refuse entity xung đột (exit 2), rewrite idempotent"
+    },
+    {
+      "name": "story-memory-index-hook",
+      "type": "bin",
+      "description": "post-pass incremental index graph memory — đọc watermark git, index commit mới"
+    },
+    {
+      "name": "story-memory-parse",
+      "type": "bin",
+      "description": "validate/roundtrip memory files — entities/triples/provenance, 1 dòng = 1 record"
+    },
+    {
+      "name": "story-notify",
+      "type": "bin",
+      "description": "thông báo có context, screenshot, đề xuất — story-notify <type> <sf> [detail]"
+    },
+    {
+      "name": "story-post-merge",
+      "type": "bin",
+      "description": "verify sau merge — tests + browser flow + agents"
+    },
+    {
+      "name": "story-preflight",
+      "type": "bin",
+      "description": "chạy trước khi code — chặn sai branch, tree dirty, deps thiếu; cảnh báo server chết, DB trống, .env thiếu"
+    },
+    {
+      "name": "story-resume",
+      "type": "bin",
+      "description": "sf|verdict|detail status lines cho watchdog"
+    },
+    {
+      "name": "story-skill-lint",
+      "type": "bin",
+      "description": "structural integrity check cho story-workflow SKILL.md — bắt mất bước spec-critic/plan-critic"
+    },
+    {
+      "name": "story-snapshot-env",
+      "type": "bin",
+      "description": "chụp trạng thái môi trường trước/sau thay đổi lớn — story-snapshot-env [tag]"
+    },
+    {
+      "name": "story-stats",
+      "type": "bin",
+      "description": "số liệu vận hành per SF — cycle-time, khối lượng, events sống sót (Linear GraphQL + worktree git)"
+    },
+    {
+      "name": "story-status",
+      "type": "bin",
+      "description": "30 giây nắm tình hình mọi story active — story nào chạy, SF Done/chạy/chờ"
+    },
+    {
+      "name": "story-sync-dest",
+      "type": "bin",
+      "description": "đưa meta commits từ main vào nhánh đích an toàn — wrapper sync của story-workflow"
+    },
+    {
+      "name": "story-test",
+      "type": "bin",
+      "description": "RULE 0 enforcer — tự mở browser đi flow, phải PASS trước khi tick Done"
+    },
+    {
+      "name": "story-top",
+      "type": "bin",
+      "description": "một màn hình theo dõi mọi agent đang chạy (Orca + ngoài Orca) — watch-style tự refresh"
+    },
+    {
+      "name": "story-validate",
+      "type": "bin",
+      "description": "validate bracket file — exit 0/1/2, verdict OK/INVALID/WARN"
+    },
+    {
+      "name": "story-verify",
+      "type": "bin",
+      "description": "enforce COMPLETE-RUN CHECKLIST 5 bước trước Linear Done — exit 0 sạch / 1 INCOMPLETE / 2 VIOLATION"
+    },
+    {
+      "name": "story-visual-regress",
+      "type": "bin",
+      "description": "so screenshot hiện tại vs baseline — --baseline <dir> --current <dir> [--threshold 5]"
+    },
+    {
+      "name": "story-watchdog",
+      "type": "bin",
+      "description": "self-sustainment loop — diagnose mọi SF, notify khi stall mới, optionally launch next"
     }
   ]
 }
