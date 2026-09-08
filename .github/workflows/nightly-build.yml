@@ -1,0 +1,43 @@
+name: Nightly build
+
+# Why (issue #2): power users get daily builds without pressure on the stable
+# channel. Builds the wakii-dev branch head and upserts a rolling `nightly`
+# PRE-RELEASE — stable releases and their auto-update feeds are untouched.
+# Rollback = disable this workflow (zero product-code impact).
+
+on:
+  schedule:
+    - cron: "0 3 * * *" # daily 03:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: nightly-build
+  cancel-in-progress: false
+
+jobs:
+  ensure-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Upsert rolling nightly release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view nightly --repo wakii-dev/wakii >/dev/null 2>&1; then
+            gh release edit nightly --repo wakii-dev/wakii --prerelease --latest=false
+          else
+            gh release create nightly --repo wakii-dev/wakii \
+              --prerelease --latest=false \
+              --title "Nightly (rolling)" \
+              --notes "Auto-built daily from the \`wakii-dev\` branch. Không ổn định — power users only. Stable channel: xem các release có cờ Latest."
+          fi
+
+      - name: Dispatch platform builds (upload to nightly)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run macos-build.yml --repo wakii-dev/wakii --ref wakii-dev -f release_tag=nightly
+          gh workflow run windows-build.yml --repo wakii-dev/wakii --ref wakii-dev -f release_tag=nightly
