@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// Negative-test harness cho installKit (FI-382) — mock orca (capture
-// notifications.show/log) + temp root. KHÔNG BAO GIỜ ghi HOME thật: mọi case
-// truyền `root` + `kitRoot` trong tmpdir(); cuối run so marker ~/.claude
-// trước/sau — lệch = FAIL cứng.
+// Negative-test harness cho installKit (FI-382) + guard advisory #22 — mock
+// orca (capture notifications.show/log) + temp root. KHÔNG BAO GIỜ ghi HOME
+// thật: mọi case truyền `root` + `kitRoot` trong tmpdir(); cuối run so marker
+// ~/.claude trước/sau — lệch = FAIL cứng.
 // Chạy: node tests/kit-manifest-negative-tests.mjs
 // KIT_MAIN=<path main.mjs> — override target (demo đỏ trên code cũ).
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, readdirSync, cpSync, rmSync } from 'node:fs'
@@ -13,12 +13,12 @@ import { fileURLToPath } from 'node:url'
 const testsDir = dirname(fileURLToPath(import.meta.url))
 const mainPath = resolve(testsDir, process.env.KIT_MAIN || '../main.mjs')
 const realKitDir = resolve(testsDir, '../kit')
-const { installKit, runKit, assertCapability, kitBinCatalog } = await import(mainPath)
+const { installKit, runKit, assertCapability, kitBinCatalog, setKitGuardLogger, resetKitRepeatGuard } = await import(mainPath)
 
 // ---- mock orca: capture notifications.show + log -------------------------
 function mockOrca({ toastFails = false } = {}) {
   const calls = { notifications: [], logs: [] }
-  return {
+  const orca = {
     calls,
     host: {
       call: async (action, payload) => {
@@ -31,6 +31,8 @@ function mockOrca({ toastFails = false } = {}) {
     },
     log: (...a) => { calls.logs.push(a.join(' ')) }
   }
+  setKitGuardLogger((line) => orca.log(line)) // guard log (#22) → cùng kênh capture
+  return orca
 }
 
 // ---- kit fixture ----------------------------------------------------------
@@ -72,6 +74,7 @@ function check(caseId, name, cond, detail = '') {
 }
 async function runCase(caseId, fn) {
   console.log(`\n== ${caseId} ==`)
+  resetKitRepeatGuard() // repeat-guard state trong module — mỗi case chạy độc lập
   try { await fn() } catch (err) {
     fail++
     failures.push(`${caseId} CRASHED: ${err.message}`)
@@ -242,6 +245,94 @@ await runCase('[i] capability-block', async () => {
   check('[i]', 'không có kit.json → catalog null (pass-through)', kitBinCatalog(join(kitRoot, 'khong-co')) === null)
 })
 
+// [#22] reject-reason log: MỖI lần runKit blocked + MỖI lỗi pre-flight để lại
+// 1 dòng log CÓ NHÃN nguồn, reason ≤200 ký tự — block-all giữ nguyên.
+await runCase('[j] reject-reason-log', async () => {
+  const kitRoot = tempDir('j-kit')
+  mkdirSync(kitRoot, { recursive: true })
+  writeFileSync(join(kitRoot, 'kit.json'), JSON.stringify({
+    version: '2.2.0',
+    provides: [{ name: 'gamma', type: 'bin', description: 'gamma cli' }]
+  }, null, 2))
+  const orca = mockOrca()
+  const r1 = await runKit('story-ghost', [], { kitRoot })
+  const r2 = await runKit('story-ghost', [], { kitRoot })
+  check('[j]', 'block giữ nguyên (ok:false + blocked=capability)', r1.ok === false && r1.blocked === 'capability' && r2.blocked === 'capability')
+  const capPrefix = "[guard:capability-check] blocked 'story-ghost' — "
+  const capLines = orca.calls.logs.filter(l => l.startsWith('[guard:capability-check]'))
+  check('[j]', 'log reject-reason MỖI lần chặn (2/2)', capLines.length === 2, `got ${capLines.length}`)
+  check('[j]', 'log nêu bin bị chặn + lý do provides', capLines.every(l => l.startsWith(capPrefix) && l.includes('provides')), (capLines[0] || '').slice(0, 140))
+  check('[j]', 'reason bị cắt ≤ 200 ký tự', capLines.every(l => l.slice(capPrefix.length).length <= 200))
+  // pre-flight fail → 1 dòng [guard:kit-manifest], cutoff chặn summary dài
+  const badKit = tempDir('j-kit2')
+  const root = tempDir('j-root')
+  buildValidKit(badKit)
+  const m = JSON.parse(readFileSync(join(badKit, 'kit.json'), 'utf8'))
+  const alpha = m.provides.find(e => e.name === 'alpha')
+  delete alpha.outputs
+  const beta = m.provides.find(e => e.name === 'beta')
+  delete beta.inputs
+  delete beta.owner
+  m.provides.push({ name: 'ghost', type: 'bin', description: 'ảo' })
+  m.provides.push({ name: 'gamma', type: 'bin', description: 'trùng gamma' })
+  writeFileSync(join(badKit, 'kit.json'), JSON.stringify(m, null, 2))
+  const orca2 = mockOrca()
+  const r3 = await installKit(orca2, { root, kitRoot: badKit })
+  await sleep(20)
+  check('[j]', 'installKit vẫn block-all', r3 === false && !existsSync(join(root, 'skills')))
+  const manPrefix = '[guard:kit-manifest] install blocked — '
+  const manLines = orca2.calls.logs.filter(l => l.startsWith('[guard:kit-manifest]'))
+  check('[j]', 'pre-flight fail để lại log nhãn [guard:kit-manifest]', manLines.length === 1, `got ${manLines.length}`)
+  check('[j]', 'summary > 200 bị cắt (không phình log)', manLines.length === 1 && manLines[0].length > manPrefix.length && manLines[0].slice(manPrefix.length).length <= 200, `len=${(manLines[0] || '').length}`)
+})
+
+// [#22] repeat-guard advisory: gọi trùng (bin + args) chạm ngưỡng 3 → nhắc ĐÚNG
+// 1 lần + advisory field; gọi khác → counter reset. Không veto.
+await runCase('[k] repeat-guard', async () => {
+  const kitRoot = tempDir('k-kit')
+  mkdirSync(kitRoot, { recursive: true })
+  writeFileSync(join(kitRoot, 'kit.json'), JSON.stringify({
+    version: '2.2.0',
+    provides: [{ name: 'k-probe', type: 'bin', description: 'repeat probe' }]
+  }, null, 2))
+  const orca = mockOrca()
+  const call = () => runKit('k-probe', ['x'], { kitRoot })
+  const r1 = await call(), r2 = await call(), r3 = await call()
+  check('[k]', 'lần 1-2 không advisory', !r1.advisory && !r2.advisory)
+  check('[k]', 'lần 3 có advisory repeat=3', r3.advisory?.guard === 'repeat-tool-reminder' && r3.advisory.repeat === 3, JSON.stringify(r3.advisory))
+  check('[k]', 'không veto: kết quả call vẫn trả (advisory chỉ cộng thêm)', r3.ok === r1.ok && r3.error === r1.error)
+  const repeats = orca.calls.logs.filter(l => l.includes('[guard:repeat-tool-reminder]'))
+  check('[k]', 'warning ĐÚNG 1 lần tại ngưỡng 3', repeats.length === 1 && repeats[0].includes('lần 3'), repeats.join(' | ').slice(0, 140))
+  await runKit('k-probe', ['y-khac'], { kitRoot }) // gọi khác → counter reset
+  const r4 = await call(), r5 = await call()
+  check('[k]', 'reset: chuỗi mới chỉ 2 lần → không advisory', !r4.advisory && !r5.advisory)
+  const r6 = await call()
+  check('[k]', 'chuỗi mới chạm lại ngưỡng 3 → advisory lại', r6.advisory?.repeat === 3)
+  check('[k]', 'tổng 2 reminder cho 2 chuỗi độc lập', orca.calls.logs.filter(l => l.includes('[guard:repeat-tool-reminder]')).length === 2)
+})
+
+// [#22] advisory KHÔNG block: lặp 9 lần — call vẫn trả kết quả mỗi lần, kết quả
+// giống hệt baseline, reminder chỉ tại 3/5/8 (không noise thêm).
+await runCase('[l] advisory-not-block', async () => {
+  const kitRoot = tempDir('l-kit')
+  mkdirSync(kitRoot, { recursive: true })
+  writeFileSync(join(kitRoot, 'kit.json'), JSON.stringify({
+    version: '2.2.0',
+    provides: [{ name: 'l-probe', type: 'bin', description: 'advisory probe' }]
+  }, null, 2))
+  const orca = mockOrca()
+  const call = () => runKit('l-probe', ['y'], { kitRoot })
+  const results = []
+  for (let i = 1; i <= 9; i++) results.push(await call())
+  const baseline = results[0]
+  check('[l]', 'mỗi call đều trả kết quả (không veto)', results.every(r => r && typeof r.ok === 'boolean' && typeof r.error === 'string'))
+  check('[l]', 'ok/error giống hệt baseline ở mọi lần', results.every(r => r.ok === baseline.ok && r.error === baseline.error))
+  check('[l]', 'advisory chỉ tại 3/5/8', results.map(r => r.advisory?.repeat ?? 0).join(',') === '0,0,3,0,5,0,0,8,0', results.map(r => r.advisory?.repeat ?? 0).join(','))
+  check('[l]', 'lần 9 không mang advisory (tần suất thấp)', results[8].advisory === undefined)
+  const repeats = orca.calls.logs.filter(l => l.includes('[guard:repeat-tool-reminder]'))
+  check('[l]', 'đúng 3 dòng reminder (3/5/8), không spam', repeats.length === 3, `got ${repeats.length}`)
+})
+
 // [+ control dương] kit hợp lệ → copy + marker + 0 notify
 await runCase('[+] valid-control', async () => {
   const kitRoot = tempDir('p-kit')
@@ -267,4 +358,4 @@ if (failures.length) {
   console.log('FAILURES:\n- ' + failures.join('\n- '))
   process.exit(1)
 }
-console.log('HARNESS GREEN (9 cases [a]-[i] + positive control + HOME guard)')
+console.log('HARNESS GREEN (12 cases [a]-[l] + positive control + HOME guard)')
