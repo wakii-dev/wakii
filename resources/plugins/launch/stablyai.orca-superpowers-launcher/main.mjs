@@ -686,6 +686,16 @@ function validateKitManifest(manifest, kitRoot) {
   return problems
 }
 
+// Fail path dùng chung: toast fire-and-forget — notification fail thì log fallback.
+// KHÔNG throw (activate phải sống); block-all do caller return false.
+function notifyKitBlocked(orca, summary) {
+  const full = `story-team-kit install blocked: ${summary} — không copy, marker giữ nguyên. Sửa kit rồi restart.`
+  const body = full.length > 400 ? `${full.slice(0, 397)}…` : full
+  Promise.resolve()
+    .then(() => orca.host.call('notifications.show', { title: 'story-team-kit', body }))
+    .catch(() => { try { orca.log(body) } catch { /* không còn kênh nào */ } })
+}
+
 // ---- Kit self-install (bundle built-in Wakii) ----
 // sync-kit.sh vendor story-team-kit vào kit/ cạnh main.mjs. Khi worker kích
 // hoạt, chép skills/agents/bin vào ~/.claude/ — build Wakii xong là full chức
@@ -699,12 +709,18 @@ export function installKit(orca, { root, kitRoot: kitRootOverride } = {}) {
   try {
     const kitRoot = kitRootOverride || join(fileURLToPath(new URL('.', import.meta.url)), 'kit')
     const manifestPath = join(kitRoot, 'kit.json')
-    if (!existsSync(manifestPath)) return true // không bundle kit — bỏ qua (plugin chạy riêng vẫn OK)
-    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
+    if (!existsSync(manifestPath)) return true // không bundle kit — silent no-op (plugin chạy riêng vẫn OK)
+    let manifest
+    try {
+      manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
+    } catch (err) {
+      notifyKitBlocked(orca, `kit.json malformed: ${err.message}`)
+      return false
+    }
     // Pre-flight TRƯỚC marker early-return: validate mỗi activate, marker chỉ skip copy.
     const problems = validateKitManifest(manifest, kitRoot)
     if (problems.length) {
-      orca.log('story-team-kit manifest INVALID (blocked, không copy): ' + problems.join(' | '))
+      notifyKitBlocked(orca, problems.join(' | '))
       return false
     }
     const claude = root || join(process.env.HOME || '', '.claude')
@@ -729,7 +745,8 @@ export function installKit(orca, { root, kitRoot: kitRootOverride } = {}) {
     orca.log('story-team-kit self-installed: v' + manifest.version)
     return true
   } catch (err) {
-    try { orca.log('kit self-install failed (plugin vẫn chạy): ' + err.message) } catch { /* silent */ }
+    // lỗi bất ngờ (đĩa/permission) — cũng fail-loud, KHÔNG throw trong activate
+    notifyKitBlocked(orca, `self-install failed: ${err.message}`)
     return false
   }
 }
