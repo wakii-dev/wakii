@@ -387,6 +387,16 @@
       "name": "story-watchdog",
       "type": "bin",
       "description": "self-sustainment loop — diagnose mọi SF, notify khi stall mới, optionally launch next"
+    },
+    {
+      "name": "wakii-skill-import",
+      "type": "bin",
+      "description": "import 1 skill chuẩn Claude (thư mục SKILL.md) vào kit — validate + collide provides[], owner community/<nguồn>, bump version"
+    },
+    {
+      "name": "wakii-skill-export",
+      "type": "bin",
+      "description": "export skills ra pack (dirs + INDEX.md + package.json) để community cài vào harness khác"
     }
   ]
 }
