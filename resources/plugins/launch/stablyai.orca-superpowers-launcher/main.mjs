@@ -444,6 +444,36 @@ async function loadStorySnapshot(orca, args) {
 
 const KIT_BIN = join(process.env.HOME || '', '.claude', 'bin')
 
+// ---- Guard advisory nhãn nguồn + reject-reason log (issue #22) -------------
+// camel: mọi item bị chặn phải để lại log lý do đọc được (reason ≤200 ký tự,
+// không phình log). deepseek-harness: guard NHẮC không chặn — reminder phải có
+// nhãn nguồn, không veto, không đổi kết quả call. Sink do activate gắn vào
+// orca.log; harness gắn mock riêng.
+let guardLogSink = null
+export function setKitGuardLogger(fn) { guardLogSink = typeof fn === 'function' ? fn : null }
+function guardLog(line) { try { guardLogSink?.(line) } catch { /* log không được chặn caller */ } }
+
+const GUARD_REASON_MAX = 200
+function truncateReason(s, max = GUARD_REASON_MAX) {
+  const t = String(s ?? '')
+  return t.length <= max ? t : t.slice(0, max - 1) + '…'
+}
+
+// Repeat-guard: đếm chuỗi gọi TRÙNG (bin + args) LIÊN TIẾP trong runKit; chạm
+// ngưỡng → advisory return field, không đụng blocked/ok. State giữ trong module.
+const REPEAT_THRESHOLDS = [3, 5, 8]
+let repeatState = { key: null, count: 0 }
+export function resetKitRepeatGuard() { repeatState = { key: null, count: 0 } }
+function recordKitRepeat(bin, args) {
+  let key
+  try { key = `${bin} ${JSON.stringify(args ?? null)}` } catch { key = `${bin} (args không tuần tự hoá được)` }
+  if (repeatState.key === key) repeatState.count++
+  else repeatState = { key, count: 1 }
+  if (!REPEAT_THRESHOLDS.includes(repeatState.count)) return null
+  guardLog(`[guard:repeat-tool-reminder] gọi trùng lần ${repeatState.count} — đây là guard nhắc, không phải lệnh mới (${truncateReason(key, 80)})`)
+  return { guard: 'repeat-tool-reminder', repeat: repeatState.count, note: 'guard nhắc, không phải lệnh mới — kết quả call giữ nguyên' }
+}
+
 // Capability catalog: provides[] bin của kit.json. Không đọc được → null
 // (dispatch pass-through — install path đã fail-loud riêng lúc activate).
 export function kitBinCatalog(kitRoot = KIT_ROOT) {
@@ -465,14 +495,20 @@ export function assertCapability(name, catalog = kitBinCatalog()) {
 }
 
 export async function runKit(bin, args, { kitRoot } = {}) {
+  const advisory = recordKitRepeat(bin, args)
   const cap = assertCapability(bin, kitBinCatalog(kitRoot))
-  if (!cap.ok) return cap
+  if (!cap.ok) {
+    // camel reject-reason: MỖI lần chặn để lại 1 dòng log lý do — block giữ nguyên
+    guardLog(`[guard:capability-check] blocked '${bin}' — ${truncateReason(cap.error)}`)
+    return advisory ? { ...cap, advisory } : cap
+  }
   try {
     const { stdout } = await execFileAsync(join(KIT_BIN, bin), args,
       { timeout: 90000, maxBuffer: 2 * 1024 * 1024 })
-    return { ok: true, stdout }
+    return advisory ? { ok: true, stdout, advisory } : { ok: true, stdout }
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : String(err) }
+    const error = err instanceof Error ? err.message : String(err)
+    return advisory ? { ok: false, error, advisory } : { ok: false, error }
   }
 }
 
@@ -719,14 +755,16 @@ function validateKitManifest(manifest, kitRoot) {
   return problems
 }
 
-// Fail path dùng chung: toast fire-and-forget — notification fail thì log fallback.
-// KHÔNG throw (activate phải sống); block-all do caller return false.
+// Fail path dùng chung: toast fire-and-forget + 1 dòng log nhãn [guard:kit-manifest]
+// (camel reject-reason — pre-flight fail không biến mất im lặng). KHÔNG throw
+// (activate phải sống); block-all do caller return false.
 function notifyKitBlocked(orca, summary) {
+  guardLog(`[guard:kit-manifest] install blocked — ${truncateReason(summary)}`)
   const full = `story-team-kit install blocked: ${summary} — không copy, marker giữ nguyên. Sửa kit rồi restart.`
   const body = full.length > 400 ? `${full.slice(0, 397)}…` : full
   Promise.resolve()
     .then(() => orca.host.call('notifications.show', { title: 'story-team-kit', body }))
-    .catch(() => { try { orca.log(body) } catch { /* không còn kênh nào */ } })
+    .catch(() => { if (!guardLogSink) { try { orca.log(body) } catch { /* không còn kênh nào */ } } })
 }
 
 // ---- Kit self-install (bundle built-in Wakii) ----
@@ -787,6 +825,7 @@ export function installKit(orca, { root, kitRoot: kitRootOverride } = {}) {
 }
 
 export default function activate(orca) {
+  setKitGuardLogger((line) => orca.log(line))
   installKit(orca)
   // Story-request poll: panel writes story.request {linear} (fork: panel can
   // storage.set) → worker finds the bracket file with that linear ID and loads it.
