@@ -1,0 +1,230 @@
+#!/usr/bin/env node
+// wakii-skill-export — export skills của story-team-kit ra pack (thư mục skill
+// + INDEX.md + package.json) để community cài vào harness khác (Claude Code,
+// Claude Desktop, …): copy từng thư mục skill là dùng được.
+//
+// Fail-loud: kiểm tra HẾT tên (tồn tại skills/<name>/SKILL.md) + đích output
+// (rỗng hoặc --force) TRƯỚC khi copy — không pack nửa vời.
+//
+// Usage:
+//   wakii-skill-export <name> [<name>…] --out <dir> [--kit <kit-dir>] [--force]
+//   wakii-skill-export --from <list-file> --out <dir> [--kit <kit-dir>]
+//   wakii-skill-export --selftest
+//
+// --from: file text 1 tên/dòng, bỏ dòng rỗng + `#` comment. Kit dir: --kit
+// hoặc env WAKII_KIT_DIR. INDEX.md lấy mô tả từ frontmatter SKILL.md, outputs
+// từ provides[] kit.json (nếu entry có). package.json: version từ kit.json.
+//
+// Exit: 0 export xong · 1 fail (tên không tồn tại / đích không rỗng /
+// kit.json hỏng) · 2 usage
+'use strict'
+
+const fs = require('node:fs')
+const os = require('node:os')
+const path = require('node:path')
+
+const VERSION_RE = /^\d+\.\d+\.\d+$/
+
+function parseArgs(argv) {
+  const opts = { names: [], from: null, out: null, kit: null, force: false, selftest: false, help: false }
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i]
+    if (a === '--selftest') opts.selftest = true
+    else if (a === '-h' || a === '--help') opts.help = true
+    else if (a === '--force') opts.force = true
+    else if (a === '--from') opts.from = argv[++i]
+    else if (a === '--out') opts.out = argv[++i]
+    else if (a === '--kit') opts.kit = argv[++i]
+    else if (a === '-' || a.startsWith('-')) die(`Unknown flag: ${a}`, 2)
+    else opts.names.push(a)
+  }
+  return opts
+}
+
+function die(msg, code) {
+  console.error(`wakii-skill-export: ${msg}`)
+  process.exit(code)
+}
+
+// ---- frontmatter (cùng format với wakii-skill-import; script phải tự chứa) -
+function parseFrontmatter(text) {
+  const m = text.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/)
+  if (!m) return { error: 'thiếu frontmatter block `---`' }
+  const data = {}
+  const lines = m[1].split(/\r?\n/)
+  for (let i = 0; i < lines.length; i++) {
+    const km = lines[i].match(/^([A-Za-z][\w-]*):\s*(.*)$/)
+    if (!km) continue
+    let val = km[2].trim()
+    if (/^[>|][>|+-]?\s*$/.test(val)) {
+      const parts = []
+      while (i + 1 < lines.length && (/^\s/.test(lines[i + 1]) || lines[i + 1] === '')) {
+        i++
+        if (lines[i] !== '') parts.push(lines[i].trim())
+      }
+      val = parts.join(' ')
+    }
+    if (val !== '') data[km[1]] = val.replace(/\s+/g, ' ').trim()
+  }
+  return { data }
+}
+
+function readKitManifest(kitRoot) {
+  const manifestPath = path.join(kitRoot, 'kit.json')
+  if (!fs.existsSync(manifestPath)) return { error: `không thấy ${manifestPath}` }
+  try {
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
+    if (typeof manifest.version !== 'string' || !VERSION_RE.test(manifest.version)) {
+      return { error: `kit.json version "${manifest.version}" không khớp \\d+.\\d+.\\d+` }
+    }
+    return { manifest, manifestPath }
+  } catch (err) {
+    return { error: `kit.json hỏng (không parse được JSON): ${err.message}` }
+  }
+}
+
+function readNameList(file) {
+  let text
+  try {
+    text = fs.readFileSync(file, 'utf8')
+  } catch (err) {
+    return { error: `không đọc được --from ${file}: ${err.message}` }
+  }
+  return { names: text.split(/\r?\n/).map((l) => l.replace(/#.*$/, '').trim()).filter(Boolean) }
+}
+
+const cell = (s) => String(s).replace(/\|/g, '\\|')
+
+// ---- export core -----------------------------------------------------------
+function runExport({ names, kitRoot, out, force }) {
+  if (!out) return { ok: false, code: 2, error: 'thiếu --out <dir>' }
+  if (!names.length) return { ok: false, code: 2, error: 'thiếu tên skill (argv hoặc --from <file>)' }
+  if (!kitRoot) return { ok: false, code: 2, error: 'thiếu kit dir — dùng --kit <dir> hoặc env WAKII_KIT_DIR' }
+
+  const kit = readKitManifest(kitRoot)
+  if (kit.error) return { ok: false, code: 1, error: kit.error }
+  const outputsBySkill = new Map(
+    (Array.isArray(kit.manifest.provides) ? kit.manifest.provides : [])
+      .filter((e) => e && e.type === 'skill' && typeof e.outputs === 'string')
+      .map((e) => [e.name, e.outputs])
+  )
+
+  // 1. validate TẤT CẢ tên + frontmatter trước khi copy (không pack nửa vời)
+  const parsed = []
+  for (const n of names) {
+    const p = path.join(kitRoot, 'skills', n, 'SKILL.md')
+    if (!fs.existsSync(p) || !fs.statSync(p).isFile()) {
+      return { ok: false, code: 1, error: `tên không tồn tại trong kit (${kitRoot}/skills/): ${names.filter((x) => !fs.existsSync(path.join(kitRoot, 'skills', x, 'SKILL.md'))).join(', ')}` }
+    }
+    const fm = parseFrontmatter(fs.readFileSync(p, 'utf8'))
+    if (fm.error) return { ok: false, code: 1, error: `SKILL.md của "${n}" ${fm.error}` }
+    parsed.push({ name: n, fm: fm.data })
+  }
+
+  // 2. đích output — refuse đè pack cũ (--force = ghi đè tại chỗ, không dọn file lạ)
+  const outDir = path.resolve(out)
+  if (fs.existsSync(outDir) && !force && fs.readdirSync(outDir).length > 0) {
+    return { ok: false, code: 1, error: `đích ${outDir} không rỗng — dùng --force hoặc đích khác (không pack đè)` }
+  }
+
+  // 3. copy từng skill
+  const rows = []
+  for (const { name, fm } of parsed) {
+    const dest = path.join(outDir, name)
+    try {
+      fs.cpSync(path.join(kitRoot, 'skills', name), dest, { recursive: true })
+    } catch (err) {
+      return { ok: false, code: 1, error: `copy ${name} → ${dest} thất bại: ${err.message}` }
+    }
+    rows.push({ name, description: fm.description || '—', outputs: outputsBySkill.get(name) || '—' })
+  }
+
+  // 4. INDEX.md + package.json
+  const ver = kit.manifest.version
+  const index = [
+    `# wakii-skills-pack`,
+    ``,
+    `Skills export từ **${kit.manifest.name || 'story-team-kit'}** v${ver} — ${new Date().toISOString().slice(0, 10)}.`,
+    ``,
+    `Cài: copy từng thư mục skill vào thư mục skills của harness (Claude Code: \`~/.claude/skills/\`).`,
+    ``,
+    `| Skill | Mô tả | Outputs |`,
+    `|-------|-------|---------|`,
+    ...rows.map((r) => `| ${cell(r.name)} | ${cell(r.description)} | ${cell(r.outputs)} |`),
+    ``
+  ].join('\n')
+  try {
+    fs.mkdirSync(outDir, { recursive: true })
+    fs.writeFileSync(path.join(outDir, 'INDEX.md'), index)
+    fs.writeFileSync(
+      path.join(outDir, 'package.json'),
+      JSON.stringify({ name: 'wakii-skills-pack', version: ver, description: `Skills pack exported from ${kit.manifest.name || 'story-team-kit'} v${ver}`, private: true }, null, 2) + '\n'
+    )
+  } catch (err) {
+    return { ok: false, code: 1, error: `ghi INDEX.md/package.json vào ${outDir} thất bại: ${err.message}` }
+  }
+
+  return { ok: true, outDir, names: rows.map((r) => r.name), version: ver }
+}
+
+// ---- selftest — kit thật chỉ ĐỌC, output vào tmp ---------------------------
+function selfTest() {
+  const kitRoot = process.env.WAKII_KIT_DIR || path.join(__dirname, '..')
+  if (!fs.existsSync(path.join(kitRoot, 'kit.json'))) {
+    return { ok: false, code: 1, error: `selftest cần chạy trong kit (không thấy ${kitRoot}/kit.json)` }
+  }
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'wakii-skill-export-selftest-'))
+  const failures = []
+  const check = (label, cond) => { if (!cond) failures.push(label) }
+  try {
+    const out = path.join(tmp, 'pack')
+    const r1 = runExport({ names: ['brainstorm', 'story-workflow'], kitRoot, out, force: false })
+    check('A1: export 2 skill thành công', r1.ok === true)
+    check('A2: 2 thư mục có SKILL.md', ['brainstorm', 'story-workflow'].every((n) => fs.existsSync(path.join(out, n, 'SKILL.md'))))
+    const index = fs.existsSync(path.join(out, 'INDEX.md')) ? fs.readFileSync(path.join(out, 'INDEX.md'), 'utf8') : ''
+    check('A3: INDEX.md có bảng + đủ tên', index.includes('| Skill | Mô tả | Outputs |') && index.includes('brainstorm') && index.includes('story-workflow'))
+    let pkg = null
+    try { pkg = JSON.parse(fs.readFileSync(path.join(out, 'package.json'), 'utf8')) } catch { /* checked dưới */ }
+    const kitVersion = readKitManifest(kitRoot).manifest.version
+    check('A4: package.json name+version từ kit.json', !!pkg && pkg.name === 'wakii-skills-pack' && pkg.version === kitVersion)
+
+    const r2 = runExport({ names: ['khong-ton-tai'], kitRoot, out: path.join(tmp, 'pack2'), force: false })
+    check('B1: tên lạ → fail exit 1', r2.ok === false && r2.code === 1)
+    check('B2: pack2 không được tạo', !fs.existsSync(path.join(tmp, 'pack2')))
+
+    const r3 = runExport({ names: ['brainstorm'], kitRoot, out, force: false })
+    check('C1: đích không rỗng → fail', r3.ok === false && r3.code === 1)
+  } finally {
+    try { fs.rmSync(tmp, { recursive: true, force: true }) } catch { /* tmp */ }
+  }
+  return failures.length ? { ok: false, code: 1, error: `selftest FAIL: ${failures.join('; ')}` } : { ok: true }
+}
+
+// ---- main ------------------------------------------------------------------
+function main() {
+  const opts = parseArgs(process.argv.slice(2))
+  if (opts.help) {
+    console.log('Usage: wakii-skill-export <name>… --out <dir> [--kit <kit-dir>] [--force] | --from <list-file> --out <dir> | --selftest\nExit: 0 ok · 1 fail · 2 usage')
+    return
+  }
+  if (opts.selftest) {
+    const r = selfTest()
+    if (!r.ok) die(r.error, r.code)
+    console.log('SELFTEST PASS — export 2 skill ✓ dirs+SKILL.md ✓ INDEX.md ✓ package.json ✓ tên lạ chặn ✓ đích không rỗng chặn ✓')
+    return
+  }
+  let names = opts.names
+  if (opts.from) {
+    const list = readNameList(opts.from)
+    if (list.error) die(list.error, 1)
+    names = names.concat(list.names)
+  }
+  names = [...new Set(names)]
+  if (!opts.kit && !process.env.WAKII_KIT_DIR) die('thiếu kit dir — dùng --kit <dir> hoặc env WAKII_KIT_DIR', 2)
+  const kitRoot = path.resolve(opts.kit || process.env.WAKII_KIT_DIR)
+  const r = runExport({ names, kitRoot, out: opts.out, force: opts.force })
+  if (!r.ok) die(r.error, r.code)
+  console.log(`exported ${r.names.length} skill(s) → ${r.outDir}\n  ${r.names.join(', ')}\n  pack: INDEX.md + package.json (v${r.version})`)
+}
+
+main()

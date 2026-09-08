@@ -28,6 +28,30 @@ Plugin + story-team-kit được đóng gói sẵn vào build Wakii (orca fork):
 
 `sync-kit.sh` riêng chỉ vendor kit từ `../story-team-kit` vào `kit/`.
 
+## Skills import/export (community)
+
+2 CLI zero-dep (Node builtins) trong `kit/bin/` — 2 chiều cho skill chuẩn Claude (thư mục `<name>/SKILL.md` với frontmatter `name` + `description`):
+
+```bash
+# IMPORT 1 skill từ community vào kit (validate trước, copy sau — fail-loud)
+node kit/bin/wakii-skill-import ~/Downloads/some-skill --kit ./kit --source ten-nguồn
+#   → copy vào kit/skills/<frontmatter-name>/, thêm entry provides[]
+#     (owner "community/<nguồn>", inputs/outputs mặc định từ description —
+#     override bằng --inputs "a, b" --outputs "..."), bump kit.json version patch
+#   → collide với name đã có trong provides[]/trên đĩa, thiếu SKILL.md,
+#     kit.json hỏng → exit 1, không sửa nửa vời
+#   → version mới → installKit() tự re-copy vào ~/.claude/ lần activate sau
+
+# EXPORT skills ra pack để cài vào harness khác
+node kit/bin/wakii-skill-export brainstorm story-workflow --out /tmp/skills-pack --kit ./kit
+#   hoặc: wakii-skill-export --from skills.txt --out /tmp/skills-pack
+#   → <out>/<name>/ (copy nguyên thư mục) + INDEX.md (bảng name/mô tả/outputs
+#     từ provides[]) + package.json (name "wakii-skills-pack", version từ kit.json)
+#   → tên lạ / đích không rỗng (không --force) → exit 1 trước khi copy
+```
+
+Kit dir nhận qua `--kit <dir>` hoặc env `WAKII_KIT_DIR` (không default `~/.claude`). Tự-check: `node kit/bin/wakii-skill-import --selftest && node kit/bin/wakii-skill-export --selftest` (chỉ ghi vào temp dir).
+
 ## Why a control deck (not a dashboard)
 The Orca panel→worker bridge is a **closed transport**: a sandboxed panel iframe can only call three host actions — `workspace.readContext`, `terminal.sendText`, `notifications.show` (see Orca's `plugin-host-api.js`, `PLUGIN_PANEL_ACTIONS`). On top of that, the panel shell injects `connect-src 'none'` CSP, so `fetch`/`XHR`/`WebSocket` to any origin is blocked. There is no route from the panel to plugin-registered commands or to the filesystem. All visualization happens **in the terminal via the agent**; this plugin only sends it the right prompts.
 
