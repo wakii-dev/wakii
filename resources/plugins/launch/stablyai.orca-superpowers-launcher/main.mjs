@@ -607,15 +607,18 @@ async function postCloseStory(epic) {
 // năng, không cần chạy install.sh tay. Idempotent: skip khi đúng version đã
 // cài (marker file). Chỉ đụng thư mục kit sở hữu — skill/CLI của người dùng
 // ngoài kit KHÔNG bị đè.
-function installKit(orca) {
+// Testability: named export + injectable seams — `root` (destination, default
+// ~/.claude) và `kitRoot` (nguồn bundle) để negative harness chạy trên temp
+// dirs, KHÔNG BAO GIỜ chạm HOME thật. Trả true = cài/đã-cứu/skip, false = blocked.
+export function installKit(orca, { root, kitRoot: kitRootOverride } = {}) {
   try {
-    const kitRoot = join(fileURLToPath(new URL('.', import.meta.url)), 'kit')
+    const kitRoot = kitRootOverride || join(fileURLToPath(new URL('.', import.meta.url)), 'kit')
     const manifestPath = join(kitRoot, 'kit.json')
-    if (!existsSync(manifestPath)) return // không bundle kit — bỏ qua (plugin chạy riêng vẫn OK)
+    if (!existsSync(manifestPath)) return true // không bundle kit — bỏ qua (plugin chạy riêng vẫn OK)
     const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
-    const claude = join(process.env.HOME || '', '.claude')
+    const claude = root || join(process.env.HOME || '', '.claude')
     const marker = join(claude, '.story-team-kit-version')
-    if (existsSync(marker) && readFileSync(marker, 'utf8').trim() === String(manifest.version)) return
+    if (existsSync(marker) && readFileSync(marker, 'utf8').trim() === String(manifest.version)) return true
     for (const name of ['skills', 'agents', 'bin']) {
       const src = join(kitRoot, name)
       if (!existsSync(src)) continue
@@ -633,8 +636,10 @@ function installKit(orca) {
     mkdirSync(claude, { recursive: true })
     writeFileSync(marker, String(manifest.version))
     orca.log('story-team-kit self-installed: v' + manifest.version)
+    return true
   } catch (err) {
     try { orca.log('kit self-install failed (plugin vẫn chạy): ' + err.message) } catch { /* silent */ }
+    return false
   }
 }
 
