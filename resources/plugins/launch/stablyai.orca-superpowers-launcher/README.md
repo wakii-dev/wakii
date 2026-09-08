@@ -17,6 +17,10 @@ Plugin + story-team-kit được đóng gói sẵn vào build Wakii (orca fork):
 - Khi Wakii khởi động, `bootstrapBundledPlugins` tự cài plugin; worker `installKit()`
   tự chép kit (skills/agents/bin CLIs) vào `~/.claude/` — idempotent theo version
   marker `.story-team-kit-version`, KHÔNG đè skill/CLI ngoài kit.
+- `installKit` validate manifest **mỗi lần kích hoạt** (trước marker early-return):
+  schema `provides[]` tay zero-dep + two-way cross-check provides ↔ đĩa. Kit hỏng →
+  desktop notification + block-all (không copy, marker giữ nguyên; lần kích hoạt
+  sau retry), plugin vẫn chạy. Thiếu `kit.json` → silent no-op.
 - Fork bật `pluginSystemEnabled: true` mặc định; consent plugin vẫn duyệt 1 lần.
 
 **Update plugin/kit rồi build lại:**
@@ -26,7 +30,11 @@ Plugin + story-team-kit được đóng gói sẵn vào build Wakii (orca fork):
 # sau đó commit repo orca (resources + index) rồi build
 ```
 
-`sync-kit.sh` riêng chỉ vendor kit từ `../story-team-kit` vào `kit/`.
+Kit flow (source-of-truth): repo **story-team-kit** → `sync-kit.sh` (nằm ở
+**launcher repo** `local.superpowers-launcher/`, mặc định vendor từ
+`../story-team-kit` tính từ launcher repo, không phải từ plugin folder; script
+này KHÔNG đi vào bundle orca) → `kit/` → `bundle-into-orca.sh` (copy plugin + kit
+vào repo orca + rehash `bundled-plugins.json`).
 
 ## Why a control deck (not a dashboard)
 The Orca panel→worker bridge is a **closed transport**: a sandboxed panel iframe can only call three host actions — `workspace.readContext`, `terminal.sendText`, `notifications.show` (see Orca's `plugin-host-api.js`, `PLUGIN_PANEL_ACTIONS`). On top of that, the panel shell injects `connect-src 'none'` CSP, so `fetch`/`XHR`/`WebSocket` to any origin is blocked. There is no route from the panel to plugin-registered commands or to the filesystem. All visualization happens **in the terminal via the agent**; this plugin only sends it the right prompts.
@@ -103,8 +111,8 @@ Directive strings are mirrored in `directives.json` (single source of truth), `p
 - `directives.json` — single source of truth for opt-in directives + tokens
 - `build-directives.mjs` — validator (panel.html ↔ directives.json byte-equality)
 - `README.md` — this file
-- `kit/` — story-team-kit vendored bởi `sync-kit.sh` (bundle built-in; `main.mjs` installKit tự chép vào `~/.claude/`)
-- `sync-kit.sh` — vendor kit từ `../story-team-kit` vào `kit/`
+- `kit/` — story-team-kit vendored bởi `sync-kit.sh` (bundle built-in; `main.mjs` installKit tự chép vào `~/.claude/` sau khi validate manifest fail-loud)
+- `sync-kit.sh` — vendor kit từ repo story-team-kit vào `kit/` *(chỉ tồn tại ở launcher repo — không đi vào bundle orca)*
 - `bundle-into-orca.sh` — đóng gói plugin+kit vào `orca/resources/plugins/launch/` (sync → copy → rehash → verify)
 - `scripts/hash-plugin.cjs` — content hash `orca-plugin-tree-v1` (cùng thuật toán với verifier của orca)
 - `FEATURE-REQUEST-panel-filesystem.md` — deferred request to Orca (loosen panel CSP for loopback); see `## Caveats`
