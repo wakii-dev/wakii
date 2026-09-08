@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url'
 const testsDir = dirname(fileURLToPath(import.meta.url))
 const mainPath = resolve(testsDir, process.env.KIT_MAIN || '../main.mjs')
 const realKitDir = resolve(testsDir, '../kit')
-const { installKit } = await import(mainPath)
+const { installKit, runKit, assertCapability, kitBinCatalog } = await import(mainPath)
 
 // ---- mock orca: capture notifications.show + log -------------------------
 function mockOrca({ toastFails = false } = {}) {
@@ -204,6 +204,44 @@ await runCase('[g] toast-fallback', async () => {
   check('[g]', 'KHÔNG copy', !existsSync(join(root, 'skills')))
 })
 
+// [h] duplicate-id WITHIN provides[] → fail liệt kê entry trùng (Qwen-Agent
+// register_tool: id catalog phải unique — file có thật nên chỉ guard này bắt được)
+await runCase('[h] duplicate-id', async () => {
+  const kitRoot = tempDir('h-kit')
+  const root = tempDir('h-root')
+  buildValidKit(kitRoot)
+  const m = JSON.parse(readFileSync(join(kitRoot, 'kit.json'), 'utf8'))
+  m.provides.push({ name: 'gamma', type: 'bin', description: 'gamma cli — bản trùng' })
+  writeFileSync(join(kitRoot, 'kit.json'), JSON.stringify(m, null, 2))
+  const orca = mockOrca()
+  const r = await installKit(orca, { root, kitRoot })
+  await sleep(20)
+  check('[h]', 'return false (blocked)', r === false, `got ${r}`)
+  check('[h]', 'notify đúng 1 lần', orca.calls.notifications.length === 1, `got ${orca.calls.notifications.length}`)
+  const body = orca.calls.notifications[0]?.body || ''
+  check('[h]', 'notify liệt kê entry trùng gamma', body.includes('gamma') && body.includes('trùng'), body.slice(0, 160))
+  check('[h]', 'KHÔNG copy', !existsSync(join(root, 'skills')) && !existsSync(join(root, 'bin')))
+  check('[h]', 'KHÔNG ghi marker', !existsSync(join(root, '.story-team-kit-version')))
+})
+
+// [i] dispatch capability không tồn tại → chặn TRƯỚC spawn với lỗi đích danh
+// (neovim lsp._unsupported_method: method %q is not supported)
+await runCase('[i] capability-block', async () => {
+  const kitRoot = tempDir('i-kit')
+  mkdirSync(kitRoot, { recursive: true })
+  writeFileSync(join(kitRoot, 'kit.json'), JSON.stringify({
+    version: '2.2.0',
+    provides: [{ name: 'gamma', type: 'bin', description: 'gamma cli' }]
+  }, null, 2))
+  const ghost = await runKit('story-ghost', [], { kitRoot })
+  check('[i]', 'return ok:false (chặn trước spawn)', ghost.ok === false, JSON.stringify(ghost).slice(0, 120))
+  check('[i]', 'blocked=capability', ghost.blocked === 'capability', JSON.stringify(ghost).slice(0, 120))
+  check('[i]', 'lỗi đích danh story-ghost + provides', (ghost.error || '').includes('story-ghost') && (ghost.error || '').includes('provides'), (ghost.error || '').slice(0, 140))
+  check('[i]', 'KHÔNG phải spawn/ENOENT error', !(ghost.error || '').includes('ENOENT') && !(ghost.error || '').includes('spawn'))
+  check('[i]', 'capability có thật → ok', assertCapability('gamma', kitBinCatalog(kitRoot)).ok === true)
+  check('[i]', 'không có kit.json → catalog null (pass-through)', kitBinCatalog(join(kitRoot, 'khong-co')) === null)
+})
+
 // [+ control dương] kit hợp lệ → copy + marker + 0 notify
 await runCase('[+] valid-control', async () => {
   const kitRoot = tempDir('p-kit')
@@ -229,4 +267,4 @@ if (failures.length) {
   console.log('FAILURES:\n- ' + failures.join('\n- '))
   process.exit(1)
 }
-console.log('HARNESS GREEN (6 negative cases + positive control + HOME guard)')
+console.log('HARNESS GREEN (9 cases [a]-[i] + positive control + HOME guard)')

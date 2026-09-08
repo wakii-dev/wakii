@@ -18,9 +18,18 @@ Plugin + story-team-kit được đóng gói sẵn vào build Wakii (orca fork):
   tự chép kit (skills/agents/bin CLIs) vào `~/.claude/` — idempotent theo version
   marker `.story-team-kit-version`, KHÔNG đè skill/CLI ngoài kit.
 - `installKit` validate manifest **mỗi lần kích hoạt** (trước marker early-return):
-  schema `provides[]` tay zero-dep + two-way cross-check provides ↔ đĩa. Kit hỏng →
-  desktop notification + block-all (không copy, marker giữ nguyên; lần kích hoạt
-  sau retry), plugin vẫn chạy. Thiếu `kit.json` → silent no-op.
+  schema `provides[]` tay zero-dep + two-way cross-check provides ↔ đĩa + **guard
+  trùng id** (2 entry cùng `name` trong `provides[]` → block kèm liệt kê entry —
+  pattern `register_tool` của Qwen-Agent: id catalog phải unique, không ghi đè
+  im lặng). Kit hỏng → desktop notification + block-all (không copy, marker giữ
+  nguyên; lần kích hoạt sau retry), plugin vẫn chạy. Thiếu `kit.json` → silent no-op.
+- **Capability check trước dispatch**: worker chỉ chạy kit CLI qua `runKit()` —
+  mỗi lần dispatch đối chiếu tên bin với `provides[]` (bin) của `kit.json`; tên
+  lạ → chặn TRƯỚC khi spawn với lỗi đích danh `capability '<tên>' không có trong
+  kit.json provides[]` (pattern `lsp._unsupported_method` của neovim), kết quả
+  hiện đúng chỗ panel đọc (`story.ops.result` / `dash.gate.result`). Helper export
+  từ `main.mjs`: `assertCapability(name)` + `kitBinCatalog(kitRoot)`; `kit.json`
+  không đọc được → catalog null → pass-through (install path đã fail-loud riêng).
 - Fork bật `pluginSystemEnabled: true` mặc định; consent plugin vẫn duyệt 1 lần.
 
 **Update plugin/kit rồi build lại:**
@@ -112,6 +121,7 @@ Directive strings are mirrored in `directives.json` (single source of truth), `p
 - `build-directives.mjs` — validator (panel.html ↔ directives.json byte-equality)
 - `README.md` — this file
 - `kit/` — story-team-kit vendored bởi `sync-kit.sh` (bundle built-in; `main.mjs` installKit tự chép vào `~/.claude/` sau khi validate manifest fail-loud)
+- `tests/kit-manifest-negative-tests.mjs` — negative harness cho installKit + runKit (9 cases [a]–[i] + positive control + HOME guard; chạy `node tests/kit-manifest-negative-tests.mjs`, chỉ đụng temp dirs)
 - `sync-kit.sh` — vendor kit từ repo story-team-kit vào `kit/` *(chỉ tồn tại ở launcher repo — không đi vào bundle orca)*
 - `bundle-into-orca.sh` — đóng gói plugin+kit vào `orca/resources/plugins/launch/` (sync → copy → rehash → verify)
 - `scripts/hash-plugin.cjs` — content hash `orca-plugin-tree-v1` (cùng thuật toán với verifier của orca)

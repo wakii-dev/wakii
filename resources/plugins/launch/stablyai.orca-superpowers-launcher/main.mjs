@@ -444,7 +444,29 @@ async function loadStorySnapshot(orca, args) {
 
 const KIT_BIN = join(process.env.HOME || '', '.claude', 'bin')
 
-async function runKit(bin, args) {
+// Capability catalog: provides[] bin của kit.json. Không đọc được → null
+// (dispatch pass-through — install path đã fail-loud riêng lúc activate).
+export function kitBinCatalog(kitRoot = KIT_ROOT) {
+  try {
+    const manifest = JSON.parse(readFileSync(join(kitRoot, 'kit.json'), 'utf8'))
+    if (!manifest || !Array.isArray(manifest.provides)) return null
+    return new Set(manifest.provides
+      .filter(e => e && typeof e === 'object' && e.type === 'bin' && typeof e.name === 'string')
+      .map(e => e.name))
+  } catch { return null }
+}
+
+// Neovim lsp._unsupported_method: lỗi chỉ đích danh capability thiếu, chặn
+// TRƯỚC dispatch — không ENOENT vô tên giữa đường. catalog vắng → không cấm.
+export function assertCapability(name, catalog = kitBinCatalog()) {
+  if (!catalog || catalog.has(name)) return { ok: true }
+  return { ok: false, blocked: 'capability',
+    error: `capability '${name}' không có trong kit.json provides[] (bin) — không dispatch. Kit cũ/thiếu entry: sửa manifest + cài lại kit.` }
+}
+
+export async function runKit(bin, args, { kitRoot } = {}) {
+  const cap = assertCapability(bin, kitBinCatalog(kitRoot))
+  if (!cap.ok) return cap
   try {
     const { stdout } = await execFileAsync(join(KIT_BIN, bin), args,
       { timeout: 90000, maxBuffer: 2 * 1024 * 1024 })
@@ -676,6 +698,17 @@ function validateKitManifest(manifest, kitRoot) {
     }
     if (typeof e.name === 'string' && e.name && KIT_ENTRY_TYPES.includes(e.type)) declared.add(`${e.type}:${e.name}`)
   }
+  // Trùng id WITHIN provides[] — học Qwen-Agent register_tool: fail ngay, liệt kê
+  // entry, không ghi đè im lặng (flat theo name — trùng name khác type cũng mơ hồ).
+  const byName = new Map()
+  for (const [i, e] of manifest.provides.entries()) {
+    if (!e || typeof e !== 'object' || typeof e.name !== 'string' || !e.name.trim()) continue
+    if (!byName.has(e.name)) byName.set(e.name, [])
+    byName.get(e.name).push(`#${i} (${e.type ?? 'không type'})`)
+  }
+  for (const [name, at] of byName) {
+    if (at.length > 1) problems.push(`provides trùng name '${name}': ${at.join(' + ')} — id catalog phải unique`)
+  }
   for (const e of manifest.provides) {
     if (!e || typeof e !== 'object' || typeof e.name !== 'string' || !KIT_ENTRY_TYPES.includes(e.type)) continue
     if (!kitDiskEntry(kitRoot, e.type, e.name)) problems.push(`entry ${e.name} (${e.type}): không thấy trên đĩa`)
@@ -705,9 +738,11 @@ function notifyKitBlocked(orca, summary) {
 // Testability: named export + injectable seams — `root` (destination, default
 // ~/.claude) và `kitRoot` (nguồn bundle) để negative harness chạy trên temp
 // dirs, KHÔNG BAO GIỜ chạm HOME thật. Trả true = cài/đã-cứu/skip, false = blocked.
+const KIT_ROOT = join(fileURLToPath(new URL('.', import.meta.url)), 'kit')
+
 export function installKit(orca, { root, kitRoot: kitRootOverride } = {}) {
   try {
-    const kitRoot = kitRootOverride || join(fileURLToPath(new URL('.', import.meta.url)), 'kit')
+    const kitRoot = kitRootOverride || KIT_ROOT
     const manifestPath = join(kitRoot, 'kit.json')
     if (!existsSync(manifestPath)) return true // không bundle kit — silent no-op (plugin chạy riêng vẫn OK)
     let manifest
