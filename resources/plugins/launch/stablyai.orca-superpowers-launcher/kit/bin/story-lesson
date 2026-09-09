@@ -1,0 +1,260 @@
+#!/usr/bin/env python3
+"""story-lesson — lessons provenance CLI + Stop audit (SF-3, GH-26 #17/#26)
+
+add <text> --source <session|issue|commit> [--ref <id>] [--tags t1,t2]
+    Schema-validated: text bắt buộc ≤1000 chars, source enum, ref optional.
+    Ghi THẲNG .wakii/lessons.jsonl qua write_atomic_with_stamp của SF-1
+    (atomic rename + stamp header = HEAD) — không pending queue. session_id
+    từ env CLAUDE_SESSION_ID, fallback null. Consumer (story-fact-pack)
+    đối chiếu stamp theo HEAD — lệch → báo stale thay vì dùng im lặng
+    (#17-a SC5).
+
+list [--match <kw>]    case-insensitive substring trên text + tags,
+                       recency desc (mới nhất trước)
+stop-audit             stdin Stop-hook JSON → đếm lessons session_id khớp;
+                       ≥1 → 1 dòng "stop-audit: session <id> — N lessons"
+                       vào errors.log. KHÔNG tự trích lesson từ transcript
+                       (poisoning + latency — decision chốt). Fail-open
+                       exit 0 im lặng (hook path).
+
+Record: {"v":1,"ts":ISO,"date":YYYY-MM-DD,"session_id","source","ref",
+"tags":[...],"text":≤1000}
+
+Env (tests): STORY_CHECKPOINT_STORE / STORY_CHECKPOINT_REPO /
+STORY_CHECKPOINT_NOW (SF-1), CLAUDE_SESSION_ID,
+STORY_LESSON_CHECKPOINT_BIN (helper module override).
+"""
+import json
+import os
+import pathlib
+import sys
+
+SOURCES = ("session", "issue", "commit")
+MAX_TEXT = 1000
+LESSONS_NAME = "lessons.jsonl"
+STAMP_PREFIX = "(generated-from: "
+
+
+def _load_checkpoint_module():
+    """Helpers SF-1 (READ-ONLY) qua SourceFileLoader — write_atomic_with_stamp,
+    check_stamp, resolve_main_checkout, current_store, ensure_store, git,
+    now_iso, log_error. Không load được → None (add/list fail loud vì là lệnh
+    tay; stop-audit fail-open)."""
+    env_bin = os.environ.get("STORY_LESSON_CHECKPOINT_BIN")
+    script_dir = pathlib.Path(__file__).resolve().parent
+    candidates = [pathlib.Path(env_bin)] if env_bin else [
+        script_dir / "story-checkpoint",
+        pathlib.Path(os.path.expanduser("~")) / ".claude" / "bin" / "story-checkpoint",
+    ]
+    for cand in candidates:
+        if not cand.is_file():
+            continue
+        try:
+            import importlib.machinery
+            import importlib.util
+            loader = importlib.machinery.SourceFileLoader(
+                "story_checkpoint_lesson", str(cand))
+            spec = importlib.util.spec_from_loader(
+                "story_checkpoint_lesson", loader)
+            mod = importlib.util.module_from_spec(spec)
+            loader.exec_module(mod)
+            return mod
+        except Exception:  # noqa: BLE001 — thử candidate kế
+            continue
+    return None
+
+
+CP = _load_checkpoint_module()
+
+
+def read_lessons(store):
+    """(records, malformed, future) — skip stamp header; malformed/v-thiếu đếm;
+    v>1 skip im lặng (convention SF-1). Đọc lỗi → ([], -1, 0)."""
+    p = pathlib.Path(store) / LESSONS_NAME
+    if not p.is_file():
+        return [], 0, 0
+    try:
+        text = p.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return [], -1, 0
+    records, malformed, future = [], 0, 0
+    for i, line in enumerate(text.splitlines()):
+        s = line.strip()
+        if not s:
+            continue
+        if i == 0 and s.startswith(STAMP_PREFIX):
+            continue
+        try:
+            rec = json.loads(s)
+        except ValueError:
+            malformed += 1
+            continue
+        if not isinstance(rec, dict):
+            malformed += 1
+            continue
+        v = rec.get("v")
+        if not isinstance(v, int) or isinstance(v, bool):
+            malformed += 1
+            continue
+        if v > 1:
+            future += 1
+            continue
+        records.append(rec)
+    return records, malformed, future
+
+
+def lessons_body_text(p):
+    """Body hiện tại (bỏ stamp header, giữ nguyên văn còn lại) — None nếu
+    đọc lỗi, '' nếu file vắng."""
+    if not p.is_file():
+        return ""
+    try:
+        text = p.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
+    lines = text.split("\n")
+    if lines and lines[0].startswith(STAMP_PREFIX):
+        lines = lines[1:]
+    return "\n".join(lines).strip("\n")
+
+
+def resolve_head_source_ref(cwd):
+    """Stamp nguồn = HEAD của MAIN checkout (anchor chung mọi worktree, cùng
+    anchor consumer fact-pack dùng). Không git → 'no-git' (vẫn ghi được)."""
+    repo = os.environ.get("STORY_CHECKPOINT_REPO")
+    if not repo:
+        mc = CP.resolve_main_checkout(cwd)
+        repo = str(mc) if mc else ""
+    if repo:
+        g = CP.git(repo, "rev-parse", "HEAD")
+        if g.returncode == 0:
+            return g.stdout.strip()
+    return "no-git"
+
+
+def cmd_add(args):
+    text = (args.text or "").strip()
+    if not text:
+        print("add FAIL: text rỗng", file=sys.stderr)
+        return 2
+    if len(text) > MAX_TEXT:
+        print(f"add FAIL: text >{MAX_TEXT} chars", file=sys.stderr)
+        return 2
+    if args.source not in SOURCES:
+        print(f"add FAIL: --source phải là {'|'.join(SOURCES)}", file=sys.stderr)
+        return 2
+    if CP is None:
+        print("add FAIL: không load được helper story-checkpoint", file=sys.stderr)
+        return 1
+    store = CP.current_store()
+    try:
+        CP.ensure_store(store)
+    except OSError as e:
+        print(f"add FAIL: store không tạo được: {e}", file=sys.stderr)
+        return 1
+    ts = CP.now_iso()
+    rec = {
+        "v": 1,
+        "ts": ts,
+        "date": ts[:10],
+        "session_id": os.environ.get("CLAUDE_SESSION_ID") or None,
+        "source": args.source,
+        "ref": (args.ref or "").strip() or None,
+        "tags": [t.strip() for t in (args.tags or "").split(",") if t.strip()],
+        "text": text,
+    }
+    p = pathlib.Path(store) / LESSONS_NAME
+    body = lessons_body_text(p)
+    if body is None:
+        print("add FAIL: không đọc được lessons.jsonl", file=sys.stderr)
+        return 1
+    new = (body + "\n" if body else "") + json.dumps(rec, ensure_ascii=False)
+    # RMW không lock: add là lệnh tay (không hook loop) — race mất dòng chấp
+    # nhận; write_atomic đảm bảo file không bao giờ nửa vời
+    CP.write_atomic_with_stamp(p, new, resolve_head_source_ref(os.getcwd()))
+    print(f"OK: 1 lesson → {p}")
+    return 0
+
+
+def cmd_list(args):
+    if CP is None:
+        print("list FAIL: không load được helper story-checkpoint", file=sys.stderr)
+        return 1
+    store = CP.current_store()
+    records, malformed, future = read_lessons(store)
+    if malformed < 0:
+        print(f"list FAIL: không đọc được store {store}", file=sys.stderr)
+        return 1
+    shown = list(reversed(records))  # recency desc — nhất quán story-checkpoint query
+    if args.match:
+        kw = args.match.lower()
+        shown = [r for r in shown
+                 if kw in f"{r.get('text', '')} {' '.join(r.get('tags') or [])}".lower()]
+    for r in shown:
+        bits = [f"[{r.get('date') or str(r.get('ts', ''))[:10]}",
+                r.get("source", "")]
+        if r.get("ref"):
+            bits.append(f"ref={r['ref']}")
+        tags = "".join(f" #{t}" for t in (r.get("tags") or []))
+        print(f"{' '.join(bits)}]{tags} {r.get('text', '')}")
+    foot = f"-- {len(shown)}/{len(records)} lessons"
+    if malformed > 0:
+        foot += f" | malformed skip: {malformed}"
+    if future > 0:
+        foot += f" | future-version skip: {future}"
+    print(foot)
+    return 0
+
+
+def cmd_stop_audit():
+    """Hook path — KHÔNG BAO GIỜ traceback ra ngoài. Chỉ audit-đếm, không trích."""
+    try:
+        raw = sys.stdin.buffer.read().decode("utf-8", errors="replace")
+        payload = json.loads(raw or "{}")
+        sid = payload.get("session_id") if isinstance(payload, dict) else None
+        if sid and CP is not None:
+            store = CP.current_store()
+            records, _malformed, _future = read_lessons(store)
+            n = sum(1 for r in records if r.get("session_id") == sid)
+            if n >= 1:
+                CP.log_error(store, "stop-audit", f"session {sid} — {n} lessons")
+    except BaseException:  # noqa: BLE001 — fail-open
+        pass
+    return 0
+
+
+def main():
+    import argparse
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8")
+        except (AttributeError, OSError):
+            pass
+    ap = argparse.ArgumentParser(
+        prog="story-lesson",
+        description="lessons provenance CLI + Stop audit (SF-3 GH-26)")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+
+    a = sub.add_parser("add", help="ghi 1 lesson schema-validated vào lessons.jsonl")
+    a.add_argument("text", help="nội dung lesson (≤1000 chars)")
+    a.add_argument("--source", required=True, help="session | issue | commit")
+    a.add_argument("--ref", default=None, help="id nguồn (session/issue/sha) — optional")
+    a.add_argument("--tags", default="", help="tags phân cách phẩy: t1,t2")
+
+    l = sub.add_parser("list", help="in lessons, recency desc")
+    l.add_argument("--match", default=None,
+                   help="case-insensitive substring trên text + tags")
+
+    sub.add_parser("stop-audit",
+                   help="stdin Stop JSON → audit đếm lessons (fail-open)")
+
+    args = ap.parse_args()
+    if args.cmd == "add":
+        sys.exit(cmd_add(args))
+    if args.cmd == "list":
+        sys.exit(cmd_list(args))
+    sys.exit(cmd_stop_audit())
+
+
+if __name__ == "__main__":
+    main()
