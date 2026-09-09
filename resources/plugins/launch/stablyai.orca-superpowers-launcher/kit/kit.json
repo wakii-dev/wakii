@@ -1,6 +1,6 @@
 {
   "name": "story-team-kit",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "description": "9-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới.",
   "requires": {
     "claude-code": ">=2.0",
@@ -282,6 +282,11 @@
       "name": "story-checkpoint",
       "type": "bin",
       "description": "session memory + checkpoint CLI — record git commit thành JSONL v-stamped, query/restore/prune-refs/stats (SF-1 GH-26)"
+    },
+    {
+      "name": "story-lesson",
+      "type": "bin",
+      "description": "lessons provenance CLI + Stop audit — add/list schema-validated ghi lessons.jsonl qua atomic+stamp, stop-audit đếm theo session (SF-3 GH-26)"
     },
     {
       "name": "story-fact-pack",
