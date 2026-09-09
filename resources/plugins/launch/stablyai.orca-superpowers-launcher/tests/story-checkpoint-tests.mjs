@@ -222,6 +222,30 @@ console.log(`\n== record với ORCA_* env + checkpoint ref ==`)
     readFileSync(jsonl(repoA), 'utf8').trim().split('\n').length === nBefore + 1 && noRef.out === '')
 }
 
+console.log(`\n== record tiếng Việt (P1 review: utf-8 stdin + git subprocess decode) ==`)
+{
+  // repoA branch có dấu + command có dấu → stdin JSON + git() decode phải
+  // giữ nguyên văn qua JSONL (không mojibake cp1252)
+  git(repoA, 'checkout', '-q', '-b', 'nhánh-tiếng-việt')
+  writeFileSync(join(repoA, 'vn.txt'), 'x\n')
+  git(repoA, 'add', '-A')
+  git(repoA, 'commit', '-q', '-m', 'vn commit')
+  const sha = git(repoA, 'rev-parse', 'HEAD').out
+  const r = recordOn(repoA, HOOK('git commit -m "thêm nhánh tiếng Việt"', { session_id: 'sess-VN' }))
+  check('vn', 'exit 0', r.status === 0, `status=${r.status} err=${r.stderr}`)
+  const rec = JSON.parse(readFileSync(jsonl(repoA), 'utf8').trim().split('\n').at(-1))
+  check('vn', 'prompt_summary nguyên văn có dấu', rec.prompt_summary === 'git commit -m "thêm nhánh tiếng Việt"', JSON.stringify(rec.prompt_summary))
+  check('vn', 'branch nguyên văn có dấu (git() utf-8 decode)', rec.branch === 'nhánh-tiếng-việt', JSON.stringify(rec.branch))
+  check('vn', 'commit đúng sha', rec.commit === sha)
+  // query round-trip qua stdout utf-8
+  const q = spawnSync(PY, [BIN, 'query', 'tiếng'], {
+    encoding: 'utf8', timeout: 30000, env: { ...process.env, STORY_CHECKPOINT_REPO: repoA },
+  })
+  check('vn', 'query trả record + branch không mojibake',
+    q.stdout.includes('thêm nhánh tiếng Việt') && q.stdout.includes('nhánh-tiếng-việt'), q.stdout.slice(0, 160))
+  git(repoA, 'checkout', '-q', 'main')
+}
+
 console.log(`\n== query ==`)
 {
   const q = (args) => spawnSync(PY, [BIN, 'query', ...args], {
