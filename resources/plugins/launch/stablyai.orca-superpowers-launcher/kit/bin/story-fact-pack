@@ -238,7 +238,7 @@ def build_sections(repo, store):
 
 def apply_cap(sections):
     """Vượt cap 2KB → cắt TỪ DƯỚI LÊN (giữ component ưu tiên cao), cuối in
-    disclosure. N = số ký tự đã bỏ (sections removed + truncation)."""
+    disclosure. N đếm NHẤT QUÁN theo ký tự (chars) — khớp nhãn "ký tự"."""
     body = "\n\n".join(sections)
     if len(body.encode("utf-8")) <= CAP_BYTES:
         return body, 0
@@ -251,8 +251,8 @@ def apply_cap(sections):
             return body, cut_chars
     # còn 1 section vẫn vượt — hard-cut theo bytes, lùi tới boundary utf-8
     budget = CAP_BYTES - 64  # chừa chỗ disclosure + newline
+    full = body  # chars thật trước truncate — N nhất quán với phần sections
     raw = body.encode("utf-8")
-    cut_chars += len(raw) - budget  # mọi byte bị truncate tính vào disclosure
     trimmed = raw[:budget]
     while trimmed:
         try:
@@ -262,6 +262,7 @@ def apply_cap(sections):
             trimmed = trimmed[:-1]
     else:
         body = ""
+    cut_chars += len(full) - len(body)
     return body, cut_chars
 
 
