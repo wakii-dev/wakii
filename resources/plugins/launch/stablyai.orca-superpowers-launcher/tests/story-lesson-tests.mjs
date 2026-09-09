@@ -2,7 +2,7 @@
 // story-lesson tests (SF-3 GH-26) — spawn python3 thật trên temp git repos
 // (injectable qua STORY_CHECKPOINT_REPO/STORE/NOW), KHÔNG chạm store thật.
 // Chạy: node tests/story-lesson-tests.mjs
-import { spawnSync } from 'node:child_process'
+import { spawnSync, spawn } from 'node:child_process'
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from 'node:fs'
 import { join, dirname, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
@@ -257,6 +257,28 @@ console.log(`\n== hook-stop wrapper: logic bên trong — pass stdin → audit, 
   // missing bin wrapper → exit 0 im lặng
   r = wrap(JSON.stringify({ session_id: 'x' }), { STORY_LESSON_BIN: join(tempDir('mb'), 'nope') })
   check('wrap', 'missing-bin → exit 0 im lặng', r.status === 0 && (r.stdout || '').trim() === '', `status=${r.status}`)
+}
+
+console.log(`\n== concurrent add (2 processes ĐỒNG THỜI — lock RMW không mất dòng) ==`)
+{
+  const repoC = tempDir('c2')
+  initRepo(repoC)
+  const runAdd = (text) => new Promise((res) => {
+    const p = spawn(PY, [BIN, 'add', text, '--source', 'session'], {
+      cwd: repoC,
+      env: { ...process.env, STORY_CHECKPOINT_REPO: repoC, STORY_LESSON_CHECKPOINT_BIN: CP_BIN },
+    })
+    let err = ''
+    p.stderr.on('data', (d) => { err += d })
+    p.on('close', (code) => res({ code, err }))
+  })
+  const [p1, p2] = await Promise.all([runAdd('concurrent lesson 1'), runAdd('concurrent lesson 2')])
+  check('conc', 'cả 2 add exit 0', p1.code === 0 && p2.code === 0, `p1=${p1.code}(${p1.err}) p2=${p2.code}`)
+  const recs = readLessons(repoC).trim().split('\n').filter(l => !l.startsWith('(generated-from: '))
+  check('conc', 'cả 2 lesson đều còn (không lost update)', recs.length === 2
+    && recs.some(l => l.includes('concurrent lesson 1')) && recs.some(l => l.includes('concurrent lesson 2')), `got ${recs.length}`)
+  check('conc', 'lockfile dọn sạch', !existsSync(join(repoC, '.wakii', '.lessons.lock')))
+  rmSync(repoC, { recursive: true, force: true })
 }
 
 console.log(`\n== module import không chạy main (seam cho test khác) ==`)

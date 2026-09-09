@@ -132,6 +132,44 @@ def resolve_head_source_ref(cwd):
     return "no-git"
 
 
+LESSONS_LOCK = ".lessons.lock"
+
+
+def _locked(store, fn, attempts=200, delay_ms=10, stale_secs=5):
+    """Lockfile O_CREAT|O_EXCL quanh RMW add — 2 add liên tiếp không mất dòng
+    (RMW không lock = lost update). Pattern lock + stale-takeover của SF-1.
+    False = không lấy được lock (caller báo FAIL)."""
+    store = pathlib.Path(store)
+    lock = store / LESSONS_LOCK
+    got = False
+    import time as _time
+    for _ in range(attempts):
+        try:
+            fd = os.open(str(lock), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            os.close(fd)
+            got = True
+            break
+        except FileExistsError:
+            try:  # lock stale (process chết) → takeover
+                if _time.time() - lock.stat().st_mtime > stale_secs:
+                    lock.unlink()
+            except OSError:
+                pass
+            _time.sleep(delay_ms / 1000.0)
+        except OSError:
+            return False
+    if not got:
+        return False
+    try:
+        fn()
+        return True
+    finally:
+        try:
+            lock.unlink()
+        except OSError:
+            pass
+
+
 def cmd_add(args):
     text = (args.text or "").strip()
     if not text:
@@ -164,14 +202,21 @@ def cmd_add(args):
         "text": text,
     }
     p = pathlib.Path(store) / LESSONS_NAME
-    body = lessons_body_text(p)
-    if body is None:
-        print("add FAIL: không đọc được lessons.jsonl", file=sys.stderr)
+
+    def _rmw():
+        body = lessons_body_text(p)
+        if body is None:
+            raise ValueError("không đọc được lessons.jsonl")
+        new = (body + "\n" if body else "") + json.dumps(rec, ensure_ascii=False)
+        CP.write_atomic_with_stamp(p, new, resolve_head_source_ref(os.getcwd()))
+
+    try:
+        if not _locked(store, _rmw):
+            print("add FAIL: không lấy được lessons lock / ghi lỗi", file=sys.stderr)
+            return 1
+    except ValueError as e:
+        print(f"add FAIL: {e}", file=sys.stderr)
         return 1
-    new = (body + "\n" if body else "") + json.dumps(rec, ensure_ascii=False)
-    # RMW không lock: add là lệnh tay (không hook loop) — race mất dòng chấp
-    # nhận; write_atomic đảm bảo file không bao giờ nửa vời
-    CP.write_atomic_with_stamp(p, new, resolve_head_source_ref(os.getcwd()))
     print(f"OK: 1 lesson → {p}")
     return 0
 
