@@ -439,7 +439,15 @@ def cmd_restore(args):
         if created:
             git(cwd, "stash", "pop")  # hoàn giao dịch mở — tree chưa đổi
         sys.exit(1)
-    git(cwd, "clean", "-fd")  # an toàn: untracked đã stash
+    # clean exclude store dir (PF-1): .wakii/.gitignore vừa bị stash đi →
+    # store data không còn ignored, clean trần sẽ XOÁ store. -e .wakii che
+    # cơ chế self-gitignore; -e tên store qua env che cơ chế override.
+    # -e có từ Git 2.25 (baseline core-workflow).
+    store_dir = os.environ.get("STORY_CHECKPOINT_STORE")
+    excludes = ["-e", ".wakii"]
+    if store_dir:
+        excludes += ["-e", pathlib.Path(store_dir).name]
+    git(cwd, "clean", "-fd", *excludes)  # an toàn: untracked đã stash
 
     if not created:
         print("restore: working tree sạch trước restore — bỏ pop "

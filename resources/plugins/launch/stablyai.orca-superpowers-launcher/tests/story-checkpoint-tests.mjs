@@ -335,6 +335,39 @@ console.log(`\n== restore: stash-untracked transaction ==`)
   rmSync(wt, { recursive: true, force: true })
 }
 
+console.log(`\n== restore: giữ store .wakii (PF-1 — clean -fd không xoá store giữa giao dịch) ==`)
+{
+  const wt = tempDir('rs') // worktree có .wakii store riêng (kiểm cả env override)
+  const w = git(repoA, 'worktree', 'add', '-q', wt, '-b', 'wt-store')
+  if (w.code !== 0) throw new Error('worktree add fail: ' + w.err)
+  // store .wakii trong wt với .gitignore self + data checkpoint + lesson
+  mkdirSync(join(wt, '.wakii'), { recursive: true })
+  writeFileSync(join(wt, '.wakii', '.gitignore'), '*\n!.gitignore\n')
+  const storeData = '{"v":1,"ts":"2026-09-09T00:00:00Z"}\n'
+  writeFileSync(join(wt, '.wakii', 'checkpoints.jsonl'), storeData)
+  writeFileSync(join(wt, '.wakii', 'lessons.jsonl'), '{"v":1,"text":"giữ đi"}\n')
+  // v2 đổi f.txt → restore lùi về v1
+  writeFileSync(join(wt, 'f.txt'), 'v2-store\n')
+  git(wt, 'add', '-A'); git(wt, 'commit', '-q', '-m', 'v2-store')
+  const shaV2 = git(wt, 'rev-parse', 'HEAD').out
+  writeFileSync(join(wt, 'untracked-us.txt'), 'user file\n')
+  const r = spawnSync(PY, [BIN, 'restore', shaV2 + '~1'], {
+    encoding: 'utf8', timeout: 60000, cwd: wt,
+    env: { ...process.env, STORY_CHECKPOINT_STORE: join(wt, '.wakii') },
+  })
+  check('rst2', 'exit 0', r.status === 0, `err=${r.stderr}`)
+  check('rst2', 'store .wakii CÒN sau restore (PF-1 fix)', existsSync(join(wt, '.wakii', 'checkpoints.jsonl')),
+    existsSync(join(wt, '.wakii')) ? 'dir còn, data mất' : 'dir mất')
+  check('rst2', 'checkpoints.jsonl nguyên nội dung',
+    existsSync(join(wt, '.wakii', 'checkpoints.jsonl')) && readFileSync(join(wt, '.wakii', 'checkpoints.jsonl'), 'utf8') === storeData)
+  check('rst2', 'lessons.jsonl CÒN', existsSync(join(wt, '.wakii', 'lessons.jsonl')))
+  check('rst2', '.wakii/.gitignore được stash pop trả lại', existsSync(join(wt, '.wakii', '.gitignore')))
+  check('rst2', 'untracked user vẫn sống', existsSync(join(wt, 'untracked-us.txt')))
+  git(wt, 'reset', '--hard', shaV2)
+  git(repoA, 'worktree', 'remove', '--force', wt)
+  rmSync(wt, { recursive: true, force: true })
+}
+
 console.log(`\n== restore: pop-conflict guarded ==`)
 {
   const wt = tempDir('rc')
