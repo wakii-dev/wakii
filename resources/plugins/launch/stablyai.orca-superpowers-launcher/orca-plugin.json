@@ -3,8 +3,8 @@
   "id": "orca-superpowers-launcher",
   "publisher": "stablyai",
   "name": "Orca Superpowers Launcher",
-  "version": "1.6.0",
-  "description": "Control deck panel for orca-superpowers-workflow. v1.6: 9-agent grid, PR story flow (gh pr create, 1 PR/story), Story Ops +memory/attempts/visual-regress, 5-gate completion, bracket editor (drag/add/edit/delete + share PNG/markdown) với layout memoized không chồng node.",
+  "version": "1.6.1",
+  "description": "Control deck panel for orca-superpowers-workflow. v1.6.1: Windows fix — orcaBin resolves %LOCALAPPDATA%/Programs/orca, bracket header regex accepts lowercase IDs, story.list carries rootsProbed/orcaBin diagnostics khi scan rỗng (autocomplete không còn trống âm thầm).",
   "engines": {
     "orca": ">=1.4.0"
   },

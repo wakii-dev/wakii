@@ -26,6 +26,7 @@ import { execFile as execFileCb } from 'node:child_process'
 import { promisify } from 'node:util'
 import { accessSync, readFileSync, existsSync, mkdirSync, readdirSync, cpSync, rmSync, writeFileSync, chmodSync, statSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import { dirname } from 'node:path'
 const execFileAsync = promisify(execFileCb)
 
 // Resolve the PRODUCTION orca binary explicitly. Why: when running inside the
@@ -33,14 +34,20 @@ const execFileAsync = promisify(execFileCb)
 // (~/Documents/orca/out/bin/orca) which breaks outside its module context
 // ("Cannot find module ..."). The production binary is self-contained.
 function orcaBin() {
-  const candidates = [
+  const isWin = process.platform === 'win32'
+  const candidates = isWin ? [
+    // Windows: binary sống cạnh app resources (exe + bin/orca.exe); ALSO the
+    // app's own executable path is unusable — resolve from process.execPath.
+    join(dirname(process.execPath), 'resources', 'bin', 'orca.exe'),
+    join(process.env.LOCALAPPDATA || '', 'Programs', 'orca', 'resources', 'bin', 'orca.exe')
+  ] : [
     '/opt/homebrew/bin/orca',
     '/usr/local/bin/orca',
     '/Applications/Wakii.app/Contents/Resources/bin/orca',
     '/Applications/Orca.app/Contents/Resources/bin/orca'
   ]
   for (const c of candidates) {
-    try { accessSync(c); return c } catch { continue }
+    try { if (c) accessSync(c); else continue; return c } catch { continue }
   }
   return 'orca' // fallback to PATH (production app context)
 }
@@ -230,7 +237,7 @@ async function worktreeRoot(orca) {
 function parseBracketFile(text, file) {
   const lines = text.split('\n')
   let linear = null, title = basename(file).replace(/\.md$/, '')
-  const hm = text.match(/^#\s+Story:\s*([A-Z]+-\d+)\s*[—–-]\s*(.+)$/m)
+  const hm = text.match(/^#\s+Story:\s*([A-Za-z]+-\d+)\s*[—–-]\s*(.+)$/m)
   if (hm) { linear = hm[1]; title = hm[2].trim() }
   return { linear, title: title.slice(0, 60), file }
 }
@@ -315,10 +322,14 @@ async function listStories(orca) {
     }
     stories.sort((a, b) => a.file.localeCompare(b.file))
     if (!stories.length) {
+      // Observability: scan-roots diagnostics in the storage payload —
+      // silent-empty made the Windows autocomplete bug invisible for weeks.
+      const roots = await storyScanRoots()
       await orca.host.call('storage.set', {
         key: 'story.list',
         value: { stories: [], currentLinear: null, currentFile: null,
                  error: 'no bracket files found in any workspace',
+                 rootsProbed: roots, orcaBin: orcaBin(),
                  root, fetchedAt: new Date().toISOString() }
       })
       return { ok: true, count: 0, root }
