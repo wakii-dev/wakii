@@ -1,6 +1,6 @@
 {
   "name": "story-team-kit",
-  "version": "2.2.3",
+  "version": "2.3.0",
   "description": "9-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới.",
   "requires": {
     "claude-code": ">=2.0",
@@ -284,6 +284,31 @@
       "description": "session memory + checkpoint CLI — record git commit thành JSONL v-stamped, query/restore/prune-refs/stats (SF-1 GH-26)"
     },
     {
+      "name": "story-fact-pack",
+      "type": "bin",
+      "description": "SessionStart hook — inject fact-pack (story đang chạy + gates pending + tail checkpoint) ≤2KB vào context (SF-2 GH-26)"
+    },
+    {
+      "name": "story-hooks-install",
+      "type": "bin",
+      "description": "merge 3 hook entries vào ~/.claude/settings.json — atomic RMW, idempotent, giữ entry user/Orca (SF-2 GH-26; runtime chính trong installKit Node)"
+    },
+    {
+      "name": "hook-post-tool-use",
+      "type": "bin",
+      "description": "wrapper PostToolUse cho settings.json — resolve story-checkpoint record, nuốt missing-bin (exit 0 im lặng)"
+    },
+    {
+      "name": "hook-session-start",
+      "type": "bin",
+      "description": "wrapper SessionStart cho settings.json — resolve story-fact-pack, stdout inject vào context, nuốt missing-bin"
+    },
+    {
+      "name": "hook-stop",
+      "type": "bin",
+      "description": "wrapper Stop cho settings.json — no-op SF-2 (logic audit lessons SF-3 thay bên trong), nuốt mọi input"
+    },
+    {
       "name": "story-compact-recovery",
       "type": "bin",
       "description": "SessionStart hook (matcher: compact) — inject lời nhắc khôi phục story state sau mỗi lần compaction"
@@ -392,6 +417,11 @@
       "name": "story-watchdog",
       "type": "bin",
       "description": "self-sustainment loop — diagnose mọi SF, notify khi stall mới, optionally launch next"
+    },
+    {
+      "name": "wakii-mcp-server",
+      "type": "bin",
+      "description": "read-only MCP server (stdio) — bracket/gate/watchdog/tasklist tools cho agent bên ngoài kit"
     },
     {
       "name": "wakii-skill-import",

@@ -1,0 +1,22 @@
+#!/bin/bash
+# hook-session-start — wrapper cho settings.json hooks.SessionStart (SF-2 GH-26)
+# Command trong settings là ĐƯỜNG DẪN wrapper này (ngắn, không free-text — EDR
+# posture). Resolve story-fact-pack (env → cạnh wrapper → ~/.claude/bin), pass
+# stdin qua. stdout plain-text của fact-pack = nội dung inject vào context —
+# PHẢI đi qua nguyên vẹn. NUỐT missing-bin + mọi lỗi: exit 0 im lặng.
+set -u
+DIR="$(cd "$(dirname "$0")" && pwd)"
+BIN="${STORY_FACT_PACK_BIN:-}"
+[ -n "$BIN" ] || BIN="$DIR/story-fact-pack"
+[ -f "$BIN" ] || BIN="$HOME/.claude/bin/story-fact-pack"
+[ -f "$BIN" ] || exit 0
+
+INPUT=$(cat 2>/dev/null) || INPUT=""
+for c in python3 python py; do
+  command -v "$c" >/dev/null 2>&1 || continue
+  OUT=$(printf '%s' "$INPUT" | "$c" "$BIN" 2>/dev/null)
+  [ $? -eq 0 ] || continue
+  [ -n "$OUT" ] && printf '%s\n' "$OUT"
+  exit 0
+done
+exit 0

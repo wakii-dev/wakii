@@ -1,0 +1,19 @@
+#!/bin/bash
+# hook-post-tool-use — wrapper cho settings.json hooks.PostToolUse (SF-2 GH-26)
+# Command trong settings là ĐƯỜNG DẪN wrapper này (ngắn, không free-text — EDR
+# posture). Wrapper resolve story-checkpoint (env → cạnh wrapper → ~/.claude/bin)
+# rồi pass stdin qua `record`. NUỐT missing-bin + mọi lỗi: hook chết không được
+# kéo chết agent run — exit 0 im lặng.
+set -u
+DIR="$(cd "$(dirname "$0")" && pwd)"
+BIN="${STORY_CHECKPOINT_BIN:-}"
+[ -n "$BIN" ] || BIN="$DIR/story-checkpoint"
+[ -f "$BIN" ] || BIN="$HOME/.claude/bin/story-checkpoint"
+[ -f "$BIN" ] || exit 0
+
+INPUT=$(cat 2>/dev/null) || INPUT=""
+for c in python3 python py; do
+  command -v "$c" >/dev/null 2>&1 || continue
+  printf '%s' "$INPUT" | "$c" "$BIN" record >/dev/null 2>&1 && exit 0
+done
+exit 0

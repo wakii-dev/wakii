@@ -1,0 +1,121 @@
+#!/bin/bash
+# story-hooks-install — merge 3 story-team-kit hook entries vào settings.json
+# (SF-2 GH-26). Runtime chính là Node trong main.mjs installKit (tránh spawn
+# bash từ Node worker trên Windows); bin này để chạy tay/CI — CÙNG semantics:
+#   - PostToolUse (matcher Bash) → hook-post-tool-use wrapper
+#   - SessionStart              → hook-session-start wrapper
+#   - Stop                      → hook-stop wrapper (no-op SF-2, logic SF-3)
+# Detection theo ĐÚNG command path của kit (KHÔNG prefix-match `story-`) —
+# entry user/Orca (claude-hook.cmd, story-compact-recovery) nguyên vẹn.
+# Idempotent (không ghi khi nội dung đã đúng). Atomic RMW: temp cùng dir +
+# rename. Malformed settings.json → KHÔNG đụng, exit 1.
+#
+# Usage: story-hooks-install [--root <dir>]   (default ~/.claude)
+# Exit: 0 = merged hoặc up-to-date · 1 = lỗi (malformed/không ghi được)
+set -u
+ROOT="${HOME:-}/.claude"
+if [ "${1:-}" = "--root" ] && [ -n "${2:-}" ]; then ROOT="$2"; fi
+PY=python3
+command -v python3 >/dev/null 2>&1 || PY=python
+command -v "$PY" >/dev/null 2>&1 || PY=py
+
+"$PY" - "$ROOT" <<'PYEOF' || exit 1
+import json
+import os
+import pathlib
+import sys
+
+root = pathlib.Path(sys.argv[1])
+WRAPPERS = {
+    "PostToolUse": ("hook-post-tool-use", "Bash"),
+    "SessionStart": ("hook-session-start", None),
+    "Stop": ("hook-stop", None),
+}
+TIMEOUT = 10
+
+
+def norm(s):
+    return str(s or "").replace("\\", "/")
+
+
+def canon_groups(claude_dir):
+    out = {}
+    for event, (fname, matcher) in WRAPPERS.items():
+        hook = {"type": "command",
+                "command": norm(claude_dir / "bin" / fname),
+                "timeout": TIMEOUT}
+        out[event] = {"matcher": matcher, "hooks": [hook]} if matcher else {"hooks": [hook]}
+    return out
+
+
+def merge(settings, claude_dir):
+    if not isinstance(settings, dict):
+        return None
+    canon = canon_groups(claude_dir)
+    kit_cmds = {norm(g["hooks"][0]["command"]) for g in canon.values()}
+    hooks = dict(settings.get("hooks") or {}) if isinstance(settings.get("hooks"), dict) else {}
+    for event, group in canon.items():
+        arr = list(hooks.get(event) or [])
+        want = norm(group["hooks"][0]["command"])
+        replaced = False
+        for i, ent in enumerate(arr):
+            if not isinstance(ent, dict) or not isinstance(ent.get("hooks"), list):
+                continue
+            cmds = [norm(h.get("command") if isinstance(h, dict) else None)
+                    for h in ent["hooks"]]
+            if want not in cmds:
+                continue
+            if any(c and c not in kit_cmds for c in cmds):
+                continue  # mixed group — giữ nguyên, append canonical riêng
+            arr[i] = json.loads(json.dumps(group))
+            replaced = True
+            break
+        if not replaced:
+            arr.append(json.loads(json.dumps(group)))
+        hooks[event] = arr
+    settings["hooks"] = hooks
+    return settings
+
+
+def atomic_write(path, content):
+    tmp = path.with_name(f".{path.name}.tmp-{os.getpid()}")
+    with open(tmp, "w", encoding="utf-8", newline="") as f:
+        f.write(content)
+    os.replace(tmp, path)
+
+
+def main():
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8")
+        except (AttributeError, OSError):
+            pass
+    path = root / "settings.json"
+    current_text = None
+    if path.exists():
+        current_text = path.read_text(encoding="utf-8")
+        try:
+            current = json.loads(current_text)
+        except ValueError as e:
+            print(f"story-hooks-install: settings.json malformed — không ghi đè ({e})",
+                  file=sys.stderr)
+            return 1
+    else:
+        current = {}
+    merged = merge(current, root)
+    if merged is None:
+        print("story-hooks-install: settings.json không phải object", file=sys.stderr)
+        return 1
+    next_text = json.dumps(merged, ensure_ascii=False, indent=2) + "\n"
+    if current_text is not None and current_text == next_text:
+        print("story-hooks-install: up-to-date (không ghi)")
+        return 0
+    root.mkdir(parents=True, exist_ok=True)
+    atomic_write(path, next_text)
+    print("story-hooks-install: merged 3 hook entries -> " + str(path))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+PYEOF

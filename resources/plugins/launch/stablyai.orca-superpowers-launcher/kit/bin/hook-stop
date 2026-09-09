@@ -1,0 +1,8 @@
+#!/bin/bash
+# hook-stop — wrapper cho settings.json hooks.Stop (SF-2 GH-26)
+# SF-2 cài NO-OP: chỉ nuốt stdin + exit 0. Logic thật (audit đếm lessons —
+# Stop stdout không vào context) do SF-3 thay bên trong wrapper này, settings
+# không đổi. Missing-bin posture giữ từ ngày đầu: mọi lỗi → exit 0 im lặng.
+set -u
+cat >/dev/null 2>&1 || true
+exit 0
