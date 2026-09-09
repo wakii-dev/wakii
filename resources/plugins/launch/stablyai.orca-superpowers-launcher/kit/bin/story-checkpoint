@@ -1,0 +1,562 @@
+#!/usr/bin/env python3
+"""story-checkpoint — session memory store + checkpoint CLI (SF-1, GH-26 #26 gộp #14+#17)
+
+Mỗi `git commit` trong story session (project có docs/superpowers/brackets/) để
+lại 1 dòng JSONL v-stamped trong <main-checkout>/.wakii/checkpoints.jsonl:
+session ↔ commit ↔ prompt-summary. Store per-project, resolve về MAIN checkout
+(`git worktree list --porcelain` — entry đầu) nên mọi worktree cùng project
+chia sẻ một store.
+
+Fail-open xuyên suốt với `record` (hook path — lỗi không được kéo chết agent
+run): mọi lỗi → exit 0 + 1 dòng vào .wakii/errors.log (không resolve được
+store → bỏ qua log, vẫn exit 0). Riêng query/restore/prune-refs/stats giữ exit
+code thật (lệnh tay).
+
+Subcommands:
+  record              stdin JSON của PostToolUse hook (session_id, cwd,
+                      tool_name, tool_input.command). Chỉ tool_name=Bash khớp
+                      \\bgit commit\\b (compound `cd x && git commit` OK), trừ
+                      --dry-run. Không khớp / meta session → exit 0 im lặng.
+  query "<kw>" [--last N] [--session <id>]
+                      case-insensitive AND-match (mỗi token) trên
+                      prompt_summary+branch+commit, recency desc, đọc JSONL
+                      trực tiếp (KHÔNG index). Malformed → skip + đếm;
+                      v>1 → skip im lặng.
+  restore <sha>       giao dịch: stash push --include-untracked → reset --hard
+                      + clean -fd → stash pop. Pop-conflict → GIỮ stash, báo
+                      FAIL-Restore-incomplete + hướng dẫn, exit 1 (KHÔNG tự
+                      resolve, KHÔNG retry). Khi working tree sạch trước
+                      restore (stash không tạo entry mới) → bỏ pop, tránh pop
+                      nhầm stash cũ của user.
+  prune-refs [--older-than <n><s|m|h|d|w>]  default 30d
+                      xoá refs/wakii/checkpoints/* cũ hơn duration (retention).
+  stats               records theo session + kích thước store + malformed.
+
+Record schema (1 dòng JSONL): {"v":1,"ts":ISO,"session_id","repo":basename
+main,"branch","commit":sha,"task_id","step","prompt_summary":≤500,
+"error_lines":[...]} — task_id/step đọc từ env ORCA_TASK_ID / ORCA_STEP (không
+suy đoán nguồn khác); khi có cả hai → tạo git ref refs/wakii/checkpoints/<t>/<s>
+trỏ commit (#14; fail-ref không chết record).
+
+Env (tests / fixture): STORY_CHECKPOINT_REPO (override main checkout),
+STORY_CHECKPOINT_STORE (override store dir), STORY_CHECKPOINT_NOW (ts override).
+
+Shared helpers import được (SF-2/SF-3 dùng — SourceFileLoader như story-memory):
+  extract_error_lines(text)            12 từ khoá lỗi, case-insensitive
+                                       substring — over-preserve nguyên văn
+  write_atomic_with_stamp(p, c, src)   ghi temp + rename, header stamp
+                                       "(generated-from: <src>, at: <ISO>)"
+  check_stamp(path, expected_source)   True = stale (file vắng/lệch stamp)
+  resolve_main_checkout(cwd)           main worktree path | None
+  append_line_locked(store, line)      lockfile O_CREAT|O_EXCL + stale-takeover
+                                       — concurrent append 2 process pass
+"""
+import datetime
+import json
+import os
+import pathlib
+import re
+import subprocess
+import sys
+import time
+
+COMMIT_RE = re.compile(r"\bgit\s+commit\b")
+DRY_RUN_RE = re.compile(r"--dry-run\b")
+DUR_RE = re.compile(r"^(\d+)([smhdw])$")
+DUR_UNITS = {"s": 1, "m": 60, "h": 3600, "d": 86400, "w": 604800}
+STAMP_PREFIX = "(generated-from: "
+JSONL_NAME = "checkpoints.jsonl"
+LOCK_NAME = ".checkpoints.lock"
+
+# 12 từ khoá lỗi (#17-b) — substring match để over-preserve (timeout khớp
+# "timeouts", error khớp "errors")
+ERROR_KEYWORDS = ("error", "exception", "failed", "failure", "critical",
+                  "fatal", "crash", "panic", "abort", "timeout", "denied",
+                  "rejected")
+_ERROR_KW_RE = re.compile("|".join(ERROR_KEYWORDS), re.IGNORECASE)
+
+
+def now_iso():
+    env = os.environ.get("STORY_CHECKPOINT_NOW")
+    if env:
+        return env
+    return datetime.datetime.now(datetime.timezone.utc).isoformat(
+        timespec="microseconds").replace("+00:00", "Z")
+
+
+def git(cwd, *args, timeout=15):
+    return subprocess.run(["git", "-C", str(cwd), *args],
+                          capture_output=True, text=True, timeout=timeout)
+
+
+def resolve_main_checkout(cwd):
+    """Main checkout của project (entry đầu của worktree list) — None nếu không
+    resolve được (không git / không phải repo): caller skip mọi thao tác."""
+    try:
+        out = git(cwd, "worktree", "list", "--porcelain", timeout=10)
+        if out.returncode != 0:
+            return None
+        for line in out.stdout.splitlines():
+            if line.startswith("worktree "):
+                p = pathlib.Path(line[len("worktree "):].strip())
+                return p if p.is_dir() else None
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return None
+
+
+def store_for(repo):
+    env = os.environ.get("STORY_CHECKPOINT_STORE")
+    return pathlib.Path(env) if env else pathlib.Path(repo) / ".wakii"
+
+
+def write_atomic(path, content):
+    tmp = pathlib.Path(path).with_name(f".{pathlib.Path(path).name}.tmp-{os.getpid()}")
+    with open(tmp, "w", encoding="utf-8", newline="") as f:  # newline="" — ghi đúng \n trên Windows
+        f.write(content)
+    os.replace(tmp, path)
+
+
+def ensure_store(store):
+    """Tạo store + tự bảo đảm gitignore: mọi thứ trong .wakii/ bị bỏ qua trừ
+    chính .gitignore (đi theo mọi project, không đòi sửa root .gitignore)."""
+    store.mkdir(parents=True, exist_ok=True)
+    gi = store / ".gitignore"
+    if not gi.exists():
+        write_atomic(gi, "*\n!.gitignore\n")
+
+
+def log_error(store, origin, message):
+    """1 dòng best-effort vào errors.log — lỗi khi log cũng bỏ qua (fail-open)."""
+    try:
+        store = pathlib.Path(store)
+        store.mkdir(parents=True, exist_ok=True)
+        with open(store / "errors.log", "a", encoding="utf-8", newline="") as f:
+            f.write(f"{now_iso()} {origin}: {str(message)[:300]}\n")
+    except OSError:
+        pass
+
+
+def append_line_locked(store, line, attempts=100, delay_ms=5, stale_secs=5):
+    """Concurrent-safe append — MỘT lần write mỗi dòng. Lockfile O_CREAT|O_EXCL,
+    retry ngắn (~0.5s), lock stale >5s bị takeover. False = không lấy được lock
+    hoặc ghi lỗi (caller fail-open)."""
+    store = pathlib.Path(store)
+    try:
+        store.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        return False
+    lock = store / LOCK_NAME
+    got = False
+    for _ in range(attempts):
+        try:
+            fd = os.open(str(lock), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            os.close(fd)
+            got = True
+            break
+        except FileExistsError:
+            try:  # process chết giữa chừng để lại lock — takeover sau stale_secs
+                if time.time() - lock.stat().st_mtime > stale_secs:
+                    lock.unlink()
+            except OSError:
+                pass
+            time.sleep(delay_ms / 1000.0)
+        except OSError:
+            return False
+    if not got:
+        return False
+    try:
+        with open(store / JSONL_NAME, "a", encoding="utf-8", newline="") as f:
+            f.write(line)
+            f.flush()
+            os.fsync(f.fileno())
+        return True
+    except OSError:
+        return False
+    finally:
+        try:
+            lock.unlink()
+        except OSError:
+            pass
+
+
+def extract_error_lines(text):
+    """Nguyên văn mọi dòng chứa ≥1 trong 12 từ khoá lỗi (case-insensitive)."""
+    if not text:
+        return []
+    return [ln for ln in str(text).splitlines() if _ERROR_KW_RE.search(ln)]
+
+
+def stamp_header(source_ref):
+    return f"{STAMP_PREFIX}{source_ref}, at: {now_iso()})\n"
+
+
+def write_atomic_with_stamp(path, content, source_ref):
+    """Ghi temp + rename (atomic, cùng dir) — CHỈ khi nội dung ghi thành công
+    trọn vẹn; header stamp nguồn để consumer đối chiếu freshness (#17-a)."""
+    body = content if content.endswith("\n") or not content else content + "\n"
+    write_atomic(pathlib.Path(path), stamp_header(source_ref) + body)
+
+
+def check_stamp(path, expected_source):
+    """True = stale — file vắng, không đọc được, thiếu stamp, hoặc sai nguồn."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            first = f.readline().strip()
+    except OSError:
+        return True
+    if not first.startswith(STAMP_PREFIX) or not first.endswith(")"):
+        return True
+    src = first[len(STAMP_PREFIX):-1].rsplit(", at:", 1)[0].strip()
+    return src != str(expected_source)
+
+
+def sanitize_ref(part):
+    """Ref component an toàn: chỉ [A-Za-z0-9._-]; rỗng/chứa .. → bỏ (skip)."""
+    cleaned = re.sub(r"[^A-Za-z0-9._-]+", "-", str(part)).strip("-.")
+    return cleaned if cleaned and ".." not in cleaned else ""
+
+
+def load_records(store):
+    """Đọc JSONL trực tiếp → (records, malformed, future). Malformed (JSON hỏng
+    / không phải dict / v thiếu hoặc sai kiểu) skip + đếm; v>1 skip im lặng."""
+    records, malformed, future = [], 0, 0
+    p = store / JSONL_NAME
+    if not p.is_file():
+        return records, malformed, future
+    try:
+        text = p.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return records, -1, future
+    for line in text.splitlines():
+        if not line.strip():
+            continue
+        try:
+            rec = json.loads(line)
+        except ValueError:
+            malformed += 1
+            continue
+        if not isinstance(rec, dict):
+            malformed += 1
+            continue
+        v = rec.get("v")
+        if not isinstance(v, int) or isinstance(v, bool):
+            malformed += 1
+            continue
+        if v > 1:
+            future += 1
+            continue
+        records.append(rec)
+    return records, malformed, future
+
+
+def current_store(cwd=None):
+    env = os.environ.get("STORY_CHECKPOINT_STORE")
+    if env:
+        return pathlib.Path(env)
+    repo = os.environ.get("STORY_CHECKPOINT_REPO") \
+        or resolve_main_checkout(cwd or os.getcwd())
+    if repo:
+        return pathlib.Path(repo) / ".wakii"
+    return pathlib.Path(cwd or os.getcwd()) / ".wakii"
+
+
+def short(sha, n=7):
+    return str(sha or "")[:n]
+
+
+# ---- record (hook path — fail-open) ----------------------------------------
+
+def cmd_record():
+    repo = None
+    store = None
+
+    def fail_open(msg):
+        # store đã gán → dùng; chưa → thử env, rồi derive từ repo nếu có
+        s = store
+        if s is None:
+            if os.environ.get("STORY_CHECKPOINT_STORE"):
+                s = pathlib.Path(os.environ["STORY_CHECKPOINT_STORE"])
+            elif repo is not None:
+                s = store_for(repo)
+        if s is not None:
+            log_error(s, "record", msg)
+        sys.exit(0)
+
+    try:
+        # stdin có thể chứa non-ASCII (command tiếng Việt) — đọc UTF-8 tường minh,
+        # không tin encoding locale (Windows cp1252 làm hỏng bytes)
+        raw = sys.stdin.buffer.read().decode("utf-8", errors="replace")
+        payload = json.loads(raw or "{}")
+    except ValueError as e:
+        fail_open(f"stdin không phải JSON: {e}")
+        return
+    if not isinstance(payload, dict):
+        fail_open("stdin JSON không phải object")
+        return
+    if payload.get("tool_name") != "Bash":
+        return  # không phải shell command — im lặng
+    command = (payload.get("tool_input") or {}).get("command")
+    if not isinstance(command, str) or not COMMIT_RE.search(command) \
+            or DRY_RUN_RE.search(command):
+        return  # không phải git commit thật — im lặng
+
+    cwd = payload.get("cwd") or os.getcwd()
+    env_repo = os.environ.get("STORY_CHECKPOINT_REPO")
+    repo = pathlib.Path(env_repo) if env_repo else resolve_main_checkout(cwd)
+    if repo is None:
+        return  # không resolve được main checkout — bỏ qua cả log, vẫn exit 0
+    store = store_for(repo)
+    try:
+        brackets = repo / "docs" / "superpowers" / "brackets"
+        if not brackets.is_dir() or not any(brackets.iterdir()):
+            return  # meta session — không ghi, không log
+    except OSError as e:
+        fail_open(f"đọc brackets fail: {e}")
+        return
+
+    try:
+        ensure_store(store)
+        b = git(cwd, "rev-parse", "--abbrev-ref", "HEAD")
+        s = git(cwd, "rev-parse", "HEAD")
+        if b.returncode or s.returncode:
+            raise RuntimeError(f"git rev-parse fail trong {cwd}: "
+                               f"{(b.stderr or s.stderr).strip()}")
+        rec = {
+            "v": 1,
+            "ts": now_iso(),
+            "session_id": str(payload.get("session_id") or ""),
+            "repo": repo.name,
+            "branch": b.stdout.strip(),
+            "commit": s.stdout.strip(),
+            "task_id": os.environ.get("ORCA_TASK_ID") or None,
+            "step": os.environ.get("ORCA_STEP") or None,
+            "prompt_summary": command[:500],
+            "error_lines": extract_error_lines(command),
+        }
+        if not append_line_locked(store, json.dumps(rec, ensure_ascii=False) + "\n"):
+            raise RuntimeError("không lấy được append lock / ghi store fail")
+        # checkpoint git ref (#14) — cần cả task_id + step; fail-ref chỉ log
+        t, st = sanitize_ref(rec["task_id"] or ""), sanitize_ref(rec["step"] or "")
+        if t and st:
+            r = git(repo, "update-ref",
+                    f"refs/wakii/checkpoints/{t}/{st}", rec["commit"])
+            if r.returncode:
+                log_error(store, "record:ref",
+                          r.stderr.strip() or f"update-ref {t}/{st} fail")
+    except Exception as e:  # noqa: BLE001 — fail-open: mọi lỗi đều exit 0
+        log_error(store, "record", e)
+    sys.exit(0)
+
+
+# ---- query / stats (đọc) ----------------------------------------------------
+
+def print_record(rec):
+    ts = str(rec.get("ts") or "")[:19].replace("T", " ")
+    print(f"[{ts}] {short(rec.get('commit'))} {rec.get('branch', '')} "
+          f"session={short(rec.get('session_id'), 12)}")
+    print(f"  {rec.get('prompt_summary', '')}")
+    for ln in rec.get("error_lines") or []:
+        print(f"  ! {ln}")
+
+
+def cmd_query(args):
+    store = current_store()
+    records, malformed, future = load_records(store)
+    if malformed < 0:
+        print(f"query FAIL: không đọc được store {store}", file=sys.stderr)
+        sys.exit(1)
+    toks = [t.lower() for t in args.keyword.split()]
+    hits = []
+    for r in records:
+        if args.session and r.get("session_id") != args.session:
+            continue
+        hay = f"{r.get('prompt_summary', '')} {r.get('branch', '')} " \
+              f"{r.get('commit', '')}".lower()
+        if all(t in hay for t in toks):
+            hits.append(r)
+    hits.sort(key=lambda r: str(r.get("ts") or ""), reverse=True)
+    if args.last is not None:
+        hits = hits[:max(args.last, 0)]
+    for r in hits:
+        print_record(r)
+    print(f"-- {len(hits)} match | malformed skip: {malformed} | "
+          f"future-version skip: {future}")
+
+
+def cmd_stats():
+    store = current_store()
+    records, malformed, future = load_records(store)
+    per = {}
+    for r in records:
+        sid = r.get("session_id") or "(không session)"
+        per[sid] = per.get(sid, 0) + 1
+    size = 0
+    if store.is_dir():
+        for f in store.glob("*"):
+            try:
+                if f.is_file():
+                    size += f.stat().st_size
+            except OSError:
+                pass
+    print(f"store: {store}")
+    print(f"records: {len(records)} (malformed: {max(malformed, 0)}, "
+          f"future-version: {future})")
+    print(f"store size: {size} B")
+    print("sessions:")
+    for sid, n in sorted(per.items(), key=lambda kv: (-kv[1], kv[0])):
+        print(f"  {sid}: {n}")
+
+
+# ---- restore (giao dịch stash — lệnh tay, exit code thật) -------------------
+
+def cmd_restore(args):
+    cwd = os.getcwd()
+    chk = git(cwd, "rev-parse", "--verify", "--quiet", f"{args.sha}^{{commit}}")
+    if chk.returncode:
+        print(f"restore FAIL: '{args.sha}' không phải commit trong repo này",
+              file=sys.stderr)
+        sys.exit(1)
+    sha = chk.stdout.strip()
+
+    before = git(cwd, "rev-parse", "-q", "--verify", "stash@{0}").stdout.strip()
+    print("restore: stash push --include-untracked (mở giao dịch)...")
+    st = git(cwd, "stash", "push", "--include-untracked",
+             "-m", f"story-checkpoint auto {now_iso()}")
+    if st.returncode:
+        print(f"restore FAIL: stash push lỗi — {st.stderr.strip()}",
+              file=sys.stderr)
+        sys.exit(1)
+    after = git(cwd, "rev-parse", "-q", "--verify", "stash@{0}").stdout.strip()
+    created = bool(after) and after != before
+
+    print(f"restore: reset --hard {short(sha)} + clean -fd")
+    rs = git(cwd, "reset", "--hard", sha)
+    if rs.returncode:
+        print(f"restore FAIL: reset lỗi — {rs.stderr.strip()}", file=sys.stderr)
+        if created:
+            git(cwd, "stash", "pop")  # hoàn giao dịch mở — tree chưa đổi
+        sys.exit(1)
+    git(cwd, "clean", "-fd")  # an toàn: untracked đã stash
+
+    if not created:
+        print("restore: working tree sạch trước restore — bỏ pop "
+              "(không pop nhầm stash cũ của user)")
+        print(f"OK-Restore: HEAD tại {short(sha)}")
+        return
+
+    print("restore: stash pop (đóng giao dịch — trả local edits + untracked)...")
+    pop = git(cwd, "stash", "pop")
+    if pop.returncode:
+        conflicted = git(cwd, "diff", "--name-only",
+                         "--diff-filter=U").stdout.split()
+        print("FAIL-Restore-incomplete: stash pop conflict — tree half-restored, "
+              "stash ĐƯỢC GIỮ (git không drop khi conflict).")
+        if conflicted:
+            print("  conflict files: " + " ".join(conflicted))
+        print("  Xử lý thủ công: 'git stash show -p stash@{0}' xem nội dung, "
+              "resolve bằng tay; KHÔNG chạy 'git stash pop' lần nữa.")
+        print("  Sau khi resolve xong: 'git stash drop stash@{0}'.")
+        sys.exit(1)
+    print(f"OK-Restore: HEAD tại {short(sha)}, local edits + untracked đã trả lại")
+
+
+# ---- prune-refs (retention #14) ---------------------------------------------
+
+def parse_duration(text):
+    m = DUR_RE.match(str(text).strip())
+    if not m:
+        return None
+    return int(m.group(1)) * DUR_UNITS[m.group(2)]
+
+
+def cmd_prune_refs(args):
+    cwd = os.getcwd()
+    dur = parse_duration(args.older_than)
+    if dur is None:
+        print("prune-refs FAIL: --older-than dạng <số><s|m|h|d|w> (vd 30d)",
+              file=sys.stderr)
+        sys.exit(2)
+    cutoff = time.time() - dur
+    out = git(cwd, "for-each-ref", "refs/wakii/checkpoints",
+              "--format=%(refname) %(committerdate:unix)")
+    if out.returncode:
+        print(f"prune-refs FAIL: {out.stderr.strip()}", file=sys.stderr)
+        sys.exit(1)
+    removed = kept = 0
+    for line in out.stdout.splitlines():
+        refname, _, unix = line.rpartition(" ")
+        try:
+            ts = float(unix)
+        except ValueError:
+            continue
+        if ts < cutoff:
+            if git(cwd, "update-ref", "-d", refname).returncode == 0:
+                removed += 1
+            else:
+                print(f"  không xoá được {refname}", file=sys.stderr)
+        else:
+            kept += 1
+    print(f"prune-refs: xoá {removed} ref, giữ {kept} "
+          f"(--older-than {args.older_than})")
+
+
+# ---- main -------------------------------------------------------------------
+
+def cmd_record_safe():
+    """Hook entry — KHÔNG BAO GIỜ để traceback chết agent run."""
+    try:
+        cmd_record()
+    except SystemExit:
+        raise
+    except BaseException as e:  # noqa: BLE001
+        store = os.environ.get("STORY_CHECKPOINT_STORE")
+        if store:
+            log_error(pathlib.Path(store), "record:crash", e)
+        sys.exit(0)
+
+
+def main():
+    import argparse
+    # Windows console (spawn từ node) mặc định cp1252 — ép UTF-8 cho tiếng Việt
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8")
+        except (AttributeError, OSError):
+            pass
+    ap = argparse.ArgumentParser(
+        prog="story-checkpoint",
+        description="Session memory store + checkpoint CLI (SF-1 GH-26)")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+
+    sub.add_parser("record", help="stdin PostToolUse JSON → 1 dòng JSONL (fail-open)")
+
+    q = sub.add_parser("query", help="keyword AND-match, recency desc")
+    q.add_argument("keyword", help="token cách nhau bởi dấu cách, AND-match")
+    q.add_argument("--last", type=int, default=None, help="giới hạn N kết quả")
+    q.add_argument("--session", default=None, help="lọc đúng session_id")
+
+    r = sub.add_parser("restore", help="stash → reset --hard + clean → pop")
+    r.add_argument("sha", help="commit sha (record.commit / checkpoint ref)")
+
+    p = sub.add_parser("prune-refs", help="xoá refs/wakii/checkpoints/* cũ")
+    p.add_argument("--older-than", default="30d",
+                   help="duration <số><s|m|h|d|w> (default 30d)")
+
+    sub.add_parser("stats", help="records/session + size store + malformed")
+
+    args = ap.parse_args()
+    if args.cmd == "record":
+        cmd_record_safe()
+    elif args.cmd == "query":
+        cmd_query(args)
+    elif args.cmd == "restore":
+        cmd_restore(args)
+    elif args.cmd == "prune-refs":
+        cmd_prune_refs(args)
+    else:
+        cmd_stats()
+
+
+if __name__ == "__main__":
+    main()
