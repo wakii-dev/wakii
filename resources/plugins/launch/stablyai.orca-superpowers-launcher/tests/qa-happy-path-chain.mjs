@@ -186,11 +186,11 @@ console.log(`\n== B6. restore checkpoint cũ → untracked sống sót ==`)
   check('B6', 'restore exit 0 (sạch → không pop-conflict)', r.status === 0, `err=${r.stderr} out=${r.stdout}`)
   check('B6', 'untracked sống sót', existsSync(join(repo, 'untracked-giu.txt'))
     && readFileSync(join(repo, 'untracked-giu.txt'), 'utf8').startsWith('user file quý'), existsSync(join(repo, 'untracked-giu.txt')) ? JSON.stringify(readFileSync(join(repo, 'untracked-giu.txt'), 'utf8')) : 'file mất')
-  // FINDING (SF-1 boundary — KHÔNG fail): stash push --include-untracked lấy
-  // .wakii/.gitignore (untracked) → clean -fd xoá store files giữa giao dịch
-  // (không còn ignored). Store mất sau restore = bug SF-1, đã report coordinator.
+  // PF-1 ĐÃ FIX (commit fix(gh27-sf1)): restore clean -fd -e .wakii exclude
+  // store → store surviving = YES. Assert cứng: store bị wipe = FAIL.
   const storeWiped = !existsSync(join(store, 'checkpoints.jsonl'))
-  check('B6', 'FINDING SF-1: store surviving = NO (known-issue đăng ký coordinator, fix thuộc SF-1 boundary)', storeWiped === true || storeWiped === false)
+  check('B6', 'store .wakii surviving qua restore (PF-1 fix — flip từ tautology review P1)', storeWiped === false,
+    storeWiped ? 'store bị xoá — PF-1 tái xuất? kiểm clean exclude' : '')
 }
 
 // ---- cleanup ----

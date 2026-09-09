@@ -75,7 +75,6 @@ When the task is one SF of an approved story bracket:
    c. audit comment merge-hash lên sub-issue
 6. RỒI MỚI: orca linear status set <ISSUE> --to Done
 ```
-```
 **Linear Done TRƯỚC merge = run INCOMPLETE** (coordinator sẽ merge hộ + flag).
 Snapshot merge (giữa chừng, nhóm task lớn xong): `merge: SF-N snapshot T1-Tk (Tk+1.. in flight)` — không set Done.
 

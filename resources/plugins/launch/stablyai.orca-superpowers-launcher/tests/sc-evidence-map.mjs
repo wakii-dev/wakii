@@ -120,12 +120,12 @@ for (const sc of SC_MAP) {
   }
 }
 
-// ---- PF (pre-existing findings) đăng ký ----
-console.log(`\n== KNOWN FINDINGS (ngoài boundary SF-3) ==`)
-console.log('  PF-1 story-checkpoint restore xoá .wakii store: stash push --include-untracked lấy')
-console.log('     .wakii/.gitignore (untracked) → clean -fd giữa giao dịch thấy store files không')
-console.log('     còn ignored → xoá. Untracked của user KHÔNG mất (SC4 giữ nguyên). Fix thuộc SF-1.')
-console.log('     Bằng chứng: qa-happy-path-chain.mjs B6 [FINDING] + qa-failure-paths store-vắng case.')
+// ---- PF (findings) đăng ký ----
+console.log(`\n== KNOWN FINDINGS ==`)
+console.log('  PF-1 [RESOLVED — commit fix(gh27-sf1), reviewer adjudicate] story-checkpoint restore')
+console.log('     từng xoá .wakii store (stash lấy .wakii/.gitignore → clean -fd giữa giao dịch')
+console.log('     thấy store files không còn ignored → xoá). Fix: clean -fd -e .wakii (+ -e tên')
+console.log('     store từ STORY_CHECKPOINT_STORE). Test: story-checkpoint-tests [rst2] + qa-happy-path B6.')
 console.log('  PF-2 kit-manifest-negative-tests.mjs crash trên Windows (ERR_UNSUPPORTED_ESM_URL_SCHEME —')
 console.log('     await import(absolute-path) thiếu pathToFileURL) — có từ TRƯỚC SF-3 (verify bằng git stash),')
 console.log('     file ngoài touch map SF-3. SC7 dựa harness hooks-factpack + kit-verify-manifest vẫn GREEN.')
