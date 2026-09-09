@@ -257,6 +257,59 @@ function runFactPack(dir, payload, env = {}) {
 const CP1 = { v: 1, ts: '2026-09-09T10:00:00Z', session_id: 's1', repo: 'r', branch: 'main', commit: 'abc1234def5678', task_id: null, step: null, prompt_summary: 'git commit -m "build store"', error_lines: ['ERROR: boom at line 12'] }
 const CP2 = { v: 1, ts: '2026-09-09T11:00:00Z', session_id: 's2', repo: 'r', branch: 'sf2', commit: 'def5678abc1234', task_id: 'T-1', step: 'implement', prompt_summary: 'git commit -m "hooks merge"', error_lines: [] }
 
+// ---- [fpl] lessons stale-check (SF-3, SC5 consumer #2) — Git repo thật để
+// stamp so HEAD chính xác; chỉ thêm block, KHÔNG sửa test SF-2 có sẵn ----
+const lessonsPath = (repo) => join(repo, '.wakii', 'lessons.jsonl')
+
+function initGitStoryRepo(dir, { lessons = null } = {}) {
+  mkdirSync(join(dir, 'docs/superpowers/brackets'), { recursive: true })
+  writeFileSync(join(dir, 'docs/superpowers/brackets/gh27-fpl.md'), '# Story: FPL — stale-check fixture\n')
+  spawnSync('git', ['-C', dir, 'init', '-q', '-b', 'main'], { encoding: 'utf8' })
+  spawnSync('git', ['-C', dir, 'config', 'user.email', 't@t'], { encoding: 'utf8' })
+  spawnSync('git', ['-C', dir, 'config', 'user.name', 't'], { encoding: 'utf8' })
+  writeFileSync(join(dir, 'f.txt'), 'v1\n')
+  spawnSync('git', ['-C', dir, 'add', '-A'], { encoding: 'utf8' })
+  spawnSync('git', ['-C', dir, 'commit', '-q', '-m', 'init'], { encoding: 'utf8' })
+  mkdirSync(join(dir, '.wakii'), { recursive: true })
+  if (lessons !== null) writeFileSync(join(dir, '.wakii', 'lessons.jsonl'), lessons)
+  return dir
+}
+
+console.log(`\n== [fpl] lessons stale-check — stamp khớp HEAD → dùng; lệch/vắng stamp → ⚠ stale (SF-3 SC5) ==`)
+{
+  const headSha = () => spawnSync('git', ['-C', repoF, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).stdout.trim()
+  const repoF = initGitStoryRepo(tempDir('fpl1'))
+  // stamp khớp HEAD → lessons dùng bình thường
+  writeFileSync(lessonsPath(repoF), `(generated-from: ${headSha()}, at: 2026-09-09T00:00:00Z)\n{"v":1,"text":"stamp khớp vẫn dùng"}\n`)
+  let r = runFactPack(repoF, { source: 'startup', cwd: repoF })
+  check('fpl', 'stamp khớp HEAD → lessons block bình thường',
+    r.status === 0 && r.stdout.includes('lessons:') && r.stdout.includes('stamp khớp vẫn dùng') && !r.stdout.includes('⚠ lessons stale'), r.stdout.slice(-160))
+  // stamp lệch (sha cũ) → ⚠ stale, KHÔNG dùng lessons
+  writeFileSync(lessonsPath(repoF), `(generated-from: deadbeefdead, at: 2026-01-01T00:00:00Z)\n{"v":1,"text":"cũ không được tin"}\n`)
+  r = runFactPack(repoF, { source: 'startup', cwd: repoF })
+  check('fpl', 'stamp lệch → dòng ⚠ stale có CẢ stamp cũ và HEAD mới',
+    r.stdout.includes('⚠ lessons stale (stamp: deadbeefdead vs HEAD: ') && r.stdout.includes(headSha()), r.stdout.slice(-200))
+  check('fpl', 'stale → KHÔNG in lessons content', !r.stdout.includes('cũ không được tin') && !r.stdout.includes('lessons:'), r.stdout.slice(-200))
+  // vắng stamp (file SF-2 fixture cũ) → stale
+  writeFileSync(lessonsPath(repoF), '{"v":1,"text":"legacy"}\n')
+  r = runFactPack(repoF, { source: 'startup', cwd: repoF })
+  check('fpl', 'vắng stamp → ⚠ stale (không stamp)', r.stdout.includes('⚠ lessons stale (stamp: (không stamp) vs HEAD: '), r.stdout.slice(-200))
+  // checkpoint advance (HEAD đổi) → stamp trước đó giờ stale
+  writeFileSync(lessonsPath(repoF), `(generated-from: ${headSha()}, at: 2026-09-09T00:00:00Z)\n{"v":1,"text":"mới sau commit"}\n`)
+  writeFileSync(join(repoF, 'f2.txt'), 'x\n')
+  spawnSync('git', ['-C', repoF, 'add', '-A'], { encoding: 'utf8' })
+  spawnSync('git', ['-C', repoF, 'commit', '-q', '-m', 'advance'], { encoding: 'utf8' })
+  r = runFactPack(repoF, { source: 'startup', cwd: repoF })
+  check('fpl', 'HEAD advance → stamp trước thành stale (consumer báo thay vì dùng)',
+    r.stdout.includes('⚠ lessons stale') && !r.stdout.includes('mới sau commit'), r.stdout.slice(-200))
+  // bin SF-1 vắng (CP None) → stale-check bỏ qua, lessons vẫn dùng (fail-open)
+  const repoNoCP = initGitStoryRepo(tempDir('fpl2'), { lessons: '{"v":1,"text":"không stamp vẫn hiện khi CP vắng"}\n' })
+  const r2 = runFactPack(repoNoCP, { source: 'startup', cwd: repoNoCP },
+    { STORY_FACT_PACK_CHECKPOINT_BIN: join(tempDir('fplmiss'), 'story-checkpoint') })
+  check('fpl', 'bin SF-1 vắng → stale-check skip, lessons vẫn dùng (fail-open)',
+    r2.status === 0 && r2.stdout.includes('không stamp vẫn hiện khi CP vắng'), r2.stdout.slice(-160))
+}
+
 console.log(`\n== [fp] fact-pack happy path — bracket + SF tiers + linear + tail + lessons ==`)
 {
   const repo = initStoryRepo(tempDir('fp1'), {
@@ -433,4 +486,4 @@ if (failures.length) {
   console.log('FAILURES:\n- ' + failures.join('\n- '))
   process.exit(1)
 }
-console.log('HARNESS GREEN (inst/idem/fix/det/edge/bin/fp/fps/fpc/fpf/wrap/lat/guard)')
+console.log('HARNESS GREEN (inst/idem/fix/det/edge/bin/fp/fps/fpc/fpl/fpf/wrap/lat/guard)')
