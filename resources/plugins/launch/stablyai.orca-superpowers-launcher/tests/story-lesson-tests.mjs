@@ -228,18 +228,35 @@ console.log(`\n== stop-audit: store vắng + helper module vắng → im lặng 
   check('aud2', 'add helper vắng → exit 1 LOUD (lệnh tay)', r3.status === 1 && r3.stderr.includes('FAIL'), `status=${r3.status}`)
 }
 
-console.log(`\n== hook-stop wrapper: logic bên trong — GHỬ VÀO story-lesson-tests SAU task hook-stop (SF-3); wrapper no-op SF-2 vẫn pass ==`)
+console.log(`\n== hook-stop wrapper: logic bên trong — pass stdin → audit, missing-bin nuốt (SF-3 thay no-op SF-2) ==`)
 {
   const repoW = tempDir('w')
   initRepo(repoW)
+  lesson(['add', 'qua wrapper', '--source', 'session', '--tags', ''], { repo: repoW, env: { CLAUDE_SESSION_ID: 'sess-WRAP' } })
+  const errLog = join(repoW, '.wakii', 'errors.log')
+  const countW = () => existsSync(errLog) ? readFileSync(errLog, 'utf8').trim().split('\n').filter(Boolean).length : 0
   const wrap = (payload, env = {}) => spawnSync(BASH, [HOOK_STOP], {
     input: payload, encoding: 'utf8', timeout: 30000, cwd: repoW,
-    env: { ...process.env, ...env },
+    env: {
+      ...process.env,
+      STORY_LESSON_BIN: BIN,
+      STORY_LESSON_CHECKPOINT_BIN: CP_BIN,
+      STORY_CHECKPOINT_REPO: repoW,
+      ...env,
+    },
   })
-  let r = wrap('x'.repeat(100000))
-  check('wrap', 'wrapper no-op (SF-2) stdin lớn → exit 0', r.status === 0)
-  r = wrap(JSON.stringify({ session_id: 'x' }))
-  check('wrap', 'wrapper no-op stdin JSON → exit 0 im lặng', r.status === 0 && (r.stdout || '').trim() === '')
+  const before = countW()
+  let r = wrap(JSON.stringify({ session_id: 'sess-WRAP' }))
+  check('wrap', 'exit 0', r.status === 0)
+  check('wrap', 'stdout rỗng (Stop không vào context)', (r.stdout || '').trim() === '')
+  check('wrap', 'audit +1 dòng qua wrapper', countW() === before + 1, `before=${before} after=${countW()}`)
+  check('wrap', 'nội dung audit đúng session', readFileSync(errLog, 'utf8').includes('stop-audit: session sess-WRAP — 1 lessons'))
+  // stdin lớn không JSON → nuốt
+  r = wrap('x'.repeat(100000))
+  check('wrap', 'stdin lớn hỏng → exit 0 im lặng', r.status === 0 && countW() === before + 1)
+  // missing bin wrapper → exit 0 im lặng
+  r = wrap(JSON.stringify({ session_id: 'x' }), { STORY_LESSON_BIN: join(tempDir('mb'), 'nope') })
+  check('wrap', 'missing-bin → exit 0 im lặng', r.status === 0 && (r.stdout || '').trim() === '', `status=${r.status}`)
 }
 
 console.log(`\n== module import không chạy main (seam cho test khác) ==`)

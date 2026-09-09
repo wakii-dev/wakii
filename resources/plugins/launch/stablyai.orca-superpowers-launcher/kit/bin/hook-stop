@@ -1,8 +1,19 @@
 #!/bin/bash
-# hook-stop — wrapper cho settings.json hooks.Stop (SF-2 GH-26)
-# SF-2 cài NO-OP: chỉ nuốt stdin + exit 0. Logic thật (audit đếm lessons —
-# Stop stdout không vào context) do SF-3 thay bên trong wrapper này, settings
-# không đổi. Missing-bin posture giữ từ ngày đầu: mọi lỗi → exit 0 im lặng.
+# hook-stop — wrapper cho settings.json hooks.Stop (SF-2 cài, SF-3 logic GH-26)
+# Đọc stdin Stop JSON → story-lesson stop-audit: đếm lessons session_id khớp →
+# ≥1 → 1 dòng audit vào <store>/errors.log. KHÔNG tự trích lesson từ transcript
+# (poisoning + latency — decision chốt). Stop stdout không vào context — wrapper
+# nuốt mọi stdout của bin. Missing-bin posture từ ngày đầu: mọi lỗi → exit 0.
 set -u
-cat >/dev/null 2>&1 || true
+DIR="$(cd "$(dirname "$0")" && pwd)"
+BIN="${STORY_LESSON_BIN:-}"
+[ -n "$BIN" ] || BIN="$DIR/story-lesson"
+[ -f "$BIN" ] || BIN="$HOME/.claude/bin/story-lesson"
+[ -f "$BIN" ] || exit 0
+
+INPUT=$(cat 2>/dev/null) || INPUT=""
+for c in python3 python py; do
+  command -v "$c" >/dev/null 2>&1 || continue
+  printf '%s' "$INPUT" | "$c" "$BIN" stop-audit >/dev/null 2>&1 && exit 0
+done
 exit 0
