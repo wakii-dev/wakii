@@ -55,21 +55,26 @@ When the task is one SF of an approved story bracket:
 - Run **Phase 3 (detailed plan for this SF only) → Phase 4 (execute) → Phase 5 (verify)** of the orca-superpowers-workflow.
 - Update your sub-issue state via `orca linear status set <ISSUE> --to <state>` at: start (In Progress), block (comment + stay).
 
-**COMPLETE-RUN CHECKLIST (thứ tự bắt buộc — KHÔNG dừng trước bước 5):**
+**COMPLETE-RUN CHECKLIST (thứ tự bắt buộc — KHÔNG dừng trước bước 6):**
 ```
 1. code + tests pass
 2. TICK plan file: mỗi task xong → sửa - [ ] thành - [x] trong plan md
    (bracket panel hiển thị % từ đây — không tick = 0% mãi dù đang làm)
-3. TESTER REVIEW: coordinator dispatch code-reviewer (cyan) trên diff —
+3. OPTIONAL — LESSON: task này có lesson đáng học (pattern lỗi lặp lại,
+   quyết định kiến trúc, pitfall platform)? →
+   `story-lesson add "<text>" --source session --tags <epic,sf>` —
+   skip nếu không có (không ép ghi; không tự trích từ transcript).
+4. TESTER REVIEW: coordinator dispatch code-reviewer (cyan) trên diff —
    review viết verdict vào /tmp/story/<epic>/code-reviewer-<sf>.md (OUTBOX)
    — APPROVED mới tiếp tục. CHANGES-REQUESTED → fix → re-review.
-4. MERGE vào NHÁNH ĐÍCH (branch bạn fork từ — --base-branch):
+5. MERGE vào NHÁNH ĐÍCH (branch bạn fork từ — --base-branch):
    a. git merge <đích> --no-edit (trong worktree bạn)
       conflict improvements-log → GIỮ CẢ HAI entries
    b. git update-ref refs/heads/<đích> HEAD
       GUARD trước: git merge-base --is-ancestor <đích-cũ> HEAD || STOP
    c. audit comment merge-hash lên sub-issue
-5. RỒI MỚI: orca linear status set <ISSUE> --to Done
+6. RỒI MỚI: orca linear status set <ISSUE> --to Done
+```
 ```
 **Linear Done TRƯỚC merge = run INCOMPLETE** (coordinator sẽ merge hộ + flag).
 Snapshot merge (giữa chừng, nhóm task lớn xong): `merge: SF-N snapshot T1-Tk (Tk+1.. in flight)` — không set Done.
@@ -83,7 +88,7 @@ Snapshot merge (giữa chừng, nhóm task lớn xong): `merge: SF-N snapshot T1
 - **Never** create Linear issues, worktrees outside instructions, or resolve OTHER tasks' gates — that's coordinator authority.
 - **Never** proceed past a failed gate; report and wait.
 - **Never** widen scope because "it would be better" — flag it in `notes:` instead.
-- **Never** self-review code bạn vừa viết — checklist bước 3 là bắt buộc.
+- **Never** self-review code bạn vừa viết — checklist bước 4 (tester review) là bắt buộc.
 - You may read anything; you write only inside your worktree + boundary.
 
 ## Relations
