@@ -85,7 +85,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          apk=$(ls mobile/android/app/build/outputs/apk/release/*.apk | head -1)
+          apk=$(ls android/app/build/outputs/apk/release/*.apk | head -1)
           gh release upload "${{ inputs.attach_release_tag }}" "$apk" --repo wakii-dev/wakii --clobber
 
       - name: Ensure GitHub release tag
