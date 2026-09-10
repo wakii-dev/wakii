@@ -135,39 +135,15 @@ def resolve_head_source_ref(cwd):
 LESSONS_LOCK = ".lessons.lock"
 
 
-def _locked(store, fn, attempts=200, delay_ms=10, stale_secs=5):
-    """Lockfile O_CREAT|O_EXCL quanh RMW add — 2 add liên tiếp không mất dòng
-    (RMW không lock = lost update). Pattern lock + stale-takeover của SF-1.
-    False = không lấy được lock (caller báo FAIL)."""
-    store = pathlib.Path(store)
-    lock = store / LESSONS_LOCK
-    got = False
-    import time as _time
-    for _ in range(attempts):
-        try:
-            fd = os.open(str(lock), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-            os.close(fd)
-            got = True
-            break
-        except FileExistsError:
-            try:  # lock stale (process chết) → takeover
-                if _time.time() - lock.stat().st_mtime > stale_secs:
-                    lock.unlink()
-            except OSError:
-                pass
-            _time.sleep(delay_ms / 1000.0)
-        except OSError:
-            return False
-    if not got:
-        return False
-    try:
+def _locked(store, fn, deadline_s=10.0):
+    """Wrapper with_file_lock (donor story-checkpoint) — xóa bản copy (GH-37).
+    False = không lấy được lock trong deadline (caller báo FAIL); fn raise
+    (ValueError flow) → PROPAGATE. True kể cả khi fn trả None."""
+    def _run():
         fn()
         return True
-    finally:
-        try:
-            lock.unlink()
-        except OSError:
-            pass
+    return CP.with_file_lock(store, LESSONS_LOCK, _run, deadline_s,
+                             mkdir=False, log_path=None)
 
 
 def cmd_add(args):
