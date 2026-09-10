@@ -119,8 +119,9 @@ def parse_file(path, fname):
         if stripped.startswith("|"):
             cells = split_row(line)
             lower = [c.lower() for c in cells]
-            if header_idx is None and "location" in lower:
-                # header row (chứa 'location') — không phải finding
+            if "location" in lower:
+                # header row (chứa 'location') — bảng mới bắt đầu (các bảng có thể
+                # nối nhau không dòng trống) — không phải finding
                 header_idx = {k: lower.index(k) for k in ("location", "severity", "conf")
                               if k in lower}
                 continue
@@ -257,12 +258,11 @@ def main():
 
     findings, unparsed = [], []
     for fp in files:
-        p = open(fp, "rb")
-        try:
-            if p.read(1) == b"":
-                sys.exit(f"FUSE FAIL: OUTBOX 0 byte — {fp} (reviewer chết ngang?)")
-        finally:
-            p.close()
+        with open(fp, "rb") as fh:
+            if fh.read(1) == b"":
+                # catastrophic: file OUTBOX tồn tại nhưng 0 byte — reviewer chết ngang
+                print(f"FUSE FAIL: OUTBOX 0 byte — {fp} (reviewer chết ngang?)")
+                sys.exit(1)
         fs, up = parse_file(fp, os.path.basename(fp))
         findings += fs
         unparsed += up
