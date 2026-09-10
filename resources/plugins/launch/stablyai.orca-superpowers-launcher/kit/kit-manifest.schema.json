@@ -61,7 +61,11 @@
       "properties": {
         "name": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
         "type": { "const": "bin" },
-        "description": { "type": "string", "minLength": 1 }
+        "description": { "type": "string", "minLength": 1 },
+        "alias_of": {
+          "type": "string",
+          "description": "Bounded rewrite (constitution VI): entry này là alias trỏ về surface cũ — chỉ trỏ, không mang logic, không nhận feature mới. Expiry nằm ở docs/superpowers/migrations/<date>-<slug>.md (một nguồn duy nhất), KHÔNG ở đây."
+        }
       }
     }
   }
