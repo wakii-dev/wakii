@@ -142,17 +142,24 @@ verify_sf() { # $1 worktree → in "<sf>|<verdict>|<detail>|<b1>|<b2>|<b3>|<b4>|
   # chính là lint; story-verify không tự đoán bounded-rewrite). Chạy từ $wt để
   # diff scope là commits của SF, base mặc định wakii-dev (STORY_LINT_BASE override).
   b2b="PASS"
+  lint_note="" # tokens FAIL của lint — đi qua detail (OB_NOTE chết trong subshell verify_sf)
   lint_base="${STORY_LINT_BASE:-wakii-dev}"
+  # Windows: bare python3 dính Store alias stub (exit 9009, chết im) — resolve
+  # python3→python→py như surface-lint-tests.mjs
+  PY_BIN=""
+  for p in python3 python py; do
+    if command -v "$p" >/dev/null 2>&1 && "$p" --version >/dev/null 2>&1; then PY_BIN="$p"; break; fi
+  done
   lint_bin=""
   for cand in "$(git -C "$wt" rev-parse --show-toplevel 2>/dev/null)/resources/plugins/launch/stablyai.orca-superpowers-launcher/kit/bin/story-surface-lint" "$HOME/.claude/bin/story-surface-lint"; do
     [ -n "${cand%%$'\n'*}" ] && [ -f "$cand" ] && { lint_bin="$cand"; break; }
   done
-  if [ -n "$lint_bin" ]; then
-    lint_out=$(STORY_LINT_DIR="$wt" python3 "$lint_bin" "$lint_base" 2>/dev/null)
+  if [ -n "$PY_BIN" ] && [ -n "$lint_bin" ]; then
+    lint_out=$(STORY_LINT_DIR="$wt" "$PY_BIN" "$lint_bin" "$lint_base" 2>/dev/null)
     lint_code=$?
     case "$lint_code" in
       0) b2b="PASS" ;;
-      1) b2b="FAIL"; OB_NOTE="${OB_NOTE:+$OB_NOTE; }surface-lint: $(printf '%s' "$lint_out" | grep -E '^(MISSING-|BAD-DATE|EXPIRED)' | head -3 | tr '\n' ' ')" ;;
+      1) b2b="FAIL"; lint_note="lint: $(printf '%s' "$lint_out" | grep -E '^(MISSING-|BAD-DATE|EXPIRED)' | head -3 | tr '\n' ' ')" ;;
       *) b2b="WARN" ;;
     esac
   else
@@ -188,7 +195,7 @@ verify_sf() { # $1 worktree → in "<sf>|<verdict>|<detail>|<b1>|<b2>|<b3>|<b4>|
   elif [ "$core_fail" -gt 0 ] || [ "$b3" = "FAIL" ] || [ "$b3" = "OUTBOX" ]; then verdict="INCOMPLETE"
   elif [ "$b5" = "PASS" ]; then verdict="COMPLETE"
   else verdict="READY-TO-DONE"; fi
-  detail="code:${code_commits}c tests:${test_files}f plan:${open_tasks} open review:${linear:-?} dest:${dest:-?}"
+  detail="code:${code_commits}c tests:${test_files}f plan:${open_tasks} open review:${linear:-?} dest:${dest:-?}${lint_note:+ $lint_note}"
 
   echo "$sf|$verdict|$detail|$b1|$b2|$b2b|$b3|$b4|$b5"
 }
