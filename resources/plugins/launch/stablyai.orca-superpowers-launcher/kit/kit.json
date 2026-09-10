@@ -1,6 +1,6 @@
 {
   "name": "story-team-kit",
-  "version": "2.8.0",
+  "version": "2.9.0",
   "description": "9-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới.",
   "requires": {
     "claude-code": ">=2.0",
@@ -422,6 +422,11 @@
       "name": "story-review-fuse",
       "type": "bin",
       "description": "gộp findings nhiều OUTBOX reviews/<agent>-<sf>*.md (GH-32) — parse tolerant bullet+bảng, cluster (file, line±10, severity), sort confidence, conf-thấp → NEEDS VERIFICATION; KHÔNG bao giờ drop finding (invariant in_ra == parsed+unparsed)"
+    },
+    {
+      "name": "story-kb",
+      "type": "bin",
+      "description": "query bin read-only Project KB (GH-45 #38) — query-adr/query-repo/glossary/moc/stats, frontmatter YAML-ish zero-dep; dir resolve --dir > WAKII_KB_DIR > docs/knowledge candidates, KB vắng exit 0 fail-open"
     },
     {
       "name": "story-report-validate",

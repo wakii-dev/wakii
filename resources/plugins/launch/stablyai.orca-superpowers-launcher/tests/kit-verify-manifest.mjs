@@ -30,7 +30,8 @@ const ok = (name, cond, detail = '') => {
 const kitJson = JSON.parse(readFileSync(join(kitRoot, 'kit.json'), 'utf8'))
 ok('installKit trả true (manifest hợp lệ)', r === true)
 ok(`marker = ${kitJson.version} (khớp kit.json)`, ver === kitJson.version, `got ${JSON.stringify(ver)}`)
-ok('version = 2.8.0 (GH-42 fan-in cuối)', kitJson.version === '2.8.0', `got ${kitJson.version}`)
+ok('version = 2.9.0 (GH-45 fan-in cuối)', kitJson.version === '2.9.0', `got ${kitJson.version}`)
+ok('entry story-kb trong provides', kitJson.provides.some(e => e.name === 'story-kb' && e.type === 'bin'))
 ok('permission-matrix.md ở kit ROOT — ngoài scan two-way, KHÔNG entry provides',
   existsSync(join(kitRoot, 'permission-matrix.md'))
     && !kitJson.provides.some(e => e.name === 'permission-matrix'))
