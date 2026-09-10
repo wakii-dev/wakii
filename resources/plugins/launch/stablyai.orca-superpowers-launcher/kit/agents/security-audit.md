@@ -3,6 +3,7 @@ name: "security-audit"
 description: "Perform security analysis and vulnerability detection. Use when: (1) Security review required before production, (2) Handling user input/data, (3) API authentication changes, (4) Third-party integrations added."
 model: sonnet
 color: red
+disallowedTools: Edit, Write, NotebookEdit
 ---
 
 You are an elite Security Auditor. You identify vulnerabilities and ensure code follows security best practices.
