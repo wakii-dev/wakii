@@ -1,6 +1,6 @@
 {
   "name": "story-team-kit",
-  "version": "2.4.0",
+  "version": "2.5.0",
   "description": "9-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới.",
   "requires": {
     "claude-code": ">=2.0",
@@ -417,6 +417,11 @@
       "name": "story-surface-lint",
       "type": "bin",
       "description": "bounded rewrite enforcer (constitution VI) — diff từ base-ref: rename surface công khai đòi alias_of + migration guide + expiry YYYY-MM-DD; hết hạn FAIL"
+    },
+    {
+      "name": "story-review-fuse",
+      "type": "bin",
+      "description": "gộp findings nhiều OUTBOX reviews/<agent>-<sf>*.md (GH-32) — parse tolerant bullet+bảng, cluster (file, line±10, severity), sort confidence, conf-thấp → NEEDS VERIFICATION; KHÔNG bao giờ drop finding (invariant in_ra == parsed+unparsed)"
     },
     {
       "name": "story-visual-regress",
