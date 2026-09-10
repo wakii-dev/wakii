@@ -162,7 +162,6 @@ def cmd_mark_git(args):
         if sp.exists():
             lines = [l for l in sp.read_text(encoding="utf-8").splitlines()
                      if l.strip()
-                     and not l.startswith(("since=", "indexed_at="))
                      and l.split("|", 1)[0] != f"git:{args.repo}"]
         lines.append(f"git:{args.repo}|{args.hash}")
         sp.write_text("\n".join(lines) + "\n", encoding="utf-8")
