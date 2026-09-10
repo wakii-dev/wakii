@@ -1,13 +1,14 @@
 import {
   PLUGIN_HOST_API_V0,
   PLUGIN_TERMINAL_ID_MAX_LENGTH,
+  PLUGIN_WORKSPACE_FILE_LIST_LIMIT,
+  PLUGIN_WORKSPACE_FILE_NAME_MAX_LENGTH,
   PLUGIN_WORKSPACE_LABEL_MAX_LENGTH,
   PLUGIN_WORKSPACE_TERMINAL_LIMIT
 } from '../../shared/plugins/plugin-host-api'
 import type { PluginEventName } from '../../shared/plugins/plugin-manifest'
 import type { BoundPluginHostMethod } from './plugin-host-method-binding'
 import { definePluginMethod } from './plugin-host-method-binding'
-import { pluginHostWorkspaceDocsMethodBindings } from './plugin-host-workspace-docs-methods'
 
 export type PluginWorktreeContext = {
   worktreeId: string
@@ -19,9 +20,8 @@ export type PluginWorktreeContext = {
  *  over runtime services; relay policy and conformance tests bind fakes. */
 export type PluginHostServices = {
   resolveActiveWorktreeContext(): Promise<PluginWorktreeContext | null>
-  /** Host-internal full path of the focused worktree (never projected to panels). */
-  resolveFocusedWorktreePath(): Promise<string | null>
   listWorktreeTerminals(worktreeId: string): Promise<{ id: string }[]>
+  listWorktreeFiles(dir?: string): Promise<{ files: { name: string; type: 'file' | 'dir' }[] }>
   sendTerminalText(
     terminalId: string,
     action: { text: string; enter: boolean }
@@ -31,7 +31,6 @@ export type PluginHostServices = {
     title: string
     body?: string
   }): Promise<{ delivered: boolean }>
-  writeClipboardText(text: string): Promise<{ written: boolean }>
   storage: {
     get(pluginId: string, key: string): unknown
     set(pluginId: string, key: string, value: unknown): { ok: true } | { ok: false; error: string }
@@ -74,6 +73,20 @@ const HANDLERS = new Map<string, BoundPluginHostMethod>([
         .map((terminal) => ({ id: terminal.id }))
     }
   }),
+  definePluginMethod('workspace.listFiles', async (params, { services }) => {
+    const { dir } = (params ?? {}) as { dir?: string }
+    const result = await services.listWorktreeFiles(dir)
+    // Clamp to the published caps before the result schema sees the payload —
+    // the structural service surface is host-internal and may over-produce.
+    return {
+      files: result.files
+        .filter(
+          (file) =>
+            file.name.length > 0 && file.name.length <= PLUGIN_WORKSPACE_FILE_NAME_MAX_LENGTH
+        )
+        .slice(0, PLUGIN_WORKSPACE_FILE_LIST_LIMIT)
+    }
+  }),
   definePluginMethod('terminal.sendText', async (params, { services }) => {
     const { terminalId, text, enter } = params as {
       terminalId: string
@@ -97,14 +110,6 @@ const HANDLERS = new Map<string, BoundPluginHostMethod>([
     const { title, body } = params as { title: string; body?: string }
     return services.dispatchPluginNotification({ pluginId, title, body })
   }),
-  definePluginMethod('clipboard.write', async (params, { services }) => {
-    const { text } = params as { text: string }
-    return services.writeClipboardText(text)
-  }),
-  // FORK-LOCAL (Wakii): workspace fs reads (brackets/contexts only) for panels.
-  // FORK-LOCAL: plan progress mọi SF worktree — panel trực tiếp (no lazy worker)
-  ...pluginHostWorkspaceDocsMethodBindings,
-
   definePluginMethod('storage.get', async (params, { pluginId, services }) => {
     const { key } = params as { key: string }
     return { value: services.storage.get(pluginId, key) ?? null }
