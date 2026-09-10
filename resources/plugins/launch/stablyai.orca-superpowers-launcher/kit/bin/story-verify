@@ -5,6 +5,10 @@
 # 5 bước (thứ tự cố định — B5 chỉ hợp lệ khi B1-B4 pass):
 #   B1 CODE+TESTS   — có commit code thật (ngoài CREATE/APPROVE/plan) + file test
 #   B2 PLAN TICKED  — plan file còn 0 task [ ] chưa tick
+#   B2b SURFACE LINT — bounded-rewrite enforcer (GH-30): story-surface-lint <base>
+#                      trên SF worktree; FAIL → story-verify INCOMPLETE (exit 1).
+#                      Base từ env STORY_LINT_BASE, fallback wakii-dev. No-op (exit 0
+#                      "no diff") → không đổi verdict.
 #   B3 REVIEW       — Linear comments có VERDICT APPROVED (code-reviewer)
 #   B4 MERGED       — HEAD của SF là ancestor của nhánh đích (story/<dest>)
 #   B5 LINEAR DONE  — issue state = Done
@@ -134,6 +138,27 @@ verify_sf() { # $1 worktree → in "<sf>|<verdict>|<detail>|<b1>|<b2>|<b3>|<b4>|
     [ "$open_tasks" -eq 0 ] && b2="PASS" || b2="FAIL"
   else b2="WARN"; fi
 
+  # B2b surface lint (GH-30) — lint FAIL → FAIL; lint crash/no-bin → WARN (enforcer
+  # chính là lint; story-verify không tự đoán bounded-rewrite). Chạy từ $wt để
+  # diff scope là commits của SF, base mặc định wakii-dev (STORY_LINT_BASE override).
+  b2b="PASS"
+  lint_base="${STORY_LINT_BASE:-wakii-dev}"
+  lint_bin=""
+  for cand in "$(git -C "$wt" rev-parse --show-toplevel 2>/dev/null)/resources/plugins/launch/stablyai.orca-superpowers-launcher/kit/bin/story-surface-lint" "$HOME/.claude/bin/story-surface-lint"; do
+    [ -n "${cand%%$'\n'*}" ] && [ -f "$cand" ] && { lint_bin="$cand"; break; }
+  done
+  if [ -n "$lint_bin" ]; then
+    lint_out=$(STORY_LINT_DIR="$wt" python3 "$lint_bin" "$lint_base" 2>/dev/null)
+    lint_code=$?
+    case "$lint_code" in
+      0) b2b="PASS" ;;
+      1) b2b="FAIL"; OB_NOTE="${OB_NOTE:+$OB_NOTE; }surface-lint: $(printf '%s' "$lint_out" | grep -E '^(MISSING-|BAD-DATE|EXPIRED)' | head -3 | tr '\n' ' ')" ;;
+      *) b2b="WARN" ;;
+    esac
+  else
+    b2b="WARN" # lint bin chưa cài — không chặn verify, doctrine sống ở lint
+  fi
+
   # B3 review APPROVED (từ Linear comments)
   if [ -n "$linear" ] && [ "$linear" != "unknown" ]; then
     IFS='|' read -r lstate approved <<< "$(linear_meta "$linear")"
@@ -156,8 +181,8 @@ verify_sf() { # $1 worktree → in "<sf>|<verdict>|<detail>|<b1>|<b2>|<b3>|<b4>|
   # B5 Linear Done
   [ "$lstate" = "Done" ] && b5="PASS" || b5="PENDING"
 
-  # verdict tổng
-  core_fail=$(printf '%s\n%s\n%s\n' "$b1" "$b2" "$b4" | grep -c '^FAIL')
+  # verdict tổng — B2b surface-lint FAIL được tính core (enforcer semantics)
+  core_fail=$(printf '%s\n%s\n%s\n%s\n' "$b1" "$b2" "$b2b" "$b4" | grep -c '^FAIL')
   if   [ "$b5" = "PASS" ] && [ "$core_fail" -gt 0 ]; then verdict="VIOLATION"
   elif [ "$b5" = "PASS" ] && [ "$b3" = "FAIL" ]; then verdict="VIOLATION"
   elif [ "$core_fail" -gt 0 ] || [ "$b3" = "FAIL" ] || [ "$b3" = "OUTBOX" ]; then verdict="INCOMPLETE"
@@ -165,7 +190,7 @@ verify_sf() { # $1 worktree → in "<sf>|<verdict>|<detail>|<b1>|<b2>|<b3>|<b4>|
   else verdict="READY-TO-DONE"; fi
   detail="code:${code_commits}c tests:${test_files}f plan:${open_tasks} open review:${linear:-?} dest:${dest:-?}"
 
-  echo "$sf|$verdict|$detail|$b1|$b2|$b3|$b4|$b5"
+  echo "$sf|$verdict|$detail|$b1|$b2|$b2b|$b3|$b4|$b5"
 }
 
 # ═══ MAIN ═══
@@ -204,20 +229,20 @@ if [ "$JSON_OUT" = 1 ]; then
   echo "["
   first=1
   for r in "${ROWS[@]}"; do
-    IFS='|' read -r sf verdict detail b1 b2 b3 b4 b5 <<< "$r"
+    IFS='|' read -r sf verdict detail b1 b2 b2b b3 b4 b5 <<< "$r"
     [ $first = 0 ] && echo ","
-    printf '  {"sf":"%s","verdict":"%s","steps":{"code_tests":"%s","plan_ticked":"%s","review":"%s","merged":"%s","linear_done":"%s"},"detail":"%s"}' \
-      "$sf" "$verdict" "$b1" "$b2" "$b3" "$b4" "$b5" "$detail"
+    printf '  {"sf":"%s","verdict":"%s","steps":{"code_tests":"%s","plan_ticked":"%s","surface_lint":"%s","review":"%s","merged":"%s","linear_done":"%s"},"detail":"%s"}' \
+      "$sf" "$verdict" "$b1" "$b2" "$b2b" "$b3" "$b4" "$b5" "$detail"
     first=0
   done
   echo ""
   echo "]"
 else
-  echo "═══ COMPLETE-RUN VERIFY ═══ (B1 code+tests · B2 plan · B3 review · B4 merge · B5 Done)"
+  echo "═══ COMPLETE-RUN VERIFY ═══ (B1 code+tests · B2 plan · B2b surface-lint · B3 review · B4 merge · B5 Done)"
   for r in "${ROWS[@]}"; do
-    IFS='|' read -r sf verdict detail b1 b2 b3 b4 b5 <<< "$r"
+    IFS='|' read -r sf verdict detail b1 b2 b2b b3 b4 b5 <<< "$r"
     icon="●"; case "$verdict" in VIOLATION) icon="🚨";; INCOMPLETE) icon="○";; COMPLETE) icon="✓";; READY-TO-DONE) icon="▶";; esac
-    printf '  %s %-22s %-14s [B1:%s B2:%s B3:%s B4:%s B5:%s]\n' "$icon" "$sf" "$verdict" "$b1" "$b2" "$b3" "$b4" "$b5"
+    printf '  %s %-22s %-14s [B1:%s B2:%s B2b:%s B3:%s B4:%s B5:%s]\n' "$icon" "$sf" "$verdict" "$b1" "$b2" "$b2b" "$b3" "$b4" "$b5"
     printf '      %s\n' "$detail"
     [ -n "${OB_NOTE:-}" ] && printf '      ⚠ %s\n' "$OB_NOTE"; OB_NOTE=""
   done
