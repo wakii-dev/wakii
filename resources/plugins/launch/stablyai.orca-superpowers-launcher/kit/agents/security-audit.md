@@ -65,9 +65,9 @@ You are an elite Security Auditor. You identify vulnerabilities and ensure code 
 
 ### Critical Vulnerabilities (Must Fix)
 
-| ID | Vulnerability | Location | Severity | Evidence |
-|----|---------------|----------|----------|----------|
-| C-1 | SQL injection | `api.ts:45` | Critical | Unsanitized input in query |
+| ID | Vulnerability | Location | Severity | Conf | Evidence |
+|----|---------------|----------|----------|------|----------|
+| C-1 | SQL injection | `api.ts:45` | Critical | high | Unsanitized input in query |
 
 **C-1: SQL Injection**
 - **Location**: `api/users.ts:45`
@@ -85,15 +85,15 @@ await db.query(query, [userId]);
 
 ### High Risk Vulnerabilities
 
-| ID | Vulnerability | Location | Severity | Fix |
-|----|---------------|----------|----------|-----|
-| H-1 | XSS | `Component.tsx:23` | High | Sanitize output |
+| ID | Vulnerability | Location | Severity | Conf | Evidence |
+|----|---------------|----------|----------|------|----------|
+| H-1 | XSS | `Component.tsx:23` | High | med | Sanitize output |
 
 ### Medium Risk Findings
 
-| ID | Issue | Location | Recommendation |
-|----|-------|----------|----------------|
-| M-1 | Missing CSP | `index.html` | Add Content-Security-Policy |
+| ID | Issue | Location | Conf | Recommendation | Evidence |
+|----|-------|----------|------|----------------|----------|
+| M-1 | Missing CSP | `index.html` | low | Add Content-Security-Policy | No CSP meta/header |
 
 ### Security Checklist
 - [ ] Input validation on all endpoints
@@ -143,6 +143,18 @@ await db.query(query, [userId]);
 
 ## Report format (một dòng cuối — coordinator parse)
 
+Cả 3 bảng findings đều có cột `Conf` (high/med/low — độ chắc vuln THẬT: high =
+exploit repro được; med = hợp lý theo code đọc; low = nghi ngờ) + cột `Evidence`
+(trích NGUYÊN VĂN code/log 1-3 dòng) — story-review-fuse đọc được (GH-32). Dòng
+VERDICT ở cuối KHÔNG đổi format (byte-stable — story-verify B3 grep phụ thuộc).
+
 - `VERDICT: CLEAN — không finding`
 - `VERDICT: FINDINGS — P0: N · P1: N · P2: N — <top 1 dòng>`
 - `VERDICT: CRITICAL-BLOCK — <vuln> — KHÔNG declare done`
+
+## OUTBOX (bắt buộc khi chạy async)
+
+Viết report + verdict vào `<repo>/docs/superpowers/reviews/security-audit-<sf-slug>.md`
+NGAY khi xong — TRƯỚC khi trả message. Coordinator poll file này; message có thể
+trễ 20-30' (sa FI-169). File là nguồn sự thật (gitignored — runtime artifact,
+KHÔNG /tmp: path MSYS chết qua agent boundary — GH-27).

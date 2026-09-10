@@ -118,6 +118,18 @@ Và trong verdict chính, nếu phát hiện P0 khi đã merged → flag `NEEDS-
 
 ## Verdict format (chặt — coordinator parse được)
 
+Mỗi finding (P0/P1/P2) ghi theo findings template để story-review-fuse đọc được (GH-32):
+
+```
+- [P1][confidence:med] <title> (file:line)
+  evidence: <trích nguyên văn 1-3 dòng code/t log>
+```
+
+- `confidence` = độ chắc finding THẬT (high = repro được/đọc kỹ; med = hợp lý
+  nhưng chưa chạy; low = nghi ngờ, cần verify thêm).
+- `evidence:` trích NGUYÊN VĂN — không diễn giải lại.
+- Dòng VERDICT ở cuối KHÔNG đổi format (byte-stable — story-verify B3 grep phụ thuộc).
+
 Kết thúc report bằng MỘT dòng duy nhất, một trong:
 - `VERDICT: APPROVED — <1 dòng lý do>`
 - `VERDICT: CHANGES-REQUESTED — P<P0|1>: <fix ngắn nhất>`
