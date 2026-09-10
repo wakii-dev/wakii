@@ -53,6 +53,12 @@ function orcaBin() {
   return 'orca' // fallback to PATH (production app context)
 }
 
+// Windows GUI processes have USERPROFILE but often no HOME (the app scrubs
+// worker env to an allowlist that may carry only one of the two) — always
+// resolve the user root through this instead of process.env.HOME directly.
+function homeDir() {
+  return process.env.HOME || process.env.USERPROFILE || ''
+}
 
 const SKILL = 'orca-superpowers-workflow'
 const {
@@ -149,7 +155,7 @@ function buildGatePrompt(gateId, resolution) {
 async function linGqlChildren(epic) {
   try {
     let key = process.env.LINEAR_API_KEY || ''
-    if (!key) { try { key = (await readFile(join(process.env.HOME || '', '.claude', '.linear-key'), 'utf8')).split('\n')[0].trim() } catch { key = '' } }
+    if (!key) { try { key = (await readFile(join(homeDir(), '.claude', '.linear-key'), 'utf8')).split('\n')[0].trim() } catch { key = '' } }
     if (!key) return null
     const r = await fetch('https://api.linear.app/graphql', {
       method: 'POST', headers: { Authorization: key, 'Content-Type': 'application/json' },
@@ -278,7 +284,7 @@ async function storyScanRoots() {
   // Orca's default workspace base: worktrees of registered repos nest here
   // (including unregistered manual ones). Add project dirs AND their worktree
   // children (brackets live at wsBase/<project>/<worktree>/docs/...).
-  const wsBase = join(process.env.HOME || '', 'orca', 'workspaces')
+  const wsBase = join(homeDir(), 'orca', 'workspaces')
   try {
     for (const proj of await readdir(wsBase, { withFileTypes: true })) {
       if (!proj.isDirectory()) continue
@@ -454,7 +460,7 @@ async function loadStorySnapshot(orca, args) {
 // ~/.claude/bin/story-resume --check  → "sf|verdict|detail" mỗi dòng
 // ~/.claude/bin/story-verify --json   → [{sf, verdict, steps{5}, detail}]
 
-const KIT_BIN = join(process.env.HOME || '', '.claude', 'bin')
+const KIT_BIN = join(homeDir(), '.claude', 'bin')
 
 // ---- Guard advisory nhãn nguồn + reject-reason log (issue #22) -------------
 // camel: mọi item bị chặn phải để lại log lý do đọc được (reason ≤200 ký tự,
@@ -587,8 +593,8 @@ async function collectStoryOps(orca) {
           const sf = parts[0].trim()
           // repo: scan workspaces tìm worktree sf-* (cho heartbeat path)
           let repo = ''
-          try { for (const r of await readdir(join(process.env.HOME || '', 'orca', 'workspaces'))) {
-            try { await readFile(join(process.env.HOME || '', 'orca', 'workspaces', r, sf, '.git'), 'utf8'); repo = r; break } catch {}
+          try { for (const r of await readdir(join(homeDir(), 'orca', 'workspaces'))) {
+            try { await readFile(join(homeDir(), 'orca', 'workspaces', r, sf, '.git'), 'utf8'); repo = r; break } catch {}
           } } catch {}
           out.sfs.push({ sf, repo, verdict: parts[1].trim(), stallDetail: parts.slice(2).join('|').trim() })
         }
@@ -613,7 +619,7 @@ async function collectStoryOps(orca) {
     // ── GAP queue: REQUIREMENT-GAP chưa có GAP-ANSWER trên mọi epic đang chạy
     out.gaps = []
     try {
-      const keyFile = join(process.env.HOME || '', '.claude', '.linear-key')
+      const keyFile = join(homeDir(), '.claude', '.linear-key')
       let key = process.env.LINEAR_API_KEY || ''
       if (!key) { try { key = (await readFile(keyFile, 'utf8')).split('\n')[0].trim() } catch {} }
       if (key) {
@@ -651,7 +657,7 @@ async function collectStoryOps(orca) {
     // heartbeat: commit cuối + dirty per SF (worktree git — kiểu story-top)
     for (const row of out.sfs) {
       try {
-        const wt = join(process.env.HOME || '', 'orca', 'workspaces', row.repo || '', row.sf)
+        const wt = join(homeDir(), 'orca', 'workspaces', row.repo || '', row.sf)
         const { execFile: ef } = await import('node:child_process')
         const { promisify: pf } = await import('node:util')
         const efa = pf(ef)
@@ -678,7 +684,7 @@ async function collectStoryOps(orca) {
 // comment lên EPIC qua GraphQL (keychain độc lập, mọi SF thấy đáp án).
 async function postGapAnswer(epic, text) {
   try {
-    const keyFile = join(process.env.HOME || '', '.claude', '.linear-key')
+    const keyFile = join(homeDir(), '.claude', '.linear-key')
     let key = process.env.LINEAR_API_KEY || ''
     if (!key) {
       try { key = (await readFile(keyFile, 'utf8')).split('\n')[0].trim() } catch { key = '' }
@@ -704,7 +710,7 @@ async function postGapAnswer(epic, text) {
 // CLOSE story: epic → Done + audit STORY-COMPLETE (panel button)
 async function postCloseStory(epic) {
   try {
-    const keyFile = join(process.env.HOME || '', '.claude', '.linear-key')
+    const keyFile = join(homeDir(), '.claude', '.linear-key')
     let key = process.env.LINEAR_API_KEY || ''
     if (!key) { try { key = (await readFile(keyFile, 'utf8')).split('\n')[0].trim() } catch { key = '' } }
     if (!key) return { ok: false, error: 'không có Linear key' }
@@ -964,7 +970,7 @@ export function installKit(orca, { root, kitRoot: kitRootOverride } = {}) {
       notifyKitBlocked(orca, problems.join(' | '))
       return false
     }
-    const claude = root || join(process.env.HOME || '', '.claude')
+    const claude = root || join(homeDir(), '.claude')
     const marker = join(claude, '.story-team-kit-version')
     // Marker `version[:kitHash]` — hash lệch (đổi kit mà không bump version) cũng
     // phải recopy, không skip. kitHash vắng (kit cũ) → so version như trước.
@@ -1099,11 +1105,11 @@ export default function activate(orca) {
       try {
         const { stdout } = await execFileAsync(orcaBin(), ['terminal', 'list', '--json'],
           { timeout: 15000, maxBuffer: 2 * 1024 * 1024,
-            env: { ...process.env, ORCA_USER_DATA_PATH: join(process.env.HOME || '', 'Library', 'Application Support', 'orca-dev') } })
+            env: { ...process.env, ORCA_USER_DATA_PATH: join(homeDir(), 'Library', 'Application Support', 'orca-dev') } })
         const parsed = JSON.parse(stdout)
         // chỉ giữ terminal trong worktree sf-* THẬT (tồn tại trên đĩa trong workspace
         // trees) — tránh title mồ côi của story cũ ghép nhầm vào node story mới
-        const wsBase2 = join(process.env.HOME || '', 'orca', 'workspaces')
+        const wsBase2 = join(homeDir(), 'orca', 'workspaces')
         for (const t of parsed?.result?.terminals ?? []) {
           const wtPath = (t.worktreeId || '').split('::')[1] || ''
           const wt = wtPath.split('/').pop()

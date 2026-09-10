@@ -22,6 +22,10 @@ const WORKER_ENV_ALLOWLIST = [
   'SYSTEMROOT',
   'SYSTEMDRIVE',
   'WINDIR',
+  // Why: orca CLI resolves its runtime metadata under APPDATA; plugins spawn it
+  // (launcher story scan) and both are standard Windows shell-folder roots.
+  'APPDATA',
+  'LOCALAPPDATA',
   'COMSPEC',
   'PATHEXT',
   'PROCESSOR_ARCHITECTURE',
