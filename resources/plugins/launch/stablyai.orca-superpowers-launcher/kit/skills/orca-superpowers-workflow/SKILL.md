@@ -711,6 +711,8 @@ fi
 
 **OUTBOX dir (GH-32):** mọi reviewer OUTBOX (code-reviewer/verifier/security-audit) ghi vào `<repo>/docs/superpowers/reviews/<agent>-<sf-slug>.md` (gitignored — runtime artifact; KHÔNG /tmp, path MSYS chết qua agent boundary). Khi ≥2 reviewer chạy cùng SF (rolling review ≥8 tasks hoặc escalation security-audit), coordinator đọc fused report thay vì N raw OUTBOX: chạy `story-review-fuse <sf-slug>` — gộp findings theo cụm (file+line-window+severity), sắp theo confidence, findings conf-thấp vào mục `NEEDS VERIFICATION` (KHÔNG bao giờ drop finding). Mục needs-verification ĐỌC, không skip. OUTBOX stale của SF cũ xóa trước re-run (glob exact prefix `<agent>-<sf-slug>*.md` chống nhiễm chéo).
 
+**OUTBOX ghi bởi coordinator (GH-42, kit ≥2.8.0):** 3 reviewer bị deny Write/Edit/NotebookEdit (`disallowedTools`) — KHÔNG tự ghi được file OUTBOX. Reviewer trả report + verdict TOÀN BỘ trong message return; coordinator (có Write) chép nguyên văn vào file OUTBOX trên trước khi fuse/resolve — story-review-fuse tiếp tục đọc file như cũ.
+
 **When:** Verification checkpoint reached (as defined in plan). **Precondition:** an Orca `taskId` exists (from Bridge 3); if not, fall back to chat approval.
 
 ```bash
