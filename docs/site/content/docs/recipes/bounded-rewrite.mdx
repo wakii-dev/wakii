@@ -1,0 +1,28 @@
+---
+title: Bound every rename with an alias, a guide, and an expiry date
+---
+
+Renaming a public surface — a CLI command, a config key, a docs URL — used to be a coin flip: users on the old name either migrated silently or broke loudly. The fix isn't "never rename". It's making the old name a signed, dated corridor instead of a wall.
+
+This is the pattern the [AutoGen](https://microsoft.github.io/autogen/) project uses when it retires a package: ship a proxy package that re-exports the new one, publish a migration guide, and mark the old name maintenance-mode. The old name keeps working, on a countdown, and carries zero new logic.
+
+## Steps
+
+1. Don't delete the old name. Declare it as an alias that points at the new one — the new surface stays the single source of truth. An alias with logic is a second codebase.
+1. Write a migration guide with four sections: what changed, an old→new map, migration steps, and notes. Frontmatter carries the expiry date (`YYYY-MM-DD`) — the one place the deadline lives, set by whoever did the rename. No date? The linter assumes a default of today + 90 days and warns on every run.
+1. Run the linter as a merge gate. It diffs your branch against the base and checks every vanished name for its three artifacts: `MISSING-ALIAS`, `MISSING-GUIDE`, `MISSING-REDIRECT` for docs slugs. An expired alias fails the same way: `EXPIRED <name>` — the fix is to delete the alias, which is the whole point.
+1. When the expiry date passes, remove the alias and its guide in one commit. A shim that translates old behavior forever is unlimited debt; a corridor that closes on schedule is bounded.
+
+## Why it works
+
+Aliases convert a hard cutover into a countdown users can see. One source of truth means the old name can never drift from the new one — it only forwards. And expiry dates mean the debt has a maturity date instead of compounding forever.
+
+Real failure that motivated this: a binary shipped in an install for weeks without its manifest entry. The installer validated manifest against disk, found the mismatch, and blocked every capability — fail-loud caught it, but the deeper lesson is that a surface and its declaration must ship together. Renames fail the same way in reverse: the name disappears from the manifest while users' references to it survive.
+
+In a repo with the `story-surface-lint` tool installed, the check runs as part of `story-verify` and ad hoc:
+
+```bash
+story-surface-lint wakii-dev   # diffs merge-base..HEAD against the base branch
+```
+
+Exit 0 with a `WARN surface-lint:` line means an alias is nearing expiry — still green, but the countdown is visible.
