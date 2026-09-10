@@ -1,0 +1,53 @@
+name: Fork PR Fast Tests
+
+# Fork CI gap (learned 2026-09-10 FI-380): release pipeline chỉ chạy typecheck,
+# test regression lọt thẳng vào release (GH-40 runId, plugin-launch-content
+# hash). Lane này chạy 2 suite then chốt — ratchet hẹp, < vài phút:
+# - plugin-launch-content: hash vendored resources phải khớp bundled-plugins.json
+# - orchestration/db: gate/task store contract
+
+on:
+  pull_request:
+    branches: [wakii-dev]
+    paths:
+      - "src/main/plugins/**"
+      - "src/main/runtime/orchestration/**"
+      - "src/shared/plugins/**"
+      - "resources/plugins/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/fork-pr-fast-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fork-pr-fast-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fast-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/setup@v2
+        with:
+          install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: package.json
+          cache: pnpm
+
+      # Lane unit-test: bỏ download Electron binary (postinstall) — không cần
+      - name: Install dependencies
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+        run: pnpm install --frozen-lockfile
+
+      - name: Critical suites
+        run: pnpm test src/main/plugins/plugin-launch-content.test.ts src/main/runtime/orchestration/db.test.ts
