@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { OrchestrationDb } from '../orchestration-db'
+import { OrchestrationError } from '../../orchestration-error'
 import type { GateTransitionEvent } from './decision-gate-store'
 
 // resolveGateIfPending + gate-transition listener coverage. Store basics
@@ -131,5 +132,50 @@ describe('decision-gate-store', () => {
     const timedOut = d.timeoutGate(last.id)
     expect(timedOut?.status).toBe('timeout')
     expect(d.getTask(task.id)?.status).toBe('blocked')
+  })
+
+  // GH-40: options non-empty + resolution ∉ options → throw (both resolve fns).
+  it('resolveGate throws resolution_not_in_options when resolution is outside non-empty options', () => {
+    const d = createDb()
+    const task = d.createTask({ spec: 'work' })
+    const gate = d.createGate({ taskId: task.id, question: 'ok?', options: ['yes', 'no'] })
+
+    expect(() => d.resolveGate(gate.id, 'surprise')).toThrowError(OrchestrationError)
+    try {
+      d.resolveGate(gate.id, 'surprise')
+    } catch (error) {
+      expect((error as OrchestrationError).code).toBe('resolution_not_in_options')
+    }
+    // THROWS phải nguyên trạng — gate vẫn pending, task vẫn blocked.
+    expect(d.getGate(gate.id)?.status).toBe('pending')
+    expect(d.getGate(gate.id)?.resolution).toBeNull()
+    expect(d.getTask(task.id)?.status).toBe('blocked')
+  })
+
+  it('resolveGateIfPending throws resolution_not_in_options when resolution is outside non-empty options', () => {
+    const d = createDb()
+    const task = d.createTask({ spec: 'work' })
+    const gate = d.createGate({ taskId: task.id, question: 'ok?', options: ['yes', 'no'] })
+
+    expect(() => d.resolveGateIfPending(gate.id, 'surprise')).toThrowError(OrchestrationError)
+    try {
+      d.resolveGateIfPending(gate.id, 'surprise')
+    } catch (error) {
+      expect((error as OrchestrationError).code).toBe('resolution_not_in_options')
+    }
+    expect(d.getGate(gate.id)?.status).toBe('pending')
+    expect(d.getTask(task.id)?.status).toBe('blocked')
+  })
+
+  it('both resolve fns pass a resolution on a gate with empty options (conformance phone path)', () => {
+    const d = createDb()
+    const task = d.createTask({ spec: 'work' })
+    const gate = d.createGate({ taskId: task.id, question: 'ok?' })
+
+    // options rỗng (createGate mặc định) → 'phone' pass nguyên trạng.
+    const resolved = d.resolveGateIfPending(gate.id, 'phone')
+    expect(resolved?.status).toBe('resolved')
+    expect(resolved?.resolution).toBe('phone')
+    expect(d.getTask(task.id)?.status).toBe('ready')
   })
 })

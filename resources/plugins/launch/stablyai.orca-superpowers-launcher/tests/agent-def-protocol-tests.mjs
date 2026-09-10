@@ -92,6 +92,33 @@ console.log(`\n== [gh32] findings template — confidence + evidence trong 3 age
   }
 }
 
+// =====================================================================
+console.log(`\n== [gh40] task-executor def — REPORT fence template + validator self-check ==`)
+{
+  const md = readFileSync(join(AGENTS, 'task-executor.md'), 'utf8')
+  // Template fence đủ 6 field + fence đóng
+  check('gh40', 'có fence mở REPORT', /^REPORT$/m.test(md))
+  check('gh40', 'có fence đóng /REPORT', /^\/REPORT$/m.test(md))
+  for (const field of ['task-id:', 'status:', 'commit:', 'files:', 'tests:', 'description:']) {
+    check('gh40', `template có field ${field}`, md.includes(`\n${field} `) || md.includes(`\n${field}<`))
+  }
+  // Validator self-check advisory — KHÔNG hard-gate
+  check('gh40', 'nhắc chạy story-report-validate trước gửi', md.includes('story-report-validate'))
+  check('gh40', 'self-check là advisory (không hard-gate — hook-stop fail-open)', /advisory/.test(md) && md.includes('fail-open'))
+  // Grammar pins: none chỉ khi BLOCKED; tránh /REPORT trong description; notes fold
+  check('gh40', 'none chỉ khi BLOCKED (DONE đòi giá trị thật)', /none chỉ khi BLOCKED/.test(md))
+  check('gh40', 'cảnh báo tránh /REPORT trong description', md.includes('TRÁNH paste log chứa /REPORT'))
+  check('gh40', 'notes fold vào description', md.includes('notes/deviations/follow-ups fold'))
+  // Legacy warn semantics được nêu đúng
+  check('gh40', 'legacy no-fence chỉ WARN (FAIL từ kit 2.8.0)', md.includes('LEGACY-REPORT') && md.includes('2.8.0'))
+  // Token chỉ đích danh nằm trong def (executor tự sửa 1 lần)
+  check('gh40', 'token MISSING-FIELD chỉ đích danh', md.includes('MISSING-FIELD <name> (got: <v>)'))
+  // fence đứng SAU headline DONE/BLOCKED (headline giữ — spec T5)
+  const iHeadline = md.indexOf('On failure: `BLOCKED <task-id>')
+  const iFence = md.search(/^REPORT$/m)
+  check('gh40', 'fence đứng sau DONE/BLOCKED headline', iHeadline > -1 && iFence > iHeadline)
+}
+
 console.log(`\n== TOTAL: ${pass} PASS / ${fail} FAIL ==`)
 if (failures.length) {
   console.log('FAILURES:\n- ' + failures.join('\n- '))

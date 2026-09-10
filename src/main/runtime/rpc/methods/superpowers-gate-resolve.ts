@@ -1,15 +1,21 @@
 import { z } from 'zod'
 import { defineMethod, type RpcMethod } from '../core'
 import { requiredStringAllowingEmpty } from '../schemas'
+import { OrchestrationError } from '../../orchestration/orchestration-error'
 import type {
   SuperpowersGateResolveError,
   SuperpowersGateResolveResult
 } from '../../../../shared/superpowers/story-rpc-contract'
 
-// Phone path resolve — result-field errors (§3b PINNED), never throws for the
-// taxonomy. Deliberately no run-scope check: the desktop RPC consumer is
-// server-trusting and the phone UI enforces gate options. Resolution outside
-// gate.options is still accepted here.
+// Phone path resolve — result-field errors (§3b PINNED — updated GH-40), never
+// throws for the taxonomy. Deliberately no run-scope check: the desktop RPC
+// consumer is server-trusting. MIGRATION from the earlier "server-trusting,
+// any resolution accepted" contract: the store now THROWS
+// OrchestrationError('resolution_not_in_options') when gate.options is
+// non-empty and the resolution is outside it (GH-40); this handler catches
+// that throw and maps it to the taxonomy result-field { error:
+// 'invalid_resolution' } — the rejection never crosses RPC as a generic error.
+// Options-empty gates keep accepting any resolution (conformance phone path).
 export const SUPERPOWERS_GATE_RESOLVE_METHODS: RpcMethod[] = [
   defineMethod({
     name: 'superpowers.gateResolve',
@@ -36,7 +42,20 @@ export const SUPERPOWERS_GATE_RESOLVE_METHODS: RpcMethod[] = [
       }
       // Conditional UPDATE guarded on status='pending' — a lost race (CLI or a
       // parallel phone call already settled it) lands as gate_not_pending.
-      const resolved = db.resolveGateIfPending(params.gateId, params.resolution)
+      // The store throws resolution_not_in_options on a bad resolution (GH-40);
+      // map it into the §3b taxonomy instead of throwing across RPC.
+      let resolved
+      try {
+        resolved = db.resolveGateIfPending(params.gateId, params.resolution)
+      } catch (error) {
+        if (
+          error instanceof OrchestrationError &&
+          error.code === 'resolution_not_in_options'
+        ) {
+          return { error: 'invalid_resolution' }
+        }
+        throw error
+      }
       if (!resolved) {
         return { error: 'gate_not_pending' }
       }

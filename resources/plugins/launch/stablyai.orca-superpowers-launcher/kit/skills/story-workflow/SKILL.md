@@ -63,6 +63,8 @@ Developer (task-executor / SF agent)
 ├─ Làm: plan chi tiết SF → code → tests pass → commit atomic
 ├─ NOT tự ý mở scope. NOT quyết định kiến trúc (flag trong notes)
 └─ Báo: DONE (commit+files+tests) / BLOCKED (symptom+tried+need)
+   └─ kèm REPORT fence máy-đọc (GH-40) — self-check `story-report-validate`
+      trước gửi (exit 1 → sửa rồi submit; report thiếu fence chỉ WARN)
 
 Tester (verifier / code-reviewer / security-audit — độc lập với Dev)
 ├─ Nhận: diff/PR của SF sau khi Dev xong
