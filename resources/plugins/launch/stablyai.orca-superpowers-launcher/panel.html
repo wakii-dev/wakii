@@ -1642,7 +1642,7 @@ Tech blog: markdown posts, post list, single-post view, tag filter, dark/light t
             '<div style="width:22px;height:22px;border:2px solid var(--primary,#2563eb);border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></div>' +
             '<div style="font-size:12px;color:var(--muted-foreground,#999);">Loading… ' + esc(name) + '</div></div>'
         }
-        call('workspace.fileRead', { dir: 'brackets', name }).then((r) => {
+        call('workspace.fileRead', { path: 'docs/superpowers/brackets/' + name }).then((r) => {
           if (seq !== loadSeq) return // stale response — request mới hơn đã thắng
           if (!r.ok) { status.textContent = 'fileRead: ' + (r.error || r.errorCode); return }
           var md = (r.value && r.value.content) || ''
@@ -1825,42 +1825,18 @@ Tech blog: markdown posts, post list, single-post view, tag filter, dark/light t
         if (lastFit) fitView(lastFit.W, lastFit.H, lastFit.bbox)
       })
 
-      // Agent activity + progress: tự tính từ FS (không phụ thuộc worker poll!)
-      // - progress: đọc plan file SF worktree qua workspace.fileRead → đếm [x]/[ ]
-      // - agents: vẫn từ worker story.tasks (terminal titles — chỉ worker lấy được)
+      // Agent activity + progress: worker story.tasks (terminal titles + plan
+      // checkbox scan per SF worktree — chỉ worker scan được nhiều worktree).
       var storyTasks = { agents: [], progress: {} }
       var lastTasksStamp = null
-      var planCache = {} // worktree → {done,total,pct,est}
-      function fsProgressFor(branches) {
-        // branches: từ parsePlan — map SF-N → sf-<n>-<slug> worktree qua bracket Tasks
-        // (worktree naming: sf-<số>-<slug từ title>)
-        var out = {}
-        branches.forEach(b => {
-          var n = (b.id.match(/SF-(\d+)/) || [])[1]
-          if (!n) return
-          // tìm plan file khớp sf<n> trong fileList... cần dir listing worktree —
-          // dùng heuristic: đọc mọi file fileList contexts? KHÔNG — dùng cách khác:
-          // scan storyFiles + các SF worktree pattern qua fileList dirs không có.
-          // → worker đã làm tốt phần scan; panel chỉ OVERRIDE khi worker stale.
-        })
-        return out
-      }
       function refreshStoryTasks() {
-        // progress: TỰ LẤY qua workspace.planProgress (main process — không worker,
-        // hết lazy-death). agents: vẫn worker storage (terminal titles).
-        var pp = call('workspace.planProgress', {})
         var st = call('storage.get', { key: 'story.tasks' })
-        return Promise.all([pp, st]).then(([rp, r]) => {
-          if (rp && rp.ok) {
-            var prog = (rp.value && rp.value.progress) || {}
-            storyTasks.progress = prog
-          }
+        return st.then((r) => {
           if (!r.ok) { maybeRerender(); return }
           var t = (r.value && r.value.value !== undefined ? r.value.value : r.value)
           if (!t) { maybeRerender(); return }
           storyTasks.agents = t.agents || []
-          // worker story.tasks có 'cur' (task đang chạy) — merge đè entries host-method
-          if (t.progress) storyTasks.progress = Object.assign({}, storyTasks.progress, t.progress)
+          storyTasks.progress = t.progress || {}
           // re-render khi agents đổi (progress re-render cùng lúc)
           var stamp = t.fetchedAt || ''
           if (stamp && stamp !== lastTasksStamp) {
@@ -1870,7 +1846,7 @@ Tech blog: markdown posts, post list, single-post view, tag filter, dark/light t
         })
       }
       function maybeRerender() {
-        // progress đổi (planProgress) nhưng agents không → vẫn re-render nhẹ
+        // progress đổi nhưng agents không → vẫn re-render nhẹ
         if (progressChanged()) rerenderIfViewing()
       }
       var lastProgSig = ''

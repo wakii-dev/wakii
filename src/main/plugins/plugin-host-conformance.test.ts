@@ -37,6 +37,7 @@ function createServices(): PluginHostServices {
       .fn()
       .mockResolvedValue([{ id: TERMINAL_ID, title: '/home/private/orca' }]),
     listWorktreeFiles: vi.fn().mockResolvedValue({ files: [{ name: 'README.md', type: 'file' }] }),
+    readWorktreeFile: vi.fn().mockResolvedValue({ content: '# bracket fixture\nplan content' }),
     sendTerminalText: vi.fn().mockResolvedValue({ accepted: true }),
     dispatchPluginNotification: vi.fn().mockResolvedValue({ delivered: true }),
     storage: {
@@ -108,6 +109,7 @@ function createAdapters(
 const successParams: Record<string, unknown> = {
   'workspace.readContext': {},
   'workspace.listFiles': { dir: 'docs' },
+  'workspace.fileRead': { path: 'docs/superpowers/brackets/fi380.md' },
   'terminal.sendText': { terminalId: TERMINAL_ID, text: 'echo hi', enter: true },
   'notifications.show': { title: 'Hello' },
   'storage.get': { key: 'alpha' },
@@ -123,8 +125,8 @@ const successParams: Record<string, unknown> = {
 }
 
 describe('plugin host main/relay conformance', () => {
-  it('runs a granted success through both transports for all 14 v0 methods', async () => {
-    expect(PLUGIN_HOST_API_V0).toHaveLength(14)
+  it('runs a granted success through both transports for all 15 v0 methods', async () => {
+    expect(PLUGIN_HOST_API_V0).toHaveLength(15)
     expect(Object.keys(successParams).sort()).toEqual(
       PLUGIN_HOST_API_V0.map((entry) => entry.name).sort()
     )

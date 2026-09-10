@@ -38,6 +38,25 @@ export type PluginRuntimeDelegate = {
   }): Promise<{ delivered: boolean }>
 }
 
+/** Containment guard shared by workspace fs reads: the shared schema already
+ *  rejects absolute/dot segments, but the service binding must not trust its
+ *  caller either — resolve and verify the target stays under the worktree root. */
+async function resolveContainedWorktreePath(
+  delegate: PluginRuntimeDelegate,
+  relativePath: string
+): Promise<string> {
+  const context = await delegate.resolveActiveWorktreeContext()
+  if (!context) {
+    throw new Error('no active worktree is available')
+  }
+  const root = nodePath.resolve(context.path)
+  const target = nodePath.resolve(root, relativePath)
+  if (target !== root && !target.startsWith(root + nodePath.sep)) {
+    throw new Error('path escapes the active worktree')
+  }
+  return target
+}
+
 export function bindPluginHostServices(input: {
   delegate: PluginRuntimeDelegate
   pluginsDataDir: string
@@ -69,18 +88,7 @@ export function bindPluginHostServices(input: {
         .map((terminal) => ({ id: terminal.handle }))
     },
     listWorktreeFiles: async (dir) => {
-      const context = await delegate.resolveActiveWorktreeContext()
-      if (!context) {
-        throw new Error('no active worktree is available')
-      }
-      // Containment guard: the shared schema already rejects absolute/dot
-      // segments, but the service binding must not trust its caller either —
-      // resolve and verify the target stays under the worktree root.
-      const root = nodePath.resolve(context.path)
-      const target = nodePath.resolve(root, dir ?? '.')
-      if (target !== root && !target.startsWith(root + nodePath.sep)) {
-        throw new Error('dir escapes the active worktree')
-      }
+      const target = await resolveContainedWorktreePath(delegate, dir ?? '.')
       let entries
       try {
         entries = await fs.readdir(target, { withFileTypes: true })
@@ -103,6 +111,23 @@ export function bindPluginHostServices(input: {
         )
         .slice(0, PLUGIN_WORKSPACE_FILE_LIST_LIMIT)
       return { files }
+    },
+    readWorktreeFile: async (path) => {
+      const target = await resolveContainedWorktreePath(delegate, path)
+      let content
+      try {
+        content = await fs.readFile(target, 'utf8')
+      } catch (error) {
+        const code = (error as NodeJS.ErrnoException).code
+        if (code === 'ENOENT') {
+          throw new Error(`file not found: ${path}`)
+        }
+        if (code === 'EISDIR') {
+          throw new Error(`path is a directory: ${path}`)
+        }
+        throw error
+      }
+      return { content }
     },
     sendTerminalText: async (terminalId, action) => {
       try {

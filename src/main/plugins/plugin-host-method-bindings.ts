@@ -3,6 +3,7 @@ import {
   PLUGIN_TERMINAL_ID_MAX_LENGTH,
   PLUGIN_WORKSPACE_FILE_LIST_LIMIT,
   PLUGIN_WORKSPACE_FILE_NAME_MAX_LENGTH,
+  PLUGIN_WORKSPACE_FILE_READ_MAX_BYTES,
   PLUGIN_WORKSPACE_LABEL_MAX_LENGTH,
   PLUGIN_WORKSPACE_TERMINAL_LIMIT
 } from '../../shared/plugins/plugin-host-api'
@@ -22,6 +23,7 @@ export type PluginHostServices = {
   resolveActiveWorktreeContext(): Promise<PluginWorktreeContext | null>
   listWorktreeTerminals(worktreeId: string): Promise<{ id: string }[]>
   listWorktreeFiles(dir?: string): Promise<{ files: { name: string; type: 'file' | 'dir' }[] }>
+  readWorktreeFile(path: string): Promise<{ content: string }>
   sendTerminalText(
     terminalId: string,
     action: { text: string; enter: boolean }
@@ -86,6 +88,12 @@ const HANDLERS = new Map<string, BoundPluginHostMethod>([
         )
         .slice(0, PLUGIN_WORKSPACE_FILE_LIST_LIMIT)
     }
+  }),
+  definePluginMethod('workspace.fileRead', async (params, { services }) => {
+    const { path } = params as { path: string }
+    const result = await services.readWorktreeFile(path)
+    // Clamp to the published cap before the result schema sees the payload.
+    return { content: result.content.slice(0, PLUGIN_WORKSPACE_FILE_READ_MAX_BYTES) }
   }),
   definePluginMethod('terminal.sendText', async (params, { services }) => {
     const { terminalId, text, enter } = params as {
