@@ -74,7 +74,7 @@ Quy tắc append:
 5. Xong chạy `bin/story-memory-parse validate` — gặp duplicate S|P|O do merge song song → chạy `bin/story-memory-fuse` rồi validate lại.
 
 Watermark + audit (cùng watermark incremental với watchdog `--with-index`):
-- Chạy `bin/story-memory mark-git <repo> <short-hash-HEAD>` — subcommand ghi/cập nhật dòng `git:<repo>|<hash>` trong `~/.story-memory.state` DƯỚI LOCK (KHÔNG sửa state file bằng tay nữa).
+- Cập nhật `~/.story-memory.state`: dòng `git:<repo>|<short-hash-HEAD>` (thay dòng cũ của repo nếu có) + dòng `linear|<ISO-ts>`.
 - Append 1 dòng audit vào `~/.story-memory.log`: `<ISO-ts> | ritual:<story-id> | +N triples` (N = số dòng triple MỚI thêm lần này).
 
 Ví dụ dòng cụ thể:

@@ -24,8 +24,15 @@ claude "/goal STORY <EPIC-ID> COMPLETE theo ĐÚNG checklist sau: (1) mọi SF s
 - `/goal` evaluator = model nhỏ riêng đánh giá sau mỗi turn bằng **những gì Claude
   đã surface trong transcript** → điều kiện phải ghi rõ "chứng minh bằng output
   lệnh thật" (evaluator không tự chạy lệnh).
+- **Goal text GIỚI HẠN 4000 ký tự** (learned 2026-09-09, FI-390): quá limit → headless
+  `-p` exit `success` NGAY với dòng "Goal condition is limited to 4000 characters (got
+  NNNN)" — không tool_use nào, trông như chạy xong. Đếm `len(text)` trước khi spawn.
 - Turn bound (`stop sau 40 turns`) chống chạy vô hạn; blocked-all → in rõ
   STORY-BLOCKED để evaluator trả "impossible" → tự clear.
+- **Watchdog chết ở bound ≠ story xong** (learned 2026-09-09, FI-390): bound hit khi
+  SF cuối Done nhưng CLOSE chưa chạy (cleanup/Epic Done/PR). Coordinator sau mỗi lần
+  watchdog process tắt → chạy 1 vòng check CLOSE checklist thủ công, thiếu bước nào
+  đóng bước đó; đừng chờ vòng kế (không còn vòng nào).
 - Xem tiến trình: `◎ /goal active` indicator (interactive) hoặc
   `--output-format stream-json --verbose` (headless).
 
@@ -60,3 +67,10 @@ chạy tay lệnh `/goal` ở trên sau khi launch SFs. Kiểm tra watchdog số
 **Bảo hiểm khi watchdog cũng chết:** cuối mỗi ngày làm việc, chạy thủ công 1 vòng
 check 3-tầng cho mọi SF In Progress (5 phút) — watchdog là lớp tự động, không phải
 sự thay thế con người nhìn bracket.
+
+## Bracket-vs-reality check khi resume (learned 2026-09-10 FI-380)
+
+Trước khi làm theo context pack/bracket của story resume sau ≥1 ngày: so
+version/target trong bracket với hiện trạng repo (kit.json version, contract
+đã drop chưa, vendored đi trước bao nhiêu). Story khác cùng lúc có thể đã
+kéo thế giới đi lên — bracket stale + làm theo mù = thiết kế sai từ đầu.

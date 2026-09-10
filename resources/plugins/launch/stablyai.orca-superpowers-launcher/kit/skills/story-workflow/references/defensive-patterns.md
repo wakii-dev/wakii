@@ -32,3 +32,10 @@ thấy đủ là nguồn quyết định sai:
 - terminal read --limit N: nếu output dài hơn N → tail ghi rõ `[đã cắt X dòng đầu]`.
 - Rule chung: **đã cắt mà không nói = nói dối bằng cách im lặng.** Fair sample
   (mẫu đại diện) OK, nhưng phải dán nhãn là sample.
+
+## Consumer scan scope — contract change phải rg cả `resources/` (learned 2026-09-10 FI-380)
+
+Đổi/drop method, RPC, host API, schema: scan consumers gồm `src/` VÀ
+`resources/plugins/**` + kit assets (panel.html, main.mjs, bins). Vendored
+plugin là consumer thật — bỏ qua = regression vào release (case: #33 drop
+`workspace.fileRead`, panel.html vẫn gọi → bracket viewer chết trong 1.4.202).

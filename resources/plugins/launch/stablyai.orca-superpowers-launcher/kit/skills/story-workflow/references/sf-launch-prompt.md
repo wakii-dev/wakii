@@ -27,9 +27,6 @@ không phải bước tùy chọn sau):**
  tier by size (Standard if small).
  Run full Phase 0-5 for this SF only. Linear issue: <SF-ISSUE> (In Progress
  at start). Worktree base: story/<epic-id>-<slug> (nhánh đích).
- Report format (GH-40): mọi DONE/BLOCKED kèm REPORT fence máy-đọc — template
- trong agent def; self-check `story-report-validate` trước gửi (exit 1 → sửa,
- DONE thiếu fence chỉ WARN hiện tại).
  COMPLETE run checklist, theo thứ tự — KHÔNG dừng trước bước 4:
    1. code + tests pass
    2. verify (Phase 5) — kiểm từng dòng ACCEPTANCE trong context pack, KHÔNG

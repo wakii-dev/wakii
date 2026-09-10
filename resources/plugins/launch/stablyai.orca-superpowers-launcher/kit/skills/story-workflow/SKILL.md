@@ -34,6 +34,7 @@ re-analyzing, never re-asking.
 | Tạo PR cuối story (push đích + gh pr create) | CLOSE bước 6 | `references/pr-playbook.md` |
 | Chẩn đoán SF vàng/kẹt | Stall detection (OPERATE) | `references/story-watchdog.md` (automation) |
 | Bất kỳ lệnh orca CLI nào | — | `references/cli-verified.md` (REQUIRED) |
+| QA sweep / test toàn bộ sau nhiều fix | `references/qa-sweep.md` (5 lớp lỗi + hybrid fresh-boot) |
 | Trước approve/launch/watchdog/merge | DEFENSIVE PATTERNS | `references/defensive-patterns.md` (REQUIRED) |
 | Watchdog / self-check loop | STORY-WATCHDOG | `references/story-watchdog.md` |
 
@@ -63,8 +64,6 @@ Developer (task-executor / SF agent)
 ├─ Làm: plan chi tiết SF → code → tests pass → commit atomic
 ├─ NOT tự ý mở scope. NOT quyết định kiến trúc (flag trong notes)
 └─ Báo: DONE (commit+files+tests) / BLOCKED (symptom+tried+need)
-   └─ kèm REPORT fence máy-đọc (GH-40) — self-check `story-report-validate`
-      trước gửi (exit 1 → sửa rồi submit; report thiếu fence chỉ WARN)
 
 Tester (verifier / code-reviewer / security-audit — độc lập với Dev)
 ├─ Nhận: diff/PR của SF sau khi Dev xong
@@ -461,6 +460,12 @@ one SF and reports DONE/BLOCKED.
 Khi MỖI SF hoàn thành workflow run (sub-issue Done), TUYỆT ĐỐI KHÔNG kết thúc
 ở worktree SF — phải hợp nhất về nhánh đích NGAY để tier sau thấy code:
 
+**Mirror-back bắt buộc trước CLOSE** (learned 2026-09-10 FI-380): story nào
+đụng vendored assets (orca `resources/plugins/**`, kit/) — port ngược mọi
+thay đổi về lineage source (launcher/story-team-kit) TRƯỚC khi CLOSE, kể cả
+thay đổi của session khác tích lũy ở vendored. Vendored đi trước lineage =
+bundle sau này hạ cấp mất fixes.
+
 **Merge target = PARENT branch (quy tắc tổng):** mỗi nhánh merge về đúng
 nhánh nó được fork từ đó trong cây topology — không hardcode đích/main:
 
@@ -562,8 +567,8 @@ phải disclosure rõ ràng.
 VERDICT-OUTBOX. Tóm tắt cực ngắn (full = file): sub-issue dùng `--parent` +
 `--body` (KHÔNG `relation add --parent`); JSON parse bằng python3 (jq cấm);
 comment qua `--body-file -`; retry luôn READ-BACK trước (silent SUCCESS tồn tại);
-mọi async agent dispatch kèm OUTBOX file (`<repo>/docs/superpowers/reviews/<agent>-<sf-slug>.md`
-— GH-32; file là nguồn sự thật, message chỉ là notification).
+mọi async agent dispatch kèm OUTBOX file — file là nguồn sự thật, message chỉ
+là notification.
 
 ## STORY-WATCHDOG — tự check & hoàn thiện khi bị ngắt quãng (anti-stall)
 
