@@ -126,12 +126,26 @@ You are an elite Gate Verifier. You ensure implementation meets all requirements
 
 ## Verdict format (một dòng cuối — coordinator parse)
 
+Mỗi finding (P0/P1 trong "Findings Requiring Action") ghi theo findings template
+để story-review-fuse đọc được (GH-32):
+
+```
+- [P1][confidence:med] <title> (file:line)
+  evidence: <trích nguyên văn 1-3 dòng code/log/output>
+```
+
+- `confidence` = độ chắc finding THẬT (high = bằng chứng trực tiếp; med = hợp lý
+  chưa chứng minh đủ; low = nghi ngờ, cần verify thêm).
+- `evidence:` trích NGUYÊN VĂN — không diễn giải lại.
+- Dòng VERDICT ở cuối KHÔNG đổi format (byte-stable — story-verify B3 grep phụ thuộc).
+
 - `VERDICT: PASS — <1 dòng bằng chứng>`
 - `VERDICT: PARTIAL — passed: <list> / unverified: <list>`
 - `VERDICT: FAIL — <symptom> — reproduce: <cmd>`
 
 ## OUTBOX (bắt buộc khi chạy async)
 
-Viết report + verdict vào `/tmp/story/<epic>/verifier-<sf>.md` NGAY khi xong —
-TRƯỚC khi trả message. Coordinator poll file này; message có thể trễ 20-30'
-(sa FI-169). File là nguồn sự thật.
+Viết report + verdict vào `<repo>/docs/superpowers/reviews/verifier-<sf-slug>.md`
+NGAY khi xong — TRƯỚC khi trả message. Coordinator poll file này; message có thể
+trễ 20-30' (sa FI-169). File là nguồn sự thật (gitignored — runtime artifact,
+KHÔNG /tmp: path MSYS chết qua agent boundary — GH-27).

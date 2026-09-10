@@ -1,0 +1,327 @@
+#!/usr/bin/env python3
+"""story-review-fuse — gộp findings từ OUTBOX reviews của N reviewer agent (GH-32).
+Đọc <agent>-<sf-slug>*.md (code-reviewer/security-audit/verifier) trong dir OUTBOX,
+parse tolerant 2 shape (bullet `[P?][confidence:?]` + bảng markdown có cột Conf),
+cluster theo (file, line-window ±10 | file-only khi missing-line, severity), sort
+confidence desc, xếp conf-thấp/unparsed vào mục NEEDS VERIFICATION. KHÔNG BAO GIỜ
+drop finding — invariant in_ra == parsed + unparsed (assert, lệch → exit 1).
+VERDICT line byte-stable không bị đụng (chỉ findings mới được fuse).
+CLI: story-review-fuse <sf-slug> [--min-conf high|med|low] [--dir <path>] [--dry-run]
+Dir resolve: --dir > env STORY_REVIEW_DIR > default <git-root>/docs/superpowers/reviews/.
+Exit: 0 (kể cả no-findings, N=1) · 1 catastrophic (file OUTBOX 0 byte) · 2 usage."""
+import os
+import re
+import subprocess
+import sys
+
+# SourceFileLoader-style pattern: bin chạy trực tiếp, không ghi __pycache__ vào
+# kit/ — contentHash của plugin package phải ổn định sau khi fuse chạy.
+sys.dont_write_bytecode = True
+
+# Pipe stdout trên Windows mặc định cp1252 → ═/══ chết UnicodeEncodeError.
+for _s in (sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
+AGENTS = ("code-reviewer", "security-audit", "verifier")
+CONF_RANK = {"high": 2, "med": 1, "low": 0}
+MIN_CONF_DEFAULT = "med"
+
+# Bullet shape (code-reviewer/verifier): - [P1][confidence:med] <title> (file:line)
+BULLET_RE = re.compile(
+    r"^-\s*\[P(\d)\]\[confidence:(high|med|low)\]\s*(.+)\(([^)]+):?(\d*)\)")
+EVIDENCE_RE = re.compile(r"^\s+evidence:\s*(.*)$")
+TABLE_SEP_RE = re.compile(r"^\|[\s:|-]+\|?$")
+
+
+def usage(msg=None):
+    if msg:
+        print(f"usage error: {msg}", file=sys.stderr)
+    print("usage: story-review-fuse <sf-slug> [--min-conf high|med|low] "
+          "[--dir <path>] [--dry-run]", file=sys.stderr)
+    sys.exit(2)
+
+
+def resolve_dir(cli_dir):
+    """--dir > env STORY_REVIEW_DIR > <git-root>/docs/superpowers/reviews/."""
+    if cli_dir:
+        return os.path.abspath(cli_dir)
+    env_dir = os.environ.get("STORY_REVIEW_DIR")
+    if env_dir:
+        return os.path.abspath(env_dir)
+    root = None
+    try:
+        root = subprocess.run(["git", "rev-parse", "--show-toplevel"],
+                              capture_output=True, text=True, timeout=10).stdout.strip()
+    except Exception:
+        pass
+    base = root if root else os.getcwd()
+    return os.path.join(base, "docs", "superpowers", "reviews")
+
+
+def outbox_files(review_dir, slug):
+    """Glob <agent>-<slug>*.md exact prefix: sau slug phải là end hoặc '-' —
+    chống nhiễm chéo sf-10 vs sf-1 (tên '...-sf-10.md' KHÔNG match slug 'sf-1')."""
+    files = []
+    for agent in AGENTS:
+        prefix = f"{agent}-{slug}"
+        try:
+            names = os.listdir(review_dir)
+        except FileNotFoundError:
+            return []
+        for name in sorted(names):
+            if not name.endswith(".md") or not name.startswith(prefix):
+                continue
+            rest = name[len(prefix):-len(".md")]
+            if rest == "" or rest.startswith("-"):
+                files.append(os.path.join(review_dir, name))
+    return files
+
+
+def split_row(line):
+    """'| a | b |' → ['a', 'b'] (strip cell + backticks)."""
+    body = line.strip().strip("|")
+    return [c.strip().strip("`").strip() for c in body.split("|")]
+
+
+def parse_location(cell):
+    """'api/users.ts:45' → (path, line|None); không ':'-line → (cell, None)."""
+    m = re.match(r"^(.*?):(\d+)$", cell)
+    if m:
+        return m.group(1), int(m.group(2))
+    return cell, None
+
+
+class Finding:
+    def __init__(self, raw, source, conf=None, severity=None, path=None, line=None):
+        self.raw = raw            # nguyên văn bullet/table row (evidence gắn kèm)
+        self.source = source      # tên file OUTBOX
+        self.conf = conf          # 'high'|'med'|'low'|None
+        self.severity = severity  # 'P0'|'Critical'|... |None
+        self.path = path
+        self.line = line
+
+
+def parse_file(path, fname):
+    """Trả (findings, unparsed) — tolerant: không khớp shape nào nhưng bắt đầu
+    '- ' hoặc '|' (trừ separator/header) → unparsed, giữ nguyên văn."""
+    with open(path, "rb") as fh:
+        raw = fh.read().decode("utf-8-sig", errors="replace")
+    findings, unparsed = [], []
+    header_idx = None  # cột (location, severity, conf) của bảng đang mở
+    for line in raw.splitlines():
+        if TABLE_SEP_RE.match(line):
+            continue
+        stripped = line.strip()
+        # --- bảng markdown: header row khai báo cột, data rows đọc theo header
+        if stripped.startswith("|"):
+            cells = split_row(line)
+            lower = [c.lower() for c in cells]
+            if "location" in lower:
+                # header row (chứa 'location') — bảng mới bắt đầu (các bảng có thể
+                # nối nhau không dòng trống) — không phải finding
+                header_idx = {k: lower.index(k) for k in ("location", "severity", "conf")
+                              if k in lower}
+                continue
+            if header_idx and len(cells) >= 2:
+                need = max(header_idx.values())
+                if len(cells) > need:
+                    loc = cells[header_idx["location"]] if "location" in header_idx else ""
+                    path_p, line_n = parse_location(loc)
+                    sev = cells[header_idx["severity"]] if "severity" in header_idx else None
+                    conf = cells[header_idx["conf"]] if "conf" in header_idx else None
+                    if conf not in CONF_RANK:
+                        conf = None
+                    findings.append(Finding(stripped, fname, conf=conf,
+                                            severity=sev, path=path_p, line=line_n))
+                    continue
+            # bảng có header chưa mở / row thiếu cột → trông-như-finding
+            unparsed.append(Finding(stripped, fname))
+            continue
+        header_idx = None  # dòng non-table kết thúc bảng đang mở
+        # --- bullet shape
+        m = BULLET_RE.match(line)
+        if m:
+            path_p, line_n = parse_location(m.group(4).strip())
+            f = Finding(m.group(0).rstrip(), fname, conf=m.group(2),
+                        severity=f"P{m.group(1)}", path=path_p,
+                        line=int(line_n) if line_n else None)
+            findings.append(f)
+            continue
+        # --- evidence line gắn finding/unparsed trước nó
+        em = EVIDENCE_RE.match(line)
+        if em:
+            target = findings[-1] if findings and findings[-1].raw else (
+                unparsed[-1] if unparsed and unparsed[-1].raw else None)
+            if target is not None:
+                target.raw += "\n" + line.rstrip()
+            continue
+        # --- trông-như-finding còn lại: bullet không khớp template
+        if stripped.startswith("- "):
+            unparsed.append(Finding(line.rstrip(), fname))
+    return findings, unparsed
+
+
+def cluster(findings):
+    """(file, line ±10, severity) greedy chain theo line tăng dần; missing line →
+    (file, severity) exact. Trả list [cluster findings]."""
+    with_line, without = {}, []
+    for f in findings:
+        if f.line is None:
+            without.append(f)
+        else:
+            with_line.setdefault((f.path, f.severity), []).append(f)
+    groups = []
+    for (path, sev), fs in with_line.items():
+        fs.sort(key=lambda f: f.line)
+        cur = [fs[0]]
+        for f in fs[1:]:
+            if f.line - cur[-1].line <= 10:
+                cur.append(f)
+            else:
+                groups.append(cur)
+                cur = [f]
+        groups.append(cur)
+    # missing-line: gộp theo (file, severity) exact
+    by_fs = {}
+    for f in without:
+        by_fs.setdefault((f.path, f.severity), []).append(f)
+    groups.extend(by_fs.values())
+    return groups
+
+
+def cluster_sort_key(members):
+    """Confidence desc (max của cluster) → file + line đầu tăng dần.
+    members: list Finding HOẶC Finding đơn (per-finding sort dùng lại key)."""
+    if isinstance(members, Finding):
+        members = [members]
+    best = -1
+    for f in members:
+        if f.conf is not None:
+            best = max(best, CONF_RANK[f.conf])
+    first = members[0]
+    line = first.line if first.line is not None else 10**9  # missing line xuống cuối
+    return (-best, first.path or "", line)
+
+
+def fmt_members(members, indent="  "):
+    out = []
+    for f in members:
+        out.append(f"{indent}{f.raw}")
+        out.append(f"{indent}  (nguồn: {f.source})")
+    return out
+
+
+def main():
+    args = sys.argv[1:]
+    dry = "--dry-run" in args
+    if dry:
+        args.remove("--dry-run")
+    min_conf, cli_dir = None, None
+    positional = []
+    i = 0
+    while i < len(args):
+        a = args[i]
+        if a == "--min-conf":
+            if i + 1 >= len(args):
+                usage("--min-conf thiếu giá trị")
+            min_conf = args[i + 1]
+            i += 2
+        elif a == "--dir":
+            if i + 1 >= len(args):
+                usage("--dir thiếu giá trị")
+            cli_dir = args[i + 1]
+            i += 2
+        elif a.startswith("--"):
+            usage(f"flag lạ: {a}")
+        else:
+            positional.append(a)
+            i += 1
+    if len(positional) != 1:
+        usage("cần đúng 1 <sf-slug>")
+    slug = positional[0]
+
+    env_conf = os.environ.get("WAKII_FUSE_MIN_CONF")
+    min_conf = min_conf or env_conf or MIN_CONF_DEFAULT
+    if min_conf not in CONF_RANK:
+        usage(f"--min-conf phải là high|med|low, nhận '{min_conf}'")
+
+    review_dir = resolve_dir(cli_dir)
+    files = outbox_files(review_dir, slug)
+    if not files:
+        print(f"review-fuse: dir đã resolve: {review_dir}")
+        print(f"no findings files cho sf-slug '{slug}' "
+              f"(glob: {{code-reviewer,security-audit,verifier}}-{slug}*.md)")
+        return  # exit 0 — no-op degrade
+
+    findings, unparsed = [], []
+    for fp in files:
+        with open(fp, "rb") as fh:
+            if fh.read(1) == b"":
+                # catastrophic: file OUTBOX tồn tại nhưng 0 byte — reviewer chết ngang
+                print(f"FUSE FAIL: OUTBOX 0 byte — {fp} (reviewer chết ngang?)")
+                sys.exit(1)
+        fs, up = parse_file(fp, os.path.basename(fp))
+        findings += fs
+        unparsed += up
+
+    total_in = len(findings) + len(unparsed)
+
+    # threshold: conf >= min → PRIMARY; low/missing (và toàn bộ unparsed) → NEEDS
+    threshold = CONF_RANK[min_conf]
+    needs = [f for f in findings if f.conf is None or CONF_RANK[f.conf] < threshold]
+    primary = [f for f in findings if f.conf is not None and CONF_RANK[f.conf] >= threshold]
+
+    needs_clusters = cluster(needs)
+    primary_clusters = cluster(primary)
+
+    if dry:
+        print(f"review-fuse dry-run: files={len(files)} parsed={len(findings)} "
+              f"unparsed={len(unparsed)} primary={len(primary)} "
+              f"needs-verification={len(needs) + len(unparsed)} "
+              f"primary-clusters={len(primary_clusters)} "
+              f"needs-clusters={len(needs_clusters)} min-conf={min_conf}")
+        return
+
+    def print_clusters(clusters, section_label):
+        n_emitted = 0
+        print(section_label)
+        for members in sorted(clusters, key=cluster_sort_key):
+            n = len(members)
+            head = members[0]
+            loc = head.path or "?"
+            if head.line is not None:
+                loc += f":{head.line}"
+            label = (f"same-area [{n} source{'s' if n > 1 else ''}]"
+                     if n > 1 else "single finding")
+            print(f"  {label} — {loc} (severity: {head.severity or '?'}):")
+            for ln in fmt_members(members):
+                print(ln)
+            n_emitted += n
+        return n_emitted
+
+    print(f"# Review fuse: {slug}")
+    print(f"sources: {len(files)} file(s) — {', '.join(os.path.basename(f) for f in files)}")
+
+    emitted_needs = print_clusters(
+        needs_clusters, f"══ NEEDS VERIFICATION (conf < {min_conf}) ══")
+    for f in sorted(unparsed, key=lambda x: (x.source, x.raw)):
+        print(f"  [unparsed] {f.raw}")
+        print(f"    (nguồn: {f.source})")
+
+    emitted_primary = print_clusters(primary_clusters, "══ PRIMARY ══")
+
+    # invariant: KHÔNG drop finding — in_ra == parsed + unparsed
+    emitted = emitted_needs + emitted_primary + len(unparsed)
+    print(f"counts: parsed={len(findings)} unparsed={len(unparsed)} "
+          f"primary-clusters={len(primary_clusters)} needs-clusters={len(needs_clusters)} "
+          f"in_ra={emitted}/{total_in}")
+    if emitted != total_in:
+        print(f"FUSE FAIL: invariant vi phạm — in_ra {emitted} != parsed+unparsed {total_in}")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

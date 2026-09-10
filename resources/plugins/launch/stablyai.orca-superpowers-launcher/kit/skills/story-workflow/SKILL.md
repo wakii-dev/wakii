@@ -560,8 +560,8 @@ phải disclosure rõ ràng.
 VERDICT-OUTBOX. Tóm tắt cực ngắn (full = file): sub-issue dùng `--parent` +
 `--body` (KHÔNG `relation add --parent`); JSON parse bằng python3 (jq cấm);
 comment qua `--body-file -`; retry luôn READ-BACK trước (silent SUCCESS tồn tại);
-mọi async agent dispatch kèm OUTBOX file — file là nguồn sự thật, message chỉ
-là notification.
+mọi async agent dispatch kèm OUTBOX file (`<repo>/docs/superpowers/reviews/<agent>-<sf-slug>.md`
+— GH-32; file là nguồn sự thật, message chỉ là notification).
 
 ## STORY-WATCHDOG — tự check & hoàn thiện khi bị ngắt quãng (anti-stall)
 

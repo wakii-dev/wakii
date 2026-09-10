@@ -64,6 +64,34 @@ console.log(`\n== [rbf] rollback-fixer def — protocol checkpoint-restore đủ
     || md.includes('Checkpoint-restore protocol (story checkpoint refs)'))
 }
 
+// =====================================================================
+console.log(`\n== [gh32] findings template — confidence + evidence trong 3 agent-defs ==`)
+{
+  // code-reviewer/verifier: bullet shape + evidence + VERDICT byte-stable note
+  for (const f of ['code-reviewer.md', 'verifier.md']) {
+    const md = readFileSync(join(AGENTS, f), 'utf8')
+    check('gh32', `${f} có bullet shape [P?][confidence:?]`, /\[P\d\]\[confidence:(high|med|low)\]/.test(md))
+    check('gh32', `${f} có evidence: trích nguyên văn`, /evidence:\s/.test(md))
+    check('gh32', `${f} note VERDICT byte-stable`, md.includes('byte-stable'))
+  }
+  // security-audit: 3 bảng đều có cột Conf + Evidence
+  const sa = readFileSync(join(AGENTS, 'security-audit.md'), 'utf8')
+  const tables = sa.split('\n').filter(l => l.trim().startsWith('|') && l.includes('Location'))
+  check('gh32', 'security-audit: các bảng Location đều có cột Conf',
+    tables.length >= 3 && tables.every(l => /\|\s*Conf\s*\|/i.test(l)),
+    `tables=${tables.length}`)
+  check('gh32', 'security-audit: các bảng Location đều có cột Evidence',
+    tables.every(l => /Evidence/i.test(l)))
+  check('gh32', 'security-audit: confidence enum high/med/low trong doc', /high\/med\/low/.test(sa))
+  check('gh32', 'security-audit: có OUTBOX reviews/ dir', sa.includes('docs/superpowers/reviews/security-audit-'))
+  // OUTBOX dir protocol 3 defs (GH-32 task 1)
+  for (const f of ['code-reviewer.md', 'verifier.md', 'task-executor.md']) {
+    const md = readFileSync(join(AGENTS, f), 'utf8')
+    check('gh32', `${f} OUTBOX trỏ docs/superpowers/reviews/`, md.includes('docs/superpowers/reviews/'))
+    check('gh32', `${f} OUTBOX KHÔNG còn /tmp/story`, !md.includes('/tmp/story/'))
+  }
+}
+
 console.log(`\n== TOTAL: ${pass} PASS / ${fail} FAIL ==`)
 if (failures.length) {
   console.log('FAILURES:\n- ' + failures.join('\n- '))
