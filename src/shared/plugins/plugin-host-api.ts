@@ -24,6 +24,7 @@ export const PLUGIN_WORKSPACE_LABEL_MAX_LENGTH = 512
 export const PLUGIN_TERMINAL_ID_MAX_LENGTH = 1024
 export const PLUGIN_WORKSPACE_FILE_LIST_LIMIT = 1000
 export const PLUGIN_WORKSPACE_FILE_NAME_MAX_LENGTH = 256
+export const PLUGIN_WORKSPACE_FILE_READ_MAX_BYTES = 256 * 1024
 
 const workspaceReadContextParams = z.object({}).strict().optional()
 const workspaceReadContextResult = z
@@ -48,13 +49,13 @@ const terminalSendTextParams = z.object({
 })
 const terminalSendTextResult = z.object({ accepted: z.boolean() })
 
-/** Listing stays inside the active worktree root: relative forward-slash
+/** Path params stay inside the active worktree root: relative forward-slash
  *  segments only — no absolute paths, no `..`, no backslashes, no dot
  *  segments, no control characters. */
-const isSafeRelativeDir = (dir: string): boolean =>
-  !dir.startsWith('/') &&
-  !dir.includes('\\') &&
-  dir
+const isSafeRelativePath = (value: string): boolean =>
+  !value.startsWith('/') &&
+  !value.includes('\\') &&
+  value
     .split('/')
     .every(
       (segment) =>
@@ -72,7 +73,7 @@ const workspaceListFilesParams = z
       .string()
       .min(1)
       .max(PLUGIN_WORKSPACE_LABEL_MAX_LENGTH)
-      .refine(isSafeRelativeDir, 'dir must be a relative path without dot segments')
+      .refine(isSafeRelativePath, 'dir must be a relative path without dot segments')
       .optional()
   })
   .strict()
@@ -89,6 +90,22 @@ const workspaceListFilesResult = z
           .strict()
       )
       .max(PLUGIN_WORKSPACE_FILE_LIST_LIMIT)
+  })
+  .strict()
+
+const workspaceFileReadParams = z
+  .object({
+    /** Worktree-relative file path to read (e.g. `docs/superpowers/brackets/x.md`). */
+    path: z
+      .string()
+      .min(1)
+      .max(PLUGIN_WORKSPACE_LABEL_MAX_LENGTH)
+      .refine(isSafeRelativePath, 'path must be a relative path without dot segments')
+  })
+  .strict()
+const workspaceFileReadResult = z
+  .object({
+    content: z.string().max(PLUGIN_WORKSPACE_FILE_READ_MAX_BYTES)
   })
   .strict()
 
@@ -180,6 +197,19 @@ export const PLUGIN_HOST_API_V0: readonly PluginHostMethodSpec[] = [
     panel: true,
     params: workspaceListFilesParams,
     result: workspaceListFilesResult
+  }),
+  spec({
+    name: 'workspace.fileRead',
+    since: '1.1',
+    scope: 'active-worktree',
+    capability: 'workspace:read',
+    mutation: false,
+    // Panel-callable read: containment-guarded inside the active worktree and
+    // size-capped, so panels (e.g. the launcher bracket viewer) can render
+    // workspace files without a worker hop.
+    panel: true,
+    params: workspaceFileReadParams,
+    result: workspaceFileReadResult
   }),
   spec({
     name: 'terminal.sendText',
