@@ -82,13 +82,28 @@ describe('superpowers.gateResolve', () => {
     expect(db.getTask(taskId)?.status).toBe('ready')
   })
 
-  it('accepts a resolution outside gate options (server-trusting contract)', async () => {
+  // GH-40: store throws resolution_not_in_options on a bad resolution (options
+  // non-empty) — the handler maps it to the §3b taxonomy result-field instead
+  // of throwing across RPC.
+  it('maps a resolution outside non-empty options to invalid_resolution without throwing', async () => {
     const db = new OrchestrationDb(':memory:')
-    const { gateId } = seedPendingGate(db, ['yes', 'no'])
-    await expect(callGateResolve(makeRuntime(db), gateId, 'surprise')).resolves.toEqual({
+    const { gateId, taskId } = seedPendingGate(db, ['yes', 'no'])
+    const runtime = makeRuntime(db)
+    await expect(callGateResolve(runtime, gateId, 'surprise')).resolves.toEqual({
+      error: 'invalid_resolution'
+    })
+    // Rejected resolution leaves the gate pending and the task blocked.
+    expect(db.getGate(gateId)?.status).toBe('pending')
+    expect(db.getTask(taskId)?.status).toBe('blocked')
+  })
+
+  it('accepts a resolution on a gate with empty options (conformance phone path)', async () => {
+    const db = new OrchestrationDb(':memory:')
+    const { gateId } = seedPendingGate(db)
+    await expect(callGateResolve(makeRuntime(db), gateId, 'phone')).resolves.toEqual({
       gateId,
       status: 'resolved',
-      resolution: 'surprise'
+      resolution: 'phone'
     })
   })
 
@@ -108,12 +123,13 @@ describe('superpowers.gateResolve', () => {
   it('returns gate_not_pending for an already-resolved gate (CLI won the race)', async () => {
     const db = new OrchestrationDb(':memory:')
     const { gateId } = seedPendingGate(db, ['yes', 'no'])
-    db.resolveGate(gateId, 'from-cli')
+    // CLI resolve trước với resolution hợp lệ (GH-40: sai options giờ bị store chặn).
+    db.resolveGate(gateId, 'yes')
     await expect(callGateResolve(makeRuntime(db), gateId, 'yes')).resolves.toEqual({
       error: 'gate_not_pending'
     })
     // Phone path must not overwrite the CLI resolution.
-    expect(db.getGate(gateId)?.resolution).toBe('from-cli')
+    expect(db.getGate(gateId)?.resolution).toBe('yes')
   })
 
   it('returns gate_not_pending for a timed-out gate', async () => {

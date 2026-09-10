@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import Database from '../../sqlite/sync-database'
 import { LEGACY_RUN_ID, OrchestrationDb } from './db'
 import type { MessageType } from './db'
+import { OrchestrationError } from './orchestration-error'
 import { createRootDispatch } from './db/root-dispatch-test-fixture'
 
 // Overwrites the datetime('now')-seeded timestamps with explicit fixture values
@@ -550,6 +551,39 @@ describe('OrchestrationDb', () => {
     it('returns undefined for nonexistent gate', () => {
       const d = createDb()
       expect(d.resolveGate('gate_fake', 'yes')).toBeUndefined()
+    })
+
+    // GH-40: options non-empty + resolution sai → CẢ HAI hàm resolve throw.
+    it('resolveGate throws when resolution is outside non-empty options', () => {
+      const d = createDb()
+      const task = d.createTask({ spec: 'work' })
+      const gate = d.createGate({ taskId: task.id, question: 'Proceed?', options: ['yes', 'no'] })
+
+      expect(() => d.resolveGate(gate.id, 'maybe')).toThrowError(OrchestrationError)
+      // Nguyên trạng sau throw: gate pending, task blocked.
+      expect(d.getGate(gate.id)?.status).toBe('pending')
+      expect(d.getTask(task.id)?.status).toBe('blocked')
+    })
+
+    it('resolveGateIfPending throws when resolution is outside non-empty options', () => {
+      const d = createDb()
+      const task = d.createTask({ spec: 'work' })
+      const gate = d.createGate({ taskId: task.id, question: 'Proceed?', options: ['yes', 'no'] })
+
+      expect(() => d.resolveGateIfPending(gate.id, 'maybe')).toThrowError(OrchestrationError)
+      expect(d.getGate(gate.id)?.status).toBe('pending')
+      expect(d.getTask(task.id)?.status).toBe('blocked')
+    })
+
+    it('passes resolution on a gate with empty options (conformance phone path)', () => {
+      const d = createDb()
+      const task = d.createTask({ spec: 'work' })
+      const gate = d.createGate({ taskId: task.id, question: 'ok?' })
+
+      const resolved = d.resolveGateIfPending(gate.id, 'phone')
+      expect(resolved?.status).toBe('resolved')
+      expect(resolved?.resolution).toBe('phone')
+      expect(d.getTask(task.id)?.status).toBe('ready')
     })
   })
 
