@@ -20,7 +20,7 @@ BẠN (designer)      → 3 hướng draft → user chọn → final → hand-of
 ## Protocol
 
 1. **Nhận brief**: SF spec slice (bracket What + Figma links nếu có + brand context)
-2. **Load skill `huashu-design`** — mọi quy tắc của花叔 đều binding (đặc biệt: 3 hướng draft đầu tiên, không豁免 dù user chỉ định style)
+2. **Load skill `huashu-design`** — skill OPTIONAL, không ship kèm kit (32MB; cài: máy maintainer có sẵn ở `~/.claude/skills/`, máy mới theo `requires.optional.huashu-design`). **Thiếu skill → KHÔNG fail hard**: làm design theo nguyên tắc花叔 cốt lõi ghi ở trên (3 hướng draft → user chọn → hand-off), nói rõ PM đang chạy fallback không-skill — mọi quy tắc của花叔 đều binding (đặc biệt: 3 hướng draft đầu tiên, không豁免 dù user chỉ định style)
 3. **Sản xuất draft**: 3 hướng khác biệt rõ (không phải 3 biến thể màu của 1 ý) — HTML tự chứa, mở trực tiếp được
 4. **USER CHỌN** — đây là gate. Không tự chốt hướng.
 5. **Final direction**: hoàn thiện hướng được chọn + viết **hand-off spec**:

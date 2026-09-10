@@ -1,7 +1,7 @@
 // One-shot verify: kit.json hợp lệ qua validator thật (installKit named
 // export) trên temp root — không đụng HOME thật. Chạy: node tests/kit-verify-manifest.mjs
 // Version assert đọc từ kit.json (bump hợp lệ không làm test đỏ).
-import { mkdtempSync, rmSync, existsSync, readFileSync, cpSync } from 'node:fs'
+import { mkdtempSync, rmSync, existsSync, readFileSync, cpSync, readdirSync, statSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, dirname, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -30,6 +30,14 @@ const ok = (name, cond, detail = '') => {
 const kitJson = JSON.parse(readFileSync(join(kitRoot, 'kit.json'), 'utf8'))
 ok('installKit trả true (manifest hợp lệ)', r === true)
 ok(`marker = ${kitJson.version} (khớp kit.json)`, ver === kitJson.version, `got ${JSON.stringify(ver)}`)
+// exec-bit: git có thể lưu 100644 → checkout/sync sinh bins không chạy được
+// (learned 2026-09-11 — 10 bins exit 126). Asset .html được loại.
+{
+  const binDir = join(kitRoot, 'bin')
+  const nonExec = readdirSync(binDir).filter(f => !f.endsWith('.html') && !(statSync(join(binDir, f)).mode & 0o111))
+  ok('kit/bin: mọi bins executable', nonExec.length === 0, `non-exec: ${nonExec.join(',')}`)
+}
+
 ok('version semver + >= 2.8.0 (GH-42 fan-in tối thiểu)', /^\d+\.\d+\.\d+$/.test(kitJson.version) && kitJson.version >= '2.8.0', `got ${kitJson.version}`)
 ok('permission-matrix.md ở kit ROOT — ngoài scan two-way, KHÔNG entry provides',
   existsSync(join(kitRoot, 'permission-matrix.md'))
