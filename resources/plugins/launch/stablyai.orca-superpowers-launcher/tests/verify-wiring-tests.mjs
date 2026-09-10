@@ -37,7 +37,9 @@ function fakeHome(tag) {
   const wt = join(home, 'orca', 'workspaces', 'proj', 'sf-1-test')
   const pluginDest = join(wt, 'resources', 'plugins', 'launch', 'stablyai.orca-superpowers-launcher')
   mkdirSync(pluginDest, { recursive: true })
-  cpSync(pluginRoot, pluginDest, { recursive: true })
+  // Loại .git (file pointer ở worktree-linked checkout, dir ở checkout thường) —
+  // clone fixture phải là repo sạch do git init tự tạo.
+  cpSync(pluginRoot, pluginDest, { recursive: true, filter: (s) => !s.includes('.git') })
   git(wt, 'init', '-q')
   git(wt, 'config', 'user.email', 't@t')
   git(wt, 'config', 'user.name', 't')
