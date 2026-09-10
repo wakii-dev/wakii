@@ -424,7 +424,7 @@ describe('OrchestrationDb', () => {
     // GH-40: options non-empty + resolution sai → CẢ HAI hàm resolve throw.
     it('resolveGate throws when resolution is outside non-empty options', () => {
       const d = createDb()
-      const task = d.createTask({ spec: 'work' })
+      const task = d.createTask({ runId, spec: 'work' })
       const gate = d.createGate({ taskId: task.id, question: 'Proceed?', options: ['yes', 'no'] })
 
       expect(() => d.resolveGate(gate.id, 'maybe')).toThrowError(OrchestrationError)
@@ -435,7 +435,7 @@ describe('OrchestrationDb', () => {
 
     it('resolveGateIfPending throws when resolution is outside non-empty options', () => {
       const d = createDb()
-      const task = d.createTask({ spec: 'work' })
+      const task = d.createTask({ runId, spec: 'work' })
       const gate = d.createGate({ taskId: task.id, question: 'Proceed?', options: ['yes', 'no'] })
 
       expect(() => d.resolveGateIfPending(gate.id, 'maybe')).toThrowError(OrchestrationError)
@@ -445,7 +445,7 @@ describe('OrchestrationDb', () => {
 
     it('passes resolution on a gate with empty options (conformance phone path)', () => {
       const d = createDb()
-      const task = d.createTask({ spec: 'work' })
+      const task = d.createTask({ runId, spec: 'work' })
       const gate = d.createGate({ taskId: task.id, question: 'ok?' })
 
       const resolved = d.resolveGateIfPending(gate.id, 'phone')
