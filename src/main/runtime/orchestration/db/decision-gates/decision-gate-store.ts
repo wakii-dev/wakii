@@ -12,6 +12,20 @@ export type GateTransitionEvent =
   | { kind: 'closed'; gate: DecisionGateRow }
 export type GateTransitionListener = (event: GateTransitionEvent) => void
 
+// Options non-empty + resolution ∉ options → throw (pattern createGate — KHÔNG
+// return undefined trộn lost-race). Options rỗng → pass nguyên trạng (conformance
+// resolution:'phone' trên gate không options).
+function assertResolutionInOptions(gate: DecisionGateRow, resolution: string): void {
+  const options: string[] = JSON.parse(gate.options) as string[]
+  if (options.length > 0 && !options.includes(resolution)) {
+    throw new OrchestrationError(
+      'resolution_not_in_options',
+      `Resolution "${resolution}" is not one of the gate options [${options.join(', ')}].`,
+      { gateId: gate.id, resolution, options }
+    )
+  }
+}
+
 export function setGateTransitionListener(
   this: OrchestrationDb,
   listener: GateTransitionListener
@@ -131,6 +145,7 @@ export function resolveGate(
   if (!gate) {
     return undefined
   }
+  assertResolutionInOptions(gate, resolution)
 
   this.db.exec('SAVEPOINT resolve_gate')
   let resolved: DecisionGateRow | undefined
@@ -166,6 +181,17 @@ export function resolveGateIfPending(
   gateId: string,
   resolution: string
 ): DecisionGateRow | undefined {
+  // Validate before SAVEPOINT: a bad resolution must not open (nor need to
+  // roll back) a savepoint at all. Gate-not-found stays undefined-return here
+  // (phone path maps it to gate_not_found); options mismatch THROWS instead —
+  // a resolution outside gate.options is a caller bug, not a lost race.
+  const existing = this.db.prepare('SELECT * FROM decision_gates WHERE id = ?').get(gateId) as
+    | DecisionGateRow
+    | undefined
+  if (existing) {
+    assertResolutionInOptions(existing, resolution)
+  }
+
   this.db.exec('SAVEPOINT resolve_gate_if_pending')
   let resolved: DecisionGateRow | undefined
   try {
