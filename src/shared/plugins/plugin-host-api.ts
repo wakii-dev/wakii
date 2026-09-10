@@ -22,6 +22,8 @@ export const PANEL_ACTION_TEXT_MAX_LENGTH = 16 * 1024 * 1024
 export const PLUGIN_WORKSPACE_TERMINAL_LIMIT = 50
 export const PLUGIN_WORKSPACE_LABEL_MAX_LENGTH = 512
 export const PLUGIN_TERMINAL_ID_MAX_LENGTH = 1024
+export const PLUGIN_WORKSPACE_FILE_LIST_LIMIT = 1000
+export const PLUGIN_WORKSPACE_FILE_NAME_MAX_LENGTH = 256
 
 const workspaceReadContextParams = z.object({}).strict().optional()
 const workspaceReadContextResult = z
@@ -46,6 +48,50 @@ const terminalSendTextParams = z.object({
 })
 const terminalSendTextResult = z.object({ accepted: z.boolean() })
 
+/** Listing stays inside the active worktree root: relative forward-slash
+ *  segments only — no absolute paths, no `..`, no backslashes, no dot
+ *  segments, no control characters. */
+const isSafeRelativeDir = (dir: string): boolean =>
+  !dir.startsWith('/') &&
+  !dir.includes('\\') &&
+  dir
+    .split('/')
+    .every(
+      (segment) =>
+        segment.length > 0 &&
+        segment !== '.' &&
+        segment !== '..' &&
+        [...segment].every((char) => char.charCodeAt(0) >= 32)
+    )
+
+const workspaceListFilesParams = z
+  .object({
+    /** Worktree-relative subdirectory to list (e.g. `docs/superpowers/brackets`).
+     *  Omitted = the worktree root. */
+    dir: z
+      .string()
+      .min(1)
+      .max(PLUGIN_WORKSPACE_LABEL_MAX_LENGTH)
+      .refine(isSafeRelativeDir, 'dir must be a relative path without dot segments')
+      .optional()
+  })
+  .strict()
+  .optional()
+const workspaceListFilesResult = z
+  .object({
+    files: z
+      .array(
+        z
+          .object({
+            name: z.string().min(1).max(PLUGIN_WORKSPACE_FILE_NAME_MAX_LENGTH),
+            type: z.enum(['file', 'dir'])
+          })
+          .strict()
+      )
+      .max(PLUGIN_WORKSPACE_FILE_LIST_LIMIT)
+  })
+  .strict()
+
 const notificationsShowParams = z.object({
   title: z.string().min(1).max(120),
   body: z.string().max(1000).optional()
@@ -65,47 +111,6 @@ export const PLUGIN_STORAGE_TOTAL_MAX_BYTES = 5 * 1024 * 1024
 export const PLUGIN_STORAGE_KEY_LIMIT = 1024
 
 const storageGetParams = z.object({ key: storageKeySchema })
-// FORK-LOCAL (Wakii): workspace filesystem reads scoped to superpowers docs
-// (brackets + contexts). Panel autocomplete reads these DIRECTLY — no worker hop.
-const workspaceFileListParams = z.object({
-  dir: z.enum(['brackets', 'contexts']).default('brackets')
-})
-const workspaceFileListResult = z.object({
-  files: z
-    .array(
-      z.object({
-        name: z.string(),
-        linear: z.string().nullable(),
-        title: z.string(),
-        mtime: z.number()
-      })
-    )
-    .max(200)
-})
-const workspaceFileReadParams = z.object({
-  dir: z.enum(['brackets', 'contexts']).default('brackets'),
-  name: z.string().min(1).max(128)
-})
-const workspaceFileReadResult = z.object({
-  content: z.string().max(PLUGIN_STORAGE_VALUE_MAX_BYTES)
-})
-
-// FORK-LOCAL: plan progress mọi SF worktree — panel gọi trực tiếp (main process,
-// KHÔNG qua worker lazy-spawn — hết vấn đề worker chết sau restart)
-const workspacePlanProgressParams = z.object({}).strict().optional()
-const workspacePlanProgressResult = z.object({
-  progress: z.record(
-    z.string(),
-    z.object({
-      plan: z.string(),
-      done: z.number(),
-      total: z.number(),
-      pct: z.number(),
-      est: z.boolean().optional()
-    })
-  )
-})
-
 const storageGetResult = z.object({ value: pluginJsonValueSchema })
 const storageSetParams = z.object({ key: storageKeySchema, value: pluginJsonValueSchema })
 const storageSetResult = z.object({ ok: z.literal(true) })
@@ -157,36 +162,6 @@ const spec = <P extends z.ZodTypeAny, R extends z.ZodTypeAny>(
 
 export const PLUGIN_HOST_API_V0: readonly PluginHostMethodSpec[] = [
   spec({
-    name: 'workspace.fileList',
-    since: '1.1-fork',
-    scope: 'active-worktree',
-    capability: 'workspace:read',
-    mutation: false,
-    panel: true,
-    params: workspaceFileListParams,
-    result: workspaceFileListResult
-  }),
-  spec({
-    name: 'workspace.fileRead',
-    since: '1.1-fork',
-    scope: 'active-worktree',
-    capability: 'workspace:read',
-    mutation: false,
-    panel: true,
-    params: workspaceFileReadParams,
-    result: workspaceFileReadResult
-  }),
-  spec({
-    name: 'workspace.planProgress',
-    since: '1.1-fork',
-    scope: 'active-worktree',
-    capability: 'workspace:read',
-    mutation: false,
-    panel: true,
-    params: workspacePlanProgressParams,
-    result: workspacePlanProgressResult
-  }),
-  spec({
     name: 'workspace.readContext',
     since: '1.0',
     scope: 'active-worktree',
@@ -195,6 +170,16 @@ export const PLUGIN_HOST_API_V0: readonly PluginHostMethodSpec[] = [
     panel: true,
     params: workspaceReadContextParams,
     result: workspaceReadContextResult
+  }),
+  spec({
+    name: 'workspace.listFiles',
+    since: '1.0',
+    scope: 'active-worktree',
+    capability: 'workspace:read',
+    mutation: false,
+    panel: true,
+    params: workspaceListFilesParams,
+    result: workspaceListFilesResult
   }),
   spec({
     name: 'terminal.sendText',
@@ -217,21 +202,15 @@ export const PLUGIN_HOST_API_V0: readonly PluginHostMethodSpec[] = [
     result: notificationsShowResult
   }),
   spec({
-    name: 'clipboard.write',
-    since: '1.4',
-    scope: 'desktop',
-    capability: 'clipboard:write',
-    mutation: true,
-    panel: true,
-    params: z.object({ text: z.string().max(1024 * 1024) }),
-    result: z.object({ written: z.boolean() })
-  }),
-  spec({
     name: 'storage.get',
     since: '1.0',
     scope: 'plugin-private',
     capability: 'storage',
     mutation: false,
+    // Panel-callable: the store is plugin-private and the panel session is
+    // bound to the owning plugin's identity, so a panel can never read
+    // another plugin's keys — its worker could read the same store anyway.
+    // This is what lets a panel render worker-produced data (snapshots).
     panel: true,
     params: storageGetParams,
     result: storageGetResult
@@ -242,6 +221,8 @@ export const PLUGIN_HOST_API_V0: readonly PluginHostMethodSpec[] = [
     scope: 'plugin-private',
     capability: 'storage',
     mutation: true,
+    // Panel-callable mutation: audit-logged with actor `plugin:<id>` like
+    // every mutation; scope argument above is why this stays safe.
     panel: true,
     params: storageSetParams,
     result: storageSetResult
@@ -252,7 +233,7 @@ export const PLUGIN_HOST_API_V0: readonly PluginHostMethodSpec[] = [
     scope: 'plugin-private',
     capability: 'storage',
     mutation: true,
-    panel: true,
+    panel: false,
     params: storageDeleteParams,
     result: storageDeleteResult
   }),
@@ -262,7 +243,7 @@ export const PLUGIN_HOST_API_V0: readonly PluginHostMethodSpec[] = [
     scope: 'plugin-private',
     capability: 'storage',
     mutation: false,
-    panel: true,
+    panel: false,
     params: storageKeysParams,
     result: storageKeysResult
   }),
@@ -272,7 +253,7 @@ export const PLUGIN_HOST_API_V0: readonly PluginHostMethodSpec[] = [
     scope: 'plugin-private',
     capability: 'secrets',
     mutation: false,
-    panel: true,
+    panel: false,
     params: secretsGetParams,
     result: secretsGetResult
   }),
@@ -282,7 +263,7 @@ export const PLUGIN_HOST_API_V0: readonly PluginHostMethodSpec[] = [
     scope: 'plugin-private',
     capability: 'secrets',
     mutation: true,
-    panel: true,
+    panel: false,
     params: secretsSetParams,
     result: secretsSetResult
   }),
@@ -292,7 +273,7 @@ export const PLUGIN_HOST_API_V0: readonly PluginHostMethodSpec[] = [
     scope: 'plugin-private',
     capability: 'secrets',
     mutation: true,
-    panel: true,
+    panel: false,
     params: secretsDeleteParams,
     result: secretsDeleteResult
   }),
@@ -302,7 +283,7 @@ export const PLUGIN_HOST_API_V0: readonly PluginHostMethodSpec[] = [
     scope: 'plugin-private',
     capability: 'settings:own',
     mutation: false,
-    panel: true,
+    panel: false,
     params: settingsGetParams,
     result: settingsGetResult
   }),
@@ -312,7 +293,7 @@ export const PLUGIN_HOST_API_V0: readonly PluginHostMethodSpec[] = [
     scope: 'plugin-private',
     capability: 'settings:own',
     mutation: true,
-    panel: true,
+    panel: false,
     params: settingsSetParams,
     result: settingsSetResult
   }),
@@ -322,7 +303,7 @@ export const PLUGIN_HOST_API_V0: readonly PluginHostMethodSpec[] = [
     scope: 'host-events',
     capability: 'events:subscribe',
     mutation: false,
-    panel: true,
+    panel: false,
     params: eventsSubscribeParams,
     result: eventsSubscribeResult
   })

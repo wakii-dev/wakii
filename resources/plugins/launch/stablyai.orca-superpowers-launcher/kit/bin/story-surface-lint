@@ -1,0 +1,305 @@
+#!/usr/bin/env python3
+"""story-surface-lint — bounded rewrite enforcer (GH-30 SF-1, doctrine constitution VI)
+
+Rename surface công khai (kit provides/bin names, docs routes, config keys) đòi
+đủ 3 vật chứng: alias declaration + migration guide + expiry. Thiếu một → FAIL
+chặn merge. Alias chỉ trỏ (single source of truth ở surface mới); expiry MỘT
+NGUỒN: guide frontmatter `expires: YYYY-MM-DD` — hết hạn → FAIL nhắc xoá, còn
+<14 ngày → WARN, thiếu → WARN "will default today+90d" (không tự ghi file).
+
+4 lớp check (style story-skill-lint — mỗi lớp bắt 1 loại quên):
+  L1 diff scan — surface cũ biến mất khỏi HEAD so với merge-base <base>
+     (kit.json provides name / kit/bin/<name> file / docs meta.json slug)
+  L2 alias    — surface cũ được trỏ lại: kit entry mới `alias_of` / docs page
+                cũ frontmatter `redirect_to:`
+  L3 guide    — mỗi rename có docs/superpowers/migrations/<YYYY-MM-DD>-<slug>.md
+                đủ frontmatter (surface/old/new/expires) + 4 section
+  L4 expiry   — format YYYY-MM-DD; FAKE_NOW/today > expires → FAIL;
+                <14 ngày → WARN; thiếu → WARN default today+90d
+
+Usage: story-surface-lint [base-ref]   (default: wakii-dev)
+Env:   FAKE_NOW=YYYY-MM-DD override "today" (tests); STORY_LINT_DIR=<repo root>
+Exit:  0 = sạch (WARN vẫn in stdout, greppable "WARN surface-lint:")
+       1 = FAIL — stdout ghi chỉ đích danh: MISSING-ALIAS <old> | MISSING-REDIRECT <slug> |
+           MISSING-GUIDE <old> | BAD-DATE <old> | EXPIRED <old>
+       2 = usage
+"""
+import json
+import os
+import re
+import subprocess
+import sys
+from datetime import date, timedelta
+
+USAGE = "usage: story-surface-lint [base-ref]   (default wakii-dev; env FAKE_NOW=YYYY-MM-DD, STORY_LINT_DIR=<repo>)"
+KIT_JSON = "resources/plugins/launch/stablyai.orca-superpowers-launcher/kit/kit.json"
+KIT_BIN_DIR = "resources/plugins/launch/stablyai.orca-superpowers-launcher/kit/bin"
+DOCS_PREFIX = "docs/site/content/docs/"
+MIGRATIONS_DIR = "docs/superpowers/migrations"
+DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+GUIDE_NAME_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})-(.+)\.md$")
+FRONTMATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*\n", re.S)
+FM_KEY_RE = re.compile(r"(?m)^(surface|old|new|expires)\s*:")
+REDIRECT_RE = re.compile(r"(?m)^redirect_to\s*:\s*(\S+)")
+SECTIONS = [
+    ("what-changed", re.compile(r"(?m)^#{1,6}\s+what\s+changed\b", re.I)),
+    ("old-new-map", re.compile(r"(?m)^#{1,6}\s+old.{0,3}new\s+map\b", re.I)),
+    ("migration-steps", re.compile(r"(?m)^#{1,6}\s+migration\s+steps\b", re.I)),
+    ("notes", re.compile(r"(?m)^#{1,6}\s+notes\b", re.I)),
+]
+
+fails = []
+warns = []
+
+
+def fail(token, name):
+    fails.append(f"{token} {name}")
+
+
+def warn(msg):
+    warns.append(msg)
+
+
+def run_git(repo, *args):
+    r = subprocess.run(
+        ["git", "-C", repo, *args],
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
+    )
+    return r.returncode, (r.stdout or ""), (r.stderr or "")
+
+
+def show(repo, rev, path):
+    """Nội dung file tại rev; None nếu không tồn tại ở rev."""
+    code, out, _ = run_git(repo, "show", f"{rev}:{path}")
+    return out if code == 0 else None
+
+
+def today():
+    raw = os.environ.get("FAKE_NOW", "").strip()
+    if raw:
+        return date.fromisoformat(raw)  # sai format → crash fail-loud (tests rely)
+    return date.today()
+
+
+def parse_name_status(diff_out):
+    """git diff --name-status -R? — trả (deleted_paths, head_paths).
+
+    R/C hai đường: old coi như deleted, new coi như có ở HEAD.
+    """
+    deleted, head = set(), set()
+    for line in diff_out.splitlines():
+        if not line.strip():
+            continue
+        parts = line.split("\t")
+        st = parts[0]
+        if st[:1] in ("R", "C") and len(parts) >= 3:
+            deleted.add(parts[1])
+            head.add(parts[2])
+        elif len(parts) >= 2:
+            if st == "D":
+                deleted.add(parts[1])
+            else:
+                head.add(parts[1])
+    return deleted, head
+
+
+def provides_names(kit_json_text):
+    try:
+        data = json.loads(kit_json_text)
+    except json.JSONDecodeError:
+        return None  # malformed — fail-loud ở caller
+    return {e.get("name") for e in data.get("provides", []) if isinstance(e, dict)}
+
+
+def alias_targets(kit_json_text):
+    """alias_of → tên entry mới (nhiều entry alias cùng old → set)."""
+    try:
+        data = json.loads(kit_json_text)
+    except json.JSONDecodeError:
+        return {}
+    out = {}
+    for e in data.get("provides", []):
+        if isinstance(e, dict) and isinstance(e.get("alias_of"), str):
+            out.setdefault(e["alias_of"], set()).add(e.get("name"))
+    return out
+
+
+def meta_slugs(text):
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError:
+        return set()
+    pages = data.get("pages", [])
+    return {p for p in pages if isinstance(p, str)}
+
+
+def has_redirect(text):
+    return bool(FRONTMATTER_RE.match(text or "") and REDIRECT_RE.search(FRONTMATTER_RE.match(text).group(1)))
+
+
+def guide_ok(text):
+    m = FRONTMATTER_RE.match(text or "")
+    if not m:
+        return False, "thiếu frontmatter --- block"
+    fm = m.group(1)
+    missing_keys = [k for k in ("surface", "old", "new", "expires") if not FM_KEY_RE.search(fm)]
+    if missing_keys:
+        return False, "frontmatter thiếu: " + ",".join(missing_keys)
+    missing_sec = [name for name, rx in SECTIONS if not rx.search(text)]
+    if missing_sec:
+        return False, "thiếu section: " + ",".join(missing_sec)
+    return True, ""
+
+
+def main():
+    # Windows console mặc định cp1252 — output Vietnamese crash UnicodeEncodeError
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
+    args = sys.argv[1:]
+    if any(a in ("-h", "--help") for a in args):
+        print(USAGE)
+        return 0
+    if len(args) > 1:
+        print(USAGE)  # stdout — kênh verdict của lint (exit 1 token cũng ở đây)
+        return 2
+    base = args[0] if args else "wakii-dev"
+    repo = os.environ.get("STORY_LINT_DIR") or os.getcwd()
+
+    code, mb, err = run_git(repo, "merge-base", base, "HEAD")
+    if code != 0:
+        # chạy nơi không có ref base (VD repo khác) → no-op theo spec
+        print(f"surface-lint: base {base} không resolve được — no-op")
+        return 0
+    mb = mb.strip()
+
+    code, diff_out, _ = run_git(repo, "diff", "--name-status", f"{mb}..HEAD")
+    if code != 0:
+        print(f"surface-lint: git diff fail: {err.strip()}", file=sys.stderr)
+        return 1
+    if not diff_out.strip():
+        print(f"surface-lint: no diff from {base}")
+        return 0
+
+    deleted, head_paths = parse_name_status(diff_out)
+    code, ncommits, _ = run_git(repo, "rev-list", "--count", f"{mb}..HEAD")
+    print(f"story-surface-lint: base={base} merge-base={mb[:12]} commits={ncommits.strip()}")
+
+    now = today()
+    kit_old_raw = show(repo, mb, KIT_JSON)
+    kit_new_raw = show(repo, "HEAD", KIT_JSON)
+    kit_old = provides_names(kit_old_raw) if kit_old_raw is not None else set()
+    kit_new = provides_names(kit_new_raw) if kit_new_raw is not None else set()
+    aliases = alias_targets(kit_new_raw) if kit_new_raw is not None else {}
+    if kit_old is None or kit_new is None:
+        fail("BAD-DATE", KIT_JSON + " malformed (không parse được JSON)")  # fail-loud lệch token? — dùng MISSING-ALIAS dưới
+        fails[-1] = f"MISSING-ALIAS {KIT_JSON} (malformed JSON ở HEAD/base)"
+
+    # ── L1+L2: kit renames ──────────────────────────────────────────────────
+    removed_kit = set()
+    if kit_old is not None and kit_new is not None:
+        removed_kit |= {n for n in kit_old if n and n not in kit_new}
+    for p in deleted:
+        if p.startswith(KIT_BIN_DIR + "/"):
+            removed_kit.add(p[len(KIT_BIN_DIR) + 1:])
+
+    def find_guide(old_name, new_names=()):
+        """Guide trong HEAD: <date>-<old|new>.md, trả (path, text) hoặc (None, None)."""
+        cands = {old_name, *new_names}
+        for p in sorted(head_paths):
+            if not p.startswith(MIGRATIONS_DIR + "/"):
+                continue
+            m = GUIDE_NAME_RE.match(p[len(MIGRATIONS_DIR) + 1:])
+            if m and m.group(2) in cands:
+                return p, show(repo, "HEAD", p)
+        return None, None
+
+    for old in sorted(removed_kit):
+        new_names = tuple(sorted(n for n in aliases.get(old, ()) if n))
+        if old not in aliases:
+            fail("MISSING-ALIAS", old)
+        gpath, gtext = find_guide(old, new_names)
+        if gpath is None:
+            fail("MISSING-GUIDE", old)
+            continue
+        ok, why = guide_ok(gtext)
+        if not ok:
+            print(f"  guide {gpath}: {why}", file=sys.stderr)
+            fail("MISSING-GUIDE", old)
+            continue
+        # ── L4: expiry — MỘT NGUỒN guide frontmatter ──
+        fm = FRONTMATTER_RE.match(gtext).group(1)
+        m = re.search(r"(?m)^expires\s*:\s*(\S*)", fm)
+        raw = (m.group(1) if m else "").strip()
+        if not raw:
+            warn(f"WARN surface-lint: {old} expires not set — will default to "
+                 f"{(now + timedelta(days=90)).isoformat()} (today+90d) in {gpath}")
+        elif not DATE_RE.match(raw):
+            fail("BAD-DATE", old)
+        else:
+            expires = date.fromisoformat(raw)
+            if now > expires:
+                fail("EXPIRED", old)
+            elif (expires - now).days < 14:
+                warn(f"WARN surface-lint: {old} expires {raw} ({(expires - now).days} days) — {gpath}")
+
+    # ── L1+L2: docs meta.json slug renames ─────────────────────────────────
+    for p in sorted(head_paths | deleted):
+        if not p.startswith(DOCS_PREFIX) or not p.endswith("meta.json"):
+            continue
+        old_raw = show(repo, mb, p)
+        new_raw = show(repo, "HEAD", p)
+        old_slugs = meta_slugs(old_raw) if old_raw is not None else set()
+        new_slugs = meta_slugs(new_raw) if new_raw is not None else set()
+        for slug in sorted(old_slugs - new_slugs):
+            # alias: page cũ còn file ở HEAD + frontmatter redirect_to
+            page = None
+            for ext in (".mdx", ".md"):
+                cand = p[: -len("meta.json")] + slug + ext
+                if show(repo, "HEAD", cand) is not None:
+                    page = cand
+                    break
+            if page is None or not has_redirect(show(repo, "HEAD", page)):
+                fail("MISSING-REDIRECT", slug)
+            gpath, gtext = find_guide(slug)
+            if gpath is None:
+                fail("MISSING-GUIDE", slug)
+                continue
+            ok, why = guide_ok(gtext)
+            if not ok:
+                print(f"  guide {gpath}: {why}", file=sys.stderr)
+                fail("MISSING-GUIDE", slug)
+                continue
+            fm = FRONTMATTER_RE.match(gtext).group(1)
+            m = re.search(r"(?m)^expires\s*:\s*(\S*)", fm)
+            raw = (m.group(1) if m else "").strip()
+            if not raw:
+                warn(f"WARN surface-lint: {slug} expires not set — will default to "
+                     f"{(now + timedelta(days=90)).isoformat()} (today+90d) in {gpath}")
+            elif not DATE_RE.match(raw):
+                fail("BAD-DATE", slug)
+            else:
+                expires = date.fromisoformat(raw)
+                if now > expires:
+                    fail("EXPIRED", slug)
+                elif (expires - now).days < 14:
+                    warn(f"WARN surface-lint: {slug} expires {raw} ({(expires - now).days} days) — {gpath}")
+
+    # ── Exit contract ───────────────────────────────────────────────────────
+    if fails:
+        for w in warns:
+            print(w)
+        for f in fails:
+            print(f)
+        print("RESULT: FAIL")
+        return 1
+    for w in warns:
+        print(w)
+    print("RESULT: CLEAN")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

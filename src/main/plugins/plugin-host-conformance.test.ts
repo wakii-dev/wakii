@@ -27,7 +27,6 @@ type HostCallAdapter = (request: unknown, viaPanel: boolean) => Promise<PluginPa
 
 function createServices(): PluginHostServices {
   return {
-    resolveFocusedWorktreePath: vi.fn().mockResolvedValue(null),
     resolveActiveWorktreeContext: vi.fn().mockResolvedValue({
       worktreeId: WORKTREE_ID,
       branch: 'main',
@@ -37,9 +36,9 @@ function createServices(): PluginHostServices {
     listWorktreeTerminals: vi
       .fn()
       .mockResolvedValue([{ id: TERMINAL_ID, title: '/home/private/orca' }]),
+    listWorktreeFiles: vi.fn().mockResolvedValue({ files: [{ name: 'README.md', type: 'file' }] }),
     sendTerminalText: vi.fn().mockResolvedValue({ accepted: true }),
     dispatchPluginNotification: vi.fn().mockResolvedValue({ delivered: true }),
-    writeClipboardText: vi.fn().mockResolvedValue({ written: true }),
     storage: {
       get: vi.fn().mockReturnValue('stored'),
       set: vi.fn().mockReturnValue({ ok: true }),
@@ -108,12 +107,9 @@ function createAdapters(
 
 const successParams: Record<string, unknown> = {
   'workspace.readContext': {},
-  'workspace.fileList': { dir: 'brackets' },
-  'workspace.fileRead': { dir: 'brackets', name: 'fi305.md' },
-  'workspace.planProgress': {},
+  'workspace.listFiles': { dir: 'docs' },
   'terminal.sendText': { terminalId: TERMINAL_ID, text: 'echo hi', enter: true },
   'notifications.show': { title: 'Hello' },
-  'clipboard.write': { text: 'copy me' },
   'storage.get': { key: 'alpha' },
   'storage.set': { key: 'alpha', value: 1 },
   'storage.delete': { key: 'alpha' },
@@ -127,27 +123,15 @@ const successParams: Record<string, unknown> = {
 }
 
 describe('plugin host main/relay conformance', () => {
-  // Why 17: upstream 13 + fork-local workspace.fileList/fileRead/planProgress +
-  // fork-local clipboard.write. FORK-LOCAL: the capability consent gate is
-  // disabled upstream-style tests assert codes the fork no longer returns.
-  // FORK-LOCAL: fileList/fileRead/planProgress read the real superpowers docs
-  // tree (homedir-bound), so they cannot ride the transport-pure loop here.
-  const FS_BOUND_FORK_METHODS = new Set([
-    'workspace.fileList',
-    'workspace.fileRead',
-    'workspace.planProgress'
-  ])
-  it('runs a granted success through both transports for all transport-pure v0 methods', async () => {
-    expect(PLUGIN_HOST_API_V0).toHaveLength(17)
+  it('runs a granted success through both transports for all 14 v0 methods', async () => {
+    expect(PLUGIN_HOST_API_V0).toHaveLength(14)
     expect(Object.keys(successParams).sort()).toEqual(
       PLUGIN_HOST_API_V0.map((entry) => entry.name).sort()
     )
     expect(PLUGIN_HOST_API_V0.every((entry) => entry.stability === 'experimental')).toBe(true)
     expect(PLUGIN_HOST_API_V0.every((entry) => entry.scope.length > 0)).toBe(true)
 
-    for (const spec of PLUGIN_HOST_API_V0.filter(
-      (entry) => !FS_BOUND_FORK_METHODS.has(entry.name)
-    )) {
+    for (const spec of PLUGIN_HOST_API_V0) {
       const policy = createPolicy([spec.capability])
       const resolvePolicy = vi.fn().mockResolvedValue(policy)
       const outcomes = await Promise.all(
@@ -186,6 +170,20 @@ describe('plugin host main/relay conformance', () => {
     code: string
   }[] = [
     {
+      name: 'missing or stale consent',
+      request: { method: 'workspace.readContext', params: {} },
+      viaPanel: true,
+      policy: () => createPolicy(null),
+      code: 'consent_required'
+    },
+    {
+      name: 'missing capability',
+      request: { method: 'workspace.readContext', params: {} },
+      viaPanel: true,
+      policy: () => createPolicy([]),
+      code: 'capability_denied'
+    },
+    {
       name: 'unknown method',
       request: { method: 'workspace.erase', params: {} },
       viaPanel: false,
@@ -201,6 +199,13 @@ describe('plugin host main/relay conformance', () => {
       viaPanel: true,
       policy: () => createPolicy(['terminal:send']),
       code: 'invalid_params'
+    },
+    {
+      name: 'panel-forbidden method',
+      request: { method: 'secrets.get', params: { key: 'token' } },
+      viaPanel: true,
+      policy: () => createPolicy(['secrets']),
+      code: 'panel_forbidden'
     },
     {
       name: 'malformed result',
@@ -232,15 +237,6 @@ describe('plugin host main/relay conformance', () => {
       code: 'action_failed'
     }
   ]
-
-  // FORK-LOCAL: the upstream capability consent gate is disabled (fork-local
-  // full plugin access — executePluginHostCallRequest no longer consults
-  // decidePluginHostCall), so 'consent_required' / 'capability_denied' /
-  // 'panel_forbidden' can no longer be produced. Restore those deniedCases
-  // together with the gate itself.
-  it.skip('returns identical consent/capability/panel codes (gate disabled in fork)', async () => {
-    expect(true).toBe(true)
-  })
 
   it.each(deniedCases)('returns identical $code codes for $name', async (testCase) => {
     const outcomes: PluginPanelActionOutcome[] = []

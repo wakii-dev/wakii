@@ -8,12 +8,11 @@ import { AgentSessionPtyWriteRefusedError } from '../../shared/agent-session-pty
 
 function createServices(storageSet: PluginHostServices['storage']['set']): PluginHostServices {
   return {
-    resolveFocusedWorktreePath: vi.fn().mockResolvedValue(null),
     resolveActiveWorktreeContext: vi.fn().mockResolvedValue(null),
     listWorktreeTerminals: vi.fn().mockResolvedValue([]),
+    listWorktreeFiles: vi.fn().mockResolvedValue({ files: [] }),
     sendTerminalText: vi.fn().mockResolvedValue({ accepted: true }),
     dispatchPluginNotification: vi.fn().mockResolvedValue({ delivered: true }),
-    writeClipboardText: vi.fn().mockResolvedValue({ written: true }),
     storage: {
       get: vi.fn(),
       set: storageSet,

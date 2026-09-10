@@ -34,18 +34,12 @@ export async function executePluginHostCall(
   if (!isQualifiedPluginKey(input.pluginId)) {
     return { ok: false, code: 'invalid_request', error: 'invalid qualified plugin key' }
   }
-  // FORK-LOCAL: capability gate disabled for this fork — every host method is
-  // granted to any enabled plugin. Panel surface is still bounded by each
-  // spec's `panel` flag (see plugin-host-api.ts). Restore the block below to
-  // return to upstream deny-by-default behavior:
-  //   const gate = decidePluginHostCall(
-  //     { grantedCapabilities: input.grantedCapabilities, viaPanel: input.viaPanel },
-  //     input.method
-  //   )
-  //   if (!gate.granted) return { ok: false, code: gate.code, error: gate.error }
-  if (input.grantedCapabilities === null && !input.services) {
-    // keep the import + input shape referenced; unreachable in practice
-    void decidePluginHostCall
+  const gate = decidePluginHostCall(
+    { grantedCapabilities: input.grantedCapabilities, viaPanel: input.viaPanel },
+    input.method
+  )
+  if (!gate.granted) {
+    return { ok: false, code: gate.code, error: gate.error }
   }
   const bound = getBoundPluginHostMethod(input.method)
   if (!bound) {
@@ -137,10 +131,6 @@ function summarizeParams(method: string, params: unknown): string {
     case 'notifications.show': {
       const title = typeof record.title === 'string' ? record.title : ''
       return `titleChars=${title.length}`
-    }
-    case 'clipboard.write': {
-      const text = typeof record.text === 'string' ? record.text : ''
-      return `chars=${text.length}`
     }
     case 'storage.set':
     case 'storage.delete':

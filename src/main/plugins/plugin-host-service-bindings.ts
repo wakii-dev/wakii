@@ -1,5 +1,10 @@
+import { promises as fs } from 'node:fs'
+import * as nodePath from 'node:path'
 import type { PluginEventName } from '../../shared/plugins/plugin-manifest'
-import { PLUGIN_WORKSPACE_TERMINAL_LIMIT } from '../../shared/plugins/plugin-host-api'
+import {
+  PLUGIN_WORKSPACE_FILE_LIST_LIMIT,
+  PLUGIN_WORKSPACE_TERMINAL_LIMIT
+} from '../../shared/plugins/plugin-host-api'
 import type { PluginHostServices } from './plugin-host-methods'
 import { PluginSecretsStore } from './plugin-secrets-store'
 import { PluginKvStore } from './plugin-storage-store'
@@ -63,6 +68,42 @@ export function bindPluginHostServices(input: {
         .slice(0, PLUGIN_WORKSPACE_TERMINAL_LIMIT)
         .map((terminal) => ({ id: terminal.handle }))
     },
+    listWorktreeFiles: async (dir) => {
+      const context = await delegate.resolveActiveWorktreeContext()
+      if (!context) {
+        throw new Error('no active worktree is available')
+      }
+      // Containment guard: the shared schema already rejects absolute/dot
+      // segments, but the service binding must not trust its caller either —
+      // resolve and verify the target stays under the worktree root.
+      const root = nodePath.resolve(context.path)
+      const target = nodePath.resolve(root, dir ?? '.')
+      if (target !== root && !target.startsWith(root + nodePath.sep)) {
+        throw new Error('dir escapes the active worktree')
+      }
+      let entries
+      try {
+        entries = await fs.readdir(target, { withFileTypes: true })
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+          // Missing directory reads as empty rather than a hard failure —
+          // callers probe convention paths (e.g. docs/superpowers/brackets)
+          // that fresh worktrees may not have yet.
+          return { files: [] }
+        }
+        throw error
+      }
+      const files = entries
+        .map((entry) => ({
+          name: entry.name,
+          type: entry.isDirectory() ? ('dir' as const) : ('file' as const)
+        }))
+        .sort((a, b) =>
+          a.type === b.type ? a.name.localeCompare(b.name) : a.type === 'dir' ? -1 : 1
+        )
+        .slice(0, PLUGIN_WORKSPACE_FILE_LIST_LIMIT)
+      return { files }
+    },
     sendTerminalText: async (terminalId, action) => {
       try {
         // Why: panel prompts target agent TUIs. The agent-prompt path writes the
@@ -85,23 +126,6 @@ export function bindPluginHostServices(input: {
       }
     },
     dispatchPluginNotification: (notification) => delegate.dispatchPluginNotification(notification),
-    resolveFocusedWorktreePath: async () => {
-      // Host-internal: the full context (with path) stays behind the facade;
-      // workspace docs resolution needs the real path, panels never see it.
-      const context = await delegate.resolveActiveWorktreeContext()
-      return context?.path ?? null
-    },
-    writeClipboardText: async (text) => {
-      // Why dynamic: this module is also bound by headless serve, which has no
-      // Electron app — the capability gate plus this guard keep the method
-      // desktop-only without dragging electron into the serve import graph.
-      if (!process.versions.electron) {
-        throw new Error('clipboard_write_unsupported_on_this_host')
-      }
-      const { clipboard } = await import('electron')
-      clipboard.writeText(text)
-      return { written: true }
-    },
     storage: {
       get: (key, itemKey) => new PluginKvStore(pluginsDataDir, key, 'storage.json').get(itemKey),
       set: (key, itemKey, value) =>
