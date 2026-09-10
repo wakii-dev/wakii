@@ -128,6 +128,53 @@ console.log(`\n== [gh42-exec] task-executor KHÔNG bị deny tool (GH-42) ==`)
   check('gh42-exec', 'frontmatter KHÔNG có disallowedTools', !/^disallowedTools:/m.test(md))
 }
 
+// =====================================================================
+// GH-42 — frontmatter parser mini (zero-dep). Mô phỏng YAML đủ dùng cho agent
+// defs: key: value + inline comment (`#` chỉ mở comment khi đầu value hoặc sau
+// whitespace) + quotes. Comment sai chỗ làm value cụt → name parse fail → test
+// FAIL (chặn agent biến mất khỏi listing vì YAML hỏng — skip âm thầm).
+function parseFrontmatter(md) {
+  const m = md.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/)
+  if (!m) return null
+  const fields = {}
+  for (const line of m[1].split(/\r?\n/)) {
+    if (!line.trim()) continue
+    const kv = line.match(/^([A-Za-z][A-Za-z0-9_-]*):(?:[ \t]*(.*))?$/)
+    if (!kv) return { invalid: line }
+    let value = kv[2] ?? ''
+    // `#` mở inline comment chỉ khi đứng sau whitespace (đúng spec YAML)
+    const hash = value.search(/(^|\s)#/)
+    if (hash !== -1) value = value.slice(0, hash)
+    value = value.trim()
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1)
+    }
+    fields[kv[1]] = value
+  }
+  return fields
+}
+
+const GH42_AGENT_FILES = [
+  'code-reviewer', 'security-audit', 'spec-critic', 'plan-critic',
+  'phase0-impact-analyst', 'verifier', 'rollback-fixer', 'designer', 'task-executor'
+]
+
+console.log(`\n== [gh42-yaml] frontmatter parse được trên cả 9 defs (chặn skip âm thầm) ==`)
+{
+  for (const name of GH42_AGENT_FILES) {
+    const md = readFileSync(join(AGENTS, `${name}.md`), 'utf8')
+    const fm = parseFrontmatter(md)
+    check('gh42-yaml', `${name}.md frontmatter block tồn tại`, fm !== null)
+    if (!fm || fm.invalid) continue
+    check('gh42-yaml', `${name}.md name field parse được + khớp file`, fm.name === name, `got: ${JSON.stringify(fm.name)}`)
+    check('gh42-yaml', `${name}.md color parse non-empty (inline comment strip đúng)`, typeof fm.color === 'string' && fm.color.length > 0)
+    check('gh42-yaml', `${name}.md description parse non-empty`, typeof fm.description === 'string' && fm.description.length > 0)
+    if (fm.disallowedTools !== undefined) {
+      check('gh42-yaml', `${name}.md disallowedTools là comma-separated string nguyên vẹn`, fm.disallowedTools === 'Edit, Write, NotebookEdit', `got: ${JSON.stringify(fm.disallowedTools)}`)
+    }
+  }
+}
+
 console.log(`\n== TOTAL: ${pass} PASS / ${fail} FAIL ==`)
 if (failures.length) {
   console.log('FAILURES:\n- ' + failures.join('\n- '))
