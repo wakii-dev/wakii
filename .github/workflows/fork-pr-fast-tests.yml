@@ -51,3 +51,8 @@ jobs:
 
       - name: Critical suites
         run: pnpm test src/main/plugins/plugin-launch-content.test.ts src/main/runtime/orchestration/db.test.ts
+
+      # Pipeline smoke: installKit thật validate kit.json + two-way disk + exec-bit
+      # (learned 2026-09-11 — 10 bins exit 126 lọt vì không có check này)
+      - name: Kit manifest verify
+        run: node resources/plugins/launch/stablyai.orca-superpowers-launcher/tests/kit-verify-manifest.mjs
