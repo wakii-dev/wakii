@@ -126,6 +126,7 @@ Kết thúc report bằng MỘT dòng duy nhất, một trong:
 
 ## OUTBOX (bắt buộc khi chạy async)
 
-Viết report + verdict vào `/tmp/story/<epic>/code-reviewer-<sf>.md` NGAY khi xong —
-TRƯỚC khi trả message. Coordinator poll file này; message có thể trễ 20-30'
-(sa FI-169). File là nguồn sự thật.
+Viết report + verdict vào `<repo>/docs/superpowers/reviews/code-reviewer-<sf-slug>.md`
+NGAY khi xong — TRƯỚC khi trả message. Coordinator poll file này; message có thể
+trễ 20-30' (sa FI-169). File là nguồn sự thật (gitignored — runtime artifact,
+KHÔNG /tmp: path MSYS chết qua agent boundary — GH-27).

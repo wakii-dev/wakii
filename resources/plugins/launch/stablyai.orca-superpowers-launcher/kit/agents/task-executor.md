@@ -65,8 +65,9 @@ When the task is one SF of an approved story bracket:
    `story-lesson add "<text>" --source session --tags <epic,sf>` —
    skip nếu không có (không ép ghi; không tự trích từ transcript).
 4. TESTER REVIEW: coordinator dispatch code-reviewer (cyan) trên diff —
-   review viết verdict vào /tmp/story/<epic>/code-reviewer-<sf>.md (OUTBOX)
-   — APPROVED mới tiếp tục. CHANGES-REQUESTED → fix → re-review.
+   review viết verdict vào <repo>/docs/superpowers/reviews/code-reviewer-<sf>.md
+   (OUTBOX — gitignored; KHÔNG /tmp) — APPROVED mới tiếp tục.
+   CHANGES-REQUESTED → fix → re-review.
 5. MERGE vào NHÁNH ĐÍCH (branch bạn fork từ — --base-branch):
    a. git merge <đích> --no-edit (trong worktree bạn)
       conflict improvements-log → GIỮ CẢ HAI entries

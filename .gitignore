@@ -101,6 +101,10 @@ docs/**
 # diff/HEAD (GH-30): ignored → rename thật đầu tiên MISSING-GUIDE vĩnh viễn.
 !docs/superpowers/migrations/
 !docs/superpowers/migrations/**
+# Review OUTBOX (GH-32) là runtime artifacts — DỐN ở đây: `docs/**` đã ignore;
+# KHÔNG negate (ngược migrations/) — LLM outbox không phải tài liệu durable.
+# Vẫn ghi tường minh để ai đọc file hiểu ý định + chống negate nhầm sau này.
+docs/superpowers/reviews/
 # The deployable docs app is source, not local engineering notes.
 !docs/site/
 !docs/site/**
