@@ -119,6 +119,15 @@ console.log(`\n== [gh40] task-executor def — REPORT fence template + validator
   check('gh40', 'fence đứng sau DONE/BLOCKED headline', iHeadline > -1 && iFence > iHeadline)
 }
 
+// =====================================================================
+console.log(`\n== [gh42-exec] task-executor KHÔNG bị deny tool (GH-42) ==`)
+{
+  const md = readFileSync(join(AGENTS, 'task-executor.md'), 'utf8')
+  // executor chạy full trong worktree — path scope qua briefing + story-diff-review
+  // hậu kiểm. Denylist per-agent — executor KHÔNG có dòng disallowedTools.
+  check('gh42-exec', 'frontmatter KHÔNG có disallowedTools', !/^disallowedTools:/m.test(md))
+}
+
 console.log(`\n== TOTAL: ${pass} PASS / ${fail} FAIL ==`)
 if (failures.length) {
   console.log('FAILURES:\n- ' + failures.join('\n- '))
