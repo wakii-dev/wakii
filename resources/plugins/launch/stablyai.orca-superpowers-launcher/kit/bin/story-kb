@@ -17,6 +17,7 @@ Dir resolve: --dir > env WAKII_KB_DIR > [<git-root>/docs/knowledge,
 adr/ · repos/ · glossary.md · MOC.md.
 Exit: 0 (kể cả no-match / KB not configured) · 2 usage."""
 import os
+import re
 import subprocess
 import sys
 
@@ -32,6 +33,11 @@ for _s in (sys.stdout, sys.stderr):
         pass
 
 KB_MARKERS = ("adr", "repos", "glossary.md", "MOC.md")
+TOP_N = 5
+SNIPPET_MAX = 160
+
+# YAML-ish tolerant: dòng `key: value` giữa cặp `---` — KHÔNG YAML lib (zero-dep).
+FM_LINE_RE = re.compile(r"^([A-Za-z_][\w-]*)\s*:\s*(.*)$")
 
 
 def usage(msg=None):
@@ -131,8 +137,74 @@ def main(argv):
     sys.exit(0)
 
 
+def read_md(path):
+    try:
+        with open(path, encoding="utf-8", errors="replace") as f:
+            return f.read()
+    except OSError:
+        return None
+
+
+def parse_frontmatter(text):
+    """Returns ({key: value}, body_start_line_index). No frontmatter → ({}, 0)."""
+    lines = text.splitlines()
+    if not lines or lines[0].strip() != "---":
+        return {}, 0
+    end = None
+    for i in range(1, len(lines)):
+        if lines[i].strip() == "---":
+            end = i
+            break
+    if end is None:
+        return {}, 0
+    fm = {}
+    for ln in lines[1:end]:
+        m = FM_LINE_RE.match(ln)
+        if m:
+            fm[m.group(1).lower()] = m.group(2).strip()
+    return fm, end + 1
+
+
+def trunc(s, cap=SNIPPET_MAX):
+    return s if len(s) <= cap else s[: cap - 3] + "..."
+
+
+def first_snippet(body_lines, kws):
+    """Dòng đầu chứa 1 keyword nào đó; không có → dòng non-empty đầu."""
+    hit = next((l for l in body_lines
+                if any(k.lower() in l.lower() for k in kws)), None)
+    return (hit or next((l for l in body_lines if l.strip()), "")).strip()
+
+
 def cmd_query_adr(kb_dir, args):
-    usage("chưa implement (task kế)")  # kb-bin-query-adr
+    kws = [k for k in args if not k.startswith("--")]
+    if not kws:
+        usage("query-adr cần ít nhất 1 keyword")
+    adr_dir = os.path.join(kb_dir, "adr")
+    results = []
+    if os.path.isdir(adr_dir):
+        for name in sorted(os.listdir(adr_dir)):
+            if not name.endswith(".md"):
+                continue
+            path = os.path.join(adr_dir, name)
+            text = read_md(path)
+            if text is None:
+                continue
+            fm, body_at = parse_frontmatter(text)
+            hay = f"{name}\n{fm.get('title', '')}\n{text}".lower()
+            if all(k.lower() in hay for k in kws):
+                results.append((name, path, fm, text, body_at))
+    if not results:
+        print("no ADR match")
+        return
+    for name, path, fm, text, body_at in results[:TOP_N]:
+        body_lines = text.splitlines()[body_at:]
+        print(f"== {name}")
+        print(fm.get("title") or name)
+        print(trunc(first_snippet(body_lines, kws)))
+        print(f"(path: {path})")
+    if len(results) > TOP_N:
+        print(f"({len(results)} ADR match — top-{TOP_N} hiển thị, refine keyword để thu hẹp)")
 
 
 def cmd_query_repo(kb_dir, args):
