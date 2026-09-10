@@ -1,6 +1,6 @@
 import { MobileNotificationReplayBuffer } from './mobile-notification-replay'
 import { notifyRuntimeListeners } from './runtime-async-boundaries'
-import { getRuntimeDesktopSurface } from './runtime-desktop-surface'
+import { getNotificationSettings, getRuntimeDesktopSurface } from './runtime-desktop-surface'
 
 export type MobileNotificationDispatchEvent = {
   type: 'notification'
@@ -75,6 +75,14 @@ export class RuntimeMobileNotificationController {
     const body = input.body ?? ''
     let delivered = false
     try {
+      // Focus gate touches only the desktop toast; null/undefined anywhere = fail-open.
+      // Mobile dispatch below stays unconditional so the replay buffer never misses an event.
+      const focused = getRuntimeDesktopSurface().isMainWindowFocused?.() ?? null
+      const suppress = (getNotificationSettings()?.suppressWhenFocused ?? false) && focused === true
+      if (suppress) {
+        this.dispatch({ type: 'notification', source: 'plugin', title, body })
+        return { delivered: false }
+      }
       delivered = getRuntimeDesktopSurface().showNotification({ title, body })
     } catch {
       // Headless runtimes still relay the notification to mobile clients.

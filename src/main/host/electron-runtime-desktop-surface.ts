@@ -1,5 +1,6 @@
 import { BrowserWindow, ipcMain, Notification } from 'electron'
 import type { RuntimeDesktopSurface } from '../runtime/runtime-desktop-surface'
+import { isMainWindowVisible } from '../window/main-window-visibility'
 
 /** The desktop implementation of the runtime's optional desktop facilities. */
 export const electronRuntimeDesktopSurface: RuntimeDesktopSurface = {
@@ -11,6 +12,15 @@ export const electronRuntimeDesktopSurface: RuntimeDesktopSurface = {
     return true
   },
   findWindowById: (id) => BrowserWindow.fromId(id),
+  isMainWindowFocused: () => {
+    // Why first non-destroyed, not a stored ref: BrowserWindow instances are recreated
+    // (macOS dock re-activation); same pattern as the notifications ipc handler.
+    const mainWindow = BrowserWindow.getAllWindows().find((window) => !window.isDestroyed()) ?? null
+    if (mainWindow === null || !isMainWindowVisible(mainWindow)) {
+      return null
+    }
+    return mainWindow.isFocused()
+  },
   onIpc: (channel, listener) => {
     ipcMain.on(channel, listener as Parameters<typeof ipcMain.on>[1])
   },

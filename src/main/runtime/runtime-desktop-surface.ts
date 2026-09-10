@@ -1,4 +1,5 @@
 import type { BrowserWindow, IpcMainEvent } from 'electron'
+import type { NotificationSettings } from '../../shared/notification-settings-types'
 
 /**
  * The desktop facilities `OrcaRuntimeService` uses, which a Node host does not have.
@@ -22,13 +23,20 @@ export type RuntimeDesktopSurface = {
   findWindowById(id: number): BrowserWindow | null
   onIpc(channel: string, listener: (event: IpcMainEvent, ...args: never[]) => void): void
   removeIpcListener(channel: string, listener: (...args: never[]) => void): void
+  /**
+   * Whether the main window has focus; null when the host cannot tell (no window, headless).
+   * Optional so doubles written before focus-gating stay valid — callers treat missing
+   * like null and fail open.
+   */
+  isMainWindowFocused?(): boolean | null
 }
 
 const inertDesktopSurface: RuntimeDesktopSurface = {
   showNotification: () => false,
   findWindowById: () => null,
   onIpc: () => {},
-  removeIpcListener: () => {}
+  removeIpcListener: () => {},
+  isMainWindowFocused: () => null
 }
 
 let current: RuntimeDesktopSurface = inertDesktopSurface
@@ -39,4 +47,21 @@ export function setRuntimeDesktopSurface(surface: RuntimeDesktopSurface | null):
 
 export function getRuntimeDesktopSurface(): RuntimeDesktopSurface {
   return current
+}
+
+let notificationSettingsSupplier: (() => NotificationSettings | undefined) | null = null
+
+/**
+ * Why module-level like the surface: the controller is constructed dependency-free at
+ * several call sites, so settings arrive here instead. Unset (or a call returning
+ * undefined) means fail-open — callers never suppress without an explicit setting.
+ */
+export function setNotificationSettingsSupplier(
+  supplier: (() => NotificationSettings | undefined) | null
+): void {
+  notificationSettingsSupplier = supplier
+}
+
+export function getNotificationSettings(): NotificationSettings | undefined {
+  return notificationSettingsSupplier?.()
 }

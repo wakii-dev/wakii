@@ -53,7 +53,10 @@ import { setSecretStore } from '../../shared/secret-store'
 import { ElectronSecretStore } from '../host/electron-secret-store'
 import { setPtyHostBindings } from '../ipc/pty-host-bindings'
 import { electronRuntimeDesktopSurface } from '../host/electron-runtime-desktop-surface'
-import { setRuntimeDesktopSurface } from '../runtime/runtime-desktop-surface'
+import {
+  setNotificationSettingsSupplier,
+  setRuntimeDesktopSurface
+} from '../runtime/runtime-desktop-surface'
 import { electronRuntimeBrowserCommandsFactory } from '../host/electron-browser-commands'
 import { setRuntimeBrowserCommandsFactory } from '../runtime/runtime-browser-commands-factory'
 import { electronHttpClient } from '../host/electron-http-client'
@@ -233,6 +236,9 @@ export function runMainProcessPreflight(options: MainProcessPreflightOptions): b
   // tab-create-reply channel are desktop-only. A Node host installs none and the
   // runtime routes notifications to paired clients instead.
   setRuntimeDesktopSurface(electronRuntimeDesktopSurface)
+  // Why lazy: state.store is set only after the profile is loaded; reading per call keeps
+  // the pre-ready window fail-open and always reflects the live setting.
+  setNotificationSettingsSupplier(() => state.store?.getSettings().notifications)
   // Why here: constructing RuntimeBrowserCommands is what pulls the Chromium browser
   // cluster into the graph. The desktop installs it; a Node host installs none and every
   // browser RPC rejects, which capability filtering already tells clients about.
