@@ -207,8 +207,45 @@ def cmd_query_adr(kb_dir, args):
         print(f"({len(results)} ADR match — top-{TOP_N} hiển thị, refine keyword để thu hẹp)")
 
 
+def grading_line(text, fm):
+    """Grading từ frontmatter; thiếu → tìm dòng `grading:` đầu trong body."""
+    if fm.get("grading"):
+        return fm["grading"]
+    for ln in text.splitlines():
+        s = ln.strip()
+        if s.lower().startswith("grading:"):
+            return s.split(":", 1)[1].strip()
+    return "(không khai báo)"
+
+
 def cmd_query_repo(kb_dir, args):
-    usage("chưa implement (task kế)")  # kb-bin-query-repo
+    kws = [k for k in args if not k.startswith("--")]
+    if not kws:
+        usage("query-repo cần ít nhất 1 keyword")
+    repos_dir = os.path.join(kb_dir, "repos")
+    results = []
+    if os.path.isdir(repos_dir):
+        for name in sorted(os.listdir(repos_dir)):
+            if not name.endswith(".md"):
+                continue
+            path = os.path.join(repos_dir, name)
+            text = read_md(path)
+            if text is None:
+                continue
+            fm, _ = parse_frontmatter(text)
+            hay = f"{name}\n{fm.get('title', '')}\n{text}".lower()
+            if all(k.lower() in hay for k in kws):
+                results.append((name, path, fm, text))
+    if not results:
+        print("no repo match")
+        return
+    for name, path, fm, text in results[:TOP_N]:
+        print(f"== {name}")
+        print(fm.get("title") or name)
+        print(f"grading: {grading_line(text, fm)}")
+        print(f"(path: {path})")
+    if len(results) > TOP_N:
+        print(f"({len(results)} repo match — top-{TOP_N} hiển thị, refine keyword để thu hẹp)")
 
 
 def cmd_glossary(kb_dir, args):
