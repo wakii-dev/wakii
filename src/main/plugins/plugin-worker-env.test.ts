@@ -17,12 +17,31 @@ describe('buildPluginWorkerEnv', () => {
   })
 
   it('matches Windows environment keys case-insensitively', () => {
-    expect(buildPluginWorkerEnv({ Path: 'C:\\safe', systemroot: 'C:\\Windows' }, 'win32')).toEqual({
+    expect(
+      buildPluginWorkerEnv(
+        { Path: 'C:\\safe', systemroot: 'C:\\Windows', AppData: 'C:\\Users\\u\\AppData\\Roaming' },
+        'win32'
+      )
+    ).toEqual({
       PATH: 'C:\\safe',
       SystemRoot: 'C:\\Windows',
+      APPDATA: 'C:\\Users\\u\\AppData\\Roaming',
       ELECTRON_RUN_AS_NODE: '1',
       ORCA_BIN: '/usr/local/bin/orca'
     })
+  })
+
+  it('passes APPDATA through so plugin-spawned orca CLI can resolve its runtime', () => {
+    const env = buildPluginWorkerEnv(
+      {
+        PATH: '/usr/bin',
+        APPDATA: 'C:\\Users\\u\\AppData\\Roaming',
+        LOCALAPPDATA: 'C:\\Users\\u\\AppData\\Local'
+      },
+      'win32'
+    )
+    expect(env.APPDATA).toBe('C:\\Users\\u\\AppData\\Roaming')
+    expect(env.LOCALAPPDATA).toBe('C:\\Users\\u\\AppData\\Local')
   })
 })
 
