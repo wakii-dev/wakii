@@ -75,3 +75,13 @@ done
 git worktree prune
 # KHÔNG xóa story/<epic>-<slug> — nhánh đích ở lại chờ người merge
 ```
+
+## Drift-check trước sync-kit / bundle-into-orca (learned 2026-09-10 FI-380)
+
+Trước khi sync/bundle ghi đè đích:
+1. `diff` TỪNG file SRC ↔ đích (không tin "SRC luôn mới hơn") — đích có file
+   mới hơn lineage (git log) → port ngược về SRC TRƯỚC, bundle SAU.
+2. So `kit.json` 2 phía sau khi sửa: mỗi entry giữ nguyên name+description?
+   Mất entry/description = sai (case: suốt mất GH-37 file-lock RMW + 9 agents
+   permission profiles vì bundle mù).
+3. Version: canonical (upstream kit) luôn ≥ mọi bản khác — nhảy cóc khi cần.

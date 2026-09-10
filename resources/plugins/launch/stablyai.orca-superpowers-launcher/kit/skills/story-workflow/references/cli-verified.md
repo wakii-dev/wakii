@@ -39,10 +39,9 @@ Vấn đề (4 SF FI-169): reviewer/verifier async chạy xong nhưng reports đ
 20-30 phút sau qua mailbox → coordinator tưởng chết → re-dispatch → duplicate.
 
 **Quy tắc:** mọi async agent (code-reviewer, verifier, designer) khi dispatch,
-prompt phải chỉ định OUTBOX (GH-32: dir chung docs/superpowers/reviews/ —
-story-review-fuse đọc đúng dir này):
+prompt phải chỉ định OUTBOX:
 ```
-Viết verdict vào <repo>/docs/superpowers/reviews/<agent>-<sf-slug>.md NGAY khi xong
+Viết verdict vào /tmp/story/<epic>/<agent>-<sf>.md NGAY khi xong
 (VERDICT: ... + evidence), TRƯỚC khi report qua message.
 ```
 Coordinator poll file mỗi vòng — FILE là nguồn sự thật, message chỉ là
