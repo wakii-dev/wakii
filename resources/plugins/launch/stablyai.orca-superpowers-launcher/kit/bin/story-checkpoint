@@ -309,7 +309,8 @@ def with_file_lock(store_dir, lock_name, fn, deadline_s=10.0, *,
             raise RuntimeError(f"lock không mở được: {e}") from e
 
     waited_ms = int((time.time() - t0) * 1000)
-    if waited_ms > 100:
+    if not logged_wait and waited_ms > 100:  # log đúng 1 dòng mỗi acquire
+        logged_wait = True
         _log("lock-wait", waited_ms)
     try:
         return fn()
@@ -322,7 +323,8 @@ def with_file_lock(store_dir, lock_name, fn, deadline_s=10.0, *,
 
 def append_line_locked(store, line, deadline_s=2.0):
     """Wire-compat wrapper — concurrent-safe append MỘT lần write mỗi dòng.
-    Swallow mọi lỗi (False) — record path fail-open giữ nguyên behavior."""
+    Swallow mọi lỗi (False) — record path fail-open giữ nguyên behavior.
+    Budget ≤2s (GH-37: record hook path không được kéo chết agent)."""
     def _append():
         with open(pathlib.Path(store) / JSONL_NAME, "a", encoding="utf-8",
                   newline="") as f:
