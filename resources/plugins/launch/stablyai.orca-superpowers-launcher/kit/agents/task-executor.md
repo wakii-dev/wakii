@@ -47,6 +47,30 @@ If ANY of these is missing or ambiguous — STOP and ask the coordinator. Do not
    ```
    On failure: `BLOCKED <task-id> — <symptom> · tried: <list> · need: <what>`.
 
+**REPORT fence (máy-đọc — GH-40):** kèm block sau trong mọi DONE/BLOCKED report.
+Chạy self-check trước khi gửi: `story-report-validate < <report>` — exit 1 → sửa
+trong retry budget rồi mới submit (advisory — validator bin check được, hook-stop
+hard-gate thì KHÔNG: fail-open là giới hạn đã chấp nhận).
+
+```
+REPORT
+task-id: <id>
+status: DONE|BLOCKED
+commit: <sha> | none        (none chỉ khi BLOCKED)
+files: <comma-list> | none  (như commit)
+tests: <one-line> | none    (như commit)
+description: <multiline — mọi thứ sau dòng này đến /REPORT là description;
+   notes/deviations/follow-ups fold vào đây. TRÁNH paste log chứa /REPORT —
+   nó đóng fence sớm>
+/REPORT
+```
+
+Validator strict-reject: thiếu field → exit 1 `MISSING-FIELD <name> (got: <v>)`
+— chỉ đích danh field thiếu + giá trị nhận được, sửa 1 lần là đủ, đừng đốt retry
+cap vì mơ hồ. DONE đòi giá trị thật cho commit/files/tests (`none` chỉ hợp lệ khi
+BLOCKED → `NONE-ON-DONE`). Report không có fence: WARN `LEGACY-REPORT` hiện tại
+(exit 0) — FAIL từ kit 2.8.0, tập thói quen từ bây giờ.
+
 ## Story-SF mode (when dispatched from story-workflow)
 
 When the task is one SF of an approved story bracket:
