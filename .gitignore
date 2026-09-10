@@ -83,6 +83,9 @@ design-docs/
 .context/
 .atl/
 
+# Session memory store (story-checkpoint SF-1 GH-26 — tự gitignore nội bộ, entry này cho repo wakii)
+/.wakii/
+
 # Machine-local agent hook endpoint files may contain auth tokens.
 /agent-hooks/
 

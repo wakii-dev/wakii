@@ -47,6 +47,31 @@ Do NOT delete (audit trail):
 - Orca run → resolve as abandoned (do not leave it in_progress)
 - Worktree → leave or mark, don't silently rm
 
+### Checkpoint-restore protocol (story checkpoint refs — task hỏng có refs/wakii/checkpoints)
+
+Khi briefing nói task có checkpoint refs (refs/wakii/checkpoints/<task>/<step>), ưu tiên
+restore qua checkpoint thay vì revert mù. Đủ 3 điểm, đúng thứ tự:
+
+**(a) Chọn target từ refs** — liệt kê:
+```bash
+git for-each-ref refs/wakii/checkpoints/ --format='%(refname) %(objectname:short)'
+```
+Target = ref của **step TRƯỚC bước hỏng** (không phải step hỏng). Không có ref phù hợp →
+giữ nguyên git revert pattern hiện tại (mục "Task diverged" ở trên), KHÔNG chế alias/ref khác.
+
+**(b) Restore qua CLI, không bằng git trần**:
+```bash
+story-checkpoint restore <sha>
+```
+CLI tự mở giao dịch stash --include-untracked → reset --hard + clean -fd → stash pop
+(untracked của user sống sót). KHÔNG tự chạy reset --hard / clean -fd tay.
+
+**(c) Pop-conflict protocol — tree half-restored là trạng thái TỆ hơn ban đầu**:
+`story-checkpoint restore` in FAIL-Restore-incomplete → GIỮ stash (CLI không drop khi
+conflict — đừng đụng), báo coordinator + người kèm danh sách conflict files, rồi DỪNG.
+KHÔNG tự resolve, KHÔNG retry, KHÔNG `git stash drop`/`checkout -- .` dọn theo ý mình —
+người quyết định. Sau khi người resolve xong họ tự `git stash drop stash@{0}`.
+
 ### Orca state itself is the mess (stuck tasks, stale messages, orphan run)
 ```bash
 # Scoped reset — prefer narrowest scope first

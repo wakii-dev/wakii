@@ -1,0 +1,322 @@
+#!/usr/bin/env python3
+"""story-fact-pack — SessionStart hook stdin → curated fact-pack ra stdout (SF-2, GH-26)
+
+Claude Code inject stdout plain-text của SessionStart vào context (exception
+event group). Output KHÔNG BAO GIỜ bắt đầu bằng `{` — tránh bị parse nhầm JSON.
+stdin: {"source": "startup|resume|clear|compact|fork", "session_id": ..., "cwd": ...}.
+
+Source filter: SKIP `compact` — story-compact-recovery legacy đã xử lý compact
+(co-tồn tại: GIỮ CẢ HAI, không double-inject). Inject cho startup|resume|clear|fork.
+
+Components (thứ tự ưu tiên 1→3; vượt cap 2KB → cắt TỪ DƯỚI LÊN, cuối in
+"[đã cắt N ký tự]"):
+  1. story đang chạy + gates pending — bracket MỚI NHẤT trong
+     <main-checkout>/docs/superpowers/brackets/ (tên + SF tiers + linear IDs)
+     + pending gates qua `story-status` (timeout 5s, fail-open)
+  2. tail checkpoint — last 3 records từ .wakii/checkpoints.jsonl của main
+     checkout (helpers import từ story-checkpoint SF-1), error lines nguyên văn
+  3. lessons — .wakii/lessons.jsonl nếu có (SF-3 tạo); vắng → skip; lệch
+     stamp theo HEAD → dòng ⚠ stale thay vì dùng im lặng (SC5 consumer #2)
+
+Fail-open xuyên suốt: mọi lỗi → exit 0; không có gì → stdout rỗng.
+
+Env (tests): STORY_FACT_PACK_CWD, STORY_CHECKPOINT_REPO / STORY_CHECKPOINT_STORE
+(SF-1 store resolve), STORY_FACT_PACK_STATUS_BIN, STORY_FACT_PACK_CHECKPOINT_BIN.
+"""
+import datetime
+import json
+import os
+import pathlib
+import subprocess
+import sys
+
+CAP_BYTES = 2048
+STATUS_TIMEOUT_S = 5
+MAX_LESSONS = 5
+
+_SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
+_HOME = pathlib.Path(os.path.expanduser("~"))
+
+
+def _load_checkpoint_module():
+    """Import helpers SF-1 qua SourceFileLoader (READ-ONLY — không sửa bin đó).
+    Env override = authoritative (test isolation); vắng → cạnh wrapper rồi
+    ~/.claude/bin. Không load được → None (tail skip, fail-open)."""
+    env_bin = os.environ.get("STORY_FACT_PACK_CHECKPOINT_BIN")
+    candidates = [pathlib.Path(env_bin)] if env_bin else [
+        _SCRIPT_DIR / "story-checkpoint",
+        _HOME / ".claude" / "bin" / "story-checkpoint",
+    ]
+    for cand in candidates:
+        if not cand.is_file():
+            continue
+        try:
+            import importlib.machinery
+            import importlib.util
+            loader = importlib.machinery.SourceFileLoader("story_checkpoint_factpack", str(cand))
+            spec = importlib.util.spec_from_loader("story_checkpoint_factpack", loader)
+            mod = importlib.util.module_from_spec(spec)
+            loader.exec_module(mod)
+            return mod
+        except Exception:  # noqa: BLE001 — fail-open
+            continue
+    return None
+
+
+CP = _load_checkpoint_module()
+
+
+def read_stdin_payload():
+    try:
+        raw = sys.stdin.buffer.read().decode("utf-8", errors="replace")
+        payload = json.loads(raw or "{}")
+    except ValueError:
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def resolve_cwd(payload):
+    env = os.environ.get("STORY_FACT_PACK_CWD")
+    if env:
+        return pathlib.Path(env)
+    c = payload.get("cwd")
+    if isinstance(c, str) and c.strip():
+        return pathlib.Path(c)
+    return pathlib.Path(os.getcwd())
+
+
+def latest_bracket(repo):
+    """Bracket file mới nhất (mtime) → (path, text) hoặc (None, None)."""
+    d = pathlib.Path(repo) / "docs" / "superpowers" / "brackets"
+    try:
+        files = [p for p in d.iterdir() if p.is_file() and p.suffix == ".md"]
+    except OSError:
+        return None, None
+    if not files:
+        return None, None
+    path = max(files, key=lambda p: p.stat().st_mtime)
+    try:
+        return path, path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None, None
+
+
+def bracket_section(path, text):
+    """Tên story + SF tiers + linear IDs từ bracket text — dòng gọn."""
+    title = path.stem
+    linear = ""
+    sfs = []
+    cur = None
+    for line in text.splitlines():
+        s = line.strip()
+        if s.startswith("# Story:") and not linear:
+            head = s[len("# Story:"):].strip()
+            parts = head.split(None, 1)
+            if parts:
+                linear = parts[0]
+                rest = parts[1].lstrip("—–- ") if len(parts) > 1 else ""
+                title = f"{linear} — {rest[:60]}" if rest else linear
+            continue
+        if s.startswith("## SF-"):
+            cur = {"name": s[len("## SF-"):].strip(), "tier": "", "linear": ""}
+            sfs.append(cur)
+            continue
+        if cur is not None:
+            if s.startswith("# "):
+                cur = None
+            elif s.startswith("Tier:") and not cur["tier"]:
+                cur["tier"] = s.split(":", 1)[1].strip()
+            elif s.startswith("linear:") and not cur["linear"]:
+                cur["linear"] = s.split(":", 1)[1].strip()
+    out = [f"story: {title}"]
+    for sf in sfs[:8]:
+        bits = [f"SF-{sf['name']}"]
+        if sf["tier"]:
+            bits.append(f"tier {sf['tier']}")
+        if sf["linear"]:
+            bits.append(sf["linear"])
+        out.append("  " + " · ".join(bits))
+    return "\n".join(out)
+
+
+def pending_gates(repo):
+    """`story-status` timeout 5s — giữ dòng trạng thái SF/gates. Fail-open."""
+    env_bin = os.environ.get("STORY_FACT_PACK_STATUS_BIN")
+    candidates = [pathlib.Path(env_bin)] if env_bin else [
+        _SCRIPT_DIR / "story-status",
+        _HOME / ".claude" / "bin" / "story-status",
+    ]
+    for cand in candidates:
+        if not cand.is_file():
+            continue
+        # Windows: bash script → chạy qua bash; POSIX: exec trực tiếp
+        if sys.platform == "win32":
+            argv = ["bash", str(cand)]
+        else:
+            argv = [str(cand)]
+        try:
+            r = subprocess.run(argv, cwd=str(repo), capture_output=True,
+                               encoding="utf-8", errors="replace",
+                               timeout=STATUS_TIMEOUT_S)
+        except (OSError, subprocess.SubprocessError):
+            continue
+        if r.returncode != 0:
+            continue
+        keep = []
+        for ln in r.stdout.splitlines():
+            t = ln.strip()
+            if t.startswith("● ") or t.startswith("states:") or t.startswith("bracket:"):
+                keep.append(t)
+        if keep:
+            return "gates/status:\n  " + "\n  ".join(keep[:6])
+        break  # binary có nhưng không parse được dòng nào — không thử fallback
+    return ""
+
+
+def tail_checkpoints(store):
+    """Last 3 records (recency desc) — format như `query` SF-1, error lines
+    nguyên văn. Không import được module SF-1 → skip (fail-open)."""
+    if CP is None:
+        return ""
+    try:
+        records, _malformed, _future = CP.load_records(pathlib.Path(store))
+    except Exception:  # noqa: BLE001 — fail-open
+        return ""
+    if not records:
+        return ""
+    records.sort(key=lambda r: str(r.get("ts") or ""), reverse=True)
+    out = ["recent checkpoints (mới nhất trước):"]
+    for rec in records[:3]:
+        ts = str(rec.get("ts") or "")[:19].replace("T", " ")
+        out.append(f"[{ts}] {CP.short(rec.get('commit'))} {rec.get('branch', '')}")
+        out.append(f"  {rec.get('prompt_summary', '')}")
+        for ln in rec.get("error_lines") or []:
+            out.append(f"  ! {ln}")
+    return "\n".join(out)
+
+
+def lessons_block(store):
+    """lessons.jsonl (SF-3 tạo) — vắng → '' (graceful skip). Lệch stamp theo
+    HEAD (SC5 consumer) → in dòng ⚠ stale THAY vì dùng im lặng (#17-a)."""
+    p = pathlib.Path(store) / "lessons.jsonl"
+    if not p.is_file():
+        return ""
+    try:
+        text = p.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return ""
+    if CP is not None:
+        try:
+            head = CP.git(store, "rev-parse", "HEAD") if CP.resolve_main_checkout(store) else None
+        except Exception:  # noqa: BLE001 — fail-open
+            head = None
+        if head is not None:
+            stamp_src = head.stdout.strip() if head.returncode == 0 else "no-git"
+            if CP.check_stamp(p, stamp_src):
+                old = text.splitlines()[0] if text else ""
+                old = old[len(CP.STAMP_PREFIX):].rsplit(", at:", 1)[0].strip() \
+                    if old.startswith(CP.STAMP_PREFIX) else "(không stamp)"
+                return (f"⚠ lessons stale (stamp: {old or '(không stamp)'} "
+                        f"vs HEAD: {stamp_src})")
+    items = []
+    for line in text.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            rec = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(rec, dict) and rec.get("text"):
+            items.append(f"  - {str(rec['text'])[:200]}")
+    if not items:
+        return ""
+    return "lessons:\n" + "\n".join(items[:MAX_LESSONS])
+
+
+def build_sections(repo, store):
+    sections = []
+    bpath, btext = latest_bracket(repo)
+    if bpath is not None:
+        sections.append(bracket_section(bpath, btext))
+        gates = pending_gates(repo)
+        if gates:
+            sections.append(gates)
+    tail = tail_checkpoints(store)
+    if tail:
+        sections.append(tail)
+    lessons = lessons_block(store)
+    if lessons:
+        sections.append(lessons)
+    return sections
+
+
+def apply_cap(sections):
+    """Vượt cap 2KB → cắt TỪ DƯỚI LÊN (giữ component ưu tiên cao), cuối in
+    disclosure. N đếm NHẤT QUÁN theo ký tự (chars) — khớp nhãn "ký tự"."""
+    body = "\n\n".join(sections)
+    if len(body.encode("utf-8")) <= CAP_BYTES:
+        return body, 0
+    cut_chars = 0
+    while len(sections) > 1:
+        removed = sections.pop()
+        cut_chars += len(removed) + 2  # \n\n joiner
+        body = "\n\n".join(sections)
+        if len(body.encode("utf-8")) <= CAP_BYTES:
+            return body, cut_chars
+    # còn 1 section vẫn vượt — hard-cut theo bytes, lùi tới boundary utf-8
+    budget = CAP_BYTES - 64  # chừa chỗ disclosure + newline
+    full = body  # chars thật trước truncate — N nhất quán với phần sections
+    raw = body.encode("utf-8")
+    trimmed = raw[:budget]
+    while trimmed:
+        try:
+            body = trimmed.decode("utf-8")
+            break
+        except UnicodeDecodeError:
+            trimmed = trimmed[:-1]
+    else:
+        body = ""
+    cut_chars += len(full) - len(body)
+    return body, cut_chars
+
+
+def main():
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8")
+        except (AttributeError, OSError):
+            pass
+    try:
+        payload = read_stdin_payload()
+        source = str(payload.get("source") or "startup")
+        if source == "compact":
+            sys.exit(0)  # compact-recovery legacy xử lý — không double-inject
+        cwd = resolve_cwd(payload)
+        repo = None
+        if CP is not None:
+            try:
+                repo = CP.resolve_main_checkout(cwd)
+            except Exception:  # noqa: BLE001
+                repo = None
+        if repo is None and (cwd / "docs" / "superpowers" / "brackets").is_dir():
+            repo = cwd  # không git — cwd có brackets vẫn pack được
+        if repo is None:
+            sys.exit(0)
+        env_store = os.environ.get("STORY_CHECKPOINT_STORE")
+        store = pathlib.Path(env_store) if env_store else pathlib.Path(repo) / ".wakii"
+        sections = build_sections(repo, store)
+        if not sections:
+            sys.exit(0)
+        body, cut = apply_cap(sections)
+        if body.strip():
+            if cut > 0:
+                body = f"{body}\n[đã cắt {cut} ký tự]"
+            sys.stdout.write(body + "\n")
+    except BaseException:  # noqa: BLE001 — hook không được kéo chết session
+        pass
+    sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()

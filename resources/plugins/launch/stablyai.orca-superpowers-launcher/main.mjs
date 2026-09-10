@@ -24,8 +24,9 @@
 import directives from './directives.json' with { type: 'json' }
 import { execFile as execFileCb } from 'node:child_process'
 import { promisify } from 'node:util'
-import { accessSync, readFileSync, existsSync, mkdirSync, readdirSync, cpSync, rmSync, writeFileSync, chmodSync, statSync } from 'node:fs'
+import { accessSync, readFileSync, existsSync, mkdirSync, readdirSync, cpSync, rmSync, writeFileSync, chmodSync, statSync, renameSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import { dirname } from 'node:path'
 const execFileAsync = promisify(execFileCb)
 
 // Resolve the PRODUCTION orca binary explicitly. Why: when running inside the
@@ -33,14 +34,20 @@ const execFileAsync = promisify(execFileCb)
 // (~/Documents/orca/out/bin/orca) which breaks outside its module context
 // ("Cannot find module ..."). The production binary is self-contained.
 function orcaBin() {
-  const candidates = [
+  const isWin = process.platform === 'win32'
+  const candidates = isWin ? [
+    // Windows: binary sống cạnh app resources (exe + bin/orca.exe); ALSO the
+    // app's own executable path is unusable — resolve from process.execPath.
+    join(dirname(process.execPath), 'resources', 'bin', 'orca.exe'),
+    join(process.env.LOCALAPPDATA || '', 'Programs', 'orca', 'resources', 'bin', 'orca.exe')
+  ] : [
     '/opt/homebrew/bin/orca',
     '/usr/local/bin/orca',
     '/Applications/Wakii.app/Contents/Resources/bin/orca',
     '/Applications/Orca.app/Contents/Resources/bin/orca'
   ]
   for (const c of candidates) {
-    try { accessSync(c); return c } catch { continue }
+    try { if (c) accessSync(c); else continue; return c } catch { continue }
   }
   return 'orca' // fallback to PATH (production app context)
 }
@@ -230,7 +237,7 @@ async function worktreeRoot(orca) {
 function parseBracketFile(text, file) {
   const lines = text.split('\n')
   let linear = null, title = basename(file).replace(/\.md$/, '')
-  const hm = text.match(/^#\s+Story:\s*([A-Z]+-\d+)\s*[—–-]\s*(.+)$/m)
+  const hm = text.match(/^#\s+Story:\s*([A-Za-z]+-\d+)\s*[—–-]\s*(.+)$/m)
   if (hm) { linear = hm[1]; title = hm[2].trim() }
   return { linear, title: title.slice(0, 60), file }
 }
@@ -315,10 +322,14 @@ async function listStories(orca) {
     }
     stories.sort((a, b) => a.file.localeCompare(b.file))
     if (!stories.length) {
+      // Observability: scan-roots diagnostics in the storage payload —
+      // silent-empty made the Windows autocomplete bug invisible for weeks.
+      const roots = await storyScanRoots()
       await orca.host.call('storage.set', {
         key: 'story.list',
         value: { stories: [], currentLinear: null, currentFile: null,
                  error: 'no bracket files found in any workspace',
+                 rootsProbed: roots, orcaBin: orcaBin(),
                  root, fetchedAt: new Date().toISOString() }
       })
       return { ok: true, count: 0, root }
@@ -767,6 +778,95 @@ function notifyKitBlocked(orca, summary) {
     .catch(() => { if (!guardLogSink) { try { orca.log(body) } catch { /* không còn kênh nào */ } } })
 }
 
+// ---- Story hooks auto-install (SF-2 GH-26) --------------------------------
+// Merge ĐÚNG 3 hook entries vào <root>/settings.json: PostToolUse (matcher
+// Bash → checkpoint record), SessionStart (→ fact-pack), Stop (wrapper no-op,
+// logic thật SF-3 thay sau). Detection theo ĐÚNG command path (normalized) của
+// kit — KHÔNG prefix-match `story-` (entry legacy story-compact-recovery và
+// claude-hook.cmd của Orca phải nguyên vẹn). Idempotent: chỉ ghi khi nội dung
+// đổi (chạy lần 2 → file byte-for-byte không đổi). Atomic: temp cùng dir +
+// rename. Malformed settings.json → KHÔNG BAO GIỜ ghi đè (return ok:false).
+const STORY_HOOK_WRAPPERS = {
+  PostToolUse: { file: 'hook-post-tool-use', matcher: 'Bash' },
+  SessionStart: { file: 'hook-session-start', matcher: null },
+  Stop: { file: 'hook-stop', matcher: null }
+}
+const STORY_HOOK_TIMEOUT = 10
+
+const normCmdPath = (s) => String(s || '').replace(/\\/g, '/')
+
+// Canonical groups cho 1 event — command = đường dẫn wrapper đã cài (forward
+// slash, chạy được cả Git Bash lẫn POSIX). Tách hàm để test so DeepEqual.
+export function buildStoryHookGroups(claudeDir) {
+  const binDir = normCmdPath(join(claudeDir, 'bin'))
+  const out = {}
+  for (const [event, w] of Object.entries(STORY_HOOK_WRAPPERS)) {
+    const hook = { type: 'command', command: `${binDir}/${w.file}`, timeout: STORY_HOOK_TIMEOUT }
+    out[event] = w.matcher ? { matcher: w.matcher, hooks: [hook] } : { hooks: [hook] }
+  }
+  return out
+}
+
+// Pure merge — settings hiện tại + canonical groups → settings mới. Group chứa
+// ĐÚNG command của kit (và không trộn lệnh lạ) → thay nguyên group; chưa có →
+// append. Group trộn command kit + lệnh lạ → không đụng, append canonical riêng.
+export function mergeStoryHookSettings(settings, claudeDir) {
+  if (!settings || typeof settings !== 'object' || Array.isArray(settings)) return null
+  const canon = buildStoryHookGroups(claudeDir)
+  const kitCmds = new Set(Object.values(canon).map(g => normCmdPath(g.hooks[0].command)))
+  const next = { ...settings }
+  const hooks = { ...(next.hooks && typeof next.hooks === 'object' && !Array.isArray(next.hooks) ? next.hooks : {}) }
+  for (const [event, group] of Object.entries(canon)) {
+    const arr = Array.isArray(hooks[event]) ? [...hooks[event]] : []
+    const want = normCmdPath(group.hooks[0].command)
+    let replaced = false
+    for (let i = 0; i < arr.length; i++) {
+      const ent = arr[i]
+      if (!ent || typeof ent !== 'object' || !Array.isArray(ent.hooks)) continue
+      const cmds = ent.hooks.map(h => normCmdPath(h?.command))
+      if (!cmds.includes(want)) continue
+      const hasForeign = cmds.some(c => c && !kitCmds.has(c))
+      if (hasForeign) continue // mixed — giữ nguyên, append canonical riêng bên dưới
+      arr[i] = JSON.parse(JSON.stringify(group))
+      replaced = true
+      break
+    }
+    if (!replaced) arr.push(JSON.parse(JSON.stringify(group)))
+    hooks[event] = arr
+  }
+  next.hooks = hooks
+  return next
+}
+
+// RMW lên đĩa — fail-open phía caller (không throw). changed=false khi nội dung
+// đã đúng (không đụng mtime → idempotent byte-for-byte).
+export function mergeStoryHooks(claudeDir) {
+  try {
+    const settingsPath = join(claudeDir, 'settings.json')
+    let current = {}
+    let currentText = null
+    if (existsSync(settingsPath)) {
+      currentText = readFileSync(settingsPath, 'utf8')
+      try {
+        current = JSON.parse(currentText)
+      } catch (err) {
+        return { ok: false, changed: false, error: `settings.json malformed — không ghi đè: ${err.message}` }
+      }
+    }
+    const merged = mergeStoryHookSettings(current, claudeDir)
+    if (!merged) return { ok: false, changed: false, error: 'settings.json không phải object' }
+    const nextText = JSON.stringify(merged, null, 2) + '\n'
+    if (currentText !== null && currentText === nextText) return { ok: true, changed: false }
+    const tmp = join(claudeDir, `.settings.json.tmp-${process.pid}`)
+    mkdirSync(claudeDir, { recursive: true })
+    writeFileSync(tmp, nextText)
+    renameSync(tmp, settingsPath)
+    return { ok: true, changed: true }
+  } catch (err) {
+    return { ok: false, changed: false, error: err instanceof Error ? err.message : String(err) }
+  }
+}
+
 // ---- Kit self-install (bundle built-in Wakii) ----
 // sync-kit.sh vendor story-team-kit vào kit/ cạnh main.mjs. Khi worker kích
 // hoạt, chép skills/agents/bin vào ~/.claude/ — build Wakii xong là full chức
@@ -815,6 +915,12 @@ export function installKit(orca, { root, kitRoot: kitRootOverride } = {}) {
     }
     mkdirSync(claude, { recursive: true })
     writeFileSync(marker, String(manifest.version))
+    // Hooks auto-install (SF-2): merge 3 entries vào settings.json trong Node
+    // (KHÔNG spawn bash bin từ worker — runProcess seam risk trên Windows).
+    // Fail không chặn install: bin đã copy, hook wrapper tự nuốt missing-bin.
+    const merged = mergeStoryHooks(claude)
+    if (merged.ok) orca.log(`story-team-kit v${manifest.version}: hooks ${merged.changed ? 'merged' : 'up-to-date'}`)
+    else orca.log(`story-team-kit v${manifest.version}: hooks merge skip — ${merged.error}`)
     orca.log('story-team-kit self-installed: v' + manifest.version)
     return true
   } catch (err) {
