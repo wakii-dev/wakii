@@ -175,6 +175,62 @@ console.log(`\n== [gh42-yaml] frontmatter parse được trên cả 9 defs (ch�
   }
 }
 
+// =====================================================================
+// GH-42 — matrix lint: kit/permission-matrix.md là nguồn truth duy nhất, test
+// hardcode matrix và buộc frontmatter khớp TỪNG file. Lệch matrix → FAIL
+// (2 bản sao của cùng profile không được phép lệch nhau).
+const GH42_MATRIX = {
+  'code-reviewer': 'Edit, Write, NotebookEdit',
+  'security-audit': 'Edit, Write, NotebookEdit',
+  'spec-critic': 'Edit, Write, NotebookEdit',
+  'plan-critic': 'Edit, Write, NotebookEdit',
+  'phase0-impact-analyst': 'Edit, Write, NotebookEdit',
+  'verifier': 'Edit, Write, NotebookEdit',
+  'rollback-fixer': 'Edit, Write, NotebookEdit',
+  'designer': 'Edit, Write, NotebookEdit',
+  'task-executor': null // executor full trong worktree — không deny
+}
+const MATRIX_DOC = resolve(testsDir, '../kit/permission-matrix.md')
+
+console.log(`\n== [gh42-lint] disallowedTools khớp matrix hardcode per-agent ==`)
+{
+  for (const name of GH42_AGENT_FILES) {
+    const fm = parseFrontmatter(readFileSync(join(AGENTS, `${name}.md`), 'utf8'))
+    if (!fm || fm.invalid) { check('gh42-lint', `${name}.md parse được (precondition)`, false); continue }
+    const actual = fm.disallowedTools ?? null
+    check('gh42-lint', `${name}: disallowedTools === matrix entry`,
+      actual === GH42_MATRIX[name], `matrix=${JSON.stringify(GH42_MATRIX[name])} got=${JSON.stringify(actual)}`)
+  }
+  // Bash không deny đồng loạt: 8 def restricted vẫn giữ Bash (rollback-fixer cần
+  // git revert; designer cần preview; analysts cần đọc phân tích)
+  const restricted = GH42_AGENT_FILES.filter(n => GH42_MATRIX[n])
+  check('gh42-lint', 'không def nào deny Bash (denylist 3 tool write duy nhất)',
+    restricted.every(n => {
+      const fm = parseFrontmatter(readFileSync(join(AGENTS, `${n}.md`), 'utf8'))
+      return fm && !/Bash/.test(fm.disallowedTools ?? '')
+    }))
+  // không def nào dùng allowlist `tools:` (agent không chết vì thiếu tool)
+  check('gh42-lint', 'không def nào có allowlist tools: trong frontmatter',
+    GH42_AGENT_FILES.every(n => !/^tools:/m.test(readFileSync(join(AGENTS, `${n}.md`), 'utf8'))))
+}
+
+console.log(`\n== [gh42-doc] permission-matrix.md tồn tại + liệt kê đủ 9 agents ==`)
+{
+  let matrix = ''
+  try { matrix = readFileSync(MATRIX_DOC, 'utf8') } catch { /* miss */ }
+  check('gh42-doc', 'kit/permission-matrix.md tồn tại', matrix.length > 0)
+  for (const name of GH42_AGENT_FILES) {
+    check('gh42-doc', `matrix chứa agent ${name}`, matrix.includes(name))
+  }
+  check('gh42-doc', 'matrix có cột tool-deny', /tool-deny/.test(matrix))
+  check('gh42-doc', 'matrix có cột ask-scope', /ask-scope/.test(matrix))
+  check('gh42-doc', 'matrix có cột escape', /escape/.test(matrix))
+  check('gh42-doc', 'matrix có Bash-gap note', /Bash-gap/.test(matrix))
+  check('gh42-doc', 'matrix có degrade note (fail-open Claude Code cũ)', /fail-open/.test(matrix))
+  check('gh42-doc', 'matrix tham chiếu story-diff-review KHÔNG tái định nghĩa guard',
+    matrix.includes('story-diff-review') && matrix.includes('KHÔNG tái định nghĩa'))
+}
+
 console.log(`\n== TOTAL: ${pass} PASS / ${fail} FAIL ==`)
 if (failures.length) {
   console.log('FAILURES:\n- ' + failures.join('\n- '))
