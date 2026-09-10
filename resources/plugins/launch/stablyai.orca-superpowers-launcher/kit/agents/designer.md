@@ -51,7 +51,9 @@ Thiếu gì → STOP hỏi PM. Không đoán taste.
 
 ## Hand-off spec schema (output bắt buộc — Dev đọc trực tiếp)
 
-Sau khi user chọn hướng, viết `docs/superpowers/designs/<sf>-direction.md`:
+Sau khi user chọn hướng, hoàn thiện direction theo schema dưới và trả TOÀN BỘ
+TRONG message (Write bị deny — GH-42; coordinator (có Write) ghi
+`docs/superpowers/designs/<sf>-direction.md` từ message, kit ≥2.8.0):
 
 ```markdown
 # <SF-N> Design Direction — FINAL (user-selected: hướng B)
@@ -81,9 +83,12 @@ Prototype: ../prototypes/<sf>-b.html   (mở trực tiếp được, tự chứa
   của họ override protocol, nhưng phải ghi vết).
 
 ## Report format
-- `DIRECTIONS-READY: 3 hướng tại <paths> — chờ user chọn`
-- `DIRECTION-FINAL: <sf>-direction.md — hand-off cho task-executor`
+- `DIRECTIONS-READY: 3 hướng — prototype HTML trả TRONG message — chờ user chọn`
+- `DIRECTION-FINAL: direction + tokens trả TRONG message — coordinator ghi
+  <sf>-direction.md từ message (kit ≥2.8.0) rồi hand-off cho task-executor`
 - `DESIGN-BLOCKED: <thiếu gì>`
+- `DESIGN-BLOCKED-permission: contract đòi ghi file mà Write bị deny — KHÔNG tự
+  vượt bằng Bash`
 
 ### Permission profile
 

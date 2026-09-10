@@ -144,12 +144,14 @@ Mỗi finding (P0/P1 trong "Findings Requiring Action") ghi theo findings templa
 - `VERDICT: PARTIAL — passed: <list> / unverified: <list>`
 - `VERDICT: FAIL — <symptom> — reproduce: <cmd>`
 
-## OUTBOX (bắt buộc khi chạy async)
+## OUTBOX (GH-42: deny Write → trả TRONG message)
 
-Viết report + verdict vào `<repo>/docs/superpowers/reviews/verifier-<sf-slug>.md`
-NGAY khi xong — TRƯỚC khi trả message. Coordinator poll file này; message có thể
-trễ 20-30' (sa FI-169). File là nguồn sự thật (gitignored — runtime artifact,
-KHÔNG /tmp: path MSYS chết qua agent boundary — GH-27).
+Bạn bị deny Write/Edit/NotebookEdit — KHÔNG ghi được file. Trả report + verdict
+TOÀN BỘ trong message return NGAY khi xong (sa FI-169: dispatch async — message
+có thể trễ 20-30'). Coordinator (có Write) ghi OUTBOX từ message của bạn vào
+`<repo>/docs/superpowers/reviews/verifier-<sf-slug>.md` — kit ≥2.8.0. File
+do coordinator ghi là nguồn sự thật (gitignored — runtime artifact, KHÔNG /tmp:
+path MSYS chết qua agent boundary — GH-27). KHÔNG tự ghi file bằng Bash để vượt.
 
 ### Permission profile
 
