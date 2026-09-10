@@ -81,6 +81,21 @@ function spawnAgents(reqs) {
     p.on('close', (code) => res({ code, out, err }))
   }))
 }
+// agent in ra pid của mình trước JSON cuối — để test đối chiếu lock content
+function spawnAgentEchoPid(req) {
+  return new Promise((res) => {
+    const p = spawn(PY, ['-c',
+      `import os, sys\nprint("MYPID:", os.getpid(), file=sys.stderr)\n` + lockScript,
+      CP_BIN, JSON.stringify(req)], { encoding: 'utf8' })
+    let out = '', err = ''
+    p.stdout.on('data', (d) => { out += d })
+    p.stderr.on('data', (d) => { err += d })
+    p.on('close', (code) => {
+      const m = /MYPID: (\d+)/.exec(err)
+      res({ code, out, err, pid: m ? Number(m[1]) : null })
+    })
+  })
+}
 function isoAgo(ms) {
   return new Date(Date.now() - ms).toISOString()
 }
@@ -325,6 +340,46 @@ except ValueError as e:
   check('exc', 'lock đã release (dựng lại lấy được)', runAgent({ store: dir, lock: '.exc.lock', tag: 'AFTER', deadline: 2 }).status === 0)
   const after = runAgent({ store: dir, lock: '.exc.lock', append: join(dir, 'log'), tag: 'AFTER', deadline: 2 })
   check('exc', 'acquire sau exception OK', after.status === 0 && parseLast(after.stdout).result === 'AFTER', after.stdout)
+}
+
+// ═══ (h) lock content: own-pid + ts gần đây; holder 8s → contender không takeover ═══
+console.log(`\n== (h) lock content pid+ts (review P0) + no-takeover holder sống ==`)
+{
+  const dir = tempDir('content')
+  const lock = join(dir, '.content.lock')
+  // (1) trong lúc giữ lock, đọc lockfile → own-pid + ts gần đây
+  const agent = spawnAgentEchoPid({ store: dir, lock: '.content.lock', tag: 'H', hold_ms: 2500, deadline: 10 })
+  await new Promise((r) => setTimeout(r, 800)) // chắc chắn agent đã acquire
+  const content = readFileSync(lock, 'utf8')
+  const parts = content.trim().split(/\s+/)
+  check('h', 'lock content đúng 2 trường pid + ISO-ts', parts.length === 2, JSON.stringify(content))
+  check('h', 'pid trong content là số dương', /^\d+$/.test(parts[0]), parts[0])
+  const ageMs = Date.now() - Date.parse(parts[1])
+  check('h', 'ts trong content là ISO parse được + gần đây (<30s)',
+    !Number.isNaN(ageMs) && ageMs >= 0 && ageMs < 30_000, `${parts[1]} age=${ageMs}ms`)
+  // pid echo từ stderr agent khớp pid trong content
+  const agentRes = await agent
+  check('h', 'pid trong content == pid thật của holder',
+    agentRes.pid !== null && parts[0] === String(agentRes.pid), `content=${parts[0]} agent=${agentRes.pid}`)
+  check('h', 'lock dọn sạch sau holder release', !existsSync(lock))
+
+  // (2) holder giữ ~8s + contender deadline 10s → contender KHÔNG takeover
+  const dir2 = tempDir('hold8')
+  const state2 = join(dir2, 'state')
+  const holder2 = spawnAgents([{ store: dir2, lock: '.hold.lock', append: state2, tag: 'H8', hold_ms: 8000, deadline: 20 }])[0]
+  await new Promise((r) => setTimeout(r, 800))
+  // mtime sẽ vượt 5s giữa chừng — pid sống + fresh-ts phải chặn takeover
+  const c = runAgent({ store: dir2, lock: '.hold.lock', append: state2, tag: 'C', deadline: 10 })
+  const cr = parseLast(c.stdout)
+  check('h2', 'contender acquired (chờ, KHÔNG takeover oan)',
+    cr.result === 'C', JSON.stringify(cr))
+  check('h2', 'contender đợi gần đủ 8s (3s < wait < 10s) — proof không takeover sớm',
+    cr.waited_ms > 3000 && cr.waited_ms < 10000, `waited=${cr.waited_ms}ms`)
+  const hr2 = await holder2
+  check('h2', 'holder hoàn thành', parseLast(hr2.out).result === 'H8', hr2.err)
+  const appends = readFileSync(state2, 'utf8').trim().split(/\r?\n/)
+  check('h2', 'cả H8 và C trong append log, H8 trước C',
+    appends.indexOf('H8') === 0 && appends[1] === 'C', JSON.stringify(appends))
 }
 
 console.log(`\n== TOTAL: ${pass} PASS / ${fail} FAIL ==`)

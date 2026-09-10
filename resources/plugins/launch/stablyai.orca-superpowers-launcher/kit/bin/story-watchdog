@@ -69,8 +69,10 @@ save_state() { # $1 sf, $2 verdict — RMW dưới with_file_lock (GH-37): pytho
   # one-shot spawn (pattern index-hook), tmp+rename trong fn — 2 pass đồng
   # thời không mất verdict. Lock timeout → giữ state cũ (benign).
   # cygpath -m: Git Bash path /c/... → C:/... cho Windows python (macOS/Linux
-  # không có cygpath → path giữ nguyên).
-  local sf="$1" verdict="$2" sdir stmp sdir_w sfile_w dir_w
+  # không có cygpath → path giữ nguyên). Giá trị truyền qua env (WD_SF,
+  # WD_VERDICT, WD_DIR, WD_STATE, WD_SDIR) — KHÔNG nhét vào python source
+  # (bash-3.2 không có ${var@Q}; escape qua heredoc gãy theo từng lớp quoting).
+  local sf="$1" verdict="$2" sdir sdir_w sfile_w dir_w stmp
   sdir="$(dirname "$STATE_FILE")"
   if command -v cygpath >/dev/null 2>&1; then
     sdir_w="$(cygpath -m "$sdir")"; sfile_w="$(cygpath -m "$STATE_FILE")"
@@ -79,16 +81,22 @@ save_state() { # $1 sf, $2 verdict — RMW dưới with_file_lock (GH-37): pytho
     sdir_w="$sdir"; sfile_w="$STATE_FILE"; dir_w="$DIR"
   fi
   stmp="$(mktemp "${TMPDIR:-/tmp}/wd-save-XXXXXX.py" 2>/dev/null)" || return 0
-  cat > "$stmp" <<PYEOF
+  # export CHO PYTHON (env-prefix chỉ trên cat là không đủ — python đọc os.environ)
+  WD_SF="$sf" WD_VERDICT="$verdict" WD_DIR="$dir_w" WD_STATE="$sfile_w" \
+    WD_SDIR="$sdir_w"
+  export WD_SF WD_VERDICT WD_DIR WD_STATE WD_SDIR
+  cat > "$stmp" <<'PYEOF'
 import sys
 sys.dont_write_bytecode = True
 import importlib.machinery
 import importlib.util
 import os
 import pathlib
-sf_dir = pathlib.Path(${sdir_w@Q})
-state = pathlib.Path(${sfile_w@Q})
-candidates = [pathlib.Path(${dir_w@Q}) / "story-checkpoint",
+sf = os.environ["WD_SF"]
+verdict = os.environ["WD_VERDICT"]
+sf_dir = pathlib.Path(os.environ["WD_SDIR"])
+state = pathlib.Path(os.environ["WD_STATE"])
+candidates = [pathlib.Path(os.environ["WD_DIR"]) / "story-checkpoint",
               pathlib.Path(os.path.expanduser("~")) / ".claude" / "bin" / "story-checkpoint"]
 cp = None
 for cand in candidates:
@@ -108,8 +116,8 @@ def rmw():
     lines = []
     if state.exists():
         lines = [l for l in state.read_text(encoding="utf-8", errors="replace").splitlines()
-                 if l.strip() and l.split("|", 1)[0] != ${sf@Q}]
-    lines.append(${sf@Q} + "|" + ${verdict@Q} + "|" + str(int(__import__("time").time())))
+                 if l.strip() and l.split("|", 1)[0] != sf]
+    lines.append(sf + "|" + verdict + "|" + str(int(__import__("time").time())))
     tmp = state.with_name(state.name + ".tmp-" + str(os.getpid()))
     with open(tmp, "w", encoding="utf-8", newline="") as f:
         f.write("\n".join(lines) + "\n")

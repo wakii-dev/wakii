@@ -240,6 +240,15 @@ def _parse_lock_content(text, now_ms):
     return False, "holder-alive"
 
 
+def _lock_stamp():
+    """'<pid> <ISO-ts>' content ghi vào lock khi acquire — đồng hồ THẬT (không
+    now_iso(): STORY_CHECKPOINT_NOW env chỉ override record ts cho test, dính
+    vào lock-ts sẽ méo stale predicate)."""
+    ts = datetime.datetime.now(datetime.timezone.utc).isoformat(
+        timespec="microseconds").replace("+00:00", "Z")
+    return f"{os.getpid()} {ts}"
+
+
 def with_file_lock(store_dir, lock_name, fn, deadline_s=10.0, *,
                    mkdir=True, log_path=None):
     """Mutual-exclusion cho RMW state dùng chung (GH-19). Lockfile
@@ -275,7 +284,10 @@ def with_file_lock(store_dir, lock_name, fn, deadline_s=10.0, *,
         waited_ms = int((time.time() - t0) * 1000)
         try:
             fd = os.open(str(lock), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-            os.close(fd)
+            try:  # content pid+ts — stale predicate của SF này dựa trên nó
+                os.write(fd, _lock_stamp().encode("utf-8"))
+            finally:
+                os.close(fd)
             got = True
             break
         except FileExistsError:
