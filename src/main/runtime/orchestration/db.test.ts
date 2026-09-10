@@ -4,7 +4,6 @@ import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import Database from '../../sqlite/sync-database'
 import { LEGACY_RUN_ID, OrchestrationDb } from './db'
-import type { MessageType } from './db'
 import { OrchestrationError } from './orchestration-error'
 import { createRootDispatch } from './db/root-dispatch-test-fixture'
 
