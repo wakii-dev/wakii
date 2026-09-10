@@ -248,16 +248,74 @@ def cmd_query_repo(kb_dir, args):
         print(f"({len(results)} repo match — top-{TOP_N} hiển thị, refine keyword để thu hẹp)")
 
 
+def toc_and_section(text, term):
+    """Returns (toc_lines, block_lines|None). Block = heading chứa term (case-
+    insens) đến heading kế bất kỳ cấp; term khớp dòng thường → in dòng đó."""
+    lines = text.splitlines()
+    toc = [l for l in lines if l.lstrip().startswith("#")]
+    if not term:
+        return toc, None
+    tl = term.lower()
+    start = next((i for i, l in enumerate(lines)
+                  if l.lstrip().startswith("#") and tl in l.lower()), None)
+    if start is not None:
+        end = next((i for i in range(start + 1, len(lines))
+                    if lines[i].lstrip().startswith("#")), len(lines))
+        block = [l for l in lines[start:end] if l.strip()]
+        return toc, block
+    hit = next((l for l in lines if not l.lstrip().startswith("#") and tl in l.lower()),
+               None)
+    if hit is not None:
+        return toc, [trunc(hit.strip())]
+    return toc, None
+
+
+def run_doc_cmd(kb_dir, args, fname, label):
+    term = args[0] if args and not args[0].startswith("--") else None
+    if len([a for a in args if not a.startswith("--")]) > 1:
+        usage(f"{label} nhận tối đa 1 term")
+    path = os.path.join(kb_dir, fname)
+    text = read_md(path)
+    if text is None:
+        print(f"no {fname} in {kb_dir}")
+        return
+    toc, block = toc_and_section(text, term)
+    if block is None:
+        if term:
+            print(f"no {label} entry for '{term}'")
+            return
+        if not toc:
+            print(f"{fname} rỗng (không có heading)")
+            return
+        for l in toc:
+            print(l)
+        return
+    for l in block:
+        print(l)
+
+
 def cmd_glossary(kb_dir, args):
-    usage("chưa implement (task kế)")  # kb-bin-glossary-moc-stats
+    run_doc_cmd(kb_dir, args, "glossary.md", "glossary")
 
 
 def cmd_moc(kb_dir, args):
-    usage("chưa implement (task kế)")  # kb-bin-glossary-moc-stats
+    run_doc_cmd(kb_dir, args, "MOC.md", "moc")
 
 
 def cmd_stats(kb_dir, args):
-    usage("chưa implement (task kế)")  # kb-bin-glossary-moc-stats
+    def count_md(sub):
+        d = os.path.join(kb_dir, sub)
+        return sum(1 for n in os.listdir(d) if n.endswith(".md")) if os.path.isdir(d) else 0
+
+    def line_count(fname):
+        text = read_md(os.path.join(kb_dir, fname))
+        return len(text.splitlines()) if text is not None else 0
+
+    print(f"KB: {kb_dir}")
+    print(f"adr: {count_md('adr')} files")
+    print(f"repos: {count_md('repos')} files")
+    print(f"glossary: {line_count('glossary.md')} lines")
+    print(f"MOC: {line_count('MOC.md')} lines")
 
 
 if __name__ == "__main__":
