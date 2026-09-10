@@ -1,0 +1,155 @@
+#!/usr/bin/env python3
+"""story-kb — query bin read-only cho Project Knowledge Base (GH-45 SF-1, #38).
+
+Layer 1 ADE knowledge infra: agents truy vấn KB (adr/repos/glossary/MOC) thay vì
+tái đọc GitHub. KB vắng → exit 0 fail-open (agents không chết trên máy chưa có
+KB). Layout + frontmatter contract pin trong docs/knowledge/adr/0001.
+
+CLI: story-kb <subcommand> [args...] [--dir <path>]
+  query-adr <keyword...>   AND-match filename+title+body, top-5 + path
+  query-repo <keyword...>  scan repos/ (org--repo + title), top-5 + grading
+  glossary [term]          entry block; không term → TOC
+  moc [section]            section đến heading kế; không term → TOC
+  stats                    counts (adr/repos/glossary/MOC) + dir đang dùng
+
+Dir resolve: --dir > env WAKII_KB_DIR > [<git-root>/docs/knowledge,
+<git-root>/../wakii-site/docs/knowledge]. KB dir hợp lệ = có ít nhất 1 trong
+adr/ · repos/ · glossary.md · MOC.md.
+Exit: 0 (kể cả no-match / KB not configured) · 2 usage."""
+import os
+import subprocess
+import sys
+
+# Bin chạy trực tiếp — không đẻ __pycache__ vào kit/ (contentHash ổn định,
+# bài học story-review-fuse/story-memory).
+sys.dont_write_bytecode = True
+
+# Pipe stdout trên Windows mặc định cp1252 → chết UnicodeEncodeError (GH-27).
+for _s in (sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
+KB_MARKERS = ("adr", "repos", "glossary.md", "MOC.md")
+
+
+def usage(msg=None):
+    if msg:
+        print(f"usage error: {msg}", file=sys.stderr)
+    print("usage: story-kb <query-adr|query-repo|glossary|moc|stats> [args...] "
+          "[--dir <path>]", file=sys.stderr)
+    sys.exit(2)
+
+
+def git_root():
+    """git rev-parse --show-toplevel từ cwd — arg-list, utf-8/replace (GH-27)."""
+    try:
+        r = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            capture_output=True, encoding="utf-8", errors="replace", timeout=10)
+        out = (r.stdout or "").strip()
+        return out if out and r.returncode == 0 else None
+    except Exception:
+        return None
+
+
+def is_kb_dir(path):
+    """KB dir hợp lệ = tồn tại + có ít nhất 1 marker (adr/ repos/ glossary.md MOC.md)."""
+    if not path or not os.path.isdir(path):
+        return False
+    return any(os.path.exists(os.path.join(path, m)) for m in KB_MARKERS)
+
+
+def resolve_kb_dir(cli_dir):
+    """--dir > WAKII_KB_DIR > candidates. Returns (dir|None, probed:list)."""
+    if cli_dir:
+        probed = [os.path.abspath(cli_dir)]
+        return (probed[0] if is_kb_dir(probed[0]) else None), probed
+    probed = []
+    env_dir = os.environ.get("WAKII_KB_DIR")
+    if env_dir:
+        probed.append(os.path.abspath(env_dir))
+        if is_kb_dir(probed[0]):
+            return probed[0], probed
+    root = git_root()
+    base = root if root else os.getcwd()
+    candidates = [
+        os.path.join(base, "docs", "knowledge"),
+        os.path.normpath(os.path.join(base, os.pardir, "wakii-site", "docs", "knowledge")),
+    ]
+    for c in candidates:
+        probed.append(c)
+        if is_kb_dir(c):
+            return c, probed
+    return None, probed
+
+
+def fail_open(probed):
+    print(f"KB not configured — probed: {', '.join(probed)}")
+    sys.exit(0)
+
+
+def main(argv):
+    args, cli_dir = [], None
+    i = 0
+    while i < len(argv):
+        if argv[i] == "--dir":
+            if i + 1 >= len(argv):
+                usage("--dir cần <path>")
+            cli_dir = argv[i + 1]
+            i += 2
+        elif argv[i].startswith("--dir="):
+            cli_dir = argv[i].split("=", 1)[1]
+            i += 1
+        elif argv[i] in ("-h", "--help"):
+            print(__doc__.strip())
+            sys.exit(0)
+        else:
+            args.append(argv[i])
+            i += 1
+    if not args:
+        usage("thiếu subcommand")
+    cmd, rest = args[0], args[1:]
+
+    handlers = {
+        "query-adr": cmd_query_adr,
+        "query-repo": cmd_query_repo,
+        "glossary": cmd_glossary,
+        "moc": cmd_moc,
+        "stats": cmd_stats,
+    }
+    fn = handlers.get(cmd)
+    if fn is None:
+        usage(f"subcommand không rõ: {cmd}")
+
+    kb_dir, probed = resolve_kb_dir(cli_dir)
+    if kb_dir is None:
+        fail_open(probed)
+
+    fn(kb_dir, rest)
+    sys.exit(0)
+
+
+def cmd_query_adr(kb_dir, args):
+    usage("chưa implement (task kế)")  # kb-bin-query-adr
+
+
+def cmd_query_repo(kb_dir, args):
+    usage("chưa implement (task kế)")  # kb-bin-query-repo
+
+
+def cmd_glossary(kb_dir, args):
+    usage("chưa implement (task kế)")  # kb-bin-glossary-moc-stats
+
+
+def cmd_moc(kb_dir, args):
+    usage("chưa implement (task kế)")  # kb-bin-glossary-moc-stats
+
+
+def cmd_stats(kb_dir, args):
+    usage("chưa implement (task kế)")  # kb-bin-glossary-moc-stats
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
