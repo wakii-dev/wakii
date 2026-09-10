@@ -1,0 +1,153 @@
+#!/usr/bin/env python3
+"""story-report-validate — schema-validate REPORT fence của task-executor (GH-40).
+Đọc report từ stdin (primary) hoặc --file <path>, parse fence `REPORT ... /REPORT`
+theo grammar chốt trong epic spec (decisions 2), FAIL token line-start chỉ đích danh:
+  MISSING-FIELD <name> (got: <v>) · BAD-STATUS <got> · NONE-ON-DONE <field> ·
+  UNCLOSED-REPORT · WARN LEGACY-REPORT (không fence — exit 0; FAIL từ kit 2.8.0).
+Strict-reject KHÔNG tolerant (executor-report doctrine — DONE evidence phải thật;
+khác review-findings tolerant GH-32 — 2 doctrine song song có chủ đích).
+Field bắt buộc: task-id, status, commit, files, tests, description.
+Grammar precedence: parser CHỈ bắt field TRƯỚC dòng `description:` đầu tiên;
+mọi thứ sau đó đến `/REPORT` ĐẦU TIÊN là description (multiline free-text).
+Exit: 0 OK/WARN · 1 FAIL · 2 usage."""
+import sys
+
+# SourceFileLoader-style pattern (story-review-fuse): bin chạy trực tiếp, không
+# ghi __pycache__ vào kit/ — contentHash của plugin package phải ổn định.
+sys.dont_write_bytecode = True
+
+# Pipe stdout trên Windows mặc định cp1252 → chết UnicodeEncodeError trên WARN glyphs.
+for _s in (sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
+REQUIRED_FIELDS = ("task-id", "status", "commit", "files", "tests", "description")
+ALLOWED_STATUS = ("DONE", "BLOCKED")
+NONE_ALLOWED_WHEN_BLOCKED = ("commit", "files", "tests")
+
+
+def usage(msg=None):
+    if msg:
+        print(f"usage error: {msg}", file=sys.stderr)
+    print("usage: story-report-validate [--file <path>]   "
+          "(stdin là primary input)", file=sys.stderr)
+    sys.exit(2)
+
+
+def read_input(argv):
+    file_path = None
+    args = list(argv)
+    while args:
+        a = args.pop(0)
+        if a == "--file":
+            if not args:
+                usage("--file cần <path>")
+            file_path = args.pop(0)
+        elif a.startswith("-"):
+            usage(f"unknown option: {a}")
+        else:
+            usage(f"unexpected positional: {a}")
+    if file_path is not None:
+        try:
+            # utf-8 + errors=replace + splitlines — CRLF-safe (kế thừa story-validate).
+            with open(file_path, encoding="utf-8", errors="replace") as f:
+                return f.read().splitlines()
+        except OSError as e:
+            print(f"FAIL: cannot read file: {e}", file=sys.stderr)
+            sys.exit(1)
+    data = sys.stdin.read()
+    return data.splitlines()
+
+
+def parse_report(lines):
+    """Trả (fields|None, fence_start_idx|None, unclosed|bool).
+
+    Parser chỉ nhận field TRƯỚC dòng `description:` đầu tiên trong fence;
+    mọi thứ sau đó đến /REPORT đầu tiên là description (multiline free-text —
+    dòng trông-like key:value trong description KHÔNG bị bắt làm field).
+    """
+    start = None
+    for i, line in enumerate(lines):
+        if line.strip() == "REPORT":
+            start = i
+            break
+    if start is None:
+        return None, None, False
+
+    fields = {}
+    in_description = False
+    for i in range(start + 1, len(lines)):
+        line = lines[i]
+        if line.strip() == "/REPORT":
+            return fields, start, False
+        if in_description:
+            continue  # multiline description — KHÔNG parse field ở đây
+        if line.strip() == "description" or line.strip().startswith("description:"):
+            in_description = True
+            fields["description"] = line.split(":", 1)[1].strip() if ":" in line else ""
+            continue
+        if ":" in line:
+            key, value = line.split(":", 1)
+            key = key.strip()
+            if key in REQUIRED_FIELDS and key != "description" and key not in fields:
+                fields[key] = value.strip()
+    return fields, start, True
+
+
+def validate(lines):
+    """Trả (fails, warns) — token chỉ đích danh theo epic spec."""
+    fields, _start, unclosed = parse_report(lines)
+
+    # Legacy: không có fence nào → WARN phiên này (exit 0); FAIL từ kit 2.8.0.
+    if fields is None:
+        return [], ["LEGACY-REPORT"]
+
+    fails = []
+    if unclosed:
+        fails.append("UNCLOSED-REPORT")
+
+    # MISSING-FIELD — thiếu hoàn toàn hoặc có-key-nhưng-trống đều thiếu giá trị.
+    for name in REQUIRED_FIELDS:
+        got = fields.get(name)
+        if got is None:
+            fails.append(f"MISSING-FIELD {name} (got: <missing>)")
+        elif not got.strip():
+            fails.append(f"MISSING-FIELD {name} (got: )")
+
+    status = fields.get("status") or ""
+    if status and status not in ALLOWED_STATUS:
+        fails.append(f"BAD-STATUS {status}")
+
+    # none chỉ hợp lệ khi BLOCKED; DONE đòi giá trị thật (P1.3 BLOCKED-before-work).
+    if status == "DONE":
+        for f_name in NONE_ALLOWED_WHEN_BLOCKED:
+            if (fields.get(f_name) or "").strip().lower() == "none":
+                fails.append(f"NONE-ON-DONE {f_name}")
+
+    return fails, warns_lines(fields, fails)
+
+
+def warns_lines(fields, fails):
+    # Warn slot cho tương lai — hiện chỉ LEGACY-REPORT sinh ở đường no-fence.
+    return []
+
+
+def main():
+    lines = read_input(sys.argv[1:])
+    fails, warns = validate(lines)
+    for m in fails:
+        print(f"FAIL: {m}")
+    for m in warns:
+        print(f"WARN: {m}")
+    if fails:
+        print("INVALID — report thiếu field bắt buộc / sai grammar")
+        sys.exit(1)
+    print("OK — report hợp lệ"
+          + (f" ({len(warns)} WARN)" if warns else ""))
+    sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()

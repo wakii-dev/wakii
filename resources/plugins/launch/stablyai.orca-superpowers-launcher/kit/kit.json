@@ -1,6 +1,6 @@
 {
   "name": "story-team-kit",
-  "version": "2.6.0",
+  "version": "2.7.0",
   "description": "9-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới.",
   "requires": {
     "claude-code": ">=2.0",
@@ -422,6 +422,11 @@
       "name": "story-review-fuse",
       "type": "bin",
       "description": "gộp findings nhiều OUTBOX reviews/<agent>-<sf>*.md (GH-32) — parse tolerant bullet+bảng, cluster (file, line±10, severity), sort confidence, conf-thấp → NEEDS VERIFICATION; KHÔNG bao giờ drop finding (invariant in_ra == parsed+unparsed)"
+    },
+    {
+      "name": "story-report-validate",
+      "type": "bin",
+      "description": "schema-validate REPORT fence của task-executor (GH-40) — strict-reject: MISSING-FIELD <name> (got: <v>) / BAD-STATUS / NONE-ON-DONE / UNCLOSED-REPORT, legacy no-fence WARN LEGACY-REPORT (FAIL từ kit 2.8.0); stdin primary + --file, exit 0/1/2"
     },
     {
       "name": "story-visual-regress",
