@@ -2,6 +2,7 @@ import Database from '../../../sqlite/sync-database'
 import { attachOrchestrationDbMethods } from './attach-orchestration-db-methods'
 import { hardenOrchestrationDatabaseFiles } from './database-file-permissions'
 import type { GateTransitionListener } from './decision-gates/decision-gate-store'
+import { backfillFederatedStubHomeRuns } from './federation/federated-stub-home-run-backfill'
 import type { OrchestrationDbMethods } from './orchestration-db-methods'
 import {
   createCoordinatorMailRoutingTrigger,
@@ -33,6 +34,7 @@ class OrchestrationDbCore {
     this.db.pragma('busy_timeout = 5000')
     createTables.call(this as unknown as OrchestrationDb)
     migrate.call(this as unknown as OrchestrationDb)
+    backfillFederatedStubHomeRuns(this.db)
     createCoordinatorMailRoutingTrigger.call(this as unknown as OrchestrationDb)
     rememberCurrentRunCoordinatorHandles.call(this as unknown as OrchestrationDb)
     hardenOrchestrationDatabaseFiles(dbPath)

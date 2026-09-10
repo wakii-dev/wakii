@@ -20,7 +20,7 @@ describe('decision-gate-store', () => {
 
   it('resolveGateIfPending resolves a pending gate, readies the task, and returns the row', () => {
     const d = createDb()
-    const task = d.createTask({ spec: 'work' })
+    const task = d.createTask({ spec: 'work', runId: 'run_legacy_local' })
     const gate = d.createGate({ taskId: task.id, question: 'ok?' })
 
     const resolved = d.resolveGateIfPending(gate.id, 'phone')
@@ -32,7 +32,7 @@ describe('decision-gate-store', () => {
 
   it('resolveGateIfPending neither overwrites a resolution nor touches the task once resolved', () => {
     const d = createDb()
-    const task = d.createTask({ spec: 'work' })
+    const task = d.createTask({ spec: 'work', runId: 'run_legacy_local' })
     const gate = d.createGate({ taskId: task.id, question: 'ok?' })
     d.resolveGate(gate.id, 'cli')
     d.updateTaskStatus(task.id, 'completed')
@@ -45,7 +45,7 @@ describe('decision-gate-store', () => {
 
   it('resolveGateIfPending is a no-op on a timed-out gate', () => {
     const d = createDb()
-    const task = d.createTask({ spec: 'work' })
+    const task = d.createTask({ spec: 'work', runId: 'run_legacy_local' })
     const gate = d.createGate({ taskId: task.id, question: 'ok?' })
     d.timeoutGate(gate.id)
 
@@ -58,7 +58,7 @@ describe('decision-gate-store', () => {
 
   it('resolveGate wins the race against resolveGateIfPending: exactly one resolution lands', () => {
     const d = createDb()
-    const task = d.createTask({ spec: 'work' })
+    const task = d.createTask({ spec: 'work', runId: 'run_legacy_local' })
     const events: GateTransitionEvent[] = []
     d.setGateTransitionListener((event) => events.push(event))
     const gate = d.createGate({ taskId: task.id, question: 'ok?' })
@@ -78,8 +78,8 @@ describe('decision-gate-store', () => {
 
   it('emits open on createGate and closed only when a conditional resolution lands', () => {
     const d = createDb()
-    const t1 = d.createTask({ spec: 'a' })
-    const t2 = d.createTask({ spec: 'b' })
+    const t1 = d.createTask({ spec: 'a', runId: 'run_legacy_local' })
+    const t2 = d.createTask({ spec: 'b', runId: 'run_legacy_local' })
     const events: GateTransitionEvent[] = []
     d.setGateTransitionListener((event) => events.push(event))
 
@@ -109,7 +109,7 @@ describe('decision-gate-store', () => {
 
   it('listener throws do not propagate into the store path', () => {
     const d = createDb()
-    const task = d.createTask({ spec: 'work' })
+    const task = d.createTask({ spec: 'work', runId: 'run_legacy_local' })
     d.setGateTransitionListener(() => {
       throw new Error('notification blew up')
     })
