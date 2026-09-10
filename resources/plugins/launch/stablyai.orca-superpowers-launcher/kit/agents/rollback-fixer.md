@@ -109,3 +109,15 @@ Return a short report:
 - `ROLLBACK-DONE: reverted <commits> → last-green <hash>`
 - `ROLLBACK-NEEDS-CONFIRM: <destructive op> — awaiting user`
 - `ROLLBACK-BLOCKED: <lý do>`
+
+### Permission profile
+
+Tool-deny (Claude Code `disallowedTools` — runtime hard-block): **Edit, Write,
+NotebookEdit**. Ma trận đầy đủ: `kit/permission-matrix.md`.
+
+Tool bị harness strip → nếu nhiệm vụ đòi tool đó: **báo BLOCKED lý do
+permission**, KHÔNG retry mù, KHÔNG dùng Bash ghi/sửa file vượt (vi phạm matrix
+— Bash-gap không phải lỗ cho phép; guard hậu kiểm: story-diff-review).
+
+Bash GIỮ — git revert/restore/checkpoint chạy bình thường qua Bash. Revert-only:
+không tự viết file fix (Edit/Write bị deny — code mới là việc của task-executor).

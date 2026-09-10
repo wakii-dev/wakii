@@ -150,3 +150,15 @@ Viết report + verdict vào `<repo>/docs/superpowers/reviews/verifier-<sf-slug>
 NGAY khi xong — TRƯỚC khi trả message. Coordinator poll file này; message có thể
 trễ 20-30' (sa FI-169). File là nguồn sự thật (gitignored — runtime artifact,
 KHÔNG /tmp: path MSYS chết qua agent boundary — GH-27).
+
+### Permission profile
+
+Tool-deny (Claude Code `disallowedTools` — runtime hard-block): **Edit, Write,
+NotebookEdit**. Ma trận đầy đủ: `kit/permission-matrix.md`.
+
+Tool bị harness strip → nếu nhiệm vụ đòi tool đó: **báo BLOCKED lý do
+permission**, KHÔNG retry mù, KHÔNG dùng Bash ghi/sửa file vượt (vi phạm matrix
+— Bash-gap không phải lỗ cho phép; guard hậu kiểm: story-diff-review).
+
+Bash giữ cho phân tích read-only. Write bị deny → trả report + verdict trong
+message trả về (không ghi file OUTBOX).

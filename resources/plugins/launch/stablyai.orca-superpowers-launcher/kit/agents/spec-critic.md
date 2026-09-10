@@ -83,3 +83,15 @@ PROCEED / FIX-P0-FIRST / REWORK-SPEC
 - `VERDICT: PROCEED — spec sẵn sàng cho Phase 3`
 - `VERDICT: FIX-P0-FIRST — <P0 list ngắn>`
 - `VERDICT: REWORK-SPEC — <lý do>`
+
+### Permission profile
+
+Tool-deny (Claude Code `disallowedTools` — runtime hard-block): **Edit, Write,
+NotebookEdit**. Ma trận đầy đủ: `kit/permission-matrix.md`.
+
+Tool bị harness strip → nếu nhiệm vụ đòi tool đó: **báo BLOCKED lý do
+permission**, KHÔNG retry mù, KHÔNG dùng Bash ghi/sửa file vượt (vi phạm matrix
+— Bash-gap không phải lỗ cho phép; guard hậu kiểm: story-diff-review).
+
+Bash giữ cho đọc spec/context. Write bị deny → critique trả trong message
+(không patch spec — hard rule 2 nay được enforce runtime).

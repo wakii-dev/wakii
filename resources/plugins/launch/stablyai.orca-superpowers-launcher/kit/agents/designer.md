@@ -85,3 +85,15 @@ Prototype: ../prototypes/<sf>-b.html   (mở trực tiếp được, tự chứa
 - `DIRECTION-FINAL: <sf>-direction.md — hand-off cho task-executor`
 - `DESIGN-BLOCKED: <thiếu gì>`
 
+### Permission profile
+
+Tool-deny (Claude Code `disallowedTools` — runtime hard-block): **Edit, Write,
+NotebookEdit**. Ma trận đầy đủ: `kit/permission-matrix.md`.
+
+Tool bị harness strip → nếu nhiệm vụ đòi tool đó: **báo BLOCKED lý do
+permission**, KHÔNG retry mù, KHÔNG dùng Bash ghi/sửa file vượt (vi phạm matrix
+— Bash-gap không phải lỗ cho phép; guard hậu kiểm: story-diff-review).
+
+Prototype/direction cần ghi file mà bị chặn → `DESIGN-BLOCKED` lý do permission
+— nội dung trả qua message, coordinator re-dispatch (task-executor) để ghi.
+

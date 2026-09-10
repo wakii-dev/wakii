@@ -231,6 +231,22 @@ console.log(`\n== [gh42-doc] permission-matrix.md tồn tại + liệt kê đủ
     matrix.includes('story-diff-review') && matrix.includes('KHÔNG tái định nghĩa'))
 }
 
+console.log(`\n== [gh42-blocked] BLOCKED behavior note trong 8 defs restricted ==`)
+{
+  const restricted = GH42_AGENT_FILES.filter(n => GH42_MATRIX[n])
+  check('gh42-blocked', 'đúng 8 defs bị restrict', restricted.length === 8, `got ${restricted.length}`)
+  for (const name of restricted) {
+    const md = readFileSync(join(AGENTS, `${name}.md`), 'utf8')
+    check('gh42-blocked', `${name}.md có section Permission profile`, md.includes('### Permission profile'))
+    check('gh42-blocked', `${name}.md: chặn → báo BLOCKED lý do permission`, md.includes('báo BLOCKED lý do\npermission') || md.includes('báo BLOCKED lý do permission'))
+    check('gh42-blocked', `${name}.md: KHÔNG retry mù`, md.includes('KHÔNG retry mù'))
+    check('gh42-blocked', `${name}.md: KHÔNG dùng Bash vượt`, md.includes('KHÔNG dùng Bash'))
+  }
+  // executor KHÔNG có section này (không bị restrict — tránh nhiễu briefing)
+  const tex = readFileSync(join(AGENTS, 'task-executor.md'), 'utf8')
+  check('gh42-blocked', 'task-executor KHÔNG có section Permission profile', !tex.includes('### Permission profile'))
+}
+
 console.log(`\n== TOTAL: ${pass} PASS / ${fail} FAIL ==`)
 if (failures.length) {
   console.log('FAILURES:\n- ' + failures.join('\n- '))
