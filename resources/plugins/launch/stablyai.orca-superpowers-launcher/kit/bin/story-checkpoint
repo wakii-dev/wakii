@@ -48,8 +48,10 @@ Shared helpers import được (SF-2/SF-3 dùng — SourceFileLoader như story-
                                        "(generated-from: <src>, at: <ISO>)"
   check_stamp(path, expected_source)   True = stale (file vắng/lệch stamp)
   resolve_main_checkout(cwd)           main worktree path | None
-  append_line_locked(store, line)      lockfile O_CREAT|O_EXCL + stale-takeover
-                                       — concurrent append 2 process pass
+  with_file_lock(dir, lock, fn, s)     mutual-exclusion RMW (GH-37) — deadline,
+                                       stale-takeover, fn raise PROPAGATE
+  append_line_locked(store, line)      wrapper with_file_lock swallow-error
+                                       (wire-compat) — concurrent append pass
 """
 import datetime
 import json
@@ -139,47 +141,215 @@ def log_error(store, origin, message):
         pass
 
 
-def append_line_locked(store, line, attempts=100, delay_ms=5, stale_secs=5):
-    """Concurrent-safe append — MỘT lần write mỗi dòng. Lockfile O_CREAT|O_EXCL,
-    retry ngắn (~0.5s), lock stale >5s bị takeover. False = không lấy được lock
-    hoặc ghi lỗi (caller fail-open)."""
-    store = pathlib.Path(store)
-    try:
-        store.mkdir(parents=True, exist_ok=True)
-    except OSError:
+# ---- file lock (GH-37) — donor helper cho mọi RMW state dùng chung ----------
+
+LOCK_STALE_SECS = 5  # mtime tối đa trước khi xem xét takeover (kèm content check)
+
+
+def _pid_alive(pid):
+    """pid còn sống? — POSIX os.kill(pid,0); Windows ctypes OpenProcess
+    QUERY_LIMITED (os.kill trên Windows là TerminateProcess — KHÔNG dùng)."""
+    if pid <= 0:
         return False
-    lock = store / LOCK_NAME
-    got = False
-    for _ in range(attempts):
+    if os.name == "nt":
+        try:
+            import ctypes
+            PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+            STILL_ACTIVE = 259
+            k32 = ctypes.windll.kernel32
+            h = k32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, pid)
+            if not h:
+                return False  # dead-no-handle
+            try:
+                code = ctypes.c_ulong()
+                if k32.GetExitCodeProcess(h, ctypes.byref(code)):
+                    return code.value == STILL_ACTIVE
+                return True  # query fail → coi sống (fail-closed an toàn hơn)
+            finally:
+                k32.CloseHandle(h)
+        except Exception:  # noqa: BLE001 — ctypes hỏng → coi sống
+            return True
+    try:
+        os.kill(pid, 0)
+        return True
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True  # tồn tại nhưng không signal được
+    except OSError:
+        return True  # không chắc — coi sống (không takeover oan)
+
+
+def _creation_time_ms(pid):
+    """Creation time (epoch ms) của pid — None nếu không lấy được."""
+    if os.name == "nt":
+        try:
+            import ctypes
+            from ctypes import wintypes
+            PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+            k32 = ctypes.windll.kernel32
+            h = k32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, pid)
+            if not h:
+                return None
+            try:
+                ct = ctypes.c_ulonglong()
+                et = ctypes.c_ulonglong()
+                if not k32.GetProcessTimes(h, ctypes.byref(ct), ctypes.byref(et),
+                                           None, None):
+                    return None
+                # FILETIME 1601-01-01 → epoch seconds: trừ 11644473600 rồi /1e7
+                return (ct.value - 116444736000000000) / 10000.0
+            finally:
+                k32.CloseHandle(h)
+        except Exception:  # noqa: BLE001
+            return None
+    # POSIX: /proc/<pid>/stat field 22 (starttime sau clap) — Linux only, ok nếu None
+    try:
+        with open(f"/proc/{pid}/stat", "rb") as f:
+            parts = f.read().rsplit(b")", 1)[-1].split()
+        return int(parts[19]) * 1000 / os.sysconf("SC_CLK_TCK")
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _lock_content_stale(pid, lock_ts_ms, now_ms):
+    """Predicate stale phần content: pid chết, HOẶC pid bị tái sử dụng
+    (process sống nhưng creation-time SAU lock-ts → không phải holder gốc)."""
+    if not _pid_alive(pid):
+        return True
+    ct = _creation_time_ms(pid)
+    if ct is not None and ct > lock_ts_ms + 5:  # +5ms grace clock jitter
+        return True
+    return False
+
+
+def _parse_lock_content(text, now_ms):
+    """(stale, reason) — content '<pid> <iso-ts>'. Empty/unparsable (bin cũ
+    viết lock rỗng) → mtime-only (caller xử lý) qua (None, reason)."""
+    parts = str(text).strip().split()
+    if len(parts) != 2:
+        return None, "empty-content"
+    try:
+        pid = int(parts[0])
+        dt = datetime.datetime.fromisoformat(parts[1].replace("Z", "+00:00"))
+        lock_ms = dt.timestamp() * 1000.0
+    except (ValueError, OSError):
+        return None, "unparsable-content"
+    if _lock_content_stale(pid, lock_ms, now_ms):
+        return True, "pid-dead-or-reused"
+    return False, "holder-alive"
+
+
+def _lock_stamp():
+    """'<pid> <ISO-ts>' content ghi vào lock khi acquire — đồng hồ THẬT (không
+    now_iso(): STORY_CHECKPOINT_NOW env chỉ override record ts cho test, dính
+    vào lock-ts sẽ méo stale predicate)."""
+    ts = datetime.datetime.now(datetime.timezone.utc).isoformat(
+        timespec="microseconds").replace("+00:00", "Z")
+    return f"{os.getpid()} {ts}"
+
+
+def with_file_lock(store_dir, lock_name, fn, deadline_s=10.0, *,
+                   mkdir=True, log_path=None):
+    """Mutual-exclusion cho RMW state dùng chung (GH-19). Lockfile
+    O_CREAT|O_EXCL content '<pid> <iso-ts>'; chờ tới deadline_s rồi FAIL —
+    KHÔNG retry phía helper, KHÔNG block agent vô hạn. Stale predicate:
+    mtime > 5s AND (pid chết OR pid tái sử dụng); content rỗng/lỗi (bin cũ
+    trong mixed-window) → mtime-only như semantic cũ. Recheck content TRƯỚC
+    unlink (chặn double-takeover B-stat-stale → A-unlink → C-create →
+    B-unlink-C). fn raise → release lock rồi PROPAGATE — caller quyết định
+    exit (helper không swallow). wait >100ms hoặc timeout → 1 dòng log
+    (log_path; thiếu → .wakii/errors.log best-effort)."""
+    store = pathlib.Path(store_dir)
+    lock = store / lock_name
+    t0 = time.time()
+    logged_wait = False
+
+    def _log(kind, waited_ms):
+        dest = pathlib.Path(log_path) if log_path else store / "errors.log"
+        try:
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            with open(dest, "a", encoding="utf-8", newline="") as f:
+                f.write(f"{now_iso()} {kind} waited={waited_ms}ms lock={lock_name}\n")
+        except OSError:
+            pass
+
+    if mkdir:
+        try:
+            store.mkdir(parents=True, exist_ok=True)
+        except OSError as e:
+            raise RuntimeError(f"store không tạo được: {e}") from e
+
+    while True:
+        waited_ms = int((time.time() - t0) * 1000)
         try:
             fd = os.open(str(lock), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-            os.close(fd)
+            try:  # content pid+ts — stale predicate của SF này dựa trên nó
+                os.write(fd, _lock_stamp().encode("utf-8"))
+            finally:
+                os.close(fd)
             got = True
             break
         except FileExistsError:
-            try:  # process chết giữa chừng để lại lock — takeover sau stale_secs
-                if time.time() - lock.stat().st_mtime > stale_secs:
-                    lock.unlink()
+            try:
+                mtime_stale = time.time() - lock.stat().st_mtime \
+                    > LOCK_STALE_SECS
+                if mtime_stale:
+                    raw = lock.read_text(encoding="utf-8", errors="replace")
+                    verdict, _why = _parse_lock_content(raw, t0 * 1000)
+                    # None (empty/unparsable — bin cũ) → mtime-only fallback
+                    if verdict is None or verdict is True:
+                        # recheck-content trước unlink: lock đã đổi tay giữa
+                        # stat và read (A takeover, C tạo mới) → KHÔNG unlink
+                        raw2 = lock.read_text(encoding="utf-8",
+                                              errors="replace")
+                        if raw2 == raw:
+                            try:
+                                lock.unlink()
+                            except OSError:
+                                pass  # kẻ khác unlink trước — vòng kế retry
             except OSError:
                 pass
-            time.sleep(delay_ms / 1000.0)
-        except OSError:
-            return False
-    if not got:
-        return False
+            if time.time() - t0 > deadline_s:
+                _log("lock-timeout", waited_ms)
+                return False
+            if not logged_wait and waited_ms > 100:
+                logged_wait = True
+                _log("lock-wait", waited_ms)
+            time.sleep(0.005)
+        except OSError as e:
+            raise RuntimeError(f"lock không mở được: {e}") from e
+
+    waited_ms = int((time.time() - t0) * 1000)
+    if not logged_wait and waited_ms > 100:  # log đúng 1 dòng mỗi acquire
+        logged_wait = True
+        _log("lock-wait", waited_ms)
     try:
-        with open(store / JSONL_NAME, "a", encoding="utf-8", newline="") as f:
-            f.write(line)
-            f.flush()
-            os.fsync(f.fileno())
-        return True
-    except OSError:
-        return False
+        return fn()
     finally:
         try:
             lock.unlink()
         except OSError:
             pass
+
+
+def append_line_locked(store, line, deadline_s=2.0):
+    """Wire-compat wrapper — concurrent-safe append MỘT lần write mỗi dòng.
+    Swallow mọi lỗi (False) — record path fail-open giữ nguyên behavior.
+    Budget ≤2s (GH-37: record hook path không được kéo chết agent)."""
+    def _append():
+        with open(pathlib.Path(store) / JSONL_NAME, "a", encoding="utf-8",
+                  newline="") as f:
+            f.write(line)
+            f.flush()
+            os.fsync(f.fileno())
+        return True
+
+    try:
+        return with_file_lock(store, LOCK_NAME, _append, deadline_s,
+                              mkdir=True, log_path=None)
+    except Exception:  # noqa: BLE001 — swallow wrapper (record fail-open)
+        return False
 
 
 def extract_error_lines(text):

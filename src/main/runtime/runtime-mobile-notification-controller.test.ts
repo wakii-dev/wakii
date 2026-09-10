@@ -1,8 +1,14 @@
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { setAppEnvironment } from '../../shared/app-environment'
+import type { NotificationSettings } from '../../shared/notification-settings-types'
+import { BrowserWindow } from 'electron'
+import {
+  setNotificationSettingsSupplier,
+  setRuntimeDesktopSurface
+} from './runtime-desktop-surface'
 import type { ResolvedWorktree } from './runtime-worktree-path-identity'
 import { OrchestrationDb } from './orchestration/db'
 import {
@@ -17,7 +23,7 @@ import { OrcaRuntimeService } from './orca-runtime'
 
 vi.mock('electron', () => ({
   app: { getPath: vi.fn(() => tmpdir()), isPackaged: false },
-  BrowserWindow: { fromId: vi.fn(() => null) },
+  BrowserWindow: { fromId: vi.fn(() => null), getAllWindows: vi.fn(() => []) },
   ipcMain: { on: vi.fn(), removeListener: vi.fn() },
   webContents: { fromId: vi.fn(() => null) }
 }))
@@ -120,6 +126,171 @@ describe('RuntimeMobileNotificationController gate sources', () => {
     expect(seen.map((event) => event.source)).toEqual(['gate-open', 'gate-closed'])
     const missed = controller.getMissedSince(0)
     expect(missed).toHaveLength(2)
+  })
+})
+
+describe('RuntimeMobileNotificationController dispatchPlugin focus gate', () => {
+  // Doubles as `never` via the electron module mock; vi.fn()s below are readable handles.
+  const electronWindowMock = BrowserWindow as unknown as {
+    getAllWindows: ReturnType<typeof vi.fn>
+    fromId: ReturnType<typeof vi.fn>
+  }
+  let showNotification: ReturnType<typeof vi.fn>
+
+  const defaultSettings: NotificationSettings = {
+    enabled: true,
+    agentTaskComplete: true,
+    terminalBell: true,
+    suppressWhenFocused: true,
+    customSoundId: 'system',
+    customSoundPath: null,
+    customSoundVolume: 0.5
+  }
+
+  function wireSurface(options: { isMainWindowFocused?: () => boolean | null } = {}): void {
+    showNotification = vi.fn(() => true)
+    setRuntimeDesktopSurface({
+      showNotification: showNotification as unknown as () => boolean,
+      findWindowById: () => null,
+      onIpc: () => {},
+      removeIpcListener: () => {},
+      ...(options.isMainWindowFocused ? { isMainWindowFocused: options.isMainWindowFocused } : {})
+    })
+  }
+
+  beforeEach(() => {
+    vi.mocked(BrowserWindow.getAllWindows).mockReset()
+    vi.mocked(BrowserWindow.getAllWindows).mockReturnValue([])
+    electronWindowMock.fromId.mockReset()
+    electronWindowMock.fromId.mockReturnValue(null)
+  })
+
+  afterEach(() => {
+    setRuntimeDesktopSurface(null)
+    setNotificationSettingsSupplier(null)
+  })
+
+  it('suppressed: focused + suppressWhenFocused ON skips the desktop toast but still dispatches (SC1)', async () => {
+    wireSurface({ isMainWindowFocused: () => true })
+    setNotificationSettingsSupplier(() => ({ ...defaultSettings, suppressWhenFocused: true }))
+    const controller = new RuntimeMobileNotificationController()
+    const mobileEvents: MobileNotificationDispatchEvent[] = []
+    controller.onDispatched((event) => {
+      if (event.type === 'notification') {
+        mobileEvents.push(event)
+      }
+    })
+
+    const result = await controller.dispatchPlugin({ pluginId: 'ci', title: 'Build done' })
+
+    expect(showNotification).not.toHaveBeenCalled()
+    expect(mobileEvents).toHaveLength(1)
+    expect(mobileEvents[0]).toMatchObject({ source: 'plugin', title: 'ci: Build done' })
+    expect(result).toEqual({ delivered: false })
+  })
+
+  it('unfocused: the desktop toast still shows (SC2)', async () => {
+    wireSurface({ isMainWindowFocused: () => false })
+    setNotificationSettingsSupplier(() => ({ ...defaultSettings, suppressWhenFocused: true }))
+    const controller = new RuntimeMobileNotificationController()
+
+    const result = await controller.dispatchPlugin({ pluginId: 'ci', title: 'Build done' })
+
+    expect(showNotification).toHaveBeenCalledTimes(1)
+    expect(result).toEqual({ delivered: true })
+  })
+
+  it('suppressWhenFocused OFF: the desktop toast always shows (SC3)', async () => {
+    wireSurface({ isMainWindowFocused: () => true })
+    setNotificationSettingsSupplier(() => ({ ...defaultSettings, suppressWhenFocused: false }))
+    const controller = new RuntimeMobileNotificationController()
+
+    const result = await controller.dispatchPlugin({ pluginId: 'ci', title: 'Build done' })
+
+    expect(showNotification).toHaveBeenCalledTimes(1)
+    expect(result).toEqual({ delivered: true })
+  })
+
+  it('settings undefined (supplier unset or no setting): fail-open, toast shows (SC4a)', async () => {
+    wireSurface({ isMainWindowFocused: () => true })
+    setNotificationSettingsSupplier(() => undefined)
+    const controller = new RuntimeMobileNotificationController()
+
+    const result = await controller.dispatchPlugin({ pluginId: 'ci', title: 'Build done' })
+
+    expect(showNotification).toHaveBeenCalledTimes(1)
+    expect(result).toEqual({ delivered: true })
+  })
+
+  it('headless surface without isMainWindowFocused: fail-open via inert show, delivered false (SC4b)', async () => {
+    // Double without the optional method — mirrors pre-gate surfaces and the inert default.
+    setRuntimeDesktopSurface({
+      showNotification: () => false,
+      findWindowById: () => null,
+      onIpc: () => {},
+      removeIpcListener: () => {}
+    })
+    setNotificationSettingsSupplier(() => ({ ...defaultSettings, suppressWhenFocused: true }))
+    const controller = new RuntimeMobileNotificationController()
+
+    const result = await controller.dispatchPlugin({ pluginId: 'ci', title: 'Build done' })
+
+    expect(result).toEqual({ delivered: false })
+  })
+
+  it('replay buffer records the event in every case, including the suppressed one (SC5)', async () => {
+    wireSurface({ isMainWindowFocused: () => true })
+    setNotificationSettingsSupplier(() => ({ ...defaultSettings, suppressWhenFocused: true }))
+    const controller = new RuntimeMobileNotificationController()
+    await controller.dispatchPlugin({ pluginId: 'ci', title: 'Suppressed' })
+    setNotificationSettingsSupplier(() => ({ ...defaultSettings, suppressWhenFocused: false }))
+    await controller.dispatchPlugin({ pluginId: 'ci', title: 'Shown' })
+
+    const missed = controller.getMissedSince(0)
+    expect(missed.map((event) => (event as MobileNotificationDispatchEvent).title)).toEqual([
+      'ci: Suppressed',
+      'ci: Shown'
+    ])
+  })
+
+  it('multi-window: first-non-destroyed window decides focus, documented suppress behavior', async () => {
+    // The electron surface scans getAllWindows for the first non-destroyed window, same
+    // as the notifications ipc handler. Pin what that means with several windows present.
+    const { electronRuntimeDesktopSurface } = await import(
+      '../host/electron-runtime-desktop-surface'
+    )
+    setNotificationSettingsSupplier(() => ({ ...defaultSettings, suppressWhenFocused: true }))
+    const controller = new RuntimeMobileNotificationController()
+    const showCalls: { title: string }[] = []
+    setRuntimeDesktopSurface({
+      ...electronRuntimeDesktopSurface,
+      showNotification: ({ title }) => {
+        showCalls.push({ title })
+        return true
+      }
+    })
+
+    // Only a focused "floating terminal" window exists: the scan treats it as the main
+    // window → suppress (spec decision 7 — accepted multi-window semantics).
+    vi.mocked(BrowserWindow.getAllWindows).mockReturnValue([
+      { isDestroyed: () => false, isFocused: () => true, isVisible: () => true } as never
+    ])
+    const terminalFocused = await controller.dispatchPlugin({
+      pluginId: 'ci',
+      title: 'Terminal focused'
+    })
+    expect(terminalFocused).toEqual({ delivered: false })
+
+    // Main window first and unfocused, floating terminal second and focused: the
+    // first-non-destroyed window is unfocused → show fires (no suppression).
+    vi.mocked(BrowserWindow.getAllWindows).mockReturnValue([
+      { isDestroyed: () => false, isFocused: () => false, isVisible: () => true } as never,
+      { isDestroyed: () => false, isFocused: () => true, isVisible: () => true } as never
+    ])
+    const mainUnfocused = await controller.dispatchPlugin({ pluginId: 'ci', title: 'Main unfocused' })
+    expect(mainUnfocused).toEqual({ delivered: true })
+    expect(showCalls).toHaveLength(1)
+    expect(showCalls[0]?.title).toBe('ci: Main unfocused')
   })
 })
 

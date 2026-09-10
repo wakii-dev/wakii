@@ -65,11 +65,74 @@ load_state() { # in state của sf ($1) từ lần trước
   [ -f "$STATE_FILE" ] && grep -m1 "^$1|" "$STATE_FILE" | cut -d'|' -f2
 }
 
-save_state() { # $1 sf, $2 verdict
-  touch "$STATE_FILE"
-  grep -v "^$1|" "$STATE_FILE" > "$STATE_FILE.tmp" 2>/dev/null || true
-  echo "$1|$2|$(date +%s)" >> "$STATE_FILE.tmp"
-  mv "$STATE_FILE.tmp" "$STATE_FILE"
+save_state() { # $1 sf, $2 verdict — RMW dưới with_file_lock (GH-37): python
+  # one-shot spawn (pattern index-hook), tmp+rename trong fn — 2 pass đồng
+  # thời không mất verdict. Lock timeout → giữ state cũ (benign).
+  # cygpath -m: Git Bash path /c/... → C:/... cho Windows python (macOS/Linux
+  # không có cygpath → path giữ nguyên). Giá trị truyền qua env (WD_SF,
+  # WD_VERDICT, WD_DIR, WD_STATE, WD_SDIR) — KHÔNG nhét vào python source
+  # (bash-3.2 không có ${var@Q}; escape qua heredoc gãy theo từng lớp quoting).
+  local sf="$1" verdict="$2" sdir sdir_w sfile_w dir_w stmp
+  sdir="$(dirname "$STATE_FILE")"
+  if command -v cygpath >/dev/null 2>&1; then
+    sdir_w="$(cygpath -m "$sdir")"; sfile_w="$(cygpath -m "$STATE_FILE")"
+    dir_w="$(cygpath -m "$DIR")"
+  else
+    sdir_w="$sdir"; sfile_w="$STATE_FILE"; dir_w="$DIR"
+  fi
+  stmp="$(mktemp "${TMPDIR:-/tmp}/wd-save-XXXXXX.py" 2>/dev/null)" || return 0
+  # export CHO PYTHON (env-prefix chỉ trên cat là không đủ — python đọc os.environ)
+  WD_SF="$sf" WD_VERDICT="$verdict" WD_DIR="$dir_w" WD_STATE="$sfile_w" \
+    WD_SDIR="$sdir_w"
+  export WD_SF WD_VERDICT WD_DIR WD_STATE WD_SDIR
+  cat > "$stmp" <<'PYEOF'
+import sys
+sys.dont_write_bytecode = True
+import importlib.machinery
+import importlib.util
+import os
+import pathlib
+sf = os.environ["WD_SF"]
+verdict = os.environ["WD_VERDICT"]
+sf_dir = pathlib.Path(os.environ["WD_SDIR"])
+state = pathlib.Path(os.environ["WD_STATE"])
+candidates = [pathlib.Path(os.environ["WD_DIR"]) / "story-checkpoint",
+              pathlib.Path(os.path.expanduser("~")) / ".claude" / "bin" / "story-checkpoint"]
+cp = None
+for cand in candidates:
+    if cand.is_file():
+        try:
+            loader = importlib.machinery.SourceFileLoader("cp_wd", str(cand))
+            spec = importlib.util.spec_from_loader("cp_wd", loader)
+            cp = importlib.util.module_from_spec(spec)
+            loader.exec_module(cp)
+            break
+        except Exception:
+            continue
+if cp is None:
+    sys.exit(0)  # donor thiếu — skip write (fail-open, không hỏng watchdog)
+
+def rmw():
+    lines = []
+    if state.exists():
+        lines = [l for l in state.read_text(encoding="utf-8", errors="replace").splitlines()
+                 if l.strip() and l.split("|", 1)[0] != sf]
+    lines.append(sf + "|" + verdict + "|" + str(int(__import__("time").time())))
+    tmp = state.with_name(state.name + ".tmp-" + str(os.getpid()))
+    with open(tmp, "w", encoding="utf-8", newline="") as f:
+        f.write("\n".join(lines) + "\n")
+    os.replace(tmp, state)
+    return True
+
+log = state.with_name(state.name + ".log")
+try:
+    cp.with_file_lock(sf_dir, ".story-watchdog-state.lock", rmw, 10.0,
+                      mkdir=True, log_path=log)
+except Exception:
+    pass
+PYEOF
+  python3 "$stmp" >/dev/null 2>&1 || python "$stmp" >/dev/null 2>&1 || true
+  rm -f "$stmp"
 }
 
 # ── Linear state qua GraphQL (fallback khi orca keychain chết — bài học FI-187)

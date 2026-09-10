@@ -26,18 +26,50 @@ read-modify-write dòng since=/indexed_at=, giữ nguyên dòng khác).
 
 Precedence memory dir: STORY_MEMORY_DIR > --repo <path>/docs/superpowers/memory
 > repo của script này."""
-import os
 import sys
+sys.dont_write_bytecode = True  # contentHash ổn định — không đẻ __pycache__
+import importlib.machinery
+import importlib.util
+import os
 import pathlib
 import argparse
 import sqlite3
 import datetime
 import re
 
+
+def _load_checkpoint_module():
+    """Donor helpers (GH-37): with_file_lock từ story-checkpoint —
+    SourceFileLoader pattern, env override cho test."""
+    env_bin = os.environ.get("STORY_MEMORY_CHECKPOINT_BIN")
+    script_dir = pathlib.Path(__file__).resolve().parent
+    candidates = [pathlib.Path(env_bin)] if env_bin else [
+        script_dir / "story-checkpoint",
+        pathlib.Path(os.path.expanduser("~")) / ".claude" / "bin" / "story-checkpoint",
+    ]
+    for cand in candidates:
+        if not cand.is_file():
+            continue
+        try:
+            loader = importlib.machinery.SourceFileLoader(
+                "story_checkpoint_memory", str(cand))
+            spec = importlib.util.spec_from_loader(
+                "story_checkpoint_memory", loader)
+            mod = importlib.util.module_from_spec(spec)
+            loader.exec_module(mod)
+            return mod
+        except Exception:  # noqa: BLE001 — thử candidate kế
+            continue
+    return None
+
+
+CP = _load_checkpoint_module()
+
 SEP = " | "
 DEFAULT_MEM = pathlib.Path(__file__).resolve().parent.parent / "docs/superpowers/memory"
 DEFAULT_DB = pathlib.Path.home() / ".story-memory.db"
 DEFAULT_STATE = pathlib.Path.home() / ".story-memory.state"
+STATE_LOCK = ".story-memory.state.lock"  # GH-37 — sibling state file, HOME-level
 
 
 def mem_dir(args) -> pathlib.Path:
@@ -73,17 +105,73 @@ def parse_mem_file(path: pathlib.Path, nfields: int):
     return rows, errs
 
 
-def update_watermark(val: str):
-    """RMW state file — chỉ đụng dòng since=/indexed_at=, giữ nguyên dòng khác
-    (file đồng sở hữu với SF-2 watchdog watermark)."""
+def _rmw_state(fn):
+    """Chạy RMW fn() dưới with_file_lock quanh state file (GH-37) — lock
+    sibling <state>.lock HOME-level, log sibling <state>.log. Deadline 10s;
+    timeout → False (benign — index full-rebuild approximation, không block
+    CLI); fn raise → PROPAGATE (caller quyết định). CP thiếu → False + log."""
+    if CP is None:
+        _log_state("state-rmw:no-donor", 0)
+        return False
     sp = state_path()
-    lines = []
-    if sp.exists():
-        lines = [l for l in sp.read_text(encoding="utf-8").splitlines()
-                 if l.strip() and not l.startswith(("since=", "indexed_at="))]
-    lines.append(f"since={val}")
-    lines.append(f"indexed_at={datetime.datetime.now().isoformat(timespec='seconds')}")
-    sp.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    log = sp.with_suffix(sp.suffix + ".log") if sp.suffix else sp.with_name(sp.name + ".log")
+    return CP.with_file_lock(sp.parent, STATE_LOCK, fn, 10.0,
+                             mkdir=False, log_path=log)
+
+
+def _log_state(kind, waited_ms):
+    """1 dòng best-effort vào sibling <state>.log — lỗi log bỏ qua."""
+    if CP is None:
+        return
+    sp = state_path()
+    log = sp.with_suffix(sp.suffix + ".log") if sp.suffix else sp.with_name(sp.name + ".log")
+    try:
+        log.parent.mkdir(parents=True, exist_ok=True)
+        with open(log, "a", encoding="utf-8", newline="") as f:
+            f.write(f"{CP.now_iso()} {kind} waited={waited_ms}ms lock={STATE_LOCK}\n")
+    except OSError:
+        pass
+
+
+def update_watermark(val: str):
+    """RMW state file DƯỚI LOCK (GH-37) — re-read trong lock, chỉ đụng dòng
+    since=/indexed_at=, giữ nguyên dòng khác (file đồng sở hữu với watchdog +
+    mark-git). Timeout lock → skip (benign) — 2 process đồng thời không mất."""
+    def _rmw():
+        lines = []
+        if sp.exists():
+            lines = [l for l in sp.read_text(encoding="utf-8").splitlines()
+                     if l.strip() and not l.startswith(("since=", "indexed_at="))]
+        lines.append(f"since={val}")
+        lines.append(f"indexed_at={datetime.datetime.now().isoformat(timespec='seconds')}")
+        sp.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        return True
+
+    sp = state_path()
+    return _rmw_state(_rmw)
+
+
+def cmd_mark_git(args):
+    """mark-git <repo> <hash> — ghi/cập nhật dòng `git:<repo>|<hash>` trong
+    state file DƯỚI LOCK (re-read trong lock; giữ nguyên dòng khác). Đây là
+    dòng index-hook awk `git:$repo` đọc — writer-8 phi-mã hết (GH-19 D3)."""
+    sp = state_path()
+
+    def _rmw():
+        lines = []
+        if sp.exists():
+            lines = [l for l in sp.read_text(encoding="utf-8").splitlines()
+                     if l.strip()
+                     and l.split("|", 1)[0] != f"git:{args.repo}"]
+        lines.append(f"git:{args.repo}|{args.hash}")
+        sp.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        return True
+
+    if _rmw_state(_rmw):
+        print(f"mark-git OK: git:{args.repo}|{args.hash} → {sp}")
+        return 0
+    print("mark-git FAIL: không lấy được state lock (timeout) — skip", file=sys.stderr)
+    return 1
 
 
 def connect_db():
@@ -292,6 +380,12 @@ def cmd_stats(args):
 
 
 def main():
+    # Windows console (spawn từ node) mặc định cp1252 — ép UTF-8 cho dấu → ←
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8")
+        except (AttributeError, OSError):
+            pass
     ap = argparse.ArgumentParser(prog="story-memory",
                                  description="Graph memory query layer (SF-3 STOS-1)")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -312,6 +406,12 @@ def main():
 
     p = sub.add_parser("stats", help="counts + provenance coverage")
     p.set_defaults(fn=cmd_stats)
+
+    p = sub.add_parser("mark-git",
+                       help="ghi/cập nhật watermark git:<repo>|<hash> (locked)")
+    p.add_argument("repo", help="repo name (index-hook awk match)")
+    p.add_argument("hash", help="commit hash watermark")
+    p.set_defaults(fn=cmd_mark_git)
 
     args = ap.parse_args()
     args.fn(args)
