@@ -1,6 +1,6 @@
 {
   "name": "story-team-kit",
-  "version": "2.9.1",
+  "version": "2.9.2",
   "description": "9-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới.",
   "requires": {
     "claude-code": ">=2.0",
@@ -453,6 +453,11 @@
       "name": "wakii-skill-import",
       "type": "bin",
       "description": "import 1 skill chuẩn Claude (thư mục SKILL.md) vào kit — validate + collide provides[], owner community/<nguồn>, bump version"
+    },
+    {
+      "name": "story-kb",
+      "type": "bin",
+      "description": "query Project KB (ADR/repos/glossary/MOC) tu configurable dir (WAKII_KB_DIR) - fail-open khi KB chua configured; layer 1 ADE knowledge infra (#38)"
     }
   ]
 }

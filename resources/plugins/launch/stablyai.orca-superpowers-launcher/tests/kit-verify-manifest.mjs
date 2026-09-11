@@ -44,6 +44,7 @@ ok('permission-matrix.md ở kit ROOT — ngoài scan two-way, KHÔNG entry prov
     && !kitJson.provides.some(e => e.name === 'permission-matrix'))
 ok('entry story-report-validate trong provides', kitJson.provides.some(e => e.name === 'story-report-validate' && e.type === 'bin'))
 ok('entry story-surface-lint trong provides', kitJson.provides.some(e => e.name === 'story-surface-lint' && e.type === 'bin'))
+ok('entry story-kb trong provides', kitJson.provides.some(e => e.name === 'story-kb' && e.type === 'bin'))
 ok('migration-guide-template cạnh bracket-template', existsSync(join(kitRoot, 'migration-guide-template.md')))
 ok('entry story-lesson trong provides', kitJson.provides.some(e => e.name === 'story-lesson' && e.type === 'bin'))
 ok('KHÔNG notify (không block)', calls.notifications.length === 0, JSON.stringify(calls.notifications))
