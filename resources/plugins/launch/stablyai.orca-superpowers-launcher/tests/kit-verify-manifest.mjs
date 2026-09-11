@@ -32,7 +32,8 @@ ok('installKit trả true (manifest hợp lệ)', r === true)
 ok(`marker = ${kitJson.version} (khớp kit.json)`, ver === kitJson.version, `got ${JSON.stringify(ver)}`)
 // exec-bit: git có thể lưu 100644 → checkout/sync sinh bins không chạy được
 // (learned 2026-09-11 — 10 bins exit 126). Asset .html được loại.
-{
+// Windows NTFS không represent exec-bit (mode luôn 0666) — chỉ assert trên POSIX.
+if (process.platform !== 'win32') {
   const binDir = join(kitRoot, 'bin')
   const nonExec = readdirSync(binDir).filter(f => !f.endsWith('.html') && !(statSync(join(binDir, f)).mode & 0o111))
   ok('kit/bin: mọi bins executable', nonExec.length === 0, `non-exec: ${nonExec.join(',')}`)
