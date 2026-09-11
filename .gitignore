@@ -101,6 +101,12 @@ docs/**
 # diff/HEAD (GH-30): ignored → rename thật đầu tiên MISSING-GUIDE vĩnh viễn.
 !docs/superpowers/migrations/
 !docs/superpowers/migrations/**
+# ADE knowledge ADR phải track được — story-kb + agents đọc decision record
+# (GH-45/#38): ADR là source-of-truth, chỉ adr/** negate; data KB thực
+# (repos/, glossary.md, MOC.md) thuộc wakii-site — vẫn ignored.
+!docs/knowledge/
+!docs/knowledge/adr/
+!docs/knowledge/adr/**
 # Review OUTBOX (GH-32) là runtime artifacts — DỐN ở đây: `docs/**` đã ignore;
 # KHÔNG negate (ngược migrations/) — LLM outbox không phải tài liệu durable.
 # Vẫn ghi tường minh để ai đọc file hiểu ý định + chống negate nhầm sau này.
@@ -185,3 +191,7 @@ tests/e2e/.cross-version-checkouts/
 # IS committed). Also keeps oxfmt/oxlint, which honor this file, from walking
 # vendored gems.
 /mobile/vendor/
+
+# Python bytecode (kit bins python3 - test runs de __pycache__ canh bins)
+__pycache__/
+*.pyc
