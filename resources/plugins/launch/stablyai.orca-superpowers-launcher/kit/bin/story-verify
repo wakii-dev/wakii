@@ -31,16 +31,16 @@ ORCA_BIN="${ORCA_BIN:-}"
 # Toggle các gate MỚI (plugin panel bật/tắt — FI-380 review plan); B1-B5 cốt lõi
 # luôn bật, không tắt được. Mặc định: evidence/realMode/checklist ON, smoke OFF.
 VERIFY_CFG_FILE="${STORY_KIT_CONFIG:-$HOME/.claude/story-kit.json}"
-EVIDENCE_GATE=1; REALMODE_GATE=1; CHECKLIST_GATE=1; SMOKE_GATE=0
+EVIDENCE_GATE=1; REALMODE_GATE=1; CHECKLIST_GATE=1; SMOKE_GATE=0; TDD_GATE=1
 if [ -f "$VERIFY_CFG_FILE" ]; then
   cfg_vals=$(python3 - "$VERIFY_CFG_FILE" <<'CFGEOF'
 import json, sys
 try: v = json.load(open(sys.argv[1])).get('verify', {})
 except Exception: v = {}
-print(int(bool(v.get('evidenceGate', True))), int(bool(v.get('realModeRule', True))), int(bool(v.get('reviewerChecklist', True))), int(bool(v.get('runtimeSmoke', False))))
+print(int(bool(v.get('evidenceGate', True))), int(bool(v.get('realModeRule', True))), int(bool(v.get('reviewerChecklist', True))), int(bool(v.get('runtimeSmoke', False))), int(bool(v.get('tddMode', True))))
 CFGEOF
 ) 2>/dev/null
-  if [ -n "$cfg_vals" ]; then read -r EVIDENCE_GATE REALMODE_GATE CHECKLIST_GATE SMOKE_GATE <<< "$cfg_vals"; fi
+  if [ -n "$cfg_vals" ]; then read -r EVIDENCE_GATE REALMODE_GATE CHECKLIST_GATE SMOKE_GATE TDD_GATE <<< "$cfg_vals"; fi
 fi
 export VERIFY_CHECKLIST="$CHECKLIST_GATE"
 ORCA_DEV="$HOME/Library/Application Support/orca-dev"
@@ -52,8 +52,8 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --json) JSON_OUT=1 ;;
     --print-config)
-      printf '{"evidenceGate":%s,"realModeRule":%s,"reviewerChecklist":%s,"runtimeSmoke":%s}\n' \
-        "$EVIDENCE_GATE" "$REALMODE_GATE" "$CHECKLIST_GATE" "$SMOKE_GATE"
+      printf '{"evidenceGate":%s,"realModeRule":%s,"reviewerChecklist":%s,"runtimeSmoke":%s,"tddMode":%s}\n' \
+        "$EVIDENCE_GATE" "$REALMODE_GATE" "$CHECKLIST_GATE" "$SMOKE_GATE" "$TDD_GATE"
       exit 0 ;;
     -*) echo "Unknown: $1"; exit 2 ;;
     *) SF_ARG="$1" ;;
@@ -161,6 +161,8 @@ verify_sf() { # $1 worktree → in "<sf>|<verdict>|<detail>|<b1>|<b2>|<b3>|<b4>|
     parent_hash=$(git -C "$wt" rev-parse --short HEAD~1 2>/dev/null)
     if [ ! -f "$ev" ] || { ! grep -q "$head_hash" "$ev" 2>/dev/null && ! grep -q "$parent_hash" "$ev" 2>/dev/null; }; then
       b1="FAIL"; b1_note="evidence thiếu/cũ: docs/superpowers/evidence/$sf/test-run.txt (phải chứa HEAD ${head_hash:-?} hoặc code commit trước đó) — chạy test + ghi output"
+    elif [ "$TDD_GATE" = 1 ] && ! grep -q "^tdd:" "$ev" 2>/dev/null; then
+      b1="FAIL"; b1_note="thiếu dòng 'tdd: RED→GREEN' hoặc 'tdd: skipped-tdd: <lý do>' trong test-run.txt (verify.tddMode — chống tautology assert, học gh27 b6)"
     fi
   fi
 

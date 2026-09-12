@@ -927,7 +927,7 @@ export function installKit(orca, { root, kitRoot: kitRootOverride } = {}) {
     const vcfgPath = join(claude, 'story-kit.json')
     if (!existsSync(vcfgPath)) {
       writeFileSync(vcfgPath, JSON.stringify({ verify: {
-        evidenceGate: true, realModeRule: true, reviewerChecklist: true, runtimeSmoke: false } }, null, 2) + '\n')
+        evidenceGate: true, realModeRule: true, reviewerChecklist: true, runtimeSmoke: false, tddMode: true } }, null, 2) + '\n')
       orca.log('story-team-kit: verify config seeded (story-kit.json)')
     }
     orca.log('story-team-kit self-installed: v' + manifest.version)
@@ -1159,7 +1159,7 @@ export default function activate(orca) {
           // Panel ⚙ verify gates — get (không set) / merge-set vào
           // ~/.claude/story-kit.json (kit bins đọc cùng file; fail-open
           // default trong story-verify). Config trả qua stdout (JSON).
-          const DEF = { evidenceGate: true, realModeRule: true, reviewerChecklist: true, runtimeSmoke: false }
+          const DEF = { evidenceGate: true, realModeRule: true, reviewerChecklist: true, runtimeSmoke: false, tddMode: true }
           const cfgPath = join(process.env.HOME || '', '.claude', 'story-kit.json')
           let cfg = {}
           try { cfg = JSON.parse(readFileSync(cfgPath, 'utf8')) } catch { /* missing/corrupt → defaults */ }

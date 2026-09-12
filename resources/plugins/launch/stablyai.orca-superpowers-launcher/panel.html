@@ -187,6 +187,7 @@ Mô tả story (feature lớn) — markdown
           <label style="display:block; margin:4px 0; cursor:pointer;"><input type="checkbox" id="vg-realmode" /> <b>Real-mode rule</b> — spec có mock/adapter ⇒ phải có test real-path (httptest); mock xanh không phủ real-mode</label>
           <label style="display:block; margin:4px 0; cursor:pointer;"><input type="checkbox" id="vg-checklist" /> <b>Reviewer CHECKLIST-4Q</b> — APPROVED phải kèm 4 câu: network-in-tx / timeout / best-effort error / partial-fail compensation</label>
           <label style="display:block; margin:4px 0; cursor:pointer;"><input type="checkbox" id="vg-smoke" /> <b>Runtime smoke</b> — yêu cầu evidence smoke (app/service boots + 0 ERROR mới) trước Done <span style="opacity:.6">(mặc định OFF — cần infra)</span></label>
+          <label style="display:block; margin:4px 0; cursor:pointer;"><input type="checkbox" id="vg-tdd" /> <b>TDD mode</b> — RED→GREEN: test thất bại trước rồi mới code; evidence khai dòng <code>tdd:</code> <span style="opacity:.6">(chống tautology assert)</span></label>
           <div style="margin-top:8px; display:flex; gap:6px; align-items:center;">
             <button id="vg-save" class="btn" style="padding:4px 10px; font-size:10px;">Lưu</button>
             <button id="vg-close" class="btn secondary" style="padding:4px 10px; font-size:10px;">Đóng</button>
@@ -2038,7 +2039,7 @@ Tech blog: markdown posts, post list, single-post view, tag filter, dark/light t
       }
       var gatesBtn = document.getElementById('story-ops-gates')
       var gatesBox = document.getElementById('story-verify-gates')
-      var GATE_KEYS = [['vg-evidence','evidenceGate'],['vg-realmode','realModeRule'],['vg-checklist','reviewerChecklist'],['vg-smoke','runtimeSmoke']]
+      var GATE_KEYS = [['vg-evidence','evidenceGate'],['vg-realmode','realModeRule'],['vg-checklist','reviewerChecklist'],['vg-smoke','runtimeSmoke'],['vg-tdd','tddMode']]
       function waitVerifyConfig(sentAt, tries) {
         call('storage.get', { key: 'story.ops.result' }).then(function (r) {
           var v = r && r.value
