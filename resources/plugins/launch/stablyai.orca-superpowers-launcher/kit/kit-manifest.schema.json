@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://github.com/VuHoi/story-team-kit/kit-manifest.schema.json",
   "title": "story-team-kit manifest (kit.json)",
-  "description": "Máy-đọc-được manifest của story-team-kit. Lưu ý terminology: `provides` ở đây KHÔNG liên quan `capabilities` của orca-plugin.json (tránh collision tên). provides[] 49 entries = 26 full contracts (17 skill + 9 agent) + 36 bin minimal. bin = upstream 38 TRỪ story-dashboard-server + story-dashboard.html (sync-loại có chủ đích — sync-kit.sh remove khi vendor). Schema này là doc/CI artifact — runtime installer KHÔNG parse schema, validator tự viết trong installKit (SF-2).",
+  "description": "Máy-đọc-được manifest của story-team-kit. Lưu ý terminology: `provides` ở đây KHÔNG liên quan `capabilities` của orca-plugin.json (tránh collision tên). provides[] 49 entries = 26 full contracts (17 skill + 9 agent) + 37 bin minimal. bin = upstream 39 TRỪ story-dashboard-server + story-dashboard.html (sync-loại có chủ đích — sync-kit.sh remove khi vendor). Schema này là doc/CI artifact — runtime installer KHÔNG parse schema, validator tự viết trong installKit (SF-2).",
   "type": "object",
   "required": ["name", "version", "description", "provides"],
   "properties": {
