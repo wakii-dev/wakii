@@ -135,3 +135,17 @@ Snapshot merge (giữa chừng, nhóm task lớn xong): `merge: SF-N snapshot T1
 - `realModeRule: true` → spec có adapter/dual-mode/mock: thêm ít nhất 1 test
   real-path (httptest) + 1 negative path (fail-mid/timeout) — mock xanh
   không phủ real-mode (bài học Ahamove #77: orphan booking chỉ nổ ở real).
+
+## TDD mode — verify.tddMode (mặc định BẬT, học gh27 tautology assert)
+
+Đọc `~/.claude/story-kit.json` (không có file → mặc định BẬT). Nếu
+`tddMode: true`, mọi task có behavior mới/bugfix/refactor chạy RED→GREEN:
+1. **RED** — viết test mô tả hành vi mong muốn TRƯỚC, chạy thấy FAIL (không
+   nhìn thấy đỏ = không biết test kiểm đúng thứ)
+2. **GREEN** — code tối thiểu để test pass
+3. **REFRACTER** — dọn dẹp, test vẫn xanh
+Ngoại lệ phải khai: `tdd: skipped-tdd: <lý do>` (prototype vứt, generated
+code, config-only). Ghi dòng `tdd: RED→GREEN` (hoặc skipped + lý do) vào
+`docs/superpowers/evidence/<sf>/test-run.txt` — story-verify B1 FAIL nếu
+thiếu khi gate bật. Test-after viết cho code có sẵn chỉ được phép khi nó
+BẮT ĐẦU bằng assert thất bại trên hành vi đúng (không tautology).
