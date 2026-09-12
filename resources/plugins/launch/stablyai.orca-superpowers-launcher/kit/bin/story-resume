@@ -199,6 +199,12 @@ do_send() { # $1 = worktree path, $2 = verdict
     echo "→ pane bare-shell: launch claude (bypass mode — khớp Orca-native, tránh permission-wall) rồi gửi prompt"
     orca terminal send --terminal "$thandle" --text "claude --dangerously-skip-permissions" --enter --json >/dev/null
     sleep 20   # đợi Claude CLI boot + ❯ prompt sẵn sàng
+    # bypass-accept dialog: máy mới chưa accept --dangerously-skip-permissions →
+    # Claude hiện dialog "Yes, I accept" — Enter 1 lần (no-op nếu không có
+    # dialog; prompt rỗng ở ❯ vô hại). Bài học FI-380: prompt gõ vào dialog
+    # ăn mất, agent treo không prompt (user báo "thường xuyên gây lỗi").
+    orca terminal send --terminal "$thandle" --enter --json >/dev/null 2>&1
+    sleep 2
     orca terminal send --terminal "$thandle" --text "$prompt1" --enter --json \
       && echo "SENT ✓ (relaunched)" || { echo "SEND FAIL sau relaunch — check pane thủ công"; return 1; }
   else
