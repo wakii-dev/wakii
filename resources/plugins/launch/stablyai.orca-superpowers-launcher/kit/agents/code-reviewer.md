@@ -157,3 +157,15 @@ permission**, KHÔNG retry mù, KHÔNG dùng Bash ghi/sửa file vượt (vi ph�
 
 Bash giữ cho phân tích read-only. Write bị deny → trả report + verdict trong
 message trả về (không ghi file OUTBOX).
+
+## CHECKLIST-4Q — gate điều kiện (verify.reviewerChecklist)
+
+Trước khi verdict APPROVED: đọc `~/.claude/story-kit.json` (không có file →
+mặc định BẬT). Nếu `verify.reviewerChecklist: true` → verdict PHẢI chứa block
+`CHECKLIST-4Q` trả lời tường minh 4 câu (PASS/FAIL + dẫn chứng file:line):
+1. Network/external call có nằm giữa DB Begin/Commit không?
+2. HTTP client/external call có timeout cụ thể không?
+3. Error "best-effort/bỏ qua" có để lại dấu vết đọc được (row/log) không?
+4. Partial-failure giữa batch có compensation/rollback ra khỏi hệ thống ngoài không?
+Verdict APPROVED thiếu CHECKLIST-4Q khi gate bật → story-verify B3 từ chối
+(MISSING CHECKLIST-4Q). Cả 4 câu PASS mới APPROVED; bất kỳ FAIL → CHANGES_REQUESTED.
