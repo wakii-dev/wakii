@@ -146,7 +146,6 @@ Agents drive Orca too — script every workflow with `orca worktree create`, `sn
 <td width="50%">
   <a href="https://www.onorca.dev/docs/cli/overview"><picture><source srcset="docs/assets/feature-wall/orca-cli.gif" type="image/gif"><img src="docs/assets/feature-wall/orca-cli.jpg" alt="Script Orca from the CLI" width="100%" /></picture></a>
 </td>
->>>>>>> upstream/main
 </tr>
 </table>
 
@@ -265,10 +264,10 @@ System Settings → Privacy & Security):
 
 | Machine       | Asset                                                                                                                            |
 | ------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Apple Silicon | [Wakii-1.4.199-arm64.dmg](https://github.com/wakii-dev/wakii/releases/download/v1.4.199/Wakii-1.4.199-arm64.dmg)                  |
-| Intel         | [Wakii-1.4.199-x64.dmg](https://github.com/wakii-dev/wakii/releases/download/v1.4.199/Wakii-1.4.199-x64.dmg)                      |
-| Android       | [app-release.apk](https://github.com/wakii-dev/wakii/releases/download/mobile-android-v0.0.48/app-release.apk)                    |
-| Windows       | [orca-windows-setup.exe](https://github.com/wakii-dev/wakii/releases/download/v1.4.199/orca-windows-setup.exe)                     |
+| Apple Silicon | [Wakii-1.4.205-arm64.dmg](https://github.com/wakii-dev/wakii/releases/download/v1.4.205/Wakii-1.4.205-arm64.dmg)                  |
+| Intel         | [Wakii-1.4.205-x64.dmg](https://github.com/wakii-dev/wakii/releases/download/v1.4.205/Wakii-1.4.205-x64.dmg)                      |
+| Android       | [app-release.apk](https://github.com/wakii-dev/wakii/releases/download/v1.4.205/app-release.apk)                    |
+| Windows       | [orca-windows-setup.exe](https://github.com/wakii-dev/wakii/releases/download/v1.4.205/orca-windows-setup.exe)                     |
 
 Build from source ([guide](#-developing)) works everywhere.
 
