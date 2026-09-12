@@ -1,6 +1,6 @@
 {
   "name": "story-team-kit",
-  "version": "2.10.1",
+  "version": "2.11.0",
   "description": "9-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới.",
   "requires": {
     "claude-code": ">=2.0",
@@ -458,6 +458,11 @@
       "name": "story-smoke",
       "type": "bin",
       "description": "Runtime smoke gate — chạy smoke command SF + scan ERROR + ghi evidence cho B3.5"
+    },
+    {
+      "name": "story-sequence",
+      "type": "bin",
+      "description": "Mermaid sequenceDiagram quá trình chạy thật của story — git + Linear verdicts + evidence, không cần LLM"
     }
   ]
 }
