@@ -453,6 +453,11 @@
       "name": "wakii-skill-import",
       "type": "bin",
       "description": "import 1 skill chuẩn Claude (thư mục SKILL.md) vào kit — validate + collide provides[], owner community/<nguồn>, bump version"
+    },
+    {
+      "name": "story-smoke",
+      "type": "bin",
+      "description": "Runtime smoke gate — chạy smoke command SF + scan ERROR + ghi evidence cho B3.5"
     }
   ]
 }

@@ -1,0 +1,97 @@
+#!/bin/bash
+# story-smoke — runtime smoke gate cho SF (verify.runtimeSmoke, FI-380).
+# Chạy smoke command của worktree, scan log ERROR, ghi evidence
+# docs/superpowers/evidence/<sf>/smoke.txt (chứa HEAD hash — story-verify
+# B3.5 đọc đúng file này). KHÔNG tự chế cách chạy app: command đến từ
+# --cmd > .wakii/smoke.json > ecosystem default (go/npm/pnpm/pytest).
+#
+# Usage: story-smoke [sf-name] [--cmd "<shell>"] [--log <app.log>] [--timeout <s>]
+# Exit: 0 pass (evidence ghi) · 1 fail · 2 usage
+set -u
+
+SF_ARG=""; CMD=""; LOG=""; TIMEOUT=300
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --cmd) CMD="${2:-}"; shift 2 ;;
+    --log) LOG="${2:-}"; shift 2 ;;
+    --timeout) TIMEOUT="${2:-300}"; shift 2 ;;
+    -*) echo "Unknown: $1"; exit 2 ;;
+    *) SF_ARG="$1" ;;
+  esac
+  shift
+done
+
+# resolve worktree: arg khớp sf-* trong $HOME/orca/workspaces, hoặc cwd là sf-*
+WT=""
+if [ -n "$SF_ARG" ]; then
+  for ws in "$HOME"/orca/workspaces/*/; do
+    for d in "$ws"sf-*/; do
+      [ -d "$d" ] && case "$(basename "$d")" in *"$SF_ARG"*) WT="${d%/}" ;; esac
+    done
+  done
+  [ -n "$WT" ] || { echo "FAIL: không thấy worktree khớp '$SF_ARG'"; exit 1; }
+else
+  case "$(basename "$PWD")" in sf-*) WT="$PWD" ;; *) echo "Usage: story-smoke <sf-name> [--cmd ...] [--log ...]"; exit 2 ;; esac
+fi
+SF="$(basename "$WT")"
+HEAD_HASH=$(git -C "$WT" rev-parse --short HEAD 2>/dev/null)
+[ -n "$HEAD_HASH" ] || { echo "FAIL: $WT không phải git repo"; exit 1; }
+
+# command: --cmd > .wakii/smoke.json {"cmd": ...} > ecosystem default
+if [ -z "$CMD" ] && [ -f "$WT/.wakii/smoke.json" ]; then
+  CMD=$(python3 -c "
+import json
+try: print(json.load(open(r'''$WT/.wakii/smoke.json''')).get('cmd', ''))
+except Exception: pass" 2>/dev/null)
+fi
+if [ -z "$CMD" ]; then
+  if [ -f "$WT/go.mod" ]; then CMD="go build ./... && go vet ./..."
+  elif [ -f "$WT/package.json" ]; then
+    if [ -f "$WT/pnpm-lock.yaml" ]; then CMD="pnpm test --silent || npm test --silent"
+    else CMD="npm test --silent"; fi
+  elif [ -f "$WT/pyproject.toml" ] || [ -f "$WT/pytest.ini" ]; then CMD="python3 -m pytest -q"
+  else echo "FAIL: không suy ra smoke command — dùng --cmd hoặc .wakii/smoke.json"; exit 2; fi
+fi
+
+echo "[smoke] $SF @ $HEAD_HASH"
+echo "[smoke] cmd: $CMD (timeout ${TIMEOUT}s)"
+OUT=$(cd "$WT" && timeout "$TIMEOUT" bash -c "$CMD" 2>&1); RC=$?
+
+# scan ERROR trong output + optional log file (baseline-free: mọi dòng match
+# đều fail — command thất bại thì RC đã bắt; log ERROR là anomaly runtime)
+ERR_HITS=""
+if printf '%s' "$OUT" | grep -nE "^(ERROR|FATAL)|Traceback|Error:" >/dev/null 2>&1; then
+  ERR_HITS=$(printf '%s' "$OUT" | grep -nE "^(ERROR|FATAL)|Traceback|Error:" | head -5)
+fi
+if [ -n "$LOG" ] && [ -f "$LOG" ]; then
+  LOG_HITS=$(grep -nE "ERROR|FATAL" "$LOG" 2>/dev/null | tail -5)
+  [ -n "$LOG_HITS" ] && ERR_HITS="$ERR_HITS
+$LOG_HITS"
+fi
+
+# evidence — contract story-verify B3.5
+EV_DIR="$WT/docs/superpowers/evidence/$SF"
+mkdir -p "$EV_DIR" 2>/dev/null || { echo "FAIL: không tạo được $EV_DIR"; exit 1; }
+EV="$EV_DIR/smoke.txt"
+{
+  echo "head: $HEAD_HASH"
+  echo "cmd: $CMD"
+  echo "exit: $RC"
+  echo "log: ${LOG:-none}"
+  echo "--- output tail ---"
+  printf '%s\n' "$OUT" | tail -30
+  [ -n "$ERR_HITS" ] && { echo "--- ERROR hits ---"; printf '%s\n' "$ERR_HITS"; }
+} > "$EV"
+
+if [ "$RC" -ne 0 ]; then
+  echo "FAIL: smoke command exit $RC — evidence: ${EV#$WT/}"
+  [ -n "$ERR_HITS" ] && printf '%s\n' "$ERR_HITS"
+  exit 1
+fi
+if [ -n "$ERR_HITS" ]; then
+  echo "FAIL: phát hiện ERROR/anomaly — evidence: ${EV#$WT/}"
+  printf '%s\n' "$ERR_HITS"
+  exit 1
+fi
+echo "PASS — evidence: ${EV#$WT/}"
+exit 0
