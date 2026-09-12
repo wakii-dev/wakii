@@ -9,12 +9,13 @@
 # Exit: 0 pass (evidence ghi) · 1 fail · 2 usage
 set -u
 
-SF_ARG=""; CMD=""; LOG=""; TIMEOUT=300
+SF_ARG=""; CMD=""; LOG=""; TIMEOUT=300; WT_ARG=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --cmd) CMD="${2:-}"; shift 2 ;;
     --log) LOG="${2:-}"; shift 2 ;;
     --timeout) TIMEOUT="${2:-300}"; shift 2 ;;
+    --wt) WT_ARG="${2:-}"; shift 2 ;;
     -*) echo "Unknown: $1"; exit 2 ;;
     *) SF_ARG="$1" ;;
   esac
@@ -23,7 +24,11 @@ done
 
 # resolve worktree: arg khớp sf-* trong $HOME/orca/workspaces, hoặc cwd là sf-*
 WT=""
-if [ -n "$SF_ARG" ]; then
+if [ -n "$WT_ARG" ]; then
+  # --wt: đường dẫn worktree/repo tường minh — ngoài layout $HOME/orca/workspaces
+  [ -d "$WT_ARG" ] && git -C "$WT_ARG" rev-parse --git-dir >/dev/null 2>&1 && WT="$WT_ARG"
+  [ -n "$WT" ] || { echo "FAIL: --wt '$WT_ARG' không phải git repo"; exit 1; }
+elif [ -n "$SF_ARG" ]; then
   for ws in "$HOME"/orca/workspaces/*/; do
     for d in "$ws"sf-*/; do
       [ -d "$d" ] && case "$(basename "$d")" in *"$SF_ARG"*) WT="${d%/}" ;; esac
