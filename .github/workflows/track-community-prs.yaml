@@ -13,8 +13,14 @@ on:
 permissions:
   contents: read
 
+env:
+  HAS_BUFO_KEY: ${{ secrets.BUFO_BOT_PRIVATE_KEY != '' }}
+
 jobs:
   track-community-pr:
+    # Fork thiếu secret BUFO_BOT_PRIVATE_KEY → job luôn đỏ chặn merge vô ích.
+    # Skip khi secret vắng (upstream giữ nguyên hành vi khi có secret).
+    if: env.HAS_BUFO_KEY == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
