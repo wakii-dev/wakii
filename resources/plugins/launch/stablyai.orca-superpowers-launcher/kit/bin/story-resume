@@ -199,6 +199,28 @@ do_send() { # $1 = worktree path, $2 = verdict
     echo "→ pane bare-shell: launch claude (bypass mode — khớp Orca-native, tránh permission-wall) rồi gửi prompt"
     orca terminal send --terminal "$thandle" --text "claude --dangerously-skip-permissions" --enter --json >/dev/null
     sleep 20   # đợi Claude CLI boot + ❯ prompt sẵn sàng
+    # verify-read-back (FI-380, user báo "[200~claude '--dangerously-skip-permissions'"):
+    # orca send bọc bracketed-paste — pane chưa sẵn sàng (claude đang boot/dialog)
+    # → marker `[200~` leaked + zsh magic-quote flag → lệnh garble, launch gãy.
+    # Đọc tail: thấy garble → interrupt (xoá line) → gửi lại, tối đa 2 lần.
+    attempt=0
+    while [ "$attempt" -lt 2 ]; do
+      tail_txt=$(orca terminal read --terminal "$thandle" --json 2>/dev/null | python3 -c "
+import json, sys
+try: print(json.load(sys.stdin)['result']['terminal']['tail'][-500:])
+except Exception: print('')" 2>/dev/null)
+      case "$tail_txt" in
+        *'[200~'*|*'[201~'*|*'command not found'*|*'Unknown option'*|*'không tìm thấy lệnh'*)
+          attempt=$((attempt+1))
+          echo "  → launch garbled (lần $attempt) — interrupt + gửi lại"
+          orca terminal send --terminal "$thandle" --interrupt --json >/dev/null 2>&1
+          sleep 1
+          orca terminal send --terminal "$thandle" --text "claude --dangerously-skip-permissions" --enter --json >/dev/null
+          sleep 15
+          ;;
+        *) break ;;
+      esac
+    done
     # bypass-accept dialog: máy mới chưa accept --dangerously-skip-permissions →
     # Claude hiện dialog "Yes, I accept" — Enter 1 lần (no-op nếu không có
     # dialog; prompt rỗng ở ❯ vô hại). Bài học FI-380: prompt gõ vào dialog
