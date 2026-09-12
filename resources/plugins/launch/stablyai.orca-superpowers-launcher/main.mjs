@@ -921,6 +921,15 @@ export function installKit(orca, { root, kitRoot: kitRootOverride } = {}) {
     const merged = mergeStoryHooks(claude)
     if (merged.ok) orca.log(`story-team-kit v${manifest.version}: hooks ${merged.changed ? 'merged' : 'up-to-date'}`)
     else orca.log(`story-team-kit v${manifest.version}: hooks merge skip — ${merged.error}`)
+    // Verify gates config (FI-380 review plan): seed mặc định lần đầu —
+    // evidence/realMode/checklist ON, smoke OFF (cần infra). Panel toggle
+    // đè qua op verify-config; bins fail-open dùng default nếu file lỗi.
+    const vcfgPath = join(claude, 'story-kit.json')
+    if (!existsSync(vcfgPath)) {
+      writeFileSync(vcfgPath, JSON.stringify({ verify: {
+        evidenceGate: true, realModeRule: true, reviewerChecklist: true, runtimeSmoke: false } }, null, 2) + '\n')
+      orca.log('story-team-kit: verify config seeded (story-kit.json)')
+    }
     orca.log('story-team-kit self-installed: v' + manifest.version)
     return true
   } catch (err) {
@@ -1146,6 +1155,25 @@ export default function activate(orca) {
           result = await runKit('story-watchdog', ['--with-index'])
         } else if (req.action === 'verify') {
           result = await runKit('story-verify', [])
+        } else if (req.action === 'verify-config') {
+          // Panel ⚙ verify gates — get (không set) / merge-set vào
+          // ~/.claude/story-kit.json (kit bins đọc cùng file; fail-open
+          // default trong story-verify). Config trả qua stdout (JSON).
+          const DEF = { evidenceGate: true, realModeRule: true, reviewerChecklist: true, runtimeSmoke: false }
+          const cfgPath = join(process.env.HOME || '', '.claude', 'story-kit.json')
+          let cfg = {}
+          try { cfg = JSON.parse(readFileSync(cfgPath, 'utf8')) } catch { /* missing/corrupt → defaults */ }
+          if (req.set && typeof req.set === 'object' && !Array.isArray(req.set)) {
+            cfg.verify = Object.assign(DEF, cfg.verify || {}, req.set)
+            try {
+              mkdirSync(dirname(cfgPath), { recursive: true })
+              writeFileSync(cfgPath, JSON.stringify(cfg, null, 2) + '\n')
+            } catch (e) { result = { ok: false, error: String((e && e.message) || e).slice(0, 200) } }
+          }
+          if (!result || result.ok !== false) {
+            const eff = Object.assign(DEF, cfg.verify || {})
+            result = { ok: true, stdout: JSON.stringify(eff) }
+          }
         } else if (req.action === 'launch') {
           // launch mọi SF sẵn sàng (deps Done, đã approve, chưa có worktree)
           result = await runKit('story-watchdog', ['--launch-next', '--with-index'])

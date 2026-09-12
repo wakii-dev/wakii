@@ -38,7 +38,12 @@ ok(`marker = ${kitJson.version} (khớp kit.json)`, ver === kitJson.version, `go
   ok('kit/bin: mọi bins executable', nonExec.length === 0, `non-exec: ${nonExec.join(',')}`)
 }
 
-ok('version semver + >= 2.8.0 (GH-42 fan-in tối thiểu)', /^\d+\.\d+\.\d+$/.test(kitJson.version) && kitJson.version >= '2.8.0', `got ${kitJson.version}`)
+// so SỐ học — '2.10.0' >= '2.8.0' sai theo string (lexicographic)
+{
+  const m = /^([1-9]\d*)\.(\d+)\.(\d+)$/.exec(kitJson.version || '')
+  const ge = !!m && (+m[1] > 2 || (+m[1] === 2 && (+m[2] > 8 || (+m[2] === 8 && +m[3] >= 0))))
+  ok('version semver + >= 2.8.0 (GH-42 fan-in tối thiểu)', ge, `got ${kitJson.version}`)
+}
 ok('permission-matrix.md ở kit ROOT — ngoài scan two-way, KHÔNG entry provides',
   existsSync(join(kitRoot, 'permission-matrix.md'))
     && !kitJson.provides.some(e => e.name === 'permission-matrix'))

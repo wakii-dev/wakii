@@ -179,6 +179,19 @@ Mô tả story (feature lớn) — markdown
           <button id="story-ops-watchdog" class="btn secondary" style="padding:3px 8px; font-size:10px;" title="1 pass diagnose + notify stall mới (không auto-resume)">🐕 Watchdog</button>
           <button id="story-ops-verify" class="btn secondary" style="padding:3px 8px; font-size:10px;" title="Run story-verify (5 bước DoD + B0 browser test)">✅ Verify</button>
           <button id="story-ops-attempts" class="btn secondary" style="padding:3px 8px; font-size:10px;" title="story-attempt show — attempt log hôm nay (3 lần cùng approach = phải đổi hướng)">🔁 Attempts</button>
+          <button id="story-ops-gates" class="btn secondary" style="padding:3px 8px; font-size:10px; border-color:#8b5cf6; color:#8b5cf6;" title="Verify gates — bật/tắt mức nghiêm ngặt của story-verify">⚙ Gates</button>
+        </div>
+        <div id="story-verify-gates" style="display:none; margin-top:6px; padding:8px; border:1px solid var(--border,#444); border-radius:8px; background:var(--secondary,#18181b); font-size:11px;">
+          <div style="font-weight:600; margin-bottom:6px;">Verify gates — story-verify đọc ~/.claude/story-kit.json</div>
+          <label style="display:block; margin:4px 0; cursor:pointer;"><input type="checkbox" id="vg-evidence" /> <b>Evidence gate</b> — test phải CHẠY và ghi evidence (test-run.txt chứa HEAD), không chỉ tồn tại</label>
+          <label style="display:block; margin:4px 0; cursor:pointer;"><input type="checkbox" id="vg-realmode" /> <b>Real-mode rule</b> — spec có mock/adapter ⇒ phải có test real-path (httptest); mock xanh không phủ real-mode</label>
+          <label style="display:block; margin:4px 0; cursor:pointer;"><input type="checkbox" id="vg-checklist" /> <b>Reviewer CHECKLIST-4Q</b> — APPROVED phải kèm 4 câu: network-in-tx / timeout / best-effort error / partial-fail compensation</label>
+          <label style="display:block; margin:4px 0; cursor:pointer;"><input type="checkbox" id="vg-smoke" /> <b>Runtime smoke</b> — yêu cầu evidence smoke (app/service boots + 0 ERROR mới) trước Done <span style="opacity:.6">(mặc định OFF — cần infra)</span></label>
+          <div style="margin-top:8px; display:flex; gap:6px; align-items:center;">
+            <button id="vg-save" class="btn" style="padding:4px 10px; font-size:10px;">Lưu</button>
+            <button id="vg-close" class="btn secondary" style="padding:4px 10px; font-size:10px;">Đóng</button>
+            <span id="vg-status" class="muted" style="font-size:10px;"></span>
+          </div>
         </div>
         <div style="display:flex; gap:6px; margin-top:6px; align-items:center;">
           <input id="story-ops-gap" placeholder="GAP-ANSWER: trả lời câu hỏi của SFs ngay тут (post lên epic đang xem)…"
@@ -2022,6 +2035,48 @@ Tech blog: markdown posts, post list, single-post view, tag filter, dark/light t
         call('storage.set', { key: 'story.ops.request', value: { action: 'launch', at: Date.now() } })
         var rs = document.getElementById('story-ops-result')
         if (rs) rs.textContent = '→ launch-next: kiểm tra SF sẵn sàng rồi fork + launch…'
+      }
+      var gatesBtn = document.getElementById('story-ops-gates')
+      var gatesBox = document.getElementById('story-verify-gates')
+      var GATE_KEYS = [['vg-evidence','evidenceGate'],['vg-realmode','realModeRule'],['vg-checklist','reviewerChecklist'],['vg-smoke','runtimeSmoke']]
+      function waitVerifyConfig(sentAt, tries) {
+        call('storage.get', { key: 'story.ops.result' }).then(function (r) {
+          var v = r && r.value
+          if (v && v.action === 'verify-config' && v.at && Date.parse(v.at) >= sentAt - 1500) {
+            var st = document.getElementById('vg-status')
+            try {
+              var cfg = JSON.parse(String(v.output || '{}'))
+              GATE_KEYS.forEach(function (k) { var el = document.getElementById(k[0]); if (el) el.checked = !!cfg[k[1]] })
+              if (st) st.textContent = (v.ok ? '✓ Đã lưu: ' : '✗ ') + String(v.output || v.error || '').slice(0, 160)
+            } catch (e) { if (st) st.textContent = '✗ parse: ' + e }
+            return
+          }
+          if (tries > 0) setTimeout(function () { waitVerifyConfig(sentAt, tries - 1) }, 1500)
+          else { var st2 = document.getElementById('vg-status'); if (st2) st2.textContent = '✗ worker không phản hồi' }
+        })
+      }
+      if (gatesBtn && gatesBox) {
+        gatesBtn.onclick = function () {
+          var show = gatesBox.style.display === 'none'
+          gatesBox.style.display = show ? '' : 'none'
+          if (show) {
+            var st = document.getElementById('vg-status'); if (st) st.textContent = '→ đọc config…'
+            var at = Date.now()
+            call('storage.set', { key: 'story.ops.request', value: { action: 'verify-config', at: at } })
+            waitVerifyConfig(at, 8)
+          }
+        }
+        var vgSave = document.getElementById('vg-save')
+        if (vgSave) vgSave.onclick = function () {
+          var set = {}
+          GATE_KEYS.forEach(function (k) { var el = document.getElementById(k[0]); if (el) set[k[1]] = el.checked })
+          var st = document.getElementById('vg-status'); if (st) st.textContent = '→ lưu…'
+          var at = Date.now()
+          call('storage.set', { key: 'story.ops.request', value: { action: 'verify-config', set: set, at: at } })
+          waitVerifyConfig(at, 8)
+        }
+        var vgClose = document.getElementById('vg-close')
+        if (vgClose) vgClose.onclick = function () { gatesBox.style.display = 'none' }
       }
       var opsStBtn = document.getElementById('story-ops-stats')
       if (opsStBtn) opsStBtn.onclick = function () {

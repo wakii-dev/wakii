@@ -123,3 +123,15 @@ Snapshot merge (giữa chừng, nhóm task lớn xong): `merge: SF-N snapshot T1
 | Diverged, needs revert | coordinator dispatches `rollback-fixer` (not you) |
 | Spec seems wrong mid-task | STOP → report to coordinator → spec-critic reopens (never patch the spec yourself) |
 | Next task exists | wait for coordinator's next dispatch — do not self-assign |
+
+## Evidence gate — B1+ (verify.evidenceGate / runtimeSmoke)
+
+Đọc `~/.claude/story-kit.json` (mặc định BẬT khi không có file):
+- `evidenceGate: true` → trước khi báo DONE: chạy test suite của SF, ghi
+  output + HEAD short hash vào `docs/superpowers/evidence/<sf>/test-run.txt`.
+  story-verify B1 FAIL nếu file thiếu hoặc không chứa HEAD hiện tại.
+- `runtimeSmoke: true` → thêm `docs/superpowers/evidence/<sf>/smoke.txt`
+  (chạy smoke: app/service boots + 0 ERROR mới trong log; ghi output + HEAD).
+- `realModeRule: true` → spec có adapter/dual-mode/mock: thêm ít nhất 1 test
+  real-path (httptest) + 1 negative path (fail-mid/timeout) — mock xanh
+  không phủ real-mode (bài học Ahamove #77: orphan booking chỉ nổ ở real).
