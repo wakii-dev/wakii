@@ -156,8 +156,11 @@ verify_sf() { # $1 worktree → in "<sf>|<verdict>|<detail>|<b1>|<b2>|<b3>|<b4>|
   # Học FI-380/Ahamove #77: file test tồn tại ≠ test đã chạy được.
   if [ "$EVIDENCE_GATE" = 1 ] && [ "$b1" != "FAIL" ]; then
     ev="$wt/docs/superpowers/evidence/$sf/test-run.txt"
-    if [ ! -f "$ev" ] || ! grep -q "$head_hash" "$ev" 2>/dev/null; then
-      b1="FAIL"; b1_note="evidence thiếu/cũ: docs/superpowers/evidence/$sf/test-run.txt (phải chứa HEAD ${head_hash:-?}) — chạy test + ghi output"
+    # chấp nhận HEAD hoặc HEAD~1: evidence commit ngay sau code commit —
+    # hash trong evidence = code commit (HEAD~1), không thể tự chứa chính nó
+    parent_hash=$(git -C "$wt" rev-parse --short HEAD~1 2>/dev/null)
+    if [ ! -f "$ev" ] || { ! grep -q "$head_hash" "$ev" 2>/dev/null && ! grep -q "$parent_hash" "$ev" 2>/dev/null; }; then
+      b1="FAIL"; b1_note="evidence thiếu/cũ: docs/superpowers/evidence/$sf/test-run.txt (phải chứa HEAD ${head_hash:-?} hoặc code commit trước đó) — chạy test + ghi output"
     fi
   fi
 
@@ -237,7 +240,8 @@ verify_sf() { # $1 worktree → in "<sf>|<verdict>|<detail>|<b1>|<b2>|<b3>|<b4>|
   b_smoke="OFF"; smoke_note=""
   if [ "$SMOKE_GATE" = 1 ]; then
     sev="$wt/docs/superpowers/evidence/$sf/smoke.txt"
-    if [ -f "$sev" ] && grep -q "$head_hash" "$sev" 2>/dev/null; then b_smoke="PASS"
+    parent_hash=$(git -C "$wt" rev-parse --short HEAD~1 2>/dev/null)
+    if [ -f "$sev" ] && { grep -q "$head_hash" "$sev" 2>/dev/null || grep -q "$parent_hash" "$sev" 2>/dev/null; }; then b_smoke="PASS"
     else b_smoke="FAIL"; smoke_note="smoke evidence thiếu: docs/superpowers/evidence/$sf/smoke.txt (HEAD ${head_hash:-?})"; fi
   fi
 
