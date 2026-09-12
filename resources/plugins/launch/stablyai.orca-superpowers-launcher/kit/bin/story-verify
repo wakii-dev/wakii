@@ -303,7 +303,7 @@ if [ "$JSON_OUT" = 1 ]; then
 else
   echo "═══ COMPLETE-RUN VERIFY ═══ (B1 code+tests · B2 plan · B2b surface-lint · B3 review · B4 merge · B5 Done)"
   for r in "${ROWS[@]}"; do
-    IFS='|' read -r sf verdict detail b1 b2 b2b b3 b4 b5 <<< "$r"
+    IFS='|' read -r sf verdict detail b1 b2 b2b b3 b4 b5 b_smoke <<< "$r"
     icon="●"; case "$verdict" in VIOLATION) icon="🚨";; INCOMPLETE) icon="○";; COMPLETE) icon="✓";; READY-TO-DONE) icon="▶";; esac
     smoke_col=""; [ "$b_smoke" != "OFF" ] && smoke_col=" Smoke:$b_smoke"
     printf '  %s %-22s %-14s [B1:%s B2:%s B2b:%s B3:%s B4:%s B5:%s%s]\n' "$icon" "$sf" "$verdict" "$b1" "$b2" "$b2b" "$b3" "$b4" "$b5" "$smoke_col"

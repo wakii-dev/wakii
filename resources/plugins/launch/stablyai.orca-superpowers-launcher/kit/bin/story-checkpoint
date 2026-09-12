@@ -144,6 +144,9 @@ def log_error(store, origin, message):
 # ---- file lock (GH-37) — donor helper cho mọi RMW state dùng chung ----------
 
 LOCK_STALE_SECS = 5  # mtime tối đa trước khi xem xét takeover (kèm content check)
+# lock cổ hơn ngưỡng này mà không verify được creation-time (macOS/BSD
+# không có /proc) → stale — pid 1 launchd sống mãi không được chặn takeover
+LOCK_CT_UNKNOWN_STALE_MS = 24 * 3600 * 1000
 
 
 def _pid_alive(pid):
@@ -219,6 +222,10 @@ def _lock_content_stale(pid, lock_ts_ms, now_ms):
         return True
     ct = _creation_time_ms(pid)
     if ct is not None and ct > lock_ts_ms + 5:  # +5ms grace clock jitter
+        return True
+    if ct is None and now_ms - lock_ts_ms > LOCK_CT_UNKNOWN_STALE_MS:
+        # creation-time không lấy được (POSIX non-Linux) + lock cổ > 24h →
+        # stale: holder "sống mãi" kiểu pid 1 không được chặn takeover vĩnh viễn
         return True
     return False
 
