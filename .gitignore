@@ -104,6 +104,12 @@ docs/**
 # diff/HEAD (GH-30): ignored → rename thật đầu tiên MISSING-GUIDE vĩnh viễn.
 !docs/superpowers/migrations/
 !docs/superpowers/migrations/**
+# Story brackets + context packs phải pull được qua git trên mọi máy —
+# tiền đề distributed execution (FI-458 SF-1); ignored = distributed chết âm thầm.
+!docs/superpowers/brackets/
+!docs/superpowers/brackets/**
+!docs/superpowers/contexts/
+!docs/superpowers/contexts/**
 # Review OUTBOX (GH-32) là runtime artifacts — DỐN ở đây: `docs/**` đã ignore;
 # KHÔNG negate (ngược migrations/) — LLM outbox không phải tài liệu durable.
 # Vẫn ghi tường minh để ai đọc file hiểu ý định + chống negate nhầm sau này.
