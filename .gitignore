@@ -28,6 +28,9 @@ out/
 /build/
 release/
 native/**/.build/
+# node-gyp output for the vendored Windows registry addon; generated per host and ABI.
+native/windows-registry/build/
+native/windows-registry/bin/
 
 # pnpm
 .pnpm-store/
@@ -116,6 +119,10 @@ docs/superpowers/reviews/
 !docs/agent-skill-sharing-implementation-checklist.md
 !docs/mobile-terminal-shortcut-bar.md
 !docs/reference/
+!docs/reference/agent-pty-transcript-capture.md
+!docs/reference/agent-session-search-query-tuning.md
+!docs/reference/agent-status-store.md
+!docs/reference/antigravity-readiness-evidence.md
 !docs/reference/git-compatibility.md
 !docs/reference/headless-linux-server.md
 !docs/reference/ime-regression-checklist.md
