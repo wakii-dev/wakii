@@ -198,6 +198,20 @@ Run the full-strictness epic pipeline:
    chỉ hoạt động khi tier 1 import; listener của SF khác) → dồn vào
    convergence SF (tier cuối). Gate tier 0 test end-to-end thứ dépend tier sau
    = fail giả, đội delay debugging.
+   **Phased-release rule (story lớn — release từng phần, học FI-380 1.4.204
+   chứa nửa feature):**
+   - Story đủ lớn (≥2 tiers HOẶC ≥5 SF HOẶC ước tính >3 ngày) → chia PHASE
+     theo tier: mỗi phase = nhóm tier hoàn chỉnh, **SHIPPABLE độc lập** (build
+     xanh, không đứt tính năng đang có).
+   - Mỗi phase COMPLETE (mọi SF tier đó merged vào đích + story-verify sạch
+     toàn phase) → **RELEASE CHECKPOINT**: cut release/ship TRƯỚC khi launch
+     tier kế. Cấm big-bang release cuối story — user chờ lâu, bug tích tụ
+     nhiều phase mới lộ (1.4.204 ship icon trắng + kit nửa cho tới 1.4.205).
+   - Bracket: ghi phase ở `What` của SF đầu tier (vd "Phase 1/2 — shippable:
+     X") — text tự do, không thêm field (parser STRICT).
+   - Tier không shippable độc lập (chỉ có nghĩa khi tier sau xong) → gộp vào
+     phase sau. Watchdog --launch-next cần người duyệt phase-gate nếu đặt
+     RELEASE_GATE=1 (env, mặc định off).
 6. `superpowers:brainstorming` MANDATORY + every clarifying question:
    - **Facts vs decisions** (learned 2026-09-03, mattpocock/grilling): cái mà
      code/repo/Linear trả lời được = FACT → tự tra (read code, dispatch subagent),
@@ -459,6 +473,9 @@ one SF and reports DONE/BLOCKED.
 ### CLOSE (merge về nhánh chính — quy trình bắt buộc)
 Khi MỖI SF hoàn thành workflow run (sub-issue Done), TUYỆT ĐỐI KHÔNG kết thúc
 ở worktree SF — phải hợp nhất về nhánh đích NGAY để tier sau thấy code:
+**Phase checkpoint:** story theo Phased-release rule → sau khi MỌI SF của
+một tier merged + story-verify sạch → RELEASE checkpoint tier đó trước khi
+launch tier kế (xem Phased-release rule ở CREATE).
 
 **Mirror-back bắt buộc trước CLOSE** (learned 2026-09-10 FI-380): story nào
 đụng vendored assets (orca `resources/plugins/**`, kit/) — port ngược mọi
