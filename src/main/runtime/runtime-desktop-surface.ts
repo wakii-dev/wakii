@@ -18,6 +18,7 @@ import type { NotificationSettings } from '../../shared/notification-settings-ty
 
 export type RuntimeDesktopSurface = {
   /** Show a native notification. Returns false when the host cannot, so callers can say so. */
+  isAwayForMobileNotifications?(): boolean | undefined
   showNotification(input: { title: string; body: string }): boolean
   /** The renderer window with this id, or null when there is no desktop. */
   findWindowById(id: number): BrowserWindow | null
