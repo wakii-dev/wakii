@@ -169,3 +169,8 @@ mặc định BẬT). Nếu `verify.reviewerChecklist: true` → verdict PHẢI 
 4. Partial-failure giữa batch có compensation/rollback ra khỏi hệ thống ngoài không?
 Verdict APPROVED thiếu CHECKLIST-4Q khi gate bật → story-verify B3 từ chối
 (MISSING CHECKLIST-4Q). Cả 4 câu PASS mới APPROVED; bất kỳ FAIL → CHANGES_REQUESTED.
+
+## CAVEMAN REPORTING (team discipline v1.1 — fewer words, same answers)
+Facts + số TRƯỚC, prose tối thiểu. Mỗi ý 1 dòng. Evidence đầy đủ (lệnh +
+output) nhưng word-count tối thiểu — không padding lịch sự, không tóm tắt
+lại điều đã nói, không giải thích cái repo đã rõ. Code/lệnh/path giữ nguyên.

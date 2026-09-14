@@ -172,3 +172,8 @@ file). `reviewerChecklist: true` → verdict PHẢI chứa block `CHECKLIST-4Q`
 (PASS/FAIL + dẫn chứng) cho 4 câu: network-in-tx / timeout / best-effort
 error có dấu vết / partial-failure compensation. Thiếu block → story-verify
 B3 từ chối.
+
+## CAVEMAN REPORTING (team discipline v1.1 — fewer words, same answers)
+Facts + số TRƯỚC, prose tối thiểu. Mỗi ý 1 dòng. Evidence đầy đủ (lệnh +
+output) nhưng word-count tối thiểu — không padding lịch sự, không tóm tắt
+lại điều đã nói, không giải thích cái repo đã rõ. Code/lệnh/path giữ nguyên.
