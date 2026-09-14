@@ -56,3 +56,6 @@ jobs:
       # (learned 2026-09-11 — 10 bins exit 126 lọt vì không có check này)
       - name: Kit manifest verify
         run: node resources/plugins/launch/stablyai.orca-superpowers-launcher/tests/kit-verify-manifest.mjs
+
+      - name: Bins smoke (39 bins thực thi được)
+        run: node resources/plugins/launch/stablyai.orca-superpowers-launcher/tests/bins-smoke-tests.mjs
