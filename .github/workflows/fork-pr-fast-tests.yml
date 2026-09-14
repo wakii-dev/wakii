@@ -12,6 +12,8 @@ on:
     paths:
       - "src/main/plugins/**"
       - "src/main/runtime/orchestration/**"
+      - "src/main/runtime/rpc/**"
+      - "src/shared/rpc-contract/**"
       - "src/shared/plugins/**"
       - "resources/plugins/**"
       - "pnpm-lock.yaml"
