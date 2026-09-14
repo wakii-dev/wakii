@@ -1,0 +1,17 @@
+PASS: T1 dead-process + stale-log 43' + idle + commits stale → STALLED (terminal idle)
+PASS: T2 fresh-log 30s (đang ghi thật) → RUNNING-EXT → RUNNING-EXT (log đang ghi)
+PASS: T3 process sống (pgrep) thắng mọi tín hiệu khác → RUNNING-EXT (process claude sống)
+PASS: T4 crashed-shell beats fresh commits → STALLED-SHELL (bare shell)
+PASS: T5 idle-alive (commits fresh) → RUNNING → RUNNING (trong stall-window)
+warning: remote HEAD refers to nonexistent ref, unable to checkout
+PASS: D1: remote dest tiến → ⚠ cảnh báo (out=⚠ dest đã tiến trên remote (origin/dest) — soi/pull trước khi resume)
+PASS: D1: fetch được gọi (1)
+PASS: D2: dest ngang remote → không cảnh báo (out='')
+PASS: D3: enabled=0 → không cảnh báo (out='')
+PASS: D3: enabled=0 → không fetch (0)
+PASS: D4: fetch fail → stdout rỗng (out='')
+PASS: D4: stderr ⚠ fetched-stale
+warning: remote HEAD refers to nonexistent ref, unable to checkout
+PASS: D5: diverged dest → vẫn cảnh báo (out=⚠ dest đã tiến trên remote (origin/dest) — soi/pull trước khi resume)
+----
+13 pass, 0 fail

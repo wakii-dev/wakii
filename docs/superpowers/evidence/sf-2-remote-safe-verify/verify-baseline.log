@@ -1,0 +1,6 @@
+═══ COMPLETE-RUN VERIFY ═══ (B1 code+tests · B2 plan · B2b surface-lint · B3 review · B4 merge · B5 Done)
+  ○ sf-2-remote-safe-verify INCOMPLETE     [B1:FAIL B2:PASS B2b:PASS B3:PASS B4:PASS B5:PENDING]
+      code:11180c tests:9906f plan:0 open review:FI-460 dest:story/fi458-distributed-bracket ⚠ evidence thiếu/cũ: docs/superpowers/evidence/sf-2-remote-safe-verify/test-run.txt (phải chứa HEAD 6ef18b9c82 hoặc code commit trước đó) — chạy test + ghi output
+
+Chưa hoàn thành — xem bước FAIL đầu tiên mỗi SF (thứ tự bước là thứ tự sửa).
+exit=1
