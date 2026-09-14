@@ -476,6 +476,7 @@ import {
   SubscribeParams,
   UnsubscribeParams
 } from './structured-agent-session-params'
+import { SuperpowersGateResolveParams, SuperpowersStoryDetailParams } from './superpowers-params'
 import { TerminalAdoptOrphans } from './terminal-orphan-params'
 import { TerminalQuickCommandsUpdate } from './terminal-quick-command-params'
 import {
@@ -1093,6 +1094,9 @@ export const RPC_PARAMS_BY_METHOD = {
   'ssh.listTargets': null,
   'stats.summary': null,
   'status.get': null,
+  'superpowers.gateResolve': SuperpowersGateResolveParams,
+  'superpowers.storyDetail': SuperpowersStoryDetailParams,
+  'superpowers.storyList': null,
   'terminal.adoptOrphans': TerminalAdoptOrphans,
   'terminal.agentStatus': TerminalHandle,
   'terminal.clearBuffer': TerminalHandle,
