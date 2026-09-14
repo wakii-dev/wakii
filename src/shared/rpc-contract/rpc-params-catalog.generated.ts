@@ -3,6 +3,10 @@
 import type { z } from 'zod'
 import { AgentSkillShareRequestSchema } from '../agent-skill-sharing-contract'
 import {
+  AiVaultSearchRequestSchema,
+  AiVaultSearchStatusRequestSchema
+} from '../ai-vault-search-contract'
+import {
   BrowserClientFileChannelAbortParams,
   BrowserClientFileChannelReadParams,
   BrowserClientFileChannelWriteParams
@@ -165,6 +169,7 @@ import {
   FileListAll,
   FileOpenDiff,
   FilePathSearch,
+  FilePathsExist,
   FileReadChunk,
   FileSearch,
   FileTreePath,
@@ -577,6 +582,8 @@ export const RPC_PARAMS_BY_METHOD = {
   'aiVault.listSessions': AiVaultListSessionsParams,
   'aiVault.prepareSessionResume': AiVaultPrepareSessionResumeParams,
   'aiVault.resolveSessionTitles': AiVaultSessionTitlesParams,
+  'aiVault.searchSessions': AiVaultSearchRequestSchema,
+  'aiVault.searchStatus': AiVaultSearchStatusRequestSchema,
   'artifacts.delete': ArtifactsDeleteParams,
   'artifacts.getPublishedLink': SourceRequest,
   'artifacts.list': ListOptions,
@@ -731,6 +738,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'files.listMarkdownDocuments': WorktreeSelector,
   'files.open': FileOpen,
   'files.openDiff': FileOpenDiff,
+  'files.pathsExist': FilePathsExist,
   'files.read': FileOpen,
   'files.readChunk': FileReadChunk,
   'files.readDir': FileTreePath,

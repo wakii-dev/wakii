@@ -90,6 +90,7 @@ export function useMobileNativeChatController(args: {
       transcriptPath: activeChatResolution?.transcriptPath ?? null,
       sessionId: activeChatSessionId,
       sourceIdentity,
+      callerIdentity: deviceTokenRef.current ?? '',
       enabled: showNativeChat,
       connState,
       onSendError

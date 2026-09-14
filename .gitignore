@@ -121,6 +121,7 @@ docs/superpowers/reviews/
 !docs/reference/
 !docs/reference/agent-pty-transcript-capture.md
 !docs/reference/agent-session-search-query-tuning.md
+!docs/reference/agent-session-search-contract.md
 !docs/reference/agent-status-store.md
 !docs/reference/antigravity-readiness-evidence.md
 !docs/reference/git-compatibility.md
@@ -129,6 +130,7 @@ docs/superpowers/reviews/
 !docs/reference/linux-glibc-compatibility.md
 !docs/reference/macos-press-and-hold.md
 !docs/reference/orcad-operations.md
+!docs/reference/pnpm-install-policy.md
 !docs/reference/relay-grace-time-reconfiguration.md
 !docs/reference/windows-cmd-shim-resolution.md
 !docs/reference/windows-daemon-host-relocation.md

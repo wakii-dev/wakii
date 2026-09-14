@@ -7,6 +7,7 @@ type StructuredNativeChatAttachment = {
   id?: string
   path: string
   previewUri: string
+  contentFingerprint?: string
 }
 
 export function useMobileStructuredNativeChatSendBridge(args: {
