@@ -9,6 +9,7 @@
 # Usage:
 #   story-watchdog                      1 pass — diagnose + notify stall mới
 #   story-watchdog --auto-resume        1 pass + GỬI resume prompt cho SF stalled
+#   story-watchdog --enforce-done       Done mà verify ≠ COMPLETE → tự hạ In Progress
 #   story-watchdog --with-index         1 pass + memory index hook (fail-safe — lỗi index không đổi exit code)
 #   story-watchdog --loop 30            tự lặp mỗi 30 phút (nohup pattern)
 #   story-watchdog --install-cron       đăng ký crontab entry (mỗi 30', idempotent)
@@ -31,6 +32,8 @@ IDX_HOOK="$DIR/story-memory-index-hook"
 # chạy sau khi story-validate OK; bracket hỏng thì SKIP, không đoán)
 VALIDATE="$DIR/story-validate"
 [ -x "$VALIDATE" ] || VALIDATE="$HOME/.claude/bin/story-validate"
+VERIFY="$DIR/story-verify"
+[ -x "$VERIFY" ] || VERIFY="$HOME/.claude/bin/story-verify"
 
 # cron PATH tối giản — resolve production binary + runtime dev-trước-prod-sau
 ORCA_BIN="${ORCA_BIN:-/opt/homebrew/bin/orca}"
@@ -47,6 +50,7 @@ orca() {
 STATE_FILE="${STATE_FILE:-$HOME/.claude/.story-watchdog-state}"
 STALL_HOURS=2
 AUTO_RESUME=0
+ENFORCE_DONE=${ENFORCE_DONE:-0}
 WITH_INDEX=0
 LOOP_MIN=0
 LAUNCH_NEXT=0
@@ -398,7 +402,49 @@ except: pass" 2>/dev/null)
   return 0
 }
 
+# ── enforce-done (FI-458 team discipline): Linear Done mà story-verify verdict
+# ≠ COMPLETE → tự hạ về In Progress + notify (chống Done-early TẠI NGUỒN).
+enforce_done_pass() {
+  local wts=() ws wt sf linear sfnum st vj vv demoted=0
+  for ws in "$HOME"/orca/workspaces/*/; do
+    for wt in "$ws"sf-*/; do
+      [ -d "$wt" ] && git -C "$wt" rev-parse --git-dir >/dev/null 2>&1 && wts+=("${wt%/}")
+    done
+  done
+  local linear_id
+  for wt in "${wts[@]}"; do
+    sf=$(basename "$wt")
+    linear_id=""
+    sfnum=$(echo "$sf" | grep -oE '[0-9]+' | head -1)
+    for bf in "$wt"/docs/superpowers/brackets/*.md; do
+      [ -f "$bf" ] || continue
+      grep -q "^## SF-$sfnum[ :]" "$bf" 2>/dev/null || continue
+      linear_id=$(awk -v sfx="SF-$sfnum" '$0 ~ "^## " sfx "([ :]|$)" { in_sf=1; next } /^## SF-/ { in_sf=0 } in_sf && /^linear:/ { gsub(/.*linear: /,""); print; exit }' "$bf" 2>/dev/null)
+      [ -n "$linear_id" ] && break
+    done
+    [ -n "$linear_id" ] || continue
+    st=$(linear_state "$linear_id")
+    [ "$st" = "Done" ] || continue
+    vj=$("$VERIFY" "$sf" --json 2>/dev/null)
+    vv=$(printf '%s' "$vj" | python3 -c "
+import json, sys
+try:
+    rows = json.load(sys.stdin)
+    print(next((r.get('verdict','?') for r in rows if r.get('sf') == '$sf'), '?'))
+except Exception: print('UNKNOWN')")
+    if [ "$vv" != "COMPLETE" ]; then
+      "$ORCA_BIN" linear status set "$linear_id" --to "In Progress" --json >/dev/null 2>&1 || true
+      notify "watchdog --enforce-done" "$sf Done bị hạ về In Progress — story-verify verdict: $vv (Done trước merge = INCOMPLETE)"
+      echo "$(date '+%H:%M') enforce-done: $sf Done → In Progress (verdict=$vv)"
+      demoted=$((demoted+1))
+    fi
+  done
+  [ "$demoted" -gt 0 ] && echo "$(date '+%H:%M') enforce-done: hạ $demoted Done về In Progress"
+  return 0
+}
+
 one_pass() {
+  [ "$ENFORCE_DONE" = 1 ] && enforce_done_pass
   local stalled=0
   while IFS='|' read -r sf verdict detail; do
     [ -n "$sf" ] || continue
@@ -445,7 +491,7 @@ one_pass() {
 }
 
 cron_next_entry() { # entry cron chuẩn — pure echo (test độc lập được, không đụng crontab)
-  echo "*/30 * * * * $HOME/.claude/bin/story-watchdog --auto-resume --with-index >> $HOME/.claude/story-watchdog.log 2>&1 # story-team-kit"
+  echo "*/30 * * * * $HOME/.claude/bin/story-watchdog --auto-resume --with-index --enforce-done >> $HOME/.claude/story-watchdog.log 2>&1 # story-team-kit"
 }
 
 install_cron() {
@@ -478,6 +524,7 @@ install_cron() {
 while [ $# -gt 0 ]; do
   case "$1" in
     --auto-resume) AUTO_RESUME=1 ;;
+    --enforce-done) ENFORCE_DONE=1 ;;
     --with-index) WITH_INDEX=1 ;;
     --launch-next) LAUNCH_NEXT=1 ;;
     --dry-run) DRY_RUN=1 ;;
