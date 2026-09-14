@@ -164,3 +164,11 @@ permission**, KHÔNG retry mù, KHÔNG dùng Bash ghi/sửa file vượt (vi ph�
 
 Bash giữ cho phân tích read-only. Write bị deny → trả report + verdict trong
 message trả về (không ghi file OUTBOX).
+
+## CHECKLIST-4Q — gate điều kiện (verify.reviewerChecklist)
+
+Như code-reviewer: đọc `~/.claude/story-kit.json` (mặc định BẬT khi không có
+file). `reviewerChecklist: true` → verdict PHẢI chứa block `CHECKLIST-4Q`
+(PASS/FAIL + dẫn chứng) cho 4 câu: network-in-tx / timeout / best-effort
+error có dấu vết / partial-failure compensation. Thiếu block → story-verify
+B3 từ chối.

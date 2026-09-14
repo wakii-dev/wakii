@@ -41,8 +41,8 @@ async function checkAsync(name, fn) {
 
 // ── newline-delimited JSON-RPC client ─────────────────────────────────────────
 class McpClient {
-  constructor(cwd) {
-    this.child = spawn(process.execPath, [SERVER], { cwd, stdio: ['pipe', 'pipe', 'pipe'] });
+  constructor(cwd, env) {
+    this.child = spawn(process.execPath, [SERVER], { cwd, stdio: ['pipe', 'pipe', 'pipe'], env });
     this.buffer = '';
     this.queue = [];
     this.waiters = [];
@@ -96,7 +96,13 @@ fs.mkdirSync(bracketDir, { recursive: true });
 fs.writeFileSync(path.join(bracketDir, '5-mcp-server.md'), '# Bracket 5\n\nSF-1 expose MCP tools\nDestination: issues/5-mcp-server\n');
 fs.writeFileSync(path.join(bracketDir, '6-skills.md'), '# Bracket 6\nlinear: WAK-6\n');
 
-const client = new McpClient(fixture); // cwd = fixture repo → bracket quét mặc định trúng fixture
+// stub orca hermetic (learned 2026-09-12): test KHÔNG được phụ thuộc orca
+// daemon thật — story_task_list qua ORCA_BIN seam của server, JSON deterministic
+const stubOrca = path.join(fixture, 'orca-stub.sh');
+fs.writeFileSync(stubOrca, '#!/bin/sh\nprintf \'{"result": {"items": [], "gates": []}}\'\n', 'utf8');
+fs.chmodSync(stubOrca, 0o755);
+const SERVER_ENV = { ...process.env, ORCA_BIN: stubOrca };
+const client = new McpClient(fixture, SERVER_ENV); // cwd = fixture repo → bracket quét mặc định trúng fixture
 try {
   // 1) initialize handshake
   const initRes = await client.request('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'mcp-server-tests', version: '0.0.0' } }, 1);

@@ -7,6 +7,7 @@
 set -u
 DIR="$(cd "$(dirname "$0")" && pwd)"
 BIN="${STORY_CHECKPOINT_BIN:-}"
+if [ -n "$BIN" ] && [ ! -f "$BIN" ]; then exit 0; fi  # env chỉ định mà thiếu → tắt chủ ý (F3a), không fallback
 [ -n "$BIN" ] || BIN="$DIR/story-checkpoint"
 [ -f "$BIN" ] || BIN="$HOME/.claude/bin/story-checkpoint"
 [ -f "$BIN" ] || exit 0

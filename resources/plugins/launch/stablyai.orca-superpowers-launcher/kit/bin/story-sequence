@@ -1,0 +1,171 @@
+#!/bin/bash
+# story-sequence — vẽ Mermaid sequenceDiagram QUÁ TRÌNH chạy thật của story
+# (FI-380: "kit cần vẽ được sequence diagram cho story").
+# Nguồn data local/CLI: git log SF + Linear verdicts (orca CLI) + evidence +
+# merge state. Render Mermaid sequenceDiagram (stdout hoặc --out file.md).
+#
+# Usage: story-sequence [sf-name] [--wt <dir>] [--out <file.md>] [--days <n>]
+# Exit: 0 có diagram · 1 lỗi
+set -u
+
+ORCA_BIN="${ORCA_BIN:-}"
+[ -x "$ORCA_BIN" ] || ORCA_BIN="$(command -v orca 2>/dev/null)"
+[ -x "$ORCA_BIN" ] || ORCA_BIN="/opt/homebrew/bin/orca"
+[ -x "$ORCA_BIN" ] || ORCA_BIN="/usr/local/bin/orca"
+[ -x "$ORCA_BIN" ] || ORCA_BIN="/Applications/Wakii.app/Contents/Resources/bin/orca"
+
+SF_ARG=""; WT_ARG=""; OUT=""; DAYS=30
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --wt) WT_ARG="${2:-}"; shift 2 ;;
+    --out) OUT="${2:-}"; shift 2 ;;
+    --days) DAYS="${2:-30}"; shift 2 ;;
+    -*) echo "Unknown: $1"; exit 2 ;;
+    *) SF_ARG="$1" ;;
+  esac
+  shift
+done
+
+WTS=()
+if [ -n "$WT_ARG" ]; then
+  if [ -d "$WT_ARG" ] && git -C "$WT_ARG" rev-parse --git-dir >/dev/null 2>&1; then
+    WTS=("$WT_ARG")
+  else
+    echo "FAIL: --wt '$WT_ARG' không phải git repo"; exit 1
+  fi
+else
+  for ws in "$HOME"/orca/workspaces/*/; do
+    for wt in "$ws"sf-*/; do
+      [ -d "$wt" ] && git -C "$wt" rev-parse --git-dir >/dev/null 2>&1 && WTS+=("${wt%/}")
+    done
+  done
+  if [ -n "$SF_ARG" ]; then
+    FILTERED=()
+    for wt in "${WTS[@]-}"; do case "$(basename "$wt")" in *"$SF_ARG"*) FILTERED+=("$wt");; esac; done
+    WTS=("${FILTERED[@]-}")
+  fi
+fi
+[ ${#WTS[@]-0} -eq 0 ] && { echo "Không có sf-* worktree nào khớp."; exit 0; }
+
+WT_LIST=$(printf '%s\n' "${WTS[@]}")
+WT_LIST="$WT_LIST" SF_ARG="$SF_ARG" ORCA_BIN="$ORCA_BIN" DAYS="$DAYS" OUT="$OUT" python3 <<'PYEOF'
+import json, os, subprocess, sys, re
+from datetime import datetime, timedelta
+
+wt_list = [w for w in os.environ.get('WT_LIST', '').split('\n') if w]
+sf_arg = os.environ.get('SF_ARG', '')
+orca = os.environ.get('ORCA_BIN', 'orca')
+days = int(os.environ.get('DAYS', '30'))
+out_path = os.environ.get('OUT', '')
+since = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
+
+def git(wt, *args):
+    return subprocess.run(['git', '-C', wt, *args], capture_output=True, text=True, timeout=30).stdout
+
+def bracket_meta(wt, sf):
+    linear, dest = '', ''
+    d = os.path.join(wt, 'docs', 'superpowers', 'brackets')
+    try:
+        for bf in sorted(os.listdir(d)):
+            p = os.path.join(d, bf)
+            if not os.path.isfile(p):
+                continue
+            text = open(p, encoding='utf-8', errors='replace').read()
+            m = re.search(r'^Destination:\s*(.+)$', text, re.M)
+            if m and not dest:
+                dest = m.group(1).strip()
+            sfnum = sf[:2].upper()  # sf-11 → SF-1? cần SF-11: dùng regex
+            m2 = re.match(r'sf-(\d+)', sf)
+            if m2:
+                sfx = f'SF-{m2.group(1)}'
+                in_sf = False
+                for ln in text.splitlines():
+                    if re.match(rf'^## {sfx}([ :]|$)', ln):
+                        in_sf = True
+                        continue
+                    if re.match(r'^## SF-', ln):
+                        in_sf = False
+                    if in_sf and 'linear:' in ln:
+                        linear = ln.split('linear:', 1)[1].strip()
+                        break
+            if linear and dest:
+                break
+    except OSError:
+        pass
+    return linear, dest
+
+def linear_events(issue_id):
+    evs = []
+    if not issue_id:
+        return evs
+    try:
+        raw = subprocess.run([orca, 'linear', 'issue', issue_id, '--comments', '--json'],
+                             capture_output=True, text=True, timeout=20).stdout
+        r = json.loads(raw)['result']
+        cs = r.get('comments')
+        nodes = cs.get('nodes', []) if isinstance(cs, dict) else (cs or [])
+        for c in nodes:
+            body = (c.get('body') or '') if isinstance(c, dict) else str(c)
+            at = str((c.get('createdAt') or ''))[:16].replace('T', ' ')
+            m = re.search(r'VERDICT[^\n]{0,40}(APPROVED|CHANGES[ _]?REQUESTED|REJECT)', body, re.I)
+            if m:
+                icon = '✅' if 'APPROV' in m.group(1).upper() else '❌'
+                evs.append((at, f'{icon} {m.group(1).upper().replace("_", " ")}'))
+    except Exception:
+        pass
+    return evs
+
+def esc(t):
+    return str(t).replace(';', ',').replace('#', '').replace('"', "'")
+
+lines = ['sequenceDiagram']
+emitted = 0
+for wt in wt_list:
+    sf = os.path.basename(wt)
+    linear, dest = bracket_meta(wt, sf)
+    ex = 'EX'
+    lines.append(f'    participant {ex} as {esc(sf)}')
+    lines.append('    participant LN as Linear')
+    if dest:
+        lines.append(f'    participant DS as {esc(dest[:40])}')
+    raw = git(wt, 'log', f'--since={since}', '--date=iso-strict', '--pretty=%ad|%h|%s')
+    commits = []
+    for ln in raw.splitlines():
+        parts = ln.split('|', 2)
+        if len(parts) == 3:
+            commits.append({'at': parts[0][:16].replace('T', ' '), 'msg': parts[2][:60]})
+    if commits:
+        first_at, last_at = commits[-1]['at'][:10], commits[0]['at'][:10]
+        lines.append(f'    Note over {ex}: launch ~{first_at} · {len(commits)} commits ({first_at} → {last_at})')
+        for c in reversed(commits[-5:]):
+            lines.append(f'    {ex}->>{ex}: {esc(c["at"][5:])} {esc(c["msg"])}')
+    else:
+        lines.append(f'    Note over {ex}: không có commit trong {days} ngày')
+    for lv_at, lv in linear_events(linear):
+        lines.append(f'    LN-->{ex}: {esc(lv_at)} {esc(lv)}')
+    ev_dir = os.path.join(wt, 'docs', 'superpowers', 'evidence', sf)
+    try:
+        for f in sorted(os.listdir(ev_dir)):
+            lines.append(f'    {ex}->>{ex}: evidence {esc(f)}')
+    except OSError:
+        pass
+    merged = '✅ MERGED vào dest' if (dest and 'Merge' not in '') else ''
+    if dest:
+        r = subprocess.run(['git', '-C', wt, 'merge-base', '--is-ancestor', 'HEAD', dest],
+                           capture_output=True)
+        merged = '✅ MERGED vào dest' if r.returncode == 0 else '⏳ chưa merge vào dest'
+    if merged:
+        lines.append(f'    Note over {ex},DS: {merged}')
+    lines.append('')
+    emitted += 1
+
+diagram = '\n'.join(lines).rstrip()
+if out_path:
+    os.makedirs(os.path.dirname(out_path) or '.', exist_ok=True)
+    with open(out_path, 'w', encoding='utf-8') as f:
+        f.write(f'# Story sequence\n\n```mermaid\n{diagram}\n```\n')
+    print(f'ghi: {out_path}')
+print(diagram)
+if emitted == 0:
+    sys.exit(1)
+PYEOF
