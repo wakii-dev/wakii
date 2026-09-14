@@ -1,0 +1,97 @@
+── R1: claim_read — không claim, không label → rỗng, rc 0 ──
+PASS: R1 không claim → stdout rỗng rc 0
+── R2: claim_read — comment claim + labels → 7 cột TAB đúng ──
+PASS: R2 parse: mid/ts(server)/cid/hasLabel/labelIds/labelNames/partial
+── R2b: claim_read — comment claim KHÔNG label → hasLabel=0 nhưng vẫn claim ──
+PASS: R2b comment-without-label: claim hợp lệ (comment = nguồn)
+── R3: claim_write — state trống → commentCreate + label create/attach + verify ──
+PASS: R3 write: 1 comment + label tạo + attach, stdout cid
+── R3b: claim_write — re-read winner là chính mình (không partial) ──
+PASS: R3b re-read sau write: winner = mình + label gắn
+── R4: claim_renew — commentUpdate giữ 1 comment, updatedAt server mới ──
+PASS: R4 renew: updatedAt server đổi, không tạo comment mới
+── R4b: renew body mới vẫn khớp prefix + mid ──
+PASS: R4b renew body: prefix + mid giữ nguyên
+── R5: LWW — 2 write (mock delay) → re-read đúng 1 winner, không mất mát ──
+PASS: R5 LWW: 2 comments tồn tại, claim parse ra đúng 1 winner (ghi sau)
+── R5b: LWW tie — 2 comment cùng ts → node sau trong list thắng ──
+PASS: R5b tie-ts: deterministic winner = node sau
+── R6: body iso TƯƠNG LAI (máy cũ clock sai) nhưng server ts stale → takeover ──
+PASS: R6 server-ts stale quyết (body 2099 không cứu) → takeover path
+── R6b: body iso 1999 nhưng server ts TƯƠI → SKIP theo server ──
+PASS: R6b server-ts tươi (body 1999) → SKIP exit 0, không stale nhầm
+── R7: (a) không claim → write claim rồi launch ──
+PASS: R7 case a: claim write + LAUNCHED
+── R8: (b) claim máy mình → renew, KHÔNG tạo comment mới ──
+PASS: R8 case b: renew (commentUpdate) + launch
+── R9: (c) claim máy khác tươi (< 2×TTL) → SKIP exit 0, không đụng ──
+PASS: R9 case c: SKIP claimed by <other>, 0 mutation
+── R10: (d) stale + remote HỎNG → takeover fail → fail-closed exit 1 ──
+PASS: R10 case d: stale + remote hỏng → takeover fail → exit 1 fail-closed
+── R10b: (d) stale + SF branch CHƯA tồn tại trên remote → takeover được ──
+PASS: R10b stale + branch chưa từng push → takeover + launch
+── R11: --list-claims — mọi SF section, schema khớp fixture ──
+PASS: R11 list-claims: schema PIN + null cho SF không claim, exit 0
+── R12: --list-claims endpoint chết → exit ≠ 0 ──
+PASS: R12 list-claims offline: exit non-zero
+── P1: label có comment KHÔNG → partial, claim mới ghi đè + log ──
+PASS: P1a read: mid rỗng + partial=1
+PASS: P1b launch: log partial-detected + ghi đè claim mới + LAUNCHED
+── P2: comment có label KHÔNG → hợp lệ, renew tự add lại label ──
+PASS: P2 comment-without-label: renew path tự add label (issueUpdate)
+── P5: partial + label createdAt TƯƠI (<2×TTL) → claim còn sống, SKIP ──
+PASS: P5 partial fresh label: SKIP + 0 mutation (không giành claim đang sống)
+── P5b: partial + label createdAt CŨ (≥2×TTL) → stale, ghi đè launch ──
+PASS: P5b partial stale: takeover/overwrite path + LAUNCHED
+── P3: 2 MÁY khác mid song song cùng issue → đúng 1 LAUNCHED, không crash ──
+PASS: P3 race: 1 winner LAUNCHED (rc 0) + 1 thua (rc 1) + loser log 'claim của <winner>'
+── P3b: sau race — re-read đúng 1 claim winner ──
+PASS: P3b re-read sau race: 1 dòng winner, không double-claim
+── P4: không treo + HTTP error fail — curl -f (status check) + timeout ──
+PASS: P4 curl -s -f -m 10 trong linear_graphql (HTTP error → rc≠0, không treo)
+── P4b: takeover git ops (ls-remote/fetch) có low-speed timeout env ──
+PASS: P4b claim_takeover: ls-remote + fetch đều có low-speed env (pattern dest_fetch_check)
+── K1: age 1.5×TTL (15m < 20m) → KHÔNG candidate, SKIP ──
+PASS: K1 age 1.5×TTL: SKIP, chưa chạm takeover
+── K2: age ≥ 2×TTL + commits-fresh trong TTL → KHÔNG takeover (AC3) ──
+PASS: K2 stale nhưng SF branch có commit mới → không takeover, skip
+── K3: age ≥ 2×TTL + KHÔNG commit mới → takeover + revoke (AC2) ──
+PASS: K3 takeover thành công + log TAKEOVER old → new
+── K3b: revoke comment chứa machine-id cũ + claim mới của mình ──
+PASS: K3b revoke comment + label swap ghost → me-lab
+── K4: remote SF branch mất (chưa từng push) → vẫn takeover được ──
+PASS: K4 branch chưa tồn tại trên remote: không ai làm → takeover OK
+── G1: guard lần 1 — branch chưa tồn tại → push tạo mới → LAUNCHED ──
+PASS: G1 guard: push tạo sf-1-claim-slice trên remote + LAUNCHED
+── G2: guard lần 2 — máy khác (clone 2), branch đã tồn tại → lost + skip ──
+PASS: G2 guard lost: branch tồn tại → exit 1, claim để tự stale (không revoke)
+── G3: disabled — 0 git push (golden zero-diff) ──
+PASS: G3 disabled golden: LAUNCHED, 0 distributed log, 0 git call
+── O1: endpoint refused + enabled → unreachable rc 7, 0 mutation, exit 1 ──
+PASS: O1 refused: 'Linear unreachable (rc 7) — fail-closed' + exit 1 + 0 mutation
+── O2: HTTP 500 + enabled → 'Linear HTTP error', exit 1 ──
+PASS: O2 HTTP error: 'Linear HTTP error — fail-closed' + exit 1 + 0 mutation
+── O3: thiếu LINEAR_API_KEY → lớp riêng, exit 1 ──
+PASS: O3 thiếu key: 'LINEAR_API_KEY thiếu — fail-closed' + exit 1 + 0 mutation
+── O4: disabled + refused → KHÔNG log distributed, exit 0 (golden fail-open) ──
+PASS: O4 disabled offline: exit 0 như pre-feature, 0 distributed log
+── H1: passthrough DISABLED → lời gọi launch KHÔNG có --claim (zero-diff) ──
+PASS: H1 disabled: launch stub được gọi, không --claim
+── H1b: passthrough ENABLED → lời gọi launch có --claim (mid từ config) ──
+PASS: H1b enabled: --claim passthrough (watchdog không truyền mid)
+── H2: phiên sống (RUNNING + commits trong TTL + claim mình) → renew 1 lần ──
+PASS: H2 liveness đầy đủ: đúng 1 mutation renew + log (rate budget ≤1/SF)
+── H3: phiên chết (STALLED) → 0 renew mutation ──
+PASS: H3 STALLED: không renew
+── H3b: chỉ có commit CŨ ngoài TTL → không renew dù terminal sống ──
+PASS: H3b chỉ có commit cũ: terminal sống vẫn không renew
+── H4: renew fail (mock 500) → log + tiếp, exit watchdog 0 (fail-open) ──
+PASS: H4 renew 500: fail-open, exit watchdog không đổi
+── H7: claim_read fail (mock 500 read) → log 1 dòng + 0 mutation (fail-open) ──
+PASS: H7 claim read fail: log + continue, exit watchdog không đổi
+── H5: claim của máy KHÁC (mình chỉ sống ở worktree) → không renew hộ ──
+PASS: H5 claim máy khác: không renew hộ
+── H6: --dry-run watchdog → heartbeat KHÔNG mutate Linear (P1-1) ──
+PASS: H6 dry-run: claim mình đang sống, vẫn 0 mutation renew
+
+Kết quả: 48 PASS · 0 FAIL

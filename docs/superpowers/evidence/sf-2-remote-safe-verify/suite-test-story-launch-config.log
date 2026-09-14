@@ -1,0 +1,58 @@
+── T1: config file THIẾU → defaults, không die ──
+PASS: T1 file thiếu: enabled=0 ttl=10 machineId=sanitized-hostname
+── T2: JSON HỎNG → defaults ──
+PASS: T2 JSON hỏng: defaults fail-open
+── T3: enabled + machineId + ttl override → load đúng ──
+PASS: T3 enabled/machineId/claimTtlMinutes override
+── T4: enabled=false → 0 nhưng các key khác vẫn đọc ──
+PASS: T4 enabled=false + key khác vẫn load
+── T4b: claimTtlMinutes HỎNG ('abc') → default RIÊNG ttl, enabled VẪN đọc được ──
+PASS: T4b ttl 'abc': per-key default, enabled không tắt theo
+── T4c: TTL < 1 → default 10 (clamp — TTL âm = takeover storm) ──
+PASS: T4c ttl -3 → clamp về 10
+── T4d: claimTtlMinutes '10m' (truthy non-int) → default ttl, enabled VẪN 1 ──
+PASS: T4d ttl '10m': per-key default, enabled không tắt theo
+── T5: --dry-run không flag → stdout IDENTICAL pre-feature ──
+PASS: T5 zero-diff stdout (không flag)
+── T5b: --host nhận, không đổi stdout, không hint khi không --claim ──
+PASS: T5b --host parse: zero-diff + im lặng ngoài claim mode
+── T6: --claim NHƯNG disabled → zero-diff ──
+PASS: T6 --claim disabled: zero-diff stdout
+── T7: --claim + enabled + --machine-id → flag thắng ──
+PASS: T7 --machine-id flag thắng config + launch info còn nguyên
+── T8: --claim + enabled không flag → machineId từ config ──
+PASS: T8 machineId mặc định từ config
+── T8b: --host trong claim mode → hint stderr (persist = panel SF-3) ──
+PASS: T8b --host hint chỉ trong claim mode
+── T9: linear_graphql — endpoint override + forward body + KHÔNG log key ──
+PASS: T9 linear_graphql mock: response + auth + body, không leak key
+── T10: thiếu key (env + file) → linear_graphql fail, không đụng mạng ──
+PASS: T10 thiếu key → non-zero + im lặng
+── T11: chạy lib TRỰC TIẾP → usage + exit 2 ──
+PASS: T11 direct-run guard
+── S1: MixedCase → lower ──
+PASS: S1 MixedCase → lowercase
+── S2: ký tự ngoài ASCII + dấu cách → dash, squeeze ──
+PASS: S2 'máy 1' → m-y-1
+── S3: rỗng sau sanitize → machine-<hash6> ──
+PASS: S3 rỗng → machine-hash6
+── S4: 64 ký tự hợp lệ → giữ nguyên (không crash GraphQL build) ──
+PASS: S4 64 ký tự ok
+── S5: config machineId lạ → sanitized qua config load ──
+PASS: S5 config 'Máy 2' → m-y-2
+── S6: --machine-id lạ → sanitized trước khi vào claim line ──
+PASS: S6 flag 'Máy 2' → m-y-2 trong claim line
+── S7: PATH KHÔNG python3 → tr fallback LC_ALL=C, không crash ──
+PASS: S7 python3 vắng: fallback tr/hash không crash + format hợp lệ
+── R1: enabled + --claim → fetch dest TRƯỚC launch ──
+PASS: R1 enabled: fetch dest chạy + launch
+── R2: disabled → KHÔNG git call nào (zero-diff) ──
+PASS: R2 disabled: 0 fetch, launch như cũ
+── R3: fetch FAIL (dest mất trên remote) → exit 1 fail-closed ──
+PASS: R3 fetch fail: fail-closed + không launch
+── R4: --claim --dry-run + enabled → fetch gate chạy (read-only) + verdict ──
+PASS: R4 dry-run claim: fetch check chạy + verdict OK, không launch
+── R5: --claim --dry-run + enabled + dest MẤT → verdict SẼ FAIL ──
+PASS: R5 dry-run claim dest mất: báo trước launch thật sẽ fail-closed
+
+Kết quả: 28 PASS · 0 FAIL

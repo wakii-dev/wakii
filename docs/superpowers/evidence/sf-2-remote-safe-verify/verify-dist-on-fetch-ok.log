@@ -1,0 +1,6 @@
+═══ COMPLETE-RUN VERIFY ═══ (B1 code+tests · B2 plan · B2b surface-lint · B3 review · B4 merge · B5 Done)
+  ✓ sf-2-remote-safe-verify COMPLETE       [B1:PASS B2:PASS B2b:PASS B3:PASS B4:PASS B5:PASS]
+      code:11181c tests:9906f plan:0 open review:FI-460 dest:story/fi458-distributed-bracket
+
+STORY-COMPLETE ✓ — mọi SF đủ 5 bước. User merge main được.
+exit=0
