@@ -183,6 +183,15 @@ verify_sf() { # $1 worktree → in "<sf>|<verdict>|<detail>|<b1>|<b2>|<b3>|<b4>|
   if   [ "$code_commits" -gt 0 ] && [ "$test_files" -gt 0 ]; then b1="PASS"
   elif [ "$code_commits" -gt 0 ]; then b1="WARN"; else b1="FAIL"; fi
   b1_note=""
+  N=$(echo "$sf" | grep -oE '[0-9]+' | head -1)
+  STORY_DIR=$(basename "$BRACKET" .md 2>/dev/null || true)
+  # context-pack budget (team discipline v1.1): pack > 8KB (~2k tokens) →
+  # WARN slice lại — pack phình đốt token mỗi lần agent đọc (caveman doctrine)
+  cp_size=0
+  for cand in "$wt"/docs/superpowers/contexts/*-sf-"$N".md "$wt"/docs/superpowers/contexts/sf-"$N".md; do
+    [ -f "$cand" ] && { cp_size=$(wc -c < "$cand"); break; }
+  done
+  if [ "${cp_size:-0}" -gt 8192 ]; then b2="WARN"; fi
   head_hash=$(git -C "$wt" rev-parse --short HEAD 2>/dev/null)
 
   # B1+ evidence gate (verify.evidenceGate) — test phải PASS CÓ BẰNG CHỨNG:

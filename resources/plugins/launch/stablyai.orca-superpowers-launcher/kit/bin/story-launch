@@ -176,8 +176,11 @@ SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/ /g' \
   | tr ' ' '\n' | awk 'length($0)>=3' | head -3 | paste -sd- - | cut -c1-30)
 [ -n "$SLUG" ] || SLUG="sf-$N-convergence"
 STORY_DIR=$(basename "$BRACKET" .md)
+BRACKET_PREFIX=$(basename "$BRACKET" .md | cut -d- -f1 | tr 'A-Z' 'a-z')
 PACK="docs/superpowers/contexts/sf-$N.md"
-[ -f "$(dirname "$(dirname "$(dirname "$BRACKET")")")/contexts/$STORY_DIR/sf-$N.md" ] && PACK="docs/superpowers/contexts/$STORY_DIR/sf-$N.md"
+for cand in "docs/superpowers/contexts/${BRACKET_PREFIX}-sf-$N.md" "docs/superpowers/contexts/$STORY_DIR/sf-$N.md"; do
+  [ -f "$cand" ] && { PACK="$cand"; break; }
+done
 PROMPT="Use orca-superpowers-workflow skill for ONE sub-feature: $TITLE ($LINEAR). Story: $EPIC — READ FIRST: context pack $PACK (spec slice + touch map + ACCEPTANCE + boundary) + bracket docs/superpowers/brackets/$BFILE. Epic đã trả lời mọi câu — KHÔNG re-ask; câu hỏi mới → REQUIREMENT-GAP comment lên epic. Run full Phase 0-5 cho SF này. Linear issue: $LINEAR (set In Progress at start). Worktree base: $DEST. GIỚI HẠN CỨNG: merge/ff CHỈ trong $DEST — TUYỆT ĐỐI KHÔNG đụng main (main là gate của USER).
 
 CHECKLIST — chạy TUẦN TỰ, mỗi mục xong phải CÓ BẰNG CHỨNG (lệnh + output), cấm tick trước bằng chứng:

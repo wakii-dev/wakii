@@ -149,3 +149,8 @@ code, config-only). Ghi dòng `tdd: RED→GREEN` (hoặc skipped + lý do) vào
 `docs/superpowers/evidence/<sf>/test-run.txt` — story-verify B1 FAIL nếu
 thiếu khi gate bật. Test-after viết cho code có sẵn chỉ được phép khi nó
 BẮT ĐẦU bằng assert thất bại trên hành vi đúng (không tautology).
+
+## CAVEMAN REPORTING (team discipline v1.1 — fewer words, same answers)
+Facts + số TRƯỚC, prose tối thiểu. Mỗi ý 1 dòng. Evidence đầy đủ (lệnh +
+output) nhưng word-count tối thiểu — không padding lịch sự, không tóm tắt
+lại điều đã nói, không giải thích cái repo đã rõ. Code/lệnh/path giữ nguyên.
