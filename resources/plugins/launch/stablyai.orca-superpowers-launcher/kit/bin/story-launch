@@ -178,8 +178,25 @@ SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/ /g' \
 STORY_DIR=$(basename "$BRACKET" .md)
 PACK="docs/superpowers/contexts/sf-$N.md"
 [ -f "$(dirname "$(dirname "$(dirname "$BRACKET")")")/contexts/$STORY_DIR/sf-$N.md" ] && PACK="docs/superpowers/contexts/$STORY_DIR/sf-$N.md"
-PROMPT="Use orca-superpowers-workflow skill for ONE sub-feature: $TITLE ($LINEAR). Story: $EPIC — READ FIRST: context pack $PACK (spec slice + touch map + ACCEPTANCE user-visible + boundary; frame Figma nào trỏ capture docs/superpowers/figma/<story>/<frame-id>.md) + bracket docs/superpowers/brackets/$BFILE. Epic đã trả lời mọi câu — KHÔNG re-ask; câu hỏi mới → REQUIREMENT-GAP comment lên epic. Run full Phase 0-5 cho SF này. Linear issue: $LINEAR (set In Progress at start). Worktree base: $DEST. GIỚI HẠN CỨNG: merge/ff CHỈ trong $DEST — TUYỆT ĐỐI KHÔNG đụng main (main là gate của USER; sf-2 FI-187 từng ff main 28/8 — vi phạm). COMPLETE run checklist theo thứ tự — KHÔNG dừng trước bước 5: (1) code+tests (2) tick plan file (2b) ROLLING REVIEW: mỗi 4-5 tasks dispatch code-reviewer ĐỘC LẬP trên diff nhóm đó — KHÔNG dồn 1 review lớn cuối SF (bài học FI-187: review dồn = agent đứng chờ 30+ phút) (2c-pre) ★ Chạy ~/.claude/bin/story-test http://localhost:<port> --login <user>:<pass> --flow <screens> → PHẢI exit 0 (PASS). Nếu FAIL → FIX trước khi tiếp. Sau khi PASS → touch .browser-test-passed trong worktree (marker cho story-verify B0).
-(2c) ★ RULE 0 — BROWSER VERIFY: MỞ APP trong browser (orca tab create --url http://localhost:<port> hoặc curl nếu chỉ API) → TỰ ĐI TRỌN FLOW (login/navigate/thao tác) → CHỤP SCREENSHOT → Nếu UI sai/không navigate/flow đứt → FIX TRƯỚC KHI TIẾP. KHÔNG ĐƯỢC nói "xong" khi chưa tự thấy nó hoạt động. (3) reviewer VERDICT APPROVED — post VERDICT comment lên $LINEAR (KHÔNG để kẹt outbox) (4) MERGE vào $DEST (merge-ngược + ancestor-guard) + audit comment merge-hash (4b) chạy ~/.claude/bin/story-verify sf-$N-$SLUG — sạch mới tiếp (5) RỒI MỚI $LINEAR Done. Cleanup: chỉ xoá worktree + NHÁNH SF mình — TUYỆT ĐỐI KHÔNG xoá $DEST (nhánh đích giữ làm audit; sf-2 FI-187 từng xoá nhánh đích 28/8 → cron launch-next chết 3 tick, phải recreate). Done TRƯỚC merge = INCOMPLETE. Linear: orca keychain có thể hỏng — fail Could not decrypt thì đọc key ~/.claude/.linear-key gọi GraphQL (Authorization: <key> header, POST https://api.linear.app/graphql). Shell: probes cmd > log; echo \$? — KHÔNG pipe head/tail. Blocked 2 lần cùng nguyên nhân → báo cụ thể. SSL/cert → đợi 30s retry tối đa 3 lần."
+PROMPT="Use orca-superpowers-workflow skill for ONE sub-feature: $TITLE ($LINEAR). Story: $EPIC — READ FIRST: context pack $PACK (spec slice + touch map + ACCEPTANCE + boundary) + bracket docs/superpowers/brackets/$BFILE. Epic đã trả lời mọi câu — KHÔNG re-ask; câu hỏi mới → REQUIREMENT-GAP comment lên epic. Run full Phase 0-5 cho SF này. Linear issue: $LINEAR (set In Progress at start). Worktree base: $DEST. GIỚI HẠN CỨNG: merge/ff CHỈ trong $DEST — TUYỆT ĐỐI KHÔNG đụng main (main là gate của USER).
+
+CHECKLIST — chạy TUẦN TỰ, mỗi mục xong phải CÓ BẰNG CHỨNG (lệnh + output), cấm tick trước bằng chứng:
+CHECK 1 CODE+TESTS — TDD RED→GREEN khi khả thi (test thất bại trước → code tối thiểu); commit atomic; tick plan file sau mỗi task.
+CHECK 2 PLAN TICKED — mọi '- [ ]' trong plan → '- [x]' (meta-steps dùng numbered list, không dùng '- [ ]').
+CHECK 3 ROLLING REVIEW — mỗi 4-5 tasks dispatch code-reviewer ĐỘC LẬP trên diff nhóm đó (KHÔNG dồn 1 review lớn cuối SF — FI-187: đứng chờ 30+ phút). Verdict post lên $LINEAR, KHÔNG để kẹt outbox.
+CHECK 4 BROWSER VERIFY (Rule 0) — mở app (orca tab create --url http://localhost:<port> hoặc curl nếu chỉ API) → TỰ ĐI TRỌN FLOW (login/navigate/thao tác) + CHỤP SCREENSHOT; UI sai/flow đứt → FIX TRƯỚC KHI TIẾP. KHÔNG ĐƯỢC nói xong khi chưa thấy nó chạy.
+CHECK 5 MERGE vào $DEST (merge-ngược + ancestor-guard) + audit comment merge-hash + chạy ~/.claude/bin/story-verify sf-$N-$SLUG — sạch mới tiếp.
+CHECK 6 DONE — CHỈ sau CHECK 5. Cleanup: chỉ xoá worktree + NHÁNH SF mình — TUYỆT ĐỐI KHÔNG xoá $DEST (nhánh đích giữ làm audit).
+BLOCKED → report 4 mục evidence: đã thử gì / output nào / giả định nào / cần gì — không im lặng. Linear: orca keychain hỏng → đọc key ~/.claude/.linear-key gọi GraphQL (Authorization: <key>, POST https://api.linear.app/graphql). Shell: probes cmd > log; echo \$? — KHÔNG pipe head/tail. SSL/cert → đợi 30s retry tối đa 3 lần. Done TRƯỚC merge = INCOMPLETE."
+
+# HOLDS check (team discipline v1): repo đang được session khác giữ → WARN,
+# không chặn (người quyết). File: ~/.claude/holds.md — dòng: <repo-path> | <holder> | <since>
+HOLDS_FILE="$HOME/.claude/holds.md"
+REPO_ABS=$(cd "$(dirname "$BRACKET")/../.." 2>/dev/null && pwd)
+if [ -f "$HOLDS_FILE" ] && [ -n "$REPO_ABS" ]; then
+  HOLD_HIT=$(grep -F "$REPO_ABS" "$HOLDS_FILE" | head -1)
+  [ -n "$HOLD_HIT" ] && echo "⚠ HOLDS: repo đang bị giữ — $HOLD_HIT (liên hệ holder trước khi launch)"
+fi
 
 if [ "$DRY_RUN" = 1 ]; then
   echo "── DRY-RUN launch sf-$N-$SLUG ($LINEAR) từ $DEST"
