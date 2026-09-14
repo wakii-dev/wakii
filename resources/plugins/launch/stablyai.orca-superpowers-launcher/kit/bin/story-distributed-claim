@@ -1,0 +1,347 @@
+#!/bin/bash
+# story-distributed-claim — thư viện distributed claim FI-458 (dùng chung
+# story-launch + story-watchdog). KHÔNG chạy trực tiếp: source rồi gọi
+#   distributed_config_load → distributed_enabled / distributed_config_get
+#   linear_graphql <body-json> (LINEAR_GRAPHQL_ENDPOINT override cho test)
+# Config fail-open: ~/.claude/story-kit.json (STORY_KIT_CONFIG override) key
+# "distributed" — thiếu file/key = defaults (tắt = hành vi pre-feature zero-diff).
+set -u
+
+DC_GRAPHQL_ENDPOINT="${LINEAR_GRAPHQL_ENDPOINT:-https://api.linear.app/graphql}"
+
+if [ "${BASH_SOURCE[0]:-}" = "$0" ]; then
+  echo "usage: source bin/story-distributed-claim — rồi distributed_config_load / distributed_enabled / linear_graphql <body-json>"
+  exit 2
+fi
+
+sanitize_machine_id() { # về ^[a-z0-9-]+ trước mọi GraphQL interpolation
+  local raw h           # python regex — locale-independent (BSD tr bỏ qua LC_ALL=C
+  raw=$(python3 -c '    # với byte ngoài ASCII — á vẫn được coi [:lower:], phải đi vòng)
+import sys, re
+raw = sys.argv[1] if len(sys.argv) > 1 else ""
+s = re.sub(r"[^a-z0-9-]", "-", raw.lower())
+s = re.sub(r"-+", "-", s).strip("-")
+if not s:
+    import hashlib
+    s = "machine-" + hashlib.md5(raw.encode("utf-8", "replace")).hexdigest()[:6]
+print(s)
+' "$1" 2>/dev/null)
+  [ -n "$raw" ] && { printf '%s' "$raw"; return 0; }
+  # python3 vắng mặt → tr best-effort (ASCII host vẫn đúng) + hash shell;
+  # LC_ALL=C — GNU tr UTF-8 locale chết "illegal byte sequence" trên byte lạ
+  raw=$(printf '%s' "$1" | LC_ALL=C tr '[:upper:]' '[:lower:]' | LC_ALL=C tr -Cs '[:lower:][:digit:]-' '-' | sed -E 's/^-+//; s/-+$//')
+  [ -n "$raw" ] && { printf '%s' "$raw"; return 0; }
+  if command -v md5 > /dev/null 2>&1; then h=$(printf '%s' "$1" | md5 -q)
+  elif command -v md5sum > /dev/null 2>&1; then h=$(printf '%s' "$1" | md5sum | cut -d' ' -f1)
+  else h=$(printf '%s' "$1" | cksum | cut -d' ' -f1); fi
+  printf '%s' "machine-$(printf '%s' "$h" | cut -c1-6)"
+}
+
+# reader REUSE pattern story-verify:33-45 — FAIL-OPEN, không bao giờ die
+distributed_config_load() {
+  local f="${STORY_KIT_CONFIG:-$HOME/.claude/story-kit.json}" vals
+  DC_ENABLED=0; DC_MACHINE_ID=""; DC_TTL=10
+  if [ -f "$f" ]; then
+    vals=$(python3 - "$f" <<'DCFEOF'
+import json, sys
+try: v = json.load(open(sys.argv[1])).get('distributed') or {}
+except Exception: v = {}
+def key_int(k, d): # per-key try — ttl hỏng không được kéo enabled tắt theo
+    try: n = int(v.get(k, d) or d)
+    except Exception: return d
+    return n if n >= 1 else d # clamp ≥1 — TTL <1 = takeover storm
+mid = str(v.get('machineId') or '').replace('\n', ' ').replace('\r', ' ')
+print(int(bool(v.get('enabled', False))), key_int('claimTtlMinutes', 10), mid)
+DCFEOF
+) 2>/dev/null
+    # mid đặt CUỐI — chứa dấu cách vẫn nguyên vẹn qua read (sanitize gộp sau)
+    [ -n "$vals" ] && read -r DC_ENABLED DC_TTL DC_MACHINE_ID <<< "$vals"
+  fi
+  # machineId trống → hostname sanitize (mặc định schema: máy hiện tại)
+  [ -n "$DC_MACHINE_ID" ] || DC_MACHINE_ID="$(hostname 2>/dev/null || echo host)"
+  DC_MACHINE_ID="$(sanitize_machine_id "$DC_MACHINE_ID")"
+  return 0
+}
+
+distributed_config_get() { # key: enabled | machineId | claimTtlMinutes
+  case "$1" in
+    enabled) echo "$DC_ENABLED" ;;
+    machineId) echo "$DC_MACHINE_ID" ;;
+    claimTtlMinutes) echo "$DC_TTL" ;;
+    *) echo "" ;;
+  esac
+}
+
+distributed_enabled() {
+  if [ "$DC_ENABLED" = "1" ]; then echo 1; else echo 0; fi
+}
+
+linear_graphql() { # $1 = body JSON; key: env hoặc ~/.claude/.linear-key
+  local key="${LINEAR_API_KEY:-}" i resp lgrc   # rc: 0 ok · 3 thiếu key · khác = curl rc
+  if [ -z "$key" ] && [ -f "$HOME/.claude/.linear-key" ]; then   # (7 refused · 22 HTTP ·
+    key=$(head -1 "$HOME/.claude/.linear-key" | tr -d '[:space:]')  #  28 timeout) — C3
+  fi
+  [ -n "$key" ] || return 3  # thiếu key — caller phân loại (khác lỗi mạng)
+  for i in 1 2; do # retry 1 lần — pattern linear_state story-launch
+    resp=$(curl -s -f -m 10 -X POST "$DC_GRAPHQL_ENDPOINT" \
+      -H "Authorization: $key" -H "Content-Type: application/json" \
+      -d "$1" 2>/dev/null) && [ -n "$resp" ] && { printf '%s\n' "$resp"; return 0; }
+    lgrc=$?
+    [ "$i" = 1 ] && sleep 1
+  done
+  return "$lgrc"  # curl rc xuyên thẳng — $() subshell không mang biến, rc thì có
+}
+
+# ═══ B1: claim CRUD — comment "🤖 claimed by <mid> <iso>" là nguồn sự thật;
+# timestamp TTL = createdAt/updatedAt SERVER (iso trong body chỉ là hiển thị —
+# clock máy cũ có thể sai). Label claimed/<mid> = tín hiệu phụ.
+
+CLAIM_PREFIX="🤖 claimed by"
+
+dc_now_iso() { # iso hiển thị cho body comment — KHÔNG dùng cho TTL math
+  python3 -c 'import datetime; print(datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))'
+}
+
+dc_field() { # $1 json $2 python-expr trên biến d — expr LITERAL nội bộ lib thôi
+  python3 -c "
+import json,sys
+try: d=json.loads(sys.argv[1])
+except Exception: sys.exit(1)
+try: v=$2
+except Exception: sys.exit(1)
+print('' if v is None else v)
+" "$1" 2>/dev/null
+}
+
+dc_age_minutes() { # $1 iso server-ts → int phút (âm = tương lai); 999999 = không parse (coi stale)
+  python3 -c "
+import sys,datetime
+try:
+    t=datetime.datetime.fromisoformat(sys.argv[1].replace('Z','+00:00'))
+    print(int((datetime.datetime.now(datetime.timezone.utc)-t).total_seconds()//60))
+except Exception:
+    print(999999)
+" "$1" 2>/dev/null
+}
+
+claim_gql_read_body() { # $1 issue-id → body JSON (variables — không ghép chuỗi)
+  python3 - "$1" <<'PYEOF'
+import json,sys
+# comments 50 + label createdAt: revoke nhiều → comment claim bị evict;
+# createdAt label = dấu vết cho partial age-gate (plan §4)
+print(json.dumps({"query":"query($id:String!){issue(id:$id){id comments(last:50){nodes{id body createdAt updatedAt}} labels{nodes{name id createdAt}}}","variables":{"id":sys.argv[1]}}))
+PYEOF
+}
+
+claim_parse() { # $1 resp → 7 cột TAB: mid ts cid hasLabel labelIds labelNames partial
+python3 - "$1" "$CLAIM_PREFIX" <<'PYEOF'
+import json,sys
+try:
+    iss=json.loads(sys.argv[1])["data"]["issue"]
+except Exception:
+    sys.exit(1)
+pre=sys.argv[2]
+best=None;bts=None
+for n in (iss.get("comments") or {}).get("nodes") or []:
+    b=n.get("body") or ""
+    if not b.startswith(pre+" "): continue
+    ts=n.get("updatedAt") or n.get("createdAt") or ""
+    if best is None or (ts and ts>=bts): best,bts=n,(ts or bts)
+labels=(iss.get("labels") or {}).get("nodes") or []
+lnames=[l.get("name") or "" for l in labels]
+lids=[l.get("id") or "" for l in labels]
+# cột 8: createdAt (server) của label claimed/* đầu tiên — partial age-gate
+labts=""
+for l in labels:
+    if (l.get("name") or "").startswith("claimed/"):
+        labts=l.get("createdAt") or ""
+        break
+if best is None:
+    if any(x.startswith("claimed/") for x in lnames):  # B2 pin: label không comment = partial
+        print("\t".join(["","","","0",",".join(lids),",".join(lnames),"1",labts]))
+    sys.exit(0)
+mid=""
+p=best["body"].split()
+if len(p)>3: mid=p[3]
+print("\t".join([mid,bts or "",best.get("id") or "",
+    "1" if ("claimed/"+mid) in lnames else "0",
+    ",".join(lids),",".join(lnames),"0",labts]))
+PYEOF
+}
+
+claim_read() { # $1 issue-id → 7 cột TAB (claim_parse); rỗng = không claim; rc = GraphQL rc
+  local resp
+  resp=$(linear_graphql "$(claim_gql_read_body "$1")") || return $?
+  claim_parse "$resp"
+}
+
+claim_label_ensure() { # $1 issue $2 mid $3 allLabelNamesCsv $4 allLabelIdsCsv → rc0 khi claimed/<mid> gắn
+  local name="claimed/$(sanitize_machine_id "$2")" resp lid body
+  case ",$3," in *",$name,"*) return 0 ;; esac
+  resp=$(linear_graphql "$(python3 - "$name" <<'PYEOF'
+import json,sys
+print(json.dumps({"query":"query($n:String!){issueLabels(first:1,filter:{name:{eq:$n}}){nodes{id name}}}","variables":{"n":sys.argv[1]}}))
+PYEOF
+)") || return 1
+  lid=$(dc_field "$resp" '(d.get("data",{}).get("issueLabels",{}).get("nodes") or [{"id":""}])[0].get("id","")')
+  if [ -z "$lid" ]; then
+    resp=$(linear_graphql "$(python3 - "$name" <<'PYEOF'
+import json,sys
+print(json.dumps({"query":"mutation($input:IssueLabelCreateInput!){issueLabelCreate(input:$input){issueLabel{id name}}}","variables":{"input":{"name":sys.argv[1],"color":"#5e6ad2"}}}))
+PYEOF
+)") || return 1
+    lid=$(dc_field "$resp" 'd["data"]["issueLabelCreate"]["issueLabel"]["id"]')
+    [ -n "$lid" ] || return 1
+  fi
+  # issueUpdate labelIds là REPLACE — truyền đủ ids cũ (từ claim_read) + id mới
+  body=$(python3 - "$1" "$4" "$lid" <<'PYEOF'
+import json,sys
+ids=[i for i in (sys.argv[2].split(",") if sys.argv[2] else []) if i]
+if sys.argv[3] not in ids: ids.append(sys.argv[3])
+print(json.dumps({"query":"mutation($input:IssueUpdateInput!){issueUpdate(input:$input){success}}","variables":{"input":{"id":sys.argv[1],"labelIds":ids}}}))
+PYEOF
+)
+  resp=$(linear_graphql "$body") || return 1
+  [ -n "$(dc_field "$resp" 'd["data"]["issueUpdate"]["success"]')" ]
+}
+
+claim_write() { # $1 issue $2 mid $3 namesCsv $4 idsCsv → stdout "cid<TAB>ts"; rc2 = thua race
+  local issue="$1" mid body resp cid ts rinfo rmid
+  mid="$(sanitize_machine_id "$2")"
+  body="$CLAIM_PREFIX $mid $(dc_now_iso)"
+  resp=$(linear_graphql "$(python3 - "$issue" "$body" <<'PYEOF'
+import json,sys
+print(json.dumps({"query":"mutation($input:CommentCreateInput!){commentCreate(input:$input){comment{id createdAt}}}","variables":{"input":{"issueId":sys.argv[1],"body":sys.argv[2]}}}))
+PYEOF
+)") || return 1
+  cid=$(dc_field "$resp" 'd["data"]["commentCreate"]["comment"]["id"]')
+  ts=$(dc_field "$resp" 'd["data"]["commentCreate"]["comment"]["createdAt"]')
+  [ -n "$cid" ] || return 1
+  # label là tín hiệu phụ — fail không hủy claim (comment = nguồn, B2 pin)
+  claim_label_ensure "$issue" "$mid" "$3" "$4" \
+    || echo "distributed: label add failed — comment vẫn giữ vai trò claim" >&2
+  # re-read xác nhận (chống partial nhìn thấy chính mình); re-read hỏng → tin mutation response
+  rinfo=$(claim_read "$issue") || { printf '%s\t%s\n' "$cid" "$ts"; return 0; }
+  rmid=$(printf '%s' "$rinfo" | cut -f1)
+  # loser phải biết THUA CHO AI — message chung chung gây đoán mò (review nhóm B)
+  [ "$rmid" = "$mid" ] || { echo "distributed: thua race — claim của $rmid" >&2; return 2; }
+  printf '%s\t%s\n' "$cid" "$ts"
+}
+
+claim_renew() { # $1 issue $2 comment-id $3 mid $4 namesCsv $5 idsCsv → stdout ts server mới
+  local mid body resp ts
+  mid="$(sanitize_machine_id "$3")"
+  body="$CLAIM_PREFIX $mid $(dc_now_iso)"
+  resp=$(linear_graphql "$(python3 - "$2" "$body" <<'PYEOF'
+import json,sys
+print(json.dumps({"query":"mutation($input:CommentUpdateInput!){commentUpdate(input:$input){comment{id updatedAt}}}","variables":{"input":{"id":sys.argv[1],"body":sys.argv[2]}}}))
+PYEOF
+)") || return 1
+  ts=$(dc_field "$resp" 'd["data"]["commentUpdate"]["comment"]["updatedAt"]')
+  [ -n "$ts" ] || return 1
+  # B2 pin: comment-without-label → renew tự sửa; ensure no-op nếu label đã gắn
+  claim_label_ensure "$1" "$mid" "$4" "$5" \
+    || echo "distributed: label-missing — re-add thất bại (comment vẫn là claim)" >&2
+  echo "$ts"
+}
+
+claim_takeover() { # $1 issue $2 old-mid $3 my-mid $4 repo $5 sf-branch $6 remote $7 ttl-min
+  # $8 labelNamesCsv $9 labelIdsCsv
+  # rc0 = takeover xong · rc1 = commits-fresh (từ chối) · rc2 = git/network fail
+  local issue="$1" repo="$4" branch="$5" remote="$6" ttl resp rc old my
+  local names="${8:-}" ids="${9:-}" lsrc rtip keep body
+  old="$(sanitize_machine_id "$2")"; my="$(sanitize_machine_id "$3")"
+  ttl="${7:-10}"
+  # (1) commits-fresh: SF branch có commit mới trong TTL → ai đó đang làm thật.
+  # ls-remote: rc0 = branch có · rc2 = chưa tồn tại (không ai làm → được chiếm)
+  # · rc khác = remote/network hỏng → fail-closed (git ls-remote --exit-code, 1.8.5+)
+  # low-speed env — HTTPS treo câm phải cắt sau 30s (pattern dest_fetch_check)
+  GIT_HTTP_LOW_SPEED_LIMIT=1000 GIT_HTTP_LOW_SPEED_TIME=30 \
+    git -C "$repo" ls-remote --exit-code --heads "$remote" "refs/heads/$branch" >/dev/null 2>&1
+  lsrc=$?
+  if [ "$lsrc" = "0" ]; then
+    if ! GIT_HTTP_LOW_SPEED_LIMIT=1000 GIT_HTTP_LOW_SPEED_TIME=30 git -C "$repo" fetch "$remote" "$branch" >/dev/null 2>&1; then
+      echo "distributed: fetch $remote $branch fail — không takeover (fail-closed)" >&2
+      return 2
+    fi
+    rtip=$(git -C "$repo" rev-parse FETCH_HEAD 2>/dev/null)  # tip cho guard force-with-lease
+    if git -C "$repo" log --since "$ttl minutes ago" FETCH_HEAD --oneline 2>/dev/null | grep -q .; then
+      echo "distributed: commits-fresh trên $branch trong ${ttl}m — KHÔNG takeover" >&2
+      return 1
+    fi
+  elif [ "$lsrc" != "2" ]; then
+    echo "distributed: remote $remote không đọc được (ls-remote rc=$lsrc) — không takeover (fail-closed)" >&2
+    return 2
+  fi
+  # (2) revoke comment — máy cũ đọc lại thấy mình bị revoke
+  resp=$(linear_graphql "$(python3 - "$issue" "$old" "$my" <<'PYEOF'
+import json,sys
+body="⚠️ claim revoked — stale ≥ 2×TTL (%s), takeover by %s"%(sys.argv[2],sys.argv[3])
+print(json.dumps({"query":"mutation($input:CommentCreateInput!){commentCreate(input:$input){comment{id}}}","variables":{"input":{"issueId":sys.argv[1],"body":body}}}))
+PYEOF
+)") || return 2
+  dc_field "$resp" 'd["data"]["commentCreate"]["comment"]["id"]' >/dev/null || return 2
+  # remove label cũ (issueUpdate labelIds REPLACE) — claim_write sau đó nhận
+  # keep-ids (đã loại old) để REPLACE không kéo label cũ quay lại
+  keep=$(python3 - "$names" "$ids" "$old" <<'PYEOF'
+import sys
+names=(sys.argv[1].split(",") if sys.argv[1] else [])
+ids=(sys.argv[2].split(",") if sys.argv[2] else [])
+print(",".join(i for i,n in zip(ids,names) if n != "claimed/"+sys.argv[3] and i))
+PYEOF
+)
+  body=$(python3 - "$issue" "$keep" <<'PYEOF'
+import json,sys
+ids=[i for i in (sys.argv[2].split(",") if sys.argv[2] else []) if i]
+print(json.dumps({"query":"mutation($input:IssueUpdateInput!){issueUpdate(input:$input){success}}","variables":{"input":{"id":sys.argv[1],"labelIds":ids}}}))
+PYEOF
+)
+  resp=$(linear_graphql "$body") || return 2
+  # (3) claim comment mới + label mới + re-read verify (claim_write tự làm)
+  claim_write "$issue" "$my" "$names" "$keep" >/dev/null 2>&1 || return 2
+  echo "${rtip:-}"  # stdout duy nhất: tip SF branch cho guard (rc2/1 không echo)
+  return 0
+}
+
+claim_list_all() { # $1 bracket → JSON array [{issueId,sfNum,machineId,claimedAtIso,bracket}]
+  local pairs resp
+  pairs=$(awk '
+    function emit() { if (sf != "" && linear != "") print sf "\t" linear }
+    /^## / {
+      if ($0 !~ /^## SF-/) { emit(); sf = ""; next }
+      emit(); sf = $2; linear = ""; next
+    }
+    /^linear:/ && sf != "" { linear = $2 }
+    END { emit() }' "$1") || return 1
+  [ -n "$pairs" ] || { echo "[]"; return 0; }
+  # 1 query batch (aliases) cho MỌI SF — không N+1 (rate-limit)
+  resp=$(linear_graphql "$(python3 - $pairs <<'PYEOF'
+import json,sys
+parts=[]
+for i in range(0,len(sys.argv)-1,2):
+    parts.append('a%d: issue(id: %s){comments(last:20){nodes{id body createdAt updatedAt}} labels{nodes{name id}}}'%(i//2,json.dumps(sys.argv[i+2])))
+print(json.dumps({"query":"query{"+" ".join(parts)+"}"}))
+PYEOF
+)") || return 1
+  python3 - "$resp" "$1" $pairs <<'PYEOF'
+import json,sys
+resp=json.loads(sys.argv[1]); bracket=sys.argv[2]; pairs=sys.argv[3:]
+out=[]; pre="🤖 claimed by"
+for i in range(0,len(pairs),2):
+    sf,iid,al=pairs[i],pairs[i+1],"a%d"%(i//2)
+    iss=(resp.get("data") or {}).get(al) or {}
+    best=None;bts=None
+    for n in (iss.get("comments") or {}).get("nodes") or []:
+        b=n.get("body") or ""
+        if not b.startswith(pre+" "): continue
+        ts=n.get("updatedAt") or n.get("createdAt") or ""
+        if best is None or (ts and ts>=bts): best,bts=n,(ts or bts)
+    mid=""
+    if best:
+        p=best["body"].split()
+        if len(p)>3: mid=p[3]
+    out.append({"issueId":iid,"sfNum":sf,"machineId":mid or None,
+                "claimedAtIso":bts or None,"bracket":bracket})
+print(json.dumps(out,ensure_ascii=False))
+PYEOF
+}
