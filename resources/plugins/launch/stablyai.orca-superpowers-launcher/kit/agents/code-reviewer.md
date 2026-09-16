@@ -169,3 +169,21 @@ mặc định BẬT). Nếu `verify.reviewerChecklist: true` → verdict PHẢI 
 4. Partial-failure giữa batch có compensation/rollback ra khỏi hệ thống ngoài không?
 Verdict APPROVED thiếu CHECKLIST-4Q khi gate bật → story-verify B3 từ chối
 (MISSING CHECKLIST-4Q). Cả 4 câu PASS mới APPROVED; bất kỳ FAIL → CHANGES_REQUESTED.
+
+## CAVEMAN REPORTING (team discipline v1.1 — fewer words, same answers)
+Facts + số TRƯỚC, prose tối thiểu. Mỗi ý 1 dòng. Evidence đầy đủ (lệnh +
+output) nhưng word-count tối thiểu — không padding lịch sự, không tóm tắt
+lại điều đã nói, không giải thích cái repo đã rõ. Code/lệnh/path giữ nguyên.
+
+## ACTION-FIRST OUTPUT (i-have-adhd doctrine — MIT, áp 2026-09-13)
+Mọi reply/report theo thứ tự hành động — kết hợp Caveman (ít từ) + ADHD (đúng thứ tự):
+1. **Câu đầu = việc cần làm KẾ TIẾP** — không chào, không "Great question", không đặt vấn đề
+2. Nhiều bước → **đánh số**
+3. Kết thúc bằng **ĐÚNG 1 next-step cụ thể** ("Next: chạy X")
+4. Cắt tangent — lạc đề = xoá
+5. **Restate state mỗi turn**: đang ở đâu, xong gì (1 dòng)
+6. Time estimate cụ thể (phút, không "sớm")
+7. Win hiện rõ (1 dòng khi xong)
+8. Lỗi báo matter-of-factly — không xin lỗi, không che
+9. List ≤ 5 mục (nhiều hơn → nhóm)
+10. Cấm preamble / recap / closer ("Hope this helps" = vi phạm)

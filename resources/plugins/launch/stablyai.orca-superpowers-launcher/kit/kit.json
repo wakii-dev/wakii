@@ -1,6 +1,6 @@
 {
   "name": "story-team-kit",
-  "version": "2.11.1",
+  "version": "2.13.3",
   "description": "9-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới.",
   "requires": {
     "claude-code": ">=2.0",
@@ -463,6 +463,11 @@
       "name": "story-sequence",
       "type": "bin",
       "description": "Mermaid sequenceDiagram quá trình chạy thật của story — git + Linear verdicts + evidence, không cần LLM"
+    },
+    {
+      "name": "story-distributed-claim",
+      "type": "bin",
+      "description": "Claim CLI distributed — --claim/--machine-id/--host/--list-claims (FI-458)"
     },
     {
       "name": "story-kb",

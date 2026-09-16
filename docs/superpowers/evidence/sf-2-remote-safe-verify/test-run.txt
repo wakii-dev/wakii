@@ -1,0 +1,37 @@
+SF-2 remote-safe-verify — full test-run + Rule 0 CLI-equivalent demo (RESUME re-verification)
+2026-09-14 (ICT) — session 2: worktree bị reset sau run 1 (mất artifacts uncommitted) → dựng lại + commit hẳn vào git
+orca worktree HEAD: 6ef18b9c82 (code commit — base story/fi458-distributed-bracket tip)
+kit repo branch: sf-2-remote-safe-verify — commits: ac520de (T1) 55cdfb0 (T2+T3) 8c831c0 (T4) 438e68f (T5) 884c7f0 (review A fixes) 237b8c7 (review B P2) ea5ed79 (ritual)
+
+tdd: RED→GREEN (T1: R-series FAIL(trích hàm không có)→6 PASS · T2: R3/R4 regression GREEN ngay (T1 tách path sạch) · T3: R6 bắt bug subshell B4_NOTE → fix contract 2 dòng → GREEN · T4: D-series FAIL(trích không có)→12 PASS · T5: e2e bắt prompt shift + stderr nuốt → 12 PASS)
+
+Re-verification session 2 (không tin log run 1 — tự chạy lại toàn bộ, exit code measured):
+tests/test-story-verify-b4-fetch.sh        exit=0 (18 PASS · 0 FAIL)  — suite-test-story-verify-b4-fetch.log
+tests/test-story-resume.sh                 exit=0 (13 pass · 0 fail)  — suite-test-story-resume.log
+tests/test-story-resume-dest-e2e.sh        exit=0 (12 PASS · 0 FAIL)  — suite-test-story-resume-dest-e2e.log
+Regression kit-wide:
+tests/test-story-launch-config.sh          exit=0 (29 PASS)           — suite-test-story-launch-config.log
+tests/test-story-launch-claim.sh           exit=0 (49 PASS)           — suite-test-story-launch-claim.log
+tests/test-watchdog-launch-next.sh         exit=0 (7 PASS)            — suite-test-watchdog-launch-next.log
+
+Rule 0 (2c-pre/2c): story-test browser N/A — SF-2 pure CLI kit (không web port, không UI).
+CLI-equivalent PASS — binary INSTALLED (~/.claude/bin, diff -q khớp kit repo) chạy thật trên worktree này:
+1. Baseline (distributed off): story-verify sf-2-remote-safe-verify → B4:PASS local-path zero-diff,
+   không có network call fetch — verify-baseline.log
+2. Distributed ON demo (STORY_KIT_CONFIG override): B4 attempt `git fetch origin story/fi458-distributed-bracket`
+   → remote không có ref → fallback verdict local + stderr
+   "⚠ fetched-stale (fetch origin/story/fi458-distributed-bracket fail — verdict local)
+   [fatal: couldn't find remote ref ...]" — KHÔNG crash, exit vẫn 1 vì B1 evidence (đã fix tại file này)
+   — verify-dist-on-stale-fallback.log
+3. 2-máy e2e (máy B push dest, máy A fetch-first PASS; offline → stale fallback) nằm trong
+   test-story-resume-dest-e2e.sh 12 PASS (E1/E2/E3) — suite-test-story-resume-dest-e2e.log
+
+Marker .browser-test-passed đã touch ở worktree root với ghi chú CLI-equivalent (không có browser để test).
+
+Ghi chú session 2:
+- B2 story-verify glob khớp nhầm plan cũ 2026-09-05-sf2-mobile-story.md (story khác, p2="sf2") —
+  false-PASS. Plan thật 2026-09-14-fi458-sf-2-remote-safe-verify-plan.md (19/19 ticked) đã restore
+  vào docs/superpowers/plans/ nhưng glob-first-match vẫn đọc file cũ → đã flag improvements-log, không tự sửa kit trong SF.
+- Kit repo: bin/story-launch dual-path vẫn UNCOMMITTED theo đúng plan convention ("KHÔNG stage
+  bin/story-launch — left-over SF-1 không thuộc SF-2"); rủi ro được ghi audit Linear.
+- Merge lần này là merge THẬT (commit evidence mới), khác run 1 (no-op — worktree trống).

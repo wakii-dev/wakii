@@ -48,7 +48,8 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        # Why: packaging builds x64 + arm64; plain install is host-CPU-only since upstream #20420
+        run: pnpm install --frozen-lockfile --cpu=current,x64,arm64
 
       # Full chain — INCLUDING build:computer-macos (needs Swift 6 tools = Xcode 16)
       - name: Build native helpers + app

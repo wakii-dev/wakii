@@ -23,14 +23,23 @@ orca() {
 }
 
 linear_state() { # $1 issue-id → state name ("" nếu không biết) — retry 1 lần
+  # Dual-path (học story-verify): orca CLI trước (keychain), curl+key fallback
+  local out
+  out=$("$ORCA_BIN" linear issue "$1" --json 2>/dev/null | python3 -c "
+import json, sys
+try: print(json.load(sys.stdin)['result']['issue']['state']['name'])
+except Exception: print('')" 2>/dev/null)
+  [ -n "$out" ] && { echo "$out"; return; }
   local key="${LINEAR_API_KEY:-}"
   if [ -z "$key" ] && [ -f "$HOME/.claude/.linear-key" ]; then
     key=$(head -1 "$HOME/.claude/.linear-key" | tr -d '[:space:]')
   fi
   [ -z "$key" ] && { echo ""; return; }
   local st i
+  # endpoint honor env — mock test/C3 offline (mặc định giữ nguyên prod)
+  local ep="${LINEAR_GRAPHQL_ENDPOINT:-https://api.linear.app/graphql}"
   for i in 1 2; do
-    st=$(curl -s -m 10 -X POST https://api.linear.app/graphql \
+    st=$(curl -s -m 10 -X POST "$ep" \
       -H "Authorization: $key" -H "Content-Type: application/json" \
       -d "{\"query\":\"query{issue(id:\\\"$1\\\"){state{name}}}\"}" 2>/dev/null \
       | python3 -c "import json,sys
@@ -42,21 +51,56 @@ except: print('')" 2>/dev/null)
   echo ""
 }
 
+dest_fetch_check() { # $1 repo $2 dest — fetch + timeout + stderr capture; rc = git rc
+  DEST_REMOTE="$(git -C "$1" config "branch.$2.remote" 2>/dev/null)"
+  [ -n "$DEST_REMOTE" ] || DEST_REMOTE=origin
+  local fc # HTTPS treo câm → low-speed env fail sau 30s (timeout cmd chỉ có Linux)
+  fc=(git -C "$1" fetch "$DEST_REMOTE" "$2")
+  command -v timeout >/dev/null 2>&1 && fc=(timeout 60 "${fc[@]}")
+  FERR=$(GIT_HTTP_LOW_SPEED_LIMIT=1000 GIT_HTTP_LOW_SPEED_TIME=30 "${fc[@]}" 2>&1 1>/dev/null)
+}
+
 SF_ARG=""; BRACKET=""; REPO_ARG=""; DRY_RUN=0
+CLAIM=0; CLAIM_MACHINE_ID=""; HOST_ID=""  # distributed flags (SF-1: nhận + resolve)
+GUARD_EXPECT=""; DEST_SHA=""  # C1 git-guard: tip SF branch remote (takeover) + tip dest vừa fetch
+LIST_CLAIMS=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --sf) SF_ARG="$2"; shift ;;
     --bracket) BRACKET="$2"; shift ;;
     --repo) REPO_ARG="$2"; shift ;;
     --dry-run) DRY_RUN=1 ;;
+    --claim) CLAIM=1 ;;
+    --machine-id) CLAIM_MACHINE_ID="$2"; shift ;;
+    --host) HOST_ID="$2"; shift ;;
+    --list-claims) LIST_CLAIMS=1 ;;
     *) SF_ARG="$1" ;;
   esac
   shift
 done
+
+DCLIB="$(dirname "$0")/story-distributed-claim"
+# ── --list-claims: read-only JSON mọi SF của bracket (SF-3 panel) — không cần enabled
+if [ "$LIST_CLAIMS" = 1 ]; then
+  [ -f "$DCLIB" ] || { echo "distributed: thiếu thư viện $DCLIB"; exit 1; }
+  [ -f "$BRACKET" ] || { echo "--list-claims cần --bracket <file> tồn tại"; exit 2; }
+  source "$DCLIB"
+  if claim_list_all "$BRACKET"; then exit 0; fi
+  echo "distributed: list-claims đọc thất bại (endpoint/key)" >&2
+  exit 1
+fi
+
 [ -n "$SF_ARG" ] || { echo "usage: story-launch SF-N [--repo <path>] [--dry-run]"; exit 2; }
 SF_NUM=$(echo "$SF_ARG" | grep -oE 'SF-[0-9]+' || echo "$SF_ARG" | grep -oE 'sf-[0-9]+' | tr 'a-z' 'A-Z')
 [ -n "$SF_NUM" ] || { echo "không hiểu SF: $SF_ARG"; exit 2; }
 N=$(echo "$SF_NUM" | cut -d- -f2)
+
+# ── distributed claim: chỉ load lib khi --claim — disabled = 0 call mới (zero-diff)
+if [ "$CLAIM" = 1 ]; then
+  [ -f "$DCLIB" ] || { echo "distributed: thiếu thư viện $DCLIB"; exit 1; }
+  source "$DCLIB"
+  distributed_config_load
+fi
 
 # ── tìm bracket nếu chưa có
 if [ -z "$BRACKET" ]; then
@@ -95,6 +139,17 @@ DEST=$(grep -m1 '^Destination:' "$BRACKET" | sed 's/Destination: *//;s/ *$//')
 EPIC=$(grep -m1 '^# Story:' "$BRACKET" | sed 's/# Story: *//;s/ *—.*//;s/ *- .*//')
 [ -n "$LINEAR" ] || { echo "$SF_NUM chưa approve (không có linear ID) — không thuộc quyền launch"; exit 1; }
 
+# ── resolve machineId claim: flag --machine-id thắng config; --host chỉ lưu
+# phiên (persist qua panel SF-3 — không tự ghi config)
+CLAIM_MID=""
+if [ "$CLAIM" = 1 ] && [ "$(distributed_enabled)" = "1" ]; then
+  [ -n "$CLAIM_MACHINE_ID" ] || CLAIM_MACHINE_ID="$(distributed_config_get machineId)"
+  CLAIM_MACHINE_ID="$(sanitize_machine_id "$CLAIM_MACHINE_ID")"  # guard GraphQL interpolation
+  CLAIM_MID="$CLAIM_MACHINE_ID"
+  [ -n "$HOST_ID" ] && echo "distributed: --host=$(sanitize_machine_id "$HOST_ID") chỉ lưu trong phiên — persist qua panel SF-3 (distributed.hostId trong story-kit.json)" >&2
+  [ "$DRY_RUN" = 1 ] && echo "── distributed claim: machine=$CLAIM_MID ttl=$(distributed_config_get claimTtlMinutes)min ($LINEAR)"
+fi
+
 # ── validate
 ST=$(linear_state "$LINEAR")
 [ "$ST" = "Done" ] && { echo "$SF_NUM ($LINEAR) đã Done — không launch lại"; exit 0; }
@@ -121,16 +176,166 @@ SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/ /g' \
   | tr ' ' '\n' | awk 'length($0)>=3' | head -3 | paste -sd- - | cut -c1-30)
 [ -n "$SLUG" ] || SLUG="sf-$N-convergence"
 STORY_DIR=$(basename "$BRACKET" .md)
+BRACKET_PREFIX=$(basename "$BRACKET" .md | cut -d- -f1 | tr 'A-Z' 'a-z')
 PACK="docs/superpowers/contexts/sf-$N.md"
-[ -f "$(dirname "$(dirname "$(dirname "$BRACKET")")")/contexts/$STORY_DIR/sf-$N.md" ] && PACK="docs/superpowers/contexts/$STORY_DIR/sf-$N.md"
-PROMPT="Use orca-superpowers-workflow skill for ONE sub-feature: $TITLE ($LINEAR). Story: $EPIC — READ FIRST: context pack $PACK (spec slice + touch map + ACCEPTANCE user-visible + boundary; frame Figma nào trỏ capture docs/superpowers/figma/<story>/<frame-id>.md) + bracket docs/superpowers/brackets/$BFILE. Epic đã trả lời mọi câu — KHÔNG re-ask; câu hỏi mới → REQUIREMENT-GAP comment lên epic. Run full Phase 0-5 cho SF này. Linear issue: $LINEAR (set In Progress at start). Worktree base: $DEST. GIỚI HẠN CỨNG: merge/ff CHỈ trong $DEST — TUYỆT ĐỐI KHÔNG đụng main (main là gate của USER; sf-2 FI-187 từng ff main 28/8 — vi phạm). COMPLETE run checklist theo thứ tự — KHÔNG dừng trước bước 5: (1) code+tests (2) tick plan file (2b) ROLLING REVIEW: mỗi 4-5 tasks dispatch code-reviewer ĐỘC LẬP trên diff nhóm đó — KHÔNG dồn 1 review lớn cuối SF (bài học FI-187: review dồn = agent đứng chờ 30+ phút) (2c-pre) ★ Chạy ~/.claude/bin/story-test http://localhost:<port> --login <user>:<pass> --flow <screens> → PHẢI exit 0 (PASS). Nếu FAIL → FIX trước khi tiếp. Sau khi PASS → touch .browser-test-passed trong worktree (marker cho story-verify B0).
-(2c) ★ RULE 0 — BROWSER VERIFY: MỞ APP trong browser (orca tab create --url http://localhost:<port> hoặc curl nếu chỉ API) → TỰ ĐI TRỌN FLOW (login/navigate/thao tác) → CHỤP SCREENSHOT → Nếu UI sai/không navigate/flow đứt → FIX TRƯỚC KHI TIẾP. KHÔNG ĐƯỢC nói "xong" khi chưa tự thấy nó hoạt động. (3) reviewer VERDICT APPROVED — post VERDICT comment lên $LINEAR (KHÔNG để kẹt outbox) (4) MERGE vào $DEST (merge-ngược + ancestor-guard) + audit comment merge-hash (4b) chạy ~/.claude/bin/story-verify sf-$N-$SLUG — sạch mới tiếp (5) RỒI MỚI $LINEAR Done. Cleanup: chỉ xoá worktree + NHÁNH SF mình — TUYỆT ĐỐI KHÔNG xoá $DEST (nhánh đích giữ làm audit; sf-2 FI-187 từng xoá nhánh đích 28/8 → cron launch-next chết 3 tick, phải recreate). Done TRƯỚC merge = INCOMPLETE. Linear: orca keychain có thể hỏng — fail Could not decrypt thì đọc key ~/.claude/.linear-key gọi GraphQL (Authorization: <key> header, POST https://api.linear.app/graphql). Shell: probes cmd > log; echo \$? — KHÔNG pipe head/tail. Blocked 2 lần cùng nguyên nhân → báo cụ thể. SSL/cert → đợi 30s retry tối đa 3 lần."
+for cand in "docs/superpowers/contexts/${BRACKET_PREFIX}-sf-$N.md" "docs/superpowers/contexts/$STORY_DIR/sf-$N.md"; do
+  [ -f "$cand" ] && { PACK="$cand"; break; }
+done
+PROMPT="Use orca-superpowers-workflow skill for ONE sub-feature: $TITLE ($LINEAR). Story: $EPIC — READ FIRST: context pack $PACK (spec slice + touch map + ACCEPTANCE + boundary) + bracket docs/superpowers/brackets/$BFILE. Epic đã trả lời mọi câu — KHÔNG re-ask; câu hỏi mới → REQUIREMENT-GAP comment lên epic. Run full Phase 0-5 cho SF này. Linear issue: $LINEAR (set In Progress at start). Worktree base: $DEST. GIỚI HẠN CỨNG: merge/ff CHỈ trong $DEST — TUYỆT ĐỐI KHÔNG đụng main (main là gate của USER).
+
+CHECKLIST — chạy TUẦN TỰ, mỗi mục xong phải CÓ BẰNG CHỨNG (lệnh + output), cấm tick trước bằng chứng:
+CHECK 1 CODE+TESTS — TDD RED→GREEN khi khả thi (test thất bại trước → code tối thiểu); commit atomic; tick plan file sau mỗi task.
+CHECK 2 PLAN TICKED — mọi '- [ ]' trong plan → '- [x]' (meta-steps dùng numbered list, không dùng '- [ ]').
+CHECK 3 ROLLING REVIEW — mỗi 4-5 tasks dispatch code-reviewer ĐỘC LẬP trên diff nhóm đó (KHÔNG dồn 1 review lớn cuối SF — FI-187: đứng chờ 30+ phút). Verdict post lên $LINEAR, KHÔNG để kẹt outbox.
+CHECK 4 BROWSER VERIFY (Rule 0) — mở app (orca tab create --url http://localhost:<port> hoặc curl nếu chỉ API) → TỰ ĐI TRỌN FLOW (login/navigate/thao tác) + CHỤP SCREENSHOT; UI sai/flow đứt → FIX TRƯỚC KHI TIẾP. KHÔNG ĐƯỢC nói xong khi chưa thấy nó chạy.
+CHECK 5 MERGE vào $DEST (merge-ngược + ancestor-guard) + audit comment merge-hash + chạy ~/.claude/bin/story-verify sf-$N-$SLUG — sạch mới tiếp.
+CHECK 6 DONE — CHỈ sau CHECK 5. Cleanup: chỉ xoá worktree + NHÁNH SF mình — TUYỆT ĐỐI KHÔNG xoá $DEST (nhánh đích giữ làm audit).
+BLOCKED → report 4 mục evidence: đã thử gì / output nào / giả định nào / cần gì — không im lặng. Linear: orca keychain hỏng → đọc key ~/.claude/.linear-key gọi GraphQL (Authorization: <key>, POST https://api.linear.app/graphql). Shell: probes cmd > log; echo \$? — KHÔNG pipe head/tail. SSL/cert → đợi 30s retry tối đa 3 lần. Done TRƯỚC merge = INCOMPLETE."
+
+# HOLDS check (team discipline v1): repo đang được session khác giữ → WARN,
+# không chặn (người quyết). File: ~/.claude/holds.md — dòng: <repo-path> | <holder> | <since>
+HOLDS_FILE="$HOME/.claude/holds.md"
+REPO_ABS=$(cd "$(dirname "$BRACKET")/../.." 2>/dev/null && pwd)
+if [ -f "$HOLDS_FILE" ] && [ -n "$REPO_ABS" ]; then
+  HOLD_HIT=$(grep -F "$REPO_ABS" "$HOLDS_FILE" | head -1)
+  [ -n "$HOLD_HIT" ] && echo "⚠ HOLDS: repo đang bị giữ — $HOLD_HIT (liên hệ holder trước khi launch)"
+fi
 
 if [ "$DRY_RUN" = 1 ]; then
   echo "── DRY-RUN launch sf-$N-$SLUG ($LINEAR) từ $DEST"
-  echo "$PROMPT" | head -6; echo "..."; exit 0
+  echo "$PROMPT" | head -6; echo "..."
+  # dry-run + claim phải chạy fetch gate (read-only) — không báo OK cho launch
+  # thật sẽ fail-closed; không --claim → output nguyên vẹn (zero-diff)
+  if [ "$CLAIM" = 1 ] && [ "$(distributed_enabled)" = "1" ]; then
+    if dest_fetch_check "$REPO" "$DEST"; then
+      echo "── distributed dry-run: dest fetch OK ($DEST ← $DEST_REMOTE)"
+    else
+      echo "── distributed dry-run: dest fetch SẼ FAIL — launch thật sẽ fail-closed ($DEST ← $DEST_REMOTE)"
+      [ -n "${FERR:-}" ] && printf 'distributed: fetch stderr: %s\n' "$(printf '%s' "$FERR" | tail -2)" >&2
+    fi
+  fi
+  exit 0
+fi
+
+# ── claim flow (B1): sau validate deps, TRƯỚC dest fetch — thứ tự normative
+# claim → git-guard → fork. Read → (a) write | (b) renew | (c) skip | (d) stale
+if [ "$CLAIM" = 1 ] && [ "$(distributed_enabled)" = "1" ]; then
+  # gọi TRỰC TIẾP (không $()) — giữ được rc của claim_read (curl rc xuyên thẳng)
+  dc_rd="$(mktemp "${TMPDIR:-/tmp}/dc-claim-read.XXXXXX")"
+  if claim_read "$LINEAR" > "$dc_rd"; then
+    cinfo=$(cat "$dc_rd"); rm -f "$dc_rd"
+  else
+    drrc=$?; rm -f "$dc_rd"
+    # C3 fail-closed phân loại: thiếu key ≠ mạng chết ≠ HTTP error — hết đoán mò
+    case "$drrc" in
+      3) echo "distributed: LINEAR_API_KEY thiếu — fail-closed" ;;
+      22) echo "distributed: Linear HTTP error — fail-closed" ;;
+      *) echo "distributed: Linear unreachable (rc $drrc) — fail-closed" ;;
+    esac
+    exit 1
+  fi
+  cmid=$(printf '%s' "$cinfo" | cut -f1)
+  cts=$(printf '%s' "$cinfo" | cut -f2)
+  ccid=$(printf '%s' "$cinfo" | cut -f3)
+  clids=$(printf '%s' "$cinfo" | cut -f5)
+  cnames=$(printf '%s' "$cinfo" | cut -f6)
+  cpartial=$(printf '%s' "$cinfo" | cut -f7)
+  clts=$(printf '%s' "$cinfo" | cut -f8)   # createdAt (server) label claimed/*
+  if [ "$cpartial" = "1" ]; then
+    # age-gate partial (plan §4): label tươi = comment bị evict nhưng claim còn
+    # sống — overwrite mù quáng giành claim của máy đang làm thật
+    page=$(dc_age_minutes "$clts")
+    pser=$(printf '%s' "$cnames" | tr ',' '\n' | grep '^claimed/' | head -1)
+    pthr=$(( DC_TTL * 2 ))
+    if [ -n "$clts" ] && [ "$page" -lt "$pthr" ]; then
+      echo "distributed: partial fresh label $pser age${page}m — không overwrite (SKIP)"
+      exit 0
+    fi
+    echo "distributed: partial-detected — stale ≥${pthr}m — takeover path (ghi đè)"
+  fi
+  if [ -z "$cmid" ]; then
+    claim_write "$LINEAR" "$CLAIM_MID" "$cnames" "$clids" >/dev/null; wrc=$?
+    [ "$wrc" = "0" ] || { echo "distributed: claim write failed (rc=$wrc) — thua race/fail — skip"; exit 1; }
+  elif [ "$cmid" = "$CLAIM_MID" ]; then
+    # renew fail-open — claim đã của mình, timestamp hụt 1 nhịp không chặn launch
+    claim_renew "$LINEAR" "$ccid" "$CLAIM_MID" "$cnames" "$clids" >/dev/null 2>&1 \
+      || echo "distributed: renew failed — tiếp tục (fail-open)" >&2
+  else
+    age=$(dc_age_minutes "$cts")
+    thr=$(( DC_TTL * 2 ))
+    if [ "$age" -lt "$thr" ]; then
+      echo "distributed: $SF_NUM claimed by $cmid — SKIP"
+      exit 0
+    else
+      # (d) stale ≥ 2×TTL (B3): commits-fresh guard rồi revoke + claim lại
+      sf_branch="sf-$N-$SLUG"
+      sf_remote="$(git -C "$REPO" config "branch.$DEST.remote" 2>/dev/null)"
+      [ -n "$sf_remote" ] || sf_remote=origin
+      gtip=$(claim_takeover "$LINEAR" "$cmid" "$CLAIM_MID" "$REPO" "$sf_branch" \
+        "$sf_remote" "$DC_TTL" "$cnames" "$clids")
+      trc=$?
+      # tip SF branch quan sát được — guard force-with-lease (stale branch của
+      # máy cũ không được chặn takeover hợp lệ, nhưng race takeover vẫn atomic)
+      [ "$trc" = "0" ] && GUARD_EXPECT="$gtip"
+      case "$trc" in
+        0) echo "TAKEOVER $SF_NUM: $cmid → $CLAIM_MID" ;;
+        1) echo "distributed: $SF_NUM không takeover — commits-fresh, skip"; exit 0 ;;
+        *) echo "distributed: takeover fail (rc=$trc) — fail-closed"; exit 1 ;;
+      esac
+    fi
+  fi
+fi
+
+# ── dest contract (A5): fetch dest TRƯỚC fork — dest stale = push-race,
+# fail-closed khi enabled; disabled/không --claim = không git call nào (zero-diff)
+if [ "$CLAIM" = 1 ] && [ "$(distributed_enabled)" = "1" ]; then
+  if ! dest_fetch_check "$REPO" "$DEST"; then
+    echo "distributed: dest fetch failed — fail-closed ($DEST ← $DEST_REMOTE)"
+    [ -n "${FERR:-}" ] && printf 'distributed: fetch stderr: %s\n' "$(printf '%s' "$FERR" | tail -2)" >&2
+    exit 1
+  fi
+  DEST_SHA=$(git -C "$REPO" rev-parse FETCH_HEAD 2>/dev/null)
+fi
+# ── git-guard (C1): serialization atomic — push nhánh SF tạo-mới-chỉ-khi-còn-trống;
+# thua = máy khác đang làm thật → skip (claim để tự stale/takeover, không revoke thêm)
+if [ "$CLAIM" = 1 ] && [ "$(distributed_enabled)" = "1" ]; then
+  [ -n "$DEST_SHA" ] || { echo "distributed: git-guard thiếu dest SHA — fail-closed"; exit 1; }
+  if [ -n "$GUARD_EXPECT" ]; then
+    guard_out=$(LC_ALL=C GIT_HTTP_LOW_SPEED_LIMIT=1000 GIT_HTTP_LOW_SPEED_TIME=30 \
+      git -C "$REPO" push "--force-with-lease=refs/heads/sf-$N-$SLUG:$GUARD_EXPECT" \
+      "$DEST_REMOTE" "$DEST_SHA:refs/heads/sf-$N-$SLUG" 2>&1 1>/dev/null)
+  else
+    guard_out=$(LC_ALL=C GIT_HTTP_LOW_SPEED_LIMIT=1000 GIT_HTTP_LOW_SPEED_TIME=30 \
+      git -C "$REPO" push "$DEST_REMOTE" "$DEST_SHA:refs/heads/sf-$N-$SLUG" 2>&1 1>/dev/null)
+  fi
+  guard_rc=$?
+  # plain push cùng SHA với branch có sẵn = "up-to-date" rc0 — chỉ [new branch] mới là thắng
+  guard_win=0
+  if [ "$guard_rc" = "0" ] && { [ -n "$GUARD_EXPECT" ] \
+    || printf '%s' "$guard_out" | grep -q '\[new branch\]'; }; then
+    guard_win=1
+  fi
+  if [ "$guard_win" != "1" ]; then
+    # phân lớp: rc0-up-to-date / rejected / stale-info = branch có thật (lost);
+    # rc≠0 khác = network/lỗi push — đúng bệnh, vẫn fail-closed không fork
+    if [ "$guard_rc" = "0" ] \
+      || printf '%s' "$guard_out" | grep -qE '\(stale info\)|rejected'; then
+      echo "distributed: git-guard lost — sf-$N-$SLUG đã tồn tại trên $DEST_REMOTE (máy khác đang làm) — nếu là branch SF lần trước của máy bạn, xoá remote branch để launch lại"
+      echo "distributed: claim vừa ghi sẽ tự stale (≥2×TTL) — máy khác takeover; không tự revoke"
+    else
+      echo "distributed: git-guard push FAIL (rc=$guard_rc) — fail-closed"
+      printf '%s\n' "$(printf '%s' "$guard_out" | tail -2)" >&2
+    fi
+    exit 1
+  fi
 fi
 echo "── launch sf-$N-$SLUG ($LINEAR) ← $DEST"
 orca worktree create --name "sf-$N-$SLUG" --linear-issue "$LINEAR" \
   --base-branch "$DEST" --agent claude --no-parent --prompt "$PROMPT" --json >/dev/null 2>&1 \
-  && echo "LAUNCHED ✓ sf-$N-$SLUG" || { echo "LAUNCH FAIL — read-back: worktree list"; exit 1; }
+  && echo "LAUNCHED ✓ sf-$N-$SLUG" || {
+    echo "LAUNCH FAIL — read-back: worktree list"
+    # guard branch giữ lại trên remote = dấu vết vô hại — máy khác thấy sẽ skip
+    [ "$CLAIM" = 1 ] && [ "$(distributed_enabled)" = "1" ] \
+      && echo "distributed: guard branch sf-$N-$SLUG còn trên remote — vô hại (máy khác sẽ skip)"
+    exit 1
+  }

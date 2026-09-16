@@ -7,21 +7,21 @@ TYPE="${1:?}"; SF="${2:-}"; DETAIL="${3:-}"
 
 case "$TYPE" in
   stall)
-    osascript -e "display notification \"${SF} stall ${DETAIL} — watchdog sẽ tự resume\" with title\"⚠ Agent Stall\" sound name \"Basso\""
+    osascript -e 'on run argv' -e 'display notification (item 2 of argv) with title (item 1 of argv) sound name "Basso"' -e 'end run' -- "⚠ Agent Stall" "${SF} stall ${DETAIL} — watchdog sẽ tự resume"
     ;;
   complete)
-    osascript -e "display notification \"${SF} hoàn thành 5/5 — có thể launch tier kế\" with title \"✓ SF Complete\" sound name \"Glass\""
+    osascript -e 'on run argv' -e 'display notification (item 2 of argv) with title (item 1 of argv) sound name "Glass"' -e 'end run' -- "✓ SF Complete" "${SF} hoàn thành 5/5 — có thể launch tier kế"
     ;;
   gate-fail)
-    osascript -e "display notification \"${SF}: ${DETAIL} — KHÔNG ĐƯỢC nói 'xong'\" with title \"🚨 Gate FAIL\" sound name \"Basso\""
+    osascript -e 'on run argv' -e 'display notification (item 2 of argv) with title (item 1 of argv) sound name "Basso"' -e 'end run' -- "🚨 Gate FAIL" "${SF}: ${DETAIL} — KHÔNG ĐƯỢC nói 'xong'"
     ;;
   gap)
-    osascript -e "display notification \"Câu hỏi cần bạn trả lời: ${DETAIL}\" with title \"⚠ REQUIREMENT-GAP\" sound name \"Ping\""
+    osascript -e 'on run argv' -e 'display notification (item 2 of argv) with title (item 1 of argv) sound name "Ping"' -e 'end run' -- "⚠ REQUIREMENT-GAP" "Câu hỏi cần bạn trả lời: ${DETAIL}"
     ;;
   story-complete)
     osascript -e "display notification \"Story hoàn thành! Merge main khi sẵn sàng\" with title \"🏁 STORY-COMPLETE\" sound name \"Hero\""
     ;;
   *)
-    osascript -e "display notification \"${DETAIL}\" with title \"${SF}\""
+    osascript -e 'on run argv' -e 'display notification (item 2 of argv) with title (item 1 of argv)' -e 'end run' -- "$SF" "$DETAIL"
     ;;
 esac

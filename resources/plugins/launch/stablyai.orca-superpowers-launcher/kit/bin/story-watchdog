@@ -9,6 +9,7 @@
 # Usage:
 #   story-watchdog                      1 pass — diagnose + notify stall mới
 #   story-watchdog --auto-resume        1 pass + GỬI resume prompt cho SF stalled
+#   story-watchdog --enforce-done       Done mà verify ≠ COMPLETE → tự hạ In Progress
 #   story-watchdog --with-index         1 pass + memory index hook (fail-safe — lỗi index không đổi exit code)
 #   story-watchdog --loop 30            tự lặp mỗi 30 phút (nohup pattern)
 #   story-watchdog --install-cron       đăng ký crontab entry (mỗi 30', idempotent)
@@ -31,6 +32,8 @@ IDX_HOOK="$DIR/story-memory-index-hook"
 # chạy sau khi story-validate OK; bracket hỏng thì SKIP, không đoán)
 VALIDATE="$DIR/story-validate"
 [ -x "$VALIDATE" ] || VALIDATE="$HOME/.claude/bin/story-validate"
+VERIFY="$DIR/story-verify"
+[ -x "$VERIFY" ] || VERIFY="$HOME/.claude/bin/story-verify"
 
 # cron PATH tối giản — resolve production binary + runtime dev-trước-prod-sau
 ORCA_BIN="${ORCA_BIN:-/opt/homebrew/bin/orca}"
@@ -47,6 +50,7 @@ orca() {
 STATE_FILE="${STATE_FILE:-$HOME/.claude/.story-watchdog-state}"
 STALL_HOURS=2
 AUTO_RESUME=0
+ENFORCE_DONE=${ENFORCE_DONE:-0}
 WITH_INDEX=0
 LOOP_MIN=0
 LAUNCH_NEXT=0
@@ -193,6 +197,16 @@ except: pass" 2>/dev/null
 #    Chỉ launch SF trong bracket ĐÃ DUYỆT (có linear ID) — không tự ý mở scope.
 launch_next() { # DRY_RUN=1 → chỉ in kế hoạch
   local launched=0
+  # distributed passthrough (B4): enabled → thêm --claim (machine-id do
+  # story-launch tự resolve từ config — watchdog không copy flags); disabled =
+  # lời gọi y nguyên bản cũ (zero-diff). File-read local, không call mạng.
+  local claim_arg=""
+  if [ -f "$DIR/story-distributed-claim" ]; then
+    # shellcheck disable=SC1091
+    . "$DIR/story-distributed-claim" 2>/dev/null || true
+    distributed_config_load || true
+    [ "$(distributed_enabled)" = "1" ] && claim_arg="--claim"
+  fi
   # cap launch mỗi pass — tránh nổ nhiều SF song song (rate limit, review dồn, port xung đột)
   local max_launch="${STORY_WATCHDOG_MAX_LAUNCH:-2}"
   local roots=()
@@ -294,9 +308,9 @@ except: print('')" 2>/dev/null)
         fi
         local launch_out
         if [ "$DRY_RUN" = 1 ]; then
-          launch_out=$("$LAUNCH" --sf "$sfnum" --bracket "$bf" --dry-run 2>&1 | head -3)
+          launch_out=$("$LAUNCH" --sf "$sfnum" --bracket "$bf" $claim_arg --dry-run 2>&1 | head -3)
         else
-          launch_out=$("$LAUNCH" --sf "$sfnum" --bracket "$bf" 2>&1)
+          launch_out=$("$LAUNCH" --sf "$sfnum" --bracket "$bf" $claim_arg 2>&1)
         fi
         echo "$launch_out" | sed 's/^/    /'
         if echo "$launch_out" | grep -q "LAUNCHED"; then
@@ -320,7 +334,117 @@ except: print('')" 2>/dev/null)
   return $launched
 }
 
+# ── heartbeat (B4): renew claim của MÁY MÌNH cho SF phiên đang sống — IFF
+# terminal verdict RUNNING/BUSY (từ story-resume --check — nguồn liveness có sẵn,
+# không xác định được → KHÔNG renew) VÀ worktree có commit mới trong TTL.
+# ≤1 mutation renew/SF/pass. Renew fail → log + chạy tiếp (fail-open, không đổi
+# exit watchdog). Disabled = return sớm — 0 call, zero-diff.
+heartbeat_renew() {
+  [ -f "$DIR/story-distributed-claim" ] || return 0
+  # shellcheck disable=SC1091
+  . "$DIR/story-distributed-claim" 2>/dev/null || return 0
+  distributed_config_load || return 0
+  [ "$(distributed_enabled)" = "1" ] || return 0
+  # dry-run chỉ xem — renew là mutation, không được chạy khi --dry-run (P1-1)
+  [ "$DRY_RUN" = 1 ] && { echo "dry-run: skip heartbeat renew"; return 0; }
+  local ttl mid check_out sf verdict sfnum repob repo wt linear cinfo cmid ccid cn ci
+  local roots=() nroots=0 p rl
+  ttl="$(distributed_config_get claimTtlMinutes)"
+  mid="$(distributed_config_get machineId)"
+  check_out=$("$RESUME" --check --stall-hours "$STALL_HOURS" 2>/dev/null)
+  [ -n "$check_out" ] || return 0
+  # repo roots — pattern launch_next (orca repo list + ~/orca/projects/*)
+  rl=$(orca repo list --json 2>/dev/null | python3 -c "
+import json,sys
+try:
+    for r in json.load(sys.stdin).get('result',{}).get('repos',[]):
+        if r.get('path'): print(r['path'])
+except: pass" 2>/dev/null)
+  while IFS= read -r p; do [ -n "$p" ] && { roots+=("$p"); nroots=$((nroots+1)); }; done <<< "$rl"
+  for p in "$HOME"/orca/projects/*; do [ -d "$p" ] && { roots+=("$p"); nroots=$((nroots+1)); }; done
+  [ "$nroots" -gt 0 ] || return 0
+  printf '%s\n' "$check_out" | while IFS='|' read -r sf verdict _; do
+    case "$verdict" in RUNNING|BUSY) ;; *) continue ;; esac
+    sfnum=$(printf '%s' "$sf" | grep -oE '[0-9]+' | head -1)
+    [ -n "$sfnum" ] || continue
+    for repo in ${roots[@]+"${roots[@]}"}; do
+      repob=$(basename "$repo")
+      wt=$(ls -d "$HOME/orca/workspaces/$repob/sf-$sfnum-"* 2>/dev/null | head -1)
+      [ -d "$wt" ] || continue
+      # commit mới trong TTL trên branch worktree? không có → có thể agent đứng
+      # im — không renew (nhường takeover logic tự phán)
+      git -C "$wt" log --since "$ttl minutes ago" -1 --oneline 2>/dev/null | grep -q . || continue
+      for bf in "$repo"/docs/superpowers/brackets/*.md; do
+        [ -f "$bf" ] || continue
+        grep -q "^## SF-$sfnum[ :]" "$bf" 2>/dev/null || continue
+        linear=$(awk -v sfx="SF-$sfnum" '
+          $0 ~ "^## " sfx "([ :]|$)" { in_sf = 1; next }
+          /^## / { in_sf = 0 }
+          in_sf && /^linear:/ { gsub(/.*linear: /,""); print; exit }' "$bf")
+        [ -n "$linear" ] || continue
+        # read fail phải lộ ra — im lặng khiến heartbeat chết mà không ai biết
+        cinfo=$(claim_read "$linear") || { echo "$(date '+%H:%M') heartbeat: claim read fail $sf" >&2; continue; }
+        cmid=$(printf '%s' "$cinfo" | cut -f1)
+        [ "$cmid" = "$mid" ] || continue   # chỉ renew claim của máy mình
+        ccid=$(printf '%s' "$cinfo" | cut -f3)
+        cn=$(printf '%s' "$cinfo" | cut -f6)
+        ci=$(printf '%s' "$cinfo" | cut -f5)
+        if claim_renew "$linear" "$ccid" "$mid" "$cn" "$ci" >/dev/null 2>&1; then
+          echo "$(date '+%H:%M') heartbeat: $sf renew ($linear)"
+        else
+          echo "$(date '+%H:%M') heartbeat: $sf renew FAIL — tiếp tục (fail-open)"
+        fi
+        break 2   # bracket đầu khớp là đủ — ≤1 renew/SF/pass
+      done
+      break
+    done
+  done
+  return 0
+}
+
+# ── enforce-done (FI-458 team discipline): Linear Done mà story-verify verdict
+# ≠ COMPLETE → tự hạ về In Progress + notify (chống Done-early TẠI NGUỒN).
+enforce_done_pass() {
+  local wts=() ws wt sf linear sfnum st vj vv demoted=0
+  for ws in "$HOME"/orca/workspaces/*/; do
+    for wt in "$ws"sf-*/; do
+      [ -d "$wt" ] && git -C "$wt" rev-parse --git-dir >/dev/null 2>&1 && wts+=("${wt%/}")
+    done
+  done
+  local linear_id
+  for wt in "${wts[@]}"; do
+    sf=$(basename "$wt")
+    linear_id=""
+    sfnum=$(echo "$sf" | grep -oE '[0-9]+' | head -1)
+    for bf in "$wt"/docs/superpowers/brackets/*.md; do
+      [ -f "$bf" ] || continue
+      grep -q "^## SF-$sfnum[ :]" "$bf" 2>/dev/null || continue
+      linear_id=$(awk -v sfx="SF-$sfnum" '$0 ~ "^## " sfx "([ :]|$)" { in_sf=1; next } /^## SF-/ { in_sf=0 } in_sf && /^linear:/ { gsub(/.*linear: /,""); print; exit }' "$bf" 2>/dev/null)
+      [ -n "$linear_id" ] && break
+    done
+    [ -n "$linear_id" ] || continue
+    st=$(linear_state "$linear_id")
+    [ "$st" = "Done" ] || continue
+    vj=$("$VERIFY" "$sf" --json 2>/dev/null)
+    vv=$(printf '%s' "$vj" | python3 -c "
+import json, sys
+try:
+    rows = json.load(sys.stdin)
+    print(next((r.get('verdict','?') for r in rows if r.get('sf') == '$sf'), '?'))
+except Exception: print('UNKNOWN')")
+    if [ "$vv" != "COMPLETE" ]; then
+      "$ORCA_BIN" linear status set "$linear_id" --to "In Progress" --json >/dev/null 2>&1 || true
+      notify "watchdog --enforce-done" "$sf Done bị hạ về In Progress — story-verify verdict: $vv (Done trước merge = INCOMPLETE)"
+      echo "$(date '+%H:%M') enforce-done: $sf Done → In Progress (verdict=$vv)"
+      demoted=$((demoted+1))
+    fi
+  done
+  [ "$demoted" -gt 0 ] && echo "$(date '+%H:%M') enforce-done: hạ $demoted Done về In Progress"
+  return 0
+}
+
 one_pass() {
+  [ "$ENFORCE_DONE" = 1 ] && enforce_done_pass
   local stalled=0
   while IFS='|' read -r sf verdict detail; do
     [ -n "$sf" ] || continue
@@ -352,6 +476,8 @@ one_pass() {
     esac
     save_state "$sf" "$verdict"
   done < <("$RESUME" --check --stall-hours "$STALL_HOURS" 2>/dev/null)
+  # heartbeat renew claim (B4) — tự guard enabled; disabled = không đụng gì
+  heartbeat_renew
   # story tự TIẾN: SF deps Done hết → launch tier kế (kể cả không session nào sống)
   if [ "$LAUNCH_NEXT" = 1 ] || [ "$DRY_RUN" = 1 ]; then
     echo "── launch-next$( [ "$DRY_RUN" = 1 ] && echo ' (DRY-RUN)' ):"
@@ -365,7 +491,7 @@ one_pass() {
 }
 
 cron_next_entry() { # entry cron chuẩn — pure echo (test độc lập được, không đụng crontab)
-  echo "*/30 * * * * $HOME/.claude/bin/story-watchdog --auto-resume --with-index >> $HOME/.claude/story-watchdog.log 2>&1 # story-team-kit"
+  echo "*/30 * * * * $HOME/.claude/bin/story-watchdog --auto-resume --with-index --enforce-done >> $HOME/.claude/story-watchdog.log 2>&1 # story-team-kit"
 }
 
 install_cron() {
@@ -398,6 +524,7 @@ install_cron() {
 while [ $# -gt 0 ]; do
   case "$1" in
     --auto-resume) AUTO_RESUME=1 ;;
+    --enforce-done) ENFORCE_DONE=1 ;;
     --with-index) WITH_INDEX=1 ;;
     --launch-next) LAUNCH_NEXT=1 ;;
     --dry-run) DRY_RUN=1 ;;

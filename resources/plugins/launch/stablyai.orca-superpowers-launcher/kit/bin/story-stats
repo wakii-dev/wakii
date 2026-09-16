@@ -43,7 +43,10 @@ except Exception: pass
 for p in (HOME / "orca/projects").glob("*"):
     if p.is_dir(): roots.add(str(p))
 
-epic_filter = sys.argv[1] if len(sys.argv) > 1 else None
+args = sys.argv[1:]
+QUALITY = "--quality" in args
+if "--quality" in args: args.remove("--quality")
+epic_filter = args[0] if args else None
 rows = []
 for root in sorted(roots):
     bdir = Path(root) / "docs/superpowers/brackets"
@@ -90,6 +93,16 @@ for root in sorted(roots):
 
 if not rows:
     print("Không tìm thấy SF nào (cần bracket đã approve + linear IDs)."); sys.exit(0)
+
+# ── QUALITY (team discipline v1): đếm Done vs chưa-merge (B4 fail = Done sớm) ──
+if QUALITY:
+    done_rows = [r for r in rows if r.get("state") == "Done"]
+    print(f"QUALITY: {len(done_rows)} SF Done / {len(rows)} SF tracked")
+    for r in done_rows:
+        print(f"  ✅ {r['sf']} ({r['epic']}) — {r['linear']}")
+    print("Merge-check chi tiết: chạy story-verify từng SF (B4 PASS = merge xong).")
+    sys.exit(0)
+
 
 print(f"{'SF':<6} {'linear':<8} {'state':<12} {'wall':>7} {'tasks':>7} {'commits':>8} {'events':>7}  story")
 print("─" * 78)

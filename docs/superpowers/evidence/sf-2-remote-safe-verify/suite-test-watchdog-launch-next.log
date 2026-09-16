@@ -1,0 +1,14 @@
+── T1: bracket hợp lệ → dry-run thấy SẴN SÀNG LAUNCH đúng SF ──
+PASS: T1 ok.md: sf-1 (deps —, đã approve) vào kế hoạch launch
+── T1b: SF có deps mà Linear state không verify được → GIỮ LẠI (fail-safe) ──
+PASS: T1b ok.md: sf-3 không có Linear key → chờ, không launch mù
+── T2: SF chưa approve (linear rỗng) → KHÔNG vào kế hoạch ──
+PASS: T2 ok.md: sf-2 chưa approve bị loại khỏi launch plan
+── T3: bracket INVALID → bị SKIP với cảnh báo validator ──
+PASS: T3 bad.md: skip + nêu lý do INVALID
+── T4: chi tiết lỗi chỉ in ở DRY-RUN (fail đầu tiên có mặt) ──
+PASS: T4 dry-run in chi tiết fails (SF-1 thiếu Tier)
+── T5: validator biến mất → fail-closed, không launch gì ──
+PASS: T5 không validator: cảnh báo + 0 launch plan
+
+Kết quả: 6 PASS · 0 FAIL
