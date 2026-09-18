@@ -253,6 +253,27 @@ console.log('\n== A11 nhiễm chéo sf-10 vs sf-1 (exact prefix) ==')
   rmSync(dir, { recursive: true, force: true })
 }
 
+console.log('\n== A12 section ### Deterministic → kênh facts riêng (2.14.3) ==')
+{
+  const dir = tempDir('a12')
+  const rd = join(dir, 'reviews')
+  const DETSEC = `### Deterministic (facts từ oxlint/tc — không tự đánh giá lại)\n` +
+    `- [oxlint] src/a.ts:12 no-unused-vars\n- [tc] src/b.ts:3 TS2304 Cannot find name\n`
+  const AFTERSEC = `### NEEDS VERIFICATION (confidence:low — không tính verdict)\n` +
+    `- [c.ts:9] nghi ngờ chưa verify\n`
+  writeReviews(rd, {
+    'code-reviewer-sf-det.md': `# Review\n${T1}${DETSEC}${AFTERSEC}\nVERDICT: CHANGES-REQUESTED — P1\n`,
+  })
+  const r = runFuse('sf-det', rd)
+  check('A12', 'exit 0', r.code === 0, `code=${r.code}`)
+  check('A12', 'facts có mục DETERMINISTIC riêng', r.out.includes('══ DETERMINISTIC'), r.out.slice(0, 600))
+  check('A12', 'facts KHÔNG rơi [unparsed]', !r.out.includes('[unparsed] - [oxlint]'), '')
+  check('A12', 'bullet SAU heading khác vẫn unparsed', r.out.includes('[unparsed] - [c.ts:9]'), r.out.slice(0, 600))
+  check('A12', 'counts parsed=1 unparsed=1 deterministic=2', /parsed=1 unparsed=1 deterministic=2/.test(r.out), r.out.slice(-200))
+  check('A12', 'invariant 4/4 (1 parsed + 1 unparsed + 2 facts)', /in_ra=4\/4/.test(r.out), r.out.slice(-200))
+  rmSync(dir, { recursive: true, force: true })
+}
+
 // =====================================================================
 console.log('\n== B3 regex-assert: VERDICT line byte-stable trong OUTBOX mới ==')
 {

@@ -13,29 +13,37 @@
 #   G1  Deps trỏ tới SF tồn tại; không self-dep
 #   G2  Không cycle; Tier của SF = 1 + max(Tier các deps) khi có deps
 #   G3  Không trùng SF-N, không trùng linear ID giữa các SF
+#   G4  (--linear) linear ID tồn tại thật trong Linear — thiếu key/mạng chết
+#       → WARN skip, không fail format verdict
 #
 # Verdict: OK · INVALID (có FAIL). WARN không chặn.
 #
-# Usage: story-validate <bracket-file> [--json]
+# Usage: story-validate <bracket-file> [--json] [--linear]
 # Exit: 0 hợp lệ · 1 có FAIL · 2 usage/lỗi đọc file
 set -u
 
 FILE=""
 JSON_OUT=0
+LINEAR=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --json) JSON_OUT=1 ;;
+    --linear) LINEAR=1 ;;
     -*) echo "Unknown: $1"; exit 2 ;;
     *) FILE="$1" ;;
   esac
   shift
 done
-[ -n "$FILE" ] && [ -f "$FILE" ] || { echo "Usage: story-validate <bracket-file> [--json]"; exit 2; }
+[ -n "$FILE" ] && [ -f "$FILE" ] || { echo "Usage: story-validate <bracket-file> [--json] [--linear]"; exit 2; }
 
-python3 - "$FILE" "$JSON_OUT" <<'PYEOF'
-import re, sys, json
+python3 - "$FILE" "$JSON_OUT" "$LINEAR" <<'PYEOF'
+import os
+import re
+import sys
+import json
+import urllib.request
 
-path, json_out = sys.argv[1], sys.argv[2] == "1"
+path, json_out, check_linear = sys.argv[1], sys.argv[2] == "1", sys.argv[3] == "1"
 try:
     text = open(path, encoding="utf-8").read()
 except Exception as e:
@@ -106,6 +114,35 @@ for n in set(n for n in nums if nums.count(n) > 1):
 linears = [sf["fields"].get("linear") for sf in sfs.values() if sf["fields"].get("linear")]
 for lid in set(l for l in linears if linears.count(l) > 1):
     fail(f"G3: linear ID {lid} dùng cho nhiều SF")
+
+# G4 — --linear: ID tồn tại thật trong Linear (học gitdiagram: graph checked
+# against the real repo — link sai format thì G3 bắt, link không tồn tại thì
+# chỉ reality-check bắt được). Thiếu key/mạng chết → WARN skip, không fail
+# format verdict.
+if check_linear:
+    ids = sorted(set(linears))
+    if ids:
+        key = os.environ.get("LINEAR_API_KEY", "")
+        if not key:
+            key_path = os.path.expanduser("~/.claude/.linear-key")
+            key = open(key_path, encoding="utf-8").read().strip() if os.path.exists(key_path) else ""
+        if not key:
+            warn("G4: --linear bỏ qua — không có LINEAR_API_KEY / ~/.claude/.linear-key")
+        else:
+            q = ("query($ids:[String!]!){issues(filter:{or:[{identifier:{in:$ids}},"
+                 "{id:{in:$ids}}]}){nodes{identifier id}}}")
+            try:
+                req = urllib.request.Request(
+                    "https://api.linear.app/graphql",
+                    data=json.dumps({"query": q, "variables": {"ids": ids}}).encode(),
+                    headers={"Authorization": key, "Content-Type": "application/json"})
+                nodes = json.load(urllib.request.urlopen(req, timeout=15))["data"]["issues"]["nodes"]
+                found = {n.get("identifier") or n.get("id") for n in nodes} | {n.get("id") for n in nodes}
+                for lid in ids:
+                    if lid not in found:
+                        fail(f"G4: linear ID {lid} không tồn tại trong Linear")
+            except Exception as e:
+                warn(f"G4: --linear bỏ qua — Linear lỗi: {e}")
 
 # G1/G2 — deps, tiers, cycles
 def norm_dep(d):

@@ -97,7 +97,9 @@ Trước khi review "bằng mắt": chạy/đọc output deterministic trên cha
 tool = FACTS — ghi thẳng vào report mục `### Deterministic` (không re-đánh giá,
 không bỏ). Review của bạn chỉ soi phần tool KHÔNG thấy: logic, design, scope,
 test-miss, contract. Không duplicate finding tool đã bắt (trừ khi severity tool
-đánh sai — nêu lý do).
+đánh sai — nêu lý do). Heading `### Deterministic` giữ NGUYÊN tên — là marker
+story-review-fuse (≥2.14.3): bullets dưới heading là kênh facts riêng, không cần
+dịch sang template P/confidence.
 
 ## Precision policy (cân coverage pass — precision-over-recall, open-code-review)
 
