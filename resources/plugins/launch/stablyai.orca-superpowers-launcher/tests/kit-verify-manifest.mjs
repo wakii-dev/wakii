@@ -52,11 +52,15 @@ ok('entry story-report-validate trong provides', kitJson.provides.some(e => e.na
 ok('entry story-surface-lint trong provides', kitJson.provides.some(e => e.name === 'story-surface-lint' && e.type === 'bin'))
 ok('entry story-kb trong provides', kitJson.provides.some(e => e.name === 'story-kb' && e.type === 'bin'))
 // Review đa chiều (2.14.0): coverage + position-verify + meta-test trong code-reviewer def
+// Input + policy (2.14.1, học tiếp open-code-review): deterministic-first + precision + adaptive depth
 {
   const cr = readFileSync(join(kitRoot, 'agents', 'code-reviewer.md'), 'utf8')
   ok('code-reviewer: coverage pass', cr.includes('Coverage pass'))
   ok('code-reviewer: position-verify pass', cr.includes('Position-verify pass'))
   ok('code-reviewer: meta-test rule', cr.includes('Meta-test rule'))
+  ok('code-reviewer: deterministic-first pass', cr.includes('Deterministic-first pass'))
+  ok('code-reviewer: precision policy', cr.includes('Precision policy'))
+  ok('code-reviewer: adaptive depth', cr.includes('Adaptive depth'))
 }
 ok('migration-guide-template cạnh bracket-template', existsSync(join(kitRoot, 'migration-guide-template.md')))
 ok('entry story-lesson trong provides', kitJson.provides.some(e => e.name === 'story-lesson' && e.type === 'bin'))
