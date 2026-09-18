@@ -27,6 +27,15 @@ describe('maybeWrapTerminalSendTextForTuiAgent', () => {
     }
   })
 
+  it('passes a single-line send raw without paste markers (#59)', () => {
+    const routed = maybeWrapTerminalSendTextForTuiAgent(
+      { text: 'git status', enter: true },
+      'claude'
+    )
+    expect(routed.text).toBe('git status')
+    expect(routed.enter).toBe(true)
+  })
+
   it('leaves non-TUI targets raw', () => {
     const action = { text: multiline, enter: true }
     expect(maybeWrapTerminalSendTextForTuiAgent(action, null)).toBe(action)

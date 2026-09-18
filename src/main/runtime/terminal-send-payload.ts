@@ -30,6 +30,13 @@ export function maybeWrapTerminalSendTextForTuiAgent(
   if (!action.text || !isTuiAgent(agent)) {
     return action
   }
+  // Why: strip ONE trailing terminator before the multiline probe so a
+  // submit-terminated single line stays raw (mirror buildStartupCommandSubmission);
+  // the terminator itself is preserved verbatim in the output.
+  const probe = action.text.replace(/(\r\n|\r|\n)$/, '')
+  if (!/[\n\r]/.test(probe)) {
+    return { ...action }
+  }
   // Why: a TUI agent submits on every newline, so a raw multi-line send reaches
   // it as fragmented prompts. Bracketed paste keeps the text atomic until the
   // caller's own Enter suffix — same contract as the agent-prompt path.
