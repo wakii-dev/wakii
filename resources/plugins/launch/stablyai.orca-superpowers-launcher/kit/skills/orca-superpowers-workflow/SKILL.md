@@ -709,6 +709,13 @@ fi
 
 **Rolling review theo nhóm (learned 2026-08-28 FI-190, từ bài học FI-187):** SF nhiều tasks (≥8) KHÔNG dồn 1 review lớn cuối — chia tasks theo nhóm 4-5 cùng đường (ví dụ nhóm watchdog-path, nhóm fusion-path) và dispatch code-reviewer ĐỘC LẬP trên diff nhóm đó ngay khi nhóm xong, song song với việc executor làm nhóm kế (khác file). Reviewer chỉ soi commit list cố định của nhóm (qua `git show <hash>`, không đọc working tree — chống lẫn commit nhóm đang chạy). Fix theo verdict từng nhóm trước khi merge; đừng để agent đứng chờ 30+ phút một review khổng lồ.
 
+**Review đa chiều — coverage + position-verify + meta-test (learned 2026-09-18, học từ alibaba/open-code-review + FI-458 retro):**
+1. **Coverage pass**: mỗi file trong diff phải có finding HOẶC explicit `reviewed, clean` — reviewer "cut corners" bỏ im lặng file là failure mode #1 của review-driven-by-language. File không nhắc = review chưa xong.
+2. **Position-verify pass**: finding `file:line` phải grep-verify tại vị trí trước khi xuất; sai → sửa hoặc đánh dấu `[unpositioned]` + nêu hàm/tên. Finding sai line nguy hiểm hơn không line.
+3. **Meta-test rule**: fix P0/P1 kèm test tái được bug đó — test phải ĐỎ trên code cũ (stash fix), XANH trên code mới. Test pass cả 2 = tautology (bài học SC4b `x===true || x===false` luôn pass).
+4. **Flaky tracker**: test fail 1 lần không tái hiện → ghi audit log chờ; tái diễn ≥2 lần cùng cause → bug, không bật ignore.
+5. **Combo integration check**: khi 2 story đổi cùng surface giao nhau (vd A deny Write + B đọc file A ghi), chạy 1 case kết hợp A+B trước merge — mỗi story xanh riêng KHÔNG bảo đảm combo xanh (bài học GH-42×GH-32 OUTBOX).
+
 **When:** Verification checkpoint reached (as defined in plan). **Precondition:** an Orca `taskId` exists (from Bridge 3); if not, fall back to chat approval.
 
 ```bash

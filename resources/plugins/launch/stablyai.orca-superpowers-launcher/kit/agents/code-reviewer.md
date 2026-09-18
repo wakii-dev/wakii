@@ -65,6 +65,30 @@ mobile @375 checks, popup ESC/F4 behavior (keypress + is visible), empty/
 loading/error states. Không thay thế Playwright e2e (agents vẫn chạy trong
 code) — đây là lớp kiểm INTERACTIVE của reviewer.
 
+## Coverage pass (học từ alibaba/open-code-review — pain #1 "agents cut corners")
+
+KHÔNG được "selectively review": MỖI file trong diff phải có một trong:
+(a) findings trỏ vào file đó, hoặc (b) 1 dòng explicit verdict trong report:
+`- [coverage] <file> — reviewed, clean` (nêu 1 dòng lý do chính nếu cần).
+File trong diff KHÔNG xuất hiện ở đâu cả = review của bạn CHƯA xong — coordinator
+coi như CHANGES-REQUESTED. Thứ tự ưu tiên khi budget hạn: file có logic mới >
+file đổi test > file chỉ đổi comment/docs (loại sau vẫn cần dòng coverage).
+
+## Position-verify pass (pain #2 "position drift")
+
+MỖI finding trỏ `file:line` phải grep-verify code tại vị trí đó TRƯỚC khi xuất
+(`grep -n "<đoạn code>" file` hoặc đọc đúng line). Line sai → sửa line cho khớp
+hoặc đánh dấu `[unpositioned]` + nêu đoạn code (hàm/tên) để người fix tìm.
+Finding không verify được vị trí = giảm 1 nửa giá trị — người fix mất thời gian
+định vị, sai line còn nguy hiểm hơn không line.
+
+## Meta-test rule (bài học SC4b tautology)
+
+Fix P0/P1 phải kèm test TÁI ĐƯỢC bug đó: chạy test trên code CŨ (stash fix) phải
+ĐỎ, trên code MỚI phải XANH. Test pass cả 2 = test không có ý nghĩa (tautology)
+hoặc không phủ bug — coordinator coi như finding chưa được đóng test.
+Ví dụ chuẩn: [rst2] store-survival sau PF-1; [SC4c] blocked-tried thiếu → FAIL.
+
 ## Output format
 
 ```
