@@ -24,6 +24,7 @@
 import directives from './directives.json' with { type: 'json' }
 import { execFile as execFileCb } from 'node:child_process'
 import { promisify } from 'node:util'
+import { createHash } from 'node:crypto'
 import { accessSync, readFileSync, existsSync, mkdirSync, readdirSync, cpSync, rmSync, writeFileSync, chmodSync, statSync, renameSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname } from 'node:path'
@@ -497,6 +498,32 @@ export function kitBinCatalog(kitRoot = KIT_ROOT) {
   } catch { return null }
 }
 
+// Hash cây kit/ — chặn drift "đổi file mà không bump": marker skip-copy theo
+// version-only từng để ~/.claude stale (2.10.1-era); rehash thiếu từng vỡ
+// launch-content 1.4.203. Sort path + sha256 16 hex, deterministic cross-platform.
+// kit.json loại khỏi hash (tự chứa hash đó).
+export function computeKitHash(kitRoot = KIT_ROOT) {
+  const skip = new Set(['__pycache__', '.git', 'node_modules'])
+  const files = []
+  const stack = ['']
+  while (stack.length) {
+    const rel = stack.pop()
+    for (const ent of readdirSync(join(kitRoot, rel), { withFileTypes: true })) {
+      if (skip.has(ent.name) || ent.name.endsWith('.pyc')) continue
+      const r = rel ? `${rel}/${ent.name}` : ent.name
+      if (r === 'kit.json') continue
+      if (ent.isDirectory()) stack.push(r)
+      else if (ent.isFile()) files.push(r)
+    }
+  }
+  files.sort()
+  const h = createHash('sha256')
+  for (const rel of files) {
+    h.update(rel); h.update('\0'); h.update(readFileSync(join(kitRoot, rel))); h.update('\0')
+  }
+  return h.digest('hex').slice(0, 16)
+}
+
 // Neovim lsp._unsupported_method: lỗi chỉ đích danh capability thiếu, chặn
 // TRƯỚC dispatch — không ENOENT vô tên giữa đường. catalog vắng → không cấm.
 export function assertCapability(name, catalog = kitBinCatalog()) {
@@ -724,6 +751,9 @@ function validateKitManifest(manifest, kitRoot) {
   }
   const problems = []
   if (typeof manifest.version !== 'string' || !manifest.version.trim()) problems.push('kit.json thiếu version')
+  if (manifest.kitHash !== undefined && !/^[0-9a-f]{8,64}$/.test(String(manifest.kitHash).trim())) {
+    problems.push('kit.json kitHash phải là hex 8-64 ký tự (computeKitHash)')
+  }
   if (!Array.isArray(manifest.provides)) return problems.concat(['kit.json thiếu provides[] (mảng)'])
   const declared = new Set()
   for (const e of manifest.provides) {
@@ -898,7 +928,11 @@ export function installKit(orca, { root, kitRoot: kitRootOverride } = {}) {
     }
     const claude = root || join(process.env.HOME || '', '.claude')
     const marker = join(claude, '.story-team-kit-version')
-    if (existsSync(marker) && readFileSync(marker, 'utf8').trim() === String(manifest.version)) return true
+    // Marker `version[:kitHash]` — hash lệch (đổi kit mà không bump version) cũng
+    // phải recopy, không skip. kitHash vắng (kit cũ) → so version như trước.
+    const kitHash = typeof manifest.kitHash === 'string' ? manifest.kitHash.trim() : ''
+    const expectedMarker = kitHash ? `${manifest.version}:${kitHash}` : String(manifest.version)
+    if (existsSync(marker) && readFileSync(marker, 'utf8').trim() === expectedMarker) return true
     for (const name of ['skills', 'agents', 'bin']) {
       const src = join(kitRoot, name)
       if (!existsSync(src)) continue
@@ -914,7 +948,7 @@ export function installKit(orca, { root, kitRoot: kitRootOverride } = {}) {
       }
     }
     mkdirSync(claude, { recursive: true })
-    writeFileSync(marker, String(manifest.version))
+    writeFileSync(marker, expectedMarker)
     // Hooks auto-install (SF-2): merge 3 entries vào settings.json trong Node
     // (KHÔNG spawn bash bin từ worker — runProcess seam risk trên Windows).
     // Fail không chặn install: bin đã copy, hook wrapper tự nuốt missing-bin.

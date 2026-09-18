@@ -75,6 +75,14 @@ KHI GẶP LỖI:
 
 **Verify = TÔI mở browser, TÔI nhìn bằng mắt, TÔI chụp screenshot, TÔI thấy nó hoạt động. Không agent, không DOM query, không tests report. TÔI.**
 
+> Fallback khi CDP `Page.captureScreenshot` timeout (window Orca không surface — tái diễn
+> SF-2/SF-24/SF-1): (learned 2026-09-14 FI-464) VISUAL tier vẫn phải là PIXEL THẬT — chụp
+> headless Chrome trên CÙNG build/story đang verify (được phép: nó là ảnh render thật, tôi
+> tự Read ảnh), KHÔNG thay bằng DOM query; DOM + FLOW tiers vẫn chạy qua Orca browser
+> (eval + `keypress` — keyboard flow PHẢI dùng trusted CDP input, synthetic
+> `new KeyboardEvent` không lên được document-level listener của React/portals). Khai báo
+> fallback trung thực trong evidence + nhờ user nhìn thêm khi có cơ hội.
+
 > Bài học 30/8: tôi code auth system, 205/205 tests pass, reviewer approve,
 > merge main, nói user "thử đi" — user KHÔNG ĐĂNG NHẬP ĐƯỢC. Vì tôi không
 > bao giờ mở browser để tự thử. Tests kiểm MẢNH RIÊNG — chỉ browser kiểm
@@ -411,6 +419,12 @@ HOẶC bracket ghi `Design: figma`. Bắt đầu bằng `figma-orientation` (rou
   # 6. Chỉ khi MỌI bước qua → mới được báo "UI hoạt động"
   ```
 
+  **Fallback plugin Electron (khi app-build vỡ/stale — learned 2026-09-14 FI-461):** panel.html thật
+  trong Chromium (headless) + bridge `page.exposeBinding` gọi op THẬT từ main.mjs (named exports có
+  seams) + kit bin thật trên máy — chỉ transport Electron bị mock. Shape-mismatch panel↔worker
+  (vd worker trả `{config:{...}}` lồng, panel đọc top-level) KHÔNG unit test nào bắt được — walkthrough
+  op-thật là gate bắt loại bug này. Còn app-build sống → ưu tiên e2e fixture chuẩn.
+
   **Checklist F7 (phải PASS từng dòng):**
   - [ ] App mở không lỗi console (F12 network tab sạch)
   - [ ] Login → chuyển trang đúng (nếu có auth)
@@ -686,6 +700,8 @@ else
 fi
 ```
 
+**DAG wiring safety (learned 2026-09-14 FI-459 — 2 runs mồ côi vì deps wire bug):** `--deps` nhận JSON array LITERAL (`'["task_x","task_y"]'`) — không build qua chuỗi lồng `sed`/nhiều `$()` và không capture id qua hàm vừa `echo` log (biến sẽ chứa log-text, không phải id). Sau khi tạo: verify bằng `task-list` — đếm deps mỗi task khớp expect + status `pending` (có deps) vs `ready` (không deps). Không có `run-delete` — run nhầm → mark từng task `failed` với reason, tạo run mới.
+
 **Plan-critic gate (optional but recommended when DAG has 5+ tasks, MANDATORY in autonomous):** before Phase 4, dispatch the `plan-critic` agent (subagent_type=`plan-critic`, color green). Brief it with: plan.md content + task DAG (IDs + titles + deps) + spec.md + Phase 0 touch map. It returns P0/P1/P2 critique (missing tasks, wrong dep edges, cap-4 violations, wrong granularity, spec-coverage gaps). On FIX-P0-FIRST / REWORK-PLAN → revise plan/DAG via writing-plans-linear, re-critique. **Rework cap: 2 cycles** — on the 3rd critique of the same plan, STOP and summarize the recurring critique + what changed each round, and ask the user. On PROCEED → Phase 4. For plans with <5 tasks, skip (no DAG to review). **Force-on contract:** `Plan critic: ON.` token (see Token Contract Table).
 
 **Next:** offer execution choice (delegate via Orca `worker-start` for parallel/isolated tasks, or execute inline).
@@ -705,9 +721,16 @@ fi
 
 **Test rule (before gate):** before requesting gate approval on a task, run the repo's test suite for the touched surface — **at minimum the unit tests for files you changed**, plus any integration test that exercises the new code path. Report what you ran + pass/fail in the gate question. If the repo has no tests for the surface, say so explicitly ("no existing test coverage for X; manually verified Y") rather than implying green. Coverage is a goal, not a gate — don't block a task for missing coverage, but do flag it. Khi repo có `~/.claude/bin/story-verify`: cuối run, ghi evidence đúng convention B1+ — `docs/superpowers/evidence/<sf-slug-đúng-như-trong-bracket>/test-run.txt` (check tên bằng `ls` bracket thay vì tự đặt), chứa hash HEAD hoặc HEAD~1 + dòng `tdd: RED→GREEN` (hoặc `tdd: skipped-tdd: <lý do>`) (learned 2026-09-13 FI-440: sai slug `sf-23` thay vì `sf-23-log-service` → gate FAIL 3 vòng, 3 lần re-merge chỉ để sửa evidence).
 
-**Code-review between tasks (optional but recommended for non-trivial tasks, MANDATORY in autonomous):** before resolving the gate as approved, dispatch the `code-reviewer` agent (subagent_type=`code-reviewer`, color cyan). Brief it with: task ID + title + spec slice + `git diff <base>..<head>` + files modified + codebase conventions. It returns P0/P1/P2 review (bugs, security, style, missing error handling, untested paths, surgical-scope violations). On CHANGES-REQUESTED → dispatch a fix task via `worker-start`; do NOT resolve gate approved. On REJECT-AND-REVERT → call `rollback-fixer`. On APPROVED → resolve gate. For Quick-fix single-line changes, skip. If OWASP surface → escalate to `security-audit` (P5) instead. This is the "review-only worker" the worker-patterns.md mentions — now a dedicated agent. **Force-on contract:** `Code review: ON.` token makes code-reviewer run before EVERY task gate resolution regardless of mode or task size (including Quick-fix tasks) — see Token Contract Table.
+**Code-review between tasks (optional but recommended for non-trivial tasks, MANDATORY in autonomous):** before resolving the gate as approved, dispatch the `code-reviewer` agent (subagent_type=`code-reviewer`, color cyan). Brief it with: task ID + title + spec slice + verify criteria + `git diff <base>..<head>` + files modified + codebase conventions + output oxlint/typecheck trên changed files nếu đã có (kit ≥2.14.1: reviewer chạy deterministic-first, spec/criteria đọc trước diff — học từ open-code-review). It returns P0/P1/P2 review (bugs, security, style, missing error handling, untested paths, surgical-scope violations). On CHANGES-REQUESTED → dispatch a fix task via `worker-start`; do NOT resolve gate approved. On REJECT-AND-REVERT → call `rollback-fixer`. On APPROVED → resolve gate. For Quick-fix single-line changes, skip. If OWASP surface → escalate to `security-audit` (P5) instead. This is the "review-only worker" the worker-patterns.md mentions — now a dedicated agent. **Force-on contract:** `Code review: ON.` token makes code-reviewer run before EVERY task gate resolution regardless of mode or task size (including Quick-fix tasks) — see Token Contract Table. **Verdict comment on Linear phải chứa literal `CHECKLIST-4Q`** (kèm 4 câu PASS) khi `verify.reviewerChecklist` ON — story-verify B3 grep literal này, thiếu → B3 FAIL dù VERDICT APPROVED đã post (learned 2026-09-14 FI-459).
 
 **Rolling review theo nhóm (learned 2026-08-28 FI-190, từ bài học FI-187):** SF nhiều tasks (≥8) KHÔNG dồn 1 review lớn cuối — chia tasks theo nhóm 4-5 cùng đường (ví dụ nhóm watchdog-path, nhóm fusion-path) và dispatch code-reviewer ĐỘC LẬP trên diff nhóm đó ngay khi nhóm xong, song song với việc executor làm nhóm kế (khác file). Reviewer chỉ soi commit list cố định của nhóm (qua `git show <hash>`, không đọc working tree — chống lẫn commit nhóm đang chạy). Fix theo verdict từng nhóm trước khi merge; đừng để agent đứng chờ 30+ phút một review khổng lồ.
+
+**Review đa chiều — coverage + position-verify + meta-test (learned 2026-09-18, học từ alibaba/open-code-review + FI-458 retro):**
+1. **Coverage pass**: mỗi file trong diff phải có finding HOẶC explicit `reviewed, clean` — reviewer "cut corners" bỏ im lặng file là failure mode #1 của review-driven-by-language. File không nhắc = review chưa xong.
+2. **Position-verify pass**: finding `file:line` phải grep-verify tại vị trí trước khi xuất; sai → sửa hoặc đánh dấu `[unpositioned]` + nêu hàm/tên. Finding sai line nguy hiểm hơn không line.
+3. **Meta-test rule**: fix P0/P1 kèm test tái được bug đó — test phải ĐỎ trên code cũ (stash fix), XANH trên code mới. Test pass cả 2 = tautology (bài học SC4b `x===true || x===false` luôn pass).
+4. **Flaky tracker**: test fail 1 lần không tái hiện → ghi audit log chờ; tái diễn ≥2 lần cùng cause → bug, không bật ignore.
+5. **Combo integration check**: khi 2 story đổi cùng surface giao nhau (vd A deny Write + B đọc file A ghi), chạy 1 case kết hợp A+B trước merge — mỗi story xanh riêng KHÔNG bảo đảm combo xanh (bài học GH-42×GH-32 OUTBOX).
 
 **When:** Verification checkpoint reached (as defined in plan). **Precondition:** an Orca `taskId` exists (from Bridge 3); if not, fall back to chat approval.
 

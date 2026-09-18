@@ -212,6 +212,9 @@ Run the full-strictness epic pipeline:
    - Tier không shippable độc lập (chỉ có nghĩa khi tier sau xong) → gộp vào
      phase sau. Watchdog --launch-next cần người duyệt phase-gate nếu đặt
      RELEASE_GATE=1 (env, mặc định off).
+   - **Mỗi phase checkpoint gồm 1 vòng security-audit** (security-audit agent:
+     quét secrets/.env, exec-bits, permissions, dependabot) — phase không
+     checkpoint nếu audit còn P0/P1 (học FI-458: 3 lần exec-bit + .env lọt).
 6. `superpowers:brainstorming` MANDATORY + every clarifying question:
    - **Facts vs decisions** (learned 2026-09-03, mattpocock/grilling): cái mà
      code/repo/Linear trả lời được = FACT → tự tra (read code, dispatch subagent),
@@ -344,7 +347,7 @@ What "inherit, don't re-analyze" means per phase inside an SF run:
 ```
 1. story-preflight    → trước code (đúng branch, server, DB)
 2. story-diff-review  → trước commit (debug code, secrets, scope)
-3. story-test         → trước "xong" (browser walkthrough, Rule 0)
+3. story-test         → trước "xong" (browser walkthrough, Rule 0; SF pure CLI không có web port → proxy: test suite exit 0 + sandbox demo chạy script installed thật + evidence logs + marker ghi chú CLI-equivalent — learned 2026-09-14 FI-460)
 4. story-snapshot-env → trước/sau merge
 5. story-post-merge   → sau merge (tests + browser + agents)
 ```
