@@ -59,6 +59,8 @@ status: DONE|BLOCKED
 commit: <sha> | none        (none chỉ khi BLOCKED)
 files: <comma-list> | none  (như commit)
 tests: <one-line> | none    (như commit)
+blocked-tried: <đã thử gì>  (BẮT BUỘC khi BLOCKED — kit ≥2.13.0)
+blocked-need: <cần gì để mở khối> (BẮT BUỘC khi BLOCKED)
 description: <multiline — mọi thứ sau dòng này đến /REPORT là description;
    notes/deviations/follow-ups fold vào đây. TRÁNH paste log chứa /REPORT —
    nó đóng fence sớm>
@@ -68,7 +70,8 @@ description: <multiline — mọi thứ sau dòng này đến /REPORT là descri
 Validator strict-reject: thiếu field → exit 1 `MISSING-FIELD <name> (got: <v>)`
 — chỉ đích danh field thiếu + giá trị nhận được, sửa 1 lần là đủ, đừng đốt retry
 cap vì mơ hồ. DONE đòi giá trị thật cho commit/files/tests (`none` chỉ hợp lệ khi
-BLOCKED → `NONE-ON-DONE`). Report không có fence: WARN `LEGACY-REPORT` hiện tại
+BLOCKED → `NONE-ON-DONE`). BLOCKED đòi thêm `blocked-tried` + `blocked-need`
+(kit ≥2.13.0 Team discipline). Report không có fence: WARN `LEGACY-REPORT` hiện tại
 (exit 0) — FAIL từ kit 2.8.0, tập thói quen từ bây giờ.
 
 ## Story-SF mode (when dispatched from story-workflow)

@@ -106,11 +106,21 @@ const VALID_DONE = [
     'commit: none',
     'files: none',
     'tests: none',
+    'blocked-tried: rerun suite 2 lần, đọc log test X',
+    'blocked-need: quyền truy cập staging DB',
     'description: symptom + tried + need',
     '/REPORT',
   ].join('\n')
   const rBlocked = runStdin(blockedNone)
-  check('SC4b', 'BLOCKED + none cả 3 → exit 0', rBlocked.code === 0, rBlocked.out)
+  check('SC4b', 'BLOCKED + none cả 3 + blocked-tried/need → exit 0', rBlocked.code === 0, rBlocked.out)
+
+  // kit ≥2.13.0 Team discipline: BLOCKED thiếu blocked-tried/need → FAIL
+  const blockedNoDiscipline = blockedNone
+    .replace('blocked-tried: rerun suite 2 lần, đọc log test X\n', '')
+    .replace('blocked-need: quyền truy cập staging DB\n', '')
+  const rNoDisc = runStdin(blockedNoDiscipline)
+  check('SC4c', 'BLOCKED thiếu blocked-tried/need → exit 1', rNoDisc.code === 1)
+  check('SC4c', 'token MISSING-FIELD blocked-tried', rNoDisc.out.includes('MISSING-FIELD blocked-tried'), rNoDisc.out)
 }
 
 // ---- SC5: description multiline chứa key-like → không bị bắt field ----------
