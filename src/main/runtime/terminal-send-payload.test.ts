@@ -3,6 +3,7 @@ import {
   buildTerminalSendPayload,
   maybeWrapTerminalSendTextForTuiAgent
 } from './terminal-send-payload'
+import { TERMINAL_INPUT_CHUNK_MAX_BYTES } from '../../shared/terminal-input'
 
 // Why: plugin terminal.sendText is the path panels use to reach agent TUIs. A
 // TUI submits on every newline, so multi-line prompt text must ride inside one
@@ -43,6 +44,54 @@ describe('maybeWrapTerminalSendTextForTuiAgent', () => {
     )
     expect(routed.text).toBe('echo <ESC>[31mred')
     expect(routed.text).not.toContain('\x1b[200~')
+  })
+
+  it('preserves a CRLF terminator in single-line output (detection-only strip)', () => {
+    const routed = maybeWrapTerminalSendTextForTuiAgent(
+      { text: 'orca status\r\n', enter: false },
+      'claude'
+    )
+    expect(routed.text).toBe('orca status\r\n')
+    expect(routed.text?.includes(PASTE_BEGIN)).toBe(false)
+  })
+
+  it('treats a lone trailing CR as single-line and preserves it', () => {
+    const routed = maybeWrapTerminalSendTextForTuiAgent({ text: 'x\r', enter: false }, 'claude')
+    expect(routed.text).toBe('x\r')
+    expect(routed.text?.includes(PASTE_BEGIN)).toBe(false)
+  })
+
+  it('keeps a CR inside the body on the wrapped multiline path', () => {
+    const routed = maybeWrapTerminalSendTextForTuiAgent({ text: 'a\rb', enter: true }, 'claude')
+    expect(routed.text?.startsWith(PASTE_BEGIN)).toBe(true)
+    expect(routed.text?.endsWith(PASTE_END)).toBe(true)
+  })
+
+  it('keeps a CRLF body on the wrapped multiline path', () => {
+    const routed = maybeWrapTerminalSendTextForTuiAgent({ text: 'a\r\nb', enter: true }, 'claude')
+    expect(routed.text?.startsWith(PASTE_BEGIN)).toBe(true)
+    expect(routed.text).toContain('a\r\nb')
+  })
+
+  it('leaves empty-string text untouched', () => {
+    const action = { text: '', enter: true }
+    expect(maybeWrapTerminalSendTextForTuiAgent(action, 'claude')).toBe(action)
+  })
+
+  it('passes an oversized single-line payload raw for downstream chunking', () => {
+    const text = 'y'.repeat(TERMINAL_INPUT_CHUNK_MAX_BYTES + 1)
+    const routed = maybeWrapTerminalSendTextForTuiAgent({ text, enter: true }, 'claude')
+    expect(routed.text).toBe(text)
+    expect(routed.text?.includes(PASTE_BEGIN)).toBe(false)
+  })
+
+  it('preserves the interrupt flag through the single-line gate', () => {
+    const routed = maybeWrapTerminalSendTextForTuiAgent(
+      { text: 'git status', interrupt: true },
+      'codex'
+    )
+    expect(routed.interrupt).toBe(true)
+    expect(routed.enter).toBeUndefined()
   })
 
   it('leaves non-TUI targets raw', () => {
