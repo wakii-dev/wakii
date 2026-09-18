@@ -35,6 +35,7 @@ for _s in (sys.stdout, sys.stderr):
 KB_MARKERS = ("adr", "repos", "glossary.md", "MOC.md")
 TOP_N = 5
 SNIPPET_MAX = 160
+MIN_KW_LEN = 2  # keyword <2 ký tự match mọi file (a/1 có trong mọi text) — usage error
 
 # YAML-ish tolerant: dòng `key: value` giữa cặp `---` — KHÔNG YAML lib (zero-dep).
 FM_LINE_RE = re.compile(r"^([A-Za-z_][\w-]*)\s*:\s*(.*)$")
@@ -176,10 +177,18 @@ def first_snippet(body_lines, kws):
     return (hit or next((l for l in body_lines if l.strip()), "")).strip()
 
 
-def cmd_query_adr(kb_dir, args):
+def extract_keywords(args, label):
     kws = [k for k in args if not k.startswith("--")]
     if not kws:
-        usage("query-adr cần ít nhất 1 keyword")
+        usage(f"{label} cần ít nhất 1 keyword")
+    short = [k for k in kws if len(k) < MIN_KW_LEN]
+    if short:
+        usage(f"{label}: keyword quá ngắn (tối thiểu {MIN_KW_LEN} ký tự): {', '.join(short)}")
+    return kws
+
+
+def cmd_query_adr(kb_dir, args):
+    kws = extract_keywords(args, "query-adr")
     adr_dir = os.path.join(kb_dir, "adr")
     results = []
     if os.path.isdir(adr_dir):
@@ -219,9 +228,7 @@ def grading_line(text, fm):
 
 
 def cmd_query_repo(kb_dir, args):
-    kws = [k for k in args if not k.startswith("--")]
-    if not kws:
-        usage("query-repo cần ít nhất 1 keyword")
+    kws = extract_keywords(args, "query-repo")
     repos_dir = os.path.join(kb_dir, "repos")
     results = []
     if os.path.isdir(repos_dir):

@@ -235,6 +235,18 @@ console.log(`\n== [KB10] usage errors ==`)
   check('KB10', 'query-adr thiếu keyword → exit 2', rNoKw.status === 2, `code=${rNoKw.status}`)
 }
 
+// ---- KB11: keyword min-length guard (review N-2) -------------------------------
+console.log(`\n== [KB11] keyword quá ngắn → usage error ==`)
+{
+  const rShort = run(['query-adr', 'a', '--dir', kbRoot])
+  check('KB11', 'query-adr keyword 1 ký tự → exit 2', rShort.status === 2, `code=${rShort.status}`)
+  check('KB11', 'stderr chỉ đích danh keyword ngắn', rShort.stderr.includes('tối thiểu 2'), rShort.stderr)
+  const rShortRepo = run(['query-repo', 'x', '--dir', kbRoot])
+  check('KB11', 'query-repo keyword 1 ký tự → exit 2', rShortRepo.status === 2, `code=${rShortRepo.status}`)
+  const rOk = run(['query-adr', 'kb', '--dir', kbRoot])
+  check('KB11', 'keyword 2 ký tự hợp lệ → exit 0', rOk.status === 0, `code=${rOk.status}`)
+}
+
 rmSync(kbRoot, { recursive: true, force: true })
 rmSync(emptyCwd, { recursive: true, force: true })
 

@@ -3,7 +3,7 @@ id: 0001
 title: ADE knowledge schema
 status: accepted
 date: 2026-09-10
-grading: ADOPT(layer1) DIRECTION(layer2) WATCH(layer3)
+grading: ADOPT(layer-1); DIRECTION(layer-2); WATCH(layer-3)
 ---
 
 # 0001 — ADE knowledge schema
@@ -52,7 +52,7 @@ id: 0001
 title: <tên hiển thị>
 status: accepted | proposed | superseded
 date: YYYY-MM-DD
-grading: ADOPT(layerN) | DIRECTION(layerN) | WATCH(layerN)
+grading: <GRADING>(<layer>)[; <GRADING>(<layer>)...]   # 1 file có thể mang nhiều grading, phân tách bằng ";"
 ---
 ```
 
