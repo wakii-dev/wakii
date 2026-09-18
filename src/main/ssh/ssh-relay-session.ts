@@ -35,6 +35,7 @@ import {
   AGENT_HOOK_REQUEST_REPLAY_METHOD,
   isRemoteAgentHooksEnabled
 } from '../../shared/agent-hook-relay'
+import { AGENT_STATUS_LEGACY_UNADVERTISED_PEER_CAPABILITIES } from '../../shared/agent-status-legacy-adapter'
 import { _internals as openCodeInternals } from '../opencode/hook-service'
 import { getPiAgentStatusExtensionSource } from '../pi/agent-status-extension-source'
 import {
@@ -434,6 +435,11 @@ export class SshRelaySession {
 
   getHostPlatform(): RemoteHostPlatform | null {
     return this.remoteCliBridgeEnv?.hostPlatform ?? this.hostPlatform
+  }
+
+  /** The host's own `$HOME`, read on the host during relay deploy — never this client's. */
+  getRemoteHomeDirectory(): string | null {
+    return this.remoteCliBridgeEnv?.remoteHome ?? null
   }
 
   getAiVaultHostInfo(): SshRelayAiVaultHostInfo | null {
@@ -1606,6 +1612,8 @@ export class SshRelaySession {
             typeof envelope.claudeRunningNonAgentTask === 'boolean'
               ? envelope.claudeRunningNonAgentTask
               : undefined,
+          // Why: the SSH relay protocol advertises no run-serving capability.
+          advertisedAgentStatusCapabilities: AGENT_STATUS_LEGACY_UNADVERTISED_PEER_CAPABILITIES,
           payload: envelope.payload
         },
         this.targetId

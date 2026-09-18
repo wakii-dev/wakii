@@ -92,7 +92,7 @@ describe('session route offline-compose wiring', () => {
     const bufferedInput = sourceSlice(
       commandDockSource,
       'ref={commandInputRef}',
-      'onSubmitEditing={() => void handleSend()}'
+      'void handleSend(storyMode'
     )
     expect(bufferedInput).toContain('editable={canCompose}')
 
@@ -108,7 +108,7 @@ describe('session route offline-compose wiring', () => {
     const sendButton = sourceSlice(
       commandDockSource,
       'styles.sendButton,',
-      'accessibilityLabel="Send command"'
+      "accessibilityLabel={storyMode ? 'Send story prompt' : 'Send command'}"
     )
     expect(sendButton).toContain('disabled={!canSend}')
   })
@@ -116,7 +116,7 @@ describe('session route offline-compose wiring', () => {
   it('holds composed text when the return key submits offline', () => {
     const handleSend = sourceSlice(
       sendActionsSource,
-      'async function handleSend()',
+      'async function handleSend(',
       'sendingRef.current = true'
     )
     expect(handleSend).toContain('!canSend')

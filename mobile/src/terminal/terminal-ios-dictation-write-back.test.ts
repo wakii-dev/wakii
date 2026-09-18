@@ -18,6 +18,9 @@ describe('terminal iOS dictation write-back', () => {
   })
 
   it('still normalizes the buffered command text at send time', () => {
-    expect(sendActionsSource).toContain('normalizeTerminalTextInput(draft)')
+    // The story-mode transform applies to the SENT text only; the raw draft still reaches the
+    // normalizer either way (see the sendOptions branch in handleSend).
+    expect(sendActionsSource).toContain('const text = normalizeTerminalTextInput(')
+    expect(sendActionsSource).toContain('sendOptions?.textTransform')
   })
 })

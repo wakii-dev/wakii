@@ -305,10 +305,10 @@ describe('push notification preference', () => {
 
   it('persists the onboarding decision in the existing mobile toggle', async () => {
     await savePushNotificationsEnabled(true)
-    expect(AsyncStorage.setItem).toHaveBeenCalledWith('orca:pushNotificationsEnabled', 'true')
+    expect(AsyncStorage.setItem).toHaveBeenCalledWith('orca:pushServiceNotificationsEnabled', 'true')
 
     await savePushNotificationsEnabled(false)
-    expect(AsyncStorage.setItem).toHaveBeenCalledWith('orca:pushNotificationsEnabled', 'false')
+    expect(AsyncStorage.setItem).toHaveBeenCalledWith('orca:pushServiceNotificationsEnabled', 'false')
   })
 })
 

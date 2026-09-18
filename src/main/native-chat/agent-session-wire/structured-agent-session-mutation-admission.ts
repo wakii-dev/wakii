@@ -45,6 +45,8 @@ export type AgentSessionMutationRequest<TValue> = {
   /** Journal of the attached session; absent when this host holds none. */
   journal: AgentSessionJournal | undefined
   publish: (journal: AgentSessionJournal) => void
+  flushStreamedEvents: (sessionId: string) => Promise<void>
+  hasPendingStreamedEvents?: (sessionId: string) => boolean
   now: () => number
 }
 
@@ -147,6 +149,9 @@ function turnContext<TValue>(
         .then(() => undefined),
     resolvedBy: request.callerKey,
     publish: () => request.publish(journal),
+    flushStreamedEvents: () => request.flushStreamedEvents(request.envelope.sessionId),
+    hasPendingStreamedEvents: () =>
+      request.hasPendingStreamedEvents?.(request.envelope.sessionId) ?? false,
     now: () => request.now()
   }
 }

@@ -13,6 +13,10 @@ import { GestureDetector, GestureHandlerRootView } from 'react-native-gesture-ha
 import { ArrowDown, ChevronsDownUp, ChevronsUpDown, Square } from 'lucide-react-native'
 import type { AskAnswerSelection, AskPrompt } from '../../../src/shared/native-chat-ask'
 import type { NativeChatMessage } from '../../../src/shared/native-chat-types'
+import type {
+  NativeChatLiveTurnIndicator,
+  NativeChatSettledTurns
+} from '../../../src/shared/native-chat-turn-status'
 import { colors } from '../theme/mobile-theme'
 import { styles } from './mobile-native-chat-view-styles'
 import {
@@ -23,6 +27,7 @@ import {
 import { useMobileNativeChatPinchGesture } from './use-mobile-native-chat-pinch-gesture'
 import { useMobileNativeChatTailFollow } from './use-mobile-native-chat-tail-follow'
 import { useMobileNativeChatTurnDisclosure } from './use-mobile-native-chat-turn-disclosure'
+import { useSettledMobileNativeChatInputLock } from './use-mobile-native-chat-input-lease'
 import { MobileNativeChatTurnStatus } from './MobileNativeChatTurnStatus'
 import { MobileAgentWorkingIndicator } from './MobileAgentWorkingIndicator'
 import type { PendingNativeChatImage } from './mobile-native-chat-image-attachment'
@@ -33,8 +38,6 @@ import type { MobileChatQuestion } from './mobile-native-chat-question'
 import type { MobileNativeChatSessionOptionPickersProps } from './MobileNativeChatSessionOptionPickers'
 import { MobileNativeChatMessage } from './MobileNativeChatMessage'
 import type { MobileNativeChatStatus } from './use-mobile-native-chat-session'
-
-const INPUT_LOCK_SETTLE_MS = 600
 
 /** Why the composer input is locked: the transport is disconnected, or the
  *  terminal subscription has not acknowledged its input lease yet. */
@@ -54,6 +57,12 @@ type Props = {
   /** Structured lane: per-turn "Working for N" status plus live tool progress,
    *  replacing the bridge lane's static three-dot working row (desktop parity). */
   structuredActivityUi?: boolean
+  /** What labels the live turn's one indicator row (structured lane only). */
+  turnIndicator?: NativeChatLiveTurnIndicator | null
+  /** Structured lane: host-recorded turn timing feeding the per-turn status rows. */
+  workingStartedAt?: number | null
+  settledTurns?: NativeChatSettledTurns | null
+  /** Interrupt the agent mid-turn (shown as a Stop button on the working bar). */
   /** Interrupt a provider turn. */
   onStop?: () => void
   /** Live partial assistant text to show as an in-progress bubble, already gated
@@ -84,7 +93,7 @@ type Props = {
   isAttaching?: boolean
   onMicPress?: () => void
   micActive?: boolean
-  dictationMode?: 'toggle' | 'hold'
+  dictationMode?: string
   onMicPressIn?: () => void
   onMicPressOut?: () => void
   inputLockReason?: MobileNativeChatInputLockReason | null
@@ -113,6 +122,8 @@ type Props = {
    *  into selector keystrokes (Claude) or pasted label text (other agents). */
   onAnswerAsk?: (prompt: AskPrompt, selections: AskAnswerSelection[]) => Promise<boolean>
   onCancelAsk?: () => Promise<boolean>
+  /** Cancel a structured approval/question with exact item identity when supported. */
+  onCancelPrompt?: (prompt?: { itemId: string; expectedRevision: number }) => Promise<boolean>
   question?: MobileChatQuestion | null
   onAnswerQuestion?: (text: string) => Promise<boolean>
   permission?: MobileChatPermission | null
@@ -133,6 +144,9 @@ export function MobileNativeChatView({
   agentWorking,
   canStop = agentWorking,
   structuredActivityUi = false,
+  turnIndicator = null,
+  workingStartedAt,
+  settledTurns,
   onStop,
   streaming,
   hasMore,
@@ -166,6 +180,7 @@ export function MobileNativeChatView({
   onDismissAsk,
   onAnswerAsk,
   onCancelAsk,
+  onCancelPrompt,
   question,
   onAnswerQuestion,
   permission,
@@ -241,14 +256,21 @@ export function MobileNativeChatView({
     [hasMore, loadingEarlier, loadEarlier, recordScrollMetrics]
   )
 
-  // Per-turn "Thinking / Working for N / Worked for N" rows. The structured lane
-  // owns them; the bridge lane keeps its three-dot indicator.
+  // Per-turn status rows: one live indicator while the turn runs, then a settled
+  // "Worked for N" row. The structured lane owns them; the bridge lane keeps its
+  // three-dot indicator.
   const turns = useMobileNativeChatTurnDisclosure({
     messages: data,
     enabled: structuredActivityUi,
     isWorking: agentWorking === true,
+    workingStartedAt,
+    settledTurns,
+    thinking: turnIndicator?.thinking === true,
+    activityText: turnIndicator?.activityText ?? null,
     scopeKey: sendSurfaceId
   })
+  const hasPendingStructuredInteraction =
+    structuredActivityUi && (ask != null || permission != null || question != null)
 
   const renderItem = useCallback(
     ({ item, index }: { item: NativeChatMessage; index: number }) => (
@@ -268,18 +290,7 @@ export function MobileNativeChatView({
   const emptyState = mobileNativeChatEmptyState(status, agent ?? null, error)
   const showLoading = status === 'loading' && messages.length === 0
 
-  // A dead PTY emits subscribed→end; settle both edges so its false lease cannot flash the composer enabled.
-  const rawLockReason = inputLockReason ?? null
-  const rawLockHeld = rawLockReason !== null
-  const [lockHeld, setLockHeld] = useState(false)
-  useEffect(() => {
-    if (rawLockHeld === lockHeld) {
-      return
-    }
-    const timer = setTimeout(() => setLockHeld(rawLockHeld), INPUT_LOCK_SETTLE_MS)
-    return () => clearTimeout(timer)
-  }, [lockHeld, rawLockHeld])
-  const lockReason = lockHeld ? (rawLockReason ?? 'waiting') : null
+  const lockReason = useSettledMobileNativeChatInputLock(inputLockReason)
 
   return (
     <View style={[styles.root, { paddingBottom: bottomPad }]}>
@@ -323,11 +334,15 @@ export function MobileNativeChatView({
                 ) : null
               }
               ListFooterComponent={
-                turns.activeTurnIsUnanchored && turns.active ? (
+                structuredActivityUi &&
+                agentWorking &&
+                !hasPendingStructuredInteraction &&
+                turns.active ? (
                   <MobileNativeChatTurnStatus
                     startedAt={turns.active.startedAt}
                     thinking={turns.active.thinking}
                     workedSeconds={turns.active.workedSeconds}
+                    activityText={turns.activeActivityText}
                   />
                 ) : null
               }
@@ -359,6 +374,7 @@ export function MobileNativeChatView({
         onDismissAsk={onDismissAsk}
         onAnswerAsk={onAnswerAsk}
         onCancelAsk={onCancelAsk}
+        onCancelPrompt={onCancelPrompt}
         permission={permission}
         onRespondPermission={onRespondPermission}
         question={question}

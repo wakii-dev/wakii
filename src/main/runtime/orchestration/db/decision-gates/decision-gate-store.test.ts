@@ -137,7 +137,7 @@ describe('decision-gate-store', () => {
   // GH-40: options non-empty + resolution ∉ options → throw (both resolve fns).
   it('resolveGate throws resolution_not_in_options when resolution is outside non-empty options', () => {
     const d = createDb()
-    const task = d.createTask({ spec: 'work' })
+    const task = d.createTask({ spec: 'work', runId: 'run_legacy_local' })
     const gate = d.createGate({ taskId: task.id, question: 'ok?', options: ['yes', 'no'] })
 
     expect(() => d.resolveGate(gate.id, 'surprise')).toThrowError(OrchestrationError)
@@ -154,7 +154,7 @@ describe('decision-gate-store', () => {
 
   it('resolveGateIfPending throws resolution_not_in_options when resolution is outside non-empty options', () => {
     const d = createDb()
-    const task = d.createTask({ spec: 'work' })
+    const task = d.createTask({ spec: 'work', runId: 'run_legacy_local' })
     const gate = d.createGate({ taskId: task.id, question: 'ok?', options: ['yes', 'no'] })
 
     expect(() => d.resolveGateIfPending(gate.id, 'surprise')).toThrowError(OrchestrationError)
@@ -169,7 +169,7 @@ describe('decision-gate-store', () => {
 
   it('both resolve fns pass a resolution on a gate with empty options (conformance phone path)', () => {
     const d = createDb()
-    const task = d.createTask({ spec: 'work' })
+    const task = d.createTask({ spec: 'work', runId: 'run_legacy_local' })
     const gate = d.createGate({ taskId: task.id, question: 'ok?' })
 
     // options rỗng (createGate mặc định) → 'phone' pass nguyên trạng.

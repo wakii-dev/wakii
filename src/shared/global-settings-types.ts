@@ -1,6 +1,7 @@
 import type { ExecutionHostId } from './execution-host'
 import type { GitHubProjectSettings } from './github/project-types'
 import type { VoiceSettings } from './speech-types'
+import type { AiVaultSearchSettings } from './ai-vault-search-settings'
 import type { GitLabProjectSettings } from './gitlab-types'
 import type { TaskProvider } from './task-providers'
 import type { KeybindingOverrides, TerminalShortcutPolicy } from './keybindings'
@@ -166,6 +167,8 @@ export type GlobalSettings = {
   terminalRightClickToPasteDefaultedForPlatform?: boolean
   /** Windows-only: COMSPEC always points to cmd.exe, so this explicit shell (default 'powershell.exe') overrides it. */
   terminalWindowsShell: string
+  /** Optional shell executable for new terminals on macOS and Linux. */
+  terminalDefaultShell?: string
   /** Pins the WSL distro for terminals/agent scans instead of WSL's current global default. */
   terminalWindowsWslDistro?: string | null
   /** Account/auth location; auto follows the global Windows runtime while host/wsl pin it. */
@@ -216,6 +219,9 @@ export type GlobalSettings = {
   experimentalNativeChat?: boolean
   /** Opt-in updated structured runtime; off keeps the existing PTY-backed native chat path. */
   experimentalStructuredNativeChat?: boolean
+  /** Opt-in: resume working structured chats automatically on the next launch. Off still offers
+   *  the list, so the user sees exactly what would run before anything spends tokens. */
+  nativeChatResumeWorkOnRestart?: boolean
   /** Last explicit native-chat model + option selections; live panes need an applied/dispatched record before showing a value. */
   nativeChatSessionOptions?: PersistedNativeChatSessionOptions
   /** Extra launcher rows for the worktree "Open in" submenu. VS Code is always shown first. */
@@ -488,6 +494,8 @@ export type GlobalSettings = {
   tabSwitchKeybindingSeed?: 'pending' | 'done'
   /** Local voice/dictation config. Optional for pre-voice profiles; getDefaultSettings() hydrates defaults via the persistence merge. */
   voice?: VoiceSettings
+  /** Transcript full-text search consent + retention. Absent means off; nothing indexes until the user opts in. */
+  aiVaultSearch?: AiVaultSearchSettings
 }
 
 export type OrcaWorkspaceLayout = {

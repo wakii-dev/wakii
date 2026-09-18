@@ -3,16 +3,58 @@
   "family": "hostedReview.eligibility",
   "namedDeltas": [],
   "runnerVersion": 1,
-  "baseline": "16d1ab81d3fd08e342b2f0ac0cc6f9e4aea4aaee",
-  "lockfileSha256": "788c1234b38a61fc882fca292341fce6690deee9cc6695673b0575cf2c4cf571",
-  "recorderSha256": "6a12160a87ceab04e74198f6dd35b8cf9125794222ee95cf6ca1872f29849960",
-  "platform": "darwin",
+  "baseline": "5741d48e592dad21660d995a3758319413a4baf0",
+  "lockfileSha256": "4568633356187895ccda8e2ff83245c37d5621832c69e268733733b6947971e3",
+  "recorderSha256": "25ff809662a78e2f33ad159fd34ee62e931e2ad597aebec5476293e19b53efd9",
+  "adapterSha256": "c582ce355b0704b38d7e84cbce352630096c91231bf09aecd1f6dbb409fed17f",
+  "scenarioSha256": "9de96287a4dfa6cf5c9a8b683cc696fdc2cd387f86f231e22ee3f100a2e778e3",
+  "platform": "win32",
   "scenarioVersion": 1,
   "projectionVersion": 2,
-  "goldenFormatVersion": 3,
+  "goldenFormatVersion": 5,
   "values": {
-    "0710fc7e2b71": {
+    "478df34536dc": {
+      "status": "fulfilled",
+      "startedAt": 0,
+      "settledAt": 0,
+      "value": {
+        "base": "main",
+        "blockedReason": {
+          "$rpc": "null"
+        },
+        "body": "",
+        "nextAction": {
+          "$rpc": "null"
+        },
+        "provider": "github",
+        "reviewLookupOutcome": "unavailable",
+        "title": "Recorded title"
+      }
+    },
+    "8bbf03da5e8d": {
       "name": "hostedReview.getCreationEligibility#1",
+      "ordinal": 2,
+      "json": "{\"id\":\"frame-1\",\"deviceToken\":\"recording-device\",\"method\":\"hostedReview.getCreationEligibility\",\"params\":{\"repo\":\"id:repo42\",\"worktree\":\"id:repo42::/p\",\"branch\":\"feature\",\"base\":null,\"linkedGitHubPR\":null,\"linkedGitLabMR\":null}}"
+    },
+    "ac13623773fe": {
+      "eligibility": "unfetched",
+      "prefill": {
+        "base": "main",
+        "blockedReason": {
+          "$rpc": "null"
+        },
+        "body": "",
+        "nextAction": {
+          "$rpc": "null"
+        },
+        "provider": "github",
+        "reviewLookupOutcome": "unavailable",
+        "title": "Recorded title"
+      }
+    },
+    "d509c6118e3a": {
+      "name": "hostedReview.getCreationEligibility#1",
+      "ordinal": 1,
       "args": [
         {
           "name": "method",
@@ -55,46 +97,6 @@
           "ok": false
         }
       }
-    },
-    "2f56274e5397": {
-      "status": "fulfilled",
-      "startedAt": 0,
-      "settledAt": 0,
-      "value": {
-        "base": "main",
-        "blockedReason": {
-          "$rpc": "null"
-        },
-        "body": "",
-        "canCreate": false,
-        "nextAction": {
-          "$rpc": "null"
-        },
-        "provider": "github",
-        "reviewLookupOutcome": "unavailable",
-        "title": "Recorded title"
-      }
-    },
-    "77a5a5f8b111": {
-      "eligibility": "unfetched",
-      "prefill": {
-        "base": "main",
-        "blockedReason": {
-          "$rpc": "null"
-        },
-        "body": "",
-        "canCreate": false,
-        "nextAction": {
-          "$rpc": "null"
-        },
-        "provider": "github",
-        "reviewLookupOutcome": "unavailable",
-        "title": "Recorded title"
-      }
-    },
-    "cc09b6142ccb": {
-      "name": "hostedReview.getCreationEligibility#1",
-      "json": "{\"id\":\"frame-1\",\"deviceToken\":\"recording-device\",\"method\":\"hostedReview.getCreationEligibility\",\"params\":{\"repo\":\"id:repo42\",\"worktree\":\"id:repo42::/p\",\"branch\":\"feature\",\"base\":null,\"linkedGitHubPR\":null,\"linkedGitLabMR\":null}}"
     }
   },
   "recording": {
@@ -103,12 +105,12 @@
       {
         "id": "settled",
         "observation": {
-          "sender": ["0710fc7e2b71"],
-          "payloads": ["cc09b6142ccb"],
+          "sender": ["d509c6118e3a"],
+          "payloads": ["8bbf03da5e8d"],
           "settlements": {
-            "prefill": "2f56274e5397"
+            "prefill": "478df34536dc"
           },
-          "state": "77a5a5f8b111",
+          "state": "ac13623773fe",
           "effects": []
         }
       }

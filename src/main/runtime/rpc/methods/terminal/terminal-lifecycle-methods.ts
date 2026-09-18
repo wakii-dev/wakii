@@ -53,6 +53,7 @@ export const TERMINAL_LIFECYCLE_METHODS = [
           (canonicalWorktreeSelector, preAllocatedHandle) =>
             runtime.createTerminal(canonicalWorktreeSelector, {
               command: params.command,
+              ...(params.shell ? { shellOverride: params.shell } : {}),
               startupCommandDelivery: params.startupCommandDelivery,
               env: params.env,
               envToDelete: params.envToDelete,
@@ -188,7 +189,8 @@ export const TERMINAL_LIFECYCLE_METHODS = [
     handler: async (params, { runtime }) => ({
       launch: await runtime.prepareClaudeAgentTeamsLeader({
         paneKey: params.paneKey,
-        baseEnv: params.env
+        baseEnv: params.env,
+        prepareAuth: params.prepareAuth
       })
     })
   })

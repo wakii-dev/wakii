@@ -26,7 +26,8 @@ import {
   resolveDiagnosticsHostId,
   getDiagnosticsSubmissionState,
   updateDiagnosticsSubmissionState,
-  type DiagnosticsSubmissionStates
+  type DiagnosticsSubmissionStates,
+  type DiagnosticsRouteKey
 } from '../src/diagnostics/connection-diagnostics-screen-data'
 import { useHostStatusGates } from '../src/transport/host-status-gates'
 import { loadHostAppVersion } from '../src/transport/host-app-version-store'
@@ -49,7 +50,7 @@ export default function ConnectionLogScreen() {
   const [manualSelection, setManualSelection] = useState<{
     hostId: string
     requestedHostId: string | undefined
-    routeKey: object
+    routeKey: DiagnosticsRouteKey
   } | null>(null)
   const [copiedHostId, setCopiedHostId] = useState<string | null>(null)
   const [submissionStates, setSubmissionStates] = useState<DiagnosticsSubmissionStates>({})

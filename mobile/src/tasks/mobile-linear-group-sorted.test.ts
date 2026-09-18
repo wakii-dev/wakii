@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { LinearIssue } from './mobile-tasks-provider-detail-types'
 import {
-  sortLinearIssues,
-  groupLinearIssues,
-  groupSortedLinearIssues
+  compareLinearIssues,
+  getLinearIssueGroup,
+  groupLinearIssues
 } from './mobile-tasks-reviewer-linear'
 
 vi.mock('./mobile-tasks-dependencies', () => import('../theme/mobile-theme'))
@@ -11,7 +11,7 @@ afterEach(() => vi.restoreAllMocks())
 
 const issues: LinearIssue[] = Array.from({ length: 60 }, (_, i) => ({
   id: `${i}`,
-  identifier: ['ENG-10', 'ENG-2', 'Ä-1', 'Å-1', 'é-2', 'e\u0301-2', 'İ-3'][i % 7],
+  identifier: ['ENG-10', 'ENG-2', 'Ä-1', 'Å-1', 'é-2', 'é-2', 'İ-3'][i % 7],
   title: 'Task',
   url: '',
   labels: [],
@@ -27,43 +27,48 @@ describe('mobile Linear grouping of sorted issues', () => {
   it.each(['updated', 'identifier', 'priority'] as const)(
     'preserves %s ordering, ties and group metadata',
     (order) => {
-      const sorted = Object.freeze(sortLinearIssues(issues, order))
       for (const group of ['none', 'status', 'assignee', 'team', 'priority'] as const) {
-        const expected = groupLinearIssues([...sorted], group, order)
-        const actual = groupSortedLinearIssues(sorted, group)
-        expect(actual).toEqual(expected)
-        actual.forEach((section, index) => {
-          expect(section.issues).not.toBe(sorted)
-          section.issues.forEach((issue, offset) =>
-            expect(issue).toBe(expected[index].issues[offset])
+        const actual = groupLinearIssues([...issues], group, order)
+        const expected = [...issues].sort((a, b) => compareLinearIssues(a, b, order))
+        if (group === 'none') {
+          expect(actual[0].issues).toEqual(expected)
+        }
+        actual.forEach((section) => {
+          expect(section.key).toBe(
+            section.issues.length ? getLinearIssueGroup(section.issues[0], group).key : section.key
           )
+          section.issues.forEach((issue, offset) => {
+            const prior = section.issues[offset - 1]
+            if (prior) {
+              // Sections must be sorted under the same comparator the grouping sorted with.
+              expect(compareLinearIssues(prior, issue, order)).toBeLessThanOrEqual(0)
+            }
+          })
         })
+        if (group === 'none') {
+          expect(actual[0].issues).not.toBe(issues)
+        }
       }
     }
   )
 
-  it('does no date parsing or collation after ordering has been established', () => {
-    const sorted = sortLinearIssues(issues, 'updated')
+  it('identifier ordering parses no dates', () => {
     const parse = vi.spyOn(Date, 'parse')
-    const compare = vi.spyOn(String.prototype, 'localeCompare')
-    groupSortedLinearIssues(sorted, 'none')
-    groupSortedLinearIssues(sorted, 'status')
+    groupLinearIssues([...issues], 'status', 'identifier')
     expect(parse).not.toHaveBeenCalled()
-    expect(compare).not.toHaveBeenCalled()
-    groupLinearIssues(sorted, 'status', 'updated')
+    groupLinearIssues([...issues], 'status', 'updated')
     expect(parse).toHaveBeenCalled()
   })
 
   it('returns independent issue arrays for empty, singleton and ungrouped inputs', () => {
     for (const input of [[], [issues[0]], issues]) {
-      const sorted = Object.freeze([...input])
-      const first = groupSortedLinearIssues(sorted, 'none')
-      const second = groupSortedLinearIssues(sorted, 'none')
+      const first = groupLinearIssues([...input], 'none', 'identifier')
+      const second = groupLinearIssues([...input], 'none', 'identifier')
       expect(first).toEqual(second)
       expect(first[0].issues).not.toBe(second[0].issues)
       first[0].issues.pop()
-      expect(second[0].issues).toEqual(sorted)
+      expect(second[0].issues).toEqual([...input].sort((a, b) => compareLinearIssues(a, b, 'identifier')))
     }
-    expect(groupSortedLinearIssues([], 'status')).toEqual([])
+    expect(groupLinearIssues([], 'status', 'updated')).toEqual([])
   })
 })

@@ -61,6 +61,14 @@ export const AiVaultSearchTruncationSchema = z.object({
   query: z.boolean(),
   freshness: z.boolean()
 })
+/**
+ * Per-host outcomes of an all-computers merge. Additive and desktop-only: no
+ * host publishes this, and a reader that does not know it simply drops it.
+ */
+export const AiVaultSearchHostOutcomeSchema = z.object({
+  executionHostId: executionHostIdSchema,
+  outcome: z.enum(['searched', 'stale', 'disabled', 'not-ready', 'no-service', 'unreachable'])
+})
 const routeSchema = z.enum(['phrase', 'and', 'or', 'typo+phrase', 'typo+and', 'typo+or'])
 export const AiVaultSearchPlannerReportSchema = z.object({
   route: routeSchema,
@@ -80,7 +88,8 @@ export const AiVaultSearchResponseSchema = z.discriminatedUnion('kind', [
     generation: z.number().int().nonnegative(),
     truncated: AiVaultSearchTruncationSchema,
     durationMs: z.number().nonnegative(),
-    debug: AiVaultSearchDebugSchema.optional()
+    debug: AiVaultSearchDebugSchema.optional(),
+    hosts: z.array(AiVaultSearchHostOutcomeSchema).optional()
   }),
   z.object({
     kind: z.literal('stale-cursor'),
@@ -94,15 +103,22 @@ export const AiVaultSearchResponseSchema = z.discriminatedUnion('kind', [
   })
 ])
 export const AiVaultSearchStatusRequestSchema = z.object({})
+/** Consent flip for one host's index. Answered with that host's status after the change is applied. */
+export const AiVaultSetSearchEnabledParamsSchema = z.object({ enabled: z.boolean() })
 export const AiVaultSearchStatusSchema = z.object({
   enabled: z.boolean(),
   phase: z.enum(['idle', 'indexing', 'current', 'degraded', 'closed']),
   filesIndexed: z.number().int().nonnegative(),
   filesDue: z.number().int().nonnegative(),
   filesFailed: z.number().int().nonnegative(),
+  // Optional: a host that predates this field degrades to a session count only.
+  messagesIndexed: z.number().int().nonnegative().optional(),
   // `root` is a host path, withheld over the relay; the array length is the count.
   degradedRoots: z.array(z.object({ root: z.string().optional(), reason: z.string() })),
   lastReconcileAt: z.number().nullable(),
   lastSweepCompletedAt: z.number().nullable(),
+  // Optional: an older host answers without it, and a reader that has none
+  // should show no breakdown rather than a breakdown of zeroes.
+  sessionsByAgent: z.record(z.string(), z.number().int().nonnegative()).optional(),
   generation: z.number().int().nonnegative()
 })

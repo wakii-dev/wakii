@@ -274,6 +274,45 @@ describe('ClaudeStructuredSessionAdapter.acquire', () => {
     ).resolves.toEqual({ cancelled: true })
   })
 
+  it('opens each queued exact replay with its own request origin', async () => {
+    const claude = fakeClaude({ replayUuid: null })
+    const events: ClaudeStructuredSessionEvent[] = []
+    const adapter = await acquired(claude, {}, events)
+    const connection = claude.connections[0]!
+    const dispatch = async (clientMessageId: string, requestedAt: number): Promise<void> => {
+      await expect(
+        adapter.dispatch({
+          sessionId: 'session-1',
+          clientMessageId,
+          body: USER_MESSAGE,
+          fence: 7,
+          requestedAt
+        })
+      ).resolves.toEqual({ state: 'admitted' })
+    }
+    const echo = (index: number): void => {
+      const sent = connection.sent[index]!
+      connection.handlers.onMessage?.({
+        ...sent,
+        uuid: `turn-${index + 1}`,
+        user_message_uuid: sent.uuid
+      })
+    }
+
+    await dispatch('client-a', 100)
+    echo(0)
+    await dispatch('client-b', 200)
+    await dispatch('client-c', 300)
+    echo(1)
+    echo(2)
+
+    expect(
+      events
+        .filter((event) => event.type === 'message' && event.startsTurn === true)
+        .map((event) => (event.type === 'message' ? event.requestedAt : undefined))
+    ).toEqual([100, 200, 300])
+  })
+
   it('quarantines SDK frames without the acquired session identity', async () => {
     const claude = fakeClaude({ replayUuid: null })
     const events: ClaudeStructuredSessionEvent[] = []
@@ -676,7 +715,8 @@ describe('ClaudeStructuredSessionAdapter prompts', () => {
       itemId: 'journal-approval',
       kind: 'approval',
       optionId: 'allowForSession',
-      fence: 7
+      fence: 7,
+      commit: async () => undefined
     })
     // The answer resolves the SDK's own callback promise; the SDK writes the wire response.
     await expect(answered.promise).resolves.toEqual({
@@ -712,7 +752,8 @@ describe('ClaudeStructuredSessionAdapter prompts', () => {
       itemId: 'journal-q1',
       kind: 'question',
       optionId: encodeClaudeQuestionOptionId('Library?', 'Luxon'),
-      fence: 7
+      fence: 7,
+      commit: async () => undefined
     })
     await tick()
     expect(answered.settled()).toBe(false)
@@ -721,7 +762,8 @@ describe('ClaudeStructuredSessionAdapter prompts', () => {
       itemId: 'journal-q2',
       kind: 'question',
       optionId: encodeClaudeQuestionOptionId('Ship now?', 'Yes'),
-      fence: 7
+      fence: 7,
+      commit: async () => undefined
     })
     await expect(answered.promise).resolves.toMatchObject({
       behavior: 'allow',
@@ -752,7 +794,8 @@ describe('ClaudeStructuredSessionAdapter prompts', () => {
         itemId: 'journal-9',
         kind: 'approval',
         optionId: 'allow',
-        fence: 7
+        fence: 7,
+        commit: async () => undefined
       })
     ).rejects.toThrow(/no longer waiting/)
   })
