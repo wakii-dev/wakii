@@ -32,6 +32,7 @@ Phase 4 workers (via `worker-start`) execute in isolated worktrees — the coord
 - **Files modified** (paths)
 - **Codebase conventions** (key patterns the coordinator knows — naming, structure, test framework)
 - **The spec section** this task implements (for behavior verification)
+- **Verify criteria** của task (exit criteria trong plan) — đọc TRƯỚC khi đọc diff (business-context, học từ open-code-review `--background`): review phán theo intent của spec, không phán theo gu riêng. Briefing thiếu spec/criteria → báo BLOCKED-INPUT, đừng review mò.
 
 You do NOT see the coordinator's conversation — only the briefing.
 
@@ -89,6 +90,33 @@ Fix P0/P1 phải kèm test TÁI ĐƯỢC bug đó: chạy test trên code CŨ (s
 hoặc không phủ bug — coordinator coi như finding chưa được đóng test.
 Ví dụ chuẩn: [rst2] store-survival sau PF-1; [SC4c] blocked-tried thiếu → FAIL.
 
+## Deterministic-first pass (hybrid — học tiếp open-code-review 2.14.1)
+
+Trước khi review "bằng mắt": chạy/đọc output deterministic trên changed files
+(`oxlint` changed + typecheck project liên quan nếu coordinator chưa đưa). Kết quả
+tool = FACTS — ghi thẳng vào report mục `### Deterministic` (không re-đánh giá,
+không bỏ). Review của bạn chỉ soi phần tool KHÔNG thấy: logic, design, scope,
+test-miss, contract. Không duplicate finding tool đã bắt (trừ khi severity tool
+đánh sai — nêu lý do).
+
+## Precision policy (cân coverage pass — precision-over-recall, open-code-review)
+
+Coverage pass = recall theo FILE (mọi file phải có verdict). Findings = precision:
+- P0/P1: bắt buộc qua Position-verify + `confidence:high|med`. `confidence:low`
+  → mục `### NEEDS VERIFICATION` — KHÔNG tính vào verdict (story-review-fuse
+  đã tách riêng, đừng nhét P1 giả tăng noise).
+- P2/nitpick style-only: gộp tối đa 5 dòng, hết cái DROP — đừng thổi style thành P1.
+Ít finding chắc > nhiều finding đoán — như OCR: recall thấp hơn có chủ đích.
+
+## Adaptive depth (review sâu chỉ tốn khi cần — open-code-review plan-phase)
+
+Đo diff trước (`git diff --stat <base>..<head>`):
+- ≤50 changed lines → đi thẳng standard pass.
+- \>50 lines → PLAN phase trước: liệt kê 3-5 file rủi ro nhất (contract/schema,
+  concurrency, auth, migration, IPC boundary), review chúng TRƯỚC, các file
+  còn lại theo priority order của Coverage pass. Plan không xuất ra report —
+  chỉ là thứ tự đọc của bạn.
+
 ## Output format
 
 ```
@@ -102,6 +130,12 @@ Ví dụ chuẩn: [rst2] store-survival sau PF-1; [SC4c] blocked-tried thiếu �
 
 ### P2 — Nice-to-have (note in audit log)
 - [<file>:<line>] <suggestion>
+
+### Deterministic (facts từ oxlint/tc — không tự đánh giá lại)
+- [<tool>] <file>:<line> <rule/message>
+
+### NEEDS VERIFICATION (confidence:low — không tính verdict)
+- [<file>:<line>] <suspicion> — <cần chạy gì để xác nhận>
 
 ### Surgical-scope check
 - In-scope edits: <count> files, all map to task → OK / <list of out-of-scope edits>
