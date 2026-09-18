@@ -1,6 +1,6 @@
 {
   "name": "story-team-kit",
-  "version": "2.14.1",
+  "version": "2.14.2",
   "description": "9-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới.",
   "requires": {
     "claude-code": ">=2.0",
@@ -474,5 +474,6 @@
       "type": "bin",
       "description": "query Project KB (ADR/repos/glossary/MOC) tu configurable dir (WAKII_KB_DIR) - fail-open khi KB chua configured; layer 1 ADE knowledge infra (#38)"
     }
-  ]
+  ],
+  "kitHash": "c51f6f98ea48d2fa"
 }

@@ -328,6 +328,29 @@ console.log(`\n== [fp] fact-pack happy path — bracket + SF tiers + linear + ta
   check('fp', 'KHÔNG disclosure khi dưới cap', !r.stdout.includes('[đã cắt'))
 }
 
+console.log(`\n== [fpk] kit-lag — installed marker ≠ kit vendored trong repo (2.14.2) ==`)
+{
+  // repo story giả + vendored kit.json đúng relative path của wakii repo
+  const repo = initStoryRepo(tempDir('fpk1'), {})
+  const kitDir = join(repo, 'resources', 'plugins', 'launch', 'stablyai.orca-superpowers-launcher', 'kit')
+  mkdirSync(kitDir, { recursive: true })
+  writeFileSync(join(kitDir, 'kit.json'), JSON.stringify({ version: '2.99.0' }))
+  const fakeHome = tempDir('fpk-home')
+  mkdirSync(join(fakeHome, '.claude'), { recursive: true })
+  writeFileSync(join(fakeHome, '.claude', '.story-team-kit-version'), '2.13.2:abcdef0123456789')
+  const homeEnv = { HOME: fakeHome, USERPROFILE: fakeHome }
+  const r = runFactPack(repo, { source: 'startup', cwd: repo }, homeEnv)
+  check('fpk', 'lệch version → 1 dòng ⚠ kit nêu cả hai version',
+    r.status === 0 && r.stdout.includes('⚠ kit lệch') && r.stdout.includes('2.13.2') && r.stdout.includes('2.99.0'),
+    r.stdout.slice(-200))
+  writeFileSync(join(fakeHome, '.claude', '.story-team-kit-version'), '2.99.0:abcdef0123456789')
+  const r2 = runFactPack(repo, { source: 'startup', cwd: repo }, homeEnv)
+  check('fpk', 'khớp version → không cảnh báo', r2.status === 0 && !r2.stdout.includes('⚠ kit'), r2.stdout.slice(-120))
+  const r3 = runFactPack(tempDir('fpk3'), { source: 'startup', cwd: tempDir('fpk3') }, homeEnv)
+  check('fpk', 'repo thường (không vendored kit) → fail-open, không crash',
+    r3.status === 0 && !r3.stdout.includes('⚠ kit'), `status=${r3.status}`)
+}
+
 console.log(`\n== [fps] source filtering — compact skip; resume/clear/fork/startup inject ==`)
 {
   const repo = initStoryRepo(tempDir('fp2'), { checkpoints: [CP1] })
