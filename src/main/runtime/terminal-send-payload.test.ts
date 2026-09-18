@@ -36,6 +36,15 @@ describe('maybeWrapTerminalSendTextForTuiAgent', () => {
     expect(routed.enter).toBe(true)
   })
 
+  it('neutralizes ESC sequences on the raw single-line path without markers', () => {
+    const routed = maybeWrapTerminalSendTextForTuiAgent(
+      { text: 'echo \x1b[31mred', enter: true },
+      'claude'
+    )
+    expect(routed.text).toBe('echo <ESC>[31mred')
+    expect(routed.text).not.toContain('\x1b[200~')
+  })
+
   it('leaves non-TUI targets raw', () => {
     const action = { text: multiline, enter: true }
     expect(maybeWrapTerminalSendTextForTuiAgent(action, null)).toBe(action)
