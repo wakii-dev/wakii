@@ -31,6 +31,19 @@ DB_LABEL="${PREFLIGHT_DB_LABEL:-rows}"
 CHECK_NM="${PREFLIGHT_NODE_MODULES:-1}"
 ENV_FILE="${PREFLIGHT_ENV_FILE:-server/.env}"
 PKG_MGR="${PREFLIGHT_PKG_MGR:-pnpm}"
+
+# flags CLI override env/conf (usage hứa từ trước — test harness 2.14.6 bắt được
+# việc chưa parse: --branch chỉ đọc env nên flag bị nuốt im lặng)
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --branch) [ $# -ge 2 ] || { echo "Usage: story-preflight [--branch <name>] [--port <n>] [--db <path>]"; exit 2; }; BRANCH="$2"; shift ;;
+    --port)   [ $# -ge 2 ] || { echo "Usage: story-preflight [--branch <name>] [--port <n>] [--db <path>]"; exit 2; }; PORT="$2"; shift ;;
+    --db)     [ $# -ge 2 ] || { echo "Usage: story-preflight [--branch <name>] [--port <n>] [--db <path>]"; exit 2; }; DB="$2"; shift ;;
+    *) echo "Unknown: $1"; echo "Usage: story-preflight [--branch <name>] [--port <n>] [--db <path>]"; exit 2 ;;
+  esac
+  shift
+done
+
 FAIL=0
 
 echo "═══ PRE-FLIGHT CHECK ═══"

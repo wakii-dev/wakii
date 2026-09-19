@@ -474,9 +474,13 @@ fi
 
 **DAG wiring safety (learned 2026-09-14 FI-459 — 2 runs mồ côi vì deps wire bug):** `--deps` nhận JSON array LITERAL (`'["task_x","task_y"]'`) — không build qua chuỗi lồng `sed`/nhiều `$()` và không capture id qua hàm vừa `echo` log (biến sẽ chứa log-text, không phải id). Sau khi tạo: verify bằng `task-list` — đếm deps mỗi task khớp expect + status `pending` (có deps) vs `ready` (không deps). Không có `run-delete` — run nhầm → mark từng task `failed` với reason, tạo run mới.
 
+**Plan-DAG validator (tool-enforced — học từ story-validate, kit ≥2.14.5):** sau khi DAG tạo xong và TRƯỚC plan-critic/Phase 4, chạy `~/.claude/bin/story-plan-validate [--run <RUN>]` — deterministic trên task-list thật: D1 deps mồ côi/self-dep · D2 cycle · D3 task thiếu spec (FAIL); W1 spec không có tiêu chí nghiệm thu tường minh (WARN, không chặn). FAIL → sửa DAG rồi chạy lại — **không vào Phase 4 khi còn FAIL** (worker đứng chờ giữa plan vì dep mồ côi = đúng class lỗi FI-459 mà bước này chặn tại chỗ rẻ nhất).
+
 **Plan-critic gate (optional but recommended when DAG has 5+ tasks, MANDATORY in autonomous):** before Phase 4, dispatch the `plan-critic` agent (subagent_type=`plan-critic`, color green). Brief it with: plan.md content + task DAG (IDs + titles + deps) + spec.md + Phase 0 touch map. It returns P0/P1/P2 critique (missing tasks, wrong dep edges, cap-4 violations, wrong granularity, spec-coverage gaps). On FIX-P0-FIRST / REWORK-PLAN → revise plan/DAG via writing-plans-linear, re-critique. **Rework cap: 2 cycles** — on the 3rd critique of the same plan, STOP and summarize the recurring critique + what changed each round, and ask the user. On PROCEED → Phase 4. For plans with <5 tasks, skip (no DAG to review). **Force-on contract:** `Plan critic: ON.` token (see Token Contract Table).
 
 **Next:** offer execution choice (delegate via Orca `worker-start` for parallel/isolated tasks, or execute inline).
+
+**Coordinator side of ask-timeout (kit ≥2.14.6):** worker bị chặn sẽ hỏi qua `ask` — mute của bạn là nợ có lãi (worker đi transparent-B sau timeout, xem task-executor ASK-TIMEOUT ladder). Đang có worker chạy → rã inbox định kỳ `orca orchestration inbox --json` (hoặc `check --wait`), ưu tiên `question`/`escalation` quá giờ trước khi mở việc mới.
 
 ---
 
@@ -531,6 +535,12 @@ orca orchestration gate-resolve --id "$GATE_ID" --resolution approved --json
 - **Task retry cap (3):** a single Phase 4 task may be retried at most 3 times, regardless of root cause. The verify-loop escape hatch above catches repeated *same-cause* failures; this cap catches the *different-cause* failure mode (fail A → fix → fail B → fix → fail C) where each failure looks novel but the task is clearly not converging. On the 4th attempt → STOP. Summarize: the task, each attempt's symptom + fix tried, why none converged. Ask the user how to proceed (different approach, escalate, or descope).
 - **Gate-resolve cap (3):** if a single gate is `rejected` 3 times, STOP re-submitting. Summarize: the gate, each rejection reason, what you changed each time, why the reviewer keeps rejecting. Ask the user — do not loop "submit → reject → patch → submit" past 3. Repeated rejection usually means you're not understanding the feedback, not that the next patch will fix it.
 
+**TASK-DONE mini-ritual (2 phút sau mỗi task — học từ story SF-COMPLETE, kit ≥2.14.5):** patterns tươi nhất nằm ở lúc task vừa đóng; chờ post-task-ritual cuối run là nhớ đã mờ. 3 câu:
+1. Task này sinh pattern/quy tắc gì chưa có trong kit/plan?
+2. Skill/CLI nào là đích nhỏ nhất chứa được nó?
+3. Patch ngay được <10' → patch + note learned-date; không → Principle 6 flag (KHÔNG tự sửa skill giữa chừng) — đừng scatter.
+Kết thúc bằng 1 dòng: `MINI-RITUAL <task-id>: N patterns → file(s) updated / no-new-patterns (trung thực)`.
+
 ---
 
 ### Phase 5: Final Verify (BROWSER WALKTHROUGH BẮT BUỘC — Rule 0) Bridge 5 — Final Sync
@@ -558,6 +568,8 @@ orca linear label add --current --label "review-approved" --json
 - Your own self-checks and a fork's self-checks do NOT substitute — only the independent verifier assigns a verdict. (Per memory `self-test-can-prove-negative-but-not-positive`.)
 
 **Security review (CONDITIONAL — when the change touches user input, auth, secrets, external APIs, or new dependencies):** spawn the `security-audit` agent on the diff before the verifier. OWASP-top-10 surface = unconditional trigger (XSS, SQLi, command injection, auth bypass, secret leakage). If it surfaces a real finding → fix before verifier (do NOT declare done on a known vuln). Non-trigger changes (refactor, docs, pure logic with no I/O) may skip this. **Force-on contract:** `Security audit: ON.` token runs security-audit unconditionally regardless of OWASP auto-detection — see Token Contract Table.
+
+**Mirror-back vendored (kit ≥2.14.5 — học từ story CLOSE / FI-380):** task nào đụng vendored assets (`resources/plugins/**`, kit/, launcher bundle) → port ngược MỌI thay đổi về lineage source (launcher/story-team-kit repo) TRƯỚC khi declare done — kể cả thay đổi của session khác tích lũy sẵn ở vendored. Vendored đi trước lineage = bundle sau này hạ cấp mất fixes (drift guard kit-verify sẽ FAIL, nhưng phải không đến bước đó).
 
 **Workflow complete** — offer next steps (PR, review, etc.).
 
