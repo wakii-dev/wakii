@@ -42,7 +42,7 @@ import { createWorktreeRemovalRuntime } from '../orca-runtime-test-scenario-buil
 // connected session has always read the host's `$HOME`. The removal guards refuse without it.
 beforeEach(resetWorktreeTestSshHostHome)
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('force-deletes a preserved branch on the qualified host when repo ids collide', async () => {
     const localRepo = store.getRepo(TEST_REPO_ID)!
     const remoteRepo = {
@@ -488,7 +488,7 @@ describe('OrcaRuntimeService', () => {
     )
   })
 
-  it('force-removes a legacy Orca-created runtime orphaned worktree directory after Git tracking is gone', async () => {
+  it('force-removes a legacy Wakii-created runtime orphaned worktree directory after Git tracking is gone', async () => {
     const parentDir = await mkdtemp(join(tmpdir(), 'orca-runtime-orphan-'))
     const repoPath = join(parentDir, 'repo')
     const orphanPath = join(parentDir, 'orphan')
@@ -550,7 +550,7 @@ describe('OrcaRuntimeService', () => {
     }
   })
 
-  it('prompts then force-removes an Orca-created runtime unregistered leftover directory with no git marker', async () => {
+  it('prompts then force-removes an Wakii-created runtime unregistered leftover directory with no git marker', async () => {
     const parentDir = await mkdtemp(join(tmpdir(), 'orca-runtime-leftover-'))
     const repoPath = join(parentDir, 'repo')
     const leftoverPath = join(parentDir, 'leftover')
@@ -622,7 +622,7 @@ describe('OrcaRuntimeService', () => {
     }
   })
 
-  it('rejects an Orca-created runtime unregistered local directory with a git directory', async () => {
+  it('rejects an Wakii-created runtime unregistered local directory with a git directory', async () => {
     const parentDir = await mkdtemp(join(tmpdir(), 'orca-runtime-standalone-'))
     const repoPath = join(parentDir, 'repo')
     const standalonePath = join(parentDir, 'standalone')

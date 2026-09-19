@@ -7,7 +7,7 @@ import {
   resolveOrcadBindHost
 } from './orcad-bind-address'
 
-describe('resolveOrcadBindHost', () => {
+describe('resolveWakiidBindHost', () => {
   it('defaults to loopback when the operator asked for nothing', () => {
     expect(resolveOrcadBindHost()).toBe(ORCAD_LOOPBACK_BIND_HOST)
     expect(ORCAD_LOOPBACK_BIND_HOST).toBe('127.0.0.1')

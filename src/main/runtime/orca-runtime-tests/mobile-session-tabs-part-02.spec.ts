@@ -18,7 +18,7 @@ import {
   store
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('reports the wake as unsupported when a phone activates a worktree on headless serve', async () => {
     // Why: without a renderer nothing holds the sleeping records so nothing wakes; the result must say so or the phone shows slept agents as resumed (#7906).
     const metaById: Record<string, WorktreeMeta> = {

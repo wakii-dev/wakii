@@ -6,7 +6,7 @@ import type { IImageAddonOptions } from '@xterm/addon-image'
 const IMAGE_SEQUENCE_SIZE_LIMIT = 8 * 1024 * 1024
 
 // Per-pane decoded-image cache before eviction (MB of RGBA). Read it as the size
-// of ONE pool, not the pane's ceiling: Orca's addon patch keys two more budgets
+// of ONE pool, not the pane's ceiling: Wakii's addon patch keys two more budgets
 // off the same number — retained encoded Kitty blobs (another 32 MB) and pending
 // base64 WASM decoders (~3 x 11 MB, since one decoder's capacity is the 8 MiB
 // sequence limit expanded 4/3 plus a page). Worst case is therefore ~98 MB per

@@ -32,10 +32,10 @@ const AGENT_STATUS_STORE_DEPS = [
 
 const MAIN_ROOT = join(import.meta.dirname, '..')
 
-/** The text of the `new OrcaRuntimeService(...)` call in one entry point. */
+/** The text of the `new WakiiRuntimeService(...)` call in one entry point. */
 function runtimeConstruction(relativePath: string): string {
   const source = readFileSync(join(MAIN_ROOT, relativePath), 'utf8')
-  const start = source.indexOf('new OrcaRuntimeService(')
+  const start = source.indexOf('new WakiiRuntimeService(')
   expect(start).toBeGreaterThanOrEqual(0)
   let depth = 0
   for (let index = source.indexOf('(', start); index < source.length; index += 1) {

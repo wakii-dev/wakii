@@ -30,7 +30,7 @@ describe('isWorktreePathMissing', () => {
   })
 })
 
-describe('canCleanupUnregisteredOrcaWorktreeDirectory', () => {
+describe('canCleanupUnregisteredWakiiWorktreeDirectory', () => {
   it('does not treat orcaCreatedAt alone as cleanup authority', () => {
     expect(
       canCleanupUnregisteredOrcaWorktreeDirectory({
@@ -47,7 +47,7 @@ describe('canCleanupUnregisteredOrcaWorktreeDirectory', () => {
     ).toBe(true)
   })
 
-  it('accepts legacy Orca-created metadata before explicit provenance existed', () => {
+  it('accepts legacy Wakii-created metadata before explicit provenance existed', () => {
     expect(
       canCleanupUnregisteredOrcaWorktreeDirectory({
         meta: { createdAt: Date.now() }
@@ -89,8 +89,8 @@ describe('canCleanupUnregisteredOrcaWorktreeDirectory', () => {
   })
 })
 
-describe('stripOrcaProvenanceMetaUpdates', () => {
-  it('removes Orca-owned provenance fields from user metadata updates', () => {
+describe('stripWakiiProvenanceMetaUpdates', () => {
+  it('removes Wakii-owned provenance fields from user metadata updates', () => {
     expect(
       stripOrcaProvenanceMetaUpdates({
         comment: 'keep me',

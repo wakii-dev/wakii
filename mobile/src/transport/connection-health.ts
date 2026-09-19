@@ -41,12 +41,12 @@ const RELAY_HOST_COPY: Record<
   'signed-out': {
     kind: 'unreachable',
     label: (host) => `Sign-in required on ${host}`,
-    detail: 'Sign in to Orca on your desktop to reconnect'
+    detail: 'Sign in to Wakii on your desktop to reconnect'
   },
   'host-offline': {
     kind: 'unreachable',
     label: (host) => `${host} is offline`,
-    detail: "Check it's awake, Orca is running, and you're signed in"
+    detail: "Check it's awake, Wakii is running, and you're signed in"
   },
   // The cell refused this phone's relay credential (revoked, a month unused, or
   // desynced). A direct session would also rotate it, but re-pairing is the one

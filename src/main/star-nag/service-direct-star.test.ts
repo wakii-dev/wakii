@@ -65,7 +65,7 @@ describe('StarNagService', () => {
 
     service.registerIpcHandlers()
     getIpcHandler('star-nag:forceShow')()
-    const ok = await getIpcHandler('star-nag:starOrca')()
+    const ok = await getIpcHandler('star-nag:starWakii')()
 
     expect(ok).toBe(true)
     expect(ui.starNagCompleted).toBe(true)
@@ -90,7 +90,7 @@ describe('StarNagService', () => {
 
     service.registerIpcHandlers()
     await getIpcHandler('star-nag:onboardingCompleted')()
-    await getIpcHandler('star-nag:starOrca')()
+    await getIpcHandler('star-nag:starWakii')()
 
     expect(trackMock).toHaveBeenCalledWith('app_starred_orca', {
       source: 'onboarding_completed',
@@ -108,7 +108,7 @@ describe('StarNagService', () => {
 
     service.registerIpcHandlers()
     getIpcHandler('star-nag:forceShow')()
-    await getIpcHandler('star-nag:starOrca')()
+    await getIpcHandler('star-nag:starWakii')()
 
     expect(trackMock).toHaveBeenCalledWith(
       'star_nag_outcome',
@@ -133,7 +133,7 @@ describe('StarNagService', () => {
 
     service.registerIpcHandlers()
     getIpcHandler('star-nag:forceShow')()
-    const starPromise = getIpcHandler('star-nag:starOrca')()
+    const starPromise = getIpcHandler('star-nag:starWakii')()
     getIpcHandler('star-nag:dismiss')()
 
     deferredStar.resolve(true)
@@ -159,7 +159,7 @@ describe('StarNagService', () => {
 
     service.registerIpcHandlers()
     getIpcHandler('star-nag:forceShow')()
-    const starPromise = getIpcHandler('star-nag:starOrca')()
+    const starPromise = getIpcHandler('star-nag:starWakii')()
     getIpcHandler('star-nag:dismiss')()
 
     deferredStar.resolve(false)
@@ -182,7 +182,7 @@ describe('StarNagService', () => {
 
     service.registerIpcHandlers()
     getIpcHandler('star-nag:forceShow')()
-    const starFromNag = getIpcHandler('star-nag:starOrca')
+    const starFromNag = getIpcHandler('star-nag:starWakii')
 
     await expect(starFromNag()).rejects.toThrow('gh failed')
     await expect(starFromNag()).resolves.toBe(true)
@@ -200,7 +200,7 @@ describe('StarNagService', () => {
 
     service.registerIpcHandlers()
     getIpcHandler('star-nag:forceShow')()
-    const starFromNag = getIpcHandler('star-nag:starOrca')
+    const starFromNag = getIpcHandler('star-nag:starWakii')
     const first = starFromNag()
     const second = starFromNag()
 

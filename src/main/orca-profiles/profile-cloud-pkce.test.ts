@@ -79,7 +79,7 @@ async function startedFlow(): Promise<{
   return { authUrl, flow, nonce, redirectUri, state }
 }
 
-describe('Orca cloud PKCE flow', () => {
+describe('Wakii cloud PKCE flow', () => {
   beforeEach(() => {
     openExternalMock.mockReset()
     openExternalMock.mockResolvedValue(undefined)
@@ -97,7 +97,7 @@ describe('Orca cloud PKCE flow', () => {
     expect(validResponse.statusCode).toBe(200)
     expect(validResponse.headers['cache-control']).toBe('no-store')
     expect(validResponse.headers['content-security-policy']).toContain("default-src 'none'")
-    expect(validResponse.body).toContain('<h1>Signed in to Orca</h1>')
+    expect(validResponse.body).toContain('<h1>Signed in to Wakii</h1>')
     expect(validResponse.body).toContain('You can close this tab and return to the app.')
     expect(validResponse.body).not.toContain('class="brand"')
     await expect(flow).resolves.toMatchObject({
@@ -114,7 +114,7 @@ describe('Orca cloud PKCE flow', () => {
     const response = await readHttp(callbackUrl(redirectUri, { error: 'access_denied', state }))
 
     expect(response.statusCode).toBe(400)
-    expect(response.body).toBe('Orca sign-in was cancelled.')
+    expect(response.body).toBe('Wakii sign-in was cancelled.')
     await expect(observedFlow).resolves.toMatchObject({ message: 'orca_cloud_auth_denied' })
   })
 
@@ -125,7 +125,7 @@ describe('Orca cloud PKCE flow', () => {
       const observedFlow = flow.catch((failure: unknown) => failure)
       const response = await readHttp(callbackUrl(redirectUri, { error, state }))
       expect(response.statusCode).toBe(400)
-      expect(response.body).toBe('Orca sign-in failed. Return to Orca and try again.')
+      expect(response.body).toBe('Wakii sign-in failed. Return to Wakii and try again.')
       await expect(observedFlow).resolves.toMatchObject({
         message: 'orca_cloud_auth_callback_failed'
       })

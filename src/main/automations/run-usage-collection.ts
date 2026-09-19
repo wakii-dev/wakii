@@ -97,7 +97,7 @@ export async function collectAutomationRunUsage({
       completedAt: collectedAt
     })
   }
-  return unavailable(null, 'provider_unsupported', 'This agent does not report usage to Orca yet.')
+  return unavailable(null, 'provider_unsupported', 'This agent does not report usage to Wakii yet.')
 }
 
 /** Collects and writes the usage a just-finalized run earned, returning the row to answer with. */

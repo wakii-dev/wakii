@@ -80,7 +80,7 @@ export class StarNagService {
     ipcMain.handle('star-nag:complete', () => this.markCompleted())
     ipcMain.handle('star-nag:disable', () => this.disable())
     ipcMain.handle('star-nag:openWeb', () => this.openWeb())
-    ipcMain.handle('star-nag:starOrca', () => this.starOrcaFromNag())
+    ipcMain.handle('star-nag:starWakii', () => this.starOrcaFromNag())
     ipcMain.handle('star-nag:forceShow', () => this.forceShow())
     ipcMain.handle('star-nag:agentValueMoment', () => this.prepareAgentValueMoment())
     ipcMain.handle('star-nag:showAgentValueMoment', () => this.showPreparedAgentValueMoment())

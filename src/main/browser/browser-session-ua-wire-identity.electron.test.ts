@@ -303,7 +303,7 @@ const processIdentity = require(${JSON.stringify(options.processIdentityModulePa
 const { cleanElectronUserAgent } = require(${JSON.stringify(options.exceptionModulePath)})
 const arm = ${JSON.stringify(options.arm)}
 const startupMarks = []
-app.setName('OrcaWireIdentityFixture')
+app.setName('WakiiWireIdentityFixture')
 const preReadyNativeUserAgent = app.userAgentFallback
 let identity
 if (arm !== 'late-session-setter') {
@@ -327,7 +327,7 @@ async function run() {
   const timeout = setTimeout(() => { writeFileSync(${JSON.stringify(options.resultPath)}, JSON.stringify({ error: 'timeout', startupMarks })); app.exit(2) }, 10000)
   await app.whenReady()
   startupMarks.push('ready')
-  app.setName('OrcaWireIdentityFixtureAfterReady')
+  app.setName('WakiiWireIdentityFixtureAfterReady')
   const fallbackAfterReadyNameChange = app.userAgentFallback
   await waitForBarrier()
   const sess = session.fromPartition('persist:wire-identity-test')

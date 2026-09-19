@@ -49,7 +49,7 @@ export type ZshWrapperRestoreSpec = {
 }
 
 export type ZshStartupHookSpec = {
-  /** First line of the generated file, e.g. `# Orca zsh shell-ready wrapper`. */
+  /** First line of the generated file, e.g. `# Wakii zsh shell-ready wrapper`. */
   headerLabel: string
   readyMarkerEscaped: string
   /** OSC 133 command-lifecycle hooks (behind the `markers` feature). */

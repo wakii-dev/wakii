@@ -12,7 +12,7 @@ import {
 } from '../orca-runtime-test-mocks.spec'
 import { TEST_REPO_PATH, store } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('creates a same-repo PR branch override from a resolved head SHA and matching push target', async () => {
     const runtime = new OrcaRuntimeService(store)
     const createdWorktree = {

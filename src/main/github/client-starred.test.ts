@@ -38,7 +38,7 @@ async function flushMicrotasks(): Promise<void> {
   }
 }
 
-describe('checkOrcaStarred', () => {
+describe('checkWakiiStarred', () => {
   beforeEach(async () => {
     resetOriginRepositoryCache()
     execFileAsyncMock.mockReset()
@@ -139,7 +139,7 @@ describe('checkOrcaStarred', () => {
   })
 })
 
-describe('starOrca', () => {
+describe('starWakii', () => {
   beforeEach(async () => {
     resetOriginRepositoryCache()
     execFileAsyncMock.mockReset()

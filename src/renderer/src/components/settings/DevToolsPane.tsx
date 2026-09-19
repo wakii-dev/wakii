@@ -134,7 +134,7 @@ function showDeleteFailureToast(): void {
   })
 }
 
-// Dev-only preview of the first-party Orca Cloud sign-in. The sidebar/titlebar
+// Dev-only preview of the first-party Wakii Cloud sign-in. The sidebar/titlebar
 // account switcher is hidden in packaged builds while the feature is in
 // progress; this surfaces it (and its status) in dev when the env vars are set.
 function OrcaCloudDevSubsection(): React.JSX.Element {
@@ -150,7 +150,7 @@ function OrcaCloudDevSubsection(): React.JSX.Element {
     <section className="space-y-3">
       <div className="flex items-start justify-between gap-3">
         <SettingsSubsectionHeader
-          title={translate('auto.components.settings.DevToolsPane.orcaCloud', 'Orca Cloud')}
+          title={translate('auto.components.settings.DevToolsPane.orcaCloud', 'Wakii Cloud')}
           description={translate(
             'auto.components.settings.DevToolsPane.orcaCloudDescription',
             'Dev-only preview of first-party cloud sign-in. Hidden in production; in dev it also appears in the sidebar account switcher once ORCA_CLOUD_API_URL and ORCA_CLOUD_CLIENT_ID are set.'

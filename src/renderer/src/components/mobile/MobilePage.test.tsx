@@ -305,7 +305,7 @@ describe('MobilePage pairing connection mode', () => {
 
     // Switching back to Orca Relay must clear the local QR, not remint a
     // local-only code under the Relay label.
-    await user.click(screen.getByRole('button', { name: 'Orca Relay' }))
+    await user.click(screen.getByRole('button', { name: 'Wakii Relay' }))
     await waitFor(() => expect(screen.getByTestId('mode')).toHaveTextContent('automatic'))
     await waitFor(() => expect(screen.getByTestId('pairing-qr')).toHaveTextContent('none'))
     await new Promise((resolve) => setTimeout(resolve, 20))

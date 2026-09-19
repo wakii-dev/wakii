@@ -75,7 +75,7 @@ function table(
       owner: 'stablyai',
       ownerType: 'organization',
       number: 3,
-      title: 'Orca',
+      title: 'Wakii',
       url: 'https://github.com/orgs/stablyai/projects/3'
     },
     selectedView: {
@@ -259,7 +259,7 @@ describe('ProjectRoadmap', () => {
     expect(screen.getByText('list')).toBeTruthy()
     expect(
       screen.getByText(
-        'This roadmap view has no date or iteration field to place items on, so Orca is listing them instead.'
+        'This roadmap view has no date or iteration field to place items on, so Wakii is listing them instead.'
       )
     ).toBeTruthy()
   })

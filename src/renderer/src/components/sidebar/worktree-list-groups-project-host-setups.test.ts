@@ -688,7 +688,7 @@ describe('buildRows with pinned worktrees', () => {
     expect(headers).toHaveLength(1)
     expect(headers[0]).toMatchObject({
       key: 'project:github:stablyai/orca',
-      label: 'Orca',
+      label: 'Wakii',
       count: 2
     })
   })
@@ -784,7 +784,7 @@ describe('buildRows with pinned worktrees', () => {
       headers.some((row) => row.key === 'project:github:stablyai/orca::setup:repo-runtime-b')
     ).toBe(false)
     expect(headers.find((row) => row.key === 'project:github:stablyai/orca')).toMatchObject({
-      label: 'Orca',
+      label: 'Wakii',
       count: 1
     })
   })

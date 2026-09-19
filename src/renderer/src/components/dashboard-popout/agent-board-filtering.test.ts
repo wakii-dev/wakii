@@ -18,7 +18,7 @@ function card(overrides: Partial<DashboardCard>): DashboardCard {
     worktreeId: 'worktree-1',
     tabId: 'tab-1',
     leafId: null,
-    repoName: 'Orca',
+    repoName: 'Wakii',
     worktreeName: 'dashboard',
     startedAt: 0,
     finishedAt: null,

@@ -64,7 +64,7 @@ describe('ImportedWorktreesVisibilityLine', () => {
     )
     expect(markup).toContain('aria-expanded="false"')
     expect(markup).not.toContain('Imported 4 existing worktrees')
-    expect(markup).not.toContain('Orca found 4 worktrees')
+    expect(markup).not.toContain('Wakii found 4 worktrees')
     expect(markup).not.toContain('repo options')
     expect(markup).not.toContain('Reveal')
     expect(markup).not.toContain('Always show')
@@ -106,12 +106,12 @@ describe('ImportedWorktreesVisibilityLine', () => {
       {
         id: 'windows-hidden',
         displayName: 'FeatureX',
-        path: 'C:\\Repos\\Orca\\FeatureX'
+        path: 'C:\\Repos\\Wakii\\FeatureX'
       }
     ])
 
-    expect(groups).toMatchObject([{ path: 'C:/Repos/Orca' }])
-    expect(groups[0]?.path).not.toBe('C:\\Repos\\Orca')
+    expect(groups).toMatchObject([{ path: 'C:/Repos/Wakii' }])
+    expect(groups[0]?.path).not.toBe('C:\\Repos\\Wakii')
   })
 
   it('keeps Windows drive roots as parent path labels', () => {

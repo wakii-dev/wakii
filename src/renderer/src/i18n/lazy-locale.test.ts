@@ -60,13 +60,13 @@ describe('renderer i18n lazy locale loading', () => {
         resourceLanguage: pluginLanguageResourceId(id),
         pluginKey: 'orca-samples.portuguese',
         locale: 'pt-BR',
-        catalog: { menu: { file: 'Arquivo Orca' } }
+        catalog: { menu: { file: 'Arquivo Wakii' } }
       }
     ])
 
     await setRendererUiLanguage(id)
     expect(i18n.language).toBe(pluginLanguageResourceId(id))
-    expect(i18n.t('menu.file', { defaultValue: 'File' })).toBe('Arquivo Orca')
+    expect(i18n.t('menu.file', { defaultValue: 'File' })).toBe('Arquivo Wakii')
 
     setRendererPluginLanguagePacks([])
     await setRendererUiLanguage(id)

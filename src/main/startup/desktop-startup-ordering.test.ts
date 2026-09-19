@@ -86,7 +86,7 @@ describe('startup ordering', () => {
     )
     const readyIndex = entrySource.indexOf('void app.whenReady().then(async () => {')
     const initReadyIndex = entrySource.indexOf('initializeMainProcessReady({')
-    const profileIndex = foundationSource.indexOf('const profile = ensureActiveOrcaProfile()')
+    const profileIndex = foundationSource.indexOf('const profile = ensureActiveWakiiProfile()')
     const initIndex = foundationSource.indexOf(
       'initializeBrowserClientHostId(profile.profileDirectory)'
     )

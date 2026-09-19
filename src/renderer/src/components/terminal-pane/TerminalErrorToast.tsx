@@ -101,7 +101,7 @@ export function isPaneOwnerUnverifiedError(error: string): boolean {
 function humanizeUnreattachableSession(error: string): string {
   const explanation = translate(
     'auto.components.terminal.pane.TerminalErrorToast.sessionUnavailable',
-    "Orca couldn't reattach to this pane's terminal session on the host. Open a new terminal to continue."
+    "Wakii couldn't reattach to this pane's terminal session on the host. Open a new terminal to continue."
   )
   // Why a replacer: a translation containing `$&` or `$1` would otherwise be read as a substitution.
   return UNREATTACHABLE_SESSION_REPLACE_PATTERNS.reduce(
@@ -117,11 +117,11 @@ export function humanizeTerminalError(error: string): string {
     const explanation = isPaneOwnerUnverifiedError(humanized)
       ? translate(
           'auto.components.terminal.pane.TerminalErrorToast.42b283ecfc',
-          "Orca couldn't safely reconnect this terminal because the host couldn't verify its saved session. Orca left the saved session unchanged. Click Retry to try reconnecting now. If it still cannot reconnect, open a new terminal."
+          "Wakii couldn't safely reconnect this terminal because the host couldn't verify its saved session. Wakii left the saved session unchanged. Click Retry to try reconnecting now. If it still cannot reconnect, open a new terminal."
         )
       : translate(
           'auto.components.terminal.pane.TerminalErrorToast.ownerUnknown',
-          "Orca couldn't verify this terminal's owner."
+          "Wakii couldn't verify this terminal's owner."
         )
     humanized = humanized.replaceAll(PANE_OWNER_UNVERIFIED_MARKER, () => explanation)
   }

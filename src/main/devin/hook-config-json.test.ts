@@ -52,7 +52,7 @@ describe('readDevinHooksConfig', () => {
   })
 })
 
-describe('readConfigFromOrcaOverlapDetail', () => {
+describe('readConfigFromWakiiOverlapDetail', () => {
   it('warns when legacy read_config_from imports Claude', () => {
     const detail = readConfigFromOrcaOverlapDetail({
       hooks: {},

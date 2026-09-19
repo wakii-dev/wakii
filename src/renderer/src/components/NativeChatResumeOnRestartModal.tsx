@@ -60,7 +60,7 @@ function ContinuationExplainer(): React.JSX.Element {
           className="size-7 shrink-0"
           aria-label={translate(
             'auto.components.NativeChatResumeOnRestartModal.whatIsSentTitle',
-            'What Orca sends'
+            'What Wakii sends'
           )}
         >
           <Info className="size-3.5" />
@@ -71,13 +71,13 @@ function ContinuationExplainer(): React.JSX.Element {
           <p className="text-xs font-semibold">
             {translate(
               'auto.components.NativeChatResumeOnRestartModal.whatIsSentTitle',
-              'What Orca sends'
+              'What Wakii sends'
             )}
           </p>
           <p className="text-xs text-muted-foreground">
             {translate(
               'auto.components.NativeChatResumeOnRestartModal.whatIsSentBody',
-              'Continuing sends one short message to each agent, telling it that Orca restarted and asking it to check its last action before carrying on. Your own prompt is never re-sent.'
+              'Continuing sends one short message to each agent, telling it that Wakii restarted and asking it to check its last action before carrying on. Your own prompt is never re-sent.'
             )}
           </p>
           <blockquote className="rounded-md border bg-muted/40 p-2 text-xs text-muted-foreground">
@@ -290,11 +290,11 @@ export function NativeChatResumeOnRestartModal(): React.JSX.Element | null {
             {interruptedByUpdate
               ? translate(
                   'auto.components.NativeChatResumeOnRestartModal.updateBody',
-                  'These chats were mid-turn when Orca installed an update. Reconnecting restores each one where it stopped, with its full context and without re-sending your prompt — the interrupted reply will not continue on its own.'
+                  'These chats were mid-turn when Wakii installed an update. Reconnecting restores each one where it stopped, with its full context and without re-sending your prompt — the interrupted reply will not continue on its own.'
                 )
               : translate(
                   'auto.components.NativeChatResumeOnRestartModal.body',
-                  'These chats were mid-turn when Orca closed. Reconnecting restores each one where it stopped, with its full context and without re-sending your prompt — the interrupted reply will not continue on its own.'
+                  'These chats were mid-turn when Wakii closed. Reconnecting restores each one where it stopped, with its full context and without re-sending your prompt — the interrupted reply will not continue on its own.'
                 )}
           </DialogDescription>
           {/* The true state of things is counterintuitive — the terminal sessions survived and the
@@ -353,7 +353,7 @@ export function NativeChatResumeOnRestartModal(): React.JSX.Element | null {
             <span className="block text-xs text-muted-foreground">
               {translate(
                 'auto.components.NativeChatResumeOnRestartModal.dontAskAgainHint',
-                'Qualifying chats will be reconnected automatically after a restart, and Orca will tell you when it happens. You can turn this off in Settings → Experimental → Chat UI.'
+                'Qualifying chats will be reconnected automatically after a restart, and Wakii will tell you when it happens. You can turn this off in Settings → Experimental → Chat UI.'
               )}
             </span>
           </span>

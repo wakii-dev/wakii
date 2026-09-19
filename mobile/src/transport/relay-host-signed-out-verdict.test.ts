@@ -24,7 +24,7 @@ import { RelayReconnectController } from './mobile-relay-reconnect-controller'
 import type { RelayHostReachability } from './relay-host-reachability'
 
 const SIGNED_OUT_LABEL = 'Sign-in required on Host 1'
-const SIGNED_OUT_DETAIL = 'Sign in to Orca on your desktop to reconnect'
+const SIGNED_OUT_DETAIL = 'Sign in to Wakii on your desktop to reconnect'
 
 class FakeSocket {
   static readonly OPEN = 1

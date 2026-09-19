@@ -60,7 +60,7 @@ export function ensureBrowserPageWebview({
   webview.setAttribute('allowpopups', '')
   // Why: Electron spreads the webpreferences keys verbatim, so the shared
   // camelCase attribute must stay intact for fullscreen containment to work.
-  // Keep Chromium's normal page canvas opaque while the host underneath follows Orca's theme.
+  // Keep Chromium's normal page canvas opaque while the host underneath follows Wakii's theme.
   webview.setAttribute(
     'webpreferences',
     `${ORCA_BROWSER_GUEST_WEB_PREFERENCES_ATTRIBUTE},transparent=false`

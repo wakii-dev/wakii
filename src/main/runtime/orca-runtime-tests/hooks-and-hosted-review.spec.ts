@@ -25,7 +25,7 @@ import {
 } from '../orca-runtime-test-mocks.spec'
 import { TEST_REPO_ID, TEST_REPO_PATH, store } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   describe('checkRepoHooks status', () => {
     const remoteStore = {
       ...store,

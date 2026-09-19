@@ -13,7 +13,7 @@ import { svelteMonarchLanguage } from './register-svelte'
 // Why pin a third-party grammar: monaco's OWN shipped mdx grammar enters a `js`
 // embed on every `{` and pops on `}` with no budget, so it reproduces the
 // unbounded embed-entry recursion exactly. That makes it the proof this shape is
-// monaco's, not something Orca's svelte/astro/vue grammars invented — and it is
+// monaco's, not something Wakii's svelte/astro/vue grammars invented — and it is
 // the tripwire for a monaco upgrade that changes the recursion shape. Do not
 // delete as "not our code".
 

@@ -27,7 +27,7 @@ describe('Claude SessionEnd managed hook capability', () => {
     }
   )
 
-  it('removes only Orca SessionEnd during a capability downgrade', () => {
+  it('removes only Wakii SessionEnd during a capability downgrade', () => {
     const capable = applyManagedHooks(
       {
         hooks: {

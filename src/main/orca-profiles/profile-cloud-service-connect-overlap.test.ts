@@ -72,7 +72,7 @@ const capabilities: OrcaCloudCapabilities = {
 
 const organizations: OrcaCloudOrgSummary[] = [{ orgId: 'org-1', name: 'Acme', role: 'Admin' }]
 
-describe('Orca cloud overlapping connect', () => {
+describe('Wakii cloud overlapping connect', () => {
   beforeEach(() => {
     userDataPath = mkdtempSync(join(tmpdir(), 'orca-cloud-connect-overlap-'))
     beginOrcaCloudPkceFlowMock.mockReset()

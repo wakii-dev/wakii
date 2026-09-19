@@ -21,7 +21,7 @@ function fragmentsOnDisk(): string[] {
     .sort()
 }
 
-describe('Orca runtime test fragments', () => {
+describe('Wakii runtime test fragments', () => {
   it('imports every fragment exactly once from the compatibility entrypoint', () => {
     const imported = importedFragments()
     expect(imported).toEqual(fragmentsOnDisk())

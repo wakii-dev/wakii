@@ -130,7 +130,7 @@ describe('Claude permission callbacks', () => {
 
     await expect(answered).resolves.toEqual({
       behavior: 'deny',
-      message: 'Orca could not decode this permission request.',
+      message: 'Wakii could not decode this permission request.',
       toolUseID: 'tool-2'
     })
     expect(control.prompts.find('perm-2')).toBeNull()

@@ -42,7 +42,7 @@ afterEach(() => {
   setRuntimeTerminalUnavailableCause(null)
 })
 
-describe('runOrcadNativePreflight', () => {
+describe('runWakiidNativePreflight', () => {
   it('stops the boot on a proven-unloadable binary instead of reaching the require', () => {
     // Continuing here would hit the very dlopen the probe just proved fatal, and the
     // operator would get the loader's stack trace instead of the sentence below.

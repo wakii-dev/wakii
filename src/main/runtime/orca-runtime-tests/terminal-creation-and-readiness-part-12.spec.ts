@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { OrcaRuntimeService } from '../orca-runtime-test-mocks.spec'
 import { store, syncSinglePty } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('bounds retained work for many newline-separated huge ANSI cursor movements', async () => {
     const runtime = new OrcaRuntimeService(store)
     syncSinglePty(runtime)

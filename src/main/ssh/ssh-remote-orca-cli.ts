@@ -40,13 +40,13 @@ export type { RemoteOrcaCliRequest, RemoteOrcaCliResult } from './ssh-remote-cli
 // cannot host. Everything else routes through the full host CLI.
 const HOST_INTERACTIVE_COMMANDS: Record<string, string> = {
   serve:
-    'orca serve starts a foreground headless Orca server and cannot run through the SSH relay bridge. Run it directly on the machine that should host Orca.',
+    'orca serve starts a foreground headless Wakii server and cannot run through the SSH relay bridge. Run it directly on the machine that should host Wakii.',
   'claude-teams':
-    'orca claude-teams starts an interactive Claude Code session and cannot run through the SSH relay bridge. Run it in a terminal on the Orca host machine.',
+    'orca claude-teams starts an interactive Claude Code session and cannot run through the SSH relay bridge. Run it in a terminal on the Wakii host machine.',
   'agent-teams-tmux':
-    'orca agent-teams-tmux is a tmux pane shim for the Orca host machine and cannot run through the SSH relay bridge.',
+    'orca agent-teams-tmux is a tmux pane shim for the Wakii host machine and cannot run through the SSH relay bridge.',
   'account add':
-    'orca account add runs an interactive agent login and cannot run through the buffered SSH relay bridge. Run it directly in a terminal on the Orca host machine.'
+    'orca account add runs an interactive agent login and cannot run through the buffered SSH relay bridge. Run it directly in a terminal on the Wakii host machine.'
 }
 
 export async function runRemoteOrcaCli(
@@ -176,7 +176,7 @@ async function dispatchRemoteCli(
       const status = response.result as RuntimeStatus
       const cliStatus: CliStatusResult = {
         target: { kind: 'environment', environment: 'ssh' },
-        // Why: this answers for the Orca host the caller reached over SSH, not for the caller's
+        // Why: this answers for the Wakii host the caller reached over SSH, not for the caller's
         // machine. It used to report running:true unconditionally, which claimed a desktop app
         // even for a headless `serve`; share the same projection the paired-server path uses so
         // both transports answer the question the same way (STA-4792 defect 4).
@@ -294,7 +294,7 @@ async function dispatchRemoteCli(
       // include that root cause so users can fix the install instead of
       // assuming the command family is unsupported over SSH.
       throw new Error(
-        `Unsupported SSH Orca CLI command: ${command} (full Orca CLI bridge unavailable: ${passthroughFailureReason})`
+        `Unsupported SSH Wakii CLI command: ${command} (full Wakii CLI bridge unavailable: ${passthroughFailureReason})`
       )
   }
 }

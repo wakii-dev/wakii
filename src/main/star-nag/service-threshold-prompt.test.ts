@@ -84,7 +84,7 @@ describe('StarNagService', () => {
     })
   })
 
-  it('shows the browser fallback when checkOrcaStarred cannot determine star state', async () => {
+  it('shows the browser fallback when checkWakiiStarred cannot determine star state', async () => {
     const window = createWindow()
     browserWindowMock.getAllWindows.mockReturnValue([window])
     checkOrcaStarredMock.mockResolvedValue(null)
@@ -116,7 +116,7 @@ describe('StarNagService', () => {
     })
   })
 
-  it('does not log a threshold exposure when checkOrcaStarred returns true', async () => {
+  it('does not log a threshold exposure when checkWakiiStarred returns true', async () => {
     const window = createWindow()
     browserWindowMock.getAllWindows.mockReturnValue([window])
     checkOrcaStarredMock.mockResolvedValue(true)

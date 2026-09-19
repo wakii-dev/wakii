@@ -8,7 +8,7 @@
  * The activation half has no relay equivalent, because the relay has no notion of a version
  * being *selected*. Bytes landing in a versioned directory neither picks a version nor rolls
  * one back; the activation record does, and it is written only after the candidate publishes
- * a health payload that survives `evaluateOrcadActivation`. A rejected candidate leaves the
+ * a health payload that survives `evaluateWakiidActivation`. A rejected candidate leaves the
  * previous version running and its own bytes on disk — nothing is lost, and a retry costs no
  * upload.
  */
@@ -164,7 +164,7 @@ async function captureSnapshot(
   )
   if (capture === 'failed') {
     throw new Error(
-      `Could not snapshot ${options.userDataDir} before activating ${fullVersion}. Orca's ` +
+      `Could not snapshot ${options.userDataDir} before activating ${fullVersion}. Wakii's ` +
         'persisted state carries no schema version, so without a snapshot a rollback has no ' +
         'way back. Refusing to activate.'
     )

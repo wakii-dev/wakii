@@ -92,7 +92,7 @@ describe('registerKeybindingHandlers', () => {
     expect(onChanged).toHaveBeenCalledOnce()
   })
 
-  it('authorizes the keybindings file before opening it outside Orca', async () => {
+  it('authorizes the keybindings file before opening it outside Wakii', async () => {
     openPathMock.mockResolvedValue('')
     registerKeybindingHandlers({ ensureFile: vi.fn(() => snapshot) } as never)
 

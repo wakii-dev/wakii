@@ -123,14 +123,14 @@ describe('LinkActionPopover', () => {
     expect(onClose).toHaveBeenCalledWith(request)
   })
 
-  it('uses distinct icons for system and Orca browser actions', () => {
+  it('uses distinct icons for system and Wakii browser actions', () => {
     vi.stubGlobal('navigator', { userAgent: 'Macintosh' })
     const request: LinkActionRequest = {
       anchorX: 100,
       anchorY: 200,
       destination: 'https://example.com',
       kind: 'url',
-      primary: { external: false, label: 'Orca Browser', run: vi.fn() },
+      primary: { external: false, label: 'Wakii Browser', run: vi.fn() },
       alternate: { external: true, label: 'System Browser', run: vi.fn() },
       restoreFocus: vi.fn()
     }
@@ -138,7 +138,7 @@ describe('LinkActionPopover', () => {
     render(<LinkActionPopover request={request} onClose={vi.fn()} />)
 
     expect(
-      screen.getByText('Orca Browser').closest('button')?.querySelector('.lucide-globe')
+      screen.getByText('Wakii Browser').closest('button')?.querySelector('.lucide-globe')
     ).toBeTruthy()
     expect(
       screen.getByText('System Browser').closest('button')?.querySelector('.lucide-external-link')

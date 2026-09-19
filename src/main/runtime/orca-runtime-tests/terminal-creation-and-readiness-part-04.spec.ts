@@ -8,7 +8,7 @@ import {
 import { TEST_WORKTREE_ID, TEST_WORKTREE_PATH, store } from '../orca-runtime-test-fixtures.spec'
 import { wireHeadlessServeRuntime } from '../orca-runtime-test-scenario-builders.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('restores captured native Claude Agent Teams mode with fresh service env', async () => {
     setPlatform('linux')
     const spawn = vi.fn().mockResolvedValue({ id: 'pty-bg' })

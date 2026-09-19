@@ -29,7 +29,7 @@ function definedEnv(env: Record<string, string | undefined>): Record<string, str
 /**
  * Orca supplies the Claude Code child rather than letting the SDK spawn it.
  *
- * Two independent reasons: the SDK's `SpawnedProcess` has no pid, and Orca's
+ * Two independent reasons: the SDK's `SpawnedProcess` has no pid, and Wakii's
  * spawner is the only path that encodes `.cmd` arguments safely on Windows.
  */
 export function createClaudeCodeProcessSpawn(

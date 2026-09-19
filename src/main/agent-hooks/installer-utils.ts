@@ -101,7 +101,7 @@ function decodePowerShellEncodedCommand(command: string): string | null {
   }
 }
 
-// Why: prod/dev/parallel Orca instances must write the same managed entry, not race between per-userData script paths.
+// Why: prod/dev/parallel Wakii instances must write the same managed entry, not race between per-userData script paths.
 export function getSharedManagedScriptPath(scriptFileName: string): string {
   return join(homedir(), '.orca', 'agent-hooks', scriptFileName)
 }
@@ -143,7 +143,7 @@ export function buildWindowsHookPowerShellCommand(
       ? ''
       : `Write-Output ${quotePowerShellString(options.fallbackStdout)}; `
   // Why the order: answer first (a gate event reads silence as deny), then the shared
-  // env guard, and only then own stdin — outside an Orca pane the caller may abandon the
+  // env guard, and only then own stdin — outside an Wakii pane the caller may abandon the
   // pipe, and ReadToEnd would strand the launcher there forever (#11549).
   return `${envPrefix}if (Test-Path -LiteralPath ${quoted} -PathType Leaf) { & ${quoted}; exit $LASTEXITCODE }; ${fallback}${WINDOWS_POWERSHELL_HOOK_ENVIRONMENT_GUARD}; [Console]::In.ReadToEnd() | Out-Null; exit 0`
 }

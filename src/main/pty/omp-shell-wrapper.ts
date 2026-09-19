@@ -84,11 +84,11 @@ __orca_omp() {
     # Why: a restored shell can retain the deleted directory inode after its path is recreated.
     (
       if [[ -z "$__orca_logical_cwd" ]]; then
-        printf 'Orca: OMP cannot start because no terminal working directory is available. Open a new terminal in an existing directory.\\n' >&2
+        printf 'Wakii: OMP cannot start because no terminal working directory is available. Open a new terminal in an existing directory.\\n' >&2
         return 1
       fi
       if ! builtin cd -P -- "$__orca_logical_cwd" 2>/dev/null; then
-        printf 'Orca: OMP cannot access the terminal working directory "%s". Open a new terminal in an existing directory.\\n' "$__orca_logical_cwd" >&2
+        printf 'Wakii: OMP cannot access the terminal working directory "%s". Open a new terminal in an existing directory.\\n' "$__orca_logical_cwd" >&2
         return 1
       fi
       __orca_omp_invoke "$__orca_use_extension" "$@"

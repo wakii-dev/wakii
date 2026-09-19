@@ -36,7 +36,7 @@ import {
 // connected session has always read the host's `$HOME`. The removal guards refuse without it.
 beforeEach(resetWorktreeTestSshHostHome)
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('launches SSH setup terminals for runtime task-created worktrees', async () => {
     vi.mocked(listWorktrees).mockClear()
     vi.mocked(addWorktree).mockClear()

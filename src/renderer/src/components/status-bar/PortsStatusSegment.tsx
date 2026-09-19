@@ -46,7 +46,7 @@ export function PortsStatusSegment({ iconOnly }: PortsStatusSegmentProps): React
   const hostLabel = useCallback(
     (host: WorkspacePortHostRef, hostScanKey: string, platform: NodeJS.Platform | null) => {
       if (host.kind === 'local') {
-        // Why: a paired web client's own userAgent is not the Orca host's
+        // Why: a paired web client's own userAgent is not the Wakii host's
         // platform, so name the machine the scan actually ran on.
         return getLocalExecutionHostLabel(platform)
       }

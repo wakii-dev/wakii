@@ -201,7 +201,7 @@ const { existsSync, writeFileSync } = require('node:fs')
 const processIdentity = require(${JSON.stringify(options.processIdentityModulePath)})
 const { cleanElectronUserAgent } = require(${JSON.stringify(options.exceptionModulePath)})
 const arm = ${JSON.stringify(options.arm)}
-app.setName('OrcaCrossContextFixture')
+app.setName('WakiiCrossContextFixture')
 app.commandLine.appendSwitch('site-per-process')
 const rawUserAgent = app.userAgentFallback
 if (arm === 'clean') processIdentity.initializeBrowserProcessUserAgent('clean')

@@ -6,7 +6,7 @@
  * versions share ONE data root, outside either dir. A newer orcad migrates that root on load
  * — and Orca's persisted state carries no schema version to migrate against, so the older
  * build cannot be shown to read the result. Rollback therefore restores the pre-activation
- * snapshot, and refuses when restoring it would orphan work (`assessOrcadRollback`).
+ * snapshot, and refuses when restoring it would orphan work (`assessWakiidRollback`).
  *
  * The order below is the whole safety argument: stop, then restore, then start. Restoring
  * under a running orcad would replace the store beneath a process holding it open, and
@@ -165,7 +165,7 @@ export async function rollbackOrcad(options: OrcadRollbackOptions): Promise<Orca
       restoreOrcadStateSnapshotCommand(
         options.host,
         options.userDataDir,
-        // Guarded by `assessOrcadRollback`: `unsafe` covers a missing snapshot.
+        // Guarded by `assessWakiidRollback`: `unsafe` covers a missing snapshot.
         snapshotDirPath(options, options.record.snapshot?.dirName ?? '')
       )
     ).catch(() => 'FAILED')

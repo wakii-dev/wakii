@@ -40,14 +40,14 @@ export const taskRuntimeStatusSchema = z.looseObject({
  * would instead throw out of `hydrateTaskState` and leave the whole screen unhydrated (the outer
  * `.catch` at use-mobile-tasks-runtime-hydration.tsx:349). Main did throw on a null or absent
  * payload, and that is the one place this reader is deliberately kinder: persisted UI state is
- * optional at every read (:283 spells `uiState?.trustedOrcaHooks ?? {}`, :284
+ * optional at every read (:283 spells `uiState?.trustedWakiiHooks ?? {}`, :284
  * `uiState?.taskResumeState ?? {}`), so "no ui" hydrates with the defaults rather than failing the
  * settings, preflight and Linear legs that arrived beside it. The
  * `matrix-settings.task-hydration-ui.get-1` golden records that move on `result-absent` and
  * `result-null`.
  *
  * Both members are `unknown`, and the call site keeps one narrowing cast over them. They are
- * opaque forwards: `trustedOrcaHooks` goes straight into state, and `taskResumeState` is the
+ * opaque forwards: `trustedWakiiHooks` goes straight into state, and `taskResumeState` is the
  * screen's whole persisted view state, re-read field by field with its own defaults at :286 and
  * across use-mobile-tasks-client-settings-actions.tsx. Declaring either here would restate a
  * twelve-member union that nothing in this reader reads.

@@ -394,7 +394,7 @@ describe('fetchNewerReleaseTagsWithReadiness', () => {
 
       if (init?.method === 'HEAD') {
         const latest = url.includes('/v1.4.28/')
-        const unavailable = latest && url.endsWith('/Orca-1.4.28-mac.zip')
+        const unavailable = latest && url.endsWith('/Wakii-1.4.28-mac.zip')
         const missing = latest && url.endsWith('/orca-windows-setup.exe')
         return Promise.resolve({
           ok: !missing && !unavailable,
@@ -437,7 +437,7 @@ describe('fetchNewerReleaseTagsWithReadiness', () => {
                 'files:',
                 '  - url: orca-windows-setup.exe',
                 '    sha512: test',
-                '  - url: Orca-1.4.28-mac.zip',
+                '  - url: Wakii-1.4.28-mac.zip',
                 '    sha512: test'
               ].join('\n')
             )
@@ -481,7 +481,7 @@ describe('fetchNewerReleaseTagsWithReadiness', () => {
               [
                 'version: 1.4.27',
                 'files:',
-                '  - url: https://downloads.example.com/Orca-1.4.27-arm64-mac.zip',
+                '  - url: https://downloads.example.com/Wakii-1.4.27-arm64-mac.zip',
                 '    sha512: test'
               ].join('\n')
             )
@@ -499,7 +499,7 @@ describe('fetchNewerReleaseTagsWithReadiness', () => {
     const { fetchNewerReleaseTag } = await import('./updater-prerelease-feed')
 
     expect(await fetchNewerReleaseTag('1.4.26')).toBe('v1.4.27')
-    expect(assetUrls).toEqual(['https://downloads.example.com/Orca-1.4.27-arm64-mac.zip'])
+    expect(assetUrls).toEqual(['https://downloads.example.com/Wakii-1.4.27-arm64-mac.zip'])
   })
 
   it('treats malformed updater manifests as not ready', async () => {

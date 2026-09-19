@@ -57,7 +57,7 @@ describe('ModelManager Windows model path handling', () => {
     try {
       setPlatform('win32')
       const programDataDir = join(dir, 'ProgramData')
-      const userDataDir = join(dir, '用户', 'Orca')
+      const userDataDir = join(dir, '用户', 'Wakii')
       process.env.PROGRAMDATA = programDataDir
       appGetPathMock.mockImplementation((name: string) =>
         name === 'userData' ? userDataDir : join(dir, name)
@@ -66,7 +66,7 @@ describe('ModelManager Windows model path handling', () => {
       const manager = new ModelManager()
 
       expect(manager.getModelsDir()).not.toContain(userDataDir)
-      expect(manager.getModelsDir()).toContain(join(programDataDir, 'Orca', 'speech-models'))
+      expect(manager.getModelsDir()).toContain(join(programDataDir, 'Wakii', 'speech-models'))
       expect(isAsciiPath(manager.getModelsDir())).toBe(true)
       expect(existsSync(manager.getModelsDir())).toBe(true)
     } finally {
@@ -79,7 +79,7 @@ describe('ModelManager Windows model path handling', () => {
     try {
       setPlatform('win32')
       const programDataDir = join(dir, 'ProgramData')
-      const userDataDir = join(dir, '用户', 'Orca')
+      const userDataDir = join(dir, '用户', 'Wakii')
       process.env.PROGRAMDATA = programDataDir
       appGetPathMock.mockImplementation((name: string) =>
         name === 'userData' ? userDataDir : join(dir, name)
@@ -118,7 +118,7 @@ describe('ModelManager Windows model path handling', () => {
     try {
       setPlatform('win32')
       const programDataDir = join(dir, 'ProgramData')
-      const userDataDir = join(dir, '用户', 'Orca')
+      const userDataDir = join(dir, '用户', 'Wakii')
       process.env.PROGRAMDATA = programDataDir
       appGetPathMock.mockImplementation((name: string) =>
         name === 'userData' ? userDataDir : join(dir, name)

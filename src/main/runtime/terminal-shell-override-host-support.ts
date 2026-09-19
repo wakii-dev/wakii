@@ -24,7 +24,7 @@ export function terminalShellOverrideRefusal(args: {
   if (args.connectionId) {
     // The shell runs on the SSH host, whose platform and installed shells this runtime cannot see.
     return new Error(
-      `This workspace runs its terminals over SSH, and Orca cannot apply --shell ${args.shellOverride} there. No terminal was created. Omit --shell, or create the terminal on the execution host itself.`
+      `This workspace runs its terminals over SSH, and Wakii cannot apply --shell ${args.shellOverride} there. No terminal was created. Omit --shell, or create the terminal on the execution host itself.`
     )
   }
   if (args.platform !== 'win32') {

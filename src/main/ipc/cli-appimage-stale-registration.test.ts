@@ -105,12 +105,12 @@ beforeEach(() => {
   mocks.resolveAppImageRuntimeIdentity.mockReset().mockImplementation(() =>
     process.platform === 'linux'
       ? {
-          appImagePath: '/opt/Orca.AppImage'
+          appImagePath: '/opt/Wakii.AppImage'
         }
       : null
   )
   Object.defineProperty(process, 'platform', { configurable: true, value: 'linux' })
-  vi.stubEnv('APPIMAGE', '/opt/Orca.AppImage')
+  vi.stubEnv('APPIMAGE', '/opt/Wakii.AppImage')
 })
 
 afterEach(() => {

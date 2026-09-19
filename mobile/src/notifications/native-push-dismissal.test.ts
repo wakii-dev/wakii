@@ -10,10 +10,10 @@ beforeEach(() => {
 
 it('requires the iOS ledger and surfaces a missing native module as a build defect', async () => {
   requireNativeModule.mockImplementation(() => {
-    throw new Error('Cannot find native module OrcaNotificationDismissal')
+    throw new Error('Cannot find native module WakiiNotificationDismissal')
   })
   await expect(import('./native-push-dismissal.ios')).rejects.toThrow(
-    'Cannot find native module OrcaNotificationDismissal'
+    'Cannot find native module WakiiNotificationDismissal'
   )
 })
 

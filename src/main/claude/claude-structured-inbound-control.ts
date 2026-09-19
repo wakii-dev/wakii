@@ -35,7 +35,7 @@ export type ClaudePermissionCallbackDeps = {
 function denySafeResult(toolUseId: string | undefined): PermissionResult {
   return {
     behavior: 'deny',
-    message: 'Orca could not decode this permission request.',
+    message: 'Wakii could not decode this permission request.',
     ...(toolUseId ? { toolUseID: toolUseId } : {})
   }
 }

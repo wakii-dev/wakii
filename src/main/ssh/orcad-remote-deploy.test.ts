@@ -131,7 +131,7 @@ const ACTIVE_OLD = JSON.stringify(
   withActivatedVersion(emptyOrcadActivationRecord(), OLD_VERSION, null, new Date(0))
 )
 
-describe('deployOrcad', () => {
+describe('deployWakiid', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })

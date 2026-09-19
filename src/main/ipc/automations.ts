@@ -39,7 +39,7 @@ function requireCapturedOwner<T extends { owner?: AutomationOwnerRef | null }>(
 }
 
 /**
- * Holds the probe pool's priority lease for the duration of Orca's own automation
+ * Holds the probe pool's priority lease for the duration of Wakii's own automation
  * work. Without this, a queued external probe competes with the list and mutation
  * traffic the user is actually waiting on.
  */

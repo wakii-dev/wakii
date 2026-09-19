@@ -22,7 +22,7 @@ import {
 } from '../orca-runtime-test-fixtures.spec'
 import { publishLegacyWorkerReveal } from '../orca-runtime-test-scenario-builders.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('defers live workers without exact controller identity evidence', async () => {
     const incarnationId = '56565656-5656-4656-8656-565656565656'
     const cases = [

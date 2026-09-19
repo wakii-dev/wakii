@@ -7,7 +7,7 @@ import {
 } from '../orca-runtime-test-mocks.spec'
 import { deferred, store } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('projects runtime-backed settings to paired clients', () => {
     const terminalQuickCommands = [
       {

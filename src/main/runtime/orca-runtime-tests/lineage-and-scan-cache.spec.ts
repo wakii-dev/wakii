@@ -26,7 +26,7 @@ import {
 } from '../orca-runtime-test-fixtures.spec'
 import { REPO_SEARCH_REFS_MAX_LIMIT } from '../../../shared/repo-search-limits'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('rejects invalid positive limits for bounded list commands', async () => {
     const runtime = new OrcaRuntimeService(store)
 
@@ -372,7 +372,7 @@ describe('OrcaRuntimeService', () => {
     ).rejects.toThrow('selector_not_found')
   })
 
-  it('rejects SSH lineage updates when Orca worktree identity is missing', async () => {
+  it('rejects SSH lineage updates when Wakii worktree identity is missing', async () => {
     const remoteRepo = {
       id: 'remote-repo',
       path: '/home/user/repo',
@@ -439,7 +439,7 @@ describe('OrcaRuntimeService', () => {
     expect(setWorktreeLineage).not.toHaveBeenCalled()
   })
 
-  it('rejects local lineage updates when Orca worktree identity is missing', async () => {
+  it('rejects local lineage updates when Wakii worktree identity is missing', async () => {
     const tempRoot = await mkdtemp(join(tmpdir(), 'orca-runtime-lineage-'))
     const repoPath = join(tempRoot, 'repo')
     const childPath = join(tempRoot, 'child')

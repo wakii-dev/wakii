@@ -228,7 +228,7 @@ describe('readGitCommonHeadIdentities (incremental)', () => {
     expect(headOf(identities, pathB)).toBe(OID_D)
   })
 
-  it('keeps a worktree whose checkout was deleted behind Orca back', async () => {
+  it('keeps a worktree whose checkout was deleted behind Wakii back', async () => {
     const { commonDir, cache, pathA } = await seed()
     // Only the checkout is gone; git prunes the admin entry lazily, and the
     // structural listing — not this reader — owns the prunable verdict.

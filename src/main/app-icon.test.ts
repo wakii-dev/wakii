@@ -125,7 +125,7 @@ describe('app icon selection', () => {
     )
 
     persistMacDockIcon('watercolor', {
-      appBundlePath: '/Applications/Orca.app',
+      appBundlePath: '/Applications/Wakii.app',
       execFile,
       isDevApp: false,
       platform: 'darwin'
@@ -162,7 +162,7 @@ describe('app icon selection', () => {
     )
 
     persistMacDockIcon('classic', {
-      appBundlePath: '/Applications/Orca.app',
+      appBundlePath: '/Applications/Wakii.app',
       execFile,
       isDevApp: false,
       platform: 'darwin'
@@ -186,7 +186,7 @@ describe('app icon selection', () => {
     )
     expect(execFile).toHaveBeenCalledWith(
       '/usr/bin/xattr',
-      ['-d', 'com.apple.FinderInfo', '/Applications/Orca.app'],
+      ['-d', 'com.apple.FinderInfo', '/Applications/Wakii.app'],
       expect.objectContaining({
         timeout: 10_000
       }),
@@ -194,7 +194,7 @@ describe('app icon selection', () => {
     )
     expect(execFile).toHaveBeenCalledWith(
       '/usr/bin/xattr',
-      ['-d', 'com.apple.ResourceFork', '/Applications/Orca.app'],
+      ['-d', 'com.apple.ResourceFork', '/Applications/Wakii.app'],
       expect.objectContaining({
         timeout: 10_000
       }),
@@ -224,7 +224,7 @@ describe('app icon selection', () => {
     )
 
     persistMacDockIcon('classic', {
-      appBundlePath: '/Applications/Orca.app',
+      appBundlePath: '/Applications/Wakii.app',
       execFile,
       isDevApp: false,
       platform: 'darwin'
@@ -258,7 +258,7 @@ describe('app icon selection', () => {
     )
 
     persistMacDockIcon('classic', {
-      appBundlePath: '/Applications/Orca.app',
+      appBundlePath: '/Applications/Wakii.app',
       execFile,
       isDevApp: false,
       platform: 'darwin'
@@ -291,7 +291,7 @@ describe('app icon selection', () => {
     )
 
     persistMacDockIcon('watercolor', {
-      appBundlePath: '/Applications/Orca.app',
+      appBundlePath: '/Applications/Wakii.app',
       execFile,
       isDevApp: false,
       platform: 'darwin'
@@ -299,13 +299,13 @@ describe('app icon selection', () => {
     await waitForQueuedPersistence()
 
     persistMacDockIcon('blue', {
-      appBundlePath: '/Applications/Orca.app',
+      appBundlePath: '/Applications/Wakii.app',
       execFile,
       isDevApp: false,
       platform: 'darwin'
     })
     persistMacDockIcon('classic', {
-      appBundlePath: '/Applications/Orca.app',
+      appBundlePath: '/Applications/Wakii.app',
       execFile,
       isDevApp: false,
       platform: 'darwin'
@@ -359,7 +359,7 @@ describe('app icon selection', () => {
     expect(execFile).toHaveBeenNthCalledWith(
       3,
       '/usr/bin/xattr',
-      ['-d', 'com.apple.FinderInfo', '/Applications/Orca.app'],
+      ['-d', 'com.apple.FinderInfo', '/Applications/Wakii.app'],
       expect.objectContaining({
         timeout: 10_000
       }),
@@ -368,7 +368,7 @@ describe('app icon selection', () => {
     expect(execFile).toHaveBeenNthCalledWith(
       4,
       '/usr/bin/xattr',
-      ['-d', 'com.apple.ResourceFork', '/Applications/Orca.app'],
+      ['-d', 'com.apple.ResourceFork', '/Applications/Wakii.app'],
       expect.objectContaining({
         timeout: 10_000
       }),
@@ -405,7 +405,7 @@ describe('app icon selection', () => {
     )
 
     persistMacDockIcon('watercolor', {
-      appBundlePath: '/Applications/Orca.app',
+      appBundlePath: '/Applications/Wakii.app',
       execFile,
       isDevApp: false,
       platform: 'darwin'
@@ -413,7 +413,7 @@ describe('app icon selection', () => {
     await waitForQueuedPersistenceMicrotasks()
 
     persistMacDockIcon('blue', {
-      appBundlePath: '/Applications/Orca.app',
+      appBundlePath: '/Applications/Wakii.app',
       execFile,
       isDevApp: false,
       platform: 'darwin'

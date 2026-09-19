@@ -177,7 +177,7 @@ describe('ExternalChromiumBrowserProcess', () => {
 describe('cross-platform browser provider paths', () => {
   it('resolves installed Electron launchers on macOS, Linux, and Windows', () => {
     expect(installedElectronCandidates('darwin', '/Users/test', {})).toContain(
-      '/Users/test/Applications/Orca.app/Contents/MacOS/Orca'
+      '/Users/test/Applications/Wakii.app/Contents/MacOS/Wakii'
     )
     expect(installedElectronCandidates('linux', '/home/test', {})).toContain(
       '/home/test/.local/bin/orca-ide'
@@ -186,7 +186,7 @@ describe('cross-platform browser provider paths', () => {
       installedElectronCandidates('win32', 'C:\\Users\\test', {
         LOCALAPPDATA: 'C:\\Users\\test\\AppData\\Local'
       })
-    ).toContain('C:\\Users\\test\\AppData\\Local\\Programs\\Orca\\Orca.exe')
+    ).toContain('C:\\Users\\test\\AppData\\Local\\Programs\\Wakii\\Wakii.exe')
   })
 
   it('uses platform-specific bundled agent-browser names', () => {
@@ -196,7 +196,7 @@ describe('cross-platform browser provider paths', () => {
   })
 })
 
-describe('resolveOrcadBrowserProvider', () => {
+describe('resolveWakiidBrowserProvider', () => {
   it('uses ORCA_BROWSER_EXECUTABLE when Electron is absent', async () => {
     const executable = join(root, process.platform === 'win32' ? 'chromium.exe' : 'chromium')
     await writeFile(executable, '')

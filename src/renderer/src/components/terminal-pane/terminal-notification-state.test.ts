@@ -18,7 +18,7 @@ function stateWithWorkspace() {
     repos: [
       {
         id: 'repo',
-        displayName: 'Orca',
+        displayName: 'Wakii',
         path: '/orca',
         connectionId: null,
         badgeColor: 'blue',
@@ -42,11 +42,11 @@ describe('notification workspace labels', () => {
       }
     })
     expect(getNotificationWorkspaceLabels(state, 'wt')).toEqual({
-      repoLabel: 'Orca',
+      repoLabel: 'Wakii',
       worktreeLabel: 'Feature'
     })
     expect(getNotificationWorkspaceLabels(state, 'worktree:wt')).toEqual({
-      repoLabel: 'Orca',
+      repoLabel: 'Wakii',
       worktreeLabel: 'Feature'
     })
   })
@@ -62,7 +62,7 @@ describe('notification workspace labels', () => {
       })
     ]
     expect(getNotificationWorkspaceLabels(state, 'remote')).toEqual({
-      repoLabel: 'Orca',
+      repoLabel: 'Wakii',
       worktreeLabel: 'Remote feature'
     })
   })
@@ -224,11 +224,11 @@ describe('notification workspace labels', () => {
       // The laptop row is unqualified, which is how a local worktree listing publishes it.
       local: {
         row: { displayName: 'Laptop feature' },
-        repo: { displayName: 'Orca on laptop', connectionId: null }
+        repo: { displayName: 'Wakii on laptop', connectionId: null }
       },
       'ssh:build-box': {
         row: { hostId: 'ssh:build-box' as const, displayName: 'Build box feature' },
-        repo: { displayName: 'Orca on build box', connectionId: 'build-box' }
+        repo: { displayName: 'Wakii on build box', connectionId: 'build-box' }
       }
     } as const
     type CollidingHostId = keyof typeof HOSTS

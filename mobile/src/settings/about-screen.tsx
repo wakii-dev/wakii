@@ -54,7 +54,7 @@ export default function AboutScreen({
 
       <View style={styles.brand}>
         <OrcaLogo size={28} />
-        <Text style={styles.brandName}>Orca</Text>
+        <Text style={styles.brandName}>Wakii</Text>
         <Text style={styles.brandSub}>Open-source agent IDE for 100x builders</Text>
       </View>
 
@@ -62,8 +62,8 @@ export default function AboutScreen({
         <Pressable
           style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
           accessibilityRole="button"
-          accessibilityLabel="Orca website"
-          onPress={() => openLink('https://onOrca.dev')}
+          accessibilityLabel="Wakii website"
+          onPress={() => openLink('https://onWakii.dev')}
         >
           <Globe size={16} color={colors.textSecondary} />
           <Text style={styles.rowValue}>onOrca.dev</Text>
@@ -72,7 +72,7 @@ export default function AboutScreen({
         <Pressable
           style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
           accessibilityRole="button"
-          accessibilityLabel="Orca source code"
+          accessibilityLabel="Wakii source code"
           onPress={() => openLink('https://github.com/stablyai/orca')}
         >
           <GithubIcon />
@@ -82,7 +82,7 @@ export default function AboutScreen({
         <Pressable
           style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
           accessibilityRole="button"
-          accessibilityLabel="Orca on X"
+          accessibilityLabel="Wakii on X"
           onPress={() => openLink('https://x.com/orca_build')}
         >
           <XIcon />

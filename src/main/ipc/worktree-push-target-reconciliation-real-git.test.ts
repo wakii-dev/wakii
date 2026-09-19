@@ -57,7 +57,7 @@ beforeEach(async () => {
   forkPath = join(scratchDir, 'fork')
   await mkdir(repoPath, { recursive: true })
   await git(['init', '-q'], repoPath)
-  await git(['config', 'user.name', 'Orca Test'], repoPath)
+  await git(['config', 'user.name', 'Wakii Test'], repoPath)
   await git(['config', 'user.email', 'orca@example.test'], repoPath)
   await git(['config', 'commit.gpgSign', 'false'], repoPath)
   await git(['config', 'core.hooksPath', '.git/no-hooks'], repoPath)
@@ -67,7 +67,7 @@ beforeEach(async () => {
 
   // A second local "fork" repo the pr-* remote points at, so `remote add`/fetch behave normally.
   await git(['clone', '-q', repoPath, forkPath], scratchDir)
-  await git(['config', 'user.name', 'Orca Test'], forkPath)
+  await git(['config', 'user.name', 'Wakii Test'], forkPath)
   await git(['config', 'user.email', 'orca@example.test'], forkPath)
   await git(['config', 'commit.gpgSign', 'false'], forkPath)
   await git(['config', 'core.hooksPath', '.git/no-hooks'], forkPath)
@@ -152,7 +152,7 @@ describe('reconcileOrphanedPrRemotesWithExec against the real Git binary', () =>
     await expect(git(['remote'], repoPath)).resolves.not.toContain(FORK_REMOTE)
   })
 
-  it('reclaims a remote orphaned by a worktree removed outside Orca (path 3)', async () => {
+  it('reclaims a remote orphaned by a worktree removed outside Wakii (path 3)', async () => {
     const worktreePath = join(scratchDir, 'wt-externally-removed')
     await git(['worktree', 'add', '-q', worktreePath, '-b', 'contributor/fix-local-2'], repoPath)
     // Simulate a plain `git worktree remove` the user ran outside Orca: Orca's metadata for

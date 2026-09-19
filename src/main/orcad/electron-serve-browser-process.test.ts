@@ -19,7 +19,7 @@ vi.mock('../../shared/child-process/run-process', async (importOriginal) => ({
 import { ElectronServeBrowserProcess } from './electron-serve-browser-process'
 
 const FAKE_SIDECAR = join(import.meta.dirname, '__fixtures__', 'fake-orcad-electron-sidecar.cjs')
-const INSTALLED_EXECUTABLE = join('/Applications', 'Orca.app', 'Contents', 'MacOS', 'Orca')
+const INSTALLED_EXECUTABLE = join('/Applications', 'Wakii.app', 'Contents', 'MacOS', 'Wakii')
 
 /** Every key the provider must strip so the sidecar cannot inherit orcad's own browser config. */
 const AGENT_BROWSER_ENVIRONMENT_KEYS = [

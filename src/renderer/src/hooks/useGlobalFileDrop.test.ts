@@ -125,7 +125,7 @@ describe('shouldUploadRemoteEditorFileDrop', () => {
       })
     ).toEqual({
       description: 'Save them to disk first, then drop the saved files.',
-      title: "Orca couldn't read a path for the dropped files."
+      title: "Wakii couldn't read a path for the dropped files."
     })
   })
 })

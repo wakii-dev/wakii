@@ -9,7 +9,7 @@ import { useNewWorkspaceRuntimeContext } from './use-new-workspace-runtime-conte
 type RuntimeContext = ReturnType<typeof useNewWorkspaceRuntimeContext>
 type PublishedState = Pick<
   RuntimeContext,
-  'runtimeSettings' | 'trustedOrcaHooks' | 'availableProviders'
+  'runtimeSettings' | 'trustedWakiiHooks' | 'availableProviders'
 >
 
 // A real PersistedTrustedOrcaHooks record, keyed by repo id with a per-hook approval. The earlier

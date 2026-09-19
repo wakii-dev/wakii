@@ -93,7 +93,7 @@ function SampleBanner({ notification }: { notification: (typeof SAMPLE_NOTIFICAT
       </View>
       <View style={styles.cardCopy}>
         <View style={styles.cardMeta}>
-          <Text style={styles.appName}>Orca</Text>
+          <Text style={styles.appName}>Wakii</Text>
           <Text style={styles.now}>now</Text>
         </View>
         <Text style={styles.cardTitle} numberOfLines={1}>

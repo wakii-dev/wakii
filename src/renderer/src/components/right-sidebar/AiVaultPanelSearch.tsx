@@ -88,7 +88,7 @@ export function AiVaultPanelSearch({
   if (needsLocalConsent) {
     message = translate(
       'sessionSearch.panel.consent',
-      'Enable full-text search? Orca builds an index on this computer from local agent transcripts, including full conversations and up to 3,072 characters per tool output. Content is not redacted. Authenticated paired clients can search it.'
+      'Enable full-text search? Wakii builds an index on this computer from local agent transcripts, including full conversations and up to 3,072 characters per tool output. Content is not redacted. Authenticated paired clients can search it.'
     )
   } else if (noAgents) {
     message = translate(
@@ -108,7 +108,7 @@ export function AiVaultPanelSearch({
   } else if (unavailable === 'no-service') {
     message = translate(
       'sessionSearch.panel.noService',
-      'Search is unavailable on this computer. It may need an Orca update or a runtime with search support.'
+      'Search is unavailable on this computer. It may need an Wakii update or a runtime with search support.'
     )
   } else if (unavailable === 'scope-unknown') {
     message = translate(

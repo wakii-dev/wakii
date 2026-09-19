@@ -31,7 +31,7 @@ import {
   resetBrowserIdentityModeStoreForTests
 } from '../../browser/browser-identity-mode-store'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   // The mixed-version guarantee: a host that never initialized the identity store must not
   // advertise a method that can only throw there.
   it('advertises the browser identity capability only where an identity store exists', () => {

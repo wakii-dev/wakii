@@ -28,7 +28,7 @@ describe('non-secure context (plain HTTP LAN web client)', () => {
     expect(() => (globalThis.crypto as Crypto).randomUUID()).toThrow()
   })
 
-  it('hashOrcaHookScript does not throw when crypto.subtle is missing', async () => {
+  it('hashWakiiHookScript does not throw when crypto.subtle is missing', async () => {
     const { hashOrcaHookScript } = await import('./orca-hook-trust')
     const hash = await hashOrcaHookScript('echo hi')
     expect(hash).toMatch(/^[0-9a-f]+$/)

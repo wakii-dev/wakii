@@ -8,7 +8,7 @@ import {
 import type { WorktreeMeta } from '../orca-runtime-test-mocks.spec'
 import { makeWorktreeMeta, store, syncSinglePty } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('keeps pinned and unread worktrees when active rows fill the mobile summary limit', async () => {
     setPlatform('win32')
     const remoteRepo = {

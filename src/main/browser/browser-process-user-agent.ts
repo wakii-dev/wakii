@@ -16,7 +16,7 @@ const CHROMIUM_ENGINE_COMMENT = '(KHTML, like Gecko)'
 // user agent without one would anchor on the OS comment and eat a real engine token. Only
 // Chromium-shaped identities are cleaned; anything else is returned byte-identical.
 // Why that anchor never crosses another ")": app.setName decides the app token, and dev uses a name
-// containing a space ("Orca Dev"), which a single \S+ cannot span — it left the app name on the wire.
+// containing a space ("Wakii Dev"), which a single \S+ cannot span — it left the app name on the wire.
 // Consuming only non-")" tokens keeps the match inside the gap between the engine comment and Chrome/.
 export function cleanElectronUserAgent(userAgent: string): string {
   if (!userAgent.includes(CHROMIUM_ENGINE_COMMENT)) {

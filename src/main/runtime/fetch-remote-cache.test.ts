@@ -3,7 +3,7 @@ import { resolveGitAdmissionTier } from '../git/command-runner/git-operation-exe
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Why: these tests cover the §3.3 Lifecycle rules on
-// `OrcaRuntimeService.fetchRemoteWithCache` — in particular that a rejected
+// `WakiiRuntimeService.fetchRemoteWithCache` — in particular that a rejected
 // fetch evicts its Map entry AND does not advance the freshness timestamp,
 // and that two concurrent callers serialize on a single underlying fetch.
 // They live in a dedicated file so we can mock `gitExecFileAsync` cleanly
@@ -79,7 +79,7 @@ function mockFetchResults(results: unknown[]): void {
   })
 }
 
-describe('OrcaRuntimeService.fetchRemoteWithCache', () => {
+describe('WakiiRuntimeService.fetchRemoteWithCache', () => {
   it.each([undefined, 'Ubuntu'])(
     'inherits create priority through fetch adapters on %s',
     async (wslDistro) =>

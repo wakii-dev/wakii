@@ -85,7 +85,7 @@ function readHookTrustProvenance(
 
 /**
  * Records the runtime config.toml trust state Orca leaves behind after an
- * install/refresh, so the next launch can tell "entry Orca wrote" apart from
+ * install/refresh, so the next launch can tell "entry Wakii wrote" apart from
  * "entry Codex wrote after a user approval". Call after all trust writes.
  */
 /**

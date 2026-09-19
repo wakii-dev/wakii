@@ -222,7 +222,7 @@ describe('#12112 opencode startup OSC 10/11 replies on the local path', () => {
 
   it('renders no reply text when the tty echo is coalesced with program output', () => {
     // The reported topology: the agent is launched by writing `opencode\n` into an
-    // interactive shell, so bash's echo of Orca's reply shares a read with the shell's
+    // interactive shell, so bash's echo of Wakii's reply shares a read with the shell's
     // own echo and the agent's first frame. It is never at the head of a chunk, and a
     // read carrying no echo at all comes first.
     vi.useFakeTimers()

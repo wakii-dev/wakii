@@ -230,7 +230,7 @@ const processIdentity = require(${JSON.stringify(options.processIdentityModulePa
 const { installBrowserSessionUserAgentPolicy } = require(${JSON.stringify(options.exceptionModulePath)})
 const arm = ${JSON.stringify(options.arm)}
 const site = ${JSON.stringify(options.site)}
-app.setName('OrcaCloudflareLiveProbe')
+app.setName('WakiiCloudflareLiveProbe')
 const nativeUserAgent = app.userAgentFallback
 const clean = userAgent => userAgent.replace(/\s+Electron\/\S+/, '').replace(/(\)\s+)\S+\s+(Chrome\/)/, '$1$2')
 let identity

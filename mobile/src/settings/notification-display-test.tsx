@@ -49,7 +49,7 @@ export function NotificationDisplayTest({ onTroubleshoot }: { onTroubleshoot: ()
         }
         const result = delivered.value
         if (result?.accepted) {
-          setMessage('Accepted by Orca’s push service. Check for the notification.')
+          setMessage('Accepted by Wakii’s push service. Check for the notification.')
           return
         }
         if (result?.reason === 'not_registered') {
@@ -59,7 +59,7 @@ export function NotificationDisplayTest({ onTroubleshoot }: { onTroubleshoot: ()
         throw new Error(
           result?.reason === 'rate_limited'
             ? 'Too many notifications. Try again later.'
-            : 'Could not send through Orca’s push service. Try again.'
+            : 'Could not send through Wakii’s push service. Try again.'
         )
       }
       throw new Error(unavailable)

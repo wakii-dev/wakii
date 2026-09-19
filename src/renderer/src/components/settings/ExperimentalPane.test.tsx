@@ -263,7 +263,7 @@ describe('ExperimentalPane', () => {
       'Opt in to the host-owned structured chat runtime for Codex and Claude.'
     )
     expect(container.textContent).toContain(
-      'Local sessions only for now. WSL and remote execution hosts (including SSH) continue to use terminal chat, and Windows falls back to it unless Orca can read process start times.'
+      'Local sessions only for now. WSL and remote execution hosts (including SSH) continue to use terminal chat, and Windows falls back to it unless Wakii can read process start times.'
     )
     expect(container.textContent).toContain('Default view')
     root.unmount()

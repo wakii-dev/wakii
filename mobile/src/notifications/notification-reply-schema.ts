@@ -56,7 +56,7 @@ export const PUSH_REGISTER_REFUSAL_REASONS = hostUnionArms<
  *
  * Total, so a result that is not an object degrades the same way. A refusal here would not be
  * silent: the call site's `try` turns it into the reader's own sentence in the message slot where
- * main printed "Could not send through Orca's push service", which is a different screen for a
+ * main printed "Could not send through Wakii's push service", which is a different screen for a
  * reply main tolerated.
  */
 export const pushDeliveryTestResultSchema = z

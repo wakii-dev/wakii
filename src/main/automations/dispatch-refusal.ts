@@ -15,11 +15,11 @@ import type {
 import { resolveAutomationRunTarget, type AutomationRunTargetResult } from './run-target-resolution'
 import type { AutomationRunWriter } from './automation-run-writer'
 
-export const NO_DISPATCH_HOST = 'No Orca window was available to launch the automation.'
+export const NO_DISPATCH_HOST = 'No Wakii window was available to launch the automation.'
 
 /** A record the tick could not evaluate at all — its schedule no longer resolves (#16303). */
 export const UNEVALUABLE_SCHEDULE =
-  'Orca could not evaluate this automation and skipped the occurrence.'
+  'Wakii could not evaluate this automation and skipped the occurrence.'
 
 /** A record the authority refuses to execute at all, with no target diagnosis of its own. */
 export const NO_RUNNABLE_HOST = 'This automation has no host to run on.'
@@ -163,6 +163,6 @@ export function recordMissedRun(input: {
     runId: missed.id,
     status: 'skipped_missed',
     workspaceId: input.automation.workspaceId,
-    error: 'This run was past its missed-run grace window when Orca next checked.'
+    error: 'This run was past its missed-run grace window when Wakii next checked.'
   })
 }

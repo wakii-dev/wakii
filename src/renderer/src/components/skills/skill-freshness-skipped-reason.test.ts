@@ -80,7 +80,7 @@ describe('skippedReason', () => {
 
   it('explains a project copy when that is the only location there is', () => {
     // Why the fallback exists: the sentence stays total. With nothing else to point at,
-    // "Orca only updates your global skills" is the honest reason.
+    // "Wakii only updates your global skills" is the honest reason.
     expect(skippedReason([projectRow()], 'orchestration')).toContain(
       'This is a project skill, not a global one'
     )

@@ -9,7 +9,7 @@ import {
   syncSinglePty
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('does not let the active browser webContents steal session focus from terminals', async () => {
     const runtime = new OrcaRuntimeService(store)
     const tabList = vi.fn(() => ({

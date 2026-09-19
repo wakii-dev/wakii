@@ -249,7 +249,7 @@ describe('WorktreeCard SSH reconnect prompt', () => {
     expect(markup).not.toContain('opacity-60')
   })
 
-  it('distinguishes connected worktrees on different Orca servers', () => {
+  it('distinguishes connected worktrees on different Wakii servers', () => {
     runtimeEnvironments = [
       { id: 'env-1', name: 'Remote Mac' },
       { id: 'env-2', name: 'Build Linux' }

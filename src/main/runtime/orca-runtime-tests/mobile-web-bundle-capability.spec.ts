@@ -32,7 +32,7 @@ function withInstallRoot(prefix: string, run: (install: string) => void): void {
   }
 }
 
-describe('OrcaRuntimeService mobile web bundle capability', () => {
+describe('WakiiRuntimeService mobile web bundle capability', () => {
   afterEach(() => {
     resetBundledMobileWebBundleCacheForTests()
   })

@@ -151,7 +151,7 @@ PROMPT_COMMAND=(__status_a __status_b)
     expectLifecycle(output)
   })
 
-  itWithBash('keeps a scalar ending in an odd backslash isolated from Orca hooks', () => {
+  itWithBash('keeps a scalar ending in an odd backslash isolated from Wakii hooks', () => {
     const profile = String.raw`PROMPT_COMMAND='printf "PROMPT_BACKSLASH:<%s>\n" safe \'
 `
     const output = runInteractiveBash(profile, tempHome)
@@ -355,7 +355,7 @@ PROMPT_COMMAND='printf "PROMPT_REMATCH:<%s>\\n" "\${BASH_REMATCH[1]-unset}"'
     expectLifecycle(output)
   })
 
-  itWithBash('does not recurse when a user trap installs Orca preexec', () => {
+  itWithBash('does not recurse when a user trap installs Wakii preexec', () => {
     const profile = [
       `trap 'trap '\\''__orca_osc133_preexec'\\'' DEBUG 2>/dev/null; printf "PRIVATE_TRAP\\n"' DEBUG`,
       'PROMPT_COMMAND=\'printf "HOOK_PRIVATE\\n"\''

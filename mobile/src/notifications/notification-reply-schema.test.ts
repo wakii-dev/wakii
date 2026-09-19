@@ -30,7 +30,7 @@ describe('notification replies tolerate the shapes their call sites guard', () =
   })
 
   // The screen interprets this inside a `try` that prints the thrown message, so a refusal would
-  // replace main's "Could not send through Orca's push service" with the reader's own sentence.
+  // replace main's "Could not send through Wakii's push service" with the reader's own sentence.
   it('reads a non-object test-push result as absent, which takes the generic copy', () => {
     for (const value of ['garbage', 7, true, []]) {
       expect(refuses(pushDeliveryTestResultSchema, value)).toBe(false)

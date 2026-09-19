@@ -68,7 +68,7 @@ export function resolveIssueListCursor(request: {
   }
   if (cursor.startsWith(ISSUE_LIST_CURSOR_PREFIX)) {
     throw cursorWorkspaceError(
-      'Cursor was issued by Orca but is malformed or truncated.',
+      'Cursor was issued by Wakii but is malformed or truncated.',
       'Re-run list-issues without --cursor, then page with the nextCursor it returns.'
     )
   }

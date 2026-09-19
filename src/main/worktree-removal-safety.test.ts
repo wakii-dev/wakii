@@ -349,7 +349,7 @@ describe('canSafelyRemoveOrphanedWorktreeDirectory', () => {
   })
 })
 
-describe('canCleanupUnregisteredOrcaLeftoverDirectory', () => {
+describe('canCleanupUnregisteredWakiiLeftoverDirectory', () => {
   const repo = { path: '/repos/main' }
   const ownedMeta = { orcaCreatedAt: 1, orcaCreationSource: 'runtime' as const }
   const baseArgs = {
@@ -402,7 +402,7 @@ describe('canCleanupUnregisteredOrcaLeftoverDirectory', () => {
     expect(isGitRepository).not.toHaveBeenCalled()
   })
 
-  it('rejects no-marker cleanup when only the Orca path shape matches', async () => {
+  it('rejects no-marker cleanup when only the Wakii path shape matches', async () => {
     const isGitRepository = vi.fn().mockResolvedValue(false)
 
     await expect(

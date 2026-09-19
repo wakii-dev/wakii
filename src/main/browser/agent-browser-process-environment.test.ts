@@ -36,7 +36,7 @@ describe('agent-browser process environment', () => {
     const windows = createAgentBrowserProcessEnvironment({
       inheritedEnv: { PATH: 'C:\\Windows' },
       platform: 'win32',
-      userDataPath: 'C:\\Users\\Orca'
+      userDataPath: 'C:\\Users\\Wakii'
     })
     expect(windows.env.AGENT_BROWSER_SOCKET_DIR).toBeUndefined()
     expect(windows.env.PATH).toBe('C:\\Windows')

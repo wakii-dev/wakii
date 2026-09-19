@@ -178,7 +178,7 @@ export function SessionHistorySettingsPane({
           {isWebClient
             ? translate(
                 'sessionHistory.settings.webUnsupported',
-                'Turn on session search from the Orca desktop app on that computer.'
+                'Turn on session search from the Wakii desktop app on that computer.'
               )
             : translate(
                 'sessionHistory.settings.computersConsent',

@@ -1,6 +1,6 @@
 /**
  * Executes the generated OpenCode plugin source because fail-open ownership
- * lives inside OpenCode's process, not in Orca's TypeScript runtime.
+ * lives inside OpenCode's process, not in Wakii's TypeScript runtime.
  */
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'

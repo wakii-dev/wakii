@@ -56,7 +56,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-describe('openAiVaultSessionLogInOrca', () => {
+describe('openAiVaultSessionLogInWakii', () => {
   it('authorizes the exact path and opens a permanent read-only local tab', async () => {
     const state = makeState()
     getStateMock.mockReturnValue(state)

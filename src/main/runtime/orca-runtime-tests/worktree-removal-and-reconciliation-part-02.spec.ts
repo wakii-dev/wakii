@@ -51,7 +51,7 @@ import { createWorktreeRemovalRuntime } from '../orca-runtime-test-scenario-buil
 // connected session has always read the host's `$HOME`. The removal guards refuse without it.
 beforeEach(resetWorktreeTestSshHostHome)
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('warns that a missing-repo removal only forgot the workspace', async () => {
     const { runtimeStore } = createStaleRuntimeWorktreeStore(TEST_WORKTREE_ID, {
       hostId: 'runtime:env-1'

@@ -6,7 +6,7 @@ import {
 } from '../orca-runtime-test-mocks.spec'
 import { makeRpcRequest, store, syncSinglePty } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('rejects a provider visible frame after live non-mode-switch output advances', async () => {
     type Snapshot = {
       data: string

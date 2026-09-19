@@ -1194,7 +1194,7 @@ function runForkRemoteAdoption<T>(
 // `setWorktreeMeta` write, so the store's `pushTarget.remoteCreated` flag stayed stale
 // forever for a lazily-minted remote -- invisible to #17842's orphan sweep
 // (`shouldReclaimPrRemote` gates solely on that flag) and to any SSH host whose relay
-// predates `markRemoteOrcaCreated` (no git-config marker either). `setWorktreeMeta` is
+// predates `markRemoteWakiiCreated` (no git-config marker either). `setWorktreeMeta` is
 // optional on `WorktreePushTargetStore` so narrow test/reconciliation stores keep compiling.
 function persistMaterializedPushTargetIfCreated(
   store: WorktreePushTargetStore | undefined,
@@ -1315,7 +1315,7 @@ export async function prepareWorktreePushTargetSsh(
         // Why: relays predating fork-remote support reject this exec by policy; name the fix instead of surfacing their rule.
         if (error instanceof Error && error.message.includes('Destructive git remote operations')) {
           throw new Error(
-            'This SSH host is running an older Orca relay that cannot add a fork remote for a PR workspace. Reconnect to deploy the latest relay, then try again.'
+            'This SSH host is running an older Wakii relay that cannot add a fork remote for a PR workspace. Reconnect to deploy the latest relay, then try again.'
           )
         }
         throw error

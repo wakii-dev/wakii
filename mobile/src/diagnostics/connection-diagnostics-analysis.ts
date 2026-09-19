@@ -167,7 +167,7 @@ const RELAY_DIAL_ADVICE: Record<
   'host-offline': {
     likelyCause: (code) =>
       `Relay answered, but the desktop is not connected to it (close code ${code}, host offline).`,
-    nextStep: 'Check the desktop is awake, Orca is running, and it is signed in to Orca Cloud.'
+    nextStep: 'Check the desktop is awake, Wakii is running, and it is signed in to Wakii Cloud.'
   },
   'credential-refused': {
     likelyCause: (code) => `Relay refused this device’s relay credential (close code ${code}).`,
@@ -180,7 +180,7 @@ const RELAY_DIAL_ADVICE: Record<
   connecting: {
     likelyCause: (code) =>
       `Relay closed the dial with code ${code}; recovery re-resolves and retries.`,
-    nextStep: 'Keep Orca open while Relay recovery retries.'
+    nextStep: 'Keep Wakii open while Relay recovery retries.'
   }
 }
 

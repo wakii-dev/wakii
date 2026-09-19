@@ -93,7 +93,7 @@ export function getPiAgentStatusHandlerSourceLines(kind: PiAgentKind): string[] 
     '// proves the owner is gone -- every other probe result keeps suppression, so',
     '// a live foreign owner still cannot double-report. Mirrors the tri-state in',
     '// main/agent-hooks/managed-hook-owner-identity.ts, which this runtime cannot',
-    '// import (the extension loads inside pi/omp with no Orca deps).',
+    '// import (the extension loads inside pi/omp with no Wakii deps).',
     'function isStatusOwnerAlive(pid: string): boolean {',
     '  const parsed = Number(pid)',
     '  if (!Number.isSafeInteger(parsed) || parsed < 1 || parsed > 0x7fffffff) return false',

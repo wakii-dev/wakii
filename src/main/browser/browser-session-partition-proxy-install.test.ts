@@ -11,7 +11,7 @@ const { sessionsByPartition, fromPartitionMock } = vi.hoisted(() => {
       resolveProxy: vi.fn(async () => 'DIRECT'),
       setProxy: vi.fn(async () => {}),
       closeAllConnections: vi.fn(async () => {}),
-      getUserAgent: vi.fn(() => 'Mozilla/5.0 Electron/43.0.0 Orca/1.0'),
+      getUserAgent: vi.fn(() => 'Mozilla/5.0 Electron/43.0.0 Wakii/1.0'),
       setUserAgent: vi.fn(),
       setPermissionRequestHandler: vi.fn(),
       setPermissionCheckHandler: vi.fn(),

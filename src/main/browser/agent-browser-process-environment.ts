@@ -11,7 +11,7 @@ const AGENT_BROWSER_SOCKET_DIRECTORY_PREFIX = 'orca-ab-'
  * client, which forks a daemon Orca holds no handle on and that reparents to
  * pid 1 immediately. Nothing in Orca can reap it — not teardown, not a pid walk
  * (see `windows-pty-job.ts` for why walking your own orphans is guesswork) —
- * and a SIGKILL'd Orca never runs teardown at all. The daemon's own idle timer
+ * and a SIGKILL'd Wakii never runs teardown at all. The daemon's own idle timer
  * is the only bound that survives every way Orca can die (#16367).
  *
  * 10 minutes: >6x `EXEC_TIMEOUT_MS` (90s) so no command, retry chain, or normal

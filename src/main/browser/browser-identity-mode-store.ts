@@ -147,7 +147,7 @@ export async function setBrowserIdentityMode(
           code: 'browser_identity_reset_required',
           message:
             current.state === 'future'
-              ? 'Browser identity data was written by a newer Orca; update Orca, or reset it explicitly to overwrite it.'
+              ? 'Browser identity data was written by a newer Wakii; update Wakii, or reset it explicitly to overwrite it.'
               : `Browser identity data is ${current.state}; reset it explicitly to overwrite it.`
         },
         identity: current

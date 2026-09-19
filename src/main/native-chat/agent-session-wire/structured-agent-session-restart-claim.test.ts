@@ -405,7 +405,7 @@ describe('reporting what the continuation actually did', () => {
     expect(noted).toEqual([])
   })
 
-  it('reports a send Orca could not hand off as refused and writes no note', async () => {
+  it('reports a send Wakii could not hand off as refused and writes no note', async () => {
     const { restartResume, noted } = surface({
       sendRefusal: { code: 'agent_session_conflict', message: 'the runtime moved on' }
     })

@@ -8,7 +8,7 @@ import {
 } from '../orca-runtime-test-fixtures.spec'
 import { createMobileCreateTestNotifier } from '../orca-runtime-test-scenario-builders.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('does not re-deliver the agent launch command when the adopted renderer PTY spawned with one', async () => {
     vi.useFakeTimers()
     try {

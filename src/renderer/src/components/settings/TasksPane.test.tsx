@@ -381,7 +381,7 @@ describe('TasksPane', () => {
     await renderInteractivePane()
 
     expect(container?.textContent).toContain('Status unavailable')
-    expect(container?.textContent).toContain("Orca couldn't check this connection")
+    expect(container?.textContent).toContain("Wakii couldn't check this connection")
     const retry = Array.from(container?.querySelectorAll('button') ?? []).find(
       (button) => button.textContent === 'Try again'
     )

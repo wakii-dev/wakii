@@ -39,7 +39,7 @@ describe('structured send idempotency', () => {
     ['a refused write', 'provider_write_failed: broken pipe'],
     ['a dead host', 'host_restarted_before_acknowledgement'],
     [
-      'a codex turn an older Orca could not name',
+      'a codex turn an older Wakii could not name',
       'codex app-server started a turn it did not name in time'
     ]
   ])('never puts an unknown back on the wire after %s', async (_case, reason) => {

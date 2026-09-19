@@ -241,7 +241,7 @@ describe('hosted review branch cache (#11532)', () => {
     expect(lookup).toHaveBeenCalledTimes(4)
   })
 
-  it('retires a cached no-review answer when Orca opens a review', async () => {
+  it('retires a cached no-review answer when Wakii opens a review', async () => {
     const lookup = vi
       .fn<() => Promise<HostedReviewInfo | null>>()
       .mockResolvedValueOnce(null)
@@ -256,7 +256,7 @@ describe('hosted review branch cache (#11532)', () => {
     expect(lookup).toHaveBeenCalledTimes(2)
   })
 
-  it('discards a lookup that was already in flight when Orca opened a review', async () => {
+  it('discards a lookup that was already in flight when Wakii opened a review', async () => {
     let resolveLookup: (value: HostedReviewInfo | null) => void = () => {}
     const lookup = vi
       .fn<() => Promise<HostedReviewInfo | null>>()

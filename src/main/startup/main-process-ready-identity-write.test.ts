@@ -13,7 +13,7 @@ const mocks = vi.hoisted(() => ({
   userDataPath: '',
   profileDirectory: '',
   state: {
-    devInstanceIdentity: { appUserModelId: 'app.id', appName: 'Orca' },
+    devInstanceIdentity: { appUserModelId: 'app.id', appName: 'Wakii' },
     isServeMode: false,
     mainProcessI18nReady: Promise.resolve(),
     managedWslCliReconciliationStatus: 'settled',

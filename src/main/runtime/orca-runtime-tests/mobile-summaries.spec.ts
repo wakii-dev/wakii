@@ -20,7 +20,7 @@ import {
   syncSinglePty
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('resolves files through a source-visible linked-checkout worktree', async () => {
     const linkedPath = '/tmp/linked'
     const scratchPath = `${linkedPath}/.claude/worktrees/review`

@@ -92,7 +92,7 @@ const REGISTERED_ENTRY = {
   isMainWorktree: false
 }
 
-describe('OrcaRuntimeService worktree removal execution host', () => {
+describe('WakiiRuntimeService worktree removal execution host', () => {
   beforeEach(() => {
     vi.mocked(listWorktrees).mockClear()
     vi.mocked(listWorktreesStrict).mockClear()

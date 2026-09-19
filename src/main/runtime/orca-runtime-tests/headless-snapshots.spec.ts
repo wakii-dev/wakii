@@ -13,7 +13,7 @@ import {
   syncSinglePty
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('returns OSC titles from headless main terminal snapshots', async () => {
     const runtime = createRuntime()
     syncSinglePty(runtime, 'pty-1')

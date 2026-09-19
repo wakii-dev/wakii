@@ -21,7 +21,7 @@ import {
   store
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   describe('deliberately parked pane activation (STA-3465)', () => {
     function makeParkedSessionStore(
       origin: SleepingAgentSessionRecord['origin'] | undefined,

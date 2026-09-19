@@ -7,7 +7,7 @@
  * running terminal — on the host whose selling point is that work survives the client going
  * away.
  *
- * The constraint that makes a restart non-destructive lives in `stopOrcadDaemon` below: the
+ * The constraint that makes a restart non-destructive lives in `stopWakiidDaemon` below: the
  * daemon is DETACHED and must outlive this process. Anything that tears it down on the way
  * out silently converts a restart back into data loss.
  */

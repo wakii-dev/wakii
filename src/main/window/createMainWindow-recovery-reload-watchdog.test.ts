@@ -45,7 +45,7 @@ import {
 const DOCUMENT_URL = 'file:///opt/orca/renderer/index.html'
 // A real macOS install URL: the crash-report redactor's PATH_PATTERNS provably leave this one intact.
 const INSTALL_PATH_LOAD_ERROR =
-  "ERR_FILE_NOT_FOUND (-6) loading 'file:///Users/jane.doe/Applications/Orca.app/Contents/Resources/app.asar/out/renderer/index.html'"
+  "ERR_FILE_NOT_FOUND (-6) loading 'file:///Users/jane.doe/Applications/Wakii.app/Contents/Resources/app.asar/out/renderer/index.html'"
 const CRASH = { reason: 'crashed', exitCode: 5 } as Electron.RenderProcessGoneDetails
 
 /**

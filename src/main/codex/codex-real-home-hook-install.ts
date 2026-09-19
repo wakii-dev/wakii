@@ -297,7 +297,7 @@ async function sweepRealHomeCodexHook(): Promise<RealHomeCodexHookLane> {
         timeoutSec: MANAGED_HOOK_TIMEOUT_SECONDS
       })
     } catch (error) {
-      console.warn('[codex-real-home-hooks] failed to drop Orca trust entries:', error)
+      console.warn('[codex-real-home-hooks] failed to drop Wakii trust entries:', error)
     }
   }
   return 'removed'

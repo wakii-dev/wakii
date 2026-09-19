@@ -88,7 +88,7 @@ describe('refusing to tree-kill our own Chromium processes', () => {
     ['an empty pid set', new Set<number>()],
     ['the live pid set', undefined]
   ])(
-    'refuses an Orca renderer from a daemon host with %s, because no Chromium descends from it',
+    'refuses an Wakii renderer from a daemon host with %s, because no Chromium descends from it',
     (_case, ownChromiumPids) => {
       // The standalone daemon and orcad install no Chromium-backed AppEnvironment,
       // so this set is empty there. The ancestry walk is what refuses instead: it

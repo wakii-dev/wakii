@@ -42,7 +42,7 @@ import {
   remoteTrackingBase
 } from '../orca-runtime-test-scenario-builders.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('does not inspect or delete a local path when SSH runtime orphan cleanup has no filesystem provider', async () => {
     const localPath = await mkdtemp(join(tmpdir(), 'orca-runtime-ssh-missing-fs-'))
     const repo = {

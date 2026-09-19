@@ -67,7 +67,7 @@ export type ClaudeStreamJsonConnectionHandlers = {
 }
 
 /**
- * Two questions with their own evidence. The root's verdict is first-hand: Orca's
+ * Two questions with their own evidence. The root's verdict is first-hand: Wakii's
  * own child handle reported exit, or reported error then close before it ever had
  * a pid. The tree's comes from bounded descendant verification, and `unverifiable`
  * is never collapsed into either neighbour.

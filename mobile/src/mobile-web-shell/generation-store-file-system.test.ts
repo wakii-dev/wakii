@@ -21,8 +21,8 @@ describe('generationDirectoryPath', () => {
   })
 
   it('decodes what a uri escaped and a path spells literally', () => {
-    expect(generationDirectoryPath('file:///var/Orca%20Mobile/mobile-web')).toBe(
-      '/var/Orca Mobile/mobile-web'
+    expect(generationDirectoryPath('file:///var/Wakii%20Mobile/mobile-web')).toBe(
+      '/var/Wakii Mobile/mobile-web'
     )
   })
 

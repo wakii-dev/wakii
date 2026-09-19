@@ -3,7 +3,7 @@ import { argvRequestsServeMode } from './serve-mode-argv'
 import { writeStartupDiagnosticLine, type StartupDiagnosticSink } from './startup-diagnostics'
 
 export const SINGLE_INSTANCE_LOCK_FAILURE_MESSAGE =
-  '[single-instance] Another Orca instance is already running for this userData profile; exiting this launch after requesting the existing window. If no Orca process is running, this may be an Electron/macOS single-instance lock failure.'
+  '[single-instance] Another Wakii instance is already running for this userData profile; exiting this launch after requesting the existing window. If no Wakii process is running, this may be an Electron/macOS single-instance lock failure.'
 export const SINGLE_INSTANCE_LOCK_BYPASS_ENV = 'ORCA_BYPASS_SINGLE_INSTANCE_LOCK'
 export const SINGLE_INSTANCE_LOCK_E2E_ENFORCE_ENV = 'ORCA_E2E_ENFORCE_SINGLE_INSTANCE_LOCK'
 export const SINGLE_INSTANCE_LOCK_BYPASS_MESSAGE =
@@ -20,7 +20,7 @@ export function shouldActivateDesktopForSecondInstance(argv: readonly string[] =
 }
 
 /**
- * Why: Orca writes two canonical discovery files into `<userData>/`:
+ * Why: Wakii writes two canonical discovery files into `<userData>/`:
  * `orca-runtime.json` (RPC endpoint + authToken for the bundled CLI) and
  * `agent-hooks/endpoint.env` (hook port + token for cursor-agent/claude/codex
  * scripts). Without a single-instance lock, every AppImage/.app double-click

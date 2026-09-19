@@ -9,7 +9,7 @@ export type StartupActions = Pick<
   | 'fetchAllWorktrees'
   | 'fetchWorktrees'
   | 'fetchWorktreeLineage'
-  | 'fetchOrcaProfiles'
+  | 'fetchWakiiProfiles'
   | 'fetchSettings'
   | 'awaitOwnerWorktreeVisibilityDefaultsHydration'
   | 'fetchKeybindings'

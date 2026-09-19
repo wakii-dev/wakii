@@ -35,7 +35,7 @@ describe('emitServeBrowserIdentityActionLine', () => {
       expected: 'old choice could not be inspected'
     },
     { state: 'corrupt' as const, migrationNotice: null, expected: 'reset it explicitly' },
-    { state: 'future' as const, migrationNotice: null, expected: 'update Orca' }
+    { state: 'future' as const, migrationNotice: null, expected: 'update Wakii' }
   ])('writes one stderr action for $state', ({ state, migrationNotice, expected }) => {
     const write = vi.fn()
     const identity =

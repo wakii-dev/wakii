@@ -331,7 +331,7 @@ describe('buildTitleDerivedAgentRows', () => {
       ['⠋ OpenCode', 'working'],
       ['⠋ use Claude Sonnet', 'working'],
       ['⠋ claude 스타일로 리팩터', 'working'],
-      ['. Compare Opencode Vs Orca', 'working'],
+      ['. Compare Opencode Vs Wakii', 'working'],
       ['OpenCode ready', 'idle']
     ]
 

@@ -31,7 +31,7 @@ function makeRepo(overrides: Partial<Repo> & Pick<Repo, 'id' | 'displayName' | '
 function makeProject({ id, ...overrides }: Partial<Project> & Pick<Project, 'id'>): Project {
   return {
     id,
-    displayName: 'Orca',
+    displayName: 'Wakii',
     badgeColor: '#737373',
     sourceRepoIds: ['local-repo', 'remote-repo'],
     createdAt: 100,
@@ -45,7 +45,7 @@ function makeSetup(
     Pick<ProjectHostSetup, 'id' | 'projectId' | 'repoId' | 'hostId' | 'path'>
 ): ProjectHostSetup {
   return {
-    displayName: 'Orca',
+    displayName: 'Wakii',
     kind: 'git',
     setupState: 'ready',
     setupMethod: 'legacy-repo',
@@ -121,12 +121,12 @@ describe('RepositoryHostSetupsSection', () => {
   it('shows a viewing-host selector when the project has multiple settings-backed hosts', () => {
     const localRepo = makeRepo({
       id: 'local-repo',
-      displayName: 'Orca',
+      displayName: 'Wakii',
       path: '/Users/alice/orca'
     })
     const remoteRepo = makeRepo({
       id: 'remote-repo',
-      displayName: 'Orca',
+      displayName: 'Wakii',
       path: '/home/alice/orca',
       connectionId: 'openclaw 2'
     })
@@ -164,12 +164,12 @@ describe('RepositoryHostSetupsSection', () => {
     const setSettingsProjectHostSelection = vi.fn()
     const localRepo = makeRepo({
       id: 'local-repo',
-      displayName: 'Orca',
+      displayName: 'Wakii',
       path: '/Users/alice/orca'
     })
     const remoteRepo = makeRepo({
       id: 'remote-repo',
-      displayName: 'Orca',
+      displayName: 'Wakii',
       path: '/home/alice/orca',
       connectionId: 'openclaw 2'
     })
@@ -222,7 +222,7 @@ describe('RepositoryHostSetupsSection', () => {
   it('keeps nested SSH setups distinct and derives readiness from their HUB owner', () => {
     const remoteRepo = makeRepo({
       id: 'remote-repo',
-      displayName: 'Orca',
+      displayName: 'Wakii',
       path: '/srv/orca',
       executionHostId: 'runtime:hub'
     })
@@ -322,7 +322,7 @@ describe('RepositoryHostSetupsSection', () => {
   it('shows HUB-local setups as disconnected when their owning runtime is unreachable', () => {
     const remoteRepo = makeRepo({
       id: 'remote-repo',
-      displayName: 'Orca',
+      displayName: 'Wakii',
       path: '/srv/orca',
       executionHostId: 'runtime:hub'
     })
@@ -364,7 +364,7 @@ describe('RepositoryHostSetupsSection', () => {
     const openSettingsTarget = vi.fn()
     const localRepo = makeRepo({
       id: 'local-repo',
-      displayName: 'Orca',
+      displayName: 'Wakii',
       path: '/Users/alice/orca'
     })
     useAppStore.setState({
@@ -425,14 +425,14 @@ describe('RepositoryHostSetupsSection', () => {
       }),
       repo: makeRepo({
         id: 'remote-repo',
-        displayName: 'Orca',
+        displayName: 'Wakii',
         path: '/home/alice/orca',
         connectionId: 'openclaw 2'
       })
     })
     const localRepo = makeRepo({
       id: 'local-repo',
-      displayName: 'Orca',
+      displayName: 'Wakii',
       path: '/Users/alice/orca'
     })
     useAppStore.setState({
@@ -477,7 +477,7 @@ describe('RepositoryHostSetupsSection', () => {
       hostId: 'ssh:openclaw%202',
       path: '/home/alice/orca',
       kind: 'git',
-      displayName: 'Orca'
+      displayName: 'Wakii'
     })
     expect(setSettingsProjectHostSelection).toHaveBeenCalledWith(
       'github:stablyai/orca',
@@ -502,14 +502,14 @@ describe('RepositoryHostSetupsSection', () => {
       }),
       repo: makeRepo({
         id: 'remote-repo',
-        displayName: 'Orca',
+        displayName: 'Wakii',
         path: '/home/alice/orca',
         connectionId: 'openclaw 2'
       })
     })
     const localRepo = makeRepo({
       id: 'local-repo',
-      displayName: 'Orca',
+      displayName: 'Wakii',
       path: '/Users/alice/orca'
     })
     useAppStore.setState({
@@ -559,7 +559,7 @@ describe('RepositoryHostSetupsSection', () => {
       hostId: 'ssh:openclaw%202',
       url: 'https://github.com/stablyai/orca.git',
       destination: '/home/alice',
-      displayName: 'Orca'
+      displayName: 'Wakii'
     })
     expect(setSettingsProjectHostSelection).toHaveBeenCalledWith(
       'github:stablyai/orca',
@@ -572,7 +572,7 @@ describe('RepositoryHostSetupsSection', () => {
   it('blocks path setup until an SSH host connects but keeps placeholders available', () => {
     const localRepo = makeRepo({
       id: 'local-repo',
-      displayName: 'Orca',
+      displayName: 'Wakii',
       path: '/Users/alice/orca'
     })
     useAppStore.setState({
@@ -623,7 +623,7 @@ describe('RepositoryHostSetupsSection', () => {
     })
     const localRepo = makeRepo({
       id: 'local-repo',
-      displayName: 'Orca',
+      displayName: 'Wakii',
       path: '/Users/alice/orca'
     })
     useAppStore.setState({
@@ -680,7 +680,7 @@ describe('RepositoryHostSetupsSection', () => {
     expect(createProjectHostSetup).toHaveBeenCalledWith({
       projectId: 'github:stablyai/orca',
       hostId: 'runtime:gpu',
-      displayName: 'Orca',
+      displayName: 'Wakii',
       setupState: 'not-set-up',
       setupMethod: 'provisioned'
     })
@@ -692,7 +692,7 @@ describe('RepositoryHostSetupsSection', () => {
     const setupProjectExistingFolder = vi.fn()
     const localRepo = makeRepo({
       id: 'local-repo',
-      displayName: 'Orca',
+      displayName: 'Wakii',
       path: '/Users/alice/orca'
     })
     useAppStore.setState({
@@ -736,7 +736,7 @@ describe('RepositoryHostSetupsSection', () => {
     renderSection(localRepo)
     clickButton('Add to another host')
 
-    expect(container.textContent).toContain('Update Orca on this host to set up projects')
+    expect(container.textContent).toContain('Update Wakii on this host to set up projects')
     const browseButton = findButton('Browse folder')
     const plannedButton = findButton('Add host placeholder')
     expect(browseButton?.disabled).toBe(true)
@@ -766,7 +766,7 @@ describe('RepositoryHostSetupsSection', () => {
     })
     const localRepo = makeRepo({
       id: 'local-repo',
-      displayName: 'Orca',
+      displayName: 'Wakii',
       path: '/Users/alice/orca'
     })
     useAppStore.setState({
@@ -822,7 +822,7 @@ describe('RepositoryHostSetupsSection', () => {
     expect(createProjectHostSetup).toHaveBeenCalledWith({
       projectId: 'github:stablyai/orca',
       hostId: 'runtime:gpu',
-      displayName: 'Orca',
+      displayName: 'Wakii',
       setupState: 'not-set-up',
       setupMethod: 'provisioned'
     })

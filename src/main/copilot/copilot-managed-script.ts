@@ -18,7 +18,7 @@ export function getManagedScript(target: 'local' | 'posix' = 'local'): string {
     return [
       "Write-Output '{}'",
       // Why: endpoint.cmd is cmd syntax, not PowerShell. Parse its `set KEY=...`
-      // lines so surviving PTYs can refresh to the current Orca server.
+      // lines so surviving PTYs can refresh to the current Wakii server.
       'if ($env:ORCA_AGENT_HOOK_ENDPOINT -and (Test-Path -LiteralPath $env:ORCA_AGENT_HOOK_ENDPOINT)) {',
       '  try {',
       '    Get-Content -LiteralPath $env:ORCA_AGENT_HOOK_ENDPOINT | ForEach-Object {',
@@ -28,8 +28,8 @@ export function getManagedScript(target: 'local' | 'posix' = 'local'): string {
       '    }',
       '  } catch {}',
       '}',
-      // Why (#11549 class): missing Orca context means a user-wide hook fired outside an
-      // Orca pane. ReadToEnd blocks forever if that caller abandons the pipe, so the guard
+      // Why (#11549 class): missing Wakii context means a user-wide hook fired outside an
+      // Wakii pane. ReadToEnd blocks forever if that caller abandons the pipe, so the guard
       // must run before the hook owns stdin; the payload would be discarded anyway.
       WINDOWS_POWERSHELL_HOOK_ENVIRONMENT_GUARD,
       '$inputData = [Console]::In.ReadToEnd()',

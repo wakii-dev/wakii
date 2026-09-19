@@ -180,12 +180,12 @@ export function UnexpectedSignoutCard(): React.JSX.Element | null {
             {email
               ? translate(
                   'auto.components.UnexpectedSignoutCard.7b4d9e1f2a',
-                  'Sign in again as {{value0}} to restore Artifact sharing, Orca Relay, and skill sharing.',
+                  'Sign in again as {{value0}} to restore Artifact sharing, Wakii Relay, and skill sharing.',
                   { value0: email }
                 )
               : translate(
                   'auto.components.UnexpectedSignoutCard.5a1c8d3e6f',
-                  'Sign in again to restore Artifact sharing, Orca Relay, and skill sharing.'
+                  'Sign in again to restore Artifact sharing, Wakii Relay, and skill sharing.'
                 )}
           </p>
 
@@ -212,15 +212,15 @@ export function UnexpectedSignoutCard(): React.JSX.Element | null {
                 )}
                 description={translate(
                   'auto.components.UnexpectedSignoutCard.2c9a5b6e8d',
-                  'Publish HTML and Markdown files and manage every shared link from Orca.'
+                  'Publish HTML and Markdown files and manage every shared link from Wakii.'
                 )}
               />
               <FeatureRow
                 icon={Smartphone}
-                title={translate('auto.components.UnexpectedSignoutCard.6e3f1a9c5b', 'Orca Relay')}
+                title={translate('auto.components.UnexpectedSignoutCard.6e3f1a9c5b', 'Wakii Relay')}
                 description={translate(
                   'auto.components.UnexpectedSignoutCard.4b7d2e8f1a',
-                  'Connect Orca Mobile to this desktop across cellular or any Wi-Fi.'
+                  'Connect Wakii Mobile to this desktop across cellular or any Wi-Fi.'
                 )}
               />
               <FeatureRow
@@ -245,7 +245,7 @@ export function UnexpectedSignoutCard(): React.JSX.Element | null {
               disabled={!canConnect}
               onClick={() => void connect()}
             >
-              {translate('auto.components.UnexpectedSignoutCard.c5b3e8a17d', 'Sign in to Orca')}
+              {translate('auto.components.UnexpectedSignoutCard.c5b3e8a17d', 'Sign in to Wakii')}
             </Button>
           </div>
         </div>

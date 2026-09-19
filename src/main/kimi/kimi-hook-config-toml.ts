@@ -30,14 +30,14 @@ export const KIMI_HOOK_EVENTS = [
 ] as const
 
 const MARKERS: ManagedTomlMarkers = {
-  startMarker: '# >>> orca-managed-kimi-hooks (managed by Orca; do not edit) >>>',
+  startMarker: '# >>> orca-managed-kimi-hooks (managed by Wakii; do not edit) >>>',
   endMarker: '# <<< orca-managed-kimi-hooks <<<'
 }
 const HOOK_TABLE_HEADER = '[[hooks]]'
 
 export type ManagedCommandMatcher = (command: string | undefined) => boolean
 
-// A `[[hooks]]` table that invokes Orca's managed script is Orca's hook: that
+// A `[[hooks]]` table that invokes Orca's managed script is Wakii's hook: that
 // command path is the only reason it fires, and it is there because Orca put it
 // there. Extra keys are a user customising our hook, not authoring their own, so
 // uninstall still owns it — leaving it would keep feeding Orca their events

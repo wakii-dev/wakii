@@ -152,7 +152,7 @@ describe('registerPtyHandlers', () => {
       }
 
       posixOnlyIt(
-        'launches plain codex when a REAL rollout sits under a home Orca no longer trusts',
+        'launches plain codex when a REAL rollout sits under a home Wakii no longer trusts',
         async () => {
           // Why: the discriminating case — the rollout exists, so only the trust check can
           // reject it. Falling through would resume it under the selected account.

@@ -188,7 +188,7 @@ describe('unhandled provider frame journal fallback', () => {
     )
 
     expect(row?.body.text).toContain('abcdefgh')
-    expect(row?.body.text).toContain('[Orca: output truncated')
+    expect(row?.body.text).toContain('[Wakii: output truncated')
   })
 
   it('unwraps a nested sentence and falls back to the opcode when there is none', () => {

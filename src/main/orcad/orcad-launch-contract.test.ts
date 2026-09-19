@@ -30,7 +30,7 @@ describe('parseArgs', () => {
   })
 })
 
-describe('resolveOrcadExitCode', () => {
+describe('resolveWakiidExitCode', () => {
   it('separates a configuration fault from a generic failure', () => {
     // A supervisor must be able to stop restarting on faults that restarting cannot fix:
     // a data root owned by someone else, held by another instance, or a bad bind address.

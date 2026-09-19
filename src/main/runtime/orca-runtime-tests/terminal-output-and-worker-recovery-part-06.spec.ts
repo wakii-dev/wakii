@@ -23,7 +23,7 @@ import {
 } from '../orca-runtime-test-fixtures.spec'
 import { publishLegacyWorkerReveal } from '../orca-runtime-test-scenario-builders.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('adopts an SSH legacy worker only after its matching relay is ready', async () => {
     const connectionId = 'ssh-legacy-worker'
     const ptyId = `ssh:${connectionId}@@pty-legacy-worker`

@@ -59,7 +59,7 @@ function rowState(agentEntry: AgentStatusEntry, ptyIdsByTabId: Record<string, st
 const LIVE = { [TAB_ID]: ['pty-1'] }
 const NO_PTY: Record<string, string[]> = {}
 
-describe('a stale entry on a pane Orca still holds', () => {
+describe('a stale entry on a pane Wakii still holds', () => {
   it('reads `unverifiable`, not `idle` — the reporting stream stopped, not the pane', () => {
     expect(rowState(entry(), LIVE)).toBe('unverifiable')
   })

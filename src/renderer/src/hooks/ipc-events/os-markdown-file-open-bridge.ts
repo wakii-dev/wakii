@@ -34,7 +34,7 @@ async function openOsRequestedMarkdownFiles(documents: MarkdownDocument[]): Prom
   }
   // Why enabled here: the user asked the OS for this file, and the tabs above are already in a
   // surface a disabled floating workspace never renders. Same enable-then-reveal as the
-  // Settings "Edit keybindings in Orca" action.
+  // Settings "Edit keybindings in Wakii" action.
   if (store.settings?.floatingTerminalEnabled !== true) {
     await store.updateSettings({ floatingTerminalEnabled: true })
   }

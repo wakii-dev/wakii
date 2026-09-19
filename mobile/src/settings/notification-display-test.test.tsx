@@ -48,7 +48,7 @@ it.each([
     failWhenDisconnected: true
   })
   expect(third).not.toHaveBeenCalled()
-  expect(JSON.stringify(renderer.toJSON())).toContain('Accepted by Orca’s push service')
+  expect(JSON.stringify(renderer.toJSON())).toContain('Accepted by Wakii’s push service')
 })
 
 it('does not try another desktop after an uncertain transport failure', async () => {

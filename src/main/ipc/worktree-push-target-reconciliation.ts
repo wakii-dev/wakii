@@ -24,7 +24,7 @@ import {
 // Orca only ever mints `pr-head` or `pr-<owner>-<repo>` (see `sanitizeRemoteName`), optionally
 // disambiguated with `-2`..`-99` (see `ensureUniqueRemoteName`). The naming convention alone is
 // not proof of provenance -- a user could name a remote `pr-foo` -- so this only narrows which
-// remotes are even considered; `hasOrcaCreatedProvenance` below is the actual safety gate.
+// remotes are even considered; `hasWakiiCreatedProvenance` below is the actual safety gate.
 const ORCA_PR_REMOTE_NAME_PATTERN =
   /^pr-(?:head|[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?)(?:-[0-9]{1,2})?$/
 

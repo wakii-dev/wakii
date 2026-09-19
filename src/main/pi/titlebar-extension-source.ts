@@ -74,7 +74,7 @@ export function getPiTitlebarExtensionSource(kind: PiAgentKind = 'pi'): string {
     '// close a maintenance spinner — cap it so idle maintenance cannot strand a working title.',
     'const IDLE_COMPACTION_MAX_FRAMES = Math.ceil(300000 / FRAME_INTERVAL_MS)',
     '',
-    '// Why: `-` is the plain separator; `!` is the state marker Orca reads as needs-input',
+    '// Why: `-` is the plain separator; `!` is the state marker Wakii reads as needs-input',
     '// (src/shared/pi-state-title-marker.ts), so mobile and the CLI see the wait too.',
     'function getMarkedTitle(pi, marker) {',
     '  const cwd = process.cwd().split(/[\\\\/]/).filter(Boolean).at(-1) || process.cwd()',

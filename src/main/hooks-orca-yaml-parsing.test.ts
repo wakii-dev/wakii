@@ -11,7 +11,7 @@ vi.mock('fs', () => ({
   chmodSync: vi.fn()
 }))
 
-describe('parseOrcaYaml', () => {
+describe('parseWakiiYaml', () => {
   it('parses YAML with setup script only', () => {
     const yaml = `scripts:\n  setup: |\n    echo "setting up"\n    npm install\n`
     const result = parseOrcaYaml(yaml)
@@ -376,7 +376,7 @@ describe('parseOrcaYaml', () => {
   })
 })
 
-describe('hasUnrecognizedOrcaYamlKeys', () => {
+describe('hasUnrecognizedWakiiYamlKeys', () => {
   it('returns true when the file contains only keys this version does not handle', async () => {
     const fs = await import('node:fs')
     vi.mocked(fs.readFileSync).mockReturnValue('futureFeature: |\n  some config\n')

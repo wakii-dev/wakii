@@ -157,7 +157,7 @@ export class SshGitWorktreeProvider extends SshGitReviewHeadProvider {
   // that hasn't shipped it yet degrades to no marker rather than failing materialization.
   async markRemoteOrcaCreated(repoPath: string, remoteName: string): Promise<void> {
     try {
-      await this.mux.request('git.markRemoteOrcaCreated', { repoPath, remoteName })
+      await this.mux.request('git.markRemoteWakiiCreated', { repoPath, remoteName })
     } catch (error) {
       if (!isJsonRpcMethodNotFoundError(error)) {
         throw error
@@ -165,7 +165,7 @@ export class SshGitWorktreeProvider extends SshGitReviewHeadProvider {
       if (!this.loggedMarkRemoteOrcaCreatedFallback) {
         this.loggedMarkRemoteOrcaCreatedFallback = true
         console.warn(
-          "[ssh-git] Relay does not implement git.markRemoteOrcaCreated; this remote will lack a git-config provenance marker permanently (reconnecting does not retroactively add it -- only a newer relay deployment does, for remotes added after that). The store's remoteCreated flag remains the fallback ownership signal for cleanup."
+          "[ssh-git] Relay does not implement git.markRemoteWakiiCreated; this remote will lack a git-config provenance marker permanently (reconnecting does not retroactively add it -- only a newer relay deployment does, for remotes added after that). The store's remoteCreated flag remains the fallback ownership signal for cleanup."
         )
       }
     }
@@ -187,7 +187,7 @@ export class SshGitWorktreeProvider extends SshGitReviewHeadProvider {
     } catch (error) {
       if (isJsonRpcMethodNotFoundError(error)) {
         throw new Error(
-          'This SSH host is running an older Orca relay that cannot delete preserved branches. Reconnect to deploy the latest relay, then try again.'
+          'This SSH host is running an older Wakii relay that cannot delete preserved branches. Reconnect to deploy the latest relay, then try again.'
         )
       }
       throw error

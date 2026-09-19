@@ -42,7 +42,7 @@ describe('quoteForPosixShell', () => {
 
   it('quotes spaces', async () => {
     const { quoteForPosixShell } = await loadCommandModule()
-    expect(quoteForPosixShell('/tmp/Orca Setup.deb')).toBe("'/tmp/Orca Setup.deb'")
+    expect(quoteForPosixShell('/tmp/Wakii Setup.deb')).toBe("'/tmp/Wakii Setup.deb'")
   })
 
   it('neutralizes expansion, command substitution, separators, and double quotes', async () => {

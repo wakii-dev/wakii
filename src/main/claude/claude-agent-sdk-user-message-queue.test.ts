@@ -57,7 +57,7 @@ describe('claude user message queue', () => {
     expect(claudeUserMessageWasProvablyUnwritten(error)).toBe(false)
   })
 
-  it('marks only frames still queued in Orca as provably unwritten', async () => {
+  it('marks only frames still queued in Wakii as provably unwritten', async () => {
     const queue = createClaudeUserMessageQueue()
     const pump = queue.messages[Symbol.asyncIterator]()
     const inFlight = queue.push(frame('first')).catch((caught: unknown) => caught)

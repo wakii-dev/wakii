@@ -711,7 +711,7 @@ describe('useComposerState host-context boundaries', () => {
       COMPOSER_SOURCE.fullCreation +
       COMPOSER_SOURCE.quickSubmitPreparation +
       COMPOSER_SOURCE.quickCreation
-    expect(submitSources).not.toContain('isOrcaCliAvailableForLaunch')
+    expect(submitSources).not.toContain('isWakiiCliAvailableForLaunch')
     expect(submitSources).not.toContain('hasGeneratedLinearSourceContext')
     expect(submitSources).not.toContain('shouldDraftGeneratedLinearContext')
     expect(COMPOSER_SOURCE.derived).toMatch(

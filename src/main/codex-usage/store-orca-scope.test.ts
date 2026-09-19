@@ -18,7 +18,7 @@ vi.mock('../usage/usage-scan-worker-spawn', () => ({
 describe('CodexUsageStore', () => {
   setupCodexUsageStoreEnv(getPathMock)
 
-  it('reports no data for Orca scope when only non-Orca Codex usage exists', async () => {
+  it('reports no data for Wakii scope when only non-Wakii Codex usage exists', async () => {
     const store = createStoreWithState({
       sessions: [
         {
@@ -241,7 +241,7 @@ describe('CodexUsageStore', () => {
     expect(breakdown.find((row) => row.key === 'gpt-5.2-codex')?.sessions).toBe(1)
   })
 
-  it('uses only Orca-scoped models when projecting mixed-scope sessions', async () => {
+  it('uses only Wakii-scoped models when projecting mixed-scope sessions', async () => {
     const store = createStoreWithState({
       sessions: [
         {

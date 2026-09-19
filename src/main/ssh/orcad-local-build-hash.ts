@@ -1,7 +1,7 @@
 /**
  * The build identity the deploy expects the host to answer with.
  *
- * It must be computed the same way `computeOrcadBuildHash` computes it on the host —
+ * It must be computed the same way `computeWakiidBuildHash` computes it on the host —
  * sha256 of `orcad.js`, first 16 hex characters — or the activation gate would reject every
  * healthy candidate. Keeping the two in one comment is deliberate: they are one contract
  * split across a network, and the version string cannot stand in for it, because

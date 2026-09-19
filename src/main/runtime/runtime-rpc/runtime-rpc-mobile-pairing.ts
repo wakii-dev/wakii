@@ -141,7 +141,7 @@ export class RuntimeRpcMobilePairing extends RuntimeRpcPairing {
         available: false,
         reason: 'relay_mint_failed',
         guidance:
-          'Orca Relay could not create a pairing invite. Use LAN (Tailscale or same Wi‑Fi) or retry Relay.',
+          'Wakii Relay could not create a pairing invite. Use LAN (Tailscale or same Wi‑Fi) or retry Relay.',
         relayFailure
       }
     }
@@ -150,7 +150,7 @@ export class RuntimeRpcMobilePairing extends RuntimeRpcPairing {
       return refuseAutomaticWithoutRelay({
         code: 'relay_provider_unavailable',
         stage: 'provider_missing',
-        message: 'Orca Relay is not available on this desktop'
+        message: 'Wakii Relay is not available on this desktop'
       })
     }
     const device = this.deviceRegistry?.getDevice(direct.deviceId)

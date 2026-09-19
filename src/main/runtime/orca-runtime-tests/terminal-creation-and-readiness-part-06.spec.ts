@@ -9,7 +9,7 @@ import {
   syncSinglePty
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('waits for exit on background terminal handles', async () => {
     const runtime = new OrcaRuntimeService(store)
     runtime.setPtyController({

@@ -147,7 +147,7 @@ function makePersistedSplitSession(): WorkspaceSessionState {
   }
 }
 
-describe('OrcaRuntimeService terminal surface retirement', () => {
+describe('WakiiRuntimeService terminal surface retirement', () => {
   it('releases each early-exit fence after its matching registration is rejected', () => {
     const runtime = new OrcaRuntimeService()
     const internals = runtime as unknown as {

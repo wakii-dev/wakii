@@ -68,7 +68,7 @@ describe('dispatch reason bounding', () => {
 
   it('marks the clipped reason rather than truncating it silently', async () => {
     const stored = await settle(HUGE)
-    expect(stored).toContain('[Orca: output truncated')
+    expect(stored).toContain('[Wakii: output truncated')
   })
 
   it('leaves a reason that already fits exactly as written', async () => {

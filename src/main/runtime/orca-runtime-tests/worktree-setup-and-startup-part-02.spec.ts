@@ -12,7 +12,7 @@ import {
 } from '../orca-runtime-test-mocks.spec'
 import { expectStablePaneKeyEnv, store } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('sequences setup before startup for opted-in local headless worktree creates', async () => {
     const waitRepo = {
       ...store.getRepo('repo-1')!,

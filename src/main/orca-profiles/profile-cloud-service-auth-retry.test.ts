@@ -28,7 +28,7 @@ const {
   OrcaCloudRequestErrorMock: class OrcaCloudRequestError extends Error {
     constructor(public readonly statusCode: number) {
       super(`orca_cloud_request_failed_${statusCode}`)
-      this.name = 'OrcaCloudRequestError'
+      this.name = 'WakiiCloudRequestError'
     }
   },
   safeStorageMock: {
@@ -126,7 +126,7 @@ function mockSuccessfulSessionRefresh(): void {
   } satisfies OrcaCloudSessionExchangeResponse)
 }
 
-describe('Orca cloud profile auth-failure retry', () => {
+describe('Wakii cloud profile auth-failure retry', () => {
   beforeEach(() => {
     userDataPath = mkdtempSync(join(tmpdir(), 'orca-cloud-service-auth-retry-'))
     beginOrcaCloudPkceFlowMock.mockReset()

@@ -7,7 +7,7 @@ import {
 import type { TaskProviderIdentity as ProviderIdentity } from '../../../../shared/task-source-context'
 
 const identities = [
-  { provider: 'github', owner: 'Acme', repo: 'Orca', host: 'github.example.com' },
+  { provider: 'github', owner: 'Acme', repo: 'Wakii', host: 'github.example.com' },
   {
     provider: 'gitlab',
     projectId: '123',

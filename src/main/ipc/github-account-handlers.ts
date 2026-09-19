@@ -15,8 +15,8 @@ import { assertRegisteredGitHubRepo, getGitHubLocalGitOptionArgs } from './githu
 
 export function registerGitHubAccountHandlers(store: Store): void {
   ipcMain.handle('gh:viewer', () => getAuthenticatedViewer())
-  ipcMain.handle('gh:checkOrcaStarred', () => checkOrcaStarred())
-  ipcMain.handle('gh:starOrca', async (_event, source: unknown) => {
+  ipcMain.handle('gh:checkWakiiStarred', () => checkOrcaStarred())
+  ipcMain.handle('gh:starWakii', async (_event, source: unknown) => {
     const sourceParse = appStarSourceSchema.safeParse(source)
     const starred = await starOrca()
     if (starred && sourceParse.success) {

@@ -167,7 +167,7 @@ describe('preflight', () => {
     await expect(detectInstalledAgents()).resolves.toEqual(['claude', 'cursor'])
   })
 
-  it('does not report Claude Agent Teams when only the Orca shim is present', async () => {
+  it('does not report Claude Agent Teams when only the Wakii shim is present', async () => {
     execFileAsyncMock.mockImplementation(async (command, args) => {
       if (command !== 'which') {
         throw new Error(`unexpected command ${String(command)}`)
@@ -176,7 +176,7 @@ describe('preflight', () => {
         return {
           environmentResolved: true,
           code: 0,
-          stdout: '/Applications/Orca.app/Contents/MacOS/orca\n',
+          stdout: '/Applications/Wakii.app/Contents/MacOS/orca\n',
           stderr: '',
           timedOut: false
         }
@@ -187,7 +187,7 @@ describe('preflight', () => {
     await expect(detectInstalledAgents()).resolves.toEqual([])
   })
 
-  it('reports Claude Agent Teams when both Orca and Claude are present', async () => {
+  it('reports Claude Agent Teams when both Wakii and Claude are present', async () => {
     execFileAsyncMock.mockImplementation(async (command, args) => {
       if (command !== 'which') {
         throw new Error(`unexpected command ${String(command)}`)
@@ -205,7 +205,7 @@ describe('preflight', () => {
         return {
           environmentResolved: true,
           code: 0,
-          stdout: '/Applications/Orca.app/Contents/MacOS/orca\n',
+          stdout: '/Applications/Wakii.app/Contents/MacOS/orca\n',
           stderr: '',
           timedOut: false
         }

@@ -8,7 +8,7 @@ import { resolveWindowsShellLaunchArgs } from './providers/windows-shell-args'
 
 const WINDOWS_POWERSHELLS = ['powershell.exe', 'pwsh.exe'] as const
 const PROFILE_CODEX_HOME = 'C:\\Profile Custom\\codex'
-const MANAGED_CODEX_HOME = 'C:\\Orca Managed\\codex-runtime-home'
+const MANAGED_CODEX_HOME = 'C:\\Wakii Managed\\codex-runtime-home'
 
 for (const shell of WINDOWS_POWERSHELLS) {
   describe.runIf(isAvailable(shell))(`${shell} managed home bootstrap`, () => {

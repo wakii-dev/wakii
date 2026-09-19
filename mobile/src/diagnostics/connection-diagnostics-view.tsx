@@ -96,7 +96,7 @@ export function ConnectionDiagnosticsView({
                           ? 'Diagnostics sent'
                           : submissionState === 'failed'
                             ? 'Retry sending'
-                            : 'Send diagnostics to Orca'}
+                            : 'Send diagnostics to Wakii'}
                     </Text>
                   </Pressable>
                 </>

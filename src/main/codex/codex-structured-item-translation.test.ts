@@ -772,7 +772,7 @@ describe('codex item bodies', () => {
   })
 
   it('carries the web search hits as the call output', () => {
-    const results = [{ title: 'Orca 1.0', url: 'https://example.com/notes' }]
+    const results = [{ title: 'Wakii 1.0', url: 'https://example.com/notes' }]
     expect(
       codexItemBody({
         type: 'webSearch',

@@ -498,7 +498,7 @@ describe('useStructuredAgentSessionOutbox', () => {
     )
     expect(sent).toContain('second')
     expect(result.current.error).toBe(
-      'Message delivery is unconfirmed and Orca will not send it again'
+      'Message delivery is unconfirmed and Wakii will not send it again'
     )
   })
 

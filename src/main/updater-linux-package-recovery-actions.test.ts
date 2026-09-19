@@ -101,7 +101,7 @@ const ARTIFACT = {
 }
 const MANUAL_INSTALL_STATUS = {
   state: 'error',
-  message: 'Quit Orca before running the system package install command.',
+  message: 'Quit Wakii before running the system package install command.',
   recovery: {
     kind: 'linux-package-install',
     packageType: 'deb',

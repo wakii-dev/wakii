@@ -323,7 +323,7 @@ export class RelayEndpointHeldError extends Error {
   constructor(readonly incumbent: RelayEndpointIncumbent) {
     super(
       `A live relay still owns ${incumbent.sockPath} and refused this connection ` +
-        `(${describeRelayEndpointIncumbent(incumbent)}). Orca will not replace it, because ` +
+        `(${describeRelayEndpointIncumbent(incumbent)}). Wakii will not replace it, because ` +
         'unlinking its socket would strand its terminals. Use Reset Relay for this host to ' +
         'stop it, then reconnect.'
     )
@@ -345,7 +345,7 @@ export class RelayEndpointUnresponsiveError extends Error {
   constructor(readonly incumbent: RelayEndpointIncumbent) {
     super(
       `A relay still owns ${incumbent.sockPath} but did not answer the handshake ` +
-        `(${describeRelayEndpointIncumbent(incumbent)}). Orca will retry rather than replace it; ` +
+        `(${describeRelayEndpointIncumbent(incumbent)}). Wakii will retry rather than replace it; ` +
         'if it never recovers, use Reset Relay for this host.'
     )
   }

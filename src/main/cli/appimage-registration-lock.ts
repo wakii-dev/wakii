@@ -34,9 +34,9 @@ export async function withAppImageRegistrationLock<T>(
     })
   } catch (error) {
     throw new Error(
-      `Timed out waiting for another Orca process to finish CLI registration ` +
+      `Timed out waiting for another Wakii process to finish CLI registration ` +
         `(waited ${Math.round(LOCK_ACQUIRE_DEADLINE_MS / 1000)}s). ` +
-        `If no other Orca is running, remove ${join(cacheRootPath, LOCK_TARGET_NAME)}.lock and retry.`,
+        `If no other Wakii is running, remove ${join(cacheRootPath, LOCK_TARGET_NAME)}.lock and retry.`,
       { cause: error }
     )
   }

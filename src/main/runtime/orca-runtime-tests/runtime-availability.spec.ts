@@ -17,7 +17,7 @@ import {
   store
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('starts unavailable with no authoritative window', () => {
     const runtime = createRuntime()
 

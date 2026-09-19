@@ -73,7 +73,7 @@ function clearCloudSessionIfUnchanged(
     return
   }
   // A session we were denied is not a session we may delete: the token we would be clearing might
-  // not even be the one that failed, and `clearOrcaCloudSession` unlinks the file outright.
+  // not even be the one that failed, and `clearWakiiCloudSession` unlinks the file outright.
   if (current.status === 'unreadable') {
     return
   }

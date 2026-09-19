@@ -655,7 +655,7 @@ describe('backgrounded-session pane guard (#9236)', () => {
     }
   })
 
-  it('exits rather than draining stdin on Windows, where a worker has no Orca pane', () => {
+  it('exits rather than draining stdin on Windows, where a worker has no Wakii pane', () => {
     const platform = Object.getOwnPropertyDescriptor(process, 'platform')!
     const tmpHome = mkdtempSync(join(tmpdir(), 'orca-claude-bg-'))
     Object.defineProperty(process, 'platform', { value: 'win32', configurable: true })
@@ -722,7 +722,7 @@ describe('ClaudeHookService.installRemote', () => {
     expect(script).toContain('-H "Content-Type: application/json"')
     expect(script).toContain('orca_hook_metadata=$(printf')
     expect(script).toContain('unset ORCA_AGENT_HOOK_TRANSPORT')
-    expect(script).toContain('-H "X-Orca-Agent-Hook-Meta: ${orca_hook_metadata}"')
+    expect(script).toContain('-H "X-Wakii-Agent-Hook-Meta: ${orca_hook_metadata}"')
     expect(script).toContain('--data-binary @-')
     expect(script).toContain('--data-urlencode "payload@-"')
     expect(fs.modes.get('/home/dev/.orca/agent-hooks/claude-hook.sh')).toBe(0o755)

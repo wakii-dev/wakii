@@ -121,7 +121,7 @@ describe('PiTitlebarExtensionService', () => {
     })
   }
 
-  it('buildPtyEnv installs Orca extensions into the user agent dir without redirecting the home', () => {
+  it('buildPtyEnv installs Wakii extensions into the user agent dir without redirecting the home', () => {
     const svc = new PiTitlebarExtensionService()
     const env = svc.buildPtyEnv('pty-1', piHome, 'pi')
 
@@ -469,7 +469,7 @@ describe('PiTitlebarExtensionService', () => {
     expect(readFileSync(extensionPath, 'utf8')).toContain(getPiTitlebarExtensionSource())
   })
 
-  it('rebuilding updates Orca-owned extensions while preserving user files', () => {
+  it('rebuilding updates Wakii-owned extensions while preserving user files', () => {
     const svc = new PiTitlebarExtensionService()
     svc.buildPtyEnv('pty-refresh-1', piHome, 'pi')
     writeFileSync(
@@ -494,7 +494,7 @@ describe('PiTitlebarExtensionService', () => {
     )
   })
 
-  it("does not overwrite a user's same-named Orca extension file", () => {
+  it("does not overwrite a user's same-named Wakii extension file", () => {
     const userStatusExtension = 'user-owned status extension'
     writeFileSync(join(piHome, 'extensions', 'orca-agent-status.ts'), userStatusExtension, 'utf-8')
 
@@ -508,7 +508,7 @@ describe('PiTitlebarExtensionService', () => {
     expectPiHomeIntact()
   })
 
-  it('uses an Orca-owned OMP status extension when a same-named user file exists', () => {
+  it('uses an Wakii-owned OMP status extension when a same-named user file exists', () => {
     const userStatusExtension = 'user-owned status extension'
     const userStatusPath = join(piHome, 'extensions', 'orca-agent-status.ts')
     writeFileSync(userStatusPath, userStatusExtension, 'utf-8')

@@ -224,7 +224,7 @@ describe('MobileHostCard', () => {
             kind: 'unreachable',
             label: 'Host 1 is offline',
             reason: 'never-connected',
-            detail: "Check it's awake, Orca is running, and you're signed in"
+            detail: "Check it's awake, Wakii is running, and you're signed in"
           },
           path: 'lan',
           onPress: vi.fn(),
@@ -236,9 +236,9 @@ describe('MobileHostCard', () => {
     consoleError.mockRestore()
 
     const texts = renderer.root.findAllByType('Text').map((node) => node.props.children)
-    expect(texts).toContainEqual("Check it's awake, Orca is running, and you're signed in")
+    expect(texts).toContainEqual("Check it's awake, Wakii is running, and you're signed in")
     expect(renderer.root.findAllByType('Pressable')[0]?.props.accessibilityLabel).toBe(
-      "Open Host 1, Host 1 is offline, Check it's awake, Orca is running, and you're signed in"
+      "Open Host 1, Host 1 is offline, Check it's awake, Wakii is running, and you're signed in"
     )
   })
 })

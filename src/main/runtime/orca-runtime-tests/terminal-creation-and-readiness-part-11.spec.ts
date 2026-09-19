@@ -15,7 +15,7 @@ import {
 } from '../orca-runtime-test-mocks.spec'
 import { store, syncSinglePty } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('trims oversized terminal output bursts without per-line array shifts', async () => {
     const shiftSpy = vi.spyOn(Array.prototype, 'shift')
     const lines = Array.from({ length: 5000 }, (_, index) => `line-${index}`)

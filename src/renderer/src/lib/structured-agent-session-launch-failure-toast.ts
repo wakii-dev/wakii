@@ -30,7 +30,7 @@ export function trackStructuredLaunchFailureToast(
       {
         description: translate(
           'components.native-chat.structuredSessionLaunchFailedDescription',
-          'Orca could not open a structured {{value0}} chat. See the logs for details.',
+          'Wakii could not open a structured {{value0}} chat. See the logs for details.',
           { value0: agentLabel }
         )
       }

@@ -19,7 +19,7 @@ import {
   syncSinglePty
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('durably closes every terminal in one workspace without touching a sibling', async () => {
     const otherWorktreeId = `${TEST_REPO_ID}::/tmp/worktree-b`
     const session = makeWorkspaceSessionWithHeadlessTerminal({

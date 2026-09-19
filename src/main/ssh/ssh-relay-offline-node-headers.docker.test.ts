@@ -177,7 +177,7 @@ describe.skipIf(!RUN_REVIEW_ORACLE)(
       }
     }, 600_000)
 
-    it('names the missing-local-headers cause, not an Orca defect, when the host ships no headers', async () => {
+    it('names the missing-local-headers cause, not an Wakii defect, when the host ships no headers', async () => {
       // Same offline host, headers removed and the relay uninstalled so the deploy compiles again.
       // This is the shape a review found misreported: the exec-failure message quotes the whole
       // command (marker echo included) ahead of the output, and the parser must not read that copy.
@@ -194,7 +194,7 @@ describe.skipIf(!RUN_REVIEW_ORACLE)(
         const message = (error as Error).message
         console.log(`[offline-node-headers] ${NODE_IMAGE} no-headers: ${message.split('\n')[0]}`)
         expect(message).toContain('no local headers matching its own version')
-        expect(message).not.toContain('Orca defect')
+        expect(message).not.toContain('Wakii defect')
         expect(message).toContain('ECONNREFUSED')
       } finally {
         await connection.disconnect()

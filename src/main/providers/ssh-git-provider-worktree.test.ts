@@ -383,7 +383,7 @@ describe('SshGitProvider', () => {
     await expect(
       provider.forceDeletePreservedBranch('/home/user/repo', 'you/fix-auth', 'abc123')
     ).rejects.toThrow(
-      'This SSH host is running an older Orca relay that cannot delete preserved branches. Reconnect to deploy the latest relay, then try again.'
+      'This SSH host is running an older Wakii relay that cannot delete preserved branches. Reconnect to deploy the latest relay, then try again.'
     )
   })
 
@@ -396,16 +396,16 @@ describe('SshGitProvider', () => {
     ).rejects.toBe(error)
   })
 
-  it('markRemoteOrcaCreated sends the narrow provenance-marker request', async () => {
+  it('markRemoteWakiiCreated sends the narrow provenance-marker request', async () => {
     await provider.markRemoteOrcaCreated('/home/user/repo', 'pr-contributor-orca')
-    expect(mux.request).toHaveBeenCalledWith('git.markRemoteOrcaCreated', {
+    expect(mux.request).toHaveBeenCalledWith('git.markRemoteWakiiCreated', {
       repoPath: '/home/user/repo',
       remoteName: 'pr-contributor-orca'
     })
   })
 
-  it('markRemoteOrcaCreated degrades to a one-time warning for an older relay', async () => {
-    mux.request.mockRejectedValue(methodNotFound('git.markRemoteOrcaCreated'))
+  it('markRemoteWakiiCreated degrades to a one-time warning for an older relay', async () => {
+    mux.request.mockRejectedValue(methodNotFound('git.markRemoteWakiiCreated'))
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
     try {
@@ -421,7 +421,7 @@ describe('SshGitProvider', () => {
     }
   })
 
-  it('markRemoteOrcaCreated rethrows non-method-not-found errors', async () => {
+  it('markRemoteWakiiCreated rethrows non-method-not-found errors', async () => {
     const error = new Error('remote config write failed')
     mux.request.mockRejectedValueOnce(error)
 

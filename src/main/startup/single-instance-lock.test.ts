@@ -82,7 +82,7 @@ describe('shouldActivateDesktopForSecondInstance', () => {
     // Why: a supervisor respawning `orca serve` must not open a window on a display-less host (#11935).
     const serveArgv = ['/opt/orca/orca-linux.AppImage', '--serve']
     expect(shouldActivateDesktopForSecondInstance(serveArgv)).toBe(false)
-    expect(shouldActivateDesktopForSecondInstance(['/Applications/Orca.app/orca'])).toBe(true)
+    expect(shouldActivateDesktopForSecondInstance(['/Applications/Wakii.app/orca'])).toBe(true)
   })
 
   it('ignores a duplicate CLI-form serve launch the CLI redirect never rewrote', () => {

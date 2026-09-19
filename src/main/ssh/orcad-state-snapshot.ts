@@ -34,7 +34,7 @@ export const ORCAD_SNAPSHOT_MEMBERS = [
 export const ORCAD_SNAPSHOT_EXCLUDED = ['daemon', 'logs'] as const
 
 /**
- * The member names go into the command unquoted (see `captureOrcadStateSnapshotCommand`), so
+ * The member names go into the command unquoted (see `captureWakiidStateSnapshotCommand`), so
  * they must be inert. They are compile-time constants; this catches the edit that adds one
  * with a space or a metacharacter in it.
  */
@@ -149,7 +149,7 @@ export function parseOrcadSnapshotRestore(output: string): OrcadSnapshotRestore 
  * Has the shared store been written since `activatedAt`?
  *
  * Prints the newest mtime (epoch seconds) across the snapshot members, or `UNKNOWN`. The
- * caller compares; an `UNKNOWN` becomes `null`, which `assessOrcadRollback` treats as "yes,
+ * caller compares; an `UNKNOWN` becomes `null`, which `assessWakiidRollback` treats as "yes,
  * assume writes".
  */
 export function newestStateMtimeCommand(host: RemoteHostPlatform, userDataDir: string): string {

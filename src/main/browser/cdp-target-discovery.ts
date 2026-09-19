@@ -21,7 +21,7 @@ export class CdpTargetDiscovery {
     if (url === '/json/version' || url === '/json/version/') {
       res.writeHead(200, { 'Content-Type': 'application/json' })
       // Why: agent-browser reads this endpoint to identify the browser. Returning
-      // "Orca/CdpWsProxy" leaks that this is an embedded automation surface, which
+      // "Wakii/CdpWsProxy" leaks that this is an embedded automation surface, which
       // could affect downstream detection heuristics.
       // Why: process.versions.chrome contains the exact Chromium version
       // bundled with Electron, producing a realistic version string.
@@ -85,7 +85,7 @@ export class CdpTargetDiscovery {
       return true
     }
     if (msg.method === 'Browser.getVersion') {
-      // Why: returning "Orca/Electron" identifies this as an embedded automation
+      // Why: returning "Wakii/Electron" identifies this as an embedded automation
       // surface to agent-browser. Use a generic Chrome product string instead.
       const chromeVersion = process.versions.chrome ?? '134.0.0.0'
       this.responder.sendResult(

@@ -80,7 +80,7 @@ describe('callStructuredAgentSession rewind capability', () => {
     mocks.supportsCapability.mockResolvedValue(false)
 
     await expect(callStructuredAgentSession(target, 'agentSession.rewind', params)).rejects.toThrow(
-      'Rewinding requires a newer Orca server'
+      'Rewinding requires a newer Wakii server'
     )
     expect(mocks.supportsCapability).toHaveBeenCalledExactlyOnceWith(
       'env-1',

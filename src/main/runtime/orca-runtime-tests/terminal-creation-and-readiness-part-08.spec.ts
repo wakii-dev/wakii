@@ -18,7 +18,7 @@ import {
   store
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('settles a foreground Codex prompt when launch metadata has not arrived', async () => {
     vi.useFakeTimers()
     try {

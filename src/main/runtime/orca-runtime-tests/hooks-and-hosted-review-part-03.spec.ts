@@ -9,7 +9,7 @@ import {
   store
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('routes local WSL project worktree drift probes through runtime git options', async () => {
     setPlatform('win32')
     const runtimeStore = {

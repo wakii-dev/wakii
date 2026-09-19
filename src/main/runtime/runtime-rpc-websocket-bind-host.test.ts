@@ -26,7 +26,7 @@ vi.mock('../git/worktree', () => {
   }
 })
 
-describe('OrcaRuntimeRpcServer WebSocket bind host (STA-2370)', () => {
+describe('WakiiRuntimeRpcServer WebSocket bind host (STA-2370)', () => {
   const wsTransportOf = (server: OrcaRuntimeRpcServer): WebSocketTransport | undefined =>
     (server['activeTransports'] as unknown[]).find(
       (transport): transport is WebSocketTransport => transport instanceof WebSocketTransport

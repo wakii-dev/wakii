@@ -100,10 +100,22 @@ export async function main(root = process.cwd()) {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'orca-i18next-extraction-'))
 
   try {
-    const [extractedCatalog, englishCatalog] = await Promise.all([
-      extractToTemporaryCatalog(root, tempDir),
-      fs.readFile(path.join(root, EN_CATALOG_PATH), 'utf8').then(JSON.parse)
-    ])
+    const extractedCatalog = await extractToTemporaryCatalog(root, tempDir)
+    // UPDATE_EN_JSON=1: regenerate en.json from source fallbacks (rebrand/mass-edit
+    // helper). Default = verify-only, unchanged behavior.
+    if (process.env.UPDATE_EN_JSON === '1') {
+      await fs.writeFile(
+        path.join(root, EN_CATALOG_PATH),
+        JSON.stringify(extractedCatalog, null, 2) + '\n'
+      )
+      console.log(
+        `Updated ${EN_CATALOG_PATH} from source fallbacks (${extractedCatalog.length ?? Object.keys(extractedCatalog).length} keys).`
+      )
+      return 0
+    }
+    const englishCatalog = await fs
+      .readFile(path.join(root, EN_CATALOG_PATH), 'utf8')
+      .then(JSON.parse)
     const result = compareExtraction(extractedCatalog, englishCatalog)
 
     console.log(

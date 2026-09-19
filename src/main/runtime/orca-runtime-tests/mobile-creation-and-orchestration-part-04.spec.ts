@@ -18,7 +18,7 @@ import {
   withPlatform
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('tui-idle times out when PTY data has no agent OSC title transitions', async () => {
     vi.useFakeTimers()
     try {

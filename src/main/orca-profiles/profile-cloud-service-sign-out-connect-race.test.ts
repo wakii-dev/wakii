@@ -65,7 +65,7 @@ const laterCloud: OrcaProfileCloudSummary = {
 const capabilities: OrcaCloudCapabilities = { flags: { share: true }, refreshedAt: 11 }
 const organizations: OrcaCloudOrgSummary[] = [{ orgId: 'org-1', name: 'Acme', role: 'Admin' }]
 
-describe('Orca cloud sign-out vs newer connect', () => {
+describe('Wakii cloud sign-out vs newer connect', () => {
   beforeEach(() => {
     userDataPath = mkdtempSync(join(tmpdir(), 'orca-cloud-sign-out-connect-'))
     beginOrcaCloudPkceFlowMock.mockReset()

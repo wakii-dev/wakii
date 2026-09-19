@@ -23,7 +23,7 @@ function makeRuntimeHostedStore(extraRepoFields: Record<string, unknown> = {}) {
   }
 }
 
-describe('OrcaRuntimeService worktree create execution host', () => {
+describe('WakiiRuntimeService worktree create execution host', () => {
   beforeEach(() => {
     vi.mocked(addWorktree).mockClear()
   })

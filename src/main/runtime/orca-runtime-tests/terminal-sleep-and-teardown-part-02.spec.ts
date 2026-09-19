@@ -17,7 +17,7 @@ import {
   store
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('does not stop a provider-owned foreign PTY referenced by stale target state', async () => {
     const otherWorktreePath = '/tmp/worktree-b'
     const otherWorktreeId = `${TEST_REPO_ID}::${otherWorktreePath}`

@@ -41,7 +41,7 @@ export type CodexSettingsBaselineSnapshotOptions = {
 
 /**
  * Records the promotable settings the runtime config.toml holds after a mirror, so the next
- * promotion can tell "value Orca mirrored" from "value Codex wrote for the user".
+ * promotion can tell "value Wakii mirrored" from "value Codex wrote for the user".
  * Call after a successful mirror only — advancing past an unpromoted change strands it forever.
  */
 export function snapshotCodexRuntimeSettingsBaseline(

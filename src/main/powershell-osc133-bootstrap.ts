@@ -76,15 +76,15 @@ ${getPowerShellCodexShellLaunchPreflight()}
         # Emit D from prompt, not readline state. Some profile setups bypass
         # PSConsoleHostReadLine; the consumer only needs completion.
         if ($Global:__OrcaOsc133State.HasSeenPrompt) {
-            $result += "$($Global:__OrcaOsc133State.Esc)]133;D;$fakeExitCode$($Global:__OrcaOsc133State.Bel)"
+            $result += "$($Global:__WakiiOsc133State.Esc)]133;D;$fakeExitCode$($Global:__WakiiOsc133State.Bel)"
         }
         $Global:__OrcaOsc133State.HasSeenPrompt = $true
 
-        $result += "$($Global:__OrcaOsc133State.Esc)]133;A$($Global:__OrcaOsc133State.Bel)"
+        $result += "$($Global:__WakiiOsc133State.Esc)]133;A$($Global:__WakiiOsc133State.Bel)"
         # Preserve the previous success/failure value for prompts that inspect it.
         if ($fakeExitCode -ne 0) { Write-Error "failure" -ea ignore }
         $result += $Global:__OrcaOsc133State.OriginalPrompt.Invoke()
-        $result += "$($Global:__OrcaOsc133State.Esc)]133;B$($Global:__OrcaOsc133State.Bel)"
+        $result += "$($Global:__WakiiOsc133State.Esc)]133;B$($Global:__WakiiOsc133State.Bel)"
         $result
     }
 
@@ -92,7 +92,7 @@ ${getPowerShellCodexShellLaunchPreflight()}
         $null -ne $Global:__OrcaOsc133State.OriginalReadLine) {
         function Global:PSConsoleHostReadLine {
             $commandLine = $Global:__OrcaOsc133State.OriginalReadLine.Invoke()
-            [Console]::Write("$($Global:__OrcaOsc133State.Esc)]133;C$($Global:__OrcaOsc133State.Bel)")
+            [Console]::Write("$($Global:__WakiiOsc133State.Esc)]133;C$($Global:__WakiiOsc133State.Bel)")
             return $commandLine
         }
     }

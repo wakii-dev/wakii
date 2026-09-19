@@ -140,7 +140,7 @@ describe('ensureMacPressAndHoldDefault', () => {
       expect(writes).toEqual([])
     })
 
-    it('accepts Orca and its channel-scoped bundles, and nothing else', () => {
+    it('accepts Wakii and its channel-scoped bundles, and nothing else', () => {
       expect(isOrcaPreferencesDomain('com.stablyai.orca')).toBe(true)
       expect(isOrcaPreferencesDomain('com.stablyai.orca.dev')).toBe(true)
       expect(isOrcaPreferencesDomain('com.github.Electron')).toBe(false)
@@ -237,14 +237,14 @@ describe('readBundleIdentifierFromExecutablePath', () => {
   function bundleWithPlist(body: string): string {
     const root = mkdtempSync(join(tmpdir(), 'orca-press-hold-'))
     roots.push(root)
-    mkdirSync(join(root, 'Orca.app', 'Contents', 'MacOS'), { recursive: true })
-    writeFileSync(join(root, 'Orca.app', 'Contents', 'Info.plist'), body)
-    return join(root, 'Orca.app', 'Contents', 'MacOS', 'Orca')
+    mkdirSync(join(root, 'Wakii.app', 'Contents', 'MacOS'), { recursive: true })
+    writeFileSync(join(root, 'Wakii.app', 'Contents', 'Info.plist'), body)
+    return join(root, 'Wakii.app', 'Contents', 'MacOS', 'Wakii')
   }
 
   it('reads CFBundleIdentifier from the plist beside the executable', () => {
     const exe = bundleWithPlist(
-      '<plist><dict>\n<key>CFBundleName</key>\n<string>Orca</string>\n' +
+      '<plist><dict>\n<key>CFBundleName</key>\n<string>Wakii</string>\n' +
         '<key>CFBundleIdentifier</key>\n\t<string>com.stablyai.orca</string>\n</dict></plist>'
     )
 

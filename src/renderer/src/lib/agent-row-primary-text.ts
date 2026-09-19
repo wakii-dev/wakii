@@ -51,7 +51,7 @@ export function getAgentRowPrimaryText(
   // Why: prefer richer orchestration labels when they match the live dispatch,
   // then fall back to the TASK-body preview. Never surface the lifecycle
   // preamble itself — status prompts are single-line ~200-char folds, and the
-  // first characters are boilerplate ("You are working inside Orca…").
+  // first characters are boilerplate ("You are working inside Wakii…").
   if (orchestrationLabelsMatchLiveDispatch(entry)) {
     return (
       entry.orchestration?.displayName?.trim() ||

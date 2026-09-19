@@ -100,7 +100,7 @@ describe('adoptProvisionedRootSshCheckout', () => {
     )
   })
 
-  it('rejects a recipe checkout on a branch Orca did not request', async () => {
+  it('rejects a recipe checkout on a branch Wakii did not request', async () => {
     seedRuntime(userDataPath, projectRoot)
     registerSshGitProvider(connectionId, {
       listWorktrees: vi
@@ -302,7 +302,7 @@ describe('adoptProvisionedRootSshCheckout', () => {
   })
 
   it('compares Windows checkout roots using runtime path semantics', async () => {
-    const windowsRoot = 'C:\\Workspace\\Orca'
+    const windowsRoot = 'C:\\Workspace\\Wakii'
     seedRuntime(userDataPath, windowsRoot)
     registerSshGitProvider(connectionId, {
       listWorktrees: vi.fn().mockResolvedValue([gitWorktree('c:/workspace/orca/')]),

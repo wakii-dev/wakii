@@ -75,9 +75,9 @@ const trustedOrcaHookRepoSchema = z.looseObject({
  * Total, and that is load-bearing rather than defensive. The call site interprets this reply inside
  * an unawaited `void (async () => {})()` with no catch (use-new-workspace-runtime-context.ts:53),
  * so a refusal would be an unhandled rejection that also skipped `setAvailableProviders` at :97.
- * Main cast the result and read `?.trustedOrcaHooks ?? {}`, which tolerated a reply of any shape,
+ * Main cast the result and read `?.trustedWakiiHooks ?? {}`, which tolerated a reply of any shape,
  * so anything that is not an object decodes as absent and reaches that `?? {}` exactly as before —
- * use-new-workspace-runtime-context.ts:80 takes `ui.value?.trustedOrcaHooks ?? {}`. The record
+ * use-new-workspace-runtime-context.ts:80 takes `ui.value?.trustedWakiiHooks ?? {}`. The record
  * salvages per repo, so one unreadable repo's approvals cannot cost every other repo its trust.
  *
  * The matrix cannot pin this: its mutation vocabulary is absent, null, inner-envelope and refusal,
@@ -90,7 +90,7 @@ export const newWorkspaceUiTrustSchema = z
       z
         .looseObject({
           trustedOrcaHooks: salvagedOptional(
-            'trustedOrcaHooks',
+            'trustedWakiiHooks',
             salvagingRecord(z.string(), trustedOrcaHookRepoSchema)
           )
         })

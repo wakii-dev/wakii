@@ -121,7 +121,7 @@ describe('collectTerminalDaemonHealth', () => {
   })
 })
 
-describe('collectOrcadHealth', () => {
+describe('collectWakiidHealth', () => {
   it('carries build identity and the Node ABI native addons must match', async () => {
     const health = await collectOrcadHealth('1.2.3')
     expect(health.buildVersion).toBe('1.2.3')
@@ -132,7 +132,7 @@ describe('collectOrcadHealth', () => {
   })
 })
 
-describe('computeOrcadBuildHash', () => {
+describe('computeWakiidBuildHash', () => {
   it('changes when the bundle bytes change, even at the same version string', () => {
     const dir = mkdtempSync(join(tmpdir(), 'orcad-build-hash-'))
     const entry = join(dir, 'orcad.js')

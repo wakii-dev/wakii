@@ -41,7 +41,7 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
-describe('startOrcadDaemon', () => {
+describe('startWakiidDaemon', () => {
   it('reports live with the daemon pid once the provider is installed', async () => {
     await expect(startOrcadDaemon()).resolves.toEqual({ state: 'live', pid: 4242 })
   })
@@ -74,7 +74,7 @@ describe('startOrcadDaemon', () => {
   })
 })
 
-describe('stopOrcadDaemon', () => {
+describe('stopWakiidDaemon', () => {
   it('disconnects and never shuts the daemon down', async () => {
     await stopOrcadDaemon()
     expect(disconnectDaemonMock).toHaveBeenCalledTimes(1)

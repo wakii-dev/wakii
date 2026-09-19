@@ -65,7 +65,7 @@ describe('resolveHostCliEntryPath', () => {
 })
 
 describe('buildHostCliEnv', () => {
-  it('forwards only Orca terminal-context vars from the remote env', () => {
+  it('forwards only Wakii terminal-context vars from the remote env', () => {
     const env = buildHostCliEnv({
       hostEnv: { PATH: '/host/bin', NODE_OPTIONS: '--inspect' },
       remoteEnv: {
@@ -260,7 +260,7 @@ describe('resolveHostCliKillTimeoutMs', () => {
   })
 })
 
-describe('runHostOrcaCliPassthrough', () => {
+describe('runHostWakiiCliPassthrough', () => {
   it('spawns the bundled CLI entry with the remote argv and returns captured output', async () => {
     const child = createFakeChild()
     const spawn = vi.fn(() => child)

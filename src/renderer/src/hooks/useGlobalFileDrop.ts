@@ -215,7 +215,7 @@ export function getNativeFileDropRejectionMessage(data: NativeFileDropRejectedPa
       ),
       title: translate(
         'auto.hooks.useGlobalFileDrop.nativeDropUnresolvedPaths',
-        "Orca couldn't read a path for the dropped files."
+        "Wakii couldn't read a path for the dropped files."
       )
     }
   }

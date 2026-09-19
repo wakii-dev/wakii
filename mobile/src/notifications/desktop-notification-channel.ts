@@ -13,7 +13,7 @@ export async function ensureDesktopNotificationChannel(): Promise<void> {
     return
   }
   await Notifications.setNotificationChannelAsync(`${DESKTOP_NOTIFICATION_CHANNEL_ID}-silent`, {
-    name: 'Orca silent notifications',
+    name: 'Wakii silent notifications',
     importance: Notifications.AndroidImportance.HIGH,
     sound: null,
     enableVibrate: false

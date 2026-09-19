@@ -13,7 +13,7 @@ import {
   withPlatform
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('keeps current-generation tab and leaf identity across a host restart', async () => {
     const session = makeWorkspaceSessionWithHeadlessTerminal({
       terminalPtyIncarnationsByPaneKey: {

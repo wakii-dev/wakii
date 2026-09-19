@@ -7,7 +7,7 @@ import {
   store
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('rejects a qualified removal when only another host has persisted ownership', async () => {
     const runtimeStore = {
       ...store,

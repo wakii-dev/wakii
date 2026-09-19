@@ -80,7 +80,7 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-describe('runOrcaContextMenuPaste', () => {
+describe('runWakiiContextMenuPaste', () => {
   it('falls through (returns false) when no editor is focused', () => {
     const deps = makeDeps({ getFocusedEditor: () => null })
     expect(runOrcaContextMenuPaste(deps)).toBe(false)

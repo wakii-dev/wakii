@@ -44,7 +44,7 @@ describe('registerGitHubHandlers', () => {
 
     registerGitHubHandlers(store as never, stats as never)
 
-    await expect(handlers['gh:starOrca'](null, 'settings')).resolves.toBe(true)
+    await expect(handlers['gh:starWakii'](null, 'settings')).resolves.toBe(true)
 
     expect(starOrcaMock).toHaveBeenCalledTimes(1)
     expect(getCohortAtEmitMock).toHaveBeenCalledTimes(1)
@@ -67,7 +67,7 @@ describe('registerGitHubHandlers', () => {
       'settings',
       'landing'
     ] as const) {
-      await expect(handlers['gh:starOrca'](null, source)).resolves.toBe(true)
+      await expect(handlers['gh:starWakii'](null, source)).resolves.toBe(true)
     }
 
     expect(trackMock).toHaveBeenCalledTimes(5)
@@ -85,7 +85,7 @@ describe('registerGitHubHandlers', () => {
 
     registerGitHubHandlers(store as never, stats as never)
 
-    await expect(handlers['gh:starOrca'](null, 'landing')).resolves.toBe(false)
+    await expect(handlers['gh:starWakii'](null, 'landing')).resolves.toBe(false)
 
     expect(starOrcaMock).toHaveBeenCalledTimes(1)
     expect(trackMock).not.toHaveBeenCalled()
@@ -97,7 +97,7 @@ describe('registerGitHubHandlers', () => {
 
     registerGitHubHandlers(store as never, stats as never)
 
-    await expect(handlers['gh:starOrca'](null, 'star_nag')).rejects.toThrow('gh failed')
+    await expect(handlers['gh:starWakii'](null, 'star_nag')).rejects.toThrow('gh failed')
 
     expect(trackMock).not.toHaveBeenCalled()
     expect(getCohortAtEmitMock).not.toHaveBeenCalled()
@@ -108,7 +108,7 @@ describe('registerGitHubHandlers', () => {
 
     registerGitHubHandlers(store as never, stats as never)
 
-    await expect(handlers['gh:starOrca'](null, 'github_website')).resolves.toBe(true)
+    await expect(handlers['gh:starWakii'](null, 'github_website')).resolves.toBe(true)
 
     expect(starOrcaMock).toHaveBeenCalledTimes(1)
     expect(trackMock).not.toHaveBeenCalled()

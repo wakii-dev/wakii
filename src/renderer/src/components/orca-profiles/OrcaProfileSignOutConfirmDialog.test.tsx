@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
-import { OrcaProfileSignOutConfirmDialog } from './OrcaProfileSignOutConfirmDialog'
+import { OrcaProfileSignOutConfirmDialog } from './WakiiProfileSignOutConfirmDialog'
 
 vi.mock('@/components/ui/dialog', () => ({
   Dialog: ({ children }: { children: ReactNode }) => <>{children}</>,
@@ -18,7 +18,7 @@ vi.mock('@/components/ui/button', () => ({
   Button: ({ children }: { children: ReactNode }) => <button>{children}</button>
 }))
 
-describe('OrcaProfileSignOutConfirmDialog', () => {
+describe('WakiiProfileSignOutConfirmDialog', () => {
   it('describes account sign-out without presenting a local profile or warning', () => {
     const html = renderToStaticMarkup(
       <OrcaProfileSignOutConfirmDialog
@@ -29,9 +29,9 @@ describe('OrcaProfileSignOutConfirmDialog', () => {
       />
     )
 
-    expect(html).toContain('Sign out of Orca?')
+    expect(html).toContain('Sign out of Wakii?')
     expect(html).toContain(
-      'Artifacts and Orca Relay will be unavailable until you sign in again. Your local projects and worktrees won&#x27;t be affected.'
+      'Artifacts and Wakii Relay will be unavailable until you sign in again. Your local projects and worktrees won&#x27;t be affected.'
     )
     expect(html).not.toContain('Personal')
     expect(html).not.toContain('alert-triangle')

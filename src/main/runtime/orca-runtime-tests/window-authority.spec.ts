@@ -17,7 +17,7 @@ import {
   store
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('claims the first window as authoritative and ignores later windows', () => {
     const runtime = createRuntime()
 

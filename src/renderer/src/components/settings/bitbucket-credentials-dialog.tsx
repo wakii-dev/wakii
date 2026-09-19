@@ -192,7 +192,7 @@ export function BitbucketCredentialsDialog({
           <DialogDescription>
             {translate(
               'auto.components.settings.bitbucket.credentials.dialog.description',
-              'Use a Bitbucket Cloud credential to browse pull requests and build statuses. Orca verifies it before saving.'
+              'Use a Bitbucket Cloud credential to browse pull requests and build statuses. Wakii verifies it before saving.'
             )}
           </DialogDescription>
         </DialogHeader>

@@ -79,8 +79,8 @@ function removeCalls(exec: ExecMock): string[][] {
     .filter((args) => args[0] === 'remote' && args[1] === 'remove')
 }
 
-describe('isOrcaGeneratedPrRemoteName', () => {
-  it('matches Orca-generated names, including disambiguated ones', () => {
+describe('isWakiiGeneratedPrRemoteName', () => {
+  it('matches Wakii-generated names, including disambiguated ones', () => {
     expect(isOrcaGeneratedPrRemoteName('pr-head')).toBe(true)
     expect(isOrcaGeneratedPrRemoteName('pr-contributor-orca')).toBe(true)
     expect(isOrcaGeneratedPrRemoteName('pr-head-2')).toBe(true)
@@ -95,7 +95,7 @@ describe('isOrcaGeneratedPrRemoteName', () => {
 })
 
 describe('reconcileOrphanedPrRemotesWithExec', () => {
-  it('leaves a remote alone when no worktree metadata ever proves Orca created it (user-created, ambiguous)', async () => {
+  it('leaves a remote alone when no worktree metadata ever proves Wakii created it (user-created, ambiguous)', async () => {
     // Same naming shape a user could coincidentally pick; no pushTarget anywhere claims it.
     const exec = makeExec({ remotes: remoteLines([{ name: FORK_REMOTE, url: FORK_URL }]) })
     const reclaimed = await reconcileOrphanedPrRemotesWithExec(
@@ -109,7 +109,7 @@ describe('reconcileOrphanedPrRemotesWithExec', () => {
     expect(removeCalls(exec)).toEqual([])
   })
 
-  it('leaves a remote alone that is not shaped like an Orca-generated pr-* remote', async () => {
+  it('leaves a remote alone that is not shaped like an Wakii-generated pr-* remote', async () => {
     const exec = makeExec({
       remotes: remoteLines([{ name: 'my-fork', url: FORK_URL }])
     })
@@ -173,7 +173,7 @@ describe('reconcileOrphanedPrRemotesWithExec', () => {
     expect(removeCalls(exec)).toEqual([['remote', 'remove', FORK_REMOTE]])
   })
 
-  it('reclaims a remote left behind by a worktree removed outside Orca (path 3)', async () => {
+  it('reclaims a remote left behind by a worktree removed outside Wakii (path 3)', async () => {
     const exec = makeExec({ remotes: remoteLines([{ name: FORK_REMOTE, url: FORK_URL }]) })
     // Metadata still records the (now-vanished) worktree's Orca-created pushTarget.
     const reclaimed = await reconcileOrphanedPrRemotesWithExec(

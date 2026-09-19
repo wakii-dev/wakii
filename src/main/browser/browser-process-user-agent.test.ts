@@ -11,22 +11,22 @@ const LINUX_CLEAN =
 
 describe('cleanElectronUserAgent', () => {
   // Why each shape: app.setName decides this token, and dev sets a name containing a space
-  // ("Orca Dev"). A cleaner that only removes a single whitespace-delimited token leaves the
+  // ("Wakii Dev"). A cleaner that only removes a single whitespace-delimited token leaves the
   // app name on the wire in exactly the builds we test with.
   it.each([
     [
       'a one-word app name',
-      `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Orca/1.4.203 Chrome/150.0.0.0 Electron/43.7.0 Safari/537.36`,
+      `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Wakii/1.4.203 Chrome/150.0.0.0 Electron/43.7.0 Safari/537.36`,
       MAC_CLEAN
     ],
     [
       'an app name containing a space',
-      `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Orca Dev/1.4.203 Chrome/150.0.0.0 Electron/43.7.0 Safari/537.36`,
+      `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Wakii Dev/1.4.203 Chrome/150.0.0.0 Electron/43.7.0 Safari/537.36`,
       MAC_CLEAN
     ],
     [
       'an app name containing two spaces',
-      `Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) My Orca Build/1.0.0 Chrome/150.0.0.0 Electron/43.7.0 Safari/537.36`,
+      `Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) My Wakii Build/1.0.0 Chrome/150.0.0.0 Electron/43.7.0 Safari/537.36`,
       LINUX_CLEAN
     ],
     [

@@ -341,7 +341,7 @@ describe('registerRuntimeEnvironmentHandlers', () => {
         lastError: 'closed'
       })
       sendRemoteRuntimeRequestMock.mockRejectedValue(
-        new Error('Could not connect to the remote Orca runtime.')
+        new Error('Could not connect to the remote Wakii runtime.')
       )
 
       const add = handler<

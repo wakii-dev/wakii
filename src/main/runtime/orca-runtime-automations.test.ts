@@ -70,7 +70,7 @@ const existingAutomation = {
   updatedAt: 1
 } satisfies Automation
 
-describe('OrcaRuntimeService automation methods', () => {
+describe('WakiiRuntimeService automation methods', () => {
   it('creates repo-scoped automations through the shared store', async () => {
     const store = makeStore()
     const runtime = new OrcaRuntimeService(store as never)

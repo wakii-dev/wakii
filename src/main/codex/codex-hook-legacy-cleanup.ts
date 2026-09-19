@@ -116,7 +116,7 @@ async function sweepLegacySystemManagedHooks(): Promise<void> {
 
   // Why: Codex hooks moved to Orca's managed CODEX_HOME; stale ~/.codex entries would keep external Codex sessions reporting into Orca.
   if (removedManagedHook) {
-    // Why: this is the user's system hooks file, not Orca's runtime copy.
+    // Why: this is the user's system hooks file, not Wakii's runtime copy.
     // Remove only stale Orca hook entries and preserve other managers' metadata.
     const hooksWritePath = resolveHooksJsonWritePath(legacyConfigPath)
     const previousMode = statSync(hooksWritePath).mode

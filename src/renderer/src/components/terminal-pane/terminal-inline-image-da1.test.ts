@@ -4,7 +4,7 @@ import { Terminal } from '@xterm/xterm'
 
 describe('inline image DA1 ownership', () => {
   it.each(['primed', 'deferred'] as const)(
-    'preserves Orca replies and replay suppression with a %s real image addon',
+    'preserves Wakii replies and replay suppression with a %s real image addon',
     async (loading) => {
       vi.resetModules()
       const { installTerminalCapabilityReplyHandlers } =

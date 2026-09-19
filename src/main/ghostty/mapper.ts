@@ -251,7 +251,7 @@ export function mapGhosttyToOrca(
     },
 
     'focus-follows-mouse': (v) => {
-      // Why: Ghostty's focus-follows-mouse is semantically identical to Orca's
+      // Why: Ghostty's focus-follows-mouse is semantically identical to Wakii's
       // terminalFocusFollowsMouse — both control pointer-hover focus transfer.
       if (v !== 'true' && v !== 'false') {
         return null

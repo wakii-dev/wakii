@@ -152,7 +152,7 @@ describe('classifyConnection with a relay host verdict', () => {
       kind: 'unreachable',
       label: 'Host 1 is offline',
       reason: 'never-connected',
-      detail: "Check it's awake, Orca is running, and you're signed in"
+      detail: "Check it's awake, Wakii is running, and you're signed in"
     })
   })
 

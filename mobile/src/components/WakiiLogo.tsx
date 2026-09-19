@@ -25,6 +25,7 @@ export function WakiiLogo({ size = 24 }: Props) {
         strokeLinejoin="round"
       />
       <Circle cx={106} cy={86} r={8.5} fill="#D7E2DD" />
+      </G>
     </Svg>
   )
 }

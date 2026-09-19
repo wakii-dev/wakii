@@ -16,7 +16,7 @@ import {
   store
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('keeps client selection when a renderer session-tab close cannot commit', async () => {
     const closeSessionTab = vi.fn().mockRejectedValue(new Error('session_tab_close_canceled'))
     const runtime = new OrcaRuntimeService(store)

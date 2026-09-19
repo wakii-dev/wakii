@@ -142,7 +142,7 @@ export function hasUsableLinuxDisplay(env: NodeJS.ProcessEnv = process.env): boo
 }
 
 export const MISSING_LINUX_DISPLAY_MESSAGE = [
-  'Orca needs a usable display server, but the selected X11 or Wayland endpoint is unavailable.',
+  'Wakii needs a usable display server, but the selected X11 or Wayland endpoint is unavailable.',
   'Check DISPLAY, WAYLAND_DISPLAY, XDG_RUNTIME_DIR, and any --ozone-platform override.',
   `Use \`orca-ide serve\` to run headless. On a bare server, ${XVFB_INSTALL_GUIDANCE}`
 ].join('\n')
@@ -239,7 +239,7 @@ export function ensureVirtualDisplayForHeadlessServe(options: { isServeMode: boo
     }
     console.warn(
       `[serve] DISPLAY=${configuredDisplay} is not verifiably live; leaving it untouched. ` +
-        'Unset DISPLAY to let Orca start its own Xvfb.'
+        'Unset DISPLAY to let Wakii start its own Xvfb.'
     )
     return false
   }

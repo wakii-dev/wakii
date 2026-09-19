@@ -1,7 +1,7 @@
 /**
- * `orcad` — the Orca runtime served from plain Node, with no Electron.
+ * `orcad` — the Wakii runtime served from plain Node, with no Electron.
  *
- * Installs the Node host adapters, constructs the same `OrcaRuntimeService` the
+ * Installs the Node host adapters, constructs the same `WakiiRuntimeService` the
  * desktop uses, installs a PTY controller via `registerHeadlessPtyRuntime`, and
  * serves runtime RPC. See docs/design/node-only-runtime-backend.html.
  *

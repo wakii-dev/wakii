@@ -24,7 +24,7 @@ import { setProcessTreeKillGate } from '../shared/child-process/process-tree-kil
  *
  * Electron main only, by construction. `terminateWindowsProcessTree` also runs
  * in the standalone daemon (the `pty-descendant-sweep` site), where
- * `readOrcaChromiumProcessPids()` is empty and this always admits. That is not
+ * `readWakiiChromiumProcessPids()` is empty and this always admits. That is not
  * the gap it looks like: the daemon reaches that taskkill only through
  * `classifyWindowsTreeKillTarget`, whose ancestry walk ends at the daemon's own
  * pid, and no Chromium process descends from the daemon. See

@@ -16,7 +16,7 @@ import {
   publishLegacyWorkerReveal
 } from '../orca-runtime-test-scenario-builders.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('retries renderer reveal before clearing an adopted legacy worker sleeping record', async () => {
     const workerPaneKey = `legacy-worker:${HEADLESS_LEAF_ID}`
     const incarnationId = '44444444-4444-4444-8444-444444444444'

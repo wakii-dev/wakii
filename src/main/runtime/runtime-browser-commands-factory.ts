@@ -6,7 +6,7 @@ import {
 import type { RuntimeBrowserCommandHost, RuntimeBrowserCommands } from './orca-runtime-browser'
 
 /**
- * How `OrcaRuntimeService` obtains its browser-automation commands.
+ * How `WakiiRuntimeService` obtains its browser-automation commands.
  *
  * Why a factory rather than a direct import: `orca-runtime-browser.ts` reaches the
  * whole Chromium cluster — `BrowserWindow`, `session`, `webContents`, cookie jars —

@@ -17,7 +17,7 @@ import {
   store
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('keeps an OSC row from an SSH pane after its PTY disconnects', async () => {
     // Why: OSC snapshots must carry the pane transport; hardcoding local would
     // strip the SSH exemption off rows whose freshest update arrived via OSC.

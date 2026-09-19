@@ -109,7 +109,7 @@ describe('plugin install trust', () => {
       })
     ).resolves.toEqual({
       ok: false,
-      error: "plugin is blocked by Orca's safety list: Security incident"
+      error: "plugin is blocked by Wakii's safety list: Security incident"
     })
   })
 })

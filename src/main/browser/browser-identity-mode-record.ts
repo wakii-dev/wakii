@@ -86,7 +86,7 @@ function parseRecord(raw: string): BrowserIdentityModeReadResult {
     return unhealthyResult('corrupt')
   }
   const { version, mode, explicitSelection, migrationNoticePending } = parsed
-  // Why before the shape check: newer data means "update Orca", never "your data is broken".
+  // Why before the shape check: newer data means "update Wakii", never "your data is broken".
   if (typeof version === 'number' && version > BROWSER_IDENTITY_MODE_VERSION) {
     return unhealthyResult('future')
   }

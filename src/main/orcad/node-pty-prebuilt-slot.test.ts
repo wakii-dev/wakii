@@ -44,7 +44,7 @@ const stageSlot = (prebuilds: string, slot: string): void => {
   writeFileSync(join(prebuilds, slot, 'spawn-helper'), 'helper')
 }
 
-describe('resolveOrcadPrebuildsDir', () => {
+describe('resolveWakiidPrebuildsDir', () => {
   it('looks beside the running bundle', () => {
     expect(resolveOrcadPrebuildsDir('/opt/orcad/orcad.js')).toBe(join('/opt/orcad', 'prebuilds'))
   })

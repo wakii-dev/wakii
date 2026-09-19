@@ -105,7 +105,7 @@ export function getWindowsWrapperScript(eventName: string): string {
     ') else (',
     '  echo {}',
     ')',
-    // Missing-core fallbacks obey the same outside-Orca stdin guard as the core.
+    // Missing-core fallbacks obey the same outside-Wakii stdin guard as the core.
     ...buildWindowsHookEnvironmentGuardLines(),
     WINDOWS_HOOK_STDIN_DRAIN_COMMAND,
     'exit /b 0',

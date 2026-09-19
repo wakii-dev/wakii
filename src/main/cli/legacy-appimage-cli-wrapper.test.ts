@@ -6,14 +6,14 @@ import {
 
 describe('legacy AppImage CLI wrapper', () => {
   it('recovers a path containing a newline', () => {
-    const appImagePath = "/tmp/Orca\nnightly's.AppImage"
+    const appImagePath = "/tmp/Wakii\nnightly's.AppImage"
     expect(extractLegacyAppImageCliWrapperTarget(buildLegacyAppImageCliWrapper(appImagePath))).toBe(
       appImagePath
     )
   })
 
   it('rejects a wrapper with a changed command body', () => {
-    const wrapper = buildLegacyAppImageCliWrapper('/tmp/Orca.AppImage')
+    const wrapper = buildLegacyAppImageCliWrapper('/tmp/Wakii.AppImage')
     expect(
       extractLegacyAppImageCliWrapperTarget(wrapper.replace('set -euo pipefail', 'set -u'))
     ).toBe(null)

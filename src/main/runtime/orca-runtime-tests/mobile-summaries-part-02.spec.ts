@@ -17,7 +17,7 @@ import {
   store
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('keeps title-only foreground work ahead of monitoring in another pane', async () => {
     const now = Date.now()
     const monitoringLeafId = '33333333-3333-4333-8333-333333333333'

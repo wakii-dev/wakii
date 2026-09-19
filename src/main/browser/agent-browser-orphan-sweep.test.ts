@@ -53,7 +53,7 @@ describe('agent-browser orphan sweep', () => {
     ])
   })
 
-  it('never closes a daemon outside Orca tab naming', async () => {
+  it('never closes a daemon outside Wakii tab naming', async () => {
     respond(['default', 'agent1', 'orca-orcad-deadbeef', 'orca-tab-aaa'])
 
     await sweepOrphanedAgentBrowserSessions({ binaryPath: BIN, ...SCOPED })
@@ -77,7 +77,7 @@ describe('agent-browser orphan sweep', () => {
   // profile owns (Windows named pipes, or an inherited AGENT_BROWSER_SOCKET_DIR). Idle timeout bounds those.
   it.each([
     ['no socket directory at all', { PATH: 'C:\\Windows' }],
-    ['a socket directory Orca inherited', { AGENT_BROWSER_SOCKET_DIR: '/tmp/shared-ab' }]
+    ['a socket directory Wakii inherited', { AGENT_BROWSER_SOCKET_DIR: '/tmp/shared-ab' }]
   ])('does not enumerate with %s', async (_label, env) => {
     respond(['orca-tab-aaa'])
 
@@ -160,7 +160,7 @@ describe('sweep kill switch', () => {
 
   // Why: the idle bound is an env passthrough an operator can raise and the quit close is
   // self-bounded, so the sweep is the only new behaviour whose failure would need a revert.
-  it('enumerates nothing when disabled, even when Orca owns the socket directory', async () => {
+  it('enumerates nothing when disabled, even when Wakii owns the socket directory', async () => {
     process.env.ORCA_DISABLE_AGENT_BROWSER_SWEEP = '1'
     runProcessMock.mockClear()
 

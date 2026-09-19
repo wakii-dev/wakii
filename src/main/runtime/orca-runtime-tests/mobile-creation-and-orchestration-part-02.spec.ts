@@ -10,7 +10,7 @@ import {
   syncSinglePty
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('delivers pending mail via notifyMessageArrived when the recipient is already idle', async () => {
     vi.useFakeTimers()
     try {

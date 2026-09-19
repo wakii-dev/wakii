@@ -9,7 +9,7 @@ const { getSshFilesystemProviderMock, getEffectiveHooksMock } = vi.hoisted(() =>
 vi.mock('../../../providers/ssh-filesystem-dispatch', () => ({
   getSshFilesystemProvider: getSshFilesystemProviderMock
 }))
-// Only `getEffectiveHooks` is stubbed: the module under test also imports `parseOrcaYaml` from
+// Only `getEffectiveHooks` is stubbed: the module under test also imports `parseWakiiYaml` from
 // here, and replacing it wholesale made the parse throw into the fail-open catch — which answers
 // "no hook", so the test saw an empty result rather than an error.
 vi.mock('../../../hooks', async () => ({

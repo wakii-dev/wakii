@@ -185,7 +185,7 @@ describe('registerWorktreeHandlers', () => {
     expect(store.setWorktreeMeta).not.toHaveBeenCalled()
   })
 
-  it('strips Orca provenance fields from renderer metadata updates', () => {
+  it('strips Wakii provenance fields from renderer metadata updates', () => {
     store.setWorktreeMeta.mockImplementation((_worktreeId, meta) => meta)
 
     const result = handlers['worktrees:updateMeta'](null, {
@@ -496,11 +496,11 @@ describe('registerWorktreeHandlers', () => {
     )
   })
 
-  // Was "keeps the Orca-created marker ...": create used to inherit the marker while
+  // Was "keeps the Wakii-created marker ...": create used to inherit the marker while
   // minting. With minting deferred (#17828) create must not claim ownership it has not
   // earned; marker inheritance now happens at materialization and is covered by
   // worktree-push-target-setup.test.ts.
-  it('does not claim the Orca-created marker at create when a sibling worktree minted the fork remote', async () => {
+  it('does not claim the Wakii-created marker at create when a sibling worktree minted the fork remote', async () => {
     listWorktreesMock.mockResolvedValue([
       {
         path: '/workspace/improve-dashboard',

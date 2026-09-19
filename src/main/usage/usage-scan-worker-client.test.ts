@@ -221,7 +221,7 @@ describe('UsageScanWorkerClient', () => {
 // path), so it is pinned here at the path-construction level.
 describe('usage scan worker entry path', () => {
   it('resolves a packaged build under resourcesPath/app.asar/out/main', () => {
-    const resourcesPath = join(sep, 'Applications', 'Orca.app', 'Contents', 'Resources')
+    const resourcesPath = join(sep, 'Applications', 'Wakii.app', 'Contents', 'Resources')
 
     const resolved = resolveWorkerThreadEntryPath(
       { isPackaged: true, resourcesPath, moduleDir: join(sep, 'unpackaged', 'out', 'main') },

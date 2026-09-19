@@ -43,7 +43,7 @@ export function sendFederatedControlMail(args: {
   if (federatedTarget.protocol_version < ORCHESTRATION_FEDERATION_CONTROL_MAIL_PROTOCOL_VERSION) {
     throw new OrchestrationError(
       'capability_unsupported',
-      `Federated Dispatch ${dispatchId} does not support coordinator control mail; start a fresh worker after updating its Orca server.`
+      `Federated Dispatch ${dispatchId} does not support coordinator control mail; start a fresh worker after updating its Wakii server.`
     )
   }
   if (db.getWorkerDispatch(dispatchId)?.state !== 'ready') {
