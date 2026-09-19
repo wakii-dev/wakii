@@ -1,4 +1,4 @@
-import Svg, { Defs, LinearGradient, Stop, Path, Circle } from 'react-native-svg'
+import Svg, { Defs, G, LinearGradient, Stop, Path, Circle } from 'react-native-svg'
 import type { StyleProp, ViewStyle } from 'react-native'
 
 // "The Monogram" (wakii-site public/wakii-icon.svg) — dark tile gradient,

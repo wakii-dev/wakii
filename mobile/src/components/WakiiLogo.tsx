@@ -1,4 +1,4 @@
-import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg'
+import Svg, { Circle, Defs, G, LinearGradient, Path, Rect, Stop } from 'react-native-svg'
 
 type Props = {
   size?: number
@@ -6,6 +6,7 @@ type Props = {
 
 // "The Monogram" (wakii-site public/wakii-icon.svg) — dark tile gradient,
 // mint stroke, dot. Multi-color mark, so no color prop.
+// translate(-3 -1): optical centering — bbox W+dot lệch phải/dưới so với tâm tile.
 export function WakiiLogo({ size = 24 }: Props) {
   return (
     <Svg width={size} height={size} viewBox="0 0 128 128">
@@ -16,15 +17,16 @@ export function WakiiLogo({ size = 24 }: Props) {
         </LinearGradient>
       </Defs>
       <Rect width={128} height={128} rx={28} fill="url(#wakiiTile)" />
-      <Path
-        d="M26 42 L44 88 L64 48 L84 88 L102 42"
-        fill="none"
-        stroke="#45E0A8"
-        strokeWidth={13}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <Circle cx={106} cy={86} r={8.5} fill="#D7E2DD" />
+      <G transform="translate(-3 -1)">
+        <Path
+          d="M26 42 L44 88 L64 48 L84 88 L102 42"
+          fill="none"
+          stroke="#45E0A8"
+          strokeWidth={13}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <Circle cx={106} cy={86} r={8.5} fill="#D7E2DD" />
       </G>
     </Svg>
   )
