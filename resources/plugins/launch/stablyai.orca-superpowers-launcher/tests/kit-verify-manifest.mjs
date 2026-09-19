@@ -132,6 +132,14 @@ ok('entry story-lesson trong provides', kitJson.provides.some(e => e.name === 's
 ok('KHÔNG notify (không block)', calls.notifications.length === 0, JSON.stringify(calls.notifications))
 ok('bin mới copy đủ (5 files)', ['story-fact-pack', 'story-hooks-install', 'hook-post-tool-use', 'hook-session-start', 'hook-stop'].every(f => existsSync(join(root, 'bin', f))))
 ok('retired orphan skill được dọn (gpt-taste seed trước install)', !existsSync(join(root, 'skills', 'gpt-taste')))
+// Lỗ 1: marker khớp nhưng installed thiếu file (user xoá tay/hỏng) → lần gọi
+// installKit kế tiếp phải tự hồi phục bằng re-copy (installedKitIntact).
+const victimFile = join(root, 'agents', 'code-reviewer.md')
+const victimBytes = readFileSync(victimFile)
+rmSync(victimFile)
+const r2 = await installKit(orca, { root, kitRoot })
+ok('integrity: marker khớp nhưng thiếu file → re-copy tự hồi phục',
+  r2 === true && readFileSync(victimFile).equals(victimBytes))
 ok('settings.json merge kèm install (SF-2 seam)', existsSync(join(root, 'settings.json')) && readFileSync(join(root, 'settings.json'), 'utf8').includes('hook-session-start'))
 ok('log nói hooks merged', calls.logs.some(l => l.includes('hooks merged')), calls.logs.join(' | '))
 

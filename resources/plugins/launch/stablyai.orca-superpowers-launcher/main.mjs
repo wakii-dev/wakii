@@ -503,25 +503,46 @@ export function kitBinCatalog(kitRoot = KIT_ROOT) {
 // launch-content 1.4.203. Sort path + sha256 16 hex, deterministic cross-platform.
 // kit.json loại khỏi hash (tự chứa hash đó).
 export function computeKitHash(kitRoot = KIT_ROOT) {
+  const h = createHash('sha256')
+  for (const rel of kitTreeFiles(kitRoot)) {
+    h.update(rel); h.update('\0'); h.update(readFileSync(join(kitRoot, rel))); h.update('\0')
+  }
+  return h.digest('hex').slice(0, 16)
+}
+
+// Danh sách file kit (skills/ + agents/ + bin/ — phần được cài vào ~/.claude)
+// bỏ junk sinh cục bộ. Dùng chung cho computeKitHash + installedKitIntact.
+function kitTreeFiles(kitRoot) {
   const skip = new Set(['__pycache__', '.git', 'node_modules'])
   const files = []
   const stack = ['']
   while (stack.length) {
     const rel = stack.pop()
     for (const ent of readdirSync(join(kitRoot, rel), { withFileTypes: true })) {
-      if (skip.has(ent.name) || ent.name.endsWith('.pyc')) continue
+      if (skip.has(ent.name) || ent.name.endsWith('.pyc') || ent.name === '.DS_Store') continue
       const r = rel ? `${rel}/${ent.name}` : ent.name
       if (r === 'kit.json') continue
       if (ent.isDirectory()) stack.push(r)
       else if (ent.isFile()) files.push(r)
     }
   }
-  files.sort()
-  const h = createHash('sha256')
-  for (const rel of files) {
-    h.update(rel); h.update('\0'); h.update(readFileSync(join(kitRoot, rel))); h.update('\0')
+  return files.sort()
+}
+
+// Bản cài ở ~/.claude còn nguyên vẹn không: mỗi file kit phải tồn tại và giống
+// bytes. Bắt case marker khớp nhưng user xoá tay/file hỏng — tự hồi phục bằng
+// re-copy. Bỏ qua file dư (skill user cài thêm ngoài kit).
+export function installedKitIntact(claude, kitRoot = KIT_ROOT) {
+  try {
+    for (const rel of kitTreeFiles(kitRoot)) {
+      const dst = join(claude, rel)
+      if (!existsSync(dst)) return false
+      if (!readFileSync(dst).equals(readFileSync(join(kitRoot, rel)))) return false
+    }
+    return true
+  } catch {
+    return false
   }
-  return h.digest('hex').slice(0, 16)
 }
 
 // Neovim lsp._unsupported_method: lỗi chỉ đích danh capability thiếu, chặn
@@ -938,7 +959,13 @@ export function installKit(orca, { root, kitRoot: kitRootOverride } = {}) {
     // phải recopy, không skip. kitHash vắng (kit cũ) → so version như trước.
     const kitHash = typeof manifest.kitHash === 'string' ? manifest.kitHash.trim() : ''
     const expectedMarker = kitHash ? `${manifest.version}:${kitHash}` : String(manifest.version)
-    if (existsSync(marker) && readFileSync(marker, 'utf8').trim() === expectedMarker) return true
+    // Dọn orphan retired — chạy MỌI activate (kể cả khi marker khớp, non-fatal).
+    for (const name of RETIRED_SKILL_DIRS) {
+      try {
+        rmSync(join(claude, 'skills', name), { recursive: true, force: true })
+      } catch { /* dọn được cái nào hay cái đó */ }
+    }
+    if (existsSync(marker) && readFileSync(marker, 'utf8').trim() === expectedMarker && installedKitIntact(claude, kitRoot)) return true
     for (const name of ['skills', 'agents', 'bin']) {
       const src = join(kitRoot, name)
       if (!existsSync(src)) continue
@@ -955,12 +982,6 @@ export function installKit(orca, { root, kitRoot: kitRootOverride } = {}) {
     }
     mkdirSync(claude, { recursive: true })
     writeFileSync(marker, expectedMarker)
-    // Dọn orphan: skill đã retire còn nằm lại từ bản cài cũ (non-fatal từng cái).
-    for (const name of RETIRED_SKILL_DIRS) {
-      try {
-        rmSync(join(claude, 'skills', name), { recursive: true, force: true })
-      } catch { /* dọn được cái nào hay cái đó */ }
-    }
     // Hooks auto-install (SF-2): merge 3 entries vào settings.json trong Node
     // (KHÔNG spawn bash bin từ worker — runProcess seam risk trên Windows).
     // Fail không chặn install: bin đã copy, hook wrapper tự nuốt missing-bin.
