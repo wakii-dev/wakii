@@ -39,7 +39,8 @@ function tempDir(tag) {
   return dir
 }
 
-// stub orca: log argv vào $ARGV_LOG rồi trả fixture theo subcommand
+// stub orca: log argv vào $ARGV_LOG rồi trả fixture theo subcommand.
+// reply: REPLY_PLAIN=1 → in text thường rc0 (không JSON); REPLY_FAIL=1 → exit 1.
 function makeOrcaStub(dir) {
   const stub = join(dir, 'orca-stub.sh')
   writeFileSync(stub, `#!/bin/sh
@@ -50,7 +51,9 @@ case "$2" in
   task-list) cat "$TL_FIXTURE" ;;
   check) cat "$CHECK_FIXTURE" ;;
   list) cat "$TERM_FIXTURE" ;;
-  reply) printf '%s\\n' '{"ok":true,"result":{"message":{"id":"replied"}}}' ;;
+  reply)
+    [ -n "$REPLY_FAIL" ] && exit 1
+    if [ -n "$REPLY_PLAIN" ]; then printf 'Replied msg_plain_text\\n'; else printf '%s\\n' '{"ok":true,"result":{"message":{"id":"replied"}}}'; fi ;;
   run-use) printf '%s\\n' '{"ok":true,"result":{"run":{}}}' ;;
   *) printf '%s\\n' '{"ok":true,"result":{}}' ;;
 esac
@@ -471,6 +474,109 @@ console.log('== C16 PASS_NOTIFY=1 + osascript fail → vẫn exit 0 (không cras
     PATH: `${fakeBin}:${process.env.PATH || ''}`,
   })
   check('C16', 'notify chết vẫn exit 0', r.code === 0, `code=${r.code} out=${r.out.slice(-300)}`)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== C17 reply rc0 nhưng stdout không JSON → gọi ĐÚNG 1 lần (cấm dup-mutation) ==')
+{
+  const dir = tempDir('c17')
+  const stub = makeOrcaStub(dir)
+  const rl = fixture(dir, 'rl.json', { ok: true, result: { runs: [
+    { id: 'run_dup', objective: 'LOCAL-1', coordinator_handle: 'term_self' },
+  ] } })
+  const ck = fixture(dir, 'ck.json', { ok: true, result: { runId: 'run_dup', count: 1, deliveryId: 'dlv_1', messages: [
+    { id: 'msg_p1', type: 'question', subject: 'hỏi 1 lần', body: 'x' },
+  ] } })
+  const r = runPass(dir, stub, {
+    RL_FIXTURE: rl, WL_FIXTURE: fixture(dir, 'wl.json', NO_WORKERS),
+    TL_FIXTURE: fixture(dir, 'tl.json', OPEN_TASK), CHECK_FIXTURE: ck,
+    TERM_FIXTURE: fixture(dir, 'tm.json', TERM_ME_ONLY),
+    REPLY_PLAIN: '1',
+  })
+  const replyCalls = (r.argv.match(/orchestration reply --id/g) || []).length
+  check('C17', 'reply gọi đúng 1 lần', replyCalls === 1, r.argv)
+  check('C17', 'rc0 vẫn tính replied (không FAIL)', r.out.includes('replied=1'), r.out)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== C18 reply fail trong batch → KHÔNG --ack batch đó (không nuốt câu hỏi) ==')
+{
+  const dir = tempDir('c18')
+  const stub = makeOrcaStub(dir)
+  const rl = fixture(dir, 'rl.json', { ok: true, result: { runs: [
+    { id: 'run_af', objective: 'LOCAL-1', coordinator_handle: 'term_self' },
+  ] } })
+  const ck = fixture(dir, 'ck.json', { ok: true, result: { runId: 'run_af', count: 1, deliveryId: 'dlv_9', messages: [
+    { id: 'msg_af1', type: 'question', subject: 'chưa được trả lời', body: 'x' },
+  ] } })
+  const r = runPass(dir, stub, {
+    RL_FIXTURE: rl, WL_FIXTURE: fixture(dir, 'wl.json', NO_WORKERS),
+    TL_FIXTURE: fixture(dir, 'tl.json', OPEN_TASK), CHECK_FIXTURE: ck,
+    TERM_FIXTURE: fixture(dir, 'tm.json', TERM_ME_ONLY),
+    REPLY_FAIL: '1',
+  })
+  check('C18', 'KHÔNG --ack sau batch fail', !r.argv.includes('--ack'), r.argv)
+  check('C18', 'REPLY FAIL được log', r.out.includes('REPLY FAIL msg_af1'), r.out)
+  check('C18', 'exit 0', r.code === 0, `code=${r.code}`)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== C19 evidence: tên file có khoảng trắng (splitlines) → EVIDENCE-OK ==')
+{
+  const dir = tempDir('c19')
+  const stub = makeOrcaStub(dir)
+  const { repo, hash } = makeGitRepo(dir, ['my file.md'])
+  const rl = fixture(dir, 'rl.json', { ok: true, result: { runs: [
+    { id: 'run_sp', objective: 'LOCAL-1', coordinator_handle: 'term_self' },
+  ] } })
+  const wl = fixture(dir, 'wl.json', { ok: true, result: { workers: [
+    { runId: 'run_sp', dispatchId: 'ctx_sp', workerState: 'completed',
+      terminalState: 'released', resource: { worktreeId: `uuid::${repo}` },
+      projection: { liveness: { verdict: 'exited' } } },
+  ] } })
+  const payload = JSON.stringify({ taskId: 'task_s', dispatchId: 'ctx_sp', outcome: 'succeeded', filesModified: ['my file.md'], commit: hash })
+  const ck = fixture(dir, 'ck.json', { ok: true, result: { runId: 'run_sp', count: 1, messages: [
+    { id: 'msg_sp1', type: 'worker_done', subject: 'xong có dấu cách', payload },
+  ] } })
+  const r = runPass(dir, stub, {
+    RL_FIXTURE: rl, WL_FIXTURE: wl,
+    TL_FIXTURE: fixture(dir, 'tl.json', OPEN_TASK), CHECK_FIXTURE: ck,
+    TERM_FIXTURE: fixture(dir, 'tm.json', TERM_ME_ONLY),
+  })
+  check('C19', 'file khoảng trắng → EVIDENCE-OK', r.out.includes('EVIDENCE-OK'), r.out)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== C20 env số hỏng (PASS_CHECK_WAIT_MS=abc) → fallback, exit 0 ==')
+{
+  const dir = tempDir('c20')
+  const stub = makeOrcaStub(dir)
+  const rl = fixture(dir, 'rl.json', { ok: true, result: { runs: [
+    { id: 'run_badenv', objective: 'LOCAL-1', coordinator_handle: 'term_self' },
+  ] } })
+  const r = runPass(dir, stub, {
+    RL_FIXTURE: rl, WL_FIXTURE: fixture(dir, 'wl.json', NO_WORKERS),
+    TL_FIXTURE: fixture(dir, 'tl.json', OPEN_TASK), CHECK_FIXTURE: fixture(dir, 'ck.json', NO_MSGS),
+    TERM_FIXTURE: fixture(dir, 'tm.json', TERM_ME_ONLY),
+    PASS_CHECK_WAIT_MS: 'abc',
+  })
+  check('C20', 'exit 0 (không ValueError)', r.code === 0, `code=${r.code} out=${r.out.slice(-200)}`)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== C21 crash bất ngờ (result sai kiểu) → PASS: idle=error, exit 0 ==')
+{
+  const dir = tempDir('c21')
+  const stub = makeOrcaStub(dir)
+  const r = runPass(dir, stub, {
+    RL_FIXTURE: fixture(dir, 'rl.json', { ok: true, result: 'boom-không-phải-object' }),
+    WL_FIXTURE: fixture(dir, 'wl.json', NO_WORKERS),
+    TL_FIXTURE: fixture(dir, 'tl.json', NO_MSGS),
+    CHECK_FIXTURE: fixture(dir, 'ck.json', NO_MSGS),
+    TERM_FIXTURE: fixture(dir, 'tm.json', TERM_ME_ONLY),
+  })
+  check('C21', 'exit 0', r.code === 0, `code=${r.code}`)
+  check('C21', 'idle=error', r.out.includes('idle=error'), r.out)
   rmSync(dir, { recursive: true, force: true })
 }
 
