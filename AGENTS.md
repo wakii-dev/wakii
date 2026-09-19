@@ -135,3 +135,17 @@ Be mindful of the user's `gh` CLI API rate limit — batch requests where possib
 ### Story PR base
 
 Story PRs target `wakii-dev`, never `main`: `gh pr create --base wakii-dev --head story/<epic>-<slug> --repo wakii-dev/wakii`. `main` mirrors upstream `stablyai/orca` (fork-sync ff-only) — story code reaches it only after owner review of the `wakii-dev` integration.
+
+## Upstream Sync Procedure
+
+Merging `origin/main` into `wakii-dev` has broken releases three times running (1.4.203, 1.4.206, 1.4.209). Before pushing a sync merge, run this battery on the merged tree — a red item means fix first, not merge anyway:
+
+1. **Sentinels + keep-deleted policy**: fork-only files still exist (launcher kit, mobile superpowers screens, fork workflows); upstream workflows stay deleted (`pr.yml`, `mobile.yml`, `cloud-*`, `computer-e2e`, `docs`, `pr-test-loc`, `skill-update-roundtrip`, `terminal-ime-e2e`, `win-crash-survival-e2e`, `windows-terminal-restart-e2e`) — merges keep resurrecting them.
+2. **`pnpm tc`** — desktop typecheck.
+3. **Mobile import scan** — `tc` does not cover `mobile/`; Metro bundling is the only gate that catches a missing module. Scan relative imports across `mobile/src` + `mobile/app` and iterate until clean; merges have silently dropped upstream-side files (`rpc-operation*` in the upstream merge lần 2). Restore dropped files verbatim from `origin/main`, never rewrite.
+4. **Golden fixtures follow upstream**: on conflict in `mobile/rpc-foundation/goldens/`, take upstream's tree (`git checkout origin/main -- mobile/rpc-foundation/goldens/`); the fork owns no goldens there.
+5. **`mobile/src/session/mobile-session-route-parity.test.ts` ratchet**: its counts/SHA constants go stale after every merge. Recompute by instrumenting the test to dump real values (temporary `it` block using the file's own helpers), then patch all constants in one pass.
+6. **Plugin fingerprints — two implementations must stay in lockstep**: `config/scripts/verify-packaged-plugin-resources.cjs` (`hashPackagedPluginTree`, packaging gate) and `src/main/plugins/plugin-content-hash.ts` (`hashPluginTree`, runtime bootstrap gate) share seed `orca-plugin-tree-v2` and the same junk skip (`__pycache__/`, `*.pyc`, `.DS_Store`). If upstream touches either, re-align both, then rehash **both** entries in `resources/plugins/launch/bundled-plugins.json` and confirm `verifyPackagedPluginResources('resources')` + `plugin-launch-content.test.ts` + `plugin-bundled-bootstrap.test.ts` pass. Fingerprints are junk-immune since v2 — rehashing no longer requires a clean machine, but a dirty-tree hash differing from CI means the two implementations diverged, not that you need to clean files.
+7. **Kit drift guard**: `resources/plugins/launch/stablyai.orca-superpowers-launcher/tests/kit-verify-manifest.mjs` (25 asserts) must pass — it also asserts the fingerprint above.
+
+CI no longer runs on PRs (PR-triggered workflows were removed at owner request), so this battery is the only gate before integration.
