@@ -1,0 +1,153 @@
+#!/bin/bash
+# story-plan-validate — kiểm task DAG của orchestration run (học từ story-validate:
+# bắt lỗi DAG NGAY sau Bridge 3 thay vì để worker đứng chờ giữa Phase 4)
+#
+# Kiểm (đọc `orca orchestration task-list --json`):
+#   D1  deps trỏ task tồn tại; không self-dep
+#   D2  không dependency cycle
+#   D3  mỗi task có spec (không rỗng)
+#   W1  WARN: spec không thấy tiêu chí nghiệm thu tường minh (verify/acceptance/
+#       test/xác nhận/nghiệm thu) — heuristic, không chặn
+#   W2  WARN: run không có task nào
+#
+# Verdict: OK · INVALID (có FAIL). WARN không chặn.
+#
+# Usage: story-plan-validate [--run <run_id>] [--json]
+# Exit: 0 hợp lệ · 1 có FAIL · 2 usage/lỗi CLI
+set -u
+
+RUN_ID=""
+JSON_OUT=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --json) JSON_OUT=1 ;;
+    --run)
+      [ $# -ge 2 ] || { echo "Usage: story-plan-validate [--run <run_id>] [--json]"; exit 2; }
+      RUN_ID="$2"; shift ;;
+    -*) echo "Unknown: $1"; exit 2 ;;
+    *) echo "Unknown arg: $1"; exit 2 ;;
+  esac
+  shift
+done
+
+# orca resolution: ORCA_BIN > PATH (đủ cho kit + stub test; known-paths là việc của orca CLI)
+ORCA="${ORCA_BIN:-orca}"
+ARGS=(orchestration task-list --json)
+if [ -n "$RUN_ID" ]; then
+  ARGS+=(--run "$RUN_ID")
+fi
+TMP=$(mktemp) || exit 2
+trap 'rm -f "$TMP"' EXIT
+"$ORCA" "${ARGS[@]}" >"$TMP" 2>&1
+ORCA_EXIT=$?
+if [ $ORCA_EXIT -ne 0 ]; then
+  if [ "$JSON_OUT" = "1" ]; then
+    printf '{"verdict":"INVALID","task_count":0,"fails":["D0: orca task-list lỗi (exit %s)"],"warns":[]}\n' "$ORCA_EXIT"
+  else
+    echo "D0: orca task-list lỗi (exit $ORCA_EXIT):"
+    head -3 "$TMP"
+  fi
+  exit 2
+fi
+
+PLAN_JSON_FILE="$TMP" python3 - "$JSON_OUT" <<'PYEOF'
+import json
+import os
+import sys
+
+json_out = sys.argv[1] == "1"
+fails, warns = [], []
+
+
+def fail(msg):
+    fails.append(msg)
+
+
+def warn(msg):
+    warns.append(msg)
+
+
+try:
+    raw = json.load(open(os.environ["PLAN_JSON_FILE"], encoding="utf-8"))
+except Exception as e:
+    fail(f"D0: task-list không parse được JSON: {e}")
+    raw = {}
+
+result = raw.get("result") or {}
+tasks = result.get("tasks") or []
+
+by_id = {}
+for t in tasks:
+    tid = t.get("id") or ""
+    if tid:
+        if tid in by_id:
+            fail(f"D3: task id trùng {tid}")
+        by_id[tid] = t
+
+deps_map = {}
+for t in tasks:
+    tid = t.get("id") or "(no-id)"
+    raw_deps = t.get("deps") or "[]"
+    try:
+        deps = json.loads(raw_deps) if isinstance(raw_deps, str) else list(raw_deps)
+    except Exception:
+        deps = []
+        fail(f"D1: {tid} deps không parse được: {str(raw_deps)[:60]}")
+    deps_map[tid] = deps
+
+# D1 — deps trỏ tồn tại + self-dep
+for tid, deps in deps_map.items():
+    for d in deps:
+        if d == tid:
+            fail(f"D1: {tid} depends on chính nó")
+        elif d not in by_id:
+            fail(f"D1: {tid} depends on {d} không tồn tại trong run")
+
+# D2 — cycle (DFS, chỉ đi qua dep tồn tại)
+state = {}
+
+
+def visit(tid, stack):
+    if state.get(tid) == 2:
+        return
+    if state.get(tid) == 1:
+        cycle = stack[stack.index(tid):] + [tid]
+        fail("D2: dependency cycle: " + " → ".join(cycle))
+        return
+    state[tid] = 1
+    for d in deps_map.get(tid, []):
+        if d in by_id:
+            visit(d, stack + [tid])
+    state[tid] = 2
+
+
+for tid in deps_map:
+    visit(tid, [])
+
+# D3 + W1 — spec
+ACCEPT_RE = ("verify", "acceptance", "test", "xác nhận", "nghiệm thu", "bằng chứng")
+for t in tasks:
+    tid = t.get("id") or "(no-id)"
+    title = t.get("task_title") or tid
+    spec = (t.get("spec") or "").strip()
+    if not spec:
+        fail(f"D3: task {title} ({tid}) thiếu spec — worker không biết làm gì")
+    elif not any(k in spec.lower() for k in ACCEPT_RE):
+        warn(f"W1: {title} ({tid}) — spec không thấy tiêu chí nghiệm thu tường minh")
+
+# W2 — run rỗng
+if not tasks:
+    warn("W2: run không có task nào — DAG chưa tạo? (Bridge 3)")
+
+result_obj = {"verdict": "INVALID" if fails else "OK",
+              "task_count": len(tasks), "fails": fails, "warns": warns}
+if json_out:
+    print(json.dumps(result_obj, ensure_ascii=False))
+else:
+    for m in fails:
+        print(m)
+    for m in warns:
+        print(f"WARN: {m}")
+    print(f"{'OK' if not fails else 'INVALID'} — {len(tasks)} task, {len(fails)} FAIL, {len(warns)} WARN")
+sys.exit(1 if fails else 0)
+PYEOF

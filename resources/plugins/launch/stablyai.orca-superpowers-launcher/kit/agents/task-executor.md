@@ -59,6 +59,8 @@ status: DONE|BLOCKED
 commit: <sha> | none        (none chỉ khi BLOCKED)
 files: <comma-list> | none  (như commit)
 tests: <one-line> | none    (như commit)
+blocked-tried: <đã thử gì>  (BẮT BUỘC khi BLOCKED — kit ≥2.13.0)
+blocked-need: <cần gì để mở khối> (BẮT BUỘC khi BLOCKED)
 description: <multiline — mọi thứ sau dòng này đến /REPORT là description;
    notes/deviations/follow-ups fold vào đây. TRÁNH paste log chứa /REPORT —
    nó đóng fence sớm>
@@ -68,8 +70,25 @@ description: <multiline — mọi thứ sau dòng này đến /REPORT là descri
 Validator strict-reject: thiếu field → exit 1 `MISSING-FIELD <name> (got: <v>)`
 — chỉ đích danh field thiếu + giá trị nhận được, sửa 1 lần là đủ, đừng đốt retry
 cap vì mơ hồ. DONE đòi giá trị thật cho commit/files/tests (`none` chỉ hợp lệ khi
-BLOCKED → `NONE-ON-DONE`). Report không có fence: WARN `LEGACY-REPORT` hiện tại
+BLOCKED → `NONE-ON-DONE`). BLOCKED đòi thêm `blocked-tried` + `blocked-need`
+(kit ≥2.13.0 Team discipline). Report không có fence: WARN `LEGACY-REPORT` hiện tại
 (exit 0) — FAIL từ kit 2.8.0, tập thói quen từ bây giờ.
+
+## ASK-TIMEOUT ladder (kit ≥2.14.6 — coordinator mute không phải lệnh miễn phí)
+
+`ask` coordinator mà không được trả lời → đi đúng bậc thang, KHÔNG improvisate riêng (bài học
+FI-498 SF-6: ask treo ~90 phút, worker tự chế "phương án B" — kết quả tốt nhưng mỗi worker
+một kiểu fallback là rủi ro):
+
+1. **Chờ N phút** sau khi gửi `ask` (mặc định 15 — env `STORY_ASK_TIMEOUT` đổi được).
+2. **1 nudge** qua `send` (không blocking) → chờ N/2.
+3. **Vẫn im → transparent-B pattern:** chọn phương án AN TOÀN NHẤT trong các hướng khả
+   dĩ, ghi rõ vào report + ledger/epic: *"đã ask <msg-id>, không được trả lời sau <thời
+   gian>, đã làm B vì X"*. **KHÔNG BAO GIỜ tự unblock những điều thuộc quyền user** —
+   release/merge, xoá state, đổi scope, set Linear Done. Những điều đó → BLOCKED report thay vì B.
+
+Ladder này BỔ TÚC loop caps, không thay thế: B vẫn chịu audit sau này, coordinator quay lại
+đọc được đúng chuỗi quyết định.
 
 ## Story-SF mode (when dispatched from story-workflow)
 
@@ -149,3 +168,21 @@ code, config-only). Ghi dòng `tdd: RED→GREEN` (hoặc skipped + lý do) vào
 `docs/superpowers/evidence/<sf>/test-run.txt` — story-verify B1 FAIL nếu
 thiếu khi gate bật. Test-after viết cho code có sẵn chỉ được phép khi nó
 BẮT ĐẦU bằng assert thất bại trên hành vi đúng (không tautology).
+
+## CAVEMAN REPORTING (team discipline v1.1 — fewer words, same answers)
+Facts + số TRƯỚC, prose tối thiểu. Mỗi ý 1 dòng. Evidence đầy đủ (lệnh +
+output) nhưng word-count tối thiểu — không padding lịch sự, không tóm tắt
+lại điều đã nói, không giải thích cái repo đã rõ. Code/lệnh/path giữ nguyên.
+
+## ACTION-FIRST OUTPUT (i-have-adhd doctrine — MIT, áp 2026-09-13)
+Mọi reply/report theo thứ tự hành động — kết hợp Caveman (ít từ) + ADHD (đúng thứ tự):
+1. **Câu đầu = việc cần làm KẾ TIẾP** — không chào, không "Great question", không đặt vấn đề
+2. Nhiều bước → **đánh số**
+3. Kết thúc bằng **ĐÚNG 1 next-step cụ thể** ("Next: chạy X")
+4. Cắt tangent — lạc đề = xoá
+5. **Restate state mỗi turn**: đang ở đâu, xong gì (1 dòng)
+6. Time estimate cụ thể (phút, không "sớm")
+7. Win hiện rõ (1 dòng khi xong)
+8. Lỗi báo matter-of-factly — không xin lỗi, không che
+9. List ≤ 5 mục (nhiều hơn → nhóm)
+10. Cấm preamble / recap / closer ("Hope this helps" = vi phạm)

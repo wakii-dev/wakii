@@ -26,6 +26,9 @@ for _s in (sys.stdout, sys.stderr):
 REQUIRED_FIELDS = ("task-id", "status", "commit", "files", "tests", "description")
 ALLOWED_STATUS = ("DONE", "BLOCKED")
 NONE_ALLOWED_WHEN_BLOCKED = ("commit", "files", "tests")
+# Team discipline v1: BLOCKED phải khai báo đủ 4 mục evidence — chống "im lặng
+# ở trạng thái dở" (FI-458 retro: stash-conflict/worktree-mất im lặng không ai biết).
+BLOCKED_REQUIRED_FIELDS = ("blocked-tried", "blocked-need")
 
 
 def usage(msg=None):
@@ -91,7 +94,7 @@ def parse_report(lines):
         if ":" in line:
             key, value = line.split(":", 1)
             key = key.strip()
-            if key in REQUIRED_FIELDS and key != "description" and key not in fields:
+            if key in (*REQUIRED_FIELDS, *BLOCKED_REQUIRED_FIELDS) and key != "description" and key not in fields:
                 fields[key] = value.strip()
     return fields, start, True
 
@@ -119,6 +122,15 @@ def validate(lines):
     status = fields.get("status") or ""
     if status and status not in ALLOWED_STATUS:
         fails.append(f"BAD-STATUS {status}")
+
+    # Team discipline v1: BLOCKED đòi evidence 4 mục — đã thử gì / cần gì.
+    if status == "BLOCKED":
+        for name in BLOCKED_REQUIRED_FIELDS:
+            got = fields.get(name)
+            if got is None:
+                fails.append(f"MISSING-FIELD {name} (got: <missing>)")
+            elif not got.strip():
+                fails.append(f"MISSING-FIELD {name} (got: )")
 
     # none chỉ hợp lệ khi BLOCKED; DONE đòi giá trị thật (P1.3 BLOCKED-before-work).
     if status == "DONE":

@@ -1,6 +1,6 @@
 {
   "name": "story-team-kit",
-  "version": "2.11.0",
+  "version": "2.17.0",
   "description": "9-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới.",
   "requires": {
     "claude-code": ">=2.0",
@@ -46,16 +46,6 @@
       "owner": "wakii"
     },
     {
-      "name": "bridge-router",
-      "type": "skill",
-      "inputs": [
-        "workflow moment",
-        "current skill context"
-      ],
-      "outputs": "bridge selection (worktree/gate/DAG/review/status-sync) + route reason",
-      "owner": "wakii"
-    },
-    {
       "name": "writing-plans-linear",
       "type": "skill",
       "inputs": [
@@ -63,77 +53,6 @@
         "current Linear issue"
       ],
       "outputs": "plan.md + Linear subtasks per milestone (Write/Publish modes)",
-      "owner": "wakii"
-    },
-    {
-      "name": "brainstorm",
-      "type": "skill",
-      "inputs": [
-        "feature idea",
-        "constraints",
-        "success criteria"
-      ],
-      "outputs": "validated spec.md + implementation plan (optional Linear publish + worktree)",
-      "owner": "wakii"
-    },
-    {
-      "name": "execute-plan",
-      "type": "skill",
-      "inputs": [
-        "implementation plan",
-        "orchestration dispatch",
-        "worktree"
-      ],
-      "outputs": "implemented tasks + atomic commits + gate/task updates",
-      "owner": "wakii"
-    },
-    {
-      "name": "prompt-master",
-      "type": "skill",
-      "inputs": [
-        "prompt goal",
-        "target AI tool"
-      ],
-      "outputs": "optimized prompt cho tool đó",
-      "owner": "wakii"
-    },
-    {
-      "name": "figma-orientation",
-      "type": "skill",
-      "inputs": [
-        "figma-related intent"
-      ],
-      "outputs": "đúng Figma skill/tool route (implement-design / use / generate-* / code-connect / MCP)",
-      "owner": "wakii"
-    },
-    {
-      "name": "image-to-code",
-      "type": "skill",
-      "inputs": [
-        "design reference image",
-        "target stack"
-      ],
-      "outputs": "code component riêng lẻ khớp ảnh (section-specific, không cards-in-cards)",
-      "owner": "wakii"
-    },
-    {
-      "name": "gpt-taste",
-      "type": "skill",
-      "inputs": [
-        "UI requirement",
-        "page structure goal"
-      ],
-      "outputs": "<design_plan> block (RNG/AIDA/hero-math/bento) + UI code theo đúng plan",
-      "owner": "wakii"
-    },
-    {
-      "name": "design-taste-frontend",
-      "type": "skill",
-      "inputs": [
-        "built UI diff",
-        "design intent"
-      ],
-      "outputs": "anti-slop audit findings + strict pre-flight verdict",
       "owner": "wakii"
     },
     {
@@ -152,34 +71,6 @@
         "completed workflow log"
       ],
       "outputs": "skill update + memory index + cleared log (7 steps)",
-      "owner": "wakii"
-    },
-    {
-      "name": "graph-engineering",
-      "type": "skill",
-      "inputs": [
-        "domain corpus hoặc orchestration goal"
-      ],
-      "outputs": "KG ontology/extraction/fusion design hoặc task graph (fan-out, verifier separation, stop rule)",
-      "owner": "wakii"
-    },
-    {
-      "name": "web-design-guidelines",
-      "type": "skill",
-      "inputs": [
-        "UI code/diff"
-      ],
-      "outputs": "violations report theo 105 rules (a11y, focus, forms, animation, layout, content)",
-      "owner": "wakii"
-    },
-    {
-      "name": "frontend-design",
-      "type": "skill",
-      "inputs": [
-        "UI cần build/reshape",
-        "aesthetic context"
-      ],
-      "outputs": "aesthetic direction — typography, signature element, chống template defaults",
       "owner": "wakii"
     },
     {
@@ -372,7 +263,7 @@
     {
       "name": "story-validate",
       "type": "bin",
-      "description": "validate bracket file — exit 0/1/2, verdict OK/INVALID/WARN"
+      "description": "validate bracket file — exit 0/1/2, verdict OK/INVALID/WARN; --linear kiểm ID tồn tại thật trong Linear (thiếu key → WARN skip)"
     },
     {
       "name": "story-verify",
@@ -432,7 +323,7 @@
     {
       "name": "story-review-fuse",
       "type": "bin",
-      "description": "gộp findings nhiều OUTBOX reviews/<agent>-<sf>*.md (GH-32) — parse tolerant bullet+bảng, cluster (file, line±10, severity), sort confidence, conf-thấp → NEEDS VERIFICATION; KHÔNG bao giờ drop finding (invariant in_ra == parsed+unparsed)"
+      "description": "gộp findings nhiều OUTBOX reviews/<agent>-<sf>*.md (GH-32) — parse tolerant bullet+bảng, cluster (file, line±10, severity), sort confidence, conf-thấp → NEEDS VERIFICATION; heading ### Deterministic = kênh facts tool (2.14.3), NEEDS VERIFICATION bullets → needs bucket, Surgical-scope/[coverage] → kênh attest (2.14.4); KHÔNG bao giờ drop finding (invariant in_ra == parsed+unparsed+facts+attest)"
     },
     {
       "name": "story-surface-lint",
@@ -442,7 +333,7 @@
     {
       "name": "wakii-mcp-server",
       "type": "bin",
-      "description": "read-only MCP server (stdio) — bracket/gate/watchdog/tasklist tools cho agent bên ngoài kit"
+      "description": "read-only MCP server (stdio) — bracket/gate/watchdog/tasklist tools cho agent bên ngoài kit; task/gate-list nhận run param (--run, 2.14.4); version fallback marker khi installed layout"
     },
     {
       "name": "wakii-skill-export",
@@ -463,6 +354,22 @@
       "name": "story-sequence",
       "type": "bin",
       "description": "Mermaid sequenceDiagram quá trình chạy thật của story — git + Linear verdicts + evidence, không cần LLM"
+    },
+    {
+      "name": "story-distributed-claim",
+      "type": "bin",
+      "description": "Claim CLI distributed — --claim/--machine-id/--host/--list-claims (FI-458)"
+    },
+    {
+      "name": "story-kb",
+      "type": "bin",
+      "description": "query Project KB (ADR/repos/glossary/MOC) tu configurable dir (WAKII_KB_DIR) - fail-open khi KB chua configured; layer 1 ADE knowledge infra (#38)"
+    },
+    {
+      "name": "story-plan-validate",
+      "type": "bin",
+      "description": "kiểm task DAG của orchestration run — bắt lỗi DAG ngay sau Bridge 3 (học từ story-validate)"
     }
-  ]
+  ],
+  "kitHash": "80937e543a47677c"
 }

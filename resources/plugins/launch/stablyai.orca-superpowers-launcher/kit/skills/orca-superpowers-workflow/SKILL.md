@@ -75,6 +75,14 @@ KHI GẶP LỖI:
 
 **Verify = TÔI mở browser, TÔI nhìn bằng mắt, TÔI chụp screenshot, TÔI thấy nó hoạt động. Không agent, không DOM query, không tests report. TÔI.**
 
+> Fallback khi CDP `Page.captureScreenshot` timeout (window Orca không surface — tái diễn
+> SF-2/SF-24/SF-1): (learned 2026-09-14 FI-464) VISUAL tier vẫn phải là PIXEL THẬT — chụp
+> headless Chrome trên CÙNG build/story đang verify (được phép: nó là ảnh render thật, tôi
+> tự Read ảnh), KHÔNG thay bằng DOM query; DOM + FLOW tiers vẫn chạy qua Orca browser
+> (eval + `keypress` — keyboard flow PHẢI dùng trusted CDP input, synthetic
+> `new KeyboardEvent` không lên được document-level listener của React/portals). Khai báo
+> fallback trung thực trong evidence + nhờ user nhìn thêm khi có cơ hội.
+
 > Bài học 30/8: tôi code auth system, 205/205 tests pass, reviewer approve,
 > merge main, nói user "thử đi" — user KHÔNG ĐĂNG NHẬP ĐƯỢC. Vì tôi không
 > bao giờ mở browser để tự thử. Tests kiểm MẢNH RIÊNG — chỉ browser kiểm
@@ -273,195 +281,13 @@ orca linear comment add --current --body-file - --json <<'EOF'
 EOF
 ```
 
-**Per-milestone minimum content** (each comment MUST carry enough to reproduce that step without re-thinking):
-
-| Milestone | Required content |
-|-----------|------------------|
-| After Phase 0 | Direction chosen + WHY (rationale for A vs B, what was dismissed), touch map, top risks, gate status |
-| After Phase 1 | Issue identifier, status set, worktree path |
-| After Phase 2 (brainstorm) | Absolute spec path + scope summary (in/out) + key clarifying Q&A that shaped the design |
-| After Phase 3 (plan) | Absolute plan path + task count + DAG tier structure + key orca commands used (so they can be replayed) |
-| During Phase 4 (per task) | task N/total, title, exact commands with `--flags`, key output ids (issue/gate/task/commit hash), gate resolution — max ~15 lines. Full narrative (files modified, reviewer notes, rationale) goes in the consolidated "Phase 4 full reproduction" comment |
-| After Phase 4 final gate | Verification outcome + evidence (test result, build status) |
-| After Phase 4 (full reproduction) | ONE consolidated comment: per-task files modified, reviewer notes, rationale, gate resolutions — the reproduction-grade narrative for the whole execution phase |
-| After Phase 5 | Done status, PR link, post-task-ritual summary (patterns learned) |
-| BLOCKER / ESCALATION / ERROR | what + when + full error context + how resolved (or what was tried) |
-
-Format: markdown (bold headers, fenced code blocks for commands/outputs, bullet lists). Skip in Quick-fix mode (no Linear issue). Standard tier: single end-of-run comment instead of per-task comments.
-
-**Resume idempotency (applies when resuming mid-workflow — e.g. continue-plan, resume, restart):** before commenting for a phase/task, check whether that milestone was already logged. Each comment MUST start with a milestone marker line (`**Phase 0**`, `**Phase 1**`, `**Phase 2**`, `**Phase 3**`, `**Phase 4 task N/total**`, `**Phase 4 full reproduction**`, `**Phase 4 final gate**`, `**Phase 5**`). On resume:
-```bash
-# (learned 2026-08-31 FI-234: `orca linear comment list` KHÔNG tồn tại —
-# pipe-swallowed error tự biến thành "0 comments" ảo. Lệnh list comments
-# hoạt động, đã verify, là `orca linear issue <id> --comments --json`
-# (trả comments[].body). Parse bằng python3 nếu jq không có trên máy.)
-orca linear issue <id> --comments --json | python3 -c "import sys,json; [print(c.get('body','')) for c in json.load(sys.stdin).get('result',{}).get('issue',{}).get('comments',[])]" | grep -E '^\*\*Phase [0-5]'
-```
-- If the milestone marker for the phase you're about to log **already exists** → SKIP commenting (do not duplicate). The first comment wins.
-- If it's **missing** → comment normally (backfill with the actual state, not a guess — if you don't have the output for a past phase, say "reconstructed from plan/state" rather than fabricating).
-- Phase 4 per-task comments are keyed by `task N/total` — only deduplicate the same N, not across tasks.
-This prevents double-commenting on resume and silent skips when the agent wrongly assumes a phase was already logged.
+**Per-milestone minimum content + resume idempotency** (mỗi comment phải đủ để reproduce bước đó; dedup theo milestone marker khi resume): **REQUIRED** đọc [references/linear-audit-log.md](references/linear-audit-log.md).
 
 **Opt-out:** the Start prompt may include a literal `audit-log: off` token (see Token Contract Table) — if present, skip this principle entirely for that run. Absent = ON.
 
 ## Principle 8: Figma Pipeline (auto-triggers khi description chứa figma.com URL)
 
-**Quy tắc lõi: mọi giao tiếp với Figma đi qua MỐT pipeline F1-F13 dưới đây —
-một nguồn (repo captures), một format (5 sections), một đường verify.**
-Không tự chế biến thể. (Thống nhất 2026-08-28 sau FI-187: 7 mảnh rải rác —
-P8 cũ, bracket Design:, captures /tmp mồ côi, URL chết theo session, review
-bằng mắt agent, diff số liệu mù, launch prompt text-only — gây app khớp
-text-spec mà SAI design: thiếu sidebar 48px + header + row 80px.)
-
-**Kích hoạt:** description có `figma.com/(design|file|proto|board)/` URL
-HOẶC bracket ghi `Design: figma`. Bắt đầu bằng `figma-orientation` (router).
-
-### Tầng NGUỒN (chống mất — bài học 12 ngày mất URL)
-
-- **F1. FIGMA-INDEX.md** tại `docs/superpowers/figma/<story-slug>/` — ghi
-  file key + mọi node-id dùng trong story + trạng thái capture. URL Figma
-  KHÔNG BAO GIỜ chỉ sống trong chat/session — vào index, commit, dùng mãi.
-- **F2. Capture + DEEP-DIVE mọi frame spec nhắc** ngay ở Phase 0/CREATE,
-  per frame-id (Figma là input trọng yếu — phân tích cạn =garbage in,
-  garbage out toàn story; FI-187 trả giá: khớp text-spec, sai design):
-  - `.png` — screenshot ĐẦY ĐỦ phân giải (fidelity target; KHÔNG dùng
-    Orca artifacts — link hết hạn)
-  - `.md` — **8 sections, đủ mới gọi là phân tích xong**:
-    1. `Intent (why)` — màn này phục vụ nhịp làm việc nào; quyết định
-       density/spacing/biến có mặt là vì gì
-    2. `Layout logic` — auto-layout → CSS CONSTRAINT (w fixed vs fill,
-       h chuẩn, gap, padding) — KHÔNG tọa độ tuyệt đối
-    3. `Component inventory` — MỖI component trong frame được phân loại:
-       REUSE (có sẵn /packages/ui) · EXTEND · NEW + vị trí đề xuất
-    4. `States matrix` — từng element tương tác × hover/focus/disabled/
-       selected/loading/empty (Figma thường chỉ vẽ default — thiếu state
-       nào liệt kê thành câu hỏi, không bịa)
-    5. `Tokens (đo được)` — màu/type/radius/spacing ĐO từ design context
-       (không nhớ nhớ) + đối chiếu tokens package hiện có
-    6. `Interactions & flows` — gì mở gì (nút → popup nào), ESC/F4,
-       keyboard, polling — từ prototype connections + convention
-    7. `Data shapes inferred` — frame ngụ ý API fields gì (cột bảng =
-       fields của DTO; chip = enum) → feeds contracts
-    8. `Open questions` — mọi điều frame KHÔNG trả lời được → thành
-       REQUIREMENT-GAP ngay ở CREATE, không chờ SF gặp
-  - `.json` — node-id · size · lastModified · capturedAt
-  - **F2b. Design-critic round (bắt buộc ở CREATE)** — một đầu khác đọc
-    capture .md SO VỚI raw design context, checklist:
-    [ ] đủ 8 sections, không section rỗng không lý do
-    [ ] component inventory phủ MỌI element nhìn thấy trong ảnh
-    [ ] states matrix có ≥1 hàng cho mọi element tương tác
-    [ ] tokens khớp màu đo được (spot-check 3)
-    [ ] open questions không chứa câu mà frame thật sự đã trả lời
-    Fail → bổ sung capture TRƯỚC khi CREATE commit. (Capture là spec
-    của design — nó xứng đáng critic như spec-critic với spec.)
-- **F3. Commit cùng story CREATE** → mọi SF kế thừa qua git (cơ chế
-  context packs). Idempotent: frame-id có sẵn → reuse, không re-fetch.
-
-### Tầng SF (kế thừa — không re-analyze)
-
-- **F4. Launch prompt** trỏ ĐƯỜNG DẪN capture (.md + .png), không chỉ
-  node-id (story-launch template đã gắn sẵn).
-- **F5. Drift guard**: SF Phase 0-mini so `lastModified` capture vs Figma
-  live → khác = REQUIREMENT-GAP ("Figma đổi sau duyệt — bản nào?"), không
-  tự implement bản mới. Frame CHƯA capture → pull + commit trên nhánh SF.
-- **F6. Code theo Intent + Layout logic + States + Tokens** — KHÔNG code
-  từ ảnh suông, KHÔNG từ text-spec (text không ghi sidebar/row-height —
-  FI-187 chứng minh). Tokens-only: hex cứng ngoài tokens package = P1.
-  Component mới: `image-to-code` với capture làm fidelity target.
-
-### Tầng REVIEW + VERIFY (đo được — không tin mắt dev)
-
-- **F7. BROWSER WALKTHROUGH (bắt buộc TRƯỚC khi nói "xong")** —
-  (bài học UAT 30/8: "150/150 tests xanh" ≠ "người dùng đăng nhập được".
-  Agents code mù — không mở browser, không thấy màn hình, không đi trọn
-  flow → user gặp lỗi ngay lần đầu. Tests unit kiểm MẢNH RIÊNG, không
-  kiểm CHUỖI LIỀN. Browser walkthrough là CỔNG DUY NHẤT phát hiện:
-  cookie cross-origin chết · React state không navigate · UI render sai
-  · luồng người dùng đứt chỗ mà code "đúng")
-
-  **KHI NÀO MỞ BROWSER (7 thời điểm — không được bỏ):**
-  | Thời điểm | Tại sao | Làm gì |
-  |---|---|---|
-  | Sau MỖI task có UI | Component render đúng? | tab create → snapshot → thấy đúng → commit |
-  | Sau auth/session/routing change | Cookie sống? Navigate? | Login → navigate → thấy màn |
-  | Sau MỖI merge vào đích | Merge không vỡ? | Mở app → flow chính → screenshots |
-  | Trước nói "task xong" | Rule 0 | Đi trọn flow → chụp → so design |
-  | Khi user báo lỗi | Tái hiện bằng mắt | Làm đúng bước user → thấy lỗi |
-  | Sau FIX bug | Fix có work? | Mở browser → làm lại → PASS |
-  | Trước STORY-COMPLETE | F9 sweep | Mọi screen → chụp → so → sạch |
-
-  **Trình tự F7 (agent tự làm, KHÔNG giao user):**
-  ```bash
-  # 1. Mở app trong browser
-  orca tab create --url http://localhost:<port>
-
-  # 2. Đi trọn luồng user bằng tay (KHÔNG curl API — phải qua UI):
-  #    login → navigate → thao tác chính → logout
-  #    (từng bước: fill form → click → chờ → snapshot → check kết quả)
-
-  # 3. Nếu có auth: đăng nhập THẬT qua UI (không bypass bằng header)
-  #    → verify cookie sống → verify navigate sau login
-
-  # 4. Chụp screenshot mỗi màn (fidelity + audit trail)
-  orca screenshot --format png
-
-  # 5. Snapshot structure để audit: đủ phần tử? đúng vị trí? đúng text?
-  orca snapshot
-
-  # 6. Chỉ khi MỌI bước qua → mới được báo "UI hoạt động"
-  ```
-
-  **Checklist F7 (phải PASS từng dòng):**
-  - [ ] App mở không lỗi console (F12 network tab sạch)
-  - [ ] Login → chuyển trang đúng (nếu có auth)
-  - [ ] Cookie/session sống qua nhiều request (nếu cross-origin: SameSite đúng)
-  - [ ] Mọi nút/form thao tác được (click thật, không chỉ inspect code)
-  - [ ] Điều hướng giữa screens hoạt động
-  - [ ] Chụp screenshot SO VỚI Figma capture → liệt kê gap từng mục
-  - [ ] Thoát/logout → quay về màn login → back button không vào lại được
-
-  **PHÁT HIỆN SỚM — UI audit checklist (rà từ F7 screenshot, so với design):**
-  | Kiểm tra | Cách phát hiện |
-  |---|---|
-  | Shell: sidebar / header / footer | So ảnh — có đường phân cách dọc/ngang không? |
-  | Density: row height / spacing | Đếm pixel từ screenshot (PIL) |
-  | Vị trí: buttons / filters / pagination | Design ghi PHẢI → actual ở đâu? |
-  | States: hover / disabled / focus / empty | Click thử + screenshot từng state |
-  | Đủ phần tử: thiếu cột / thiếu nút / thiếu hint | Snapshot tree so với design tree |
-  | Format: ngày / số / tiền tệ | So text từng cell với design |
-  | Cross-origin cookie chết | Login xong navigate → quay về login = cookie rớt |
-  | React state không update | Fill form → submit → thấy alert lỗi gì? |
-
-- **F7b. Visual diff (sau khi walkthrough pass):** đặt CẠNH capture chuẩn
-  → liệt kê từng khác biệt (vị trí + design + actual). Pixel-diff cho SỐ
-  (chú ý: diff đều ≠ khớp — có thể lệch style toàn cục; diff cục bộ vọt
-  = sai vùng đó). Verdict có dẫn chứng ảnh.
-
-- **F8. UX review (P8.6)** — 3 lớp chạy như TASK trong plan (không phải
-  gợi ý), so implementation lại Intent:
-  · `web-design-guidelines` — 105 rules cụ thể trên CODE (a11y/focus/
-    forms/animation/keyboard) — bắt lỗi ảnh không thấy được
-  · `gpt-taste` + `design-taste-frontend` — thẩm mỹ + anti-slop
-  · `frontend-design` — chủ đích: signature, copy-as-design, calibration
-    chống 3 "AI default looks"
-- **F9. Story-level visual sweep** (convergence SF): mọi key screen chụp
-  lại → so capture chuẩn → gap-list repair → re-chụp tới sạch.
-
-### Quy tắc vàng (ngắn)
-
-1. Nguồn duy nhất = repo captures + FIGMA-INDEX. Figma MCP chỉ để
-   CAPTURE/lần đầu, không re-read mỗi phase.
-2. **"Xong" = F7 browser walkthrough PASS + ảnh hai bên cạnh nhau.**
-   Tests xanh ≠ người dùng dùng được. KHÔNG được nói "UI hoạt động"
-   nếu chưa tự mở browser + đi trọn flow + chụp screenshot.
-3. Thiếu capture = KHÔNG code frame đó (pull trước — 5 phút).
-4. **Browser walkthrough TRƯỚC khi merge**, không phải sau. Bắt lỗi
-   cookie / navigate / render ở tầng dev rẻ hơn ở tầng user 100 lần.
-
-*(Phase 0 six-step cũ: VERIFY → DIFF vs codebase → COMPONENT MAP → FILE
-STRUCTURE → IMAGE-TO-CODE → UX REVIEW vẫn đúng thứ tự bên trong — giờ
-được tổ chức thành F1-F9 với storage + verify tường minh.)*
-
+Chỉ kích hoạt khi feature description chứa URL figma.com — không có thì bỏ qua nguyên principle. Pipeline 3 tầng (NGUỒN chống mất URL → SF kế thừa → REVIEW+VERIFY đo được), steps F1–F9, quy tắc vàng: **REQUIRED** đọc [references/figma-pipeline.md](references/figma-pipeline.md).
 ## The Workflow
 
 ```
@@ -521,47 +347,7 @@ orca orchestration run-list --json | jq -r '.result.runs[] | select(.legacy != t
 
 **Action:** Produce the impact analysis below, then **STOP** and wait for chat approval before Phase 1. Do NOT call any orca bridge yet. This is a chat-approval gate (same fallback as Phase 4 gates without a taskId).
 
-```
-<!-- Template below — fill each section, then paste the populated analysis into the chat. Headings inside this fence are template fields, not document sections. -->
-## Phase 0: Impact Analysis
-
-### 1. Problem framing
-1-2 sentences in your own words. Separate the actual problem from any proposed solution ("user suggested X to solve Y; real problem is Y"). Flag scope ambiguity.
-
-### 2. Touch map
-- Files/modules to modify: <list, paths>
-- Consumers/callers that depend on them (regression candidates): <list>
-- Shared surfaces: API contracts, DB schema, config, env vars, events — <which>
-
-### 3. Second-order effects
-- Existing features that could break under the proposed direction
-- Non-functional (per Principle 4 — analyze across ALL relevant dimensions: functional/arch/data/performance/security/backward-compat/UX/maintenance/ops/business; justify any skip): perf, security, backward-compat, migrations
-- Interaction with adjacent features / in-flight work
-
-### 4. Alternatives (≥2)
-- Direction A: <summary> — pros / cons / blast radius
-- Direction B: <summary> — pros / cons / blast radius
-(Prefer smaller blast radius unless a tradeoff is justified.)
-
-### 5. Risks & unknowns
-- What must be verified before implementing (probes, reads, experiments)?
-- Unverified assumptions you're about to make?
-```
-
-**Then STOP.** Ask one direct question: *"Which direction (A/B/other), and is the touch map complete?"* Don't proceed to Phase 1 until answered. If the user changes direction, update + re-confirm first.
-
-**Design-fidelity requests ("feature exists but doesn't match design"):** almost always a scope ambiguity, not a styling task — what exists is usually only PART of the design. After the diff-vs-codebase step, explicitly fork the direction: (A) restyle what exists; (B) build the missing structure the design shows (modal shell, extra column, entry point); (C) wrong screen — the design belongs to another flow. Put all three in the STOP question (small ASCII previews help); do NOT default to (A). Blast radii differ by an order of magnitude.
-
-**Subagent option (when the Start prompt includes a multi-dim SUBAGENT_DIRECTIVE — panel "Subagents" checkbox 1-10, OR you judge the change spans enough dimensions to warrant parallel coverage):** spawn N read-only `Agent` subagents (subagent_type `general-purpose` or `Explore`), one per relevant dimension round-robin (functional/architecture/data/performance/security/backward-compat/UX/maintenance/operational/business). Each subagent gets a self-contained briefing (it does NOT see this conversation) — feature idea + files in scope + its assigned dimension + "return assessment + risk + alternative". Synthesize their outputs into the impact analysis above (dimensions covered → touch map / risks / alternatives). Read-only: subagents must NOT write code (no worktree isolation); for code-write delegation use `worker-start` at Phase 4.
-
-**Dedicated Phase 0 agent (optional, for structured analysis):** if you want a single consolidated impact-analysis pass (instead of N round-robin subagents), dispatch the `phase0-impact-analyst` agent (subagent_type=`phase0-impact-analyst`, color blue). Brief it with: feature idea + files in scope + codebase context you already know. It returns the populated 5-section template (problem framing / touch map / second-order effects / alternatives / risks) as markdown — paste into chat, then STOP for approval (non-autonomous) or pick direction (autonomous). Read-only; does NOT write code or mutate state. **Force-on contract:** `Phase 0 analyst: ON.` token makes this dispatch MANDATORY (even for small changes that would otherwise skip it) — see Token Contract Table.
-
-**Autonomous mode:** if the user enabled Autonomous (the Start prompt says "Autonomous mode"), do NOT stop at Phase 0 for direction approval. Still produce the impact analysis (you need the touch map and risks), pick the best direction yourself, and proceed to Phase 1. **"Proceed" means continue to Phase 1 and Phase 2 (brainstorm) — it does NOT mean skip them.** Brainstorm still runs in autonomous (you self-answer its questions). Only stop if you hit a true blocker you can't resolve.
-
-**Rationale:** a Linear issue + worktree on the wrong direction is wasted infra + noisy history.
-
----
-
+**Action:** produce the impact analysis theo template — **REQUIRED** đọc [references/phase-0-playbook.md](references/phase-0-playbook.md) (5-section template, design-fidelity fork, subagent option, briefing cho phase0-impact-analyst). Sau đó **STOP** chờ chat approval trước Phase 1 — không call orca bridge nào trước approval (chat-approval gate, cùng fallback như Phase 4 gates không có taskId).
 ### Phase 1: Bridge 5 — Linear Issue Creation (Full + Standard tiers; Quick-fix skips)
 
 **When:** User provides feature idea, before brainstorming.
@@ -686,9 +472,15 @@ else
 fi
 ```
 
+**DAG wiring safety (learned 2026-09-14 FI-459 — 2 runs mồ côi vì deps wire bug):** `--deps` nhận JSON array LITERAL (`'["task_x","task_y"]'`) — không build qua chuỗi lồng `sed`/nhiều `$()` và không capture id qua hàm vừa `echo` log (biến sẽ chứa log-text, không phải id). Sau khi tạo: verify bằng `task-list` — đếm deps mỗi task khớp expect + status `pending` (có deps) vs `ready` (không deps). Không có `run-delete` — run nhầm → mark từng task `failed` với reason, tạo run mới.
+
+**Plan-DAG validator (tool-enforced — học từ story-validate, kit ≥2.14.5):** sau khi DAG tạo xong và TRƯỚC plan-critic/Phase 4, chạy `~/.claude/bin/story-plan-validate [--run <RUN>]` — deterministic trên task-list thật: D1 deps mồ côi/self-dep · D2 cycle · D3 task thiếu spec (FAIL); W1 spec không có tiêu chí nghiệm thu tường minh (WARN, không chặn). FAIL → sửa DAG rồi chạy lại — **không vào Phase 4 khi còn FAIL** (worker đứng chờ giữa plan vì dep mồ côi = đúng class lỗi FI-459 mà bước này chặn tại chỗ rẻ nhất).
+
 **Plan-critic gate (optional but recommended when DAG has 5+ tasks, MANDATORY in autonomous):** before Phase 4, dispatch the `plan-critic` agent (subagent_type=`plan-critic`, color green). Brief it with: plan.md content + task DAG (IDs + titles + deps) + spec.md + Phase 0 touch map. It returns P0/P1/P2 critique (missing tasks, wrong dep edges, cap-4 violations, wrong granularity, spec-coverage gaps). On FIX-P0-FIRST / REWORK-PLAN → revise plan/DAG via writing-plans-linear, re-critique. **Rework cap: 2 cycles** — on the 3rd critique of the same plan, STOP and summarize the recurring critique + what changed each round, and ask the user. On PROCEED → Phase 4. For plans with <5 tasks, skip (no DAG to review). **Force-on contract:** `Plan critic: ON.` token (see Token Contract Table).
 
 **Next:** offer execution choice (delegate via Orca `worker-start` for parallel/isolated tasks, or execute inline).
+
+**Coordinator side of ask-timeout (kit ≥2.14.6):** worker bị chặn sẽ hỏi qua `ask` — mute của bạn là nợ có lãi (worker đi transparent-B sau timeout, xem task-executor ASK-TIMEOUT ladder). Đang có worker chạy → rã inbox định kỳ `orca orchestration inbox --json` (hoặc `check --wait`), ưu tiên `question`/`escalation` quá giờ trước khi mở việc mới.
 
 ---
 
@@ -705,9 +497,16 @@ fi
 
 **Test rule (before gate):** before requesting gate approval on a task, run the repo's test suite for the touched surface — **at minimum the unit tests for files you changed**, plus any integration test that exercises the new code path. Report what you ran + pass/fail in the gate question. If the repo has no tests for the surface, say so explicitly ("no existing test coverage for X; manually verified Y") rather than implying green. Coverage is a goal, not a gate — don't block a task for missing coverage, but do flag it. Khi repo có `~/.claude/bin/story-verify`: cuối run, ghi evidence đúng convention B1+ — `docs/superpowers/evidence/<sf-slug-đúng-như-trong-bracket>/test-run.txt` (check tên bằng `ls` bracket thay vì tự đặt), chứa hash HEAD hoặc HEAD~1 + dòng `tdd: RED→GREEN` (hoặc `tdd: skipped-tdd: <lý do>`) (learned 2026-09-13 FI-440: sai slug `sf-23` thay vì `sf-23-log-service` → gate FAIL 3 vòng, 3 lần re-merge chỉ để sửa evidence).
 
-**Code-review between tasks (optional but recommended for non-trivial tasks, MANDATORY in autonomous):** before resolving the gate as approved, dispatch the `code-reviewer` agent (subagent_type=`code-reviewer`, color cyan). Brief it with: task ID + title + spec slice + `git diff <base>..<head>` + files modified + codebase conventions. It returns P0/P1/P2 review (bugs, security, style, missing error handling, untested paths, surgical-scope violations). On CHANGES-REQUESTED → dispatch a fix task via `worker-start`; do NOT resolve gate approved. On REJECT-AND-REVERT → call `rollback-fixer`. On APPROVED → resolve gate. For Quick-fix single-line changes, skip. If OWASP surface → escalate to `security-audit` (P5) instead. This is the "review-only worker" the worker-patterns.md mentions — now a dedicated agent. **Force-on contract:** `Code review: ON.` token makes code-reviewer run before EVERY task gate resolution regardless of mode or task size (including Quick-fix tasks) — see Token Contract Table.
+**Code-review between tasks (optional but recommended for non-trivial tasks, MANDATORY in autonomous):** before resolving the gate as approved, dispatch the `code-reviewer` agent (subagent_type=`code-reviewer`, color cyan). Brief it with: task ID + title + spec slice + verify criteria + `git diff <base>..<head>` + files modified + codebase conventions + output oxlint/typecheck trên changed files nếu đã có (kit ≥2.14.1: reviewer chạy deterministic-first, spec/criteria đọc trước diff — học từ open-code-review). It returns P0/P1/P2 review (bugs, security, style, missing error handling, untested paths, surgical-scope violations). On CHANGES-REQUESTED → dispatch a fix task via `worker-start`; do NOT resolve gate approved. On REJECT-AND-REVERT → call `rollback-fixer`. On BLOCKED-INPUT (kit ≥2.14.1 — reviewer báo briefing thiếu spec/criteria) → KHÔNG re-dispatch y nguyên: tự lấy verify criteria + spec slice từ plan, re-brief MỘT lần; vẫn BLOCKED → KHÔNG resolve gate approved — pause và hỏi user (gate không có review thì không approved). On APPROVED → resolve gate. For Quick-fix single-line changes, skip. If OWASP surface → escalate to `security-audit` (P5) instead. This is the "review-only worker" the worker-patterns.md mentions — now a dedicated agent. **Force-on contract:** `Code review: ON.` token makes code-reviewer run before EVERY task gate resolution regardless of mode or task size (including Quick-fix tasks) — see Token Contract Table. **Verdict comment on Linear phải chứa literal `CHECKLIST-4Q`** (kèm 4 câu PASS) khi `verify.reviewerChecklist` ON — story-verify B3 grep literal này, thiếu → B3 FAIL dù VERDICT APPROVED đã post (learned 2026-09-14 FI-459).
 
 **Rolling review theo nhóm (learned 2026-08-28 FI-190, từ bài học FI-187):** SF nhiều tasks (≥8) KHÔNG dồn 1 review lớn cuối — chia tasks theo nhóm 4-5 cùng đường (ví dụ nhóm watchdog-path, nhóm fusion-path) và dispatch code-reviewer ĐỘC LẬP trên diff nhóm đó ngay khi nhóm xong, song song với việc executor làm nhóm kế (khác file). Reviewer chỉ soi commit list cố định của nhóm (qua `git show <hash>`, không đọc working tree — chống lẫn commit nhóm đang chạy). Fix theo verdict từng nhóm trước khi merge; đừng để agent đứng chờ 30+ phút một review khổng lồ.
+
+**Review đa chiều — coverage + position-verify + meta-test (learned 2026-09-18, học từ alibaba/open-code-review + FI-458 retro):**
+1. **Coverage pass**: mỗi file trong diff phải có finding HOẶC explicit `reviewed, clean` — reviewer "cut corners" bỏ im lặng file là failure mode #1 của review-driven-by-language. File không nhắc = review chưa xong.
+2. **Position-verify pass**: finding `file:line` phải grep-verify tại vị trí trước khi xuất; sai → sửa hoặc đánh dấu `[unpositioned]` + nêu hàm/tên. Finding sai line nguy hiểm hơn không line.
+3. **Meta-test rule**: fix P0/P1 kèm test tái được bug đó — test phải ĐỎ trên code cũ (stash fix), XANH trên code mới. Test pass cả 2 = tautology (bài học SC4b `x===true || x===false` luôn pass).
+4. **Flaky tracker**: test fail 1 lần không tái hiện → ghi audit log chờ; tái diễn ≥2 lần cùng cause → bug, không bật ignore.
+5. **Combo integration check**: khi 2 story đổi cùng surface giao nhau (vd A deny Write + B đọc file A ghi), chạy 1 case kết hợp A+B trước merge — mỗi story xanh riêng KHÔNG bảo đảm combo xanh (bài học GH-42×GH-32 OUTBOX).
 
 **When:** Verification checkpoint reached (as defined in plan). **Precondition:** an Orca `taskId` exists (from Bridge 3); if not, fall back to chat approval.
 
@@ -735,6 +534,12 @@ orca orchestration gate-resolve --id "$GATE_ID" --resolution approved --json
 **Loop caps (all follow the same shape: max N → STOP + summarize + ask user — do NOT keep looping):**
 - **Task retry cap (3):** a single Phase 4 task may be retried at most 3 times, regardless of root cause. The verify-loop escape hatch above catches repeated *same-cause* failures; this cap catches the *different-cause* failure mode (fail A → fix → fail B → fix → fail C) where each failure looks novel but the task is clearly not converging. On the 4th attempt → STOP. Summarize: the task, each attempt's symptom + fix tried, why none converged. Ask the user how to proceed (different approach, escalate, or descope).
 - **Gate-resolve cap (3):** if a single gate is `rejected` 3 times, STOP re-submitting. Summarize: the gate, each rejection reason, what you changed each time, why the reviewer keeps rejecting. Ask the user — do not loop "submit → reject → patch → submit" past 3. Repeated rejection usually means you're not understanding the feedback, not that the next patch will fix it.
+
+**TASK-DONE mini-ritual (2 phút sau mỗi task — học từ story SF-COMPLETE, kit ≥2.14.5):** patterns tươi nhất nằm ở lúc task vừa đóng; chờ post-task-ritual cuối run là nhớ đã mờ. 3 câu:
+1. Task này sinh pattern/quy tắc gì chưa có trong kit/plan?
+2. Skill/CLI nào là đích nhỏ nhất chứa được nó?
+3. Patch ngay được <10' → patch + note learned-date; không → Principle 6 flag (KHÔNG tự sửa skill giữa chừng) — đừng scatter.
+Kết thúc bằng 1 dòng: `MINI-RITUAL <task-id>: N patterns → file(s) updated / no-new-patterns (trung thực)`.
 
 ---
 
@@ -764,6 +569,8 @@ orca linear label add --current --label "review-approved" --json
 
 **Security review (CONDITIONAL — when the change touches user input, auth, secrets, external APIs, or new dependencies):** spawn the `security-audit` agent on the diff before the verifier. OWASP-top-10 surface = unconditional trigger (XSS, SQLi, command injection, auth bypass, secret leakage). If it surfaces a real finding → fix before verifier (do NOT declare done on a known vuln). Non-trigger changes (refactor, docs, pure logic with no I/O) may skip this. **Force-on contract:** `Security audit: ON.` token runs security-audit unconditionally regardless of OWASP auto-detection — see Token Contract Table.
 
+**Mirror-back vendored (kit ≥2.14.5 — học từ story CLOSE / FI-380):** task nào đụng vendored assets (`resources/plugins/**`, kit/, launcher bundle) → port ngược MỌI thay đổi về lineage source (launcher/story-team-kit repo) TRƯỚC khi declare done — kể cả thay đổi của session khác tích lũy sẵn ở vendored. Vendored đi trước lineage = bundle sau này hạ cấp mất fixes (drift guard kit-verify sẽ FAIL, nhưng phải không đến bước đó).
+
 **Workflow complete** — offer next steps (PR, review, etc.).
 
 **Post-task ritual (skill self-improvement):** after workflow complete, invoke the `post-task-ritual` skill. This is the deliberate learning step (distinct from Principle 6, which is the in-flight flag — that one stays safe; this one is the intentional, end-of-task update). The skill defines the 6 steps (problems → solutions → patterns → which skill to update → update → clear log). Our workflow-specific overlay on top of the ritual:
@@ -791,34 +598,6 @@ Do NOT skip just because the task felt routine (routine tasks hide the most usef
 
 ---
 
-## Rollback Ritual (when something breaks mid-workflow)
+## Rollback Ritual + Fallback Behavior
 
-Per Phase 4 task-retry cap + gate-resolve cap, when you hit a STOP or a task clearly diverged, **recover to the last known-good state before retrying or escalating.** Do not pile a "fix" on top of a broken half-change.
-
-**Dedicated rollback agent:** for non-trivial rollbacks (multi-commit revert, orphan Linear/Orca state cleanup, Orca state reset), dispatch the `rollback-fixer` agent (subagent_type=`rollback-fixer`, color yellow). Brief it with: what broke + which Phase/task + last-green commit hash + files/state involved + what was tried. It reverts safely (prefer `git revert`), confirms with user before destructive ops (`reset --hard`, `reset --all`, force-push), preserves audit trail (Linear comment), and respects loop caps (task-retry 3 / gate-resolve 3 / verify-fail 2). For Quick-fix single-commit reverts, do it inline — overkill to dispatch. **Force-on contract:** `Rollback fixer: ON.` token dispatches `rollback-fixer` for ANY rollback (including single-commit Quick-fix reverts); default behavior (inline for small) is overridden — see Token Contract Table.
-
-- **Per-task granularity:** each Phase 4 task should be a single commit (or a small atomic group) so rollback = revert one commit, not reconstruct work. Commit hash goes in the audit log (Principle 7) — that's your checkpoint.
-- **Task diverged / verify-fail loop hit:** revert the task's commits and re-approach from the last green state.
-  ```bash
-  git log --oneline -5              # find the last green commit
-  git revert <bad-commit>           # preferred — preserves history + audit trail
-  # only use `git reset --hard <commit>` if the change was never pushed/committed AND you have the user's explicit OK (destructive)
-  ```
-- **Spec wrong after brainstorm (Phase 2) discovered at Phase 3+:** do NOT silently rewrite the spec mid-execute. STOP, re-open the Phase 2 question that was missed, update the spec, then resume. The spec is the contract — if it's wrong, the whole plan is suspect.
-- **Linear/Orca state created for an abandoned direction:** if a worktree/run/task was created for a direction you've since abandoned, mark it (don't delete — audit trail): set Linear issue to `Canceled` or comment why; resolve the Orca run as abandoned. Do not leave orphan state that confuses the next resume.
-- **Reset orchestration state (scoped):** when Orca state itself is the mess (stuck tasks, stale messages, orphan run) and per-item cleanup isn't enough, `orca orchestration reset (--all | --tasks | --messages) --json` resets one explicit scope. Prefer the narrowest scope (`--tasks` or `--messages`) before `--all`; `--all` is destructive and re-runs setup. Confirm with the user before `--all` (it wipes the run's state machine).
-- **Ask before destructive rollback:** `git reset --hard`, force-push, dropping DB migrations, deleting worktrees — these are irreversible. Per system rule, confirm with the user first unless they pre-authorized it. `git revert` is safe-by-default (additive); prefer it.
-
-## Fallback Behavior
-
-**Orca CLI failure:** if Orca CLI is unavailable or commands fail: continue with the superpowers workflow without bridges, inform the user ("Bridge X unavailable, continuing..."), and note which bridge failed for later debugging.
-
-**Skill-invoke failure (graceful degradation per phase):** if a delegated skill cannot be invoked (not installed, renamed, returns an error, or the skill loader reports it unknown) — do NOT silently fall back to "I'll just do it myself" for MANDATORY-skill phases. The MANDATORY skills exist to catch specific failure modes (brainstorming = holistic re-examination; writing-plans-linear = structured plan). Falling back silently loses that coverage. Instead:
-- **Phase 2 brainstorming unavailable:** STOP. Tell the user the skill is missing and that proceeding inline skips holistic re-examination (per Principle 5, flag don't silently act). Ask whether to (a) install/fix the skill and retry, or (b) proceed inline with an explicit user-acknowledged risk flag. Autonomous mode does NOT authorize this fallback — brainstorming STILL RUNS rule (line 312) binds.
-- **Phase 3 writing-plans-linear unavailable:** STOP. Same pattern — the skill structures the plan; inline risks skipping sections. Ask the user.
-- **Phase 4 superpowers:executing-plans unavailable (only when user picked superpowers execute-mode):** this is NOT mandatory (delegate/inline are valid alternatives). Inform the user the chosen execute-mode is unavailable, fall back to the default delegate table for this run, and note it in the audit log. Do NOT keep retrying the missing skill.
-- **Figma Principle 8 skills (image-to-code/gpt-taste/design-taste-frontend) unavailable:** these are conditional (only fire on figma.com URL). Skip the affected step, inform the user which verification step was skipped, and proceed — the workflow can complete without UX polish, just flag the gap in the audit log.
-
-General rule: a MANDATORY skill going missing is a STOP + ask (Phase 2, Phase 3); a CONDITIONAL skill going missing is a skip + flag (Figma steps, executing-plans when not the only option).
-
-This skill wraps the standard superpowers skills (brainstorming, writing-plans-linear) + Orca orchestration (execute via inline or `worker-start`, gate via `gate-create`) — adding bridge invocations at transitions and speaking the worker-side lifecycle when dispatched. No modifications to superpowers required.
+Khi workflow vỡ giữa chừng (verify-fail loop, spec wrong mid-execute, orphan state): **REQUIRED** đọc [references/rollback-ritual.md](references/rollback-ritual.md) — rollback rules, cách đánh dấu trạng thái bỏ rội, fallback per-phase khi bridge lỗi. Dispatch `rollback-fixer` theo Token Contract Table (`Rollback fixer: ON.`).

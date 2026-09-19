@@ -2,26 +2,39 @@
 # story-notify — thông minh: có context, có screenshot, có đề xuất
 # Usage: story-notify <type> <sf> [detail]
 # Types: stall | complete | gate-fail | gap | story-complete
+#
+# Transport chain (2.16.5 — banner phải hiển thị nguồn ĐÚNG app, không "Script Editor"):
+#   1. terminal-notifier -sender <bundle-id Wakii> — banner nguồn Wakii, click mở app
+#   2. osascript display notification — fallback mọi máy (banner ghi "Script Editor")
+#      (khi app expose `orca notifications show` CLI thì thêm làm tầng 1)
 set -u
 TYPE="${1:?}"; SF="${2:-}"; DETAIL="${3:-}"
 
+WAKII_APP="${WAKII_APP:-/Applications/Wakii.app}"
+
+notify() { # $1=title $2=body $3=sound
+  local title="$1" body="$2" sound="${3:-}"
+  local sender=""
+  if [ -d "$WAKII_APP" ]; then
+    sender=$(defaults read "$WAKII_APP/Contents/Info" CFBundleIdentifier 2>/dev/null)
+  fi
+  if command -v terminal-notifier >/dev/null 2>&1 && [ -n "$sender" ]; then
+    local args=(-title "$title" -message "$body" -sender "$sender" -group "wakii-story")
+    [ -n "$sound" ] && args+=(-sound "$sound")
+    terminal-notifier "${args[@]}" >/dev/null 2>&1 && return 0
+  fi
+  if [ -n "$sound" ]; then
+    osascript -e 'on run argv' -e 'display notification (item 2 of argv) with title (item 1 of argv) sound name (item 3 of argv)' -e 'end run' -- "$title" "$body" "$sound"
+  else
+    osascript -e 'on run argv' -e 'display notification (item 2 of argv) with title (item 1 of argv)' -e 'end run' -- "$title" "$body"
+  fi
+}
+
 case "$TYPE" in
-  stall)
-    osascript -e "display notification \"${SF} stall ${DETAIL} — watchdog sẽ tự resume\" with title\"⚠ Agent Stall\" sound name \"Basso\""
-    ;;
-  complete)
-    osascript -e "display notification \"${SF} hoàn thành 5/5 — có thể launch tier kế\" with title \"✓ SF Complete\" sound name \"Glass\""
-    ;;
-  gate-fail)
-    osascript -e "display notification \"${SF}: ${DETAIL} — KHÔNG ĐƯỢC nói 'xong'\" with title \"🚨 Gate FAIL\" sound name \"Basso\""
-    ;;
-  gap)
-    osascript -e "display notification \"Câu hỏi cần bạn trả lời: ${DETAIL}\" with title \"⚠ REQUIREMENT-GAP\" sound name \"Ping\""
-    ;;
-  story-complete)
-    osascript -e "display notification \"Story hoàn thành! Merge main khi sẵn sàng\" with title \"🏁 STORY-COMPLETE\" sound name \"Hero\""
-    ;;
-  *)
-    osascript -e "display notification \"${DETAIL}\" with title \"${SF}\""
-    ;;
+  stall)          notify "⚠ Agent Stall" "${SF} stall ${DETAIL} — watchdog sẽ tự resume" "Basso" ;;
+  complete)       notify "✓ SF Complete" "${SF} hoàn thành 5/5 — có thể launch tier kế" "Glass" ;;
+  gate-fail)      notify "🚨 Gate FAIL" "${SF}: ${DETAIL} — KHÔNG ĐƯỢC nói 'xong'" "Basso" ;;
+  gap)            notify "⚠ REQUIREMENT-GAP" "Câu hỏi cần bạn trả lời: ${DETAIL}" "Ping" ;;
+  story-complete) notify "🏁 STORY-COMPLETE" "Story hoàn thành! Merge main khi sẵn sàng" "Hero" ;;
+  *)              notify "${SF}" "${DETAIL}" "" ;;
 esac

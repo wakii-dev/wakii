@@ -178,11 +178,11 @@ function selfTest() {
   const check = (label, cond) => { if (!cond) failures.push(label) }
   try {
     const out = path.join(tmp, 'pack')
-    const r1 = runExport({ names: ['brainstorm', 'story-workflow'], kitRoot, out, force: false })
+    const r1 = runExport({ names: ['orca-bridge', 'story-workflow'], kitRoot, out, force: false })
     check('A1: export 2 skill thành công', r1.ok === true)
-    check('A2: 2 thư mục có SKILL.md', ['brainstorm', 'story-workflow'].every((n) => fs.existsSync(path.join(out, n, 'SKILL.md'))))
+    check('A2: 2 thư mục có SKILL.md', ['orca-bridge', 'story-workflow'].every((n) => fs.existsSync(path.join(out, n, 'SKILL.md'))))
     const index = fs.existsSync(path.join(out, 'INDEX.md')) ? fs.readFileSync(path.join(out, 'INDEX.md'), 'utf8') : ''
-    check('A3: INDEX.md có bảng + đủ tên', index.includes('| Skill | Mô tả | Outputs |') && index.includes('brainstorm') && index.includes('story-workflow'))
+    check('A3: INDEX.md có bảng + đủ tên', index.includes('| Skill | Mô tả | Outputs |') && index.includes('orca-bridge') && index.includes('story-workflow'))
     let pkg = null
     try { pkg = JSON.parse(fs.readFileSync(path.join(out, 'package.json'), 'utf8')) } catch { /* checked dưới */ }
     const kitVersion = readKitManifest(kitRoot).manifest.version
@@ -192,7 +192,9 @@ function selfTest() {
     check('B1: tên lạ → fail exit 1', r2.ok === false && r2.code === 1)
     check('B2: pack2 không được tạo', !fs.existsSync(path.join(tmp, 'pack2')))
 
-    const r3 = runExport({ names: ['brainstorm'], kitRoot, out, force: false })
+    // đích không rỗng: orca-bridge đã tồn tại trong pack từ r1 — guard thật
+    // (brainstorm đã retire → dùng nó chỉ fail "tên không tồn tại", không chạm guard)
+    const r3 = runExport({ names: ['orca-bridge'], kitRoot, out, force: false })
     check('C1: đích không rỗng → fail', r3.ok === false && r3.code === 1)
   } finally {
     try { fs.rmSync(tmp, { recursive: true, force: true }) } catch { /* tmp */ }

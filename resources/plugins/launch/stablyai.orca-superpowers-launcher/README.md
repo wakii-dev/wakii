@@ -17,19 +17,6 @@ Plugin + story-team-kit được đóng gói sẵn vào build Wakii (orca fork):
 - Khi Wakii khởi động, `bootstrapBundledPlugins` tự cài plugin; worker `installKit()`
   tự chép kit (skills/agents/bin CLIs) vào `~/.claude/` — idempotent theo version
   marker `.story-team-kit-version`, KHÔNG đè skill/CLI ngoài kit.
-- `installKit` validate manifest **mỗi lần kích hoạt** (trước marker early-return):
-  schema `provides[]` tay zero-dep + two-way cross-check provides ↔ đĩa + **guard
-  trùng id** (2 entry cùng `name` trong `provides[]` → block kèm liệt kê entry —
-  pattern `register_tool` của Qwen-Agent: id catalog phải unique, không ghi đè
-  im lặng). Kit hỏng → desktop notification + block-all (không copy, marker giữ
-  nguyên; lần kích hoạt sau retry), plugin vẫn chạy. Thiếu `kit.json` → silent no-op.
-- **Capability check trước dispatch**: worker chỉ chạy kit CLI qua `runKit()` —
-  mỗi lần dispatch đối chiếu tên bin với `provides[]` (bin) của `kit.json`; tên
-  lạ → chặn TRƯỚC khi spawn với lỗi đích danh `capability '<tên>' không có trong
-  kit.json provides[]` (pattern `lsp._unsupported_method` của neovim), kết quả
-  hiện đúng chỗ panel đọc (`story.ops.result` / `dash.gate.result`). Helper export
-  từ `main.mjs`: `assertCapability(name)` + `kitBinCatalog(kitRoot)`; `kit.json`
-  không đọc được → catalog null → pass-through (install path đã fail-loud riêng).
 - Fork bật `pluginSystemEnabled: true` mặc định; consent plugin vẫn duyệt 1 lần.
 
 **Update plugin/kit rồi build lại:**
@@ -39,35 +26,7 @@ Plugin + story-team-kit được đóng gói sẵn vào build Wakii (orca fork):
 # sau đó commit repo orca (resources + index) rồi build
 ```
 
-Kit flow (source-of-truth): repo **story-team-kit** → `sync-kit.sh` (nằm ở
-**launcher repo** `local.superpowers-launcher/`, mặc định vendor từ
-`../story-team-kit` tính từ launcher repo, không phải từ plugin folder; script
-này KHÔNG đi vào bundle orca) → `kit/` → `bundle-into-orca.sh` (copy plugin + kit
-vào repo orca + rehash `bundled-plugins.json`).
-
-## Skills import/export (community)
-
-2 CLI zero-dep (Node builtins) trong `kit/bin/` — 2 chiều cho skill chuẩn Claude (thư mục `<name>/SKILL.md` với frontmatter `name` + `description`):
-
-```bash
-# IMPORT 1 skill từ community vào kit (validate trước, copy sau — fail-loud)
-node kit/bin/wakii-skill-import ~/Downloads/some-skill --kit ./kit --source ten-nguồn
-#   → copy vào kit/skills/<frontmatter-name>/, thêm entry provides[]
-#     (owner "community/<nguồn>", inputs/outputs mặc định từ description —
-#     override bằng --inputs "a, b" --outputs "..."), bump kit.json version patch
-#   → collide với name đã có trong provides[]/trên đĩa, thiếu SKILL.md,
-#     kit.json hỏng → exit 1, không sửa nửa vời
-#   → version mới → installKit() tự re-copy vào ~/.claude/ lần activate sau
-
-# EXPORT skills ra pack để cài vào harness khác
-node kit/bin/wakii-skill-export brainstorm story-workflow --out /tmp/skills-pack --kit ./kit
-#   hoặc: wakii-skill-export --from skills.txt --out /tmp/skills-pack
-#   → <out>/<name>/ (copy nguyên thư mục) + INDEX.md (bảng name/mô tả/outputs
-#     từ provides[]) + package.json (name "wakii-skills-pack", version từ kit.json)
-#   → tên lạ / đích không rỗng (không --force) → exit 1 trước khi copy
-```
-
-Kit dir nhận qua `--kit <dir>` hoặc env `WAKII_KIT_DIR` (không default `~/.claude`). Tự-check: `node kit/bin/wakii-skill-import --selftest && node kit/bin/wakii-skill-export --selftest` (chỉ ghi vào temp dir).
+`sync-kit.sh` riêng chỉ vendor kit từ `../story-team-kit` vào `kit/`.
 
 ## Why a control deck (not a dashboard)
 The Orca panel→worker bridge is a **closed transport**: a sandboxed panel iframe can only call three host actions — `workspace.readContext`, `terminal.sendText`, `notifications.show` (see Orca's `plugin-host-api.js`, `PLUGIN_PANEL_ACTIONS`). On top of that, the panel shell injects `connect-src 'none'` CSP, so `fetch`/`XHR`/`WebSocket` to any origin is blocked. There is no route from the panel to plugin-registered commands or to the filesystem. All visualization happens **in the terminal via the agent**; this plugin only sends it the right prompts.
@@ -144,9 +103,8 @@ Directive strings are mirrored in `directives.json` (single source of truth), `p
 - `directives.json` — single source of truth for opt-in directives + tokens
 - `build-directives.mjs` — validator (panel.html ↔ directives.json byte-equality)
 - `README.md` — this file
-- `kit/` — story-team-kit vendored bởi `sync-kit.sh` (bundle built-in; `main.mjs` installKit tự chép vào `~/.claude/` sau khi validate manifest fail-loud)
-- `tests/kit-manifest-negative-tests.mjs` — negative harness cho installKit + runKit (9 cases [a]–[i] + positive control + HOME guard; chạy `node tests/kit-manifest-negative-tests.mjs`, chỉ đụng temp dirs)
-- `sync-kit.sh` — vendor kit từ repo story-team-kit vào `kit/` *(chỉ tồn tại ở launcher repo — không đi vào bundle orca)*
+- `kit/` — story-team-kit vendored bởi `sync-kit.sh` (bundle built-in; `main.mjs` installKit tự chép vào `~/.claude/`)
+- `sync-kit.sh` — vendor kit từ `../story-team-kit` vào `kit/`
 - `bundle-into-orca.sh` — đóng gói plugin+kit vào `orca/resources/plugins/launch/` (sync → copy → rehash → verify)
 - `scripts/hash-plugin.cjs` — content hash `orca-plugin-tree-v1` (cùng thuật toán với verifier của orca)
 - `FEATURE-REQUEST-panel-filesystem.md` — deferred request to Orca (loosen panel CSP for loopback); see `## Caveats`

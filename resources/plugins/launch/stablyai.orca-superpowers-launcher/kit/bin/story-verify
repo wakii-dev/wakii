@@ -117,6 +117,40 @@ for c in (d.get('comments') or {}).get('nodes', []):
 print(f'{st}|{approved}')" 2>/dev/null || echo "unknown|0"
 }
 
+dest_fetch_check() { # $1 repo $2 dest — pattern dest_fetch_check (story-launch); rc = git rc
+  DEST_REMOTE="$(git -C "$1" config "branch.$2.remote" 2>/dev/null)"
+  [ -n "$DEST_REMOTE" ] || DEST_REMOTE=origin
+  local fc # HTTPS treo câm → low-speed env cắt sau 30s (timeout cmd chỉ có Linux)
+  fc=(git -C "$1" fetch "$DEST_REMOTE" "$2")
+  command -v timeout >/dev/null 2>&1 && fc=(timeout 60 "${fc[@]}")
+  FERR=$(GIT_HTTP_LOW_SPEED_LIMIT=1000 GIT_HTTP_LOW_SPEED_TIME=30 "${fc[@]}" 2>&1 1>/dev/null)
+}
+
+dc_enabled_read() { # stdout 0/1 — .distributed.enabled từ VERIFY_CFG_FILE (default 0)
+  python3 -c "
+import json, sys
+try: print(int(bool(json.load(open(sys.argv[1])).get('distributed', {}).get('enabled', False))))
+except Exception: print(0)" "$VERIFY_CFG_FILE" 2>/dev/null
+}
+
+b4_check() { # $1 wt $2 dest $3 enabled(0/1) → stdout 2 dòng: "<PASS|FAIL>\n<stale-note>"
+  local wt="$1" dest="$2" rt note=""
+  if [ "$3" = "1" ]; then
+    if dest_fetch_check "$wt" "$dest"; then
+      # FETCH_HEAD chỉ đọc khi fetch rc=0 — fetch cũ không nhiễm verdict
+      rt=$(git -C "$wt" rev-parse FETCH_HEAD 2>/dev/null)
+      if [ -n "$rt" ] && git -C "$wt" merge-base --is-ancestor HEAD "$rt" 2>/dev/null; then
+        printf 'PASS\n\n'; return
+      fi
+    else
+      note="fetched-stale (fetch ${DEST_REMOTE:-origin}/$dest fail — verdict local)"
+      [ -n "${FERR:-}" ] && note="$note [$(printf '%s' "$FERR" | head -1)]"
+    fi
+  fi
+  git -C "$wt" merge-base --is-ancestor HEAD "$dest" 2>/dev/null && printf 'PASS\n' || printf 'FAIL\n'
+  printf '%s\n' "$note"
+}
+
 verify_sf() { # $1 worktree → in "<sf>|<verdict>|<detail>|<b1>|<b2>|<b3>|<b4>|<b5>"
   wt="$1"; sf=$(basename "$wt")
 
@@ -149,6 +183,15 @@ verify_sf() { # $1 worktree → in "<sf>|<verdict>|<detail>|<b1>|<b2>|<b3>|<b4>|
   if   [ "$code_commits" -gt 0 ] && [ "$test_files" -gt 0 ]; then b1="PASS"
   elif [ "$code_commits" -gt 0 ]; then b1="WARN"; else b1="FAIL"; fi
   b1_note=""
+  N=$(echo "$sf" | grep -oE '[0-9]+' | head -1)
+  STORY_DIR=$(basename "$BRACKET" .md 2>/dev/null || true)
+  # context-pack budget (team discipline v1.1): pack > 8KB (~2k tokens) →
+  # WARN slice lại — pack phình đốt token mỗi lần agent đọc (caveman doctrine)
+  cp_size=0
+  for cand in "$wt"/docs/superpowers/contexts/*-sf-"$N".md "$wt"/docs/superpowers/contexts/sf-"$N".md; do
+    [ -f "$cand" ] && { cp_size=$(wc -c < "$cand"); break; }
+  done
+  if [ "${cp_size:-0}" -gt 8192 ]; then b2="WARN"; fi
   head_hash=$(git -C "$wt" rev-parse --short HEAD 2>/dev/null)
 
   # B1+ evidence gate (verify.evidenceGate) — test phải PASS CÓ BẰNG CHỨNG:
@@ -230,9 +273,18 @@ verify_sf() { # $1 worktree → in "<sf>|<verdict>|<detail>|<b1>|<b2>|<b3>|<b4>|
     fi
   else lstate="unknown"; approved=0; b3="UNKNOWN"; fi
 
-  # B4 merged — HEAD là ancestor của nhánh đích (cùng object store mọi worktree)
+  # B4 merged — HEAD là ancestor của nhánh đích (cùng object store mọi worktree).
+  # SF-2 remote-safe: distributed ON → fetch dest trước (máy khác push merge);
+  # fetch fail → verdict local + ⚠ fetched-stale; OFF → path cũ nguyên vẹn (zero-diff)
+  b4_note=""
   if [ -n "$dest" ] && git -C "$wt" rev-parse --verify -q "$dest" >/dev/null; then
-    git -C "$wt" merge-base --is-ancestor HEAD "$dest" 2>/dev/null && b4="PASS" || b4="FAIL"
+    b4line=$(b4_check "$wt" "$dest" "$DC_ON")
+    # $(...) xé newline đuôi — chỉ có dòng 2 khi b4line chứa newline thật
+    case "$b4line" in
+      *$'\n'*) b4=${b4line%%$'\n'*}; b4_note=${b4line#*$'\n'} ;;
+      *) b4="$b4line" ;;
+    esac
+    [ -n "$b4_note" ] && echo "distributed: ⚠ $b4_note" >&2
   else b4="FAIL"; fi
 
   # B3.5 runtime smoke (verify.runtimeSmoke — mặc định OFF): evidence
@@ -257,7 +309,7 @@ verify_sf() { # $1 worktree → in "<sf>|<verdict>|<detail>|<b1>|<b2>|<b3>|<b4>|
   elif [ "$core_fail" -gt 0 ] || [ "$b3" = "FAIL" ] || [ "$b3" = "OUTBOX" ]; then verdict="INCOMPLETE"
   elif [ "$b5" = "PASS" ]; then verdict="COMPLETE"
   else verdict="READY-TO-DONE"; fi
-  detail="code:${code_commits}c tests:${test_files}f plan:${open_tasks} open review:${linear:-?} dest:${dest:-?}${lint_note:+ $lint_note}${b1_note:+ ⚠ $b1_note}${real_note:+ $real_note}${smoke_note:+ ⚠ $smoke_note}"
+  detail="code:${code_commits}c tests:${test_files}f plan:${open_tasks} open review:${linear:-?} dest:${dest:-?}${lint_note:+ $lint_note}${b1_note:+ ⚠ $b1_note}${real_note:+ $real_note}${smoke_note:+ ⚠ $smoke_note}${b4_note:+ ⚠ $b4_note}"
 
   echo "$sf|$verdict|$detail|$b1|$b2|$b2b|$b3|$b4|$b5|$b_smoke"
 }
@@ -277,6 +329,9 @@ for w in wts:
     if p: print(p + '|' + li + '|' + br)
 ") || WT_META=""
 
+# SF-2 remote-safe: distributed flag đọc 1 lần (zero-diff khi OFF — B4 không fetch)
+DC_ON=$(dc_enabled_read); DC_ON=${DC_ON:-0}
+
 WTS=()
 for ws in "$HOME"/orca/workspaces/*/; do
   for wt in "$ws"sf-*/; do
@@ -293,6 +348,57 @@ fi
 
 ROWS=(); EXIT=0
 for wt in "${WTS[@]}"; do ROWS+=("$(verify_sf "$wt")"); done
+
+# ── story-level derive từ Linear (FI-458 SF-4): bracket×Linear là nguồn story —
+# máy này thiếu worktree máy khác → local-only kết luận STORY-COMPLETE sai.
+# Dual-path đọc (linear_meta: orca CLI trước, curl fallback). Per-issue không
+# đọc được → warn-only (fail-open — stale bracket id không được block story);
+# KHÔNG đọc được Linear (không orca/key) → warn + fallback local-only.
+BR_SEEN=""; BR_LIST=""
+LIN_TOTAL=0; LIN_DONE=0; LIN_OPEN=0; LIN_UNKNOWN=0; LIN_OPEN_IDS=""; DERIVE_ROWS=""
+for wt in ${WTS[@]+"${WTS[@]}"}; do
+  for bf in "$wt"/docs/superpowers/brackets/*.md; do
+    [ -f "$bf" ] || continue
+    case "$BR_SEEN" in *"|$bf|"*) continue ;; esac
+    BR_SEEN="$BR_SEEN|$bf|"
+    BR_LIST="$BR_LIST$bf"$'\n'
+  done
+done
+if [ -n "$BR_LIST" ]; then
+  WTN=""  # worktree sống (basename) — SF còn wt sống thì B-rows của wt thay mặt
+  for wt in ${WTS[@]+"${WTS[@]}"}; do WTN="$WTN|$(basename "$wt")"; done
+  while IFS= read -r bf; do
+    [ -n "$bf" ] || continue
+    while IFS='|' read -r sfnum lin; do
+      [ -n "$lin" ] || continue
+      LIN_TOTAL=$((LIN_TOTAL+1))
+      lmeta=$(linear_meta "$lin")
+      lst=${lmeta%%|*}
+      n=$(printf '%s' "$sfnum" | grep -oE '[0-9]+' | head -1)
+      case "$WTN" in
+        *"|sf-$n-"*|*"|sf-$n|") HASWT=1 ;;
+        *) HASWT=0 ;;
+      esac
+      case "$lst" in
+        Done)
+          LIN_DONE=$((LIN_DONE+1))
+          [ "$HASWT" = "0" ] && DERIVE_ROWS="${DERIVE_ROWS}  ✓ $sfnum Done theo Linear — worktree đã dọn [derive]"$'\n' ;;
+        unknown|"")
+          LIN_UNKNOWN=$((LIN_UNKNOWN+1)) ;;
+        *)
+          LIN_OPEN=$((LIN_OPEN+1)); LIN_OPEN_IDS="$LIN_OPEN_IDS $lin"
+          DERIVE_ROWS="${DERIVE_ROWS}  ○ $sfnum ($lin) chưa Done [derive]"$'\n' ;;
+      esac
+    done <<< "$(awk '
+      function emit() { if (sf != "" && lin != "") print sf "|" lin }
+      /^## / { if ($0 !~ /^## SF-/) { emit(); sf = ""; next }
+               emit(); sf = $2; lin = ""; next }
+      /^linear:/ && sf != "" { lin = $2 }
+      END { emit() }' "$bf")"
+  done <<< "$BR_LIST"
+fi
+LIN_READ=0
+if [ "$LIN_DONE" -gt 0 ] || [ "$LIN_OPEN" -gt 0 ]; then LIN_READ=1; fi
 
 if [ "$JSON_OUT" = 1 ]; then
   echo "["
@@ -326,7 +432,21 @@ else
       *) incomplete=1; all_done=0 ;;
     esac
   done
-  echo ""
+  # bracket×Linear fold (SF-4): per-SF rows + chặn khi còn SF chưa Done;
+  # per-issue không đọc được → warn-only (fail-open). Nhánh warn CẤM chứa
+  # substring "STORY-COMPLETE" — test assert điểm đó (chỉ verdict dương mới in).
+  [ -n "$DERIVE_ROWS" ] && printf '%s' "$DERIVE_ROWS"
+  if [ "$LIN_TOTAL" -gt 0 ] && [ "$LIN_READ" = 1 ]; then
+    if [ "$LIN_OPEN" -gt 0 ]; then
+      all_done=0
+      echo "⚠ Linear derive:${LIN_OPEN_IDS# } chưa Done theo bracket — story chưa hoàn thành."
+    else
+      echo "Linear derive: $LIN_DONE/$LIN_TOTAL SF Done theo bracket."
+    fi
+    [ "$LIN_UNKNOWN" -gt 0 ] && echo "⚠ Linear derive: $LIN_UNKNOWN issue không đọc được — bỏ qua (fail-open)."
+  elif [ "$LIN_TOTAL" -gt 0 ]; then
+    echo "⚠ không đọc được Linear (không orca/key) — story-level chỉ dựa worktree máy này."
+  fi
   if [ "$all_done" = 1 ]; then
     echo "STORY-COMPLETE ✓ — mọi SF đủ 5 bước. User merge main được."
   elif [ "$violation" = 1 ]; then

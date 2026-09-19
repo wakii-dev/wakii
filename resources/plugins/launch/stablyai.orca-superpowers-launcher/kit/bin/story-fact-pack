@@ -8,7 +8,7 @@ stdin: {"source": "startup|resume|clear|compact|fork", "session_id": ..., "cwd":
 Source filter: SKIP `compact` — story-compact-recovery legacy đã xử lý compact
 (co-tồn tại: GIỮ CẢ HAI, không double-inject). Inject cho startup|resume|clear|fork.
 
-Components (thứ tự ưu tiên 1→3; vượt cap 2KB → cắt TỪ DƯỚI LÊN, cuối in
+Components (thứ tự ưu tiên 1→4; vượt cap 2KB → cắt TỪ DƯỚI LÊN, cuối in
 "[đã cắt N ký tự]"):
   1. story đang chạy + gates pending — bracket MỚI NHẤT trong
      <main-checkout>/docs/superpowers/brackets/ (tên + SF tiers + linear IDs)
@@ -17,6 +17,8 @@ Components (thứ tự ưu tiên 1→3; vượt cap 2KB → cắt TỪ DƯỚI L
      checkout (helpers import từ story-checkpoint SF-1), error lines nguyên văn
   3. lessons — .wakii/lessons.jsonl nếu có (SF-3 tạo); vắng → skip; lệch
      stamp theo HEAD → dòng ⚠ stale thay vì dùng im lặng (SC5 consumer #2)
+  4. kit lệch — installed marker ≠ kit vendored trong wakii repo đang mở
+     (chỉ khi repo có resources/.../kit/kit.json; fail-open)
 
 Fail-open xuyên suốt: mọi lỗi → exit 0; không có gì → stdout rỗng.
 
@@ -234,6 +236,29 @@ def lessons_block(store):
     return "lessons:\n" + "\n".join(items[:MAX_LESSONS])
 
 
+def kit_lag_line(repo):
+    """Component 4 (ưu tiên thấp nhất — apply_cap cắt trước): kit installed
+    (~/.claude marker `version[:hash]`) ≠ kit vendored trong repo đang mở
+    (resources/.../kit/kit.json). Fail-open: không phải wakii repo / thiếu
+    file / parse lỗi → rỗng."""
+    try:
+        vendored = (pathlib.Path(repo) / "resources" / "plugins" / "launch"
+                    / "stablyai.orca-superpowers-launcher" / "kit" / "kit.json")
+        if not vendored.is_file():
+            return ""
+        repo_ver = str(json.loads(vendored.read_text(encoding="utf-8")).get("version") or "")
+        marker = _HOME / ".claude" / ".story-team-kit-version"
+        if not marker.is_file():
+            return ""
+        inst_ver = marker.read_text(encoding="utf-8", errors="replace").strip().split(":")[0]
+        if not repo_ver or not inst_ver or repo_ver == inst_ver:
+            return ""
+        return (f"⚠ kit lệch: installed {inst_ver} ≠ repo {repo_ver} — "
+                f"restart Wakii (bundle sync) hoặc chạy lại installKit")
+    except Exception:  # noqa: BLE001 — fail-open
+        return ""
+
+
 def build_sections(repo, store):
     sections = []
     bpath, btext = latest_bracket(repo)
@@ -248,6 +273,9 @@ def build_sections(repo, store):
     lessons = lessons_block(store)
     if lessons:
         sections.append(lessons)
+    lag = kit_lag_line(repo)
+    if lag:
+        sections.append(lag)
     return sections
 
 

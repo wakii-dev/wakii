@@ -64,6 +64,9 @@ Không chắc đích → flag vào improvements-log, đừng nhét nhầm chỗ.
 - Nếu kit có mặt: nhắc user chạy sync-from-local sau
 
 ### 5b. INDEX — ghi story vừa xong vào graph memory
+> **NGUỒN CHÍNH (team discipline v1, 2026-09-13):** graph memory là nơi DUY NHẤT
+> lưu patterns/bài học durable. MEMORY.md, improvements-log chỉ giữ CON TRỎ
+> (1 dòng + link) — không chép nội dung. Tránh 3-nơi phân tán (FI-458 retro).
 Sau khi patterns đã lọc (step 3) và skill đã update (step 5): ghi story vừa xong vào graph memory `docs/superpowers/memory/*.md` (format SF-1 — xem ontology.md + parser `bin/story-memory-parse`). CURATED theo thiết kế — KHÔNG auto-extract đậm đặc: chỉ entities/triples thật sự đáng ghi (patterns mới, decisions, bugs, files produced).
 
 Quy tắc append:

@@ -85,6 +85,32 @@ Chia việc (PM làm lúc CREATE/APPROVE):
 - Đây chính là cấu trúc agents đã có (task-executor xanh, code-reviewer xanh lam,
   verifier cam) — section này formal hóa cách nhìn chúng như MỘT TEAM.
 
+# ⚠️ MINDSET SỐ 0 — BROWSER LÀ NƠI SF ĐƯỢC CHỨNG MINH (port từ orca-superpowers-workflow)
+
+**Đây không phải rule để check — đây là cách Dev làm việc trong worktree SF.**
+Gate 3 (`story-test` browser walkthrough) chỉ là LƯU ĐIỂM chốt; mindset này áp
+từ dòng code UI đầu tiên:
+
+- **SAI:** code → tests pass → nói agent "mở browser test" → coi như xong.
+  Tests kiểm MẢNH RIÊNG — chỉ browser kiểm CHUỖI LIỀN MẠCH (bài học 30/8:
+  auth 205/205 pass, reviewer approve, user KHÔNG ĐĂNG NHẬP ĐƯỢC).
+- **ĐÚNG:** mở browser TRƯỚC khi code (nhìn hiện trạng + screenshot BEFORE)
+  → làm → mở lại + AFTER → so cạnh nhau → mới nói "xong".
+
+**Quy tắc tuyệt đối (giữ nguyên từ workflow thường):**
+1. Screenshot > DOM query — ảnh thấy TOTAL, DOM chỉ từng mảnh; DOM query fail
+   ≠ kết luận "không bug" (sai selector / chưa render / shadow DOM)
+2. Tự nhìn > agent báo cáo; screenshot fail → nói thật + nhờ user nhìn giúp —
+   KHÔNG lặng lẽ fallback sang DOM đo thay
+3. Flow walkthrough (login → navigate → click → logout) là CHUẨN DUY NHẤT cho
+   "xong" — chính là nội dung Gate 3, không phải thủ tục cuối cho có
+4. CDP screenshot timeout (window không surface) → headless Chrome TRÊN CÙNG
+   build vẫn được — pixel thật, tự Read ảnh; KHÔNG thay bằng DOM (FI-464)
+5. CLI chỉ dùng cho: git, tests, servers, deploy — KHÔNG thay browser
+
+Chi tiết 3 tầng nhận thức (DOM / screenshot / flow) + fallback đầy đủ: xem
+`orca-superpowers-workflow/SKILL.md` — MINDSET SỐ 0.
+
 ## Operating principles (học từ FI-151 chạy thật — giữ nguyên, không pha trộn)
 
 1. **Thiết kế cho việc mình sẽ sai.** Mọi giả định "chắc chắn rồi" là một bug chưa bộc lộ
@@ -212,6 +238,11 @@ Run the full-strictness epic pipeline:
    - Tier không shippable độc lập (chỉ có nghĩa khi tier sau xong) → gộp vào
      phase sau. Watchdog --launch-next cần người duyệt phase-gate nếu đặt
      RELEASE_GATE=1 (env, mặc định off).
+   - **Mỗi phase checkpoint gồm 1 vòng security-audit** (OWASP surface +
+     repo-hygiene pass trong agent def: secrets/.env trong diff, exec-bit mới,
+     permissions, lockfile-deps) — phase không checkpoint nếu audit còn P0/P1
+     (học FI-458: 3 lần exec-bit + .env lọt). Lớp secrets TRƯỚC commit vẫn là
+     story-diff-review (gate per-task) — checkpoint là lớp thứ 2, không thay thế.
 6. `superpowers:brainstorming` MANDATORY + every clarifying question:
    - **Facts vs decisions** (learned 2026-09-03, mattpocock/grilling): cái mà
      code/repo/Linear trả lời được = FACT → tự tra (read code, dispatch subagent),
@@ -344,7 +375,7 @@ What "inherit, don't re-analyze" means per phase inside an SF run:
 ```
 1. story-preflight    → trước code (đúng branch, server, DB)
 2. story-diff-review  → trước commit (debug code, secrets, scope)
-3. story-test         → trước "xong" (browser walkthrough, Rule 0)
+3. story-test         → trước "xong" (browser walkthrough, Rule 0; SF pure CLI không có web port → proxy: test suite exit 0 + sandbox demo chạy script installed thật + evidence logs + marker ghi chú CLI-equivalent — learned 2026-09-14 FI-460)
 4. story-snapshot-env → trước/sau merge
 5. story-post-merge   → sau merge (tests + browser + agents)
 ```
@@ -454,12 +485,12 @@ one SF and reports DONE/BLOCKED.
   (audit trail) tới khi người tự xóa.
 
 ### OPERATE (progress)
-- Each SF's workflow run updates its sub-issue state via Bridge 5 — the
-  bracket panel reads these states (worker polls Linear + worktree ps + task-list).
-- Panel data flow (verified end-to-end): panel writes `story.request` to plugin
-  storage → worker poll (3s) loads that bracket file → `story.snapshot` → panel
-  auto-poll (15s) renders. Worker is LAZY — first request after app restart waits
-  until a command/event wakes it; run "Story List" once (⌘J) after restart.
+- Each SF's workflow run updates its sub-issue state via Bridge 5 — states đọc
+  bằng `story-status` / `story-top` / Linear trực tiếp.
+- Plugin ≥1.7.0 là HEADLESS: panel story.request/story.snapshot handshake ĐÃ XOÁ
+  (cùng các poller consumer). Worker báo tiến độ qua orchestration messages —
+  coordinator đọc bằng `inbox` / `check --wait`; không còn poll 3s/15s, không
+  cần "Story List ⌘J" sau restart.
 - An SF blocked at an async user gate (e.g. SF-6's user-review-gate) blocks
   ONLY itself; siblings keep running. The node stays yellow with the gate pending.
 - Blocked/failed SF → node red; downstream tiers visibly wait. Escalate per

@@ -26,10 +26,29 @@ const OUTPUT_CAP = 10 * 1024 * 1024; // chặn OOM nếu CLI đề stdout bất 
 // ── kit.json → serverInfo.version ─────────────────────────────────────────────
 function kitVersion() {
   try {
-    return String(JSON.parse(fs.readFileSync(path.join(KIT_ROOT, 'kit.json'), 'utf8')).version || '0.0.0');
+    return String(JSON.parse(fs.readFileSync(path.join(KIT_ROOT, 'kit.json'), 'utf8')).version || '') || installedVersion();
   } catch {
-    return '0.0.0';
+    return installedVersion();
   }
+}
+
+// Layout cài ~/.claude/bin/: kit.json KHÔNG nằm trên bin → fallback marker
+// .story-team-kit-version (định dạng "version" hoặc "version:kitHash" từ 2.14.2)
+function installedVersion() {
+  // marker thật nằm ở ~/.claude/ (installKit ghi join(claude, ...) — main.mjs:903);
+  // đường HOME-root là legacy fallback. Bug 2.16.3-: đọc ngược layout → 0.0.0 mãi.
+  for (const p of [
+    path.join(os.homedir(), '.claude', '.story-team-kit-version'),
+    path.join(os.homedir(), '.story-team-kit-version'),
+  ]) {
+    try {
+      const marker = fs.readFileSync(p, 'utf8').trim();
+      if (marker) return marker.split(':')[0] || '0.0.0';
+    } catch {
+      /* thử đường kế tiếp */
+    }
+  }
+  return '0.0.0';
 }
 
 // ── orca CLI: chuỗi fallback y hệt kit bash CLIs (ORCA_BIN → PATH → known paths) ──
@@ -193,7 +212,14 @@ async function runOrcaTool(orcaArgs, args) {
     cwd = path.resolve(process.cwd(), args.cwd.trim());
     if (!fs.existsSync(cwd)) return err(`cwd not found: ${cwd}`);
   }
-  const r = await runOrca(orcaArgs, cwd);
+  const orcaArgsFull = [...orcaArgs];
+  if (typeof args.run === 'string' && args.run.trim()) {
+    const rid = args.run.trim();
+    // charset chặt — args của CLI không được Inject từ ngoài
+    if (!/^[\w:-]{1,64}$/.test(rid)) return err(`run id không hợp lệ: ${rid}`);
+    orcaArgsFull.push('--run', rid);
+  }
+  const r = await runOrca(orcaArgsFull, cwd);
   if (r.timedOut) return err(`timed out after 30s: orca ${orcaArgs.join(' ')}`);
   if (!r.ok) {
     return err(`orca ${orcaArgs.join(' ')} failed (exit ${r.code}): ${(r.stderr || r.stdout || '(no output)').trim().slice(-500)}`);
@@ -226,6 +252,7 @@ const TOOLS = [
       type: 'object',
       properties: {
         cwd: { type: 'string', description: 'Working directory passed to the orca CLI (default: server cwd).' },
+        run: { type: 'string', description: 'Run ID (run_xxx) — query this run explicitly instead of the one bound to the cwd terminal (2.14.4).' },
       },
     },
     run: (args) => runOrcaTool(['orchestration', 'gate-list', '--json'], args),
@@ -245,6 +272,7 @@ const TOOLS = [
       type: 'object',
       properties: {
         cwd: { type: 'string', description: 'Working directory passed to the orca CLI (default: server cwd).' },
+        run: { type: 'string', description: 'Run ID (run_xxx) — query this run explicitly instead of the one bound to the cwd terminal (2.14.4).' },
       },
     },
     run: (args) => runOrcaTool(['orchestration', 'task-list', '--json'], args),
