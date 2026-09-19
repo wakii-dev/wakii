@@ -25,6 +25,8 @@
 # Env seams (test/hermetic + ops): ORCA_BIN · ORCA_TERMINAL_HANDLE (self — env
 # thật của terminal Orca; fallback ORCA_COORDINATOR_HANDLE → run-current) ·
 # PASS_CHECK_WAIT_MS (default 300000) · PASS_MAX_BATCHES (default 3) ·
+# PASS_MAX_RUNS (default 20 — cap candidates/pass) ·
+# PASS_MAX_TASK_PROBES (default 25 — cap lệnh task-list 1 pass) ·
 # PASS_WINDOW_H (default 2 — window discovery) · PASS_MAX_RESUME (default 1) ·
 # PASS_NOTIFY (default 1 — osascript) ·
 # PASS_STATE_FILE (NEEDS-VERIFY trail, default ~/.claude/.story-coordinator-pass-verify) ·
@@ -62,8 +64,8 @@ ORCA_DEV="$HOME/Library/Application Support/orca-dev"
 ORCA_PROD="$HOME/Library/Application Support/orca"
 export ORCA_DEV ORCA_PROD
 
-PY="$(command -v python3 || command -v python || true)"
-[ -n "$PY" ] || { echo "python không tìm thấy"; exit 2; }
+PY="$(command -v python3 || true)"
+[ -n "$PY" ] || { echo "python3 không tìm thấy"; exit 2; }
 
 case "${1:-}" in
   ""|--) ;;   # không arg = chạy 1 pass
@@ -82,12 +84,29 @@ import time
 ORCA_BIN = os.environ["ORCA_BIN"]
 ORCA_DEV = os.environ.get("ORCA_DEV", "")
 ORCA_PROD = os.environ.get("ORCA_PROD", "")
+
+
+def env_int(name, default):
+    try:
+        return int(os.environ.get(name, "") or default)
+    except ValueError:
+        return default
+
+
+def env_float(name, default):
+    try:
+        return float(os.environ.get(name, "") or default)
+    except ValueError:
+        return default
+
+
 RESUME_BIN = os.environ.get("STORY_RESUME_BIN", "")
-WAIT_MS = int(os.environ.get("PASS_CHECK_WAIT_MS", "300000"))
-MAX_BATCHES = int(os.environ.get("PASS_MAX_BATCHES", "3"))
-MAX_RUNS = int(os.environ.get("PASS_MAX_RUNS", "20"))
-WINDOW_H = float(os.environ.get("PASS_WINDOW_H", "2"))
-MAX_RESUME = int(os.environ.get("PASS_MAX_RESUME", "1"))
+WAIT_MS = env_int("PASS_CHECK_WAIT_MS", 300000)
+MAX_BATCHES = env_int("PASS_MAX_BATCHES", 3)
+MAX_RUNS = env_int("PASS_MAX_RUNS", 20)
+MAX_TASK_PROBES = env_int("PASS_MAX_TASK_PROBES", 25)
+WINDOW_H = env_float("PASS_WINDOW_H", 2)
+MAX_RESUME = env_int("PASS_MAX_RESUME", 1)
 NOTIFY = os.environ.get("PASS_NOTIFY", "1") == "1"
 DOCS_ROOTS = [p for p in os.environ.get(
     "COORDINATOR_DOCS_ROOTS", os.getcwd()).split(":") if p]
@@ -117,7 +136,10 @@ def notify(title, body):
 
 
 def run_orca(args, timeout_s=45):
-    """Spawn orca (dev→prod→plain runtime) → JSON parsed, hoặc None khi fail."""
+    """Spawn orca (dev→prod→plain runtime) → JSON parsed, hoặc None khi fail.
+    rc==0 LUÔN return (kể cả stdout không parse được — coi như ok) — KHÔNG retry
+    sau một lệnh đã thành công: prod-env và plain-env cùng chạm runtime sống,
+    retry biến lệnh mutating (reply) thành gửi ĐÔI (bài học real-run 23:27)."""
     for ud in (ORCA_DEV, ORCA_PROD, None):
         env = dict(os.environ)
         if ud:
@@ -133,7 +155,7 @@ def run_orca(args, timeout_s=45):
             try:
                 return json.loads(p.stdout)
             except Exception:
-                continue
+                return {"ok": True, "_unparsed": (p.stdout or "").strip()}
     return None
 
 
@@ -148,7 +170,7 @@ def first_of(d, *keys):
     for k in keys:
         v = d.get(k)
         if v:
-            return v
+            return str(v)
     return ""
 
 
@@ -203,13 +225,13 @@ def verify_evidence(msg):
         return False  # không nêu commit → không có gì chứng minh
     if not git_ok("-C", wt, "cat-file", "-e", f"{commit}^{{commit}}"):
         return False  # commit không tồn tại trong worktree
-    diff = set(git("-C", wt, "show", "--name-only", "--format=", commit).split())
+    diff = set(git("-C", wt, "show", "--name-only", "--format=", commit).splitlines())
     if not diff:
         return False
     for f in files:
         if not os.path.exists(os.path.join(wt, f)):
             return False
-        if f not in diff and os.path.relpath(f, ".") not in diff:
+        if f not in diff:
             return False  # file báo không nằm trong diff commit → khai sai
     return True
 
@@ -255,7 +277,9 @@ def reply_body(run):
 
 def process_inbox(run, self_handle):
     """Inbox bounded 1 run: batch đầu check --wait; batch sau chỉ drain khi biết
-    delivery id để --ack (không ack mù — replay là an toàn hơn dup-reply)."""
+    delivery id để --ack. Ack batch trước CHỈ advance khi mọi message đã xử OK —
+    reply/verify fail → giữ delivery, pass kế xử lại (không nuốt câu hỏi).
+    Không ack mù — replay là an toàn hơn dup-reply."""
     processed = replied = 0
     run_id = run.get("id")
     seen = set()
@@ -274,7 +298,7 @@ def process_inbox(run, self_handle):
             break
         res = d.get("result") or {}
         msgs = res.get("messages") or []
-        prev_ack = first_of(res, "deliveryId", "delivery_id", "acknowledged") or None
+        batch_ok = True
         fresh = [m for m in msgs if m.get("id") and m.get("id") not in seen]
         if not fresh:
             break
@@ -291,6 +315,7 @@ def process_inbox(run, self_handle):
                     replied += 1
                     log(f"REPLY {mid} (question) — dẫn bracket/contexts")
                 else:
+                    batch_ok = False
                     log(f"REPLY FAIL {mid} — question để lại cho pass kế")
             elif mtype == "escalation":
                 log(f"ESCALATION {mid}: {subject[0][:80]} → needs-user (đụng quyền user)")
@@ -299,14 +324,15 @@ def process_inbox(run, self_handle):
                 if verify_evidence(m):
                     log(f"EVIDENCE-OK {mid} — worker_done chấp nhận")
                 else:
-                    line = f"NEEDS-VERIFY: {run_id} {mid} — evidence thiếu (files/commit chưa chứng minh)"
-                    needs_verify.append(line)
+                    batch_ok = False
+                    needs_verify.append(
+                        f"NEEDS-VERIFY: {run_id} {mid} — evidence thiếu (files/commit chưa chứng minh)")
                     save_needs_verify(run_id, mid)
-                    log(line)
                     notify("coordinator-pass ⚠", f"NEEDS-VERIFY: {subject[0][:60]}")
             else:
                 log(f"NOTE {mid} ({mtype}): {subject[0][:80]}")
             processed += 1
+        prev_ack = (first_of(res, "deliveryId", "delivery_id", "acknowledged") or None) if batch_ok else None
     return processed, replied
 
 
@@ -406,6 +432,7 @@ def main():
             wt_by_dispatch[w.get("dispatchId")] = wt
 
     candidates = []
+    task_probes = 0
     for r in runs:
         if r.get("legacy"):
             continue
@@ -413,6 +440,10 @@ def main():
         if rid in live_by_run:
             candidates.append(r)
         elif recent(r):
+            if task_probes >= MAX_TASK_PROBES:
+                log(f"task-probe cap {MAX_TASK_PROBES} — run sau đó xét pass kế")
+                break
+            task_probes += 1
             tasks = orca_rows(["orchestration", "task-list", "--run", rid, "--json"],
                               "tasks")
             if tasks and any(t.get("status") in IN_FLIGHT for t in tasks):
@@ -425,6 +456,12 @@ def main():
         return 0
 
     alive = terminal_handles()
+
+    if not self_handle:
+        # Không tự nhận diện được — mọi run có owner đều bị coi foreign. Cron
+        # terminal thường có env; khi thiếu, chỉ run mồ côi được xử — cảnh báo
+        # để log không im lặng (2 pass ẩn danh cùng chạy có thể dup-reply).
+        log("WARN: self handle rỗng (ORCA_TERMINAL_HANDLE/run-current) — chỉ run mồ côi được xử")
 
     processed = replied = skipped_owned = 0
     for r in candidates:
@@ -457,5 +494,10 @@ def main():
     return 0
 
 
-sys.exit(main())
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except Exception as exc:  # pass là hành vi — mọi sự cố đều exit 0
+        print(f"PASS: idle=error ({type(exc).__name__}: {exc})")
+        sys.exit(0)
 PYEOF
