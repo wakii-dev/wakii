@@ -268,9 +268,32 @@ console.log('\n== A12 section ### Deterministic → kênh facts riêng (2.14.3) 
   check('A12', 'exit 0', r.code === 0, `code=${r.code}`)
   check('A12', 'facts có mục DETERMINISTIC riêng', r.out.includes('══ DETERMINISTIC'), r.out.slice(0, 600))
   check('A12', 'facts KHÔNG rơi [unparsed]', !r.out.includes('[unparsed] - [oxlint]'), '')
-  check('A12', 'bullet SAU heading khác vẫn unparsed', r.out.includes('[unparsed] - [c.ts:9]'), r.out.slice(0, 600))
-  check('A12', 'counts parsed=1 unparsed=1 deterministic=2', /parsed=1 unparsed=1 deterministic=2/.test(r.out), r.out.slice(-200))
-  check('A12', 'invariant 4/4 (1 parsed + 1 unparsed + 2 facts)', /in_ra=4\/4/.test(r.out), r.out.slice(-200))
+  // 2.14.4: bullet sau heading tắt kênh facts → NEEDS VERIFICATION (conf=None), không unparsed
+  check('A12', 'NV bullet sau heading vào NEEDS, không unparsed',
+    !r.out.includes('[unparsed] - [c.ts:9]') && /NEEDS VERIFICATION[\s\S]*nghi ngờ chưa verify/.test(r.out), r.out.slice(0, 700))
+  check('A12', 'counts parsed=2 deterministic=2', /parsed=2 unparsed=0 deterministic=2 attest=0/.test(r.out), r.out.slice(-250))
+  check('A12', 'invariant 4/4 (2 parsed + 2 facts)', /in_ra=4\/4/.test(r.out), r.out.slice(-200))
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('\n== A13 kênh NEEDS-VERIFICATION parse + COVERAGE attest (2.14.4) ==')
+{
+  const dir = tempDir('a13')
+  const rd = join(dir, 'reviews')
+  const NVSEC = `### NEEDS VERIFICATION (confidence:low — không tính verdict)\n` +
+    `- [d.ts:4] nghi ngờ race chưa verify — cần chạy stress\n`
+  const COVSEC = `### Surgical-scope check\n- In-scope edits: 2 files, all map to task → OK\n` +
+    `- [coverage] src/a.ts — reviewed, clean\n`
+  writeReviews(rd, {
+    'code-reviewer-sf-ch.md': `# Review\n${T1}${NVSEC}${COVSEC}\nVERDICT: CHANGES-REQUESTED — P1\n`,
+  })
+  const r = runFuse('sf-ch', rd)
+  check('A13', 'exit 0', r.code === 0, `code=${r.code}`)
+  check('A13', 'NV bullet KHÔNG còn [unparsed]', !r.out.includes('[unparsed] - [d.ts:4]'), r.out)
+  check('A13', 'NV bullet parse vào NEEDS (missing-conf)', /NEEDS VERIFICATION[\s\S]*nghi ngờ race chưa verify/.test(r.out), r.out.slice(0, 700))
+  check('A13', 'coverage/surgical vào mục COVERAGE', r.out.includes('══ COVERAGE') && r.out.includes('[coverage] src/a.ts'), r.out)
+  check('A13', 'counts parsed=2 attest=2', /parsed=2 unparsed=0 deterministic=0 attest=2/.test(r.out), r.out.slice(-250))
+  check('A13', 'invariant 4/4 (2 parsed + 2 attest)', /in_ra=4\/4/.test(r.out), r.out.slice(-200))
   rmSync(dir, { recursive: true, force: true })
 }
 
