@@ -11,6 +11,13 @@ function hashLength(hash, length) {
   hash.update(framedLength)
 }
 
+// Junk bỏ qua khi hash: gitignored và sinh lại cục bộ mỗi lần chạy test
+// (kit/bin/__pycache__/*.pyc) hoặc Finder (.DS_Store) — có mặt trên máy rehash
+// nhưng không bao giờ tồn tại trong CI checkout. Tính vào hash làm fingerprint
+// lệch theo máy (1.4.209 fail 2 lần vì 2 file .pyc). Seed bump v1 → v2.
+const JUNK_ENTRY_NAMES = new Set(['.DS_Store'])
+const JUNK_EXTENSIONS = ['.pyc']
+
 function hashPackagedPluginTree(root) {
   const files = []
   let entriesVisited = 0
@@ -21,6 +28,12 @@ function hashPackagedPluginTree(root) {
     )
     for (const entry of entries) {
       if (directory === root && entry.name === '.git') {
+        continue
+      }
+      if (JUNK_ENTRY_NAMES.has(entry.name) || JUNK_EXTENSIONS.some(ext => entry.name.endsWith(ext))) {
+        continue
+      }
+      if (entry.isDirectory() && entry.name === '__pycache__') {
         continue
       }
       const entryPath = join(directory, entry.name)
@@ -46,7 +59,7 @@ function hashPackagedPluginTree(root) {
     }
   }
   visit(root)
-  const hash = createHash('sha256').update('orca-plugin-tree-v1\0')
+  const hash = createHash('sha256').update('orca-plugin-tree-v2\0')
   for (const file of files) {
     const relativePath = relative(root, file.path).replaceAll('\\', '/')
     hashLength(hash, Buffer.byteLength(relativePath, 'utf8'))
