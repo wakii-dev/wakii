@@ -1,14 +1,20 @@
 #!/usr/bin/env node
 // story-coordinator-pass tests — spawn bin thật với stub orca + stub story-resume
-// (ORCA_BIN seam, hermetic như story-plan-validate-tests — KHÔNG đụng orca daemon
-// thật). Phủ: foreign worker → skip-owned KHÔNG check; live worker của mình → xử;
-// run mồ côi → nhận trách nhiệm; question → reply dẫn bracket; worker_done
-// evidence thiếu → NEEDS-VERIFY; evidence đủ (git thật trong tmp) → chấp nhận;
-// không run → idle exit 0; orca chết → idle=orca-unavailable exit 0; resume
-// STALLED → --send đúng 1 lần; exit luôn 0.
+// (ORCA_BIN / STORY_RESUME_BIN seam, hermetic như story-plan-validate-tests —
+// KHÔNG đụng orca daemon thật). Matrix merge 2 nguồn (commit 6974ce74 + pass
+// executor term_5e1eb396 sau collision 22:39 — provenance trong audit LOCAL-1):
+//   discovery active filter (window + worker live, không N+1 run cũ) ·
+//   ownership probe: foreign worker live → skip-owned KHÔNG check · foreign
+//   coordinator terminal CÒN SỐNG → skip · foreign terminal ĐÃ CHẾT (stale
+//   handle — automation reuseSession:false) → self-heal xử · run mồ côi → xử ·
+//   question → reply body DẪN FILE bracket · escalation không reply ·
+//   worker_done: evidence thiếu / hash fake → NEEDS-VERIFY; hash thật +
+//   files ⊆ diff (git tmp thật) → chấp nhận · idle + orca chết → exit 0 ·
+//   resume chỉ STALLED, cap 1/pass · PASS SUMMARY 1 dòng · notify không crash
+//   khi osascript thiếu.
 // Chạy: node tests/story-coordinator-pass-tests.mjs
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, writeFileSync, chmodSync, rmSync, existsSync, readFileSync } from 'node:fs'
+import { mkdtempSync, writeFileSync, chmodSync, rmSync, existsSync, readFileSync, mkdirSync } from 'node:fs'
 import { join, dirname, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
@@ -28,12 +34,12 @@ function check(caseId, name, cond, detail = '') {
 }
 
 function tempDir(tag) {
-  const dir = mkdtempSync(join(tmpdir(), `coordinator-pass-${tag}-`))
+  const dir = mkdtempSync(join(tmpdir(), `coord-pass-${tag}-`))
   if (!dir.startsWith(tmpdir())) throw new Error('temp ngoài tmpdir — dừng')
   return dir
 }
 
-// stub orca: ghi argv vào $ARGV_LOG rồi trả fixture theo subcommand
+// stub orca: log argv vào $ARGV_LOG rồi trả fixture theo subcommand
 function makeOrcaStub(dir) {
   const stub = join(dir, 'orca-stub.sh')
   writeFileSync(stub, `#!/bin/sh
@@ -43,6 +49,9 @@ case "$2" in
   worker-list) cat "$WL_FIXTURE" ;;
   task-list) cat "$TL_FIXTURE" ;;
   check) cat "$CHECK_FIXTURE" ;;
+  list) cat "$TERM_FIXTURE" ;;
+  reply) printf '%s\\n' '{"ok":true,"result":{"message":{"id":"replied"}}}' ;;
+  run-use) printf '%s\\n' '{"ok":true,"result":{"run":{}}}' ;;
   *) printf '%s\\n' '{"ok":true,"result":{}}' ;;
 esac
 `, 'utf8')
@@ -50,7 +59,7 @@ esac
   return stub
 }
 
-// stub story-resume: --check in fixture; <sf> --send in SENT ✓
+// stub story-resume: --check in fixture; <sf> --send in SENT
 function makeResumeStub(dir) {
   const stub = join(dir, 'resume-stub.sh')
   writeFileSync(stub, `#!/bin/sh
@@ -71,20 +80,23 @@ function makeBrokenStub(dir) {
 
 function fixture(dir, name, obj) {
   const p = join(dir, name)
-  writeFileSync(p, JSON.stringify(obj))
+  writeFileSync(p, typeof obj === 'string' ? obj : JSON.stringify(obj))
   return p
 }
 
-// repo git thật trong tmp — chứng minh path "commit tồn tại chạm files"
-function makeGitRepo(dir) {
+// repo git thật trong tmp — chứng minh "commit tồn tại + files ⊆ diff"
+function makeGitRepo(dir, files = ['README.md']) {
   const repo = join(dir, 'wt-repo')
   spawnSync('git', ['init', '-q', repo])
   spawnSync('git', ['-C', repo, 'config', 'user.email', 't@t'])
   spawnSync('git', ['-C', repo, 'config', 'user.name', 't'])
-  writeFileSync(join(repo, 'README.md'), 'demo\n')
-  spawnSync('git', ['-C', repo, 'add', 'README.md'])
+  for (const f of files) {
+    writeFileSync(join(repo, f), 'demo\n')
+    spawnSync('git', ['-C', repo, 'add', f])
+  }
   spawnSync('git', ['-C', repo, 'commit', '-qm', 'demo commit'])
-  return repo
+  const h = spawnSync('git', ['-C', repo, 'rev-parse', 'HEAD'], { encoding: 'utf8' })
+  return { repo, hash: (h.stdout || '').trim() }
 }
 
 function runPass(dir, stub, env = {}) {
@@ -92,10 +104,12 @@ function runPass(dir, stub, env = {}) {
   writeFileSync(argvLog, '')
   const stateFile = join(dir, 'verify-state')
   const r = spawnSync(BASH, [BIN], {
-    encoding: 'utf8', timeout: 60000,
+    encoding: 'utf8', timeout: 60000, cwd: env.PASS_CWD || dir,
     env: {
       ...process.env,
       ORCA_BIN: stub,
+      STORY_RESUME_BIN: join(dir, 'resume-missing.sh'),
+      ORCA_TERMINAL_HANDLE: 'term_self',
       ORCA_COORDINATOR_HANDLE: 'term_self',
       PASS_NOTIFY: '0',
       PASS_CHECK_WAIT_MS: '1000',
@@ -104,15 +118,19 @@ function runPass(dir, stub, env = {}) {
       ...env,
     },
   })
+  delete env.PASS_CWD
   const argv = existsSync(argvLog) ? readFileSync(argvLog, 'utf8') : ''
-  return { code: r.status, out: (r.stdout || '') + (r.stderr || ''), argv, stateFile, argvLog }
+  return { code: r.status, out: (r.stdout || '') + (r.stderr || ''), argv, stateFile }
 }
 
 const NO_MSGS = { ok: true, result: { runId: 'x', messages: [], count: 0 } }
+const NO_WORKERS = { ok: true, result: { workers: [] } }
+const OPEN_TASK = { ok: true, result: { runId: 'x', tasks: [{ id: 't', status: 'pending' }] } }
+const TERM_ME_ONLY = { ok: true, result: { terminals: [{ handle: 'term_self' }] } }
 
-console.log('== P1 foreign worker live → SKIP-OWNED, KHÔNG check run đó ==')
+console.log('== C1 foreign worker live → SKIP-OWNED, KHÔNG check run đó ==')
 {
-  const dir = tempDir('p1')
+  const dir = tempDir('c1')
   const stub = makeOrcaStub(dir)
   const rl = fixture(dir, 'rl.json', { ok: true, result: { runs: [
     { id: 'run_foreign', objective: 'FI-X SF-4', coordinator_handle: 'term_other' },
@@ -122,17 +140,22 @@ console.log('== P1 foreign worker live → SKIP-OWNED, KHÔNG check run đó =='
       terminalState: 'active', resource: { worktreeId: 'uuid::/tmp/x' },
       projection: { liveness: { verdict: 'live' } } },
   ] } })
-  const r = runPass(dir, stub, { RL_FIXTURE: rl, WL_FIXTURE: wl, TL_FIXTURE: fixture(dir, 'tl.json', { ok: true, result: { tasks: [] } }), CHECK_FIXTURE: fixture(dir, 'ck.json', NO_MSGS) })
-  check('P1', 'exit 0', r.code === 0, `code=${r.code} out=${r.out}`)
-  check('P1', 'summary skipped-owned=1', r.out.includes('skipped-owned=1'), r.out)
-  check('P1', 'KHÔNG check run foreign', !r.argv.includes('check --run run_foreign'), r.argv)
-  check('P1', 'log SKIP-OWNED nêu owner', r.out.includes('SKIP-OWNED run_foreign'), r.out)
+  const r = runPass(dir, stub, {
+    RL_FIXTURE: rl, WL_FIXTURE: wl,
+    TL_FIXTURE: fixture(dir, 'tl.json', OPEN_TASK),
+    CHECK_FIXTURE: fixture(dir, 'ck.json', NO_MSGS),
+    TERM_FIXTURE: fixture(dir, 'tm.json', TERM_ME_ONLY),
+  })
+  check('C1', 'exit 0', r.code === 0, `code=${r.code} out=${r.out}`)
+  check('C1', 'summary skipped-owned=1', r.out.includes('skipped-owned=1'), r.out)
+  check('C1', 'KHÔNG check run foreign', !r.argv.includes('check --run run_foreign'), r.argv)
+  check('C1', 'log SKIP-OWNED nêu owner', r.out.includes('SKIP-OWNED run_foreign'), r.out)
   rmSync(dir, { recursive: true, force: true })
 }
 
-console.log('== P2 live worker của chính mình + run mồ côi → được xử, không skip ==')
+console.log('== C2 live worker của mình + run mồ côi → được xử, không skip ==')
 {
-  const dir = tempDir('p2')
+  const dir = tempDir('c2')
   const stub = makeOrcaStub(dir)
   const rl = fixture(dir, 'rl.json', { ok: true, result: { runs: [
     { id: 'run_mine', objective: 'LOCAL-1', coordinator_handle: 'term_self' },
@@ -143,38 +166,127 @@ console.log('== P2 live worker của chính mình + run mồ côi → được x
       terminalState: 'active', resource: { worktreeId: 'uuid::/tmp/y' },
       projection: { liveness: { verdict: 'live' } } },
   ] } })
-  const tl = fixture(dir, 'tl.json', { ok: true, result: { tasks: [
-    { id: 'task_a', status: 'dispatched' },
-  ] } })
-  const r = runPass(dir, stub, { RL_FIXTURE: rl, WL_FIXTURE: wl, TL_FIXTURE: tl, CHECK_FIXTURE: fixture(dir, 'ck.json', NO_MSGS) })
-  check('P2', 'exit 0', r.code === 0, `code=${r.code}`)
-  check('P2', 'run của mình được check', r.argv.includes('check --run run_mine'), r.argv)
-  check('P2', 'run mồ côi được nhận (check)', r.argv.includes('check --run run_orphan'), r.argv)
-  check('P2', 'skipped-owned=0', r.out.includes('skipped-owned=0'), r.out)
+  const r = runPass(dir, stub, {
+    RL_FIXTURE: rl, WL_FIXTURE: wl,
+    TL_FIXTURE: fixture(dir, 'tl.json', OPEN_TASK),
+    CHECK_FIXTURE: fixture(dir, 'ck.json', NO_MSGS),
+    TERM_FIXTURE: fixture(dir, 'tm.json', TERM_ME_ONLY),
+  })
+  check('C2', 'exit 0', r.code === 0, `code=${r.code}`)
+  check('C2', 'run của mình được check', r.argv.includes('check --run run_mine'), r.argv)
+  check('C2', 'run mồ côi được nhận (check)', r.argv.includes('check --run run_orphan'), r.argv)
+  check('C2', 'skipped-owned=0', r.out.includes('skipped-owned=0'), r.out)
   rmSync(dir, { recursive: true, force: true })
 }
 
-console.log('== P3 question trong inbox → reply được gọi, body dẫn bracket ==')
+console.log('== C3 foreign coordinator terminal CÒN SỐNG (không worker live) → skip ==')
 {
-  const dir = tempDir('p3')
+  const dir = tempDir('c3')
   const stub = makeOrcaStub(dir)
   const rl = fixture(dir, 'rl.json', { ok: true, result: { runs: [
-    { id: 'run_q', objective: 'LOCAL-1 câu hỏi', coordinator_handle: 'term_self' },
+    { id: 'run_bound', objective: 'FI-Y SF-1', coordinator_handle: 'term_other_alive' },
+  ] } })
+  const terms = { ok: true, result: { terminals: [{ handle: 'term_self' }, { handle: 'term_other_alive' }] } }
+  const r = runPass(dir, stub, {
+    RL_FIXTURE: rl, WL_FIXTURE: fixture(dir, 'wl.json', NO_WORKERS),
+    TL_FIXTURE: fixture(dir, 'tl.json', OPEN_TASK),
+    CHECK_FIXTURE: fixture(dir, 'ck.json', NO_MSGS),
+    TERM_FIXTURE: fixture(dir, 'tm.json', terms),
+  })
+  check('C3', 'skipped-owned=1', r.out.includes('skipped-owned=1'), r.out)
+  check('C3', 'KHÔNG check', !r.argv.includes('check --run run_bound'), r.argv)
+  check('C3', 'exit 0', r.code === 0, `code=${r.code}`)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== C4 foreign coordinator terminal ĐÃ CHẾT (stale handle) → self-heal xử ==')
+{
+  const dir = tempDir('c4')
+  const stub = makeOrcaStub(dir)
+  const rl = fixture(dir, 'rl.json', { ok: true, result: { runs: [
+    { id: 'run_stranded', objective: 'FI-Z SF-2', coordinator_handle: 'term_dead_ago' },
+  ] } })
+  const r = runPass(dir, stub, {
+    RL_FIXTURE: rl, WL_FIXTURE: fixture(dir, 'wl.json', NO_WORKERS),
+    TL_FIXTURE: fixture(dir, 'tl.json', OPEN_TASK),
+    CHECK_FIXTURE: fixture(dir, 'ck.json', NO_MSGS),
+    TERM_FIXTURE: fixture(dir, 'tm.json', TERM_ME_ONLY),
+  })
+  check('C4', 'stale handle → check được xử', r.argv.includes('check --run run_stranded'), r.argv)
+  check('C4', 'skipped-owned=0', r.out.includes('skipped-owned=0'), r.out)
+  check('C4', 'exit 0', r.code === 0, `code=${r.code}`)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== C5 question → reply body DẪN FILE bracket (epic từ objective) ==')
+{
+  const dir = tempDir('c5')
+  const stub = makeOrcaStub(dir)
+  const docs = join(dir, 'docs', 'superpowers', 'brackets')
+  mkdirSync(docs, { recursive: true })
+  writeFileSync(join(docs, 'local-1-self-sustain-24-7.md'), '# Story: LOCAL-1\n')
+  const rl = fixture(dir, 'rl.json', { ok: true, result: { runs: [
+    { id: 'run_q', objective: 'LOCAL-1 SF-1: Coordinator pass bin', coordinator_handle: 'term_self' },
   ] } })
   const ck = fixture(dir, 'ck.json', { ok: true, result: { runId: 'run_q', count: 1, messages: [
     { id: 'msg_q1', type: 'question', subject: 'SF-3 có nên block dispatch?', body: 'chi tiết' },
   ] } })
-  const r = runPass(dir, stub, { RL_FIXTURE: rl, WL_FIXTURE: fixture(dir, 'wl.json', { ok: true, result: { workers: [] } }), TL_FIXTURE: fixture(dir, 'tl.json', { ok: true, result: { tasks: [{ id: 't', status: 'pending' }] } }), CHECK_FIXTURE: ck })
-  check('P3', 'exit 0', r.code === 0, `code=${r.code}`)
-  check('P3', 'reply msg_q1 được gọi', /orchestration reply --id msg_q1/.test(r.argv), r.argv)
-  check('P3', 'reply body dẫn brackets/', r.argv.includes('docs/superpowers/brackets/'), r.argv)
-  check('P3', 'summary replied=1 processed=1', r.out.includes('replied=1') && r.out.includes('processed=1'), r.out)
+  const r = runPass(dir, stub, {
+    RL_FIXTURE: rl, WL_FIXTURE: fixture(dir, 'wl.json', NO_WORKERS),
+    TL_FIXTURE: fixture(dir, 'tl.json', OPEN_TASK), CHECK_FIXTURE: ck,
+    TERM_FIXTURE: fixture(dir, 'tm.json', TERM_ME_ONLY),
+    PASS_CWD: dir,
+  })
+  check('C5', 'reply msg_q1 được gọi', /orchestration reply --id msg_q1/.test(r.argv), r.argv)
+  check('C5', 'reply body dẫn FILE bracket local-1', r.argv.includes('brackets/local-1-self-sustain-24-7.md'), r.argv)
+  check('C5', 'summary replied=1 processed=1', r.out.includes('replied=1') && r.out.includes('processed=1'), r.out)
   rmSync(dir, { recursive: true, force: true })
 }
 
-console.log('== P4 worker_done evidence thiếu → NEEDS-VERIFY, KHÔNG chấp nhận ==')
+console.log('== C6 question nhưng không tìm được bracket file → vẫn reply, dẫn thư mục ==')
 {
-  const dir = tempDir('p4')
+  const dir = tempDir('c6')
+  const stub = makeOrcaStub(dir)
+  const rl = fixture(dir, 'rl.json', { ok: true, result: { runs: [
+    { id: 'run_q2', objective: 'LOCAL-1 câu hỏi', coordinator_handle: 'term_self' },
+  ] } })
+  const ck = fixture(dir, 'ck.json', { ok: true, result: { runId: 'run_q2', count: 1, messages: [
+    { id: 'msg_q2', type: 'question', subject: 'hỏi không epic', body: 'x' },
+  ] } })
+  const r = runPass(dir, stub, {
+    RL_FIXTURE: rl, WL_FIXTURE: fixture(dir, 'wl.json', NO_WORKERS),
+    TL_FIXTURE: fixture(dir, 'tl.json', OPEN_TASK), CHECK_FIXTURE: ck,
+    TERM_FIXTURE: fixture(dir, 'tm.json', TERM_ME_ONLY),
+    PASS_CWD: dir,
+  })
+  check('C6', 'vẫn reply', /orchestration reply --id msg_q2/.test(r.argv), r.argv)
+  check('C6', 'body dẫn docs/superpowers/brackets/', r.argv.includes('docs/superpowers/brackets/'), r.argv)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== C7 escalation → KHÔNG reply, báo needs-user ==')
+{
+  const dir = tempDir('c7')
+  const stub = makeOrcaStub(dir)
+  const rl = fixture(dir, 'rl.json', { ok: true, result: { runs: [
+    { id: 'run_esc', objective: 'LOCAL-1', coordinator_handle: 'term_self' },
+  ] } })
+  const ck = fixture(dir, 'ck.json', { ok: true, result: { runId: 'run_esc', count: 1, messages: [
+    { id: 'msg_e1', type: 'escalation', subject: 'cần xoá branch main?', body: 'y' },
+  ] } })
+  const r = runPass(dir, stub, {
+    RL_FIXTURE: rl, WL_FIXTURE: fixture(dir, 'wl.json', NO_WORKERS),
+    TL_FIXTURE: fixture(dir, 'tl.json', OPEN_TASK), CHECK_FIXTURE: ck,
+    TERM_FIXTURE: fixture(dir, 'tm.json', TERM_ME_ONLY),
+  })
+  check('C7', 'KHÔNG reply', !r.argv.includes('reply'), r.argv)
+  check('C7', 'escalation được ghi needs-user', r.out.includes('needs-user'), r.out)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== C8 worker_done evidence thiếu (files rỗng) → NEEDS-VERIFY + trail ==')
+{
+  const dir = tempDir('c8')
   const stub = makeOrcaStub(dir)
   const rl = fixture(dir, 'rl.json', { ok: true, result: { runs: [
     { id: 'run_e', objective: 'LOCAL-1', coordinator_handle: 'term_self' },
@@ -183,74 +295,182 @@ console.log('== P4 worker_done evidence thiếu → NEEDS-VERIFY, KHÔNG chấp 
   const ck = fixture(dir, 'ck.json', { ok: true, result: { runId: 'run_e', count: 1, messages: [
     { id: 'msg_d1', type: 'worker_done', subject: 'xong rồi', payload },
   ] } })
-  const r = runPass(dir, stub, { RL_FIXTURE: rl, WL_FIXTURE: fixture(dir, 'wl.json', { ok: true, result: { workers: [] } }), TL_FIXTURE: fixture(dir, 'tl.json', { ok: true, result: { tasks: [{ id: 't', status: 'pending' }] } }), CHECK_FIXTURE: ck })
-  check('P4', 'exit 0', r.code === 0, `code=${r.code}`)
-  check('P4', 'NEEDS-VERIFY được ghi', r.out.includes('NEEDS-VERIFY'), r.out)
-  check('P4', 'KHÔNG EVIDENCE-OK', !r.out.includes('EVIDENCE-OK'), r.out)
-  check('P4', 'state file có trail', existsSync(r.stateFile) && readFileSync(r.stateFile, 'utf8').includes('msg_d1'), r.stateFile)
+  const r = runPass(dir, stub, {
+    RL_FIXTURE: rl, WL_FIXTURE: fixture(dir, 'wl.json', NO_WORKERS),
+    TL_FIXTURE: fixture(dir, 'tl.json', OPEN_TASK), CHECK_FIXTURE: ck,
+    TERM_FIXTURE: fixture(dir, 'tm.json', TERM_ME_ONLY),
+  })
+  check('C8', 'NEEDS-VERIFY được ghi', r.out.includes('NEEDS-VERIFY'), r.out)
+  check('C8', 'KHÔNG EVIDENCE-OK', !r.out.includes('EVIDENCE-OK'), r.out)
+  check('C8', 'state file có trail', existsSync(r.stateFile) && readFileSync(r.stateFile, 'utf8').includes('msg_d1'), r.stateFile)
   rmSync(dir, { recursive: true, force: true })
 }
 
-console.log('== P5 worker_done evidence đủ (git thật) → EVIDENCE-OK ==')
+console.log('== C9 worker_done commit hash THẬT + files ⊆ diff (git tmp) → EVIDENCE-OK ==')
 {
-  const dir = tempDir('p5')
+  const dir = tempDir('c9')
   const stub = makeOrcaStub(dir)
-  const repo = makeGitRepo(dir)
+  const { repo, hash } = makeGitRepo(dir)
   const rl = fixture(dir, 'rl.json', { ok: true, result: { runs: [
     { id: 'run_e2', objective: 'LOCAL-1', coordinator_handle: 'term_self' },
   ] } })
   const wl = fixture(dir, 'wl.json', { ok: true, result: { workers: [
-    // worker ĐÃ XONG (exited + released) — không tính live, nhưng cho path worktree
     { runId: 'run_e2', dispatchId: 'ctx_ok', workerState: 'completed',
       terminalState: 'released', resource: { worktreeId: `uuid::${repo}` },
       projection: { liveness: { verdict: 'exited' } } },
   ] } })
-  const payload = JSON.stringify({ taskId: 'task_y', dispatchId: 'ctx_ok', outcome: 'succeeded', filesModified: ['README.md'] })
+  const payload = JSON.stringify({ taskId: 'task_y', dispatchId: 'ctx_ok', outcome: 'succeeded', filesModified: ['README.md'], commit: hash })
   const ck = fixture(dir, 'ck.json', { ok: true, result: { runId: 'run_e2', count: 1, messages: [
     { id: 'msg_d2', type: 'worker_done', subject: 'xong có chứng minh', payload },
   ] } })
-  const r = runPass(dir, stub, { RL_FIXTURE: rl, WL_FIXTURE: wl, TL_FIXTURE: fixture(dir, 'tl.json', { ok: true, result: { tasks: [{ id: 't', status: 'pending' }] } }), CHECK_FIXTURE: ck })
-  check('P5', 'exit 0', r.code === 0, `code=${r.code}`)
-  check('P5', 'EVIDENCE-OK — chấp nhận', r.out.includes('EVIDENCE-OK'), r.out)
-  check('P5', 'KHÔNG NEEDS-VERIFY', !r.out.includes('NEEDS-VERIFY'), r.out)
+  const r = runPass(dir, stub, {
+    RL_FIXTURE: rl, WL_FIXTURE: wl,
+    TL_FIXTURE: fixture(dir, 'tl.json', OPEN_TASK), CHECK_FIXTURE: ck,
+    TERM_FIXTURE: fixture(dir, 'tm.json', TERM_ME_ONLY),
+  })
+  check('C9', 'EVIDENCE-OK — chấp nhận', r.out.includes('EVIDENCE-OK'), r.out)
+  check('C9', 'KHÔNG NEEDS-VERIFY', !r.out.includes('NEEDS-VERIFY'), r.out)
   rmSync(dir, { recursive: true, force: true })
 }
 
-console.log('== P6 không run active → PASS: idle=no-active-runs, exit 0 ==')
+console.log('== C10 worker_done hash KHÔNG tồn tại trong repo → NEEDS-VERIFY (commit phải tồn tại) ==')
 {
-  const dir = tempDir('p6')
+  const dir = tempDir('c10')
   const stub = makeOrcaStub(dir)
-  const r = runPass(dir, stub, { RL_FIXTURE: fixture(dir, 'rl.json', { ok: true, result: { runs: [] } }), WL_FIXTURE: fixture(dir, 'wl.json', { ok: true, result: { workers: [] } }), TL_FIXTURE: fixture(dir, 'tl.json', NO_MSGS), CHECK_FIXTURE: fixture(dir, 'ck.json', NO_MSGS) })
-  check('P6', 'exit 0', r.code === 0, `code=${r.code}`)
-  check('P6', 'PASS: idle=no-active-runs', r.out.includes('PASS: idle=no-active-runs'), r.out)
-  check('P6', 'idle bỏ sớm — KHÔNG check/reply', !r.argv.includes('check') && !r.argv.includes('reply'), r.argv)
+  const { repo } = makeGitRepo(dir)
+  const rl = fixture(dir, 'rl.json', { ok: true, result: { runs: [
+    { id: 'run_e3', objective: 'LOCAL-1', coordinator_handle: 'term_self' },
+  ] } })
+  const wl = fixture(dir, 'wl.json', { ok: true, result: { workers: [
+    { runId: 'run_e3', dispatchId: 'ctx_f', workerState: 'completed',
+      terminalState: 'released', resource: { worktreeId: `uuid::${repo}` },
+      projection: { liveness: { verdict: 'exited' } } },
+  ] } })
+  const payload = JSON.stringify({ taskId: 'task_z', dispatchId: 'ctx_f', outcome: 'succeeded', filesModified: ['README.md'], commit: 'dead000dead000dead000dead000dead000f00d' })
+  const ck = fixture(dir, 'ck.json', { ok: true, result: { runId: 'run_e3', count: 1, messages: [
+    { id: 'msg_d3', type: 'worker_done', subject: 'khoe xong', payload },
+  ] } })
+  const r = runPass(dir, stub, {
+    RL_FIXTURE: rl, WL_FIXTURE: wl,
+    TL_FIXTURE: fixture(dir, 'tl.json', OPEN_TASK), CHECK_FIXTURE: ck,
+    TERM_FIXTURE: fixture(dir, 'tm.json', TERM_ME_ONLY),
+  })
+  check('C10', 'hash fake → NEEDS-VERIFY', r.out.includes('NEEDS-VERIFY'), r.out)
+  check('C10', 'KHÔNG EVIDENCE-OK', !r.out.includes('EVIDENCE-OK'), r.out)
   rmSync(dir, { recursive: true, force: true })
 }
 
-console.log('== P7 orca chết → idle=orca-unavailable, exit 0 (pass không fail hard) ==')
+console.log('== C11 không run active → PASS: idle=no-active-runs, exit 0 ==')
 {
-  const dir = tempDir('p7')
+  const dir = tempDir('c11')
+  const stub = makeOrcaStub(dir)
+  const r = runPass(dir, stub, {
+    RL_FIXTURE: fixture(dir, 'rl.json', { ok: true, result: { runs: [] } }),
+    WL_FIXTURE: fixture(dir, 'wl.json', NO_WORKERS),
+    TL_FIXTURE: fixture(dir, 'tl.json', NO_MSGS),
+    CHECK_FIXTURE: fixture(dir, 'ck.json', NO_MSGS),
+    TERM_FIXTURE: fixture(dir, 'tm.json', TERM_ME_ONLY),
+  })
+  check('C11', 'exit 0', r.code === 0, `code=${r.code}`)
+  check('C11', 'PASS: idle=no-active-runs', r.out.includes('PASS: idle=no-active-runs'), r.out)
+  check('C11', 'idle bỏ sớm — KHÔNG check/reply', !r.argv.includes('check') && !r.argv.includes('reply'), r.argv)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== C12 orca chết → idle=orca-unavailable, exit 0 (pass không fail hard) ==')
+{
+  const dir = tempDir('c12')
   const r = runPass(dir, makeBrokenStub(dir), {})
-  check('P7', 'exit 0', r.code === 0, `code=${r.code}`)
-  check('P7', 'idle=orca-unavailable', r.out.includes('PASS: idle=orca-unavailable'), r.out)
+  check('C12', 'exit 0', r.code === 0, `code=${r.code}`)
+  check('C12', 'idle=orca-unavailable', r.out.includes('PASS: idle=orca-unavailable'), r.out)
   rmSync(dir, { recursive: true, force: true })
 }
 
-console.log('== P8 story-resume STALLED → --send đúng 1 lần (cap 1/pass) ==')
+console.log('== C13 discovery filter: run cũ (window) + legacy không tốn task-list ==')
 {
-  const dir = tempDir('p8')
+  const dir = tempDir('c13')
+  const stub = makeOrcaStub(dir)
+  const now = new Date(Date.now() - 5 * 60 * 1000).toISOString().replace(/\.\d+Z$/, 'Z')
+  const old = '2026-01-01T00:00:00Z'
+  const rl = fixture(dir, 'rl.json', { ok: true, result: { runs: [
+    { id: 'run_fresh', objective: 'LOCAL-1', coordinator_handle: 'term_self', updated_at: now },
+    { id: 'run_aged', objective: 'FI-233 cũ', coordinator_handle: 'term_o', updated_at: old },
+    { id: 'run_leg', objective: 'legacy', coordinator_handle: null, legacy: 1, updated_at: now },
+  ] } })
+  const r = runPass(dir, stub, {
+    RL_FIXTURE: rl, WL_FIXTURE: fixture(dir, 'wl.json', NO_WORKERS),
+    TL_FIXTURE: fixture(dir, 'tl.json', OPEN_TASK),
+    CHECK_FIXTURE: fixture(dir, 'ck.json', NO_MSGS),
+    TERM_FIXTURE: fixture(dir, 'tm.json', TERM_ME_ONLY),
+  })
+  check('C13', 'run fresh được task-list', r.argv.includes('--run run_fresh'), r.argv)
+  check('C13', 'run cũ ngoài window KHÔNG task-list', !r.argv.includes('--run run_aged'), r.argv)
+  check('C13', 'legacy KHÔNG task-list', !r.argv.includes('--run run_leg'), r.argv)
+  check('C13', 'exit 0', r.code === 0, `code=${r.code}`)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== C14 story-resume: STALLED → --send đúng 1 lần; RUNNING/COLD không gửi ==')
+{
+  const dir = tempDir('c14')
   const stub = makeOrcaStub(dir)
   const resume = makeResumeStub(dir)
   const rl = fixture(dir, 'rl.json', { ok: true, result: { runs: [
     { id: 'run_r', objective: 'LOCAL-1', coordinator_handle: 'term_self' },
   ] } })
-  const rc = fixture(dir, 'rc.json', { ok: true, result: { runs: [] } })
-  writeFileSync(rc, 'sf-2-demo|STALLED|terminal idle + 3h không commit\nsf-3-x|RUNNING|commit 1h trước\nsf-4-y|STALLED-COLD|không terminal\n')
-  const r = runPass(dir, stub, { RL_FIXTURE: rl, WL_FIXTURE: fixture(dir, 'wl.json', { ok: true, result: { workers: [] } }), TL_FIXTURE: fixture(dir, 'tl.json', { ok: true, result: { tasks: [{ id: 't', status: 'pending' }] } }), CHECK_FIXTURE: fixture(dir, 'ck.json', NO_MSGS), STORY_RESUME_BIN: resume, RESUME_CHECK_FIXTURE: rc })
-  check('P8', 'exit 0', r.code === 0, `code=${r.code}`)
-  check('P8', 'summary resumed=1 (cap 1)', r.out.includes('resumed=1'), r.out)
-  check('P8', 'gửi --send cho sf stalled đầu', r.argv.includes('sf-2-demo --send'), r.argv)
-  check('P8', 'KHÔNG gửi lần 2 (cap)', (r.argv.match(/--send/g) || []).length === 1, r.argv)
+  const rc = fixture(dir, 'rc.txt', 'sf-2-demo|STALLED|terminal idle + 3h không commit\nsf-3-x|RUNNING|commit 1h trước\nsf-4-y|STALLED-COLD|không terminal\n')
+  const r = runPass(dir, stub, {
+    RL_FIXTURE: rl, WL_FIXTURE: fixture(dir, 'wl.json', NO_WORKERS),
+    TL_FIXTURE: fixture(dir, 'tl.json', OPEN_TASK), CHECK_FIXTURE: fixture(dir, 'ck.json', NO_MSGS),
+    TERM_FIXTURE: fixture(dir, 'tm.json', TERM_ME_ONLY),
+    STORY_RESUME_BIN: resume, RESUME_CHECK_FIXTURE: rc,
+  })
+  check('C14', 'summary resumed=1 (cap 1)', r.out.includes('resumed=1'), r.out)
+  check('C14', 'gửi --send cho sf stalled', r.argv.includes('sf-2-demo --send'), r.argv)
+  check('C14', 'KHÔNG gửi lần 2 (cap)', (r.argv.match(/--send/g) || []).length === 1, r.argv)
+  check('C14', 'exit 0', r.code === 0, `code=${r.code}`)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== C15 PASS SUMMARY 1 dòng đúng format pack ==')
+{
+  const dir = tempDir('c15')
+  const stub = makeOrcaStub(dir)
+  const rl = fixture(dir, 'rl.json', { ok: true, result: { runs: [
+    { id: 'run_s', objective: 'LOCAL-1', coordinator_handle: 'term_self' },
+  ] } })
+  const r = runPass(dir, stub, {
+    RL_FIXTURE: rl, WL_FIXTURE: fixture(dir, 'wl.json', NO_WORKERS),
+    TL_FIXTURE: fixture(dir, 'tl.json', OPEN_TASK), CHECK_FIXTURE: fixture(dir, 'ck.json', NO_MSGS),
+    TERM_FIXTURE: fixture(dir, 'tm.json', TERM_ME_ONLY),
+  })
+  const last = (r.out.trim().split('\n').pop() || '')
+  check('C15', 'format đúng pack', /^PASS: processed=\d+ replied=\d+ resumed=\d+ skipped-owned=\d+ idle=\S+$/.test(last), last)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== C16 PASS_NOTIFY=1 + osascript fail → vẫn exit 0 (không crash) ==')
+{
+  const dir = tempDir('c16')
+  const stub = makeOrcaStub(dir)
+  const fakeBin = join(dir, 'fake-bin')
+  mkdirSync(fakeBin, { recursive: true })
+  writeFileSync(join(fakeBin, 'osascript'), '#!/bin/sh\nexit 1\n', 'utf8')
+  chmodSync(join(fakeBin, 'osascript'), 0o755)
+  const rl = fixture(dir, 'rl.json', { ok: true, result: { runs: [
+    { id: 'run_n', objective: 'LOCAL-1', coordinator_handle: 'term_self' },
+  ] } })
+  const ck = fixture(dir, 'ck.json', { ok: true, result: { runId: 'run_n', count: 1, messages: [
+    { id: 'msg_n1', type: 'escalation', subject: 'cần user', body: 'z' },
+  ] } })
+  const r = runPass(dir, stub, {
+    RL_FIXTURE: rl, WL_FIXTURE: fixture(dir, 'wl.json', NO_WORKERS),
+    TL_FIXTURE: fixture(dir, 'tl.json', OPEN_TASK), CHECK_FIXTURE: ck,
+    TERM_FIXTURE: fixture(dir, 'tm.json', TERM_ME_ONLY),
+    PASS_NOTIFY: '1',
+    PATH: `${fakeBin}:${process.env.PATH || ''}`,
+  })
+  check('C16', 'notify chết vẫn exit 0', r.code === 0, `code=${r.code} out=${r.out.slice(-300)}`)
   rmSync(dir, { recursive: true, force: true })
 }
 
