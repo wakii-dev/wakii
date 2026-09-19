@@ -37,6 +37,11 @@ BULLET_RE = re.compile(
 EVIDENCE_RE = re.compile(r"^\s+evidence:\s*(.*)$")
 TABLE_SEP_RE = re.compile(r"^\|[\s:|-]+\|?$")
 DET_HEADING_RE = re.compile(r"^#{1,6}\s+deterministic\b", re.IGNORECASE)
+NV_HEADING_RE = re.compile(r"^#{1,6}\s+needs verification\b", re.IGNORECASE)
+ATTEST_HEADING_RE = re.compile(r"^#{1,6}\s+surgical-scope\b", re.IGNORECASE)
+COV_LINE_RE = re.compile(r"^-\s*\[coverage\]", re.IGNORECASE)
+# NV bullet dạng `- [path:line] nghi ngờ` — không có P/confidence → conf=None
+NV_BULLET_RE = re.compile(r"^-\s*\[([^\]\s]+):?(\d*)\]\s*(.+)$")
 
 
 def usage(msg=None):
@@ -108,21 +113,30 @@ class Finding:
 
 
 def parse_file(path, fname):
-    """Trả (findings, unparsed, facts) — tolerant: không khớp shape nào nhưng
-    bắt đầu '- ' hoặc '|' (trừ separator/header) → unparsed, giữ nguyên văn.
-    Bullets dưới heading `### Deterministic` → facts (kênh riêng, 2.14.3)."""
+    """Trả (findings, unparsed, facts, attest) — tolerant: không khớp shape nào
+    nhưng bắt đầu '- ' hoặc '|' (trừ separator/header) → unparsed, giữ nguyên văn.
+    Section channels (2.14.3/2.14.4): bullets dưới `### Deterministic` → facts;
+    `### NEEDS VERIFICATION` → findings conf=None (vào needs bucket); bullets
+    `### Surgical-scope` + dòng `- [coverage]` → attest (không phải finding)."""
     with open(path, "rb") as fh:
         raw = fh.read().decode("utf-8-sig", errors="replace")
-    findings, unparsed, facts = [], [], []
+    findings, unparsed, facts, attest = [], [], [], []
     header_idx = None  # cột (location, severity, conf) của bảng đang mở
-    in_det = False     # đang trong section `### Deterministic`
+    section = None     # None | 'det' | 'needs' | 'attest'
     for line in raw.splitlines():
         if TABLE_SEP_RE.match(line):
             continue
         stripped = line.strip()
-        # --- heading: `### Deterministic` bật kênh facts, heading khác tắt
+        # --- heading: chọn kênh cho bullets phía dưới
         if stripped.startswith("#"):
-            in_det = bool(DET_HEADING_RE.match(stripped))
+            if DET_HEADING_RE.match(stripped):
+                section = "det"
+            elif NV_HEADING_RE.match(stripped):
+                section = "needs"
+            elif ATTEST_HEADING_RE.match(stripped):
+                section = "attest"
+            else:
+                section = None
             header_idx = None
             continue
         # --- bảng markdown: header row khai báo cột, data rows đọc theo header
@@ -153,8 +167,28 @@ def parse_file(path, fname):
         header_idx = None  # dòng non-table kết thúc bảng đang mở
         # --- deterministic facts (2.14.3): bullet dưới heading `### Deterministic`
         # là facts từ tool — nguyên văn, không dịch template, không qua conf
-        if in_det and stripped.startswith("- "):
+        if section == "det" and stripped.startswith("- "):
             facts.append(Finding(line.rstrip(), fname))
+            continue
+        # --- coverage/surgical attest (2.14.4): dòng `[coverage]` ở bất kỳ đâu +
+        # bullets dưới `### Surgical-scope` — attestation, không phải finding
+        if COV_LINE_RE.match(stripped):
+            attest.append(Finding(line.rstrip(), fname))
+            continue
+        if section == "attest" and stripped.startswith("- "):
+            attest.append(Finding(line.rstrip(), fname))
+            continue
+        # --- NEEDS VERIFICATION bullets (2.14.4): conf=None → needs bucket
+        # (đúng ngữ nghĩa reviewer viết cho section này), parse path:line để cluster
+        if section == "needs" and stripped.startswith("- "):
+            nm = NV_BULLET_RE.match(stripped)
+            if nm:
+                path_p, line_n = parse_location(nm.group(1).strip())
+                findings.append(Finding(stripped, fname, conf=None,
+                                        path=path_p,
+                                        line=int(line_n) if line_n else None))
+            else:
+                findings.append(Finding(stripped, fname, conf=None))
             continue
         # --- bullet shape
         m = BULLET_RE.match(line)
@@ -165,19 +199,20 @@ def parse_file(path, fname):
                         line=int(line_n) if line_n else None)
             findings.append(f)
             continue
-        # --- evidence line gắn finding/unparsed/fact trước nó
+        # --- evidence line gắn finding/unparsed/fact/attest trước nó
         em = EVIDENCE_RE.match(line)
         if em:
             target = findings[-1] if findings and findings[-1].raw else (
                 unparsed[-1] if unparsed and unparsed[-1].raw else (
-                    facts[-1] if facts and facts[-1].raw else None))
+                    facts[-1] if facts and facts[-1].raw else (
+                        attest[-1] if attest and attest[-1].raw else None)))
             if target is not None:
                 target.raw += "\n" + line.rstrip()
             continue
         # --- trông-như-finding còn lại: bullet không khớp template
         if stripped.startswith("- "):
             unparsed.append(Finding(line.rstrip(), fname))
-    return findings, unparsed, facts
+    return findings, unparsed, facts, attest
 
 
 def cluster(findings):
@@ -272,19 +307,20 @@ def main():
               f"(glob: {{code-reviewer,security-audit,verifier}}-{slug}*.md)")
         return  # exit 0 — no-op degrade
 
-    findings, unparsed, facts = [], [], []
+    findings, unparsed, facts, attest = [], [], [], []
     for fp in files:
         with open(fp, "rb") as fh:
             if fh.read(1) == b"":
                 # catastrophic: file OUTBOX tồn tại nhưng 0 byte — reviewer chết ngang
                 print(f"FUSE FAIL: OUTBOX 0 byte — {fp} (reviewer chết ngang?)")
                 sys.exit(1)
-        fs, up, fc = parse_file(fp, os.path.basename(fp))
+        fs, up, fc, ac = parse_file(fp, os.path.basename(fp))
         findings += fs
         unparsed += up
         facts += fc
+        attest += ac
 
-    total_in = len(findings) + len(unparsed) + len(facts)
+    total_in = len(findings) + len(unparsed) + len(facts) + len(attest)
 
     # threshold: conf >= min → PRIMARY; low/missing (và toàn bộ unparsed) → NEEDS
     threshold = CONF_RANK[min_conf]
@@ -297,7 +333,7 @@ def main():
     if dry:
         print(f"review-fuse dry-run: files={len(files)} parsed={len(findings)} "
               f"unparsed={len(unparsed)} deterministic={len(facts)} "
-              f"primary={len(primary)} "
+              f"attest={len(attest)} primary={len(primary)} "
               f"needs-verification={len(needs) + len(unparsed)} "
               f"primary-clusters={len(primary_clusters)} "
               f"needs-clusters={len(needs_clusters)} min-conf={min_conf}")
@@ -329,6 +365,12 @@ def main():
             print(f"  [facts] {f.raw}")
             print(f"    (nguồn: {f.source})")
 
+    if attest:
+        print("══ COVERAGE (attestation — không phải finding) ══")
+        for f in sorted(attest, key=lambda x: (x.source, x.raw)):
+            print(f"  [attest] {f.raw}")
+            print(f"    (nguồn: {f.source})")
+
     emitted_needs = print_clusters(
         needs_clusters, f"══ NEEDS VERIFICATION (conf < {min_conf}) ══")
     for f in sorted(unparsed, key=lambda x: (x.source, x.raw)):
@@ -337,10 +379,10 @@ def main():
 
     emitted_primary = print_clusters(primary_clusters, "══ PRIMARY ══")
 
-    # invariant: KHÔNG drop finding — in_ra == parsed + unparsed + facts
-    emitted = emitted_needs + emitted_primary + len(unparsed) + len(facts)
+    # invariant: KHÔNG drop finding — in_ra == parsed + unparsed + facts + attest
+    emitted = emitted_needs + emitted_primary + len(unparsed) + len(facts) + len(attest)
     print(f"counts: parsed={len(findings)} unparsed={len(unparsed)} "
-          f"deterministic={len(facts)} "
+          f"deterministic={len(facts)} attest={len(attest)} "
           f"primary-clusters={len(primary_clusters)} needs-clusters={len(needs_clusters)} "
           f"in_ra={emitted}/{total_in}")
     if emitted != total_in:

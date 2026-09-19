@@ -41,8 +41,8 @@ async function checkAsync(name, fn) {
 
 // ── newline-delimited JSON-RPC client ─────────────────────────────────────────
 class McpClient {
-  constructor(cwd, env) {
-    this.child = spawn(process.execPath, [SERVER], { cwd, stdio: ['pipe', 'pipe', 'pipe'], env });
+  constructor(cwd, env, serverPath = SERVER) {
+    this.child = spawn(process.execPath, [serverPath], { cwd, stdio: ['pipe', 'pipe', 'pipe'], env });
     this.buffer = '';
     this.queue = [];
     this.waiters = [];
@@ -97,11 +97,17 @@ fs.writeFileSync(path.join(bracketDir, '5-mcp-server.md'), '# Bracket 5\n\nSF-1 
 fs.writeFileSync(path.join(bracketDir, '6-skills.md'), '# Bracket 6\nlinear: WAK-6\n');
 
 // stub orca hermetic (learned 2026-09-12): test KHÔNG được phụ thuộc orca
-// daemon thật — story_task_list qua ORCA_BIN seam của server, JSON deterministic
+// daemon thật — story_task_list qua ORCA_BIN seam của server, JSON deterministic.
+// 2.14.4: stub log argv vào ARGV_LOG để assert --run passthrough không cần daemon.
+const argvLog = path.join(fixture, 'argv.log');
 const stubOrca = path.join(fixture, 'orca-stub.sh');
-fs.writeFileSync(stubOrca, '#!/bin/sh\nprintf \'{"result": {"items": [], "gates": []}}\'\n', 'utf8');
+fs.writeFileSync(
+  stubOrca,
+  '#!/bin/sh\nprintf \'%s\\n\' "$*" >> "$ARGV_LOG"\nprintf \'{"result": {"items": [], "gates": []}}\'\n',
+  'utf8'
+);
 fs.chmodSync(stubOrca, 0o755);
-const SERVER_ENV = { ...process.env, ORCA_BIN: stubOrca };
+const SERVER_ENV = { ...process.env, ORCA_BIN: stubOrca, ARGV_LOG: argvLog };
 const client = new McpClient(fixture, SERVER_ENV); // cwd = fixture repo → bracket quét mặc định trúng fixture
 try {
   // 1) initialize handshake
@@ -192,12 +198,62 @@ try {
     const res = await client.request('ping', {}, 12);
     assert.deepEqual(res.result, {});
   });
+
+  // 10) 2.14.4 — run param: passthrough --run cho task-list/gate-list qua argv log
+  const argvLines = () => (fs.existsSync(argvLog) ? fs.readFileSync(argvLog, 'utf8').split('\n').filter(Boolean) : []);
+  await checkAsync('story_task_list không run → không có --run', async () => {
+    const before = argvLines().length;
+    await client.callTool('story_task_list', {}, 13);
+    const last = argvLines().slice(before).join('|');
+    assert.match(last, /orchestration task-list --json$/);
+  });
+  await checkAsync('story_task_list run → --run passthrough', async () => {
+    const before = argvLines().length;
+    await client.callTool('story_task_list', { run: 'run_test123' }, 14);
+    const last = argvLines().slice(before).join('|');
+    assert.match(last, /--run run_test123$/);
+  });
+  await checkAsync('story_gate_list run → --run passthrough', async () => {
+    const before = argvLines().length;
+    await client.callTool('story_gate_list', { run: 'run_abc-9' }, 15);
+    const last = argvLines().slice(before).join('|');
+    assert.match(last, /orchestration gate-list --json --run run_abc-9$/);
+  });
+  await checkAsync('run id lạ (charset ngoài whitelist) → isError, không spawn', async () => {
+    const before = argvLines().length;
+    const res = await client.callTool('story_task_list', { run: '../evil; rm' }, 16);
+    assert.equal(res.result.isError, true);
+    assert.match(textOf(res), /run id không hợp lệ/);
+    assert.equal(argvLines().length, before, 'stub không được bị spawn với run id lạ');
+  });
 } finally {
   client.kill();
   const code = await client.exit;
   console.log(`\nserver exit code: ${code}`);
   fs.rmSync(fixture, { recursive: true, force: true });
 }
+
+// 11) 2.14.4 — installed layout (~/.claude/bin/, không kit.json ở trên): version
+// fallback từ marker .story-team-kit-version thay vì 0.0.0
+await checkAsync('installed layout: version fallback từ marker HOME', async () => {
+  const fixture2 = fs.mkdtempSync(path.join(os.tmpdir(), 'wakii-mcp-installed-'));
+  try {
+    const binDir = path.join(fixture2, 'bin');
+    fs.mkdirSync(binDir, { recursive: true });
+    fs.writeFileSync(path.join(binDir, 'wakii-mcp-server'), fs.readFileSync(SERVER, 'utf8'));
+    fs.writeFileSync(path.join(fixture2, '.story-team-kit-version'), '9.9.9:deadbeef0123');
+    const c2 = new McpClient(fixture2, { ...process.env, HOME: fixture2 }, path.join(binDir, 'wakii-mcp-server'));
+    try {
+      const init = await c2.request('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 't', version: '0' } }, 1);
+      assert.equal(init.result.serverInfo.version, '9.9.9');
+    } finally {
+      c2.kill();
+      await c2.exit;
+    }
+  } finally {
+    fs.rmSync(fixture2, { recursive: true, force: true });
+  }
+});
 
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

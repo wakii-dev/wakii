@@ -1,6 +1,6 @@
 {
   "name": "story-team-kit",
-  "version": "2.14.3",
+  "version": "2.14.4",
   "description": "9-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới.",
   "requires": {
     "claude-code": ">=2.0",
@@ -432,7 +432,7 @@
     {
       "name": "story-review-fuse",
       "type": "bin",
-      "description": "gộp findings nhiều OUTBOX reviews/<agent>-<sf>*.md (GH-32) — parse tolerant bullet+bảng, cluster (file, line±10, severity), sort confidence, conf-thấp → NEEDS VERIFICATION; heading ### Deterministic = kênh facts tool riêng (2.14.3); KHÔNG bao giờ drop finding (invariant in_ra == parsed+unparsed+facts)"
+      "description": "gộp findings nhiều OUTBOX reviews/<agent>-<sf>*.md (GH-32) — parse tolerant bullet+bảng, cluster (file, line±10, severity), sort confidence, conf-thấp → NEEDS VERIFICATION; heading ### Deterministic = kênh facts tool (2.14.3), NEEDS VERIFICATION bullets → needs bucket, Surgical-scope/[coverage] → kênh attest (2.14.4); KHÔNG bao giờ drop finding (invariant in_ra == parsed+unparsed+facts+attest)"
     },
     {
       "name": "story-surface-lint",
@@ -442,7 +442,7 @@
     {
       "name": "wakii-mcp-server",
       "type": "bin",
-      "description": "read-only MCP server (stdio) — bracket/gate/watchdog/tasklist tools cho agent bên ngoài kit"
+      "description": "read-only MCP server (stdio) — bracket/gate/watchdog/tasklist tools cho agent bên ngoài kit; task/gate-list nhận run param (--run, 2.14.4); version fallback marker khi installed layout"
     },
     {
       "name": "wakii-skill-export",
@@ -475,5 +475,5 @@
       "description": "query Project KB (ADR/repos/glossary/MOC) tu configurable dir (WAKII_KB_DIR) - fail-open khi KB chua configured; layer 1 ADE knowledge infra (#38)"
     }
   ],
-  "kitHash": "9af3f9631e342e71"
+  "kitHash": "38d335d0d54a9d52"
 }
