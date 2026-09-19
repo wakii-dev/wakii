@@ -1,6 +1,6 @@
 {
   "name": "story-team-kit",
-  "version": "2.14.4",
+  "version": "2.14.5",
   "description": "9-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới.",
   "requires": {
     "claude-code": ">=2.0",
@@ -21,7 +21,7 @@
       "inputs": [
         "feature work trong orca-managed project"
       ],
-      "outputs": "6-phase pipeline spec→plan→execute→review→verify với orca infra (worktree/DAG/gates/Linear sync) tự động",
+      "outputs": "6-phase pipeline spec→plan→execute→review→verify với orca infra (worktree/DAG/gates/Linear sync) tự động + plan-DAG validator + TASK-DONE mini-ritual + mirror-back vendored (2.14.5)",
       "owner": "wakii"
     },
     {
@@ -375,6 +375,11 @@
       "description": "validate bracket file — exit 0/1/2, verdict OK/INVALID/WARN; --linear kiểm ID tồn tại thật trong Linear (thiếu key → WARN skip)"
     },
     {
+      "name": "story-plan-validate",
+      "type": "bin",
+      "description": "validate task DAG của orchestration run — D1 deps mồ côi/self-dep, D2 cycle, D3 thiếu spec (FAIL); W1 spec không có tiêu chí nghiệm thu (WARN) — chặn sau Bridge 3 trước Phase 4 (học story-validate, 2.14.5)"
+    },
+    {
       "name": "story-verify",
       "type": "bin",
       "description": "enforce COMPLETE-RUN CHECKLIST 5 bước trước Linear Done — exit 0 sạch / 1 INCOMPLETE / 2 VIOLATION"
@@ -475,5 +480,5 @@
       "description": "query Project KB (ADR/repos/glossary/MOC) tu configurable dir (WAKII_KB_DIR) - fail-open khi KB chua configured; layer 1 ADE knowledge infra (#38)"
     }
   ],
-  "kitHash": "38d335d0d54a9d52"
+  "kitHash": "711444f692f5b62c"
 }
