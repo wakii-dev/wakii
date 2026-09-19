@@ -369,6 +369,11 @@
       "name": "story-plan-validate",
       "type": "bin",
       "description": "kiểm task DAG của orchestration run — bắt lỗi DAG ngay sau Bridge 3 (học từ story-validate)"
+    },
+    {
+      "name": "story-coordinator-pass",
+      "type": "bin",
+      "description": "một lượt coordination pass bounded — run discovery + ownership probe + inbox question/escalation/worker_done verify evidence + stall sweep 3 tầng + PASS summary 1 dòng (LOCAL-1 SF-1)"
     }
   ],
   "kitHash": "9da4eb19ca6c9597"
