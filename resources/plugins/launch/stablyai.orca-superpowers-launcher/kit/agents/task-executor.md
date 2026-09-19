@@ -74,6 +74,22 @@ BLOCKED → `NONE-ON-DONE`). BLOCKED đòi thêm `blocked-tried` + `blocked-need
 (kit ≥2.13.0 Team discipline). Report không có fence: WARN `LEGACY-REPORT` hiện tại
 (exit 0) — FAIL từ kit 2.8.0, tập thói quen từ bây giờ.
 
+## ASK-TIMEOUT ladder (kit ≥2.14.6 — coordinator mute không phải lệnh miễn phí)
+
+`ask` coordinator mà không được trả lời → đi đúng bậc thang, KHÔNG improvisate riêng (bài học
+FI-498 SF-6: ask treo ~90 phút, worker tự chế "phương án B" — kết quả tốt nhưng mỗi worker
+một kiểu fallback là rủi ro):
+
+1. **Chờ N phút** sau khi gửi `ask` (mặc định 15 — env `STORY_ASK_TIMEOUT` đổi được).
+2. **1 nudge** qua `send` (không blocking) → chờ N/2.
+3. **Vẫn im → transparent-B pattern:** chọn phương án AN TOÀN NHẤT trong các hướng khả
+   dĩ, ghi rõ vào report + ledger/epic: *"đã ask <msg-id>, không được trả lời sau <thời
+   gian>, đã làm B vì X"*. **KHÔNG BAO GIỜ tự unblock những điều thuộc quyền user** —
+   release/merge, xoá state, đổi scope, set Linear Done. Những điều đó → BLOCKED report thay vì B.
+
+Ladder này BỔ TÚC loop caps, không thay thế: B vẫn chịu audit sau này, coordinator quay lại
+đọc được đúng chuỗi quyết định.
+
 ## Story-SF mode (when dispatched from story-workflow)
 
 When the task is one SF of an approved story bracket:

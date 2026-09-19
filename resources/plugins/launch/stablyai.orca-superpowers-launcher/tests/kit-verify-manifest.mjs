@@ -101,6 +101,21 @@ if (process.platform !== 'win32') {
   ok('kit/bin: mọi bins executable', nonExec.length === 0, `non-exec: ${nonExec.join(',')}`)
 }
 
+// Test-coverage ratchet (2.14.6 — backlog #6): số kit bin có harness trong tests/
+// KHÔNG ĐƯỢC GIẢM. Baseline 23/42 đo bằng substring match tại 2.14.6 (match nghiêm
+// ngặt hơn scan tay — chỉ tính sàn, không thổi). Mỗi kit release thêm tối thiểu 1
+// harness cho 1 bin chưa cover, đừng big-bang.
+{
+  const binDir = join(kitRoot, 'bin')
+  const bins = readdirSync(binDir).filter(f => !f.endsWith('.html'))
+  const testsDirRatchet = join(pluginRoot, 'tests')
+  const testBlob = readdirSync(testsDirRatchet).filter(f => f.endsWith('.mjs'))
+    .map(f => readFileSync(join(testsDirRatchet, f), 'utf8')).join('\n')
+  const covered = bins.filter(b => testBlob.includes(b)).length
+  ok(`coverage ratchet: ${covered}/${bins.length} bins có harness (>= 23)`, covered >= 23,
+    `covered=${covered} — không xoá/đổi tên harness existing; bin mới cần harness`)
+}
+
 // so SỐ học — '2.10.0' >= '2.8.0' sai theo string (lexicographic)
 {
   const m = /^([1-9]\d*)\.(\d+)\.(\d+)$/.exec(kitJson.version || '')

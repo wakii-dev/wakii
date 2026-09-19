@@ -708,6 +708,8 @@ fi
 
 **Next:** offer execution choice (delegate via Orca `worker-start` for parallel/isolated tasks, or execute inline).
 
+**Coordinator side of ask-timeout (kit ≥2.14.6):** worker bị chặn sẽ hỏi qua `ask` — mute của bạn là nợ có lãi (worker đi transparent-B sau timeout, xem task-executor ASK-TIMEOUT ladder). Đang có worker chạy → rã inbox định kỳ `orca orchestration inbox --json` (hoặc `check --wait`), ưu tiên `question`/`escalation` quá giờ trước khi mở việc mới.
+
 ---
 
 ### Phase 4: Bridge 2 — Gates at Checkpoints (BROWSER VERIFY sau mỗi nhóm task — Rule 0)
