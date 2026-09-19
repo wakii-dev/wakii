@@ -19,7 +19,7 @@ không cần cảm nhận. Dùng cùng (không thay thế) capture chuẩn + ả
 - **F7 visual review** (code-reviewer): sau khi so ảnh 2 bên, chạy rules
   này trên code của screens — bắt lỗi ảnh không thấy (aria, focus, forms,
   keyboard, reduced-motion).
-- **F8 / P8.6 UX review**: checklist nền + gpt-taste (thẩm mỹ) +
+- **F8 / P8.6 UX review**: checklist nền +
   frontend-design (chủ đích).
 - Bất kỳ lúc user nói "review UI/UX", "audit accessibility".
 

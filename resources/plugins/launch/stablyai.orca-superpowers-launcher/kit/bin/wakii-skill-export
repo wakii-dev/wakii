@@ -178,9 +178,9 @@ function selfTest() {
   const check = (label, cond) => { if (!cond) failures.push(label) }
   try {
     const out = path.join(tmp, 'pack')
-    const r1 = runExport({ names: ['brainstorm', 'story-workflow'], kitRoot, out, force: false })
+    const r1 = runExport({ names: ['orca-bridge', 'story-workflow'], kitRoot, out, force: false })
     check('A1: export 2 skill thành công', r1.ok === true)
-    check('A2: 2 thư mục có SKILL.md', ['brainstorm', 'story-workflow'].every((n) => fs.existsSync(path.join(out, n, 'SKILL.md'))))
+    check('A2: 2 thư mục có SKILL.md', ['orca-bridge', 'story-workflow'].every((n) => fs.existsSync(path.join(out, n, 'SKILL.md'))))
     const index = fs.existsSync(path.join(out, 'INDEX.md')) ? fs.readFileSync(path.join(out, 'INDEX.md'), 'utf8') : ''
     check('A3: INDEX.md có bảng + đủ tên', index.includes('| Skill | Mô tả | Outputs |') && index.includes('brainstorm') && index.includes('story-workflow'))
     let pkg = null

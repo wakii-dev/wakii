@@ -60,7 +60,7 @@ node kit/bin/wakii-skill-import ~/Downloads/some-skill --kit ./kit --source ten-
 #   → version mới → installKit() tự re-copy vào ~/.claude/ lần activate sau
 
 # EXPORT skills ra pack để cài vào harness khác
-node kit/bin/wakii-skill-export brainstorm story-workflow --out /tmp/skills-pack --kit ./kit
+node kit/bin/wakii-skill-export orca-bridge story-workflow --out /tmp/skills-pack --kit ./kit
 #   hoặc: wakii-skill-export --from skills.txt --out /tmp/skills-pack
 #   → <out>/<name>/ (copy nguyên thư mục) + INDEX.md (bảng name/mô tả/outputs
 #     từ provides[]) + package.json (name "wakii-skills-pack", version từ kit.json)

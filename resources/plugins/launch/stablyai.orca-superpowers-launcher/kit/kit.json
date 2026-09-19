@@ -1,6 +1,6 @@
 {
   "name": "story-team-kit",
-  "version": "2.14.4",
+  "version": "2.15.0",
   "description": "9-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới.",
   "requires": {
     "claude-code": ">=2.0",
@@ -46,16 +46,6 @@
       "owner": "wakii"
     },
     {
-      "name": "bridge-router",
-      "type": "skill",
-      "inputs": [
-        "workflow moment",
-        "current skill context"
-      ],
-      "outputs": "bridge selection (worktree/gate/DAG/review/status-sync) + route reason",
-      "owner": "wakii"
-    },
-    {
       "name": "writing-plans-linear",
       "type": "skill",
       "inputs": [
@@ -63,28 +53,6 @@
         "current Linear issue"
       ],
       "outputs": "plan.md + Linear subtasks per milestone (Write/Publish modes)",
-      "owner": "wakii"
-    },
-    {
-      "name": "brainstorm",
-      "type": "skill",
-      "inputs": [
-        "feature idea",
-        "constraints",
-        "success criteria"
-      ],
-      "outputs": "validated spec.md + implementation plan (optional Linear publish + worktree)",
-      "owner": "wakii"
-    },
-    {
-      "name": "execute-plan",
-      "type": "skill",
-      "inputs": [
-        "implementation plan",
-        "orchestration dispatch",
-        "worktree"
-      ],
-      "outputs": "implemented tasks + atomic commits + gate/task updates",
       "owner": "wakii"
     },
     {
@@ -117,16 +85,6 @@
       "owner": "wakii"
     },
     {
-      "name": "gpt-taste",
-      "type": "skill",
-      "inputs": [
-        "UI requirement",
-        "page structure goal"
-      ],
-      "outputs": "<design_plan> block (RNG/AIDA/hero-math/bento) + UI code theo đúng plan",
-      "owner": "wakii"
-    },
-    {
       "name": "design-taste-frontend",
       "type": "skill",
       "inputs": [
@@ -152,15 +110,6 @@
         "completed workflow log"
       ],
       "outputs": "skill update + memory index + cleared log (7 steps)",
-      "owner": "wakii"
-    },
-    {
-      "name": "graph-engineering",
-      "type": "skill",
-      "inputs": [
-        "domain corpus hoặc orchestration goal"
-      ],
-      "outputs": "KG ontology/extraction/fusion design hoặc task graph (fan-out, verifier separation, stop rule)",
       "owner": "wakii"
     },
     {
@@ -475,5 +424,5 @@
       "description": "query Project KB (ADR/repos/glossary/MOC) tu configurable dir (WAKII_KB_DIR) - fail-open khi KB chua configured; layer 1 ADE knowledge infra (#38)"
     }
   ],
-  "kitHash": "38d335d0d54a9d52"
+  "kitHash": "b58e72a0bb17a0cb"
 }
