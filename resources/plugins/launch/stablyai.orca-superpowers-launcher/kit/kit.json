@@ -1,6 +1,6 @@
 {
   "name": "story-team-kit",
-  "version": "2.14.2",
+  "version": "2.14.3",
   "description": "9-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới.",
   "requires": {
     "claude-code": ">=2.0",
@@ -372,7 +372,7 @@
     {
       "name": "story-validate",
       "type": "bin",
-      "description": "validate bracket file — exit 0/1/2, verdict OK/INVALID/WARN"
+      "description": "validate bracket file — exit 0/1/2, verdict OK/INVALID/WARN; --linear kiểm ID tồn tại thật trong Linear (thiếu key → WARN skip)"
     },
     {
       "name": "story-verify",
@@ -432,7 +432,7 @@
     {
       "name": "story-review-fuse",
       "type": "bin",
-      "description": "gộp findings nhiều OUTBOX reviews/<agent>-<sf>*.md (GH-32) — parse tolerant bullet+bảng, cluster (file, line±10, severity), sort confidence, conf-thấp → NEEDS VERIFICATION; KHÔNG bao giờ drop finding (invariant in_ra == parsed+unparsed)"
+      "description": "gộp findings nhiều OUTBOX reviews/<agent>-<sf>*.md (GH-32) — parse tolerant bullet+bảng, cluster (file, line±10, severity), sort confidence, conf-thấp → NEEDS VERIFICATION; heading ### Deterministic = kênh facts tool riêng (2.14.3); KHÔNG bao giờ drop finding (invariant in_ra == parsed+unparsed+facts)"
     },
     {
       "name": "story-surface-lint",
@@ -475,5 +475,5 @@
       "description": "query Project KB (ADR/repos/glossary/MOC) tu configurable dir (WAKII_KB_DIR) - fail-open khi KB chua configured; layer 1 ADE knowledge infra (#38)"
     }
   ],
-  "kitHash": "c51f6f98ea48d2fa"
+  "kitHash": "9af3f9631e342e71"
 }

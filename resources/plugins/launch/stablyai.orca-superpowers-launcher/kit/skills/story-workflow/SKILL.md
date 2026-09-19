@@ -212,9 +212,11 @@ Run the full-strictness epic pipeline:
    - Tier không shippable độc lập (chỉ có nghĩa khi tier sau xong) → gộp vào
      phase sau. Watchdog --launch-next cần người duyệt phase-gate nếu đặt
      RELEASE_GATE=1 (env, mặc định off).
-   - **Mỗi phase checkpoint gồm 1 vòng security-audit** (security-audit agent:
-     quét secrets/.env, exec-bits, permissions, dependabot) — phase không
-     checkpoint nếu audit còn P0/P1 (học FI-458: 3 lần exec-bit + .env lọt).
+   - **Mỗi phase checkpoint gồm 1 vòng security-audit** (OWASP surface +
+     repo-hygiene pass trong agent def: secrets/.env trong diff, exec-bit mới,
+     permissions, lockfile-deps) — phase không checkpoint nếu audit còn P0/P1
+     (học FI-458: 3 lần exec-bit + .env lọt). Lớp secrets TRƯỚC commit vẫn là
+     story-diff-review (gate per-task) — checkpoint là lớp thứ 2, không thay thế.
 6. `superpowers:brainstorming` MANDATORY + every clarifying question:
    - **Facts vs decisions** (learned 2026-09-03, mattpocock/grilling): cái mà
      code/repo/Linear trả lời được = FACT → tự tra (read code, dispatch subagent),

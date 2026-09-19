@@ -40,6 +40,19 @@ ok(`marker = ${kitJson.version} (khớp kit.json)`, ver === kitJson.version || v
     `declared=${declared} actual=${computeKitHash(kitRoot)}`)
   ok(`marker đầy đủ version:hash`, ver === `${kitJson.version}:${declared}`, `got ${JSON.stringify(ver)}`)
 }
+// Plugin fingerprint (bài học 1.4.209): bundled-plugins.json contentHash phải
+// khớp bytes plugin thật — stale hash = mac/win packaging chết ở
+// verify-packaged-plugin-resources trước khi upload (cắn 1.4.203 + 1.4.209).
+{
+  const { createRequire } = await import('node:module')
+  const require2 = createRequire(import.meta.url)
+  const { hashPackagedPluginTree } = require2(resolve(pluginRoot, '..', '..', '..', '..', 'config', 'scripts', 'verify-packaged-plugin-resources.cjs'))
+  const index = JSON.parse(readFileSync(resolve(pluginRoot, '..', 'bundled-plugins.json'), 'utf8'))
+  const entry = (index.plugins || []).find(e => e.pluginKey === 'stablyai.orca-superpowers-launcher')
+  const actualHash = hashPackagedPluginTree(pluginRoot)
+  ok('bundled-plugins.json: contentHash khớp bytes plugin', !!entry && entry.contentHash === actualHash,
+    `manifest=${String(entry?.contentHash).slice(0, 16)} actual=${actualHash.slice(0, 16)} — rehash qua hashPackagedPluginTree`)
+}
 // Drift guard source↔vendored (2.14.2): source repo (local-only) phải khớp
 // vendored trên đúng contract sync-kit — bin/ + skills/ + agents/ + kit.json.
 // Lệch = lần sync-kit tới xoá sạch doctrine mới (2.14.x từng chỉ tồn tại
