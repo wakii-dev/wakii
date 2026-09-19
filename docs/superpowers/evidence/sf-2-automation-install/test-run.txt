@@ -1,0 +1,174 @@
+# LOCAL-1 SF-2 evidence — 2026-09-20 00:49 +0700
+branch: wakii-dev/sf-2-automation-install
+head: 82a5969c
+code commit: f393c7bbe5 (feat) + 82a5969c94 (review fixes)
+merged: 4e99bb06f9 -> story/local-1-self-sustain-24-7 (SF-1 b50b8e22ec ancestor-guarded)
+review: code-reviewer round2 APPROVED (round1 CHANGES_REQUESTED: P1 owns() exact-name + P2 trace — đã đóng)
+
+$ node tests/story-automation-install-tests.mjs
+== C1 install fresh → 2 create đúng name/cron/prompt/seeds ==
+  [PASS] C1 exit 0
+  [PASS] C1 đúng 2 automation
+  [PASS] C1 coordinator-pass cron */30 mặc định
+  [PASS] C1 briefing cron 0 7 mặc định
+  [PASS] C1 prompt coord gọi bin SF-1
+  [PASS] C1 prompt brief gọi subcommand briefing
+  [PASS] C1 provider claude mặc định
+  [PASS] C1 fresh-session trong argv
+  [PASS] C1 missed-run-grace 720 trong argv
+  [PASS] C1 không có workspace override khi không truyền
+  [PASS] C1 summary INSTALL created=2
+== C2 idempotent: install ×2 → vẫn 2 automation, lần 2 KHÔNG create ==
+  [PASS] C2 exit 0 lần 2
+  [PASS] C2 vẫn đúng 2 automation (không nhân bản)
+  [PASS] C2 lần 2 KHÔNG create
+  [PASS] C2 lần 2 edit cả 2
+  [PASS] C2 summary INSTALL updated=2
+== C3 override --cron/--briefing-cron/--workspace/--provider/--timezone ==
+  [PASS] C3 exit 0
+  [PASS] C3 --cron override coordinator-pass
+  [PASS] C3 --briefing-cron override briefing
+  [PASS] C3 --workspace pass-through cả 2
+  [PASS] C3 --provider override
+  [PASS] C3 --timezone trong argv
+== C4 legacy orchestration-coordinator-pass → ADOPT edit, không nhân bản ==
+  [PASS] C4 exit 0
+  [PASS] C4 vẫn 2 automation (legacy adopted + briefing mới)
+  [PASS] C4 chỉ 1 create (briefing)
+  [PASS] C4 legacy được edit giữ id
+  [PASS] C4 legacy prompt thay bằng 1 dòng gọi bin SF-1
+  [PASS] C4 summary created=1 updated=1
+== C5 retire → gỡ sạch cả 2 automation owned ==
+  [PASS] C5 exit 0
+  [PASS] C5 state rỗng
+  [PASS] C5 remove đúng 2
+  [PASS] C5 summary RETIRE removed=2
+== C6 retire không owned → removed=0, automation lạ nguyên vẹn ==
+  [PASS] C6 exit 0
+  [PASS] C6 removed=0
+  [PASS] C6 KHÔNG remove call
+  [PASS] C6 automation lạ còn nguyên
+== C7 briefing happy → story-notify 1 tin tổng hợp, peek không ack ==
+  [PASS] C7 exit 0
+  [PASS] C7 story-notify được gọi đúng 1 lần
+  [PASS] C7 type generic briefing
+  [PASS] C7 body chứa story-status digest (epic + Linear states)
+  [PASS] C7 body chứa stall STALLED (không RUNNING)
+  [PASS] C7 body chứa question [chờ coordinator]
+  [PASS] C7 body chứa escalation [cần user]
+  [PASS] C7 đọc --peek
+  [PASS] C7 KHÔNG --ack (đọc không phá inbox)
+  [PASS] C7 stdout BRIEFING: notified
+== C8 briefing orca + seams chết → vẫn notify degraded, exit 0 ==
+  [PASS] C8 exit 0 (briefing không fail hard)
+  [PASS] C8 vẫn gọi story-notify
+  [PASS] C8 body degraded nói rõ nguồn hỏng
+== C9 install orca chết → exit 1 KHÔNG blind-create (chống nhân bản) ==
+  [PASS] C9 exit 1
+  [PASS] C9 KHÔNG create/edit
+  [PASS] C9 state không đổi
+== C10 briefing không có gì mới → "Không có gì bất thường" ==
+  [PASS] C10 exit 0
+  [PASS] C10 body "Không có gì bất thường"
+== C11 --help + usage sai ==
+  [PASS] C11 --help exit 0
+  [PASS] C11 --help in usage
+  [PASS] C11 flag lạ exit 2
+== C12 briefing story-notify chết → notify-fail rõ ràng, exit 0 ==
+  [PASS] C12 exit 0 (briefing không fail hard)
+  [PASS] C12 BRIEFING: notify-fail (không nói notified)
+  [PASS] C12 body vẫn in ra stdout
+== C13 automation lạ cùng suffix KHÔNG bị adopt; multi-owned cảnh báo; retire partial fail exit 1 ==
+  [PASS] C13 exit 0
+  [PASS] C13 deploy-coordinator-pass KHÔNG bị adopt (giữ nguyên prompt)
+  [PASS] C13 team-morning-briefing KHÔNG bị adopt
+  [PASS] C13 chỉ create briefing — coord multi-owned KHÔNG create
+  [PASS] C13 cảnh báo multi-owned coord
+  [PASS] C13 retire partial fail → exit 1
+  [PASS] C13 báo FAIL remove đúng automation
+  [PASS] C13 automation user còn nguyên sau retire
+
+== TOTAL: 68 PASS / 0 FAIL ==
+HARNESS GREEN
+
+$ node tests/story-coordinator-pass-tests.mjs (harness SF-1 trên cây merge — integration)
+== C1 foreign worker live → SKIP-OWNED, KHÔNG check run đó ==
+  [PASS] C1 exit 0
+  [PASS] C1 summary skipped-owned=1
+  [PASS] C1 KHÔNG check run foreign
+  [PASS] C1 log SKIP-OWNED nêu owner
+== C2 live worker của mình + run mồ côi → được xử, không skip ==
+  [PASS] C2 exit 0
+  [PASS] C2 run của mình được check
+  [PASS] C2 run mồ côi được nhận (check)
+  [PASS] C2 skipped-owned=0
+== C3 foreign coordinator terminal CÒN SỐNG (không worker live) → skip ==
+  [PASS] C3 skipped-owned=1
+  [PASS] C3 KHÔNG check
+  [PASS] C3 exit 0
+== C4 foreign coordinator terminal ĐÃ CHẾT (stale handle) → self-heal xử ==
+  [PASS] C4 stale handle → check được xử
+  [PASS] C4 skipped-owned=0
+  [PASS] C4 exit 0
+== C5 question → reply body DẪN FILE bracket (epic từ objective) ==
+  [PASS] C5 reply msg_q1 được gọi
+  [PASS] C5 reply body dẫn FILE bracket local-1
+  [PASS] C5 summary replied=1 processed=1
+== C6 question nhưng không tìm được bracket file → vẫn reply, dẫn thư mục ==
+  [PASS] C6 vẫn reply
+  [PASS] C6 body dẫn docs/superpowers/brackets/
+== C7 escalation → KHÔNG reply, báo needs-user ==
+  [PASS] C7 KHÔNG reply
+  [PASS] C7 escalation được ghi needs-user
+== C8 worker_done evidence thiếu (files rỗng) → NEEDS-VERIFY + trail ==
+  [PASS] C8 NEEDS-VERIFY được ghi
+  [PASS] C8 KHÔNG EVIDENCE-OK
+  [PASS] C8 state file có trail
+== C9 worker_done commit hash THẬT + files ⊆ diff (git tmp) → EVIDENCE-OK ==
+  [PASS] C9 EVIDENCE-OK — chấp nhận
+  [PASS] C9 KHÔNG NEEDS-VERIFY
+== C10 worker_done hash KHÔNG tồn tại trong repo → NEEDS-VERIFY (commit phải tồn tại) ==
+  [PASS] C10 hash fake → NEEDS-VERIFY
+  [PASS] C10 KHÔNG EVIDENCE-OK
+== C11 không run active → PASS: idle=no-active-runs, exit 0 ==
+  [PASS] C11 exit 0
+  [PASS] C11 PASS: idle=no-active-runs
+  [PASS] C11 idle bỏ sớm — KHÔNG check/reply
+== C12 orca chết → idle=orca-unavailable, exit 0 (pass không fail hard) ==
+  [PASS] C12 exit 0
+  [PASS] C12 idle=orca-unavailable
+== C13 discovery filter: run cũ (window) + legacy không tốn task-list ==
+  [PASS] C13 run fresh được task-list
+  [PASS] C13 run cũ ngoài window KHÔNG task-list
+  [PASS] C13 legacy KHÔNG task-list
+  [PASS] C13 exit 0
+== C14 story-resume: STALLED → --send đúng 1 lần; RUNNING/COLD không gửi ==
+  [PASS] C14 summary resumed=1 (cap 1)
+  [PASS] C14 gửi --send cho sf stalled
+  [PASS] C14 KHÔNG gửi lần 2 (cap)
+  [PASS] C14 exit 0
+== C15 PASS SUMMARY 1 dòng đúng format pack ==
+  [PASS] C15 format đúng pack
+== C16 PASS_NOTIFY=1 + osascript fail → vẫn exit 0 (không crash) ==
+  [PASS] C16 notify chết vẫn exit 0
+== C17 reply rc0 nhưng stdout không JSON → gọi ĐÚNG 1 lần (cấm dup-mutation) ==
+  [PASS] C17 reply gọi đúng 1 lần
+  [PASS] C17 rc0 vẫn tính replied (không FAIL)
+== C18 reply fail trong batch → KHÔNG --ack batch đó (không nuốt câu hỏi) ==
+  [PASS] C18 KHÔNG --ack sau batch fail
+  [PASS] C18 REPLY FAIL được log
+  [PASS] C18 exit 0
+== C19 evidence: tên file có khoảng trắng (splitlines) → EVIDENCE-OK ==
+  [PASS] C19 file khoảng trắng → EVIDENCE-OK
+== C20 env số hỏng (PASS_CHECK_WAIT_MS=abc) → fallback, exit 0 ==
+  [PASS] C20 exit 0 (không ValueError)
+== C21 crash bất ngờ (result sai kiểu) → PASS: idle=error, exit 0 ==
+  [PASS] C21 exit 0
+  [PASS] C21 idle=error
+== C22 terminal list trả rác rc0 → degrade bảo thủ: foreign owner bị SKIP, không ADOPT ==
+  [PASS] C22 skipped-owned=1 (không ADOPT khi không dò được liveness)
+  [PASS] C22 KHÔNG check inbox run unsure
+  [PASS] C22 exit 0
+
+== TOTAL: 55 PASS / 0 FAIL ==
+HARNESS GREEN
