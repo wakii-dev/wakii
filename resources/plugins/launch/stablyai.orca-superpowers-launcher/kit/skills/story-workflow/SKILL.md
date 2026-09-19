@@ -85,6 +85,32 @@ Chia việc (PM làm lúc CREATE/APPROVE):
 - Đây chính là cấu trúc agents đã có (task-executor xanh, code-reviewer xanh lam,
   verifier cam) — section này formal hóa cách nhìn chúng như MỘT TEAM.
 
+# ⚠️ MINDSET SỐ 0 — BROWSER LÀ NƠI SF ĐƯỢC CHỨNG MINH (port từ orca-superpowers-workflow)
+
+**Đây không phải rule để check — đây là cách Dev làm việc trong worktree SF.**
+Gate 3 (`story-test` browser walkthrough) chỉ là LƯU ĐIỂM chốt; mindset này áp
+từ dòng code UI đầu tiên:
+
+- **SAI:** code → tests pass → nói agent "mở browser test" → coi như xong.
+  Tests kiểm MẢNH RIÊNG — chỉ browser kiểm CHUỖI LIỀN MẠCH (bài học 30/8:
+  auth 205/205 pass, reviewer approve, user KHÔNG ĐĂNG NHẬP ĐƯỢC).
+- **ĐÚNG:** mở browser TRƯỚC khi code (nhìn hiện trạng + screenshot BEFORE)
+  → làm → mở lại + AFTER → so cạnh nhau → mới nói "xong".
+
+**Quy tắc tuyệt đối (giữ nguyên từ workflow thường):**
+1. Screenshot > DOM query — ảnh thấy TOTAL, DOM chỉ từng mảnh; DOM query fail
+   ≠ kết luận "không bug" (sai selector / chưa render / shadow DOM)
+2. Tự nhìn > agent báo cáo; screenshot fail → nói thật + nhờ user nhìn giúp —
+   KHÔNG lặng lẽ fallback sang DOM đo thay
+3. Flow walkthrough (login → navigate → click → logout) là CHUẨN DUY NHẤT cho
+   "xong" — chính là nội dung Gate 3, không phải thủ tục cuối cho có
+4. CDP screenshot timeout (window không surface) → headless Chrome TRÊN CÙNG
+   build vẫn được — pixel thật, tự Read ảnh; KHÔNG thay bằng DOM (FI-464)
+5. CLI chỉ dùng cho: git, tests, servers, deploy — KHÔNG thay browser
+
+Chi tiết 3 tầng nhận thức (DOM / screenshot / flow) + fallback đầy đủ: xem
+`orca-superpowers-workflow/SKILL.md` — MINDSET SỐ 0.
+
 ## Operating principles (học từ FI-151 chạy thật — giữ nguyên, không pha trộn)
 
 1. **Thiết kế cho việc mình sẽ sai.** Mọi giả định "chắc chắn rồi" là một bug chưa bộc lộ
@@ -459,12 +485,12 @@ one SF and reports DONE/BLOCKED.
   (audit trail) tới khi người tự xóa.
 
 ### OPERATE (progress)
-- Each SF's workflow run updates its sub-issue state via Bridge 5 — the
-  bracket panel reads these states (worker polls Linear + worktree ps + task-list).
-- Panel data flow (verified end-to-end): panel writes `story.request` to plugin
-  storage → worker poll (3s) loads that bracket file → `story.snapshot` → panel
-  auto-poll (15s) renders. Worker is LAZY — first request after app restart waits
-  until a command/event wakes it; run "Story List" once (⌘J) after restart.
+- Each SF's workflow run updates its sub-issue state via Bridge 5 — states đọc
+  bằng `story-status` / `story-top` / Linear trực tiếp.
+- Plugin ≥1.7.0 là HEADLESS: panel story.request/story.snapshot handshake ĐÃ XOÁ
+  (cùng các poller consumer). Worker báo tiến độ qua orchestration messages —
+  coordinator đọc bằng `inbox` / `check --wait`; không còn poll 3s/15s, không
+  cần "Story List ⌘J" sau restart.
 - An SF blocked at an async user gate (e.g. SF-6's user-review-gate) blocks
   ONLY itself; siblings keep running. The node stays yellow with the gate pending.
 - Blocked/failed SF → node red; downstream tiers visibly wait. Escalate per

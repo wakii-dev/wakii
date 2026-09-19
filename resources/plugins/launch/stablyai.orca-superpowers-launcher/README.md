@@ -2,11 +2,11 @@
 
 An **Orca app plugin** (`pluginApi` 1, headless since v1.7.0 — panel Story Ops removed) that auto-installs the story-team-kit and adds **palette Commands** to drive the `orca-superpowers-workflow` skill from the focused worktree's terminal.
 
-It is a **control deck**: every button types a prompt into the terminal, and the agent there does the real work (runs the skill, prints progress, resolves gates). The plugin itself runs no skill logic and reads no workflow state.
+The plugin itself runs no skill logic and reads no workflow state — every Command types a prompt into the focused worktree's terminal, and the agent there does the real work (runs the skill, prints progress, resolves gates). Tiến độ đọc bằng kit bins (`story-status`, `story-top`) + orchestration messages, không còn panel.
 
 ## Identity
 - `publisher.id` = `stablyai.orca-superpowers-launcher` (đổi từ `local.superpowers-launcher` khi bundle built-in — bundled plugin bắt buộc identity official `stablyai.orca-*`)
-- `version` = `1.6.0`
+- `version` = `1.7.0`
 - `engines.orca` = `>=1.4.0`, `pluginApi` = 1 (EXPERIMENTAL)
 
 ## Built-in trong build Wakii (bundle)
@@ -69,8 +69,8 @@ node kit/bin/wakii-skill-export orca-bridge story-workflow --out /tmp/skills-pac
 
 Kit dir nhận qua `--kit <dir>` hoặc env `WAKII_KIT_DIR` (không default `~/.claude`). Tự-check: `node kit/bin/wakii-skill-import --selftest && node kit/bin/wakii-skill-export --selftest` (chỉ ghi vào temp dir).
 
-## Why a control deck (not a dashboard)
-[LỊCH SỬ v1.6 — panel đã gỡ] The Orca panel→worker bridge was a **closed transport**: a sandboxed panel iframe can only call three host actions — `workspace.readContext`, `terminal.sendText`, `notifications.show` (see Orca's `plugin-host-api.js`, `PLUGIN_PANEL_ACTIONS`). On top of that, the panel shell injects `connect-src 'none'` CSP, so `fetch`/`XHR`/`WebSocket` to any origin is blocked. There is no route from the panel to plugin-registered commands or to the filesystem. All visualization happens **in the terminal via the agent**; this plugin only sends it the right prompts.
+## Why headless (panel gỡ ở v1.7.0 — lịch sử v1.6 "control deck")
+The Orca panel→worker bridge was a **closed transport**: a sandboxed panel iframe can only call three host actions — `workspace.readContext`, `terminal.sendText`, `notifications.show` (see Orca's `plugin-host-api.js`, `PLUGIN_PANEL_ACTIONS`). On top of that, the panel shell injects `connect-src 'none'` CSP, so `fetch`/`XHR`/`WebSocket` to any origin is blocked. There is no route from the panel to plugin-registered commands or to the filesystem. All visualization happens **in the terminal via the agent**; this plugin only sends it the right prompts — và giờ không còn panel để gửi thay, chỉ còn palette Commands + kit bins.
 
 ## v1.3 architecture: policy in the skill, opt-in in the prompt
 To keep composed prompts well under Orca's `terminal.sendText` 4096-byte limit, directives are split by nature:

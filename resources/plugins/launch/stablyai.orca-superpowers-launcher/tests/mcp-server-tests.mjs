@@ -234,18 +234,21 @@ try {
 }
 
 // 11) 2.14.4 — installed layout (~/.claude/bin/, không kit.json ở trên): version
-// fallback từ marker .story-team-kit-version thay vì 0.0.0
-await checkAsync('installed layout: version fallback từ marker HOME', async () => {
+// fallback từ marker. 2.16.4 fix: marker THẬT nằm ở $HOME/.claude/ (installKit
+// ghi join(claude,...)) — test fixture PHẢI khớp layout production, không được
+// tự chế layout chỉ để test pass (meta-test: bug 2.16.3 green-lit nhờ fixture sai).
+async function probeInstalledVersion(markerPath, label, id) {
   const fixture2 = fs.mkdtempSync(path.join(os.tmpdir(), 'wakii-mcp-installed-'));
   try {
     const binDir = path.join(fixture2, 'bin');
     fs.mkdirSync(binDir, { recursive: true });
     fs.writeFileSync(path.join(binDir, 'wakii-mcp-server'), fs.readFileSync(SERVER, 'utf8'));
-    fs.writeFileSync(path.join(fixture2, '.story-team-kit-version'), '9.9.9:deadbeef0123');
+    fs.mkdirSync(path.dirname(markerPath(fixture2)), { recursive: true });
+    fs.writeFileSync(markerPath(fixture2), '9.9.9:deadbeef0123');
     const c2 = new McpClient(fixture2, { ...process.env, HOME: fixture2 }, path.join(binDir, 'wakii-mcp-server'));
     try {
-      const init = await c2.request('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 't', version: '0' } }, 1);
-      assert.equal(init.result.serverInfo.version, '9.9.9');
+      const init = await c2.request('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 't', version: '0' } }, id);
+      assert.equal(init.result.serverInfo.version, '9.9.9', `${label}: got ${init.result.serverInfo.version}`);
     } finally {
       c2.kill();
       await c2.exit;
@@ -253,7 +256,11 @@ await checkAsync('installed layout: version fallback từ marker HOME', async ()
   } finally {
     fs.rmSync(fixture2, { recursive: true, force: true });
   }
-});
+}
+await checkAsync('installed layout: marker ở $HOME/.claude/ (layout production thật)', () =>
+  probeInstalledVersion(f => path.join(f, '.claude', '.story-team-kit-version'), 'claude layout', 20));
+await checkAsync('installed layout: legacy marker ở $HOME/ (fallback)', () =>
+  probeInstalledVersion(f => path.join(f, '.story-team-kit-version'), 'legacy layout', 21));
 
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);
