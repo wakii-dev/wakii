@@ -485,6 +485,20 @@ one SF and reports DONE/BLOCKED.
   (audit trail) tới khi người tự xóa.
 
 ### OPERATE (progress)
+
+**⚠️ ONE COORDINATOR PER STORY (user directive 2026-09-19):** story đã có
+coordinator terminal đang chạy → **TẬN DỤNG terminal đó, TUYỆT ĐỐI KHÔNG mở
+coordinator mới cho cùng story**. Người đến sau = attach: quan sát, hỏi trạng
+thái, handover có chủ đích — không dispatch thêm, không rã inbox song song.
+Worker (executor) vẫn chạy song song nếu boundary tách bạch. (19/09: 2
+coordinator cùng đụng SF-4 → worker bị stop mid-flight; chiều: 3 agent song
+song do 2 bên cùng điều phối LOCAL-1.)
+
+**Coordinator dedupe (tránh lặp không cần thiết):** cùng lệnh + cùng signal →
+nhắc kết quả cũ thay vì quét lại (DSH pattern như task-executor); một thông tin
+nằm ở MỘT nơi (inbox/evidence/Linear) — không sao chép sang layer khác; trước
+khi dispatch/chạy gì, kiểm ai đang giữ việc đó (ownership probe — SF-3 LOCAL-1).
+
 - Each SF's workflow run updates its sub-issue state via Bridge 5 — states đọc
   bằng `story-status` / `story-top` / Linear trực tiếp.
 - Plugin ≥1.7.0 là HEADLESS: panel story.request/story.snapshot handshake ĐÃ XOÁ
