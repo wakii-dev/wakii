@@ -1,0 +1,358 @@
+#!/bin/bash
+# story-automation-install — 1 LỆNH trên máy mới là có ca trực 24/7 (LOCAL-1 SF-2)
+# (mirror pattern story-hooks-install GH-26: idempotent create/update, retire sạch.)
+#
+# install (default) — tạo/CẬP NHẬT đúng 2 automation, chạy lại KHÔNG nhân bản:
+#   1. story-coordinator-pass — cron mặc định "*/30 * * * *" (flag --cron),
+#      prompt 1 dòng gọi bin SF-1 story-coordinator-pass (~/.claude/bin, fallback
+#      kit path). Automation "orchestration-coordinator-pass" cũ (prompt fat
+#      19/09) được ADOPT: match theo tên *-coordinator-pass → edit in place,
+#      tránh 2 pass/30' song song.
+#   2. story-morning-briefing — cron mặc định "0 7 * * *" (flag --briefing-cron),
+#      prompt 1 dòng gọi chính bin này với subcommand `briefing`.
+#   Cả 2: --fresh-session (reuseSession=false — bài học binding churn) +
+#   --missed-run-grace-minutes 720 (máy ngủ quá giờ vẫn chạy khi thức — giá trị
+#   chứng minh của automation 19/09). Workspace: existing — flag --workspace
+#   (selector verbatim); không có → CLI tự resolve enclosing worktree từ cwd
+#   (chạy từ trong workspace muốn ca trực phụ trách).
+# retire — remove mọi automation OWNED (marker dưới), không đụng automation lạ.
+# briefing — chạy flow briefing NGAY (bin tự gom, không cần agent):
+#   story-status (đã gồm Linear states) → digest + story-resume --check
+#   (STALLED*) + orchestration check --peek (question/escalation pending,
+#   KHÔNG ack — đọc không phá inbox) → story-notify generic 1 tin:
+#   "đêm qua xong gì / treo gì / câu hỏi chờ ai". Exit 0 luôn.
+# OWNED marker — coord: tên *-coordinator-pass hoặc prompt có
+# "story-coordinator-pass" · brief: tên *morning-briefing hoặc prompt có
+# "story-automation-install briefing".
+#
+# Env seams (hermetic test + ops): ORCA_BIN · STORY_STATUS_BIN ·
+# STORY_RESUME_BIN · STORY_NOTIFY_BIN (default nằm cạnh script này rồi
+# ~/.claude/bin). automations list/create/edit/remove gọi orca THẲNG (không
+# dev/prod override — store automation nằm ở default runtime; dev runtime
+# không có orca-runtime.json thì orchestration read mới cần fallback SF-1).
+#
+# Usage: story-automation-install [install|retire|briefing]
+#        [--cron <expr>] [--briefing-cron <expr>] [--workspace <selector>]
+#        [--provider <agent>] [--timezone <tz>] [--help]
+# Exit: install/retire 0 = xong · 1 = orca đọc không được (KHÔNG blind-create
+#       — tránh nhân bản) hoặc có automation không xử được · briefing 0 luôn ·
+#       usage sai 2
+set -u
+DIR="$(cd "$(dirname "$0")" && pwd)"
+
+ORCA_BIN="${ORCA_BIN:-}"
+[ -x "$ORCA_BIN" ] || ORCA_BIN="$(command -v orca 2>/dev/null)"
+[ -x "$ORCA_BIN" ] || ORCA_BIN="/opt/homebrew/bin/orca"
+[ -x "$ORCA_BIN" ] || ORCA_BIN="/usr/local/bin/orca"
+[ -x "$ORCA_BIN" ] || ORCA_BIN="/Applications/Wakii.app/Contents/Resources/bin/orca"
+[ -x "$ORCA_BIN" ] || ORCA_BIN="/Applications/Orca.app/Contents/Resources/bin/orca"
+[ -x "$ORCA_BIN" ] || { echo "orca binary không tìm thấy (đặt ORCA_BIN)"; exit 2; }
+export ORCA_BIN
+
+ACTION="install"
+COORD_CRON=""; BRIEF_CRON=""; WORKSPACE=""; PROVIDER=""; TIMEZONE=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    install|retire|briefing) ACTION="$1" ;;
+    --help|-h) grep '^#' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    --cron) [ $# -ge 2 ] || { echo "Missing: $1 value"; exit 2; }; COORD_CRON="$2"; shift ;;
+    --briefing-cron) [ $# -ge 2 ] || { echo "Missing: $1 value"; exit 2; }; BRIEF_CRON="$2"; shift ;;
+    --workspace) [ $# -ge 2 ] || { echo "Missing: $1 value"; exit 2; }; WORKSPACE="$2"; shift ;;
+    --provider) [ $# -ge 2 ] || { echo "Missing: $1 value"; exit 2; }; PROVIDER="$2"; shift ;;
+    --timezone) [ $# -ge 2 ] || { echo "Missing: $1 value"; exit 2; }; TIMEZONE="$2"; shift ;;
+    *) echo "story-automation-install: Unknown: $1"; exit 2 ;;
+  esac
+  shift
+done
+export ACTION COORD_CRON BRIEF_CRON WORKSPACE PROVIDER TIMEZONE KIT_DIR="$DIR"
+
+PY="$(command -v python3 || command -v python || true)"
+[ -n "$PY" ] || { echo "python không tìm thấy"; exit 2; }
+"$PY" -c 'import sys; sys.exit(0 if sys.version_info[0] >= 3 else 1)' || \
+  { echo "cần python >= 3 (fallback 'python' là python2?)"; exit 2; }
+
+exec "$PY" - <<'PYEOF'
+import json
+import os
+import subprocess
+import sys
+import time
+
+ORCA_BIN = os.environ["ORCA_BIN"]
+ACTION = os.environ.get("ACTION", "install")
+COORD_CRON = os.environ.get("COORD_CRON") or "*/30 * * * *"
+BRIEF_CRON = os.environ.get("BRIEF_CRON") or "0 7 * * *"
+WORKSPACE = os.environ.get("WORKSPACE", "")
+PROVIDER = os.environ.get("PROVIDER") or "claude"
+TIMEZONE = os.environ.get("TIMEZONE", "")
+KIT_DIR = os.environ.get("KIT_DIR", "")
+HOME_BIN = os.path.join(os.path.expanduser("~"), ".claude", "bin")
+KIT_REPO_BIN = "resources/plugins/launch/stablyai.orca-superpowers-launcher/kit/bin"
+
+COORD_NAME = "story-coordinator-pass"
+BRIEF_NAME = "story-morning-briefing"
+COORD_PROMPT = (
+    "1 lượt coordinator pass: bash ~/.claude/bin/story-coordinator-pass "
+    f"|| bash {KIT_REPO_BIN}/story-coordinator-pass — doctrine + CẤM tuyệt đối "
+    "xem header bin (không merge main, không xoá state, không Linear Done khi "
+    "chưa verify); exit 0 luôn, không mở việc ngoài inbox + watchdog.")
+BRIEF_PROMPT = (
+    "Morning briefing: bash ~/.claude/bin/story-automation-install briefing "
+    f"|| bash {KIT_REPO_BIN}/story-automation-install briefing — bin tự gom "
+    "story-status + stall + câu hỏi pending rồi story-notify 1 tin, exit 0.")
+
+
+def resolve_seam(env_key, name):
+    """env seam → bin cạnh script → ~/.claude/bin → '' (caller tự degrade)."""
+    for cand in (os.environ.get(env_key, ""),
+                 os.path.join(KIT_DIR, name),
+                 os.path.join(HOME_BIN, name)):
+        if cand and os.access(cand, os.X_OK):
+            return cand
+    return ""
+
+
+def orca_plain(args, timeout_s=30):
+    """automations store nằm ở default runtime — gọi orca THẲNG, không override."""
+    env = dict(os.environ)
+    env.pop("ORCA_USER_DATA_PATH", None)
+    try:
+        p = subprocess.run([ORCA_BIN] + args, capture_output=True, text=True,
+                           timeout=timeout_s, env=env)
+    except (subprocess.TimeoutExpired, OSError):
+        return None
+    if p.returncode != 0:
+        return None
+    try:
+        return json.loads(p.stdout)
+    except Exception:
+        return None
+
+
+def orca_read(args, timeout_s=30):
+    """orchestration read — dev runtime trước (story worktrees), rồi prod, plain."""
+    for ud in (os.path.expanduser("~/Library/Application Support/orca-dev"),
+               os.path.expanduser("~/Library/Application Support/orca"), None):
+        env = dict(os.environ)
+        if ud:
+            env["ORCA_USER_DATA_PATH"] = ud
+        else:
+            env.pop("ORCA_USER_DATA_PATH", None)
+        try:
+            p = subprocess.run([ORCA_BIN] + args, capture_output=True, text=True,
+                               timeout=timeout_s, env=env)
+        except (subprocess.TimeoutExpired, OSError):
+            continue
+        if p.returncode == 0:
+            try:
+                return json.loads(p.stdout)
+            except Exception:
+                continue
+    return None
+
+
+def list_automations():
+    d = orca_plain(["automations", "list", "--json"])
+    if d is None:
+        return None
+    res = d.get("result")
+    if res is None:
+        return None
+    return res.get("automations") or []
+
+
+# exact-name (kể cả legacy 19/09) + prompt marker — KHÔNG suffix/substring:
+# "deploy-coordinator-pass" của user không được adopt/xóa (review P1)
+OWNED_NAMES_COORD = {COORD_NAME, "orchestration-coordinator-pass"}
+OWNED_NAMES_BRIEF = {BRIEF_NAME}
+
+
+def owns(name, prompt, *, coord):
+    name = (name or "").lower()
+    prompt = prompt or ""
+    if coord:
+        return name in OWNED_NAMES_COORD or "story-coordinator-pass" in prompt
+    return name in OWNED_NAMES_BRIEF or "story-automation-install briefing" in prompt
+
+
+def target_args(cron, prompt):
+    args = ["--trigger", cron, "--prompt", prompt, "--provider", PROVIDER,
+            "--fresh-session", "--missed-run-grace-minutes", "720"]
+    if WORKSPACE:
+        args += ["--workspace", WORKSPACE]
+    if TIMEZONE:
+        args += ["--timezone", TIMEZONE]
+    return args
+
+
+def do_install():
+    autos = list_automations()
+    if autos is None:
+        print("story-automation-install: automations list đọc không được — "
+              "KHÔNG create mù (tránh nhân bản)", file=sys.stderr)
+        return 1
+    created = updated = failed = 0
+    for coord in (True, False):
+        name = COORD_NAME if coord else BRIEF_NAME
+        prompt = COORD_PROMPT if coord else BRIEF_PROMPT
+        cron = COORD_CRON if coord else BRIEF_CRON
+        owned = [a for a in autos if owns(a.get("name"), a.get("prompt"), coord=coord)]
+        if owned:
+            aid = owned[0].get("id")
+            d = orca_plain(["automations", "edit", aid] + target_args(cron, prompt))
+            if d is None:
+                print(f"  FAIL edit {name} ({aid})", file=sys.stderr)
+                failed += 1
+                continue
+            note = ""
+            if len(owned) > 1:
+                note = f" (cảnh báo: {len(owned) - 1} automation owned nữa — chạy retire để gỡ thừa)"
+            print(f"installed: {name} — updated {aid}{note}")
+            updated += 1
+        else:
+            d = orca_plain(["automations", "create", "--name", name,
+                            *target_args(cron, prompt)])
+            if d is None:
+                print(f"  FAIL create {name}", file=sys.stderr)
+                failed += 1
+                continue
+            a = (d.get("result") or {}).get("automation") or {}
+            mode = a.get("workspaceMode") or ""
+            note = ""
+            if mode and mode != "existing" and not WORKSPACE:
+                note = (" (cảnh báo: workspace-mode=" + mode + " — chạy lại từ "
+                        "trong workspace muốn ca trực phụ trách, hoặc dùng --workspace)")
+            print(f"installed: {name} — created {a.get('id', '?')}{note}")
+            created += 1
+    print(f"INSTALL: created={created} updated={updated} failed={failed}")
+    return 1 if failed else 0
+
+
+def do_retire():
+    autos = list_automations()
+    if autos is None:
+        print("story-automation-install: automations list đọc không được",
+              file=sys.stderr)
+        return 1
+    removed = failed = 0
+    for coord in (True, False):
+        for a in [x for x in autos
+                  if owns(x.get("name"), x.get("prompt"), coord=coord)]:
+            aid = a.get("id")
+            if orca_plain(["automations", "remove", aid]) is None:
+                print(f"  FAIL remove {a.get('name')} ({aid})", file=sys.stderr)
+                failed += 1
+                continue
+            print(f"retired: {a.get('name')} ({aid})")
+            removed += 1
+    print(f"RETIRE: removed={removed}")
+    return 1 if failed else 0
+
+
+def do_briefing():
+    date_str = time.strftime("%Y-%m-%d")
+    digest = []
+    status_bin = resolve_seam("STORY_STATUS_BIN", "story-status")
+    orca_ok = True
+    if status_bin:
+        try:
+            p = subprocess.run([status_bin], capture_output=True, text=True,
+                               timeout=120)
+        except (subprocess.TimeoutExpired, OSError):
+            p = None
+        text = (p.stdout or "") if p is not None and p.returncode == 0 else ""
+        for line in text.splitlines():
+            s = line.strip()
+            if s.startswith("●") or s.startswith("states:"):
+                digest.append(s[:120])
+    if not digest:
+        digest = ["(story-status không đọc được — kit chưa cài?)"]
+    if len(digest) > 8:
+        rest = len(digest) - 8
+        digest = digest[:8] + [f"…(+{rest} dòng nữa)"]
+
+    stalls = []
+    resume_bin = resolve_seam("STORY_RESUME_BIN", "story-resume")
+    if resume_bin:
+        try:
+            p = subprocess.run([resume_bin, "--check"], capture_output=True,
+                               text=True, timeout=180)
+        except (subprocess.TimeoutExpired, OSError):
+            p = None
+        for line in (p.stdout or "").splitlines() if p is not None else []:
+            parts = line.split("|")
+            if len(parts) >= 2 and parts[1].strip().startswith("STALLED"):
+                stalls.append(f"{parts[0].strip()} ({parts[1].strip()})")
+    stalls = stalls[:4]
+
+    waiting = []
+    check_fails = 0
+    d = orca_read(["orchestration", "run-list", "--json", "--limit", "20"])
+    if d is None:
+        orca_ok = False
+    else:
+        for r in ((d.get("result") or {}).get("runs") or [])[:10]:
+            rid = r.get("id")
+            if not rid:
+                continue
+            c = orca_read(["orchestration", "check", "--run", rid, "--peek",
+                           "--json"])
+            if c is None:
+                check_fails += 1
+                continue
+            for m in (c.get("result") or {}).get("messages") or []:
+                mtype = m.get("type")
+                if mtype not in ("question", "escalation"):
+                    continue
+                subj = ((m.get("subject") or "").splitlines() or ["?"])[0][:70]
+                tag = "cần user" if mtype == "escalation" else "chờ coordinator"
+                waiting.append(f"{subj} [{tag}]")
+                if len(waiting) >= 4:
+                    break
+            if len(waiting) >= 4:
+                break
+
+    body = f"Briefing {date_str}"
+    body += "\n" + "\n".join(digest)
+    if stalls:
+        body += "\nTreo: " + "; ".join(stalls)
+    if waiting:
+        body += "\nChờ: " + "; ".join(waiting)
+    if not orca_ok:
+        body += "\n(orchestration không đọc được — kiểm tra app Orca)"
+    if check_fails:
+        body += f"\n({check_fails} run không đọc được inbox)"
+    got_news = bool(stalls or waiting
+                    or any(not d.startswith("(") for d in digest))
+    if not got_news:
+        body += "\nKhông có gì bất thường — mọi story ổn."
+    print(body)
+
+    notify_bin = resolve_seam("STORY_NOTIFY_BIN", "story-notify")
+    if not notify_bin:
+        print("BRIEFING: notify-missing (story-notify không tìm thấy — body ở trên)")
+        return 0
+    try:
+        p = subprocess.run([notify_bin, "briefing", f"Morning briefing {date_str}",
+                            body], capture_output=True, timeout=20)
+    except (subprocess.TimeoutExpired, OSError):
+        p = None
+    if p is not None and p.returncode == 0:
+        print("BRIEFING: notified")
+    else:
+        rc = p.returncode if p is not None else "timeout"
+        print(f"BRIEFING: notify-fail (rc={rc} — body ở trên)")
+    return 0
+
+
+sys.stdout.reconfigure(encoding="utf-8")
+sys.stderr.reconfigure(encoding="utf-8")
+if ACTION == "install":
+    sys.exit(do_install())
+if ACTION == "retire":
+    sys.exit(do_retire())
+if ACTION == "briefing":
+    sys.exit(do_briefing())
+print(f"story-automation-install: Unknown action: {ACTION}", file=sys.stderr)
+sys.exit(2)
+PYEOF
