@@ -1,0 +1,17 @@
+FI-458 SF-4 — PRE checkpoint (phased-release rule) — 2026-09-19T14:23Z
+
+Điều kiện PRE: cut kit 2.12.0 + release TRƯỚC khi bắt đầu SF-4.
+
+Bằng chứng (lệnh + output):
+$ grep "\"version\"" kit.json
+  "version": "2.16.4",
+$ grep -n "### 2.12.0" README.md
+254:### 2.12.0 — Distributed claim multi-machine (2026-09-14)
+$ git log --all --grep "2.12.0" --oneline | head -3
+af54b72 fix(launch): linear_state dual-path (orca CLI trước) + kit.json 2.12.0 checkpoint
+deb66af feat(fi458-sf1): version 2.12.0 + README distributed claim config (C4)
+$ git -C ~/Desktop/projects/local.superpowers-launcher log --oneline -1
+e5418f2 sync-kit 2.16.3 — vendor kit mới nhất (eeaa537f9f9dc0a7) từ story-team-kit
+
+KẾT LUẬN: kit 2.12.0 cut (deb66af, changelog 14/09) + released — launcher vendored
+sync-kit 2.16.3 (e5418f2). Hiện kit source 2.16.4 ≥ 2.12.0 → PRE thỏa. T1 evidence-only.
