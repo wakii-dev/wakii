@@ -459,12 +459,12 @@ one SF and reports DONE/BLOCKED.
   (audit trail) tới khi người tự xóa.
 
 ### OPERATE (progress)
-- Each SF's workflow run updates its sub-issue state via Bridge 5 — the
-  bracket panel reads these states (worker polls Linear + worktree ps + task-list).
-- Panel data flow (verified end-to-end): panel writes `story.request` to plugin
-  storage → worker poll (3s) loads that bracket file → `story.snapshot` → panel
-  auto-poll (15s) renders. Worker is LAZY — first request after app restart waits
-  until a command/event wakes it; run "Story List" once (⌘J) after restart.
+- Each SF's workflow run updates its sub-issue state via Bridge 5 — states đọc
+  bằng `story-status` / `story-top` / Linear trực tiếp.
+- Plugin ≥1.7.0 là HEADLESS: panel story.request/story.snapshot handshake ĐÃ XOÁ
+  (cùng các poller consumer). Worker báo tiến độ qua orchestration messages —
+  coordinator đọc bằng `inbox` / `check --wait`; không còn poll 3s/15s, không
+  cần "Story List ⌘J" sau restart.
 - An SF blocked at an async user gate (e.g. SF-6's user-review-gate) blocks
   ONLY itself; siblings keep running. The node stays yellow with the gate pending.
 - Blocked/failed SF → node red; downstream tiers visibly wait. Escalate per

@@ -43,6 +43,15 @@ ok(`marker = ${kitJson.version} (khớp kit.json)`, ver === kitJson.version || v
     `declared=${declared} actual=${computeKitHash(kitRoot)}`)
   ok(`marker đầy đủ version:hash`, ver === `${kitJson.version}:${declared}`, `got ${JSON.stringify(ver)}`)
 }
+// Install contract (2.16.4 — meta-test cho bug self-heal 2.16.2): output của
+// installKit PHẢI thỏa installedKitIntact — nếu kitTreeFiles (hash/intact scope)
+// lệch install copy scope thì self-heal chết + recopy đè edit user mỗi activation.
+// Bug 2.16.2: intact luôn false → test này sẽ ĐỎ nếu ai đó lệch scope lần nữa.
+{
+  const { installedKitIntact } = await import(pathToFileURL(join(pluginRoot, 'main.mjs')))
+  ok('install contract: installKit output thỏa installedKitIntact', installedKitIntact(root, kitRoot) === true,
+    'self-heal dead-code — install scope lệch intact scope (xem kitTreeFiles KIT_INSTALLED_DIRS)')
+}
 // Plugin fingerprint (bài học 1.4.209): bundled-plugins.json contentHash phải
 // khớp bytes plugin thật — stale hash = mac/win packaging chết ở
 // verify-packaged-plugin-resources trước khi upload (cắn 1.4.203 + 1.4.209).
@@ -104,10 +113,10 @@ if (process.platform !== 'win32') {
   ok('kit/bin: mọi bins executable', nonExec.length === 0, `non-exec: ${nonExec.join(',')}`)
 }
 
-// Test-coverage ratchet (backlog #6 — port từ 2.14.6 lên 2.16.3 sau rebase):
-// số kit bin có harness trong tests/ KHÔNG ĐƯỢC GIẢM. Baseline 23/42 đo bằng
-// substring match (match nghiêm ngặt hơn scan tay — chỉ tính sàn, không thổi).
-// Mỗi kit release thêm tối thiểu 1 harness cho 1 bin chưa cover, đừng big-bang.
+// Test-coverage ratchet (backlog #6 — baseline đo lại 2.16.4: 22/41 — 2.15/2.16
+// retire 1 bin có harness, đồng thời +2 bin được cover nhờ mcp/preflight tests):
+// số kit bin có harness trong tests/ KHÔNG ĐƯỢC GIẢM. Mỗi kit release thêm
+// tối thiểu 1 harness cho 1 bin chưa cover, đừng big-bang.
 {
   const binDir = join(kitRoot, 'bin')
   const bins = readdirSync(binDir).filter(f => !f.endsWith('.html'))
@@ -115,7 +124,7 @@ if (process.platform !== 'win32') {
   const testBlob = readdirSync(testsDirRatchet).filter(f => f.endsWith('.mjs'))
     .map(f => readFileSync(join(testsDirRatchet, f), 'utf8')).join('\n')
   const covered = bins.filter(b => testBlob.includes(b)).length
-  ok(`coverage ratchet: ${covered}/${bins.length} bins có harness (>= 23)`, covered >= 23,
+  ok(`coverage ratchet: ${covered}/${bins.length} bins có harness (>= 22)`, covered >= 22,
     `covered=${covered} — không xoá/đổi tên harness existing; bin mới cần harness`)
 }
 

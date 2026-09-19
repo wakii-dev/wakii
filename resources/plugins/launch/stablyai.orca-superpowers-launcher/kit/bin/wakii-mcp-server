@@ -35,12 +35,20 @@ function kitVersion() {
 // Layout cài ~/.claude/bin/: kit.json KHÔNG nằm trên bin → fallback marker
 // .story-team-kit-version (định dạng "version" hoặc "version:kitHash" từ 2.14.2)
 function installedVersion() {
-  try {
-    const marker = fs.readFileSync(path.join(os.homedir(), '.story-team-kit-version'), 'utf8').trim();
-    return marker.split(':')[0] || '0.0.0';
-  } catch {
-    return '0.0.0';
+  // marker thật nằm ở ~/.claude/ (installKit ghi join(claude, ...) — main.mjs:903);
+  // đường HOME-root là legacy fallback. Bug 2.16.3-: đọc ngược layout → 0.0.0 mãi.
+  for (const p of [
+    path.join(os.homedir(), '.claude', '.story-team-kit-version'),
+    path.join(os.homedir(), '.story-team-kit-version'),
+  ]) {
+    try {
+      const marker = fs.readFileSync(p, 'utf8').trim();
+      if (marker) return marker.split(':')[0] || '0.0.0';
+    } catch {
+      /* thử đường kế tiếp */
+    }
   }
+  return '0.0.0';
 }
 
 // ── orca CLI: chuỗi fallback y hệt kit bash CLIs (ORCA_BIN → PATH → known paths) ──

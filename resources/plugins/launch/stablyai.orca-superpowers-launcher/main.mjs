@@ -505,20 +505,25 @@ export function computeKitHash(kitRoot = KIT_ROOT) {
   return h.digest('hex').slice(0, 16)
 }
 
-// Danh sách file kit (skills/ + agents/ + bin/ — phần được cài vào ~/.claude)
-// bỏ junk sinh cục bộ. Dùng chung cho computeKitHash + installedKitIntact.
+// Danh sách file kit (skills/ + agents/ + bin/ — phần được cài vào ~/.claude).
+// CHỈ 3 dirs này — contract với installKit copy scope + installedKitIntact.
+// Walk cả root làm self-heal thành dead code + recopy đè edit user MỌI activation
+// (bug 2.16.2). Root files (bracket-template, permission-matrix…) KHÔNG cài →
+// không vào hash/intact (drift guard kit-verify cũng chỉ so 3 dirs + kit.json).
+// Dùng chung cho computeKitHash + installedKitIntact.
+const KIT_INSTALLED_DIRS = ['skills', 'agents', 'bin']
 function kitTreeFiles(kitRoot) {
   const skip = new Set(['__pycache__', '.git', 'node_modules'])
   const files = []
-  const stack = ['']
-  while (stack.length) {
-    const rel = stack.pop()
-    for (const ent of readdirSync(join(kitRoot, rel), { withFileTypes: true })) {
-      if (skip.has(ent.name) || ent.name.endsWith('.pyc') || ent.name === '.DS_Store') continue
-      const r = rel ? `${rel}/${ent.name}` : ent.name
-      if (r === 'kit.json') continue
-      if (ent.isDirectory()) stack.push(r)
-      else if (ent.isFile()) files.push(r)
+  for (const dir of KIT_INSTALLED_DIRS) {
+    const stack = ['']
+    while (stack.length) {
+      const rel = stack.pop()
+      for (const ent of readdirSync(join(kitRoot, dir, rel), { withFileTypes: true })) {
+        if (skip.has(ent.name) || ent.name.endsWith('.pyc') || ent.name === '.DS_Store') continue
+        if (ent.isDirectory()) stack.push(rel ? `${rel}/${ent.name}` : ent.name)
+        else if (ent.isFile()) files.push(`${dir}/${rel ? rel + '/' : ''}${ent.name}`)
+      }
     }
   }
   return files.sort()
@@ -879,7 +884,13 @@ const KIT_ROOT = join(fileURLToPath(new URL('.', import.meta.url)), 'kit')
 // cũ — installKit dọn theo danh sách biết trước này. KHÔNG tự xoá skill ngoài
 // danh sách (huashu-design, issue-fix-loop... là skill của user/khác, không
 // thuộc kit). Bổ sung vào đây mỗi khi retire skill (2.15.0: 5 skills đầu tiên).
-const RETIRED_SKILL_DIRS = ['brainstorm', 'bridge-router', 'execute-plan', 'graph-engineering', 'gpt-taste']
+// 2.15.0 retire 5 + 2.16.0 Phase-1 retire 6 (moved vào kênh skills/ của repo) —
+// BỔ SUNG VÀO ĐÂY MỖI KHI RETIRE (chỉ dẫn trong 2.16.1 từng bị bỏ qua cho 2.16.0)
+const RETIRED_SKILL_DIRS = [
+  'brainstorm', 'bridge-router', 'execute-plan', 'graph-engineering', 'gpt-taste',
+  'design-taste-frontend', 'figma-orientation', 'frontend-design', 'image-to-code',
+  'prompt-master', 'web-design-guidelines',
+]
 
 export function installKit(orca, { root, kitRoot: kitRootOverride } = {}) {
   try {
