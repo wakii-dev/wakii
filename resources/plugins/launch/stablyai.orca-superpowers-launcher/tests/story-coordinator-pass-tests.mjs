@@ -50,7 +50,7 @@ case "$2" in
   worker-list) cat "$WL_FIXTURE" ;;
   task-list) cat "$TL_FIXTURE" ;;
   check) cat "$CHECK_FIXTURE" ;;
-  list) cat "$TERM_FIXTURE" ;;
+  list) if [ -n "$TERM_PLAIN" ]; then printf 'garbage-not-json\n'; else cat "$TERM_FIXTURE"; fi ;;
   reply)
     [ -n "$REPLY_FAIL" ] && exit 1
     if [ -n "$REPLY_PLAIN" ]; then printf 'Replied msg_plain_text\\n'; else printf '%s\\n' '{"ok":true,"result":{"message":{"id":"replied"}}}'; fi ;;
@@ -577,6 +577,25 @@ console.log('== C21 crash bất ngờ (result sai kiểu) → PASS: idle=error, 
   })
   check('C21', 'exit 0', r.code === 0, `code=${r.code}`)
   check('C21', 'idle=error', r.out.includes('idle=error'), r.out)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== C22 terminal list trả rác rc0 → degrade bảo thủ: foreign owner bị SKIP, không ADOPT ==')
+{
+  const dir = tempDir('c22')
+  const stub = makeOrcaStub(dir)
+  const rl = fixture(dir, 'rl.json', { ok: true, result: { runs: [
+    { id: 'run_unsure', objective: 'FI-W SF-1', coordinator_handle: 'term_unknown_state' },
+  ] } })
+  const r = runPass(dir, stub, {
+    RL_FIXTURE: rl, WL_FIXTURE: fixture(dir, 'wl.json', NO_WORKERS),
+    TL_FIXTURE: fixture(dir, 'tl.json', OPEN_TASK), CHECK_FIXTURE: fixture(dir, 'ck.json', NO_MSGS),
+    TERM_FIXTURE: fixture(dir, 'tm.json', TERM_ME_ONLY),
+    TERM_PLAIN: '1', // terminal list rc0 nhưng không phải JSON
+  })
+  check('C22', 'skipped-owned=1 (không ADOPT khi không dò được liveness)', r.out.includes('skipped-owned=1'), r.out)
+  check('C22', 'KHÔNG check inbox run unsure', !r.argv.includes('check --run run_unsure'), r.argv)
+  check('C22', 'exit 0', r.code === 0, `code=${r.code}`)
   rmSync(dir, { recursive: true, force: true })
 }
 

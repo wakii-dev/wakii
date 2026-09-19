@@ -136,10 +136,9 @@ def notify(title, body):
 
 
 def run_orca(args, timeout_s=45):
-    """Spawn orca (dev→prod→plain runtime) → JSON parsed, hoặc None khi fail.
-    rc==0 LUÔN return (kể cả stdout không parse được — coi như ok) — KHÔNG retry
-    sau một lệnh đã thành công: prod-env và plain-env cùng chạm runtime sống,
-    retry biến lệnh mutating (reply) thành gửi ĐÔI (bài học real-run 23:27)."""
+    """Lệnh ĐỌC: spawn orca (dev→prod→plain runtime) → JSON, hoặc None khi fail.
+    rc0 nhưng stdout hỏng → coi như fail và retry runtime kế (đọc an toàn để
+    retry); cả 3 fail → None → các nơi gọi degrade bảo thủ (SKIP-OWNED...)."""
     for ud in (ORCA_DEV, ORCA_PROD, None):
         env = dict(os.environ)
         if ud:
@@ -155,8 +154,26 @@ def run_orca(args, timeout_s=45):
             try:
                 return json.loads(p.stdout)
             except Exception:
-                return {"ok": True, "_unparsed": (p.stdout or "").strip()}
+                continue  # rác → thử runtime kế; hết → None (không coi là sạch)
     return None
+
+
+def run_orca_once(args, timeout_s=45):
+    """Lệnh MUTATING (reply...): CHỈ 1 attempt, env hiện tại — không retry
+    runtime nào cả (prod-env và plain-env cùng chạm runtime sống: retry biến
+    reply thành gửi ĐÔI — real-run 23:27). rc0 = thành công dù stdout có parse
+    được JSON hay không."""
+    try:
+        p = subprocess.run([ORCA_BIN] + args, capture_output=True, text=True,
+                           timeout=timeout_s, env=dict(os.environ))
+    except (subprocess.TimeoutExpired, OSError):
+        return None
+    if p.returncode != 0:
+        return None
+    try:
+        return json.loads(p.stdout)
+    except Exception:
+        return {"ok": True, "_unparsed": (p.stdout or "").strip()}
 
 
 def orca_rows(args, key):
@@ -311,11 +328,11 @@ def process_inbox(run, self_handle):
                 rargs = ["orchestration", "reply", "--id", mid, "--body", reply_body(run)]
                 if self_handle:
                     rargs += ["--from", self_handle]
-                if run_orca(rargs) is not None:
+                if run_orca_once(rargs) is not None:
                     replied += 1
                     log(f"REPLY {mid} (question) — dẫn bracket/contexts")
                 else:
-                    batch_ok = False
+                    batch_ok = False  # lỗi tạm thời → giữ delivery, pass kế xử lại
                     log(f"REPLY FAIL {mid} — question để lại cho pass kế")
             elif mtype == "escalation":
                 log(f"ESCALATION {mid}: {subject[0][:80]} → needs-user (đụng quyền user)")
@@ -324,7 +341,8 @@ def process_inbox(run, self_handle):
                 if verify_evidence(m):
                     log(f"EVIDENCE-OK {mid} — worker_done chấp nhận")
                 else:
-                    batch_ok = False
+                    # NEEDS-VERIFY đã ghi trail + stdout → ack luôn, tránh
+                    # spam lại mỗi pass; verdict không chấp nhận là cố định.
                     needs_verify.append(
                         f"NEEDS-VERIFY: {run_id} {mid} — evidence thiếu (files/commit chưa chứng minh)")
                     save_needs_verify(run_id, mid)
