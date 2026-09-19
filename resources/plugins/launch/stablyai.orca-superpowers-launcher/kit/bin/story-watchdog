@@ -279,9 +279,9 @@ except: print('')" 2>/dev/null)
       local state_map="" bid
       bid=$(grep -oE 'linear: *[A-Za-z]+-[0-9]+' "$bf" | awk '{print $2}' | sort -u)
       [ -n "$bid" ] && state_map=$(linear_states_batch $bid)
-      local bk_total=0 bk_done=0
+      local bk_total=0 bk_done=0 bk_noid=0
       while IFS='|' read -r sfnum title linear deps; do
-        [ -n "$linear" ] || continue   # chưa APPROVE → không thuộc quyền launch
+        if [ -z "$linear" ]; then bk_noid=$((bk_noid+1)); continue; fi   # chưa APPROVE → không launch; đếm riêng — thiếu id không được tính Done (review B P1)
         bk_total=$((bk_total+1))
         # SF đã Done = hoàn thành, không phải "chưa launch" (worktree đã dọn)
         local ownst=$(printf '%s\n' "$state_map" | awk -v id="$linear" -F'\t' '$1==id{print $2}')
@@ -350,7 +350,7 @@ except: print('')" 2>/dev/null)
         END { emit() }' "$bf")
       # ── STORY-COMPLETE per bracket (SF-4): derive từ Linear — mọi SF có id
       # đều Done → story xong thật (kể khi worktree máy khác đã dọn)
-      if [ "$bk_total" -gt 0 ] && [ "$bk_total" -eq "$bk_done" ]; then
+      if [ "$bk_total" -gt 0 ] && [ "$bk_total" -eq "$bk_done" ] && [ "$bk_noid" = "0" ]; then
         echo "  STORY-COMPLETE: $epic — mọi SF Done theo Linear (bracket $(basename "$bf"))"
       fi
     done

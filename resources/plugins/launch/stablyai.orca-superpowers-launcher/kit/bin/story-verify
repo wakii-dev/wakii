@@ -359,14 +359,17 @@ LIN_TOTAL=0; LIN_DONE=0; LIN_OPEN=0; LIN_UNKNOWN=0; LIN_OPEN_IDS=""; DERIVE_ROWS
 for wt in ${WTS[@]+"${WTS[@]}"}; do
   for bf in "$wt"/docs/superpowers/brackets/*.md; do
     [ -f "$bf" ] || continue
-    case "$BR_SEEN" in *"|$bf|"*) continue ;; esac
-    BR_SEEN="$BR_SEEN|$bf|"
+    bbase=$(basename "$bf")   # dedupe basename — full-path chứa wt → 2 wt cùng story đếm nhân (review B P1)
+    case "$BR_SEEN" in *"|$bbase|"*) continue ;; esac
+    BR_SEEN="$BR_SEEN|$bbase|"
     BR_LIST="$BR_LIST$bf"$'\n'
   done
 done
 if [ -n "$BR_LIST" ]; then
   WTN=""  # worktree sống (basename) — SF còn wt sống thì B-rows của wt thay mặt
   for wt in ${WTS[@]+"${WTS[@]}"}; do WTN="$WTN|$(basename "$wt")"; done
+  # linear_meta per-SF (N+1): orca CLI = keychain app (không rate-limit API);
+  # batch chỉ đáng khi curl fallback — rào rate-limit đã ở watchdog batch.
   while IFS= read -r bf; do
     [ -n "$bf" ] || continue
     while IFS='|' read -r sfnum lin; do
@@ -445,7 +448,7 @@ else
     fi
     [ "$LIN_UNKNOWN" -gt 0 ] && echo "⚠ Linear derive: $LIN_UNKNOWN issue không đọc được — bỏ qua (fail-open)."
   elif [ "$LIN_TOTAL" -gt 0 ]; then
-    echo "⚠ không đọc được Linear (không orca/key) — story-level chỉ dựa worktree máy này."
+    echo "⚠ không đọc được Linear từ máy này (không orca/key, hoặc id không tồn tại) — story-level chỉ dựa worktree máy này."
   fi
   if [ "$all_done" = 1 ]; then
     echo "STORY-COMPLETE ✓ — mọi SF đủ 5 bước. User merge main được."
