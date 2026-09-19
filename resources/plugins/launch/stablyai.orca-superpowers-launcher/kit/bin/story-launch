@@ -164,8 +164,9 @@ if [ -n "$WT" ]; then
     # shellcheck disable=SC1091
     . "$OPLIB"
     if ownership_probe_load; then
-      wtrun="$(ownership_probe_worktree_owner "$(basename "$WT")")"
-      wtrun2="$(ownership_probe_worktree_owner "$WT")"
+      # parent-dir scope — basename trùng giữa 2 repo không được block nhầm
+      wtrun="$(ownership_probe_worktree_owner "$(basename "$WT")" "$(dirname "$WT")")"
+      wtrun2="$(ownership_probe_worktree_owner "$WT" "$(dirname "$WT")")"
       [ -n "$wtrun2" ] && wtrun="$wtrun2"
       wowner="$(printf '%s' "$wtrun" | cut -f2)"
       wrun="$(printf '%s' "$wtrun" | cut -f1)"

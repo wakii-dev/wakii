@@ -83,8 +83,8 @@ function run(wtDir, { repo = 'reponb', num = 2, slug = 'demo' } = {}) {
   return join(wtDir, 'orca', 'workspaces', repo, `sf-${num}-${slug}`)
 }
 
-function writeBracket(dir) {
-  const repo = join(dir, 'repo')
+function writeBracket(dir, repoName = 'repo') {
+  const repo = join(dir, repoName)
   mkdirSync(repo, { recursive: true })
   const bf = join(repo, 'bracket.md')
   writeFileSync(bf, `# Story: TST — story test
@@ -166,8 +166,9 @@ console.log('== L2 exec --json: runs qua stdin + maps đầy đủ ==')
   check('L2', 'orcaOk + workersOk true', d?.orcaOk === true && d?.workersOk === true, r.stdout)
   check('L2', 'liveRuns=[run_foreign]', JSON.stringify(d?.liveRuns) === '["run_foreign"]', r.stdout)
   check('L2', 'runOwner map', d?.runOwner?.run_foreign === 'term_other', r.stdout)
-  check('L2', 'worktreeLive owner (run owner thắng fallback)', d?.worktreeLive?.['sf-4-x']?.owner === 'term_other', r.stdout)
-  check('L2', 'worktreeLive path', d?.worktreeLive?.['sf-4-x']?.path === '/abs/wt/sf-4-x', r.stdout)
+  const wtl = (d?.worktreeLive || []).find(x => x.name === 'sf-4-x')
+  check('L2', 'worktreeLive owner (run owner thắng fallback)', wtl?.owner === 'term_other', r.stdout)
+  check('L2', 'worktreeLive path', wtl?.path === '/abs/wt/sf-4-x', r.stdout)
   check('L2', 'worktreeByDispatch full path', d?.worktreeByDispatch?.ctx_w1 === '/abs/wt/sf-4-x', r.stdout)
   rmSync(dir, { recursive: true, force: true })
 }
@@ -225,7 +226,38 @@ console.log('== L6 wt_by_dispatch gồm worker released (evidence parity SF-1 P5
   let d = null
   try { d = JSON.parse(r.stdout) } catch {}
   check('L6', 'released vẫn vào worktreeByDispatch', d?.worktreeByDispatch?.ctx_rel === '/tmp/repo', r.stdout)
-  check('L6', 'released KHÔNG tính live', JSON.stringify(d?.liveRuns) === '[]' && !d?.worktreeLive?.['repo'], r.stdout)
+  check('L6', 'released KHÔNG tính live', JSON.stringify(d?.liveRuns) === '[]' && (d?.worktreeLive || []).length === 0, r.stdout)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== L7 parent-dir scope: basename trùng 2 repo không nhầm lẫn ==')
+{
+  const dir = tempDir('l7')
+  const stub = makeOrcaStub(dir)
+  const wl = fixture(dir, 'wl.json', { ok: true, result: { workers: [
+    worker({ dispatchId: 'ctx_a', runId: 'run_a', worktree: '/x/wsA/sf-2-demo' }),
+    worker({ dispatchId: 'ctx_b', runId: 'run_b', worktree: '/x/wsB/sf-2-demo' }),
+  ] } })
+  const rl = fixture(dir, 'rl.json', { ok: true, result: { runs: [
+    { id: 'run_a', coordinator_handle: 'term_a' },
+    { id: 'run_b', coordinator_handle: 'term_b' },
+  ] } })
+  const r = spawnSync('bash', ['-c', `
+    . "${LIB}"
+    ownership_probe_load || exit 9
+    echo "A=[$(ownership_probe_worktree_owner sf-2-demo /x/wsA)]"
+    echo "B=[$(ownership_probe_worktree_owner sf-2-demo /x/wsB)]"
+    echo "C=[$(ownership_probe_worktree_owner sf-2-demo /x/wsC)]"
+    echo "PATHB=[$(ownership_probe_worktree_owner /x/wsB/sf-2-demo /x/wsB)]"
+    echo "NOBRANCH=[$(ownership_probe_worktree_owner sf-2-demo)]"
+  `], { encoding: 'utf8', timeout: 60000,
+    env: { ...process.env, ORCA_BIN: stub, ORCA_COORDINATOR_HANDLE: 'term_self', RL_FIXTURE: rl, WL_FIXTURE: wl } })
+  check('L7', 'exit 0', r.status === 0, `code=${r.status} ${r.stdout}${r.stderr}`)
+  check('L7', 'wsA → run_a/term_a', r.stdout.includes(`A=[run_a\tterm_a]`), r.stdout)
+  check('L7', 'wsB → run_b/term_b', r.stdout.includes(`B=[run_b\tterm_b]`), r.stdout)
+  check('L7', 'wsC (repo không có wt) → rỗng', r.stdout.includes('C=[]'), r.stdout)
+  check('L7', 'full path + parent → đúng', r.stdout.includes(`PATHB=[run_b\tterm_b]`), r.stdout)
+  check('L7', 'không parent → fallback basename (documented)', r.stdout.includes(`NOBRANCH=[run_a\tterm_a]`), r.stdout)
   rmSync(dir, { recursive: true, force: true })
 }
 
@@ -325,6 +357,29 @@ console.log('== B5 story-launch: probe chết → fail-open, hành vi cũ ==')
     { ORCA_COORDINATOR_HANDLE: 'term_self' })
   check('B5', 'exit 0 + thông điệp cũ (không chặn mù)', r.code === 0 && r.out.includes('đã có worktree: sf-2-demo'), `code=${r.code} out=${r.out}`)
   check('B5', 'stderr nêu degrade', r.out.includes('degrade'), r.out)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== B6 story-launch: basename trùng — repo khác mồ côi KHÔNG bị block nhầm ==')
+{
+  const dir = tempDir('b6')
+  const stub = makeOrcaStub(dir)
+  const a = writeBracket(dir, 'repoA')
+  const b = writeBracket(dir, 'repoB')
+  const wtA = run(dir, { repo: 'repoA', slug: 'demo' })
+  run(dir, { repo: 'repoB', slug: 'demo' })
+  const rl = fixture(dir, 'rl.json', { ok: true, result: { runs: [
+    { id: 'run_other', coordinator_handle: 'term_other' },
+  ] } })
+  const wl = fixture(dir, 'wl.json', { ok: true, result: { workers: [
+    worker({ dispatchId: 'ctx_o', runId: 'run_other', worktree: wtA }),
+  ] } })
+  const envB = { ORCA_COORDINATOR_HANDLE: 'term_self', RL_FIXTURE: rl, WL_FIXTURE: wl }
+  const rB = runLaunch(dir, stub, ['SF-2', '--repo', b.repo, '--bracket', b.bf], envB)
+  check('B6', 'repoB mồ côi → exit 0 thông điệp cũ', rB.code === 0 && rB.out.includes('đã có worktree: sf-2-demo'), `code=${rB.code} out=${rB.out}`)
+  check('B6', 'repoB không bị block', !rB.out.includes('BLOCKED'), rB.out)
+  const rA = runLaunch(dir, stub, ['SF-2', '--repo', a.repo, '--bracket', a.bf], envB)
+  check('B6', 'repoA foreign → vẫn BLOCKED', rA.code === 1 && rA.out.includes('BLOCKED') && rA.out.includes('term_other'), `code=${rA.code} out=${rA.out}`)
   rmSync(dir, { recursive: true, force: true })
 }
 

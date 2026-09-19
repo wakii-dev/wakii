@@ -23,7 +23,8 @@
 #   exec bin/story-ownership-probe --json [--self H] [runs-json-qua-stdin]
 #                                      → JSON cho consumer python:
 #     {"self","orcaOk","workersOk","liveRuns":[],"runOwner":{},
-#      "worktreeLive":{name:{run,owner,path}},"worktreeByDispatch":{dispatch:path}}
+#      "worktreeLive":[{name,run,owner,path}],"worktreeByDispatch":{dispatch:path}}
+#      worktreeLive = list (2 repo trùng basename vẫn giữ đủ record);
 #      worktreeByDispatch gồm MỌI worker (kể cả released — evidence verify).
 #
 # Fail-open theo kit convention: probe hỏng → OP_LOADED=0 + warn stderr, caller
@@ -31,14 +32,14 @@
 #
 # Biến sau load: OP_LIVE_RUNS (space-sep) · OP_RUN_OWNER (id|owner\n) ·
 # OP_WT_LIVE (name|run|owner|path\n) · OP_WT_BY_DISPATCH (dispatch|path\n) ·
-# OP_SELF · OP_ORCA_OK · OP_WORKERS_OK · OP_LOADED.
+# OP_SELF · OP_ORCA_OK · OP_WORKERS_OK · OP_LOADED. Record nối bằng "|" —
+# path/handle chứa "|" sẽ misparse (fail-open, không block nhầm — chấp nhận).
 #
 # Story-level (run của SF) chỉ suy được qua worktree của SF — run không gắn
 # worktree không link được (fuzzy match objective là đoán mò — cố tình không làm).
-set -u
-# (set -u chỉ guard chạy trực tiếp; KHÔNG áp lên caller — story-top không dùng -u)
+# -u chỉ bật khi chạy trực tiếp — KHÔNG rò vào caller khi source (review SF-3 P1)
+if [ "${BASH_SOURCE[0]:-}" = "$0" ]; then set -u; fi
 
-OP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 OP_LIVE_RUNS=""; OP_RUN_OWNER=""; OP_WT_LIVE=""; OP_WT_BY_DISPATCH=""
 OP_SELF=""; OP_ORCA_OK=1; OP_WORKERS_OK=1; OP_LOADED=0
 
@@ -114,7 +115,10 @@ def run_orca(args, timeout_s=45):
 def rows(d, key):
     if d is None:
         return None
-    return ((d.get("result") or {}).get(key)) or []
+    r = (d.get("result") or {}).get(key)
+    if r is None and key in d:  # bare {key: [...]} không bọc result
+        r = d.get(key)
+    return r or []
 
 
 def first_of(d, *keys):
@@ -168,7 +172,8 @@ for r in runs:
 
 LIVE_VERDICTS = ("live", "unverifiable")
 live_runs = []            # giữ thứ tự, dedup dưới
-wt_live = {}              # wt name → {run, owner, path} (worker live đầu thắng)
+wt_live = {}              # path → {run, owner, name} — key theo path (unique);
+                          # key theo name sẽ nuốt record khi 2 repo trùng basename
 wt_by_dispatch = {}       # dispatchId → full path (MỌI worker — kể cả released)
 for w in workers:
     dispatch = w.get("dispatchId") or ""
@@ -184,7 +189,7 @@ for w in workers:
     if wt_path:
         name = os.path.basename(wt_path.rstrip("/")) or wt_path
         owner = run_owner.get(rid) or (w.get("agentTerminalHandle") or "")
-        wt_live.setdefault(name, {"run": rid, "owner": owner, "path": wt_path})
+        wt_live.setdefault(wt_path, {"run": rid, "owner": owner, "name": name})
 
 # self: --self/env thắng (consumer đã resolve), trống → probe run-current
 self_handle = self_arg or os.environ.get("ORCA_COORDINATOR_HANDLE", "")
@@ -200,7 +205,9 @@ if mode == "json":
     print(json.dumps({
         "self": self_handle, "orcaOk": orca_ok, "workersOk": workers_ok,
         "liveRuns": live_runs, "runOwner": run_owner,
-        "worktreeLive": wt_live, "worktreeByDispatch": wt_by_dispatch,
+        "worktreeLive": [{"name": v["name"], "run": v["run"], "owner": v["owner"],
+                          "path": p} for p, v in wt_live.items()],
+        "worktreeByDispatch": wt_by_dispatch,
     }, ensure_ascii=False))
     sys.exit(0)
 
@@ -211,8 +218,8 @@ for rid in live_runs:
 for rid, owner in run_owner.items():
     if owner:
         print(f"OWNER\t{rid}\t{owner}")
-for name, info in wt_live.items():
-    print(f"WTLIVE\t{name}\t{info['run']}\t{info['owner']}\t{info['path']}")
+for path, info in wt_live.items():
+    print(f"WTLIVE\t{info['name']}\t{info['run']}\t{info['owner']}\t{path}")
 for dispatch, path in wt_by_dispatch.items():
     print(f"WTDISP\t{dispatch}\t{path}")
 OPCORE
@@ -245,6 +252,7 @@ ownership_probe_load() { # $1 (optional) file chứa runs JSON — nạp maps. r
 ownership_probe_self() { printf '%s' "$OP_SELF"; }
 
 ownership_probe_run_live() { # rc0 khi run $1 có worker live
+  [ -n "$1" ] || return 1
   case " $OP_LIVE_RUNS " in *" $1 "*) return 0 ;; esac
   return 1
 }
@@ -258,15 +266,21 @@ ownership_probe_run_owner() { # in owner handle của run $1 ("" khi không rõ)
   return 0
 }
 
-ownership_probe_worktree_owner() { # $1 wt basename hoặc full path → "runId<TAB>owner"
-  local key="$1" name run owner path
+ownership_probe_worktree_owner() { # $1 wt basename hoặc full path; $2 (optional)
+                                    # parent-dir — khi có, chỉ nhận record đúng repo
+                                    # (chống basename trùng giữa 2 repo — review SF-3)
+                                    # → in "runId<TAB>owner" khi worktree có worker live
+  local key="$1" parent="${2:-}" name run owner path pdir
   [ -n "$key" ] || return 0
   while IFS='|' read -r name run owner path; do
     [ -n "$name" ] || continue
-    if [ "$name" = "$key" ] || [ "$path" = "$key" ]; then
-      printf '%s\t%s' "$run" "$owner"
-      return 0
+    [ "$name" = "$key" ] || [ "$path" = "$key" ] || continue
+    if [ -n "$parent" ]; then
+      pdir="$(dirname "$path" 2>/dev/null)"
+      [ "$pdir" = "$parent" ] || continue
     fi
+    printf '%s\t%s' "$run" "$owner"
+    return 0
   done < <(printf '%s\n' "$OP_WT_LIVE")
   return 0
 }

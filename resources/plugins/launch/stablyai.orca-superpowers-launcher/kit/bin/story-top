@@ -6,6 +6,12 @@
 #        story-top --loop [10]  # tự refresh mỗi N giây (mặc định 10)
 set -u
 DIR="$(cd "$(dirname "$0")" && pwd)"
+# SF-3: source lib probe MỘT lần — --loop không re-source mỗi tick (load data
+# vẫn làm mỗi render để owner tươi)
+if [ -f "$DIR/story-ownership-probe" ]; then
+  # shellcheck disable=SC1091
+  . "$DIR/story-ownership-probe" 2>/dev/null || true
+fi
 INTERVAL=10; LOOP=0
 while [ $# -gt 0 ]; do case "$1" in --loop) LOOP=1; [ $# -ge 2 ] && [[ "$2" =~ ^[0-9]+$ ]] && INTERVAL="$2" ;; esac; shift; done
 
@@ -18,9 +24,8 @@ render() {
   echo "─────────────────────────────────────────────────────────────────────────────────────"
   # SF-3: cột owner — probe hỏng → owner=— (fail-open, hiển thị không chết)
   op_ready=0
-  if [ -f "$DIR/story-ownership-probe" ]; then
-    # shellcheck disable=SC1091
-    . "$DIR/story-ownership-probe" 2>/dev/null && ownership_probe_load 2>/dev/null && op_ready=1
+  if declare -F ownership_probe_load >/dev/null 2>&1 && ownership_probe_load 2>/dev/null; then
+    op_ready=1
   fi
   for ws in "$HOME"/orca/workspaces/*/; do
     repo=$(basename "$ws")
@@ -35,10 +40,13 @@ render() {
         age=$(( $(date +%s) - $(stat -f %m "$wt/.git" 2>/dev/null || git -C "$wt" log -1 --format=%ct) ))
         if [ "$age" -lt 7200 ]; then v="IDLE?"; vcol="\033[33m"; else v="STALE"; vcol="\033[31m"; fi
       fi
-      # owner (SF-3): coordinator đang giữ worker live trong worktree
+      # owner (SF-3): coordinator đang giữ worker live trong worktree (parent-dir
+      # scope — basename trùng giữa repo không misattribute)
       owner="—"
       if [ "$op_ready" = 1 ]; then
-        wrow="$(ownership_probe_worktree_owner "$sf")"
+        wrow="$(ownership_probe_worktree_owner "$sf" "$(dirname "$wt")")"
+        wrow2="$(ownership_probe_worktree_owner "$wt" "$(dirname "$wt")")"
+        [ -n "$wrow2" ] && wrow="$wrow2"
         [ -n "$wrow" ] && { owner="$(printf '%s' "$wrow" | cut -f2)"; [ -n "$owner" ] || owner="?"; }
         owner="${owner#term_}"; [ ${#owner} -gt 10 ] && owner="${owner:0:10}"
       fi
