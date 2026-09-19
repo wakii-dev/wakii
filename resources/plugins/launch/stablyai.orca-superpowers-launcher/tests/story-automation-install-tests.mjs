@@ -84,6 +84,8 @@ if argv[0] == "automations":
         print(json.dumps({"ok": True, "result": {"automation": {"id": aid}}}))
     elif cmd == "remove":
         aid = argv[2]
+        if os.environ.get("REMOVE_FAIL_ID") and aid == os.environ["REMOVE_FAIL_ID"]:
+            sys.exit(7)
         save([a for a in load() if a.get("id") != aid])
         print(json.dumps({"ok": True, "result": {}}))
     else:
@@ -382,6 +384,52 @@ console.log('== C11 --help + usage sai ==')
   check('C11', '--help in usage', h.out.includes('story-automation-install') && h.out.includes('retire'), h.out.slice(0, 200))
   const u = runBin(dir, stub, ['--khong-biet'], {})
   check('C11', 'flag lạ exit 2', u.code === 2, `code=${u.code}`)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== C12 briefing story-notify chết → notify-fail rõ ràng, exit 0 ==')
+{
+  const dir = tempDir('c12')
+  const stub = makeOrcaStub(dir)
+  const seams = makeSeamStubs(dir)
+  const r = runBin(dir, stub, ['briefing'], {
+    STORY_STATUS_BIN: seams.broken,
+    STORY_RESUME_BIN: seams.broken,
+    STORY_NOTIFY_BIN: seams.broken, // notify exit 7
+    RL_FIXTURE: fixture(dir, 'rl.json', { ok: true, result: { runs: [] } }),
+    CHECK_FIXTURE: fixture(dir, 'ck.json', { ok: true, result: { messages: [] } }),
+  })
+  check('C12', 'exit 0 (briefing không fail hard)', r.code === 0, `code=${r.code} out=${r.out}`)
+  check('C12', 'BRIEFING: notify-fail (không nói notified)', r.out.includes('BRIEFING: notify-fail') && !r.out.includes('BRIEFING: notified'), r.out)
+  check('C12', 'body vẫn in ra stdout', r.out.includes('Briefing 20'), r.out)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== C13 automation lạ cùng suffix KHÔNG bị adopt; multi-owned cảnh báo; retire partial fail exit 1 ==')
+{
+  const dir = tempDir('c13')
+  const stub = makeOrcaStub(dir)
+  const state = join(dir, 'auto-state.json')
+  writeFileSync(state, JSON.stringify([
+    { id: 'user-1', name: 'deploy-coordinator-pass', prompt: 'deploy pipeline của user', rrule: '*/5 * * * *', agentId: 'codex' },
+    { id: 'user-2', name: 'team-morning-briefing', prompt: 'briefing team của user', rrule: '0 8 * * *', agentId: 'codex' },
+    { id: 'e976ddde', name: 'orchestration-coordinator-pass', prompt: LEGACY_PROMPT, rrule: '*/30 * * * *', agentId: 'claude' },
+    { id: 'mine-1', name: 'story-coordinator-pass', prompt: '1 lượt coordinator pass: bash ~/.claude/bin/story-coordinator-pass', rrule: '*/30 * * * *', agentId: 'claude' },
+  ]))
+  const r = runBin(dir, stub, ['install'], { AUTO_STATE: state })
+  const st = readState(state)
+  const user1 = st.find(a => a.id === 'user-1')
+  const user2 = st.find(a => a.id === 'user-2')
+  check('C13', 'exit 0', r.code === 0, `code=${r.code} out=${r.out}`)
+  check('C13', 'deploy-coordinator-pass KHÔNG bị adopt (giữ nguyên prompt)', user1 && user1.prompt === 'deploy pipeline của user' && user1.rrule === '*/5 * * * *', JSON.stringify(user1))
+  check('C13', 'team-morning-briefing KHÔNG bị adopt', user2 && user2.prompt === 'briefing team của user', JSON.stringify(user2))
+  check('C13', 'chỉ create briefing — coord multi-owned KHÔNG create', (r.argv.match(/ create --name /g) || []).length === 1 && r.argv.includes(' create --name story-morning-briefing'), r.argv)
+  check('C13', 'cảnh báo multi-owned coord', r.out.includes('automation owned nữa'), r.out)
+  const r2 = runBin(dir, stub, ['retire'], { AUTO_STATE: state, REMOVE_FAIL_ID: 'mine-1' })
+  check('C13', 'retire partial fail → exit 1', r2.code === 1, `code=${r2.code} out=${r2.out}`)
+  check('C13', 'báo FAIL remove đúng automation', r2.out.includes('FAIL remove'), r2.out)
+  const st2 = readState(state)
+  check('C13', 'automation user còn nguyên sau retire', st2.some(a => a.id === 'user-1') && st2.some(a => a.id === 'user-2'), JSON.stringify(st2))
   rmSync(dir, { recursive: true, force: true })
 }
 
