@@ -1,6 +1,6 @@
 {
   "name": "story-team-kit",
-  "version": "2.15.0",
+  "version": "2.16.0",
   "description": "9-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới.",
   "requires": {
     "claude-code": ">=2.0",
@@ -56,45 +56,6 @@
       "owner": "wakii"
     },
     {
-      "name": "prompt-master",
-      "type": "skill",
-      "inputs": [
-        "prompt goal",
-        "target AI tool"
-      ],
-      "outputs": "optimized prompt cho tool đó",
-      "owner": "wakii"
-    },
-    {
-      "name": "figma-orientation",
-      "type": "skill",
-      "inputs": [
-        "figma-related intent"
-      ],
-      "outputs": "đúng Figma skill/tool route (implement-design / use / generate-* / code-connect / MCP)",
-      "owner": "wakii"
-    },
-    {
-      "name": "image-to-code",
-      "type": "skill",
-      "inputs": [
-        "design reference image",
-        "target stack"
-      ],
-      "outputs": "code component riêng lẻ khớp ảnh (section-specific, không cards-in-cards)",
-      "owner": "wakii"
-    },
-    {
-      "name": "design-taste-frontend",
-      "type": "skill",
-      "inputs": [
-        "built UI diff",
-        "design intent"
-      ],
-      "outputs": "anti-slop audit findings + strict pre-flight verdict",
-      "owner": "wakii"
-    },
-    {
       "name": "mock-prototype",
       "type": "skill",
       "inputs": [
@@ -110,25 +71,6 @@
         "completed workflow log"
       ],
       "outputs": "skill update + memory index + cleared log (7 steps)",
-      "owner": "wakii"
-    },
-    {
-      "name": "web-design-guidelines",
-      "type": "skill",
-      "inputs": [
-        "UI code/diff"
-      ],
-      "outputs": "violations report theo 105 rules (a11y, focus, forms, animation, layout, content)",
-      "owner": "wakii"
-    },
-    {
-      "name": "frontend-design",
-      "type": "skill",
-      "inputs": [
-        "UI cần build/reshape",
-        "aesthetic context"
-      ],
-      "outputs": "aesthetic direction — typography, signature element, chống template defaults",
       "owner": "wakii"
     },
     {
@@ -424,5 +366,5 @@
       "description": "query Project KB (ADR/repos/glossary/MOC) tu configurable dir (WAKII_KB_DIR) - fail-open khi KB chua configured; layer 1 ADE knowledge infra (#38)"
     }
   ],
-  "kitHash": "b58e72a0bb17a0cb"
+  "kitHash": "f990734872c098e2"
 }

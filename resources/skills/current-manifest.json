@@ -20,6 +20,150 @@
       ]
     },
     {
+      "name": "design-taste-frontend",
+      "sourcePath": "skills/design-taste-frontend",
+      "releaseRevision": 1,
+      "packageDigest": "c0ebfb928bd5fe7ed99a3732bdbd074df7377373ed2435a62908e346398a5d62",
+      "gitTreeSha": "9521c653979bd5532afc2b740a6582bfa97fd7d4",
+      "files": [
+        {
+          "path": "SKILL.md",
+          "size": 37079,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "8c207109f7a96542af80630cf1d5d26527b70351d88d4249fb95999d830e07e5",
+          "textNormalizedSha256": "8c207109f7a96542af80630cf1d5d26527b70351d88d4249fb95999d830e07e5",
+          "identitySha256": "8c207109f7a96542af80630cf1d5d26527b70351d88d4249fb95999d830e07e5"
+        },
+        {
+          "path": "references/ai-tells.md",
+          "size": 8248,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "84762a481f828cf19e4e16b9b589f926bd3655af4393bb7854c35927d47b0ba1",
+          "textNormalizedSha256": "84762a481f828cf19e4e16b9b589f926bd3655af4393bb7854c35927d47b0ba1",
+          "identitySha256": "84762a481f828cf19e4e16b9b589f926bd3655af4393bb7854c35927d47b0ba1"
+        },
+        {
+          "path": "references/appendices.md",
+          "size": 7339,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "5c49143aef9efad3e9939bd7f1d1bb19fbd8b67d30ff48393c853b3e5a225ec1",
+          "textNormalizedSha256": "5c49143aef9efad3e9939bd7f1d1bb19fbd8b67d30ff48393c853b3e5a225ec1",
+          "identitySha256": "5c49143aef9efad3e9939bd7f1d1bb19fbd8b67d30ff48393c853b3e5a225ec1"
+        },
+        {
+          "path": "references/block-library.md",
+          "size": 2184,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "a42b5955cfe3343f7bdc5a261e42ba87fe492c3a46b9d1e632b69157e994400a",
+          "textNormalizedSha256": "a42b5955cfe3343f7bdc5a261e42ba87fe492c3a46b9d1e632b69157e994400a",
+          "identitySha256": "a42b5955cfe3343f7bdc5a261e42ba87fe492c3a46b9d1e632b69157e994400a"
+        },
+        {
+          "path": "references/design-directives.md",
+          "size": 25048,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "369e7342c8ab3ae73672e317c455b141f31457e6ea1866f39e6f319234d944f8",
+          "textNormalizedSha256": "369e7342c8ab3ae73672e317c455b141f31457e6ea1866f39e6f319234d944f8",
+          "identitySha256": "369e7342c8ab3ae73672e317c455b141f31457e6ea1866f39e6f319234d944f8"
+        },
+        {
+          "path": "references/dial-definitions.md",
+          "size": 1757,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "b29da63a298367e999210267871973deb9760ea59a673ea8f2f6fb41a1c97d98",
+          "textNormalizedSha256": "b29da63a298367e999210267871973deb9760ea59a673ea8f2f6fb41a1c97d98",
+          "identitySha256": "b29da63a298367e999210267871973deb9760ea59a673ea8f2f6fb41a1c97d98"
+        },
+        {
+          "path": "references/gsap-skeletons.md",
+          "size": 4586,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "5e52ac341d2087dfef3838da340c35bf268ef9a49aa752c3dcc142a954cc85e7",
+          "textNormalizedSha256": "5e52ac341d2087dfef3838da340c35bf268ef9a49aa752c3dcc142a954cc85e7",
+          "identitySha256": "5e52ac341d2087dfef3838da340c35bf268ef9a49aa752c3dcc142a954cc85e7"
+        },
+        {
+          "path": "references/vocabulary.md",
+          "size": 4408,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "d3a086c7046aee4f8a249a2ce3b6cc2e9fcccd0dd303dfb56b18bb5f661bc2ec",
+          "textNormalizedSha256": "d3a086c7046aee4f8a249a2ce3b6cc2e9fcccd0dd303dfb56b18bb5f661bc2ec",
+          "identitySha256": "d3a086c7046aee4f8a249a2ce3b6cc2e9fcccd0dd303dfb56b18bb5f661bc2ec"
+        }
+      ]
+    },
+    {
+      "name": "figma-orientation",
+      "sourcePath": "skills/figma-orientation",
+      "releaseRevision": 1,
+      "packageDigest": "ed332cbd84157f70ce79d959d235bd64c28c4c741e15baebf2ebda823992a1ea",
+      "gitTreeSha": "10904114f8d8872b27d1469652c59ba556fa5343",
+      "files": [
+        {
+          "path": "SKILL.md",
+          "size": 7675,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "4775dfc30ce34af5f517fa8c9ee7ec93d76febefce815f6103b4912b217cba38",
+          "textNormalizedSha256": "4775dfc30ce34af5f517fa8c9ee7ec93d76febefce815f6103b4912b217cba38",
+          "identitySha256": "4775dfc30ce34af5f517fa8c9ee7ec93d76febefce815f6103b4912b217cba38"
+        }
+      ]
+    },
+    {
+      "name": "frontend-design",
+      "sourcePath": "skills/frontend-design",
+      "releaseRevision": 1,
+      "packageDigest": "d19145386e035de88569cae57dd42b82411eeb8de07f872bcc892866e310dea4",
+      "gitTreeSha": "1fd4ded28b5c6c8bdff71db2d76b43966e50fb59",
+      "files": [
+        {
+          "path": "LICENSE-upstream",
+          "size": 10174,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+          "textNormalizedSha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+          "identitySha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+        },
+        {
+          "path": "SKILL.md",
+          "size": 8260,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "1608ea77fbb6fc30d13a97d12cfa8ebf31358d40f0dd97beed24829d6b3f45dd",
+          "textNormalizedSha256": "1608ea77fbb6fc30d13a97d12cfa8ebf31358d40f0dd97beed24829d6b3f45dd",
+          "identitySha256": "1608ea77fbb6fc30d13a97d12cfa8ebf31358d40f0dd97beed24829d6b3f45dd"
+        }
+      ]
+    },
+    {
+      "name": "image-to-code",
+      "sourcePath": "skills/image-to-code",
+      "releaseRevision": 1,
+      "packageDigest": "b95f4002562d165d0943c6bf7e8981fa7f2007c69642e9ddad0efaf6f8509fe2",
+      "gitTreeSha": "5a8772f91c0ad4d150ee030774c20518ac2b927b",
+      "files": [
+        {
+          "path": "SKILL.md",
+          "size": 36272,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "54c69584b1ff6a3adb04591f2f35bd27a39970f478627404b643b23b83d4a081",
+          "textNormalizedSha256": "54c69584b1ff6a3adb04591f2f35bd27a39970f478627404b643b23b83d4a081",
+          "identitySha256": "54c69584b1ff6a3adb04591f2f35bd27a39970f478627404b643b23b83d4a081"
+        }
+      ]
+    },
+    {
       "name": "linear-tickets",
       "sourcePath": "skills/linear-tickets",
       "releaseRevision": 11,
@@ -142,6 +286,96 @@
           "exactSha256": "36bc32f022447418b566db35f9ffcff75113eb023e37d06fd1bd609c5dd173ef",
           "textNormalizedSha256": "36bc32f022447418b566db35f9ffcff75113eb023e37d06fd1bd609c5dd173ef",
           "identitySha256": "36bc32f022447418b566db35f9ffcff75113eb023e37d06fd1bd609c5dd173ef"
+        }
+      ]
+    },
+    {
+      "name": "prompt-master",
+      "sourcePath": "skills/prompt-master",
+      "releaseRevision": 1,
+      "packageDigest": "371a8212e0e7d44d822e5d7226f21e444317c81705553d71aa831ce11611f21e",
+      "gitTreeSha": "bcecd8f8d43f899e58d5eb94c7e8ad06f3c4b02a",
+      "files": [
+        {
+          "path": "LICENSE",
+          "size": 1077,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "29e8ba0b54274eaa92b7cb074fe1765ba7b83993e0d2605e5308c6972a47daa7",
+          "textNormalizedSha256": "29e8ba0b54274eaa92b7cb074fe1765ba7b83993e0d2605e5308c6972a47daa7",
+          "identitySha256": "29e8ba0b54274eaa92b7cb074fe1765ba7b83993e0d2605e5308c6972a47daa7"
+        },
+        {
+          "path": "README.md",
+          "size": 21020,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "0990269b91ccbcd50e6574bd89edbf176043e097cf1584a5746240bc473afefc",
+          "textNormalizedSha256": "0990269b91ccbcd50e6574bd89edbf176043e097cf1584a5746240bc473afefc",
+          "identitySha256": "0990269b91ccbcd50e6574bd89edbf176043e097cf1584a5746240bc473afefc"
+        },
+        {
+          "path": "SKILL.md",
+          "size": 27165,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "b85718374d27bbada453791af92b7ae0b3256e5552d2f3f9d940ca4183131e4b",
+          "textNormalizedSha256": "b85718374d27bbada453791af92b7ae0b3256e5552d2f3f9d940ca4183131e4b",
+          "identitySha256": "b85718374d27bbada453791af92b7ae0b3256e5552d2f3f9d940ca4183131e4b"
+        },
+        {
+          "path": "references/patterns.md",
+          "size": 6083,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "2d2eb623396ce5edade402cfcafbd457af093cf85fa5966c34c210e58ce1f9d1",
+          "textNormalizedSha256": "2d2eb623396ce5edade402cfcafbd457af093cf85fa5966c34c210e58ce1f9d1",
+          "identitySha256": "2d2eb623396ce5edade402cfcafbd457af093cf85fa5966c34c210e58ce1f9d1"
+        },
+        {
+          "path": "references/templates.md",
+          "size": 16650,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "0850a3871058077bfc6a16372fa3beb28d81f02baab8d42d3607ddc3a681ae67",
+          "textNormalizedSha256": "0850a3871058077bfc6a16372fa3beb28d81f02baab8d42d3607ddc3a681ae67",
+          "identitySha256": "0850a3871058077bfc6a16372fa3beb28d81f02baab8d42d3607ddc3a681ae67"
+        }
+      ]
+    },
+    {
+      "name": "web-design-guidelines",
+      "sourcePath": "skills/web-design-guidelines",
+      "releaseRevision": 1,
+      "packageDigest": "8bc72b2de7be62424f82db4949a3aecf1f8f99d70e295d80428d825b9e8f0b9f",
+      "gitTreeSha": "d45905aa950855f4608a224bdcebcb88c28d5e49",
+      "files": [
+        {
+          "path": "SKILL.md",
+          "size": 2029,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "8472f537a12e2dbbd83e400844c7dbf2452d617ab3614780d0c02f6017f2b623",
+          "textNormalizedSha256": "8472f537a12e2dbbd83e400844c7dbf2452d617ab3614780d0c02f6017f2b623",
+          "identitySha256": "8472f537a12e2dbbd83e400844c7dbf2452d617ab3614780d0c02f6017f2b623"
+        },
+        {
+          "path": "resources/LICENSE-upstream",
+          "size": 1068,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "6cd1609c9c12233507cdd2ce0d32e9a721e3c27494951be06b90090deeeb7af2",
+          "textNormalizedSha256": "6cd1609c9c12233507cdd2ce0d32e9a721e3c27494951be06b90090deeeb7af2",
+          "identitySha256": "6cd1609c9c12233507cdd2ce0d32e9a721e3c27494951be06b90090deeeb7af2"
+        },
+        {
+          "path": "resources/web-interface-guidelines.md",
+          "size": 7760,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "5a775e6411f790f518dbc9c1fa7c50a89e6873502d9a3530a6eb223a590bcfe8",
+          "textNormalizedSha256": "5a775e6411f790f518dbc9c1fa7c50a89e6873502d9a3530a6eb223a590bcfe8",
+          "identitySha256": "5a775e6411f790f518dbc9c1fa7c50a89e6873502d9a3530a6eb223a590bcfe8"
         }
       ]
     }
