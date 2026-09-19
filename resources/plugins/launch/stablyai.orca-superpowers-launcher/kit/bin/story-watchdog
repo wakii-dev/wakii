@@ -446,23 +446,38 @@ except Exception: print('UNKNOWN')")
 one_pass() {
   [ "$ENFORCE_DONE" = 1 ] && enforce_done_pass
   local stalled=0
+  local check_out probe_ready=0 owner osfx
+  check_out=$("$RESUME" --check --stall-hours "$STALL_HOURS" 2>/dev/null)
+  # SF-3: cột owner (worker live của coordinator nào) — chỉ load probe khi có
+  # SF để soi (zero-diff khi idle); probe hỏng → không suffix, hành vi cũ
+  if [ -n "$check_out" ] && [ -f "$DIR/story-ownership-probe" ]; then
+    # shellcheck disable=SC1091
+    . "$DIR/story-ownership-probe" 2>/dev/null && \
+      ownership_probe_load 2>/dev/null && probe_ready=1
+  fi
   while IFS='|' read -r sf verdict detail; do
     [ -n "$sf" ] || continue
     prev=$(load_state "$sf")
+    osfx=""
+    if [ "$probe_ready" = 1 ]; then
+      owner="$(ownership_probe_worktree_owner "$sf" | cut -f2)"
+      [ -n "$owner" ] || owner="—"
+      osfx=" · owner=$owner"
+    fi
 
     case "$verdict" in
       RUNNING|BUSY)
         [ "$prev" = "STALLED" ] || [ "$prev" = "STALLED-COLD" ] && \
           notify "story-watchdog" "$sf đã sống lại ($verdict)"
-        echo "$(date '+%H:%M') $sf: $verdict — $detail"
+        echo "$(date '+%H:%M') $sf: $verdict — $detail$osfx"
         ;;
       STALLED*)
         stalled=1
         if [ "$prev" != "$verdict" ]; then  # stall MỚI (transition) → notify
           notify "story-watchdog ⚠" "$sf STALLED — $detail"
-          echo "$(date '+%H:%M') $sf: ⚠ $verdict (MỚI) — $detail"
+          echo "$(date '+%H:%M') $sf: ⚠ $verdict (MỚI) — $detail$osfx"
         else
-          echo "$(date '+%H:%M') $sf: ⚠ $verdict (đã biết) — $detail"
+          echo "$(date '+%H:%M') $sf: ⚠ $verdict (đã biết) — $detail$osfx"
         fi
         if [ "$AUTO_RESUME" = 1 ]; then
           echo "  → auto-resume:"
@@ -475,7 +490,7 @@ one_pass() {
         ;;
     esac
     save_state "$sf" "$verdict"
-  done < <("$RESUME" --check --stall-hours "$STALL_HOURS" 2>/dev/null)
+  done < <(printf '%s\n' "$check_out")
   # heartbeat renew claim (B4) — tự guard enabled; disabled = không đụng gì
   heartbeat_renew
   # story tự TIẾN: SF deps Done hết → launch tier kế (kể cả không session nào sống)

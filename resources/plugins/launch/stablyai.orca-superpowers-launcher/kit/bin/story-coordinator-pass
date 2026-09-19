@@ -26,7 +26,8 @@
 # trống thì probe run-current) · PASS_CHECK_WAIT_MS (default 300000) ·
 # PASS_MAX_BATCHES (default 3) · PASS_NOTIFY (default 1 — osascript) ·
 # PASS_STATE_FILE (NEEDS-VERIFY trail, default ~/.claude/.story-coordinator-pass-verify) ·
-# STORY_RESUME_BIN (default nằm cạnh script này).
+# STORY_RESUME_BIN (default nằm cạnh script này) · OWNERSHIP_PROBE_BIN
+# (default nằm cạnh script này — lib story-ownership-probe SF-3).
 #
 # Usage: story-coordinator-pass [--help]
 # Exit: 0 luôn (trừ usage sai → 2)
@@ -48,6 +49,12 @@ RESUME="${STORY_RESUME_BIN:-}"
 [ -x "$RESUME" ] || RESUME=""
 export STORY_RESUME_BIN="$RESUME"
 
+# ownership probe lib dùng chung (SF-3) — nằm cạnh script (installed layout flat)
+PROBE="${OWNERSHIP_PROBE_BIN:-}"
+[ -n "$PROBE" ] && [ -f "$PROBE" ] || PROBE="$DIR/story-ownership-probe"
+[ -f "$PROBE" ] || PROBE=""
+export OWNERSHIP_PROBE_BIN="$PROBE"
+
 # runtime dev-trước-prod-sau (story worktrees sống ở dev runtime — pattern story-resume)
 ORCA_DEV="$HOME/Library/Application Support/orca-dev"
 ORCA_PROD="$HOME/Library/Application Support/orca"
@@ -67,6 +74,7 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 import time
 
 ORCA_BIN = os.environ["ORCA_BIN"]
@@ -248,6 +256,38 @@ def process_inbox(run, self_handle):
     return processed, replied
 
 
+def load_ownership(runs, self_handle):
+    """worker-live map qua lib dùng chung story-ownership-probe (--json) —
+    liveRuns + worktreeByDispatch. None = probe hỏng → caller degrade."""
+    probe = os.environ.get("OWNERSHIP_PROBE_BIN", "")
+    if not probe or not os.path.isfile(probe):
+        return None
+    tmp = None
+    try:
+        fd, tmp = tempfile.mkstemp(suffix=".json")
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(runs, f)
+        env = dict(os.environ)
+        env["OP_RUNS_FILE"] = tmp
+        p = subprocess.run([probe, "--json", "--self", self_handle or ""],
+                           capture_output=True, text=True, timeout=300, env=env)
+    except (subprocess.TimeoutExpired, OSError):
+        return None
+    finally:
+        if tmp:
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
+    if p.returncode != 0:
+        return None
+    try:
+        d = json.loads(p.stdout)
+    except Exception:
+        return None
+    return d if isinstance(d, dict) else None
+
+
 def stall_sweep():
     """story-resume --check → verdict STALLED* đã là bằng chứng dương 3 tầng
     (commits stale + terminal idle/cold) → --send. Cap 1 resume/pass."""
@@ -297,20 +337,16 @@ def main():
         print("PASS: idle=orca-unavailable")
         return 0
 
-    workers = orca_rows(["orchestration", "worker-list", "--json", "--limit", "100"],
-                        "workers")
-    if workers is None:
-        log("worker-list đọc không được — ownership probe degrade (chỉ task-list)")
-        workers = []
+    # SF-3: worker-live map qua lib dùng chung story-ownership-probe —
+    # probe hỏng = worker-list đọc không được (degrade như cũ)
+    probe = load_ownership(runs, self_handle)
     live_by_run = set()
-    for w in workers:
-        proj = w.get("projection") or {}
-        liveness = (proj.get("liveness") or {}).get("verdict") or ""
-        if w.get("terminalState") == "active" and liveness in ("live", "unverifiable"):
-            live_by_run.add(w.get("runId") or w.get("run_id"))
-        wt = ((w.get("resource") or {}).get("worktreeId") or "").split("::")[-1]
-        if wt:
-            wt_by_dispatch[w.get("dispatchId")] = wt
+    if probe is None or not probe.get("workersOk", False):
+        log("worker-list đọc không được — ownership probe degrade (chỉ task-list)")
+    else:
+        live_by_run = set(probe.get("liveRuns") or [])
+    for k, v in ((probe or {}).get("worktreeByDispatch") or {}).items():
+        wt_by_dispatch[k] = v
 
     candidates = []
     for r in runs[:MAX_RUNS]:

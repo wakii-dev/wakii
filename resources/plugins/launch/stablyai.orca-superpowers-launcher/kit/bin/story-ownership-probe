@@ -1,0 +1,291 @@
+#!/bin/bash
+# story-ownership-probe — thư viện ownership probe dùng chung (LOCAL-1 SF-3):
+# run/worktree nào đang có worker live của coordinator NÀO (bài học collision
+# 19/09 — 2 coordinator cùng đụng SF-4). Dùng chung bởi story-coordinator-pass
+# (qua exec --json), story-launch (pre-dispatch block), story-watchdog +
+# story-top (cột owner). Tên theo domain — KHÔNG phải lib generic.
+#
+# Worker live = terminalState "active" + liveness verdict "live"/"unverifiable"
+# (nguồn: orchestration worker-list — cùng predicate coordinator-pass SF-1).
+# Owner của worker = coordinator_handle của run (fallback agentTerminalHandle).
+#
+# Cách dùng:
+#   . bin/story-ownership-probe        # source — KHÔNG set -u vào caller
+#   ownership_probe_load [runs-file]   # nạp maps (1 lượt fetch worker-list +
+#                                      #  run-list; có runs-file thì dùng lại,
+#                                      #  không fetch run-list lần 2). rc0 = có data
+#   ownership_probe_self               → self handle (OP_SELF: --self/env/run-current)
+#   ownership_probe_run_live <runId>   → rc0 khi run có worker live
+#   ownership_probe_run_owner <runId>  → in owner handle
+#   ownership_probe_worktree_owner <wt-basename-hoặc-full-path>
+#                                      → in "runId<TAB>owner" khi worktree có
+#                                        worker live; rỗng khi không
+#   exec bin/story-ownership-probe --json [--self H] [runs-json-qua-stdin]
+#                                      → JSON cho consumer python:
+#     {"self","orcaOk","workersOk","liveRuns":[],"runOwner":{},
+#      "worktreeLive":{name:{run,owner,path}},"worktreeByDispatch":{dispatch:path}}
+#      worktreeByDispatch gồm MỌI worker (kể cả released — evidence verify).
+#
+# Fail-open theo kit convention: probe hỏng → OP_LOADED=0 + warn stderr, caller
+# chạy tiếp không chặn (degrade — không có data thì không phán được ownership).
+#
+# Biến sau load: OP_LIVE_RUNS (space-sep) · OP_RUN_OWNER (id|owner\n) ·
+# OP_WT_LIVE (name|run|owner|path\n) · OP_WT_BY_DISPATCH (dispatch|path\n) ·
+# OP_SELF · OP_ORCA_OK · OP_WORKERS_OK · OP_LOADED.
+#
+# Story-level (run của SF) chỉ suy được qua worktree của SF — run không gắn
+# worktree không link được (fuzzy match objective là đoán mò — cố tình không làm).
+set -u
+# (set -u chỉ guard chạy trực tiếp; KHÔNG áp lên caller — story-top không dùng -u)
+
+OP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
+OP_LIVE_RUNS=""; OP_RUN_OWNER=""; OP_WT_LIVE=""; OP_WT_BY_DISPATCH=""
+OP_SELF=""; OP_ORCA_OK=1; OP_WORKERS_OK=1; OP_LOADED=0
+
+op_warn() { echo "ownership-probe: $*" >&2; }
+
+if [ "${BASH_SOURCE[0]:-}" = "$0" ] && [ "${1:-}" != "--json" ]; then
+  echo "usage: source bin/story-ownership-probe — ownership_probe_load ... ; hoặc exec bin/story-ownership-probe --json [--self H]"
+  exit 2
+fi
+
+_op_reset() {
+  OP_LIVE_RUNS=""; OP_RUN_OWNER=""; OP_WT_LIVE=""; OP_WT_BY_DISPATCH=""
+  OP_SELF=""; OP_ORCA_OK=1; OP_WORKERS_OK=1; OP_LOADED=0
+}
+
+# ── core python (1 implementation cho cả face bash + face --json) ──
+# env vào: OP_MODE json|tsv · OP_SELF_ARG · OP_RUNS_JSON (raw) · OP_RUNS_FILE
+# · OP_ORCA_BIN (trống → tự resolve) · ORCA_DEV/ORCA_PROD
+_op_core() { # stdin không dùng — python source qua heredoc, data qua env
+  local py
+  py="$(command -v python3 || command -v python)" || { op_warn "python không có — probe tắt"; return 1; }
+  OP_MODE="${1:-tsv}" OP_SELF_ARG="${2:-}" OP_ORCA_BIN="${ORCA_BIN:-}" \
+    ORCA_DEV="${ORCA_DEV:-$HOME/Library/Application Support/orca-dev}" \
+    ORCA_PROD="${ORCA_PROD:-$HOME/Library/Application Support/orca}" \
+    "$py" - <<'OPCORE'
+import json
+import os
+import subprocess
+import sys
+
+mode = os.environ.get("OP_MODE", "tsv")
+self_arg = os.environ.get("OP_SELF_ARG", "")
+
+orca_bin = os.environ.get("OP_ORCA_BIN", "")
+if not orca_bin or not os.access(orca_bin, os.X_OK):
+    import shutil
+    orca_bin = (shutil.which("orca") or "/opt/homebrew/bin/orca"
+                or "/usr/local/bin/orca")
+for cand in ("/Applications/Wakii.app/Contents/Resources/bin/orca",
+             "/Applications/Orca.app/Contents/Resources/bin/orca"):
+    if not orca_bin or not os.access(orca_bin, os.X_OK):
+        if os.access(cand, os.X_OK):
+            orca_bin = cand
+if not orca_bin:
+    print("ownership-probe: orca binary không tìm thấy", file=sys.stderr)
+    sys.exit(1)
+
+ORCA_DEV = os.environ.get("ORCA_DEV", "")
+ORCA_PROD = os.environ.get("ORCA_PROD", "")
+
+
+def run_orca(args, timeout_s=45):
+    """Spawn orca (dev→prod→plain runtime) → JSON parsed, hoặc None khi fail."""
+    for ud in (ORCA_DEV, ORCA_PROD, None):
+        env = dict(os.environ)
+        if ud:
+            env["ORCA_USER_DATA_PATH"] = ud
+        else:
+            env.pop("ORCA_USER_DATA_PATH", None)
+        try:
+            p = subprocess.run([orca_bin] + args, capture_output=True, text=True,
+                               timeout=timeout_s, env=env)
+        except (subprocess.TimeoutExpired, OSError):
+            continue
+        if p.returncode == 0:
+            try:
+                return json.loads(p.stdout)
+            except Exception:
+                continue
+    return None
+
+
+def rows(d, key):
+    if d is None:
+        return None
+    return ((d.get("result") or {}).get(key)) or []
+
+
+def first_of(d, *keys):
+    for k in keys:
+        v = d.get(k)
+        if v:
+            return v
+    return ""
+
+
+# runs: env raw JSON → env file → tự fetch run-list (đúng thứ tự ưu tiên)
+runs = None
+runs_ok = True
+raw = os.environ.get("OP_RUNS_JSON", "")
+runs_file = os.environ.get("OP_RUNS_FILE", "")
+if raw.strip():
+    try:
+        parsed = json.loads(raw)
+        runs = parsed if isinstance(parsed, list) else rows(parsed, "runs")
+        if runs is None:
+            runs = []
+    except Exception:
+        runs = []
+elif runs_file and os.path.isfile(runs_file):
+    try:
+        with open(runs_file, encoding="utf-8") as f:
+            parsed = json.load(f)
+        runs = parsed if isinstance(parsed, list) else rows(parsed, "runs")
+        if runs is None:
+            runs = []
+    except Exception:
+        runs = []
+else:
+    d = run_orca(["orchestration", "run-list", "--json", "--limit", "100"])
+    runs = rows(d, "runs")
+    runs_ok = d is not None
+    if runs is None:
+        runs = []
+
+wd = run_orca(["orchestration", "worker-list", "--json", "--limit", "100"])
+workers = rows(wd, "workers")
+workers_ok = wd is not None
+if workers is None:
+    workers = []
+
+run_owner = {}
+for r in runs:
+    rid = r.get("id") or ""
+    if rid:
+        run_owner[rid] = first_of(r, "coordinator_handle", "coordinatorHandle")
+
+LIVE_VERDICTS = ("live", "unverifiable")
+live_runs = []            # giữ thứ tự, dedup dưới
+wt_live = {}              # wt name → {run, owner, path} (worker live đầu thắng)
+wt_by_dispatch = {}       # dispatchId → full path (MỌI worker — kể cả released)
+for w in workers:
+    dispatch = w.get("dispatchId") or ""
+    wt_path = ((w.get("resource") or {}).get("worktreeId") or "").split("::")[-1]
+    if dispatch and wt_path:
+        wt_by_dispatch[dispatch] = wt_path
+    liveness = ((w.get("projection") or {}).get("liveness") or {}).get("verdict") or ""
+    if w.get("terminalState") != "active" or liveness not in LIVE_VERDICTS:
+        continue
+    rid = w.get("runId") or w.get("run_id") or ""
+    if rid and rid not in live_runs:
+        live_runs.append(rid)
+    if wt_path:
+        name = os.path.basename(wt_path.rstrip("/")) or wt_path
+        owner = run_owner.get(rid) or (w.get("agentTerminalHandle") or "")
+        wt_live.setdefault(name, {"run": rid, "owner": owner, "path": wt_path})
+
+# self: --self/env thắng (consumer đã resolve), trống → probe run-current
+self_handle = self_arg or os.environ.get("ORCA_COORDINATOR_HANDLE", "")
+if not self_handle:
+    d = run_orca(["orchestration", "run-current", "--json"])
+    cur = (d or {}).get("result") or {}
+    self_handle = first_of(cur.get("run") or {}, "coordinatorHandle",
+                           "coordinator_handle")
+
+orca_ok = runs_ok  # run-list chết = orca unavailable (semantics coordinator-pass)
+
+if mode == "json":
+    print(json.dumps({
+        "self": self_handle, "orcaOk": orca_ok, "workersOk": workers_ok,
+        "liveRuns": live_runs, "runOwner": run_owner,
+        "worktreeLive": wt_live, "worktreeByDispatch": wt_by_dispatch,
+    }, ensure_ascii=False))
+    sys.exit(0)
+
+# TSV face — tag\t... mỗi dòng
+print(f"META\t{1 if orca_ok else 0}\t{1 if workers_ok else 0}\t{self_handle}")
+for rid in live_runs:
+    print(f"LIVE\t{rid}")
+for rid, owner in run_owner.items():
+    if owner:
+        print(f"OWNER\t{rid}\t{owner}")
+for name, info in wt_live.items():
+    print(f"WTLIVE\t{name}\t{info['run']}\t{info['owner']}\t{info['path']}")
+for dispatch, path in wt_by_dispatch.items():
+    print(f"WTDISP\t{dispatch}\t{path}")
+OPCORE
+}
+
+ownership_probe_load() { # $1 (optional) file chứa runs JSON — nạp maps. rc0 = OP_LOADED=1
+  _op_reset
+  local out
+  if [ -n "${1:-}" ] && [ -f "$1" ]; then
+    out="$(OP_RUNS_FILE="$1" _op_core tsv 2>/dev/null)"
+  else
+    out="$(_op_core tsv 2>/dev/null)"
+  fi
+  [ -n "$out" ] || { op_warn "probe không đọc được — degrade"; return 1; }
+  while IFS=$'\t' read -r tag a b c d; do
+    case "$tag" in
+      META)   OP_ORCA_OK="$a"; OP_WORKERS_OK="$b"; OP_SELF="$c" ;;
+      LIVE)   OP_LIVE_RUNS="$OP_LIVE_RUNS $a" ;;
+      OWNER)  OP_RUN_OWNER="$OP_RUN_OWNER$a|$b"$'\n' ;;
+      WTLIVE) OP_WT_LIVE="$OP_WT_LIVE$a|$b|$c|$d"$'\n' ;;
+      WTDISP) OP_WT_BY_DISPATCH="$OP_WT_BY_DISPATCH$a|$b"$'\n' ;;
+    esac
+  done < <(printf '%s\n' "$out")
+  [ "$OP_ORCA_OK" = "1" ] || op_warn "orca không đọc được — data thiếu"
+  [ "$OP_WORKERS_OK" = "1" ] || op_warn "worker-list đọc không được — degrade (chỉ run-list)"
+  OP_LOADED=1
+  return 0
+}
+
+ownership_probe_self() { printf '%s' "$OP_SELF"; }
+
+ownership_probe_run_live() { # rc0 khi run $1 có worker live
+  case " $OP_LIVE_RUNS " in *" $1 "*) return 0 ;; esac
+  return 1
+}
+
+ownership_probe_run_owner() { # in owner handle của run $1 ("" khi không rõ)
+  local row
+  while IFS='|' read -r rid owner; do
+    [ -n "$rid" ] || continue
+    [ "$rid" = "$1" ] && { printf '%s' "$owner"; return 0; }
+  done < <(printf '%s\n' "$OP_RUN_OWNER")
+  return 0
+}
+
+ownership_probe_worktree_owner() { # $1 wt basename hoặc full path → "runId<TAB>owner"
+  local key="$1" name run owner path
+  [ -n "$key" ] || return 0
+  while IFS='|' read -r name run owner path; do
+    [ -n "$name" ] || continue
+    if [ "$name" = "$key" ] || [ "$path" = "$key" ]; then
+      printf '%s\t%s' "$run" "$owner"
+      return 0
+    fi
+  done < <(printf '%s\n' "$OP_WT_LIVE")
+  return 0
+}
+
+# exec face: --json cho consumer python (coordinator-pass) — stdin = runs JSON tùy chọn
+if [ "${BASH_SOURCE[0]:-}" = "$0" ]; then
+  shift  # bỏ --json
+  SELF_ARG=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --self) SELF_ARG="${2:-}"; shift ;;
+      *) echo "unknown arg: $1" >&2; exit 2 ;;
+    esac
+    shift
+  done
+  if [ -t 0 ]; then
+    _op_core json "$SELF_ARG"
+  else
+    OP_RUNS_JSON="$(cat)" _op_core json "$SELF_ARG"
+  fi
+  exit $?
+fi
