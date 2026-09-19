@@ -1,9 +1,5 @@
 name: Git command termination runtime
 on:
-  pull_request:
-    paths:
-      - 'src/main/git/command-runner/spawned-command-tree-kill*'
-      - '.github/workflows/git-command-termination-runtime.yml'
   workflow_dispatch:
 permissions:
   contents: read
