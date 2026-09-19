@@ -1,12 +1,13 @@
 name: Sync fork with upstream
 
-# Daily sync of wakii-dev/wakii main with stablyai/orca main.
-# Fast-forward only: if the histories diverge (Wakii-specific commits on main),
-# the job logs and exits cleanly instead of force-merging — resolve manually.
+# main = PURE MIRROR of stablyai/orca main (policy A, owner call 2026-09-19):
+# force-align thay vì ff-only — mọi commit fork trên main bị đè (releases cut
+# từ wakii-dev, không từ main). Trước đây ff-only im lặng no-op khi diverge,
+# để main kẹt 1.139 commits.
 
 on:
   schedule:
-    - cron: "41 2 * * *" # daily ~02:41 UTC — sau khi upstream có worker chạy đêm
+    - cron: "13 17 * * *" # 00:13 giờ VN hằng ngày (17:13 UTC) — 12h đêm
   workflow_dispatch:
 
 permissions:
@@ -21,19 +22,19 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Sync upstream
+      - name: Force-align main to upstream/main
         run: |
           git remote add upstream https://github.com/stablyai/orca.git
           git fetch upstream main
           BEHIND=$(git rev-list --count main..upstream/main)
-          echo "upstream ahead by $BEHIND commits"
+          AHEAD=$(git rev-list --count upstream/main..main)
+          echo "main vs upstream/main: behind=$BEHIND ahead=$AHEAD"
           if [ "$BEHIND" -eq 0 ]; then
             echo "Already up to date."
             exit 0
           fi
-          if git merge --ff-only upstream/main; then
-            git push origin main
-            echo "synced: fast-forwarded main to upstream/main"
-          else
-            echo "::warning::main diverged from upstream — fast-forward không thực hiện được, cần merge thủ công."
+          if [ "$AHEAD" -gt 0 ]; then
+            echo "::warning::main có $AHEAD commit riêng — sẽ bị ĐÈ theo policy mirror thuần."
           fi
+          git push origin upstream/main:main --force
+          echo "synced: main force-aligned to upstream/main ($BEHIND commits)"
