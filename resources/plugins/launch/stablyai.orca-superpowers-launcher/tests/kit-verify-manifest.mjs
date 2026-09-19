@@ -1,7 +1,7 @@
 // One-shot verify: kit.json hợp lệ qua validator thật (installKit named
 // export) trên temp root — không đụng HOME thật. Chạy: node tests/kit-verify-manifest.mjs
 // Version assert đọc từ kit.json (bump hợp lệ không làm test đỏ).
-import { mkdtempSync, rmSync, existsSync, readFileSync, cpSync, readdirSync, statSync } from 'node:fs'
+import { mkdtempSync, rmSync, existsSync, readFileSync, cpSync, readdirSync, statSync, mkdirSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, dirname, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -19,6 +19,9 @@ const orca = {
 
 const root = mkdtempSync(join(tmpdir(), 'kit-verify-'))
 const before = existsSync(join(root, '.story-team-kit-version')) ? readFileSync(join(root, '.story-team-kit-version'), 'utf8') : null
+// Seed orphan từ bản cài cũ — installKit phải dọn theo RETIRED_SKILL_DIRS
+mkdirSync(join(root, 'skills', 'gpt-taste'), { recursive: true })
+writeFileSync(join(root, 'skills', 'gpt-taste', 'SKILL.md'), 'stale orphan từ 2.13.2')
 const r = await installKit(orca, { root, kitRoot })
 const ver = existsSync(join(root, '.story-team-kit-version')) ? readFileSync(join(root, '.story-team-kit-version'), 'utf8').trim() : null
 
@@ -128,6 +131,7 @@ ok('migration-guide-template cạnh bracket-template', existsSync(join(kitRoot, 
 ok('entry story-lesson trong provides', kitJson.provides.some(e => e.name === 'story-lesson' && e.type === 'bin'))
 ok('KHÔNG notify (không block)', calls.notifications.length === 0, JSON.stringify(calls.notifications))
 ok('bin mới copy đủ (5 files)', ['story-fact-pack', 'story-hooks-install', 'hook-post-tool-use', 'hook-session-start', 'hook-stop'].every(f => existsSync(join(root, 'bin', f))))
+ok('retired orphan skill được dọn (gpt-taste seed trước install)', !existsSync(join(root, 'skills', 'gpt-taste')))
 ok('settings.json merge kèm install (SF-2 seam)', existsSync(join(root, 'settings.json')) && readFileSync(join(root, 'settings.json'), 'utf8').includes('hook-session-start'))
 ok('log nói hooks merged', calls.logs.some(l => l.includes('hooks merged')), calls.logs.join(' | '))
 

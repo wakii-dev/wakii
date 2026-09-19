@@ -908,6 +908,12 @@ export function mergeStoryHooks(claudeDir) {
 // dirs, KHÔNG BAO GIỜ chạm HOME thật. Trả true = cài/đã-cứu/skip, false = blocked.
 const KIT_ROOT = join(fileURLToPath(new URL('.', import.meta.url)), 'kit')
 
+// Skills đã retire khỏi kit nhưng còn nằm lại ~/.claude/skills từ các bản cài
+// cũ — installKit dọn theo danh sách biết trước này. KHÔNG tự xoá skill ngoài
+// danh sách (huashu-design, issue-fix-loop... là skill của user/khác, không
+// thuộc kit). Bổ sung vào đây mỗi khi retire skill (2.15.0: 5 skills đầu tiên).
+const RETIRED_SKILL_DIRS = ['brainstorm', 'bridge-router', 'execute-plan', 'graph-engineering', 'gpt-taste']
+
 export function installKit(orca, { root, kitRoot: kitRootOverride } = {}) {
   try {
     const kitRoot = kitRootOverride || KIT_ROOT
@@ -949,6 +955,12 @@ export function installKit(orca, { root, kitRoot: kitRootOverride } = {}) {
     }
     mkdirSync(claude, { recursive: true })
     writeFileSync(marker, expectedMarker)
+    // Dọn orphan: skill đã retire còn nằm lại từ bản cài cũ (non-fatal từng cái).
+    for (const name of RETIRED_SKILL_DIRS) {
+      try {
+        rmSync(join(claude, 'skills', name), { recursive: true, force: true })
+      } catch { /* dọn được cái nào hay cái đó */ }
+    }
     // Hooks auto-install (SF-2): merge 3 entries vào settings.json trong Node
     // (KHÔNG spawn bash bin từ worker — runProcess seam risk trên Windows).
     // Fail không chặn install: bin đã copy, hook wrapper tự nuốt missing-bin.
