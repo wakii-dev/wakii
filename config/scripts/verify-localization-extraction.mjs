@@ -106,10 +106,10 @@ export async function main(root = process.cwd()) {
     if (process.env.UPDATE_EN_JSON === '1') {
       await fs.writeFile(
         path.join(root, EN_CATALOG_PATH),
-        JSON.stringify(extractedCatalog, null, 2) + '\n'
+        `${JSON.stringify(extractedCatalog, null, 2)}\n`
       )
       console.log(
-        `Updated ${EN_CATALOG_PATH} from source fallbacks (${extractedCatalog.length ?? Object.keys(extractedCatalog).length} keys).`
+        `Updated ${EN_CATALOG_PATH} from source fallbacks (${Object.keys(extractedCatalog).length} keys).`
       )
       return 0
     }
