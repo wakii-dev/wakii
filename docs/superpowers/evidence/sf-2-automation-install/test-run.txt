@@ -172,3 +172,5 @@ $ node tests/story-coordinator-pass-tests.mjs (harness SF-1 trên cây merge —
 
 == TOTAL: 55 PASS / 0 FAIL ==
 HARNESS GREEN
+
+tdd: skipped-tdd: bin + harness viết cùng lúc theo pattern hermetic stub của pack (acceptance = harness GREEN, không red-first); lần chạy đầu 1 FAIL là test-side bug (đếm notify đa dòng) đã sửa → GREEN 68/68 + 55/55 integration
