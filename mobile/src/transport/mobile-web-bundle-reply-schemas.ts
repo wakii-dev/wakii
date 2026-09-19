@@ -4,8 +4,9 @@ import {
   MobileWebBundleAssetPathSchema,
   MOBILE_WEB_BUNDLE_MAX_ASSETS,
   MOBILE_WEB_BUNDLE_MAX_ASSET_BYTES,
-  MOBILE_WEB_BUNDLE_MAX_TOTAL_BYTES,
-  MOBILE_WEB_BUNDLE_SCHEMA_VERSION
+  MOBILE_WEB_BUNDLE_MAX_ROUTE_GRANTS,
+  MOBILE_WEB_BUNDLE_MAX_ROUTES,
+  MOBILE_WEB_BUNDLE_MAX_TOTAL_BYTES
 } from '../../../src/shared/mobile-web-bundle/manifest-contract'
 
 // Hoisted, never built inside a reader: a schema constructed per parse cost 2275 ns against 156 ns
@@ -24,6 +25,15 @@ const SHA256_PATTERN = /^[a-f0-9]{64}$/
  *  host that overshoots is refused at the boundary instead of at reassembly. */
 const MAX_DATA_BASE64_LENGTH = Math.ceil(MOBILE_WEB_BUNDLE_CHUNK_BYTES / 3) * 4 + 8
 
+/** A screen the desktop asks this shell to render from the bundle. Optional, because a desktop
+ *  older than the field sends none and every route then stays native, which is where they all
+ *  start. Loose for the same reason the manifest is: a grant name this build does not know is not a
+ *  reason to refuse a bundle, it is a reason to leave that one route native. */
+const pageRouteSchema = z.looseObject({
+  pathname: z.string().min(1).max(255),
+  grants: z.array(z.string().min(1).max(64)).max(MOBILE_WEB_BUNDLE_MAX_ROUTE_GRANTS)
+})
+
 const assetSchema = z.looseObject({
   path: MobileWebBundleAssetPathSchema,
   sha256: z.string().regex(SHA256_PATTERN),
@@ -32,18 +42,27 @@ const assetSchema = z.looseObject({
 })
 
 /** Everything the fetch reads: the id it caches under, the assets it pages, and the entry it will
- *  later load. `desktopVersion` and the protocol window pass through untyped — Phase B's update
- *  wall reads them, this phase does not.
+ *  later load, plus the protocol window the update wall compares against the host.
+ *  `desktopVersion` still passes through untyped; nothing reads it yet.
  *
- *  `schemaVersion` stays a literal because the manifest is closed in both directions: a bump is the
- *  only change path, and an unrecognised one is an unusable bundle to re-fetch, never a crash. */
-const manifestSchema = z
+ *  `schemaVersion` is read as a number, not pinned to the one this shell knows: refusing it here
+ *  would fail the parse before `evaluateMobileWebBundleCompat` could name the shell as too old, and
+ *  an unreadable schema is a wall to show, not a shape to guess at. The manifest stays closed in
+ *  both directions on the host's side, where it is written.
+ *
+ *  Exported because the generation store re-parses the manifest it cached, and reading it back
+ *  strictly after accepting it loosely would make a host's added field a forced redownload on every
+ *  launch. */
+export const MobileWebBundleManifestReadSchema = z
   .looseObject({
-    schemaVersion: z.literal(MOBILE_WEB_BUNDLE_SCHEMA_VERSION),
+    schemaVersion: z.number().int(),
     buildId: z.string().regex(SHA256_PATTERN),
+    minCompatibleRuntimeProtocolVersion: z.number().int().nonnegative(),
+    runtimeProtocolVersion: z.number().int().nonnegative(),
     entrypoint: MobileWebBundleAssetPathSchema,
     totalBytes: z.number().int().nonnegative().max(MOBILE_WEB_BUNDLE_MAX_TOTAL_BYTES),
-    assets: z.array(assetSchema).min(1).max(MOBILE_WEB_BUNDLE_MAX_ASSETS)
+    assets: z.array(assetSchema).min(1).max(MOBILE_WEB_BUNDLE_MAX_ASSETS),
+    routes: z.array(pageRouteSchema).max(MOBILE_WEB_BUNDLE_MAX_ROUTES).optional()
   })
   // The allocation bound, and the reason it is the sum rather than `totalBytes`: the fetch
   // allocates one buffer per asset from `byteLength` and holds them all, so a manifest declaring
@@ -60,7 +79,7 @@ const manifestSchema = z
 /** `chunkBytes` is read, never assumed: the host may shrink it without a client release. Capped at
  *  the constant because a larger value would overshoot `dataBase64` above. */
 export const MobileWebBundleManifestReplySchema = z.looseObject({
-  manifest: manifestSchema,
+  manifest: MobileWebBundleManifestReadSchema,
   chunkBytes: z.number().int().positive().max(MOBILE_WEB_BUNDLE_CHUNK_BYTES)
 })
 

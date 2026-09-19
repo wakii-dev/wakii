@@ -3,12 +3,12 @@
   "family": "hostedReview.create-intent",
   "namedDeltas": [],
   "runnerVersion": 1,
-  "baseline": "5741d48e592dad21660d995a3758319413a4baf0",
+  "baseline": "47d24d324ef5b2c9c985fb83f355414c93e1d46d",
   "lockfileSha256": "4568633356187895ccda8e2ff83245c37d5621832c69e268733733b6947971e3",
-  "recorderSha256": "25ff809662a78e2f33ad159fd34ee62e931e2ad597aebec5476293e19b53efd9",
+  "recorderSha256": "f67c2f5b753d2a4f572599f6861fae8e6e917fe89ac75b58288f8e84be609d86",
   "adapterSha256": "c582ce355b0704b38d7e84cbce352630096c91231bf09aecd1f6dbb409fed17f",
   "scenarioSha256": "beb1161b98ffde8c5f1128e843766a1da3182d195f1f0a9012e12e5318ae01bc",
-  "platform": "win32",
+  "platform": "darwin",
   "scenarioVersion": 1,
   "projectionVersion": 2,
   "goldenFormatVersion": 5,
@@ -211,51 +211,6 @@
         }
       }
     },
-    "1b5df98588c2": {
-      "status": "fulfilled",
-      "startedAt": 0,
-      "settledAt": 0,
-      "value": {
-        "committed": true,
-        "ok": true,
-        "prefill": {
-          "base": "main",
-          "blockedReason": {
-            "$rpc": "null"
-          },
-          "body": "Host body",
-          "canCreate": true,
-          "nextAction": {
-            "$rpc": "null"
-          },
-          "provider": "github",
-          "reviewLookupOutcome": "not_found",
-          "title": "Host title"
-        },
-        "status": {
-          "branch": "feature",
-          "conflictOperation": "unknown",
-          "entries": [],
-          "head": "def5678",
-          "upstreamStatus": {
-            "ahead": 0,
-            "behind": 0,
-            "behindCommitsArePatchEquivalent": {
-              "$rpc": "undefined"
-            },
-            "hasConfiguredPushTarget": {
-              "$rpc": "undefined"
-            },
-            "hasUpstream": true,
-            "upstreamName": {
-              "$rpc": "undefined"
-            }
-          }
-        },
-        "url": "https://review.test/5",
-        "warning": "Pull Request created, but Wakii could not refresh it yet."
-      }
-    },
     "1f1eb128297f": {
       "name": "worktree.set#1",
       "ordinal": 28,
@@ -366,6 +321,48 @@
             "$rpc": "null"
           }
         }
+      }
+    },
+    "2c6dd148501e": {
+      "outcome": {
+        "committed": true,
+        "ok": true,
+        "prefill": {
+          "base": "main",
+          "blockedReason": {
+            "$rpc": "null"
+          },
+          "body": "Host body",
+          "canCreate": true,
+          "nextAction": {
+            "$rpc": "null"
+          },
+          "provider": "github",
+          "reviewLookupOutcome": "not_found",
+          "title": "Host title"
+        },
+        "status": {
+          "branch": "feature",
+          "conflictOperation": "unknown",
+          "entries": [],
+          "head": "def5678",
+          "upstreamStatus": {
+            "ahead": 0,
+            "behind": 0,
+            "behindCommitsArePatchEquivalent": {
+              "$rpc": "undefined"
+            },
+            "hasConfiguredPushTarget": {
+              "$rpc": "undefined"
+            },
+            "hasUpstream": true,
+            "upstreamName": {
+              "$rpc": "undefined"
+            }
+          }
+        },
+        "url": "https://review.test/5",
+        "warning": "Pull Request created, but Orca could not refresh it yet."
       }
     },
     "395c47c3d42e": {
@@ -1108,6 +1105,51 @@
       "ordinal": 8,
       "value": "generating_commit_message"
     },
+    "b661d30b2d73": {
+      "status": "fulfilled",
+      "startedAt": 0,
+      "settledAt": 0,
+      "value": {
+        "committed": true,
+        "ok": true,
+        "prefill": {
+          "base": "main",
+          "blockedReason": {
+            "$rpc": "null"
+          },
+          "body": "Host body",
+          "canCreate": true,
+          "nextAction": {
+            "$rpc": "null"
+          },
+          "provider": "github",
+          "reviewLookupOutcome": "not_found",
+          "title": "Host title"
+        },
+        "status": {
+          "branch": "feature",
+          "conflictOperation": "unknown",
+          "entries": [],
+          "head": "def5678",
+          "upstreamStatus": {
+            "ahead": 0,
+            "behind": 0,
+            "behindCommitsArePatchEquivalent": {
+              "$rpc": "undefined"
+            },
+            "hasConfiguredPushTarget": {
+              "$rpc": "undefined"
+            },
+            "hasUpstream": true,
+            "upstreamName": {
+              "$rpc": "undefined"
+            }
+          }
+        },
+        "url": "https://review.test/5",
+        "warning": "Pull Request created, but Orca could not refresh it yet."
+      }
+    },
     "c9569b29c1f2": {
       "name": "worktree.set#1",
       "ordinal": 28,
@@ -1276,48 +1318,6 @@
       "name": "git.commit#1",
       "ordinal": 13,
       "json": "{\"id\":\"frame-5\",\"deviceToken\":\"recording-device\",\"method\":\"git.commit\",\"params\":{\"worktree\":\"id:repo42::/p\",\"message\":\"feat: recorded\"}}"
-    },
-    "f1b09530c239": {
-      "outcome": {
-        "committed": true,
-        "ok": true,
-        "prefill": {
-          "base": "main",
-          "blockedReason": {
-            "$rpc": "null"
-          },
-          "body": "Host body",
-          "canCreate": true,
-          "nextAction": {
-            "$rpc": "null"
-          },
-          "provider": "github",
-          "reviewLookupOutcome": "not_found",
-          "title": "Host title"
-        },
-        "status": {
-          "branch": "feature",
-          "conflictOperation": "unknown",
-          "entries": [],
-          "head": "def5678",
-          "upstreamStatus": {
-            "ahead": 0,
-            "behind": 0,
-            "behindCommitsArePatchEquivalent": {
-              "$rpc": "undefined"
-            },
-            "hasConfiguredPushTarget": {
-              "$rpc": "undefined"
-            },
-            "hasUpstream": true,
-            "upstreamName": {
-              "$rpc": "undefined"
-            }
-          }
-        },
-        "url": "https://review.test/5",
-        "warning": "Pull Request created, but Wakii could not refresh it yet."
-      }
     },
     "f591bfdffebe": {
       "name": "worktree.set#1",
@@ -1826,9 +1826,9 @@
             "ffef2a178ce4"
           ],
           "settlements": {
-            "run": "1b5df98588c2"
+            "run": "b661d30b2d73"
           },
-          "state": "f1b09530c239",
+          "state": "2c6dd148501e",
           "effects": [
             "e83dca631c9c",
             "b2ae4b8e30b7",
@@ -1870,9 +1870,9 @@
             "ffef2a178ce4"
           ],
           "settlements": {
-            "run": "1b5df98588c2"
+            "run": "b661d30b2d73"
           },
-          "state": "f1b09530c239",
+          "state": "2c6dd148501e",
           "effects": [
             "e83dca631c9c",
             "b2ae4b8e30b7",
@@ -1914,9 +1914,9 @@
             "ffef2a178ce4"
           ],
           "settlements": {
-            "run": "1b5df98588c2"
+            "run": "b661d30b2d73"
           },
-          "state": "f1b09530c239",
+          "state": "2c6dd148501e",
           "effects": [
             "e83dca631c9c",
             "b2ae4b8e30b7",
@@ -1958,9 +1958,9 @@
             "ffef2a178ce4"
           ],
           "settlements": {
-            "run": "1b5df98588c2"
+            "run": "b661d30b2d73"
           },
-          "state": "f1b09530c239",
+          "state": "2c6dd148501e",
           "effects": [
             "e83dca631c9c",
             "b2ae4b8e30b7",

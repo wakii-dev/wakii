@@ -3,12 +3,12 @@
   "family": "tasks.item-detail-gitlab",
   "namedDeltas": [],
   "runnerVersion": 1,
-  "baseline": "5741d48e592dad21660d995a3758319413a4baf0",
+  "baseline": "47d24d324ef5b2c9c985fb83f355414c93e1d46d",
   "lockfileSha256": "4568633356187895ccda8e2ff83245c37d5621832c69e268733733b6947971e3",
-  "recorderSha256": "25ff809662a78e2f33ad159fd34ee62e931e2ad597aebec5476293e19b53efd9",
+  "recorderSha256": "f67c2f5b753d2a4f572599f6861fae8e6e917fe89ac75b58288f8e84be609d86",
   "adapterSha256": "c0ef16b959002e4a3c5347114a0844b95670e274ef010d910b6671ac5f49e783",
   "scenarioSha256": "d163c6125fa180da7575642ee29f4bb18e3678079b7c30a42934550896d5b3c1",
-  "platform": "win32",
+  "platform": "darwin",
   "scenarioVersion": 1,
   "projectionVersion": 2,
   "goldenFormatVersion": 5,
@@ -412,6 +412,41 @@
         "title": "A GitLab issue"
       }
     },
+    "62edf8d0f053": {
+      "error": "The host sent a reply this app could not read (gitlab.workItemDetails)",
+      "item": {
+        "provider": "gitlab",
+        "source": {
+          "id": "gitlab:issue:4",
+          "labels": ["bug"],
+          "number": 4,
+          "projectRef": "group/project",
+          "repoId": "repo-1",
+          "state": "opened",
+          "type": "issue"
+        },
+        "title": "A GitLab issue"
+      },
+      "items": [
+        {
+          "provider": "gitlab",
+          "source": {
+            "id": "gitlab:issue:4",
+            "labels": ["bug"],
+            "number": 4,
+            "projectRef": "group/project",
+            "repoId": "repo-1",
+            "state": "opened",
+            "type": "issue"
+          },
+          "title": "A GitLab issue"
+        }
+      ],
+      "loading": false,
+      "payload": {
+        "$rpc": "null"
+      }
+    },
     "6a8913577681": {
       "name": "detailPayload",
       "ordinal": 6,
@@ -503,6 +538,11 @@
       "payload": {
         "$rpc": "null"
       }
+    },
+    "81e387573ce6": {
+      "name": "detailError",
+      "ordinal": 6,
+      "value": "The host sent a reply this app could not read (gitlab.workItemDetails)"
     },
     "8ccd4fa759a5": {
       "name": "detailLoading",
@@ -956,12 +996,12 @@
           "settlements": {
             "mount": "eb79a9b3682a"
           },
-          "state": "f24316a2872c",
+          "state": "62edf8d0f053",
           "effects": [
             "33614c90b6eb",
             "a4f1a8696a24",
             "264010756b38",
-            "923a1c0af8db",
+            "81e387573ce6",
             "7816d31432b8"
           ]
         }

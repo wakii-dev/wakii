@@ -3,12 +3,12 @@
   "family": "settings.task-hydration",
   "namedDeltas": [],
   "runnerVersion": 1,
-  "baseline": "5741d48e592dad21660d995a3758319413a4baf0",
+  "baseline": "47d24d324ef5b2c9c985fb83f355414c93e1d46d",
   "lockfileSha256": "4568633356187895ccda8e2ff83245c37d5621832c69e268733733b6947971e3",
-  "recorderSha256": "25ff809662a78e2f33ad159fd34ee62e931e2ad597aebec5476293e19b53efd9",
+  "recorderSha256": "f67c2f5b753d2a4f572599f6861fae8e6e917fe89ac75b58288f8e84be609d86",
   "adapterSha256": "fc73116d95985606fe32f22d3f14f434a6d5cd49219416c9fa0f47f971fa6ff0",
   "scenarioSha256": "3f448feff463b59c3927dae020ecd8d4931bb4a6036df6d6af080de2ec5fcf2b",
-  "platform": "win32",
+  "platform": "darwin",
   "scenarioVersion": 1,
   "projectionVersion": 2,
   "goldenFormatVersion": 5,
@@ -96,11 +96,6 @@
       "name": "showLinearDisplayPicker",
       "ordinal": 50,
       "value": false
-    },
-    "18093ad8d5b1": {
-      "name": "error",
-      "ordinal": 81,
-      "value": "Update Wakii desktop to use Tasks on mobile."
     },
     "182f5ca03618": {
       "name": "status.get#1",
@@ -620,11 +615,6 @@
         }
       }
     },
-    "60b0fde8ea88": {
-      "name": "error",
-      "ordinal": 41,
-      "value": "Cannot read properties of undefined (reading 'capabilities')"
-    },
     "644df42439c4": {
       "name": "linearWorkspaces",
       "ordinal": 55,
@@ -926,6 +916,11 @@
       "ordinal": 52,
       "value": {}
     },
+    "962af04c16e6": {
+      "name": "error",
+      "ordinal": 41,
+      "value": "The host sent a reply this app could not read (status.get)"
+    },
     "983ee07db023": {
       "name": "status.get#1",
       "ordinal": 39,
@@ -1198,11 +1193,6 @@
       "ordinal": 49,
       "json": "{\"id\":\"frame-4\",\"deviceToken\":\"recording-device\",\"method\":\"preflight.check\"}"
     },
-    "e2892cada877": {
-      "name": "error",
-      "ordinal": 41,
-      "value": "Cannot read properties of null (reading 'capabilities')"
-    },
     "e2c613587259": {
       "name": "showGitHubProjectPicker",
       "ordinal": 62,
@@ -1229,6 +1219,11 @@
       "name": "githubProjectHiddenFieldIdsByView",
       "ordinal": 53,
       "value": {}
+    },
+    "e74a1813f5ba": {
+      "name": "error",
+      "ordinal": 81,
+      "value": "Update Orca desktop to use Tasks on mobile."
     },
     "e7538ac5908a": {
       "name": "runtimeTaskSettings",
@@ -1503,7 +1498,7 @@
             "2d1b83d7dc85",
             "1221fd1c3ae9",
             "da3527bc5f58",
-            "60b0fde8ea88",
+            "962af04c16e6",
             "1eb9c1e3ee82"
           ]
         }
@@ -1556,7 +1551,7 @@
             "2d1b83d7dc85",
             "1221fd1c3ae9",
             "da3527bc5f58",
-            "60b0fde8ea88",
+            "962af04c16e6",
             "1eb9c1e3ee82"
           ]
         }
@@ -1609,7 +1604,7 @@
             "2d1b83d7dc85",
             "1221fd1c3ae9",
             "da3527bc5f58",
-            "e2892cada877",
+            "962af04c16e6",
             "1eb9c1e3ee82"
           ]
         }
@@ -1662,7 +1657,7 @@
             "2d1b83d7dc85",
             "1221fd1c3ae9",
             "da3527bc5f58",
-            "e2892cada877",
+            "962af04c16e6",
             "1eb9c1e3ee82"
           ]
         }
@@ -1755,7 +1750,7 @@
             "54fba5c273ed",
             "576f2e06ad1b",
             "b523ed4da0d6",
-            "18093ad8d5b1",
+            "e74a1813f5ba",
             "bd86f8dd7be9"
           ]
         }
@@ -1848,7 +1843,7 @@
             "54fba5c273ed",
             "576f2e06ad1b",
             "b523ed4da0d6",
-            "18093ad8d5b1",
+            "e74a1813f5ba",
             "bd86f8dd7be9"
           ]
         }
@@ -1941,7 +1936,7 @@
             "54fba5c273ed",
             "576f2e06ad1b",
             "b523ed4da0d6",
-            "18093ad8d5b1",
+            "e74a1813f5ba",
             "bd86f8dd7be9"
           ]
         }
@@ -2034,7 +2029,7 @@
             "54fba5c273ed",
             "576f2e06ad1b",
             "b523ed4da0d6",
-            "18093ad8d5b1",
+            "e74a1813f5ba",
             "bd86f8dd7be9"
           ]
         }
@@ -2127,7 +2122,7 @@
             "54fba5c273ed",
             "576f2e06ad1b",
             "b523ed4da0d6",
-            "18093ad8d5b1",
+            "e74a1813f5ba",
             "bd86f8dd7be9"
           ]
         }
@@ -2220,7 +2215,7 @@
             "54fba5c273ed",
             "576f2e06ad1b",
             "b523ed4da0d6",
-            "18093ad8d5b1",
+            "e74a1813f5ba",
             "bd86f8dd7be9"
           ]
         }

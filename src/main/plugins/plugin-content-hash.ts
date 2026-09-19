@@ -14,6 +14,14 @@ import { pluginPathSegmentError } from '../../shared/plugins/plugin-path-safety'
 
 const MAX_PLUGIN_FILES = 2_000
 const MAX_PLUGIN_TOTAL_BYTES = 50 * 1024 * 1024
+// Junk bỏ qua khi hash: gitignored và sinh lại cục bộ mỗi lần chạy test kit
+// (__pycache__/*.pyc) hoặc Finder (.DS_Store) — có trên máy rehash nhưng không
+// bao giờ có trong CI checkout, tính vào hash làm fingerprint lệch theo máy
+// (1.4.209 fail 2 lần vì 2 file .pyc). Phải mirror đúng skip-set + seed của
+// config/scripts/verify-packaged-plugin-resources.cjs — hai implementation
+// này phải cùng giá trị trên cùng một cây.
+const JUNK_ENTRY_NAMES = new Set(['.DS_Store'])
+const JUNK_EXTENSIONS = ['.pyc']
 
 type PluginFile = { path: string; size: number }
 
@@ -33,6 +41,12 @@ async function collectFiles(
   entries.sort((left, right) => (left.name < right.name ? -1 : left.name > right.name ? 1 : 0))
   for (const entry of entries) {
     if (dir === root && entry.name === '.git') {
+      continue
+    }
+    if (JUNK_ENTRY_NAMES.has(entry.name) || JUNK_EXTENSIONS.some((ext) => entry.name.endsWith(ext))) {
+      continue
+    }
+    if (entry.isDirectory() && entry.name === '__pycache__') {
       continue
     }
     const segmentError = pluginPathSegmentError(entry.name)
@@ -96,7 +110,7 @@ export async function hashPluginTree(root: string): Promise<PluginTreeHashResult
     const hash = createHash('sha256')
     // Why: every record is length-framed so path/content delimiters inside a
     // plugin file cannot make two different trees share one hash preimage.
-    hash.update('orca-plugin-tree-v1\0')
+    hash.update('orca-plugin-tree-v2\0')
     let totalBytes = 0
     for (const file of files) {
       totalBytes += file.size

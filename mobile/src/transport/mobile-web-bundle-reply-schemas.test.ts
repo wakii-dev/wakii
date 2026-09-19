@@ -8,11 +8,16 @@ import {
   MOBILE_WEB_BUNDLE_MAX_ASSET_BYTES,
   MOBILE_WEB_BUNDLE_MAX_TOTAL_BYTES
 } from '../../../src/shared/mobile-web-bundle/manifest-contract'
+import { MOBILE_WEB_BUNDLE_CAPABILITY } from '../../../src/shared/mobile-web-bundle/mobile-web-bundle-capability'
+import { evaluateMobileWebBundleCompat } from './mobile-web-bundle-compat'
 import {
+  isMobileWebBundleTransportFailure,
   mobileWebBundleChunkRead,
   mobileWebBundleManifestRead,
   readMobileWebBundleErrorCode
 } from './mobile-web-bundle-operations'
+import { markRpcDeliveryUnknown } from './rpc-delivery-ambiguity'
+import { MobileWebBundleManifestReplySchema } from './mobile-web-bundle-reply-schemas'
 import type { RpcReadResult } from './rpc-operation-contract'
 
 const BUILD_ID = 'a'.repeat(64)
@@ -149,9 +154,36 @@ describe('mobile web bundle manifest reply reader', () => {
     ).toBe(false)
   })
 
-  it('refuses a schemaVersion it does not know rather than guessing at the shape', () => {
-    expect(readManifest(manifestReply({ schemaVersion: 2 })).compatible).toBe(false)
+  it('reads an unknown schemaVersion through so the update wall can name it', () => {
+    // Refusing it here would fail the parse before `evaluateMobileWebBundleCompat` could say
+    // `bundle-shell-too-old`, leaving a transport error where the wall belongs.
+    expect(readManifest(manifestReply({ schemaVersion: 2 })).compatible).toBe(true)
     expect(readManifest(manifestReply({ schemaVersion: undefined })).compatible).toBe(false)
+    for (const schemaVersion of [1.5, 'one', null]) {
+      expect(readManifest(manifestReply({ schemaVersion })).compatible).toBe(false)
+    }
+  })
+
+  it('types the protocol window the update wall compares, without a cast at the call site', () => {
+    const parsed = MobileWebBundleManifestReplySchema.parse(manifestReply())
+    // The pin is this call: `manifest` only assigns if the reader still types both window fields.
+    const verdict = evaluateMobileWebBundleCompat({
+      hostCapabilities: [MOBILE_WEB_BUNDLE_CAPABILITY],
+      hostStatus: { protocolVersion: 2, minCompatibleMobileVersion: 2 },
+      manifest: parsed.manifest
+    })
+
+    expect(verdict).toEqual({ kind: 'ok', manifestChecked: true })
+  })
+
+  it('refuses a manifest with no protocol window, which only a host without the capability sends', () => {
+    expect(readManifest(manifestReply({ runtimeProtocolVersion: undefined })).compatible).toBe(
+      false
+    )
+    expect(
+      readManifest(manifestReply({ minCompatibleRuntimeProtocolVersion: undefined })).compatible
+    ).toBe(false)
+    expect(readManifest(manifestReply({ runtimeProtocolVersion: -1 })).compatible).toBe(false)
   })
 
   it('bounds every manifest field the fetch reads', () => {
@@ -297,5 +329,32 @@ describe('mobile web bundle operation descriptors', () => {
       expect(operation.acceptance).toBe('require-result-or-throw')
       expect(operation.barrier).toBe('on-settle')
     }
+  })
+})
+
+describe('which side a bundle read failed on', () => {
+  it('reads the transport marks the transport itself sets', () => {
+    // Every socket close, relay drop and request timeout rejects in-flight requests with this mark.
+    expect(
+      isMobileWebBundleTransportFailure(markRpcDeliveryUnknown(new Error('Connection closed')))
+    ).toBe(true)
+    // The cutover error matches by message as well as by class, across bundle copies.
+    expect(
+      isMobileWebBundleTransportFailure(new Error('RPC interrupted by connection migration'))
+    ).toBe(true)
+  })
+
+  it.each([
+    ['a host refusal', `invalid_argument: ${MOBILE_WEB_BUNDLE_ERROR_CODES[0]}`],
+    ['bytes that do not hash', 'bundle asset index.html hashed aa, not bb'],
+    ['a build that changed mid-fetch', 'bundle build changed mid-fetch: asked aa, served bb'],
+    ['an unread reply', 'The host sent a reply this app could not read (mobileWeb.bundle.manifest)']
+  ])('treats %s as a verdict about the bundle', (_label, message) => {
+    expect(isMobileWebBundleTransportFailure(new Error(message))).toBe(false)
+  })
+
+  it('treats anything that is not an error as a verdict too, rather than guessing', () => {
+    expect(isMobileWebBundleTransportFailure('Connection closed')).toBe(false)
+    expect(isMobileWebBundleTransportFailure(null)).toBe(false)
   })
 })

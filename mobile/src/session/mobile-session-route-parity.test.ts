@@ -82,8 +82,10 @@ const HEAD_CALLBACK_BODY_SHA256 = 'ceba525103ccac47df766063d58593ba083d59785f862
 // Refreshed for the startup effect: both `worktree.activate` sends became `worktreeActivate`, and
 // the sleeping-agent check reads that operation's verdict instead of the reply envelope. Refreshed
 // again when the reporter took the reply and interpreted it itself, retiring the hand-built
-// refusal the timer site passed when it had no reply at all.
-const HEAD_EFFECT_SHA256 = '97e96c1b690a50ede83b2b9040040c174e63f2bfbb0c378660d505a33d104a32'
+// refusal the timer site passed when it had no reply at all. Refreshed once more for the
+// last-visited-worktree effect, whose bare store write became the one writer of that key, so the
+// hybrid shell's page mirror sees it as it is written rather than one `init` later.
+const HEAD_EFFECT_SHA256 = 'c5fe295b349f548bb8c21c59918debbe3467562291b4cc2cae497978b2720c36'
 const HEAD_CONTENT_HOOK_SHA256 = '9c3b612fef3f370d66873aefdbe1d701f20cb64ded31fef5cc45fde6f8189581'
 // Same pin for the 12 bodies that sit in nested functions rather than callbacks, moved by the same
 // rewrite of those send and read expressions. Count unchanged. Refreshed again in step 6 for
