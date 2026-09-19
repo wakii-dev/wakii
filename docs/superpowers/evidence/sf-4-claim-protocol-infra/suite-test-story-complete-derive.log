@@ -1,0 +1,29 @@
+── S1: bracket SF-1..4 Done → STORY-COMPLETE (local SF-4 COMPLETE) ──
+PASS: S1 STORY-COMPLETE emit khi mọi SF bracket Done
+PASS: S1 exit 0 (mọi SF đủ)
+PASS: S1 summary nêu nguồn Linear (bracket derive)
+── S2: FI-8803 In Progress → không STORY-COMPLETE (derive chặn) ──
+PASS: S2 không emit STORY-COMPLETE khi SF bracket chưa Done
+PASS: S2 summary đích danh SF chưa Done (FI-8803)
+PASS: S2 exit 1 (chưa hoàn thành)
+── S3: Linear không đọc được → warn + local-only fallback (rc giữ parity) ──
+PASS: S3 KHÔNG emit verdict STORY-COMPLETE khi Linear chết
+PASS: S3 có warn Linear không đọc được
+PASS: S3 rc=1 (parity pre-derive — READY-TO-DONE)
+── S4: bracket không linear id → derive bỏ qua, output sạch ──
+PASS: S4 không linear id → derive no-op, local COMPLETE đủ (parity pre-derive)
+PASS: S4 không in dòng derive
+PASS: S4 exit 0 (parity pre-derive)
+── W1: watchdog launch-next --dry-run đọc state không cần key ──
+PASS: W1 SF-1 Done nhận diện không cần key (dual-path)
+── W2: bracket mọi SF Done → STORY-COMPLETE ──
+PASS: W2 STORY-COMPLETE emit trong launch-next dry-run
+── W3: FI-8803 chưa Done → không STORY-COMPLETE ──
+PASS: W3 không emit khi còn SF chưa Done
+── S5: FI-8899 lạ (stub không có) → warn fail-open, vẫn STORY-COMPLETE ──
+PASS: S5 unknown id không block STORY-COMPLETE (fail-open)
+PASS: S5 có warn issue không đọc được
+PASS: S5 đi đúng nhánh per-issue fail-open (không phải global-dead)
+PASS: S5 exit 0
+
+test-story-complete-derive: 19 PASS · 0 FAIL

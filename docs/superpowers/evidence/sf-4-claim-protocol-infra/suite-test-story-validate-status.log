@@ -1,0 +1,11 @@
+── story-validate ──
+PASS: V1 ok.md: exit 0 + verdict OK
+PASS: V2 thiếu Tier+What: exit 1 + nêu đúng 2 lỗi
+PASS: V3 cycle SF-1↔SF-2: báo dependency cycle
+PASS: V4 linear ID trùng: báo G3 duplicate
+PASS: V5 --json: verdict INVALID + fails[] parse được
+PASS: V6 dep ma SF-9: báo G1
+── story-status (stub orca) ──
+PASS: S1 story-status: exit chạy + in header (stub orca, không crash)
+
+Kết quả: 7 PASS · 0 FAIL

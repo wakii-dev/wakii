@@ -1,0 +1,31 @@
+PASS: S1 iter1 race: đúng 1 winner (sim-a) · loser đích danh/guard hoặc rc0-skip
+PASS: S1 iter2 race: đúng 1 winner (sim-b) · loser đích danh/guard hoặc rc0-skip
+PASS: S1 iter3 race: đúng 1 winner (sim-a) · loser đích danh/guard hoặc rc0-skip
+PASS: S1 iter4 race: đúng 1 winner (sim-b) · loser đích danh/guard hoặc rc0-skip
+PASS: S1 iter5 race: đúng 1 winner (sim-a) · loser đích danh/guard hoặc rc0-skip
+PASS: S2 setup: sim-a claim trực tiếp
+PASS: S2 takeover: sim-b chiếm (TAKEOVER + LAUNCHED, rc0)
+PASS: S2 revoke comment ghi mutations.log
+PASS: S2 claim comment mới nhất = sim-b
+PASS: S2 label: claimed/sim-b gắn, claimed/sim-a removed
+PASS: S2b fresh claim: SKIP rc0, 0 mutation
+PASS: S3 commits-fresh: từ chối takeover, rc0-skip
+PASS: S3 claim giữ cho sim-a (0 revoke)
+PASS: S4 remote-merge: máy A story-verify B4 PASS qua fetch (không fetched-stale)
+PASS: S4 zero-diff: OFF không fetch (0 mutation MLOG, verdict local)
+PASS: S4b setup: force-push máy cũ landed trên remote
+PASS: S4b worst-case hiện trạng: B4 vẫn PASS (mù — alert là việc Task 7)
+PASS: S6 setup: kit-old 2.12.0 extracted (deb66afeedfe30ff233c82f97c24f3815259b8e9)
+PASS: S6a máy cũ (2.12.0) claim: HEAD đọc được
+PASS: S6b HEAD --list-claims JSON: machineId=sim-b
+PASS: S6c HEAD takeover claim máy cũ (revoke+claim mới)
+PASS: S6d máy cũ claim_read thấy sim-a (2 chiều)
+PASS: S5.1 launch OFF: LAUNCHED, 0 distributed line, 0 mutation
+PASS: S5.1 launch OFF: 0 git-guard push (SF branch vắng trên remote)
+PASS: S5.2 verify OFF: chạy sạch, 0 mutation (không fetch)
+PASS: S5.3 resume OFF: --check rc0, 0 distributed/fetch, 0 mutation
+PASS: S5.4 watchdog OFF: dry-run rc0, không distributed
+PASS: S5.4 mechanism: distributed_enabled=0 → claim_arg rỗng (passthrough)
+PASS: S5.5 panel OFF-state suite (launcher repo) rc=0
+
+Kết quả: 29 PASS · 0 FAIL
