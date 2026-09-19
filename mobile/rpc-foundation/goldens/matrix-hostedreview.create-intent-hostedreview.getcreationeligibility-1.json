@@ -3,12 +3,12 @@
   "family": "hostedReview.create-intent",
   "namedDeltas": [],
   "runnerVersion": 1,
-  "baseline": "5741d48e592dad21660d995a3758319413a4baf0",
+  "baseline": "47d24d324ef5b2c9c985fb83f355414c93e1d46d",
   "lockfileSha256": "4568633356187895ccda8e2ff83245c37d5621832c69e268733733b6947971e3",
-  "recorderSha256": "25ff809662a78e2f33ad159fd34ee62e931e2ad597aebec5476293e19b53efd9",
+  "recorderSha256": "f67c2f5b753d2a4f572599f6861fae8e6e917fe89ac75b58288f8e84be609d86",
   "adapterSha256": "c582ce355b0704b38d7e84cbce352630096c91231bf09aecd1f6dbb409fed17f",
   "scenarioSha256": "658eb7bbf63b3a4b38eca0b1733e523962b6b6943644d65aab6f5c7e62534d6a",
-  "platform": "win32",
+  "platform": "darwin",
   "scenarioVersion": 1,
   "projectionVersion": 2,
   "goldenFormatVersion": 5,
@@ -67,33 +67,6 @@
             "provider": "github",
             "reviewLookupOutcome": "not_found",
             "title": "Host title"
-          }
-        }
-      }
-    },
-    "06ae4a398aae": {
-      "outcome": {
-        "committed": true,
-        "error": "Wakii could not confirm whether this branch already has a pull request. Try again in a moment.",
-        "ok": false,
-        "status": {
-          "branch": "feature",
-          "conflictOperation": "unknown",
-          "entries": [],
-          "head": "def5678",
-          "upstreamStatus": {
-            "ahead": 1,
-            "behind": 0,
-            "behindCommitsArePatchEquivalent": {
-              "$rpc": "undefined"
-            },
-            "hasConfiguredPushTarget": {
-              "$rpc": "undefined"
-            },
-            "hasUpstream": true,
-            "upstreamName": {
-              "$rpc": "undefined"
-            }
           }
         }
       }
@@ -858,36 +831,6 @@
       "ordinal": 27,
       "json": "{\"id\":\"frame-11\",\"deviceToken\":\"recording-device\",\"method\":\"hostedReview.create\",\"params\":{\"repo\":\"id:repo42\",\"worktree\":\"id:repo42::/p\",\"provider\":\"github\",\"base\":\"main\",\"head\":\"feature\",\"title\":\"Host title\",\"body\":\"Host body\",\"draft\":false}}"
     },
-    "7aba962c590d": {
-      "status": "fulfilled",
-      "startedAt": 0,
-      "settledAt": 0,
-      "value": {
-        "committed": true,
-        "error": "Wakii could not confirm whether this branch already has a pull request. Try again in a moment.",
-        "ok": false,
-        "status": {
-          "branch": "feature",
-          "conflictOperation": "unknown",
-          "entries": [],
-          "head": "def5678",
-          "upstreamStatus": {
-            "ahead": 1,
-            "behind": 0,
-            "behindCommitsArePatchEquivalent": {
-              "$rpc": "undefined"
-            },
-            "hasConfiguredPushTarget": {
-              "$rpc": "undefined"
-            },
-            "hasUpstream": true,
-            "upstreamName": {
-              "$rpc": "undefined"
-            }
-          }
-        }
-      }
-    },
     "7b98416e2b81": {
       "name": "git.status#3",
       "ordinal": 14,
@@ -1007,6 +950,36 @@
           "ok": true,
           "result": {
             "ok": true
+          }
+        }
+      }
+    },
+    "83e80c98d259": {
+      "status": "fulfilled",
+      "startedAt": 0,
+      "settledAt": 0,
+      "value": {
+        "committed": true,
+        "error": "Orca could not confirm whether this branch already has a pull request. Try again in a moment.",
+        "ok": false,
+        "status": {
+          "branch": "feature",
+          "conflictOperation": "unknown",
+          "entries": [],
+          "head": "def5678",
+          "upstreamStatus": {
+            "ahead": 1,
+            "behind": 0,
+            "behindCommitsArePatchEquivalent": {
+              "$rpc": "undefined"
+            },
+            "hasConfiguredPushTarget": {
+              "$rpc": "undefined"
+            },
+            "hasUpstream": true,
+            "upstreamName": {
+              "$rpc": "undefined"
+            }
           }
         }
       }
@@ -1431,6 +1404,33 @@
         }
       }
     },
+    "dd5d9b4070b7": {
+      "outcome": {
+        "committed": true,
+        "error": "Orca could not confirm whether this branch already has a pull request. Try again in a moment.",
+        "ok": false,
+        "status": {
+          "branch": "feature",
+          "conflictOperation": "unknown",
+          "entries": [],
+          "head": "def5678",
+          "upstreamStatus": {
+            "ahead": 1,
+            "behind": 0,
+            "behindCommitsArePatchEquivalent": {
+              "$rpc": "undefined"
+            },
+            "hasConfiguredPushTarget": {
+              "$rpc": "undefined"
+            },
+            "hasUpstream": true,
+            "upstreamName": {
+              "$rpc": "undefined"
+            }
+          }
+        }
+      }
+    },
     "ddee63fd3bf5": {
       "name": "git.status#1",
       "ordinal": 2,
@@ -1696,9 +1696,9 @@
             "395c47c3d42e"
           ],
           "settlements": {
-            "run": "7aba962c590d"
+            "run": "83e80c98d259"
           },
-          "state": "06ae4a398aae",
+          "state": "dd5d9b4070b7",
           "effects": ["e83dca631c9c", "b2ae4b8e30b7", "682fbd1f6b74"]
         }
       },
@@ -1724,9 +1724,9 @@
             "395c47c3d42e"
           ],
           "settlements": {
-            "run": "7aba962c590d"
+            "run": "83e80c98d259"
           },
-          "state": "06ae4a398aae",
+          "state": "dd5d9b4070b7",
           "effects": ["e83dca631c9c", "b2ae4b8e30b7", "682fbd1f6b74"]
         }
       },
@@ -1752,9 +1752,9 @@
             "395c47c3d42e"
           ],
           "settlements": {
-            "run": "7aba962c590d"
+            "run": "83e80c98d259"
           },
-          "state": "06ae4a398aae",
+          "state": "dd5d9b4070b7",
           "effects": ["e83dca631c9c", "b2ae4b8e30b7", "682fbd1f6b74"]
         }
       },
@@ -1780,9 +1780,9 @@
             "395c47c3d42e"
           ],
           "settlements": {
-            "run": "7aba962c590d"
+            "run": "83e80c98d259"
           },
-          "state": "06ae4a398aae",
+          "state": "dd5d9b4070b7",
           "effects": ["e83dca631c9c", "b2ae4b8e30b7", "682fbd1f6b74"]
         }
       },
@@ -1808,9 +1808,9 @@
             "395c47c3d42e"
           ],
           "settlements": {
-            "run": "7aba962c590d"
+            "run": "83e80c98d259"
           },
-          "state": "06ae4a398aae",
+          "state": "dd5d9b4070b7",
           "effects": ["e83dca631c9c", "b2ae4b8e30b7", "682fbd1f6b74"]
         }
       },
@@ -1836,9 +1836,9 @@
             "395c47c3d42e"
           ],
           "settlements": {
-            "run": "7aba962c590d"
+            "run": "83e80c98d259"
           },
-          "state": "06ae4a398aae",
+          "state": "dd5d9b4070b7",
           "effects": ["e83dca631c9c", "b2ae4b8e30b7", "682fbd1f6b74"]
         }
       },
@@ -1864,9 +1864,9 @@
             "395c47c3d42e"
           ],
           "settlements": {
-            "run": "7aba962c590d"
+            "run": "83e80c98d259"
           },
-          "state": "06ae4a398aae",
+          "state": "dd5d9b4070b7",
           "effects": ["e83dca631c9c", "b2ae4b8e30b7", "682fbd1f6b74"]
         }
       },
@@ -1892,9 +1892,9 @@
             "395c47c3d42e"
           ],
           "settlements": {
-            "run": "7aba962c590d"
+            "run": "83e80c98d259"
           },
-          "state": "06ae4a398aae",
+          "state": "dd5d9b4070b7",
           "effects": ["e83dca631c9c", "b2ae4b8e30b7", "682fbd1f6b74"]
         }
       },
@@ -1920,9 +1920,9 @@
             "395c47c3d42e"
           ],
           "settlements": {
-            "run": "7aba962c590d"
+            "run": "83e80c98d259"
           },
-          "state": "06ae4a398aae",
+          "state": "dd5d9b4070b7",
           "effects": ["e83dca631c9c", "b2ae4b8e30b7", "682fbd1f6b74"]
         }
       },
@@ -1948,9 +1948,9 @@
             "395c47c3d42e"
           ],
           "settlements": {
-            "run": "7aba962c590d"
+            "run": "83e80c98d259"
           },
-          "state": "06ae4a398aae",
+          "state": "dd5d9b4070b7",
           "effects": ["e83dca631c9c", "b2ae4b8e30b7", "682fbd1f6b74"]
         }
       },
@@ -1976,9 +1976,9 @@
             "395c47c3d42e"
           ],
           "settlements": {
-            "run": "7aba962c590d"
+            "run": "83e80c98d259"
           },
-          "state": "06ae4a398aae",
+          "state": "dd5d9b4070b7",
           "effects": ["e83dca631c9c", "b2ae4b8e30b7", "682fbd1f6b74"]
         }
       },
@@ -2004,9 +2004,9 @@
             "395c47c3d42e"
           ],
           "settlements": {
-            "run": "7aba962c590d"
+            "run": "83e80c98d259"
           },
-          "state": "06ae4a398aae",
+          "state": "dd5d9b4070b7",
           "effects": ["e83dca631c9c", "b2ae4b8e30b7", "682fbd1f6b74"]
         }
       },
@@ -2032,9 +2032,9 @@
             "395c47c3d42e"
           ],
           "settlements": {
-            "run": "7aba962c590d"
+            "run": "83e80c98d259"
           },
-          "state": "06ae4a398aae",
+          "state": "dd5d9b4070b7",
           "effects": ["e83dca631c9c", "b2ae4b8e30b7", "682fbd1f6b74"]
         }
       },
@@ -2060,9 +2060,9 @@
             "395c47c3d42e"
           ],
           "settlements": {
-            "run": "7aba962c590d"
+            "run": "83e80c98d259"
           },
-          "state": "06ae4a398aae",
+          "state": "dd5d9b4070b7",
           "effects": ["e83dca631c9c", "b2ae4b8e30b7", "682fbd1f6b74"]
         }
       },
@@ -2088,9 +2088,9 @@
             "395c47c3d42e"
           ],
           "settlements": {
-            "run": "7aba962c590d"
+            "run": "83e80c98d259"
           },
-          "state": "06ae4a398aae",
+          "state": "dd5d9b4070b7",
           "effects": ["e83dca631c9c", "b2ae4b8e30b7", "682fbd1f6b74"]
         }
       },
@@ -2116,9 +2116,9 @@
             "395c47c3d42e"
           ],
           "settlements": {
-            "run": "7aba962c590d"
+            "run": "83e80c98d259"
           },
-          "state": "06ae4a398aae",
+          "state": "dd5d9b4070b7",
           "effects": ["e83dca631c9c", "b2ae4b8e30b7", "682fbd1f6b74"]
         }
       },
@@ -2144,9 +2144,9 @@
             "395c47c3d42e"
           ],
           "settlements": {
-            "run": "7aba962c590d"
+            "run": "83e80c98d259"
           },
-          "state": "06ae4a398aae",
+          "state": "dd5d9b4070b7",
           "effects": ["e83dca631c9c", "b2ae4b8e30b7", "682fbd1f6b74"]
         }
       },
@@ -2172,9 +2172,9 @@
             "395c47c3d42e"
           ],
           "settlements": {
-            "run": "7aba962c590d"
+            "run": "83e80c98d259"
           },
-          "state": "06ae4a398aae",
+          "state": "dd5d9b4070b7",
           "effects": ["e83dca631c9c", "b2ae4b8e30b7", "682fbd1f6b74"]
         }
       },
@@ -2200,9 +2200,9 @@
             "395c47c3d42e"
           ],
           "settlements": {
-            "run": "7aba962c590d"
+            "run": "83e80c98d259"
           },
-          "state": "06ae4a398aae",
+          "state": "dd5d9b4070b7",
           "effects": ["e83dca631c9c", "b2ae4b8e30b7", "682fbd1f6b74"]
         }
       },
@@ -2228,9 +2228,9 @@
             "395c47c3d42e"
           ],
           "settlements": {
-            "run": "7aba962c590d"
+            "run": "83e80c98d259"
           },
-          "state": "06ae4a398aae",
+          "state": "dd5d9b4070b7",
           "effects": ["e83dca631c9c", "b2ae4b8e30b7", "682fbd1f6b74"]
         }
       },
@@ -2256,9 +2256,9 @@
             "395c47c3d42e"
           ],
           "settlements": {
-            "run": "7aba962c590d"
+            "run": "83e80c98d259"
           },
-          "state": "06ae4a398aae",
+          "state": "dd5d9b4070b7",
           "effects": ["e83dca631c9c", "b2ae4b8e30b7", "682fbd1f6b74"]
         }
       },
@@ -2284,9 +2284,9 @@
             "395c47c3d42e"
           ],
           "settlements": {
-            "run": "7aba962c590d"
+            "run": "83e80c98d259"
           },
-          "state": "06ae4a398aae",
+          "state": "dd5d9b4070b7",
           "effects": ["e83dca631c9c", "b2ae4b8e30b7", "682fbd1f6b74"]
         }
       },
@@ -2312,9 +2312,9 @@
             "395c47c3d42e"
           ],
           "settlements": {
-            "run": "7aba962c590d"
+            "run": "83e80c98d259"
           },
-          "state": "06ae4a398aae",
+          "state": "dd5d9b4070b7",
           "effects": ["e83dca631c9c", "b2ae4b8e30b7", "682fbd1f6b74"]
         }
       },
@@ -2340,9 +2340,9 @@
             "395c47c3d42e"
           ],
           "settlements": {
-            "run": "7aba962c590d"
+            "run": "83e80c98d259"
           },
-          "state": "06ae4a398aae",
+          "state": "dd5d9b4070b7",
           "effects": ["e83dca631c9c", "b2ae4b8e30b7", "682fbd1f6b74"]
         }
       },
@@ -2368,9 +2368,9 @@
             "395c47c3d42e"
           ],
           "settlements": {
-            "run": "7aba962c590d"
+            "run": "83e80c98d259"
           },
-          "state": "06ae4a398aae",
+          "state": "dd5d9b4070b7",
           "effects": ["e83dca631c9c", "b2ae4b8e30b7", "682fbd1f6b74"]
         }
       },
@@ -2396,9 +2396,9 @@
             "395c47c3d42e"
           ],
           "settlements": {
-            "run": "7aba962c590d"
+            "run": "83e80c98d259"
           },
-          "state": "06ae4a398aae",
+          "state": "dd5d9b4070b7",
           "effects": ["e83dca631c9c", "b2ae4b8e30b7", "682fbd1f6b74"]
         }
       },
@@ -2424,9 +2424,9 @@
             "395c47c3d42e"
           ],
           "settlements": {
-            "run": "7aba962c590d"
+            "run": "83e80c98d259"
           },
-          "state": "06ae4a398aae",
+          "state": "dd5d9b4070b7",
           "effects": ["e83dca631c9c", "b2ae4b8e30b7", "682fbd1f6b74"]
         }
       },
@@ -2452,9 +2452,9 @@
             "395c47c3d42e"
           ],
           "settlements": {
-            "run": "7aba962c590d"
+            "run": "83e80c98d259"
           },
-          "state": "06ae4a398aae",
+          "state": "dd5d9b4070b7",
           "effects": ["e83dca631c9c", "b2ae4b8e30b7", "682fbd1f6b74"]
         }
       },
@@ -2480,9 +2480,9 @@
             "395c47c3d42e"
           ],
           "settlements": {
-            "run": "7aba962c590d"
+            "run": "83e80c98d259"
           },
-          "state": "06ae4a398aae",
+          "state": "dd5d9b4070b7",
           "effects": ["e83dca631c9c", "b2ae4b8e30b7", "682fbd1f6b74"]
         }
       },
@@ -2508,9 +2508,9 @@
             "395c47c3d42e"
           ],
           "settlements": {
-            "run": "7aba962c590d"
+            "run": "83e80c98d259"
           },
-          "state": "06ae4a398aae",
+          "state": "dd5d9b4070b7",
           "effects": ["e83dca631c9c", "b2ae4b8e30b7", "682fbd1f6b74"]
         }
       }
