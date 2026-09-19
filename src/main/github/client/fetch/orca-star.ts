@@ -62,7 +62,7 @@ async function runOrcaStarredCheck(): Promise<boolean | null> {
 /**
  * Star the Orca repo for the authenticated user.
  */
-export async function starOrca(): Promise<boolean> {
+export async function starWakii(): Promise<boolean> {
   await acquire()
   try {
     await ghExecFileAsync(['api', '-X', 'PUT', `user/starred/${ORCA_REPO}`], {

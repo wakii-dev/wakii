@@ -113,7 +113,7 @@ export function createAllHostRepoCatalogActions(
               s.setupScriptPromptDismissedRepoIds,
               validRepoHostIdentities
             ),
-            trustedOrcaHooks: filterTrustedOrcaHooksToValidRepos(s.trustedOrcaHooks, validRepoIds)
+            trustedWakiiHooks: filterTrustedOrcaHooksToValidRepos(s.trustedWakiiHooks, validRepoIds)
           }
         })
       }

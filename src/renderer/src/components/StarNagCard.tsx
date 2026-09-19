@@ -116,7 +116,7 @@ export function StarNagCard(): React.JSX.Element | null {
     setBusy(true)
     let ok = false
     try {
-      ok = await window.api.starNag.starOrca()
+      ok = await window.api.starNag.starWakii()
     } catch {
       ok = false
     }

@@ -200,7 +200,7 @@ export type PersistedUIState = {
   starNagDeferredUntil?: number | null
   /** App version that consumed the first value-moment ask; main-owned so remote/web clients can't spoof the once-per-version cap. */
   starNagAgentValueMomentAppVersion?: string | null
-  trustedOrcaHooks?: PersistedTrustedOrcaHooks
+  trustedWakiiHooks?: PersistedTrustedOrcaHooks
   setupScriptPromptDismissedRepoIds?: string[]
   /** Pet overlay visibility, separate from the experimentalPet settings flag so "Hide pet" is a reversible dismiss; absent = true. */
   petVisible?: boolean

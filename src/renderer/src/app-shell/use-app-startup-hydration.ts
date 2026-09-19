@@ -87,7 +87,7 @@ export function useAppStartupHydration(onOnboardingLoaded: (state: OnboardingSta
       logRendererStartupDiagnostic('startup-chain-start')
       try {
         // Why: nothing in the hydration chain reads profile state synchronously, so don't let it add a serial IPC round-trip before fetchSettings.
-        void actions.fetchOrcaProfiles()
+        void actions.fetchWakiiProfiles()
         // Why: publish local settings before persisted UI/catalog work; a saved remote owner's defaults can spend the full connect timeout.
         await timeRendererStartupStep('fetch-settings', () =>
           actions.fetchSettings({ deferOwnerWorktreeVisibilityDefaults: true })

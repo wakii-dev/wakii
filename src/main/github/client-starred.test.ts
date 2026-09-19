@@ -26,7 +26,7 @@ vi.mock('./github-api-repository', async (importOriginal) =>
   )
 )
 
-import { __resetOrcaStarCheckForTests, checkOrcaStarred, starOrca } from './client'
+import { __resetOrcaStarCheckForTests, checkOrcaStarred, starWakii } from './client'
 import { resetOriginRepositoryCache } from './client-test-harness'
 
 const { execFileAsyncMock, ghExecFileAsyncMock, acquireMock, releaseMock } = clientMocks
@@ -153,7 +153,7 @@ describe('starWakii', () => {
   it('stars through the bounded gh runner and releases its slot', async () => {
     ghExecFileAsyncMock.mockResolvedValueOnce({ stdout: '', stderr: '' })
 
-    await expect(starOrca()).resolves.toBe(true)
+    await expect(starWakii()).resolves.toBe(true)
 
     expect(execFileAsyncMock).not.toHaveBeenCalled()
     const [args, options] = ghExecFileAsyncMock.mock.calls[0]
@@ -165,7 +165,7 @@ describe('starWakii', () => {
   it('reports failure and still releases its slot when gh times out', async () => {
     ghExecFileAsyncMock.mockRejectedValueOnce(new Error('gh timed out.'))
 
-    await expect(starOrca()).resolves.toBe(false)
+    await expect(starWakii()).resolves.toBe(false)
     expect(releaseMock).toHaveBeenCalledTimes(1)
   })
 })

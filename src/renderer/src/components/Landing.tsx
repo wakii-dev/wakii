@@ -68,7 +68,7 @@ function GitHubStarButton({
       return
     }
     setState('starred') // optimistic
-    const ok = await window.api.gh.starOrca('landing')
+    const ok = await window.api.gh.starWakii('landing')
     if (!ok) {
       if (mountedRef.current) {
         setState('web-fallback')

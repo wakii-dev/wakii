@@ -106,7 +106,7 @@ describe('worktree remote runtime mutations', () => {
       })
     store.setState({
       settings: { activeRuntimeEnvironmentId: 'env-1' } as never,
-      trustedOrcaHooks: { repo1: { all: { approvedAt: 1 } } },
+      trustedWakiiHooks: { repo1: { all: { approvedAt: 1 } } },
       worktreesByRepo: { repo1: [wt] }
     } as Partial<AppState>)
 
@@ -471,7 +471,7 @@ describe('worktree remote runtime mutations', () => {
     })
     store.setState({
       settings: { activeRuntimeEnvironmentId: 'env-1' } as never,
-      trustedOrcaHooks: { 'repo-shared': { all: { approvedAt: 1 } } },
+      trustedWakiiHooks: { 'repo-shared': { all: { approvedAt: 1 } } },
       worktreesByRepo: { 'repo-shared': [original] }
     } as Partial<AppState>)
 

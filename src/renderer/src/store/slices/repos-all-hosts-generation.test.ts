@@ -500,7 +500,7 @@ describe('fetchReposForAllHosts generation', () => {
     store.setState({
       activeRepoId: 'remote-repo',
       filterRepoIds: ['remote-repo'],
-      trustedOrcaHooks: { 'remote-repo': { all: { approvedAt: 1 } } }
+      trustedWakiiHooks: { 'remote-repo': { all: { approvedAt: 1 } } }
     })
     const response = {
       id: 'rpc-repo-list',
@@ -518,7 +518,7 @@ describe('fetchReposForAllHosts generation', () => {
 
     expect(store.getState().activeRepoId).toBe('remote-repo')
     expect(store.getState().filterRepoIds).toEqual(['remote-repo'])
-    expect(store.getState().trustedOrcaHooks).toEqual({
+    expect(store.getState().trustedWakiiHooks).toEqual({
       'remote-repo': { all: { approvedAt: 1 } }
     })
 

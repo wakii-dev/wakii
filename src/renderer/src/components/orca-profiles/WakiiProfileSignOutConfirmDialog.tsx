@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog'
 import { translate } from '@/i18n/i18n'
 
-export function OrcaProfileSignOutConfirmDialog({
+export function WakiiProfileSignOutConfirmDialog({
   open,
   onOpenChange,
   onConfirm,

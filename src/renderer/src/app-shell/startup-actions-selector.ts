@@ -45,7 +45,7 @@ export function selectStartupActions(state: StartupActions): StartupActions {
     cachedStartupActions.fetchAllWorktrees === state.fetchAllWorktrees &&
     cachedStartupActions.fetchWorktrees === state.fetchWorktrees &&
     cachedStartupActions.fetchWorktreeLineage === state.fetchWorktreeLineage &&
-    cachedStartupActions.fetchOrcaProfiles === state.fetchOrcaProfiles &&
+    cachedStartupActions.fetchWakiiProfiles === state.fetchWakiiProfiles &&
     cachedStartupActions.fetchSettings === state.fetchSettings &&
     cachedStartupActions.awaitOwnerWorktreeVisibilityDefaultsHydration ===
       state.awaitOwnerWorktreeVisibilityDefaultsHydration &&
@@ -80,7 +80,7 @@ export function selectStartupActions(state: StartupActions): StartupActions {
     fetchAllWorktrees: state.fetchAllWorktrees,
     fetchWorktrees: state.fetchWorktrees,
     fetchWorktreeLineage: state.fetchWorktreeLineage,
-    fetchOrcaProfiles: state.fetchOrcaProfiles,
+    fetchWakiiProfiles: state.fetchWakiiProfiles,
     fetchSettings: state.fetchSettings,
     awaitOwnerWorktreeVisibilityDefaultsHydration:
       state.awaitOwnerWorktreeVisibilityDefaultsHydration,

@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
-import { OrcaProfileSignOutConfirmDialog } from './WakiiProfileSignOutConfirmDialog'
+import { WakiiProfileSignOutConfirmDialog } from './WakiiProfileSignOutConfirmDialog'
 
 vi.mock('@/components/ui/dialog', () => ({
   Dialog: ({ children }: { children: ReactNode }) => <>{children}</>,
@@ -21,7 +21,7 @@ vi.mock('@/components/ui/button', () => ({
 describe('WakiiProfileSignOutConfirmDialog', () => {
   it('describes account sign-out without presenting a local profile or warning', () => {
     const html = renderToStaticMarkup(
-      <OrcaProfileSignOutConfirmDialog
+      <WakiiProfileSignOutConfirmDialog
         open
         onOpenChange={vi.fn()}
         onConfirm={vi.fn()}

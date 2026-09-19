@@ -16,7 +16,7 @@ vi.mock('./ui', () => mocks.ui)
 import { registerGitHubHandlers } from './github'
 import { createGitHubIpcHarness } from './github-ipc-test-harness'
 
-const { getAuthenticatedViewer: getAuthenticatedViewerMock, starOrca: starOrcaMock } = mocks.client
+const { getAuthenticatedViewer: getAuthenticatedViewerMock, starWakii: starWakiiMock } = mocks.client
 const { track: trackMock } = mocks.telemetry
 const { getCohortAtEmit: getCohortAtEmitMock } = mocks.cohort
 
@@ -39,14 +39,14 @@ describe('registerGitHubHandlers', () => {
   })
 
   it('emits app_starred_orca once after a successful star with cohort context', async () => {
-    starOrcaMock.mockResolvedValue(true)
+    starWakiiMock.mockResolvedValue(true)
     getCohortAtEmitMock.mockReturnValue({ nth_repo_added: 3 })
 
     registerGitHubHandlers(store as never, stats as never)
 
     await expect(handlers['gh:starWakii'](null, 'settings')).resolves.toBe(true)
 
-    expect(starOrcaMock).toHaveBeenCalledTimes(1)
+    expect(starWakiiMock).toHaveBeenCalledTimes(1)
     expect(getCohortAtEmitMock).toHaveBeenCalledTimes(1)
     expect(trackMock).toHaveBeenCalledTimes(1)
     expect(trackMock).toHaveBeenCalledWith('app_starred_orca', {
@@ -56,7 +56,7 @@ describe('registerGitHubHandlers', () => {
   })
 
   it('accepts every app star source for success telemetry', async () => {
-    starOrcaMock.mockResolvedValue(true)
+    starWakiiMock.mockResolvedValue(true)
 
     registerGitHubHandlers(store as never, stats as never)
 
@@ -81,19 +81,19 @@ describe('registerGitHubHandlers', () => {
   })
 
   it('does not emit app_starred_orca when the star action returns false', async () => {
-    starOrcaMock.mockResolvedValue(false)
+    starWakiiMock.mockResolvedValue(false)
 
     registerGitHubHandlers(store as never, stats as never)
 
     await expect(handlers['gh:starWakii'](null, 'landing')).resolves.toBe(false)
 
-    expect(starOrcaMock).toHaveBeenCalledTimes(1)
+    expect(starWakiiMock).toHaveBeenCalledTimes(1)
     expect(trackMock).not.toHaveBeenCalled()
     expect(getCohortAtEmitMock).not.toHaveBeenCalled()
   })
 
   it('does not emit app_starred_orca when the star action throws', async () => {
-    starOrcaMock.mockRejectedValue(new Error('gh failed'))
+    starWakiiMock.mockRejectedValue(new Error('gh failed'))
 
     registerGitHubHandlers(store as never, stats as never)
 
@@ -104,13 +104,13 @@ describe('registerGitHubHandlers', () => {
   })
 
   it('preserves star result but skips telemetry for an invalid IPC source', async () => {
-    starOrcaMock.mockResolvedValue(true)
+    starWakiiMock.mockResolvedValue(true)
 
     registerGitHubHandlers(store as never, stats as never)
 
     await expect(handlers['gh:starWakii'](null, 'github_website')).resolves.toBe(true)
 
-    expect(starOrcaMock).toHaveBeenCalledTimes(1)
+    expect(starWakiiMock).toHaveBeenCalledTimes(1)
     expect(trackMock).not.toHaveBeenCalled()
     expect(getCohortAtEmitMock).not.toHaveBeenCalled()
   })

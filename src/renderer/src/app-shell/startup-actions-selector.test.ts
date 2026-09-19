@@ -17,7 +17,7 @@ function makeActions(): StartupActions {
     fetchAllWorktrees: vi.fn(),
     fetchWorktrees: vi.fn(),
     fetchWorktreeLineage: vi.fn(),
-    fetchOrcaProfiles: vi.fn(),
+    fetchWakiiProfiles: vi.fn(),
     fetchSettings: vi.fn(),
     awaitOwnerWorktreeVisibilityDefaultsHydration: vi.fn(),
     fetchKeybindings: vi.fn(),

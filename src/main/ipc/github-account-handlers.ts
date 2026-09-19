@@ -2,7 +2,7 @@ import { ipcMain } from 'electron'
 import { appStarSourceSchema } from '../../shared/gh-star-source'
 import { githubHostFromIdentityKey } from '../../shared/github/repository-identity-key'
 import { diagnoseGhAuth } from '../github/auth-diagnose'
-import { checkOrcaStarred, getAuthenticatedViewer, starOrca } from '../github/client'
+import { checkOrcaStarred, getAuthenticatedViewer, starWakii } from '../github/client'
 import {
   listGhAccountBindingInventory,
   validateGhAccountBinding
@@ -18,7 +18,7 @@ export function registerGitHubAccountHandlers(store: Store): void {
   ipcMain.handle('gh:checkWakiiStarred', () => checkOrcaStarred())
   ipcMain.handle('gh:starWakii', async (_event, source: unknown) => {
     const sourceParse = appStarSourceSchema.safeParse(source)
-    const starred = await starOrca()
+    const starred = await starWakii()
     if (starred && sourceParse.success) {
       track('app_starred_orca', {
         source: sourceParse.data,

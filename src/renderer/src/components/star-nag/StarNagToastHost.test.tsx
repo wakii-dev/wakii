@@ -28,7 +28,7 @@ type StarNagApi = {
   dismiss: ReturnType<typeof vi.fn>
   later: ReturnType<typeof vi.fn>
   openWeb: ReturnType<typeof vi.fn>
-  starOrca: ReturnType<typeof vi.fn>
+  starWakii: ReturnType<typeof vi.fn>
 }
 
 type ShellApi = {
@@ -96,7 +96,7 @@ describe('StarNagToastHost', () => {
       dismiss: vi.fn().mockResolvedValue(undefined),
       later: vi.fn().mockResolvedValue(undefined),
       openWeb: vi.fn().mockResolvedValue(undefined),
-      starOrca: vi.fn().mockResolvedValue(true)
+      starWakii: vi.fn().mockResolvedValue(true)
     }
     shell = {
       openUrl: vi.fn().mockResolvedValue(undefined)
@@ -138,7 +138,7 @@ describe('StarNagToastHost', () => {
       button?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     })
 
-    expect(starNag.starOrca).toHaveBeenCalledTimes(1)
+    expect(starNag.starWakii).toHaveBeenCalledTimes(1)
     expect(toastContainer.textContent).toContain('Starred — thank you!')
   })
 
@@ -161,13 +161,13 @@ describe('StarNagToastHost', () => {
 
     expect(shell.openUrl).toHaveBeenCalledWith('https://github.com/stablyai/orca')
     expect(starNag.openWeb).toHaveBeenCalledTimes(1)
-    expect(starNag.starOrca).not.toHaveBeenCalled()
+    expect(starNag.starWakii).not.toHaveBeenCalled()
     expect(toastContainer.textContent).toContain('GitHub opened')
     expect(toastContainer.textContent).not.toContain('GitHub opened in your browser.')
   })
 
   it('switches to the explicit GitHub fallback when direct star fails', async () => {
-    starNag.starOrca.mockResolvedValueOnce(false)
+    starNag.starWakii.mockResolvedValueOnce(false)
     ;({ root, container } = renderHost())
 
     act(() => showCallback?.({ mode: 'gh', surface: 'toast' }))
@@ -182,7 +182,7 @@ describe('StarNagToastHost', () => {
       button?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     })
 
-    expect(starNag.starOrca).toHaveBeenCalledTimes(1)
+    expect(starNag.starWakii).toHaveBeenCalledTimes(1)
     expect(shell.openUrl).not.toHaveBeenCalled()
     expect(starNag.openWeb).not.toHaveBeenCalled()
     expect(toastContainer.textContent).toContain('Open GitHub')
@@ -223,7 +223,7 @@ describe('StarNagToastHost', () => {
 
   it('does not allow unresolved close while the primary action is busy', async () => {
     const pendingStar = createDeferred<boolean>()
-    starNag.starOrca.mockReturnValueOnce(pendingStar.promise)
+    starNag.starWakii.mockReturnValueOnce(pendingStar.promise)
     ;({ root, container } = renderHost())
 
     act(() => showCallback?.({ mode: 'gh', surface: 'toast' }))

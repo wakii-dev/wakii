@@ -21,7 +21,7 @@ function createStateBackedByRealModalSlot(): {
   const store = createUIStore()
   store.setState({
     repos: [{ id: 'repo-1', displayName: 'Repo One' }],
-    trustedOrcaHooks: {}
+    trustedWakiiHooks: {}
   } as unknown as Partial<AppState>)
   return { store, state: store.getState() }
 }
@@ -72,7 +72,7 @@ describe('orca.yaml trust prompt evicted from the modal slot', () => {
 
     expect(result).toBe('skip')
     expect(runSetup).not.toHaveBeenCalled()
-    expect(store.getState().trustedOrcaHooks).toEqual({})
+    expect(store.getState().trustedWakiiHooks).toEqual({})
   })
 
   it('resolves the pending decision as skip when the slot is closed outright', async () => {

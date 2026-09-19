@@ -6,7 +6,7 @@ import { useOrcaProfileAuthStatusRefresh } from '@/hooks/use-orca-profile-auth-s
 import { cn } from '@/lib/utils'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
-import { OrcaProfileSignOutConfirmDialog } from '../orca-profiles/OrcaProfileSignOutConfirmDialog'
+import { WakiiProfileSignOutConfirmDialog } from '../orca-profiles/WakiiProfileSignOutConfirmDialog'
 
 function accountStatusCopy(
   state: 'local' | 'unconfigured' | 'connected' | 'reconnect-required' | undefined,
@@ -170,7 +170,7 @@ export function OrcaAccountSettingsPane(): React.JSX.Element {
         </div>
       </div>
 
-      <OrcaProfileSignOutConfirmDialog
+      <WakiiProfileSignOutConfirmDialog
         open={signOutOpen}
         onOpenChange={setSignOutOpen}
         onConfirm={() => void confirmSignOut()}

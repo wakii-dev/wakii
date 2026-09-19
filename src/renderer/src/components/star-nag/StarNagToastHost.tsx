@@ -61,7 +61,7 @@ function StarNagToast({
     }
     let ok = false
     try {
-      ok = await window.api.starNag.starOrca()
+      ok = await window.api.starNag.starWakii()
     } catch {
       ok = false
     }

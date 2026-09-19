@@ -298,7 +298,7 @@ export function getDefaultUIState(): PersistedUIState {
     dismissedUpdateVersion: null,
     dismissedUnexpectedSignoutVersion: null,
     lastUpdateCheckAt: null,
-    trustedOrcaHooks: {},
+    trustedWakiiHooks: {},
     setupScriptPromptDismissedRepoIds: [],
     acknowledgedAgentsByPaneKey: {},
     activityClearedAtByPaneKey: {},

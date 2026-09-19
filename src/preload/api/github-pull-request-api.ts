@@ -196,7 +196,7 @@ export type GithubPullRequestApi = {
     }
   ) => Promise<GitHubCommentResult>
   checkOrcaStarred: () => Promise<boolean | null>
-  starOrca: (source: AppStarSource) => Promise<boolean>
+  starWakii: (source: AppStarSource) => Promise<boolean>
   /**
    * GitHub API rate-limit snapshot. Does NOT consume quota (the
    * `rate_limit` endpoint is exempt). Cached 30s server-side — pass
