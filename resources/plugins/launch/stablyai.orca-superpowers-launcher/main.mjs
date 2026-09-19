@@ -4,21 +4,16 @@
 // The default export receives the `orca` API: command registration + the
 // capability-gated host API.
 //
-// IMPORTANT (v1.3): the panel→worker bridge is a CLOSED transport. Only three
-// host actions are reachable from a sandboxed panel iframe (see Orca's
-// plugin-host-api.js PANEL_ACTIONS list): workspace.readContext, terminal.sendText,
-// notifications.show. There is NO route to plugin-registered commands. So the
-// panel can only ever *type a string into a terminal*. We lean into that:
-// every panel button composes a prompt and sends it via terminal.sendText —
-// the agent in that terminal does the real work (renders progress, resolves
-// gates, runs the skill). No CLI spawn, no snapshot, no DAG rendering here.
+// IMPORTANT (v1.7): panel Story Ops đã GỠ — plugin là headless worker.
+// Điều khiển: Orca command palette (13 superpowers.* commands) + Claude
+// sessions chạy skills trực tiếp. Worker tự cài kit (installKit) lúc activate.
 //
-// POLICY MOVED TO SKILL.md (v1.3):
-//   - COMMENT_AUDIT  → orca-superpowers-workflow SKILL.md Principle 7 (default ON; opt-out via "audit-log: off" token)
-//   - FIGMA          → SKILL.md Principle 8 (auto-triggers when description has figma.com URL)
+// POLICY nằm ở SKILL.md:
+//   - COMMENT_AUDIT  → SKILL.md Principle 7 (default ON; opt-out qua "audit-log: off" token)
+//   - FIGMA          → SKILL.md Principle 8 (auto-triggers khi description có figma.com URL)
 //   - AUTONOMOUS self-review → SKILL.md Principle 3
-// Prompt now carries only: idea + short mode flags + audit opt-out token.
-// Directives.json keeps the OPT-IN ones (polish/simplify/plan-only/quick-fix/subagent)
+// Directives.json giữ OPT-IN directives (polish/simplify/plan-only/quick-fix/subagent)
+// + các token audit-off / autonomous-on / agent-forcing.
 // + the compact audit-off / autonomous-on tokens.
 
 import directives from './directives.json' with { type: 'json' }
@@ -669,56 +664,7 @@ async function collectStoryOps(orca) {
   }
 }
 
-// GAP-ANSWER: user trả lời REQUIREMENT-GAP ngay từ panel — worker post
-// comment lên EPIC qua GraphQL (keychain độc lập, mọi SF thấy đáp án).
-async function postGapAnswer(epic, text) {
-  try {
-    const keyFile = join(process.env.HOME || '', '.claude', '.linear-key')
-    let key = process.env.LINEAR_API_KEY || ''
-    if (!key) {
-      try { key = (await readFile(keyFile, 'utf8')).split('\n')[0].trim() } catch { key = '' }
-    }
-    if (!key) return { ok: false, error: 'không có Linear key (~/.claude/.linear-key)' }
-    const iss = await (async () => {
-      const b = JSON.stringify({ query: `query{issue(id:"${epic}"){id}}` })
-      const r = await fetch('https://api.linear.app/graphql', { method: 'POST', headers: { Authorization: key, 'Content-Type': 'application/json' }, body: b })
-      return (await r.json()).data?.issue?.id || null
-    })()
-    if (!iss) return { ok: false, error: 'epic không tìm thấy: ' + epic }
-    const body = JSON.stringify({ query: `mutation($i:CommentCreateInput!){commentCreate(input:$i){success}}`,
-      variables: { i: { issueId: iss, body: `GAP-ANSWER (từ panel): ${text}` } } })
-    const r = await fetch('https://api.linear.app/graphql', { method: 'POST', headers: { Authorization: key, 'Content-Type': 'application/json' }, body })
-    const j = await r.json()
-    const okFlag = j?.data?.commentCreate?.success === true
-    return { ok: okFlag, stdout: okFlag ? `Đã post GAP-ANSWER lên ${epic}` : JSON.stringify(j).slice(0, 300) }
-  } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : String(err) }
-  }
-}
 
-// CLOSE story: epic → Done + audit STORY-COMPLETE (panel button)
-async function postCloseStory(epic) {
-  try {
-    const keyFile = join(process.env.HOME || '', '.claude', '.linear-key')
-    let key = process.env.LINEAR_API_KEY || ''
-    if (!key) { try { key = (await readFile(keyFile, 'utf8')).split('\n')[0].trim() } catch { key = '' } }
-    if (!key) return { ok: false, error: 'không có Linear key' }
-    const iss = await (async () => {
-      const r = await fetch('https://api.linear.app/graphql', { method: 'POST', headers: { Authorization: key, 'Content-Type': 'application/json' }, body: JSON.stringify({ query: `query{issue(id:"${epic}"){id team{states{nodes{id name}}}}}` }) })
-      return (await r.json()).data?.issue
-    })()
-    if (!iss) return { ok: false, error: 'epic không tìm thấy: ' + epic }
-    const done = iss.team?.states?.nodes?.find(x => x.name === 'Done')
-    if (!done) return { ok: false, error: 'không tìm state Done' }
-    const r1 = await fetch('https://api.linear.app/graphql', { method: 'POST', headers: { Authorization: key, 'Content-Type': 'application/json' }, body: JSON.stringify({ query: 'mutation($id:String!,$u:IssueUpdateInput!){issueUpdate(id:$id,input:$u){success}}', variables: { id: iss.id, u: { stateId: done.id } } }) })
-    const ok1 = (await r1.json())?.data?.issueUpdate?.success === true
-    const r2 = await fetch('https://api.linear.app/graphql', { method: 'POST', headers: { Authorization: key, 'Content-Type': 'application/json' }, body: JSON.stringify({ query: 'mutation($i:CommentCreateInput!){commentCreate(input:$i){success}}', variables: { i: { issueId: iss.id, body: `**STORY-COMPLETE** — đóng từ panel. Code trên nhánh đích; merge main là việc USER.` } } }) })
-    const ok2 = (await r2.json())?.data?.commentCreate?.success === true
-    return { ok: ok1 && ok2, stdout: `epic ${epic} → Done + audit ${ok2 ? '✓' : '✗'}` }
-  } catch (err) { return { ok: false, error: err.message } }
-}
-
-// ---- Kit manifest pre-flight (fail-loud) ----
 // Zero-dep (không ajv): schema tay + two-way provides ↔ đĩa. Chạy MỖI lần
 // activate, TRƯỚC marker early-return — kit hỏng phải được biết ngay, không
 // chết lặng lẽ. Trả mảng problems (rỗng = hợp lệ).
@@ -1009,41 +955,6 @@ export function installKit(orca, { root, kitRoot: kitRootOverride } = {}) {
 export default function activate(orca) {
   setKitGuardLogger((line) => orca.log(line))
   installKit(orca)
-  // Story-request poll: panel writes story.request {linear} (fork: panel can
-  // storage.set) → worker finds the bracket file with that linear ID and loads it.
-  let lastReqAt = 0
-  // process any pending request immediately at spawn (worker may be cold)
-  const processRequest = async () => {
-    try {
-      const stored = await orca.host.call('storage.get', { key: 'story.request' })
-      const req = stored?.value
-      if (req && typeof req.linear === 'string' && req.at && req.at !== lastReqAt) {
-        lastReqAt = req.at
-        if (typeof req.file === 'string' && req.file.endsWith('.md')) {
-          await loadFromBracketFile(orca, req.file)
-          return true
-        }
-        for (const r of await storyScanRoots()) {
-          const d = join(r, 'docs', 'superpowers', 'brackets')
-          let ents = []
-          try { ents = await readdir(d) } catch { continue }
-          for (const f of ents.filter(x => x.endsWith('.md'))) {
-            const text = await readFile(join(d, f), 'utf8').catch(() => '')
-            const hm = text.match(/^#\s+Story:\s*([A-Za-z]+-\d+)\s/m)
-            if (hm && hm[1] === req.linear) {
-              await loadFromBracketFile(orca, f)
-              return true
-            }
-          }
-        }
-        orca.log('story request unmatched: ' + req.linear)
-      }
-    } catch { /* silent */ }
-    return false
-  }
-  void processRequest()
-  const reqTimer = setInterval(() => { void processRequest() }, 3000)
-  reqTimer.unref?.()
   orca.commands.register('superpowers.start', async (args) => {
     const idea = args && (args.idea || args.text || '')
     const res = await sendToTerminal(orca, buildStartPrompt(idea, args?.autonomous, args?.polish, args?.subagents, args?.simplify, args?.auditLog, args?.executeMode, args?.story, args?.mindsetBrowser))
@@ -1152,193 +1063,8 @@ export default function activate(orca) {
     }
   }
   orca.commands.register('superpowers.storyTasks', () => collectStoryTasks())
-  // Poll story.viewed → nạp story.states cho story panel đang mở (panel không
-  // invoke được command — đây là đường panel⇄worker handshake cho states)
-  const statesTimer = setInterval(async () => {
-    try {
-      const stored = await orca.host.call('storage.get', { key: 'story.viewed' })
-      const v = stored?.value
-      if (v && typeof v.epic === 'string' && /^[A-Za-z]+-\d+$/.test(v.epic)) {
-        const cur = await orca.host.call('storage.get', { key: 'story.states.' + v.epic })
-        const c = cur?.value
-        // refresh nếu chưa có hoặc quá 60s
-        const stale = !c || !c.fetchedAt || (Date.now() - new Date(c.fetchedAt).getTime() > 60000)
-        if (stale) {
-          const lf = await linearChildrenFull(v.epic)
-          const children = (lf.children || [])
-            .filter(ch => ch.stateType !== 'canceled' && ch.stateType !== 'duplicate')
-            .map(ch => ({ identifier: ch.identifier, title: ch.title, url: ch.url,
-              stateName: ch.stateName, stateType: ch.stateType, stateColor: ch.stateColor }))
-          await orca.host.call('storage.set', { key: 'story.states.' + v.epic,
-            value: { epic: v.epic, children, fetchedAt: new Date().toISOString() } })
-        }
-      }
-    } catch { /* silent */ }
-  }, 20000)
-  statesTimer.unref?.()
 
-  // TỰ REFRESH 15s — panel bracket luôn có dữ liệu tươi mà không cần ai invoke
-  const tasksTimer = setInterval(() => { void collectStoryTasks() }, 15000)
-  tasksTimer.unref?.()
-  void collectStoryTasks()
 
-  // story.list: worker tự quét lúc start + mỗi 60s — panel chỉ đọc storage.
-  // Trước đây chỉ chạy qua command thủ công → autocomplete luôn rỗng.
-  void listStories(orca)
-  const listTimer = setInterval(() => { void listStories(orca) }, 60000)
-  listTimer.unref?.()
-
-  // ---- Story Ops: poll request từ panel (resume/watchdog/refresh) + refresh 60s
-  let lastOpsReqAt = 0
-  const processOpsRequest = async () => {
-    try {
-      const stored = await orca.host.call('storage.get', { key: 'story.ops.request' })
-      const req = stored?.value
-      if (req && req.at && req.at !== lastOpsReqAt) {
-        lastOpsReqAt = req.at
-        let result = null
-        if (req.action === 'refresh') {
-          result = await listStories(orca)
-        } else if (req.action === 'share-artifact' && typeof req.name === 'string' && req.name
-                   && !req.name.includes('..') && !req.name.includes('/') && typeof req.html === 'string' && req.html.length > 16) {
-          // Share bracket → HTML file → orca artifacts share (link public qua account)
-          const tmpHtml = join(tmpdir(), 'wakii-bracket-' + Date.now() + '.html')
-          await writeFile(tmpHtml, req.html, 'utf8')
-          result = await execFileAsync(orcaBin(), ['artifacts', 'share', tmpHtml])
-            .then(({ stdout }) => {
-              let url = null
-              try {
-                const parsed = JSON.parse(stdout)
-                url = parsed?.result?.url ?? parsed?.result?.shareUrl ?? parsed?.url ?? null
-              } catch { /* output không phải JSON — dùng raw */ }
-              return { ok: true, stdout: url ? 'artifact: ' + url : String(stdout).slice(0, 500) }
-            })
-            .catch((e) => ({ ok: false, error: String((e && (e.stderr || e.message)) || e).slice(0, 400) }))
-          await unlink(tmpHtml).catch(() => {})
-        } else if (req.action === 'resume' && typeof req.sf === 'string') {
-          result = await runKit('story-resume', [req.sf, '--send'])
-        } else if (req.action === 'watchdog') {
-          // --with-index khớp cron mặc định kit — pass xong index memory (fail-safe)
-          result = await runKit('story-watchdog', ['--with-index'])
-        } else if (req.action === 'verify') {
-          result = await runKit('story-verify', [])
-        } else if (req.action === 'verify-config') {
-          // Panel ⚙ verify gates — get (không set) / merge-set vào
-          // ~/.claude/story-kit.json (kit bins đọc cùng file; fail-open
-          // default trong story-verify). Config trả qua stdout (JSON).
-          const DEF = { evidenceGate: true, realModeRule: true, reviewerChecklist: true, runtimeSmoke: false, tddMode: true }
-          const cfgPath = join(process.env.HOME || '', '.claude', 'story-kit.json')
-          let cfg = {}
-          try { cfg = JSON.parse(readFileSync(cfgPath, 'utf8')) } catch { /* missing/corrupt → defaults */ }
-          if (req.set && typeof req.set === 'object' && !Array.isArray(req.set)) {
-            cfg.verify = Object.assign(DEF, cfg.verify || {}, req.set)
-            try {
-              mkdirSync(dirname(cfgPath), { recursive: true })
-              writeFileSync(cfgPath, JSON.stringify(cfg, null, 2) + '\n')
-            } catch (e) { result = { ok: false, error: String((e && e.message) || e).slice(0, 200) } }
-          }
-          if (!result || result.ok !== false) {
-            const eff = Object.assign(DEF, cfg.verify || {})
-            result = { ok: true, stdout: JSON.stringify(eff) }
-          }
-        } else if (req.action === 'launch') {
-          // launch mọi SF sẵn sàng (deps Done, đã approve, chưa có worktree)
-          result = await runKit('story-watchdog', ['--launch-next', '--with-index'])
-        } else if (req.action === 'stats') {
-          result = await runKit('story-stats', [])
-        } else if (req.action === 'memory-query' && typeof req.q === 'string' && req.q.trim()) {
-          // graph memory v2.0 — query patterns team đã học (kèm provenance)
-          result = await runKit('story-memory', ['query', req.q.trim()])
-        } else if (req.action === 'memory-stats') {
-          result = await runKit('story-memory', ['stats'])
-        } else if (req.action === 'attempts') {
-          // attempt-cap: attempt log hôm nay (3 lần cùng approach → đổi hướng)
-          result = await runKit('story-attempt', ['show'])
-        } else if (req.action === 'visual-regress' && typeof req.baseline === 'string' && req.baseline.trim()
-                   && typeof req.current === 'string' && req.current.trim()) {
-          result = await runKit('story-visual-regress', ['--baseline', req.baseline.trim(), '--current', req.current.trim()])
-        } else if (req.action === 'bracket-save' && typeof req.file === 'string' && req.file
-                   && !req.file.includes('..') && !req.file.includes('/') && typeof req.content === 'string') {
-          // Bracket node CRUD (panel drag/edit) — ghi lại file .md gốc qua
-          // storyScanRoots (cùng nguồn với fileRead, không đoán đường dẫn)
-          let written = null
-          for (const r of await storyScanRoots()) {
-            const p = join(r, 'docs', 'superpowers', 'brackets', req.file)
-            try { await writeFile(p, req.content, 'utf8'); written = p; break } catch { continue }
-          }
-          result = written
-            ? { ok: true, stdout: 'saved bracket: ' + written }
-            : { ok: false, error: 'bracket file not writable in any workspace: ' + req.file }
-        } else if (req.action === 'gap-answer' && typeof req.epic === 'string' && typeof req.text === 'string' && req.text.trim()) {
-          result = await postGapAnswer(req.epic, req.text.trim())
-        } else if (req.action === 'close' && typeof req.epic === 'string') {
-          result = await postCloseStory(req.epic)
-        } else if (req.action !== 'refresh') {
-          return
-        }
-        if (result) {
-          await orca.host.call('storage.set', {
-            key: 'story.ops.result',
-            value: { action: req.action, sf: req.sf ?? null, ok: result.ok,
-                     output: String(result.stdout || result.error || '').slice(0, 2000),
-                     at: new Date().toISOString() }
-          })
-        }
-        await collectStoryOps(orca)
-      }
-    } catch { /* silent */ }
-  }
-  void processOpsRequest()
-  const opsReqTimer = setInterval(() => { void processOpsRequest() }, 3000)
-  opsReqTimer.unref?.()
-  const opsTimer = setInterval(() => { void collectStoryOps(orca) }, 60000)
-  opsTimer.unref?.()
-  // ═══ DASHBOARD GATES ═══
-  let lastDashGateAt = 0
-  const processDashGate = async () => {
-    try {
-      const stored = await orca.host.call('storage.get', { key: 'dash.gate.request' })
-      const req = stored?.value
-      if (req && req.at && req.at !== lastDashGateAt) {
-        lastDashGateAt = req.at
-        const gates = {
-          'preflight': ['story-preflight'],
-          'diff-review': ['story-diff-review'],
-          'test': ['story-test', 'http://localhost:4200', '--flow', 'orders'],
-          'snapshot': ['story-snapshot-env'],
-          'verify': ['story-verify'],
-        }
-        // 5-gate chain (khớp README kit): preflight → diff-review → test →
-        // snapshot-env → post-merge. post-merge cần nhánh đích (req.dest).
-        if (req.gate === 'post-merge') {
-          if (typeof req.dest !== 'string' || !req.dest.trim()) {
-            await orca.host.call('storage.set', {
-              key: 'dash.gate.result',
-              value: { gate: 'post-merge', pass: false, output: 'post-merge cần dest branch (req.dest, vd story/<epic>-<slug>)', at: Date.now() }
-            })
-            return
-          }
-          orca.log('dash gate: post-merge')
-          const pm = await runKit('story-post-merge', [req.dest.trim()])
-          await orca.host.call('storage.set', {
-            key: 'dash.gate.result',
-            value: { gate: 'post-merge', pass: pm.ok, output: String(pm.stdout || pm.error || '').slice(-500), at: Date.now() }
-          })
-          return
-        }
-        const args = gates[req.gate]
-        if (!args) return
-        orca.log(`dash gate: ${req.gate}`)
-        const result = await runKit(args[0], args.slice(1))
-        await orca.host.call('storage.set', {
-          key: 'dash.gate.result',
-          value: { gate: req.gate, pass: result.ok, output: String(result.stdout || result.error || '').slice(-500), at: Date.now() }
-        })
-      }
-    } catch { /* silent */ }
-  }
-  const dashTimer = setInterval(() => { void processDashGate() }, 3000)
-  dashTimer.unref?.()
 
   orca.commands.register('superpowers.storyOps', () => collectStoryOps(orca))
 

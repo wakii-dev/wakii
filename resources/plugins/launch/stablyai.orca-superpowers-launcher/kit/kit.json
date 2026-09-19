@@ -364,7 +364,12 @@
       "name": "story-kb",
       "type": "bin",
       "description": "query Project KB (ADR/repos/glossary/MOC) tu configurable dir (WAKII_KB_DIR) - fail-open khi KB chua configured; layer 1 ADE knowledge infra (#38)"
+    },
+    {
+      "name": "story-plan-validate",
+      "type": "bin",
+      "description": "kiểm task DAG của orchestration run — bắt lỗi DAG ngay sau Bridge 3 (học từ story-validate)"
     }
   ],
-  "kitHash": "f990734872c098e2"
+  "kitHash": "726c39fa2f2f87c7"
 }

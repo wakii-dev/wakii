@@ -1,6 +1,6 @@
 # Orca Superpowers Launcher
 
-An **Orca app plugin** (`pluginApi` 1) that adds a **Panel + Commands** to drive the `orca-superpowers-workflow` skill from the focused worktree's terminal.
+An **Orca app plugin** (`pluginApi` 1, headless since v1.7.0 — panel Story Ops removed) that auto-installs the story-team-kit and adds **palette Commands** to drive the `orca-superpowers-workflow` skill from the focused worktree's terminal.
 
 It is a **control deck**: every button types a prompt into the terminal, and the agent there does the real work (runs the skill, prints progress, resolves gates). The plugin itself runs no skill logic and reads no workflow state.
 
@@ -70,7 +70,7 @@ node kit/bin/wakii-skill-export orca-bridge story-workflow --out /tmp/skills-pac
 Kit dir nhận qua `--kit <dir>` hoặc env `WAKII_KIT_DIR` (không default `~/.claude`). Tự-check: `node kit/bin/wakii-skill-import --selftest && node kit/bin/wakii-skill-export --selftest` (chỉ ghi vào temp dir).
 
 ## Why a control deck (not a dashboard)
-The Orca panel→worker bridge is a **closed transport**: a sandboxed panel iframe can only call three host actions — `workspace.readContext`, `terminal.sendText`, `notifications.show` (see Orca's `plugin-host-api.js`, `PLUGIN_PANEL_ACTIONS`). On top of that, the panel shell injects `connect-src 'none'` CSP, so `fetch`/`XHR`/`WebSocket` to any origin is blocked. There is no route from the panel to plugin-registered commands or to the filesystem. All visualization happens **in the terminal via the agent**; this plugin only sends it the right prompts.
+[LỊCH SỬ v1.6 — panel đã gỡ] The Orca panel→worker bridge was a **closed transport**: a sandboxed panel iframe can only call three host actions — `workspace.readContext`, `terminal.sendText`, `notifications.show` (see Orca's `plugin-host-api.js`, `PLUGIN_PANEL_ACTIONS`). On top of that, the panel shell injects `connect-src 'none'` CSP, so `fetch`/`XHR`/`WebSocket` to any origin is blocked. There is no route from the panel to plugin-registered commands or to the filesystem. All visualization happens **in the terminal via the agent**; this plugin only sends it the right prompts.
 
 ## v1.3 architecture: policy in the skill, opt-in in the prompt
 To keep composed prompts well under Orca's `terminal.sendText` 4096-byte limit, directives are split by nature:
@@ -83,10 +83,9 @@ To keep composed prompts well under Orca's `terminal.sendText` 4096-byte limit, 
 
 Result: worst-case prompt went from ~5035 bytes (over limit → `invalid_params`) to ~949 bytes (start) / ~1128 bytes (plan-only), ~75% headroom.
 
-The tokens are the **only wire** between the panel and skill-side Principles. The coupling is documented 2-sided: SKILL.md Principle 3/7 carries an "Activation contract" / "Opt-out" note naming the exact token + json key; `directives.json` carries a `_token_coupling` key naming each Principle. If either end renames, the trail is visible at the point of edit.
+The tokens are the **wire** between prompt emitters (palette commands / Start prompt) and skill-side Principles. The coupling is documented 2-sided: SKILL.md Principle 3/7 carries an "Activation contract" / "Opt-out" note naming the exact token + json key; `directives.json` carries a `_token_coupling` key naming each Principle. If either end renames, the trail is visible at the point of edit.
 
 ## What it contributes
-- **Panel** "Superpowers" (activity bar icon `zap`) — 3 intent radios + 6 mode checkboxes + 3 Other actions.
 - **Commands** (command palette): Start / Plan / Quick Fix / Continue Plan / Resume / Print Status / Resolve Gate.
 
 ### Intent radios (cascade)
@@ -122,7 +121,7 @@ Auto-detect: any `figma.com/(design|file|proto|board)/` URL in the feature descr
 - **SIMPLIFY_DIRECTIVE** (default ON): after each Phase 4 task, invoke `simplify` on changed code.
 - **SUBAGENT_DIRECTIVE** (when subagents > 1): spawn N read-only subagents, one per analysis dimension, synthesized into Phase 0 / Phase 4 gate.
 
-Directive strings are mirrored in `directives.json` (single source of truth), `panel.html` (inlined — CSP blocks fetch), and `main.mjs`. `build-directives.mjs` is the validator: run `node build-directives.mjs` to verify panel.html stays byte-identical to `directives.json`.
+Directive strings are mirrored in `directives.json` (single source of truth) and `main.mjs`. `build-directives.mjs` is the validator: run `node build-directives.mjs` to verify the SKILL.md token-coupling stays intact.
 
 ## Capabilities (consented at install)
 - `workspace:read` — read branch + terminal list of the focused worktree
@@ -133,27 +132,24 @@ Directive strings are mirrored in `directives.json` (single source of truth), `p
 1. In the Orca app, open the plugin/add-on flow.
 2. Point it at this folder: `/Users/mac/Documents/local.superpowers-launcher`. **Select the folder itself** — not its parent and not the `orca-plugin.json` file.
 3. Consent to the three capabilities above.
-4. The "Superpowers" panel appears in the activity bar; the seven commands appear in the command palette.
+4. The superpowers commands appear in the command palette.
 
 **Reinstall after any edit.** Orca stores plugin content by content-hash under `~/Library/Application Support/orca/plugins/<id>/`; the install flow re-hashes and updates the `current` pointer. Editing source files does **not** update the running plugin.
 
 ## Files
-- `orca-plugin.json` — manifest v1 (v1.3.0); 1 panel + 7 commands
+- `orca-plugin.json` — manifest v1 (v1.7.0); headless (no panel) + 13 commands
 - `main.mjs` — worker; host-API-only (no CLI spawn), 7 registered commands, imports directives from `directives.json`
-- `panel.html` — sandboxed UI; postMessage bridge, cascade combo, inline directive constants
 - `directives.json` — single source of truth for opt-in directives + tokens
-- `build-directives.mjs` — validator (panel.html ↔ directives.json byte-equality)
+- `build-directives.mjs` — validator (SKILL.md ↔ directives.json token-coupling)
 - `README.md` — this file
 - `kit/` — story-team-kit vendored bởi `sync-kit.sh` (bundle built-in; `main.mjs` installKit tự chép vào `~/.claude/` sau khi validate manifest fail-loud)
 - `tests/kit-manifest-negative-tests.mjs` — negative harness cho installKit + runKit (9 cases [a]–[i] + positive control + HOME guard; chạy `node tests/kit-manifest-negative-tests.mjs`, chỉ đụng temp dirs)
 - `sync-kit.sh` — vendor kit từ repo story-team-kit vào `kit/` *(chỉ tồn tại ở launcher repo — không đi vào bundle orca)*
 - `bundle-into-orca.sh` — đóng gói plugin+kit vào `orca/resources/plugins/launch/` (sync → copy → rehash → verify)
 - `scripts/hash-plugin.cjs` — content hash `orca-plugin-tree-v1` (cùng thuật toán với verifier của orca)
-- `FEATURE-REQUEST-panel-filesystem.md` — deferred request to Orca (loosen panel CSP for loopback); see `## Caveats`
 
 ## Caveats
 - `pluginApi` 1 is **EXPERIMENTAL**; the plugin may break on future Orca versions. The `engines.orca` gate enforces a minimum.
 - The plugin does **not** run skill logic — it types prompts into a terminal. Whether the agent auto-invokes the skill depends on the agent. If it doesn't, switch the prompt to a `/orca-superpowers-workflow` slash invocation (for Claude Code TUI).
 - No event handlers in this version (no auto worktree→Linear linking). Can be added later via `contributes.events`.
 - The policy Principles (7/8/3) live in the companion skill `orca-superpowers-workflow` at `~/.claude/plugins/marketplaces/orca-superpowers-bridges/.../orca-superpowers-workflow/SKILL.md`. That marketplace is `directory`-source, so SKILL.md edits are persistent and won't be overwritten. If you rename a Principle or change its trigger phrase, update the matching token in `directives.json` (the trail is documented at both ends).
-- `FEATURE-REQUEST-panel-filesystem.md` is on hold until Orca loosens the panel CSP (`connect-src 'none'`). Once shipped, a worker-side data layer + panel dropdown could replace the agent-side auto-load pattern.
