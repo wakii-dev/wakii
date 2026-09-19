@@ -61,13 +61,8 @@ const devChannelBuildVersion = isHourlyChannel
 // to install. Keeping adhoc/daily separate from hourly too means a branch build
 // or a once-a-day cut cannot be picked up by someone who only meant to ride
 // main's hourlies.
-const devChannelRepo = isHourlyChannel
-  ? 'orca-hourly'
-  : isDailyChannel
-    ? 'orca-daily'
-    : isAdhocChannel
-      ? 'orca-adhoc'
-      : null
+// dev channel repos (orca-hourly/daily/adhoc của upstream) không tồn tại trên fork —
+// update feed duy nhất = wakii-dev/wakii (xem publish ở dưới).
 const appId = 'com.stablyai.orca'
 const featureWallResources = {
   from: 'resources/onboarding/feature-wall',
@@ -662,10 +657,13 @@ module.exports = {
   // returns false so electron-builder does not rebuild optional cpu-features.
   npmRebuild: true,
   publish: {
+    // Wakii releases live on the fork; the update feed MUST point here —
+    // pointing at stablyai/orca makes electron-updater install UPSTREAM Orca
+    // over Wakii on user machines (feed mismatch found in the 1.4.211 audit).
     provider: 'github',
-    owner: 'stablyai',
-    repo: devChannelRepo ?? 'orca',
-    releaseType: devChannelRepo ? 'prerelease' : 'release'
+    owner: 'wakii-dev',
+    repo: 'wakii',
+    releaseType: 'release'
   }
 }
 
