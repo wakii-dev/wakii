@@ -1,6 +1,6 @@
 {
   "name": "story-team-kit",
-  "version": "2.16.7",
+  "version": "2.16.8",
   "description": "9-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới.",
   "requires": {
     "claude-code": ">=2.0",
@@ -384,7 +384,12 @@
       "name": "story-ownership-probe",
       "type": "bin",
       "description": "thư viện ownership probe dùng chung — run/worktree nào đang có worker live của coordinator nào (LOCAL-1 SF-3)"
+    },
+    {
+      "name": "story-close",
+      "type": "bin",
+      "description": "chuẩn hoá CLOSE phase — audit sf-branches merged → ownership probe → cleanup worktree/branch (3 guards) → next-steps; BLOCK liệt kê rõ, fail-open khi probe chết (20/09)"
     }
   ],
-  "kitHash": "944b1f63d3f40441"
+  "kitHash": "3334b6da023b120b"
 }
