@@ -128,6 +128,8 @@ if check_linear:
             key = open(key_path, encoding="utf-8").read().strip() if os.path.exists(key_path) else ""
         if not key:
             warn("G4: --linear bỏ qua — không có LINEAR_API_KEY / ~/.claude/.linear-key")
+        elif _lrl_limited():
+            warn("G4: --linear bỏ qua — Linear rate-limited (state máy-level)")
         else:
             q = ("query($ids:[String!]!){issues(filter:{or:[{identifier:{in:$ids}},"
                  "{id:{in:$ids}}]}){nodes{identifier id}}}")
