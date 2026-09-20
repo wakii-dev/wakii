@@ -36,8 +36,11 @@ export function maybeWrapTerminalSendTextForTuiAgent(
   // Why: strip ONE trailing terminator before the multiline probe so a
   // submit-terminated single line stays raw (mirror buildStartupCommandSubmission);
   // the terminator itself is preserved verbatim in the output.
+  // Terminator-only text ('\n'/'\r'/'\r\n' — probe rỗng sau strip) phải đi
+  // wrapped: raw submit-terminator + Enter của caller = submit 2 lần, và
+  // enter:false bị đổi nghĩa thành submit (issue #87).
   const probe = action.text.replace(/(\r\n|\r|\n)$/, '')
-  if (!/[\n\r]/.test(probe)) {
+  if (probe.length > 0 && !/[\n\r]/.test(probe)) {
     // Why: raw fast path still keeps the agent-pane invariant — inert ESC, no markers.
     return { ...action, text: sanitizeAgentPromptText(action.text) }
   }

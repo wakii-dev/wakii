@@ -61,6 +61,26 @@ describe('maybeWrapTerminalSendTextForTuiAgent', () => {
     expect(routed.text?.includes(PASTE_BEGIN)).toBe(false)
   })
 
+  // Issue #87: terminator-only text ('\n' / '\r' / '\r\n') phải đi wrapped —
+  // raw submit-terminator + Enter của caller = submit 2 lần (lần 2 vào composer rỗng).
+  it('wraps terminator-only text so enter:true submits exactly once (#87)', () => {
+    for (const t of ['\n', '\r', '\r\n']) {
+      const routed = maybeWrapTerminalSendTextForTuiAgent({ text: t, enter: true }, 'claude')
+      expect(routed.text?.startsWith(PASTE_BEGIN)).toBe(true)
+      expect(routed.text?.endsWith(PASTE_END)).toBe(true)
+      expect(routed.enter).toBe(true)
+    }
+  })
+
+  it('wraps a bare terminator with enter:false — chèn nội dung, không submit (#87)', () => {
+    for (const t of ['\n', '\r', '\r\n']) {
+      const routed = maybeWrapTerminalSendTextForTuiAgent({ text: t, enter: false }, 'claude')
+      expect(routed.text?.startsWith(PASTE_BEGIN)).toBe(true)
+      expect(routed.text?.endsWith(PASTE_END)).toBe(true)
+      expect(routed.enter).toBe(false)
+    }
+  })
+
   it('keeps a CR inside the body on the wrapped multiline path', () => {
     const routed = maybeWrapTerminalSendTextForTuiAgent({ text: 'a\rb', enter: true }, 'claude')
     expect(routed.text?.startsWith(PASTE_BEGIN)).toBe(true)
