@@ -268,6 +268,20 @@ Run the full-strictness epic pipeline:
 11. Print `STORY-READY: <ISSUE> — bracket file: <path>` → STOP. Await user approval.
 
 ### APPROVE (user says "approve story" / duyệt)
+**Coordinator worktree (worktree CHA — kit ≥2.16.7):** tạo worktree coordinator
+của story TRƯỚC khi launch SF đầu — mọi SF worktree sau đó là CON lineage của nó
+(`story-launch` tự gắn `--parent-worktree` khi thấy cha tồn tại):
+
+```bash
+# <dest-slug> = nhánh đích không chữ "story/" — vd fi458-distributed-bracket
+orca worktree create --name "<dest-slug>-coordinator" \
+  --base-branch "story/<epic>-<slug>" --no-parent --agent claude --json
+```
+
+Coordinator terminal sống ở worktree cha này: aggregate, duyệt gate, merge con
+về branch cha (branch cha = checkout đích). 1 story = 1 cây lineage = 1
+coordinator (ONE COORDINATOR PER STORY — xem OPERATE).
+
 **Idempotency first:** read the bracket — any SF already carrying `linear: <ID>`
 is DONE (skip creating; verify the issue exists and is active, else recreate).
 Only create sub-issues for SFs with empty `linear:`. A second APPROVE must be a
@@ -534,11 +548,18 @@ nhánh nó được fork từ đó trong cây topology — không hardcode đíc
 ```
 main
  └─ story/<epic>-<slug>   (NHÁNH ĐÍCH — fork từ main lúc APPROVE)
-     ├─ sf-1             (fork từ đích → merge về đích)
-     ├─ sf-2..sf-7       (fork từ đích → merge về đích)
-     └─ sf-nested        (SF con fork từ SF cha → merge về SF cha)
+     │
+     └─ <dest-slug>-coordinator   (WORKTREE CHA kit ≥2.16.7 — coordinator
+         │                         terminal sống đây, giữ checkout đích)
+         ├─ sf-1             (lineage CON của cha; git fork từ đích → merge về cha)
+         ├─ sf-2..sf-7       (như trên — 1 story = 1 cây lineage)
+         └─ sf-nested        (SF con fork từ SF cha → merge về SF cha)
 đích ──▶ main            (NGƯỜI DÙNG tự merge khi story xong — agents không làm)
 ```
+
+Ngoại lệ đa máy: worktree trên host KHÁC không thể là con lineage
+(same repo+host+project) — máy remote tham gia qua claim protocol (FI-458),
+ngang hàng chứ không phải con.
 
 Xác định parent khi launch: `--base-branch <X>` đã dùng = merge target.
 Ghi rõ parent vào orchestration task spec để agent SF không đoán.

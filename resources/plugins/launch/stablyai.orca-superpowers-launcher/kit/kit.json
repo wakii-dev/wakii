@@ -1,6 +1,6 @@
 {
   "name": "story-team-kit",
-  "version": "2.16.6",
+  "version": "2.16.7",
   "description": "9-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới.",
   "requires": {
     "claude-code": ">=2.0",
@@ -371,5 +371,5 @@
       "description": "kiểm task DAG của orchestration run — bắt lỗi DAG ngay sau Bridge 3 (học từ story-validate)"
     }
   ],
-  "kitHash": "a29168f11ac7c0a5"
+  "kitHash": "35e0c2cd2bb3531a"
 }
