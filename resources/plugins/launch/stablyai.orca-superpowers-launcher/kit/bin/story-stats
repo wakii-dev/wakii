@@ -15,11 +15,29 @@ KEY = os.environ.get("LINEAR_API_KEY", "")
 if not KEY and (HOME / ".claude/.linear-key").exists():
     KEY = (HOME / ".claude/.linear-key").read_text().splitlines()[0].strip()
 
+def _lrl_limited():
+    """Linear rate-limit gate (policy 2026-09-20)."""
+    try:
+        import datetime
+        p = os.environ.get("LINEAR_RATE_LIMIT_STATE") or str(HOME / ".claude/.linear-rate-limit.state")
+        st = json.load(open(p, encoding="utf-8"))
+        since = datetime.datetime.fromisoformat(st["since"])
+        cd = int(st.get("cooldownMinutes", 15))
+        return (datetime.datetime.now(datetime.timezone.utc) - since) <= datetime.timedelta(minutes=cd)
+    except Exception:
+        return False
+
 def gql(q):
     req = urllib.request.Request("https://api.linear.app/graphql",
         data=json.dumps({"query": q}).encode(),
         headers={"Authorization": KEY, "Content-Type": "application/json"})
-    return json.load(urllib.request.urlopen(req, timeout=15))
+    try:
+        return json.load(urllib.request.urlopen(req, timeout=15))
+    except urllib.error.HTTPError as e:
+        if e.code == 429:
+            print("⇩ Linear rate-limited — story-stats bỏ qua phần Linear", file=sys.stderr)
+            sys.exit(3)
+        raise
 
 def hrs(a, b):
     if not a or not b: return None

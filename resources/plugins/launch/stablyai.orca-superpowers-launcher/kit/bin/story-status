@@ -48,12 +48,41 @@ for bf in "${FINAL[@]}"; do
   sfs=$(grep -c '^## SF-' "$bf")
 
   # Linear states cho SFs của story này (nếu có linear: IDs + orca auth)
+  # Rate-limit gate (policy 2026-09-20): limited → 1 dòng chú thích, 0 Linear call
+  # (tránh N+1 tự tái gây limit trong SessionStart hot path)
+  LRL_BIN="${LRL_BIN:-$HOME/.claude/bin/linear-rate-limit}"
   states=""
-  for id in $(grep -oE 'linear: [A-Z]+-[0-9]+' "$bf" | awk '{print $2}'); do
-    st=$("$ORCA_BIN" linear issue "$id" --json 2>/dev/null \
-      | python3 -c "import json,sys;d=json.load(sys.stdin);print(d.get('result',{}).get('issue',{}).get('state',{}).get('name','?'))" 2>/dev/null || echo "?")
-    states="$states $id:$st"
-  done
+  ids_all=$(grep -oE 'linear: [A-Z]+-[0-9]+' "$bf" | awk '{print $2}')
+  if [ -x "$LRL_BIN" ] && "$LRL_BIN" check >/dev/null 2>&1; then
+    [ -n "$ids_all" ] && states=" ⇩ Linear rate-limited — states tạm bỏ qua"
+  else
+    # Batch: 1 GraphQL query cho mọi ID khi có .linear-key; fallback per-SF orca CLI
+    key=""; [ -n "${LINEAR_API_KEY:-}" ] && key="$LINEAR_API_KEY"
+    [ -z "$key" ] && [ -f "$HOME/.claude/.linear-key" ] && key=$(head -1 "$HOME/.claude/.linear-key" | tr -d '[:space:]')
+    ids_json=$(printf '"%s",' $ids_all | sed 's/,$//')
+    if [ -n "$ids_all" ] && [ -n "$key" ]; then
+      states=$(curl -s -m 10 -X POST "${LINEAR_GRAPHQL_ENDPOINT:-https://api.linear.app/graphql}" \
+        -H "Authorization: $key" -H "Content-Type: application/json" \
+        -d "{\"query\":\"query{issues(filter:{identifier:{in:[$ids_json]}}){nodes{identifier state{name}}}}\"}" 2>/dev/null \
+        | python3 -c "
+import json,sys
+try:
+    d = json.load(sys.stdin)
+    for n in (d.get('data') or {}).get('issues', {}).get('nodes', []):
+        st = (n.get('state') or {}).get('name', '?')
+        print(n.get('identifier', '') + ':' + st)
+except Exception:
+    pass" 2>/dev/null)
+      states=" $states"
+    fi
+    if [ -z "$states" ]; then
+      for id in $ids_all; do
+        st=$("$ORCA_BIN" linear issue "$id" --json 2>/dev/null \
+          | python3 -c "import json,sys;d=json.load(sys.stdin);print(d.get('result',{}).get('issue',{}).get('state',{}).get('name','?'))" 2>/dev/null || echo "?")
+        states="$states $id:$st"
+      done
+    fi
+  fi
   # không auth → gọn thành 1 ghi chú thay vì dãy "?"
   echo ""
   echo "● $epic"

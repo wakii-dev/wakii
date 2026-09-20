@@ -1,6 +1,6 @@
 {
   "name": "story-team-kit",
-  "version": "2.16.8",
+  "version": "2.16.9",
   "description": "9-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới.",
   "requires": {
     "claude-code": ">=2.0",
@@ -389,7 +389,12 @@
       "name": "story-close",
       "type": "bin",
       "description": "chuẩn hoá CLOSE phase — audit sf-branches merged → ownership probe → cleanup worktree/branch (3 guards) → next-steps; BLOCK liệt kê rõ, fail-open khi probe chết (20/09)"
+    },
+    {
+      "name": "linear-rate-limit",
+      "type": "bin",
+      "description": "state machine Linear rate-limit — check/note/clear/pending/classify (policy skip+note+resume 2026-09-20)"
     }
   ],
-  "kitHash": "3334b6da023b120b"
+  "kitHash": "b3a2638c820c5d43"
 }

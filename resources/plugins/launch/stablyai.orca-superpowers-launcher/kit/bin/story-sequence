@@ -94,7 +94,22 @@ def bracket_meta(wt, sf):
         pass
     return linear, dest
 
+
+def _lrl_limited():
+    """Linear rate-limit gate (policy 2026-09-20) — fail-open."""
+    try:
+        import datetime
+        p = os.environ.get("LINEAR_RATE_LIMIT_STATE") or os.path.expanduser("~/.claude/.linear-rate-limit.state")
+        st = json.load(open(p, encoding="utf-8"))
+        since = datetime.datetime.fromisoformat(st["since"])
+        cd = int(st.get("cooldownMinutes", 15))
+        return (datetime.datetime.now(datetime.timezone.utc) - since) <= datetime.timedelta(minutes=cd)
+    except Exception:
+        return False
+
 def linear_events(issue_id):
+    if _lrl_limited():
+        return []  # ⇩ Linear rate-limited — bỏ qua events
     evs = []
     if not issue_id:
         return evs

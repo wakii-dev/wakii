@@ -351,6 +351,32 @@ console.log(`\n== [fpk] kit-lag — installed marker ≠ kit vendored trong repo
     r3.status === 0 && !r3.stdout.includes('⚠ kit'), `status=${r3.status}`)
 }
 
+console.log(`\n== [fpx] rate-limit — Linear rate-limited state → dòng ⇩ (2.16.9) ==`)
+{
+  const repo = initStoryRepo(tempDir('fpx1'), {})
+  const fakeHome = tempDir('fpx-home')
+  mkdirSync(join(fakeHome, '.claude'), { recursive: true })
+  writeFileSync(join(fakeHome, '.claude', '.linear-rate-limit.state'), JSON.stringify({
+    since: new Date().toISOString(), cooldownMinutes: 15,
+    ops: [{ bin: 'story-watchdog', op: 'enforce-done:FI-1', ts: 't' }],
+  }))
+  const env = { HOME: fakeHome, USERPROFILE: fakeHome }
+  const r = runFactPack(repo, { source: 'startup', cwd: repo }, env)
+  check('fpx', 'state active → dòng ⇩ Linear rate-limited', r.status === 0 && r.stdout.includes('⇩ Linear rate-limited'), r.stdout.slice(-160))
+  // state cũ quá cooldown → không hiện
+  const old2 = tempDir('fpx2')
+  mkdirSync(join(old2, '.claude'), { recursive: true })
+  writeFileSync(join(old2, '.claude', '.linear-rate-limit.state'), JSON.stringify({ since: '2020-01-01T00:00:00+00:00', cooldownMinutes: 15 }))
+  const r2 = runFactPack(repo, { source: 'startup', cwd: repo }, { HOME: old2, USERPROFILE: old2 })
+  check('fpx', 'hết cooldown → không dòng ⚠', r2.status === 0 && !r2.stdout.includes('⇩ Linear rate-limited'))
+  // state hỏng → fail-open
+  const bad3 = tempDir('fpx3')
+  mkdirSync(join(bad3, '.claude'), { recursive: true })
+  writeFileSync(join(bad3, '.claude', '.linear-rate-limit.state'), '{broken')
+  const r3 = runFactPack(repo, { source: 'startup', cwd: repo }, { HOME: bad3, USERPROFILE: bad3 })
+  check('fpx', 'state hỏng → fail-open không crash', r3.status === 0)
+}
+
 console.log(`\n== [fps] source filtering — compact skip; resume/clear/fork/startup inject ==`)
 {
   const repo = initStoryRepo(tempDir('fp2'), { checkpoints: [CP1] })

@@ -259,6 +259,29 @@ def kit_lag_line(repo):
         return ""
 
 
+def rate_limit_line():
+    """Component (ưu tiên thấp nhất): Linear đang rate-limited theo state máy-level
+    (~/.claude/.linear-rate-limit.state từ bin linear-rate-limit). Fail-open."""
+    try:
+        p = _HOME / ".claude" / ".linear-rate-limit.state"
+        if not p.is_file():
+            return ""
+        st = json.loads(p.read_text(encoding="utf-8"))
+        since = datetime.datetime.fromisoformat(st["since"])
+        cd = int(st.get("cooldownMinutes", 15))
+        now = datetime.datetime.now(datetime.timezone.utc)
+        if since.tzinfo is None:
+            since = since.replace(tzinfo=datetime.timezone.utc)
+        if (now - since) > datetime.timedelta(minutes=cd):
+            return ""
+        ops = st.get("ops", [])
+        hhmm = since.strftime("%H:%M")
+        return (f"⇩ Linear rate-limited từ {hhmm} — "
+                f"{len(ops)} ops chờ (resume khi hết limit)")
+    except Exception:
+        return ""
+
+
 def build_sections(repo, store):
     sections = []
     bpath, btext = latest_bracket(repo)
@@ -276,6 +299,9 @@ def build_sections(repo, store):
     lag = kit_lag_line(repo)
     if lag:
         sections.append(lag)
+    rll = rate_limit_line()
+    if rll:
+        sections.append(rll)
     return sections
 
 

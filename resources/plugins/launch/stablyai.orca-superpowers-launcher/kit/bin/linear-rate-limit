@@ -1,0 +1,116 @@
+#!/bin/bash
+# linear-rate-limit — state machine máy-level cho Linear rate limit (policy 2026-09-20)
+#
+# Policy: Linear bị rate limit (429 / complexity budget / rate limit) → skip việc
+# Linear-dependent, note op lại ở đây, làm việc kế tiếp; resume khi hết cooldown.
+#
+# State: ~/.claude/.linear-rate-limit.state (JSON máy-level — watchdog chạy từ
+# cron ngoài repo nên không đặt theo project). Override: LINEAR_RATE_LIMIT_STATE.
+#
+# Sub-commands:
+#   check      → exit 0 sạch · exit 3 đang rate-limited (in JSON state)
+#   note --op <json> --bin <tên>   → ghi 1 op bị bỏ vào queue + refresh since
+#   clear      → xoá state (gọi khi Linear call thành công lại)
+#   pending    → in JSON mảng ops đang chờ
+#   classify --body <file|->   → grep signature rate-limit trên body; exit 3 nếu match
+#
+# Detection signature: 429 · rate limit · too many requests · complexity budget
+# (khớp classifyLinearError code 'linear_rate_limited' của app).
+set -u
+
+STATE_FILE="${LINEAR_RATE_LIMIT_STATE:-$HOME/.claude/.linear-rate-limit.state}"
+COOLDOWN_MIN="${LINEAR_RATE_LIMIT_COOLDOWN_MIN:-15}"
+
+usage() { echo "usage: linear-rate-limit {check|note --op <json> --bin <tên>|clear|pending|classify --body <file->}" >&2; exit 2; }
+
+CMD="${1:-}"; shift 2>/dev/null || true
+
+case "$CMD" in
+  check)
+    [ -f "$STATE_FILE" ] || exit 0
+    python3 - "$STATE_FILE" "$COOLDOWN_MIN" <<'PY'
+import json, sys, datetime
+try:
+    st = json.load(open(sys.argv[1], encoding="utf-8"))
+    since = datetime.datetime.fromisoformat(st["since"])
+    cd = int(sys.argv[2])
+except Exception:
+    sys.exit(0)
+now = datetime.datetime.now(datetime.timezone.utc)
+if since.tzinfo is None:
+    since = since.replace(tzinfo=datetime.timezone.utc)
+if (now - since) > datetime.timedelta(minutes=cd):
+    sys.exit(0)  # hết cooldown — coi như sạch
+sys.exit(3)
+PY
+    rc=$?
+    [ $rc -eq 3 ] && cat "$STATE_FILE"
+    exit $rc
+    ;;
+
+  note)
+    OP=""; BIN=""
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --op) OP="$2"; shift 2 ;;
+        --bin) BIN="$2"; shift 2 ;;
+        *) shift ;;
+      esac
+    done
+    [ -z "$OP" ] && { echo "note: thiếu --op" >&2; exit 2; }
+    mkdir -p "$(dirname "$STATE_FILE")"
+    NOW=$(python3 -c "import datetime;print(datetime.datetime.now(datetime.timezone.utc).isoformat())")
+    python3 - "$STATE_FILE" "$NOW" "$BIN" "$OP" <<'PY'
+import json, sys, os
+path, now, binname, op = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+try:
+    st = json.load(open(path, encoding="utf-8"))
+    if not isinstance(st, dict) or "ops" not in st:
+        st = {}
+except Exception:
+    st = {}
+st.setdefault("since", now)
+st.setdefault("cooldownMinutes", int(os.environ.get("LINEAR_RATE_LIMIT_COOLDOWN_MIN", "15")))
+st.setdefault("ops", [])
+st["ops"].append({"bin": binname, "op": op, "ts": now})
+open(path, "w", encoding="utf-8").write(json.dumps(st, ensure_ascii=False, indent=1) + "\n")
+PY
+    echo "⇩ linear-rate-limit: op đã note (${BIN:-?}) — resume khi hết limit"
+    ;;
+
+  clear)
+    rm -f "$STATE_FILE"
+    echo "linear-rate-limit state cleared"
+    ;;
+
+  pending)
+    [ -f "$STATE_FILE" ] || { echo "[]"; exit 0; }
+    python3 -c "
+import json,sys
+try:
+    st = json.load(open(sys.argv[1], encoding='utf-8'))
+    print(json.dumps(st.get('ops', []), ensure_ascii=False, indent=1))
+except Exception:
+    print('[]')
+" "$STATE_FILE"
+    ;;
+
+  classify)
+    BODY_FILE=""
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --body) BODY_FILE="$2"; shift 2 ;;
+        *) shift ;;
+      esac
+    done
+    [ -z "$BODY_FILE" ] || [ ! -f "$BODY_FILE" ] && { echo "classify: thiếu --body <file>" >&2; exit 2; }
+    if grep -qiE 'rate limit|429|too many requests|complexity budget' "$BODY_FILE"; then
+      exit 3
+    fi
+    exit 0
+    ;;
+
+  *)
+    usage
+    ;;
+esac
