@@ -125,6 +125,26 @@ describe('maybeWrapTerminalSendTextForTuiAgent', () => {
     expect(maybeWrapTerminalSendTextForTuiAgent(action, 'claude')).toBe(action)
   })
 
+  // Issue #88: keystroke frames (xterm onData từ Input mobile/desktop) là control
+  // input nguyên bản — ESC là hàm phím, bypass cả sanitize lẫn paste-wrap.
+  it('passes keystroke frames through verbatim, ESC intact (#88)', () => {
+    const routed = maybeWrapTerminalSendTextForTuiAgent(
+      { text: '\x1b[A', keystroke: true, enter: false },
+      'claude'
+    )
+    expect(routed.text).toBe('\x1b[A')
+    expect(routed.text).not.toContain('<ESC>')
+    expect(routed.text?.includes(PASTE_BEGIN)).toBe(false)
+  })
+
+  it('keystroke multiline control input is not wrapped either (#88)', () => {
+    const routed = maybeWrapTerminalSendTextForTuiAgent(
+      { text: '\x1b[A\x1b[B', keystroke: true },
+      'claude'
+    )
+    expect(routed.text).toBe('\x1b[A\x1b[B')
+  })
+
   it('buildTerminalSendPayload appends enter to the wrapped text', () => {
     const routed = maybeWrapTerminalSendTextForTuiAgent({ text: 'a\nb', enter: true }, 'claude')
     const payload = buildTerminalSendPayload(routed)

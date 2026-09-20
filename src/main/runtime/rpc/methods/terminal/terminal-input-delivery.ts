@@ -110,7 +110,9 @@ export async function sendTerminalStreamInput(
     isMobile: boolean
   }
 ): Promise<TerminalStreamInputOutcome> {
-  const action = { text: args.text, enter: false, interrupt: false }
+  // Keystroke frames là control input nguyên bản (issue #88): ESC phải đi
+  // verbatim tới agent pane — gate sanitize/paste chỉ dành cho prompt text RPC.
+  const action = { text: args.text, enter: false, interrupt: false, keystroke: true }
   const clientId = args.isMobile ? args.client?.id : undefined
   const floorClaim: MobileInputFloorClaimHolder = { current: null }
   try {

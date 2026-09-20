@@ -12,6 +12,7 @@ export function buildTerminalSendPayload(action: {
   text?: string
   enter?: boolean
   interrupt?: boolean
+  keystroke?: boolean
 }): string | null {
   let payload = ''
   if (typeof action.text === 'string' && action.text.length > 0) {
@@ -27,10 +28,13 @@ export function buildTerminalSendPayload(action: {
 }
 
 export function maybeWrapTerminalSendTextForTuiAgent(
-  action: { text?: string; enter?: boolean; interrupt?: boolean },
+  action: { text?: string; enter?: boolean; interrupt?: boolean; keystroke?: boolean },
   agent: unknown
-): { text?: string; enter?: boolean; interrupt?: boolean } {
-  if (!action.text || !isTuiAgent(agent)) {
+): { text?: string; enter?: boolean; interrupt?: boolean; keystroke?: boolean } {
+  // Keystroke frames (xterm onData từ Input của mobile/desktop) là control input
+  // nguyên bản — ESC là hàm phím, không phải prompt-injection text. Đi raw
+  // verbatim, bypass cả sanitize lẫn paste-wrap (issue #88).
+  if (!action.text || action.keystroke || !isTuiAgent(agent)) {
     return action
   }
   // Why: strip ONE trailing terminator before the multiline probe so a
