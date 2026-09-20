@@ -36,9 +36,11 @@ jobs:
             exit 0
           fi
           # Tree = upstream chính xác, rồi khôi phục .github của fork
+          # (nguồn .github đúng = nhánh wakii-dev — release-only 7 workflow)
           git switch -C mirror upstream/main
+          git fetch origin wakii-dev
           rm -rf .github
-          git checkout main -- .github
+          git checkout FETCH_HEAD -- .github
           git commit -q -m "sync: upstream/main — mirror trừ .github (giữ workflow release của fork)" --allow-empty
           git push origin HEAD:main --force
           echo "synced: main = upstream/main (trừ .github) — $BEHIND commits"
