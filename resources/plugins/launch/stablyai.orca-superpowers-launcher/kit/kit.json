@@ -389,7 +389,12 @@
       "name": "story-close",
       "type": "bin",
       "description": "chuẩn hoá CLOSE phase — audit sf-branches merged → ownership probe → cleanup worktree/branch (3 guards) → next-steps; BLOCK liệt kê rõ, fail-open khi probe chết (20/09)"
+    },
+    {
+      "name": "linear-rate-limit",
+      "type": "bin",
+      "description": "state machine Linear rate-limit — check/note/clear/pending/classify (policy skip+note+resume 2026-09-20)"
     }
   ],
-  "kitHash": "fdbc4cd4d5a6aa4d"
+  "kitHash": "3877410741900f40"
 }
