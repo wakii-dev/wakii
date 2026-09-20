@@ -1,20 +1,18 @@
 name: Sync fork with upstream
 
-# main = PURE MIRROR of stablyai/orca main (policy A, owner call 2026-09-19):
-# force-align thay vì ff-only — mọi commit fork trên main bị đè (releases cut
-# từ wakii-dev, không từ main). Trước đây ff-only im lặng no-op khi diverge,
-# để main kẹt 1.139 commits.
+# main = mirror của stablyai/orca main, TRỪ .github (fork giữ bộ workflow
+# release riêng — GITHUB_TOKEN không được cấp workflows:write nên không thể
+# push file workflow của upstream; và về policy fork cũng không muốn chạy
+# workflow upstream trên main). Force-align thay vì ff-only.
+# Lịch: 00:13 giờ VN hằng ngày (17:13 UTC).
 
 on:
   schedule:
-    - cron: "13 17 * * *" # 00:13 giờ VN hằng ngày (17:13 UTC) — 12h đêm
+    - cron: "13 17 * * *"
   workflow_dispatch:
 
 permissions:
   contents: write
-  # Force-align mirror đưa cả file .github/workflows/* của upstream về main —
-  # không có workflows:write thì remote rejected (run 35457722320).
-  workflows: write
 
 jobs:
   sync:
@@ -25,19 +23,22 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Force-align main to upstream/main
+      - name: Force-align main to upstream/main (trừ .github)
         run: |
+          git config user.email "sync@wakii-dev.local"
+          git config user.name "wakii-dev sync bot"
           git remote add upstream https://github.com/stablyai/orca.git
           git fetch upstream main
           BEHIND=$(git rev-list --count main..upstream/main)
-          AHEAD=$(git rev-list --count upstream/main..main)
-          echo "main vs upstream/main: behind=$BEHIND ahead=$AHEAD"
+          echo "main vs upstream/main: behind=$BEHIND"
           if [ "$BEHIND" -eq 0 ]; then
             echo "Already up to date."
             exit 0
           fi
-          if [ "$AHEAD" -gt 0 ]; then
-            echo "::warning::main có $AHEAD commit riêng — sẽ bị ĐÈ theo policy mirror thuần."
-          fi
-          git push origin upstream/main:main --force
-          echo "synced: main force-aligned to upstream/main ($BEHIND commits)"
+          # Tree = upstream chính xác, rồi khôi phục .github của fork
+          git switch -C mirror upstream/main
+          rm -rf .github
+          git checkout main -- .github
+          git commit -q -m "sync: upstream/main — mirror trừ .github (giữ workflow release của fork)" --allow-empty
+          git push origin HEAD:main --force
+          echo "synced: main = upstream/main (trừ .github) — $BEHIND commits"
