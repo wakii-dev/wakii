@@ -229,7 +229,7 @@ planning and review skills below.
 | -- | --------- |
 | 🤖 | **9-agent story team** — adversarial specialists with checks-and-balances; self-approval never counts as a gate |
 | 🧠 | **20 bundled skills** — planning, review, design pipelines, machine-control platform skills |
-| 🛠️ | **24 `story-*` CLIs** — gate checks, stall watchdog, preflight, story tests |
+| 🛠️ | **39 `story-*` CLIs** — gate checks, stall watchdog, preflight, story tests |
 | 🎨 | **HoiVu branding** — rebranded UI, fork-local full plugin access |
 
 ## 🔀 Inherited from Orca (kept intact)
@@ -263,10 +263,10 @@ System Settings → Privacy & Security):
 
 | Machine       | Asset                                                                                                                            |
 | ------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Apple Silicon | [Wakii-1.4.205-arm64.dmg](https://github.com/wakii-dev/wakii/releases/download/v1.4.205/Wakii-1.4.205-arm64.dmg)                  |
-| Intel         | [Wakii-1.4.205-x64.dmg](https://github.com/wakii-dev/wakii/releases/download/v1.4.205/Wakii-1.4.205-x64.dmg)                      |
-| Android       | [app-release.apk](https://github.com/wakii-dev/wakii/releases/download/v1.4.205/app-release.apk)                    |
-| Windows       | [orca-windows-setup.exe](https://github.com/wakii-dev/wakii/releases/download/v1.4.205/orca-windows-setup.exe)                     |
+| Apple Silicon | [Wakii-1.4.214-arm64.dmg](https://github.com/wakii-dev/wakii/releases/download/v1.4.214/Wakii-1.4.214-arm64.dmg)                  |
+| Intel         | [Wakii-1.4.214-x64.dmg](https://github.com/wakii-dev/wakii/releases/download/v1.4.214/Wakii-1.4.214-x64.dmg)                      |
+| Android       | [app-release.apk](https://github.com/wakii-dev/wakii/releases/download/v1.4.214/app-release.apk)                    |
+| Windows       | [orca-windows-setup.exe](https://github.com/wakii-dev/wakii/releases/download/v1.4.214/orca-windows-setup.exe)                     |
 
 Build from source ([guide](#-developing)) works everywhere.
 
