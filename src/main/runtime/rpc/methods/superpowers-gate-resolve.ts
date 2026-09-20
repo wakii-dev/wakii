@@ -1,7 +1,7 @@
-import { z } from 'zod'
-import { defineMethod, type RpcMethod } from '../core'
-import { requiredStringAllowingEmpty } from '../schemas'
+import { defineMethod } from '../core'
 import { OrchestrationError } from '../../orchestration/orchestration-error'
+import { SuperpowersGateResolveParams } from '../../../../shared/rpc-contract/superpowers-params'
+
 import type {
   SuperpowersGateResolveError,
   SuperpowersGateResolveResult
@@ -16,15 +16,12 @@ import type {
 // that throw and maps it to the taxonomy result-field { error:
 // 'invalid_resolution' } — the rejection never crosses RPC as a generic error.
 // Options-empty gates keep accepting any resolution (conformance phone path).
-export const SUPERPOWERS_GATE_RESOLVE_METHODS: RpcMethod[] = [
+export const SUPERPOWERS_GATE_RESOLVE_METHODS = [
   defineMethod({
     name: 'superpowers.gateResolve',
     // Why requiredStringAllowingEmpty: rỗng phải map taxonomy (invalid_resolution /
     // gate_not_found) chứ không rơi vào zod validation error chung chung.
-    params: z.object({
-      gateId: requiredStringAllowingEmpty('Missing gateId'),
-      resolution: requiredStringAllowingEmpty('Missing resolution')
-    }),
+    params: SuperpowersGateResolveParams,
     handler: async (
       params,
       { runtime }

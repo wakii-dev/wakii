@@ -71,7 +71,7 @@ describe('real Codex structured-to-TUI resume', () => {
           'model = "gpt-5"',
           '',
           '[model_providers.orca-integration]',
-          'name = "Orca integration"',
+          'name = "Wakii integration"',
           'base_url = "http://127.0.0.1:9/v1"',
           'wire_api = "responses"',
           'requires_openai_auth = false',

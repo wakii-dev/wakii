@@ -7,7 +7,7 @@ import {
   syncSinglePty
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('reports a queued PTY focus as not navigated when its notifier disappears', async () => {
     const runtime = new OrcaRuntimeService(store)
     runtime.setPtyController({

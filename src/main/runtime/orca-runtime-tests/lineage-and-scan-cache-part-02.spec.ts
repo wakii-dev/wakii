@@ -9,8 +9,8 @@ import {
   store
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
-  it('strips Orca provenance fields from runtime metadata updates', async () => {
+describe('WakiiRuntimeService', () => {
+  it('strips Wakii provenance fields from runtime metadata updates', async () => {
     const metaById: Record<string, WorktreeMeta> = {
       [TEST_WORKTREE_ID]: makeWorktreeMeta({ instanceId: 'child-instance' })
     }

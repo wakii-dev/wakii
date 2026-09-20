@@ -11,7 +11,7 @@ function stubCrypto(value: unknown): void {
   Object.defineProperty(globalThis, 'crypto', { value, configurable: true })
 }
 
-describe('hashOrcaHookScript', () => {
+describe('hashWakiiHookScript', () => {
   it('produces a stable hex digest via crypto.subtle', async () => {
     const hash = await hashOrcaHookScript('echo hi')
     expect(hash).toMatch(/^[0-9a-f]+$/)

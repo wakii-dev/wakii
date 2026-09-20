@@ -8,7 +8,7 @@ import {
   store
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('preserves OSC 9999 parser state for rendererless background PTYs', async () => {
     const statuses: RuntimeTerminalAgentStatusEvent[] = []
     const spawn = vi.fn().mockResolvedValue({ id: 'pty-bg' })

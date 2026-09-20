@@ -1,10 +1,11 @@
-import { AlertTriangle, Loader2, Plus } from 'lucide-react'
+import { AlertTriangle, Loader2, Plus, X } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { selectCodexProviderAccount } from '@/runtime/runtime-provider-accounts-client'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
 import { Label } from '../ui/label'
 import { OpenAIIcon } from '../status-bar/icons'
+import { CodexLoginLinkNotice } from './CodexLoginLinkNotice'
 import { SearchableSetting } from './SearchableSetting'
 import { getAccountsCodexSearchEntries } from './accounts-search'
 import { getCodexSystemDefaultSubtitle } from './accounts-pane-runtime'
@@ -42,7 +43,7 @@ export function renderCodexAccountsSection(model: AccountsPaneSectionModel): Rea
         <p className="text-xs text-muted-foreground">
           {translate(
             'auto.components.settings.AccountsPane.cedfab35ab',
-            'Optional. Orca can use your normal Codex login; add accounts only if you want quick switching in Orca.'
+            'Optional. Wakii can use your normal Codex login; add accounts only if you want quick switching in Wakii.'
           )}
         </p>
         <p className="text-xs text-muted-foreground">
@@ -54,7 +55,7 @@ export function renderCodexAccountsSection(model: AccountsPaneSectionModel): Rea
               )
             : translate(
                 'auto.components.settings.AccountsPane.340d6f7a85',
-                'Each account keeps its own local sign-in context in Orca. Account auth stays on this device.'
+                'Each account keeps its own local sign-in context in Wakii. Account auth stays on this device.'
               )}
         </p>
       </div>
@@ -63,7 +64,7 @@ export function renderCodexAccountsSection(model: AccountsPaneSectionModel): Rea
         title={translate('auto.components.settings.AccountsPane.3180536c7a', 'Codex Accounts')}
         description={translate(
           'auto.components.settings.AccountsPane.d0d53b7eb0',
-          'Manage which Codex account Orca uses for live rate limit fetching.'
+          'Manage which Codex account Wakii uses for live rate limit fetching.'
         )}
         // Why: this single SearchableSetting backs the whole Codex section,
         // including the "Active Codex Account" sub-control (account picker
@@ -111,7 +112,7 @@ export function renderCodexAccountsSection(model: AccountsPaneSectionModel): Rea
               {codexConfigSyncWarning === 'managed-home-unavailable'
                 ? translate(
                     'auto.components.settings.AccountsPane.codexConfigSyncManagedHomeUnavailable',
-                    'Orca could not read this account’s Codex files just now, so settings may not be syncing. This usually clears on its own — antivirus or a backup tool briefly locks them.'
+                    'Wakii could not read this account’s Codex files just now, so settings may not be syncing. This usually clears on its own — antivirus or a backup tool briefly locks them.'
                   )
                 : codexConfigSyncWarning === 'missing-source'
                   ? translate(
@@ -152,36 +153,52 @@ export function renderCodexAccountsSection(model: AccountsPaneSectionModel): Rea
                   )}
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="xs"
-            onClick={() =>
-              void runCodexAccountAction('adding', () =>
-                window.api.codexAccounts.add({
-                  runtime: accountRuntime.runtime,
-                  wslDistro: accountRuntime.wslDistro
-                })
-              )
-            }
-            disabled={
-              // Why: interactive `codex login` needs a desktop browser and
-              // would authenticate against this device, not the server.
-              isRemoteAccountScope ||
-              codexAction !== 'idle' ||
-              wslCapabilitiesLoading ||
-              accountRuntimeUnavailable
-            }
-            className="gap-1.5"
-          >
+          <div className="flex shrink-0 items-center gap-1.5">
+            <Button
+              variant="outline"
+              size="xs"
+              onClick={() =>
+                void runCodexAccountAction('adding', () =>
+                  window.api.codexAccounts.add({
+                    runtime: accountRuntime.runtime,
+                    wslDistro: accountRuntime.wslDistro
+                  })
+                )
+              }
+              disabled={
+                // Why: interactive `codex login` needs a desktop browser and
+                // would authenticate against this device, not the server.
+                isRemoteAccountScope ||
+                codexAction !== 'idle' ||
+                wslCapabilitiesLoading ||
+                accountRuntimeUnavailable
+              }
+              className="gap-1.5"
+            >
+              {codexAction === 'adding' ? (
+                <Loader2 className="size-3 animate-spin" />
+              ) : (
+                <Plus className="size-3" />
+              )}
+              {translate('auto.components.settings.AccountsPane.b0e948a4f9', 'Add Account')}
+            </Button>
             {codexAction === 'adding' ? (
-              <Loader2 className="size-3 animate-spin" />
-            ) : (
-              <Plus className="size-3" />
-            )}
-            {translate('auto.components.settings.AccountsPane.b0e948a4f9', 'Add Account')}
-          </Button>
+              <Button
+                variant="ghost"
+                size="xs"
+                onClick={() => void window.api.codexAccounts.cancelPendingLogin()}
+                className="gap-1.5"
+              >
+                <X />
+                {translate('auto.components.settings.AccountsPane.dbb9626ed1', 'Cancel')}
+              </Button>
+            ) : null}
+          </div>
         </div>
         {remoteAccountScopeNotice}
+        {/* Why not in a remote scope: the link belongs to a login running on
+        this desktop, which has nothing to do with the server named above. */}
+        {isRemoteAccountScope ? null : <CodexLoginLinkNotice />}
 
         <div className="space-y-2">
           <button
@@ -257,7 +274,7 @@ export function renderCodexAccountsSection(model: AccountsPaneSectionModel): Rea
                   )
                 : translate(
                     'auto.components.settings.AccountsPane.b4c9450319',
-                    "No managed Codex accounts for {{value0}}. Orca will use that environment's system default Codex login until you add one here.",
+                    "No managed Codex accounts for {{value0}}. Wakii will use that environment's system default Codex login until you add one here.",
                     { value0: accountRuntimeSentenceLabel }
                   )}
             </div>

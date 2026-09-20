@@ -13,7 +13,7 @@ import {
   store
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('publishes the hook provider session on a headless mobile tab so native chat can address the transcript', async () => {
     const paneKey = makePaneKey('claude-tab', HEADLESS_LEAF_ID)
     const providerSession = {

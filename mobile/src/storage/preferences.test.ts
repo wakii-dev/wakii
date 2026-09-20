@@ -10,6 +10,7 @@ import {
   clampHostSidebarWidth,
   loadDisabledTerminalLiveInputHandles,
   loadHostSidebarWidth,
+  loadMobileWebShellEnabled,
   loadPushNotificationsEnabled,
   loadTerminalAutocompleteEnabled,
   loadTerminalLinkOpenMode,
@@ -305,10 +306,10 @@ describe('push notification preference', () => {
 
   it('persists the onboarding decision in the existing mobile toggle', async () => {
     await savePushNotificationsEnabled(true)
-    expect(AsyncStorage.setItem).toHaveBeenCalledWith('orca:pushNotificationsEnabled', 'true')
+    expect(AsyncStorage.setItem).toHaveBeenCalledWith('orca:pushServiceNotificationsEnabled', 'true')
 
     await savePushNotificationsEnabled(false)
-    expect(AsyncStorage.setItem).toHaveBeenCalledWith('orca:pushNotificationsEnabled', 'false')
+    expect(AsyncStorage.setItem).toHaveBeenCalledWith('orca:pushServiceNotificationsEnabled', 'false')
   })
 })
 
@@ -462,7 +463,7 @@ describe('terminal link open mode preference', () => {
     vi.mocked(AsyncStorage.setItem).mockReset()
   })
 
-  it('defaults to Orca browser when unset', async () => {
+  it('defaults to Wakii browser when unset', async () => {
     vi.mocked(AsyncStorage.getItem).mockResolvedValue(null)
 
     await expect(loadTerminalLinkOpenMode()).resolves.toBe('orca-browser')
@@ -477,7 +478,7 @@ describe('terminal link open mode preference', () => {
     await expect(loadTerminalLinkOpenMode()).resolves.toBe('orca-browser')
   })
 
-  it('falls back to Orca browser when storage cannot be read', async () => {
+  it('falls back to Wakii browser when storage cannot be read', async () => {
     vi.mocked(AsyncStorage.getItem).mockRejectedValue(new Error('storage unavailable'))
 
     await expect(loadTerminalLinkOpenMode()).resolves.toBe('orca-browser')
@@ -487,5 +488,42 @@ describe('terminal link open mode preference', () => {
     await saveTerminalLinkOpenMode('phone-browser')
 
     expect(AsyncStorage.setItem).toHaveBeenCalledWith('orca:terminalLinkOpenMode', 'phone-browser')
+  })
+})
+
+/** `__DEV__` is a React Native global, absent outside that runtime; assigned rather than cast so
+ *  the test says which build kind it is running as without asserting a type on `globalThis`. */
+function setDevelopmentBuild(isDevelopmentBuild: boolean | undefined): void {
+  if (isDevelopmentBuild === undefined) {
+    Reflect.deleteProperty(globalThis, '__DEV__')
+    return
+  }
+  Object.assign(globalThis, { __DEV__: isDevelopmentBuild })
+}
+
+describe('hybrid shell flag', () => {
+  beforeEach(() => {
+    vi.mocked(AsyncStorage.getItem).mockReset()
+    setDevelopmentBuild(undefined)
+  })
+
+  it('reads the developer toggle in a development build', async () => {
+    setDevelopmentBuild(true)
+    vi.mocked(AsyncStorage.getItem).mockResolvedValue('true')
+
+    await expect(loadMobileWebShellEnabled()).resolves.toBe(true)
+    expect(AsyncStorage.getItem).toHaveBeenCalledWith('orca:mobileWebShellEnabled')
+  })
+
+  it.each([
+    ['a release build', false],
+    ['a runtime with no __DEV__ at all', undefined]
+  ])('is off in %s even with the key left on, and never reads it', async (_label, isDev) => {
+    setDevelopmentBuild(isDev)
+    // The value a development build left behind in a container the install-over kept.
+    vi.mocked(AsyncStorage.getItem).mockResolvedValue('true')
+
+    await expect(loadMobileWebShellEnabled()).resolves.toBe(false)
+    expect(AsyncStorage.getItem).not.toHaveBeenCalled()
   })
 })

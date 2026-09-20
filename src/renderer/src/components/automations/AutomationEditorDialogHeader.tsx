@@ -107,7 +107,7 @@ export function AutomationEditorDialogHeader({
             <ToggleGroupItem value="orca" className={segmentedItemClassName}>
               {translate(
                 'auto.components.automations.AutomationEditorDialogHeader.6f309eef8d',
-                'Orca'
+                'Wakii'
               )}
             </ToggleGroupItem>
             <ToggleGroupItem value="hermes" className={segmentedItemClassName}>

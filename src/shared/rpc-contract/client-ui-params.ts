@@ -220,7 +220,7 @@ export const UiUpdateFields = z
     _sortBySmartMigrated: z.boolean().optional(),
     _inlineAgentsDefaultedForExperiment: z.boolean().optional(),
     _inlineAgentsDefaultedForAllUsers: z.boolean().optional(),
-    trustedOrcaHooks: z.record(z.string(), z.unknown()).optional(),
+    trustedWakiiHooks: z.record(z.string(), z.unknown()).optional(),
     setupScriptPromptDismissedRepoIds: StringArray.optional(),
     // Why: one-shot dismissals the renderer writes through ui.set; each was a
     // whole-payload rejection for paired clients while unlisted.

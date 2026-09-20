@@ -20,7 +20,7 @@ export const AGENT_SESSION_DELTA_COALESCE_MS = 60
  * unbounded string after they have crossed that boundary. */
 export const AGENT_SESSION_STREAMED_TEXT_MAX_BYTES = 16 * 1024 * 1024
 export const AGENT_SESSION_STREAMED_TEXT_TOTAL_MAX_BYTES = 32 * 1024 * 1024
-export const AGENT_SESSION_STREAMED_TEXT_TRUNCATION_MARKER = '\n[Orca: streamed output truncated]'
+export const AGENT_SESSION_STREAMED_TEXT_TRUNCATION_MARKER = '\n[Wakii: streamed output truncated]'
 export const AGENT_SESSION_MAX_STREAMS = 256
 
 export type AgentSessionDeltaSnapshot = {
@@ -230,7 +230,9 @@ function appendWithinUtf8ByteLimit(
   if (deltaBytes <= available) {
     // The caller owns the per-stream array; append in place so each token is
     // amortized O(1) instead of copying the complete prefix on every delta.
-    current.push(delta)
+    if (delta.length > 0) {
+      current.push(delta)
+    }
     return {
       chunks: current,
       retainedBytes: currentBytes + deltaBytes,

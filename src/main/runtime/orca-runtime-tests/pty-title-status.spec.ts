@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { listWorktrees } from '../orca-runtime-test-mocks.spec'
 import { TEST_REPO_ID, createRuntime, syncSinglePty } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('associates controller PTYs with mixed-case Windows and UNC cwd paths', async () => {
     vi.mocked(listWorktrees).mockResolvedValue([
       {

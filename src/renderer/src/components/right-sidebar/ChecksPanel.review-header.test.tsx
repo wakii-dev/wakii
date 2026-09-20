@@ -82,7 +82,7 @@ describe('ChecksPanelReviewHeader', () => {
     expect(markup).toContain('More PR actions')
     expect(markup).toContain('Unlink PR from workspace')
     expect(markup).toContain(
-      'Orca will hide PR #2964 details for this workspace. The PR and branch on GitHub won’t be changed.'
+      'Wakii will hide PR #2964 details for this workspace. The PR and branch on GitHub won’t be changed.'
     )
     expect(markup).toContain('Link another PR')
     expect(markup).toContain('lucide-ellipsis')
@@ -99,12 +99,12 @@ describe('ChecksPanelReviewHeader', () => {
 
   // Why: with inverting on and Link Routing off the modifier reaches Orca here, so the
   // hint must name Orca rather than the destination a plain click already uses.
-  it('names Orca when the modifier inverts toward the built-in browser', () => {
+  it('names Wakii when the modifier inverts toward the built-in browser', () => {
     expect(renderHeader({ modifierHintDestination: 'orca' })).toContain('⇧⌘+click to open in Orca')
 
     vi.stubGlobal('navigator', { userAgent: 'Windows' })
     expect(renderHeader({ modifierHintDestination: 'orca' })).toContain(
-      'Shift+Ctrl+click to open in Orca'
+      'Shift+Ctrl+click to open in Wakii'
     )
   })
 
@@ -132,7 +132,7 @@ describe('ChecksPanelReviewHeader', () => {
     expect(markup).toContain('More MR actions')
     expect(markup).toContain('Unlink MR from workspace')
     expect(markup).toContain(
-      'Orca will hide MR !31 details for this workspace. The MR and branch on GitLab won’t be changed.'
+      'Wakii will hide MR !31 details for this workspace. The MR and branch on GitLab won’t be changed.'
     )
     expect(markup).toContain('Link another MR')
   })

@@ -128,7 +128,7 @@ describe('trackDaemonPtyCwdDeniedIfDiverged', () => {
       JSON.stringify({
         ...stalePidRecord,
         appVersion: '1.4.191',
-        spawnerExecPath: '/Applications/Orca.app/Contents/MacOS/Orca'
+        spawnerExecPath: '/Applications/Wakii.app/Contents/MacOS/Wakii'
       })
     )
     trackDaemonPtyCwdDeniedIfDiverged('/Users/alice/Documents/repo', false, PID_PATH)

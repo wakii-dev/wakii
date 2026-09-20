@@ -11,7 +11,6 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { resolveFolderWorkspaceHost } from '../../shared/folder-workspace-execution-host'
 import type { FolderWorkspace } from '../../shared/folder-workspace-types'
 import type { Repo } from '../../shared/repo-types'
 import type { WorktreeMeta } from '../../shared/worktree/meta-types'
@@ -75,6 +74,7 @@ function makeStore(
   }))
   return {
     getRepos: () => built,
+    getFolderWorkspaces: (): FolderWorkspace[] => [],
     getAllWorktreeMeta: () => worktreeMeta,
     getAllWorktreeMetaForHost: (hostId) =>
       Object.fromEntries(
@@ -581,11 +581,11 @@ describe('hydrateLocalPtyRegistryAtBoot', () => {
 
   it('matches Windows worktree path spelling while preserving the daemon worktree id', async () => {
     const { hydrate, listRegisteredPtys } = await loadFresh()
-    const worktreeId = 'repo-a::C:/Users/Neil/Orca'
+    const worktreeId = 'repo-a::C:/Users/Neil/Wakii'
     const ptyId = `${worktreeId}@@cafebabe`
     getDaemonProviderMock.mockReturnValue(
       makeProvider([
-        { sessionId: ptyId, pid: 4242, cwd: 'C:/Users/Neil/Orca' } as unknown as SessionInfo
+        { sessionId: ptyId, pid: 4242, cwd: 'C:/Users/Neil/Wakii' } as unknown as SessionInfo
       ])
     )
     listLocalRepoWorktreesStrictMock.mockResolvedValue([
@@ -598,22 +598,22 @@ describe('hydrateLocalPtyRegistryAtBoot', () => {
       }
     ])
 
-    await hydrate(makeStore([{ id: 'repo-a', path: 'C:\\Users\\Neil\\Orca' }]))
+    await hydrate(makeStore([{ id: 'repo-a', path: 'C:\\Users\\Neil\\Wakii' }]))
 
     expect(listRegisteredPtys()).toEqual([expect.objectContaining({ ptyId, worktreeId })])
   })
 
   it('fails closed when live worktrees collide on one normalized key', async () => {
     const { hydrate, listRegisteredPtys } = await loadFresh()
-    const ptyId = 'repo-a::C:/Users/Neil/Orca@@cafebabe'
+    const ptyId = 'repo-a::C:/Users/Neil/Wakii@@cafebabe'
     getDaemonProviderMock.mockReturnValue(
       makeProvider([
-        { sessionId: ptyId, pid: 4242, cwd: 'C:/Users/Neil/Orca' } as unknown as SessionInfo
+        { sessionId: ptyId, pid: 4242, cwd: 'C:/Users/Neil/Wakii' } as unknown as SessionInfo
       ])
     )
     listLocalRepoWorktreesStrictMock.mockResolvedValue([
       {
-        path: 'C:/Users/Neil/Orca',
+        path: 'C:/Users/Neil/Wakii',
         head: '',
         branch: '',
         isBare: false,
@@ -628,7 +628,7 @@ describe('hydrateLocalPtyRegistryAtBoot', () => {
       }
     ])
 
-    await hydrate(makeStore([{ id: 'repo-a', path: 'C:/Users/Neil/Orca' }]))
+    await hydrate(makeStore([{ id: 'repo-a', path: 'C:/Users/Neil/Wakii' }]))
 
     expect(listRegisteredPtys()).toHaveLength(0)
   })
@@ -765,34 +765,48 @@ describe('hydrateLocalPtyRegistryAtBoot', () => {
     expect(listRegisteredPtys()).toEqual([expect.objectContaining({ ptyId })])
   })
 
-  it('keeps true folder workspace PTY ids as an accepted hydration gap', async () => {
-    const { hydrate, listRegisteredPtys } = await loadFresh()
-    const workspace = {
-      id: 'folder-workspace-1',
-      executionHostId: 'local'
-    } as FolderWorkspace
-    getDaemonProviderMock.mockReturnValue(
-      makeProvider([
-        {
-          sessionId: 'folder:folder-workspace-1@@cafebabe',
-          pid: 4242,
-          cwd: '/workspace/folder'
-        } as unknown as SessionInfo
-      ])
-    )
-
-    expect(
-      resolveFolderWorkspaceHost(
-        { folderWorkspaces: [workspace], projectGroups: [], repos: [] },
-        workspace.id
+  it.each([
+    ['local', { executionHostId: 'local' }, true],
+    ['ssh:box', { executionHostId: 'ssh:box' }, false],
+    ['runtime:paired', { executionHostId: 'runtime:paired' }, false],
+    ['duplicate', { executionHostId: 'local' }, false],
+    ['persisted local', { connectionId: null }, true],
+    ['persisted SSH', { connectionId: 'box' }, false]
+  ] as const)(
+    'hydrates only an unambiguous local folder workspace (%s)',
+    async (host, ownership, expected) => {
+      const { hydrate, listRegisteredPtys } = await loadFresh()
+      const workspace = {
+        id: 'folder-workspace-1',
+        ...ownership
+      } as FolderWorkspace
+      getDaemonProviderMock.mockReturnValue(
+        makeProvider([
+          {
+            sessionId: 'folder:folder-workspace-1@@cafebabe',
+            pid: 4242,
+            cwd: '/workspace/folder'
+          } as unknown as SessionInfo
+        ])
       )
-    ).toEqual({ kind: 'local' })
 
-    await hydrate(makeStore())
+      const store = makeStore()
+      store.getFolderWorkspaces = () =>
+        host === 'duplicate'
+          ? [workspace, { ...workspace, executionHostId: 'runtime:paired' }]
+          : [workspace]
+      await hydrate(store)
 
-    expect(listRegisteredPtys()).toHaveLength(0)
-    expect(listLocalRepoWorktreesStrictMock).not.toHaveBeenCalled()
-  })
+      expect(listRegisteredPtys()).toHaveLength(expected ? 1 : 0)
+      if (expected) {
+        expect(listRegisteredPtys()[0]).toMatchObject({
+          worktreeId: 'folder:folder-workspace-1',
+          pid: 4242
+        })
+      }
+      expect(listLocalRepoWorktreesStrictMock).not.toHaveBeenCalled()
+    }
+  )
 
   it('does not register a daemon session whose worktree was removed', async () => {
     const { hydrate, listRegisteredPtys } = await loadFresh()

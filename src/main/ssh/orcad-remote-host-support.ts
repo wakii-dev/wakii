@@ -17,7 +17,7 @@ export class OrcadRemoteLaunchUnsupportedError extends Error {
         'host-agnostic, but the launch and readiness path is POSIX-only: it uses nohup, a ' +
         'redirected stdout and `kill -0` liveness. Use the relay for this host.'
     )
-    this.name = 'OrcadRemoteLaunchUnsupportedError'
+    this.name = 'WakiidRemoteLaunchUnsupportedError'
   }
 }
 

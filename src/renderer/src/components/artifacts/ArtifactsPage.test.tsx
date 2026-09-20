@@ -63,7 +63,6 @@ function storeState(): Record<string, unknown> {
     closeArtifactsPage: mocks.closePage,
     connectCurrentOrcaProfile: mocks.connect,
     orcaProfileAuthStatus: mocks.authStatus,
-    orcaProfileConnecting: false,
     refreshCurrentOrcaProfileAuth: mocks.refreshAuth,
     settings: mocks.settings,
     updateSettings: mocks.updateSettings,
@@ -357,7 +356,7 @@ describe('ArtifactsPage', () => {
     resolveRefresh()
 
     await waitFor(() =>
-      expect(screen.queryByText('Sign in to Orca again to load artifacts.')).not.toBeInTheDocument()
+      expect(screen.queryByText('Sign in to Wakii again to load artifacts.')).not.toBeInTheDocument()
     )
   })
 
@@ -397,7 +396,7 @@ describe('ArtifactsPage', () => {
     resolveRefresh()
 
     await waitFor(() =>
-      expect(screen.queryByText('Sign in to Orca again to load artifacts.')).not.toBeInTheDocument()
+      expect(screen.queryByText('Sign in to Wakii again to load artifacts.')).not.toBeInTheDocument()
     )
   })
 

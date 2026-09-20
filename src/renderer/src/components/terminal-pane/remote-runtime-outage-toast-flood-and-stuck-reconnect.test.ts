@@ -31,7 +31,7 @@ import { REMOTE_RUNTIME_AUTO_RECOVERY_TIMEOUT_MS } from './remote-runtime-pty-re
 const ELECTRON_IPC_PREFIX = "Error invoking remote method 'runtimeEnvironments:call': "
 
 /** A rejection exactly as the renderer sees it after Electron IPC strips custom props. */
-function electronIpcShapedRejection(errorName: string, message: string): Error {
+function electronIpcRejection(errorName: string, message: string): Error {
   return new Error(`${ELECTRON_IPC_PREFIX}${errorName}: ${message}`)
 }
 
@@ -39,7 +39,7 @@ const QUEUE_OVERLOAD_RAW = new RuntimeRpcCallQueueOverloadError('selector').mess
 
 // The exact user-reported toast text family (timeout + Tailscale funnel hint).
 const TIMEOUT_WITH_TAILSCALE_HINT = withRemoteRuntimeTailscaleHint(
-  'Timed out waiting for the remote Orca runtime to respond.',
+  'Timed out waiting for the remote Wakii runtime to respond.',
   'https://orca-server.tail1234.ts.net'
 )
 
@@ -192,7 +192,7 @@ describe('remote runtime outage: toast flood and stuck reconnect (issue3)', () =
     const { isRecoverableRemoteRuntimeConnectionError, toRemoteRuntimeClientErrorLike } =
       await import('../../../../shared/remote-runtime-client-error-classification')
     const rendererSide = toRemoteRuntimeClientErrorLike(
-      electronIpcShapedRejection('RemoteRuntimeClientError', TIMEOUT_WITH_TAILSCALE_HINT)
+      electronIpcRejection('RemoteRuntimeClientError', TIMEOUT_WITH_TAILSCALE_HINT)
     )
     // Electron IPC stripped the code; the fragment list still catches this one.
     expect(rendererSide.code).toBeUndefined()
@@ -201,7 +201,7 @@ describe('remote runtime outage: toast flood and stuck reconnect (issue3)', () =
     // per-selector RPC queue saturated by 15s-timeout calls) is classified
     // fatal even though its own code says "retry later".
     const overload = toRemoteRuntimeClientErrorLike(
-      electronIpcShapedRejection('RuntimeRpcCallQueueOverloadError', QUEUE_OVERLOAD_RAW)
+      electronIpcRejection('RuntimeRpcCallQueueOverloadError', QUEUE_OVERLOAD_RAW)
     )
     expect(overload.code).toBeUndefined()
     // DESIRED: transient capacity pressure during an outage is recoverable,
@@ -220,7 +220,7 @@ describe('remote runtime outage: toast flood and stuck reconnect (issue3)', () =
     runtimeCall.mockImplementation(async (request: { method: string; params?: unknown }) => {
       if (request.method === 'terminal.send') {
         sendRejections += 1
-        throw electronIpcShapedRejection('RuntimeRpcCallQueueOverloadError', QUEUE_OVERLOAD_RAW)
+        throw electronIpcRejection('RuntimeRpcCallQueueOverloadError', QUEUE_OVERLOAD_RAW)
       }
       return healthyImpl(request)
     })
@@ -294,7 +294,7 @@ describe('remote runtime outage: toast flood and stuck reconnect (issue3)', () =
       if (request.method === 'terminal.resolvePane') {
         throw Object.assign(new Error(fatalMessage), { code: 'unauthorized' })
       }
-      throw electronIpcShapedRejection('RemoteRuntimeClientError', TIMEOUT_WITH_TAILSCALE_HINT)
+      throw electronIpcRejection('RemoteRuntimeClientError', TIMEOUT_WITH_TAILSCALE_HINT)
     })
     subscriptionCallbacks?.onClose?.()
     await vi.waitFor(() => expect(onError).toHaveBeenCalled())

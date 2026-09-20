@@ -69,7 +69,7 @@ function ProjectViewTab({
           ? view.name
           : translate(
               'auto.components.github.project.ProjectViewWrapper.2edf5e7e77',
-              "{{value0}} — Orca doesn't support {{value1}} project views yet. File a feature request at {{value2}}.",
+              "{{value0}} — Wakii doesn't support {{value1}} project views yet. File a feature request at {{value2}}.",
               { value0: view.name, value1: layoutLabel, value2: ORCA_FEATURE_REQUEST_URL }
             )
       }
@@ -89,7 +89,7 @@ function ProjectViewTab({
   if (supported) {
     return tab
   }
-  const message = `Orca doesn't support ${layoutLabel} project views yet.`
+  const message = `Wakii doesn't support ${layoutLabel} project views yet.`
   return (
     <HoverCard openDelay={200} closeDelay={100}>
       <HoverCardTrigger asChild>
@@ -111,7 +111,7 @@ function ProjectViewTab({
             {message}{' '}
             {translate(
               'auto.components.github.project.ProjectViewStates.ac83c45672',
-              'Switch to a Table or Roadmap view to work with this project in Orca.'
+              'Switch to a Table or Roadmap view to work with this project in Wakii.'
             )}
           </p>
           <Button
@@ -156,13 +156,13 @@ export function ProjectViewErrorState({
   }
   const copy =
     error.type === 'too_large'
-      ? `This view has ${totalCount ?? 'many'} items — too large to render in Orca. Narrow the view's filter on GitHub.`
+      ? `This view has ${totalCount ?? 'many'} items — too large to render in Wakii. Narrow the view's filter on GitHub.`
       : error.type === 'unsupported_layout'
         ? // Why: an older paired host still reports roadmaps as unsupported, so this
           // copy must not name the layout — the tab strip already does that.
           translate(
             'auto.components.github.project.ProjectViewStates.e4cc8b14f2',
-            'Orca renders table and roadmap project views. This view uses a layout it cannot render yet.'
+            'Wakii renders table and roadmap project views. This view uses a layout it cannot render yet.'
           )
         : error.type === 'not_found'
           ? 'Could not find this project or view.'
@@ -222,6 +222,44 @@ export function ProjectTableSkeleton(): React.JSX.Element {
           </div>
         ))}
       </div>
+    </div>
+  )
+}
+
+/**
+ * Empty result for a project view, worded from the view's own filter.
+ *
+ * Why: an unfiltered view has no filter to blame, so "no items match this
+ * view's filter" reads as data loss when a freshly populated board momentarily
+ * comes back empty (#12648). `ProjectV2.items(query:)` defaults to `""`, so
+ * there is no non-search request shape to fall back to — the honest remedy is
+ * to name the state correctly and say the emptiness may be transient.
+ */
+export function ProjectItemsEmptyState({ filter }: { filter: string }): React.JSX.Element {
+  if (filter.trim().length > 0) {
+    return (
+      <div className="flex min-h-[120px] items-center justify-center p-6 text-sm text-muted-foreground">
+        {translate(
+          'auto.components.github.project.ProjectViewList.4f57d2e0b1',
+          "No items match this view's filter."
+        )}
+      </div>
+    )
+  }
+  return (
+    <div className="flex min-h-[120px] flex-col items-center justify-center gap-1 p-6 text-center text-sm text-muted-foreground">
+      <span>
+        {translate(
+          'auto.components.github.project.ProjectViewStates.3b9c1d5e47',
+          'This view has no items yet.'
+        )}
+      </span>
+      <span className="text-xs">
+        {translate(
+          'auto.components.github.project.ProjectViewStates.7e4a2f80c6',
+          'Recently added items can take a while to appear.'
+        )}
+      </span>
     </div>
   )
 }

@@ -176,7 +176,7 @@ function startRepair(
         clearInstallDirAclPoisonMarker(options.userDataPath)
         // The GPU child deaths were never a driver fault, so safe graphics — and the
         // --in-process-gpu launch that hides the next crash's evidence — must not outlive the repair.
-        // Never a user-confirmed marker: "keep safe graphics" is a choice, not Orca's latch.
+        // Never a user-confirmed marker: "keep safe graphics" is a choice, not Wakii's latch.
         const gpuMarker = readGpuFallbackMarker(options.userDataPath)
         if (gpuMarker?.userConfirmed === false) {
           // Kept: a probe reading that later disproves this claim restores the marker,
@@ -311,7 +311,7 @@ export async function repairKnownPoisonedInstallDirBeforeWindow(
 }
 
 const CAUSE =
-  "Windows permissions on Orca's install folder are blocking its own sandboxed processes from reading the files it shipped with."
+  "Windows permissions on Wakii's install folder are blocking its own sandboxed processes from reading the files it shipped with."
 
 // Why the exact commands: the window is blank, so the dialog is the only place a user can be told what to run.
 export function describeInstallDirAclPoison(): InstallDirAclPoisonDiagnosis | null {
@@ -324,10 +324,10 @@ export function describeInstallDirAclPoison(): InstallDirAclPoisonDiagnosis | nu
   }
   const status =
     poison.stage === 'pending'
-      ? 'Orca is repairing the permissions now.'
-      : 'Orca could not repair them, which usually means the folder needs an administrator.'
+      ? 'Wakii is repairing the permissions now.'
+      : 'Wakii could not repair them, which usually means the folder needs an administrator.'
   return {
-    detail: `${CAUSE} ${status}\n\nRun these in an Administrator Command Prompt, then relaunch Orca:\n\n${commands.join('\n')}`,
+    detail: `${CAUSE} ${status}\n\nRun these in an Administrator Command Prompt, then relaunch Wakii:\n\n${commands.join('\n')}`,
     commands
   }
 }

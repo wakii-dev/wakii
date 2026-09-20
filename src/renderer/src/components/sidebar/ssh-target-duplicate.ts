@@ -13,7 +13,7 @@ export function isDuplicateSshTargetAlias({
   label: string
   host: string
 }): boolean {
-  // Why: the config picker's `alreadyInOrca` flag compares lowercased aliases; match it or the
+  // Why: the config picker's `alreadyInWakii` flag compares lowercased aliases; match it or the
   // two checks disagree on case-only variants.
   const alias =
     normalizeSshConfigAlias(configHost) ||
@@ -26,7 +26,7 @@ export function isDuplicateSshTargetAlias({
 }
 
 /** Why: the picker treats configHost *and* label as owned, so the save check must too —
- *  otherwise an alias it greys out as "In Orca" is still savable as a second target. */
+ *  otherwise an alias it greys out as "In Wakii" is still savable as a second target. */
 function getOccupiedAliases(target: Pick<SshTarget, 'configHost' | 'label' | 'host'>): string[] {
   const occupied = [target.configHost, target.label].map(normalizeSshConfigAlias).filter(Boolean)
   return occupied.length > 0 ? occupied : [normalizeSshConfigAlias(target.host)].filter(Boolean)

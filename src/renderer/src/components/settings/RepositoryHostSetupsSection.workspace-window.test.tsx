@@ -19,7 +19,7 @@ let root: Root
 
 const repo: Repo = {
   id: 'remote-repo',
-  displayName: 'Orca',
+  displayName: 'Wakii',
   path: '/srv/orca',
   badgeColor: '#737373',
   addedAt: 100,
@@ -28,7 +28,7 @@ const repo: Repo = {
 }
 const project: Project = {
   id: 'github:stablyai/orca',
-  displayName: 'Orca',
+  displayName: 'Wakii',
   badgeColor: '#737373',
   sourceRepoIds: [repo.id],
   createdAt: 100,
@@ -116,7 +116,7 @@ describe('RepositoryHostSetupsSection workspace window availability', () => {
     expect(currentSetup?.textContent).not.toContain('Ready')
     // The host is reachable — this must not be reported as a lost connection.
     expect(container.textContent).not.toContain('Disconnected')
-    expect(container.textContent).toContain('Open Orca on')
+    expect(container.textContent).toContain('Open Wakii on')
   })
 
   it('keeps a graph-ready runtime owner Ready when it reports no desktop window', () => {

@@ -33,11 +33,11 @@ export function assertHooksJsonGeneration(
   if (currentRaw !== expectedRaw || resolveHooksJsonWritePath(hooksJsonPath) !== hooksWritePath) {
     // Why: the pre-mutation RPC can overlap a user's editor save. Abort rather
     // than atomically replacing a newer file with the stale parsed snapshot.
-    throw new Error('Codex hooks.json changed while Orca prepared its trust repair')
+    throw new Error('Codex hooks.json changed while Wakii prepared its trust repair')
   }
 }
 
-/** One-time pristine copy of the user's file, kept under Orca's userData. */
+/** One-time pristine copy of the user's file, kept under Wakii's userData. */
 export function backupRealHomeHooksJsonOnce(
   userDataPath: string,
   previousRaw: string | null

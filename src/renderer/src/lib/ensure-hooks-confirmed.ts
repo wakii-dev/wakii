@@ -97,7 +97,7 @@ function settingsForHookRepoOwner(
 
 function canUseRepoWideTrust(state: AppState, repoId: string): boolean {
   const hasDuplicateRepoId = state.repos.filter((repo) => repo.id === repoId).length > 1
-  return Boolean(state.trustedOrcaHooks[repoId]?.all) && !hasDuplicateRepoId
+  return Boolean(state.trustedWakiiHooks[repoId]?.all) && !hasDuplicateRepoId
 }
 
 async function confirmScriptContent(
@@ -119,7 +119,7 @@ async function confirmScriptContent(
   if (isCancelled()) {
     return 'skip'
   }
-  const existingHash = state.trustedOrcaHooks[repoId]?.[scriptKind]?.contentHash
+  const existingHash = state.trustedWakiiHooks[repoId]?.[scriptKind]?.contentHash
   if (existingHash === contentHash) {
     return 'run'
   }

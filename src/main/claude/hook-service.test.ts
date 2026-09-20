@@ -262,6 +262,7 @@ describe('ClaudeHookService.install', () => {
         'utf-8'
       )
       expect(managedScript).toContain('DEVIN_PROJECT_DIR')
+      expect(managedScript).toContain('GROK_HOOK_EVENT')
       // Why: guard and Devin-skip paths must still return neutral JSON (#14818).
       expect(managedScript).toMatch(
         process.platform === 'win32'
@@ -654,7 +655,7 @@ describe('backgrounded-session pane guard (#9236)', () => {
     }
   })
 
-  it('exits rather than draining stdin on Windows, where a worker has no Orca pane', () => {
+  it('exits rather than draining stdin on Windows, where a worker has no Wakii pane', () => {
     const platform = Object.getOwnPropertyDescriptor(process, 'platform')!
     const tmpHome = mkdtempSync(join(tmpdir(), 'orca-claude-bg-'))
     Object.defineProperty(process, 'platform', { value: 'win32', configurable: true })
@@ -711,6 +712,7 @@ describe('ClaudeHookService.installRemote', () => {
     const script = fs.files.get('/home/dev/.orca/agent-hooks/claude-hook.sh')
     expect(script).toContain('#!/bin/sh')
     expect(script).toContain('DEVIN_PROJECT_DIR')
+    expect(script).toContain('GROK_HOOK_EVENT')
     // Why: remote guard paths must still return neutral JSON (#14818).
     expect(script!.indexOf('printf "{}\\n"')).toBe(
       script!.indexOf('#!/bin/sh') + '#!/bin/sh\n'.length
@@ -720,7 +722,7 @@ describe('ClaudeHookService.installRemote', () => {
     expect(script).toContain('-H "Content-Type: application/json"')
     expect(script).toContain('orca_hook_metadata=$(printf')
     expect(script).toContain('unset ORCA_AGENT_HOOK_TRANSPORT')
-    expect(script).toContain('-H "X-Orca-Agent-Hook-Meta: ${orca_hook_metadata}"')
+    expect(script).toContain('-H "X-Wakii-Agent-Hook-Meta: ${orca_hook_metadata}"')
     expect(script).toContain('--data-binary @-')
     expect(script).toContain('--data-urlencode "payload@-"')
     expect(fs.modes.get('/home/dev/.orca/agent-hooks/claude-hook.sh')).toBe(0o755)
@@ -813,6 +815,9 @@ describe('OpenClaudeHookService-compatible install', () => {
       expect(
         readFileSync(join(tmpHome, '.orca', 'agent-hooks', OPENCLAUDE_SCRIPT_FILE_NAME), 'utf-8')
       ).not.toContain('DEVIN_PROJECT_DIR')
+      expect(
+        readFileSync(join(tmpHome, '.orca', 'agent-hooks', OPENCLAUDE_SCRIPT_FILE_NAME), 'utf-8')
+      ).not.toContain('GROK_HOOK_EVENT')
       // Why: the statusline usage feed is Claude-only; OpenClaude installs must not set statusLine.
       expect(parsed.statusLine).toBeUndefined()
       expect(existsSync(join(tmpHome, '.claude', 'settings.json'))).toBe(false)

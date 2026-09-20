@@ -43,7 +43,7 @@ afterEach(() => {
   }
 })
 
-describe('acquireOrcadInstanceLock', () => {
+describe('acquireWakiidInstanceLock', () => {
   it('publishes a record naming the holder and removes it on release', () => {
     const root = makeRoot()
     const lock = acquireOrcadInstanceLock(root, hooks())

@@ -104,7 +104,7 @@ export async function inspectStableCommand(
       return { fileSha256, rawSymlinkTarget, snapshot: afterEvidence, status }
     }
   }
-  throw new Error(`The command at ${commandPath} changed while Orca inspected it.`)
+  throw new Error(`The command at ${commandPath} changed while Wakii inspected it.`)
 }
 
 export async function quarantineCommandPath(commandPath: string): Promise<CommandQuarantine> {

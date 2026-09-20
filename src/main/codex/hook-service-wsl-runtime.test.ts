@@ -376,7 +376,7 @@ describe('Codex WSL runtime hook install', () => {
     expect(script).toContain('WSL_DISTRO_NAME')
     expect(script).toContain('windows_curl=$(command -v curl.exe 2>/dev/null || true)')
     expect(script).toContain('-H "Content-Type: application/json"')
-    expect(script).toContain('-H "X-Orca-Agent-Hook-Meta-Encoding: base64"')
+    expect(script).toContain('-H "X-Wakii-Agent-Hook-Meta-Encoding: base64"')
     expect(script).toContain('--data-binary @-')
     expect(script).toContain('--data-urlencode "payload@-"')
     expect(script).toContain('if post_codex_hook curl >/dev/null 2>&1; then')
@@ -431,7 +431,7 @@ describe('Codex WSL runtime hook install', () => {
       expect(result.status).toBe(0)
       const posted = readFileSync(capturePath, 'utf-8')
       expect(posted).toContain('http://127.0.0.1:43210/hook/codex')
-      expect(posted).toContain('X-Orca-Agent-Hook-Token: fresh-token')
+      expect(posted).toContain('X-Wakii-Agent-Hook-Token: fresh-token')
       expect(posted).toContain('Content-Type: application/json')
       expect(posted).not.toContain('stale-token')
     }
@@ -474,11 +474,11 @@ describe('Codex WSL runtime hook install', () => {
       expect(result.status).toBe(0)
       const posted = readFileSync(capturePath, 'utf-8')
       expect(posted).toContain('http://127.0.0.1:43210/hook/codex')
-      expect(posted).toContain('X-Orca-Agent-Hook-Token: token')
+      expect(posted).toContain('X-Wakii-Agent-Hook-Token: token')
     }
   )
 
-  it('installs trusted WSL hooks and removes only Orca entries when disabled', async () => {
+  it('installs trusted WSL hooks and removes only Wakii entries when disabled', async () => {
     const plan = createTestPlan()
     const userCommand = '/bin/sh /home/alice/user-hook.sh'
     writeFileSync(

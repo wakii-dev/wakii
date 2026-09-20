@@ -15,7 +15,7 @@ import {
   store
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('lists live terminals and issues stable handles for synced leaves', async () => {
     const runtime = new OrcaRuntimeService(store)
     const events: RuntimeClientEvent[] = []

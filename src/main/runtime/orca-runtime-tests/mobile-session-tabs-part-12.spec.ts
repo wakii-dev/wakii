@@ -10,7 +10,7 @@ import {
   withPlatform
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('rejects startup prompts for agents that require post-ready stdin', async () => {
     const spawn = vi.fn().mockResolvedValue({ id: 'pty-agent-prompt' })
     const runtime = new OrcaRuntimeService({

@@ -40,7 +40,7 @@ async function waitUntil(predicate: () => boolean, timeoutMs: number): Promise<b
   return false
 }
 
-describe('fish keeps per-worktree history under the session Orca names', () => {
+describe('fish keeps per-worktree history under the session Wakii names', () => {
   let home: string | null = null
 
   // Always runs, so the CI lane cannot report green with the regression below skipped.

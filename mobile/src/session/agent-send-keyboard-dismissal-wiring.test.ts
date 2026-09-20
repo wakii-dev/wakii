@@ -81,13 +81,15 @@ describe('terminal send keyboard dismissal wiring', () => {
   it('dismisses the buffered command send only once the write is accepted', () => {
     const slice = sourceSlice(
       sendActionsSource,
-      'async function handleSend() {',
+      'async function handleSend(sendOptions?: { textTransform?: (draft: string) => string }) {',
       'async function handleAccessoryKey('
     )
-    const acceptedAt = slice.indexOf('const accepted = isTerminalSendRpcAccepted(response)')
+    const acceptedAt = slice.indexOf(
+      'const accepted = terminalInputSend.interpret(response) === true'
+    )
     const restoreAt = slice.indexOf('restoreRejectedDraft()', acceptedAt)
     const dismissAt = slice.indexOf('dismissKeyboardAfterAgentSend(')
-    const responseAt = slice.indexOf('const response = await client.sendRequest(')
+    const responseAt = slice.indexOf('const response = await terminalInputSend.request(')
     const catchAt = slice.indexOf('} catch {')
     expect(dismissAt).toBeGreaterThan(0)
     expect(responseAt).toBeGreaterThan(0)
@@ -109,7 +111,7 @@ describe('terminal send keyboard dismissal wiring', () => {
     const slice = sourceSlice(
       commandDockSource,
       'ref={commandInputRef}',
-      'onSubmitEditing={() => void handleSend()}'
+      'void handleSend(storyMode ? { textTransform: formatStoryPrompt } : undefined)'
     )
     expect(slice).toContain('blurOnSubmit={false}')
   })
@@ -117,11 +119,11 @@ describe('terminal send keyboard dismissal wiring', () => {
   it('restores a rejected buffered draft by origin without generation fencing', () => {
     const sendSlice = sourceSlice(
       sendActionsSource,
-      'async function handleSend() {',
+      'async function handleSend(sendOptions?: { textTransform?: (draft: string) => string }) {',
       'async function handleAccessoryKey('
     )
     const originAt = sendSlice.indexOf('handle: activeHandle')
-    const requestAt = sendSlice.indexOf('await client.sendRequest(')
+    const requestAt = sendSlice.indexOf('await terminalInputSend.request(')
     const restoreSlice = sourceSlice(
       sendActionsSource,
       'const bufferedDraftSend = bufferedTerminalDraftState.beginBufferedTerminalDraftSend(',

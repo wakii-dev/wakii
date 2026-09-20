@@ -7,7 +7,7 @@ import {
   syncSinglePty
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('lets Claude agents management titles clear stale runtime-created title status', async () => {
     const runtime = new OrcaRuntimeService(store)
     runtime.setPtyController({

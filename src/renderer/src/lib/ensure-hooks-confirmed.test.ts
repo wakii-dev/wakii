@@ -45,7 +45,7 @@ function createTestState(overrides?: Partial<AppState>): {
   const pending: PendingPrompt[] = []
   const trust: PersistedTrustedOrcaHooks = {}
   const state = {
-    trustedOrcaHooks: trust,
+    trustedWakiiHooks: trust,
     repos: [{ id: 'repo-1', displayName: 'Repo One' }],
     openModal: (modal: string, data: Record<string, unknown>) => {
       pending.push({ modal, data, resolve: data.onResolve as (d: 'run' | 'skip') => void })
@@ -77,7 +77,7 @@ describe('ensureHooksConfirmed', () => {
     const { state, pending } = createTestState()
     const script = 'pnpm install'
     const hash = await hashOrcaHookScript(script)
-    state.trustedOrcaHooks['repo-1'] = {
+    state.trustedWakiiHooks['repo-1'] = {
       setup: { contentHash: hash, approvedAt: 1 }
     }
     hooksCheckMock.mockResolvedValue({
@@ -95,7 +95,7 @@ describe('ensureHooksConfirmed', () => {
   it('re-prompts when the script content differs from the persisted hash', async () => {
     const { state, pending } = createTestState()
     const staleHash = await hashOrcaHookScript('old script')
-    state.trustedOrcaHooks['repo-1'] = {
+    state.trustedWakiiHooks['repo-1'] = {
       setup: { contentHash: staleHash, approvedAt: 1 }
     }
     hooksCheckMock.mockResolvedValue({
@@ -179,7 +179,7 @@ describe('ensureHooksConfirmed', () => {
 
   it('returns run without inspecting hooks when the repo is always trusted', async () => {
     const { state, pending } = createTestState()
-    state.trustedOrcaHooks['repo-1'] = {
+    state.trustedWakiiHooks['repo-1'] = {
       all: { approvedAt: 1 }
     }
     hooksCheckMock.mockRejectedValue(new Error('boom'))
@@ -232,7 +232,7 @@ describe('ensureHooksConfirmed', () => {
   it('inspects the requested host when duplicate repo ids exist', async () => {
     const { state } = createTestState({
       settings: { activeRuntimeEnvironmentId: 'env-1' },
-      trustedOrcaHooks: { 'repo-1': { all: { approvedAt: 1 } } },
+      trustedWakiiHooks: { 'repo-1': { all: { approvedAt: 1 } } },
       repos: [
         { id: 'repo-1', displayName: 'Runtime', executionHostId: 'runtime:env-1' },
         { id: 'repo-1', displayName: 'SSH', connectionId: 'ssh-1' }
@@ -442,7 +442,7 @@ describe('ensureHooksConfirmed', () => {
 
   it('does not reuse repo-wide trust across duplicate execution hosts', async () => {
     const { state, pending } = createTestState({
-      trustedOrcaHooks: { 'repo-1': { all: { approvedAt: 1 } } },
+      trustedWakiiHooks: { 'repo-1': { all: { approvedAt: 1 } } },
       repos: [
         { id: 'repo-1', displayName: 'Runtime', executionHostId: 'runtime:env-1' },
         { id: 'repo-1', displayName: 'SSH', connectionId: 'server' }

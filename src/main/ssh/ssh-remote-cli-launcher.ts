@@ -45,12 +45,12 @@ internal static class OrcaRemoteCliLauncher
 
             if (!File.Exists(nodePath))
             {
-                Console.Error.WriteLine("Orca SSH CLI bridge cannot find Node.js at \"{0}\"", nodePath);
+                Console.Error.WriteLine("Wakii SSH CLI bridge cannot find Node.js at \"{0}\"", nodePath);
                 return 1;
             }
             if (!File.Exists(relayPath))
             {
-                Console.Error.WriteLine("Orca SSH CLI bridge cannot find the relay at \"{0}\"", relayPath);
+                Console.Error.WriteLine("Wakii SSH CLI bridge cannot find the relay at \"{0}\"", relayPath);
                 return 1;
             }
 
@@ -69,7 +69,7 @@ internal static class OrcaRemoteCliLauncher
         }
         catch (Exception error)
         {
-            Console.Error.WriteLine("Unable to start the Orca SSH CLI bridge: {0}", error.Message);
+            Console.Error.WriteLine("Unable to start the Wakii SSH CLI bridge: {0}", error.Message);
             return 1;
         }
     }
@@ -181,10 +181,10 @@ function createWindowsLauncherCompileCommand(
       '$windowsDirectory = if ($env:WINDIR) { $env:WINDIR } else { $env:SystemRoot }',
       `$compilerCandidates = @((Join-Path $windowsDirectory 'Microsoft.NET\\Framework64\\v4.0.30319\\csc.exe'), (Join-Path $windowsDirectory 'Microsoft.NET\\Framework\\v4.0.30319\\csc.exe'))`,
       '$compiler = $compilerCandidates | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } | Select-Object -First 1',
-      "if (-not $compiler) { Write-Error 'Unable to find the .NET Framework C# compiler required for the Orca SSH CLI launcher.'; exit 1 }",
+      "if (-not $compiler) { Write-Error 'Unable to find the .NET Framework C# compiler required for the Wakii SSH CLI launcher.'; exit 1 }",
       `& $compiler ${compilerArgs}`,
       'if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }',
-      `if (-not (Test-Path -LiteralPath ${powerShellLiteral(launcherPath)} -PathType Leaf)) { Write-Error 'The Orca SSH CLI launcher compiler produced no executable.'; exit 1 }`,
+      `if (-not (Test-Path -LiteralPath ${powerShellLiteral(launcherPath)} -PathType Leaf)) { Write-Error 'The Wakii SSH CLI launcher compiler produced no executable.'; exit 1 }`,
       // Why: remove the legacy %* bridge only after a successful compile, so a
       // host missing csc.exe keeps its existing CLI (orca.exe shadows orca.cmd).
       `Remove-Item -LiteralPath ${powerShellLiteral(legacyShimPath)} -Force -ErrorAction SilentlyContinue`,

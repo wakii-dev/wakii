@@ -18,7 +18,7 @@ vi.mock('../../shared/child-process/run-process', async (importOriginal) => ({
 import { resolveOrcadBrowserProvider, type OrcadBrowserProvider } from './orcad-browser-provider'
 
 const FAKE_SIDECAR = join(import.meta.dirname, '__fixtures__', 'fake-orcad-electron-sidecar.cjs')
-const INSTALLED_EXECUTABLE = join('/Applications', 'Orca.app', 'Contents', 'MacOS', 'Orca')
+const INSTALLED_EXECUTABLE = join('/Applications', 'Wakii.app', 'Contents', 'MacOS', 'Wakii')
 
 let harnessRoot: string
 let controlPath: string
@@ -97,7 +97,7 @@ afterEach(async () => {
   await rm(harnessRoot, { recursive: true, force: true })
 })
 
-describe('resolveOrcadBrowserProvider Electron preference', () => {
+describe('resolveWakiidBrowserProvider Electron preference', () => {
   it('uses the installed Electron app even when a Chromium executable is configured', async () => {
     provider = await resolveOrcadBrowserProvider({
       userDataPath: join(harnessRoot, 'state'),

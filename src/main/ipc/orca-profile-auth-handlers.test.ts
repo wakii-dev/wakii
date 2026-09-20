@@ -57,7 +57,7 @@ vi.mock('../orca-profiles/profile-cloud-service', () => ({
 import { registerOrcaProfileHandlers } from './orca-profiles'
 import { installFakeAppEnvironment } from '../../../config/scripts/vitest-host-ports-setup'
 
-describe('registerOrcaProfileHandlers auth channels', () => {
+describe('registerWakiiProfileHandlers auth channels', () => {
   beforeEach(() => {
     // Why the port and per-test: userData resolves through AppEnvironment now, and
     // the global setup's beforeEach reinstates its own fake before this runs.

@@ -20,6 +20,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
+import { preventOutsideDismissWhenDirty } from '@/lib/outside-dismiss-guard'
 import {
   createLinearApiKeyDialogState,
   resolveLinearApiKeyDialogState
@@ -74,6 +75,10 @@ export function LinearApiKeyDialog({
     }
   }
 
+  // Why: a stray backdrop click must not discard a typed API key. Escape / Cancel / × stay explicit.
+  const isDraftDirty = (): boolean => apiKeyDraft !== ''
+  const guardOutsideDismiss = preventOutsideDismissWhenDirty(isDraftDirty)
+
   const handleConnect = async (): Promise<void> => {
     const apiKey = apiKeyDraft.trim()
     if (!apiKey || connectState === 'connecting') {
@@ -113,8 +118,8 @@ export function LinearApiKeyDialog({
   const resolvedDescription =
     description ??
     (workspace
-      ? `Paste a Personal API key for ${workspace.organizationName}. If this workspace is already connected, Orca replaces its stored key.`
-      : 'Paste a Personal API key for the Linear workspace you want Orca to use. If that workspace is already connected, Orca replaces its stored key.')
+      ? `Paste a Personal API key for ${workspace.organizationName}. If this workspace is already connected, Wakii replaces its stored key.`
+      : 'Paste a Personal API key for the Linear workspace you want Wakii to use. If that workspace is already connected, Wakii replaces its stored key.')
   const storageCopy =
     runtimeTarget.kind === 'environment'
       ? 'This key is stored by the active remote runtime.'
@@ -125,6 +130,8 @@ export function LinearApiKeyDialog({
       <DialogContent
         overlayClassName={overlayClassName}
         className={cn('sm:max-w-lg', contentClassName)}
+        onPointerDownOutside={guardOutsideDismiss}
+        onInteractOutside={guardOutsideDismiss}
         onKeyDown={(event) => {
           if (event.key === 'Enter' && apiKeyDraft.trim() && connectState !== 'connecting') {
             event.preventDefault()
@@ -184,7 +191,7 @@ export function LinearApiKeyDialog({
             <p>
               {translate(
                 'auto.components.linear.api.key.dialog.d56d3629f4',
-                'Prefer full access when Orca should show every team the account can access in that workspace. Restricted keys only expose permitted teams, and private teams require the key owner to have access.'
+                'Prefer full access when Wakii should show every team the account can access in that workspace. Restricted keys only expose permitted teams, and private teams require the key owner to have access.'
               )}
             </p>
             <p>

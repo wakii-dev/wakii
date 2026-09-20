@@ -198,7 +198,6 @@ planning and review skills below.
 
 | Command | What it does | How it works |
 | ------- | ------------ | ------------ |
-| `/brainstorm` | Turns a rough idea into a validated spec + implementation plan | Explores intent through clarifying questions, challenges assumptions, then produces the spec — optionally publishing the plan to Linear and isolating a worktree |
 | `/writing-plans-linear` | Plans detailed enough for an engineer with zero context | Decomposes the spec into bite-sized tasks (files, code, how to test) and publishes to Linear for team visibility |
 | `/story-workflow` | Runs large features as epic + sub-feature brackets | Analyzes once at epic level, writes a bracket file with dependencies, launches each sub-feature as an isolated workflow |
 | `/orca-superpowers-workflow` | The end-to-end pipeline in one command | Impact analysis → Linear issue → spec → plan → task DAG → gated execution → verification, auto-activating the Orca bridges at every transition |

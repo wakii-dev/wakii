@@ -35,7 +35,7 @@ import {
 } from '../orca-runtime-test-fixtures.spec'
 import { createWorktreeRemovalRuntime } from '../orca-runtime-test-scenario-builders.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('creates the first terminal by id when duplicate repo entries expose the same path', async () => {
     const runtime = new OrcaRuntimeService(store)
     const spawn = vi.fn().mockResolvedValue({ id: 'pty-duplicate-path' })
@@ -612,7 +612,12 @@ describe('OrcaRuntimeService', () => {
     })
 
     await expect(
-      runtime.removeManagedWorktree(TEST_WORKTREE_ID, false, false, false, 'runtime:env-b')
+      runtime.removeManagedWorktree(TEST_WORKTREE_ID, {
+        force: false,
+        runHooks: false,
+        allowUnverifiedPtyStop: false,
+        hostId: 'runtime:env-b'
+      })
     ).rejects.toThrow('no longer belongs to runtime:env-b')
 
     expect(localProvider.listProcesses).not.toHaveBeenCalled()

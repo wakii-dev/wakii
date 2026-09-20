@@ -167,7 +167,7 @@ export async function runHostOrcaCliPassthrough(
       })
     // Why: must match the userData dir the runtime RPC server writes metadata
     // to (see index.ts OrcaRuntimeRpcServer wiring), or the CLI subprocess
-    // reports "Orca is not running" against a healthy app.
+    // reports "Wakii is not running" against a healthy app.
     userDataPath = options.userDataPath ?? getCanonicalUserDataPath()
   } catch (err) {
     // Why: no Electron app context (or broken install paths) — degrade to the
@@ -187,7 +187,7 @@ export async function runHostOrcaCliPassthrough(
   }
 
   if (!entryExists(cliEntryPath)) {
-    throw new HostCliUnavailableError(`Orca CLI entry not found at ${cliEntryPath}`)
+    throw new HostCliUnavailableError(`Wakii CLI entry not found at ${cliEntryPath}`)
   }
 
   const env = buildHostCliEnv({
@@ -222,7 +222,7 @@ export async function runHostOrcaCliPassthrough(
       }
       resolve({
         stdout: stdout.toString(),
-        stderr: `${stderr.toString()}Orca CLI bridge timed out after ${killTimeoutMs}ms on the host.\n`,
+        stderr: `${stderr.toString()}Wakii CLI bridge timed out after ${killTimeoutMs}ms on the host.\n`,
         exitCode: 1
       })
     }, killTimeoutMs)
@@ -238,7 +238,7 @@ export async function runHostOrcaCliPassthrough(
       // runnable at all — signal the caller to use the legacy fallback rather
       // than reporting a confusing per-command failure.
       reject(
-        new HostCliUnavailableError(`Failed to launch the Orca CLI on the host: ${err.message}`)
+        new HostCliUnavailableError(`Failed to launch the Wakii CLI on the host: ${err.message}`)
       )
     })
 

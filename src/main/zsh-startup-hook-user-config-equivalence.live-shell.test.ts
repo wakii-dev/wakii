@@ -422,7 +422,7 @@ describe.skipIf(process.platform === 'win32')('the fixes the old wrapper was bui
     }
   })
 
-  itWithZsh('refuses an inherited ZDOTDIR that is an Orca wrapper dir (#15258)', async () => {
+  itWithZsh('refuses an inherited ZDOTDIR that is an Wakii wrapper dir (#15258)', async () => {
     // Why the shell checks this and not only Node: the launch config sets
     // ORCA_ORIG_ZDOTDIR when it resolved a usable dir, but a pane also inherits
     // its parent's environment, so a stale value written by an older build can
@@ -450,7 +450,7 @@ describe.skipIf(process.platform === 'win32')('the fixes the old wrapper was bui
     }
   })
 
-  itWithZsh('leaves a nested Orca nothing of its own to inherit (#11044, #11146)', async () => {
+  itWithZsh('leaves a nested Wakii nothing of its own to inherit (#11044, #11146)', async () => {
     // Why this closes #11044's plain shape rather than repairing it: that bug was
     // a nested zsh inheriting Orca's ZDOTDIR, so /etc/zshrc derived HISTFILE
     // inside the wrapper dir. A pane can no longer hand any child a ZDOTDIR that

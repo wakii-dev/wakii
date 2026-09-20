@@ -42,7 +42,7 @@ export class OrcadInstanceLockError extends Error {
     message: string
   ) {
     super(message)
-    this.name = 'OrcadInstanceLockError'
+    this.name = 'WakiidInstanceLockError'
   }
 }
 
@@ -178,7 +178,7 @@ function assertDataRootIsPrivate(dataRoot: string): void {
 }
 
 /**
- * Take the lock, or throw an `OrcadInstanceLockError` naming why.
+ * Take the lock, or throw an `WakiidInstanceLockError` naming why.
  *
  * A dead holder's record is reclaimed; a live one, or one belonging to a different identity,
  * is never touched.

@@ -12,7 +12,7 @@ const STATUSLINE_CLEANUP_LABEL = 'orca_statusline_cleanup'
 const STATUSLINE_PROBE_LABEL = 'orca_statusline_probe'
 
 // Why: Claude Code pipes `rate_limits` to the statusLine command on every turn; forwarding
-// it gives Orca live usage without spending the OAuth usage endpoint's tight budget.
+// it gives Wakii live usage without spending the OAuth usage endpoint's tight budget.
 // Emits no stdout so the in-terminal status line stays visually unchanged.
 export function getManagedStatusLineScript(target: 'local' | 'posix' = 'local'): string {
   if (target === 'local' && process.platform === 'win32') {
@@ -21,7 +21,7 @@ export function getManagedStatusLineScript(target: 'local' | 'posix' = 'local'):
       'setlocal',
       // Why: a backgrounded session's statusline runs in a daemon worker that inherited the
       // dispatching pane's env, so ORCA_PANE_KEY names a pane it does not run in (#9236).
-      // Why exit, not the drain label: a worker is outside an Orca pane, so reading stdin to
+      // Why exit, not the drain label: a worker is outside an Wakii pane, so reading stdin to
       // EOF can block forever (#11549). This gates before stdin is owned, per that contract.
       'if not "%CLAUDE_JOB_DIR%"=="" exit /b 0',
       // Why: pane key is static PTY env (the endpoint file never sets it), so it can gate before stdin is consumed.
@@ -51,7 +51,7 @@ export function getManagedStatusLineScript(target: 'local' | 'posix' = 'local'):
       // Why: \" is the MSVC argv escape — findstr sees the quoted JSON key, so a cwd containing rate_limits can't false-match (POSIX guard parity).
       '"%SystemRoot%\\System32\\findstr.exe" /c:\\"rate_limits\\" "%ORCA_STATUSLINE_PAYLOAD_FILE%" >nul 2>nul',
       `if errorlevel 1 goto :${STATUSLINE_CLEANUP_LABEL}`,
-      // Why: call the endpoint file to refresh port/token — a PTY that survived an Orca restart carries stale env; falls through to PTY env if missing.
+      // Why: call the endpoint file to refresh port/token — a PTY that survived an Wakii restart carries stale env; falls through to PTY env if missing.
       'if defined ORCA_AGENT_HOOK_ENDPOINT if exist "%ORCA_AGENT_HOOK_ENDPOINT%" call "%ORCA_AGENT_HOOK_ENDPOINT%" 2>nul',
       `if "%ORCA_AGENT_HOOK_PORT%"=="" goto :${STATUSLINE_CLEANUP_LABEL}`,
       `if "%ORCA_AGENT_HOOK_TOKEN%"=="" goto :${STATUSLINE_CLEANUP_LABEL}`,

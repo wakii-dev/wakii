@@ -1,14 +1,14 @@
 // ── PINNED worktree-catalog enumeration source (spec adaptation 3, rev 3) ─────
 // ONE source for ALL consumers (storyList, storyDetail, notification routing):
 //   the runtime resolved-worktree snapshot — the same data protected
-//   `OrcaRuntimeWithListKnownResolvedWorktreesForExplicitTarget.listResolvedWorktrees()`
+//   `WakiiRuntimeWithListKnownResolvedWorktreesForExplicitTarget.listResolvedWorktrees()`
 //   returns (computed by computeResolvedWorktrees(),
 //   src/main/runtime/orca-runtime-list-known-resolved-worktrees-for-explicit-target.ts).
 //   Do NOT re-probe; do NOT substitute.
 //
 // ACCESS PATH (review fix C1 — concrete, no re-probing):
 // Tasks 5/6/7 write src/main/runtime/rpc/methods/superpowers-*.ts handlers whose
-// ctx.runtime is typed `OrcaRuntimeService` (src/main/runtime/rpc/core.ts:65), so
+// ctx.runtime is typed `WakiiRuntimeService` (src/main/runtime/rpc/core.ts:65), so
 // the `protected` listResolvedWorktrees() (file above, :72) is a TS compile error
 // from there. Task 5 must add a minimal 1:1 public accessor:
 //   `listWorktreeCatalog(): Promise<ResolvedWorktree[]>`

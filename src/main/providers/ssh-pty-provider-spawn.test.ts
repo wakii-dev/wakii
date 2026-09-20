@@ -437,7 +437,7 @@ describe('spawn', () => {
     })
   })
 
-  it('injects the relay-backed Orca CLI bridge into remote PTY env', async () => {
+  it('injects the relay-backed Wakii CLI bridge into remote PTY env', async () => {
     mux.request.mockResolvedValue({ id: 'pty-bridge' })
     provider = new SshPtyProvider('conn-1', mux as never, {
       binDir: '/home/user/.orca-relay/bin',

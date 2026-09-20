@@ -14,7 +14,7 @@ import {
 } from '../orca-runtime-test-mocks.spec'
 import { UUID_RE, expectStablePaneKeyEnv, store } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('returns a setup launch payload for CLI-created worktrees when hooks are explicitly enabled', async () => {
     const runtime = new OrcaRuntimeService(store)
     const activateWorktree = vi.fn()
@@ -77,7 +77,9 @@ describe('OrcaRuntimeService', () => {
       '/tmp/workspaces/runtime-hook-test',
       'runtime-hook-test',
       'origin/main',
-      false
+      false,
+      false,
+      {}
     )
     expect(result).toEqual({
       worktree: expect.objectContaining({

@@ -17,7 +17,7 @@ export type SubscriptionRegistryDouble = {
 }
 
 /**
- * Faithful double of the runtime subscription registry (`OrcaRuntimeService`,
+ * Faithful double of the runtime subscription registry (`WakiiRuntimeService`,
  * `registerSubscriptionCleanup` through `cleanupSubscriptionsForConnection`).
  *
  * This mirrors production line-for-line, so it can drift. If you change

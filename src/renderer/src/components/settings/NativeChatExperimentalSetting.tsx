@@ -20,6 +20,7 @@ export function NativeChatExperimentalSetting({
 }: NativeChatExperimentalSettingProps): React.JSX.Element {
   const nativeChatEnabled = settings.experimentalNativeChat === true
   const structuredNativeChatEnabled = settings.experimentalStructuredNativeChat === true
+  const resumeOnRestartEnabled = settings.nativeChatResumeWorkOnRestart === true
   const defaultView: NativeChatDefaultView =
     settings.openAgentTabsInChatByDefault === true ? 'native-chat' : 'terminal-chat'
 
@@ -132,7 +133,7 @@ export function NativeChatExperimentalSetting({
                 <p className="text-xs text-muted-foreground">
                   {translate(
                     'auto.components.settings.ExperimentalPane.nativeChat.structuredScope',
-                    'Local sessions only for now. WSL and remote execution hosts (including SSH) continue to use terminal chat, and Windows falls back to it unless Orca can read process start times.'
+                    'Local sessions only for now. WSL and remote execution hosts (including SSH) continue to use terminal chat, and Windows falls back to it unless Wakii can read process start times.'
                   )}
                 </p>
               </div>
@@ -146,6 +147,36 @@ export function NativeChatExperimentalSetting({
                   updateSettings({
                     experimentalStructuredNativeChat: !structuredNativeChatEnabled
                   })
+                }
+              />
+            </div>
+          ) : null}
+
+          {/* Only structured sessions have a resume cursor to continue from. */}
+          {defaultView === 'native-chat' && structuredNativeChatEnabled ? (
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 shrink space-y-0.5">
+                <Label>
+                  {translate(
+                    'auto.components.settings.ExperimentalPane.nativeChat.resumeTitle',
+                    'Reconnect working chats automatically after a restart'
+                  )}
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {translate(
+                    'auto.components.settings.ExperimentalPane.nativeChat.resumeCopy',
+                    'When Wakii quits or installs an update, chats that were mid-turn are offered again on the next launch. On, they are reconnected without asking and Wakii tells you afterwards — the same thing as ticking "Don\'t ask again" in that prompt. Off, you choose from the list each time. Reconnecting restores a chat where it stopped; it does not continue the interrupted reply.'
+                  )}
+                </p>
+              </div>
+              <SettingsSwitch
+                checked={resumeOnRestartEnabled}
+                ariaLabel={translate(
+                  'auto.components.settings.ExperimentalPane.nativeChat.resumeToggleLabel',
+                  'Toggle automatic reconnect after a restart'
+                )}
+                onChange={() =>
+                  updateSettings({ nativeChatResumeWorkOnRestart: !resumeOnRestartEnabled })
                 }
               />
             </div>

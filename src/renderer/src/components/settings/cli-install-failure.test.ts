@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { CliInstallStatus } from '../../../../shared/cli-install-types'
 import { readCliInstallFailure, readCliInstallRejection } from './cli-install-failure'
 
-const FALLBACK = 'Orca could not finish CLI registration and reported no reason.'
+const FALLBACK = 'Wakii could not finish CLI registration and reported no reason.'
 
 function cliStatus(overrides: Partial<CliInstallStatus> = {}): CliInstallStatus {
   return {
@@ -11,7 +11,7 @@ function cliStatus(overrides: Partial<CliInstallStatus> = {}): CliInstallStatus 
     commandPath: '/usr/local/bin/orca',
     pathDirectory: '/usr/local/bin',
     pathConfigured: true,
-    launcherPath: '/Applications/Orca.app/Contents/Resources/bin/orca',
+    launcherPath: '/Applications/Wakii.app/Contents/Resources/bin/orca',
     installMethod: 'symlink',
     supported: true,
     state: 'installed',
@@ -34,12 +34,12 @@ describe('readCliInstallFailure', () => {
           state: 'unsupported',
           supported: false,
           unsupportedReason: 'launcher_missing',
-          detail: 'The bundled CLI launcher is missing from this Orca build.'
+          detail: 'The bundled CLI launcher is missing from this Wakii build.'
         }),
         FALLBACK
       )
     ).toEqual({
-      reason: 'The bundled CLI launcher is missing from this Orca build.',
+      reason: 'The bundled CLI launcher is missing from this Wakii build.',
       conflictCommandPath: null
     })
   })
@@ -49,12 +49,12 @@ describe('readCliInstallFailure', () => {
       readCliInstallFailure(
         cliStatus({
           state: 'conflict',
-          detail: '/usr/local/bin/orca exists but is not an Orca symlink.'
+          detail: '/usr/local/bin/orca exists but is not an Wakii symlink.'
         }),
         FALLBACK
       )
     ).toEqual({
-      reason: '/usr/local/bin/orca exists but is not an Orca symlink.',
+      reason: '/usr/local/bin/orca exists but is not an Wakii symlink.',
       conflictCommandPath: '/usr/local/bin/orca'
     })
   })
@@ -72,14 +72,14 @@ describe('readCliInstallRejection', () => {
     expect(
       readCliInstallRejection(
         new Error(
-          "Error invoking remote method 'cli:install': Error: Refusing to replace non-Orca " +
+          "Error invoking remote method 'cli:install': Error: Refusing to replace non-Wakii " +
             'command at /usr/local/bin/orca. Remove it and register again if it is no longer needed.'
         ),
         FALLBACK
       )
     ).toEqual({
       reason:
-        'Refusing to replace non-Orca command at /usr/local/bin/orca. ' +
+        'Refusing to replace non-Wakii command at /usr/local/bin/orca. ' +
         'Remove it and register again if it is no longer needed.',
       conflictCommandPath: null
     })
@@ -88,8 +88,8 @@ describe('readCliInstallRejection', () => {
   it('keeps the registration-lock remedy that names the lock file', () => {
     const failure = readCliInstallRejection(
       new Error(
-        "Error invoking remote method 'cli:install': Error: Timed out waiting for another Orca " +
-          'process to finish CLI registration (waited 330s). If no other Orca is running, remove ' +
+        "Error invoking remote method 'cli:install': Error: Timed out waiting for another Wakii " +
+          'process to finish CLI registration (waited 330s). If no other Wakii is running, remove ' +
           '/home/u/.cache/orca/appimage/.cli-registration.lock and retry.'
       ),
       FALLBACK

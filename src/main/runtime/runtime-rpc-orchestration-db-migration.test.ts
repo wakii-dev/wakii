@@ -21,7 +21,7 @@ vi.mock('../git/worktree', () => {
   }
 })
 
-describe('OrcaRuntimeRpcServer', () => {
+describe('WakiiRuntimeRpcServer', () => {
   // Why: §6 test for the idempotent + hard-fail schema migration. A broken
   // migration must crash startup loudly rather than serve traffic against a
   // schema missing the delivered_at column.

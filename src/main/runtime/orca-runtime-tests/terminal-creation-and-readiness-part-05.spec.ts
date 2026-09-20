@@ -24,7 +24,7 @@ import {
   store
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('returns the exact pre-minted leaf for concurrent renderer-backed splits', async () => {
     const tabId = 'tab-concurrent-splits'
     const sourceLeafId = '11111111-1111-4111-8111-111111111111'

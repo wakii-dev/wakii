@@ -371,7 +371,7 @@ function restoreEnv(key: string, value: string | undefined): void {
   }
 }
 
-describe('configureOrcaUserDataPathEnv', () => {
+describe('configureWakiiUserDataPathEnv', () => {
   it('overwrites stale inherited ORCA_USER_DATA_PATH with Electron userData', async () => {
     const { app } = await import('electron')
     const { configureOrcaUserDataPathEnv } = await import('./configure-process')

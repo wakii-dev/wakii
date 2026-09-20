@@ -330,7 +330,7 @@ describe('prepareWorktreePushTargetWithExec rollback', () => {
     expect(remotes).not.toHaveProperty('pr-contributor-orca')
   })
 
-  it('keeps a reused remote Orca did not add when the fetch fails', async () => {
+  it('keeps a reused remote Wakii did not add when the fetch fails', async () => {
     const remotes: Record<string, string> = {
       origin: 'git@github.com:stablyai/orca.git',
       existing: FORK_SSH

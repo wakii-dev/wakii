@@ -21,16 +21,16 @@ const LINUX_PACKAGE_RECOVERY_MESSAGES: Record<LinuxPackageRecoveryUnavailableRea
   'not-regular':
     'The downloaded package is no longer a valid file in the update cache. Download the update again, or get it from the official release page.',
   'hash-mismatch':
-    'The downloaded package no longer matches the verified release, so Orca will not hand it to a package manager. Download the update again, or get it from the official release page.',
+    'The downloaded package no longer matches the verified release, so Wakii will not hand it to a package manager. Download the update again, or get it from the official release page.',
   'read-failed':
-    'Orca could not read the downloaded package. Download the update again, or get it from the official release page.',
+    'Wakii could not read the downloaded package. Download the update again, or get it from the official release page.',
   'no-sudo':
-    'No sudo command was found in the system directories, so Orca cannot build a safe install command. Show the package and install it with your package manager.',
+    'No sudo command was found in the system directories, so Wakii cannot build a safe install command. Show the package and install it with your package manager.',
   'no-package-manager':
-    'No supported package manager was found in the system directories, so Orca cannot build a safe install command. Show the package and install it with your package manager.',
+    'No supported package manager was found in the system directories, so Wakii cannot build a safe install command. Show the package and install it with your package manager.',
   // Defensive: capture only ever tracks absolute cache paths, so this reports a bug rather than a machine state.
   'invalid-package-path':
-    'The downloaded package is not at a usable path, so Orca cannot build a safe install command. Show the package and install it with your package manager.'
+    'The downloaded package is not at a usable path, so Wakii cannot build a safe install command. Show the package and install it with your package manager.'
 }
 
 // Why: clearing the artifact alone would leave the renderer's actions enabled; the status must lose its recovery too.

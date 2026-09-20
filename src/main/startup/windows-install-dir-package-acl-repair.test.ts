@@ -156,7 +156,7 @@ describe('repairWindowsInstallDirPackageAcl', () => {
       (
         await repair({
           userDataPath,
-          installDir: 'D:\\Program Files\\Orca',
+          installDir: 'D:\\Program Files\\Wakii',
           run: moved.run
         })
       ).result

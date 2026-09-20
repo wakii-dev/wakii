@@ -154,7 +154,33 @@ fi
 ST=$(linear_state "$LINEAR")
 [ "$ST" = "Done" ] && { echo "$SF_NUM ($LINEAR) đã Done — không launch lại"; exit 0; }
 WT=$(ls -d "$HOME"/orca/workspaces/"$REPOB"/sf-"$N"-* 2>/dev/null | head -1)
-[ -n "$WT" ] && { echo "$SF_NUM đã có worktree: $(basename "$WT")"; exit 0; }
+if [ -n "$WT" ]; then
+  # SF-3 pre-dispatch: worktree có worker live của coordinator khác → CHẶN
+  # (bài học collision 19/09 — 2 coordinator cùng đụng SF-4). Probe hỏng →
+  # fail-open (không chặn mù — không data thì không phán được ownership).
+  OPLIB="$(dirname "$0")/story-ownership-probe"
+  [ -f "$OPLIB" ] || OPLIB="$HOME/.claude/bin/story-ownership-probe"
+  if [ -f "$OPLIB" ]; then
+    # shellcheck disable=SC1091
+    . "$OPLIB"
+    if ownership_probe_load; then
+      # parent-dir scope — basename trùng giữa 2 repo không được block nhầm
+      wtrun="$(ownership_probe_worktree_owner "$(basename "$WT")" "$(dirname "$WT")")"
+      wtrun2="$(ownership_probe_worktree_owner "$WT" "$(dirname "$WT")")"
+      [ -n "$wtrun2" ] && wtrun="$wtrun2"
+      wowner="$(printf '%s' "$wtrun" | cut -f2)"
+      wrun="$(printf '%s' "$wtrun" | cut -f1)"
+      wself="$(ownership_probe_self)"
+      if [ -n "$wtrun" ] && { [ -z "$wself" ] || [ "$wowner" != "$wself" ]; }; then
+        echo "⛔ BLOCKED: $SF_NUM foreign-owned — worktree $(basename "$WT") đang có worker live của coordinator ${wowner:-?} (run ${wrun:-?}) — KHÔNG dispatch"
+        exit 1
+      fi
+    else
+      echo "ownership-probe: đọc không được — không chặn được (degrade)" >&2
+    fi
+  fi
+  echo "$SF_NUM đã có worktree: $(basename "$WT")"; exit 0
+fi
 for d in $(echo "$DEPS" | tr ',' ' '); do
   d=$(echo "$d" | tr -d ' ')
   echo "$d" | grep -q '^SF-' || continue
@@ -330,8 +356,18 @@ if [ "$CLAIM" = 1 ] && [ "$(distributed_enabled)" = "1" ]; then
   fi
 fi
 echo "── launch sf-$N-$SLUG ($LINEAR) ← $DEST"
+# lineage cha (kit ≥2.16.7): SF worktree là CON của coordinator worktree của
+# story — 1 story = 1 cây. Cha tên "<dest-slug>-coordinator" (tạo ở APPROVE);
+# chưa có cha → degrade --no-parent, không chặn launch (fail-open).
+COORD_WT="$(basename "$DEST")-coordinator"
+PARENT_FLAG="--no-parent"
+if orca worktree show --worktree "$COORD_WT" --json >/dev/null 2>&1; then
+  PARENT_FLAG="--parent-worktree $COORD_WT"
+else
+  echo "  (worktree cha $COORD_WT chưa có — tạo ở APPROVE; launch tiếp không lineage)"
+fi
 orca worktree create --name "sf-$N-$SLUG" --linear-issue "$LINEAR" \
-  --base-branch "$DEST" --agent claude --no-parent --prompt "$PROMPT" --json >/dev/null 2>&1 \
+  --base-branch "$DEST" --agent claude $PARENT_FLAG --prompt "$PROMPT" --json >/dev/null 2>&1 \
   && echo "LAUNCHED ✓ sf-$N-$SLUG" || {
     echo "LAUNCH FAIL — read-back: worktree list"
     # guard branch giữ lại trên remote = dấu vết vô hại — máy khác thấy sẽ skip

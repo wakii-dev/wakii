@@ -9,7 +9,7 @@ import { DEVICE_REGISTRY_FILENAME, E2EE_KEYPAIR_FILENAME } from './mobile-pairin
 import { installFakeAppEnvironment } from '../../../config/scripts/vitest-host-ports-setup'
 
 // Mutable userData the electron mock resolves. We flip it mid-test to simulate
-// app.setName('Orca') changing how app.getPath('userData') resolves (e.g. from
+// app.setName('Wakii') changing how app.getPath('userData') resolves (e.g. from
 // lowercase 'orca' to uppercase 'Orca' on a case-sensitive filesystem) — the
 // divergence that drops paired devices. We use two genuinely distinct directory
 // names rather than case variants so the assertion is deterministic regardless
@@ -58,7 +58,7 @@ describe('mobile pairing userData path stability', () => {
     const { initDataPath, getCanonicalUserDataPath } = await import('../persistence')
     initDataPath()
 
-    // app.setName('Orca') happens later in startup, changing late resolution.
+    // app.setName('Wakii') happens later in startup, changing late resolution.
     appState.userData = lateDir
 
     expect(getCanonicalUserDataPath()).toBe(canonicalDir)
@@ -72,7 +72,7 @@ describe('mobile pairing userData path stability', () => {
     const { initDataPath, getCanonicalUserDataPath } = await import('../persistence')
     initDataPath()
 
-    appState.userData = lateDir // app.setName('Orca') has run by the time the runtime starts
+    appState.userData = lateDir // app.setName('Wakii') has run by the time the runtime starts
 
     const { DeviceRegistry } = await import('./device-registry')
     const { loadOrCreateE2EEKeypair } = await import('./e2ee-keypair')

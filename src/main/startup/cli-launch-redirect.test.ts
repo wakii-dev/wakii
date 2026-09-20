@@ -5,15 +5,15 @@ import { getCliLaunchArgs, maybeRedirectCliLaunch } from './cli-launch-redirect'
 const COMMAND_NAMES = ['project', 'serve', 'status', 'skills', 'worktree']
 
 const linux = {
-  resourcesPath: '/opt/Orca/resources',
+  resourcesPath: '/opt/Wakii/resources',
   execPath: '/opt/Orca/orca-ide',
   get cliEntryPath(): string {
     return posix.join(this.resourcesPath, 'app.asar.unpacked', 'out', 'cli', 'index.js')
   }
 }
 const windows = {
-  resourcesPath: 'C:\\Users\\me\\AppData\\Local\\Programs\\Orca\\resources',
-  execPath: 'C:\\Users\\me\\AppData\\Local\\Programs\\Orca\\Orca.exe',
+  resourcesPath: 'C:\\Users\\me\\AppData\\Local\\Programs\\Wakii\\resources',
+  execPath: 'C:\\Users\\me\\AppData\\Local\\Programs\\Wakii\\Wakii.exe',
   get cliEntryPath(): string {
     return win32.join(this.resourcesPath, 'app.asar.unpacked', 'out', 'cli', 'index.js')
   }

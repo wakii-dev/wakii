@@ -50,11 +50,11 @@ export function maybeRedirectCliLaunch(
     return { redirected: false }
   }
   if (env[REDIRECT_ATTEMPT_ENV] === '1') {
-    process.stderr.write('Unable to start the Orca CLI through Electron node mode.\n')
+    process.stderr.write('Unable to start the Wakii CLI through Electron node mode.\n')
     return { redirected: true, status: 1 }
   }
   if (!exists(cliEntryPath)) {
-    process.stderr.write(`Unable to locate the Orca CLI entrypoint at ${cliEntryPath}\n`)
+    process.stderr.write(`Unable to locate the Wakii CLI entrypoint at ${cliEntryPath}\n`)
     return { redirected: true, status: 1 }
   }
 

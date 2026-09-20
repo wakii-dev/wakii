@@ -98,7 +98,7 @@ afterEach(() => {
 describe('UpdateCard Windows signature failures', () => {
   it('does not offer the rejected version as a manual publisher-check bypass', () => {
     const message =
-      'New version 1.4.200 is not signed by the application owner: publisherNames: Orca'
+      'New version 1.4.200 is not signed by the application owner: publisherNames: Wakii'
     renderAfterAvailableStatus()
 
     act(() => useAppStore.getState().setUpdateStatus({ state: 'error', message }))
@@ -136,7 +136,7 @@ describe('UpdateCard Windows signature failures', () => {
   // An install failure now carries the updater's own text, so it can reach these branches too.
   it('routes a signature verdict raised during install to the security-stop card', () => {
     const message =
-      'New version 1.4.200 is not signed by the application owner: publisherNames: Orca'
+      'New version 1.4.200 is not signed by the application owner: publisherNames: Wakii'
     renderAfterAvailableStatus()
 
     act(() => useAppStore.getState().setUpdateStatus({ state: 'error', message }))
@@ -218,7 +218,7 @@ function showPackageRecovery(recovery = PACKAGE_RECOVERY): void {
   act(() =>
     useAppStore.getState().setUpdateStatus({
       state: 'error',
-      message: 'Quit Orca before running the system package install command.',
+      message: 'Quit Wakii before running the system package install command.',
       recovery
     })
   )
@@ -242,7 +242,7 @@ describe('UpdateCard Linux package-install recovery', () => {
   it('renders an initial recovery snapshot with its versioned release fallback', () => {
     renderWithInitialStatus({
       state: 'error',
-      message: 'Quit Orca before running the system package install command.',
+      message: 'Quit Wakii before running the system package install command.',
       recovery: PACKAGE_RECOVERY
     })
 
@@ -325,7 +325,7 @@ describe('UpdateCard Linux package-install recovery', () => {
 
   it('links unusable package metadata to the release without offering a futile retry', () => {
     const message =
-      'The downloaded package metadata could not be verified. Quit Orca before downloading and installing the update from the official release page.'
+      'The downloaded package metadata could not be verified. Quit Wakii before downloading and installing the update from the official release page.'
     renderWithInitialStatus({
       state: 'error',
       message,
@@ -354,7 +354,7 @@ describe('UpdateCard Linux package-install recovery', () => {
 
   it('shows the appended install cause behind the generic card details', () => {
     const message =
-      'Could not start the update installer. Orca remains open. (Command failed: pkexec must be setuid root)'
+      'Could not start the update installer. Wakii remains open. (Command failed: pkexec must be setuid root)'
     renderAfterAvailableStatus()
 
     act(() => useAppStore.getState().setUpdateStatus({ state: 'error', message }))

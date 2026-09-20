@@ -54,7 +54,7 @@ async function writePayload(rootPath: string, content = '#!/usr/bin/env bash\n')
 async function makeExtractionFixture() {
   const root = await mkdtemp(join(tmpdir(), 'orca-appimage-pruning-'))
   created.push(root)
-  const appImagePath = join(root, 'Orca.AppImage')
+  const appImagePath = join(root, 'Wakii.AppImage')
   await writeFile(appImagePath, '#!/usr/bin/env bash\n', { mode: 0o755 })
   return { root, appImagePath, cacheRootPath: join(root, 'cache') }
 }

@@ -36,11 +36,11 @@ describe('parseMobileMarkdown', () => {
   })
 
   it('parses GFM tables into table blocks', () => {
-    expect(parseMobileMarkdown('| Name | State |\n| --- | --- |\n| Orca | Open |')).toEqual([
+    expect(parseMobileMarkdown('| Name | State |\n| --- | --- |\n| Wakii | Open |')).toEqual([
       {
         type: 'table',
         headers: ['Name', 'State'],
-        rows: [['Orca', 'Open']]
+        rows: [['Wakii', 'Open']]
       }
     ])
   })
@@ -58,7 +58,7 @@ describe('parseMobileMarkdown', () => {
   it('normalizes common README HTML into readable Markdown preview text', () => {
     const normalized = normalizeMobileMarkdownPreviewHtml(`
 <h1 align="center">
-  <a href="https://onOrca.dev"><img src="resources/build/icon.png" alt="Orca" width="64" /></a>
+  <a href="https://onWakii.dev"><img src="resources/build/icon.png" alt="Wakii" width="64" /></a>
   Orca
 </h1>
 
@@ -69,7 +69,7 @@ describe('parseMobileMarkdown', () => {
 </p>
 `)
 
-    expect(normalized).toContain('# [Orca](https://onOrca.dev)')
+    expect(normalized).toContain('# [Wakii](https://onWakii.dev)')
     expect(normalized).toContain('[GitHub stars](https://github.com/stablyai/orca/stargazers)')
     expect(normalized).toContain('**The AI Orchestrator**')
     expect(normalized).not.toContain('<h1')

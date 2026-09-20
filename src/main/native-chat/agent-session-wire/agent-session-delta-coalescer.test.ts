@@ -204,13 +204,13 @@ describe('agent-session delta coalescer', () => {
 
     expect(emitted).toEqual([
       {
-        text: 'ééé\n[Orca: streamed output truncated]',
+        text: 'ééé\n[Wakii: streamed output truncated]',
         observedBytes: 48,
         truncated: true
       }
     ])
     expect(instance.snapshot('item-1')).toEqual({
-      text: 'ééé\n[Orca: streamed output truncated]',
+      text: 'ééé\n[Wakii: streamed output truncated]',
       observedBytes: 55,
       truncated: true
     })

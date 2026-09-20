@@ -46,7 +46,7 @@ function invoke(channel: string, args?: unknown): unknown {
   return handler({}, args)
 }
 
-describe('registerOrcaProfileOrgMemberHandlers', () => {
+describe('registerWakiiProfileOrgMemberHandlers', () => {
   beforeEach(() => {
     handlers.clear()
     listOrcaProfileOrgMembersMock.mockReset().mockResolvedValue({ status: 'ok', roster: {} })

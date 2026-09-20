@@ -30,7 +30,7 @@ function createServices(): PluginHostServices {
     resolveActiveWorktreeContext: vi.fn().mockResolvedValue({
       worktreeId: WORKTREE_ID,
       branch: 'main',
-      displayName: 'Orca',
+      displayName: 'Wakii',
       path: '/Users/private/orca'
     }),
     listWorktreeTerminals: vi
@@ -155,7 +155,7 @@ describe('plugin host main/relay conformance', () => {
         ok: true,
         value: {
           branch: 'main',
-          displayName: 'Orca',
+          displayName: 'Wakii',
           terminals: [{ id: TERMINAL_ID }]
         }
       })

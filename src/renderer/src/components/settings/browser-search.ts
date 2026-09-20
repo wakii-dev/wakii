@@ -1,9 +1,9 @@
 import type { SettingsSearchEntry } from './settings-search'
 import { translate } from '@/i18n/i18n'
 import { translateSearchKeyword } from './settings-search-keywords'
+import { getBrowserUserAgentSearchEntry } from './browser-user-agent-search'
 import {
   getBrowserLinkRoutingDescription,
-  getTerminalLinkActionsDescription,
   getLinkRoutingModifierDescription,
   getLinkRoutingModifierTitle
 } from './browser-link-routing-copy'
@@ -58,6 +58,11 @@ export function getTerminalLinkActionSearchKeywords(platform: BrowserShortcutPla
       'auto.components.settings.browser.search.terminalLinkActions.disable',
       'disable'
     ),
+    'link click behavior',
+    'open directly',
+    'modifier-click only',
+    'middle click',
+    'mouse 3',
     platform.isMac ? 'cmd' : 'ctrl'
   ]
 }
@@ -186,9 +191,12 @@ export function getBrowserPaneSearchEntries(
     {
       title: translate(
         'auto.components.settings.BrowserTerminalLinkActionsSetting.title',
-        'Show link actions'
+        'Terminal URL clicks'
       ),
-      description: getTerminalLinkActionsDescription(platform),
+      description: translate(
+        'auto.components.settings.BrowserTerminalLinkActionsSetting.descriptionV2',
+        'Control clicks on detected URLs printed in terminal panes and chat transcripts.'
+      ),
       keywords: getTerminalLinkActionSearchKeywords(platform)
     },
     {
@@ -198,7 +206,7 @@ export function getBrowserPaneSearchEntries(
       ),
       description: translate(
         'auto.components.settings.browser.search.4e0fdf0a3f',
-        'Open workspace ports as worktree-specific Orca localhost URLs so browser tabs are easier to tell apart.'
+        'Open workspace ports as worktree-specific Wakii localhost URLs so browser tabs are easier to tell apart.'
       ),
       keywords: [
         ...translateSearchKeyword('auto.components.settings.browser.search.2d2d995c58', 'browser'),
@@ -217,7 +225,7 @@ export function getBrowserPaneSearchEntries(
       title: translate('auto.components.settings.browser.search.96afedcb5c', 'Session & Cookies'),
       description: translate(
         'auto.components.settings.browser.search.060ac1fcba',
-        'Import cookies from Chrome, Edge, or other browsers to use existing logins inside Orca.'
+        'Import cookies from Chrome, Edge, or other browsers to use existing logins inside Wakii.'
       ),
       keywords: [
         ...translateSearchKeyword('auto.components.settings.browser.search.2d2d995c58', 'browser'),
@@ -287,6 +295,7 @@ export function getBrowserPaneSearchEntries(
           'network'
         )
       ]
-    }
+    },
+    getBrowserUserAgentSearchEntry()
   ]
 }

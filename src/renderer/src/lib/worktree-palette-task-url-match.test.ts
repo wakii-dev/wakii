@@ -285,7 +285,7 @@ describe('matchWorktreePaletteTaskUrl', () => {
   })
 
   it('normalizes host case, port, and owner case before comparing GitHub identities', () => {
-    const intent = parseCmdJTaskSourceUrl('https://GHE.Example.com:8443/StablyAI/Orca/pull/12789')
+    const intent = parseCmdJTaskSourceUrl('https://GHE.Example.com:8443/StablyAI/Wakii/pull/12789')
     expect(
       matchWorktreePaletteTaskUrl({
         worktree: makeWorktree({ linkedPR: 12789 }),

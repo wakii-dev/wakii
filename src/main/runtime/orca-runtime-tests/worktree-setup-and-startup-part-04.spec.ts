@@ -15,7 +15,7 @@ import {
 import type { WorktreeMeta } from '../orca-runtime-test-mocks.spec'
 import { TEST_REPO_ID, makeWorktreeMeta, store } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('sends follow-up prompts for CLI-created stdin-after-start startup agents', async () => {
     const metaById: Record<string, WorktreeMeta> = {}
     const runtimeStore = {

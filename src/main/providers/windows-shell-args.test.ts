@@ -8,7 +8,7 @@ import { resolveWindowsShellLaunchArgs } from './windows-shell-args'
 // Why resolved rather than hardcoded: the wrapper tree is content-addressed.
 import { getShellReadyWrapperRoot } from './local-pty-shell-ready-wrapper-root'
 
-const CODEX_LAUNCH_PREFLIGHT = 'C:\\Program Files\\Orca\\orca.exe'
+const CODEX_LAUNCH_PREFLIGHT = 'C:\\Program Files\\Wakii\\orca.exe'
 const CMD_CODEX_LAUNCH_PREFLIGHT =
   'if defined ORCA_CODEX_LAUNCH_PREFLIGHT call %ORCA_CODEX_LAUNCH_PREFLIGHT_CMD_QUOTE%%ORCA_CODEX_LAUNCH_PREFLIGHT%%ORCA_CODEX_LAUNCH_PREFLIGHT_CMD_QUOTE% agent hooks prepare-codex > nul 2>&1'
 
@@ -129,7 +129,7 @@ describe('resolveWindowsShellLaunchArgs', () => {
       '$env:OPENCODE_CONFIG_DIR = $env:ORCA_OPENCODE_CONFIG_DIR'
     )
     const mimocodeRestoreIndex = command.indexOf('$env:MIMOCODE_HOME = $env:ORCA_MIMOCODE_HOME')
-    const duplicateStateGuardIndex = command.indexOf('Test-Path variable:global:__OrcaOsc133State')
+    const duplicateStateGuardIndex = command.indexOf('Test-Path variable:global:__WakiiOsc133State')
     const languageModeGuardIndex = command.indexOf('LanguageMode -eq "FullLanguage"')
     const ompWrapperIndex = command.indexOf('function Global:omp')
     const ompExtensionIndex = command.indexOf('--extension $env:ORCA_OMP_STATUS_EXTENSION')

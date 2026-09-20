@@ -34,7 +34,7 @@ it('keeps real git output byte-identical with admission on and bypassed', async 
   tempRoots.push(root)
   execFileSync('git', ['init', '-q'], { cwd: root })
   execFileSync('git', ['config', 'user.email', 'test@example.com'], { cwd: root })
-  execFileSync('git', ['config', 'user.name', 'Orca Test'], { cwd: root })
+  execFileSync('git', ['config', 'user.name', 'Wakii Test'], { cwd: root })
   await writeFile(path.join(root, 'tracked.txt'), 'line one\nline two\n')
   await writeFile(path.join(root, 'blob.bin'), Buffer.from([0, 1, 2, 3, 255]))
   execFileSync('git', ['add', '.'], { cwd: root })

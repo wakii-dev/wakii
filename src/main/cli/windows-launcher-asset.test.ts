@@ -13,7 +13,7 @@ describe('packaged Windows CLI launcher asset', () => {
   })
 
   it('marks the packaged child and propagates its exact exit status', () => {
-    const sourcePath = join(process.cwd(), 'native', 'windows-cli-launcher', 'OrcaCliLauncher.cs')
+    const sourcePath = join(process.cwd(), 'native', 'windows-cli-launcher', 'WakiiCliLauncher.cs')
     const source = readFileSync(sourcePath, 'utf8')
 
     // Why: the marker and command name must ride the launcher's own environment, never

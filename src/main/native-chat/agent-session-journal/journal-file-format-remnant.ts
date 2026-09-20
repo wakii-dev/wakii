@@ -50,7 +50,7 @@ export function journalFileFormatRemnantDisclosure(input: {
     body: {
       kind: 'status',
       text: boundJournalStatusText(
-        `This chat's history was saved in an older format Orca no longer reads, so it starts ` +
+        `This chat's history was saved in an older format Wakii no longer reads, so it starts ` +
           `empty. The session still points at the same ${formatAgentTypeLabel(input.agent)} ` +
           `conversation — send a message to pick up where you left off. The original ` +
           `transcript is on the session's host at \`${input.transcriptPath}\``

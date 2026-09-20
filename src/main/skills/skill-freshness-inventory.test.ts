@@ -677,7 +677,7 @@ describe('read-only skill freshness inventory', () => {
     )
     await mkdir(withSidecarRoot, { recursive: true })
     await writeFile(join(withSidecarRoot, 'SKILL.md'), test.currentMarkdown)
-    await writeFile(join(withSidecarRoot, 'README.md'), 'Neighbouring file Orca never shipped\n')
+    await writeFile(join(withSidecarRoot, 'README.md'), 'Neighbouring file Wakii never shipped\n')
 
     const inventory = await inventorySkillFreshness({
       currentAppVersion: '2.0.0',

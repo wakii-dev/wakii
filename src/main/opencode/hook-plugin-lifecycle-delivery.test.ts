@@ -1,6 +1,6 @@
 /**
  * Executes the generated OpenCode plugin source because this delivery state
- * lives inside OpenCode's process, not in Orca's TypeScript runtime.
+ * lives inside OpenCode's process, not in Wakii's TypeScript runtime.
  */
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -19,6 +19,12 @@ vi.mock('electron', () => ({
 import { _internals } from './hook-service'
 
 type SessionFixture = { id: string; parentID?: string }
+
+/** The plugin probes both SDK call conventions — current `(parameters, options)` and legacy
+ *  single-options — so fixtures for one session-client method differ in arity. */
+type SessionClientCall = (...args: never[]) => Promise<{ data: SessionFixture[] }>
+
+type SessionClientFixture = { list: SessionClientCall; get?: SessionClientCall }
 type PluginEvent = { type: string; properties?: Record<string, unknown> }
 type PluginEventHandler = (input: { event: PluginEvent }) => Promise<void>
 type PluginHooks = { event: PluginEventHandler; dispose?: () => Promise<void> }
@@ -83,7 +89,7 @@ describe('OpenCode plugin lifecycle delivery', () => {
     return loadHooksWithSession({ list })
   }
 
-  async function loadHooksWithSession(session: object): Promise<PluginHooks> {
+  async function loadHooksWithSession(session: SessionClientFixture): Promise<PluginHooks> {
     const pluginPath = join(tempDir, 'orca-opencode-status.mjs')
     writeFileSync(pluginPath, _internals.getOpenCodePluginSource())
     const module = (await import(pathToFileURL(pluginPath).href)) as {
@@ -166,7 +172,7 @@ describe('OpenCode plugin lifecycle delivery', () => {
     expect(fetchMock).toHaveBeenCalledOnce()
     const [url, init] = fetchMock.mock.calls[0]!
     expect(String(url)).toBe('http://127.0.0.1:45678/hook/opencode')
-    expect(new Headers(init?.headers).get('X-Orca-Agent-Hook-Token')).toBe('file-token')
+    expect(new Headers(init?.headers).get('X-Wakii-Agent-Hook-Token')).toBe('file-token')
   })
 
   it('warns once for an unreadable endpoint without exposing hook credentials', async () => {
@@ -786,7 +792,7 @@ describe('OpenCode plugin lifecycle delivery', () => {
       posts.push(readPayload(init))
       deliveries.push({
         url: String(url),
-        token: new Headers(init?.headers).get('X-Orca-Agent-Hook-Token')
+        token: new Headers(init?.headers).get('X-Wakii-Agent-Hook-Token')
       })
       return new Response(null, { status: 204 })
     }) as typeof globalThis.fetch

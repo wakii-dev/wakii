@@ -196,7 +196,7 @@ describe('installNativeDeps staged uploads', () => {
     const error = await deployAndLaunchRelay(conn).catch((e: Error) => e)
     expect((error as Error).message).toContain('could not download the Node.js headers')
     expect((error as Error).message).toContain('no local headers matching its own version')
-    expect((error as Error).message).not.toContain('Orca defect')
+    expect((error as Error).message).not.toContain('Wakii defect')
     expect((error as Error).message).toContain('ECONNREFUSED')
     // A full toolchain: the toolchain probe must not run, and this is not a "build tools" error.
     expect((error as Error).message).not.toContain('build tools')
@@ -204,7 +204,7 @@ describe('installNativeDeps staged uploads', () => {
     expect(commands.some((command) => command.includes('command -v "$t"'))).toBe(false)
   })
 
-  it('reports an Orca defect when headers were exported but node-gyp downloaded anyway', async () => {
+  it('reports an Wakii defect when headers were exported but node-gyp downloaded anyway', async () => {
     // The marker says the export happened; a download after it means node-gyp never read the env.
     const conn = makeMockConnection(sftpCapture)
     feed(makeStagedFirstInstallExecPrefix())
@@ -213,7 +213,7 @@ describe('installNativeDeps staged uploads', () => {
 
     const error = await deployAndLaunchRelay(conn).catch((e: Error) => e)
     expect((error as Error).message).toContain('/usr/local/include/node')
-    expect((error as Error).message).toContain('Orca defect')
+    expect((error as Error).message).toContain('Wakii defect')
     expect((error as Error).message).not.toContain('no local headers matching its own version')
   })
 

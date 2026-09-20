@@ -157,7 +157,7 @@ describePosix('generated shell wrapper files', () => {
       (): string => getDaemonShellReadyWrapperRoot()
     ],
     ['relay', (): void => void ensureOverlayRestoreWrappers(root), (): string => root]
-  ])('%s wrappers write no shell global outside Orca’s namespace', (_transport, generate, dir) => {
+  ])('%s wrappers write no shell global outside Wakii’s namespace', (_transport, generate, dir) => {
     generate()
 
     for (const [, relativePath] of WRAPPER_FILES) {

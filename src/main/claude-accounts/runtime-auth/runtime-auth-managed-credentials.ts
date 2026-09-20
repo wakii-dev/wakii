@@ -39,7 +39,7 @@ export class ClaudeRuntimeAuthManagedCredentials extends ClaudeRuntimeAuthCreden
   ): Promise<void> {
     const managedAuthPath = await this.getOwnedManagedAuthPath(account)
     if (!managedAuthPath) {
-      throw new Error('Managed Claude auth storage is not owned by Orca.')
+      throw new Error('Managed Claude auth storage is not owned by Wakii.')
     }
     if (process.platform === 'darwin') {
       await writeManagedClaudeKeychainCredentials(account.id, credentialsJson)
@@ -125,7 +125,7 @@ export class ClaudeRuntimeAuthManagedCredentials extends ClaudeRuntimeAuthCreden
           const canonicalLinuxPath = owned.stdout.trim()
           return canonicalLinuxPath ? toWindowsWslPath(canonicalLinuxPath, wslInfo.distro) : null
         } catch (error) {
-          // Why rethrow a timeout: null means "not owned by Orca", and the
+          // Why rethrow a timeout: null means "not owned by Wakii", and the
           // caller persists that -- clearing the user's account selection. A
           // slow distro must not decide ownership. Swallowing it here is what
           // made the previous guard dead code.

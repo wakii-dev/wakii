@@ -31,7 +31,7 @@ async function postGrokHook(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Orca-Agent-Hook-Token': endpoint.token
+      'X-Wakii-Agent-Hook-Token': endpoint.token
     },
     body: JSON.stringify(hookBody(payload))
   })

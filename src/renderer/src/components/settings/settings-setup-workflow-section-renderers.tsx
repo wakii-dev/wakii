@@ -1,3 +1,4 @@
+import { SessionHistorySettingsPane } from './SessionHistorySettingsPane'
 import { ArtifactsSettingsPane } from './ArtifactsSettingsPane'
 import { AutomationsSettingsPane } from './AutomationsSettingsPane'
 import { GeneralPane } from './GeneralPane'
@@ -17,10 +18,10 @@ export function renderOrcaAccountSettingsSection(
   return model.showDesktopOnlySettings ? (
     <SettingsSection
       id="orca-account"
-      title={translate('auto.components.settings.orcaAccount.title', 'Orca Account')}
+      title={translate('auto.components.settings.orcaAccount.title', 'Wakii Account')}
       description={translate(
         'auto.components.settings.orcaAccount.description',
-        'Share work instantly and reach your desktop from Orca Mobile wherever you are.'
+        'Share work instantly and reach your desktop from Wakii Mobile wherever you are.'
       )}
       searchEntries={navigation.getSectionSearchEntries('orca-account')}
     >
@@ -37,7 +38,7 @@ export function renderSetupGuideSettingsSection(context: SettingsRenderContext):
       title={translate('auto.components.settings.Settings.6d119427ef', 'Onboarding checklist')}
       description={translate(
         'auto.components.settings.Settings.6855b0f77d',
-        'Finish the core workflows that make Orca useful for parallel agent work.'
+        'Finish the core workflows that make Wakii useful for parallel agent work.'
       )}
       searchEntries={navigation.getSectionSearchEntries('setup-guide')}
       bodyClassName="overflow-hidden rounded-none border-0 bg-transparent p-0 shadow-none"
@@ -173,6 +174,30 @@ export function renderShareSkillsSettingsSection(
       searchEntries={navigation.getSectionSearchEntries('share-skills')}
     >
       {view.isSectionMounted('share-skills') ? <ShareSkillsSettingsPane /> : null}
+    </SettingsSection>
+  )
+}
+
+export function renderSessionHistorySettingsSection(
+  context: SettingsRenderContext
+): React.JSX.Element {
+  const { model, navigation, view } = context
+  return (
+    <SettingsSection
+      id="session-history"
+      title={translate('sessionHistory.settings.title', 'Agent Session Search')}
+      description={translate(
+        'sessionHistory.settings.description',
+        'Search everything your agents have said and done, on this computer and on any paired Wakii server.'
+      )}
+      searchEntries={navigation.getSectionSearchEntries('session-history')}
+    >
+      {view.isSectionMounted('session-history') ? (
+        <SessionHistorySettingsPane
+          settings={model.settings}
+          updateSettings={model.updateSettingsOrThrow}
+        />
+      ) : null}
     </SettingsSection>
   )
 }

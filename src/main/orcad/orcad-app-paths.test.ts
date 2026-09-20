@@ -32,14 +32,14 @@ describe('resolveUserDataPath', () => {
     expect(resolveUserDataPath()).toBe(join(sep, 'srv', 'orca-state'))
 
     vi.stubEnv('ORCA_USER_DATA', '')
-    expect(resolveUserDataPath()).toBe(join(sep, 'xdg', 'Orca'))
+    expect(resolveUserDataPath()).toBe(join(sep, 'xdg', 'Wakii'))
 
     vi.stubEnv('XDG_DATA_HOME', '')
     expect(resolveUserDataPath()).toBe(join(homedir(), '.orca'))
   })
 })
 
-describe('resolveOrcadPath', () => {
+describe('resolveWakiidPath', () => {
   it('answers every path name without ever falling back to the data directory', () => {
     vi.stubEnv('ORCA_USER_DATA', join(sep, 'srv', 'orca-state'))
     const answers = new Map(ALL_PATH_NAMES.map((name) => [name, resolveOrcadPath(name)]))
@@ -96,7 +96,7 @@ describe('resolveOrcadPath', () => {
   })
 })
 
-describe('resolveOrcadInstallRoot', () => {
+describe('resolveWakiidInstallRoot', () => {
   it('is the directory holding the running bundle, not the working directory', () => {
     expect(resolveOrcadInstallRoot(join(sep, 'opt', 'orca', 'orcad.js'))).toBe(
       join(sep, 'opt', 'orca')

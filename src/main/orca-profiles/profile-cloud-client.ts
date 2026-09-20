@@ -43,7 +43,7 @@ export class OrcaCloudRequestError extends Error {
     public readonly errorCode?: string
   ) {
     super(`orca_cloud_request_failed_${statusCode}`)
-    this.name = 'OrcaCloudRequestError'
+    this.name = 'WakiiCloudRequestError'
   }
 }
 

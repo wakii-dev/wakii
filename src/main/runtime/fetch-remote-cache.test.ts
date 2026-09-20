@@ -1,7 +1,9 @@
+import { worktreeCreateGit } from '../git/worktree-create-git-executor'
+import { resolveGitAdmissionTier } from '../git/command-runner/git-operation-executor'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Why: these tests cover the §3.3 Lifecycle rules on
-// `OrcaRuntimeService.fetchRemoteWithCache` — in particular that a rejected
+// `WakiiRuntimeService.fetchRemoteWithCache` — in particular that a rejected
 // fetch evicts its Map entry AND does not advance the freshness timestamp,
 // and that two concurrent callers serialize on a single underlying fetch.
 // They live in a dedicated file so we can mock `gitExecFileAsync` cleanly
@@ -77,7 +79,42 @@ function mockFetchResults(results: unknown[]): void {
   })
 }
 
-describe('OrcaRuntimeService.fetchRemoteWithCache', () => {
+describe('WakiiRuntimeService.fetchRemoteWithCache', () => {
+  it.each([undefined, 'Ubuntu'])(
+    'inherits create priority through fetch adapters on %s',
+    async (wslDistro) =>
+      worktreeCreateGit.run(async () => {
+        gitExecFileAsyncMock.mockImplementation(async (argv: string[]) => {
+          expect(resolveGitAdmissionTier()).toBe('interactive')
+          return {
+            stdout: argv[0] === 'remote' ? 'origin\n' : '/priority-repo/.git\n',
+            stderr: ''
+          }
+        })
+        const runtime = new OrcaRuntimeService()
+        const options = wslDistro ? { wslDistro } : {}
+        const base = await runtime.resolveRemoteTrackingBase(
+          '/priority-repo',
+          'origin/main',
+          options
+        )
+        expect(base).not.toBeNull()
+        if (!base) {
+          throw new Error('expected a remote base')
+        }
+        await expect(runtime.hasRemoteTrackingRef('/priority-repo', base, options)).resolves.toBe(
+          true
+        )
+        await expect(
+          runtime.getOrStartRemoteTrackingBaseRefresh('/priority-repo', base, options)
+        ).resolves.toEqual({ ok: true })
+        expect(fetchCallCount()).toBe(1)
+        for (const [, execOptions] of gitExecFileAsyncMock.mock.calls) {
+          expect(execOptions).toMatchObject({ cwd: '/priority-repo', ...options })
+        }
+      })
+  )
+
   beforeEach(() => {
     gitExecFileAsyncMock.mockReset()
   })

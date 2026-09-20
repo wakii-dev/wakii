@@ -108,7 +108,7 @@ describe.skipIf(process.platform === 'win32')(
   'worktree-scoped HISTFILE survives zsh startup',
   () => {
     itWithZsh(
-      'wraps a plain pane once Orca injected a worktree HISTFILE',
+      'wraps a plain pane once Wakii injected a worktree HISTFILE',
       withHome(USER_FILES, async (home) => {
         const { features, launch } = launchPane(home, join(home, 'zsh_history'))
 
@@ -157,7 +157,7 @@ describe.skipIf(process.platform === 'win32')(
     )
 
     itWithZsh(
-      'never leaves history inside Orca’s own wrapper directory',
+      'never leaves history inside Wakii’s own wrapper directory',
       withHome(USER_FILES, async (home) => {
         const { env, launch } = launchPane(home, join(home, 'orca-history', 'zsh_history'))
 
@@ -188,7 +188,7 @@ describe.skipIf(process.platform === 'win32')(
     )
 
     itWithZsh(
-      'leaves HISTFILE exactly as an unwrapped zsh would when Orca injects nothing',
+      'leaves HISTFILE exactly as an unwrapped zsh would when Wakii injects nothing',
       withHome(USER_FILES, async (home) => {
         // Why compared against an unwrapped run rather than asserted non-empty:
         // what zsh defaults to is platform-specific. macOS /etc/zshrc assigns
@@ -253,7 +253,7 @@ describe.skipIf(process.platform === 'win32')('the deferred hook delivers every 
   )
 
   itWithZsh(
-    'restores Orca’s overlay values after the user’s config overwrites them',
+    'restores Wakii’s overlay values after the user’s config overwrites them',
     withHome(
       {
         ...USER_FILES,
@@ -342,7 +342,7 @@ describe.skipIf(process.platform === 'win32')(
         const { values } = await runZshPty({ env, report })
         // Why compared against an unwrapped run rather than asserted to differ
         // from the scoped path: whether the scoped value survives at all is the
-        // host's call, not Orca's. macOS /etc/zshrc overwrites HISTFILE, so it
+        // host's call, not Wakii's. macOS /etc/zshrc overwrites HISTFILE, so it
         // does not; a host with no such assignment keeps whatever the spawn env
         // set. The contract on both is the same — this pane is the pane the user
         // would have had unwrapped.

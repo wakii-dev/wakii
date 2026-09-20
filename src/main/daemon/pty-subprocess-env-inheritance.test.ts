@@ -119,7 +119,7 @@ describe('createPtySubprocess', () => {
     )
   })
 
-  it('does not inherit parent Orca pane identity when caller omits pane env', async () => {
+  it('does not inherit parent Wakii pane identity when caller omits pane env', async () => {
     const proc = mockPtyProcess()
     spawnMock.mockReturnValue(proc)
     const saved = {
@@ -149,7 +149,7 @@ describe('createPtySubprocess', () => {
     expect(env.ORCA_WORKTREE_ID).toBeUndefined()
   })
 
-  it('preserves explicit child Orca pane identity over parent env', async () => {
+  it('preserves explicit child Wakii pane identity over parent env', async () => {
     const proc = mockPtyProcess()
     spawnMock.mockReturnValue(proc)
     const saved = {
@@ -192,7 +192,7 @@ describe('createPtySubprocess', () => {
     // fish EXPORTS fish_history, so a daemon started from a fish pane would hand
     // every session the launching worktree's history file (STA-4682). Only the
     // name this spawn asked for — the isolated one, or the user's — may stand.
-    ['drops an inherited Orca fish_history', undefined, undefined],
+    ['drops an inherited Wakii fish_history', undefined, undefined],
     ['keeps the session this spawn injected', 'orca_c0ffee', 'orca_c0ffee'],
     ['keeps a caller-supplied value', 'mine', 'mine']
   ])('%s', async (_name, requested, expected) => {
@@ -221,7 +221,7 @@ describe('createPtySubprocess', () => {
   it.each([
     // HISTFILE is exported too, so a daemon started from an Orca pane would hand
     // every session the launching worktree's history file.
-    ['drops an inherited Orca HISTFILE', undefined, undefined],
+    ['drops an inherited Wakii HISTFILE', undefined, undefined],
     [
       'keeps the path this spawn injected',
       '/fake/userData/terminal-history/00112233445566aa/zsh_history',

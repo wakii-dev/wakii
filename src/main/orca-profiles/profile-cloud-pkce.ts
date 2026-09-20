@@ -78,7 +78,7 @@ export function beginOrcaCloudPkceFlow(
 
     function writeInvalidCallback(response: ServerResponse): void {
       response.writeHead(400)
-      response.end('Invalid Orca sign-in response.')
+      response.end('Invalid Wakii sign-in response.')
     }
 
     const server = createServer((request, response) => {
@@ -97,9 +97,16 @@ export function beginOrcaCloudPkceFlow(
           return
         }
         if (url.searchParams.has('error')) {
+          const cancelled = url.searchParams.get('error') === 'access_denied'
           response.writeHead(400)
-          response.end('Orca sign-in was cancelled.')
-          rejectFlow(new Error('orca_cloud_auth_denied'))
+          response.end(
+            cancelled
+              ? 'Wakii sign-in was cancelled.'
+              : 'Wakii sign-in failed. Return to Wakii and try again.'
+          )
+          rejectFlow(
+            new Error(cancelled ? 'orca_cloud_auth_denied' : 'orca_cloud_auth_callback_failed')
+          )
           return
         }
         if (!code) {

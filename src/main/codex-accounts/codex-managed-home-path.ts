@@ -60,7 +60,7 @@ export class CodexManagedHomePath {
       !wslInfo.linuxPath.includes('/.local/share/orca/codex-accounts/') ||
       !wslInfo.linuxPath.endsWith('/home')
     ) {
-      throw new Error('Managed WSL Codex home is outside Orca account storage.')
+      throw new Error('Managed WSL Codex home is outside Wakii account storage.')
     }
     if (
       expectedAccountId !== undefined &&
@@ -153,7 +153,7 @@ export class CodexManagedHomePath {
       }
       return toWindowsWslPath(canonicalLinuxPath, wslInfo.distro)
     } catch (error) {
-      throw new Error('Managed WSL Codex home is outside Orca account storage.', {
+      throw new Error('Managed WSL Codex home is outside Wakii account storage.', {
         cause: error
       })
     }
@@ -165,14 +165,14 @@ export class CodexManagedHomePath {
     expectedAccountId?: string
   ): string {
     if (linuxPath.split('/').includes('..')) {
-      throw new Error('Managed WSL Codex home is outside Orca account storage.')
+      throw new Error('Managed WSL Codex home is outside Wakii account storage.')
     }
     if (!existsSync(candidatePath)) {
       throw new Error('Managed Codex home directory does not exist on disk.')
     }
     const markerPath = join(candidatePath, '.orca-managed-home')
     if (!existsSync(markerPath)) {
-      throw new Error('Managed Codex home is missing Orca ownership marker.')
+      throw new Error('Managed Codex home is missing Wakii ownership marker.')
     }
     if (
       expectedAccountId !== undefined &&

@@ -1,5 +1,6 @@
 import type { ProjectHostSetup, ProjectHostSetupUpdateArgs } from '../../../shared/project-types'
 import type { Repo } from '../../../shared/repo-types'
+import type { GhAccountBinding } from '../../../shared/github/account-binding'
 import {
   removeRepoFromHostWorkspaceSessions,
   removeRepoFromWorkspaceSession
@@ -172,6 +173,7 @@ export class RepoLifecycleOperations {
         | 'worktreeBaseRef'
         | 'worktreeBasePath'
         | 'kind'
+        | 'folderUpgradeGitRootPath'
         | 'executionHostId'
         | 'symlinkPaths'
         | 'issueSourcePreference'
@@ -190,6 +192,7 @@ export class RepoLifecycleOperations {
       agentWorktreeVisibility?: Repo['agentWorktreeVisibility'] | null
       sourceControlAi?: Repo['sourceControlAi'] | null
       externalWorktreeDiscoverySuppressedAt?: Repo['externalWorktreeDiscoverySuppressedAt'] | null
+      ghAccount?: GhAccountBinding | null
     },
     hostId?: ExecutionHostId
   ): Repo | null {
@@ -322,7 +325,7 @@ export function hydrateRepo(owner: RepoLifecycleOperations, repo: Repo): Repo {
 }
 
 export function installRepoLifecycleOperationsContext(
-  target: object,
+  target: RepoLifecycleOperations,
   source: RepoLifecycleOperations
 ): void {
   Object.defineProperty(target, repoLifecycleOperationsContext, {

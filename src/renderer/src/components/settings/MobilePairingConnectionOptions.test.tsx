@@ -12,7 +12,6 @@ import { MobilePairingConnectionOptions } from './MobilePairingConnectionOptions
 
 type MobileRelayStoreState = {
   orcaProfileAuthStatus: OrcaProfileAuthStatus | null
-  orcaProfileConnecting: boolean
   connectCurrentOrcaProfile: () => Promise<null>
   fetchOrcaProfileAuthStatus: () => Promise<OrcaProfileAuthStatus | null>
 }
@@ -73,7 +72,6 @@ describe('MobilePairingConnectionOptions', () => {
         state: 'local',
         persistence: 'none'
       },
-      orcaProfileConnecting: false,
       connectCurrentOrcaProfile: connect,
       fetchOrcaProfileAuthStatus: fetchAuthStatus
     }
@@ -81,7 +79,7 @@ describe('MobilePairingConnectionOptions', () => {
 
   afterEach(() => cleanup())
 
-  it('shows Sign in directly under Orca Relay, above LAN', async () => {
+  it('shows Sign in directly under Wakii Relay, above LAN', async () => {
     const user = userEvent.setup()
     const onChange = vi.fn()
     render(<MobilePairingConnectionOptions value="automatic" onChange={onChange} />)
@@ -214,7 +212,7 @@ describe('MobilePairingConnectionOptions', () => {
     expect(screen.getByTestId('anywhere-sign-in-panel')).toBeVisible()
   })
 
-  it('shows relay status when signed in on Orca Relay', async () => {
+  it('shows relay status when signed in on Wakii Relay', async () => {
     mocks.state = {
       orcaProfileAuthStatus: {
         activeProfileId: 'profile-1',
@@ -222,7 +220,6 @@ describe('MobilePairingConnectionOptions', () => {
         state: 'connected',
         persistence: 'encrypted'
       },
-      orcaProfileConnecting: false,
       connectCurrentOrcaProfile: connect,
       fetchOrcaProfileAuthStatus: fetchAuthStatus
     }

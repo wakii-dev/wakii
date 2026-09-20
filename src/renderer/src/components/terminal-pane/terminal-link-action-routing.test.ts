@@ -30,6 +30,12 @@ function plainEvent(): MouseEvent {
   } as unknown as MouseEvent
 }
 
+function middleEvent(): MouseEvent {
+  const event = plainEvent()
+  Object.defineProperty(event, 'button', { value: 1 })
+  return event
+}
+
 function actionContext(request = vi.fn()): TerminalLinkActionContext {
   return {
     paneId: 7,
@@ -85,6 +91,52 @@ describe('terminal link action routing', () => {
     )
   })
 
+  it('opens the primary destination directly when plain-click mode is enabled', () => {
+    const request = vi.fn()
+    const run = vi.fn()
+    const context = actionContext(request)
+    context.plainClickBehavior = 'open'
+
+    expect(
+      requestTerminalLinkAction(plainEvent(), context, {
+        destination: 'https://example.com',
+        kind: 'url',
+        primary: { label: 'Open', run }
+      })
+    ).toBe(true)
+    expect(run).toHaveBeenCalledOnce()
+    expect(request).not.toHaveBeenCalled()
+  })
+
+  it('opens a URL on middle click when configured', () => {
+    const run = vi.fn()
+    const context = actionContext()
+    context.middleClickBehavior = 'open'
+    expect(
+      requestTerminalLinkAction(middleEvent(), context, {
+        destination: 'https://example.com',
+        kind: 'url',
+        primary: { label: 'Open', run }
+      })
+    ).toBe(true)
+    expect(run).toHaveBeenCalledOnce()
+  })
+
+  it('keeps middle click available when plain clicks stay with the terminal', () => {
+    const run = vi.fn()
+    const context = actionContext()
+    context.plainClickBehavior = 'none'
+    context.middleClickBehavior = 'open'
+    expect(
+      requestTerminalLinkAction(middleEvent(), context, {
+        destination: 'https://example.com',
+        kind: 'url',
+        primary: { label: 'Open', run }
+      })
+    ).toBe(true)
+    expect(run).toHaveBeenCalledOnce()
+  })
+
   it('leaves PTY mouse ownership with an ineligible pointer gesture', () => {
     const context = actionContext()
     context.pointerGesture.canRequestAction = () => false
@@ -114,7 +166,7 @@ describe('terminal link action routing', () => {
     expect(context.request).not.toHaveBeenCalled()
   })
 
-  it('offers system browser first and Orca second when system browser is the default', () => {
+  it('offers system browser first and Wakii second when system browser is the default', () => {
     const request = vi.fn()
     const event = plainEvent()
 
@@ -137,7 +189,7 @@ describe('terminal link action routing', () => {
     )
     expect(request.mock.calls[0][0].primary.label).toBe('System Browser')
     expect(request.mock.calls[0][0].primary.external).toBe(true)
-    expect(request.mock.calls[0][0].alternate.label).toBe('Orca Browser')
+    expect(request.mock.calls[0][0].alternate.label).toBe('Wakii Browser')
     expect(request.mock.calls[0][0].alternate.external).toBe(false)
 
     request.mock.calls[0][0].primary.run()
@@ -149,7 +201,7 @@ describe('terminal link action routing', () => {
     })
   })
 
-  it('offers Orca first and system browser second when Orca is the default', () => {
+  it('offers Wakii first and system browser second when Wakii is the default', () => {
     const request = vi.fn()
 
     handleTerminalHttpLink('https://example.com/path', plainEvent(), {
@@ -158,7 +210,7 @@ describe('terminal link action routing', () => {
       actionDestinations: { primary: 'orca', alternate: 'system' }
     })
 
-    expect(request.mock.calls[0][0].primary.label).toBe('Orca Browser')
+    expect(request.mock.calls[0][0].primary.label).toBe('Wakii Browser')
     expect(request.mock.calls[0][0].primary.external).toBe(false)
     expect(request.mock.calls[0][0].alternate.label).toBe('System Browser')
     expect(request.mock.calls[0][0].alternate.external).toBe(true)
@@ -187,7 +239,7 @@ describe('terminal link action routing', () => {
     expect(request.mock.calls[0][0].alternate).toBeUndefined()
   })
 
-  it('routes an explicit Orca Browser action to the owning runtime', () => {
+  it('routes an explicit Wakii Browser action to the owning runtime', () => {
     const request = vi.fn()
 
     handleTerminalHttpLink('https://example.com/path', plainEvent(), {
@@ -209,7 +261,7 @@ describe('terminal link action routing', () => {
     expect(createBrowserTab).not.toHaveBeenCalled()
   })
 
-  it('routes an explicit Orca Browser action through the owning SSH workspace', () => {
+  it('routes an explicit Wakii Browser action through the owning SSH workspace', () => {
     const request = vi.fn()
     const url = 'http://0.0.0.0:8000/'
 

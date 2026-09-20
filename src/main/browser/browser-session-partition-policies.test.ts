@@ -45,7 +45,7 @@ function fakeSession(): FakeSession {
         listeners.splice(index, 1)
       }
     }),
-    getUserAgent: () => 'Mozilla/5.0 Orca',
+    getUserAgent: () => 'Mozilla/5.0 Wakii',
     setUserAgent: vi.fn(),
     setPermissionRequestHandler: vi.fn(),
     setPermissionCheckHandler: vi.fn(),
@@ -82,11 +82,10 @@ vi.mock('./browser-media-access', () => ({
   requestSystemMediaAccess: async () => false
 }))
 vi.mock('./browser-session-ua', () => ({
-  cleanElectronUserAgent: (userAgent: string) => userAgent,
-  setupGoogleAuthUserAgentOverride: vi.fn()
+  installBrowserSessionUserAgentPolicy: vi.fn(() => vi.fn())
 }))
-vi.mock('./browser-session-user-agent-mode', () => ({
-  setBrowserSessionUserAgentMode: vi.fn()
+vi.mock('./browser-process-user-agent', () => ({
+  getBrowserProcessUserAgentIdentity: () => ({ mode: 'clean', userAgent: 'Mozilla/5.0 Wakii' })
 }))
 vi.mock('./browser-webauthn-access', () => ({
   allowsBrowserWebAuthnPermission: () => false,
@@ -113,8 +112,7 @@ function profileFor(partition: string): BrowserSessionProfile {
     scope: 'isolated',
     partition,
     label: partition,
-    source: null,
-    userAgentMode: 'clean'
+    source: null
   }
 }
 

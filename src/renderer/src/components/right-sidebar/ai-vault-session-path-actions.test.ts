@@ -28,7 +28,7 @@ describe('isSyntheticAiVaultSessionPath', () => {
   })
 })
 
-describe('canOpenAiVaultSessionLogInOrca', () => {
+describe('canOpenAiVaultSessionLogInWakii', () => {
   it('allows a local, single-file, non-synthetic path', () => {
     expect(
       canOpenAiVaultSessionLogInOrca({

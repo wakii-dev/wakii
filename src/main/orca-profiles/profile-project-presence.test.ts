@@ -63,7 +63,7 @@ function makeRepo(overrides: Partial<Repo> = {}): Repo {
   return {
     id: 'repo-1',
     path: '/workspace/orca',
-    displayName: 'Orca',
+    displayName: 'Wakii',
     badgeColor: '#33aa99',
     addedAt: 100,
     kind: 'git',
@@ -84,10 +84,10 @@ describe('profile project presence', () => {
 
   it('finds matching projects in other profiles while excluding the active profile', async () => {
     writeProfileState('personal', [
-      makeRepo({ id: 'personal-repo', path: 'C:\\Code\\Orca', displayName: 'Personal Orca' })
+      makeRepo({ id: 'personal-repo', path: 'C:\\Code\\Wakii', displayName: 'Personal Wakii' })
     ])
     writeProfileState('work', [
-      makeRepo({ id: 'work-repo', path: 'C:\\Code\\Orca', displayName: 'Work Orca' })
+      makeRepo({ id: 'work-repo', path: 'C:\\Code\\Wakii', displayName: 'Work Wakii' })
     ])
 
     const { findOrcaProfileProjectsByPath } = await loadPresenceModule()
@@ -106,20 +106,20 @@ describe('profile project presence', () => {
         profileName: 'Work',
         profileKind: 'local',
         repoId: 'work-repo',
-        repoName: 'Work Orca'
+        repoName: 'Work Wakii'
       }
     ])
   })
 
   it('keeps SSH projects separate from local projects with the same path', async () => {
     writeProfileState('personal', [
-      makeRepo({ id: 'local-repo', path: '/srv/orca', displayName: 'Local Orca' })
+      makeRepo({ id: 'local-repo', path: '/srv/orca', displayName: 'Local Wakii' })
     ])
     writeProfileState('work', [
       makeRepo({
         id: 'ssh-repo',
         path: '/srv/orca',
-        displayName: 'SSH Orca',
+        displayName: 'SSH Wakii',
         connectionId: 'builder',
         executionHostId: 'ssh:builder'
       })
@@ -139,7 +139,7 @@ describe('profile project presence', () => {
       expect.objectContaining({
         profileId: 'work',
         repoId: 'ssh-repo',
-        repoName: 'SSH Orca'
+        repoName: 'SSH Wakii'
       })
     ])
   })

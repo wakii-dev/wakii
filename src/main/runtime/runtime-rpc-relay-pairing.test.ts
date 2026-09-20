@@ -22,7 +22,7 @@ vi.mock('../git/worktree', () => {
   }
 })
 
-describe('OrcaRuntimeRpcServer', () => {
+describe('WakiiRuntimeRpcServer', () => {
   it('adds only the exact optional relay object to GUI mobile pairing offers', async () => {
     const userDataPath = mkdtempSync(join(tmpdir(), 'orca-runtime-rpc-'))
     const server = new OrcaRuntimeRpcServer({
@@ -200,7 +200,7 @@ describe('OrcaRuntimeRpcServer', () => {
         relayFailure: {
           code: 'relay_provider_unavailable',
           stage: 'provider_missing',
-          message: 'Orca Relay is not available on this desktop'
+          message: 'Wakii Relay is not available on this desktop'
         }
       })
       expect(server.getDeviceRegistry()?.getPendingDevice('mobile')).toBeNull()

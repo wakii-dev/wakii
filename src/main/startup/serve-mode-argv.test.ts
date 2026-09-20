@@ -76,8 +76,8 @@ describe('serve-mode-argv', () => {
     // Why: a false positive here is the expensive direction — the window never opens and a runtime
     // server binds instead. These are the argv shapes the desktop actually receives.
     for (const argv of [
-      ['/Applications/Orca.app/Contents/MacOS/Orca', '-psn_0_123456'],
-      ['C:\\Program Files\\Orca\\Orca.exe', '--squirrel-firstrun'],
+      ['/Applications/Wakii.app/Contents/MacOS/Wakii', '-psn_0_123456'],
+      ['C:\\Program Files\\Wakii\\Wakii.exe', '--squirrel-firstrun'],
       ['C:\\Program Files\\Orca\\Orca.exe', 'orca://worktree/serve'],
       ['/opt/orca/orca-ide', '/home/u/serve'],
       // `--pairing-code` takes the next token, so its value is never the subcommand.

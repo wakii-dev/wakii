@@ -41,17 +41,17 @@ export function MobileRelayMintFailureNotice({
   const title = visibleBusy
     ? translate(
         'auto.components.mobile.MobileRelayMintFailureNotice.retryingTitle',
-        'Retrying Orca Relay…'
+        'Retrying Wakii Relay…'
       )
     : providerMissing
       ? translate(
           'auto.components.mobile.MobileRelayMintFailureNotice.unavailableTitle',
-          'Orca Relay isn’t available on this desktop.'
+          'Wakii Relay isn’t available on this desktop.'
         )
       : reconnectRequired
         ? translate(
             'auto.components.mobile.MobileRelayMintFailureNotice.reconnectTitle',
-            'Your Orca account session expired.'
+            'Your Wakii account session expired.'
           )
         : translate(
             'auto.components.mobile.MobileRelayMintFailureNotice.title',
@@ -70,7 +70,7 @@ export function MobileRelayMintFailureNotice({
       : reconnectRequired
         ? translate(
             'auto.components.mobile.MobileRelayMintFailureNotice.reconnectBody',
-            'Sign in again to use Orca Relay, or use LAN to pair over Tailscale or the same Wi‑Fi.'
+            'Sign in again to use Wakii Relay, or use LAN to pair over Tailscale or the same Wi‑Fi.'
           )
         : translate(
             'auto.components.mobile.MobileRelayMintFailureNotice.body',

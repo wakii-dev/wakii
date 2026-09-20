@@ -338,12 +338,12 @@ describe('parseMinidumpCrashSignature', () => {
         {
           base: 0x7ff7_0000_0000n,
           size: 0x1000,
-          name: 'C:\\Program Files\\Orca\\Orca.exe'
+          name: 'C:\\Program Files\\Wakii\\Wakii.exe'
         },
         {
           base: 0x7ff8_0000_0000n,
           size: 0x10_0000,
-          name: 'C:\\Program Files\\Orca\\chrome_elf.dll'
+          name: 'C:\\Program Files\\Wakii\\chrome_elf.dll'
         }
       ]
     })

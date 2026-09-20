@@ -463,7 +463,7 @@ ${getPosixOmpShellWrapper()}`,
       'UNSET=23\nPWD=unset\nLINK=23\nFIRST=23\nSKIP=23\nPARENT=stale\nSTALE_UNSET=23\nNO_LOGICAL=1\nMISSING=1\n'
     )
     expect(output).toContain('no terminal working directory is available')
-    expect(output).toContain('Orca: OMP cannot access the terminal working directory')
+    expect(output).toContain('Wakii: OMP cannot access the terminal working directory')
   }
 
   itWithBash('rebinds a stale Bash cwd before launching OMP', async () => {

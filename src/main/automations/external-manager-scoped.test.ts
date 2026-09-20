@@ -217,7 +217,7 @@ describe('scoped external automations', () => {
     expect(getActiveMultiplexer).not.toHaveBeenCalled()
   })
 
-  it('confines a manager failure to its own scope and never to Orca store health', async () => {
+  it('confines a manager failure to its own scope and never to Wakii store health', async () => {
     const health = orcaStoreHealth()
     vi.mocked(getActiveMultiplexer).mockReturnValue(
       undefined as unknown as ReturnType<typeof getActiveMultiplexer>

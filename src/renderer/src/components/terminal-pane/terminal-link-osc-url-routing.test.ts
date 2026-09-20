@@ -197,7 +197,7 @@ describe('handleOscLink', () => {
     expect(openUrlMock).not.toHaveBeenCalled()
   })
 
-  it('uses the system browser for shift+cmd/ctrl+click even when Orca browser tabs are enabled', () => {
+  it('uses the system browser for shift+cmd/ctrl+click even when Wakii browser tabs are enabled', () => {
     setPlatform('Windows')
     storeState.settings = { openLinksInApp: true }
 

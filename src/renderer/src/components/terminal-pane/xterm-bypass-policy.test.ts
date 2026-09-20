@@ -40,7 +40,7 @@ describe('shouldBypassXtermKeyboardEvent — macOS', () => {
     ).toBe(false)
   })
 
-  it('does NOT bubble other Cmd chords — Orca window handlers intercept them before xterm', () => {
+  it('does NOT bubble other Cmd chords — Wakii window handlers intercept them before xterm', () => {
     // Why: this policy is narrowly scoped to clipboard chords. Cmd+F, Cmd+D,
     // Cmd+K, Cmd+W, Cmd+Arrow, Cmd+Backspace are handled in keyboard-handlers.ts
     // with stopImmediatePropagation before xterm's textarea listener fires.
@@ -203,6 +203,15 @@ describe('shouldSuppressTerminalImeKeyboardEvent — macOS', () => {
       shouldSuppressTerminalImeKeyboardEvent(
         event({ key: 'Process', code: 'KeyN', keyCode: 229 }),
         idle
+      )
+    ).toBe(false)
+  })
+
+  it('lets an idle Linux Process keydown reach xterm when Chromium marks it composing', () => {
+    expect(
+      shouldSuppressTerminalImeKeyboardEvent(
+        event({ key: 'Process', code: 'Comma', keyCode: 229, isComposing: true }),
+        { ...idle, isMac: false, isLinux: true }
       )
     ).toBe(false)
   })

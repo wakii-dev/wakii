@@ -16,7 +16,7 @@ import {
   store
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it.each(['failed', 'circuit_broken'] as const)(
     'returns recent %s orchestration context without an active coordinator',
     (dispatchStatus) => {
@@ -219,7 +219,7 @@ describe('OrcaRuntimeService', () => {
       expect.objectContaining({
         code: 'LINEAGE_PARENT_CONTEXT_MISSING',
         message:
-          'Worktree created, but Orca could not validate the current directory as a parent context.'
+          'Worktree created, but Wakii could not validate the current directory as a parent context.'
       })
     ])
   })

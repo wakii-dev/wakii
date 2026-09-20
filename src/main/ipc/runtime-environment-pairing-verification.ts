@@ -76,7 +76,7 @@ export async function verifyAndAddRuntimeEnvironmentFromPairingCode(
       message:
         error instanceof RuntimeEnvironmentStoreError && error.code === 'invalid_argument'
           ? error.message
-          : 'Orca verified the host but could not save it. Check local settings storage and try again.'
+          : 'Wakii verified the host but could not save it. Check local settings storage and try again.'
     }
   }
   return {
@@ -105,7 +105,7 @@ function classifyPairingVerificationError(
       return {
         ok: false,
         kind: 'host-identity-mismatch',
-        message: `Orca reached ${endpoint}, but that host does not match this access link.`
+        message: `Wakii reached ${endpoint}, but that host does not match this access link.`
       }
     }
     if (error.pairingStage === 'runtime') {
@@ -139,6 +139,6 @@ function unreachableHostResult(endpoint: string): VerifyAndAddRuntimeEnvironment
   return {
     ok: false,
     kind: 'host-unreachable',
-    message: `Cannot reach Orca at ${endpoint}. Confirm the other host is running and reachable.`
+    message: `Cannot reach Wakii at ${endpoint}. Confirm the other host is running and reachable.`
   }
 }

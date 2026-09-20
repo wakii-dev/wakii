@@ -6,7 +6,7 @@ import {
 } from '../orca-runtime-test-mocks.spec'
 import { TEST_REPO_ID, store } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('uses remote path joins for SSH hook checks and issue-command files', async () => {
     const remoteStore = {
       ...store,

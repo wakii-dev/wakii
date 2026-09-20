@@ -93,8 +93,8 @@ export type UpdaterMocks = {
 // Why: macOS keeps the restart advice because quitting does re-stage a Squirrel update.
 export const PRE_COMMIT_INSTALL_FAILURE =
   process.platform === 'darwin'
-    ? 'Could not restart to install the update. Quit and reopen Orca, then try again.'
-    : 'Could not start the update installer. Orca remains open.'
+    ? 'Could not restart to install the update. Quit and reopen Wakii, then try again.'
+    : 'Could not start the update installer. Wakii remains open.'
 
 /**
  * Builds the electron/electron-updater mock graph `updater.ts` runs against, plus the module
@@ -146,6 +146,7 @@ export function createUpdaterMocks(): UpdaterMocks {
     const loadedGeneration = currentGeneration
     return new Proxy(autoUpdaterMock, {
       get(target, property) {
+        // oxlint-disable-next-line anti-slop/no-reflect-get -- Proxy `get` trap: raw string|symbol pass-through; the receiver stays the target on purpose.
         const value = Reflect.get(target, property)
         if (loadedGeneration === currentGeneration || typeof value !== 'function') {
           return value
@@ -155,7 +156,7 @@ export function createUpdaterMocks(): UpdaterMocks {
       set(target, property, value) {
         return loadedGeneration === currentGeneration ? Reflect.set(target, property, value) : true
       }
-    }) as AutoUpdaterMock
+    })
   }
 
   const reset = () => {

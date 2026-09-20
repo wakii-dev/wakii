@@ -192,7 +192,7 @@ function createRuntime() {
   return runtime
 }
 
-describe('runRemoteOrcaCli Linear commands', () => {
+describe('runRemoteWakiiCli Linear commands', () => {
   it('dispatches Linear issue reads through the remote runtime with SSH context hints', async () => {
     const runtime = createRuntime()
 

@@ -48,9 +48,9 @@ describe('markdownPathsFromArguments', () => {
 
   it('drops the executable and dev entries because none of them end in a markdown extension', () => {
     const nonDocumentEntries = [
-      '/Applications/Orca.app/Contents/MacOS/Orca',
+      '/Applications/Wakii.app/Contents/MacOS/Wakii',
       '/Users/dev/orca/out/main/index.js',
-      '/Applications/Orca.app/Contents/Resources/app.asar'
+      '/Applications/Wakii.app/Contents/Resources/app.asar'
     ]
     // The module documents that the extension check alone excludes these; hold it to that.
     for (const entry of nonDocumentEntries) {
@@ -159,7 +159,7 @@ describe('OsOpenedMarkdownFileState', () => {
     const state = new OsOpenedMarkdownFileState()
     const publish = vi.fn()
 
-    expect(state.capture(['/Applications/Orca.app/Contents/MacOS/Orca', '--serve'], publish)).toBe(
+    expect(state.capture(['/Applications/Wakii.app/Contents/MacOS/Wakii', '--serve'], publish)).toBe(
       false
     )
     expect(publish).not.toHaveBeenCalled()
@@ -171,7 +171,7 @@ describe('OsOpenedMarkdownFileState', () => {
     const publish = vi.fn()
     const filePath = hostPath('a.md')
 
-    expect(state.capture(['/Applications/Orca.app/Contents/MacOS/Orca', filePath], publish)).toBe(
+    expect(state.capture(['/Applications/Wakii.app/Contents/MacOS/Wakii', filePath], publish)).toBe(
       true
     )
     expect(publish).toHaveBeenCalledTimes(1)

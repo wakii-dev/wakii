@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
-import { defineMethod, type RpcMethod } from '../core'
+import { defineMethod } from '../core'
 import type { OrcaRuntimeService } from '../../orca-runtime'
 import { runtimeWorktreeIdsEqual } from '../../runtime-worktree-path-identity'
 import type { OrchestrationDb } from '../../orchestration/db'
@@ -155,7 +155,7 @@ export async function listStoriesForRuntime(
     )
 }
 
-export const SUPERPOWERS_STORY_LIST_METHODS: RpcMethod[] = [
+export const SUPERPOWERS_STORY_LIST_METHODS = [
   defineMethod({
     name: 'superpowers.storyList',
     params: null,

@@ -115,7 +115,7 @@ function options(overrides: Partial<OrcadRollbackOptions> = {}): OrcadRollbackOp
   }
 }
 
-describe('rollbackOrcad', () => {
+describe('rollbackWakiid', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })

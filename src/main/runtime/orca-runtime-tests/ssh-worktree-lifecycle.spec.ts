@@ -27,7 +27,7 @@ import {
   store
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('rejects when every exact PR branch checkout path suffix is occupied', async () => {
     const runtime = new OrcaRuntimeService(store)
     computeWorktreePathMock.mockReturnValue(process.cwd())
@@ -337,7 +337,9 @@ describe('OrcaRuntimeService', () => {
       created.path,
       'folder-child',
       'origin/main',
-      false
+      false,
+      false,
+      {}
     )
     expect(result.lineage).toBeNull()
     expect(result.workspaceLineage).toMatchObject({

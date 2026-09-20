@@ -29,7 +29,7 @@ import {
   store
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('creates mobile session terminals for folder workspaces in a headless runtime server', async () => {
     const folderPath = await mkdtemp(join(tmpdir(), 'orca-mobile-folder-workspace-'))
     const spawn = vi.fn().mockResolvedValue({ id: 'pty-mobile-folder' })

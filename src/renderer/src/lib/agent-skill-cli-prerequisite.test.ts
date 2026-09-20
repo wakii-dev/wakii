@@ -23,7 +23,7 @@ function cliStatus(overrides: Partial<CliInstallStatus> = {}): CliInstallStatus 
     commandPath: '/usr/local/bin/orca',
     pathDirectory: '/usr/local/bin',
     pathConfigured: true,
-    launcherPath: '/Applications/Orca.app/Contents/MacOS/orca',
+    launcherPath: '/Applications/Wakii.app/Contents/MacOS/orca',
     installMethod: 'symlink',
     supported: true,
     state: 'installed',
@@ -34,7 +34,7 @@ function cliStatus(overrides: Partial<CliInstallStatus> = {}): CliInstallStatus 
   }
 }
 
-describe('isOrcaCliAvailableOnPath', () => {
+describe('isWakiiCliAvailableOnPath', () => {
   it('requires the installed CLI command to be visible on PATH', () => {
     expect(isOrcaCliAvailableOnPath(cliStatus())).toBe(true)
     expect(isOrcaCliAvailableOnPath(cliStatus({ pathConfigured: false }))).toBe(false)
@@ -42,7 +42,7 @@ describe('isOrcaCliAvailableOnPath', () => {
   })
 })
 
-describe('ensureOrcaCliAvailableForAgentSkillTerminal', () => {
+describe('ensureWakiiCliAvailableForAgentSkillTerminal', () => {
   afterEach(() => {
     vi.useRealTimers()
     vi.unstubAllGlobals()
@@ -87,7 +87,7 @@ describe('ensureOrcaCliAvailableForAgentSkillTerminal', () => {
     const initial = cliStatus({
       platform: 'win32',
       pathConfigured: null,
-      detail: 'Orca could not read the Windows user PATH registry value.'
+      detail: 'Wakii could not read the Windows user PATH registry value.'
     })
     const install = vi.fn()
     vi.stubGlobal('window', {

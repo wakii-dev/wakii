@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { OrcaRuntimeService } from '../orca-runtime-test-mocks.spec'
 import { TEST_WORKTREE_ID, store } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('reports recognized foreground agents with unknown status as running with null status', async () => {
     const runtime = new OrcaRuntimeService(store)
     runtime.setPtyController({

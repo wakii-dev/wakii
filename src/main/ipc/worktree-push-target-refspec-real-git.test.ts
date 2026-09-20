@@ -35,7 +35,7 @@ async function git(args: string[], cwd: string): Promise<string> {
 const execGit: GitRemoteExec = (args, cwd) => execFileAsync('git', args, { cwd })
 
 async function setIdentity(cwd: string): Promise<void> {
-  await git(['config', 'user.name', 'Orca Test'], cwd)
+  await git(['config', 'user.name', 'Wakii Test'], cwd)
   await git(['config', 'user.email', 'orca@example.test'], cwd)
   await git(['config', 'commit.gpgSign', 'false'], cwd)
   await git(['config', 'core.hooksPath', '.git/no-hooks'], cwd)

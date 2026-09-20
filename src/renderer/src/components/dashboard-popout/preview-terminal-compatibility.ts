@@ -11,7 +11,7 @@ import { installPreviewTerminalLinks } from './preview-terminal-links'
 import { syncPreviewTerminalLigatures } from './preview-terminal-ligatures'
 
 /**
- * Brings the preview's emulator up to a pane's: Orca's Unicode 11 width shim,
+ * Brings the preview's emulator up to a pane's: Wakii's Unicode 11 width shim,
  * Windows Ctrl+Alt chord classification, clickable links, ligatures, the TUI
  * wheel multiplier, lazy Arabic shaping, and the IME candidate anchor.
  *

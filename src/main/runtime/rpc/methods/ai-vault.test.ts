@@ -407,7 +407,7 @@ describe('aiVault.listSessions handler + shared cache', () => {
     expect(options.wslHomeDirs).toEqual([])
   })
 
-  it('forwards codex-home through the real OrcaRuntimeService construction path', async () => {
+  it('forwards codex-home through the real WakiiRuntimeService construction path', async () => {
     // Why: the dispatcher test above seeds the cache module directly, so it would
     // still pass if OrcaRuntimeService stopped forwarding the codex-home source.
     // Construct the real runtime to lock that cross-layer wiring in place.

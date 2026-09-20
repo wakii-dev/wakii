@@ -18,7 +18,7 @@ import {
   store
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('forwards generated-name provenance while launching SSH startup drafts', async () => {
     detectRemoteAgentsMock.mockResolvedValue(['claude'])
     const created = {

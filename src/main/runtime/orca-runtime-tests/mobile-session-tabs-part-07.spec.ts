@@ -17,7 +17,7 @@ import {
 } from '../orca-runtime-test-fixtures.spec'
 import { makePendingAgentTabActivationRuntime } from '../orca-runtime-test-scenario-builders.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('briefly preserves abnormal SSH exits for paired pane recovery', async () => {
     vi.useFakeTimers()
     try {

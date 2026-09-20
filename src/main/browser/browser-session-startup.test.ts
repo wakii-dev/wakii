@@ -63,7 +63,7 @@ describe('initializeBrowserSessionsForApp', () => {
     )
   })
 
-  it('configures the active Orca profile before replaying browser sessions', async () => {
+  it('configures the active Wakii profile before replaying browser sessions', async () => {
     const {
       configureForOrcaProfileMock,
       configureRouteSessionsForOrcaProfileMock,

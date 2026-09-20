@@ -153,7 +153,7 @@ export function formatMissingToolchainError(
 ): string {
   const lines = [
     `The remote host is missing the C/C++ build tools (${missingToolNames(status).join(', ')}) ` +
-      `needed to compile Orca's relay native modules (node-pty, @parcel/watcher). node-pty has no ` +
+      `needed to compile Wakii's relay native modules (node-pty, @parcel/watcher). node-pty has no ` +
       `prebuilt binary for Linux, so they must be compiled on the remote host.`,
     '',
     'Install the build tools on the remote host, then reconnect:',
@@ -208,7 +208,7 @@ export function formatNodeHeadersDownloadError(
     ? [
         `The remote host could not download the Node.js headers needed to compile node-pty, even ` +
           `though its Node install ships matching headers at ${localHeadersDir}/include/node and ` +
-          `Orca pointed node-gyp at them. node-gyp ignored that setting; this is an Orca defect, ` +
+          `Wakii pointed node-gyp at them. node-gyp ignored that setting; this is an Wakii defect, ` +
           `please report it with the log below.`,
         '',
         'Workaround on the remote host until then: allow outbound HTTPS to nodejs.org, or point ' +

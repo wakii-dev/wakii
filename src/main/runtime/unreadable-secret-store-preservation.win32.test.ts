@@ -232,7 +232,7 @@ describeOnWindows('a secure store that exists but cannot be read', () => {
 
   /**
    * The one site that *deletes* rather than overwrites: a refresh failure plus an unreadable
-   * session used to fall past the `status === 'found'` guard into `clearOrcaCloudSession`.
+   * session used to fall past the `status === 'found'` guard into `clearWakiiCloudSession`.
    */
   it('does not delete the account session it could not read', async () => {
     vi.doMock('electron', () => ({

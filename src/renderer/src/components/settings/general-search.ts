@@ -30,7 +30,7 @@ export const getGeneralWorkspaceSearchEntries = createLocalizedCatalog(() => [
     ),
     description: translate(
       'auto.components.settings.general.search.externalWorktreesDescription',
-      'Choose whether worktrees created outside Orca appear by default.'
+      'Choose whether worktrees created outside Wakii appear by default.'
     ),
     keywords: [
       ...translateSearchKeyword(
@@ -151,15 +151,37 @@ export const getGeneralNavigationSearchEntries = createLocalizedCatalog(() => [
       ...translateSearchKeyword('auto.components.settings.general.search.9f8558233a', 'confirm'),
       ...translateSearchKeyword('auto.components.settings.general.search.afa37a34e1', 'close')
     ]
+  },
+  {
+    title: translate(
+      'auto.components.settings.GeneralPane.confirm_running_terminal_close',
+      'Confirm before closing running terminals'
+    ),
+    description: translate(
+      'auto.components.settings.GeneralPane.confirm_running_terminal_close_description',
+      'Ask before stopping a running agent or command when closing a terminal.'
+    ),
+    keywords: [
+      ...translateSearchKeyword(
+        'auto.components.settings.general.search.running_terminal',
+        'running'
+      ),
+      ...translateSearchKeyword('auto.components.settings.general.search.terminal', 'terminal'),
+      ...translateSearchKeyword('auto.components.settings.general.search.agent', 'agent'),
+      ...translateSearchKeyword('auto.components.settings.general.search.command', 'command'),
+      ...translateSearchKeyword('auto.components.settings.general.search.confirm', 'confirm'),
+      ...translateSearchKeyword('auto.components.settings.general.search.close', 'close'),
+      ...translateSearchKeyword('auto.components.settings.general.search.omp', 'OMP')
+    ]
   }
 ])
 
 export const getGeneralCliSearchEntries = createLocalizedCatalog(() => [
   {
-    title: translate('auto.components.settings.general.search.327e3fa70d', 'Orca CLI'),
+    title: translate('auto.components.settings.general.search.327e3fa70d', 'Wakii CLI'),
     description: translate(
       'auto.components.settings.general.search.ca529079bf',
-      'Register or remove the Orca CLI command.'
+      'Register or remove the Wakii CLI command.'
     ),
     keywords: [
       ...translateSearchKeyword('auto.components.settings.general.search.924a660a78', 'cli'),
@@ -183,7 +205,7 @@ export const getGeneralCliSearchEntries = createLocalizedCatalog(() => [
     title: translate('auto.components.settings.general.search.2d9f7b42df', 'Agent skill'),
     description: translate(
       'auto.components.settings.general.search.244e3fb4c8',
-      'Install the Orca skill so agents know to use the Orca CLI.'
+      'Install the Wakii skill so agents know to use the Wakii CLI.'
     ),
     keywords: [
       ...translateSearchKeyword('auto.components.settings.general.search.bda108e66c', 'skill'),
@@ -198,7 +220,7 @@ export const getGeneralUpdateSearchEntries = createLocalizedCatalog(() => [
     title: translate('auto.components.settings.general.search.e15af4eb64', 'Check for Updates'),
     description: translate(
       'auto.components.settings.general.search.79ff46776e',
-      'Check for app updates and install a newer Orca version.'
+      'Check for app updates and install a newer Wakii version.'
     ),
     keywords: [
       ...translateSearchKeyword('auto.components.settings.general.search.f89a94773c', 'update'),

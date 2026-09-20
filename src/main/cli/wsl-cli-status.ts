@@ -112,7 +112,7 @@ export async function resolveReadyWslCliState(args: {
     return {
       status: unsupportedWslCliStatus(
         hostStatus.unsupportedReason ?? 'launcher_missing',
-        hostStatus.detail ?? 'The Windows Orca CLI launcher is missing.'
+        hostStatus.detail ?? 'The Windows Wakii CLI launcher is missing.'
       )
     }
   }
@@ -138,7 +138,7 @@ export async function resolveReadyWslCliState(args: {
     return {
       status: unsupportedWslCliStatus(
         'launcher_missing',
-        'WSL Windows interop is unavailable; Orca cannot launch the Windows CLI from WSL.'
+        'WSL Windows interop is unavailable; Wakii cannot launch the Windows CLI from WSL.'
       )
     }
   }

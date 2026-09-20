@@ -20,7 +20,12 @@ function regQuery(key: string, name: string): { type: string; data: string } | n
   } catch {
     return null
   }
-  const line = stdout.split(/\r?\n/).find((candidate) => candidate.trim().startsWith(name))
+  // reg.exe echoes the name as stored, so a machine holding PATH rather than Path would
+  // otherwise miss the line and make the oracle look absent.
+  const wanted = name.toLowerCase()
+  const line = stdout
+    .split(/\r?\n/)
+    .find((candidate) => candidate.trim().toLowerCase().startsWith(wanted))
   if (!line) {
     return null
   }
@@ -62,7 +67,7 @@ describeWindows('vendored windows registry addon', () => {
 
   it('returns null for a key that does not exist instead of throwing', () => {
     const registry = loadWindowsNativeRegistry()
-    expect(registry.getRegistryKey(registry.HK.CU, 'Software\\OrcaNoSuchKey\\Absent')).toBeNull()
+    expect(registry.getRegistryKey(registry.HK.CU, 'Software\\WakiiNoSuchKey\\Absent')).toBeNull()
   })
 
   it('reports every value in the key keyed by its own name', () => {

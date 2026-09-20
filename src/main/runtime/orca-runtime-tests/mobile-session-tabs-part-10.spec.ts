@@ -9,7 +9,7 @@ import {
   makeWorkspaceSessionWithHeadlessTerminal
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('rejects missing requested split leaves instead of activating a sibling', async () => {
     const layout = makeHeadlessTerminalLayout({
       [HEADLESS_LEAF_ID]: 'pty-a'

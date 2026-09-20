@@ -94,6 +94,7 @@ export class OrcaRuntimeWithControllerKnowsPtyIsLive extends OrcaRuntimeWithReso
       text?: string
       enter?: boolean
       interrupt?: boolean
+      keystroke?: boolean
     },
     options: {
       signal?: AbortSignal

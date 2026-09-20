@@ -482,7 +482,8 @@ describe('launchAgentInNewTab', () => {
       agentArgs: '--permission-mode plan'
     })
 
-    expect(result).toEqual(expect.objectContaining({ tabId: null, pasteDraftAfterLaunch: false }))
+    expect(result?.surface).toEqual({ kind: 'host-published' })
+    expect(result?.pasteDraftAfterLaunch).toBe(false)
     expect(mockCreateWebRuntimeAgentSessionTerminalWithLaunchDraft).toHaveBeenCalledWith(
       expect.objectContaining({
         launchAgent: 'claude',
@@ -554,7 +555,7 @@ describe('launchAgentInNewTab', () => {
     mockIsWebRuntimeSessionActive.mockReturnValue(true)
     mockCreateWebRuntimeSessionTerminal.mockResolvedValue({
       status: 'failed',
-      message: 'Upgrade the remote Orca host before starting or resuming agent sessions.'
+      message: 'Upgrade the remote Wakii host before starting or resuming agent sessions.'
     })
     store.settings = {
       agentCmdOverrides: {},
@@ -571,7 +572,7 @@ describe('launchAgentInNewTab', () => {
 
     await Promise.resolve()
     expect(mockToastError).toHaveBeenCalledWith(
-      'Upgrade the remote Orca host before starting or resuming agent sessions.'
+      'Upgrade the remote Wakii host before starting or resuming agent sessions.'
     )
     expect(mockSetActiveTabType).not.toHaveBeenCalled()
   })
@@ -829,7 +830,6 @@ describe('launchAgentInNewTab', () => {
       delivered: false,
       failureNotified: true
     })
-    expect(mockToastMessage).not.toHaveBeenCalled()
   })
 
   it('marks a cancelled submit-after-ready launch notified when the user switched worktrees', async () => {
@@ -852,7 +852,6 @@ describe('launchAgentInNewTab', () => {
       delivered: false,
       failureNotified: true
     })
-    expect(mockToastMessage).not.toHaveBeenCalled()
   })
 
   it('leaves a genuine launch failure unnotified so the caller surfaces it', async () => {

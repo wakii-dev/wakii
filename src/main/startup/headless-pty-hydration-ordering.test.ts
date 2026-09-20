@@ -41,7 +41,7 @@ describe('headless PTY registry hydration ordering', () => {
   it('hydrates orcad after Store and daemon readiness but before RPC and publication', () => {
     const source = readFileSync(join(process.cwd(), 'src/main/orcad/orcad-entry.ts'), 'utf8')
     const store = source.indexOf('const store = new Store(')
-    const daemon = source.indexOf('await startOrcadDaemon()', store)
+    const daemon = source.indexOf('await startWakiidDaemon()', store)
     const handlersAndHydration = source.indexOf('await registerHeadlessPtyRuntime(', daemon)
     const rpc = source.indexOf('await rpc.start()', handlersAndHydration)
     const readiness = source.indexOf('await new ServeReadinessPublisher().publish(', rpc)
@@ -59,7 +59,7 @@ describe('headless PTY registry hydration ordering', () => {
     const hookStop = source.indexOf('agentHookServer.stop()', cleanup)
     const store = source.indexOf('const store = new Store(')
     const hookStart = source.indexOf('await agentHookServer.start(', store)
-    const daemon = source.indexOf('await startOrcadDaemon()', hookStart)
+    const daemon = source.indexOf('await startWakiidDaemon()', hookStart)
     const hookEnv = source.indexOf('buildAgentHookPtyEnv:', daemon)
     const handlersAndHydration = source.indexOf('await registerHeadlessPtyRuntime(', hookEnv)
 
@@ -75,7 +75,7 @@ describe('headless PTY registry hydration ordering', () => {
 
   it('captures orcad status identity at ingest for fleet stale-row fencing', () => {
     const source = readFileSync(join(process.cwd(), 'src/main/orcad/orcad-entry.ts'), 'utf8')
-    const runtime = source.indexOf('const runtime = new OrcaRuntimeService(')
+    const runtime = source.indexOf('const runtime = new WakiiRuntimeService(')
     const identityReader = source.indexOf('readObservedAgentStatusPaneIdentity:', runtime)
     const identitySubscription = source.indexOf('agentHookServer.subscribeEnrichedStatus(')
     const hooksEnabled = source.indexOf('if (isAgentStatusHooksEnabled(', identitySubscription)
@@ -96,7 +96,7 @@ describe('headless PTY registry hydration ordering', () => {
     const source = readFileSync(join(process.cwd(), 'src/main/orcad/orcad-entry.ts'), 'utf8')
     const subscription = source.indexOf('agentHookServer.subscribeEnrichedStatus(')
     const hookStart = source.indexOf('await agentHookServer.start(', subscription)
-    const runtime = source.indexOf('const runtime = new OrcaRuntimeService(')
+    const runtime = source.indexOf('const runtime = new WakiiRuntimeService(')
     const handlers = source.indexOf('await registerHeadlessPtyRuntime(', runtime)
     const identityRecovery = source.indexOf('await runtime.refreshRestoredOrchestrationAuthority()')
     const workerRecovery = source.indexOf('await runtime.reconcileLegacyWorkerTerminals()')

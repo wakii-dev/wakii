@@ -6,19 +6,27 @@ import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const mocks = vi.hoisted(() => ({
-  connect: vi.fn(),
-  fetchAuthStatus: vi.fn(),
-  signOut: vi.fn(),
-  state: {
+type MockAuthStatus = {
+  configured: boolean
+  state: string
+  cloud?: { displayName: string; email: string }
+} | null
+
+const mocks = vi.hoisted(() => {
+  const state: { orcaProfileAuthStatus: MockAuthStatus } = {
     orcaProfileAuthStatus: {
       configured: true,
       state: 'connected',
       cloud: { displayName: 'Ada Lovelace', email: 'ada@example.com' }
-    } as Record<string, unknown> | null,
-    orcaProfileConnecting: false
+    }
   }
-}))
+  return {
+    connect: vi.fn(),
+    fetchAuthStatus: vi.fn(),
+    signOut: vi.fn(),
+    state
+  }
+})
 
 vi.mock('@/i18n/i18n', () => ({
   translate: (_key: string, fallback: string) => fallback
@@ -34,8 +42,8 @@ vi.mock('@/store', () => ({
     })
 }))
 
-vi.mock('../orca-profiles/OrcaProfileSignOutConfirmDialog', () => ({
-  OrcaProfileSignOutConfirmDialog: ({
+vi.mock('../orca-profiles/WakiiProfileSignOutConfirmDialog', () => ({
+  WakiiProfileSignOutConfirmDialog: ({
     open,
     onConfirm
   }: {
@@ -58,7 +66,6 @@ describe('OrcaAccountSettingsPane', () => {
       state: 'connected',
       cloud: { displayName: 'Ada Lovelace', email: 'ada@example.com' }
     }
-    mocks.state.orcaProfileConnecting = false
   })
 
   afterEach(cleanup)
@@ -70,7 +77,7 @@ describe('OrcaAccountSettingsPane', () => {
     expect(screen.getByText('Ada Lovelace')).toBeInTheDocument()
     expect(screen.getByText('ada@example.com')).toBeInTheDocument()
     expect(screen.getByText('Artifact sharing')).toBeInTheDocument()
-    expect(screen.getByText('Orca Relay')).toBeInTheDocument()
+    expect(screen.getByText('Wakii Relay')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Sign out' }))
     await user.click(screen.getByRole('button', { name: 'Confirm sign out' }))
@@ -80,15 +87,19 @@ describe('OrcaAccountSettingsPane', () => {
   it('offers sign in for a local profile', async () => {
     const user = userEvent.setup()
     mocks.state.orcaProfileAuthStatus = { configured: true, state: 'local' }
+    mocks.connect.mockReturnValue(new Promise(() => {}))
     render(<OrcaAccountSettingsPane />)
 
     expect(
       screen.getByText(
-        'Sign in to extend Orca with cloud features, including Artifacts and Orca Relay.'
+        'Sign in to extend Wakii with cloud features, including Artifacts and Wakii Relay.'
       )
     ).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Sign in to Orca' }))
+    await user.click(screen.getByRole('button', { name: 'Sign in to Wakii' }))
     expect(mocks.connect).toHaveBeenCalledOnce()
+    expect(screen.getByRole('button', { name: 'Sign in to Wakii' })).toBeEnabled()
+    await user.click(screen.getByRole('button', { name: 'Sign in to Wakii' }))
+    expect(mocks.connect).toHaveBeenCalledTimes(2)
   })
 
   it('loads account status when it is not hydrated yet', () => {
@@ -96,6 +107,6 @@ describe('OrcaAccountSettingsPane', () => {
     render(<OrcaAccountSettingsPane />)
 
     expect(mocks.fetchAuthStatus).toHaveBeenCalledOnce()
-    expect(screen.getByRole('button', { name: 'Sign in to Orca' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Sign in to Wakii' })).toBeDisabled()
   })
 })

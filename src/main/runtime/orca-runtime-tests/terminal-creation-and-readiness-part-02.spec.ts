@@ -33,7 +33,7 @@ import {
   store
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('preserves SSH dispatch authority commitment across transient relay loss', async () => {
     const targetId = 'ssh-1'
     const ptyId = `ssh:${targetId}@@pty-retained`

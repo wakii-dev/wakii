@@ -182,7 +182,7 @@ export function assessOrcadRollback(input: {
       code: 'orcad_rollback_snapshot_missing',
       reason:
         `The pre-activation state snapshot for ${input.record.active ?? 'the active version'} ` +
-        'is gone, and Orca state carries no schema version that could prove the older build ' +
+        'is gone, and Wakii state carries no schema version that could prove the older build ' +
         'can read what the newer one migrated. Switching the binary back would hand ' +
         `${target} a store it may not understand. Deploy forward instead.`
     }

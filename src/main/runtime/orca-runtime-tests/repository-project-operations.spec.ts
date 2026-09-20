@@ -19,7 +19,7 @@ import {
 } from '../orca-runtime-test-mocks.spec'
 import { store } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('deduplicates runtime repo paths with Windows/UNC comparison semantics', async () => {
     const added: Record<string, unknown>[] = []
     const uncStore = {

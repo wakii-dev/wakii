@@ -17,7 +17,7 @@ import {
 } from '../orca-runtime-test-fixtures.spec'
 import { createMobileCreateTestNotifier } from '../orca-runtime-test-scenario-builders.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   describe('browser page targeting', () => {
     function mockLiveBrowserGuest(): void {
       electronMocks.webContents.fromId.mockReturnValue({

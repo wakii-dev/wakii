@@ -138,7 +138,7 @@ export class PushDispatcher {
           notificationEpoch: event.notificationEpoch,
           source: 'agent-task-complete',
           agentState: null,
-          title: 'Orca',
+          title: 'Wakii',
           body: '',
           sound: false
         }

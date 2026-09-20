@@ -128,10 +128,10 @@ export function projectCompatibilityForReconciledRepos(
 }
 
 export function filterTrustedOrcaHooksToValidRepos(
-  trust: AppState['trustedOrcaHooks'],
+  trust: AppState['trustedWakiiHooks'],
   validRepoIds: Set<string>
-): AppState['trustedOrcaHooks'] {
-  const next: AppState['trustedOrcaHooks'] = {}
+): AppState['trustedWakiiHooks'] {
+  const next: AppState['trustedWakiiHooks'] = {}
   for (const [repoId, entry] of Object.entries(trust)) {
     if (validRepoIds.has(repoId)) {
       next[repoId] = entry

@@ -68,7 +68,7 @@ function GitHubStarButton({
       return
     }
     setState('starred') // optimistic
-    const ok = await window.api.gh.starOrca('landing')
+    const ok = await window.api.gh.starWakii('landing')
     if (!ok) {
       if (mountedRef.current) {
         setState('web-fallback')
@@ -261,7 +261,7 @@ export default function Landing(): React.JSX.Element {
           >
             <img
               src={logo}
-              alt={translate('auto.components.Landing.520304a067', 'Orca logo')}
+              alt={translate('auto.components.Landing.520304a067', 'Wakii logo')}
               className="size-12"
             />
           </div>

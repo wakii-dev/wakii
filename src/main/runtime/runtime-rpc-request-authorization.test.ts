@@ -26,7 +26,7 @@ vi.mock('../git/worktree', () => {
   }
 })
 
-describe('OrcaRuntimeRpcServer', () => {
+describe('WakiiRuntimeRpcServer', () => {
   it('rejects WebSocket requests whose request token differs from the authenticated channel token', async () => {
     const userDataPath = mkdtempSync(join(tmpdir(), 'orca-runtime-rpc-'))
     const runtime = {

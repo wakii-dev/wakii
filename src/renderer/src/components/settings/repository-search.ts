@@ -76,6 +76,40 @@ export function getRepositoryPaneSearchEntries(
         )
       ]
     },
+    ...(!isFolder
+      ? [
+          {
+            title: translate(
+              'auto.components.settings.repository.search.githubAccount',
+              'GitHub Account'
+            ),
+            description: translate(
+              'auto.components.settings.repository.search.githubAccountDescription',
+              'Bind a keyring gh login for this project’s GitHub API calls.'
+            ),
+            keywords: [
+              repo.displayName,
+              ...translateSearchKeyword(
+                'auto.components.settings.repository.search.9dc60d7f6d',
+                'github'
+              ),
+              ...translateSearchKeyword(
+                'auto.components.settings.repository.search.githubAccountKeyword',
+                'github account'
+              ),
+              ...translateSearchKeyword(
+                'auto.components.settings.repository.search.ghAccount',
+                'gh account'
+              ),
+              ...translateSearchKeyword(
+                'auto.components.settings.repository.search.login',
+                'login'
+              ),
+              ...translateSearchKeyword('auto.components.settings.repository.search.token', 'token')
+            ]
+          }
+        ]
+      : []),
     ...(repo.upstream && !isFolder
       ? [
           {
@@ -167,7 +201,7 @@ export function getRepositoryPaneSearchEntries(
       title: translate('auto.components.settings.repository.search.c5266c2c9d', 'Remove Project'),
       description: translate(
         'auto.components.settings.repository.search.c86478c3d8',
-        'Remove this project from Orca.'
+        'Remove this project from Wakii.'
       ),
       keywords: [
         repo.displayName,

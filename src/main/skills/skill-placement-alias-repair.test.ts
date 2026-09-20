@@ -80,7 +80,7 @@ describe('skill provider alias reconciliation', () => {
     expect(result).toMatchObject({ topology: 'provider-alias', status: 'unchanged' })
   })
 
-  it('repairs a broken Orca-owned alias', async () => {
+  it('repairs a broken Wakii-owned alias', async () => {
     const value = await fixture()
     const providerRoot = join(value.root, 'provider')
     const placementPath = join(providerRoot, 'private-skill')

@@ -146,7 +146,7 @@ export async function resolveRuntimeWorktreeCreateLineage(
     } catch {
       warnings.push({
         code: 'LINEAGE_PARENT_CONTEXT_MISSING',
-        message: 'Worktree created, but Orca could not validate the environment parent context.',
+        message: 'Worktree created, but Wakii could not validate the environment parent context.',
         details: { envParentWorkspace: input.envParentWorkspace }
       })
     }
@@ -191,7 +191,7 @@ export async function resolveRuntimeWorktreeCreateLineage(
       warnings.push({
         code: 'LINEAGE_PARENT_CONTEXT_MISSING',
         message:
-          'Worktree created, but Orca could not validate the caller terminal as a parent context.',
+          'Worktree created, but Wakii could not validate the caller terminal as a parent context.',
         details: { callerTerminalHandle: input.callerTerminalHandle }
       })
     }
@@ -206,7 +206,7 @@ export async function resolveRuntimeWorktreeCreateLineage(
       warnings.push({
         code: 'LINEAGE_PARENT_CONTEXT_MISSING',
         message:
-          'Worktree created, but Orca could not validate the current directory as a parent context.',
+          'Worktree created, but Wakii could not validate the current directory as a parent context.',
         details: { cwdParentWorktree: input.cwdParentWorktree }
       })
     }
@@ -224,7 +224,7 @@ export async function resolveRuntimeWorktreeCreateLineage(
       warnings: [
         {
           code: 'LINEAGE_PARENT_CONTEXT_CONFLICT',
-          message: 'Worktree created, but Orca could not prove which parent context caused it.',
+          message: 'Worktree created, but Wakii could not prove which parent context caused it.',
           details: {
             terminalParentWorkspaceKey: candidates.find((c) => c.source === 'terminal-context')
               ?.parent.workspaceKey,

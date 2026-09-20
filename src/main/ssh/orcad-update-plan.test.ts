@@ -25,7 +25,7 @@ function record(overrides: Partial<OrcadActivationRecord> = {}): OrcadActivation
   }
 }
 
-describe('planOrcadUpdate', () => {
+describe('planWakiidUpdate', () => {
   it('does nothing when the candidate is already active', () => {
     const plan = planOrcadUpdate({
       record: record(),
@@ -87,7 +87,7 @@ describe('planOrcadUpdate', () => {
   })
 })
 
-describe('assessOrcadRollback', () => {
+describe('assessWakiidRollback', () => {
   it('is clean when the snapshot is intact and nothing happened since activation', () => {
     const safety = assessOrcadRollback({
       record: record(),

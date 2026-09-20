@@ -14,7 +14,7 @@ const STORAGE_IDENTITY_TAG = 'orca-browser-execution-host-storage'
  * Chromium partition on every runtime restart or SSH reconnect and silently
  * dropped cookies and localStorage.
  *
- * `runtimeId` is per-process too -- `OrcaRuntimeService` mints it with
+ * `runtimeId` is per-process too -- `WakiiRuntimeService` mints it with
  * `randomUUID()` at construction and elsewhere pairs it with `pid` as a
  * process-ownership token -- so native and WSL hosts name their machine by
  * `authorityStorageKey`, the client's durable record of the paired server.

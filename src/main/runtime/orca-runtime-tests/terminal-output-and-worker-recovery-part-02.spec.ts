@@ -23,7 +23,7 @@ import {
 } from '../orca-runtime-test-fixtures.spec'
 import { publishLegacyWorkerReveal } from '../orca-runtime-test-scenario-builders.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('recovers exported ORCA_TERMINAL_HANDLE from discovered live PTY sessions', async () => {
     const runtime = new OrcaRuntimeService(store)
     const writes: string[] = []

@@ -15,7 +15,7 @@ import {
   store
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('emits one mobile session terminal tab per live PTY even if two tabs resolve to it', () => {
     const runtime = createRuntime()
     const internals = runtime as unknown as {
@@ -436,10 +436,11 @@ describe('OrcaRuntimeService', () => {
             throw new Error('onPtyData should use the PTY leaf index')
           }
         }
+        // oxlint-disable-next-line anti-slop/no-reflect-get -- Proxy get trap default forward.
         const value = Reflect.get(target, prop, target)
         return typeof value === 'function' ? value.bind(target) : value
       }
-    }) as Map<string, unknown>
+    })
 
     runtime.onPtyData(`pty-${targetIndex}`, 'hello indexed\n', 123)
 

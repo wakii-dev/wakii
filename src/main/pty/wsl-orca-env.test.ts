@@ -7,8 +7,8 @@ import {
 } from '../../shared/setup-agent-sequencing'
 import { addOrcaWslInteropEnv, stampWslOrchestrationCompatibilityHost } from './wsl-orca-env'
 
-describe('addOrcaWslInteropEnv', () => {
-  it('marks the Orca terminal handle for Windows to WSL env import', () => {
+describe('addWakiiWslInteropEnv', () => {
+  it('marks the Wakii terminal handle for Windows to WSL env import', () => {
     const env: Record<string, string> = { ORCA_TERMINAL_HANDLE: 'term_wsl' }
 
     addOrcaWslInteropEnv(env)
@@ -206,6 +206,12 @@ describe('addOrcaWslInteropEnv', () => {
     expect(env.WSLENV).toBe('ORCA_TERMINAL_HANDLE/u:ORCA_SHELL_READY_ROOT/p')
   })
 
+  it('crosses the inline-image protocol hint into the guest untranslated (/u)', () => {
+    const env: Record<string, string> = { ORCA_IMAGE_PROTOCOL: 'kitty' }
+    addOrcaWslInteropEnv(env)
+    expect(env.WSLENV).toContain('ORCA_IMAGE_PROTOCOL/u')
+  })
+
   it('marks the WSL hook relay version for import on relay spawn envs', () => {
     const env: Record<string, string> = {
       ORCA_WSL_HOOK_RELAY_VERSION: '0.1.0+abc'
@@ -230,7 +236,7 @@ describe('addOrcaWslInteropEnv', () => {
     // own — a /p entry here would deliver C:\... as /mnt/c and in-guest OpenCode
     // would adopt Orca's Windows overlay as its config root.
     const env: Record<string, string> = {
-      OPENCODE_CONFIG_DIR: 'C:\\Users\\jin\\AppData\\Roaming\\Orca\\opencode-overlays\\abc',
+      OPENCODE_CONFIG_DIR: 'C:\\Users\\jin\\AppData\\Roaming\\Wakii\\opencode-overlays\\abc',
       ORCA_OPENCODE_CONFIG_DIR: 'C:\\Users\\jin\\AppData\\Roaming\\Orca\\opencode-overlays\\abc'
     }
     addOrcaWslInteropEnv(env)

@@ -10,7 +10,7 @@ import {
 } from '../orca-runtime-test-mocks.spec'
 import { TEST_REPO_ID, TEST_REPO_PATH, store } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('resolves SSH GitLab fork MR bases from the target project MR head ref', async () => {
     const remoteRepo = {
       id: TEST_REPO_ID,

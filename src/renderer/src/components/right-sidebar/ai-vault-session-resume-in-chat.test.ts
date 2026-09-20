@@ -144,7 +144,7 @@ describe('workspace matching, which only Claude is bound by', () => {
   it('treats Windows spellings of one directory as the same workspace', () => {
     expect(
       eligibility({
-        session: session({ cwd: 'C:\\Users\\Dev\\repo\\Orca\\' }),
+        session: session({ cwd: 'C:\\Users\\Dev\\repo\\Wakii\\' }),
         targetWorkspacePath: 'c:/users/dev/repo/orca'
       })
     ).toMatchObject({ available: true })
@@ -153,7 +153,7 @@ describe('workspace matching, which only Claude is bound by', () => {
 
 describe('aiVaultSessionCwdMatchesWorkspace', () => {
   it('ignores separator, case, and a trailing slash', () => {
-    expect(aiVaultSessionCwdMatchesWorkspace('C:\\repo\\Orca', 'c:/repo/orca')).toBe(true)
+    expect(aiVaultSessionCwdMatchesWorkspace('C:\\repo\\Wakii', 'c:/repo/orca')).toBe(true)
     expect(aiVaultSessionCwdMatchesWorkspace('/repo/orca/', '/repo/orca')).toBe(true)
     expect(aiVaultSessionCwdMatchesWorkspace(' /repo/orca ', '/repo/orca')).toBe(true)
   })

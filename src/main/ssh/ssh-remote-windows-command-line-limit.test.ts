@@ -77,7 +77,7 @@ describe('Windows remote command line limit', () => {
     ).toString('utf16le')
     const payload = bootstrap.match(/FromBase64String\('([A-Za-z0-9+/=]+)'\)/u)?.[1] ?? ''
     expect(gunzipSync(Buffer.from(payload, 'base64')).toString('utf-8')).toBe(script)
-    expect(bootstrap).toContain('Invoke-Expression $OrcaScriptText')
+    expect(bootstrap).toContain('Invoke-Expression $WakiiScriptText')
   })
 
   it('refuses a script no encoding can fit instead of letting cmd.exe reject it', () => {

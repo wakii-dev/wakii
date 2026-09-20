@@ -235,7 +235,7 @@ while (( SECONDS <= deadline )); do
   fi
   sleep 0.1
 done
-printf 'Orca CLI is not ready; reopen Orca or register the CLI again.\\n' >&2
+printf 'Wakii CLI is not ready; reopen Wakii or register the CLI again.\\n' >&2
 exit 1
 `
 }

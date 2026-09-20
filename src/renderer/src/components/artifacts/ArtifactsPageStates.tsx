@@ -22,13 +22,11 @@ export function ArtifactsPageErrorBanner({
 }
 
 export function ArtifactsPageAuthState({
-  connecting,
   needsReconnect,
   configured,
   onConnect,
   onOpenAccountSettings
 }: {
-  connecting: boolean
   needsReconnect: boolean
   configured: boolean
   onConnect: () => void
@@ -42,7 +40,7 @@ export function ArtifactsPageAuthState({
           {needsReconnect
             ? translate(
                 'auto.components.artifacts.ArtifactsPage.reconnectHeading',
-                'Sign in to Orca again'
+                'Sign in to Wakii again'
               )
             : translate(
                 'auto.components.artifacts.ArtifactsPage.signInHeading',
@@ -57,27 +55,25 @@ export function ArtifactsPageAuthState({
               )
             : translate(
                 'auto.components.artifacts.ArtifactsPage.signInCopy',
-                'Use your Orca account to upload artifacts and manage their public links.'
+                'Use your Wakii account to upload artifacts and manage their public links.'
               )}
         </p>
       </div>
       {configured ? (
-        <Button size="sm" disabled={connecting} onClick={onConnect}>
-          {connecting
-            ? translate('auto.components.artifacts.ArtifactsPage.signingIn', 'Signing in…')
-            : needsReconnect
-              ? translate(
-                  'auto.components.artifacts.ArtifactsPage.signInAgainAction',
-                  'Sign in again'
-                )
-              : translate('auto.components.artifacts.ArtifactsPage.signIn', 'Sign in to Orca')}
+        <Button size="sm" onClick={onConnect}>
+          {needsReconnect
+            ? translate(
+                'auto.components.artifacts.ArtifactsPage.signInAgainAction',
+                'Sign in again'
+              )
+            : translate('auto.components.artifacts.ArtifactsPage.signIn', 'Sign in to Wakii')}
         </Button>
       ) : (
         <div className="flex flex-col items-center gap-2">
           <p className="max-w-sm text-xs leading-5 text-muted-foreground">
             {translate(
               'auto.components.artifacts.ArtifactsPage.unconfiguredCopy',
-              'Orca account sign-in is not configured on this machine yet.'
+              'Wakii account sign-in is not configured on this machine yet.'
             )}
           </p>
           <Button variant="outline" size="sm" onClick={onOpenAccountSettings}>

@@ -11,7 +11,7 @@ export type DevInstanceIdentity = AppIdentity & {
   // Why: drives app.setName → the macOS safeStorage Keychain item name
   // ("<appName> Safe Storage"). Kept stable across dev branches (unlike the
   // per-branch `name`) so every dev instance shares one Keychain key instead of
-  // creating a new one per branch and re-prompting. Distinct from prod's 'Orca'.
+  // creating a new one per branch and re-prompting. Distinct from prod's 'Wakii'.
   appName: string
 }
 
@@ -21,7 +21,7 @@ export type DevInstanceIdentity = AppIdentity & {
  * Why: Electron resolves the macOS safeStorage Keychain service name
  * ("<app name> Safe Storage") before `ready`, so a post-ready setName cannot move it.
  * Dev-only on purpose — a packaged build must keep deriving its key from its own
- * CFBundleName, which downstream forks ship differently ("Orca ALab Edition").
+ * CFBundleName, which downstream forks ship differently ("Wakii ALab Edition").
  * Renaming it pre-ready would orphan their encrypted secrets.
  */
 export function shouldApplyPreReadyAppName(identity: Pick<AppIdentity, 'isDev'>): boolean {

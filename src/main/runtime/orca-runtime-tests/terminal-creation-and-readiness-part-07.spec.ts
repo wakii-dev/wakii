@@ -17,7 +17,7 @@ import {
   store
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('resolves tui-idle from a Codex ready prompt even when stale startup lines remain', async () => {
     const runtime = new OrcaRuntimeService(store)
     runtime.setPtyController({

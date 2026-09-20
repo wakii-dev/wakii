@@ -38,7 +38,7 @@ afterEach(() => {
 })
 
 describe('startPluginWorker', () => {
-  it('does not inherit Orca execArgv', async () => {
+  it('does not inherit Wakii execArgv', async () => {
     const child = new FakeChild()
     const pending = start(child)
     child.emit('message', { type: 'ready', commands: [] })

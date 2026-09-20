@@ -69,7 +69,7 @@ vi.mock('../pty-descendant-termination', () => ({
 const WINDOWS_POWERSHELL_ABS = 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe'
 const PWSH7_ABS = 'C:\\Program Files\\PowerShell\\7\\pwsh.exe'
 const CMD_ABS = 'C:\\Windows\\System32\\cmd.exe'
-const CODEX_LAUNCH_PREFLIGHT = 'C:\\Program Files\\Orca\\orca.exe'
+const CODEX_LAUNCH_PREFLIGHT = 'C:\\Program Files\\Wakii\\orca.exe'
 vi.mock('./windows-powershell-executable', () => ({
   resolveWindowsPowerShellExecutablePath: (family: 'pwsh.exe' | 'powershell.exe') =>
     family === 'pwsh.exe' ? PWSH7_ABS : WINDOWS_POWERSHELL_ABS,
@@ -486,7 +486,7 @@ describe('LocalPtyProvider', () => {
       expect(spawnMock).toHaveBeenCalledTimes(callsBeforeSpawn)
     })
 
-    it('marks Orca terminal handle for WSL import when buildSpawnEnv opts in', async () => {
+    it('marks Wakii terminal handle for WSL import when buildSpawnEnv opts in', async () => {
       Object.defineProperty(process, 'platform', { configurable: true, value: 'win32' })
       const savedCodexHome = process.env.CODEX_HOME
       const savedOrcaCodexHome = process.env.ORCA_CODEX_HOME

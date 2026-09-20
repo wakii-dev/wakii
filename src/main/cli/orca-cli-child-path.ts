@@ -1,5 +1,5 @@
 /**
- * The PATH entry through which an Orca-launched child reaches THIS app's own CLI.
+ * The PATH entry through which an Wakii-launched child reaches THIS app's own CLI.
  *
  * Extracted from `buildPtyHostEnv` so the structured-session lane can apply the identical
  * treatment. A structured worker has no PTY, but its provider child runs `orca orchestration ...`
@@ -53,7 +53,7 @@ export function prependOrcaCliDirToChildPath(
       env.PATH = [shimDir, ...inheritedEntries].join(pathDelimiter)
     }
   } else if (opts.resourcesPath && (platform === 'darwin' || platform === 'win32')) {
-    // Why: global CLI registration is optional, but agents in Orca-managed PTYs must always reach this app's bundled CLI.
+    // Why: global CLI registration is optional, but agents in Wakii-managed PTYs must always reach this app's bundled CLI.
     const bundledCliBin = join(opts.resourcesPath, 'bin')
     const inheritedPath = readInheritedPath(env, platform)
     env[resolvePathEnvKey(env, platform)] = inheritedPath

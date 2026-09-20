@@ -1,8 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { z } from 'zod'
-import { defineMethod, type RpcMethod } from '../core'
-import { requiredString } from '../schemas'
+import { SuperpowersStoryDetailParams } from '../../../../shared/rpc-contract/superpowers-params'
+import { defineMethod } from '../core'
 import type { OrcaRuntimeService } from '../../orca-runtime'
 import { runtimeWorktreeIdsEqual } from '../../runtime-worktree-path-identity'
 import { deriveWorktreeIdForGate } from '../../../superpowers/gate-worktree-derivation'
@@ -147,10 +146,10 @@ export async function resolveStoryDetail(
   return { story, gates }
 }
 
-export const SUPERPOWERS_STORY_DETAIL_METHODS: RpcMethod[] = [
+export const SUPERPOWERS_STORY_DETAIL_METHODS = [
   defineMethod({
     name: 'superpowers.storyDetail',
-    params: z.object({ storyId: requiredString('Missing storyId') }),
+    params: SuperpowersStoryDetailParams,
     handler: (params, { runtime }) => resolveStoryDetail(runtime, params.storyId)
   })
 ]

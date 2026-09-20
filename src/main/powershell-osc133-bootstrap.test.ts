@@ -22,7 +22,7 @@ describe('PowerShell OSC 133 bootstrap', () => {
     expect(script).toContain('ORCA_CODEX_HOME')
     expect(script).toContain('ORCA_CODEX_LAUNCH_PREFLIGHT')
     expect(script).toContain('function Global:codex')
-    expect(script).not.toContain('$Global:__OrcaCodexExecutable')
+    expect(script).not.toContain('$Global:__WakiiCodexExecutable')
     expect(script).toContain('function Global:prompt')
     expect(script).toContain('function Global:PSConsoleHostReadLine')
     expect(script).toContain('Esc = [char]27')

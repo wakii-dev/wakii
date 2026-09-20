@@ -13,7 +13,7 @@ import {
   store
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   describe('close intent adjudication', () => {
     // Shared setup: a renderer-adopted tab whose PTY the host sees alive.
     function makeAdoptedLiveTabRuntime(): {

@@ -383,7 +383,7 @@ describe('terminal-history', () => {
           `${OTHER_WORKTREE_HASH}-zsh_history`
         ].join(sep)
       ]
-    ])('drops a %s HISTFILE inherited from a parent Orca pane', (_kind, inherited) => {
+    ])('drops a %s HISTFILE inherited from a parent Wakii pane', (_kind, inherited) => {
       // HISTFILE stays EXPORTED once the wrapper restores it, so an Orca launched
       // from a pane in another worktree would otherwise hit the check-before-set
       // early return in EVERY pane and append into that one worktree's file.
@@ -401,7 +401,7 @@ describe('terminal-history', () => {
       // Orca only ever mints absolute paths, so the same shape relative to the
       // user's cwd is theirs.
       [
-        'a relative path of Orca’s shape',
+        'a relative path of Wakii’s shape',
         ['terminal-history', OTHER_WORKTREE_HASH, 'zsh_history'].join(sep)
       ]
     ])('preserves %s the user set as HISTFILE', (_kind, histFile) => {
@@ -425,7 +425,7 @@ describe('terminal-history', () => {
     it.each([
       ['desktop', fishHistorySessionName(hashWorktreeId('repo-1::/path/other-wt'))],
       ['relay', relayFishHistorySessionName(hashWorktreeId('repo-1::/path/other-wt'))]
-    ])('replaces a %s fish_history inherited from a parent Orca', (_kind, inherited) => {
+    ])('replaces a %s fish_history inherited from a parent Wakii', (_kind, inherited) => {
       // fish EXPORTS fish_history, so an Orca launched from a fish pane hands the
       // LAUNCHING worktree's session to every pane here — panes in every other
       // worktree included, which would all then write one worktree's history file.
@@ -467,7 +467,7 @@ describe('terminal-history', () => {
       mkdirSyncMock.mockReset()
     })
 
-    it('replaces an inherited Orca fish_history with this worktree session', () => {
+    it('replaces an inherited Wakii fish_history with this worktree session', () => {
       const env: Record<string, string> = {
         fish_history: fishHistorySessionName(hashWorktreeId('repo-1::/path/other-wt'))
       }
@@ -694,7 +694,7 @@ describe('terminal-history', () => {
       try {
         parseWslPathMock.mockReturnValue({ distro: 'Ubuntu', linuxPath: '/home/user/project' })
         toLinuxPathMock.mockReturnValue(
-          '/mnt/c/Users/user/AppData/Roaming/Orca/terminal-history-wsl/Ubuntu/abc123/bash_history'
+          '/mnt/c/Users/user/AppData/Roaming/Wakii/terminal-history-wsl/Ubuntu/abc123/bash_history'
         )
         mkdirSyncMock.mockReturnValue(undefined)
         existsSyncMock.mockReturnValue(true)
@@ -751,7 +751,7 @@ describe('terminal-history', () => {
         toLinuxPathMock.mockImplementation((p: string) => p.replace(/^C:\\/i, '/mnt/c/'))
         mkdirSyncMock.mockReturnValue(undefined)
         existsSyncMock.mockReturnValue(true)
-        getPathMock.mockReturnValue('C:\\Users\\alice\\AppData\\Roaming\\Orca')
+        getPathMock.mockReturnValue('C:\\Users\\alice\\AppData\\Roaming\\Wakii')
 
         const env: Record<string, string> = {}
         const result = injectHistoryEnv(env, 'repo-1::C:\\repo', '/bin/bash', 'C:\\repo', {

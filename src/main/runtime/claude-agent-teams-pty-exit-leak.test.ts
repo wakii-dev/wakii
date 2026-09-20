@@ -4,7 +4,7 @@
  *
  * `ClaudeAgentTeamsService.createLaunchEnv` adds a team (with a nested panes Map)
  * per agent-team leader launch. The only eviction was `removeTeamForLeaderHandle`,
- * called solely from `OrcaRuntimeService.closeTerminal` (the explicit user-close IPC).
+ * called solely from `WakiiRuntimeService.closeTerminal` (the explicit user-close IPC).
  * The natural-exit teardown paths — `onPtyExit` and `dropDisconnectedPtyRecord` —
  * tore down every other per-pty map but never evicted the team. teamId is a fresh
  * `team-${randomUUID()}`, so when a leader shell exits on its own (agent finishes,

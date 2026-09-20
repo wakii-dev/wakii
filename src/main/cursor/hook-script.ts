@@ -9,6 +9,10 @@ import {
   buildWindowsHookEnvironmentGuardLines,
   buildWindowsHookStdinDrainEpilogue
 } from '../agent-hooks/hook-stdin-contract'
+import {
+  buildPosixGrokReplayGuardLines,
+  buildWindowsGrokReplayGuardLines
+} from '../agent-hooks/grok-replay-guard'
 import { getCursorHookResponse, type CursorEvent } from './hook-events'
 
 const CURSOR_HOOK_RESPONSE_ENV = 'ORCA_CURSOR_HOOK_RESPONSE'
@@ -40,9 +44,10 @@ export function getManagedScript(target: 'local' | 'posix' = 'local'): string {
       'setlocal',
       // Why: Cursor permission hooks fail closed on empty/invalid stdout (#15462).
       `if defined ${CURSOR_HOOK_RESPONSE_ENV} (echo %${CURSOR_HOOK_RESPONSE_ENV}%) else (echo {})`,
-      // Why: source current endpoint coordinates for PTYs surviving an Orca restart.
+      // Why: source current endpoint coordinates for PTYs surviving an Wakii restart.
       'if defined ORCA_AGENT_HOOK_ENDPOINT if exist "%ORCA_AGENT_HOOK_ENDPOINT%" call "%ORCA_AGENT_HOOK_ENDPOINT%" 2>nul',
       ...buildWindowsHookEnvironmentGuardLines(),
+      ...buildWindowsGrokReplayGuardLines(),
       buildWindowsAgentHookPostCommand('cursor'),
       'exit /b 0',
       ...buildWindowsHookStdinDrainEpilogue(),
@@ -59,6 +64,7 @@ export function getManagedScript(target: 'local' | 'posix' = 'local'): string {
     '  printf "{}\\n"',
     'fi',
     ...buildPosixHookPayloadCapture(),
+    ...buildPosixGrokReplayGuardLines(),
     ...buildPosixHookSpoolLines('cursor'),
     // Why: refresh endpoint coordinates so surviving PTYs keep reporting.
     'if [ -n "$ORCA_AGENT_HOOK_ENDPOINT" ] && [ -r "$ORCA_AGENT_HOOK_ENDPOINT" ]; then',

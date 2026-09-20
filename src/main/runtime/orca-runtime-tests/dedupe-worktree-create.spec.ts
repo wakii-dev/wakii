@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { OrcaRuntimeService } from '../orca-runtime-test-mocks.spec'
 import { store } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService.dedupeWorktreeCreate', () => {
+describe('WakiiRuntimeService.dedupeWorktreeCreate', () => {
   it('coalesces concurrent creates that share a clientMutationId', async () => {
     const runtime = new OrcaRuntimeService(store)
     let calls = 0

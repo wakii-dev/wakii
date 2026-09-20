@@ -6,7 +6,7 @@ import { hardenExistingSecureFile } from '../../../shared/secure-file'
 import { MOBILE_PAIRING_USERDATA_FILES } from '../../runtime/mobile-pairing-files'
 
 // Why capture once (not a module const, not per-call): a const resolves before configureDevUserDataPath() redirects userData (dev/prod collide);
-// per-call resolves after app.setName('Orca') flips path case and loses data on case-sensitive FS. index.ts calls initDataPath() at the right moment.
+// per-call resolves after app.setName('Wakii') flips path case and loses data on case-sensitive FS. index.ts calls initDataPath() at the right moment.
 let _dataFile: string | null = null
 let _userDataDir: string | null = null
 

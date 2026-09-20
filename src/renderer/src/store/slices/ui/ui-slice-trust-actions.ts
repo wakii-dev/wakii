@@ -3,10 +3,10 @@ import { getSetupScriptPromptDismissalKey } from '../../../lib/setup-script-prom
 
 export function createUiTrustActions(set: UISliceSet, _get: UISliceGet): Partial<UISlice> {
   return {
-    trustedOrcaHooks: {},
+    trustedWakiiHooks: {},
     markOrcaHookScriptConfirmed: (repoId, kind, contentHash) =>
       set((s) => {
-        const existing = s.trustedOrcaHooks[repoId]
+        const existing = s.trustedWakiiHooks[repoId]
         const currentEntry = existing?.[kind]
         if (currentEntry?.contentHash === contentHash) {
           return s
@@ -15,35 +15,35 @@ export function createUiTrustActions(set: UISliceSet, _get: UISliceGet): Partial
           ...existing,
           [kind]: { contentHash, approvedAt: Date.now() }
         }
-        const next = { ...s.trustedOrcaHooks, [repoId]: nextRepo }
-        window.api.ui.set({ trustedOrcaHooks: next }).catch(console.error)
-        return { trustedOrcaHooks: next }
+        const next = { ...s.trustedWakiiHooks, [repoId]: nextRepo }
+        window.api.ui.set({ trustedWakiiHooks: next }).catch(console.error)
+        return { trustedWakiiHooks: next }
       }),
     markOrcaHookRepoAlwaysTrusted: (repoId) =>
       set((s) => {
-        const existing = s.trustedOrcaHooks[repoId]
+        const existing = s.trustedWakiiHooks[repoId]
         if (existing?.all) {
           return s
         }
         const next = {
-          ...s.trustedOrcaHooks,
+          ...s.trustedWakiiHooks,
           [repoId]: {
             ...existing,
             all: { approvedAt: Date.now() }
           }
         }
-        window.api.ui.set({ trustedOrcaHooks: next }).catch(console.error)
-        return { trustedOrcaHooks: next }
+        window.api.ui.set({ trustedWakiiHooks: next }).catch(console.error)
+        return { trustedWakiiHooks: next }
       }),
     clearOrcaHookTrustForRepo: (repoId) =>
       set((s) => {
-        if (!(repoId in s.trustedOrcaHooks)) {
+        if (!(repoId in s.trustedWakiiHooks)) {
           return s
         }
-        const next = { ...s.trustedOrcaHooks }
+        const next = { ...s.trustedWakiiHooks }
         delete next[repoId]
-        window.api.ui.set({ trustedOrcaHooks: next }).catch(console.error)
-        return { trustedOrcaHooks: next }
+        window.api.ui.set({ trustedWakiiHooks: next }).catch(console.error)
+        return { trustedWakiiHooks: next }
       }),
     setupScriptPromptDismissedRepoIds: [],
     dismissSetupScriptPrompt: (repoHostIdentity) =>

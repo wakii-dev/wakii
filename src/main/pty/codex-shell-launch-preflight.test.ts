@@ -228,7 +228,7 @@ describe.skipIf(process.platform === 'win32')('Codex shell launch preflight', ()
     )
   })
 
-  it('does not trigger a preflight outside an Orca terminal', () => {
+  it('does not trigger a preflight outside an Wakii terminal', () => {
     const root = mkdtempSync(join(tmpdir(), 'orca-codex-plain-shell-'))
     roots.push(root)
     const bin = join(root, 'bin')
@@ -580,7 +580,7 @@ describe('Codex shell launch preflight command', () => {
 // Program Files (Windows) both put spaces in it.
 describe.skipIf(process.platform === 'win32')('Codex preflight paths containing spaces', () => {
   function writeSpacedPreflight(root: string): { preflightPath: string; markerPath: string } {
-    const dir = join(root, 'Orca Dev.app', 'Contents', 'Resources', 'bin')
+    const dir = join(root, 'Wakii Dev.app', 'Contents', 'Resources', 'bin')
     mkdirSync(dir, { recursive: true })
     const markerPath = join(root, 'preflight-ran')
     const preflightPath = join(dir, 'orca')

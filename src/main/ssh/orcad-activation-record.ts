@@ -53,7 +53,7 @@ export function emptyOrcadActivationRecord(): OrcadActivationRecord {
  *
  * Why a null return and not a throw on a newer schema: a client older than the host must not
  * treat "I cannot read this" as "nothing is activated" — that would deploy over a live
- * install. Callers distinguish the two through `OrcadActivationReadResult`.
+ * install. Callers distinguish the two through `WakiidActivationReadResult`.
  */
 export type OrcadActivationReadResult =
   | { state: 'absent' }

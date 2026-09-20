@@ -36,8 +36,8 @@ export function buildNotificationOptions(args: NotificationDispatchRequest): {
 
   if (args.source === 'test') {
     return {
-      title: 'Orca notifications are on',
-      body: 'This is a test notification from Orca.'
+      title: 'Wakii notifications are on',
+      body: 'This is a test notification from Wakii.'
     }
   }
 
@@ -87,7 +87,7 @@ function formatNotificationWorktreeContext(args: NotificationDispatchRequest): s
     NOTIFICATION_TITLE_CONTEXT_MAX_LENGTH
   )
   const repoLabel = normalizeNotificationText(args.repoLabel, NOTIFICATION_TITLE_CONTEXT_MAX_LENGTH)
-  if (args.hasMultipleActiveRepos && repoLabel && worktreeLabel) {
+  if (repoLabel && worktreeLabel) {
     return normalizeNotificationText(
       `${repoLabel} / ${worktreeLabel}`,
       NOTIFICATION_TITLE_CONTEXT_MAX_LENGTH

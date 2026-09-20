@@ -61,7 +61,7 @@ describe('RuntimeLinearReadCommands', () => {
           dueDate: null,
           updatedAt: '2026-08-29T00:00:00.000Z',
           workspaceId: 'workspace-1',
-          workspaceName: 'Orca'
+          workspaceName: 'Wakii'
         }
       ],
       hasMore: true,

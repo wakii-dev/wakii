@@ -85,7 +85,7 @@ export function GeneralUpdateSettingsSection(): React.JSX.Element {
         )}
         description={translate(
           'auto.components.settings.GeneralUpdateSettingsSection.ceb579abaf',
-          'Check for app updates and install a newer Orca version.'
+          'Check for app updates and install a newer Wakii version.'
         )}
         keywords={['update', 'version', 'release notes', 'download']}
         className="space-y-3"
@@ -171,7 +171,7 @@ export function GeneralUpdateSettingsSection(): React.JSX.Element {
               {updateStatus.externallyManaged
                 ? translate(
                     'auto.components.settings.GeneralUpdateSettingsSection.e3b9d21c07',
-                    'is available. Update Orca through your system package manager — Orca cannot install this release itself.'
+                    'is available. Update Wakii through your system package manager — Wakii cannot install this release itself.'
                   )
                 : translate(
                     'auto.components.settings.GeneralUpdateSettingsSection.8311da27ba',

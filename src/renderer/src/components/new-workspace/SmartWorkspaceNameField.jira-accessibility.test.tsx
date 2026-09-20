@@ -403,7 +403,7 @@ describe('SmartWorkspaceNameField Jira accessibility', () => {
         siteName: 'Company Jira',
         title: 'Disambiguate Jira search',
         url: 'https://company.atlassian.net/browse/ORCA-123',
-        project: { id: 'project-1', key: 'ORCA', name: 'Orca' },
+        project: { id: 'project-1', key: 'ORCA', name: 'Wakii' },
         issueType: { id: 'type-1', name: 'Task' },
         status: { id: 'status-1', name: 'Open', categoryKey: 'new', categoryName: 'To Do' },
         labels: [],

@@ -17,7 +17,7 @@ import {
 } from '../orca-runtime-test-fixtures.spec'
 import { publishLegacyWorkerReveal } from '../orca-runtime-test-scenario-builders.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('requeues an active Task before clearing recovery for an authoritatively missing worker', async () => {
     const workerPaneKey = `legacy-missing:${HEADLESS_LEAF_ID}`
     const incarnationId = '32323232-3232-4232-8232-323232323232'

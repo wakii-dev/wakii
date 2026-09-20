@@ -6,6 +6,7 @@ import {
   FolderInput,
   FolderTree,
   Plus,
+  // `Shapes` is lucide-react's own export name; exempted in config/oxlint-anti-slop.json.
   Shapes,
   SlidersHorizontal,
   Trash2
@@ -53,7 +54,7 @@ function getWorktreeVisibilityMenuLabel(
     isLegacyRepoForExternalWorktreeVisibility(repo),
     visibilityDefaults
   )
-  return visibility === 'show' ? 'Hide non-Orca worktrees' : 'Show hidden worktrees'
+  return visibility === 'show' ? 'Hide non-Wakii worktrees' : 'Show hidden worktrees'
 }
 
 export type RepoHeaderProjectActions = {

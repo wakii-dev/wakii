@@ -96,7 +96,7 @@ export class ClaudeRuntimeAuthSync extends ClaudeRuntimeAuthPreparationService {
     if (activeAccount.managedAuthRuntime === 'wsl') {
       if (!(await this.getOwnedManagedAuthPath(activeAccount))) {
         console.warn(
-          '[claude-runtime-auth] Active WSL managed account is not owned by Orca, restoring system default'
+          '[claude-runtime-auth] Active WSL managed account is not owned by Wakii, restoring system default'
         )
         const nextSelection = setSelectedClaudeAccountIdForTarget(
           normalizeClaudeRuntimeSelection(settings),
@@ -134,7 +134,7 @@ export class ClaudeRuntimeAuthSync extends ClaudeRuntimeAuthPreparationService {
 
     if (!(await this.getOwnedManagedAuthPath(activeAccount))) {
       console.warn(
-        '[claude-runtime-auth] Active managed account is not owned by Orca, restoring system default'
+        '[claude-runtime-auth] Active managed account is not owned by Wakii, restoring system default'
       )
       if (this.lastSyncedAccountId !== null) {
         if (

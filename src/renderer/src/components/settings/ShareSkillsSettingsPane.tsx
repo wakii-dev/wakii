@@ -14,7 +14,6 @@ export function ShareSkillsSettingsPane(): React.JSX.Element {
   const settings = useAppStore((state) => state.settings)
   const updateSettings = useAppStore((state) => state.updateSettings)
   const authStatus = useAppStore((state) => state.orcaProfileAuthStatus)
-  const connecting = useAppStore((state) => state.orcaProfileConnecting)
   const connect = useAppStore((state) => state.connectCurrentOrcaProfile)
   const signedIn = authStatus?.state === 'connected'
   const isWebClient = isWebClientLocation()
@@ -72,7 +71,7 @@ export function ShareSkillsSettingsPane(): React.JSX.Element {
         <p className="text-xs leading-relaxed text-muted-foreground">
           {translate(
             'auto.components.settings.shareSkills.linkDescription',
-            'Shared bundles are not searchable or listed in Orca. The link is the credential, so send it only to people you trust.'
+            'Shared bundles are not searchable or listed in Wakii. The link is the credential, so send it only to people you trust.'
           )}
         </p>
       </section>
@@ -80,7 +79,7 @@ export function ShareSkillsSettingsPane(): React.JSX.Element {
       <SettingsSwitchRow
         label={translate(
           'auto.components.settings.shareSkills.allowAgentPublishing',
-          'Allow agents and the Orca CLI to publish skill links'
+          'Allow agents and the Wakii CLI to publish skill links'
         )}
         description={
           isWebClient
@@ -123,11 +122,11 @@ export function ShareSkillsSettingsPane(): React.JSX.Element {
               {isWebClient
                 ? translate(
                     'auto.components.settings.shareSkills.signInWebDescription',
-                    'Publishing and link management are available in the Orca desktop app.'
+                    'Publishing and link management are available in the Wakii desktop app.'
                   )
                 : translate(
                     'auto.components.settings.shareSkills.signInDescription',
-                    'Use your Orca account to publish bundles and manage their links. Recipients do not need an account.'
+                    'Use your Wakii account to publish bundles and manage their links. Recipients do not need an account.'
                   )}
             </p>
           </div>
@@ -135,14 +134,12 @@ export function ShareSkillsSettingsPane(): React.JSX.Element {
             <Button
               type="button"
               size="sm"
-              disabled={connecting || authStatus?.configured !== true}
+              disabled={authStatus?.configured !== true}
               onClick={() => void connect()}
             >
-              {connecting
-                ? translate('auto.components.settings.shareSkills.signingIn', 'Signing in…')
-                : authStatus?.state === 'reconnect-required'
-                  ? translate('auto.components.settings.shareSkills.signInAgain', 'Sign in again')
-                  : translate('auto.components.settings.shareSkills.signIn', 'Sign in to Orca')}
+              {authStatus?.state === 'reconnect-required'
+                ? translate('auto.components.settings.shareSkills.signInAgain', 'Sign in again')
+                : translate('auto.components.settings.shareSkills.signIn', 'Sign in to Wakii')}
             </Button>
           ) : null}
         </section>

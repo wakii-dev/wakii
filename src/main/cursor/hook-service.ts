@@ -45,7 +45,7 @@ function getManagedScript(target: 'local' | 'posix' = 'local'): string {
     return [
       '@echo off',
       'setlocal',
-      // Why: source current endpoint coordinates for PTYs surviving an Orca restart.
+      // Why: source current endpoint coordinates for PTYs surviving an Wakii restart.
       'if defined ORCA_AGENT_HOOK_ENDPOINT if exist "%ORCA_AGENT_HOOK_ENDPOINT%" call "%ORCA_AGENT_HOOK_ENDPOINT%" 2>nul',
       ...buildWindowsHookEnvironmentGuardLines(),
       buildWindowsAgentHookPostCommand('cursor'),
@@ -168,13 +168,13 @@ export class CursorHookService {
       }
       const cleaned = removeManagedCommands(definitions, isManagedCommand)
       // Also strip entries with the command at the top level (Cursor schema).
-      const strippedCursorShape = cleaned.filter(
+      const strippedTopLevelCommands = cleaned.filter(
         (definition) => !isManagedCommand(definition.command)
       )
-      if (strippedCursorShape.length === 0) {
+      if (strippedTopLevelCommands.length === 0) {
         delete nextHooks[eventName]
       } else {
-        nextHooks[eventName] = strippedCursorShape
+        nextHooks[eventName] = strippedTopLevelCommands
       }
     }
 

@@ -72,7 +72,7 @@ function removeCalls(exec: ExecMock): string[][] {
 }
 
 describe('cleanupUnusedWorktreePushTargetRemoteWithExec', () => {
-  it('removes an Orca-created fork remote that nothing else uses', async () => {
+  it('removes an Wakii-created fork remote that nothing else uses', async () => {
     const exec = makeExec()
     await cleanupUnusedWorktreePushTargetRemoteWithExec(
       REPO_PATH,
@@ -98,7 +98,7 @@ describe('cleanupUnusedWorktreePushTargetRemoteWithExec', () => {
     }
   })
 
-  it('keeps a remote Orca did not create (remoteCreated falsy)', async () => {
+  it('keeps a remote Wakii did not create (remoteCreated falsy)', async () => {
     const exec = makeExec()
     await cleanupUnusedWorktreePushTargetRemoteWithExec(
       REPO_PATH,
@@ -351,7 +351,7 @@ describe('sameGitHubRemoteUrl', () => {
   it('is case-insensitive on owner/repo', () => {
     expect(
       sameGitHubRemoteUrl(
-        'git@github.com:Contributor/Orca.git',
+        'git@github.com:Contributor/Wakii.git',
         'git@github.com:contributor/orca.git'
       )
     ).toBe(true)

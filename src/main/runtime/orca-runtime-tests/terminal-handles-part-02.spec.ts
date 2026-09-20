@@ -8,7 +8,7 @@ import {
 } from '../orca-runtime-test-fixtures.spec'
 import { makePaneKey } from '../orca-runtime-test-mocks.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('keeps a no-incarnation handle across an in-graph pane remint', async () => {
     const runtime = createRuntime()
     const tabId = 'tab-1'

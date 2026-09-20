@@ -83,7 +83,7 @@ afterEach(() => {
 })
 
 describe('self-initiated tree kill breadcrumb', () => {
-  it('separates an Orca-issued tree kill from an external kill of the same shape', async () => {
+  it('separates an Wakii-issued tree kill from an external kill of the same shape', async () => {
     // Arm A — Orca issues the kill through its own taskkill choke point.
     await terminateWindowsProcessTree(4242, {
       execFileImpl: ((_program, _args, _options, done) => {

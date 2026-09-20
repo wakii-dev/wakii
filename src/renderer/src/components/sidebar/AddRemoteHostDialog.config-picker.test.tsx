@@ -168,11 +168,11 @@ describe('SSH config picker tombstoned hosts', () => {
 
     const removed = await screen.findByRole('button', { name: /removed/ })
     expect(removed.hasAttribute('disabled')).toBe(false)
-    expect(removed.textContent).toContain('Removed from Orca')
+    expect(removed.textContent).toContain('Removed from Wakii')
 
     const kept = screen.getByRole('button', { name: /kept/ })
     expect(kept.hasAttribute('disabled')).toBe(true)
-    expect(kept.textContent).toContain('In Orca')
+    expect(kept.textContent).toContain('In Wakii')
   })
 
   it('never claims the config is empty when every host is only tombstoned', async () => {
@@ -192,7 +192,7 @@ describe('SSH config picker tombstoned hosts', () => {
     await openPickerWith({ hosts: [], totalHostCount: 0, newHostCount: 0, matchCount: 0 })
 
     expect(await screen.findByText('No hosts in ~/.ssh/config')).toBeDefined()
-    expect(screen.getByRole('button', { name: 'Add all to Orca' }).hasAttribute('disabled')).toBe(
+    expect(screen.getByRole('button', { name: 'Add all to Wakii' }).hasAttribute('disabled')).toBe(
       true
     )
   })

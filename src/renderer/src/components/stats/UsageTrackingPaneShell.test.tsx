@@ -42,7 +42,7 @@ function renderEnabled({
         />,
         <div key="range">Range filter</div>
       ]}
-      selectionSummary="Orca worktrees only • Last 7 days"
+      selectionSummary="Wakii worktrees only • Last 7 days"
       emptyMessage="No local Codex usage found yet for this scope."
       onEnabledChange={onEnabledChange}
       onRefresh={onRefresh}
@@ -80,7 +80,7 @@ describe('UsageTrackingPaneShell', () => {
 
     expect(screen.getByText('Updated now')).toBeInTheDocument()
     expect(screen.getByText('Share usage')).toBeInTheDocument()
-    expect(screen.getByText('Orca worktrees only • Last 7 days')).toBeInTheDocument()
+    expect(screen.getByText('Wakii worktrees only • Last 7 days')).toBeInTheDocument()
     expect(screen.getByText('No local Codex usage found yet for this scope.')).toBeInTheDocument()
     expect(screen.queryByText('Ready content')).not.toBeInTheDocument()
 

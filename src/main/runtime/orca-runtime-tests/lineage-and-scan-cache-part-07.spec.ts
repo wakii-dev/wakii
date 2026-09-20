@@ -65,7 +65,7 @@ function lineageOf<T extends { attention?: unknown }>(
   return lineage
 }
 
-describe('OrcaRuntimeService orchestration lineage across restart', () => {
+describe('WakiiRuntimeService orchestration lineage across restart', () => {
   it('projects the coordinator pane key as the worker parent after the handles are reminted', () => {
     const terminals = makeTerminals()
     const paneKey = (name: string): string => {

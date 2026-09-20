@@ -772,7 +772,7 @@ describe('codex item bodies', () => {
   })
 
   it('carries the web search hits as the call output', () => {
-    const results = [{ title: 'Orca 1.0', url: 'https://example.com/notes' }]
+    const results = [{ title: 'Wakii 1.0', url: 'https://example.com/notes' }]
     expect(
       codexItemBody({
         type: 'webSearch',
@@ -806,7 +806,7 @@ describe('codex item bodies', () => {
     // Both the row label and the run header read top-level input keys only, so a
     // shape whose detail sits inside `action` renders as the input's raw JSON.
     const url = 'https://example.com/docs/page'
-    const shapes: [string, unknown, string, string][] = [
+    const cases: [string, unknown, string, string][] = [
       ['started', null, '', ''],
       [
         'search',
@@ -823,7 +823,7 @@ describe('codex item bodies', () => {
       ],
       ['other', { type: 'other' }, 'other', '']
     ]
-    for (const [name, action, label, brief] of shapes) {
+    for (const [name, action, label, brief] of cases) {
       // Codex leaves the item's own `query` empty on most completed searches.
       const query = name === 'search' || name === 'findInPage' ? 'a sample query' : ''
       const input = toolCallInput({ type: 'webSearch', id: 'w', query, action })

@@ -272,7 +272,7 @@ describe('repo slice project runtime updates', () => {
   it('prefers a known createdAt over an unknown 0 when merging the same project id', async () => {
     const project: Project = {
       id: 'github:stablyai/orca',
-      displayName: 'Orca',
+      displayName: 'Wakii',
       badgeColor: '#000',
       sourceRepoIds: ['remote-repo'],
       createdAt: 0,
@@ -299,7 +299,7 @@ describe('repo slice project runtime updates', () => {
   it('preserves shared project source repos when updating local runtime preferences', async () => {
     const project: Project = {
       id: 'github:stablyai/orca',
-      displayName: 'Orca',
+      displayName: 'Wakii',
       badgeColor: '#000',
       sourceRepoIds: ['local-repo', 'remote-repo'],
       createdAt: 1,
@@ -327,7 +327,7 @@ describe('repo slice project runtime updates', () => {
   it('clears local runtime preferences without dropping shared project source repos', async () => {
     const project: Project = {
       id: 'github:stablyai/orca',
-      displayName: 'Orca',
+      displayName: 'Wakii',
       badgeColor: '#000',
       sourceRepoIds: ['local-repo', 'remote-repo'],
       localWindowsRuntimePreference: { kind: 'windows-host' },

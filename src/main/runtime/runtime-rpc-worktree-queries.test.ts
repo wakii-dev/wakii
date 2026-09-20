@@ -24,7 +24,7 @@ vi.mock('../git/worktree', () => {
   }
 })
 
-describe('OrcaRuntimeRpcServer', () => {
+describe('WakiiRuntimeRpcServer', () => {
   it('serves worktree.ps from the runtime summary builder', async () => {
     const userDataPath = mkdtempSync(join(tmpdir(), 'orca-runtime-rpc-'))
     const runtime = new OrcaRuntimeService(makeStore({ isUnread: true }) as never)

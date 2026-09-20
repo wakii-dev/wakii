@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { mapGhosttyToOrca } from './mapper'
 
-describe('mapGhosttyToOrca — font & cursor', () => {
+describe('mapGhosttyToWakii — font & cursor', () => {
   it('maps supported keys to GlobalSettings', () => {
     const result = mapGhosttyToOrca({
       'font-family': 'JetBrains Mono',
@@ -101,7 +101,7 @@ describe('mapGhosttyToOrca — font & cursor', () => {
   })
 })
 
-describe('mapGhosttyToOrca — macos-option-as-alt', () => {
+describe('mapGhosttyToWakii — macos-option-as-alt', () => {
   it('maps on to true', () => {
     const result = mapGhosttyToOrca({ 'macos-option-as-alt': 'on' }, true)
     expect(result.diff).toEqual({ terminalMacOptionAsAlt: 'true' })
@@ -145,7 +145,7 @@ describe('mapGhosttyToOrca — macos-option-as-alt', () => {
   })
 })
 
-describe('mapGhosttyToOrca — background & colors', () => {
+describe('mapGhosttyToWakii — background & colors', () => {
   it('maps background-opacity to terminalBackgroundOpacity', () => {
     const result = mapGhosttyToOrca({ 'background-opacity': '0.72' })
     expect(result.diff).toEqual({ terminalBackgroundOpacity: 0.72 })
@@ -251,7 +251,7 @@ describe('mapGhosttyToOrca — background & colors', () => {
   })
 })
 
-describe('mapGhosttyToOrca — palette', () => {
+describe('mapGhosttyToWakii — palette', () => {
   it('maps palette array to terminalColorOverrides ANSI fields', () => {
     const result = mapGhosttyToOrca({
       palette: ['0=#000000', '1=#ff0000', '3=#ffaa00', '15=#ffffff']
@@ -280,7 +280,7 @@ describe('mapGhosttyToOrca — palette', () => {
   })
 })
 
-describe('mapGhosttyToOrca — window & padding', () => {
+describe('mapGhosttyToWakii — window & padding', () => {
   // Why: window-padding-color and window-padding-balance are not imported —
   // the CSS vars Orca sets for them have no consuming rules today, so the
   // mapper must treat the keys as unsupported rather than silently dropping.
@@ -297,7 +297,7 @@ describe('mapGhosttyToOrca — window & padding', () => {
   })
 })
 
-describe('mapGhosttyToOrca — unsupported keys', () => {
+describe('mapGhosttyToWakii — unsupported keys', () => {
   it('marks unknown keys as unsupported', () => {
     const result = mapGhosttyToOrca({ 'unknown-key': 'value' })
     expect(result.diff).toEqual({})

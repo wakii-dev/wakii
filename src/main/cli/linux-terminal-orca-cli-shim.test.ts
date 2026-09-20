@@ -30,7 +30,7 @@ afterEach(async () => {
   await Promise.all(created.splice(0).map((dir) => rm(dir, { recursive: true, force: true })))
 })
 
-describe('ensureLinuxTerminalOrcaCliShimDir', () => {
+describe('ensureLinuxTerminalWakiiCliShimDir', () => {
   it('uses the mounted bundled launcher when only APPDIR is inherited', async () => {
     const { userDataPath, resourcesPath } = await makeFixture()
     vi.stubEnv('APPIMAGE', '')
@@ -96,7 +96,7 @@ describe('ensureLinuxTerminalOrcaCliShimDir', () => {
     'routes first-use AppImage terminals through a fenced current mount without a live endpoint',
     async () => {
       const { userDataPath, resourcesPath } = await makeFixture()
-      const appImagePath = join(userDataPath, 'Orca.AppImage')
+      const appImagePath = join(userDataPath, 'Wakii.AppImage')
       await mkdir(userDataPath, { recursive: true })
       await writeFile(appImagePath, '#!/usr/bin/env bash\n', { encoding: 'utf8', mode: 0o755 })
       const cacheRootPath = join(userDataPath, 'cache')
@@ -126,7 +126,7 @@ describe('ensureLinuxTerminalOrcaCliShimDir', () => {
     'refreshes restored terminals to the current AppImage mount',
     async () => {
       const { userDataPath, resourcesPath } = await makeFixture()
-      const appImagePath = join(userDataPath, 'Orca.AppImage')
+      const appImagePath = join(userDataPath, 'Wakii.AppImage')
       await mkdir(userDataPath, { recursive: true })
       await writeFile(appImagePath, '#!/usr/bin/env bash\n', { encoding: 'utf8', mode: 0o755 })
       const cacheRootPath = join(userDataPath, 'cache')
@@ -166,7 +166,7 @@ describe('ensureLinuxTerminalOrcaCliShimDir', () => {
     'rejects a stale shim when its mount path is removed and reused',
     async () => {
       const { userDataPath, resourcesPath } = await makeFixture()
-      const appImagePath = join(userDataPath, 'Orca.AppImage')
+      const appImagePath = join(userDataPath, 'Wakii.AppImage')
       const cacheRootPath = join(userDataPath, 'cache')
       await mkdir(userDataPath, { recursive: true })
       await writeFile(appImagePath, '#!/usr/bin/env bash\n', { mode: 0o755 })
@@ -194,7 +194,7 @@ describe('ensureLinuxTerminalOrcaCliShimDir', () => {
     'rejects a shim after its owning AppImage process generation changes',
     async () => {
       const { userDataPath, resourcesPath } = await makeFixture()
-      const appImagePath = join(userDataPath, 'Orca.AppImage')
+      const appImagePath = join(userDataPath, 'Wakii.AppImage')
       await mkdir(userDataPath, { recursive: true })
       await writeFile(appImagePath, '#!/usr/bin/env bash\n', { mode: 0o755 })
       const liveLauncher = join(resourcesPath, 'bin', 'orca-ide')

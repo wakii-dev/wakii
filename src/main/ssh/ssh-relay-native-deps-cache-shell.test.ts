@@ -220,7 +220,7 @@ describe.runIf(process.platform !== 'win32').each(SHELLS)(
       ])
     })
 
-    it('reports a symlink no Orca version wrote, so GC can refuse the pass', () => {
+    it('reports a symlink no Wakii version wrote, so GC can refuse the pass', () => {
       makePrivateInstall('0.1.0+aaa')
       promote('0.1.0+aaa')
       mkdirSync(relayDir('0.1.0+bbb'), { recursive: true })

@@ -61,7 +61,7 @@ export class RuntimeLinearRetryCommands extends RuntimeLinearCommandBase {
           : ''
     return linearError(
       'linear_write_unconfirmed',
-      'Linear may have applied the write, but Orca could not confirm it.',
+      'Linear may have applied the write, but Wakii could not confirm it.',
       {
         writeId,
         workspaceId,

@@ -189,7 +189,7 @@ launcher=${quotedLauncherPath}
 expected_runtime_identity=${expectedRuntimeIdentity}
 expected_launcher_identity=${expectedLauncherIdentity}
 fail() {
-  printf 'Orca CLI is unavailable; reopen Orca or register the CLI again.\\n' >&2
+  printf 'Wakii CLI is unavailable; reopen Wakii or register the CLI again.\\n' >&2
   exit 1
 }
 proc_stat_path="/proc/$runtime_pid/stat"

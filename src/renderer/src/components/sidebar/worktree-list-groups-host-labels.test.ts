@@ -90,7 +90,7 @@ describe('buildRows with pinned worktrees', () => {
     expect(rows.filter((row) => row.type === 'header')).toMatchObject([
       {
         key: 'project:github:stablyai/orca',
-        label: 'Orca',
+        label: 'Wakii',
         count: 2
       }
     ])
@@ -202,7 +202,7 @@ describe('buildRows with pinned worktrees', () => {
     ])
   })
 
-  it('shows distinct Orca server names when status grouping mixes runtime hosts', () => {
+  it('shows distinct Wakii server names when status grouping mixes runtime hosts', () => {
     const firstRepo: Repo = {
       ...repo,
       id: 'repo-runtime-a',

@@ -2,13 +2,17 @@ import {
   isTerminalInputTooLargeWithYield,
   TERMINAL_INPUT_TOO_LARGE_ERROR
 } from '../../shared/terminal-input'
-import { buildAgentPromptPasteBytes } from '../../shared/agent-prompt-injection'
+import {
+  buildAgentPromptPasteBytes,
+  sanitizeAgentPromptText
+} from '../../shared/agent-prompt-injection'
 import { isTuiAgent } from '../../shared/tui-agent-config'
 
 export function buildTerminalSendPayload(action: {
   text?: string
   enter?: boolean
   interrupt?: boolean
+  keystroke?: boolean
 }): string | null {
   let payload = ''
   if (typeof action.text === 'string' && action.text.length > 0) {
@@ -24,11 +28,25 @@ export function buildTerminalSendPayload(action: {
 }
 
 export function maybeWrapTerminalSendTextForTuiAgent(
-  action: { text?: string; enter?: boolean; interrupt?: boolean },
+  action: { text?: string; enter?: boolean; interrupt?: boolean; keystroke?: boolean },
   agent: unknown
-): { text?: string; enter?: boolean; interrupt?: boolean } {
-  if (!action.text || !isTuiAgent(agent)) {
+): { text?: string; enter?: boolean; interrupt?: boolean; keystroke?: boolean } {
+  // Keystroke frames (xterm onData từ Input của mobile/desktop) là control input
+  // nguyên bản — ESC là hàm phím, không phải prompt-injection text. Đi raw
+  // verbatim, bypass cả sanitize lẫn paste-wrap (issue #88).
+  if (!action.text || action.keystroke || !isTuiAgent(agent)) {
     return action
+  }
+  // Why: strip ONE trailing terminator before the multiline probe so a
+  // submit-terminated single line stays raw (mirror buildStartupCommandSubmission);
+  // the terminator itself is preserved verbatim in the output.
+  // Terminator-only text ('\n'/'\r'/'\r\n' — probe rỗng sau strip) phải đi
+  // wrapped: raw submit-terminator + Enter của caller = submit 2 lần, và
+  // enter:false bị đổi nghĩa thành submit (issue #87).
+  const probe = action.text.replace(/(\r\n|\r|\n)$/, '')
+  if (probe.length > 0 && !/[\n\r]/.test(probe)) {
+    // Why: raw fast path still keeps the agent-pane invariant — inert ESC, no markers.
+    return { ...action, text: sanitizeAgentPromptText(action.text) }
   }
   // Why: a TUI agent submits on every newline, so a raw multi-line send reaches
   // it as fragmented prompts. Bracketed paste keeps the text atomic until the

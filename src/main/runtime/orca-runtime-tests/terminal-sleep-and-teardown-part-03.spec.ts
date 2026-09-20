@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { OrcaRuntimeService } from '../orca-runtime-test-mocks.spec'
 import { TEST_WORKTREE_ID, TEST_WORKTREE_PATH, store } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('rejects exact terminal stop when async PTY stop fails', async () => {
     const runtime = new OrcaRuntimeService(store)
     const stopped: string[] = []

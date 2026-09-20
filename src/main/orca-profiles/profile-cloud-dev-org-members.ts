@@ -44,7 +44,7 @@ function seedDevRoster(): DevOrgRoster {
         displayName: 'Dev Teammate',
         role: 'admin'
       },
-      // Why: userId null exercises the "hasn't signed in to Orca yet" disabled row.
+      // Why: userId null exercises the "hasn't signed in to Wakii yet" disabled row.
       { userId: null, email: 'invited-member@orca.local', displayName: undefined, role: 'member' }
     ],
     pendingInvites: [{ email: 'pending@orca.local', role: 'member', createdAt: Date.now() }]

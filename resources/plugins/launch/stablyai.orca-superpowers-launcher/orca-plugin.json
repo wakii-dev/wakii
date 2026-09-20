@@ -3,22 +3,14 @@
   "id": "orca-superpowers-launcher",
   "publisher": "stablyai",
   "name": "Orca Superpowers Launcher",
-  "version": "1.6.0",
-  "description": "Control deck panel for orca-superpowers-workflow. v1.6: 9-agent grid, PR story flow (gh pr create, 1 PR/story), Story Ops +memory/attempts/visual-regress, 5-gate completion, bracket editor (drag/add/edit/delete + share PNG/markdown) với layout memoized không chồng node.",
+  "version": "1.7.0",
+  "description": "Headless worker cho orca-superpowers-workflow: tự cài kit (skills/bins/agents/hooks), expose 13 palette commands + events. v1.7.0: gỡ panel Story Ops — điều khiển qua palette commands + Claude sessions.",
   "engines": {
     "orca": ">=1.4.0"
   },
   "pluginApi": 1,
   "main": "main.mjs",
   "contributes": {
-    "panels": [
-      {
-        "id": "superpowers",
-        "title": "Superpowers",
-        "icon": "zap",
-        "entry": "panel.html"
-      }
-    ],
     "commands": [
       {
         "id": "superpowers.start",

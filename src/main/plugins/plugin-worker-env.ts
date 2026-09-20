@@ -59,7 +59,7 @@ export function buildPluginWorkerEnv(
       '/usr/local/bin/orca',
       '/opt/homebrew/bin/orca',
       '/Applications/Wakii.app/Contents/Resources/bin/orca',
-      '/Applications/Orca.app/Contents/Resources/bin/orca'
+      '/Applications/Wakii.app/Contents/Resources/bin/orca'
     ].find((candidate) => existsSync(candidate)) ??
     '/usr/local/bin/orca'
   env.ELECTRON_RUN_AS_NODE = '1'

@@ -69,7 +69,7 @@ export function GeneralSupportSection({
       return
     }
     setStarState('starring')
-    const ok = await window.api.gh.starOrca('settings')
+    const ok = await window.api.gh.starWakii('settings')
     if (!ok) {
       if (mountedRef.current) {
         setStarState('web-fallback')
@@ -123,7 +123,7 @@ function SupportSection({
             <SettingsSubsectionHeader
               title={translate(
                 'auto.components.settings.GeneralSupportSection.55a87e5fd1',
-                'Support Orca'
+                'Support Wakii'
               )}
             />
             {state === 'loading' ? <SupportRowSkeleton /> : null}
@@ -160,7 +160,7 @@ function SupportRow({
     <SearchableSetting
       title={translate(
         'auto.components.settings.GeneralSupportSection.6922c1fa2b',
-        'Star Orca on GitHub'
+        'Star Wakii on GitHub'
       )}
       description={translate(
         'auto.components.settings.GeneralSupportSection.511782265b',
@@ -172,7 +172,7 @@ function SupportRow({
       <Label>
         {translate(
           'auto.components.settings.GeneralSupportSection.6922c1fa2b',
-          'Star Orca on GitHub'
+          'Star Wakii on GitHub'
         )}
       </Label>
       {state === 'starred' ? (

@@ -6,7 +6,7 @@ import { useOrcaProfileAuthStatusRefresh } from '@/hooks/use-orca-profile-auth-s
 import { cn } from '@/lib/utils'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
-import { OrcaProfileSignOutConfirmDialog } from '../orca-profiles/OrcaProfileSignOutConfirmDialog'
+import { WakiiProfileSignOutConfirmDialog } from '../orca-profiles/WakiiProfileSignOutConfirmDialog'
 
 function accountStatusCopy(
   state: 'local' | 'unconfigured' | 'connected' | 'reconnect-required' | undefined,
@@ -24,13 +24,13 @@ function accountStatusCopy(
   if (state === 'unconfigured') {
     return translate(
       'auto.components.settings.orcaAccount.unavailable',
-      'Orca sign-in is unavailable in this build.'
+      'Wakii sign-in is unavailable in this build.'
     )
   }
   if (state === 'local') {
     return translate(
       'auto.components.settings.orcaAccount.signedOut',
-      'Sign in to extend Orca with cloud features, including Artifacts and Orca Relay.'
+      'Sign in to extend Wakii with cloud features, including Artifacts and Wakii Relay.'
     )
   }
   return translate('auto.components.settings.orcaAccount.checking', 'Checking account status…')
@@ -60,7 +60,6 @@ function AccountBenefit({
 
 export function OrcaAccountSettingsPane(): React.JSX.Element {
   const authStatus = useAppStore((state) => state.orcaProfileAuthStatus)
-  const connecting = useAppStore((state) => state.orcaProfileConnecting)
   const connect = useAppStore((state) => state.connectCurrentOrcaProfile)
   const signOut = useAppStore((state) => state.signOutCurrentOrcaProfile)
   const [signOutOpen, setSignOutOpen] = useState(false)
@@ -93,7 +92,7 @@ export function OrcaAccountSettingsPane(): React.JSX.Element {
             <div className="flex flex-wrap items-center gap-2">
               <p className="text-sm font-medium">
                 {authStatus?.cloud?.displayName?.trim() ||
-                  translate('auto.components.settings.orcaAccount.account', 'Orca account')}
+                  translate('auto.components.settings.orcaAccount.account', 'Wakii account')}
               </p>
               {connected ? (
                 <Badge variant="outline" className="text-[11px] text-muted-foreground">
@@ -117,17 +116,10 @@ export function OrcaAccountSettingsPane(): React.JSX.Element {
               {translate('auto.components.settings.orcaAccount.signOut', 'Sign out')}
             </Button>
           ) : (
-            <Button
-              type="button"
-              size="sm"
-              disabled={!canConnect || connecting}
-              onClick={() => void connect()}
-            >
-              {connecting
-                ? translate('auto.components.settings.orcaAccount.signingIn', 'Signing in…')
-                : authStatus?.state === 'reconnect-required'
-                  ? translate('auto.components.settings.orcaAccount.signInAgain', 'Sign in again')
-                  : translate('auto.components.settings.orcaAccount.signIn', 'Sign in to Orca')}
+            <Button type="button" size="sm" disabled={!canConnect} onClick={() => void connect()}>
+              {authStatus?.state === 'reconnect-required'
+                ? translate('auto.components.settings.orcaAccount.signInAgain', 'Sign in again')
+                : translate('auto.components.settings.orcaAccount.signIn', 'Sign in to Wakii')}
             </Button>
           )}
         </div>
@@ -150,16 +142,16 @@ export function OrcaAccountSettingsPane(): React.JSX.Element {
                 )}
                 description={translate(
                   'auto.components.settings.orcaAccount.artifactsDescription',
-                  'Publish HTML and Markdown files, then manage every shared link from Orca.'
+                  'Publish HTML and Markdown files, then manage every shared link from Wakii.'
                 )}
               />
               <AccountBenefit
                 icon={Smartphone}
                 className="md:pl-6"
-                title={translate('auto.components.settings.orcaAccount.relayTitle', 'Orca Relay')}
+                title={translate('auto.components.settings.orcaAccount.relayTitle', 'Wakii Relay')}
                 description={translate(
                   'auto.components.settings.orcaAccount.relayDescription',
-                  'Connect Orca Mobile to this desktop across cellular or any Wi-Fi.'
+                  'Connect Wakii Mobile to this desktop across cellular or any Wi-Fi.'
                 )}
               />
             </div>
@@ -178,7 +170,7 @@ export function OrcaAccountSettingsPane(): React.JSX.Element {
         </div>
       </div>
 
-      <OrcaProfileSignOutConfirmDialog
+      <WakiiProfileSignOutConfirmDialog
         open={signOutOpen}
         onOpenChange={setSignOutOpen}
         onConfirm={() => void confirmSignOut()}

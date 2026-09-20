@@ -121,7 +121,7 @@ describe('buildFontFamily', () => {
   })
 
   it('does not duplicate the bundled Nerd Font symbol fallback', () => {
-    const result = buildFontFamily('Orca Nerd Font Symbols')
+    const result = buildFontFamily('Wakii Nerd Font Symbols')
     expect(result).toBe(
       '"Orca Nerd Font Symbols", "SF Mono", "Menlo", "Monaco", "Cascadia Mono", "Consolas", "DejaVu Sans Mono", "Liberation Mono", "Symbols Nerd Font Mono", "MesloLGS Nerd Font", "JetBrainsMono Nerd Font", "Hack Nerd Font", monospace'
     )

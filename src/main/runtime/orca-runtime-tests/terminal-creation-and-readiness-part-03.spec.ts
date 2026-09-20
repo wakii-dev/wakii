@@ -28,7 +28,7 @@ import {
   store
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('does not use the local Windows shell setting for remote Windows bare agent creates', async () => {
     const remoteRepo = {
       id: TEST_REPO_ID,

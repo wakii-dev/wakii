@@ -327,7 +327,7 @@ describe('CliSkillRuntimeSetup runtime helpers', () => {
     }
   })
 
-  it('adapts bare WSL setup commands to the shell that Orca created', () => {
+  it('adapts bare WSL setup commands to the shell that Wakii created', () => {
     const runtime = { runtime: 'wsl', wslDistro: 'Ubuntu', label: 'WSL Ubuntu' } as const
     const skillCommand = 'npx skills add orchestration --global'
     const copiedCommand = buildSkillCommandForRuntime(skillCommand, runtime, 'win32')

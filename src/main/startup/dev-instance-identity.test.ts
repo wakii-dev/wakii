@@ -4,8 +4,8 @@ import { getDevInstanceIdentity, shouldApplyPreReadyAppName } from './dev-instan
 describe('dev-instance-identity', () => {
   it('keeps packaged identity stable', () => {
     expect(getDevInstanceIdentity(false, {})).toMatchObject({
-      name: 'Orca',
-      appName: 'Orca',
+      name: 'Wakii',
+      appName: 'Wakii',
       isDev: false,
       devLabel: null,
       dockBadgeLabel: null,
@@ -20,14 +20,14 @@ describe('dev-instance-identity', () => {
     // Per-branch label differs (window title / app menu)...
     expect(a.name).not.toBe(b.name)
     // ...but the Keychain-driving appName is identical and distinct from prod.
-    expect(a.appName).toBe('Orca Dev')
-    expect(b.appName).toBe('Orca Dev')
-    expect(a.appName).not.toBe('Orca')
+    expect(a.appName).toBe('Wakii Dev')
+    expect(b.appName).toBe('Wakii Dev')
+    expect(a.appName).not.toBe('Wakii')
   })
 
   it('never renames a packaged build before ready', () => {
     // Packaged builds must keep deriving the safeStorage key from their own CFBundleName;
-    // a pre-ready rename would repoint forks ("Orca ALab Edition") at Orca's key.
+    // a pre-ready rename would repoint forks ("Wakii ALab Edition") at Orca's key.
     expect(shouldApplyPreReadyAppName(getDevInstanceIdentity(false, {}))).toBe(false)
     expect(shouldApplyPreReadyAppName({ isDev: false })).toBe(false)
   })
@@ -50,7 +50,7 @@ describe('dev-instance-identity', () => {
       devWorktreeName: 'dev-indicator',
       devRepoRoot: '/repo/worktrees/dev-indicator'
     })
-    expect(identity.name).toBe('Orca: nwparker/dev-indicator')
+    expect(identity.name).toBe('Wakii: nwparker/dev-indicator')
     expect(identity.dockBadgeLabel).toBeNull()
     expect(identity.appUserModelId).toMatch(/^com\.stablyai\.orca\.dev\.[a-f0-9]{10}$/)
   })
@@ -63,7 +63,7 @@ describe('dev-instance-identity', () => {
     })
 
     expect(identity.devLabel).toBe('payment-ui @ feature/billing-shell')
-    expect(identity.name).toBe('Orca: feature/billing-shell')
+    expect(identity.name).toBe('Wakii: feature/billing-shell')
     expect(identity.dockBadgeLabel).toBeNull()
   })
 
@@ -75,7 +75,7 @@ describe('dev-instance-identity', () => {
     })
 
     expect(identity.devLabel).toBe('manual label')
-    expect(identity.name).toBe('Orca: feature/other')
+    expect(identity.name).toBe('Wakii: feature/other')
     expect(identity.dockBadgeLabel).toBeNull()
   })
 })

@@ -6,8 +6,10 @@ import { getFileTypeIcon } from '@/lib/file-type-icons'
 import {
   encodeWorkspaceFilePaths,
   WORKSPACE_FILE_PATH_MIME,
-  WORKSPACE_FILE_PATHS_MIME
+  WORKSPACE_FILE_PATHS_MIME,
+  writeWorkspaceFileDragSourceIfResolved
 } from '@/lib/workspace-file-drag'
+import type { ExecutionHostId } from '../../../../shared/execution-host'
 import type { GitFileStatus } from '../../../../shared/git-status-types'
 import { STATUS_LABELS } from './status-display'
 import { RENAME_HOTSPOT_ATTR } from './file-explorer-dir-toggle-timing'
@@ -33,9 +35,12 @@ export type FileExplorerRowProps = {
   isIgnored: boolean
   deleteShortcutLabel: string
   connectionId?: string | null
+  sourceWorkspaceId?: string | null
+  /** Resolved at dragstart so the virtualized list pays nothing per render. */
+  resolveDragSourceHostId?: (paths: readonly string[]) => ExecutionHostId | null
   runtimeDownloadContext?: RuntimeFileOperationArgs | null
   supportsFolderDownload?: boolean
-  canOpenInOrcaBrowser: boolean
+  canOpenInWakiiBrowser: boolean
   canCollapseFolderSubtree: boolean
   targetDir: string
   targetDepth: number
@@ -74,9 +79,11 @@ export function FileExplorerRow({
   isIgnored,
   deleteShortcutLabel,
   connectionId,
+  sourceWorkspaceId,
+  resolveDragSourceHostId,
   runtimeDownloadContext,
   supportsFolderDownload = false,
-  canOpenInOrcaBrowser,
+  canOpenInWakiiBrowser,
   canCollapseFolderSubtree,
   targetDir,
   targetDepth,
@@ -153,6 +160,11 @@ export function FileExplorerRow({
             if (paths.length > 1) {
               event.dataTransfer.setData(WORKSPACE_FILE_PATHS_MIME, encodeWorkspaceFilePaths(paths))
             }
+            writeWorkspaceFileDragSourceIfResolved(
+              event.dataTransfer,
+              sourceWorkspaceId,
+              resolveDragSourceHostId?.(paths)
+            )
             event.dataTransfer.effectAllowed = 'copyMove'
             onDragSourceChange(node.path)
 
@@ -256,7 +268,7 @@ export function FileExplorerRow({
         connectionId={connectionId}
         runtimeDownloadContext={runtimeDownloadContext}
         supportsFolderDownload={supportsFolderDownload}
-        canOpenInOrcaBrowser={canOpenInOrcaBrowser}
+        canOpenInWakiiBrowser={canOpenInWakiiBrowser}
         canCollapseFolderSubtree={canCollapseFolderSubtree}
         targetDir={targetDir}
         targetDepth={targetDepth}

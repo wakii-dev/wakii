@@ -7,6 +7,7 @@ import { i18n, translate } from '@/i18n/i18n'
 import ProjectGroupHeader from './ProjectGroupHeader'
 import ProjectRoadmapBar from './ProjectRoadmapBar'
 import { ProjectTitleCell } from './ProjectCellIdentity'
+import { ProjectItemsEmptyState } from './ProjectViewStates'
 import { formatRoadmapTick } from './roadmap-tick-format'
 import { loadRoadmapZoom, saveRoadmapZoom } from './roadmap-zoom-preference'
 import { groupRows, sortRows } from '../../../../shared/github/project-group-sort'
@@ -136,7 +137,7 @@ export default function ProjectRoadmap({
         <div className="flex-none border-b border-border/50 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
           {translate(
             'auto.components.github.project.ProjectRoadmap.be52f7b6db',
-            'This roadmap view has no date or iteration field to place items on, so Orca is listing them instead.'
+            'This roadmap view has no date or iteration field to place items on, so Wakii is listing them instead.'
           )}
         </div>
         {fallback}
@@ -145,14 +146,7 @@ export default function ProjectRoadmap({
   }
 
   if (table.rows.length === 0) {
-    return (
-      <div className="flex min-h-[120px] items-center justify-center p-6 text-sm text-muted-foreground">
-        {translate(
-          'auto.components.github.project.ProjectViewList.4f57d2e0b1',
-          "No items match this view's filter."
-        )}
-      </div>
-    )
+    return <ProjectItemsEmptyState filter={view.filter} />
   }
 
   const undatedCount = table.rows.length - spans.size

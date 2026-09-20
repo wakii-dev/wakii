@@ -7,7 +7,7 @@ import {
 } from '../orca-runtime-test-mocks.spec'
 import { TEST_WORKTREE_ID, store } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('batches attention queries across unchanged graph publishes', () => {
     const runtime = new OrcaRuntimeService(store)
     const terminals = Array.from({ length: 12 }, (_, index) => ({

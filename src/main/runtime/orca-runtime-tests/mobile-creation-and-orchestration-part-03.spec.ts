@@ -10,7 +10,7 @@ import {
   syncSinglePty
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('leaves rows a live filtered waiter reserved out of the pushed batch', async () => {
     vi.useFakeTimers()
     try {

@@ -9,10 +9,10 @@ import {
 } from './monaco-large-text-paste'
 
 // Why: Monaco's built-in context-menu Paste action (editor.action.clipboardPasteAction)
-// reads the clipboard with navigator.clipboard.readText(). Orca runs the renderer with
+// reads the clipboard with navigator.clipboard.readText(). Wakii runs the renderer with
 // `sandbox: true`, where that read is blocked/empty — so right-click Paste silently does
 // nothing even though Cmd+V (a real OS paste ClipboardEvent) and right-click Copy
-// (execCommand('copy') from a user gesture) both work. We route the read through Orca's
+// (execCommand('copy') from a user gesture) both work. We route the read through Wakii's
 // trusted clipboard IPC bridge instead, matching how the terminal already reads it.
 export const ORCA_CONTEXT_MENU_PASTE_PRIORITY = 10001
 export const ORCA_CONTEXT_MENU_PASTE_NAME = 'orca-ipc-paste'
@@ -69,7 +69,7 @@ function resolvePasteMetadata(
  * Replacement implementation for Monaco's clipboard paste command. Returns
  * `false` when it declines to handle the paste so Monaco's default
  * implementation runs unchanged (read-only editor, no focus, no clipboard
- * bridge); otherwise performs the paste through Orca's IPC clipboard read and
+ * bridge); otherwise performs the paste through Wakii's IPC clipboard read and
  * returns a Promise (truthy) so Monaco's blocked default never runs.
  */
 export function runOrcaContextMenuPaste(

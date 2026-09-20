@@ -25,7 +25,7 @@ import {
 beforeEach(() => {
   environmentMocks.resolveFooter.mockReset()
   environmentMocks.resolveFooter.mockResolvedValue(
-    ['---', 'Orca: 1.4.178-rc.2', 'OS: darwin 25.0.0 (arm64)', 'Shell: /bin/zsh'].join('\n')
+    ['---', 'Wakii: 1.4.178-rc.2', 'OS: darwin 25.0.0 (arm64)', 'Shell: /bin/zsh'].join('\n')
   )
 })
 
@@ -71,7 +71,7 @@ describe('humanizeTerminalError', () => {
     const humanized = humanizeTerminalError('terminal_pane_owner_unverified')
     expect(humanized).not.toContain('terminal_pane_owner_unverified')
     expect(humanized).toContain('Click Retry to try reconnecting now')
-    expect(humanized).toContain('Orca left the saved session unchanged')
+    expect(humanized).toContain('Wakii left the saved session unchanged')
     expect(humanized).not.toContain('was not closed or deleted')
   })
 
@@ -90,7 +90,7 @@ describe('humanizeTerminalError', () => {
   it('humanizes an owner marker without classifying mixed errors as safe warnings', () => {
     const mixed = humanizeTerminalError('Paste failed.\nterminal_pane_owner_unverified')
     expect(mixed).toContain('Paste failed.')
-    expect(mixed).toContain("Orca couldn't verify this terminal's owner.")
+    expect(mixed).toContain("Wakii couldn't verify this terminal's owner.")
     expect(mixed).not.toContain('terminal_pane_owner_unverified')
     expect(isPaneOwnerUnverifiedError('Paste failed.\nterminal_pane_owner_unverified')).toBe(false)
   })
@@ -246,7 +246,7 @@ describe('isExplainedTerminalError', () => {
     ).toBe(true)
   })
 
-  it('keeps the issue link for errors Orca cannot explain', () => {
+  it('keeps the issue link for errors Wakii cannot explain', () => {
     expect(isExplainedTerminalError('Paste failed.')).toBe(false)
     expect(isExplainedTerminalError('node-pty: open_slave failed: EMFILE')).toBe(false)
     expect(isExplainedTerminalError('terminal_gone')).toBe(false)
@@ -299,7 +299,7 @@ describe('shouldOfferDaemonRestart', () => {
   it('matches stale daemon node-pty install failures', () => {
     expect(
       shouldOfferDaemonRestart(
-        "Daemon's node-pty install is gone (worktree deleted?). Restart Orca. node-pty: posix_spawn failed: ENOENT (errno 2, No such file or directory) - helper='/Applications/Orca.app/Contents/Resources/app.asar.unpacked/node_modules/node-pty/build/Release/spawn-helper'"
+        "Daemon's node-pty install is gone (worktree deleted?). Restart Wakii. node-pty: posix_spawn failed: ENOENT (errno 2, No such file or directory) - helper='/Applications/Wakii.app/Contents/Resources/app.asar.unpacked/node_modules/node-pty/build/Release/spawn-helper'"
       )
     ).toBe(true)
   })
@@ -307,7 +307,7 @@ describe('shouldOfferDaemonRestart', () => {
   it('matches stale daemon cwd failures', () => {
     expect(
       shouldOfferDaemonRestart(
-        "Daemon's working directory is gone (worktree deleted?). Restart Orca. node-pty: daemon_cwd failed: ENOENT (errno 2, No such file or directory) - cwd='<unavailable>'"
+        "Daemon's working directory is gone (worktree deleted?). Restart Wakii. node-pty: daemon_cwd failed: ENOENT (errno 2, No such file or directory) - cwd='<unavailable>'"
       )
     ).toBe(true)
   })
@@ -327,7 +327,7 @@ describe('TerminalErrorToast environment footer', () => {
       })
     )
 
-    await waitFor(() => expect(view.container.textContent).toContain('Orca: 1.4.178-rc.2'))
+    await waitFor(() => expect(view.container.textContent).toContain('Wakii: 1.4.178-rc.2'))
   })
 
   it('does not retain a prior async footer when the next error already has one', async () => {
@@ -337,17 +337,17 @@ describe('TerminalErrorToast environment footer', () => {
         onDismiss: vi.fn()
       })
     )
-    await waitFor(() => expect(view.container.textContent).toContain('Orca: 1.4.178-rc.2'))
+    await waitFor(() => expect(view.container.textContent).toContain('Wakii: 1.4.178-rc.2'))
 
     view.rerender(
       React.createElement(TerminalErrorToast, {
-        error: 'Second failure.\n\n---\nOrca: embedded\nOS: linux 6.8 (x64)',
+        error: 'Second failure.\n\n---\nWakii: embedded\nOS: linux 6.8 (x64)',
         onDismiss: vi.fn()
       })
     )
 
-    expect(view.container.textContent).toContain('Orca: embedded')
-    expect(view.container.textContent).not.toContain('Orca: 1.4.178-rc.2')
+    expect(view.container.textContent).toContain('Wakii: embedded')
+    expect(view.container.textContent).not.toContain('Wakii: 1.4.178-rc.2')
   })
 
   it('omits client details for every SSH reconnect-owned error', async () => {
@@ -374,7 +374,7 @@ describe('TerminalErrorToast environment footer', () => {
     const toast = view.container.querySelector('[data-terminal-error-toast]')
     expect(toast?.getAttribute('data-terminal-error-kind')).toBe('owner-unverified')
     expect(toast?.querySelector('a')).toBeNull()
-    expect(toast?.textContent).toContain('Orca left the saved session unchanged')
+    expect(toast?.textContent).toContain('Wakii left the saved session unchanged')
     expect(view.getByRole('button', { name: 'Retry' }).getAttribute('data-slot')).toBe('button')
     fireEvent.click(view.getByRole('button', { name: 'Retry' }))
     expect(onRetry).toHaveBeenCalledTimes(1)

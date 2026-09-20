@@ -35,7 +35,7 @@ class FakeWebSocket extends EventEmitter {
   readyState = this.OPEN
 }
 
-describe('OrcaRuntimeRpcServer', () => {
+describe('WakiiRuntimeRpcServer', () => {
   it('caps WebSocket long-polls and aborts them when the socket closes', async () => {
     const userDataPath = mkdtempSync(join(tmpdir(), 'orca-runtime-rpc-'))
     const runtime = new OrcaRuntimeService()

@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import { Loader2 } from 'lucide-react'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
 import { translate } from '../../i18n/i18n'
@@ -66,7 +65,6 @@ export function MobilePairingConnectionOptions({
   relayMintRetrying?: boolean
 }): React.JSX.Element {
   const authStatus = useAppStore((state) => state.orcaProfileAuthStatus)
-  const connecting = useAppStore((state) => state.orcaProfileConnecting)
   const connect = useAppStore((state) => state.connectCurrentOrcaProfile)
   const [relayStatus, setRelayStatus] = useState<MobileRelayStatus>('offline')
   const [relayCellUrl, setRelayCellUrl] = useState<string | undefined>(undefined)
@@ -161,13 +159,13 @@ export function MobilePairingConnectionOptions({
           onSelect={() => onChange('automatic')}
           title={translate(
             'auto.components.settings.MobilePairingConnectionOptions.anywhereTitle',
-            'Orca Relay'
+            'Wakii Relay'
           )}
           description={
             relayUnavailable
               ? translate(
                   'auto.components.settings.MobilePairingConnectionOptions.relayUnavailable',
-                  'Orca Relay isn’t available in this build. Use LAN.'
+                  'Wakii Relay isn’t available in this build. Use LAN.'
                 )
               : translate(
                   'auto.components.settings.MobilePairingConnectionOptions.anywhereDescription',
@@ -227,13 +225,11 @@ export function MobilePairingConnectionOptions({
               type="button"
               size="sm"
               className="shrink-0"
-              disabled={connecting}
               onClick={() => {
                 onChange('automatic')
                 void connect()
               }}
             >
-              {connecting ? <Loader2 className="animate-spin" /> : null}
               {reconnectRequired
                 ? translate(
                     'auto.components.settings.MobilePairingConnectionOptions.signInAgain',

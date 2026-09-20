@@ -30,7 +30,7 @@ function stubLaunchScope(runtime: OrcaRuntimeService, path = '/repo/app'): void 
   })
 }
 
-describe('OrcaRuntimeService terminal startup cwd', () => {
+describe('WakiiRuntimeService terminal startup cwd', () => {
   it('spawns terminals inside the requested worktree subdirectory', async () => {
     const runtime = new OrcaRuntimeService()
     stubLaunchScope(runtime)

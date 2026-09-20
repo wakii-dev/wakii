@@ -45,7 +45,7 @@ function readiness(overrides: Partial<ServeReadiness> = {}): ServeReadiness {
   }
 }
 
-describe('evaluateOrcadActivation', () => {
+describe('evaluateWakiidActivation', () => {
   it('activates a candidate that proved a real PTY round trip', () => {
     const verdict = evaluateOrcadActivation(readiness(), EXPECTED)
     expect(verdict).toEqual({ decision: 'activate', coverage: 'pty-spawn', warnings: [] })

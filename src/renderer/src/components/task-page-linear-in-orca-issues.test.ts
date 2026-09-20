@@ -113,7 +113,7 @@ describe('collectLinkedLinearIssueRefsFromWorktrees', () => {
   })
 })
 
-describe('filterLinearIssuesForInOrcaWorkspace', () => {
+describe('filterLinearIssuesForInWakiiWorkspace', () => {
   it('keeps issues without workspace metadata when a workspace is selected', () => {
     const issues = [
       issue({ id: '1', identifier: 'ENG-1', workspaceId: 'ws-a' }),

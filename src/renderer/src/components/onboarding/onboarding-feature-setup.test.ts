@@ -45,11 +45,11 @@ const INSTALLED_CLI_STATUS: CliInstallStatus = {
   commandPath: '/usr/local/bin/orca',
   pathDirectory: '/usr/local/bin',
   pathConfigured: true,
-  launcherPath: '/Applications/Orca.app/Contents/MacOS/Orca',
+  launcherPath: '/Applications/Wakii.app/Contents/MacOS/Wakii',
   installMethod: 'symlink',
   supported: true,
   state: 'installed',
-  currentTarget: '/Applications/Orca.app/Contents/MacOS/Orca',
+  currentTarget: '/Applications/Wakii.app/Contents/MacOS/Wakii',
   unsupportedReason: null,
   detail: null
 }
@@ -66,7 +66,7 @@ const GRANTED_COMPUTER_USE_STATUS: ComputerUsePermissionStatusResult = {
 
 const OPENED_COMPUTER_USE_SETUP: ComputerUsePermissionSetupResult = {
   platform: 'darwin',
-  helperAppPath: '/Applications/Orca.app',
+  helperAppPath: '/Applications/Wakii.app',
   openedSettings: true,
   launchedHelper: true
 }
@@ -411,7 +411,7 @@ describe('onboarding feature setup runner', () => {
       ...INSTALLED_CLI_STATUS,
       platform: 'win32',
       pathConfigured: null,
-      detail: 'Orca could not read the Windows user PATH registry value.'
+      detail: 'Wakii could not read the Windows user PATH registry value.'
     }
     const deps = createDeps({ getCliStatus: vi.fn(async () => unknownStatus) })
 

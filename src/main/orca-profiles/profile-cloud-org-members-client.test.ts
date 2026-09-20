@@ -42,7 +42,7 @@ function mockJsonResponse(value: unknown, init: { ok?: boolean; status?: number 
   })
 }
 
-describe('Orca cloud org members client', () => {
+describe('Wakii cloud org members client', () => {
   beforeEach(() => {
     fetchMock.mockReset()
     vi.stubGlobal('fetch', fetchMock)
@@ -121,7 +121,7 @@ describe('Orca cloud org members client', () => {
     ).rejects.toMatchObject({ statusCode: 409, errorCode: 'already_invited' })
   })
 
-  it('surfaces a 403 as an OrcaCloudRequestError without an error code when the body is empty', async () => {
+  it('surfaces a 403 as an WakiiCloudRequestError without an error code when the body is empty', async () => {
     fetchMock.mockResolvedValue({
       ok: false,
       status: 403,

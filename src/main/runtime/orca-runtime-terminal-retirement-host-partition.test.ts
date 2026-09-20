@@ -174,7 +174,7 @@ function syncSshSplit(runtime: OrcaRuntimeService, snapshot: RuntimeMobileSessio
   })
 }
 
-describe('OrcaRuntimeService terminal retirement host partitioning (STA-3463)', () => {
+describe('WakiiRuntimeService terminal retirement host partitioning (STA-3463)', () => {
   it('routes a stale catalog owner to the unique persisted session owner', async () => {
     const staleHostId: ExecutionHostId = 'runtime:stale-host'
     const persistedTab = {

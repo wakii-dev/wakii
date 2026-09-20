@@ -51,7 +51,7 @@ describe('ServeReadinessPublisher', () => {
     expect(write).toHaveBeenCalledOnce()
     expect(write).toHaveBeenCalledWith(
       expect.stringContaining(
-        'Orca server ready\nBound endpoint: ws://0.0.0.0:6768\nAdvertised endpoint: wss://orca.example.test/runtime'
+        'Wakii server ready\nBound endpoint: ws://0.0.0.0:6768\nAdvertised endpoint: wss://orca.example.test/runtime'
       )
     )
     expect(write).toHaveBeenCalledWith(

@@ -39,7 +39,7 @@ export async function inspectWorkerTerminal(
     // Exactness is the recorded pane and lineage, which the runtime getters answer from the
     // structured registry; there is no terminal to show.
     //
-    // `agentWait` is deliberately ABSENT rather than null. Null is the contract's "Orca looked and
+    // `agentWait` is deliberately ABSENT rather than null. Null is the contract's "Wakii looked and
     // found no wait", and nothing here looks: a structured worker parks on a journal question item,
     // which no terminal prompt scan can see. Reporting null would tell a coordinator the worker is
     // not waiting, which is the one thing the field's own documentation forbids inferring.
@@ -265,7 +265,7 @@ export function resolvePinnedFederatedServer(
   if (server.peerFingerprint !== federated.peer_fingerprint) {
     throw new OrchestrationError(
       'peer_changed',
-      `Saved environment ${federated.environment_name} now identifies a different Orca server.`
+      `Saved environment ${federated.environment_name} now identifies a different Wakii server.`
     )
   }
   return server

@@ -172,11 +172,11 @@ export function AppSection({
             isCollapsed
               ? translate(
                   'auto.components.status.bar.ResourceUsageStatusSegment.e419d27083',
-                  'Expand Orca'
+                  'Expand Wakii'
                 )
               : translate(
                   'auto.components.status.bar.ResourceUsageStatusSegment.53dd5560ae',
-                  'Collapse Orca'
+                  'Collapse Wakii'
                 )
           }
           aria-expanded={!isCollapsed}

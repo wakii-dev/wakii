@@ -64,7 +64,7 @@ export class WebRuntimeRequestRegistry {
         this.pending.delete(id)
         window.clearTimeout(timeout)
         cleanup()
-        reject(new Error('Remote Orca runtime is not connected.'))
+        reject(new Error('Remote Wakii runtime is not connected.'))
       }
     })
   }

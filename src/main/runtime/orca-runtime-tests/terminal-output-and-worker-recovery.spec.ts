@@ -17,7 +17,7 @@ import {
   syncSinglePty
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('preserves non-ASCII terminal preview text in chunks with controls', async () => {
     const runtime = new OrcaRuntimeService(store)
     syncSinglePty(runtime)

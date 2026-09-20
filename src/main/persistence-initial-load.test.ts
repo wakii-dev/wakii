@@ -234,8 +234,8 @@ describe('Store', () => {
         makeRepo({
           id: 'local-repo',
           path: '/Users/alice/orca',
-          displayName: 'Orca',
-          upstream: { owner: 'StablyAI', repo: 'Orca' }
+          displayName: 'Wakii',
+          upstream: { owner: 'StablyAI', repo: 'Wakii' }
         }),
         makeRepo({
           id: 'remote-repo',

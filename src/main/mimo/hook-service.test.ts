@@ -45,7 +45,7 @@ describe('MimoCodeHookService buildPtyEnv', () => {
     rmSync(mimocodeHome, { recursive: true, force: true })
   })
 
-  it('mirrors user config into shared overlay and installs Orca status plugin', () => {
+  it('mirrors user config into shared overlay and installs Wakii status plugin', () => {
     const service = new MimoCodeHookService()
     const env = service.buildPtyEnv('pty-1', mimocodeHome)
 

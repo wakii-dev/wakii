@@ -1,11 +1,12 @@
 /* oxlint-disable max-lines */
 import type { IPty } from 'node-pty'
+import { killWithDescendantSweep } from '../main/pty-descendant-termination'
 import type * as NodePty from 'node-pty'
 import { existsSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { resolveWindowsGitBashShellPath } from '../main/git-bash'
-import { WINDOWS_GIT_BASH_SHELL } from '../shared/windows-terminal-shell'
+import { isSupportedWindowsShellOverride } from '../shared/windows-terminal-shell'
 import type { RelayDispatcher, RequestContext } from './dispatcher'
 import {
   resolveDefaultShell,
@@ -18,6 +19,10 @@ import { inspectPtyChildProcesses, processHasChildren } from './pty-child-proces
 import { getRelayShellLaunchConfig, isRelayWslShell } from './pty-shell-launch'
 import { RetiredPaneSurfaceRegistry } from './retired-pane-surfaces'
 import { addWslEnvKeys } from '../shared/wsl-env'
+import {
+  ORCA_IMAGE_PROTOCOL_ENV,
+  ORCA_IMAGE_PROTOCOL_VALUE
+} from '../shared/terminal-image-protocol'
 import { SHELL_STARTUP_FEATURE_ENV } from '../main/shell-startup-features'
 import { DEFAULT_SSH_RELAY_GRACE_PERIOD_SECONDS } from '../shared/ssh-types'
 import { shouldUseShellReadyStartupDelivery } from '../shared/codex-startup-delivery'
@@ -236,6 +241,7 @@ type ManagedPty = {
    *  spawn reply to skip waiting for a marker that will never come (fish, sh, Windows). */
   shellReadyArmed?: boolean
   physicalExit?: PhysicalExitTracker
+  immediateClose?: Promise<void>
   forceKillSent?: boolean
   gracefulKillSent?: boolean
   startupIngress?: PtyStartupIngress
@@ -365,22 +371,6 @@ const ALLOWED_SIGNALS = new Set([
   'SIGUSR2'
 ])
 
-const ALLOWED_WINDOWS_SHELL_OVERRIDES = new Set([
-  'powershell.exe',
-  'powershell',
-  'pwsh.exe',
-  'pwsh',
-  'cmd.exe',
-  'cmd',
-  'wsl.exe',
-  'wsl',
-  // Why: both spellings classify as a POSIX startup family, so rejecting them here made the relay
-  // the one host that hard-failed a setting the local and daemon PTYs accept.
-  'bash.exe',
-  'bash',
-  WINDOWS_GIT_BASH_SHELL
-])
-
 function resolvePtyShellOverride(shellOverride: string): string {
   if (!shellOverride) {
     return ''
@@ -388,8 +378,7 @@ function resolvePtyShellOverride(shellOverride: string): string {
   if (process.platform !== 'win32') {
     return ''
   }
-  const normalized = shellOverride.toLowerCase()
-  if (!ALLOWED_WINDOWS_SHELL_OVERRIDES.has(normalized)) {
+  if (!isSupportedWindowsShellOverride(shellOverride)) {
     throw new Error(`Unsupported Windows shell override: ${shellOverride}`)
   }
   return resolveWindowsGitBashShellPath(shellOverride) ?? shellOverride
@@ -645,7 +634,14 @@ export class PtyHandler {
 
   /** Where the relay's own node-pty lives — the deployed bundle dir, never cwd. */
   private relayNodePtyDir(): string {
-    return join(__dirname, 'node_modules', 'node-pty')
+    // Packaged relays live under Resources/relay while runtime dependencies are
+    // copied to the sibling Resources/node_modules directory. Development
+    // bundles keep node_modules beside the relay output, so retain that path as
+    // the fallback.
+    const packagedRoot = typeof process.resourcesPath === 'string' ? process.resourcesPath : ''
+    const packagedDir = packagedRoot ? join(packagedRoot, 'node_modules', 'node-pty') : ''
+    const localDir = join(__dirname, 'node_modules', 'node-pty')
+    return packagedDir && existsSync(packagedDir) ? packagedDir : localDir
   }
 
   /**
@@ -821,6 +817,7 @@ export class PtyHandler {
       }
     }
     const result = mergeGitConfigEnvProtocol(baseEnv, augmented) as Record<string, string>
+    result[ORCA_IMAGE_PROTOCOL_ENV] = ORCA_IMAGE_PROTOCOL_VALUE
     // Why: an older client may not ask a newly upgraded relay to delete inherited shim state.
     stripLegacyTerminalShimEnv(result, process.platform)
     // Why unconditionally here, not in injectRelayFishHistoryEnv: that runs only for a
@@ -1685,6 +1682,7 @@ export class PtyHandler {
     const existing = this.agentSessionCreateOperations.get(operationId)
     if (existing) {
       const result = await existing
+      this.assertPtyNotClosing(this.ptys.get(result.id))
       this.sourcePublication?.activate(result.id, result.incarnationId, context)
       const sourceActivation =
         context && this.sourcePublication?.receivingActivation?.(result.id, context.clientId)
@@ -1799,6 +1797,7 @@ export class PtyHandler {
         this.agentSessionOwners.release(result.owner.ptyId, result.owner.generation)
         throw new Error('agent_session_exited_during_start')
       }
+      this.assertPtyNotClosing(managed)
       managed.agentSessionOwners = this.agentSessionOwners.listForPty(managed.id)
       const adoptedReplay = result.disposition === 'adopted' ? managed.buffered.read() : ''
       this.sourcePublication?.activate(managed.id, managed.incarnationId, context)
@@ -1891,10 +1890,13 @@ export class PtyHandler {
       injectRelayFishHistoryEnv(spawnEnv, worktreeId)
     }
     const wslShell = isRelayWslShell(shell)
+    if (wslShell) {
+      // WSLENV is the only channel that carries a host env var into the guest.
+      addWslEnvKeys(spawnEnv, [ORCA_IMAGE_PROTOCOL_ENV])
+    }
     if (historyIsolationEnabled && worktreeId) {
       const historyRoot = injectRelayHistoryEnv(spawnEnv, worktreeId, shell, { wsl: wslShell })
       if (wslShell && historyRoot) {
-        // WSLENV is the only channel that carries a host env var into the guest.
         addWslEnvKeys(spawnEnv, ['HISTFILE'])
       }
     }
@@ -2070,6 +2072,8 @@ export class PtyHandler {
       throw new Error(`PTY "${id}" not found`)
     }
 
+    this.assertPtyNotClosing(managed)
+
     // Why: verify liveness because shells can exit without node-pty onExit.
     if (this.reapPtyProvenExited(managed)) {
       // Why the marker: this is the ONLY not-found answer backed by a liveness check. The unmarked
@@ -2108,6 +2112,10 @@ export class PtyHandler {
     ) {
       sourceRecovery = Object.freeze({ status: 'checkpointUnavailable' })
     }
+    if (this.ptys.get(id) !== managed || managed.disposed) {
+      throw new Error(`PTY "${id}" not found`)
+    }
+    this.assertPtyNotClosing(managed)
     const activation = this.sourcePublication?.activate(
       id,
       managed.incarnationId,
@@ -2282,12 +2290,48 @@ export class PtyHandler {
     if (immediate) {
       this.releaseStartupCommand(managed)
       this.flushPtyOutput(id)
-      this.requestForceKill(managed)
-      // Why: preserve timed-out entries so onExit/retry owns native handles.
-      await this.waitForPhysicalExit(managed, IMMEDIATE_PTY_EXIT_TIMEOUT_MS)
+      await this.closeImmediately(managed)
     } else {
       this.releaseStartupCommand(managed)
       this.requestGracefulKill(managed, 'force-kill')
+    }
+  }
+
+  private assertPtyNotClosing(managed: ManagedPty | undefined): void {
+    if (managed?.immediateClose) {
+      throw new Error(`PTY "${managed.id}" is terminating`)
+    }
+  }
+
+  private async closeImmediately(managed: ManagedPty): Promise<void> {
+    if (managed.immediateClose) {
+      return managed.immediateClose
+    }
+    const ownsRoot = (): boolean => this.ptys.get(managed.id) === managed && !managed.disposed
+    const close = async (): Promise<void> => {
+      if (process.platform === 'win32') {
+        this.requestForceKill(managed)
+      } else {
+        await killWithDescendantSweep(
+          managed.pty.pid,
+          () => {
+            if (ownsRoot()) {
+              this.requestForceKill(managed)
+            }
+          },
+          { ownsRoot, terminateOwnedTree: () => terminatePtyJob(managed.pty) }
+        )
+      }
+      await this.waitForPhysicalExit(managed, IMMEDIATE_PTY_EXIT_TIMEOUT_MS)
+    }
+    const pending = close()
+    managed.immediateClose = pending
+    try {
+      await pending
+    } finally {
+      if (managed.immediateClose === pending) {
+        managed.immediateClose = undefined
+      }
     }
   }
 
@@ -2907,10 +2951,10 @@ export class PtyHandler {
       if (this.ptys.has(entry.id) || this.pendingReviveIds.has(entry.id)) {
         continue
       }
-      // Only re-attach if the original process is still alive
-      try {
-        process.kill(entry.pid, 0)
-      } catch {
+      // Only re-attach if the host proves the original process is still there. `isProcessAlive`
+      // is ESRCH-only for the same reason `reapPtyProvenExited` is: a refusal this host cannot
+      // resolve is unverifiable, not absence (docs/reference/ssh-execution-boundary.md).
+      if (!Number.isInteger(entry.pid) || entry.pid <= 0 || !isProcessAlive(entry.pid)) {
         continue
       }
       const ownedPath = entry.worktreeId
@@ -2987,6 +3031,9 @@ export class PtyHandler {
       basename(shell).toLowerCase().startsWith('fish')
     ) {
       injectRelayFishHistoryEnv(spawnEnv, entry.worktreeId)
+    }
+    if (wslShell) {
+      addWslEnvKeys(spawnEnv, [ORCA_IMAGE_PROTOCOL_ENV])
     }
     if (historyIsolationEnabled && entry.worktreeId) {
       const historyRoot = injectRelayHistoryEnv(spawnEnv, entry.worktreeId, shell, {

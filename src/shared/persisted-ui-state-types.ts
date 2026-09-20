@@ -125,7 +125,7 @@ export type PersistedUIState = {
   /** Client-side footer presentation; verbose preserves the pre-roster all-window default. */
   statusBarUsageMode?: StatusBarUsageMode
   dismissedUpdateVersion: string | null
-  /** App version that last dismissed the unexpected-sign-out card; null = never. Re-arms on each new version while still signed out. */
+  /** Version when the sign-out notice was seen or dismissed; any value suppresses future appearances. */
   dismissedUnexpectedSignoutVersion?: string | null
   lastUpdateCheckAt: number | null
   /** Dev-only update channel override; absent means the build's own channel. */
@@ -200,7 +200,7 @@ export type PersistedUIState = {
   starNagDeferredUntil?: number | null
   /** App version that consumed the first value-moment ask; main-owned so remote/web clients can't spoof the once-per-version cap. */
   starNagAgentValueMomentAppVersion?: string | null
-  trustedOrcaHooks?: PersistedTrustedOrcaHooks
+  trustedWakiiHooks?: PersistedTrustedOrcaHooks
   setupScriptPromptDismissedRepoIds?: string[]
   /** Pet overlay visibility, separate from the experimentalPet settings flag so "Hide pet" is a reversible dismiss; absent = true. */
   petVisible?: boolean

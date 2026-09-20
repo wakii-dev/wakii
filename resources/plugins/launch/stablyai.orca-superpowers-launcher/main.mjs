@@ -4,30 +4,25 @@
 // The default export receives the `orca` API: command registration + the
 // capability-gated host API.
 //
-// IMPORTANT (v1.3): the panel→worker bridge is a CLOSED transport. Only three
-// host actions are reachable from a sandboxed panel iframe (see Orca's
-// plugin-host-api.js PANEL_ACTIONS list): workspace.readContext, terminal.sendText,
-// notifications.show. There is NO route to plugin-registered commands. So the
-// panel can only ever *type a string into a terminal*. We lean into that:
-// every panel button composes a prompt and sends it via terminal.sendText —
-// the agent in that terminal does the real work (renders progress, resolves
-// gates, runs the skill). No CLI spawn, no snapshot, no DAG rendering here.
+// IMPORTANT (v1.7): panel Story Ops đã GỠ — plugin là headless worker.
+// Điều khiển: Orca command palette (13 superpowers.* commands) + Claude
+// sessions chạy skills trực tiếp. Worker tự cài kit (installKit) lúc activate.
 //
-// POLICY MOVED TO SKILL.md (v1.3):
-//   - COMMENT_AUDIT  → orca-superpowers-workflow SKILL.md Principle 7 (default ON; opt-out via "audit-log: off" token)
-//   - FIGMA          → SKILL.md Principle 8 (auto-triggers when description has figma.com URL)
+// POLICY nằm ở SKILL.md:
+//   - COMMENT_AUDIT  → SKILL.md Principle 7 (default ON; opt-out qua "audit-log: off" token)
+//   - FIGMA          → SKILL.md Principle 8 (auto-triggers khi description có figma.com URL)
 //   - AUTONOMOUS self-review → SKILL.md Principle 3
-// Prompt now carries only: idea + short mode flags + audit opt-out token.
-// Directives.json keeps the OPT-IN ones (polish/simplify/plan-only/quick-fix/subagent)
+// Directives.json giữ OPT-IN directives (polish/simplify/plan-only/quick-fix/subagent)
+// + các token audit-off / autonomous-on / agent-forcing.
 // + the compact audit-off / autonomous-on tokens.
 
 import directives from './directives.json' with { type: 'json' }
 import { execFile as execFileCb } from 'node:child_process'
 import { promisify } from 'node:util'
-import { accessSync, readFileSync, existsSync, mkdirSync, readdirSync, cpSync, rmSync, writeFileSync, chmodSync, renameSync, statSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
-import { hostname } from 'node:os'
 import { createHash } from 'node:crypto'
+import { accessSync, readFileSync, existsSync, mkdirSync, readdirSync, cpSync, rmSync, writeFileSync, chmodSync, statSync, renameSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { dirname } from 'node:path'
 const execFileAsync = promisify(execFileCb)
 
 // Resolve the PRODUCTION orca binary explicitly. Why: when running inside the
@@ -35,13 +30,20 @@ const execFileAsync = promisify(execFileCb)
 // (~/Documents/orca/out/bin/orca) which breaks outside its module context
 // ("Cannot find module ..."). The production binary is self-contained.
 function orcaBin() {
-  const candidates = [
+  const isWin = process.platform === 'win32'
+  const candidates = isWin ? [
+    // Windows: binary sống cạnh app resources (exe + bin/orca.exe); ALSO the
+    // app's own executable path is unusable — resolve from process.execPath.
+    join(dirname(process.execPath), 'resources', 'bin', 'orca.exe'),
+    join(process.env.LOCALAPPDATA || '', 'Programs', 'orca', 'resources', 'bin', 'orca.exe')
+  ] : [
     '/opt/homebrew/bin/orca',
     '/usr/local/bin/orca',
+    '/Applications/Wakii.app/Contents/Resources/bin/orca',
     '/Applications/Orca.app/Contents/Resources/bin/orca'
   ]
   for (const c of candidates) {
-    try { accessSync(c); return c } catch { continue }
+    try { if (c) accessSync(c); else continue; return c } catch { continue }
   }
   return 'orca' // fallback to PATH (production app context)
 }
@@ -215,8 +217,9 @@ async function sendToTerminal(orca, text, { terminalId } = {}) {
 // Stories live as bracket files under docs/superpowers/brackets/*.md.
 // Fallback source: issues-with-children from Linear (no bracket file yet).
 
-import { readFile, readdir, writeFile } from 'node:fs/promises'
+import { readFile, readdir, writeFile, unlink } from 'node:fs/promises'
 import { join, basename } from 'node:path'
+import { tmpdir } from 'node:os'
 
 async function worktreeRoot(orca) {
   try {
@@ -230,7 +233,7 @@ async function worktreeRoot(orca) {
 function parseBracketFile(text, file) {
   const lines = text.split('\n')
   let linear = null, title = basename(file).replace(/\.md$/, '')
-  const hm = text.match(/^#\s+Story:\s*([A-Z]+-\d+)\s*[—–-]\s*(.+)$/m)
+  const hm = text.match(/^#\s+Story:\s*([A-Za-z]+-\d+)\s*[—–-]\s*(.+)$/m)
   if (hm) { linear = hm[1]; title = hm[2].trim() }
   return { linear, title: title.slice(0, 60), file }
 }
@@ -315,10 +318,14 @@ async function listStories(orca) {
     }
     stories.sort((a, b) => a.file.localeCompare(b.file))
     if (!stories.length) {
+      // Observability: scan-roots diagnostics in the storage payload —
+      // silent-empty made the Windows autocomplete bug invisible for weeks.
+      const roots = await storyScanRoots()
       await orca.host.call('storage.set', {
         key: 'story.list',
         value: { stories: [], currentLinear: null, currentFile: null,
                  error: 'no bracket files found in any workspace',
+                 rootsProbed: roots, orcaBin: orcaBin(),
                  root, fetchedAt: new Date().toISOString() }
       })
       return { ok: true, count: 0, root }
@@ -444,13 +451,123 @@ async function loadStorySnapshot(orca, args) {
 
 const KIT_BIN = join(process.env.HOME || '', '.claude', 'bin')
 
-async function runKit(bin, args) {
+// ---- Guard advisory nhãn nguồn + reject-reason log (issue #22) -------------
+// camel: mọi item bị chặn phải để lại log lý do đọc được (reason ≤200 ký tự,
+// không phình log). deepseek-harness: guard NHẮC không chặn — reminder phải có
+// nhãn nguồn, không veto, không đổi kết quả call. Sink do activate gắn vào
+// orca.log; harness gắn mock riêng.
+let guardLogSink = null
+export function setKitGuardLogger(fn) { guardLogSink = typeof fn === 'function' ? fn : null }
+function guardLog(line) { try { guardLogSink?.(line) } catch { /* log không được chặn caller */ } }
+
+const GUARD_REASON_MAX = 200
+function truncateReason(s, max = GUARD_REASON_MAX) {
+  const t = String(s ?? '')
+  return t.length <= max ? t : t.slice(0, max - 1) + '…'
+}
+
+// Repeat-guard: đếm chuỗi gọi TRÙNG (bin + args) LIÊN TIẾP trong runKit; chạm
+// ngưỡng → advisory return field, không đụng blocked/ok. State giữ trong module.
+const REPEAT_THRESHOLDS = [3, 5, 8]
+let repeatState = { key: null, count: 0 }
+export function resetKitRepeatGuard() { repeatState = { key: null, count: 0 } }
+function recordKitRepeat(bin, args) {
+  let key
+  try { key = `${bin} ${JSON.stringify(args ?? null)}` } catch { key = `${bin} (args không tuần tự hoá được)` }
+  if (repeatState.key === key) repeatState.count++
+  else repeatState = { key, count: 1 }
+  if (!REPEAT_THRESHOLDS.includes(repeatState.count)) return null
+  guardLog(`[guard:repeat-tool-reminder] gọi trùng lần ${repeatState.count} — đây là guard nhắc, không phải lệnh mới (${truncateReason(key, 80)})`)
+  return { guard: 'repeat-tool-reminder', repeat: repeatState.count, note: 'guard nhắc, không phải lệnh mới — kết quả call giữ nguyên' }
+}
+
+// Capability catalog: provides[] bin của kit.json. Không đọc được → null
+// (dispatch pass-through — install path đã fail-loud riêng lúc activate).
+export function kitBinCatalog(kitRoot = KIT_ROOT) {
+  try {
+    const manifest = JSON.parse(readFileSync(join(kitRoot, 'kit.json'), 'utf8'))
+    if (!manifest || !Array.isArray(manifest.provides)) return null
+    return new Set(manifest.provides
+      .filter(e => e && typeof e === 'object' && e.type === 'bin' && typeof e.name === 'string')
+      .map(e => e.name))
+  } catch { return null }
+}
+
+// Hash cây kit/ — chặn drift "đổi file mà không bump": marker skip-copy theo
+// version-only từng để ~/.claude stale (2.10.1-era); rehash thiếu từng vỡ
+// launch-content 1.4.203. Sort path + sha256 16 hex, deterministic cross-platform.
+// kit.json loại khỏi hash (tự chứa hash đó).
+export function computeKitHash(kitRoot = KIT_ROOT) {
+  const h = createHash('sha256')
+  for (const rel of kitTreeFiles(kitRoot)) {
+    h.update(rel); h.update('\0'); h.update(readFileSync(join(kitRoot, rel))); h.update('\0')
+  }
+  return h.digest('hex').slice(0, 16)
+}
+
+// Danh sách file kit (skills/ + agents/ + bin/ — phần được cài vào ~/.claude).
+// CHỈ 3 dirs này — contract với installKit copy scope + installedKitIntact.
+// Walk cả root làm self-heal thành dead code + recopy đè edit user MỌI activation
+// (bug 2.16.2). Root files (bracket-template, permission-matrix…) KHÔNG cài →
+// không vào hash/intact (drift guard kit-verify cũng chỉ so 3 dirs + kit.json).
+// Dùng chung cho computeKitHash + installedKitIntact.
+const KIT_INSTALLED_DIRS = ['skills', 'agents', 'bin']
+function kitTreeFiles(kitRoot) {
+  const skip = new Set(['__pycache__', '.git', 'node_modules'])
+  const files = []
+  for (const dir of KIT_INSTALLED_DIRS) {
+    const stack = ['']
+    while (stack.length) {
+      const rel = stack.pop()
+      for (const ent of readdirSync(join(kitRoot, dir, rel), { withFileTypes: true })) {
+        if (skip.has(ent.name) || ent.name.endsWith('.pyc') || ent.name === '.DS_Store') continue
+        if (ent.isDirectory()) stack.push(rel ? `${rel}/${ent.name}` : ent.name)
+        else if (ent.isFile()) files.push(`${dir}/${rel ? rel + '/' : ''}${ent.name}`)
+      }
+    }
+  }
+  return files.sort()
+}
+
+// Bản cài ở ~/.claude còn nguyên vẹn không: mỗi file kit phải tồn tại và giống
+// bytes. Bắt case marker khớp nhưng user xoá tay/file hỏng — tự hồi phục bằng
+// re-copy. Bỏ qua file dư (skill user cài thêm ngoài kit).
+export function installedKitIntact(claude, kitRoot = KIT_ROOT) {
+  try {
+    for (const rel of kitTreeFiles(kitRoot)) {
+      const dst = join(claude, rel)
+      if (!existsSync(dst)) return false
+      if (!readFileSync(dst).equals(readFileSync(join(kitRoot, rel)))) return false
+    }
+    return true
+  } catch {
+    return false
+  }
+}
+
+// Neovim lsp._unsupported_method: lỗi chỉ đích danh capability thiếu, chặn
+// TRƯỚC dispatch — không ENOENT vô tên giữa đường. catalog vắng → không cấm.
+export function assertCapability(name, catalog = kitBinCatalog()) {
+  if (!catalog || catalog.has(name)) return { ok: true }
+  return { ok: false, blocked: 'capability',
+    error: `capability '${name}' không có trong kit.json provides[] (bin) — không dispatch. Kit cũ/thiếu entry: sửa manifest + cài lại kit.` }
+}
+
+export async function runKit(bin, args, { kitRoot } = {}) {
+  const advisory = recordKitRepeat(bin, args)
+  const cap = assertCapability(bin, kitBinCatalog(kitRoot))
+  if (!cap.ok) {
+    // camel reject-reason: MỖI lần chặn để lại 1 dòng log lý do — block giữ nguyên
+    guardLog(`[guard:capability-check] blocked '${bin}' — ${truncateReason(cap.error)}`)
+    return advisory ? { ...cap, advisory } : cap
+  }
   try {
     const { stdout } = await execFileAsync(join(KIT_BIN, bin), args,
       { timeout: 90000, maxBuffer: 2 * 1024 * 1024 })
-    return { ok: true, stdout }
+    return advisory ? { ok: true, stdout, advisory } : { ok: true, stdout }
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : String(err) }
+    const error = err instanceof Error ? err.message : String(err)
+    return advisory ? { ok: false, error, advisory } : { ok: false, error }
   }
 }
 
@@ -552,53 +669,204 @@ async function collectStoryOps(orca) {
   }
 }
 
-// GAP-ANSWER: user trả lời REQUIREMENT-GAP ngay từ panel — worker post
-// comment lên EPIC qua GraphQL (keychain độc lập, mọi SF thấy đáp án).
-async function postGapAnswer(epic, text) {
-  try {
-    const keyFile = join(process.env.HOME || '', '.claude', '.linear-key')
-    let key = process.env.LINEAR_API_KEY || ''
-    if (!key) {
-      try { key = (await readFile(keyFile, 'utf8')).split('\n')[0].trim() } catch { key = '' }
-    }
-    if (!key) return { ok: false, error: 'không có Linear key (~/.claude/.linear-key)' }
-    const iss = await (async () => {
-      const b = JSON.stringify({ query: `query{issue(id:"${epic}"){id}}` })
-      const r = await fetch('https://api.linear.app/graphql', { method: 'POST', headers: { Authorization: key, 'Content-Type': 'application/json' }, body: b })
-      return (await r.json()).data?.issue?.id || null
-    })()
-    if (!iss) return { ok: false, error: 'epic không tìm thấy: ' + epic }
-    const body = JSON.stringify({ query: `mutation($i:CommentCreateInput!){commentCreate(input:$i){success}}`,
-      variables: { i: { issueId: iss, body: `GAP-ANSWER (từ panel): ${text}` } } })
-    const r = await fetch('https://api.linear.app/graphql', { method: 'POST', headers: { Authorization: key, 'Content-Type': 'application/json' }, body })
-    const j = await r.json()
-    const okFlag = j?.data?.commentCreate?.success === true
-    return { ok: okFlag, stdout: okFlag ? `Đã post GAP-ANSWER lên ${epic}` : JSON.stringify(j).slice(0, 300) }
-  } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : String(err) }
-  }
+
+// Zero-dep (không ajv): schema tay + two-way provides ↔ đĩa. Chạy MỖI lần
+// activate, TRƯỚC marker early-return — kit hỏng phải được biết ngay, không
+// chết lặng lẽ. Trả mảng problems (rỗng = hợp lệ).
+const KIT_ENTRY_TYPES = ['skill', 'agent', 'bin']
+
+function kitEntryLabel(e) {
+  if (e && typeof e === 'object' && typeof e.name === 'string') return e.name
+  return JSON.stringify(e)?.slice(0, 40) || '(entry rỗng)'
 }
 
-// CLOSE story: epic → Done + audit STORY-COMPLETE (panel button)
-async function postCloseStory(epic) {
+// Đĩa→predicate: skills/ = dir có SKILL.md; agents/ = file *.md; bin/ = file thường.
+function kitDiskEntry(kitRoot, type, name) {
   try {
-    const keyFile = join(process.env.HOME || '', '.claude', '.linear-key')
-    let key = process.env.LINEAR_API_KEY || ''
-    if (!key) { try { key = (await readFile(keyFile, 'utf8')).split('\n')[0].trim() } catch { key = '' } }
-    if (!key) return { ok: false, error: 'không có Linear key' }
-    const iss = await (async () => {
-      const r = await fetch('https://api.linear.app/graphql', { method: 'POST', headers: { Authorization: key, 'Content-Type': 'application/json' }, body: JSON.stringify({ query: `query{issue(id:"${epic}"){id team{states{nodes{id name}}}}}` }) })
-      return (await r.json()).data?.issue
-    })()
-    if (!iss) return { ok: false, error: 'epic không tìm thấy: ' + epic }
-    const done = iss.team?.states?.nodes?.find(x => x.name === 'Done')
-    if (!done) return { ok: false, error: 'không tìm state Done' }
-    const r1 = await fetch('https://api.linear.app/graphql', { method: 'POST', headers: { Authorization: key, 'Content-Type': 'application/json' }, body: JSON.stringify({ query: 'mutation($id:String!,$u:IssueUpdateInput!){issueUpdate(id:$id,input:$u){success}}', variables: { id: iss.id, u: { stateId: done.id } } }) })
-    const ok1 = (await r1.json())?.data?.issueUpdate?.success === true
-    const r2 = await fetch('https://api.linear.app/graphql', { method: 'POST', headers: { Authorization: key, 'Content-Type': 'application/json' }, body: JSON.stringify({ query: 'mutation($i:CommentCreateInput!){commentCreate(input:$i){success}}', variables: { i: { issueId: iss.id, body: `**STORY-COMPLETE** — đóng từ panel. Code trên nhánh đích; merge main là việc USER.` } } }) })
-    const ok2 = (await r2.json())?.data?.commentCreate?.success === true
-    return { ok: ok1 && ok2, stdout: `epic ${epic} → Done + audit ${ok2 ? '✓' : '✗'}` }
-  } catch (err) { return { ok: false, error: err.message } }
+    if (type === 'skill') {
+      return statSync(join(kitRoot, 'skills', name)).isDirectory()
+        && statSync(join(kitRoot, 'skills', name, 'SKILL.md')).isFile()
+    }
+    if (type === 'agent') return statSync(join(kitRoot, 'agents', `${name}.md`)).isFile()
+    if (type === 'bin') return statSync(join(kitRoot, 'bin', name)).isFile()
+  } catch { /* không tồn tại */ }
+  return false
+}
+
+// Toàn bộ entry mà đĩa cung cấp — dotfiles + bracket-template.md ngoài scope manifest.
+function kitDiskEntries(kitRoot) {
+  const found = new Set()
+  try {
+    for (const d of readdirSync(join(kitRoot, 'skills'), { withFileTypes: true })) {
+      if (d.name.startsWith('.') || !d.isDirectory()) continue
+      try { if (statSync(join(kitRoot, 'skills', d.name, 'SKILL.md')).isFile()) found.add(`skill:${d.name}`) } catch { /* không SKILL.md */ }
+    }
+  } catch { /* không có skills/ */ }
+  try {
+    for (const f of readdirSync(join(kitRoot, 'agents'), { withFileTypes: true })) {
+      if (f.name.startsWith('.') || !f.isFile() || !f.name.endsWith('.md') || f.name === 'bracket-template.md') continue
+      found.add(`agent:${f.name.replace(/\.md$/, '')}`)
+    }
+  } catch { /* không có agents/ */ }
+  try {
+    for (const f of readdirSync(join(kitRoot, 'bin'), { withFileTypes: true })) {
+      if (f.name.startsWith('.') || !f.isFile()) continue
+      found.add(`bin:${f.name}`)
+    }
+  } catch { /* không có bin/ */ }
+  return found
+}
+
+function validateKitManifest(manifest, kitRoot) {
+  if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) {
+    return ['kit.json không phải object']
+  }
+  const problems = []
+  if (typeof manifest.version !== 'string' || !manifest.version.trim()) problems.push('kit.json thiếu version')
+  if (manifest.kitHash !== undefined && !/^[0-9a-f]{8,64}$/.test(String(manifest.kitHash).trim())) {
+    problems.push('kit.json kitHash phải là hex 8-64 ký tự (computeKitHash)')
+  }
+  if (!Array.isArray(manifest.provides)) return problems.concat(['kit.json thiếu provides[] (mảng)'])
+  const declared = new Set()
+  for (const e of manifest.provides) {
+    const label = kitEntryLabel(e)
+    if (!e || typeof e !== 'object' || Array.isArray(e)) {
+      problems.push(`provides entry không hợp lệ: ${label}`)
+      continue
+    }
+    if (typeof e.name !== 'string' || !e.name.trim()) problems.push(`entry ${label}: thiếu name`)
+    if (!KIT_ENTRY_TYPES.includes(e.type)) problems.push(`entry ${label}: type phải thuộc skill|agent|bin (nhận ${JSON.stringify(e.type ?? null)})`)
+    if ((e.type === 'skill' || e.type === 'agent')) {
+      if (!Array.isArray(e.inputs) || e.inputs.length === 0 || !e.inputs.every(x => typeof x === 'string' && x.trim())) {
+        problems.push(`entry ${label} (${e.type}): thiếu inputs[] (mảng string)`)
+      }
+      if (typeof e.outputs !== 'string' || !e.outputs.trim()) problems.push(`entry ${label} (${e.type}): thiếu outputs (string)`)
+      if (typeof e.owner !== 'string' || !e.owner.trim()) problems.push(`entry ${label} (${e.type}): thiếu owner`)
+    } else if (e.type === 'bin' && (typeof e.description !== 'string' || !e.description.trim())) {
+      problems.push(`entry ${label} (bin): thiếu description`)
+    }
+    if (typeof e.name === 'string' && e.name && KIT_ENTRY_TYPES.includes(e.type)) declared.add(`${e.type}:${e.name}`)
+  }
+  // Trùng id WITHIN provides[] — học Qwen-Agent register_tool: fail ngay, liệt kê
+  // entry, không ghi đè im lặng (flat theo name — trùng name khác type cũng mơ hồ).
+  const byName = new Map()
+  for (const [i, e] of manifest.provides.entries()) {
+    if (!e || typeof e !== 'object' || typeof e.name !== 'string' || !e.name.trim()) continue
+    if (!byName.has(e.name)) byName.set(e.name, [])
+    byName.get(e.name).push(`#${i} (${e.type ?? 'không type'})`)
+  }
+  for (const [name, at] of byName) {
+    if (at.length > 1) problems.push(`provides trùng name '${name}': ${at.join(' + ')} — id catalog phải unique`)
+  }
+  for (const e of manifest.provides) {
+    if (!e || typeof e !== 'object' || typeof e.name !== 'string' || !KIT_ENTRY_TYPES.includes(e.type)) continue
+    if (!kitDiskEntry(kitRoot, e.type, e.name)) problems.push(`entry ${e.name} (${e.type}): không thấy trên đĩa`)
+  }
+  for (const key of kitDiskEntries(kitRoot)) {
+    if (!declared.has(key)) problems.push(`trên đĩa nhưng không có entry provides: ${key}`)
+  }
+  return problems
+}
+
+// Fail path dùng chung: toast fire-and-forget + 1 dòng log nhãn [guard:kit-manifest]
+// (camel reject-reason — pre-flight fail không biến mất im lặng). KHÔNG throw
+// (activate phải sống); block-all do caller return false.
+function notifyKitBlocked(orca, summary) {
+  guardLog(`[guard:kit-manifest] install blocked — ${truncateReason(summary)}`)
+  const full = `story-team-kit install blocked: ${summary} — không copy, marker giữ nguyên. Sửa kit rồi restart.`
+  const body = full.length > 400 ? `${full.slice(0, 397)}…` : full
+  Promise.resolve()
+    .then(() => orca.host.call('notifications.show', { title: 'story-team-kit', body }))
+    .catch(() => { if (!guardLogSink) { try { orca.log(body) } catch { /* không còn kênh nào */ } } })
+}
+
+// ---- Story hooks auto-install (SF-2 GH-26) --------------------------------
+// Merge ĐÚNG 3 hook entries vào <root>/settings.json: PostToolUse (matcher
+// Bash → checkpoint record), SessionStart (→ fact-pack), Stop (wrapper no-op,
+// logic thật SF-3 thay sau). Detection theo ĐÚNG command path (normalized) của
+// kit — KHÔNG prefix-match `story-` (entry legacy story-compact-recovery và
+// claude-hook.cmd của Orca phải nguyên vẹn). Idempotent: chỉ ghi khi nội dung
+// đổi (chạy lần 2 → file byte-for-byte không đổi). Atomic: temp cùng dir +
+// rename. Malformed settings.json → KHÔNG BAO GIỜ ghi đè (return ok:false).
+const STORY_HOOK_WRAPPERS = {
+  PostToolUse: { file: 'hook-post-tool-use', matcher: 'Bash' },
+  SessionStart: { file: 'hook-session-start', matcher: null },
+  Stop: { file: 'hook-stop', matcher: null }
+}
+const STORY_HOOK_TIMEOUT = 10
+
+const normCmdPath = (s) => String(s || '').replace(/\\/g, '/')
+
+// Canonical groups cho 1 event — command = đường dẫn wrapper đã cài (forward
+// slash, chạy được cả Git Bash lẫn POSIX). Tách hàm để test so DeepEqual.
+export function buildStoryHookGroups(claudeDir) {
+  const binDir = normCmdPath(join(claudeDir, 'bin'))
+  const out = {}
+  for (const [event, w] of Object.entries(STORY_HOOK_WRAPPERS)) {
+    const hook = { type: 'command', command: `${binDir}/${w.file}`, timeout: STORY_HOOK_TIMEOUT }
+    out[event] = w.matcher ? { matcher: w.matcher, hooks: [hook] } : { hooks: [hook] }
+  }
+  return out
+}
+
+// Pure merge — settings hiện tại + canonical groups → settings mới. Group chứa
+// ĐÚNG command của kit (và không trộn lệnh lạ) → thay nguyên group; chưa có →
+// append. Group trộn command kit + lệnh lạ → không đụng, append canonical riêng.
+export function mergeStoryHookSettings(settings, claudeDir) {
+  if (!settings || typeof settings !== 'object' || Array.isArray(settings)) return null
+  const canon = buildStoryHookGroups(claudeDir)
+  const kitCmds = new Set(Object.values(canon).map(g => normCmdPath(g.hooks[0].command)))
+  const next = { ...settings }
+  const hooks = { ...(next.hooks && typeof next.hooks === 'object' && !Array.isArray(next.hooks) ? next.hooks : {}) }
+  for (const [event, group] of Object.entries(canon)) {
+    const arr = Array.isArray(hooks[event]) ? [...hooks[event]] : []
+    const want = normCmdPath(group.hooks[0].command)
+    let replaced = false
+    for (let i = 0; i < arr.length; i++) {
+      const ent = arr[i]
+      if (!ent || typeof ent !== 'object' || !Array.isArray(ent.hooks)) continue
+      const cmds = ent.hooks.map(h => normCmdPath(h?.command))
+      if (!cmds.includes(want)) continue
+      const hasForeign = cmds.some(c => c && !kitCmds.has(c))
+      if (hasForeign) continue // mixed — giữ nguyên, append canonical riêng bên dưới
+      arr[i] = JSON.parse(JSON.stringify(group))
+      replaced = true
+      break
+    }
+    if (!replaced) arr.push(JSON.parse(JSON.stringify(group)))
+    hooks[event] = arr
+  }
+  next.hooks = hooks
+  return next
+}
+
+// RMW lên đĩa — fail-open phía caller (không throw). changed=false khi nội dung
+// đã đúng (không đụng mtime → idempotent byte-for-byte).
+export function mergeStoryHooks(claudeDir) {
+  try {
+    const settingsPath = join(claudeDir, 'settings.json')
+    let current = {}
+    let currentText = null
+    if (existsSync(settingsPath)) {
+      currentText = readFileSync(settingsPath, 'utf8')
+      try {
+        current = JSON.parse(currentText)
+      } catch (err) {
+        return { ok: false, changed: false, error: `settings.json malformed — không ghi đè: ${err.message}` }
+      }
+    }
+    const merged = mergeStoryHookSettings(current, claudeDir)
+    if (!merged) return { ok: false, changed: false, error: 'settings.json không phải object' }
+    const nextText = JSON.stringify(merged, null, 2) + '\n'
+    if (currentText !== null && currentText === nextText) return { ok: true, changed: false }
+    const tmp = join(claudeDir, `.settings.json.tmp-${process.pid}`)
+    mkdirSync(claudeDir, { recursive: true })
+    writeFileSync(tmp, nextText)
+    renameSync(tmp, settingsPath)
+    return { ok: true, changed: true }
+  } catch (err) {
+    return { ok: false, changed: false, error: err instanceof Error ? err.message : String(err) }
+  }
 }
 
 // ---- Kit self-install (bundle built-in Wakii) ----
@@ -607,15 +875,54 @@ async function postCloseStory(epic) {
 // năng, không cần chạy install.sh tay. Idempotent: skip khi đúng version đã
 // cài (marker file). Chỉ đụng thư mục kit sở hữu — skill/CLI của người dùng
 // ngoài kit KHÔNG bị đè.
-function installKit(orca) {
+// Testability: named export + injectable seams — `root` (destination, default
+// ~/.claude) và `kitRoot` (nguồn bundle) để negative harness chạy trên temp
+// dirs, KHÔNG BAO GIỜ chạm HOME thật. Trả true = cài/đã-cứu/skip, false = blocked.
+const KIT_ROOT = join(fileURLToPath(new URL('.', import.meta.url)), 'kit')
+
+// Skills đã retire khỏi kit nhưng còn nằm lại ~/.claude/skills từ các bản cài
+// cũ — installKit dọn theo danh sách biết trước này. KHÔNG tự xoá skill ngoài
+// danh sách (huashu-design, issue-fix-loop... là skill của user/khác, không
+// thuộc kit). Bổ sung vào đây mỗi khi retire skill (2.15.0: 5 skills đầu tiên).
+// 2.15.0 retire 5 + 2.16.0 Phase-1 retire 6 (moved vào kênh skills/ của repo) —
+// BỔ SUNG VÀO ĐÂY MỖI KHI RETIRE (chỉ dẫn trong 2.16.1 từng bị bỏ qua cho 2.16.0)
+const RETIRED_SKILL_DIRS = [
+  'brainstorm', 'bridge-router', 'execute-plan', 'graph-engineering', 'gpt-taste',
+  'design-taste-frontend', 'figma-orientation', 'frontend-design', 'image-to-code',
+  'prompt-master', 'web-design-guidelines',
+]
+
+export function installKit(orca, { root, kitRoot: kitRootOverride } = {}) {
   try {
-    const kitRoot = join(fileURLToPath(new URL('.', import.meta.url)), 'kit')
+    const kitRoot = kitRootOverride || KIT_ROOT
     const manifestPath = join(kitRoot, 'kit.json')
-    if (!existsSync(manifestPath)) return // không bundle kit — bỏ qua (plugin chạy riêng vẫn OK)
-    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
-    const claude = join(process.env.HOME || '', '.claude')
+    if (!existsSync(manifestPath)) return true // không bundle kit — silent no-op (plugin chạy riêng vẫn OK)
+    let manifest
+    try {
+      manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
+    } catch (err) {
+      notifyKitBlocked(orca, `kit.json malformed: ${err.message}`)
+      return false
+    }
+    // Pre-flight TRƯỚC marker early-return: validate mỗi activate, marker chỉ skip copy.
+    const problems = validateKitManifest(manifest, kitRoot)
+    if (problems.length) {
+      notifyKitBlocked(orca, problems.join(' | '))
+      return false
+    }
+    const claude = root || join(process.env.HOME || '', '.claude')
     const marker = join(claude, '.story-team-kit-version')
-    if (existsSync(marker) && readFileSync(marker, 'utf8').trim() === String(manifest.version)) return
+    // Marker `version[:kitHash]` — hash lệch (đổi kit mà không bump version) cũng
+    // phải recopy, không skip. kitHash vắng (kit cũ) → so version như trước.
+    const kitHash = typeof manifest.kitHash === 'string' ? manifest.kitHash.trim() : ''
+    const expectedMarker = kitHash ? `${manifest.version}:${kitHash}` : String(manifest.version)
+    // Dọn orphan retired — chạy MỌI activate (kể cả khi marker khớp, non-fatal).
+    for (const name of RETIRED_SKILL_DIRS) {
+      try {
+        rmSync(join(claude, 'skills', name), { recursive: true, force: true })
+      } catch { /* dọn được cái nào hay cái đó */ }
+    }
+    if (existsSync(marker) && readFileSync(marker, 'utf8').trim() === expectedMarker && installedKitIntact(claude, kitRoot)) return true
     for (const name of ['skills', 'agents', 'bin']) {
       const src = join(kitRoot, name)
       if (!existsSync(src)) continue
@@ -631,201 +938,34 @@ function installKit(orca) {
       }
     }
     mkdirSync(claude, { recursive: true })
-    writeFileSync(marker, String(manifest.version))
+    writeFileSync(marker, expectedMarker)
+    // Hooks auto-install (SF-2): merge 3 entries vào settings.json trong Node
+    // (KHÔNG spawn bash bin từ worker — runProcess seam risk trên Windows).
+    // Fail không chặn install: bin đã copy, hook wrapper tự nuốt missing-bin.
+    const merged = mergeStoryHooks(claude)
+    if (merged.ok) orca.log(`story-team-kit v${manifest.version}: hooks ${merged.changed ? 'merged' : 'up-to-date'}`)
+    else orca.log(`story-team-kit v${manifest.version}: hooks merge skip — ${merged.error}`)
+    // Verify gates config (FI-380 review plan): seed mặc định lần đầu —
+    // evidence/realMode/checklist ON, smoke OFF (cần infra). Panel toggle
+    // đè qua op verify-config; bins fail-open dùng default nếu file lỗi.
+    const vcfgPath = join(claude, 'story-kit.json')
+    if (!existsSync(vcfgPath)) {
+      writeFileSync(vcfgPath, JSON.stringify({ verify: {
+        evidenceGate: true, realModeRule: true, reviewerChecklist: true, runtimeSmoke: false, tddMode: true } }, null, 2) + '\n')
+      orca.log('story-team-kit: verify config seeded (story-kit.json)')
+    }
     orca.log('story-team-kit self-installed: v' + manifest.version)
+    return true
   } catch (err) {
-    try { orca.log('kit self-install failed (plugin vẫn chạy): ' + err.message) } catch { /* silent */ }
-  }
-}
-
-// ---- Distributed panel ops (FI-458 SF-3) — named exports cho tests ----------
-// Panel ⚙ Machines không đụng FS/Linear trực tiếp (closed transport): mọi
-// đọc/ghi config distributed{} đi qua op này. Get fail-open (thiếu/hỏng file =
-// defaults — mirror distributed_config_load kit); set merge-set CHỈ key thuộc
-// distributed{}, parse-fail thì từ chối (không clobber config user).
-function sanitizeMachineId(raw) {
-  const s = String(raw ?? '').toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-+|-+$/g, '')
-  if (s) return s
-  // rỗng ký tự hợp lệ → hash fallback (mirror kit sanitize_machine_id)
-  return 'machine-' + createHash('md5').update(String(raw ?? ''), 'utf8').digest('hex').slice(0, 6)
-}
-
-function readStoryKitConfig(cfgPath) {
-  try {
-    const raw = readFileSync(cfgPath, 'utf8')
-    try { return { base: JSON.parse(raw), parseFailed: false, existed: true } }
-    catch { return { base: null, parseFailed: true, existed: true } }
-  } catch { return { base: null, parseFailed: false, existed: false } }
-}
-
-function clampTtl(v) {
-  const n = parseInt(v, 10)
-  return Number.isFinite(n) && n >= 1 ? n : 10
-}
-
-function normalizeDistributed(dist) {
-  const d = dist && typeof dist === 'object' ? dist : {}
-  const mid = String(d.machineId ?? '').trim()
-  return {
-    enabled: Boolean(d.enabled),
-    machineId: mid ? sanitizeMachineId(mid) : sanitizeMachineId(hostname()),
-    claimTtlMinutes: clampTtl(d.claimTtlMinutes),
-  }
-}
-
-function distErr(errorClass, detail) {
-  return { ok: false, error: JSON.stringify({ ok: false, errorClass, detail }) }
-}
-
-export async function distributedConfigOp(orca, req, { configPath } = {}) {
-  const cfgPath = configPath || join(process.env.HOME || '', '.claude', 'story-kit.json')
-  try {
-    const { base, parseFailed, existed } = readStoryKitConfig(cfgPath)
-    if (req.op === 'set') {
-      const cfgIn = req.config && typeof req.config === 'object' ? req.config : {}
-      const patch = {}
-      if ('enabled' in cfgIn) patch.enabled = Boolean(cfgIn.enabled)
-      if ('machineId' in cfgIn) {
-        if (!String(cfgIn.machineId ?? '').trim()) return distErr('invalid_machine_id', 'machine-id rỗng')
-        patch.machineId = sanitizeMachineId(String(cfgIn.machineId))
-      }
-      if ('claimTtlMinutes' in cfgIn) {
-        const n = Number(cfgIn.claimTtlMinutes)
-        if (!Number.isFinite(n) || n < 1) return distErr('invalid_ttl', 'claimTtlMinutes phải là số ≥ 1')
-        patch.claimTtlMinutes = Math.floor(n)
-      }
-      if (!Object.keys(patch).length) return distErr('invalid_config', 'không có key hợp lệ để set')
-      if (parseFailed) return distErr('config_parse_fail', cfgPath + ' không parse được JSON — không ghi đè')
-      const out = { ...(base && typeof base === 'object' ? base : {}), distributed: { ...(base?.distributed ?? {}), ...patch } }
-      const tmp = cfgPath + '.tmp'
-      try {
-        writeFileSync(tmp, JSON.stringify(out, null, 2) + '\n')
-        if (existed) { try { chmodSync(tmp, statSync(cfgPath).mode) } catch { /* mode giữ mặc định */ } }
-        renameSync(tmp, cfgPath)
-      } catch (werr) {
-        try { rmSync(tmp, { force: true }) } catch { /* dọn rác best-effort */ }
-        throw werr
-      }
-      return { ok: true, stdout: JSON.stringify({ ok: true, config: normalizeDistributed(out.distributed) }) }
-    }
-    // get (mặc định): fail-open — thiếu/hỏng file = defaults, kèm warn để panel hiển thị
-    const dist = base && typeof base === 'object' ? base.distributed : null
-    const out = { ok: true, config: normalizeDistributed(dist), defaultsApplied: !existed || parseFailed || !dist }
-    if (parseFailed) out.warn = 'config_parse_fail'
-    return { ok: true, stdout: JSON.stringify(out) }
-  } catch (err) {
-    return distErr('write_fail', String((err && err.message) || err).slice(0, 300))
-  }
-}
-
-// claims-table (SF-3): read-only derive từ Linear qua kit bin --list-claims —
-// KHÔNG đọc story.ops local storage (per-machine, sai chéo máy). Lỗi phân lớp:
-// missing_key ≠ linear_unreachable ≠ parse_fail ≠ bracket_missing ≠ kit_missing.
-function distBucket(claim, ttlMinutes, nowMs) {
-  const row = { sfNum: claim.sfNum, machineId: claim.machineId ?? null, claimedAtIso: claim.claimedAtIso ?? null, ageMinutes: null, bucket: 'unclaimed' }
-  if (!row.machineId || !row.claimedAtIso) return row
-  const t = Date.parse(row.claimedAtIso)
-  // ts không parse được → coi stale (mirror kit dc_age_minutes 999999); age âm (skew) clamp 0
-  const age = Number.isFinite(t) ? Math.max(0, Math.round((nowMs - t) / 60000)) : null
-  row.ageMinutes = age
-  row.bucket = age !== null && age < ttlMinutes ? 'active' : age !== null && age < ttlMinutes * 2 ? 'aging' : 'stale'
-  return row
-}
-
-export async function claimsTableOp(orca, req, { runKit: runKitFn, scanRoots, configPath, keyFile, now } = {}) {
-  try {
-    const file = String(req.file || '')
-    if (!file || file.includes('..') || file.includes('/')) return distErr('invalid_request', 'file bracket không hợp lệ')
-    let hasKey = Boolean(process.env.LINEAR_API_KEY)
-    if (!hasKey) {
-      try {
-        const raw = await readFile(join(keyFile || join(process.env.HOME || '', '.claude', '.linear-key')), 'utf8')
-        hasKey = Boolean(raw.split('\n')[0].trim())
-      } catch { hasKey = false }
-    }
-    if (!hasKey) return distErr('missing_key', 'thiếu Linear key (env LINEAR_API_KEY hoặc ~/.claude/.linear-key)')
-    let bracketPath = null
-    const roots = scanRoots ? await scanRoots() : await storyScanRoots()
-    for (const r of roots) {
-      const p = join(r, 'docs', 'superpowers', 'brackets', file)
-      if (existsSync(p)) { bracketPath = p; break }
-    }
-    if (!bracketPath) return distErr('bracket_missing', 'không thấy bracket ' + file + ' trong workspace nào')
-    const { base } = readStoryKitConfig(configPath || join(process.env.HOME || '', '.claude', 'story-kit.json'))
-    const ttl = clampTtl(base?.distributed?.claimTtlMinutes)
-    const run = runKitFn
-      ? await runKitFn('story-launch', ['--list-claims', '--bracket', bracketPath])
-      : await (async () => {
-          try {
-            const { stdout } = await execFileAsync(join(KIT_BIN, 'story-launch'), ['--list-claims', '--bracket', bracketPath], { timeout: 90000, maxBuffer: 2 * 1024 * 1024 })
-            return { ok: true, stdout, exitCode: 0 }
-          } catch (err) {
-            return {
-              ok: false,
-              exitCode: typeof err?.code === 'number' ? err.code : null,
-              // kit --list-claims báo lỗi ra STDOUT (echo) — phải gộp cả hai nguồn
-              stderr: String((err && (err.stderr || err.stdout || err.message)) || err).slice(0, 300),
-              stdout: String((err && err.stdout) || '').slice(0, 300),
-            }
-          }
-        })()
-    if (!run.ok) {
-      // Phân lớp theo TEXT, không chỉ exit code: kit thiếu lib distributed → exit 1
-      // "thiếu thư viện"; kit cũ (<2.12) không biết cờ → usage/không-hiểu (exit 2).
-      // Cả hai = kit_missing — sửa bằng cài kit, KHÔNG phải key/mạng/bracket.
-      const text = String(run.stderr || '') + '\n' + String(run.stdout || '')
-      if (/ENOENT/.test(String(run.stderr || ''))) return distErr('kit_missing', 'thiếu ' + join(KIT_BIN, 'story-launch') + ' (kit chưa cài?)')
-      if (/thiếu thư viện|story-distributed-claim|không hiểu SF|usage: story-launch/.test(text)) return distErr('kit_missing', 'kit cũ/thiếu lib distributed — cần story-team-kit ≥ 2.12')
-      if (run.exitCode === 2) return distErr('bracket_missing', String(run.stderr || run.stdout || '').slice(0, 300))
-      return distErr('linear_unreachable', String(run.stderr || run.stdout || 'list-claims fail').slice(0, 300))
-    }
-    let rows
-    try { rows = JSON.parse(run.stdout) } catch { return distErr('parse_fail', 'stdout không phải JSON') }
-    if (!Array.isArray(rows)) return distErr('parse_fail', 'stdout không phải array claims')
-    const out = { ok: true, rows: rows.map((r) => distBucket(r, ttl, now ? now() : Date.now())), ttlMinutes: ttl, bracket: file }
-    return { ok: true, stdout: JSON.stringify(out) }
-  } catch (err) {
-    return distErr('linear_unreachable', String((err && err.message) || err).slice(0, 300))
+    // lỗi bất ngờ (đĩa/permission) — cũng fail-loud, KHÔNG throw trong activate
+    notifyKitBlocked(orca, `self-install failed: ${err.message}`)
+    return false
   }
 }
 
 export default function activate(orca) {
+  setKitGuardLogger((line) => orca.log(line))
   installKit(orca)
-  // Story-request poll: panel writes story.request {linear} (fork: panel can
-  // storage.set) → worker finds the bracket file with that linear ID and loads it.
-  let lastReqAt = 0
-  // process any pending request immediately at spawn (worker may be cold)
-  const processRequest = async () => {
-    try {
-      const stored = await orca.host.call('storage.get', { key: 'story.request' })
-      const req = stored?.value
-      if (req && typeof req.linear === 'string' && req.at && req.at !== lastReqAt) {
-        lastReqAt = req.at
-        if (typeof req.file === 'string' && req.file.endsWith('.md')) {
-          await loadFromBracketFile(orca, req.file)
-          return true
-        }
-        for (const r of await storyScanRoots()) {
-          const d = join(r, 'docs', 'superpowers', 'brackets')
-          let ents = []
-          try { ents = await readdir(d) } catch { continue }
-          for (const f of ents.filter(x => x.endsWith('.md'))) {
-            const text = await readFile(join(d, f), 'utf8').catch(() => '')
-            const hm = text.match(/^#\s+Story:\s*([A-Za-z]+-\d+)\s/m)
-            if (hm && hm[1] === req.linear) {
-              await loadFromBracketFile(orca, f)
-              return true
-            }
-          }
-        }
-        orca.log('story request unmatched: ' + req.linear)
-      }
-    } catch { /* silent */ }
-    return false
-  }
-  void processRequest()
-  const reqTimer = setInterval(() => { void processRequest() }, 3000)
-  reqTimer.unref?.()
   orca.commands.register('superpowers.start', async (args) => {
     const idea = args && (args.idea || args.text || '')
     const res = await sendToTerminal(orca, buildStartPrompt(idea, args?.autonomous, args?.polish, args?.subagents, args?.simplify, args?.auditLog, args?.executeMode, args?.story, args?.mindsetBrowser))
@@ -934,158 +1074,8 @@ export default function activate(orca) {
     }
   }
   orca.commands.register('superpowers.storyTasks', () => collectStoryTasks())
-  // Poll story.viewed → nạp story.states cho story panel đang mở (panel không
-  // invoke được command — đây là đường panel⇄worker handshake cho states)
-  const statesTimer = setInterval(async () => {
-    try {
-      const stored = await orca.host.call('storage.get', { key: 'story.viewed' })
-      const v = stored?.value
-      if (v && typeof v.epic === 'string' && /^[A-Za-z]+-\d+$/.test(v.epic)) {
-        const cur = await orca.host.call('storage.get', { key: 'story.states.' + v.epic })
-        const c = cur?.value
-        // refresh nếu chưa có hoặc quá 60s
-        const stale = !c || !c.fetchedAt || (Date.now() - new Date(c.fetchedAt).getTime() > 60000)
-        if (stale) {
-          const lf = await linearChildrenFull(v.epic)
-          const children = (lf.children || [])
-            .filter(ch => ch.stateType !== 'canceled' && ch.stateType !== 'duplicate')
-            .map(ch => ({ identifier: ch.identifier, title: ch.title, url: ch.url,
-              stateName: ch.stateName, stateType: ch.stateType, stateColor: ch.stateColor }))
-          await orca.host.call('storage.set', { key: 'story.states.' + v.epic,
-            value: { epic: v.epic, children, fetchedAt: new Date().toISOString() } })
-        }
-      }
-    } catch { /* silent */ }
-  }, 20000)
-  statesTimer.unref?.()
 
-  // TỰ REFRESH 15s — panel bracket luôn có dữ liệu tươi mà không cần ai invoke
-  const tasksTimer = setInterval(() => { void collectStoryTasks() }, 15000)
-  tasksTimer.unref?.()
-  void collectStoryTasks()
 
-  // ---- Story Ops: poll request từ panel (resume/watchdog/refresh) + refresh 60s
-  let lastOpsReqAt = 0
-  const processOpsRequest = async () => {
-    try {
-      const stored = await orca.host.call('storage.get', { key: 'story.ops.request' })
-      const req = stored?.value
-      if (req && req.at && req.at !== lastOpsReqAt) {
-        lastOpsReqAt = req.at
-        let result = null
-        if (req.action === 'resume' && typeof req.sf === 'string') {
-          result = await runKit('story-resume', [req.sf, '--send'])
-        } else if (req.action === 'watchdog') {
-          // --with-index khớp cron mặc định kit — pass xong index memory (fail-safe)
-          result = await runKit('story-watchdog', ['--with-index'])
-        } else if (req.action === 'verify') {
-          result = await runKit('story-verify', [])
-        } else if (req.action === 'launch') {
-          // launch mọi SF sẵn sàng (deps Done, đã approve, chưa có worktree)
-          result = await runKit('story-watchdog', ['--launch-next', '--with-index'])
-        } else if (req.action === 'stats') {
-          result = await runKit('story-stats', [])
-        } else if (req.action === 'memory-query' && typeof req.q === 'string' && req.q.trim()) {
-          // graph memory v2.0 — query patterns team đã học (kèm provenance)
-          result = await runKit('story-memory', ['query', req.q.trim()])
-        } else if (req.action === 'memory-stats') {
-          result = await runKit('story-memory', ['stats'])
-        } else if (req.action === 'attempts') {
-          // attempt-cap: attempt log hôm nay (3 lần cùng approach → đổi hướng)
-          result = await runKit('story-attempt', ['show'])
-        } else if (req.action === 'visual-regress' && typeof req.baseline === 'string' && req.baseline.trim()
-                   && typeof req.current === 'string' && req.current.trim()) {
-          result = await runKit('story-visual-regress', ['--baseline', req.baseline.trim(), '--current', req.current.trim()])
-        } else if (req.action === 'bracket-save' && typeof req.file === 'string' && req.file
-                   && !req.file.includes('..') && !req.file.includes('/') && typeof req.content === 'string') {
-          // Bracket node CRUD (panel drag/edit) — ghi lại file .md gốc qua
-          // storyScanRoots (cùng nguồn với fileRead, không đoán đường dẫn)
-          let written = null
-          for (const r of await storyScanRoots()) {
-            const p = join(r, 'docs', 'superpowers', 'brackets', req.file)
-            try { await writeFile(p, req.content, 'utf8'); written = p; break } catch { continue }
-          }
-          result = written
-            ? { ok: true, stdout: 'saved bracket: ' + written }
-            : { ok: false, error: 'bracket file not writable in any workspace: ' + req.file }
-        } else if (req.action === 'gap-answer' && typeof req.epic === 'string' && typeof req.text === 'string' && req.text.trim()) {
-          result = await postGapAnswer(req.epic, req.text.trim())
-        } else if (req.action === 'close' && typeof req.epic === 'string') {
-          result = await postCloseStory(req.epic)
-        } else if (req.action === 'distributed-config') {
-          result = await distributedConfigOp(orca, req)
-        } else if (req.action === 'claims-table' && typeof req.file === 'string' && req.file
-                   && !req.file.includes('..') && !req.file.includes('/')) {
-          result = await claimsTableOp(orca, req)
-        } else if (req.action !== 'refresh') {
-          return
-        }
-        if (result) {
-          await orca.host.call('storage.set', {
-            key: 'story.ops.result',
-            value: { action: req.action, sf: req.sf ?? null, ok: result.ok,
-                     // reqAt: identity để panel khớp đúng result của request mình
-                     // (slot chia sẻ — 2 producer trong cùng window poll không nhận nhầm)
-                     reqAt: req.at,
-                     output: String(result.stdout || result.error || '').slice(0, req.action === 'claims-table' ? 16000 : 2000),
-                     at: new Date().toISOString() }
-          })
-        }
-        await collectStoryOps(orca)
-      }
-    } catch { /* silent */ }
-  }
-  void processOpsRequest()
-  const opsReqTimer = setInterval(() => { void processOpsRequest() }, 3000)
-  opsReqTimer.unref?.()
-  const opsTimer = setInterval(() => { void collectStoryOps(orca) }, 60000)
-  opsTimer.unref?.()
-  // ═══ DASHBOARD GATES ═══
-  let lastDashGateAt = 0
-  const processDashGate = async () => {
-    try {
-      const stored = await orca.host.call('storage.get', { key: 'dash.gate.request' })
-      const req = stored?.value
-      if (req && req.at && req.at !== lastDashGateAt) {
-        lastDashGateAt = req.at
-        const gates = {
-          'preflight': ['story-preflight'],
-          'diff-review': ['story-diff-review'],
-          'test': ['story-test', 'http://localhost:4200', '--flow', 'orders'],
-          'snapshot': ['story-snapshot-env'],
-          'verify': ['story-verify'],
-        }
-        // 5-gate chain (khớp README kit): preflight → diff-review → test →
-        // snapshot-env → post-merge. post-merge cần nhánh đích (req.dest).
-        if (req.gate === 'post-merge') {
-          if (typeof req.dest !== 'string' || !req.dest.trim()) {
-            await orca.host.call('storage.set', {
-              key: 'dash.gate.result',
-              value: { gate: 'post-merge', pass: false, output: 'post-merge cần dest branch (req.dest, vd story/<epic>-<slug>)', at: Date.now() }
-            })
-            return
-          }
-          orca.log('dash gate: post-merge')
-          const pm = await runKit('story-post-merge', [req.dest.trim()])
-          await orca.host.call('storage.set', {
-            key: 'dash.gate.result',
-            value: { gate: 'post-merge', pass: pm.ok, output: String(pm.stdout || pm.error || '').slice(-500), at: Date.now() }
-          })
-          return
-        }
-        const args = gates[req.gate]
-        if (!args) return
-        orca.log(`dash gate: ${req.gate}`)
-        const result = await runKit(args[0], args.slice(1))
-        await orca.host.call('storage.set', {
-          key: 'dash.gate.result',
-          value: { gate: req.gate, pass: result.ok, output: String(result.stdout || result.error || '').slice(-500), at: Date.now() }
-        })
-      }
-    } catch { /* silent */ }
-  }
-  const dashTimer = setInterval(() => { void processDashGate() }, 3000)
-  dashTimer.unref?.()
 
   orca.commands.register('superpowers.storyOps', () => collectStoryOps(orca))
 

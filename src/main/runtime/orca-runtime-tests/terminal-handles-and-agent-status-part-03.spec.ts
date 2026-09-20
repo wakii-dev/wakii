@@ -9,7 +9,7 @@ import {
   store
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('allows non-Claude foreground agents after preserved Claude agents management evidence', async () => {
     const runtime = new OrcaRuntimeService(store)
     runtime.setPtyController({

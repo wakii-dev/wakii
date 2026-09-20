@@ -201,7 +201,7 @@ if (-not $realCommand -or -not (Test-Path -LiteralPath $realCommand)) {
   }
 }
 if (-not $realCommand) {
-  [Console]::Error.WriteLine("Orca compatibility wrapper could not locate $commandName on PATH.")
+  [Console]::Error.WriteLine("Wakii compatibility wrapper could not locate $commandName on PATH.")
   exit 127
 }
 & $realCommand @args

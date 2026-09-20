@@ -14,7 +14,7 @@ import {
   syncSinglePty
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('never lets an old handle adopt a replacement PTY incarnation', async () => {
     const { runtimeStore } = makeRuntimeStoreWithWorkspaceSession({
       ...getDefaultWorkspaceSession(),

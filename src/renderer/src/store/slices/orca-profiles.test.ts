@@ -114,7 +114,7 @@ describe('orca profile slice', () => {
     orcaProfilesApi.list.mockResolvedValue(listState)
     const store = createTestStore()
 
-    await store.getState().fetchOrcaProfiles()
+    await store.getState().fetchWakiiProfiles()
 
     expect(store.getState().activeOrcaProfileId).toBe('local-default')
     expect(store.getState().orcaProfiles).toEqual(listState.profiles)
@@ -127,7 +127,7 @@ describe('orca profile slice', () => {
     orcaProfilesApi.list.mockResolvedValue({ ...listState, multiProfileUi: true })
     const store = createTestStore()
 
-    await store.getState().fetchOrcaProfiles()
+    await store.getState().fetchWakiiProfiles()
 
     expect(store.getState().orcaProfilesMultiProfileUi).toBe(true)
   })

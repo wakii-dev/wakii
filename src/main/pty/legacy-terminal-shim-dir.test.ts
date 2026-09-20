@@ -76,7 +76,7 @@ describe('legacy terminal shim neutralization', () => {
       join(win32Dir, 'gh.cmd')
     ]) {
       expect(existsSync(path)).toBe(true)
-      expect(readFileSync(path, 'utf8')).not.toContain('Co-authored-by: Orca')
+      expect(readFileSync(path, 'utf8')).not.toContain('Co-authored-by: Wakii')
       if (process.platform !== 'win32') {
         expect(statSync(path).mode & 0o111).not.toBe(0)
       }
@@ -324,7 +324,7 @@ describe('legacy terminal shim neutralization', () => {
 
       const git = readFileSync(join(posixDir, 'git'), 'utf8')
       expect(git.split('\n')[0]).toBe('#!/bin/bash')
-      expect(git).toContain('Orca compatibility wrapper could not locate')
+      expect(git).toContain('Wakii compatibility wrapper could not locate')
       expect(existsSync(join(posixDir, 'gh'))).toBe(false)
     } finally {
       vi.doUnmock('./legacy-terminal-posix-tombstone')
@@ -733,7 +733,7 @@ describe('legacy terminal shim neutralization', () => {
       child.kill('SIGKILL')
     }
     expect(stdout).toContain('arg=<commit>\narg=<-m>\narg=<subject with spaces>\nstdin payload\n')
-    expect(stdout).not.toContain('Co-authored-by: Orca')
+    expect(stdout).not.toContain('Co-authored-by: Wakii')
     expect(stderr).toBe('fixture stderr\n')
   })
 
@@ -802,8 +802,8 @@ describe('legacy terminal shim neutralization', () => {
 
   it('strips legacy entries from every Windows PATH spelling', () => {
     const env: Record<string, string> = {
-      PATH: 'C:\\Orca\\orca-terminal-attribution\\win32',
-      Path: 'C:\\Orca\\orca-terminal-attribution\\win32;C:\\Windows\\System32'
+      PATH: 'C:\\Wakii\\orca-terminal-attribution\\win32',
+      Path: 'C:\\Wakii\\orca-terminal-attribution\\win32;C:\\Windows\\System32'
     }
 
     stripLegacyTerminalShimEnv(env, 'win32')
@@ -814,7 +814,7 @@ describe('legacy terminal shim neutralization', () => {
 
   it('matches a re-cased Windows shim path', () => {
     const env: Record<string, string> = {
-      Path: 'C:\\Orca\\Orca-Terminal-Attribution\\Win32;C:\\Windows\\System32'
+      Path: 'C:\\Wakii\\Wakii-Terminal-Attribution\\Win32;C:\\Windows\\System32'
     }
 
     stripLegacyTerminalShimEnv(env, 'win32')

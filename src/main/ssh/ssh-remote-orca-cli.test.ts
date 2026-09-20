@@ -41,7 +41,7 @@ function createFakeChild(): FakeChild {
   return child
 }
 
-describe('runRemoteOrcaCli', () => {
+describe('runRemoteWakiiCli', () => {
   function createRuntime() {
     const messages: {
       id: string
@@ -179,6 +179,36 @@ describe('runRemoteOrcaCli', () => {
       })
     }
   )
+
+  // Why: `orca terminal create --shell` gates on these; without them an SSH pane was told the
+  // host was too old, when the accurate refusal is that SSH cannot apply the shell.
+  it('reports the execution host capabilities through the legacy status fallback', async () => {
+    const runtime = new OrcaRuntimeService()
+    vi.spyOn(runtime, 'getStatus').mockReturnValue({
+      runtimeId: 'runtime-test',
+      rendererGraphEpoch: 1,
+      graphStatus: 'ready',
+      authoritativeWindowId: 1,
+      liveTabCount: 0,
+      liveLeafCount: 0,
+      capabilities: ['terminal.create-shell-selection.v1']
+    })
+
+    const result = await runRemoteOrcaCli(
+      runtime,
+      { argv: ['status', '--json'], cwd: '/home/alice/repo', env: {} },
+      LEGACY_FALLBACK_OPTIONS
+    )
+
+    expect(result.exitCode, result.stdout).toBe(0)
+    expect(JSON.parse(result.stdout)).toMatchObject({
+      ok: true,
+      result: {
+        target: { kind: 'environment', environment: 'ssh' },
+        runtime: { reachable: true, capabilities: ['terminal.create-shell-selection.v1'] }
+      }
+    })
+  })
 
   it('uses the remote ORCA_TERMINAL_HANDLE as orchestration sender identity', async () => {
     const { runtime, db } = createRuntime()
@@ -729,8 +759,8 @@ describe('runRemoteOrcaCli', () => {
     )
 
     expect(result.exitCode).toBe(1)
-    expect(result.stderr).toContain('Unsupported SSH Orca CLI command: worktree list')
-    expect(result.stderr).toContain('full Orca CLI bridge unavailable')
+    expect(result.stderr).toContain('Unsupported SSH Wakii CLI command: worktree list')
+    expect(result.stderr).toContain('full Wakii CLI bridge unavailable')
   })
 
   it('does not parse Android --activity values as Linear boolean flags', async () => {
@@ -748,7 +778,7 @@ describe('runRemoteOrcaCli', () => {
 
     expect(result.exitCode).toBe(1)
     expect(result.stderr).toContain(
-      'Unsupported SSH Orca CLI command: emulator launch com.acme.app'
+      'Unsupported SSH Wakii CLI command: emulator launch com.acme.app'
     )
     expect(result.stderr).not.toContain('com.acme.app .MainActivity')
   })

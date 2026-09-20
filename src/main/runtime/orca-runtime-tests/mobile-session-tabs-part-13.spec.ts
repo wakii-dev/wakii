@@ -15,7 +15,7 @@ import {
 } from '../orca-runtime-test-fixtures.spec'
 import { createMobileCreateTestNotifier } from '../orca-runtime-test-scenario-builders.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('does not dedupe mobile terminal creates across worktrees with the same clientMutationId', async () => {
     const otherWorktreeId = `${TEST_REPO_ID}::/tmp/worktree-b`
     vi.mocked(listWorktrees).mockResolvedValue([

@@ -123,7 +123,7 @@ function createMacInstaller(
     isPackaged: true,
     userDataPath: join(fixture.root, 'user-data'),
     resourcesPath: fixture.resourcesPath,
-    execPath: join(fixture.root, 'Current.app', 'Contents', 'MacOS', 'Orca'),
+    execPath: join(fixture.root, 'Current.app', 'Contents', 'MacOS', 'Wakii'),
     appPath: join(fixture.root, 'Current.app', 'Contents', 'Resources', 'app.asar'),
     homePath: join(fixture.root, 'home'),
     commandPathOverride: fixture.commandPath,
@@ -194,7 +194,7 @@ describe.skipIf(process.platform === 'win32')('CLI command filesystem races', ()
       }
     })
 
-    await expect(installer.install()).rejects.toThrow('Refusing to replace non-Orca command')
+    await expect(installer.install()).rejects.toThrow('Refusing to replace non-Wakii command')
     await expect(readlink(fixture.commandPath)).resolves.toBe(foreignTarget)
     expect(
       (await readdir(fixture.commandDirectory)).some((name) => name.startsWith('.orca-cli-'))
@@ -225,7 +225,7 @@ describe.skipIf(process.platform === 'win32')('CLI command filesystem races', ()
       }
     })
 
-    await expect(installer.install()).rejects.toThrow('Refusing to replace non-Orca command')
+    await expect(installer.install()).rejects.toThrow('Refusing to replace non-Wakii command')
     await expect(readFile(fixture.commandPath, 'utf8')).resolves.toBe(
       'foreign command written into the inspected inode'
     )
@@ -247,7 +247,7 @@ describe.skipIf(process.platform === 'win32')('CLI command filesystem races', ()
       }
     })
 
-    await expect(installer.remove()).rejects.toThrow('Refusing to remove non-Orca command')
+    await expect(installer.remove()).rejects.toThrow('Refusing to remove non-Wakii command')
     await expect(readlink(fixture.commandPath)).resolves.toBe(foreignTarget)
   })
 

@@ -64,6 +64,8 @@ import { KimiHookService } from '../kimi/hook-service'
 import { openClaudeHookService } from '../openclaude/hook-service'
 import { wrapPosixHookCommand, wrapWindowsHookCommand } from './installer-utils'
 import {
+  POSIX_HOOK_JSON_STDIN_PRELUDE,
+  POSIX_HOOK_JSON_STDIN_READER,
   POSIX_HOOK_STDIN_READER,
   WINDOWS_POWERSHELL_HOOK_ENVIRONMENT_GUARD
 } from './hook-stdin-contract'
@@ -256,7 +258,7 @@ async function withPlatform<T>(platform: NodeJS.Platform, run: () => T | Promise
 }
 
 describe('Windows managed hook stdin structure', () => {
-  it('exits immediately when Orca env is missing and keeps drain for other failures', async () => {
+  it('exits immediately when Wakii env is missing and keeps drain for other failures', async () => {
     const home = mkdtempSync(join(tmpdir(), 'orca-hook-stdin-windows-'))
     homedirMock.mockReturnValue(home)
     seedCmdAutoRunTarget(home)
@@ -370,7 +372,7 @@ describe('Windows managed hook stdin structure', () => {
   })
 
   it.skipIf(process.platform !== 'win32')(
-    'exits 0 for every local script and missing-script launcher, dropping stdin only without Orca env',
+    'exits 0 for every local script and missing-script launcher, dropping stdin only without Wakii env',
     async () => {
       const home = mkdtempSync(join(tmpdir(), 'orca-hook-stdin-windows-live-'))
       homedirMock.mockReturnValue(home)
@@ -508,9 +510,9 @@ describe('Windows managed hook stdin structure', () => {
         ]
         // Why: cover guard exit, reached curl, and the launcher's missing-script fallback.
         const environments = [
-          { name: 'no Orca env', env: hookEnvironment({ USERPROFILE: home }) },
+          { name: 'no Wakii env', env: hookEnvironment({ USERPROFILE: home }) },
           {
-            name: 'Orca env with dead listener',
+            name: 'Wakii env with dead listener',
             env: hookEnvironment({
               USERPROFILE: home,
               ORCA_AGENT_HOOK_PORT: '59999',
@@ -561,14 +563,26 @@ describe.skipIf(process.platform === 'win32')('managed hook stdin lifecycle', ()
   it('captures stdin before every possible whole-script success exit', async () => {
     const scripts = await generatePosixScripts()
     for (const [agent, script] of scripts) {
-      const captureIndex = script.indexOf(`payload=$(${POSIX_HOOK_STDIN_READER})`)
+      const captureIndex = Math.max(
+        script.indexOf(`payload=$(${POSIX_HOOK_STDIN_READER})`),
+        script.indexOf(`payload=$(${POSIX_HOOK_JSON_STDIN_READER})`)
+      )
       const firstExitIndex = script.indexOf('exit 0')
       expect(captureIndex, `${agent} payload capture`).toBeGreaterThanOrEqual(0)
       expect(firstExitIndex, `${agent} first success exit`).toBeGreaterThan(captureIndex)
+      // Why: the JSON reader dereferences a variable the prelude sets, so a script
+      // that carries the reader must carry its prelude above the capture line.
+      if (script.includes(POSIX_HOOK_JSON_STDIN_READER)) {
+        const prelude = POSIX_HOOK_JSON_STDIN_PRELUDE.join('\n')
+        expect(script.indexOf(prelude), `${agent} JSON reader prelude`).toBeGreaterThanOrEqual(0)
+        expect(script.indexOf(prelude), `${agent} prelude before capture`).toBeLessThan(
+          captureIndex
+        )
+      }
     }
   })
 
-  it('accepts a large payload without Orca environment or a broken writer', async () => {
+  it('accepts a large payload without Wakii environment or a broken writer', async () => {
     const scripts = await generatePosixScripts()
     for (const [agent, script] of scripts) {
       const extraEnv = agent.startsWith('command-code')

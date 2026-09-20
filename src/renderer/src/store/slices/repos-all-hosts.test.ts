@@ -209,7 +209,7 @@ function configureSharedProjectCompatibilityMocks(
   }
   const sharedLocalProject: Project = {
     id: sharedProjectId,
-    displayName: 'Orca',
+    displayName: 'Wakii',
     badgeColor: '#000',
     sourceRepoIds: ['local-repo'],
     localWindowsRuntimePreference: { kind: 'windows-host' },
@@ -218,7 +218,7 @@ function configureSharedProjectCompatibilityMocks(
   }
   const sharedRemoteProject: Project = {
     id: sharedProjectId,
-    displayName: 'Orca',
+    displayName: 'Wakii',
     badgeColor: '#111',
     sourceRepoIds: ['remote-repo'],
     ...(options.remoteProjectRuntimePreference
@@ -790,7 +790,7 @@ describe('fetchReposForAllHosts', () => {
       activeRepoId: 'remote-repo',
       filterRepoIds: ['remote-repo', 'stale-repo'],
       setupScriptPromptDismissedRepoIds: [remoteDismissalKey, staleDismissalKey],
-      trustedOrcaHooks: {
+      trustedWakiiHooks: {
         'remote-repo': { all: { approvedAt: 1 } },
         'stale-repo': { all: { approvedAt: 2 } }
       }
@@ -804,7 +804,7 @@ describe('fetchReposForAllHosts', () => {
       remoteDismissalKey,
       staleDismissalKey
     ])
-    expect(store.getState().trustedOrcaHooks).toEqual({
+    expect(store.getState().trustedWakiiHooks).toEqual({
       'remote-repo': { all: { approvedAt: 1 } },
       'stale-repo': { all: { approvedAt: 2 } }
     })
@@ -814,7 +814,7 @@ describe('fetchReposForAllHosts', () => {
     expect(store.getState().activeRepoId).toBe('remote-repo')
     expect(store.getState().filterRepoIds).toEqual(['remote-repo'])
     expect(store.getState().setupScriptPromptDismissedRepoIds).toEqual([remoteDismissalKey])
-    expect(store.getState().trustedOrcaHooks).toEqual({
+    expect(store.getState().trustedWakiiHooks).toEqual({
       'remote-repo': { all: { approvedAt: 1 } }
     })
   })

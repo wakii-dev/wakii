@@ -171,7 +171,7 @@ describe('describeInstallDirAclPoison', () => {
   it('offers the copyable commands, and drops them once the repair lands', async () => {
     await probeThenRecover((target) => icaclsDacl(target, [ORPHAN_PACKAGE_ACE]))
     const repaired = describeInstallDirAclPoison()
-    expect(repaired?.detail).toContain('Orca repaired the permissions')
+    expect(repaired?.detail).toContain('Wakii repaired the permissions')
     expect(repaired?.detail).not.toContain('Administrator Command Prompt')
     expect(repaired?.commands).toEqual([
       `icacls "${INSTALL_DIR}" /grant "*S-1-15-2-2:(OI)(CI)(RX)"`,
@@ -639,7 +639,7 @@ describe('a repair marker recording a completed repair', () => {
   })
 
   // The budget is what stops the retry above running forever; a spent one must still read
-  // as "Orca could not fix this", never as a repair it never made.
+  // as "Wakii could not fix this", never as a repair it never made.
   it('does not let the gate report a spent budget as a repair', async () => {
     const userDataPath = mkdtempSync(join(tmpdir(), 'orca-acl-gate-budget-'))
     writeFileSync(

@@ -13,7 +13,7 @@ import {
   store
 } from '../orca-runtime-test-fixtures.spec'
 
-describe('OrcaRuntimeService', () => {
+describe('WakiiRuntimeService', () => {
   it('retires exited saved PTY bindings instead of publishing a pending ghost', async () => {
     const runtime = new OrcaRuntimeService(store)
     runtime.attachWindow(1)

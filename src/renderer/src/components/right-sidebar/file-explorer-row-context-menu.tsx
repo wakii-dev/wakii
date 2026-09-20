@@ -75,7 +75,7 @@ type FileExplorerRowContextMenuProps = Pick<
   | 'connectionId'
   | 'runtimeDownloadContext'
   | 'supportsFolderDownload'
-  | 'canOpenInOrcaBrowser'
+  | 'canOpenInWakiiBrowser'
   | 'canCollapseFolderSubtree'
   | 'targetDir'
   | 'targetDepth'
@@ -100,7 +100,7 @@ export function FileExplorerRowContextMenu({
   connectionId,
   runtimeDownloadContext,
   supportsFolderDownload,
-  canOpenInOrcaBrowser,
+  canOpenInWakiiBrowser,
   canCollapseFolderSubtree,
   targetDir,
   targetDepth,
@@ -224,12 +224,12 @@ export function FileExplorerRowContextMenu({
           {translate('auto.components.right.sidebar.FileExplorerRow.1d8e182c32', 'View File')}
         </ContextMenuItem>
       )}
-      {!node.isDirectory && activeWorktreeId && canOpenInOrcaBrowser && (
+      {!node.isDirectory && activeWorktreeId && canOpenInWakiiBrowser && (
         <ContextMenuItem onSelect={handleOpenInOrcaBrowser}>
           <Globe />
           {translate(
             'auto.components.right.sidebar.FileExplorerRow.dd112c81d2',
-            'Open in Orca Browser'
+            'Open in Wakii Browser'
           )}
         </ContextMenuItem>
       )}

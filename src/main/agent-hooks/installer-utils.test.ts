@@ -36,6 +36,7 @@ import {
   WINDOWS_POWERSHELL_HOOK_ENVIRONMENT_GUARD
 } from './hook-stdin-contract'
 import { wrapRuntimeHomeHookCommand } from './runtime-home-hook-command'
+import { findBareHookCommandVariables } from './managed-hook-command-env.test-fixture'
 
 let tmpDir: string
 let configPath: string
@@ -235,13 +236,13 @@ describe('createManagedCommandMatcher', () => {
 
   it('matches commands containing the agent-hooks/<scriptFileName> path', () => {
     expect(
-      match('/bin/sh "/Users/alice/Library/Application Support/Orca/agent-hooks/claude-hook.sh"')
+      match('/bin/sh "/Users/alice/Library/Application Support/Wakii/agent-hooks/claude-hook.sh"')
     ).toBe(true)
     expect(match('/bin/sh "/some/other/location/agent-hooks/claude-hook.sh"')).toBe(true)
   })
 
   it('normalizes Windows backslashes so cmd-style paths still match', () => {
-    expect(match('C:\\Users\\alice\\AppData\\Roaming\\Orca\\agent-hooks\\claude-hook.sh')).toBe(
+    expect(match('C:\\Users\\alice\\AppData\\Roaming\\Wakii\\agent-hooks\\claude-hook.sh')).toBe(
       true
     )
   })
@@ -264,7 +265,7 @@ describe('createManagedCommandMatcher', () => {
     // still recognize them or reinstalling would retain a stale duplicate.
     expect(
       match(
-        'if [ -x "/Users/alice/Library/Application Support/Orca/agent-hooks/claude-hook.sh" ]; then /bin/sh "/Users/alice/Library/Application Support/Orca/agent-hooks/claude-hook.sh"; fi'
+        'if [ -x "/Users/alice/Library/Application Support/Wakii/agent-hooks/claude-hook.sh" ]; then /bin/sh "/Users/alice/Library/Application Support/Wakii/agent-hooks/claude-hook.sh"; fi'
       )
     ).toBe(true)
   })
@@ -313,12 +314,12 @@ describe('removeManagedCommands', () => {
       [
         {
           type: 'command',
-          bash: '/bin/sh "/Users/alice/Orca/agent-hooks/copilot-hook.sh"',
+          bash: '/bin/sh "/Users/alice/Wakii/agent-hooks/copilot-hook.sh"',
           timeoutSec: 5
         },
         {
           type: 'command',
-          powershell: "& 'C:\\Users\\alice\\Orca\\agent-hooks\\copilot-hook.sh'",
+          powershell: "& 'C:\\Users\\alice\\Wakii\\agent-hooks\\copilot-hook.sh'",
           timeoutSec: 5
         },
         {
@@ -406,7 +407,7 @@ describe('hookDefinitionHasManagedCommand', () => {
 
     expect(
       hookDefinitionHasManagedCommand(
-        { bash: '/bin/sh "/Users/alice/Orca/agent-hooks/copilot-hook.sh"' },
+        { bash: '/bin/sh "/Users/alice/Wakii/agent-hooks/copilot-hook.sh"' },
         match
       )
     ).toBe(true)
@@ -462,7 +463,7 @@ describe('getSharedManagedScriptPath', () => {
     )
   })
 
-  it('does not depend on Electron app.getPath, so two Orca instances resolve to the same path', () => {
+  it('does not depend on Electron app.getPath, so two Wakii instances resolve to the same path', () => {
     // Why: using userData here would reintroduce dev/prod settings thrash.
     const a = getSharedManagedScriptPath('claude-hook.sh')
     const b = getSharedManagedScriptPath('claude-hook.sh')
@@ -498,8 +499,8 @@ describe('wrapPosixHookCommand', () => {
     // Why: Electron's userData on macOS lives under "Application Support" with
     // a space. The guard must keep the path quoted so each file test and
     // `/bin/sh` see one argument.
-    const cmd = wrapPosixHookCommand('/Users/a/Library/Application Support/Orca/agent-hooks/x.sh')
-    expect(cmd).toContain("'/Users/a/Library/Application Support/Orca/agent-hooks/x.sh'")
+    const cmd = wrapPosixHookCommand('/Users/a/Library/Application Support/Wakii/agent-hooks/x.sh')
+    expect(cmd).toContain("'/Users/a/Library/Application Support/Wakii/agent-hooks/x.sh'")
   })
 
   it('escapes embedded single quotes so the wrapped command stays well-formed', () => {
@@ -706,10 +707,7 @@ describe('wrapWindowsHookCommand', () => {
 
 describe('wrapWindowsCmdHookCommand', () => {
   it('returns the bare, directly-spawnable path for a cmd-safe managed script', () => {
-    // Why: Codex/Antigravity/Devin launch the command as a program (argv[0]),
-    // not via cmd.exe, so the launcher must be a single spawnable token — a bare
-    // .cmd path. A cmd-builtin `if …` launcher has argv[0] = `if`, which is
-    // unspawnable and fails every hook with exit 1 (#8430 regression).
+    // Direct-spawn consumers need a launchable argv[0], not a cmd builtin such as `if`.
     const scriptPath = 'C:\\Users\\alice\\.orca\\agent-hooks\\codex-hook.cmd'
     const command = wrapWindowsCmdHookCommand(scriptPath)
     expect(command).toBe(scriptPath)
@@ -720,12 +718,7 @@ describe('wrapWindowsCmdHookCommand', () => {
   it.skipIf(process.platform !== 'win32')(
     'resolves the launcher to a real executable file, not a shell fragment',
     () => {
-      // Regression guard for #8430: Codex/Antigravity/Devin spawn the launcher as
-      // a program (argv[0]), so it must be an existing, launchable file. The broken
-      // `if exist … (call …)` form had argv[0] = `if` — a cmd builtin, not a file —
-      // which is unspawnable and failed every hook. The bare path is the file.
-      // win32-only: the real temp path is cmd-safe only with backslashes; a POSIX
-      // tmpDir has `/`, which routes to the encoded fallback by design.
+      // POSIX temp paths contain `/`, which selects the encoded fallback instead.
       const scriptPath = join(tmpDir, 'codex-hook.cmd')
       writeFileSync(scriptPath, '@echo off\r\nexit /b 0\r\n', 'utf-8')
       const command = wrapWindowsCmdHookCommand(scriptPath)
@@ -765,8 +758,7 @@ describe('wrapRuntimeHomeHookCommand', () => {
       const command = wrapRuntimeHomeHookCommand('claude-hook', options)
 
       expect(command).toContain('"${SYSTEMROOT-}/System32/WindowsPowerShell/v1.0/powershell.exe"')
-      expect(command).not.toMatch(/\$(?!\{)[A-Za-z_]/)
-      expect(command).not.toMatch(/\$\{[A-Za-z_][A-Za-z0-9_]*\}/)
+      expect(findBareHookCommandVariables(command)).toEqual([])
     }
   )
 
@@ -906,8 +898,8 @@ describe('buildPosixAgentHookPostCommand', () => {
     expect(command).toContain('command -v base64')
     expect(command).toContain('command -v tr')
     expect(command).toContain('Content-Type: application/json')
-    expect(command).toContain('X-Orca-Agent-Hook-Meta-Encoding: base64')
-    expect(command).toContain('X-Orca-Agent-Hook-Meta: ${orca_hook_metadata}')
+    expect(command).toContain('X-Wakii-Agent-Hook-Meta-Encoding: base64')
+    expect(command).toContain('X-Wakii-Agent-Hook-Meta: ${orca_hook_metadata}')
     expect(command).toContain("printf '%s\\037%s\\037%s\\037%s\\037%s\\037%s'")
     expect(command).toContain('$ORCA_PANE_KEY')
     expect(command).toContain('$ORCA_WORKTREE_ID')

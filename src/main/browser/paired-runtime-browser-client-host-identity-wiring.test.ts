@@ -119,7 +119,7 @@ describe('client host hosting identity wiring', () => {
     )
   })
 
-  it('attaches under a different identity for a different Orca profile', async () => {
+  it('attaches under a different identity for a different Wakii profile', async () => {
     expect(
       await hostingIdentityForLaunch(mkdtempSync(join(tmpdir(), 'orca-host-wiring-')))
     ).not.toBe(await hostingIdentityForLaunch(mkdtempSync(join(tmpdir(), 'orca-host-wiring-'))))

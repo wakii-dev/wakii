@@ -59,7 +59,7 @@ async function postCompleteHook(port: number, token: string): Promise<void> {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
-      'X-Orca-Agent-Hook-Token': token
+      'X-Wakii-Agent-Hook-Token': token
     },
     body
   })

@@ -22,7 +22,7 @@
  * hex directory directly under `terminal-history`, holding a file named exactly
  * `zsh_history`/`bash_history`. That is a machine-minted layout, not one a
  * person types. The blast radius if it were ever hit is also bounded: the value
- * is dropped from ONE spawn's env, so the pane gets Orca's own worktree history
+ * is dropped from ONE spawn's env, so the pane gets Wakii's own worktree history
  * (isolation on) or the shell's default (isolation off). Nothing on disk is
  * read, written, moved, or deleted.
  */
@@ -33,7 +33,7 @@ const HISTORY_FILE = '(?:zsh|bash)_history'
 
 // Why a leading `/` rather than `(?:^|/)`: every minted value is absolute (or a
 // Windows path normalized to forward slashes), so a relative path of the same
-// shape is the user's, not Orca's.
+// shape is the user's, not Wakii's.
 const ORCA_MINTED_HISTFILE = new RegExp(
   '/(?:' +
     // Desktop: <userData>/terminal-history/<hash>/<file>
