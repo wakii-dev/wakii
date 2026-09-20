@@ -1,0 +1,31 @@
+  ok  get: file thiếu → defaults fail-open (enabled=false, ttl=10, machineId=hostname sanitized)
+  ok  get: file có distributed → đọc đúng giá trị
+  ok  get: per-key tolerant — ttl hỏng không kéo enabled theo (mirror SF-1)
+  ok  get: file parse-fail → defaults + warn config_parse_fail, KHÔNG đụng file
+  ok  set: merge-set chỉ distributed{} — key khác (verify) giữ nguyên
+  ok  set: sanitize gộp dash + hash fallback khi rỗng ký tự hợp lệ (mirror kit — accent → dash)
+  ok  set: machineId rỗng/whitespace → invalid_machine_id, file không đổi
+  ok  set: ttl <1 / NaN → invalid_ttl; ttl 3 hợp lệ
+  ok  set: file parse-fail → config_parse_fail KHÔNG clobber
+  ok  set: file thiếu → tạo mới chỉ chứa distributed; không để rác .tmp
+  ok  set: không có key hợp lệ trong config → invalid_config
+  ok  claims: thiếu key (env + keyFile) → missing_key, KHÔNG gọi bin
+  ok  claims: env LINEAR_API_KEY đủ → đi tiếp tới bin
+  ok  claims: rows bucket đúng — unclaimed/active/stale + ttl kèm theo
+  ok  claims: biên TTL — age=TTL → aging, age=2×TTL → stale, age=TTL-1 → active
+  ok  claims: claimedAtIso không parse được → stale (mirror kit dc_age 999999)
+  ok  claims: TTL đọc từ config (claimTtlMinutes 3 → biên theo 3)
+  ok  claims: phân lớp exit — bin exit2 → bracket_missing, exit1 → linear_unreachable, ENOENT → kit_missing
+  ok  claims: stdout không phải JSON / không phải array → parse_fail
+  ok  claims: bracket không thấy trong scanRoots → bracket_missing
+  ok  claims: req.file traversal ("../x", "a/b") → invalid_request
+  ok  T6 zero-local-storage: 2 op không đụng storage story.ops (derive chỉ từ Linear+config)
+  ok  claims exec-thật: bin exit 0 JSON → ok rows
+  ok  claims exec-thật: "thiếu thư viện" ra STDOUT exit 1 → kit_missing (không phải linear_unreachable)
+  ok  claims exec-thật: kit cũ usage "không hiểu SF" exit 2 → kit_missing (không phải bracket_missing)
+  ok  claims exec-thật: exit 2 "cần --bracket" (kit mới, bracket mất) → bracket_missing
+  ok  claims exec-thật: exit 1 mạng chết (curl 28) → linear_unreachable
+  ok  claims exec-thật: bin biến mất (ENOENT) → kit_missing
+  ok  claims: claimedAt tương lai (clock skew) → active, age clamp 0
+
+29 passed, 0 failed

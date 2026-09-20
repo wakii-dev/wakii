@@ -349,6 +349,60 @@ fi
 ROWS=(); EXIT=0
 for wt in "${WTS[@]}"; do ROWS+=("$(verify_sf "$wt")"); done
 
+# ── story-level derive từ Linear (FI-458 SF-4): bracket×Linear là nguồn story —
+# máy này thiếu worktree máy khác → local-only kết luận STORY-COMPLETE sai.
+# Dual-path đọc (linear_meta: orca CLI trước, curl fallback). Per-issue không
+# đọc được → warn-only (fail-open — stale bracket id không được block story);
+# KHÔNG đọc được Linear (không orca/key) → warn + fallback local-only.
+BR_SEEN=""; BR_LIST=""
+LIN_TOTAL=0; LIN_DONE=0; LIN_OPEN=0; LIN_UNKNOWN=0; LIN_OPEN_IDS=""; DERIVE_ROWS=""
+for wt in ${WTS[@]+"${WTS[@]}"}; do
+  for bf in "$wt"/docs/superpowers/brackets/*.md; do
+    [ -f "$bf" ] || continue
+    bbase=$(basename "$bf")   # dedupe basename — full-path chứa wt → 2 wt cùng story đếm nhân (review B P1)
+    case "$BR_SEEN" in *"|$bbase|"*) continue ;; esac
+    BR_SEEN="$BR_SEEN|$bbase|"
+    BR_LIST="$BR_LIST$bf"$'\n'
+  done
+done
+if [ -n "$BR_LIST" ]; then
+  WTN=""  # worktree sống (basename) — SF còn wt sống thì B-rows của wt thay mặt
+  for wt in ${WTS[@]+"${WTS[@]}"}; do WTN="$WTN|$(basename "$wt")"; done
+  # linear_meta per-SF (N+1): orca CLI = keychain app (không rate-limit API);
+  # batch chỉ đáng khi curl fallback — rào rate-limit đã ở watchdog batch.
+  while IFS= read -r bf; do
+    [ -n "$bf" ] || continue
+    while IFS='|' read -r sfnum lin; do
+      [ -n "$lin" ] || continue
+      LIN_TOTAL=$((LIN_TOTAL+1))
+      lmeta=$(linear_meta "$lin")
+      lst=${lmeta%%|*}
+      n=$(printf '%s' "$sfnum" | grep -oE '[0-9]+' | head -1)
+      case "$WTN" in
+        *"|sf-$n-"*|*"|sf-$n|") HASWT=1 ;;
+        *) HASWT=0 ;;
+      esac
+      case "$lst" in
+        Done)
+          LIN_DONE=$((LIN_DONE+1))
+          [ "$HASWT" = "0" ] && DERIVE_ROWS="${DERIVE_ROWS}  ✓ $sfnum Done theo Linear — worktree đã dọn [derive]"$'\n' ;;
+        unknown|"")
+          LIN_UNKNOWN=$((LIN_UNKNOWN+1)) ;;
+        *)
+          LIN_OPEN=$((LIN_OPEN+1)); LIN_OPEN_IDS="$LIN_OPEN_IDS $lin"
+          DERIVE_ROWS="${DERIVE_ROWS}  ○ $sfnum ($lin) chưa Done [derive]"$'\n' ;;
+      esac
+    done <<< "$(awk '
+      function emit() { if (sf != "" && lin != "") print sf "|" lin }
+      /^## / { if ($0 !~ /^## SF-/) { emit(); sf = ""; next }
+               emit(); sf = $2; lin = ""; next }
+      /^linear:/ && sf != "" { lin = $2 }
+      END { emit() }' "$bf")"
+  done <<< "$BR_LIST"
+fi
+LIN_READ=0
+if [ "$LIN_DONE" -gt 0 ] || [ "$LIN_OPEN" -gt 0 ]; then LIN_READ=1; fi
+
 if [ "$JSON_OUT" = 1 ]; then
   echo "["
   first=1
@@ -381,7 +435,21 @@ else
       *) incomplete=1; all_done=0 ;;
     esac
   done
-  echo ""
+  # bracket×Linear fold (SF-4): per-SF rows + chặn khi còn SF chưa Done;
+  # per-issue không đọc được → warn-only (fail-open). Nhánh warn CẤM chứa
+  # substring "STORY-COMPLETE" — test assert điểm đó (chỉ verdict dương mới in).
+  [ -n "$DERIVE_ROWS" ] && printf '%s' "$DERIVE_ROWS"
+  if [ "$LIN_TOTAL" -gt 0 ] && [ "$LIN_READ" = 1 ]; then
+    if [ "$LIN_OPEN" -gt 0 ]; then
+      all_done=0
+      echo "⚠ Linear derive:${LIN_OPEN_IDS# } chưa Done theo bracket — story chưa hoàn thành."
+    else
+      echo "Linear derive: $LIN_DONE/$LIN_TOTAL SF Done theo bracket."
+    fi
+    [ "$LIN_UNKNOWN" -gt 0 ] && echo "⚠ Linear derive: $LIN_UNKNOWN issue không đọc được — bỏ qua (fail-open)."
+  elif [ "$LIN_TOTAL" -gt 0 ]; then
+    echo "⚠ không đọc được Linear từ máy này (không orca/key, hoặc id không tồn tại) — story-level chỉ dựa worktree máy này."
+  fi
   if [ "$all_done" = 1 ]; then
     echo "STORY-COMPLETE ✓ — mọi SF đủ 5 bước. User merge main được."
   elif [ "$violation" = 1 ]; then

@@ -1,0 +1,14 @@
+PASS: E1: b4_check PASS nhờ fetch (out=PASS)
+PASS: E1: build_prompt chứa cảnh báo dest tiến
+PASS: E1: prompt giữ checklist dest đúng từ bracket
+PASS: E2: b4_check offline → verdict local (out=FAIL)
+PASS: E2: b4_check stderr ⚠ fetched-stale
+PASS: E2: b4_check không crash (rc=0)
+PASS: E2: prompt offline không giả cảnh báo
+PASS: E2: prompt log ⚠ fetched-stale stderr
+PASS: E3: b4_check enabled=0 → verdict local (out=FAIL)
+PASS: E3: full-pipeline enabled=0 → 0 fetch call (0)
+PASS: E3: prompt tắt không có cảnh báo
+PASS: E3: prompt tắt giữ checklist nguyên vẹn
+
+test-story-resume-dest-e2e: 12 PASS · 0 FAIL

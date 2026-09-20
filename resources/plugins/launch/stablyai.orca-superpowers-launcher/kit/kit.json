@@ -396,5 +396,5 @@
       "description": "state machine Linear rate-limit — check/note/clear/pending/classify (policy skip+note+resume 2026-09-20)"
     }
   ],
-  "kitHash": "b3a2638c820c5d43"
+  "kitHash": "bf2c197ba84c2451"
 }

@@ -1,0 +1,9 @@
+PASS: iter1 race: đúng 1 winner (machine-b) · loser rc1 đích danh/guard hoặc rc0-skip
+PASS: iter2 race: đúng 1 winner (machine-b) · loser rc1 đích danh/guard hoặc rc0-skip
+PASS: iter3 race: đúng 1 winner (machine-b) · loser rc1 đích danh/guard hoặc rc0-skip
+PASS: iter4 race: đúng 1 winner (machine-b) · loser rc1 đích danh/guard hoặc rc0-skip
+PASS: iter5 race: đúng 1 winner (machine-a) · loser rc1 đích danh/guard hoặc rc0-skip
+── F1: guard thắng nhưng orca create fail → exit ≠0, guard branch vô hại ──
+PASS: F1 guard-pass create-fail: exit≠0, create được gọi, 0 orphan worktree, branch giữ
+
+Kết quả: 6 PASS · 0 FAIL

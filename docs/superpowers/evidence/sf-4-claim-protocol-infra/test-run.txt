@@ -1,0 +1,17 @@
+FI-458 SF-4 — final test run + Rule 0 verify — 2026-09-19T15:17Z
+HEAD (code, trước evidence commit): d43d1589fa
+tdd: RED→GREEN — Task 7 STORY-COMPLETE derive: test-story-complete-derive viết trước (S1-S4 fail ở bản absorb ban đầu: 8 PASS/6 FAIL do fixture + impl dở dang của session song song) → implement/fix → 19 PASS 0 FAIL. Task 2-6: suite chính nó là test-first (harness mới); S4b worst-case là skeleton RED có chủ ý cho Task 7.
+
+═══ FULL SUITE (11 suite, post review-B fixes) — tất cả rc=0 ═══
+sim-2machines 29 PASS (S1 race ×5 · S2 takeover 2×TTL · S2b fresh-skip · S3 commits-fresh · S4 B4-fetch + zero-diff OFF · S4b worst-case · S6 mixed-version 4 · S5 zero-diff 5 mặt + panel)
+complete-derive 19 PASS (S1 STORY-COMPLETE · S2 block open-SF · S3 global-dead parity · S4 no-id no-op · S5 per-issue fail-open · W1-W3 watchdog dual-path+complete)
+launch-race 6 · launch-claim 48 · launch-config 28 · verify-b4-fetch 18 · resume 13 · resume-dest-e2e 12 · watchdog-launch-next 6 · validate-status 7 · panel-ops 29 — logs: suite-*.log cùng thư mục
+
+═══ PRE checkpoint ═══
+kit 2.12.0 cut (deb66af) + released; launcher vendored 2.16.3 (e5418f2) — chi tiết đầu file (T1)
+
+═══ Release checkpoint (T9) ═══
+kit 2.17.0 · kitHash 60b9b3f58470146f (source↔vendored diff=0) · launcher sync 7456308 · orca re-bundle d43d1589fa contentHash b54b7ec5… verify-packaged-plugin-resources PASS ×2 lần (dd0040ca trước review-B, b54b7ec5 sau)
+
+═══ Rule 0 (CHECK 4) — hình thức verify cho SF này ═══
+SF không có UI mới (harness CLI + bin scripts + README). 'Flow thật' = 5 kịch bản e2e sim harness chạy TRỰC TIẾP story-launch/verify/watchdog thật qua mock Linear + file:// remote: đã chạy đầy đủ 29 asserts xanh (xem suite-test-story-sim-2machines.log — mỗi scenario in PASS riêng). Panel UI (SF-3 làm, SF-4 chỉ regression) = distributed-panel-ops-tests 29 PASS. Không có màn hình UI để chụp — bằng chứng = suite logs.

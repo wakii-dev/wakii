@@ -1,0 +1,20 @@
+PASS: R1 sanity: local dest cũ KHÔNG chứa HEAD_A (fetch mới cứu được)
+PASS: R1: b4_check PASS nhờ fetch (out=PASS rc=0)
+PASS: R1: fetch được gọi (1 lần)
+PASS: R2: enabled=0 verdict local FAIL (out=FAIL)
+PASS: R2: enabled=0 KHÔNG fetch call (0)
+PASS: R5: remote dest diverged → FAIL đúng (out=FAIL)
+PASS: R3: enabled=0 + origin hỏng → verdict local (out=FAIL)
+PASS: R3: enabled=0 không chạm fetch kể cả khi origin hỏng (0)
+PASS: R4: config hỏng → enabled=0 (out=0)
+PASS: R4: thiếu key enabled → 0 (out=0)
+PASS: R4: enabled=true → 1 (out=1)
+PASS: R4: file không tồn tại → 0 (out=0)
+PASS: R6: fetch fail → verdict từ local dest (out=FAIL)
+PASS: R6: stderr chứa ⚠ fetched-stale
+PASS: R6: b4_check không crash (rc=0)
+PASS: R7: enabled=0 e2e — stderr KHÔNG có ⚠ distributed giả
+PASS: R7: enabled=0 e2e — detail KHÔNG có ⚠ verdict giả
+PASS: R7: enabled=1 e2e (no origin) — stderr CÓ fetched-stale
+
+test-story-verify-b4-fetch: 18 PASS · 0 FAIL
