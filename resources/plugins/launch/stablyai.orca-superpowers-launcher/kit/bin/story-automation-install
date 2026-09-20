@@ -324,6 +324,20 @@ def do_briefing():
         body += "\nTreo: " + "; ".join(stalls)
     if waiting:
         body += "\nChờ: " + "; ".join(waiting)
+    # 2.16.8 enrichment: kit-lag (installed vs repo) — cùng nguồn fact-pack component 4
+    try:
+        inst = (open(os.path.expanduser("~/.claude/.story-team-kit-version"),
+                     encoding="utf-8").read().strip() if os.path.exists(
+                     os.path.expanduser("~/.claude/.story-team-kit-version")) else "")
+        repo_kit = os.path.join(os.getcwd(), "resources/plugins/launch/stablyai.orca-superpowers-launcher/kit/kit.json")
+        repo_ver = ""
+        if os.path.exists(repo_kit):
+            repo_ver = json.load(open(repo_kit, encoding="utf-8")).get("version", "")
+        inst_v = inst.split(":")[0] if inst else ""
+        if repo_ver and inst_v and inst_v != repo_ver:
+            body += f"\n⚠ kit lệch: installed {inst_v} ≠ repo {repo_ver} — restart Orca/sync-kit"
+    except Exception:
+        pass
     if not orca_ok:
         body += "\n(orchestration không đọc được — kiểm tra app Orca)"
     if check_fails:
