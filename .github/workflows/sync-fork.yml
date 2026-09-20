@@ -12,6 +12,9 @@ on:
 
 permissions:
   contents: write
+  # Force-align mirror đưa cả file .github/workflows/* của upstream về main —
+  # không có workflows:write thì remote rejected (run 35457722320).
+  workflows: write
 
 jobs:
   sync:
