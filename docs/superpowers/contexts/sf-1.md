@@ -1,58 +1,42 @@
-# Context pack — FI-305 SF-1: Desktop RPC foundation + gate notifications
+# Context pack — LOCAL-1 SF-1: Coordinator pass bin
 
-Source spec: `docs/superpowers/specs/2026-09-04-superpowers-android.md` (rev 3).
-Contracts PINNED ở spec §3b — build đúng theo đây, không tự ý đổi shape.
+> ⚠️ Pack này là của STORY LOCAL-1 "Story tự vận hành 24/7" — KHÔNG phải FI-305.
+> File `sf-1.md` trùng tên với pack story cũ — nếu thấy nội dung khác pack này,
+> DỪNG và báo coordinator (bài học FI-458 B2: glob khớp nhầm story).
 
-## Spec slice
-3 RPC methods mới `superpowers.storyList` / `superpowers.storyDetail` /
-`superpowers.gateResolve` đúng signature + error taxonomy §3b; allowlist 3 method
-đó; notification source union mở thêm `'gate-open'`/`'gate-closed'` với payload
-`{gateId, storyId: string|null, worktreeId: string|null, title}`; store-layer
-hooks cho create/resolve/timeout; method store mới `resolveGateIfPending`
-(conditional UPDATE `WHERE status='pending'`, pattern `timeoutGate`) — CLI
-`resolveGate` GIỮ NGUYÊN semantics; gate→story derivation theo §3 (run→worktree→
-bracket, legacy → null/"khác"); SF status trong storyDetail v1 = `'unknown'`
-(Linear read là task SF-2); fixture bracket sanitized + §3b TS types commit vào
-location importable từ `mobile/`.
+## Spec slice (từ bracket local-1-self-sustain-24-7.md — SF-1, Tier 0)
 
-## Touch map (verified Phase 0/plan-critic)
-- NEW `src/main/runtime/rpc/methods/superpowers.ts` — register trong `ALL_RPC_METHODS`
-  (`src/main/runtime/rpc/methods/index.ts`)
-- `src/main/runtime/runtime-rpc/runtime-rpc-mobile-method-allowlist.ts` — thêm 3
-  entries; extend enforcement test `mobile-rpc-allowlist.test.ts`
-- `src/main/runtime/orchestration/db/decision-gates/decision-gate-store.ts` —
-  thêm `resolveGateIfPending` (KHÔNG đổi `resolveGate`/`timeoutGate` hiện có)
-- `src/main/runtime/runtime-mobile-notification-controller.ts` — source union
-  + dispatch payload
-- Shared bracket-parse module — tách logic từ
-  `src/main/plugins/plugin-host-method-bindings.ts`
-  (`workspace.fileList/fileRead/planProgress`, `resolveWorkspaceDocsRoot`) —
-  KHÔNG dùng first-match cho storyList (multi-root liệt kê hết)
-- Shared types location importable từ `mobile/` (chọn lúc plan; constraint:
-  mobile bundle build được độc lập với Electron main)
-- `docs/reference/remote-wire-compatibility.md` — update cho 2 source mới +
-  payload fields (AGENTS.md hard rule: wire change phải update doc này)
+Bin mới `kit/bin/story-coordinator-pass` — MỘT lượt coordination pass CÓ GIỚI HẠN
+(bounded, không đợi vô hạn), exit 0 luôn (pass là hành vi, không fail hard):
 
-## ACCEPTANCE (user-visible / verifiable)
-- Từ client paired (mock hoặc mobile dev build): `superpowers.storyList` trả
-  stories group per worktree với đúng pendingGates; `storyDetail` trả sfs + gates
-  đúng §3b; story không tồn tại → error `story_not_found`
-- `gateResolve` trên gate pending → resolved, agent/CLI thấy kết quả; resolve lại
-  → `gate_not_pending` KHÔNG overwrite; gate lạ → `gate_not_found`; resolution
-  rỗng → `invalid_resolution`; resolution không nằm trong options vẫn chấp nhận
-  (chủ tương — UI phone mới ép option)
-- Gate create trên desktop → notification `'gate-open'` đi tới subscriber với đủ
-  routing fields; resolve/timeout → `'gate-closed'` — kể cả khi writer là CLI
-- Fixture parity test pass trong CI: parse output của shared module khớp output
-  launcher plugin trên cùng bracket fixture
-- `mobile-rpc-allowlist.test.ts` chứng minh 3 method mới allowed, và mọi method
-  KHÔNG allowlist vẫn bị chặn (regression)
-- CLI path `orca orchestration gate-resolve` hoạt động đúng như trước (không đổi)
+1. **Run discovery**: `orca orchestration run-list --json` → run còn task
+   pending/in-progress hoặc worker live → danh sách run ứng viên.
+2. **Ownership probe**: run đang có worker live của coordinator KHÁC
+   (`worker-list` — owner terminal ≠ terminal hiện tại) → chỉ quan sát, KHÔNG
+   xử lý inbox của run đó (bài học collision 19/09: 2 coordinator cùng đụng SF-4).
+3. **Inbox bounded**: với run được sở hữu → `check --wait --timeout-ms 300000`
+   → xử lý: question → ĐỌC bracket/contexts rồi reply; escalation → đánh giá,
+   đụng quyền user thì báo; worker_done → verify evidence (commit tồn tại,
+   files ⊆ boundary) trước khi chấp nhận.
+4. **Stall sweep**: `story-resume --check` → STALLED → chẩn đoán 3 tầng
+   (git log → terminal state → mới RESUME) — chỉ resume khi có bằng chứng dương.
+5. **PASS SUMMARY** 1 dòng: `PASS: processed=<n> replied=<n> resumed=<n> skipped-owned=<n> idle=<reason>`.
+
+## Touch map
+- NEW `kit/bin/story-coordinator-pass` (bash + python heredoc — pattern story-validate)
+- NEW `tests/story-coordinator-pass-tests.mjs` (stub ORCA_BIN — pattern
+  story-plan-validate-tests: fixture run-list/task-list/inbox JSON)
+- KHÔNG đụng: story-watchdog, story-resume, main.mjs, kit.json (coordinator lo bump)
+
+## Acceptance (observable)
+- Stub orca: có run active + worker foreign → output chứa `skipped-owned` và
+  KHÔNG gọi check của run đó
+- Có question trong inbox → reply được gọi (argv log stub), reply body dẫn bracket
+- worker_done evidence thiếu → KHÔNG chấp nhận, ghi NEEDS-VERIFY
+- Không run active → `PASS: idle=no-active-runs`, exit 0
+- `node tests/story-coordinator-pass-tests.mjs` HARNESS GREEN
 
 ## Boundary
-- KHÔNG đổi format bracket file, KHÔNG sửa kit/launcher plugin
-- KHÔNG allowlist `orchestration.*` cho mobile
-- KHÔNG làm Linear status read (thuộc SF-2) — storyDetail hardcode status 'unknown'
-- KHÔNG file-watcher cho bracket edits
-- KHÔNG đụng mobile UI (screens thuộc SF-2/SF-3) — trừ shared types location
-- KHÔNG đổi `resolveGate` hiện có (CLI last-write-wins giữ nguyên)
+- CHỈ worktree sf-1 + 2 file trên. KHÔNG đụng Linear (LOCAL-1 là story local —
+  KHÔNG có issue thật, KHÔNG set state gì cả). KHÔNG đụng kit source repo
+  (story-team-kit) — coordinator lo sync-back. KHÔNG merge main.

@@ -154,7 +154,33 @@ fi
 ST=$(linear_state "$LINEAR")
 [ "$ST" = "Done" ] && { echo "$SF_NUM ($LINEAR) đã Done — không launch lại"; exit 0; }
 WT=$(ls -d "$HOME"/orca/workspaces/"$REPOB"/sf-"$N"-* 2>/dev/null | head -1)
-[ -n "$WT" ] && { echo "$SF_NUM đã có worktree: $(basename "$WT")"; exit 0; }
+if [ -n "$WT" ]; then
+  # SF-3 pre-dispatch: worktree có worker live của coordinator khác → CHẶN
+  # (bài học collision 19/09 — 2 coordinator cùng đụng SF-4). Probe hỏng →
+  # fail-open (không chặn mù — không data thì không phán được ownership).
+  OPLIB="$(dirname "$0")/story-ownership-probe"
+  [ -f "$OPLIB" ] || OPLIB="$HOME/.claude/bin/story-ownership-probe"
+  if [ -f "$OPLIB" ]; then
+    # shellcheck disable=SC1091
+    . "$OPLIB"
+    if ownership_probe_load; then
+      # parent-dir scope — basename trùng giữa 2 repo không được block nhầm
+      wtrun="$(ownership_probe_worktree_owner "$(basename "$WT")" "$(dirname "$WT")")"
+      wtrun2="$(ownership_probe_worktree_owner "$WT" "$(dirname "$WT")")"
+      [ -n "$wtrun2" ] && wtrun="$wtrun2"
+      wowner="$(printf '%s' "$wtrun" | cut -f2)"
+      wrun="$(printf '%s' "$wtrun" | cut -f1)"
+      wself="$(ownership_probe_self)"
+      if [ -n "$wtrun" ] && { [ -z "$wself" ] || [ "$wowner" != "$wself" ]; }; then
+        echo "⛔ BLOCKED: $SF_NUM foreign-owned — worktree $(basename "$WT") đang có worker live của coordinator ${wowner:-?} (run ${wrun:-?}) — KHÔNG dispatch"
+        exit 1
+      fi
+    else
+      echo "ownership-probe: đọc không được — không chặn được (degrade)" >&2
+    fi
+  fi
+  echo "$SF_NUM đã có worktree: $(basename "$WT")"; exit 0
+fi
 for d in $(echo "$DEPS" | tr ',' ' '); do
   d=$(echo "$d" | tr -d ' ')
   echo "$d" | grep -q '^SF-' || continue

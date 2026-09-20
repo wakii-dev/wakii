@@ -1,0 +1,49 @@
+SF-3 ownership-probe — test-run evidence
+date: 2026-09-20 01:03 +0700
+HEAD: beca6f229c8b0d0cf58db28afbce8bae45d986eb
+branch: wakii-dev/sf-3-ownership-probe
+tdd: RED→GREEN (harness SF-3 RED cho block/owner-column cases trước khi sửa bins; regression L7/B6 RED trước fix review round 1)
+
+── node tests/story-ownership-probe-tests.mjs (kit harness SF-3)
+
+== TOTAL: 57 PASS / 0 FAIL ==
+HARNESS GREEN
+rc=0
+
+── node tests/story-coordinator-pass-tests.mjs (harness SF-1 — phải còn GREEN sau refactor)
+
+== TOTAL: 55 PASS / 0 FAIL ==
+HARNESS GREEN
+rc=0
+
+── bash -n mọi bins chạm
+OK story-ownership-probe
+OK story-coordinator-pass
+OK story-launch
+OK story-watchdog
+OK story-top
+
+── full kit suite (tổng)
+agent-def-protocol-tests.mjs → == TOTAL: 157 PASS / 0 FAIL ==
+file-lock-tests.mjs → == TOTAL: 45 PASS / 0 FAIL ==
+hooks-factpack-tests.mjs → == TOTAL: 79 PASS / 0 FAIL ==
+kb-tests.mjs → == TOTAL: 46 PASS / 0 FAIL ==
+kit-manifest-negative-tests.mjs → == TOTAL: 68 PASS / 0 FAIL — target: /Users/hoivu/orca/workspaces/orca/sf-3-ownership-probe/resources/plugins/launch/stablyai.orca-superpowers-launcher/main.mjs ==
+kit-verify-manifest.mjs → 
+mcp-server-tests.mjs → 21 passed, 0 failed
+qa-bins-negative-tests.mjs → == TOTAL: 8 PASS / 0 FAIL ==
+qa-failure-paths.mjs → == TOTAL: 21 PASS / 0 FAIL ==
+qa-happy-path-chain.mjs → == TOTAL: 20 PASS / 0 FAIL ==
+report-validate-tests.mjs → == TOTAL: 23 PASS / 0 FAIL ==
+review-fuse-tests.mjs → == TOTAL: 57 PASS / 0 FAIL ==
+sc-evidence-map.mjs → == TOTAL: harness 6/7 GREEN | SC 7/8 COVERED ==
+story-automation-install-tests.mjs → == TOTAL: 68 PASS / 0 FAIL ==
+story-checkpoint-tests.mjs → == TOTAL: 82 PASS / 0 FAIL ==
+story-coordinator-pass-tests.mjs → == TOTAL: 55 PASS / 0 FAIL ==
+story-lesson-tests.mjs → == TOTAL: 60 PASS / 0 FAIL ==
+story-ownership-probe-tests.mjs → == TOTAL: 57 PASS / 0 FAIL ==
+story-plan-validate-tests.mjs → == TOTAL: 12 PASS / 0 FAIL ==
+story-preflight-tests.mjs → == TOTAL: 15 PASS / 0 FAIL ==
+story-validate-tests.mjs → == TOTAL: 13 PASS / 0 FAIL ==
+surface-lint-tests.mjs → == TOTAL: 27 PASS / 0 FAIL ==
+verify-wiring-tests.mjs → == TOTAL: 6 PASS / 0 FAIL ==

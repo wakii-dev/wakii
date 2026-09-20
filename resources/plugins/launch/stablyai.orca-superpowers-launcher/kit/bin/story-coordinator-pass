@@ -1,0 +1,567 @@
+#!/bin/bash
+# story-coordinator-pass — MỘT lượt coordination pass CÓ GIỚI HẠN (LOCAL-1 SF-1)
+# (story tự vận hành 24/7: automation chỉ cần gọi bin này 1 dòng — bin tự làm
+#  đúng 1 pass rồi thoát; KHÔNG đợi vô hạn, exit 0 luôn — pass là hành vi,
+#  không fail hard, cron wrapper không cần xử lý rc.)
+#
+# 1 pass =
+#   1. Run discovery: run-list → run còn task pending/ready/dispatched/blocked
+#      HOẶC đang có worker live → danh sách ứng viên.
+#   2. Ownership probe (bài học collision 19/09 — 2 coordinator cùng đụng SF-4):
+#      run có worker live KHÔNG phải của mình, hoặc coordinator_handle là
+#      terminal KHÁC → chỉ quan sát (SKIP-OWNED), KHÔNG xử lý inbox.
+#      Run mồ côi (không owner, không worker live) → pass nhận trách nhiệm.
+#   3. Inbox bounded: với run sở hữu → check --wait (5') → question → REPLY
+#      (dẫn bracket/contexts, KHÔNG tự quyết khi đụng quyền user); escalation →
+#      notify needs-user; worker_done → verify evidence (files tồn tại trong
+#      worktree + commit chạm files) TRƯỚC khi chấp nhận — thiếu → NEEDS-VERIFY
+#      (ghi state file, không chấp nhận).
+#   4. Stall sweep: story-resume --check → verdict STALLED* (đã là bằng chứng
+#      dương 3 tầng: commits stale + terminal idle/cold) → --send, cap 1/pass.
+#      Idle run (không run active) → bỏ qua sweep, thoát ngay.
+#   5. PASS SUMMARY 1 dòng: `PASS: processed=<n> replied=<n> resumed=<n>
+#      skipped-owned=<n> idle=<reason>` (idle: `PASS: idle=no-active-runs`).
+#
+# Env seams (test/hermetic + ops): ORCA_BIN · ORCA_TERMINAL_HANDLE (self — env
+# thật của terminal Orca; fallback ORCA_COORDINATOR_HANDLE → run-current) ·
+# PASS_CHECK_WAIT_MS (default 300000) · PASS_MAX_BATCHES (default 3) ·
+# PASS_MAX_RUNS (default 20 — cap candidates/pass) ·
+# PASS_MAX_TASK_PROBES (default 25 — cap lệnh task-list 1 pass) ·
+# PASS_WINDOW_H (default 2 — window discovery) · PASS_MAX_RESUME (default 1) ·
+# PASS_NOTIFY (default 1 — osascript) ·
+# PASS_STATE_FILE (NEEDS-VERIFY trail, default ~/.claude/.story-coordinator-pass-verify) ·
+# COORDINATOR_DOCS_ROOTS (tìm bracket, colon-list; default $PWD) ·
+# STORY_RESUME_BIN (default nằm cạnh script này; SET mà không executable →
+# sweep skip, KHÔNG fallback về bin thật — seam test phải tôn trọng) ·
+# OWNERSHIP_PROBE_BIN (default nằm cạnh script này — lib story-ownership-probe
+# SF-3; SET mà không phải file → probe tắt, degrade như worker-list chết).
+#
+# Usage: story-coordinator-pass [--help]
+# Exit: 0 luôn (trừ usage sai → 2)
+set -u
+DIR="$(cd "$(dirname "$0")" && pwd)"
+
+ORCA_BIN="${ORCA_BIN:-}"
+[ -x "$ORCA_BIN" ] || ORCA_BIN="$(command -v orca 2>/dev/null)"
+[ -x "$ORCA_BIN" ] || ORCA_BIN="/opt/homebrew/bin/orca"
+[ -x "$ORCA_BIN" ] || ORCA_BIN="/usr/local/bin/orca"
+[ -x "$ORCA_BIN" ] || ORCA_BIN="/Applications/Wakii.app/Contents/Resources/bin/orca"
+[ -x "$ORCA_BIN" ] || ORCA_BIN="/Applications/Orca.app/Contents/Resources/bin/orca"
+[ -x "$ORCA_BIN" ] || { echo "orca binary không tìm thấy (đặt ORCA_BIN)"; exit 2; }
+export ORCA_BIN
+
+# Seam: env SET tường minh mà không executable → sweep skip (test hermetic),
+# chỉ tự đi tìm sibling khi env KHÔNG set.
+RESUME_EXPORTED="${STORY_RESUME_BIN+set}"
+RESUME="${STORY_RESUME_BIN:-}"
+if [ -z "$RESUME" ] && [ -z "$RESUME_EXPORTED" ]; then
+  RESUME="$DIR/story-resume"
+  [ -x "$RESUME" ] || RESUME="$HOME/.claude/bin/story-resume"
+fi
+[ -n "$RESUME" ] && [ -x "$RESUME" ] || RESUME=""
+export STORY_RESUME_BIN="$RESUME"
+
+# ownership probe lib dùng chung (SF-3) — nằm cạnh script (installed layout
+# flat). Cùng seam philosophy RESUME: env SET tường minh mà không phải file →
+# probe tắt (seam test phải tôn trọng), chỉ tự đi tìm sibling khi env KHÔNG set.
+PROBE="${OWNERSHIP_PROBE_BIN:-}"
+if [ -z "$PROBE" ] && [ -z "${OWNERSHIP_PROBE_BIN+set}" ]; then
+  PROBE="$DIR/story-ownership-probe"
+fi
+[ -n "$PROBE" ] && [ -f "$PROBE" ] || PROBE=""
+export OWNERSHIP_PROBE_BIN="$PROBE"
+
+# runtime dev-trước-prod-sau (story worktrees sống ở dev runtime — pattern story-resume)
+ORCA_DEV="$HOME/Library/Application Support/orca-dev"
+ORCA_PROD="$HOME/Library/Application Support/orca"
+export ORCA_DEV ORCA_PROD
+
+PY="$(command -v python3 || true)"
+[ -n "$PY" ] || { echo "python3 không tìm thấy"; exit 2; }
+
+case "${1:-}" in
+  ""|--) ;;   # không arg = chạy 1 pass
+  --help|-h) grep '^#' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+  -*) echo "Unknown: $1"; exit 2 ;;
+esac
+
+exec "$PY" - <<'PYEOF'
+import datetime
+import json
+import os
+import subprocess
+import sys
+import tempfile
+import time
+
+ORCA_BIN = os.environ["ORCA_BIN"]
+ORCA_DEV = os.environ.get("ORCA_DEV", "")
+ORCA_PROD = os.environ.get("ORCA_PROD", "")
+
+
+def env_int(name, default):
+    try:
+        return int(os.environ.get(name, "") or default)
+    except ValueError:
+        return default
+
+
+def env_float(name, default):
+    try:
+        return float(os.environ.get(name, "") or default)
+    except ValueError:
+        return default
+
+
+RESUME_BIN = os.environ.get("STORY_RESUME_BIN", "")
+WAIT_MS = env_int("PASS_CHECK_WAIT_MS", 300000)
+MAX_BATCHES = env_int("PASS_MAX_BATCHES", 3)
+MAX_RUNS = env_int("PASS_MAX_RUNS", 20)
+MAX_TASK_PROBES = env_int("PASS_MAX_TASK_PROBES", 25)
+WINDOW_H = env_float("PASS_WINDOW_H", 2)
+MAX_RESUME = env_int("PASS_MAX_RESUME", 1)
+NOTIFY = os.environ.get("PASS_NOTIFY", "1") == "1"
+DOCS_ROOTS = [p for p in os.environ.get(
+    "COORDINATOR_DOCS_ROOTS", os.getcwd()).split(":") if p]
+STATE_FILE = os.environ.get(
+    "PASS_STATE_FILE",
+    os.path.expanduser("~/.claude/.story-coordinator-pass-verify"))
+IN_FLIGHT = ("pending", "ready", "dispatched", "blocked")
+
+needs_verify = []          # dòng NEEDS-VERIFY in trước summary
+wt_by_dispatch = {}        # dispatchId → worktree path (từ worker-list)
+
+
+def log(msg):
+    print(f"{time.strftime('%H:%M')} {msg}")
+
+
+def notify(title, body):
+    if not NOTIFY or not body:
+        return
+    t = title.replace("\\", "\\\\").replace('"', '\\"')
+    b = body.replace("\\", "\\\\").replace('"', '\\"')
+    try:
+        subprocess.run(["osascript", "-e", f'display notification "{b}" with title "{t}"'],
+                       capture_output=True, timeout=15)
+    except Exception:
+        pass  # không có osascript (Linux/CI) — notify là best-effort, pass không fail
+
+
+def run_orca(args, timeout_s=45):
+    """Lệnh ĐỌC: spawn orca (dev→prod→plain runtime) → JSON, hoặc None khi fail.
+    rc0 nhưng stdout hỏng → coi như fail và retry runtime kế (đọc an toàn để
+    retry); cả 3 fail → None → các nơi gọi degrade bảo thủ (SKIP-OWNED...)."""
+    for ud in (ORCA_DEV, ORCA_PROD, None):
+        env = dict(os.environ)
+        if ud:
+            env["ORCA_USER_DATA_PATH"] = ud
+        else:
+            env.pop("ORCA_USER_DATA_PATH", None)
+        try:
+            p = subprocess.run([ORCA_BIN] + args, capture_output=True, text=True,
+                               timeout=timeout_s, env=env)
+        except (subprocess.TimeoutExpired, OSError):
+            continue
+        if p.returncode == 0:
+            try:
+                return json.loads(p.stdout)
+            except Exception:
+                continue  # rác → thử runtime kế; hết → None (không coi là sạch)
+    return None
+
+
+def run_orca_once(args, timeout_s=45):
+    """Lệnh MUTATING (reply...): CHỈ 1 attempt, env hiện tại — không retry
+    runtime nào cả (prod-env và plain-env cùng chạm runtime sống: retry biến
+    reply thành gửi ĐÔI — real-run 23:27). rc0 = thành công dù stdout có parse
+    được JSON hay không."""
+    try:
+        p = subprocess.run([ORCA_BIN] + args, capture_output=True, text=True,
+                           timeout=timeout_s, env=dict(os.environ))
+    except (subprocess.TimeoutExpired, OSError):
+        return None
+    if p.returncode != 0:
+        return None
+    try:
+        return json.loads(p.stdout)
+    except Exception:
+        return {"ok": True, "_unparsed": (p.stdout or "").strip()}
+
+
+def orca_rows(args, key):
+    d = run_orca(args)
+    if d is None:
+        return None
+    return ((d.get("result") or {}).get(key)) or []
+
+
+def first_of(d, *keys):
+    for k in keys:
+        v = d.get(k)
+        if v:
+            return str(v)
+    return ""
+
+
+def git(*args):
+    try:
+        p = subprocess.run(["git"] + list(args), capture_output=True, text=True, timeout=30)
+    except (subprocess.TimeoutExpired, OSError):
+        return ""
+    return p.stdout if p.returncode == 0 else ""
+
+
+def git_ok(*args):
+    """git theo exit-code (cat-file -e thành công in stdout rỗng)."""
+    try:
+        p = subprocess.run(["git"] + list(args), capture_output=True, timeout=30)
+    except (subprocess.TimeoutExpired, OSError):
+        return False
+    return p.returncode == 0
+
+
+def verify_evidence(msg):
+    """worker_done chấp nhận chỉ khi (pack: commit tồn tại + files ⊆ boundary):
+    filesModified ≠ rỗng · worktree resolve được (worker-list theo dispatchId,
+    hoặc path tuyệt đối trong payload) · commit hash có trong payload/body ·
+    commit TỒN TẠI trong worktree (cat-file) · mọi file nằm trong diff commit đó.
+    Thiếu bất kỳ → False (NEEDS-VERIFY)."""
+    try:
+        payload = json.loads(msg.get("payload") or "{}")
+    except Exception:
+        payload = {}
+    if not isinstance(payload, dict):
+        payload = {}
+    files = [f.strip() for f in (payload.get("filesModified") or [])
+             if isinstance(f, str) and f.strip()]
+    if not files:
+        return False
+    wt = wt_by_dispatch.get(payload.get("dispatchId") or "")
+    if not wt:
+        for f in files:
+            if os.path.isabs(f):
+                wt = git("-C", os.path.dirname(f), "rev-parse", "--show-toplevel").strip()
+                break
+    if not wt or not os.path.isdir(wt):
+        return False
+    commit = (payload.get("commit") or payload.get("commitHash") or payload.get("sha") or "").strip()
+    if not commit:
+        import re
+        blob = f"{msg.get('subject') or ''} {msg.get('body') or ''}"
+        m = re.search(r"\b[0-9a-f]{7,40}\b", blob)
+        commit = m.group(0) if m else ""
+    if not commit:
+        return False  # không nêu commit → không có gì chứng minh
+    if not git_ok("-C", wt, "cat-file", "-e", f"{commit}^{{commit}}"):
+        return False  # commit không tồn tại trong worktree
+    diff = set(git("-C", wt, "show", "--name-only", "--format=", commit).splitlines())
+    if not diff:
+        return False
+    for f in files:
+        if not os.path.exists(os.path.join(wt, f)):
+            return False
+        if f not in diff:
+            return False  # file báo không nằm trong diff commit → khai sai
+    return True
+
+
+def save_needs_verify(run_id, msg):
+    try:
+        os.makedirs(os.path.dirname(STATE_FILE), exist_ok=True)
+        with open(STATE_FILE, "a", encoding="utf-8") as f:
+            f.write(f"{time.strftime('%Y-%m-%d %H:%M')}|{run_id}|{msg}\n")
+    except Exception:
+        pass  # trail là best-effort — không chết vì state file
+
+
+def find_bracket(run):
+    """Tìm bracket file theo epic-id trong objective (docs roots: env hoặc $PWD)."""
+    import re
+    import glob
+    obj = run.get("objective") or ""
+    m = re.search(r"\b([A-Za-z][A-Za-z0-9]*-\d+)\b", obj)
+    if not m:
+        return ""
+    epic = m.group(1).lower()
+    for root in DOCS_ROOTS:
+        hits = sorted(glob.glob(os.path.join(
+            root, "docs", "superpowers", "brackets", f"{epic}-*.md")))
+        if hits:
+            return hits[0]
+    return ""
+
+
+def reply_body(run):
+    obj = (run.get("objective") or "").strip()
+    if len(obj) > 120:
+        obj = obj[:120] + "…"
+    bracket = find_bracket(run)
+    ref = (f"Bracket: {bracket}" if bracket
+           else "Đọc lại docs/superpowers/brackets/ + docs/superpowers/contexts/")
+    base = (f"[coordinator-pass] Đã nhận câu hỏi — {ref}. Chờ ruling "
+            "coordinator/user, KHÔNG tự quyết khi đụng quyền user; giữ nguyên "
+            "scope chờ review.")
+    return f"{base} Run: {obj}" if obj else base
+
+
+def process_inbox(run, self_handle):
+    """Inbox bounded 1 run. 2.16.8 fix (review F2+F3):
+    F2 — `check --run` bị consumer-fenced với terminal chưa bind
+    (run-scope.ts requireCurrentConsumer; cron terminal mới mỗi pass) →
+    bind qua `run-use` TRƯỚC mọi check; bind fail → bỏ inbox pass này.
+    F3 — ack NGAY sau khi xử xong batch: delivery không ack sẽ replay 100%
+    ở pass kế (dup reply/notify). Reply hard-fail là trường hợp DUY NHẤT
+    giữ delivery để pass kế xử lại (replay có chủ đích, không nuốt câu hỏi)."""
+    processed = replied = 0
+    run_id = run.get("id")
+    if run_orca(["orchestration", "run-use", run_id], timeout_s=30) is None:
+        log(f"run-use fail {run_id} — bỏ qua inbox pass này (consumer-fenced)")
+        return 0, 0
+    seen = set()
+    for batch_no in range(MAX_BATCHES):
+        args = ["orchestration", "check", "--run", run_id, "--wait",
+                "--timeout-ms", str(WAIT_MS), "--json"]
+        d = run_orca(args, timeout_s=WAIT_MS / 1000 + 60)
+        if d is None:
+            log(f"check fail {run_id} — bỏ qua inbox pass này")
+            break
+        res = d.get("result") or {}
+        delivery_id = first_of(res, "deliveryId", "delivery_id")
+        msgs = res.get("messages") or []
+        fresh = [m for m in msgs if m.get("id") and m.get("id") not in seen]
+        if not fresh:
+            break
+        batch_ok = True
+        for m in fresh:
+            mid = m.get("id")
+            seen.add(mid)
+            mtype = m.get("type") or "?"
+            subject = (m.get("subject") or "").splitlines() or [""]
+            if mtype == "question":
+                rargs = ["orchestration", "reply", "--id", mid, "--body", reply_body(run)]
+                if self_handle:
+                    rargs += ["--from", self_handle]
+                if run_orca_once(rargs) is not None:
+                    replied += 1
+                    log(f"REPLY {mid} (question) — dẫn bracket/contexts")
+                else:
+                    batch_ok = False  # lỗi tạm thời → giữ delivery, pass kế xử lại
+                    log(f"REPLY FAIL {mid} — question để lại cho pass kế")
+            elif mtype == "escalation":
+                log(f"ESCALATION {mid}: {subject[0][:80]} → needs-user (đụng quyền user)")
+                notify("coordinator-pass ⚠", f"escalation: {subject[0][:60]}")
+            elif mtype == "worker_done":
+                if verify_evidence(m):
+                    log(f"EVIDENCE-OK {mid} — worker_done chấp nhận")
+                else:
+                    # NEEDS-VERIFY đã ghi trail + stdout; verdict cố định →
+                    # ack bình thường cùng batch (không spam lại mỗi pass).
+                    needs_verify.append(
+                        f"NEEDS-VERIFY: {run_id} {mid} — evidence thiếu (files/commit chưa chứng minh)")
+                    save_needs_verify(run_id, mid)
+                    notify("coordinator-pass ⚠", f"NEEDS-VERIFY: {subject[0][:60]}")
+            else:
+                log(f"NOTE {mid} ({mtype}): {subject[0][:80]}")
+            processed += 1
+        # F3: ack ngay sau khi xử batch — không chờ batch kế (luồng cũ để
+        # delivery cuối tung lửng → replay dup mỗi pass).
+        if batch_ok and delivery_id:
+            run_orca(["orchestration", "check", "--run", run_id, "--ack",
+                      delivery_id, "--json"], timeout_s=30)
+    return processed, replied
+
+
+def load_ownership(runs, self_handle):
+    """worker-live map qua lib dùng chung story-ownership-probe (--json) —
+    liveRuns + worktreeByDispatch. None = probe hỏng → caller degrade."""
+    probe = os.environ.get("OWNERSHIP_PROBE_BIN", "")
+    if not probe or not os.path.isfile(probe):
+        return None
+    tmp = None
+    try:
+        fd, tmp = tempfile.mkstemp(suffix=".json")
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(runs, f)
+        env = dict(os.environ)
+        env["OP_RUNS_FILE"] = tmp
+        p = subprocess.run([probe, "--json", "--self", self_handle or ""],
+                           capture_output=True, text=True, timeout=300, env=env)
+    except (subprocess.TimeoutExpired, OSError):
+        return None
+    finally:
+        if tmp:
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
+    if p.returncode != 0:
+        return None
+    try:
+        d = json.loads(p.stdout)
+    except Exception:
+        return None
+    return d if isinstance(d, dict) else None
+
+
+def stall_sweep():
+    """story-resume --check → verdict STALLED* đã là bằng chứng dương 3 tầng
+    (commits stale + terminal idle/cold) → --send. Cap PASS_MAX_RESUME/pass.
+    STALLED-COLD chỉ báo cáo — cần tạo terminal mới, rủi ro hơn resume giữ context."""
+    if not RESUME_BIN:
+        log("stall sweep skip — story-resume không tìm thấy")
+        return 0
+    resumed = 0
+    try:
+        p = subprocess.run([RESUME_BIN, "--check"], capture_output=True, text=True, timeout=180)
+    except (subprocess.TimeoutExpired, OSError):
+        log("stall sweep skip — story-resume --check fail")
+        return 0
+    for line in (p.stdout or "").splitlines():
+        parts = line.split("|")
+        if len(parts) < 2:
+            continue
+        sf, verdict = parts[0].strip(), parts[1].strip()
+        if not verdict.startswith("STALLED"):
+            continue
+        if verdict == "STALLED-COLD":
+            log(f"RESUME SKIP {sf} (STALLED-COLD — cần tạo terminal mới, báo coordinator)")
+            continue
+        if resumed >= MAX_RESUME:
+            log(f"RESUME SKIP {sf} (cap {MAX_RESUME} resume/pass)")
+            continue
+        try:
+            s = subprocess.run([RESUME_BIN, sf, "--send"], capture_output=True,
+                               text=True, timeout=300)
+        except (subprocess.TimeoutExpired, OSError):
+            s = None
+        if s is not None and "SENT" in (s.stdout or ""):
+            resumed += 1
+            log(f"RESUME {sf} — sent ({verdict})")
+        else:
+            log(f"RESUME FAIL {sf} ({verdict})")
+    return resumed
+
+
+def terminal_handles():
+    """Set handle terminal đang sống, hoặc None khi đọc không được (degrade)."""
+    d = run_orca(["terminal", "list", "--json"])
+    if d is None:
+        return None
+    out = set()
+    for t in ((d.get("result") or {}).get("terminals") or []):
+        h = t.get("handle") or t.get("terminalHandle")
+        if h:
+            out.add(h)
+    return out
+
+
+def recent(r):
+    """updated_at trong window; thiếu/không parse được → coi như mới (thận trọng)."""
+    ts = r.get("updated_at") or ""
+    if not ts:
+        return True
+    try:
+        t = datetime.datetime.fromisoformat(ts.replace("Z", "+00:00")).timestamp()
+    except Exception:
+        return True
+    return (time.time() - t) <= WINDOW_H * 3600
+
+
+def main():
+    # self: env thật của terminal trước (ORCA_TERMINAL_HANDLE — automation cron
+    # = terminal mới mỗi lần, run-current thường rỗng), rồi seam phụ, rồi probe.
+    self_handle = (os.environ.get("ORCA_TERMINAL_HANDLE", "")
+                   or os.environ.get("ORCA_COORDINATOR_HANDLE", ""))
+    if not self_handle:
+        d = run_orca(["orchestration", "run-current", "--json"])
+        run_cur = (d or {}).get("result") or {}
+        self_handle = first_of(run_cur.get("run") or {}, "coordinatorHandle",
+                               "coordinator_handle")
+
+    runs = orca_rows(["orchestration", "run-list", "--json", "--limit", "100"], "runs")
+    if runs is None:
+        print("PASS: idle=orca-unavailable")
+        return 0
+
+    # SF-3: worker-live map qua lib dùng chung story-ownership-probe —
+    # probe hỏng = worker-list đọc không được (degrade như cũ)
+    probe = load_ownership(runs, self_handle)
+    live_by_run = set()
+    if probe is None or not probe.get("workersOk", False):
+        log("worker-list đọc không được — ownership probe degrade (chỉ task-list)")
+    else:
+        live_by_run = set(probe.get("liveRuns") or [])
+    for k, v in ((probe or {}).get("worktreeByDispatch") or {}).items():
+        wt_by_dispatch[k] = v
+
+    candidates = []
+    task_probes = 0
+    for r in runs:
+        if r.get("legacy"):
+            continue
+        rid = r.get("id")
+        if rid in live_by_run:
+            candidates.append(r)
+        elif recent(r):
+            if task_probes >= MAX_TASK_PROBES:
+                log(f"task-probe cap {MAX_TASK_PROBES} — run sau đó xét pass kế")
+                break
+            task_probes += 1
+            tasks = orca_rows(["orchestration", "task-list", "--run", rid, "--json"],
+                              "tasks")
+            if tasks and any(t.get("status") in IN_FLIGHT for t in tasks):
+                candidates.append(r)
+        if len(candidates) >= MAX_RUNS:
+            break
+
+    if not candidates:
+        print("PASS: idle=no-active-runs")
+        return 0
+
+    alive = terminal_handles()
+
+    if not self_handle:
+        # Không tự nhận diện được — mọi run có owner đều bị coi foreign. Cron
+        # terminal thường có env; khi thiếu, chỉ run mồ côi được xử — cảnh báo
+        # để log không im lặng (2 pass ẩn danh cùng chạy có thể dup-reply).
+        log("WARN: self handle rỗng (ORCA_TERMINAL_HANDLE/run-current) — chỉ run mồ côi được xử")
+
+    processed = replied = skipped_owned = 0
+    for r in candidates:
+        rid = r.get("id")
+        owner = first_of(r, "coordinator_handle", "coordinatorHandle")
+        mine = bool(owner) and owner == self_handle
+        if rid in live_by_run and not mine:
+            skipped_owned += 1
+            log(f"SKIP-OWNED {rid} owner={owner or '?'} live-worker=1 — chỉ quan sát")
+            continue
+        if owner and not mine:
+            # Terminal owner còn sống (hoặc không dò được) → coordinator khác
+            # đang đứng ca. Terminal đã chết → stale handle (automation terminal
+            # chết mỗi pass) → self-heal: pass này nhận trách nhiệm.
+            if alive is None or owner in alive:
+                skipped_owned += 1
+                log(f"SKIP-OWNED {rid} owner={owner} live-worker=0 — coordinator khác đứng")
+                continue
+            log(f"ADOPT {rid} — owner {owner} đã chết (stale handle) → self-heal")
+        p, rp = process_inbox(r, self_handle)
+        processed += p
+        replied += rp
+
+    resumed = stall_sweep()
+
+    for line in needs_verify:
+        print(line)
+    print(f"PASS: processed={processed} replied={replied} resumed={resumed} "
+          f"skipped-owned={skipped_owned} idle=none")
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except Exception as exc:  # pass là hành vi — mọi sự cố đều exit 0
+        print(f"PASS: idle=error ({type(exc).__name__}: {exc})")
+        sys.exit(0)
+PYEOF

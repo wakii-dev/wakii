@@ -369,7 +369,22 @@
       "name": "story-plan-validate",
       "type": "bin",
       "description": "kiểm task DAG của orchestration run — bắt lỗi DAG ngay sau Bridge 3 (học từ story-validate)"
+    },
+    {
+      "name": "story-coordinator-pass",
+      "type": "bin",
+      "description": "MỘT lượt coordination pass bounded — run discovery → ownership probe → inbox (question/escalation/worker_done verify evidence) → stall sweep → PASS SUMMARY; automation chỉ cần gọi 1 dòng (LOCAL-1 SF-1)"
+    },
+    {
+      "name": "story-automation-install",
+      "type": "bin",
+      "description": "installer idempotent cho Orca automation coordinator-pass + morning briefing — cron tuỳ chọn, workspace existing, retire sạch (LOCAL-1 SF-2)"
+    },
+    {
+      "name": "story-ownership-probe",
+      "type": "bin",
+      "description": "thư viện ownership probe dùng chung — run/worktree nào đang có worker live của coordinator nào (LOCAL-1 SF-3)"
     }
   ],
-  "kitHash": "35e0c2cd2bb3531a"
+  "kitHash": "944b1f63d3f40441"
 }
