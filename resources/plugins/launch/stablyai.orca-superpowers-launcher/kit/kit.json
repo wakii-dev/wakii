@@ -1,6 +1,6 @@
 {
   "name": "story-team-kit",
-  "version": "2.16.8",
+  "version": "2.16.7",
   "description": "9-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới.",
   "requires": {
     "claude-code": ">=2.0",
@@ -373,7 +373,7 @@
     {
       "name": "story-coordinator-pass",
       "type": "bin",
-      "description": "một lượt coordination pass bounded — run discovery + ownership probe + inbox question/escalation/worker_done verify evidence + stall sweep 3 tầng + PASS summary 1 dòng (LOCAL-1 SF-1)"
+      "description": "MỘT lượt coordination pass bounded — run discovery → ownership probe → inbox (question/escalation/worker_done verify evidence) → stall sweep → PASS SUMMARY; automation chỉ cần gọi 1 dòng (LOCAL-1 SF-1)"
     },
     {
       "name": "story-automation-install",
@@ -383,8 +383,8 @@
     {
       "name": "story-ownership-probe",
       "type": "bin",
-      "description": "thư viện ownership probe dùng chung — run/worktree nào đang có worker live của coordinator nào; tiêu thụ: coordinator-pass, story-launch pre-dispatch, watchdog, story-top (LOCAL-1 SF-3)"
+      "description": "thư viện ownership probe dùng chung — run/worktree nào đang có worker live của coordinator nào (LOCAL-1 SF-3)"
     }
   ],
-  "kitHash": "ff89d0afeed48fda"
+  "kitHash": "944b1f63d3f40441"
 }

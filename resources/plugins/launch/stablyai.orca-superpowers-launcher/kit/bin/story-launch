@@ -356,8 +356,18 @@ if [ "$CLAIM" = 1 ] && [ "$(distributed_enabled)" = "1" ]; then
   fi
 fi
 echo "── launch sf-$N-$SLUG ($LINEAR) ← $DEST"
+# lineage cha (kit ≥2.16.7): SF worktree là CON của coordinator worktree của
+# story — 1 story = 1 cây. Cha tên "<dest-slug>-coordinator" (tạo ở APPROVE);
+# chưa có cha → degrade --no-parent, không chặn launch (fail-open).
+COORD_WT="$(basename "$DEST")-coordinator"
+PARENT_FLAG="--no-parent"
+if orca worktree show --worktree "$COORD_WT" --json >/dev/null 2>&1; then
+  PARENT_FLAG="--parent-worktree $COORD_WT"
+else
+  echo "  (worktree cha $COORD_WT chưa có — tạo ở APPROVE; launch tiếp không lineage)"
+fi
 orca worktree create --name "sf-$N-$SLUG" --linear-issue "$LINEAR" \
-  --base-branch "$DEST" --agent claude --no-parent --prompt "$PROMPT" --json >/dev/null 2>&1 \
+  --base-branch "$DEST" --agent claude $PARENT_FLAG --prompt "$PROMPT" --json >/dev/null 2>&1 \
   && echo "LAUNCHED ✓ sf-$N-$SLUG" || {
     echo "LAUNCH FAIL — read-back: worktree list"
     # guard branch giữ lại trên remote = dấu vết vô hại — máy khác thấy sẽ skip
