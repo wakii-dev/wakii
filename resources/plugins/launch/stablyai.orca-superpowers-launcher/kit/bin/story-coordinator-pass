@@ -306,32 +306,33 @@ def reply_body(run):
 
 
 def process_inbox(run, self_handle):
-    """Inbox bounded 1 run: batch đầu check --wait; batch sau chỉ drain khi biết
-    delivery id để --ack. Ack batch trước CHỈ advance khi mọi message đã xử OK —
-    reply/verify fail → giữ delivery, pass kế xử lại (không nuốt câu hỏi).
-    Không ack mù — replay là an toàn hơn dup-reply."""
+    """Inbox bounded 1 run. 2.16.8 fix (review F2+F3):
+    F2 — `check --run` bị consumer-fenced với terminal chưa bind
+    (run-scope.ts requireCurrentConsumer; cron terminal mới mỗi pass) →
+    bind qua `run-use` TRƯỚC mọi check; bind fail → bỏ inbox pass này.
+    F3 — ack NGAY sau khi xử xong batch: delivery không ack sẽ replay 100%
+    ở pass kế (dup reply/notify). Reply hard-fail là trường hợp DUY NHẤT
+    giữ delivery để pass kế xử lại (replay có chủ đích, không nuốt câu hỏi)."""
     processed = replied = 0
     run_id = run.get("id")
+    if run_orca(["orchestration", "run-use", run_id], timeout_s=30) is None:
+        log(f"run-use fail {run_id} — bỏ qua inbox pass này (consumer-fenced)")
+        return 0, 0
     seen = set()
-    prev_ack = None
     for batch_no in range(MAX_BATCHES):
-        if batch_no == 0:
-            args = ["orchestration", "check", "--run", run_id, "--wait",
-                    "--timeout-ms", str(WAIT_MS), "--json"]
-        elif prev_ack:
-            args = ["orchestration", "check", "--run", run_id, "--ack", prev_ack, "--json"]
-        else:
-            break
+        args = ["orchestration", "check", "--run", run_id, "--wait",
+                "--timeout-ms", str(WAIT_MS), "--json"]
         d = run_orca(args, timeout_s=WAIT_MS / 1000 + 60)
         if d is None:
             log(f"check fail {run_id} — bỏ qua inbox pass này")
             break
         res = d.get("result") or {}
+        delivery_id = first_of(res, "deliveryId", "delivery_id")
         msgs = res.get("messages") or []
-        batch_ok = True
         fresh = [m for m in msgs if m.get("id") and m.get("id") not in seen]
         if not fresh:
             break
+        batch_ok = True
         for m in fresh:
             mid = m.get("id")
             seen.add(mid)
@@ -354,8 +355,8 @@ def process_inbox(run, self_handle):
                 if verify_evidence(m):
                     log(f"EVIDENCE-OK {mid} — worker_done chấp nhận")
                 else:
-                    # NEEDS-VERIFY đã ghi trail + stdout → ack luôn, tránh
-                    # spam lại mỗi pass; verdict không chấp nhận là cố định.
+                    # NEEDS-VERIFY đã ghi trail + stdout; verdict cố định →
+                    # ack bình thường cùng batch (không spam lại mỗi pass).
                     needs_verify.append(
                         f"NEEDS-VERIFY: {run_id} {mid} — evidence thiếu (files/commit chưa chứng minh)")
                     save_needs_verify(run_id, mid)
@@ -363,7 +364,11 @@ def process_inbox(run, self_handle):
             else:
                 log(f"NOTE {mid} ({mtype}): {subject[0][:80]}")
             processed += 1
-        prev_ack = (first_of(res, "deliveryId", "delivery_id", "acknowledged") or None) if batch_ok else None
+        # F3: ack ngay sau khi xử batch — không chờ batch kế (luồng cũ để
+        # delivery cuối tung lửng → replay dup mỗi pass).
+        if batch_ok and delivery_id:
+            run_orca(["orchestration", "check", "--run", run_id, "--ack",
+                      delivery_id, "--json"], timeout_s=30)
     return processed, replied
 
 

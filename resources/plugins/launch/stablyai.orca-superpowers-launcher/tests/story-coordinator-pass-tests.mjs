@@ -49,12 +49,20 @@ case "$2" in
   run-list) cat "$RL_FIXTURE" ;;
   worker-list) cat "$WL_FIXTURE" ;;
   task-list) cat "$TL_FIXTURE" ;;
-  check) cat "$CHECK_FIXTURE" ;;
+  check)
+    if [ -n "$FENCE" ] && ! grep -qFx "$4" "$BOUND_FILE" 2>/dev/null; then
+      printf '%s\\n' '{"ok":false,"error":{"code":"run_required","message":"No Run is bound"}}'
+    else
+      cat "$CHECK_FIXTURE"
+    fi ;;
   list) if [ -n "$TERM_PLAIN" ]; then printf 'garbage-not-json\n'; else cat "$TERM_FIXTURE"; fi ;;
   reply)
     [ -n "$REPLY_FAIL" ] && exit 1
-    if [ -n "$REPLY_PLAIN" ]; then printf 'Replied msg_plain_text\\n'; else printf '%s\\n' '{"ok":true,"result":{"message":{"id":"replied"}}}'; fi ;;
-  run-use) printf '%s\\n' '{"ok":true,"result":{"run":{}}}' ;;
+    if [ -n "$REPLY_PLAIN" ]; then printf 'Replied msg_plain_text\n'; else printf '%s\\n' '{"ok":true,"result":{"message":{"id":"replied"}}}'; fi ;;
+  run-use)
+    [ -n "$RUN_USE_FAIL" ] && exit 1
+    printf '%s\\n' "$3" >> "$BOUND_FILE"
+    printf '%s\\n' '{"ok":true,"result":{"run":{}}}' ;;
   *) printf '%s\\n' '{"ok":true,"result":{}}' ;;
 esac
 `, 'utf8')
@@ -596,6 +604,55 @@ console.log('== C22 terminal list trả rác rc0 → degrade bảo thủ: foreig
   check('C22', 'skipped-owned=1 (không ADOPT khi không dò được liveness)', r.out.includes('skipped-owned=1'), r.out)
   check('C22', 'KHÔNG check inbox run unsure', !r.argv.includes('check --run run_unsure'), r.argv)
   check('C22', 'exit 0', r.code === 0, `code=${r.code}`)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== C23 terminal cron bị consumer-fenced → run-use TRƯỚC check (2.16.8 F2) ==')
+{
+  const dir = tempDir('c23')
+  const stub = makeOrcaStub(dir)
+  const docs = join(dir, 'docs', 'superpowers', 'brackets')
+  mkdirSync(docs, { recursive: true })
+  writeFileSync(join(docs, 'local-1-self-sustain-24-7.md'), '# Story: LOCAL-1\n')
+  const bound = join(dir, 'bound.txt')
+  const rl = fixture(dir, 'rl.json', { ok: true, result: { runs: [
+    { id: 'run_q', objective: 'LOCAL-1 SF-1: Coordinator pass bin', coordinator_handle: 'term_self' },
+  ] } })
+  const ck = fixture(dir, 'ck.json', { ok: true, result: { runId: 'run_q', deliveryId: 'delivery_q1', count: 1, messages: [
+    { id: 'msg_q1', type: 'question', subject: 'FENCE test — câu hỏi cần ruling', body: 'chi tiết' },
+  ] } })
+  const r = runPass(dir, stub, {
+    RL_FIXTURE: rl, WL_FIXTURE: fixture(dir, 'wl.json', NO_WORKERS),
+    TL_FIXTURE: fixture(dir, 'tl.json', OPEN_TASK), CHECK_FIXTURE: ck,
+    TERM_FIXTURE: fixture(dir, 'tm.json', TERM_ME_ONLY),
+    FENCE: '1', BOUND_FILE: bound, PASS_CWD: dir,
+  })
+  const iUse = r.argv.indexOf('orchestration run-use run_q')
+  const iCheck = r.argv.indexOf('orchestration check --run run_q')
+  check('C23', 'run-use được gọi TRƯỚC check (bind trước khi fenced)', iUse > -1 && iCheck > -1 && iUse < iCheck, r.argv.slice(0, 300))
+  check('C23', 'sau bind: check đọc được message → REPLY', /orchestration reply --id msg_q1/.test(r.argv), r.argv.slice(0, 400))
+  check('C23', 'ack ngay sau batch (F3)', /orchestration check --run run_q --ack/.test(r.argv), r.argv)
+  check('C23', 'summary replied=1', r.out.includes('replied=1'), r.out)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== C24 run-use fail → bỏ inbox, KHÔNG check (F2 degrade) ==')
+{
+  const dir = tempDir('c24')
+  const stub = makeOrcaStub(dir)
+  const r = runPass(dir, stub, {
+    RL_FIXTURE: fixture(dir, 'rl.json', { ok: true, result: { runs: [
+      { id: 'run_x', objective: 'LOCAL-1 SF-1', coordinator_handle: 'term_self' },
+    ] } }),
+    WL_FIXTURE: fixture(dir, 'wl.json', NO_WORKERS),
+    TL_FIXTURE: fixture(dir, 'tl.json', OPEN_TASK),
+    CHECK_FIXTURE: fixture(dir, 'ck.json', NO_MSGS),
+    TERM_FIXTURE: fixture(dir, 'tm.json', TERM_ME_ONLY),
+    RUN_USE_FAIL: '1', PASS_CWD: dir,
+  })
+  check('C24', 'run-use fail → bỏ qua inbox (run-use fail trong out)', r.out.includes('run-use fail'), r.out)
+  check('C24', 'KHÔNG gọi check sau run-use fail', !r.argv.includes('check --run'), r.argv)
+  check('C24', 'exit 0 (pass là hành vi, không fail hard)', r.code === 0, `code=${r.code}`)
   rmSync(dir, { recursive: true, force: true })
 }
 

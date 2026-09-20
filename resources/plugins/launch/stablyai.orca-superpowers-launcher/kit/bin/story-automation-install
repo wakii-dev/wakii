@@ -295,6 +295,12 @@ def do_briefing():
             rid = r.get("id")
             if not rid:
                 continue
+            # 2.16.8 fix (review F2b): `check --peek` cũng consumer-fenced với
+            # terminal chưa bind — run-use trước, fail → đếm check_fails như cũ
+            b = orca_read(["orchestration", "run-use", rid, "--json"])
+            if b is None:
+                check_fails += 1
+                continue
             c = orca_read(["orchestration", "check", "--run", rid, "--peek",
                            "--json"])
             if c is None:
