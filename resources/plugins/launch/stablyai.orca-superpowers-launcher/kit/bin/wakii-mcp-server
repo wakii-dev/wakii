@@ -72,6 +72,19 @@ function which(bin) {
 
 function resolveOrca() {
   if (process.env.ORCA_BIN && isExecutable(process.env.ORCA_BIN)) return process.env.ORCA_BIN;
+  // Windows: spawn cần file thực thi thật — orca.cmd là shim cmd.exe (Node refuse
+  // spawn .cmd không shell) còn shim bash không extension thì EFTYPE. orca.exe nằm
+  // cạnh shim (xem docs/reference/windows-cmd-shim-resolution.md).
+  if (process.platform === 'win32') {
+    const exe = which('orca.exe');
+    if (exe) return exe;
+    const shim = which('orca.cmd');
+    if (shim) {
+      const sibling = path.join(path.dirname(shim), 'orca.exe');
+      if (isExecutable(sibling)) return sibling;
+    }
+    return 'orca.exe';
+  }
   const onPath = which('orca');
   if (onPath) return onPath;
   const known = [
@@ -92,7 +105,7 @@ function orcaRuntimes() {
 // ── spawn chung: timeout 30s, mọi lỗi → {ok:false} — server không bao giờ crash ──
 const liveChildren = new Set();
 
-function runCommand(cmd, args, opts = {}) {
+function spawnOnce(cmd, args, opts) {
   return new Promise((resolve) => {
     const env = { ...process.env, ...(opts.env || {}) };
     let child;
@@ -138,6 +151,23 @@ function runCommand(cmd, args, opts = {}) {
     child.on('error', (err) => done({ ok: false, code: null, stdout, stderr: String((err && err.message) || err) }));
     child.on('close', (code) => done({ ok: code === 0 && !timedOut, code, stdout, stderr, timedOut }));
   });
+}
+
+// Windows không exec được script shebang (EFTYPE) — seam ORCA_BIN vốn nhận
+// "script thực thi", nên retry 1 lần qua bash (cùng pattern với kit bash CLIs).
+const SPAWN_SCRIPT_ERRORS = new Set(['EFTYPE', 'EACCES', 'EINVAL', 'ENOEXEC']);
+
+async function runCommand(cmd, args, opts = {}) {
+  const direct = await spawnOnce(cmd, args, opts);
+  if (
+    process.platform === 'win32' &&
+    !direct.ok &&
+    direct.code === null &&
+    SPAWN_SCRIPT_ERRORS.has((direct.stderr || '').match(/\b(EFTYPE|EACCES|EINVAL|ENOEXEC)\b/)?.[1] || '')
+  ) {
+    return spawnOnce('bash', [cmd, ...args], opts);
+  }
+  return direct;
 }
 
 async function runOrca(orcaArgs, cwd) {

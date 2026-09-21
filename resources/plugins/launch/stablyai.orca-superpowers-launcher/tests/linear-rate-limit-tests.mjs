@@ -22,8 +22,10 @@ function tempDir(tag) {
   return dir
 }
 
+// Windows không chạy shebang script trực tiếp qua spawnSync — phải đi qua bash
+// (cùng pattern với qa-happy-path-chain.mjs).
 function run(args, env = {}) {
-  return spawnSync(LRL, args, {
+  return spawnSync('bash', [LRL, ...args], {
     encoding: 'utf8',
     env: { ...process.env, LINEAR_RATE_LIMIT_STATE: join(tmpdir('lrl-state'), 'state.json'), ...env },
   })
@@ -101,7 +103,7 @@ console.log('== [lrl6] classify — signature rate-limit ==')
     const bf = join(tempDir('lrl6b' + i), 'body.txt')
     mkdirSync(dirname(bf), { recursive: true })
     writeFileSync(bf, body)
-    const r = spawnSync(LRL, ['classify', '--body', bf], { encoding: 'utf8' })
+    const r = spawnSync('bash', [LRL, 'classify', '--body', bf], { encoding: 'utf8' })
     const isLimited = r.status === 3
     check(`lrl6.${i}: ${JSON.stringify(body.slice(0, 40))} → ${limited ? 'limited' : 'ok'}`, isLimited === limited, `status=${r.status}`)
   }

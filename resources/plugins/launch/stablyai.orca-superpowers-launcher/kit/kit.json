@@ -1,6 +1,6 @@
 {
   "name": "story-team-kit",
-  "version": "2.16.9",
+  "version": "2.16.10",
   "description": "9-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới.",
   "requires": {
     "claude-code": ">=2.0",
@@ -396,5 +396,5 @@
       "description": "state machine Linear rate-limit — check/note/clear/pending/classify (policy skip+note+resume 2026-09-20)"
     }
   ],
-  "kitHash": "bf2c197ba84c2451"
+  "kitHash": "537b7e695d046deb"
 }

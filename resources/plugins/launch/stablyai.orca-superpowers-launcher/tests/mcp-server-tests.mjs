@@ -245,7 +245,13 @@ async function probeInstalledVersion(markerPath, label, id) {
     fs.writeFileSync(path.join(binDir, 'wakii-mcp-server'), fs.readFileSync(SERVER, 'utf8'));
     fs.mkdirSync(path.dirname(markerPath(fixture2)), { recursive: true });
     fs.writeFileSync(markerPath(fixture2), '9.9.9:deadbeef0123');
-    const c2 = new McpClient(fixture2, { ...process.env, HOME: fixture2 }, path.join(binDir, 'wakii-mcp-server'));
+    // os.homedir() trên Windows đọc USERPROFILE trước HOME — override cả hai để
+    // server marker lookup rơi vào fixture thay vì profile thật của máy.
+    const c2 = new McpClient(
+      fixture2,
+      { ...process.env, HOME: fixture2, USERPROFILE: fixture2 },
+      path.join(binDir, 'wakii-mcp-server')
+    );
     try {
       const init = await c2.request('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 't', version: '0' } }, id);
       assert.equal(init.result.serverInfo.version, '9.9.9', `${label}: got ${init.result.serverInfo.version}`);
