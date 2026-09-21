@@ -73,8 +73,9 @@ function which(bin) {
 function resolveOrca() {
   if (process.env.ORCA_BIN && isExecutable(process.env.ORCA_BIN)) return process.env.ORCA_BIN;
   // Windows: spawn cần file thực thi thật — orca.cmd là shim cmd.exe (Node refuse
-  // spawn .cmd không shell) còn shim bash không extension thì EFTYPE. orca.exe nằm
-  // cạnh shim (xem docs/reference/windows-cmd-shim-resolution.md).
+  // spawn .cmd không shell) còn script shebang không extension thì ENOENT. Ưu tiên
+  // orca.exe cạnh shim (docs/reference/windows-cmd-shim-resolution.md); shim bash
+  // extensionless vẫn hợp lệ nhờ bash-retry của runCommand.
   if (process.platform === 'win32') {
     const exe = which('orca.exe');
     if (exe) return exe;
@@ -83,7 +84,8 @@ function resolveOrca() {
       const sibling = path.join(path.dirname(shim), 'orca.exe');
       if (isExecutable(sibling)) return sibling;
     }
-    return 'orca.exe';
+    const script = which('orca');
+    return script || 'orca.exe';
   }
   const onPath = which('orca');
   if (onPath) return onPath;
@@ -155,7 +157,11 @@ function spawnOnce(cmd, args, opts) {
 
 // Windows không exec được script shebang (EFTYPE) — seam ORCA_BIN vốn nhận
 // "script thực thi", nên retry 1 lần qua bash (cùng pattern với kit bash CLIs).
-const SPAWN_SCRIPT_ERRORS = new Set(['EFTYPE', 'EACCES', 'EINVAL', 'ENOEXEC']);
+// Windows không exec được script shebang: không extension → ENOENT (error event,
+// message chứa path); .sh/.cmd có extension → EFTYPE/EINVAL (sync throw). EACCES/
+// ENOEXEC cho các biến thể. ENOENT cũng là mã "binary không tồn tại" — guard
+// existsSync để không retry bash vô ích cho command thật sự missing.
+const SPAWN_SCRIPT_ERRORS = new Set(['EFTYPE', 'EACCES', 'EINVAL', 'ENOEXEC', 'ENOENT']);
 
 async function runCommand(cmd, args, opts = {}) {
   const direct = await spawnOnce(cmd, args, opts);
@@ -163,7 +169,8 @@ async function runCommand(cmd, args, opts = {}) {
     process.platform === 'win32' &&
     !direct.ok &&
     direct.code === null &&
-    SPAWN_SCRIPT_ERRORS.has((direct.stderr || '').match(/\b(EFTYPE|EACCES|EINVAL|ENOEXEC)\b/)?.[1] || '')
+    fs.existsSync(cmd) &&
+    SPAWN_SCRIPT_ERRORS.has((direct.stderr || '').match(/\b(EFTYPE|EACCES|EINVAL|ENOEXEC|ENOENT)\b/)?.[1] || '')
   ) {
     return spawnOnce('bash', [cmd, ...args], opts);
   }

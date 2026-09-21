@@ -163,12 +163,14 @@ try {
     assert.ok(!out.includes('# Bracket 5'));
   });
 
-  // 6) story_watchdog_status — chạy thật story-resume --check (máy không có sf-* worktree → thông báo, không lỗi)
+  // 6) story_watchdog_status — chạy thật story-resume --check (máy không có sf-* worktree → thông báo, không lỗi).
+  // assert !isError: kết luận "trả text" với isError=true là paper-over spawn bug (bài 2.16.10).
   await checkAsync('story_watchdog_status: chạy story-resume --check, trả text', async () => {
     const res = await client.callTool('story_watchdog_status', {}, 7);
     if (res.error) throw new Error(`JSON-RPC error: ${res.error.message}`);
     assert.equal(typeof textOf(res), 'string');
     assert.ok(textOf(res).length > 0);
+    if (res.result.isError) throw new Error(`isError từ server: ${textOf(res).slice(0, 300)}`);
   });
 
   // 7) story_gate_list — hoặc JSON hoặc lỗi orca lộ ra isError (không crash)
@@ -178,6 +180,32 @@ try {
     const out = textOf(res);
     if (res.result.isError) assert.match(out, /orca/); // lỗi phải nêu rõ lệnh orca
     else JSON.parse(out);
+  });
+
+  // 7b) ORCA_BIN extensionless — kit bins đều không extension; trên win32 spawn
+  // trực tiếp ra ENOENT (không phải EFTYPE) — bài 2.16.10: retry chỉ fire khi
+  // set lỗi đủ và fixture PHẢI extensionless để bắt case production.
+  await checkAsync('ORCA_BIN extensionless: story_task_list qua bash-retry', async () => {
+    const extLog = path.join(fixture, 'argv-ext.log');
+    const extStub = path.join(fixture, 'orca-stub'); // cố ý KHÔNG có extension
+    fs.writeFileSync(
+      extStub,
+      '#!/bin/sh\nprintf \'%s\\n\' "$*" >> "$ARGV_LOG"\nprintf \'{"result": {"items": [], "gates": []}}\'\n',
+      'utf8'
+    );
+    fs.chmodSync(extStub, 0o755);
+    const c3 = new McpClient(fixture, { ...process.env, ORCA_BIN: extStub, ARGV_LOG: extLog });
+    try {
+      const res = await c3.callTool('story_task_list', {}, 30);
+      if (res.error) throw new Error(`JSON-RPC error: ${res.error.message}`);
+      if (res.result.isError) throw new Error(`isError từ server: ${textOf(res).slice(0, 300)}`);
+      JSON.parse(textOf(res));
+      const logged = fs.readFileSync(extLog, 'utf8').trim();
+      assert.match(logged, /orchestration task-list --json$/);
+    } finally {
+      c3.kill();
+      await c3.exit;
+    }
   });
 
   // 8) lỗi tool không được crash server
