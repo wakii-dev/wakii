@@ -248,6 +248,8 @@ export default function MonacoEditor({
           maxTokenizationLineLength: MAX_TOKENIZATION_LINE_LENGTH,
           // Why: only the file editor honors this; Monaco 0.55 DiffEditor hard-overrides minimap.enabled=false on sub-editors (see diffEditorEditors._adjustOptionsForSubEditor).
           minimap: { enabled: settings?.editorMinimapEnabled ?? false },
+          // Why: sticky scroll defaults off (VS Code parity is opt-in here); diff editors pin it separately.
+          stickyScroll: { enabled: settings?.editorStickyScroll ?? false },
           scrollBeyondLastLine: false,
           ...buildFileEditorWordWrapOptions(editorWordWrap),
           fontSize: editorFontSize,
