@@ -25,7 +25,14 @@ vi.mock('electron', () => ({
   app: { getPath: vi.fn(() => tmpdir()), isPackaged: false },
   BrowserWindow: { fromId: vi.fn(() => null), getAllWindows: vi.fn(() => []) },
   ipcMain: { on: vi.fn(), removeListener: vi.fn() },
-  webContents: { fromId: vi.fn(() => null) }
+  webContents: { fromId: vi.fn(() => null) },
+  // Why: the default desktop surface resolves to the electron implementation,
+  // and dispatch() consults isAwayForMobileNotifications on every event.
+  powerMonitor: {
+    getSystemIdleTime: vi.fn(() => 0),
+    getSystemIdleState: vi.fn(() => 'active'),
+    on: vi.fn()
+  }
 }))
 
 const temporaryDirectories: string[] = []
@@ -53,7 +60,13 @@ function fakeResolvedWorktree(id: string, path: string): ResolvedWorktree {
 }
 
 function seedSettledDispatch(db: OrchestrationDb, worktreeId: string | null): string {
-  const task = db.createTask({ spec: 'gate notification' })
+  // Why the run: post-merge task-store requires every task to bind a live run.
+  const run = db.createRun({
+    objective: 'gate notification fixture',
+    coordinatorHandle: 'term_fixture',
+    coordinatorPaneKey: 'tab_fixture:leaf_fixture'
+  })
+  const task = db.createTask({ spec: 'gate notification', runId: run.id })
   const { dispatch } = db.createStartingWorkerDispatch({
     taskId: task.id,
     startOptions: {},
@@ -256,9 +269,8 @@ describe('RuntimeMobileNotificationController dispatchPlugin focus gate', () => 
   it('multi-window: first-non-destroyed window decides focus, documented suppress behavior', async () => {
     // The electron surface scans getAllWindows for the first non-destroyed window, same
     // as the notifications ipc handler. Pin what that means with several windows present.
-    const { electronRuntimeDesktopSurface } = await import(
-      '../host/electron-runtime-desktop-surface'
-    )
+    const { electronRuntimeDesktopSurface } =
+      await import('../host/electron-runtime-desktop-surface')
     setNotificationSettingsSupplier(() => ({ ...defaultSettings, suppressWhenFocused: true }))
     const controller = new RuntimeMobileNotificationController()
     const showCalls: { title: string }[] = []
@@ -287,7 +299,10 @@ describe('RuntimeMobileNotificationController dispatchPlugin focus gate', () => 
       { isDestroyed: () => false, isFocused: () => false, isVisible: () => true } as never,
       { isDestroyed: () => false, isFocused: () => true, isVisible: () => true } as never
     ])
-    const mainUnfocused = await controller.dispatchPlugin({ pluginId: 'ci', title: 'Main unfocused' })
+    const mainUnfocused = await controller.dispatchPlugin({
+      pluginId: 'ci',
+      title: 'Main unfocused'
+    })
     expect(mainUnfocused).toEqual({ delivered: true })
     expect(showCalls).toHaveLength(1)
     expect(showCalls[0]?.title).toBe('ci: Main unfocused')
@@ -349,7 +364,12 @@ describe('wireGateTransitionNotifications', () => {
 
   it('dispatches without routing fields when the gate has no dispatch row', async () => {
     const harness = createWiredHarness()
-    const task = harness.db.createTask({ spec: 'unmapped gate' })
+    const run = harness.db.createRun({
+      objective: 'unmapped gate fixture',
+      coordinatorHandle: 'term_fixture',
+      coordinatorPaneKey: 'tab_fixture:leaf_fixture'
+    })
+    const task = harness.db.createTask({ spec: 'unmapped gate', runId: run.id })
 
     harness.db.createGate({ taskId: task.id, question: 'Unmapped proceed?' })
     await vi.waitFor(() => expect(harness.events).toHaveLength(1))
