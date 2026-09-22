@@ -5362,6 +5362,18 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
           tasks: (b.tasks || []).join(' / ')
         })
       }
+      // Xoá edge A→B = bỏ A khỏi deps của B (bracketApply). deps rỗng → '—'.
+      function edgeRemoveApply(fromId, toId) {
+        var st = document.getElementById('story-status')
+        var b = ((graph && graph.branches) || []).find(x => x.id === toId)
+        if (!b) { if (st) st.textContent = 'edge remove: không tìm thấy ' + toId; return }
+        if ((b.deps || []).indexOf(fromId) < 0) { if (st) st.textContent = toId + ' không có dep ' + fromId; return }
+        bracketApply({
+          id: toId, title: b.title, tier: b.tier || 0,
+          deps: (b.deps || []).filter(d => d !== fromId).join(', '),
+          tasks: (b.tasks || []).join(' / ')
+        })
+      }
       function wireCanvasEvents() {
         if (!cyCanvas) return
         // Edge draft: giữ Shift + kéo từ node A → thả trên node B = thêm dep B←A.
@@ -5381,6 +5393,14 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
           var t = e.target
           if (t && t !== src && t.isNode && t.isNode()) edgeConnectApply(src.id(), t.id())
           else renderGraphStatus()
+        })
+        // Click edge → confirm xoá dep (A→B = A trong Depends on của B)
+        cyCanvas.on('tap', 'edge', function (e) {
+          var a = e.target.source().id()
+          var b = e.target.target().id()
+          if (confirm('Xoá dep ' + a + ' → ' + b + '? (bỏ ' + a + ' khỏi Depends on của ' + b + ' trong bracket file)')) {
+            edgeRemoveApply(a, b)
+          }
         })
       }
       function renderGraphStatus() {
