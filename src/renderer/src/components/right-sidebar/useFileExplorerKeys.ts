@@ -226,6 +226,13 @@ export function useFileExplorerKeys(opts: {
             startRenameRef.current(node)
             return
           }
+          // Why: F2 mirrors Enter's rename; Enter stays hardcoded on purpose (VS Code parity
+          // on rows) while F2 goes through the user-rebindable keybindings system.
+          if (keybindingMatchesAction('fileExplorer.rename', e, platform, keybindings)) {
+            e.preventDefault()
+            startRenameRef.current(node)
+            return
+          }
           const wantsDelete = keybindingMatchesAction(
             'fileExplorer.delete',
             e,
