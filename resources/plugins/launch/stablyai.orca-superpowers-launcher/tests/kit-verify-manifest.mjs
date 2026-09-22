@@ -114,7 +114,8 @@ if (process.platform !== 'win32') {
 }
 
 // Test-coverage ratchet (backlog #6 — baseline đo lại 2.16.4: 22/41 — 2.15/2.16
-// retire 1 bin có harness, đồng thời +2 bin được cover nhờ mcp/preflight tests):
+// retire 1 bin có harness, đồng thời +2 bin được cover nhờ mcp/preflight tests;
+// 2.17.0: 34/47 — story-resume + story-test có harness riêng):
 // số kit bin có harness trong tests/ KHÔNG ĐƯỢC GIẢM. Mỗi kit release thêm
 // tối thiểu 1 harness cho 1 bin chưa cover, đừng big-bang.
 {
@@ -124,7 +125,7 @@ if (process.platform !== 'win32') {
   const testBlob = readdirSync(testsDirRatchet).filter(f => f.endsWith('.mjs'))
     .map(f => readFileSync(join(testsDirRatchet, f), 'utf8')).join('\n')
   const covered = bins.filter(b => testBlob.includes(b)).length
-  ok(`coverage ratchet: ${covered}/${bins.length} bins có harness (>= 22)`, covered >= 22,
+  ok(`coverage ratchet: ${covered}/${bins.length} bins có harness (>= 34)`, covered >= 34,
     `covered=${covered} — không xoá/đổi tên harness existing; bin mới cần harness`)
 }
 
