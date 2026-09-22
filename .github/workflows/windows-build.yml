@@ -1,0 +1,72 @@
+name: Windows build
+
+# Build Wakii for Windows on a GitHub-hosted windows runner and attach the
+# release matching the built version. Unsigned build (no signing secrets).
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Release tag to upload to (default v<package.json version>)
+        required: false
+        type: string
+  push:
+    branches: [wakii-dev]
+    paths:
+      - ".github/workflows/windows-build.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: wakii-dev
+
+      - name: Resolve release tag
+        shell: bash
+        run: |
+          TAG="${{ inputs.release_tag }}"
+          [ -n "$TAG" ] || TAG="v$(node -p "require('./package.json').version")"
+          echo "RELEASE_TAG=$TAG" >> "$GITHUB_ENV"
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Windows app
+        run: pnpm run build:win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Collect artifacts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist/release | Out-Null
+          Get-ChildItem dist -File |
+            Where-Object { $_.Name -match '\.(exe|zip|blockmap)$' -or $_.Name -eq 'latest.yml' } |
+            Copy-Item -Destination dist/release
+
+      - name: Upload to release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd dist/release
+          for f in *; do
+            gh release upload "$RELEASE_TAG" "$f" --repo wakii-dev/wakii --clobber
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wakii-windows
+          path: dist/release

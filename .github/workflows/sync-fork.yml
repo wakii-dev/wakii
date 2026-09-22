@@ -1,0 +1,46 @@
+name: Sync fork with upstream
+
+# main = mirror của stablyai/orca main, TRỪ .github (fork giữ bộ workflow
+# release riêng — GITHUB_TOKEN không được cấp workflows:write nên không thể
+# push file workflow của upstream; và về policy fork cũng không muốn chạy
+# workflow upstream trên main). Force-align thay vì ff-only.
+# Lịch: 00:13 giờ VN hằng ngày (17:13 UTC).
+
+on:
+  schedule:
+    - cron: "13 17 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Force-align main to upstream/main (trừ .github)
+        run: |
+          git config user.email "sync@wakii-dev.local"
+          git config user.name "wakii-dev sync bot"
+          git remote add upstream https://github.com/stablyai/orca.git
+          git fetch upstream main
+          BEHIND=$(git rev-list --count main..upstream/main)
+          echo "main vs upstream/main: behind=$BEHIND"
+          if [ "$BEHIND" -eq 0 ]; then
+            echo "Already up to date."
+            exit 0
+          fi
+          # Tree = upstream chính xác, rồi khôi phục .github của fork
+          # (nguồn .github đúng = nhánh wakii-dev — release-only 7 workflow)
+          git switch -C mirror upstream/main
+          git fetch origin wakii-dev
+          rm -rf .github
+          git checkout FETCH_HEAD -- .github
+          git commit -q -m "sync: upstream/main — mirror trừ .github (giữ workflow release của fork)" --allow-empty
+          git push origin HEAD:main --force
+          echo "synced: main = upstream/main (trừ .github) — $BEHIND commits"

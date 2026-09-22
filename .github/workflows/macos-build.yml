@@ -1,0 +1,88 @@
+name: macOS build
+
+# Build the full macOS DMG (including the computer-use native module) on a
+# GitHub-hosted macOS runner (Xcode 16 available) and attach it to the
+# release matching the built version. Unsigned build (no signing secrets).
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Release tag to upload to (default v<package.json version>)
+        required: false
+        type: string
+  push:
+    branches: [wakii-dev]
+    paths:
+      - ".github/workflows/macos-build.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: wakii-dev
+
+      - name: Resolve release tag
+        run: |
+          TAG="${{ inputs.release_tag }}"
+          [ -n "$TAG" ] || TAG="v$(node -p "require('./package.json').version")"
+          echo "RELEASE_TAG=$TAG" >> "$GITHUB_ENV"
+          echo "RELEASE_VERSION=${TAG#v}" >> "$GITHUB_ENV"
+
+      - name: Select Xcode 16
+        run: |
+          ls /Applications | grep Xcode
+          sudo xcode-select -s /Applications/Xcode.app
+          xcodebuild -version
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        # Why: packaging builds x64 + arm64; plain install is host-CPU-only since upstream #20420
+        run: pnpm install --frozen-lockfile --cpu=current,x64,arm64
+
+      # Full chain — INCLUDING build:computer-macos (needs Swift 6 tools = Xcode 16)
+      - name: Build native helpers + app
+        env:
+          EP_PUBLISH: never # workflow uploads the DMG to the release itself
+        run: |
+          pnpm run build:desktop
+          pnpm run build:computer-macos
+          pnpm run build:keyboard-layout-macos
+          pnpm run build:notification-status-macos
+          pnpm run ensure:electron-runtime
+          node config/scripts/build-mac-local.mjs
+
+      - name: Collect artifacts (arm64 + x64)
+        run: |
+          mkdir -p dist/release
+          mv dist/orca-macos-arm64.dmg "dist/Wakii-$RELEASE_VERSION-arm64.dmg" || true
+          mv dist/orca-macos-x64.dmg "dist/Wakii-$RELEASE_VERSION-x64.dmg" || true
+          for f in dist/Wakii-*.dmg dist/Wakii-*.zip dist/latest-mac.yml; do
+            [ -e "$f" ] && cp "$f" dist/release/
+          done
+          ls -la dist/release/
+
+      - name: Upload to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd dist/release
+          for f in *; do
+            gh release upload "$RELEASE_TAG" "$f" --repo wakii-dev/wakii --clobber
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wakii-macos
+          path: dist/release

@@ -1,0 +1,73 @@
+<svg width="840" height="190" viewBox="0 0 840 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="contributors">
+  <defs>
+    <linearGradient id="xbg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1020"/><stop offset="1" stop-color="#140b26"/>
+    </linearGradient>
+    <filter id="xglow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- HoiVu -->
+  <g>
+    <rect x="2" y="2" width="200" height="184" rx="12" fill="url(#xbg)" stroke="#7c6cf055" stroke-width="1.5"/>
+    <circle cx="102" cy="52" r="24" fill="#111834" stroke="#f0abfc" stroke-width="2" filter="url(#xglow)"/>
+    <text x="102" y="61" text-anchor="middle" font-size="24">🧑‍💻</text>
+    <text x="102" y="106" text-anchor="middle" font-family="Menlo, monospace" font-size="15" font-weight="700" fill="#e2e8f0">HoiVu</text>
+    <text x="102" y="126" text-anchor="middle" font-family="Menlo, monospace" font-size="10.5" fill="#94a3b8">author · product owner</text>
+    <text x="102" y="142" text-anchor="middle" font-family="Menlo, monospace" font-size="10.5" fill="#64748b">specs · judgment · ships</text>
+    <circle cx="66" cy="164" r="4" fill="#34d399">
+      <animate attributeName="opacity" values="1;0.3;1" dur="1.6s" repeatCount="indefinite"/>
+    </circle>
+    <text x="76" y="168" font-family="Menlo, monospace" font-size="10.5" fill="#34d399">approving</text>
+  </g>
+
+  <!-- Claude -->
+  <g>
+    <rect x="214" y="2" width="200" height="184" rx="12" fill="url(#xbg)" stroke="#d9775799" stroke-width="1.5"/>
+    <circle cx="314" cy="52" r="24" fill="#111834" stroke="#d97757" stroke-width="2" filter="url(#xglow)">
+      <animate attributeName="stroke" values="#d97757;#f0abfc;#d97757" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <text x="314" y="61" text-anchor="middle" font-size="24">🤖</text>
+    <text x="314" y="106" text-anchor="middle" font-family="Menlo, monospace" font-size="15" font-weight="700" fill="#e2e8f0">Claude</text>
+    <text x="314" y="126" text-anchor="middle" font-family="Menlo, monospace" font-size="10.5" fill="#94a3b8">Anthropic · AI agent</text>
+    <text x="314" y="142" text-anchor="middle" font-family="Menlo, monospace" font-size="10.5" fill="#64748b">long-haul builds</text>
+    <circle cx="278" cy="164" r="4" fill="#fbbf24">
+      <animate attributeName="opacity" values="1;0.3;1" dur="1.2s" repeatCount="indefinite"/>
+    </circle>
+    <text x="288" y="168" font-family="Menlo, monospace" font-size="10.5" fill="#fbbf24">typing</text>
+  </g>
+
+  <!-- Kiro -->
+  <g>
+    <rect x="426" y="2" width="200" height="184" rx="12" fill="url(#xbg)" stroke="#67e8f966" stroke-width="1.5"/>
+    <circle cx="526" cy="52" r="24" fill="#111834" stroke="#67e8f9" stroke-width="2" filter="url(#xglow)">
+      <animate attributeName="stroke" values="#67e8f9;#a78bfa;#67e8f9" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <text x="526" y="61" text-anchor="middle" font-size="24">🛠️</text>
+    <text x="526" y="106" text-anchor="middle" font-family="Menlo, monospace" font-size="15" font-weight="700" fill="#e2e8f0">Kiro</text>
+    <text x="526" y="126" text-anchor="middle" font-family="Menlo, monospace" font-size="10.5" fill="#94a3b8">AWS · AI agent</text>
+    <text x="526" y="142" text-anchor="middle" font-family="Menlo, monospace" font-size="10.5" fill="#64748b">spec-driven sidekick</text>
+    <circle cx="490" cy="164" r="4" fill="#34d399">
+      <animate attributeName="opacity" values="1;0.3;1" dur="1.9s" repeatCount="indefinite"/>
+    </circle>
+    <text x="500" y="168" font-family="Menlo, monospace" font-size="10.5" fill="#34d399">on deck</text>
+  </g>
+
+  <!-- Upstream -->
+  <g>
+    <rect x="638" y="2" width="200" height="184" rx="12" fill="url(#xbg)" stroke="#58a6ff66" stroke-width="1.5"/>
+    <circle cx="738" cy="52" r="24" fill="#111834" stroke="#58a6ff" stroke-width="2" filter="url(#xglow)"/>
+    <text x="738" y="61" text-anchor="middle" font-size="24">🌊</text>
+    <text x="738" y="106" text-anchor="middle" font-family="Menlo, monospace" font-size="15" font-weight="700" fill="#e2e8f0">stablyai/orca</text>
+    <text x="738" y="126" text-anchor="middle" font-family="Menlo, monospace" font-size="10.5" fill="#94a3b8">upstream · MIT</text>
+    <text x="738" y="142" text-anchor="middle" font-family="Menlo, monospace" font-size="10.5" fill="#64748b">the base we build on</text>
+    <a href="https://github.com/stablyai/orca/graphs/contributors">
+      <circle cx="702" cy="164" r="4" fill="#58a6ff">
+        <animate attributeName="opacity" values="1;0.3;1" dur="2.2s" repeatCount="indefinite"/>
+      </circle>
+      <text x="712" y="168" font-family="Menlo, monospace" font-size="10.5" fill="#58a6ff">contribs →</text>
+    </a>
+  </g>
+</svg>
