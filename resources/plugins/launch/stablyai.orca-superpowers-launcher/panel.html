@@ -5342,7 +5342,51 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
         }
         return false
       }
-      function wireCanvasEvents() {} // wired ở edge-connect/remove + dblclick tasks
+      // Kéo edge A→B = B thêm dep A (ghi bracket qua bracketApply). Chặn cycle
+      // TRƯỚC khi apply: thêm A vào deps của B không được tạo đường B→…→A.
+      function edgeConnectApply(fromId, toId) {
+        var st = document.getElementById('story-status')
+        var b = ((graph && graph.branches) || []).find(x => x.id === toId)
+        if (!b) { if (st) st.textContent = 'edge: không tìm thấy ' + toId; return }
+        if ((b.deps || []).indexOf(fromId) >= 0) { if (st) st.textContent = toId + ' đã có dep ' + fromId + ' — không thêm trùng'; return }
+        var depsMap = {}
+        ;(graph.branches || []).forEach(x => { depsMap[x.id] = (x.deps || []).slice() })
+        depsMap[toId] = (depsMap[toId] || []).concat([fromId])
+        if (dfsCheck(depsMap, toId, fromId)) {
+          if (st) st.textContent = '⛔ chặn cycle: ' + fromId + ' → ' + toId + ' tạo vòng (' + toId + ' đã phụ thuộc ' + fromId + ', trực tiếp hoặc gián tiếp)'
+          return
+        }
+        bracketApply({
+          id: toId, title: b.title, tier: b.tier || 0,
+          deps: (b.deps || []).concat([fromId]).join(', '),
+          tasks: (b.tasks || []).join(' / ')
+        })
+      }
+      function wireCanvasEvents() {
+        if (!cyCanvas) return
+        // Edge draft: giữ Shift + kéo từ node A → thả trên node B = thêm dep B←A.
+        // Trong lúc Shift held, node ungrabify (đặt ở keydown/keyup Shift dưới) —
+        // kéo không di chuyển node.
+        var draft = null
+        cyCanvas.on('tapstart', 'node', function (e) {
+          if (!e.originalEvent || !e.originalEvent.shiftKey) return
+          draft = { src: e.target }
+          var st = document.getElementById('story-status')
+          if (st) st.textContent = 'edge draft từ ' + e.target.id() + ' — thả lên node đích để thêm dep (thả nền = huỷ)'
+        })
+        cyCanvas.on('tapend', function (e) {
+          if (!draft) return
+          var src = draft.src
+          draft = null
+          var t = e.target
+          if (t && t !== src && t.isNode && t.isNode()) edgeConnectApply(src.id(), t.id())
+          else renderGraphStatus()
+        })
+      }
+      function renderGraphStatus() {
+        var st = document.getElementById('story-status')
+        if (st) st.textContent = 'Canvas mode — kéo node = view-only · Shift+kéo node→node = thêm dep · click edge = xoá dep · double-click nền = thêm SF'
+      }
       function mountCanvas() {
         var svg = document.getElementById('story-svg')
         var ph = document.getElementById('story-placeholder')
@@ -6215,6 +6259,13 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
       // ---- Bracket mode toggle: [Tier] [Canvas] segmented ----
       document.getElementById('bracket-mode-tier').addEventListener('click', () => setBracketMode('tier'))
       document.getElementById('bracket-mode-canvas').addEventListener('click', () => setBracketMode('canvas'))
+      // Shift held → node không grab: Shift+kéo từ node = edge draft, không lỡ kéo dời node
+      document.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Shift' && bracketMode === 'canvas' && cyCanvas) cyCanvas.nodes().ungrabify()
+      })
+      document.addEventListener('keyup', function (ev) {
+        if (ev.key === 'Shift' && bracketMode === 'canvas' && cyCanvas) cyCanvas.nodes().grabify()
+      })
 
       // Agent activity + progress: worker story.tasks (terminal titles + plan
       // checkbox scan per SF worktree — chỉ worker scan được nhiều worktree).
