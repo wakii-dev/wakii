@@ -128,8 +128,35 @@ describe('the page routes a manifest declares', () => {
   })
 
   it('refuses a grant name that is not one', () => {
+    // One segment under `native` is not a verb: the namespace is `native.<domain>.<action>`, and
+    // anything shorter is a plain name wearing a dot.
     expect(withRoutes([{ pathname: '/h', grants: ['native.navigate'] }])).toBe(false)
     expect(withRoutes([{ pathname: '/h', grants: [''] }])).toBe(false)
+    for (const grant of ['navigate.', '.native', 'native..read', 'Native.Clipboard.Read', 'a.b']) {
+      expect(withRoutes([{ pathname: '/h', grants: [grant] }]), grant).toBe(false)
+    }
+  })
+
+  it('takes a native verb, which a route must be able to declare to ever be granted one', () => {
+    // Without this no manifest can name a verb, and with per-route grants that leaves every native
+    // verb unreachable for every route.
+    for (const grant of [
+      'native.clipboard.write',
+      'native.clipboard.read',
+      'native.file.pick',
+      'native.a.b.c'
+    ]) {
+      expect(withRoutes([{ pathname: '/h', grants: [grant] }]), grant).toBe(true)
+    }
+  })
+
+  /** The first plain grant added since this pattern was written, and the reason its name has no
+   *  dot: one segment under `native` is refused as a malformed verb, so a capability that is not a
+   *  verb has to be a single token. */
+  it('takes the binary screencast lane, and refuses the spelling that looks like a verb', () => {
+    expect(withRoutes([{ pathname: '/h', grants: ['screencastBinary'] }])).toBe(true)
+    expect(withRoutes([{ pathname: '/h', grants: ['native.screencast'] }])).toBe(false)
+    expect(withRoutes([{ pathname: '/h', grants: ['browser.screencast'] }])).toBe(false)
   })
 
   it('refuses a route carrying a field the contract does not declare', () => {

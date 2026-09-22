@@ -13,6 +13,7 @@ type Props = {
   hostId?: string
   existingWorktreePaths?: readonly string[]
   existingWorktrees?: readonly { repoId: string; branch: string }[]
+  openExternalUrl: (url: string) => void
   onVisibleChange?: (visible: boolean) => void
   onRouteVisibleChange: (visible: boolean) => void
   onCreated: (worktreeId: string, name: string) => void

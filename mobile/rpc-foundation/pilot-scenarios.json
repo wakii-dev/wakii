@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "baseline": "47d24d324ef5b2c9c985fb83f355414c93e1d46d",
+  "baseline": "0b1567a7b1adde0260598426730a38fe99f78852",
   "scenarios": [
     {
       "id": "b1",
@@ -15139,7 +15139,7 @@
         {
           "complete": "speech.dictation.start#1",
           "params": {
-            "dictationId": "mobile-dictation-1767225600000-dakoxjr8wun"
+            "dictationId": "mobile-dictation-1767225600000-8ig2henseon"
           },
           "reply": {
             "ok": true,
@@ -15155,7 +15155,7 @@
         {
           "complete": "speech.dictation.finish#1",
           "params": {
-            "dictationId": "mobile-dictation-1767225600000-dakoxjr8wun"
+            "dictationId": "mobile-dictation-1767225600000-8ig2henseon"
           },
           "reply": {
             "ok": true,
@@ -15190,7 +15190,7 @@
         {
           "complete": "speech.dictation.start#1",
           "params": {
-            "dictationId": "mobile-dictation-1767225600000-dakoxjr8wun"
+            "dictationId": "mobile-dictation-1767225600000-8ig2henseon"
           },
           "reply": {
             "ok": true,
@@ -15206,7 +15206,7 @@
         {
           "complete": "speech.dictation.cancel#1",
           "params": {
-            "dictationId": "mobile-dictation-1767225600000-dakoxjr8wun"
+            "dictationId": "mobile-dictation-1767225600000-8ig2henseon"
           },
           "reply": {
             "ok": true,
@@ -16472,7 +16472,7 @@
           "complete": "terminal.send#1",
           "params": {
             "terminal": "terminal-1",
-            "text": "\u001b[200~/tmp/img.png\u001b[201~ ",
+            "text": "\u001b[200~@/tmp/img.png\u001b[201~ ",
             "enter": false,
             "client": {
               "id": "device-token-1",
@@ -16626,7 +16626,7 @@
           "complete": "terminal.send#1",
           "params": {
             "terminal": "terminal-1",
-            "text": "\u001b[200~/tmp/img.png\u001b[201~ ",
+            "text": "\u001b[200~@/tmp/img.png\u001b[201~ ",
             "enter": false
           },
           "reply": {
@@ -16681,7 +16681,7 @@
           "complete": "terminal.send#2",
           "params": {
             "terminal": "terminal-1",
-            "text": "\u001b[200~/tmp/a.png\u001b[201~ ",
+            "text": "\u001b[200~@/tmp/a.png\u001b[201~ ",
             "enter": false,
             "client": {
               "id": "device-token-1",
@@ -16740,7 +16740,7 @@
           "complete": "terminal.send#2",
           "params": {
             "terminal": "terminal-1",
-            "text": "\u001b[200~/tmp/a.png\u001b[201~",
+            "text": "\u001b[200~@/tmp/a.png\u001b[201~ ",
             "enter": false,
             "client": {
               "id": "device-token-1",
@@ -16760,7 +16760,7 @@
           "complete": "terminal.send#3",
           "params": {
             "terminal": "terminal-1",
-            "text": "\u001b[200~/tmp/b.png\u001b[201~ ",
+            "text": "\u001b[200~@/tmp/b.png\u001b[201~ ",
             "enter": false,
             "client": {
               "id": "device-token-1",
@@ -16819,7 +16819,7 @@
           "complete": "terminal.send#2",
           "params": {
             "terminal": "terminal-1",
-            "text": "\u001b[200~/tmp/a.png\u001b[201~",
+            "text": "\u001b[200~@/tmp/a.png\u001b[201~ ",
             "enter": false,
             "client": {
               "id": "device-token-1",
@@ -16878,7 +16878,7 @@
           "complete": "terminal.send#2",
           "params": {
             "terminal": "terminal-1",
-            "text": "\u001b[200~/tmp/a.png\u001b[201~",
+            "text": "\u001b[200~@/tmp/a.png\u001b[201~",
             "enter": false,
             "client": {
               "id": "device-token-1",

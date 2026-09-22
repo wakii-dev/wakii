@@ -58,9 +58,11 @@ export const BRIDGE_MAX_ROUTE_PARAM_CHARS = 1024
  * Which is why the dot-segment lookahead ends a segment at `?` as well as at `/` and at the end of
  * the string. A pathname carries no query, but an href does, so `/h/..?x` reaches the shared rule.
  * The harm there is not the climb `replaceState` performs on the pathname: the href's sink is the
- * native router, which resolves a dot segment only for an href beginning with `.` and otherwise
- * matches segments literally, so `..` is taken as a value for `[hostId]` and the shell opens a host
- * screen for an id no host has. Different screen, same reason to refuse it.
+ * native router, and `getStateFromPath` resolves it through `new URL(href, 'file:')` — in
+ * `getUrlWithReactNavigationConcessions`, before `cleanPath` ever sees it — so `/h/..?x` normalizes
+ * to `/` and opens the app's root screen, outside the `/h/` prefix entirely. Measured at
+ * expo-router 55.0.18; `resolveHrefStringWithSegments` leaves a rooted href alone, which is the
+ * half that looks like literal matching. Different screen, same reason to refuse it.
  *
  * Widening the boundary cannot loosen the pathname pattern, where a `?` fails the character class
  * wherever it appears.
@@ -75,14 +77,76 @@ export const BRIDGE_ROUTE_PATHNAME_PATTERN = new RegExp(`^${ROUTE_PATH_SOURCE}$`
 /** A `navigate` target: the same path, plus the query the screen is opened with. Still no
  *  fragment — the shell matches on a pathname, and a `#` is the page's own business.
  *
- *  Shape only. Whether the target names a screen the app actually has is a different question and
- *  a later one: with no `+not-found` file, expo-router's Unmatched paints over the shell for a
- *  well-formed path nobody routes. C1.7 owns that check. */
+ *  Shape only. Whether the target names a screen the app actually has is a different question, and
+ *  C8's `app/h/[hostId]/[...page].tsx` answers it for this prefix: a well-formed `/h/<id>/…` path
+ *  nobody routes reaches the catch-all, which hands it to the manifest and paints a readable
+ *  refusal rather than expo-router's Unmatched. A target outside `/h/` still reaches Unmatched. */
 export const BRIDGE_ROUTE_HREF_PATTERN = new RegExp(
   String.raw`^${ROUTE_PATH_SOURCE}(?:\?[^#\s]*)?$`
 )
 export const BRIDGE_MAX_ROUTE_HREF_CHARS = 2048
+
+/**
+ * The schemes a page may ask the shell to open in the system browser, and the only three.
+ *
+ * `https:` and `http:` are what every provider's task source is, and `mailto:` is what a review
+ * thread produces. Everything else — `javascript:`, `data:`, `file:`, `intent:`, the shell's own
+ * `orca-mobile-web:` — is a way to reach something the page was never granted, so the list is
+ * closed. Broad inside it on purpose: any host and any path, because a grant that named GitHub
+ * would have to grow a row per provider.
+ */
+export const BRIDGE_EXTERNAL_LINK_SCHEMES: readonly string[] = ['https:', 'http:', 'mailto:']
+
+/** The same bound a route href gets: one cap for every URL that crosses, in either direction. */
+export const BRIDGE_MAX_EXTERNAL_LINK_CHARS = BRIDGE_MAX_ROUTE_HREF_CHARS
+
+/**
+ * The URL the shell will open, as the parser reads it, or null when it is not one the grant covers.
+ *
+ * Parsed rather than prefix-matched, because a scheme is what a URL parser says it is and
+ * `startsWith('https:')` reads one out of `javascript:alert("https://x")`. `URL` with no base
+ * accepts only an absolute URL, which is the rest of the rule: a relative target is a route, and
+ * routes go back over `navigate`.
+ *
+ * The parsed href is what callers forward, never the string they were handed. The WHATWG parser
+ * strips tab, LF and CR from anywhere and trims leading C0 and space before it reads the scheme, so
+ * `ht\ntps://example.com` and `https:example.com` pass this check and are not what a device handler
+ * should be given. Normalizing is the fix and comparing is not: `https://example.com` differs from
+ * its own href by a path slash, so refusing what differs would refuse an ordinary URL.
+ */
+export function readBridgeExternalLinkUrl(url: string): string | null {
+  // The raw string first, so a hostile one is refused without being parsed. The normalized form is
+  // bounded too, below: percent-encoding expands, so a string inside the cap can leave it.
+  if (url.length > BRIDGE_MAX_EXTERNAL_LINK_CHARS) {
+    return null
+  }
+  let parsed: URL
+  try {
+    parsed = new URL(url)
+  } catch {
+    return null
+  }
+  if (!BRIDGE_EXTERNAL_LINK_SCHEMES.includes(parsed.protocol)) {
+    return null
+  }
+  return parsed.href.length > BRIDGE_MAX_EXTERNAL_LINK_CHARS ? null : parsed.href
+}
+
+/** Whether the shell will open this URL at all. The envelope's refine; the value is read above. */
+export function isBridgeExternalLinkUrl(url: string): boolean {
+  return readBridgeExternalLinkUrl(url) !== null
+}
 export const BRIDGE_MAX_PAGE_ROUTES = 64
+
+/**
+ * What a page may say it can be sent, bounded the way every other list on the envelope is.
+ *
+ * A frame bound and not a vocabulary: the shell acts on the names it knows and ignores the rest,
+ * which is what lets a newer page declare one an older shell has never heard of.
+ */
+export const BRIDGE_MAX_PAGE_ACCEPTS = 16
+export const BRIDGE_MAX_PAGE_ACCEPT_CHARS = 64
+
 /** A host id, its name and its endpoint. Bounded because the page renders all three. */
 export const BRIDGE_MAX_HOST_FIELD_CHARS = 1024
 
@@ -207,13 +271,25 @@ function inspectDocument(root: unknown): DocumentRefusal | null {
 }
 
 /**
+ * Whether a frame this long is one the reader on the other side will accept.
+ *
+ * The receiving half of the bridge drops an oversized frame and answers nothing, so a sender that
+ * posts one leaves its caller waiting for a reply that cannot come. Exported so the sender can
+ * refuse in advance under the receiver's own predicate rather than a second spelling of it.
+ *
+ * A code unit never encodes to fewer than one byte, so a string longer than the cap in units is
+ * over it in bytes too: the hostile case is refused without walking it.
+ */
+export function isBridgeFrameWithinCap(raw: string): boolean {
+  return raw.length <= BRIDGE_MAX_MESSAGE_BYTES && utf8ByteLength(raw) <= BRIDGE_MAX_MESSAGE_BYTES
+}
+
+/**
  * Parses a frame far enough to hand it to a schema, and no further. `direction` has no default: a
  * new call site has to say which bounds it is asking for.
  */
 export function parseBridgeMessage(raw: string, direction: BridgeDirection): BridgeRead<unknown> {
-  // A code unit never encodes to fewer than one byte, so a string longer than the cap in units is
-  // over it in bytes too: the hostile case is refused without walking it.
-  if (raw.length > BRIDGE_MAX_MESSAGE_BYTES || utf8ByteLength(raw) > BRIDGE_MAX_MESSAGE_BYTES) {
+  if (!isBridgeFrameWithinCap(raw)) {
     return { ok: false, refusal: 'oversized' }
   }
   let parsed: unknown
