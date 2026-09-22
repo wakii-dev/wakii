@@ -107,6 +107,15 @@
   --color-workspace-status-done: var(--workspace-status-done);
   --color-workspace-status-review: var(--workspace-status-review);
   --color-workspace-status-progress: var(--workspace-status-progress);
+  --color-file-icon-code-ts-js: var(--file-icon-code-ts-js);
+  --color-file-icon-code: var(--file-icon-code);
+  --color-file-icon-data-config: var(--file-icon-data-config);
+  --color-file-icon-markup-doc: var(--file-icon-markup-doc);
+  --color-file-icon-web-style: var(--file-icon-web-style);
+  --color-file-icon-shell: var(--file-icon-shell);
+  --color-file-icon-binary-build: var(--file-icon-binary-build);
+  --color-file-icon-asset: var(--file-icon-asset);
+  --color-file-icon-name-based: var(--file-icon-name-based);
   --color-tab-group-split-divider: var(--tab-group-split-divider);
   --color-tab-group-split-divider-strong: var(--tab-group-split-divider-strong);
   --color-git-graph-ref: var(--git-graph-ref);
@@ -190,6 +199,19 @@
   --workspace-status-done: #c7a594;
   --workspace-status-review: #16a34a;
   --workspace-status-progress: #d4a300;
+  /* File-type icon groups (spec FI-28 C2). Light ratios vs #ffffff (floor incl.
+     #fafafa sidebar ≥3:1): ts-js 5.17 · code 3.74 · data-config 3.19 ·
+     markup-doc 5.70 · web-style 4.60 · shell 5.02 · binary-build 4.99 ·
+     asset 6.32 · name-based 4.83. */
+  --file-icon-code-ts-js: #2563eb;
+  --file-icon-code: #0d9488;
+  --file-icon-data-config: #d97706;
+  --file-icon-markup-doc: #7c3aed;
+  --file-icon-web-style: #db2777;
+  --file-icon-shell: #15803d;
+  --file-icon-binary-build: #4d7c0f;
+  --file-icon-asset: #a21caf;
+  --file-icon-name-based: #dc2626;
   --chart-1: var(--color-blue-300);
   --chart-2: var(--color-blue-500);
   --chart-3: var(--color-blue-600);
@@ -302,6 +324,19 @@
   --workspace-status-done: #c7a594;
   --workspace-status-review: #16a34a;
   --workspace-status-progress: #d4a300;
+  /* File-type icon groups — dark ratios vs #171717 card (floor; #0a0a0a canvas
+     and #262626 panels higher): ts-js 7.05 · code 9.63 · data-config 10.74 ·
+     markup-doc 6.59 · web-style 6.77 · shell 10.80 · binary-build 11.88 ·
+     asset 7.29 · name-based 6.48. */
+  --file-icon-code-ts-js: #60a5fa;
+  --file-icon-code: #2dd4bf;
+  --file-icon-data-config: #fbbf24;
+  --file-icon-markup-doc: #a78bfa;
+  --file-icon-web-style: #f472b6;
+  --file-icon-shell: #4ade80;
+  --file-icon-binary-build: #a3e635;
+  --file-icon-asset: #e879f9;
+  --file-icon-name-based: #f87171;
   --chart-1: var(--color-blue-300);
   --chart-2: var(--color-blue-500);
   --chart-3: var(--color-blue-600);
