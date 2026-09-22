@@ -2,7 +2,7 @@ import { createElement, memo } from 'react'
 import { ChevronDown, Folder, FolderOpen } from 'lucide-react'
 import { STATUS_COLORS, STATUS_LABELS } from '@/components/right-sidebar/status-display'
 import type { SourceControlTreeNode } from '@/components/right-sidebar/source-control-tree'
-import { getFileTypeIcon } from '@/lib/file-type-icons'
+import { FILE_ICON_COLOR_CLASS, getFileTypeIcon, getFileTypeIconColor } from '@/lib/file-type-icons'
 import { basename, dirname, joinPath } from '@/lib/path'
 import { cn } from '@/lib/utils'
 import { WORKSPACE_FILE_PATH_MIME } from '@/lib/workspace-file-drag'
@@ -96,6 +96,7 @@ export const CombinedDiffFileTreeRow = memo(function CombinedDiffFileTreeRow({
 
   const sectionKey = getCombinedDiffFileTreeSectionKey(mode, node.entry)
   const FileIcon = getFileTypeIcon(node.entry.path)
+  const iconColorGroup = getFileTypeIconColor(node.entry.path)
   const fileName = basename(node.entry.path)
   const parentDir = dirname(node.entry.path)
   const dirPath = parentDir === '.' ? '' : parentDir
@@ -130,9 +131,12 @@ export const CombinedDiffFileTreeRow = memo(function CombinedDiffFileTreeRow({
       }}
       onClick={() => onNavigate(node.entry)}
     >
+      {/* Why: icon carries the file-type color; git status color stays on the badge below (C4). */}
       {createElement(FileIcon, {
-        className: 'size-3.5 shrink-0',
-        style: { color: STATUS_COLORS[status] }
+        className: cn(
+          'size-3.5 shrink-0',
+          iconColorGroup ? FILE_ICON_COLOR_CLASS[iconColorGroup] : 'text-muted-foreground'
+        )
       })}
       <span className="min-w-0 flex-1 truncate">
         <span className="text-foreground">{fileName}</span>

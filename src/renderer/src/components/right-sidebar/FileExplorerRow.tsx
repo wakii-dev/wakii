@@ -2,7 +2,7 @@ import React from 'react'
 import { ChevronRight, CircleSlash, Folder, FolderOpen, Link, Loader2 } from 'lucide-react'
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu'
 import { cn } from '@/lib/utils'
-import { getFileTypeIcon } from '@/lib/file-type-icons'
+import { FILE_ICON_COLOR_CLASS, getFileTypeIcon, getFileTypeIconColor } from '@/lib/file-type-icons'
 import {
   encodeWorkspaceFilePaths,
   WORKSPACE_FILE_PATH_MIME,
@@ -110,6 +110,7 @@ export function FileExplorerRow({
   onNativeDragExpandDir
 }: FileExplorerRowProps): React.JSX.Element {
   const FileIcon = getFileTypeIcon(node.relativePath || node.name)
+  const iconColorGroup = getFileTypeIconColor(node.relativePath || node.name)
   const rowDropDir = node.isDirectory ? node.path : targetDir
   const { setRowDragNode, handleDragOver, handleDragEnter, handleDragLeave, handleDrop } =
     useFileExplorerRowDrag({
@@ -209,7 +210,12 @@ export function FileExplorerRow({
                 <Link className="size-3 shrink-0 text-muted-foreground" />
               ) : (
                 React.createElement(FileIcon, {
-                  className: 'size-3 shrink-0 text-muted-foreground'
+                  className: cn(
+                    'size-3 shrink-0',
+                    iconColorGroup
+                      ? FILE_ICON_COLOR_CLASS[iconColorGroup]
+                      : 'text-muted-foreground'
+                  )
                 })
               )}
             </>
