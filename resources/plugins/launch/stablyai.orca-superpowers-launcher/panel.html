@@ -5395,13 +5395,22 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
           if (t && t !== src && t.isNode && t.isNode()) edgeConnectApply(src.id(), t.id())
           else renderGraphStatus()
         })
-        // Click edge → confirm xoá dep (A→B = A trong Depends on của B)
+        // Click edge → two-tap confirm xoá dep (A→B = A trong Depends on của B).
+        // KHÔNG dùng confirm(): sandbox iframe (allow-scripts, không allow-modals)
+        // khiến nó trả false im lặng — CDP-proven. Tap 1 đánh dấu, tap 2 trong 3s xoá.
+        var pendingEdgeDelete = null
         cyCanvas.on('tap', 'edge', function (e) {
           var a = e.target.source().id()
           var b = e.target.target().id()
-          if (confirm('Xoá dep ' + a + ' → ' + b + '? (bỏ ' + a + ' khỏi Depends on của ' + b + ' trong bracket file)')) {
+          var now = Date.now()
+          if (pendingEdgeDelete && pendingEdgeDelete.a === a && pendingEdgeDelete.b === b && now - pendingEdgeDelete.at < 3000) {
+            pendingEdgeDelete = null
             edgeRemoveApply(a, b)
+            return
           }
+          pendingEdgeDelete = { a: a, b: b, at: now }
+          var st = document.getElementById('story-status')
+          if (st) st.textContent = 'edge ' + a + ' → ' + b + ' — tap LẠI edge trong 3s để xoá dep ' + a + ' khỏi ' + b
         })
         // Double-click nền trống → node editor (tái dùng openNodeEditor(null);
         // save qua bracketApply → saveBracketMd → renderGraph → canvas re-mount)
@@ -5425,7 +5434,7 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
       }
       function renderGraphStatus() {
         var st = document.getElementById('story-status')
-        if (st) st.textContent = 'Canvas mode — kéo node = view-only · Shift+kéo node→node = thêm dep · click edge = xoá dep · double-click nền = thêm SF'
+        if (st) st.textContent = 'Canvas mode — kéo node = view-only · Shift+kéo node→node = thêm dep · tap edge 2 lần = xoá dep · double-click nền = thêm SF'
       }
       function mountCanvas() {
         var svg = document.getElementById('story-svg')
@@ -5480,7 +5489,7 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
           if (graph && graph.branches && graph.branches.length) mountCanvas()
           else unmountCanvas()
           if (st && graph && graph.branches && graph.branches.length) {
-            st.textContent = 'Canvas mode — kéo node = view-only · Shift+kéo node→node = thêm dep · click edge = xoá dep · double-click nền = thêm SF'
+            st.textContent = 'Canvas mode — kéo node = view-only · Shift+kéo node→node = thêm dep · tap edge 2 lần = xoá dep · double-click nền = thêm SF'
           }
         } else {
           unmountCanvas()
@@ -5492,11 +5501,36 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
       // Single render entry — mọi đường parse xong (loadBracketFromFile,
       // saveBracketMd, loadStory) đi qua đây để mode-aware: canvas → re-mount,
       // tier → renderBracket như cũ. graph.branches luôn cập nhật (edge editing
-      // đọc từ đây).
+      // đọc từ đây). curBracket cũng sync TRƯỚC khi rẽ nhánh mode — canvas path
+      // không set nó, thiếu sync này toggle về Tier hiện bracket CŨ (review P1-1).
       function renderGraph(branches, storyMeta) {
         if (graph) graph.branches = branches
+        if (curBracket) curBracket.branches = branches
+        else curBracket = { branches: branches, story: storyMeta, file: graph && graph.bracketFile }
         if (bracketMode === 'canvas' && window.cytoscape) mountCanvas()
         else renderBracket(branches, storyMeta)
+      }
+      // In-panel confirm thay window.confirm — sandbox iframe (allow-scripts,
+      // không allow-modals) làm confirm() trả false IM LẶNG (CDP-proven), mọi
+      // hành vi chạy qua nó chết ngầm. Pattern: DOM form trong #story-inspector
+      // như node editor. onOk chạy khi user bấm Đồng ý.
+      function inPanelConfirm(message, onOk) {
+        var el = document.getElementById('story-inspector')
+        if (!el) { return }
+        el.style.display = ''
+        el.innerHTML = '<div style="font-size:11px; margin-bottom:8px;">' + esc(message) + '</div>' +
+          '<div style="display:flex; gap:6px;">' +
+          '<button id="ipc-ok" style="padding:4px 12px; border:1px solid #ef4444; border-radius:6px; background:transparent; color:#ef4444; font-size:11px; font-weight:600; cursor:pointer;">Đồng ý</button>' +
+          '<button id="ipc-cancel" class="btn secondary" style="padding:4px 12px; font-size:11px;">Huỷ</button></div>'
+        document.getElementById('ipc-ok').addEventListener('click', function () {
+          el.style.display = 'none'
+          onOk()
+        })
+        document.getElementById('ipc-cancel').addEventListener('click', function () {
+          // canvas: canvas đang đúng — chỉ ẩn panel; tier: re-render như cancel node editor
+          el.style.display = 'none'
+          if (bracketMode !== 'canvas' && curBracket) renderGraph(curBracket.branches, curBracket.story)
+        })
       }
       // Layout constants — mỗi tier tự tính width riêng nên node KHÔNG BAO GIỜ
       // đè nhau (spacing = NODE_W + GAP_X >= NODE_W luôn luôn).
@@ -5685,9 +5719,9 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
             var p0 = curBranchPos(id)
             var newTier = Math.max(0, Math.round((p0.y - ORIGIN_H) / COL_H))
             if (newTier !== (b.tier || 0)) {
-              if (confirm(b.id + ' → tier ' + newTier + '? (ghi vào bracket file)')) {
+              inPanelConfirm(b.id + ' → tier ' + newTier + '? (ghi vào bracket file)', function () {
                 openNodeEditor(b, String(newTier))
-              }
+              })
             }
             // re-render để vị trí + edge khớp offset mới
             if (curBracket) renderBracket(curBracket.branches, curBracket.story)
@@ -5789,7 +5823,7 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
         if (eb) eb.addEventListener('click', () => openNodeEditor(item))
         var db = document.getElementById('insp-del')
         if (db) db.addEventListener('click', () => {
-          if (confirm('Xoá ' + item.id + ' khỏi bracket file?')) bracketDeleteNode(item.id)
+          inPanelConfirm('Xoá ' + item.id + ' khỏi bracket file?', function () { bracketDeleteNode(item.id) })
         })
       }
 
@@ -5889,7 +5923,9 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
           })
         })
         document.getElementById('ne-cancel').addEventListener('click', () => {
-          if (curBracket) renderBracket(curBracket.branches, curBracket.story)
+          // mode-aware: canvas chỉ ẩn panel (cy canvas đang đúng), tier re-render
+          document.getElementById('story-inspector').style.display = 'none'
+          if (bracketMode !== 'canvas' && curBracket) renderGraph(curBracket.branches, curBracket.story)
         })
         document.getElementById('ne-title').focus()
       }
