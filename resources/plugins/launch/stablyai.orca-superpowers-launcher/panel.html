@@ -5304,7 +5304,29 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
       // bracket .md) — cấu trúc (deps/tier/title) vẫn qua bracketApply.
       var bracketMode = 'tier'
       var cyCanvas = null
-      function canvasElements(branches) { return [] } // wired ở canvas-nodes task
+      var TIER_COLORS = ['#6ba1f8', '#eab308', '#34d399', '#d946ef', '#f97316', '#22d3ee']
+      // Canvas elements từ graph.branches: node = SF (id + title, màu theo tier),
+      // edge = dep (SF-\d+ đã parse ở parsePlan) — dep trỏ node không tồn tại bỏ qua.
+      function canvasElements(branches) {
+        var els = []
+        var byId = {}
+        ;(branches || []).forEach(b => { byId[b.id] = b })
+        ;(branches || []).forEach(b => {
+          var tier = b.tier || 0
+          els.push({ data: {
+            id: b.id,
+            label: b.id + '\n' + (b.title || '').slice(0, 26),
+            color: TIER_COLORS[tier % TIER_COLORS.length]
+          } })
+        })
+        ;(branches || []).forEach(b => {
+          ;(b.deps || []).forEach(d => {
+            if (!byId[d]) return
+            els.push({ data: { id: d + '->' + b.id, source: d, target: b.id, color: stateColor(b) } })
+          })
+        })
+        return els
+      }
       function wireCanvasEvents() {} // wired ở edge-connect/remove + dblclick tasks
       function mountCanvas() {
         var svg = document.getElementById('story-svg')
@@ -5777,7 +5799,6 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
       function buildBracketHtml() {
         var branches = (graph && graph.branches) || []
         var story = (graph && graph.story) || {}
-        var TIER_COLORS = ['#6ba1f8', '#eab308', '#34d399', '#d946ef', '#f97316', '#22d3ee']
         var NODE_W = 250, NODE_H = 96, COL_GAP = 72, ROW_GAP = 22, M = 56
         var tiers = {}
         branches.forEach(function (b) {
