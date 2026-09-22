@@ -1,42 +1,30 @@
-# Context pack — LOCAL-1 SF-1: Coordinator pass bin
+# SF-1 Context Pack — ⌘⇧P Command palette + unified registry
+> Đọc file này THAY VÌ tự tổng hợp từ bracket + epic + comments. Epic spec: `docs/superpowers/specs/2026-09-21-editor-vscode-parity-design.md`. Bracket: `docs/superpowers/brackets/fi478-editor-vscode-parity.md`. Design: mock-prototype (designer phase TRƯỚC dev — 3 hướng HTML → user chọn).
 
-> ⚠️ Pack này là của STORY LOCAL-1 "Story tự vận hành 24/7" — KHÔNG phải FI-305.
-> File `sf-1.md` trùng tên với pack story cũ — nếu thấy nội dung khác pack này,
-> DỪNG và báo coordinator (bài học FI-458 B2: glob khớp nhầm story).
+## Spec slice (chỉ phần SF-1 chịu trách nhiệm)
+1. Palette lệnh mới mở bằng ⌘⇧P; tái dùng shadcn `CommandDialog` primitives (pattern QuickOpen).
+2. Registry gộp 3 nguồn: core keybindings (`definitions-core-1..4`, flag palette-visible), plugin palette source, cmd-j quick-actions — tất cả qua `app-command-dispatch` hiện có.
+3. **Contract `PaletteCommandEntry` (QĐ-12) — SF-1 SỞ HỮU, các SF khác code against**: `{ id: string (dot-namespaced, vd 'explorer.revealActive'), titleKey: string (i18n key, KHÔNG literal), category: 'file'|'edit'|'view'|'git'|'terminal'|'plugin', when?: PreconditionId, run: KeybindingActionId | (() => void), source: 'core'|'plugin'|'cmd-j' }`.
+4. Fuzzy + recent-commands (persist); **5 truy vấn pinned** cho verify — tạo fixture khi implement, ghi danh sách query → expected top-command vào chính pack này (append section "Pinned verify queries" ở cuối).
+5. ⌘⇧P binding: scope policy theo `TerminalShortcutPolicy` ('orca-first' | 'terminal-first' — đã có) — terminal focus thì KHÔNG capture.
+6. i18n: SF-1 sở hữu catalog infra; platform labels (⌘/Ctrl) qua `shortcut-platform` — GỘP 1 task.
+7. Startup budget: assert palette module KHÔNG nằm trong startup import graph (lazy mount như QuickOpen/lazyWithRetry pattern).
+8. Tier-gate: acceptance CHỈ test lệnh 3 nguồn HIỆN CÓ. Lệnh mới SF-2/3/4 hiện trong palette là hệ quả contract — verify ở SF-6 convergence, KHÔNG gate SF-1.
 
-## Spec slice (từ bracket local-1-self-sustain-24-7.md — SF-1, Tier 0)
+## Touch map (files SF-N tạo/sở hữu)
+- Sở hữu: component mới `src/renderer/src/components/command-palette/` (modal + registry glue); extension của `src/renderer/src/lib/app-command-dispatch.ts`; `activeModal` union trong `src/renderer/src/store/slices/ui/ui-slice-modal-actions.ts` (+ ripple `useModalReturnFocus`, `FeatureTipsModal` — task riêng); i18n catalog keys namespace `commandPalette.*`.
+- Append-only (các SF khác cùng đụng): `src/shared/keybindings/definitions-core-*.ts` (thêm palette-visible flag — KHÔNG đổi union hiện có).
+- READ-ONLY: `src/renderer/src/components/cmd-j/` (chỉ đọc catalog để surface qua dispatcher); `src/renderer/src/components/QuickOpen.tsx` (pattern tham khảo, KHÔNG sửa); `src/renderer/src/components/ui/command.tsx` (primitive, KHÔNG restyle — STYLEGUIDE gate).
 
-Bin mới `kit/bin/story-coordinator-pass` — MỘT lượt coordination pass CÓ GIỚI HẠN
-(bounded, không đợi vô hạn), exit 0 luôn (pass là hành vi, không fail hard):
+## ACCEPTANCE (user-visible — verifier Phase 5 kiểm)
+- Nhấn ⌘⇧P (Ctrl+Shift+P trên Win/Linux): palette mở giữa màn hình, gõ được ngay.
+- 100% core actions palette-visible có trong danh sách (verify đếm trực tiếp từ definitions-core-*.ts); 5 truy vấn pinned trả đúng command đứng đầu; Enter chạy đúng lệnh.
+- Lệnh từ plugin (navigation-shortcuts) và cmd-j hiện đúng category; chạy được từ palette.
+- Terminal đang focus → ⌘⇧P đi vào terminal (theo policy hiện có), không mở palette.
+- Mở palette không làm chậm khởi động app (startup assert pass).
 
-1. **Run discovery**: `orca orchestration run-list --json` → run còn task
-   pending/in-progress hoặc worker live → danh sách run ứng viên.
-2. **Ownership probe**: run đang có worker live của coordinator KHÁC
-   (`worker-list` — owner terminal ≠ terminal hiện tại) → chỉ quan sát, KHÔNG
-   xử lý inbox của run đó (bài học collision 19/09: 2 coordinator cùng đụng SF-4).
-3. **Inbox bounded**: với run được sở hữu → `check --wait --timeout-ms 300000`
-   → xử lý: question → ĐỌC bracket/contexts rồi reply; escalation → đánh giá,
-   đụng quyền user thì báo; worker_done → verify evidence (commit tồn tại,
-   files ⊆ boundary) trước khi chấp nhận.
-4. **Stall sweep**: `story-resume --check` → STALLED → chẩn đoán 3 tầng
-   (git log → terminal state → mới RESUME) — chỉ resume khi có bằng chứng dương.
-5. **PASS SUMMARY** 1 dòng: `PASS: processed=<n> replied=<n> resumed=<n> skipped-owned=<n> idle=<reason>`.
-
-## Touch map
-- NEW `kit/bin/story-coordinator-pass` (bash + python heredoc — pattern story-validate)
-- NEW `tests/story-coordinator-pass-tests.mjs` (stub ORCA_BIN — pattern
-  story-plan-validate-tests: fixture run-list/task-list/inbox JSON)
-- KHÔNG đụng: story-watchdog, story-resume, main.mjs, kit.json (coordinator lo bump)
-
-## Acceptance (observable)
-- Stub orca: có run active + worker foreign → output chứa `skipped-owned` và
-  KHÔNG gọi check của run đó
-- Có question trong inbox → reply được gọi (argv log stub), reply body dẫn bracket
-- worker_done evidence thiếu → KHÔNG chấp nhận, ghi NEEDS-VERIFY
-- Không run active → `PASS: idle=no-active-runs`, exit 0
-- `node tests/story-coordinator-pass-tests.mjs` HARNESS GREEN
-
-## Boundary
-- CHỈ worktree sf-1 + 2 file trên. KHÔNG đụng Linear (LOCAL-1 là story local —
-  KHÔNG có issue thật, KHÔNG set state gì cả). KHÔNG đụng kit source repo
-  (story-team-kit) — coordinator lo sync-back. KHÔNG merge main.
+## Boundary (KHÔNG làm)
+- KHÔNG sửa UI cmd-j (⌘J) hay QuickOpen (⌘P) — chúng giữ nguyên, chỉ bị surface qua registry.
+- KHÔNG thêm lệnh của explorer/search/chrome — đó của SF-2/3/4 (chỉ bảo đảm contract nhận được).
+- KHÔNG đụng Monaco keybindings hay tiptap shortcuts.
+- KHÔNG hardcode Meta key (AGENTS.md cross-platform).

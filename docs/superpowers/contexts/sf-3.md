@@ -1,57 +1,36 @@
-# Context pack — FI-305 SF-3: Gate resolve UX + notification handling
+# SF-3 Context Pack — Search & Replace toàn workspace
+> Đọc file này THAY VÌ tự tổng hợp. Epic spec: `docs/superpowers/specs/2026-09-21-editor-vscode-parity-design.md`. Bracket: `docs/superpowers/brackets/fi478-editor-vscode-parity.md`. Design: none — extend `SearchResultsPane` hiện có theo STYLEGUIDE + pattern cmd-j/QuickOpen. Reference behavior: `~/Desktop/projects/vscode/src/vs/workbench/contrib/search/browser/` (`searchView.ts`, `replace.ts`, `searchResultsView.ts`, `searchWidget.ts`, `patternInputWidget.ts`).
 
-Source spec: `docs/superpowers/specs/2026-09-04-superpowers-android.md` (rev 3).
-Code chống contract §3b đã commit bởi SF-1 (shared types + fixture). KHÔNG làm
-route wiring sang màn story — thuộc SF-4.
+## Spec slice (chỉ phần SF-3 chịu trách nhiệm)
+1. Content-search IPC mới (rg content mode, sibling của `filesystem-search-file-paths.ts` — WSL-aware, authorized-path, rg-missing fallback như local). RPC: `files.*` hiện có **18 methods** trong `src/main/runtime/rpc/methods/files.ts` (gồm `files.search`, `files.searchPaths` — enumerate thật khi implement); streaming qua `defineStreamingMethod` nếu cần; **opcode mới → capability-negotiate** (remote-wire-compat).
+2. Results tree group-theo-file + highlight match + **cap: per-file 50 matches, tổng 200 file / 1000 matches, chỉ báo truncated** [QĐ-11].
+3. Toggles case/word/regex (VSCode-parity) + preserve-case toggle cho replace.
+4. Replace field + per-match/per-file/Replace All (confirm dialog).
+5. Open-dirty reconciliation: file đang mở có dirty draft → loại khỏi replace-all + liệt kê cảnh báo; file mở sạch → apply qua editor write pipeline.
+6. **Batch-write service — TÁCH 2 TASK, core land TRƯỚC UI polish (SF-5 phụ thuộc)**:
+   - Core: nhận `{path,newContent}[]`, **byte-preserve** (chỉ span match đổi, EOL/BOM/encoding giữ nguyên), **self-write suppression qua `recordSelfWrite`** (`editor-self-write-registry.ts`) + external-watch suppression — KHÔNG ghi fs thuần.
+   - Semantics: **stale-check** (re-stat so `(size,mtime)` snapshot lúc search, mismatch → SKIP + báo cáo "đổi ngoài, thử lại"), **partial failure** fail-stop + báo cáo 3 lớp (đã ghi / skip / chưa đụng), SSH verdict `live/unverifiable/exited` — response mất = unverifiable, không tự báo failed-when-maybe-applied.
+7. Remote thiếu rg → search + replace disable trên host đó + guidance cài rg (pattern QuickOpen) [QĐ-7]. KHÔNG fallback fetch-content-search-local.
+8. Keyboard: Enter mở result, F4 next (binding SF-3 sở hữu trong `definitions-core-3.ts` — append-only).
+9. Search history (recent queries persist).
+10. **Fixture pinned cho verify**: script tạo sandbox 5 file `.ts` chứa symbol `editorVscodeProbe` (tổng 7 matches); whole-word replace → `editorVscodeProbeReplaced`; diff 5 file pinned trong pack (append khi implement).
+11. Folder workspace: không có .gitignore → search tất cả (hidden theo toggle hiện có) — chủ ý, ghi trong UI help.
 
-## Spec slice
-Pending-gates surface per host (gates `storyLinked: false` / worktreeId null →
-nhóm "khác", vẫn resolve được). Resolve flow: gate có `options` → choice buttons
-(giá trị = option); options rỗng → free-text; LUÔN có confirm dialog trước khi
-gửi. Error states theo taxonomy: `gate_not_found` / `gate_not_pending` /
-`invalid_resolution` / ws-drop giữa confirm-response → refresh state + hiển thị
-trạng thái mới; retry model = re-tap an toàn (pending guard ở desktop trả lỗi
-sạch, không side effect). Notification handling: nhận `'gate-open'` → thêm vào
-pending list; `'gate-closed'` → gỡ khỏi pending list (kể cả resolution từ
-desktop/CLI/timeout). Testable bằng fixture payloads (không cần route thật).
+## Touch map (files SF-N tạo/sở hữu)
+- Sở hữu: `SearchResultsPane.tsx`, `useFileSearchPanel.ts`, `SearchQueryRow.tsx`, `SearchResultItems.tsx`, `file-search-include-pattern.ts`, `store/slices/editor/search/*` + `actions/file-search-actions.ts` (mở rộng), IPC mới `src/main/ipc/` (content search + batch write), batch-write service module mới, F4 entry `definitions-core-3.ts` (append).
+- READ-ONLY (CONSUME — không sửa): `editor-self-write-registry.ts` (`recordSelfWrite`), `useEditorExternalWatch*`, `editor-autosave-controller.ts`, `rpc/methods/files.ts` (thêm method mới theo pattern — coordinate nếu cần catalog update).
+- Append-only chung: `create-editor-slice.ts` + `editor-slice.ts` (2 dòng), `definitions-core-3.ts` (F4).
 
-## Touch map (verified)
-- `mobile/src/notifications/notification-routing.ts` — KHÔNG đụng ở SF này
-  (routing chỉ học gate target ở SF-4); SF-3 chỉ parse payload fields ở data layer
-- Pending gates data module + hooks: pattern `sendSingleFlightRequest` +
-  `use-mobile-*` như các SF khác
-- Resolve UX tham chiếu precedent approval/question đã có:
-  `mobile/src/session/MobileNativeChatQuestion.tsx`,
-  `MobileNativeChatPermission.tsx` (pattern UI, KHÔNG dùng `agentSession.*` —
-  gates là object khác, đi qua `superpowers.gateResolve`)
-- Gate-open/closed subscription: `client.subscribe('notifications.subscribe', …)`
-  pattern từ `mobile/src/notifications/mobile-notifications.ts`; reconnect
-  catch-up pattern từ `notification-reconnect-catchup.ts`
-- Conformance smoke test chống shared types SF-1
+## ACCEPTANCE (user-visible)
+- ⌘⇧F: gõ `editorVscodeProbe` → tree 5 file group, 7 match highlight; cap hoạt động trên repo lớn (truncated indicator).
+- Bật whole-word + replace `editorVscodeProbeReplaced` → Replace All → confirm → đúng 7 chỗ đổi; file không mở ghi thẳng disk, file mở sạch cập nhật buffer, **zero giả-banner** (banner ExternalFileChangeBanner không hiện do self-write).
+- File đang mở có edit chưa lưu → bị loại + cảnh báo liệt kê tên.
+- Giữa search và Replace All, sửa 1 file ngoài → file đó SKIP + báo cáo "đổi ngoài, thử lại".
+- SSH worktree: chạy trọn flow trên execution host; host thiếu rg → guidance, không treo.
+- Folder workspace: search + replace chạy đầy đủ.
 
-## ACCEPTANCE (user-visible / verifiable)
-- Phone thấy đúng mọi pending gate trên host, đúng nhóm (story vs "khác")
-- Resolve gate có options → bấm option + confirm → gate resolved, agent bên
-  desktop nhận biết và tiếp tục workflow (verify bằng terminal/CLI đọc gate)
-- Resolve gate đã resolved/timeout → thông báo sạch + state refresh, KHÔNG
-  overwrite; gate biến mất khỏi pending list khi `'gate-closed'` đến
-- Mất mạng giữa confirm và response → UI không kẹt spinner; sau reconnect state
-  đúng; re-tap an toàn (2 request song song → đúng 1 land, test được)
-- Free-text resolve hoạt động với gate không options
-- Unit tests cho resolve flow + event handling chống fixture payloads
-
-## Boundary
-- KHÔNG đụng `notification-routing.ts` / `use-open-notification-route.ts`
-  (deep-link thuộc SF-4)
-- KHÔNG sửa desktop code (resolve guard + hooks là SF-1) — nếu contract thiếu
-  → REQUIREMENT-GAP lên epic
-- KHÔNG dùng `orchestration.gateResolve` hay `agentSession.respondTo*` cho gates
-- KHÔNG tự thêm confirm-bypass/quick-approve setting — mọi resolve qua confirm
-  dialog (decision #6)
-
-## Device verify (meta 2026-09-04 — user cung cấp)
-Android emulator đã mở sẵn: id `emulator-5554` (Android 14 / SDK 34, ARM64) —
-DÙNG ĐÚNG thiết bị này, KHÔNG tự tạo emulator mới. App `mobile/` (expo):
-build+install `pnpm android`, dev server `pnpm start`. Rule 0: resolve flow
-(options / free-text + confirm) phải THẤY chạy thật trên emulator trước khi
-claim — `adb -s emulator-5554 exec-out screencap -p > /tmp/shot.png`.
+## Boundary (KHÔNG làm)
+- KHÔNG đụng explorer rows/context menu (SF-2), breadcrumbs/tab chrome (SF-4), palette modal (SF-1).
+- KHÔNG làm in-buffer replace cho file dirty (chỉ loại + cảnh báo — QĐ-4).
+- KHÔNG normalize EOL khi ghi (byte-preserve là hard requirement).
+- i18n: add entries thôi, không dựng infra.
