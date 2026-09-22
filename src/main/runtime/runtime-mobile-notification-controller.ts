@@ -19,13 +19,7 @@ export type MobileNotificationDispatchEvent = {
   desktopAllowed?: boolean
   desktopAway?: boolean
   emittedAt?: number
-  source:
-    | 'agent-task-complete'
-    | 'terminal-bell'
-    | 'test'
-    | 'plugin'
-    | 'gate-open'
-    | 'gate-closed'
+  source: 'agent-task-complete' | 'terminal-bell' | 'test' | 'plugin' | 'gate-open' | 'gate-closed'
   title: string
   body: string
   worktreeId?: string
@@ -161,8 +155,23 @@ export class RuntimeMobileNotificationController {
     title: string
     body?: string
   }): Promise<{ delivered: boolean }> {
-    const title = `${input.pluginId}: ${input.title}`
-    const body = input.body ?? ''
+    return this.showAndDispatch({
+      title: `${input.pluginId}: ${input.title}`,
+      body: input.body ?? ''
+    })
+  }
+
+  // Why source 'plugin': the notification stream's source union is wire-compatible
+  // closed — CLI callers ride the already-understood generic external source
+  // instead of teaching every client a new value.
+  async dispatchCli(input: { title: string; body?: string }): Promise<{ delivered: boolean }> {
+    return this.showAndDispatch({ title: input.title, body: input.body ?? '' })
+  }
+
+  private async showAndDispatch(input: {
+    title: string
+    body: string
+  }): Promise<{ delivered: boolean }> {
     let delivered = false
     try {
       // Focus gate touches only the desktop toast; null/undefined anywhere = fail-open.
@@ -170,14 +179,22 @@ export class RuntimeMobileNotificationController {
       const focused = getRuntimeDesktopSurface().isMainWindowFocused?.() ?? null
       const suppress = (getNotificationSettings()?.suppressWhenFocused ?? false) && focused === true
       if (suppress) {
-        this.dispatch({ type: 'notification', source: 'plugin', title, body })
+        this.dispatch({
+          type: 'notification',
+          source: 'plugin',
+          title: input.title,
+          body: input.body
+        })
         return { delivered: false }
       }
-      delivered = getRuntimeDesktopSurface().showNotification({ title, body })
+      delivered = getRuntimeDesktopSurface().showNotification({
+        title: input.title,
+        body: input.body
+      })
     } catch {
       // Headless runtimes still relay the notification to mobile clients.
     }
-    this.dispatch({ type: 'notification', source: 'plugin', title, body })
+    this.dispatch({ type: 'notification', source: 'plugin', title: input.title, body: input.body })
     return { delivered }
   }
 }

@@ -34,6 +34,7 @@ export type RuntimeServiceCommandSurface = {
   getMobileNotificationEpoch: RuntimeMobileNotificationController['getEpoch']
   dismissMobileNotification: RuntimeMobileNotificationController['dismiss']
   dispatchPluginNotification: RuntimeMobileNotificationController['dispatchPlugin']
+  dispatchCliNotification: RuntimeMobileNotificationController['dispatchCli']
   setMobilePushRegistrar: RuntimeMobileNotificationController['setPushRegistrar']
   testMobilePushDevice: RuntimeMobileNotificationController['testPushDevice']
   registerMobilePushDevice: RuntimeMobileNotificationController['registerPushDevice']
@@ -123,6 +124,7 @@ export function installRuntimeServiceCommandSurface(
     getMobileNotificationEpoch: notifications.getEpoch.bind(notifications),
     dismissMobileNotification: notifications.dismiss.bind(notifications),
     dispatchPluginNotification: notifications.dispatchPlugin.bind(notifications),
+    dispatchCliNotification: notifications.dispatchCli.bind(notifications),
     setMobilePushRegistrar: notifications.setPushRegistrar.bind(notifications),
     testMobilePushDevice: notifications.testPushDevice.bind(notifications),
     registerMobilePushDevice: notifications.registerPushDevice.bind(notifications),
