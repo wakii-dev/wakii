@@ -73,7 +73,7 @@ describe('OpenCode hook plugin source', () => {
     expect(primarySource).toContain('post("SessionStart", { sessionID: info.id })')
     expect(familySource).toContain('http://127.0.0.1:${coords.port}/hook/mimo-code')
     expect(familySource).not.toContain('post("SessionStart", { sessionID: info.id })')
-    expect(familySource).toContain('export const WakiiOpenCodeStatusPlugin')
+    expect(familySource).toContain('export const OrcaOpenCodeStatusPlugin')
   })
 
   it('generates the OpenCode 2 plugin with its dedicated hook and event family', () => {
@@ -91,11 +91,11 @@ describe('OpenCode hook plugin source', () => {
     const digest = (source: string): string => createHash('sha256').update(source).digest('hex')
 
     expect(digest(getOpenCodePluginSource())).toBe(
-      '51ae4f9fbf7a85e3e33db961d0d83b89395ed026335502569e4f3179927aa629'
+      '33bb85de068b5ecbd1806d103f92e7f3171ef1c1b332d0ee5aba20b2093aa93e'
     )
     expect(
       digest(getOpenCodeFamilyPluginSource('/hook/mimo-code', { emitSessionStart: false }))
-    ).toBe('4c9c27af603a9e85e3e33a30c439d9dfb6785936dea0be76fdd64cf7dc2f7174')
+    ).toBe('86ce51e998b19e11a9696fa6dcad7035a983835dce8aa1aa5ee9c69115595266')
   })
 
   it('filters child sessions via parentID lookup before forwarding events', () => {
@@ -124,7 +124,7 @@ describe('OpenCode hook plugin source', () => {
   it('still accepts an optional opaque plugin context instead of destructuring', () => {
     const source = _internals.getOpenCodePluginSource()
 
-    expect(source).toContain('export const WakiiOpenCodeStatusPlugin = async (_ctx) => {')
+    expect(source).toContain('export const OrcaOpenCodeStatusPlugin = async (_ctx) => {')
     expect(source).toContain('const client = _ctx?.client;')
   })
 
@@ -284,7 +284,7 @@ describe('OpenCodeHookService buildPtyEnv / clearPty round-trip', () => {
     expect(existsSync(pluginPath)).toBe(true)
     // Sanity-check the file has plugin source, not a stray write.
     const pluginSource = readFileSync(pluginPath, 'utf8')
-    expect(pluginSource).toContain('WakiiOpenCodeStatusPlugin')
+    expect(pluginSource).toContain('OrcaOpenCodeStatusPlugin')
     expect(pluginSource).toContain('messageID: part.messageID')
   })
 
@@ -402,7 +402,7 @@ describe('OpenCodeHookService overlay mode (user OPENCODE_CONFIG_DIR set)', () =
     // Orca's status plugin is a sibling, not a replacement.
     const orcaPluginPath = join(env.OPENCODE_CONFIG_DIR!, 'plugins', 'orca-opencode-status.js')
     expect(existsSync(orcaPluginPath)).toBe(true)
-    expect(readFileSync(orcaPluginPath, 'utf8')).toContain('WakiiOpenCodeStatusPlugin')
+    expect(readFileSync(orcaPluginPath, 'utf8')).toContain('OrcaOpenCodeStatusPlugin')
 
     expectUserConfigIntact()
   })
@@ -443,7 +443,7 @@ describe('OpenCodeHookService overlay mode (user OPENCODE_CONFIG_DIR set)', () =
       join(env.OPENCODE_CONFIG_DIR!, 'plugins', 'orca-opencode-status.js'),
       'utf8'
     )
-    expect(overlayPlugin).toContain('WakiiOpenCodeStatusPlugin')
+    expect(overlayPlugin).toContain('OrcaOpenCodeStatusPlugin')
     expect(overlayPlugin).not.toBe(userOrcaSentinel)
     expectUserConfigIntact()
   })
@@ -555,7 +555,7 @@ describe('OpenCodeHookService overlay mode (user OPENCODE_CONFIG_DIR set)', () =
 
     expect(
       readFileSync(join(env.OPENCODE_CONFIG_DIR!, 'plugins', 'orca-opencode-status.js'), 'utf8')
-    ).toContain('WakiiOpenCodeStatusPlugin')
+    ).toContain('OrcaOpenCodeStatusPlugin')
     expectUserConfigIntact()
   })
 

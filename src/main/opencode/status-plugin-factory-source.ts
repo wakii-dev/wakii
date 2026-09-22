@@ -16,7 +16,7 @@ export function getStatusPluginFactorySource(options: {
     '// plugin factory with undefined during startup, which makes the',
     '// destructuring form throw synchronously and crash OpenCode with an opaque',
     '// UnknownError before any event is ever dispatched.',
-    'export const WakiiOpenCodeStatusPlugin = async (_ctx) => {',
+    'export const OrcaOpenCodeStatusPlugin = async (_ctx) => {',
     `  if (process.env.ORCA_OPENCODE_AGENT && process.env.ORCA_OPENCODE_AGENT !== '${expectedAgent}') return {};`,
     '  const client = _ctx?.client;',
     '  const factoryID = ++nextFactoryID;',
@@ -286,7 +286,7 @@ export function getStatusPluginFactorySource(options: {
     '// export so the factory-based loader still finds the same instance.',
     'export default {',
     '  id: "orca-opencode-status",',
-    '  server: WakiiOpenCodeStatusPlugin,',
+    '  server: OrcaOpenCodeStatusPlugin,',
     ...(options.emitNextEvents ? ['  setup: setupOpenCode2Status,'] : []),
     '};',
     ''
