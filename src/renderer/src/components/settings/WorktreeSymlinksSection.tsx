@@ -5,7 +5,7 @@ import { Button } from '../ui/button'
 import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from '../ui/command'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { cn } from '@/lib/utils'
-import { getFileTypeIcon } from '@/lib/file-type-icons'
+import { FILE_ICON_COLOR_CLASS, getFileTypeIcon, getFileTypeIconColor } from '@/lib/file-type-icons'
 import { SearchableSetting } from './SearchableSetting'
 import {
   getWorktreeSymlinkPathFilterState,
@@ -182,6 +182,7 @@ export function WorktreeSymlinksSection({
                 {filtered.map((entry) => {
                   const alreadyAdded = paths.includes(entry.name)
                   const FileIcon = getFileTypeIcon(entry.name)
+                  const iconColorGroup = getFileTypeIconColor(entry.name)
                   return (
                     <CommandItem
                       key={entry.name}
@@ -193,7 +194,14 @@ export function WorktreeSymlinksSection({
                       {entry.isDirectory ? (
                         <Folder className="size-3.5 text-muted-foreground" />
                       ) : (
-                        <FileIcon className="size-3.5 text-muted-foreground" />
+                        <FileIcon
+                          className={cn(
+                            'size-3.5',
+                            iconColorGroup
+                              ? FILE_ICON_COLOR_CLASS[iconColorGroup]
+                              : 'text-muted-foreground'
+                          )}
+                        />
                       )}
                       <span className="truncate text-xs">{entry.name}</span>
                       {alreadyAdded ? (

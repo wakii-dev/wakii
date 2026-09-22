@@ -8,7 +8,8 @@ import { getEditorDisplayLabel } from '@/components/editor/editor-labels'
 import { renameFileOnDisk } from '@/lib/rename-file'
 import { isImeCompositionKeyDown } from '@/lib/ime-composition-keyboard-event'
 import { detectLanguage } from '@/lib/language-detect'
-import { getFileTypeIcon } from '@/lib/file-type-icons'
+import { FILE_ICON_COLOR_CLASS, getFileTypeIcon, getFileTypeIconColor } from '@/lib/file-type-icons'
+import { cn } from '@/lib/utils'
 import { useRepoById, useWorktreeById } from '@/store/selectors'
 import { useAppStore } from '@/store'
 import { STATUS_COLORS, STATUS_LABELS } from '../right-sidebar/status-display'
@@ -74,6 +75,9 @@ export default function EditorFileTab({
   const worktree = useWorktreeById(file.worktreeId)
   const repo = useRepoById(worktree?.repoId ?? null)
   const FileIcon = getFileTypeIcon(file.filePath)
+  // Why: simulator tabs reuse this chrome with synthetic labels — the classifier
+  // returns null for them, so they keep the neutral tab color.
+  const iconColorGroup = getFileTypeIconColor(file.filePath)
   // Why: no transform/transition/isDragging styling — the drag design is
   // that tabs stay visually anchored; only the blue insertion bar moves.
   const { attributes, listeners, setNodeRef } = useSortable({
@@ -282,7 +286,14 @@ export default function EditorFileTab({
         />
       ) : (
         createElement(FileIcon, {
-          className: `w-3 h-3 mr-1 shrink-0 ${isActive ? 'text-foreground' : 'text-muted-foreground'}`
+          className: cn(
+            'w-3 h-3 mr-1 shrink-0',
+            isActive
+              ? 'text-foreground'
+              : iconColorGroup
+                ? FILE_ICON_COLOR_CLASS[iconColorGroup]
+                : 'text-muted-foreground'
+          )
         })
       )}
       {isPinned && <Pin className="mr-1 size-3 shrink-0 text-muted-foreground" aria-hidden />}

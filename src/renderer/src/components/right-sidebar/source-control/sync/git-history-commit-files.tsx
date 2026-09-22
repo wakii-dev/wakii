@@ -7,7 +7,8 @@ import {
   toSourceControlRowOpenEvent,
   type SourceControlRowOpenEvent
 } from '../listing/split-open'
-import { getFileTypeIcon } from '@/lib/file-type-icons'
+import { FILE_ICON_COLOR_CLASS, getFileTypeIcon, getFileTypeIconColor } from '@/lib/file-type-icons'
+import { cn } from '@/lib/utils'
 import { basename, dirname } from '@/lib/path'
 import { translate } from '@/i18n/i18n'
 import { formatGitHistoryTimestamp } from './git-history-format'
@@ -30,6 +31,7 @@ function CommitFileRow({
 }): React.JSX.Element {
   const status = entry.status as GitFileStatus
   const FileIcon = getFileTypeIcon(entry.path)
+  const iconColorGroup = getFileTypeIconColor(entry.path)
   const fileName = basename(entry.path)
   const parentDir = dirname(entry.path)
   const dirPath = parentDir === '.' ? '' : parentDir
@@ -43,9 +45,12 @@ function CommitFileRow({
       onClick={(event) => onOpen(entry, toSourceControlRowOpenEvent(event))}
       onDoubleClick={(event) => onOpen(entry, toPermanentSourceControlRowOpenEvent(event))}
     >
+      {/* Why: icon carries the file-type color; git status color stays on the badge below (C4). */}
       {createElement(FileIcon, {
-        className: 'size-3.5 shrink-0',
-        style: { color: STATUS_COLORS[status] }
+        className: cn(
+          'size-3.5 shrink-0',
+          iconColorGroup ? FILE_ICON_COLOR_CLASS[iconColorGroup] : 'text-muted-foreground'
+        )
       })}
       <span className="min-w-0 flex-1 truncate">
         <span className="text-foreground">{fileName}</span>

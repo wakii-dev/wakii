@@ -180,7 +180,19 @@ vi.mock('@/lib/file-type-icons', () => ({
   getFileTypeIcon: () =>
     function FileIcon(props: Record<string, unknown>) {
       return { type: 'FileIcon', props }
-    }
+    },
+  getFileTypeIconColor: () => null,
+  FILE_ICON_COLOR_CLASS: {
+    codeTsJs: 'text-file-icon-code-ts-js',
+    code: 'text-file-icon-code',
+    dataConfig: 'text-file-icon-data-config',
+    markupDoc: 'text-file-icon-markup-doc',
+    webStyle: 'text-file-icon-web-style',
+    shell: 'text-file-icon-shell',
+    binaryBuild: 'text-file-icon-binary-build',
+    asset: 'text-file-icon-asset',
+    nameBased: 'text-file-icon-name-based'
+  }
 }))
 
 vi.mock('@/store/selectors', () => ({
