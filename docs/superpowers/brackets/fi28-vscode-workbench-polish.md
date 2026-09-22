@@ -4,7 +4,7 @@ Destination: story/fi28-vscode-workbench-polish
 
 ## SF-1 Workbench polish: icon colors + sticky scroll + F2 rename
 Tier: 0
-linear:
+linear: FI-29
 Design: none
 What: mở app trên worktree có code đa định dạng, explorer tree + tab bar + QuickOpen + search results + SCM rows hiện icon file có màu phân biệt theo nhóm loại file (12 surfaces cùng ánh xạ, simulator tab không tô, unknown giữ muted); bật Settings→Editor→Sticky scroll rồi cuộn file TypeScript dài thấy scope header giữ chỗ (default OFF, không leak vào diff/peek/automation); bấm F2 trên file trong explorer đổi tên được (rebindable, Enter vẫn chạy). Renderer-only, không IPC mới.
 Depends on: —
