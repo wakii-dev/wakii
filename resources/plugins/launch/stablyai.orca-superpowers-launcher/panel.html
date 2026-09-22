@@ -5402,6 +5402,25 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
             edgeRemoveApply(a, b)
           }
         })
+        // Double-click nền trống → node editor (tái dùng openNodeEditor(null);
+        // save qua bracketApply → saveBracketMd → renderGraph → canvas re-mount)
+        var lastTap = { t: 0, x: 0, y: 0 }
+        cyCanvas.on('tap', function (e) {
+          if (e.target !== cyCanvas) return
+          var rp = e.renderedPosition || { x: 0, y: 0 }
+          var now = Date.now()
+          if (now - lastTap.t < 400 && Math.abs(rp.x - lastTap.x) < 12 && Math.abs(rp.y - lastTap.y) < 12) {
+            lastTap = { t: 0, x: 0, y: 0 }
+            if (!graph || !graph.planMarkdown) {
+              var st = document.getElementById('story-status')
+              if (st) st.textContent = 'load một bracket trước khi thêm node'
+              return
+            }
+            openNodeEditor(null)
+          } else {
+            lastTap = { t: now, x: rp.x, y: rp.y }
+          }
+        })
       }
       function renderGraphStatus() {
         var st = document.getElementById('story-status')
