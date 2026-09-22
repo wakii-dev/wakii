@@ -5327,6 +5327,21 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
         })
         return els
       }
+      // Cycle guard: DFS trên depsMap {id: [deps]} — true nếu `to` reachable từ
+      // `from` đi theo deps (chiều prerequisite). Trước khi thêm dep from→to:
+      // dfsCheck(depsMap, to, from) === true ⇒ edge sẽ tạo vòng → chặn.
+      function dfsCheck(depsMap, from, to) {
+        var seen = {}
+        var stack = [from]
+        while (stack.length) {
+          var cur = stack.pop()
+          if (cur === to) return true
+          if (seen[cur]) continue
+          seen[cur] = true
+          ;(depsMap[cur] || []).forEach(d => { if (!seen[d]) stack.push(d) })
+        }
+        return false
+      }
       function wireCanvasEvents() {} // wired ở edge-connect/remove + dblclick tasks
       function mountCanvas() {
         var svg = document.getElementById('story-svg')
