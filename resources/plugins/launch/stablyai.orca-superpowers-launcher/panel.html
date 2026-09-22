@@ -5343,7 +5343,8 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
         return false
       }
       // Kéo edge A→B = B thêm dep A (ghi bracket qua bracketApply). Chặn cycle
-      // TRƯỚC khi apply: thêm A vào deps của B không được tạo đường B→…→A.
+      // TRƯỚC khi apply: thêm A vào deps của B tạo vòng ⇔ A đã phụ thuộc B
+      // (gián tiếp) ⇔ reachable(A →* B) theo deps.
       function edgeConnectApply(fromId, toId) {
         var st = document.getElementById('story-status')
         var b = ((graph && graph.branches) || []).find(x => x.id === toId)
@@ -5352,7 +5353,7 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
         var depsMap = {}
         ;(graph.branches || []).forEach(x => { depsMap[x.id] = (x.deps || []).slice() })
         depsMap[toId] = (depsMap[toId] || []).concat([fromId])
-        if (dfsCheck(depsMap, toId, fromId)) {
+        if (dfsCheck(depsMap, fromId, toId)) {
           if (st) st.textContent = '⛔ chặn cycle: ' + fromId + ' → ' + toId + ' tạo vòng (' + toId + ' đã phụ thuộc ' + fromId + ', trực tiếp hoặc gián tiếp)'
           return
         }
