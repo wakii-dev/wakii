@@ -430,6 +430,16 @@ Kết thúc bằng 1 dòng: `MINI-RITUAL SF-N: N patterns → file(s) updated / 
 One worktree per SF — isolation + parallelism. Tier-N SFs launch together
 (up to the parallel cap); the Orca DAG blocks lower tiers until deps are Done.
 
+**Relay mặc định (pull-based) — KHÔNG launch tay từng node:** worker xong SF tự
+kích hoạt `story-watchdog --launch-next` (COMPLETE-RUN CHECKLIST bước 7);
+`story-coordinator-pass` 30' là an toàn ròng khi relay trượt. Coordinator CHỈ
+launch tay khi: (a) SF dính DESIGN GATE (mock-prototype — phải xong user-chọn +
+hand-off), (b) destination-freshness guard cần phán (đích đang chứa merges),
+(c) launch-next SKIP/fail-closed và cần gỡ thủ công. **Rule pre-clear:** trước
+khi rời tier, coordinator xử hết design gate của tier — SF đã clear thì relay
+tự chạy (bài học FI-187: rule chỉ nằm trong doc thì không ai thực thi; giờ relay
+là cơ chế, doc mô tả đúng cơ chế).
+
 **Destination-freshness guard (trước khi fork SF đầu tiên của tier):** nhánh đích
 phải chứa mọi story-meta commit mới nhất trên main (bracket remaps, context-pack
 backfills). **DÙNG NGUYÊN CỤM LỆNH — đừng tự ghép branch -f tay** (sự cố thật

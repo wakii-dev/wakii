@@ -98,7 +98,7 @@ When the task is one SF of an approved story bracket:
 - Run **Phase 3 (detailed plan for this SF only) → Phase 4 (execute) → Phase 5 (verify)** of the orca-superpowers-workflow.
 - Update your sub-issue state via `orca linear status set <ISSUE> --to <state>` at: start (In Progress), block (comment + stay).
 
-**COMPLETE-RUN CHECKLIST (thứ tự bắt buộc — KHÔNG dừng trước bước 6):**
+**COMPLETE-RUN CHECKLIST (thứ tự bắt buộc — KHÔNG dừng trước bước 7):**
 ```
 1. code + tests pass
 2. TICK plan file: mỗi task xong → sửa - [ ] thành - [x] trong plan md
@@ -118,6 +118,11 @@ When the task is one SF of an approved story bracket:
       GUARD trước: git merge-base --is-ancestor <đích-cũ> HEAD || STOP
    c. audit comment merge-hash lên sub-issue
 6. RỒI MỚI: orca linear status set <ISSUE> --to Done
+7. RELAY (pull-based): `story-watchdog --launch-next` — kích hoạt SF kế
+   tiếp ready (deps Done, chưa có worktree) ngay, không chờ pass 30'.
+   Launcher IDEMPOTENT + fail-closed (tự validate — KHÔNG tự ghép lệnh
+   launch tay). 1 attempt; relay lỗi KHÔNG đổ DONE — ghi 1 dòng vào
+   report, pass kế tiếp sẽ nhặt.
 ```
 **Linear Done TRƯỚC merge = run INCOMPLETE** (coordinator sẽ merge hộ + flag).
 Snapshot merge (giữa chừng, nhóm task lớn xong): `merge: SF-N snapshot T1-Tk (Tk+1.. in flight)` — không set Done.
