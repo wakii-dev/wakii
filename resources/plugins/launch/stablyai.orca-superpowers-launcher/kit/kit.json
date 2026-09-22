@@ -166,6 +166,17 @@
       "owner": "wakii"
     },
     {
+      "name": "story-medic",
+      "type": "agent",
+      "inputs": [
+        "watchdog verdict / triệu chứng stall",
+        "story id + sf-* worktree",
+        "session/run id nếu có"
+      ],
+      "outputs": "MEDIC-RESUMED | MEDIC-NOOP | MEDIC-BLOCKED | MEDIC-ESCALATE report",
+      "owner": "wakii"
+    },
+    {
       "name": "story-attempt",
       "type": "bin",
       "description": "track debugging attempts — chặn lặp cùng cách fail (3 lần cùng approach → buộc đổi hướng)"
@@ -396,5 +407,5 @@
       "description": "state machine Linear rate-limit — check/note/clear/pending/classify (policy skip+note+resume 2026-09-20)"
     }
   ],
-  "kitHash": "372b520314bca5b5"
+  "kitHash": "d95e357e1690f787"
 }

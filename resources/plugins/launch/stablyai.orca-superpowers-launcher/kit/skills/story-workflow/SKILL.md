@@ -71,6 +71,12 @@ Tester (verifier / code-reviewer / security-audit — độc lập với Dev)
 ├─ Phán: APPROVED / CHANGES-REQUESTED / REJECT-AND-REVERT
 └─ NOT fix code. Chỉ tìm lỗi — Dev mới fix.
 
+Medic (story-medic — cấp cứu vận hành, KHÔNG đụng code)
+├─ Nhận: watchdog verdict STALLED* / session chết giữa turn / 2 session cùng story
+├─ Làm: chẩn đoán bằng chứng (story-resume --check) → absorb provenance → resume/rebind
+├─ NOT quyết done-semantics (REQUIREMENT-GAP → USER). NOT xoá state. NOT sửa code
+└─ Khi cần: PM dispatch NGAY khi stall detected — không gom chờ
+
 Chia việc (PM làm lúc CREATE/APPROVE):
 ├─ Mỗi SF = 1 dev-ticket: đủ lớn để có ý nghĩa (8-15 tasks), đủ nhỏ để 1 agent
 ├─ SF visual-heavy → designer phase TRƯỚC dev phase (design-first flow)
@@ -84,6 +90,21 @@ Chia việc (PM làm lúc CREATE/APPROVE):
 - Tester không fix — tìm lỗi là việc khác với sửa lỗi
 - Đây chính là cấu trúc agents đã có (task-executor xanh, code-reviewer xanh lam,
   verifier cam) — section này formal hóa cách nhìn chúng như MỘT TEAM.
+
+**Crew theo phase (dispatch checklist — ai chạy khi nào):**
+
+| Phase | MANDATORY | Tuỳ chọn / theo kích hoạt |
+|---|---|---|
+| 0 — Impact | `phase0-impact-analyst` (feature work; skip cho fix nhỏ) | |
+| 2 — Spec | `spec-critic` (trước khi plan) | |
+| 3 — Plan | `plan-critic` (plan ≥5 tasks / chạy song song) | |
+| 4 — Execute | `task-executor` mỗi SF/task · `code-reviewer` giữa các task | `designer` TRƯỚC dev nếu SF có UI (design-first) · `security-audit` khi chạm auth/secret/input ngoài |
+| 5 — Verify | `verifier` tại gate-resolve | `rollback-fixer` khi diverge / verify-fail ×2 cùng nguyên nhân |
+| Mọi lúc | | `story-medic` khi watchdog `STALLED*` / 2 session cùng story / binding churn |
+
+Quy tắc bảng: MANDATORY = bỏ qua là lỗ hổng quá trình (đã cắn thật); cột phải =
+dispatch theo điều kiện ghi sẵn, không cần PM nhớ. Chi tiết từng vai: Team Model
+ở trên + `kit/agents/*.md`.
 
 # ⚠️ MINDSET SỐ 0 — BROWSER LÀ NƠI SF ĐƯỢC CHỨNG MINH (port từ orca-superpowers-workflow)
 
