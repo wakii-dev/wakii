@@ -28,7 +28,28 @@ const MAX_ROUTE_PATHNAME_LENGTH = 255
 const MAX_GRANT_NAME_LENGTH = 64
 /** Rooted, single-slash, no query and no fragment: a phone writes this into its own history. */
 const ROUTE_PATHNAME_PATTERN = /^\/(?![/\\])[^?#\s]*$/
-const GRANT_NAME_PATTERN = /^[a-zA-Z][a-zA-Z0-9]*$/
+/**
+ * A grant is either a plain capability name (`navigate`, `storage`, `externalLink`) or one of the
+ * shell-answered verbs, which live under `native.` and are named `native.<domain>.<action>`.
+ *
+ * Two segments at least, so a plain name wearing a dot is still refused: the verb namespace is what
+ * the shell's table declares, and a route that could not name one would never be granted one —
+ * which, with grants scoped per route, leaves every verb unreachable.
+ */
+const GRANT_NAME_PATTERN = /^(?:[a-zA-Z][a-zA-Z0-9]*|native(?:\.[a-z][a-z0-9]*){2,})$/
+
+/**
+ * One grant name, as both the manifest and the bridge read it.
+ *
+ * Exported so the `init` frame's route-grant pairs are checked by the same grammar the desktop
+ * wrote the manifest under. Two spellings of one rule drift, and the half that matters is the half
+ * the page believes.
+ */
+export const MobileWebBundleGrantNameSchema = z
+  .string()
+  .min(1)
+  .max(MAX_GRANT_NAME_LENGTH)
+  .regex(GRANT_NAME_PATTERN)
 
 /** Every segment must be a name the bundle root can hold on all three desktop platforms: no
  *  traversal, and none of the Windows shapes that cannot be created or that resolve to a device.
@@ -102,9 +123,7 @@ export function computeMobileWebBundleId(assets: readonly MobileWebBundleAsset[]
 export const MobileWebBundleRouteSchema = z
   .object({
     pathname: z.string().min(1).max(MAX_ROUTE_PATHNAME_LENGTH).regex(ROUTE_PATHNAME_PATTERN),
-    grants: z
-      .array(z.string().min(1).max(MAX_GRANT_NAME_LENGTH).regex(GRANT_NAME_PATTERN))
-      .max(MOBILE_WEB_BUNDLE_MAX_ROUTE_GRANTS)
+    grants: z.array(MobileWebBundleGrantNameSchema).max(MOBILE_WEB_BUNDLE_MAX_ROUTE_GRANTS)
   })
   .strict()
 

@@ -13,6 +13,8 @@ import {
 import { publishPageStorage } from '../src/mobile-web-shell/bridge/page-async-storage'
 import { PageFaultBoundary } from '../src/mobile-web-shell/bridge/page-fault-boundary'
 import { publishPageHostProfile } from '../src/mobile-web-shell/bridge/page-host-profile'
+import { publishExternalLinkOpener } from '../src/platform/external-link.web'
+import { publishHapticsNotifier } from '../src/platform/haptics.web'
 // Named with its extension: this entry is the web build's and the provider it needs is the web
 // sibling's, which takes the page's client. The screens below still import `./client-context`
 // and reach the same module, because the builder resolves both specifiers to the same file.
@@ -78,12 +80,20 @@ bootstrapShellPage({
     // Before the first render, because both are read from effects that run on it: the host store is
     // a plain async function with no provider above it, and the first list paints its pins.
     publishPageHostProfile(session.host)
+    // Same reason, and the same shape: the seam is a plain function in render trees the provider
+    // does not wrap, so the client's notify is published rather than read from context.
+    publishExternalLinkOpener((url) => client.notifyExternalLink(url))
+    // The same shape again, and for the same reason: every haptic on this page is played from a
+    // plain function inside a row's press handler, which no provider wraps.
+    publishHapticsNotifier((kind) => client.notifyHaptics(kind))
     // Scoped to the host `init` named: with none, no key is writable, which is the right answer
     // for a shell too old to say whose list this is.
     publishPageStorage(
       session.storage,
       (key, value) => client.notifyStorageWrite(key, value),
-      session.host?.id ?? ''
+      session.host?.id ?? '',
+      session.route?.pathname ?? '',
+      session.storageOversize
     )
     createRoot(container).render(
       // Above `ExpoRoot`, not inside its wrapper: a route this bundle cannot resolve or import

@@ -585,6 +585,7 @@
           "9e2a9bb87b": "Continue",
           "6f8056a565": "Command Code",
           "4238b771b5": "Codebuff",
+          "b0b350de65": "Freebuff",
           "cbaf0c2e0b": "Cline",
           "1f8a19e9ad": "Autohand Code",
           "5e8eff11b3": "Auggie",
@@ -609,7 +610,8 @@
           "da41abbdd4": "Ante",
           "060d152fb5": "Trae",
           "d443a47995": "Prime Agent",
-          "mimo_code_label": "MiMo Code"
+          "mimo_code_label": "MiMo Code",
+          "opencode2_label": "OpenCode 2"
         },
         "skill": {
           "cli": {
@@ -1683,13 +1685,14 @@
         "326a578923": "orca.yaml + local",
         "2132b670da": "both",
         "0e587e31fb": "yaml",
-        "ac3748dcda": "Name or 'Create From'",
+        "ac3748dcda": "Create From",
         "f660aa1454": "Connecting",
         "7711ad5122": "Local setup command",
         "e5db1b0419": "Combined setup command",
         "runOn": "Run on",
         "addProjectBeforeWorkspace": "Add a project before creating a workspace.",
         "connectProjectFirst": "Connect this project first",
+        "defaultBranchUpdateFailed": "Could not update the project default branch. Try again.",
         "connectSourceLookup": "Connect",
         "reconnectSourceLookup": "Reconnect",
         "setupHostExistingFolderTitle": "Set up {{value0}}",
@@ -1950,44 +1953,27 @@
         "9b40d7b018": "Copy"
       },
       "NativeChatResumeOnRestartModal": {
-        "title": "Reconnect interrupted chats?",
-        "body": "These chats were mid-turn when Wakii closed. Reconnecting restores each one where it stopped, with its full context and without re-sending your prompt — the interrupted reply will not continue on its own.",
-        "updateBody": "These chats were mid-turn when Wakii installed an update. Reconnecting restores each one where it stopped, with its full context and without re-sending your prompt — the interrupted reply will not continue on its own.",
-        "terminalSessionsUnaffected": "Only chats are affected — your terminal sessions kept running and need nothing from you.",
-        "resume": "Reconnect",
-        "reconnectAgent": "Reconnect {{value0}} chat",
-        "resumeAll": "Reconnect all",
-        "resuming": "Reconnecting…",
-        "notNow": "Not now",
+        "title": "Resume interrupted chats?",
+        "body": "These chats were mid-turn when Wakii closed. Resuming restores each one where it stopped, with its full context, and asks the agent to check its last action before carrying on. Your own prompt is not re-sent.",
+        "updateBody": "These chats were mid-turn when Wakii installed an update. Resuming restores each one where it stopped, with its full context, and asks the agent to check its last action before carrying on. Your own prompt is not re-sent.",
+        "resuming": "Resuming…",
         "untitled": "Untitled chat",
-        "listLabel": "Chats that would be reconnected",
-        "notNowHint": "Not now keeps everything — you can reopen any chat later and carry on from the same point.",
-        "dontAskAgain": "Don't ask again — reconnect automatically next time",
-        "dontAskAgainHint": "Qualifying chats will be reconnected automatically after a restart, and Wakii will tell you when it happens. You can turn this off in Settings → Experimental → Chat UI.",
-        "resumedOne": "Reconnected 1 chat",
-        "resumedMany": "Reconnected {{value0}} chats",
-        "oneAgent": "1 agent",
-        "manyAgents": "{{value0}} agents",
-        "reconnectAndContinue": "Reconnect and continue",
-        "continuedOne": "Reconnected 1 chat and asked it to continue",
-        "continuedMany": "Reconnected {{value0}} chats and asked them to continue",
-        "whatIsSentTitle": "What Wakii sends",
-        "whatIsSentBody": "Continuing sends one short message to each agent, telling it that Wakii restarted and asking it to check its last action before carrying on. Your own prompt is never re-sent.",
-        "selectAgent": "Reconnect {{value0}} chat \"{{value1}}\" in {{value2}}",
-        "projects": "Folder workspaces",
-        "resumeSelected": "Reconnect {{value0}}",
+        "listLabel": "Chats that would be resumed",
+        "dontAskAgain": "Don't ask again (resume automatically)",
+        "dontAskAgainHint": "You can turn this off in Settings → Experimental → Chat UI.",
+        "continuedOne": "Resumed 1 chat and asked it to continue",
+        "continuedMany": "Resumed {{value0}} chats and asked them to continue",
+        "selectAgent": "Resume {{value0}} chat \"{{value1}}\" in {{value2}}",
+        "resumeSelected": "Resume {{value0}} chats",
+        "resumeSelectedOne": "Resume 1 chat",
         "continueUnconfirmed": "Continuation delivery is unconfirmed for {{value0}} chats. Open them to check before sending another message.",
         "continueUnconfirmed_one": "Continuation delivery is unconfirmed for {{value0}} chat. Open it to check before sending another message.",
         "continueUnconfirmed_other": "Continuation delivery is unconfirmed for {{value0}} chats. Open them to check before sending another message.",
-        "reconnectUnconfirmed": "Reconnection is unconfirmed for {{value0}} chats. You can still open them normally.",
-        "reconnectUnconfirmed_one": "Reconnection is unconfirmed for {{value0}} chat. You can still open it normally.",
-        "reconnectUnconfirmed_other": "Reconnection is unconfirmed for {{value0}} chats. You can still open them normally.",
         "continueRefused": "{{value0}} chats could not be continued. Open them to continue manually.",
         "continueRefused_one": "{{value0}} chat could not be continued. Open it to continue manually.",
         "continueRefused_other": "{{value0}} chats could not be continued. Open them to continue manually.",
-        "reconnectRefused": "{{value0}} chats could not be reconnected. You can still open them normally.",
-        "reconnectRefused_one": "{{value0}} chat could not be reconnected. You can still open it normally.",
-        "reconnectRefused_other": "{{value0}} chats could not be reconnected. You can still open them normally."
+        "dismissAll": "Dismiss all",
+        "dismissUnconfirmed": "Dismissing the resume offer was not confirmed — it may still be in the status bar."
       },
       "StarNagCard": {
         "92b0f9d921": "is authenticated and try again.",
@@ -4077,6 +4063,13 @@
             "contact_note": "The host may still be running; only the Wakii connection is unavailable.",
             "last_connected": "Last connected {{value0}}",
             "reconnect_attempt": "Attempt {{value0}}"
+          },
+          "NativeChatResumeStatusSegment": {
+            "labelOne": "1 chat to resume",
+            "label": "{{value0}} chats to resume",
+            "ariaLabelOne": "1 chat available to resume",
+            "ariaLabel": "{{value0}} chats available to resume",
+            "tooltip": "Open interrupted chats available to resume"
           }
         }
       },
@@ -4186,7 +4179,8 @@
           "rangeLast7Days": "Last 7 days",
           "rangeLast30Days": "Last 30 days",
           "rangeLast90Days": "Last 90 days",
-          "rangeAllTime": "All time"
+          "rangeAllTime": "All time",
+          "costExcludesUnpricedModels": "• excludes unpriced models"
         },
         "OpenCodeUsagePane": {
           "349f7c3f5c": "Total",
@@ -6126,7 +6120,8 @@
           "setParentFor": "Set parent for"
         },
         "WorktreeCardStatusSlot": {
-          "branchIdentity": "Branch"
+          "branchIdentity": "Branch",
+          "sleeping": "Sleeping"
         },
         "NewExternalWorktreesInboxLine": {
           "9f2d4c8b17": "Hide external worktrees permanently for {{value0}}",
@@ -6455,7 +6450,11 @@
           "922b51e02d": "Fe26.2**…",
           "0023cc336e": "Paste either the raw token value (e.g.",
           "a7e38affcd": "Fe26.2**… token or auth=Fe26.2**… header",
+          "d5267cce63": "). The auth cookie still covers workspace discovery; auth alone is not enough for usage. OpenCode Go auth is web-based and shared across Windows and WSL terminals.",
+          "62ab430f94": "Paste the full Cookie header from your browser's DevTools → Network → any opencode.ai request, including __Host-console_session (e.g.",
+          "37b4b4a3f7": "auth=…; __Host-console_session=…",
           "67e3c33670": "OpenCode Go session cookie",
+          "0335bd31d5": "Paste the full opencode.ai Cookie header, including __Host-console_session, for rate limit fetching.",
           "b2b1aa936d": "Paste your opencode.ai session cookie for rate limit fetching.",
           "36223200ac": "OpenCode Go Session Cookie",
           "ea631977b5": "Configure OpenCode Go provider settings.",
@@ -7134,9 +7133,9 @@
             "structuredCopy": "Opt in to the host-owned structured chat runtime for Codex and Claude. Off keeps the existing terminal-backed chat path.",
             "structuredScope": "Local sessions only for now. WSL and remote execution hosts (including SSH) continue to use terminal chat, and Windows falls back to it unless Wakii can read process start times.",
             "structuredToggleLabel": "Toggle updated structured native chat",
-            "resumeTitle": "Reconnect working chats automatically after a restart",
-            "resumeCopy": "When Wakii quits or installs an update, chats that were mid-turn are offered again on the next launch. On, they are reconnected without asking and Wakii tells you afterwards — the same thing as ticking \"Don't ask again\" in that prompt. Off, you choose from the list each time. Reconnecting restores a chat where it stopped; it does not continue the interrupted reply.",
-            "resumeToggleLabel": "Toggle automatic reconnect after a restart"
+            "resumeTitle": "Resume working chats automatically after a restart",
+            "resumeCopy": "When Wakii quits or installs an update, chats that were mid-turn are automatically resumed when Wakii is reopened.",
+            "resumeToggleLabel": "Toggle automatic resume after a restart"
           },
           "agentDashboard": {
             "title": "Agent Dashboard",
@@ -7207,7 +7206,9 @@
           "b82f86d7d2": "Rich Markdown Spellcheck",
           "5195f0b9ef": "Show browser spelling underlines and suggestions while editing rich Markdown.",
           "7ddd66fede": "Editor Word Wrap",
-          "9b18de6eea": "Wrap long lines in file editors instead of requiring horizontal scrolling."
+          "9b18de6eea": "Wrap long lines in file editors instead of requiring horizontal scrolling.",
+          "collapseUnchangedTitle": "Collapse Unchanged Regions",
+          "collapseUnchangedDescription": "Show only changed lines and a little surrounding context in a file diff, hiding the rest behind expandable bands. The View All Changes diff always collapses this way."
         },
         "AdvancedNetworkSettingsSection": {
           "3e431564b5": "localhost, 127.0.0.1, *.internal",
@@ -8928,6 +8929,8 @@
             "4ee2029e9c": "OpenCode Go Workspace ID",
             "9c4e40cf6b": "session",
             "61f7d1fcbe": "cookie",
+            "37020a02c2": "console",
+            "25591bf95b": "Paste the full opencode.ai Cookie header, including __Host-console_session, for rate limit fetching.",
             "d1d2ae383c": "Paste your opencode.ai session cookie for rate limit fetching.",
             "6ed1401020": "OpenCode Go Session Cookie",
             "b7c2cee442": "experimental",
@@ -9748,6 +9751,11 @@
             "005be5c699": "Wrap long lines in file editors instead of requiring horizontal scrolling.",
             "editorFontFamily": "Editor Font Family",
             "editorFontFamilyDesc": "Font used by file editors and diff views. Leave empty to follow the terminal font.",
+            "collapseUnchanged": "Collapse Unchanged Regions",
+            "collapseUnchangedDesc": "Show only changed lines and a little surrounding context in a file diff, hiding the rest behind expandable bands. The View All Changes diff always collapses this way.",
+            "collapseUnchangedKw": "collapse",
+            "hideUnchangedKw": "hide unchanged",
+            "foldKw": "fold",
             "externalWorktrees": "External worktrees",
             "externalWorktreesDescription": "Choose whether worktrees created outside Wakii appear by default.",
             "editorFontKw": "font",
@@ -11739,6 +11747,7 @@
           "loadingBuilds": "Loading builds…",
           "noBuilds": "No builds found",
           "refresh": "Refresh build list",
+          "cacheHint": "Build lists are cached for 5 minutes. Refresh to check for new builds.",
           "switchTo": "Switch to build",
           "alreadyRunning": "This is the build you are running.",
           "willSwitch": "{{value0}} → {{value1}}",
@@ -13199,8 +13208,6 @@
             "agentSessionQueued": "{{value0}} session queued",
             "sessionHistory": "Agent Session History",
             "agents": "Agents",
-            "shownRecent": "{{value0}} shown · {{value1}} recent",
-            "sessionsShownCompact": "{{value0}} shown",
             "resumePastSessions": "Resume past sessions",
             "refreshSessionHistory": "Refresh Session History",
             "searchSessions": "Search sessions",
@@ -13240,7 +13247,6 @@
             "agents": "Agents",
             "selectAllAgents": "Select all",
             "clearAgents": "Clear",
-            "sort": "Sort",
             "lastUpdated": "Last updated",
             "created": "Created",
             "group": "Group",
@@ -17326,7 +17332,29 @@
         "renamedFile": "Renamed file",
         "copyDiff": "Copy diff",
         "diffGap": "Lines not shown",
-        "diffTruncated": "Diff truncated"
+        "diffTruncated": "Diff truncated",
+        "runReadOne": "Read 1 file",
+        "runReadMany": "Read {{value0}} files",
+        "runSearchOne": "Searched 1 time",
+        "runSearchMany": "Searched {{value0}} times",
+        "runListFilesOne": "Listed 1 directory",
+        "runListFilesMany": "Listed {{value0}} directories",
+        "runCommandOne": "Ran 1 command",
+        "runCommandMany": "Ran {{value0}} commands",
+        "runFileChangeOne": "Edited 1 file",
+        "runFileChangeMany": "Edited {{value0}} files",
+        "runWebSearchOne": "Searched the web 1 time",
+        "runWebSearchMany": "Searched the web {{value0}} times",
+        "runIntegrationOne": "Used 1 integration",
+        "runIntegrationMany": "Used {{value0}} integrations",
+        "runAgentOne": "Ran 1 agent",
+        "runAgentMany": "Ran {{value0}} agents",
+        "runPlanOne": "Updated the plan",
+        "runPlanMany": "Updated the plan {{value0}} times",
+        "runToolOne": "Used 1 tool",
+        "runToolMany": "Used {{value0}} tools",
+        "runPair": "{{value0}} and {{value1}}",
+        "runList": "{{value0}}, and {{value1}}"
       },
       "providerFrame": {
         "byteLength": "{{value0}} bytes"
@@ -18000,11 +18028,15 @@
   },
   "sessionSearch": {
     "panel": {
-      "rankedResults": "Best matches",
+      "resultsOne": "{{count}} result",
+      "resultsOther": "{{count}} results",
       "noMatches": "No matching sessions in the indexed history. Try another query or scope.",
       "loadMore": "Load more matches",
-      "indexedHistory": "Indexed history · best matches",
+      "indexedHistory": "Indexed history",
       "hostsSkipped": "Not searched: {{value0}}",
+      "sortRelevance": "Most relevant",
+      "sortNewest": "Newest",
+      "sortResultsAriaLabel": "Sort results: {{value0}}",
       "consent": "Enable full-text search? Wakii builds an index on this computer from local agent transcripts, including full conversations and up to 3,072 characters per tool output. Content is not redacted. Authenticated paired clients can search it.",
       "remoteDisabled": "Search is disabled on this computer. Enable transcript indexing on that computer to search its sessions.",
       "notReady": "The search index is not ready yet. Try again shortly.",
@@ -18015,7 +18047,13 @@
       "enableFailed": "Could not enable search. Try again.",
       "enable": "Enable",
       "retry": "Try again",
-      "scopeUnknown": "This computer does not have this workspace or project. Switch the scope to All to search everything on it."
+      "scopeUnknown": "This computer does not have this workspace or project. Switch the scope to All to search everything on it.",
+      "sortSessionsAriaLabel": "Sort sessions: {{value0}}",
+      "sessionsOne": "{{count}} session",
+      "sessionsOther": "{{count}} sessions",
+      "sessionsOfLoaded": "{{value0}} of {{value1}} sessions",
+      "showMoreSessions": "Show more sessions",
+      "loadingMoreSessions": "Loading more sessions…"
     }
   },
   "sessionHistory": {

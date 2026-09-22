@@ -43,6 +43,7 @@ export function NewWorktreeFormSheet(props: {
   creating: boolean
   canCreate: boolean
   onClose: () => void
+  onOpenExternalUrl: (url: string) => void
   onOpenProject: () => void
   onOpenRunTarget: () => void
   onOpenSource: () => void
