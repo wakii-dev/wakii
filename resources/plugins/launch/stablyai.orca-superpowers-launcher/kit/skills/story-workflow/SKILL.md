@@ -221,7 +221,12 @@ Run the full-strictness epic pipeline:
    clarifying questions của bước 6, KHÔNG hỏi riêng 2 lần.
    (learned 2026-08-28 FI-187-review: bước 1 từng trỏ prompt-master sai
    purpose — tool không activate, bước refine thực tế trống)
-2. `phase0-impact-analyst` MANDATORY — all 10 dimensions (P4)
+2. `phase0-impact-analyst` MANDATORY — all 10 dimensions (P4). TRƯỚC khi
+   dispatch: **prior-art probe** — 2–3 câu `orca search` trên module sẽ đụng
+   (vd `orca search "computeKitHash" --sort newest --limit 20`, `--since`
+   1–2 tháng), hit có ích nạp vào context pack — trí nhớ tổ chức thay cho
+   "tưởng mình nhớ" (bài học kit-clobber ×2: 1 query "computeKitHash" hồi
+   21/09 đã vươn lên đủ session của 19–20/09)
 3. Figma URLs → Principle 8 (read at Phase 0, get_design_context + diff vs
    codebase) — **capture TẤT CẢ frames spec nhắc vào
    `docs/superpowers/figma/<story-slug>/` (md+png+json theo frame-id,
@@ -613,6 +618,9 @@ SF In Progress + node vàng mãi →
 3. Chỉ khi cả hai tĩnh hoàn toàn → RESUME (ở LAUNCH).
 Bài học FI-151: 4 SF tưởng "chết qua đêm" — 2 đang tự chạy, 2 idle-sống;
 0 cái thật sự chết. Kết luận sai → tạo worktree trùng / khởi lại mất state.
+Ánh xạ từ vựng fence Orca: RUNNING/BUSY = `live` · STALLED* = `unverifiable`
+(khoanh vùng + probe thêm, KHÔNG tuyên bố chết) · `exited` chỉ khi host
+chứng minh (tail error + exit code). Map STALLED → redo tự động là lỗi cấm.
 CASE PHỤ (SF-5 thực tế): commits mới + terminal ✳ idle + issue In Progress →
 agent có thể VỪA xong code chưa kịp merge/Done. Chờ 1 vòng check kế tiếp;
 nếu unchanged → gửi resume prompt (agent tự xác nhận xong và chạy checklist
