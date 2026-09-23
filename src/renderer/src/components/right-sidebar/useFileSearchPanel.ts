@@ -1,5 +1,5 @@
 import type React from 'react'
-import { useCallback, useDeferredValue, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { useAppStore } from '@/store'
 import { useActiveWorktree } from '@/store/selectors'
 import type { SearchFileResult, SearchMatch } from '../../../../shared/code-search-types'
@@ -9,6 +9,9 @@ import type { FileSearchPanelModel } from './file-search-panel-model'
 import { useFileSearchRunner } from './useFileSearchRunner'
 import { useFileSearchHistory } from './use-file-search-history'
 import { useFileSearchReplaceCancelGuard } from './use-file-search-replace-cancel'
+import { isInvalidReplaceRegex } from './search-replace-engine'
+import { REPLACE_ALL_MAX_FILES } from './search-replace-all-runner'
+import type { ReplaceDisabledReason } from './SearchQueryRow'
 
 const EMPTY_COLLAPSED_FILES = new Set<string>()
 
@@ -33,6 +36,9 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
   const fileSearchCollapsedFiles = searchState?.collapsedFiles ?? EMPTY_COLLAPSED_FILES
   const fileSearchSeedRequestId = searchState?.seedRequestId
   const fileSearchFocusRequestId = searchState?.focusRequestId
+  const fileSearchReplaceVisible = searchState?.replaceVisible ?? false
+  const fileSearchReplaceQuery = searchState?.replaceQuery ?? ''
+  const fileSearchReplaceAllInProgress = searchState?.replaceAllInProgress ?? false
 
   const updateFileSearchState = useAppStore((s) => s.updateFileSearchState)
   const consumeFileSearchSeedRequest = useAppStore((s) => s.consumeFileSearchSeedRequest)
@@ -239,6 +245,65 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
     [fileSearchQuery, handleClearSearch, executeSearch, recordCurrentQuery]
   )
 
+  // Why: computed in the panel (not the component) so the block matrix and the
+  // up-front regex compile share one source of truth with the runner.
+  const replaceDisabledReason = useMemo<ReplaceDisabledReason | null>(() => {
+    if (!fileSearchResults || fileSearchResults.files.length === 0) {
+      return 'no-results'
+    }
+    if (fileSearchReplaceAllInProgress) {
+      return 'running'
+    }
+    if (fileSearchResults.truncated) {
+      return 'truncated'
+    }
+    if (fileSearchResults.files.length > REPLACE_ALL_MAX_FILES) {
+      return 'cap'
+    }
+    if (
+      fileSearchUseRegex &&
+      isInvalidReplaceRegex(fileSearchQuery, {
+        caseSensitive: fileSearchCaseSensitive,
+        wholeWord: fileSearchWholeWord,
+        useRegex: true
+      })
+    ) {
+      return 'invalid-regex'
+    }
+    return null
+  }, [
+    fileSearchResults,
+    fileSearchReplaceAllInProgress,
+    fileSearchUseRegex,
+    fileSearchQuery,
+    fileSearchCaseSensitive,
+    fileSearchWholeWord
+  ])
+
+  const [replacePreviewOpen, setReplacePreviewOpen] = useState(false)
+
+  const handleToggleReplaceVisible = useCallback(() => {
+    updateActiveSearchState({ replaceVisible: !fileSearchReplaceVisible })
+  }, [updateActiveSearchState, fileSearchReplaceVisible])
+
+  const handleReplaceQueryChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      updateActiveSearchState({ replaceQuery: e.target.value })
+    },
+    [updateActiveSearchState]
+  )
+
+  const handleReplaceAll = useCallback(() => {
+    if (replaceDisabledReason !== null) {
+      return
+    }
+    setReplacePreviewOpen(true)
+  }, [replaceDisabledReason])
+
+  const closeReplacePreview = useCallback(() => {
+    setReplacePreviewOpen(false)
+  }, [])
+
   const handleExpandAll = useCallback(() => {
     updateActiveSearchState({
       collapsedFiles: setAllSearchFilesCollapsed(fileSearchResults, false)
@@ -275,6 +340,12 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
       useRegex: fileSearchUseRegex,
       history: searchHistory,
       historyOpen: historyOpen && fileSearchQuery.trim() === '',
+      replaceVisible: fileSearchReplaceVisible,
+      replaceQuery: fileSearchReplaceQuery,
+      replaceDisabledReason,
+      onToggleReplaceVisible: handleToggleReplaceVisible,
+      onReplaceQueryChange: handleReplaceQueryChange,
+      onReplaceAll: handleReplaceAll,
       onQueryChange: handleQueryChange,
       onKeyDown: handleKeyDown,
       onClearSearch: handleClearSearch,
@@ -319,6 +390,10 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
       onExpandAll: handleExpandAll,
       onCollapseAll: handleCollapseAll,
       onMatchClick: handleMatchClick
+    },
+    replacePreviewProps: {
+      open: replacePreviewOpen,
+      onClose: closeReplacePreview
     },
     focusQueryInput
   }

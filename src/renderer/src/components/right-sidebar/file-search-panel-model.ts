@@ -26,5 +26,9 @@ export type FileSearchPanelModel = {
   queryRowProps: SearchQueryRowProps
   filtersProps: SearchFiltersProps
   resultsProps: FileSearchResultsProps
+  replacePreviewProps: {
+    open: boolean
+    onClose: () => void
+  }
   focusQueryInput: () => void
 }

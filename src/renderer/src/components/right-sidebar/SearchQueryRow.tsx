@@ -1,8 +1,26 @@
 import React from 'react'
-import { Search as SearchIcon, CaseSensitive, WholeWord, Regex, X, Loader2 } from 'lucide-react'
+import {
+  Search as SearchIcon,
+  CaseSensitive,
+  WholeWord,
+  Regex,
+  X,
+  Loader2,
+  Replace,
+  ReplaceAll,
+  ChevronDown,
+  ChevronRight
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ToggleButton } from './SearchResultItems'
 import { translate } from '@/i18n/i18n'
+
+export type ReplaceDisabledReason =
+  | 'no-results'
+  | 'truncated'
+  | 'cap'
+  | 'invalid-regex'
+  | 'running'
 
 export type SearchQueryRowProps = {
   inputRef: React.Ref<HTMLInputElement>
@@ -13,12 +31,18 @@ export type SearchQueryRowProps = {
   useRegex: boolean
   history: string[]
   historyOpen: boolean
+  replaceVisible: boolean
+  replaceQuery: string
+  replaceDisabledReason: ReplaceDisabledReason | null
   onQueryChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   onKeyDown: (e: React.KeyboardEvent) => void
   onClearSearch: () => void
   onToggleCaseSensitive: () => void
   onToggleWholeWord: () => void
   onToggleRegex: () => void
+  onToggleReplaceVisible: () => void
+  onReplaceQueryChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onReplaceAll: () => void
   onHistoryFocus: () => void
   onHistoryBlur: () => void
   onHistorySelect: (query: string) => void
@@ -33,12 +57,18 @@ export function SearchQueryRow({
   useRegex,
   history,
   historyOpen,
+  replaceVisible,
+  replaceQuery,
+  replaceDisabledReason,
   onQueryChange,
   onKeyDown,
   onClearSearch,
   onToggleCaseSensitive,
   onToggleWholeWord,
   onToggleRegex,
+  onToggleReplaceVisible,
+  onReplaceQueryChange,
+  onReplaceAll,
   onHistoryFocus,
   onHistoryBlur,
   onHistorySelect
@@ -49,6 +79,19 @@ export function SearchQueryRow({
         className="flex h-7 items-center gap-1 rounded-sm border border-border bg-input/50 px-1.5 focus-within:border-ring"
         data-ignore-file-explorer-keys="true"
       >
+        <button
+          type="button"
+          className="flex shrink-0 items-center rounded-sm p-0.5 text-muted-foreground hover:text-foreground"
+          aria-label={translate(
+            'auto.components.right.sidebar.SearchQueryRow.toggleReplaceLabel',
+            'Toggle Replace'
+          )}
+          aria-expanded={replaceVisible}
+          data-testid="search-replace-toggle"
+          onClick={onToggleReplaceVisible}
+        >
+          {replaceVisible ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
+        </button>
         <SearchIcon className="size-3.5 shrink-0 text-muted-foreground" />
         <input
           ref={inputRef}
@@ -112,6 +155,69 @@ export function SearchQueryRow({
           <Regex className="size-3.5" />
         </ToggleButton>
       </div>
+      {replaceVisible ? (
+        <div
+          className="mt-1 flex h-7 items-center gap-1 rounded-sm border border-border bg-input/50 px-1.5 focus-within:border-ring"
+          data-ignore-file-explorer-keys="true"
+        >
+          <Replace className="size-3.5 shrink-0 text-muted-foreground" />
+          <input
+            type="text"
+            className="min-w-0 flex-1 bg-transparent py-1 text-xs text-foreground outline-none placeholder:text-muted-foreground/50"
+            aria-label={translate(
+              'auto.components.right.sidebar.SearchQueryRow.replaceLabel',
+              'Replace'
+            )}
+            placeholder={translate(
+              'auto.components.right.sidebar.SearchQueryRow.replaceLabel',
+              'Replace'
+            )}
+            value={replaceQuery}
+            onChange={onReplaceQueryChange}
+            spellCheck={false}
+            data-testid="search-replace-input"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            className="h-auto w-auto shrink-0 gap-1 rounded-sm px-1 text-muted-foreground hover:text-foreground"
+            aria-label={translate(
+              'auto.components.right.sidebar.SearchQueryRow.replaceAllLabel',
+              'Replace All'
+            )}
+            title={translate(
+              'auto.components.right.sidebar.SearchQueryRow.replaceAllLabel',
+              'Replace All'
+            )}
+            disabled={replaceDisabledReason !== null}
+            aria-disabled={replaceDisabledReason !== null}
+            onClick={() => {
+              if (replaceDisabledReason === null) {
+                onReplaceAll()
+              }
+            }}
+            data-testid="search-replace-all-button"
+          >
+            {replaceDisabledReason === 'running' ? (
+              <Loader2 className="size-3 animate-spin" />
+            ) : (
+              <ReplaceAll className="size-3.5" />
+            )}
+          </Button>
+        </div>
+      ) : null}
+      {replaceVisible && replaceDisabledReason === 'invalid-regex' ? (
+        <div
+          className="mt-1 text-[11px] text-destructive"
+          data-testid="search-replace-block-message"
+        >
+          {translate(
+            'auto.components.right.sidebar.SearchQueryRow.invalidRegexMessage',
+            'Invalid regular expression'
+          )}
+        </div>
+      ) : null}
       {historyOpen && history.length > 0 ? (
         <div
           data-testid="search-history-dropdown"
