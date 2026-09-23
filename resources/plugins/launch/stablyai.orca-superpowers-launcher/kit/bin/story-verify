@@ -69,6 +69,11 @@ orca() {
     && { printf '%s' "$out"; return 0; }
   out=$(ORCA_USER_DATA_PATH="$ORCA_PROD" "$ORCA_BIN" "$@" 2>/dev/null) \
     && { printf '%s' "$out"; return 0; }
+  # Why: Windows keeps runtime metadata under %APPDATA%\orca, not the macOS
+  # Library paths above — every forced override fails there and bare orca
+  # autodetects. A bare call never mixes dev/prod output, safe to forward.
+  out=$("$ORCA_BIN" "$@" 2>/dev/null) \
+    && { printf '%s' "$out"; return 0; }
   return 1
 }
 
@@ -167,7 +172,10 @@ verify_sf() { # $1 worktree → in "<sf>|<verdict>|<detail>|<b1>|<b2>|<b3>|<b4>|
   for bf in "$wt"/docs/superpowers/brackets/*.md; do
     [ -f "$bf" ] || continue
     [ -z "$dest" ] && dest=$(grep -m1 '^Destination:' "$bf" | sed 's/Destination: //')
-    sfnum=$(echo "$sf" | cut -d- -f1-2 | tr 'a-z' 'A-Z')
+    # Why not cut -d- -f1-2: coordinators name worktrees `<story>-sf-<n>`
+    # (fi28-sf-1) — that cut yields FI28-SF, which matches no `## SF-<n>`
+    # section. Extract the sf-<n> token wherever it sits in the name.
+    sfnum=$(echo "$sf" | grep -oE 'sf-?[0-9]+' | head -1 | tr 'a-z' 'A-Z')
     linear=$(awk -v sfx="$sfnum" '
       $0 ~ "^## " sfx "([ :]|$)" { in_sf = 1; next }
       /^## SF-/ { in_sf = 0 }
@@ -184,7 +192,6 @@ verify_sf() { # $1 worktree → in "<sf>|<verdict>|<detail>|<b1>|<b2>|<b3>|<b4>|
   elif [ "$code_commits" -gt 0 ]; then b1="WARN"; else b1="FAIL"; fi
   b1_note=""
   N=$(echo "$sf" | grep -oE '[0-9]+' | head -1)
-  STORY_DIR=$(basename "$BRACKET" .md 2>/dev/null || true)
   # context-pack budget (team discipline v1.1): pack > 8KB (~2k tokens) →
   # WARN slice lại — pack phình đốt token mỗi lần agent đọc (caveman doctrine)
   cp_size=0
@@ -193,12 +200,16 @@ verify_sf() { # $1 worktree → in "<sf>|<verdict>|<detail>|<b1>|<b2>|<b3>|<b4>|
   done
   if [ "${cp_size:-0}" -gt 8192 ]; then b2="WARN"; fi
   head_hash=$(git -C "$wt" rev-parse --short HEAD 2>/dev/null)
+  sftok=$(echo "$sf" | grep -oE 'sf-?[0-9]+' | head -1)
 
   # B1+ evidence gate (verify.evidenceGate) — test phải PASS CÓ BẰNG CHỨNG:
   # docs/superpowers/evidence/<sf>/test-run.txt chứa HEAD hash hiện tại.
   # Học FI-380/Ahamove #77: file test tồn tại ≠ test đã chạy được.
   if [ "$EVIDENCE_GATE" = 1 ] && [ "$b1" != "FAIL" ]; then
     ev="$wt/docs/superpowers/evidence/$sf/test-run.txt"
+    # Established convention on this repo is slug evidence dirs (sf-1-<slug>)
+    # while worktrees are named <story>-sf-<n> — fall back to the token glob.
+    [ -f "$ev" ] || ev=$(ls "$wt"/docs/superpowers/evidence/"$sftok"*/test-run.txt 2>/dev/null | head -1)
     # chấp nhận HEAD hoặc HEAD~1: evidence commit ngay sau code commit —
     # hash trong evidence = code commit (HEAD~1), không thể tự chứa chính nó
     parent_hash=$(git -C "$wt" rev-parse --short HEAD~1 2>/dev/null)
@@ -221,7 +232,10 @@ verify_sf() { # $1 worktree → in "<sf>|<verdict>|<detail>|<b1>|<b2>|<b3>|<b4>|
   # B2 plan ticked — còn bao nhiêu task [ ]?
   # (chấp nhận cả "sf-3" lẫn "sf3" — agents đặt tên plan không đồng nhất dash)
   plan=""; open_tasks=0
-  local p1=$(echo "$sf" | cut -d- -f1-2); local p2=$(echo "$p1" | tr -d '-')
+  # Same sf-token rule as the bracket derive: p1 = the sf-<n> token itself
+  # (matches `*-sf-1-*` plan names), p2 = first two dash fields (matches
+  # story-prefixed names like *fi28-sf-*).
+  local p1=$(echo "$sf" | grep -oE 'sf-?[0-9]+' | head -1); local p2=$(echo "$sf" | cut -d- -f1-2)
   for pf in "$wt"/docs/superpowers/plans/*.md; do
     [ -f "$pf" ] || continue
     case "$(basename "$pf")" in *"$p1"*|*"$p2"*) plan="$pf"; break ;; esac
@@ -266,7 +280,7 @@ verify_sf() { # $1 worktree → in "<sf>|<verdict>|<detail>|<b1>|<b2>|<b3>|<b4>|
     else
       # fallback: verdict kẹt OUTBOX (bài học SF-1 19:48: reviewer viết file
       # xong nhưng chưa post lên Linear — B3 FAIL mù dù review ĐÃ xong)
-      sfp=$(echo "$sf" | cut -d- -f1-2)
+      sfp=$(echo "$sf" | grep -oE 'sf-?[0-9]+' | head -1)
       ob=$(grep -l "VERDICT: APPROVED" /tmp/story/*/code-reviewer-"$sfp"*.md 2>/dev/null | head -1)
       b3="FAIL"
       [ -n "$ob" ] && { b3="OUTBOX"; OB_NOTE="verdict trong $ob — CHƯA post lên Linear (agent cần post + Done)"; }
@@ -294,6 +308,7 @@ verify_sf() { # $1 worktree → in "<sf>|<verdict>|<detail>|<b1>|<b2>|<b3>|<b4>|
   b_smoke="OFF"; smoke_note=""
   if [ "$SMOKE_GATE" = 1 ]; then
     sev="$wt/docs/superpowers/evidence/$sf/smoke.txt"
+    [ -f "$sev" ] || sev=$(ls "$wt"/docs/superpowers/evidence/"$sftok"*/smoke.txt 2>/dev/null | head -1)
     parent_hash=$(git -C "$wt" rev-parse --short HEAD~1 2>/dev/null)
     if [ -f "$sev" ] && { grep -q "$head_hash" "$sev" 2>/dev/null || grep -q "$parent_hash" "$sev" 2>/dev/null; }; then b_smoke="PASS"
     else b_smoke="FAIL"; smoke_note="smoke evidence thiếu: docs/superpowers/evidence/$sf/smoke.txt (HEAD ${head_hash:-?})"; fi
@@ -333,8 +348,10 @@ for w in wts:
 DC_ON=$(dc_enabled_read); DC_ON=${DC_ON:-0}
 
 WTS=()
+# Why two globs: coordinators name SF worktrees `<story>-sf-<n>` (fi28-sf-1) —
+# the legacy `sf-*` glob silently missed every real worktree on this layout.
 for ws in "$HOME"/orca/workspaces/*/; do
-  for wt in "$ws"sf-*/; do
+  for wt in "$ws"sf-*/ "$ws"*-sf-*/; do
     [ -d "$wt" ] && git -C "$wt" rev-parse --git-dir >/dev/null 2>&1 && WTS+=("${wt%/}")
   done
 done

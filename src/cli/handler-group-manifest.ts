@@ -137,6 +137,11 @@ export const HANDLER_GROUPS: readonly HandlerGroup[] = [
     load: async () => (await import('./handlers/orchestration.js')).ORCHESTRATION_HANDLERS
   },
   {
+    name: 'notifications',
+    keys: ['notifications show'],
+    load: async () => (await import('./handlers/notifications.js')).NOTIFICATION_HANDLERS
+  },
+  {
     name: 'emulator',
     keys: [
       'emulator list',

@@ -7,6 +7,11 @@
 #   3. Chỉ resume khi tĩnh hẳn: commits stale VÀ terminal idle/cold.
 #      Idle Claude session GIỮ context — resume = gửi input mới, không restart lại từ đầu.
 #
+# Ánh xạ từ vựng fence Orca (ssh-execution-boundary): RUNNING/BUSY/RUNNING-EXT = `live`
+# · STALLED* = `unverifiable` (khoanh vùng, probe thêm — KHÔNG tuyên bố chết)
+# · "chết" (`exited`) chỉ khi có bằng chứng host: tail error + exit code. Map STALLED
+#   → redo tự động = cold-start đè worktree đang sống — lỗi lớp này cấm lặp.
+#
 # Usage:
 #   story-resume                    diagnose MỌI sf-* worktree (bảng + verdict)
 #   story-resume <sf-name>          diagnose 1 SF + in resume plan (prompt sẵn sàng)

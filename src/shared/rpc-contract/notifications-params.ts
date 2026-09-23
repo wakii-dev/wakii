@@ -59,3 +59,12 @@ export const NotificationRegisterPushParams = z
 export const NotificationsSubscribeParams = z
   .object({ includeDesktopSuppressed: z.boolean().optional() })
   .optional()
+
+// Why strict: the CLI author wrote every flag by hand, so a typo'd flag must
+// error, not silently drop the field it was meant to carry.
+export const NotificationsShowParams = z
+  .object({
+    title: z.string().min(1, 'Missing title').max(200),
+    body: z.string().max(2000).optional()
+  })
+  .strict()

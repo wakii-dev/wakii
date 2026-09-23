@@ -71,6 +71,12 @@ Tester (verifier / code-reviewer / security-audit — độc lập với Dev)
 ├─ Phán: APPROVED / CHANGES-REQUESTED / REJECT-AND-REVERT
 └─ NOT fix code. Chỉ tìm lỗi — Dev mới fix.
 
+Medic (story-medic — cấp cứu vận hành, KHÔNG đụng code)
+├─ Nhận: watchdog verdict STALLED* / session chết giữa turn / 2 session cùng story
+├─ Làm: chẩn đoán bằng chứng (story-resume --check) → absorb provenance → resume/rebind
+├─ NOT quyết done-semantics (REQUIREMENT-GAP → USER). NOT xoá state. NOT sửa code
+└─ Khi cần: PM dispatch NGAY khi stall detected — không gom chờ
+
 Chia việc (PM làm lúc CREATE/APPROVE):
 ├─ Mỗi SF = 1 dev-ticket: đủ lớn để có ý nghĩa (8-15 tasks), đủ nhỏ để 1 agent
 ├─ SF visual-heavy → designer phase TRƯỚC dev phase (design-first flow)
@@ -84,6 +90,21 @@ Chia việc (PM làm lúc CREATE/APPROVE):
 - Tester không fix — tìm lỗi là việc khác với sửa lỗi
 - Đây chính là cấu trúc agents đã có (task-executor xanh, code-reviewer xanh lam,
   verifier cam) — section này formal hóa cách nhìn chúng như MỘT TEAM.
+
+**Crew theo phase (dispatch checklist — ai chạy khi nào):**
+
+| Phase | MANDATORY | Tuỳ chọn / theo kích hoạt |
+|---|---|---|
+| 0 — Impact | `phase0-impact-analyst` (feature work; skip cho fix nhỏ) | |
+| 2 — Spec | `spec-critic` (trước khi plan) | |
+| 3 — Plan | `plan-critic` (plan ≥5 tasks / chạy song song) | |
+| 4 — Execute | `task-executor` mỗi SF/task · `code-reviewer` giữa các task | `designer` TRƯỚC dev nếu SF có UI (design-first) · `security-audit` khi chạm auth/secret/input ngoài |
+| 5 — Verify | `verifier` tại gate-resolve | `rollback-fixer` khi diverge / verify-fail ×2 cùng nguyên nhân |
+| Mọi lúc | | `story-medic` khi watchdog `STALLED*` / 2 session cùng story / binding churn |
+
+Quy tắc bảng: MANDATORY = bỏ qua là lỗ hổng quá trình (đã cắn thật); cột phải =
+dispatch theo điều kiện ghi sẵn, không cần PM nhớ. Chi tiết từng vai: Team Model
+ở trên + `kit/agents/*.md`.
 
 # ⚠️ MINDSET SỐ 0 — BROWSER LÀ NƠI SF ĐƯỢC CHỨNG MINH (port từ orca-superpowers-workflow)
 
@@ -200,7 +221,12 @@ Run the full-strictness epic pipeline:
    clarifying questions của bước 6, KHÔNG hỏi riêng 2 lần.
    (learned 2026-08-28 FI-187-review: bước 1 từng trỏ prompt-master sai
    purpose — tool không activate, bước refine thực tế trống)
-2. `phase0-impact-analyst` MANDATORY — all 10 dimensions (P4)
+2. `phase0-impact-analyst` MANDATORY — all 10 dimensions (P4). TRƯỚC khi
+   dispatch: **prior-art probe** — 2–3 câu `orca search` trên module sẽ đụng
+   (vd `orca search "computeKitHash" --sort newest --limit 20`, `--since`
+   1–2 tháng), hit có ích nạp vào context pack — trí nhớ tổ chức thay cho
+   "tưởng mình nhớ" (bài học kit-clobber ×2: 1 query "computeKitHash" hồi
+   21/09 đã vươn lên đủ session của 19–20/09)
 3. Figma URLs → Principle 8 (read at Phase 0, get_design_context + diff vs
    codebase) — **capture TẤT CẢ frames spec nhắc vào
    `docs/superpowers/figma/<story-slug>/` (md+png+json theo frame-id,
@@ -409,6 +435,16 @@ Kết thúc bằng 1 dòng: `MINI-RITUAL SF-N: N patterns → file(s) updated / 
 One worktree per SF — isolation + parallelism. Tier-N SFs launch together
 (up to the parallel cap); the Orca DAG blocks lower tiers until deps are Done.
 
+**Relay mặc định (pull-based) — KHÔNG launch tay từng node:** worker xong SF tự
+kích hoạt `story-watchdog --launch-next` (COMPLETE-RUN CHECKLIST bước 7);
+`story-coordinator-pass` 30' là an toàn ròng khi relay trượt. Coordinator CHỈ
+launch tay khi: (a) SF dính DESIGN GATE (mock-prototype — phải xong user-chọn +
+hand-off), (b) destination-freshness guard cần phán (đích đang chứa merges),
+(c) launch-next SKIP/fail-closed và cần gỡ thủ công. **Rule pre-clear:** trước
+khi rời tier, coordinator xử hết design gate của tier — SF đã clear thì relay
+tự chạy (bài học FI-187: rule chỉ nằm trong doc thì không ai thực thi; giờ relay
+là cơ chế, doc mô tả đúng cơ chế).
+
 **Destination-freshness guard (trước khi fork SF đầu tiên của tier):** nhánh đích
 phải chứa mọi story-meta commit mới nhất trên main (bracket remaps, context-pack
 backfills). **DÙNG NGUYÊN CỤM LỆNH — đừng tự ghép branch -f tay** (sự cố thật
@@ -582,6 +618,9 @@ SF In Progress + node vàng mãi →
 3. Chỉ khi cả hai tĩnh hoàn toàn → RESUME (ở LAUNCH).
 Bài học FI-151: 4 SF tưởng "chết qua đêm" — 2 đang tự chạy, 2 idle-sống;
 0 cái thật sự chết. Kết luận sai → tạo worktree trùng / khởi lại mất state.
+Ánh xạ từ vựng fence Orca: RUNNING/BUSY = `live` · STALLED* = `unverifiable`
+(khoanh vùng + probe thêm, KHÔNG tuyên bố chết) · `exited` chỉ khi host
+chứng minh (tail error + exit code). Map STALLED → redo tự động là lỗi cấm.
 CASE PHỤ (SF-5 thực tế): commits mới + terminal ✳ idle + issue In Progress →
 agent có thể VỪA xong code chưa kịp merge/Done. Chờ 1 vòng check kế tiếp;
 nếu unchanged → gửi resume prompt (agent tự xác nhận xong và chạy checklist

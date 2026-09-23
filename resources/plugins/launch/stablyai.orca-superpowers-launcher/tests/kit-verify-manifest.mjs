@@ -65,10 +65,11 @@ ok(`marker = ${kitJson.version} (khớp kit.json)`, ver === kitJson.version || v
   ok('bundled-plugins.json: contentHash khớp bytes plugin', !!entry && entry.contentHash === actualHash,
     `manifest=${String(entry?.contentHash).slice(0, 16)} actual=${actualHash.slice(0, 16)} — rehash qua hashPackagedPluginTree`)
 }
-// Drift guard source↔vendored (2.14.2): source repo (local-only) phải khớp
-// vendored trên đúng contract sync-kit — bin/ + skills/ + agents/ + kit.json.
-// Lệch = lần sync-kit tới xoá sạch doctrine mới (2.14.x từng chỉ tồn tại
-// vendored). CI không có source repo → SKIP; local discipline → FAIL.
+// Drift guard source↔vendored (2.14.2) — RETIRED 22/09 (ruling "kit chỉ sống
+// trong wakii"): source repo story-team-kit là LEGACY frozen, hết sync-back.
+// Giữ phép so sánh như SKIP thông tin (delta còn nhìn được nếu ai ôm lại source
+// repo), KHÔNG FAIL — assert cũ gợi ý "sync-back/sync-kit", hướng đã từng đẩy
+// ngược content cũ đè mới (version clobber ×2 cùng class lỗi).
 {
   const osHome = process.env.HOME || process.env.USERPROFILE || ''
   const srcCandidates = [process.env.WAKII_KIT_SRC, join(osHome, 'Desktop', 'projects', 'story-team-kit')].filter(Boolean)
@@ -99,9 +100,11 @@ ok(`marker = ${kitJson.version} (khớp kit.json)`, ver === kitJson.version || v
     const onlySrc = [...srcFiles.keys()].filter(k => !venFiles.has(k))
     const onlyVen = [...venFiles.keys()].filter(k => !srcFiles.has(k))
     const diffContent = [...srcFiles.keys()].filter(k => venFiles.has(k) && !srcFiles.get(k).equals(venFiles.get(k)))
-    ok('drift guard: source == vendored (file list + content)',
-      onlySrc.length === 0 && onlyVen.length === 0 && diffContent.length === 0,
-      `only-src=${onlySrc.slice(0, 3)} only-vendored=${onlyVen.slice(0, 3)} khác-nội-dung=${diffContent.slice(0, 3)} — sync-back hoặc sync-kit`)
+    if (onlySrc.length === 0 && onlyVen.length === 0 && diffContent.length === 0) {
+      console.log('  [SKIP] drift guard source↔vendored — legacy source trùng khớp vendored (hiếm, chỉ thông tin)')
+    } else {
+      console.log(`  [SKIP] drift guard source↔vendored — source repo LEGACY frozen (ruling 22/09, kit chỉ sống trong wakii). Delta: only-src=${onlySrc.slice(0, 3)} only-vendored=${onlyVen.slice(0, 3)} khác-nội-dung=${diffContent.slice(0, 3)}. KHÔNG sync-back/sync-kit.`)
+    }
   }
 }
 // exec-bit: git có thể lưu 100644 → checkout/sync sinh bins không chạy được
@@ -114,7 +117,8 @@ if (process.platform !== 'win32') {
 }
 
 // Test-coverage ratchet (backlog #6 — baseline đo lại 2.16.4: 22/41 — 2.15/2.16
-// retire 1 bin có harness, đồng thời +2 bin được cover nhờ mcp/preflight tests):
+// retire 1 bin có harness, đồng thời +2 bin được cover nhờ mcp/preflight tests;
+// 2.17.0: 34/47 — story-resume + story-test có harness riêng):
 // số kit bin có harness trong tests/ KHÔNG ĐƯỢC GIẢM. Mỗi kit release thêm
 // tối thiểu 1 harness cho 1 bin chưa cover, đừng big-bang.
 {
@@ -124,7 +128,7 @@ if (process.platform !== 'win32') {
   const testBlob = readdirSync(testsDirRatchet).filter(f => f.endsWith('.mjs'))
     .map(f => readFileSync(join(testsDirRatchet, f), 'utf8')).join('\n')
   const covered = bins.filter(b => testBlob.includes(b)).length
-  ok(`coverage ratchet: ${covered}/${bins.length} bins có harness (>= 22)`, covered >= 22,
+  ok(`coverage ratchet: ${covered}/${bins.length} bins có harness (>= 34)`, covered >= 34,
     `covered=${covered} — không xoá/đổi tên harness existing; bin mới cần harness`)
 }
 

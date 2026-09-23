@@ -354,6 +354,12 @@ def process_inbox(run, self_handle):
             elif mtype == "worker_done":
                 if verify_evidence(m):
                     log(f"EVIDENCE-OK {mid} — worker_done chấp nhận")
+                    # Relay gate: SF xong evidence-clean phải lộ ra cho
+                    # coordinator dispatch verifier (pass CLI không spawn
+                    # agent — gate quyết định ở coordinator, không ở pass).
+                    log(f"READY-FOR-VERIFY {mid} — surfaced cho coordinator")
+                    notify("coordinator-pass ✓",
+                           f"READY-FOR-VERIFY: {subject[0][:60]}")
                 else:
                     # NEEDS-VERIFY đã ghi trail + stdout; verdict cố định →
                     # ack bình thường cùng batch (không spam lại mỗi pass).

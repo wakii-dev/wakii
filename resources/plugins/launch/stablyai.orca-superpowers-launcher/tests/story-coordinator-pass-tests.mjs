@@ -313,6 +313,7 @@ console.log('== C8 worker_done evidence thiếu (files rỗng) → NEEDS-VERIFY 
   })
   check('C8', 'NEEDS-VERIFY được ghi', r.out.includes('NEEDS-VERIFY'), r.out)
   check('C8', 'KHÔNG EVIDENCE-OK', !r.out.includes('EVIDENCE-OK'), r.out)
+  check('C8', 'KHÔNG READY-FOR-VERIFY (evidence thiếu thì không surfaced)', !r.out.includes('READY-FOR-VERIFY'), r.out)
   check('C8', 'state file có trail', existsSync(r.stateFile) && readFileSync(r.stateFile, 'utf8').includes('msg_d1'), r.stateFile)
   rmSync(dir, { recursive: true, force: true })
 }
@@ -341,6 +342,7 @@ console.log('== C9 worker_done commit hash THẬT + files ⊆ diff (git tmp) →
   })
   check('C9', 'EVIDENCE-OK — chấp nhận', r.out.includes('EVIDENCE-OK'), r.out)
   check('C9', 'KHÔNG NEEDS-VERIFY', !r.out.includes('NEEDS-VERIFY'), r.out)
+  check('C9', 'READY-FOR-VERIFY surfaced (gate chờ coordinator)', r.out.includes('READY-FOR-VERIFY'), r.out)
   rmSync(dir, { recursive: true, force: true })
 }
 

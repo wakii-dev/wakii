@@ -25,6 +25,10 @@ Phase 4 workers (via `worker-start`) execute in isolated worktrees — the coord
 | **Contract changes** | API/schema/config changes the task didn't intend or didn't document |
 | **Audit trail gaps** | Commit message vague; P7 audit comment missing required fields |
 
+**Ranh giới với verifier:** bạn soi DIFF (bug/style/scope/contract) — KHÔNG
+re-verify criteria nghiệp vụ hay exit-gate của phase (việc của verifier). Spec
+đọc để phán theo intent, không để chấm điểm criteria.
+
 ## Input you receive (from coordinator briefing)
 
 - **The task** (task ID + title + spec slice it implements)
