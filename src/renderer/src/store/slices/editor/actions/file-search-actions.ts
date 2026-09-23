@@ -14,6 +14,10 @@ export function createFileSearchActions(
   | 'consumeFileSearchSeedRequest'
   | 'toggleFileSearchCollapsedFile'
   | 'clearFileSearch'
+  | 'beginFileReplaceAll'
+  | 'finishFileReplaceAll'
+  | 'requestCancelFileReplaceAll'
+  | 'clearLastFileReplaceOp'
 > {
   return {
     fileSearchStateByWorktree: {},
@@ -109,11 +113,60 @@ export function createFileSearchActions(
             [worktreeId]: {
               ...current,
               query: '',
+              replaceQuery: '',
               results: null,
               resultOwner: null,
               loading: false,
               collapsedFiles: new Set()
             }
+          }
+        }
+      }),
+    // Why: dedicated verbs instead of raw updateFileSearchState calls so the
+    // undo-closure accounting (one op, cleared after undo) has a single seam.
+    beginFileReplaceAll: (worktreeId) =>
+      set((s) => {
+        const current = s.fileSearchStateByWorktree[worktreeId] || defaultFileSearchState()
+        return {
+          fileSearchStateByWorktree: {
+            ...s.fileSearchStateByWorktree,
+            [worktreeId]: { ...current, replaceAllInProgress: true, cancelRequested: false }
+          }
+        }
+      }),
+    finishFileReplaceAll: (worktreeId, op) =>
+      set((s) => {
+        const current = s.fileSearchStateByWorktree[worktreeId] || defaultFileSearchState()
+        return {
+          fileSearchStateByWorktree: {
+            ...s.fileSearchStateByWorktree,
+            [worktreeId]: { ...current, replaceAllInProgress: false, lastReplaceOp: op }
+          }
+        }
+      }),
+    requestCancelFileReplaceAll: (worktreeId) =>
+      set((s) => {
+        const current = s.fileSearchStateByWorktree[worktreeId]
+        if (!current) {
+          return s
+        }
+        return {
+          fileSearchStateByWorktree: {
+            ...s.fileSearchStateByWorktree,
+            [worktreeId]: { ...current, cancelRequested: true }
+          }
+        }
+      }),
+    clearLastFileReplaceOp: (worktreeId) =>
+      set((s) => {
+        const current = s.fileSearchStateByWorktree[worktreeId]
+        if (!current) {
+          return s
+        }
+        return {
+          fileSearchStateByWorktree: {
+            ...s.fileSearchStateByWorktree,
+            [worktreeId]: { ...current, lastReplaceOp: null }
           }
         }
       })
