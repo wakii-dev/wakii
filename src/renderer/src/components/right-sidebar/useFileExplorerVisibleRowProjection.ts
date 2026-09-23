@@ -88,6 +88,34 @@ export function createVisibleFileExplorerRowProjection(
     return !options.showGitIgnoredFiles && isPathIgnored(options.ignoredSet, row.relativePath)
   }
 
+  // Why VS Code-style compact folders: a collapsed folder whose listing holds exactly one
+  // visible directory child displays as "a/b/c". The row keeps the FIRST folder's path,
+  // depth, and git status, so a click toggles one level and the chain splits progressively.
+  const compactFolderDisplayName = (folder: TreeNode): string => {
+    if (!folder.isDirectory || folder.isSymlink || expanded.has(folder.path)) {
+      return folder.name
+    }
+    let name = folder.name
+    let cursorPath = folder.path
+    for (;;) {
+      const listing = dirCache[cursorPath]
+      if (!listing?.children) {
+        break
+      }
+      const visibleChildren = listing.children.filter((child) => !shouldHideRow(child))
+      if (visibleChildren.length !== 1) {
+        break
+      }
+      const only = visibleChildren[0]
+      if (!only.isDirectory || only.isSymlink || expanded.has(only.path)) {
+        break
+      }
+      name += '/' + only.name
+      cursorPath = only.path
+    }
+    return name
+  }
+
   const visitChildren = (parentPath: string): void => {
     const cached = dirCache[parentPath]
     if (!cached?.children) {
@@ -97,8 +125,15 @@ export function createVisibleFileExplorerRowProjection(
       if (shouldHideRow(row)) {
         continue
       }
-      visibleFlatRows.push(row)
-      rowsByPath.set(row.path, row)
+      let projected = row
+      if (row.isDirectory) {
+        const displayName = compactFolderDisplayName(row)
+        if (displayName !== row.name) {
+          projected = { ...row, name: displayName }
+        }
+      }
+      visibleFlatRows.push(projected)
+      rowsByPath.set(row.path, projected)
       if (row.isDirectory && expanded.has(row.path)) {
         visitChildren(row.path)
       }
