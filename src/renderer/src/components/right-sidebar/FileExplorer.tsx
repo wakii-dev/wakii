@@ -203,6 +203,23 @@ function FileExplorerFiles(): React.JSX.Element {
     startNew: inlineInputState.startNew
   })
 
+  // Why: toolbar New targets the selected directory (creating inside it), and
+  // falls back to the workspace root — mirroring the background menu's root
+  // convention startNew('file', worktreePath, 0).
+  const handleToolbarStartNew = useCallback(
+    (type: 'file' | 'folder') => {
+      return () => {
+        if (!worktreePath) {
+          return
+        }
+        const parentPath = selectedNode?.isDirectory ? selectedNode.path : worktreePath
+        const depth = selectedNode?.isDirectory ? selectedNode.depth + 1 : 0
+        inlineInputState.startNew(type, parentPath, depth)
+      }
+    },
+    [worktreePath, selectedNode, inlineInputState]
+  )
+
   if (!worktreePath) {
     return (
       <div className="flex h-full items-center justify-center text-[11px] text-muted-foreground px-4 text-center">
@@ -242,6 +259,9 @@ function FileExplorerFiles(): React.JSX.Element {
           onToggleGitIgnoredFiles={toggleGitIgnoredFiles}
           showDotfiles={showDotfiles}
           onToggleDotfiles={handleToggleDotfiles}
+          canCreate={isFilesViewActive}
+          onStartNewFile={handleToolbarStartNew('file')}
+          onStartNewFolder={handleToolbarStartNew('folder')}
         />
         <FileExplorerQueryStrip view={explorerView} onSelectView={handleSelectExplorerView}>
           {/* Why: keep both query rows mounted and cross-fade so the Names/Contents
