@@ -1,27 +1,15 @@
 import type React from 'react'
-import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useAppStore } from '@/store'
 import { useActiveWorktree } from '@/store/selectors'
-import type { SearchFileResult, SearchMatch } from '../../../../shared/code-search-types'
-import { buildSearchRows, setAllSearchFilesCollapsed } from './search-rows'
-import { cancelRevealFrame, openMatchResult } from './search-match-open'
+import { cancelRevealFrame } from './search-match-open'
 import type { FileSearchPanelModel } from './file-search-panel-model'
 import { useFileSearchRunner } from './useFileSearchRunner'
 import { useFileSearchHistory } from './use-file-search-history'
 import { useFileSearchReplaceCancelGuard } from './use-file-search-replace-cancel'
-import { useFileSearchReplacePreview } from './use-file-search-replace-preview'
-import { useFileSearchReplaceRun } from './use-file-search-replace-run'
-import { useFileSearchReplaceUndo } from './use-file-search-replace-undo'
-import { isInvalidReplaceRegex } from './search-replace-engine'
-import { REPLACE_ALL_MAX_FILES } from './search-replace-all-runner'
-import { buildReplaceAllIo } from './search-replace-runtime-io'
-import { toast } from 'sonner'
-import {
-  captureFileExplorerOperationGuard,
-  getFileExplorerOperationOwner,
-  getFileExplorerOwnerUnresolvedMessage
-} from './file-explorer-operation-owner'
-import type { ReplaceDisabledReason } from './SearchQueryRow'
+import { useFileSearchReplacePanel } from './use-file-search-replace-panel'
+import { useFileSearchResultsPanel } from './use-file-search-results-panel'
+import { useFileSearchInputFocus } from './use-file-search-input-focus'
 
 const EMPTY_COLLAPSED_FILES = new Set<string>()
 
@@ -60,7 +48,6 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
   const resultsScrollRef = useRef<HTMLDivElement>(null)
   const revealRafRef = useRef<number | null>(null)
   const revealInnerRafRef = useRef<number | null>(null)
-  const seededInputSelectionRafRef = useRef<number | null>(null)
   const includeInputRef = useRef<HTMLInputElement>(null)
   const excludeInputRef = useRef<HTMLInputElement>(null)
 
@@ -135,84 +122,40 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
     focusInput: focusQueryInput
   })
 
-  const cancelSeededInputSelectionFrame = useCallback(() => {
-    if (seededInputSelectionRafRef.current !== null) {
-      cancelAnimationFrame(seededInputSelectionRafRef.current)
-      seededInputSelectionRafRef.current = null
-    }
-  }, [])
-
-  const scheduleSeededInputSelection = useCallback(() => {
-    cancelSeededInputSelectionFrame()
-    seededInputSelectionRafRef.current = requestAnimationFrame(() => {
-      seededInputSelectionRafRef.current = null
-      inputRef.current?.focus()
-      inputRef.current?.select()
-    })
-  }, [cancelSeededInputSelectionFrame])
-
   useEffect(() => {
     return () => {
-      cancelSeededInputSelectionFrame()
       cancelRevealFrame(revealRafRef)
       cancelRevealFrame(revealInnerRafRef)
     }
-  }, [cancelSeededInputSelectionFrame])
+  }, [])
 
-  useEffect(() => {
-    if (!worktreePath) {
-      cancelPendingSearch()
-      updateActiveSearchState({ results: null, resultOwner: null })
-    }
-  }, [worktreePath, cancelPendingSearch, updateActiveSearchState])
-
-  const committedSearchResults = useMemo(
-    () => ({ results: fileSearchResults, owner: fileSearchResultOwner }),
-    [fileSearchResultOwner, fileSearchResults]
-  )
-  const deferredSearchResults = useDeferredValue(committedSearchResults)
-  const searchRows = useMemo(
-    () =>
-      buildSearchRows(
-        fileSearchQuery.trim() && worktreePath ? deferredSearchResults.results : null,
-        fileSearchCollapsedFiles
-      ),
-    [deferredSearchResults.results, fileSearchCollapsedFiles, fileSearchQuery, worktreePath]
-  )
-
-  useEffect(() => {
-    if (!activeWorktreeId || fileSearchSeedRequestId === undefined) {
-      return
-    }
-
-    if (fileSearchQuery.trim()) {
-      executeSearch(fileSearchQuery)
-    }
-    scheduleSeededInputSelection()
-    consumeFileSearchSeedRequest(activeWorktreeId, fileSearchSeedRequestId)
-  }, [
+  useFileSearchInputFocus({
+    inputRef,
     activeWorktreeId,
-    consumeFileSearchSeedRequest,
-    executeSearch,
+    worktreePath,
     fileSearchQuery,
     fileSearchSeedRequestId,
-    scheduleSeededInputSelection
-  ])
+    fileSearchFocusRequestId,
+    explorerView,
+    executeSearch,
+    cancelPendingSearch,
+    updateActiveSearchState,
+    consumeFileSearchSeedRequest
+  })
 
-  useEffect(() => {
-    if (!activeWorktreeId || fileSearchFocusRequestId === undefined) {
-      return
-    }
-    inputRef.current?.focus()
-  }, [activeWorktreeId, fileSearchFocusRequestId])
-
-  const previousExplorerViewRef = useRef(explorerView)
-  useEffect(() => {
-    if (previousExplorerViewRef.current !== 'search' && explorerView === 'search') {
-      focusQueryInput()
-    }
-    previousExplorerViewRef.current = explorerView
-  }, [explorerView, focusQueryInput])
+  const resultsPanel = useFileSearchResultsPanel({
+    results: fileSearchResults,
+    resultOwner: fileSearchResultOwner,
+    collapsedFiles: fileSearchCollapsedFiles,
+    query: fileSearchQuery,
+    worktreePath,
+    toggleCollapsedFile: toggleActiveCollapsedFile,
+    updateActiveSearchState,
+    openFile,
+    setPendingEditorReveal,
+    revealRafRef,
+    revealInnerRafRef
+  })
 
   const handleClearSearch = useCallback(() => {
     cancelPendingSearch()
@@ -228,6 +171,30 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
       executeSearch(q)
     }
   }, [executeSearch, activeWorktreeId])
+
+  const {
+    replaceDisabledReason,
+    onReplaceUndo,
+    onToggleReplaceVisible,
+    onReplaceQueryChange,
+    onReplaceAll,
+    replacePreviewProps
+  } = useFileSearchReplacePanel({
+    activeWorktreeId,
+    worktreePath,
+    results: fileSearchResults,
+    query: fileSearchQuery,
+    replaceTerm: fileSearchReplaceQuery,
+    replaceVisible: fileSearchReplaceVisible,
+    flags: {
+      caseSensitive: fileSearchCaseSensitive,
+      wholeWord: fileSearchWholeWord,
+      useRegex: fileSearchUseRegex
+    },
+    replaceAllInProgress: fileSearchReplaceAllInProgress,
+    updateActiveSearchState,
+    rerunSearch
+  })
 
   const handleQueryChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -256,181 +223,6 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
     [fileSearchQuery, handleClearSearch, executeSearch, recordCurrentQuery]
   )
 
-  // Why: computed in the panel (not the component) so the block matrix and the
-  // up-front regex compile share one source of truth with the runner.
-  const replaceDisabledReason = useMemo<ReplaceDisabledReason | null>(() => {
-    if (!fileSearchResults || fileSearchResults.files.length === 0) {
-      return 'no-results'
-    }
-    if (fileSearchReplaceAllInProgress) {
-      return 'running'
-    }
-    if (fileSearchResults.truncated) {
-      return 'truncated'
-    }
-    if (fileSearchResults.files.length > REPLACE_ALL_MAX_FILES) {
-      return 'cap'
-    }
-    if (
-      fileSearchUseRegex &&
-      isInvalidReplaceRegex(fileSearchQuery, {
-        caseSensitive: fileSearchCaseSensitive,
-        wholeWord: fileSearchWholeWord,
-        useRegex: true
-      })
-    ) {
-      return 'invalid-regex'
-    }
-    return null
-  }, [
-    fileSearchResults,
-    fileSearchReplaceAllInProgress,
-    fileSearchUseRegex,
-    fileSearchQuery,
-    fileSearchCaseSensitive,
-    fileSearchWholeWord
-  ])
-
-  const [replacePreviewOpen, setReplacePreviewOpen] = useState(false)
-  const { runReplaceAll } = useFileSearchReplaceRun({ activeWorktreeId, worktreePath })
-  const { undoReplaceAll } = useFileSearchReplaceUndo({ activeWorktreeId, worktreePath })
-
-  const handleReplaceUndo = useCallback(() => {
-    void undoReplaceAll()
-  }, [undoReplaceAll])
-
-  // Why: the preview is a real dry-run over fresh disk content — counts shown
-  // in the modal come from re-derivation, never the stored match list (P0).
-  const replacePreview = useFileSearchReplacePreview({
-    open: replacePreviewOpen,
-    candidates: fileSearchResults?.files ?? [],
-    query: fileSearchQuery,
-    replaceTerm: fileSearchReplaceQuery,
-    flags: {
-      caseSensitive: fileSearchCaseSensitive,
-      wholeWord: fileSearchWholeWord,
-      useRegex: fileSearchUseRegex
-    },
-    buildIo: () => {
-      const worktreeId = activeWorktreeId
-      if (!worktreeId) {
-        throw new Error(getFileExplorerOwnerUnresolvedMessage())
-      }
-      const route = captureFileExplorerOperationGuard(
-        worktreeId,
-        getFileExplorerOperationOwner(worktreeId)
-      ).route
-      return buildReplaceAllIo({
-        settings: route.settings,
-        worktreeId,
-        worktreePath,
-        connectionId: route.connectionId,
-        expectedExecutionHostId: route.expectedExecutionHostId,
-        expectedSshTargetId: route.expectedSshTargetId,
-        expectedSshConnectionGeneration: route.expectedSshConnectionGeneration
-      })
-    }
-  })
-
-  const handleToggleReplaceVisible = useCallback(() => {
-    updateActiveSearchState({ replaceVisible: !fileSearchReplaceVisible })
-  }, [updateActiveSearchState, fileSearchReplaceVisible])
-
-  const handleReplaceQueryChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      updateActiveSearchState({ replaceQuery: e.target.value })
-    },
-    [updateActiveSearchState]
-  )
-
-  const handleReplaceAll = useCallback(() => {
-    if (replaceDisabledReason !== null || !activeWorktreeId) {
-      return
-    }
-    // Reject unresolved/changed workspace ownership before the preview opens —
-    // the confirmed run re-captures the guard at confirm time.
-    try {
-      captureFileExplorerOperationGuard(
-        activeWorktreeId,
-        getFileExplorerOperationOwner(activeWorktreeId)
-      )
-    } catch (err) {
-      toast.error(err instanceof Error && err.message ? err.message : getFileExplorerOwnerUnresolvedMessage())
-      return
-    }
-    setReplacePreviewOpen(true)
-  }, [replaceDisabledReason, activeWorktreeId])
-
-  const closeReplacePreview = useCallback(() => {
-    setReplacePreviewOpen(false)
-    replacePreview.dismiss()
-  }, [replacePreview])
-
-  const totalReplaceOccurrences = useMemo(() => {
-    if (!fileSearchResults) {
-      return 0
-    }
-    return fileSearchResults.files.reduce((total, file) => total + (file.matchCount ?? 0), 0)
-  }, [fileSearchResults])
-
-  const handleConfirmReplacePreview = useCallback(() => {
-    setReplacePreviewOpen(false)
-    replacePreview.dismiss()
-    void runReplaceAll({
-      candidates: fileSearchResults?.files ?? [],
-      query: fileSearchQuery,
-      replaceTerm: fileSearchReplaceQuery,
-      flags: {
-        caseSensitive: fileSearchCaseSensitive,
-        wholeWord: fileSearchWholeWord,
-        useRegex: fileSearchUseRegex
-      }
-    }).then(() => {
-      if (activeWorktreeId) {
-        const q = useAppStore.getState().fileSearchStateByWorktree[activeWorktreeId]?.query ?? ''
-        if (q.trim()) {
-          executeSearch(q)
-        }
-      }
-    })
-  }, [
-    replacePreview,
-    runReplaceAll,
-    fileSearchResults,
-    fileSearchQuery,
-    fileSearchReplaceQuery,
-    fileSearchCaseSensitive,
-    fileSearchWholeWord,
-    fileSearchUseRegex,
-    activeWorktreeId,
-    executeSearch
-  ])
-
-  const handleExpandAll = useCallback(() => {
-    updateActiveSearchState({
-      collapsedFiles: setAllSearchFilesCollapsed(fileSearchResults, false)
-    })
-  }, [fileSearchResults, updateActiveSearchState])
-
-  const handleCollapseAll = useCallback(() => {
-    updateActiveSearchState({ collapsedFiles: setAllSearchFilesCollapsed(fileSearchResults, true) })
-  }, [fileSearchResults, updateActiveSearchState])
-
-  const handleMatchClick = useCallback(
-    (fileResult: SearchFileResult, match: SearchMatch) => {
-      openMatchResult({
-        resultOwner: deferredSearchResults.owner,
-        fileResult,
-        match,
-        openFile,
-        setPendingEditorReveal,
-        revealRafRef,
-        revealInnerRafRef
-      })
-    },
-    [deferredSearchResults.owner, openFile, setPendingEditorReveal]
-  )
-
   return {
     activeWorktreeId,
     queryRowProps: {
@@ -446,10 +238,10 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
       replaceQuery: fileSearchReplaceQuery,
       replaceDisabledReason,
       hasReplaceUndo: fileSearchHasReplaceUndo,
-      onReplaceUndo: handleReplaceUndo,
-      onToggleReplaceVisible: handleToggleReplaceVisible,
-      onReplaceQueryChange: handleReplaceQueryChange,
-      onReplaceAll: handleReplaceAll,
+      onReplaceUndo,
+      onToggleReplaceVisible,
+      onReplaceQueryChange,
+      onReplaceAll,
       onQueryChange: handleQueryChange,
       onKeyDown: handleKeyDown,
       onClearSearch: handleClearSearch,
@@ -484,26 +276,18 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
       }
     },
     resultsProps: {
-      results: deferredSearchResults.results,
+      results: resultsPanel.results,
       hasCommittedResults: fileSearchResults !== null,
       query: fileSearchQuery,
       loading: fileSearchLoading,
-      rows: searchRows,
+      rows: resultsPanel.rows,
       scrollRef: resultsScrollRef,
-      onToggleCollapsedFile: toggleActiveCollapsedFile,
-      onExpandAll: handleExpandAll,
-      onCollapseAll: handleCollapseAll,
-      onMatchClick: handleMatchClick
+      onToggleCollapsedFile: resultsPanel.onToggleCollapsedFile,
+      onExpandAll: resultsPanel.onExpandAll,
+      onCollapseAll: resultsPanel.onCollapseAll,
+      onMatchClick: resultsPanel.onMatchClick
     },
-    replacePreviewProps: {
-      open: replacePreviewOpen,
-      onClose: closeReplacePreview,
-      onConfirm: handleConfirmReplacePreview,
-      loading: replacePreview.loading,
-      summary: replacePreview.summary,
-      replaceTerm: fileSearchReplaceQuery,
-      totalOccurrences: totalReplaceOccurrences
-    },
+    replacePreviewProps,
     focusQueryInput
   }
 }

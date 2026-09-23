@@ -140,7 +140,13 @@ export function createFileSearchActions(
         return {
           fileSearchStateByWorktree: {
             ...s.fileSearchStateByWorktree,
-            [worktreeId]: { ...current, replaceAllInProgress: false, lastReplaceOp: op }
+            // Why: a failed/no-op run must not destroy the previous undo closure;
+            // the op is only cleared by undo (clearLastFileReplaceOp).
+            [worktreeId]: {
+              ...current,
+              replaceAllInProgress: false,
+              lastReplaceOp: op ?? current.lastReplaceOp
+            }
           }
         }
       }),

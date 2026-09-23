@@ -158,4 +158,25 @@ describe('SearchQueryRow replace field', () => {
     invokeHandler(ids.get('search-replace-undo'), 'onClick')
     expect(onReplaceUndo).toHaveBeenCalledTimes(1)
   })
+
+  it('disables undo while a replace-all is running', () => {
+    const ids = findTestIds(
+      renderQueryRow({
+        replaceVisible: true,
+        hasReplaceUndo: true,
+        replaceDisabledReason: 'running'
+      })
+    )
+    const undo = ids.get('search-replace-undo')
+    expect(undo?.props['disabled']).toBe(true)
+    expect(undo?.props['aria-disabled']).toBe(true)
+  })
+
+  it('keeps undo enabled while a run is not in flight', () => {
+    const ids = findTestIds(
+      renderQueryRow({ replaceVisible: true, hasReplaceUndo: true })
+    )
+    const undo = ids.get('search-replace-undo')
+    expect(undo?.props['disabled']).toBe(false)
+  })
 })

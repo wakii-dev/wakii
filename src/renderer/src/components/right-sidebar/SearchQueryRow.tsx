@@ -224,6 +224,8 @@ export function SearchQueryRow({
                 'auto.components.right.sidebar.SearchQueryRow.undoReplaceLabel',
                 'Undo Replace All'
               )}
+              disabled={replaceDisabledReason === 'running'}
+              aria-disabled={replaceDisabledReason === 'running'}
               onClick={onReplaceUndo}
               data-testid="search-replace-undo"
             >

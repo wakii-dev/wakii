@@ -78,6 +78,13 @@ describe('file search replace state slice', () => {
     expect(store.getState().fileSearchStateByWorktree[WT]?.lastReplaceOp).toBeNull()
   })
 
+  it('finish with no written files keeps the previous undo closure', () => {
+    store.getState().finishFileReplaceAll(WT, makeOp(2))
+    store.getState().beginFileReplaceAll(WT)
+    store.getState().finishFileReplaceAll(WT, null)
+    expect(store.getState().fileSearchStateByWorktree[WT]?.lastReplaceOp?.files).toHaveLength(2)
+  })
+
   it('clearLastFileReplaceOp makes undo a no-op the second time', () => {
     store.getState().finishFileReplaceAll(WT, makeOp(1))
     store.getState().clearLastFileReplaceOp(WT)
