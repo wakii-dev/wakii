@@ -44,7 +44,7 @@ Avoid type assertions except `as const`. Unavoidable casts need a line-specific 
 # Verifying Changes
 
 - **Typecheck**: `pnpm tc` (or `tc:node` / `tc:cli` / `tc:web`)
-- **Test**: `pnpm test [path/to/file.test.ts]`
+- **Test**: `pnpm test [path/to/file.test.ts]` — runs a native rebuild in pretest, so it fails on machines without VS Build Tools. There, run vitest directly WITH the repo config: `pnpm vitest run --config config/vitest.config.ts <paths>`; bare `pnpm vitest run` drops the `@/` renderer alias and fails renderer tests falsely (reproduces on a clean baseline — verify against baseline before believing a regression)
 - **Lint**: `oxlint`, or `pnpm run check:code-quality:changed` for changed files (full `pnpm lint` is slow); format with `pnpm format`
 - **Design system**: `pnpm run lint:design-system` for the full renderer report (not a gate); the changed-lines gate above is what CI enforces
 
