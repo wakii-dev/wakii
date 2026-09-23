@@ -2,35 +2,14 @@ import type React from 'react'
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef } from 'react'
 import { useAppStore } from '@/store'
 import { useActiveWorktree } from '@/store/selectors'
-import type {
-  SearchFileResult,
-  SearchMatch,
-  SearchResult
-} from '../../../../shared/code-search-types'
-import { buildSearchRows } from './search-rows'
+import type { SearchFileResult, SearchMatch } from '../../../../shared/code-search-types'
+import { buildSearchRows, setAllSearchFilesCollapsed } from './search-rows'
 import { cancelRevealFrame, openMatchResult } from './search-match-open'
-import type { SearchQueryRowProps } from './SearchQueryRow'
-import type { SearchFiltersProps } from './SearchFilters'
+import type { FileSearchPanelModel } from './file-search-panel-model'
 import { useFileSearchRunner } from './useFileSearchRunner'
+import { useFileSearchHistory } from './use-file-search-history'
 
 const EMPTY_COLLAPSED_FILES = new Set<string>()
-
-export type FileSearchPanelModel = {
-  activeWorktreeId: string | null
-  queryRowProps: SearchQueryRowProps
-  filtersProps: SearchFiltersProps
-  resultsProps: {
-    results: SearchResult | null
-    hasCommittedResults: boolean
-    query: string
-    loading: boolean
-    rows: ReturnType<typeof buildSearchRows>
-    scrollRef: React.RefObject<HTMLDivElement | null>
-    onToggleCollapsedFile: (filePath: string) => void
-    onMatchClick: (fileResult: SearchFileResult, match: SearchMatch) => void
-  }
-  focusQueryInput: () => void
-}
 
 export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearchPanelModel {
   const activeWorktree = useActiveWorktree()
@@ -101,6 +80,39 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
     updateActiveSearchState
   })
 
+  const focusQueryInput = useCallback(() => {
+    inputRef.current?.focus()
+  }, [])
+
+  const getCurrentSearchQuery = useCallback(() => {
+    if (!activeWorktreeId) {
+      return ''
+    }
+    return useAppStore.getState().fileSearchStateByWorktree[activeWorktreeId]?.query ?? ''
+  }, [activeWorktreeId])
+
+  const selectHistoryQuery = useCallback(
+    (selected: string) => {
+      updateActiveSearchState({ query: selected })
+      executeSearch(selected)
+    },
+    [executeSearch, updateActiveSearchState]
+  )
+
+  const {
+    searchHistory,
+    historyOpen,
+    handleHistoryFocus,
+    handleHistoryBlur,
+    handleHistorySelect,
+    recordCurrentQuery
+  } = useFileSearchHistory({
+    activeWorktreeId,
+    getCurrentQuery: getCurrentSearchQuery,
+    onSelectQuery: selectHistoryQuery,
+    focusInput: focusQueryInput
+  })
+
   const cancelSeededInputSelectionFrame = useCallback(() => {
     if (seededInputSelectionRafRef.current !== null) {
       cancelAnimationFrame(seededInputSelectionRafRef.current)
@@ -116,10 +128,6 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
       inputRef.current?.select()
     })
   }, [cancelSeededInputSelectionFrame])
-
-  const focusQueryInput = useCallback(() => {
-    inputRef.current?.focus()
-  }, [])
 
   useEffect(() => {
     return () => {
@@ -220,10 +228,21 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
       }
       if (e.key === 'Enter') {
         executeSearch(fileSearchQuery)
+        recordCurrentQuery()
       }
     },
-    [fileSearchQuery, handleClearSearch, executeSearch]
+    [fileSearchQuery, handleClearSearch, executeSearch, recordCurrentQuery]
   )
+
+  const handleExpandAll = useCallback(() => {
+    updateActiveSearchState({
+      collapsedFiles: setAllSearchFilesCollapsed(fileSearchResults, false)
+    })
+  }, [fileSearchResults, updateActiveSearchState])
+
+  const handleCollapseAll = useCallback(() => {
+    updateActiveSearchState({ collapsedFiles: setAllSearchFilesCollapsed(fileSearchResults, true) })
+  }, [fileSearchResults, updateActiveSearchState])
 
   const handleMatchClick = useCallback(
     (fileResult: SearchFileResult, match: SearchMatch) => {
@@ -249,6 +268,8 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
       caseSensitive: fileSearchCaseSensitive,
       wholeWord: fileSearchWholeWord,
       useRegex: fileSearchUseRegex,
+      history: searchHistory,
+      historyOpen: historyOpen && fileSearchQuery.trim() === '',
       onQueryChange: handleQueryChange,
       onKeyDown: handleKeyDown,
       onClearSearch: handleClearSearch,
@@ -263,7 +284,10 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
       onToggleRegex: () => {
         updateActiveSearchState({ useRegex: !fileSearchUseRegex })
         rerunSearch()
-      }
+      },
+      onHistoryFocus: handleHistoryFocus,
+      onHistoryBlur: handleHistoryBlur,
+      onHistorySelect: handleHistorySelect
     },
     filtersProps: {
       includePattern: fileSearchIncludePattern,
@@ -287,6 +311,8 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
       rows: searchRows,
       scrollRef: resultsScrollRef,
       onToggleCollapsedFile: toggleActiveCollapsedFile,
+      onExpandAll: handleExpandAll,
+      onCollapseAll: handleCollapseAll,
       onMatchClick: handleMatchClick
     },
     focusQueryInput

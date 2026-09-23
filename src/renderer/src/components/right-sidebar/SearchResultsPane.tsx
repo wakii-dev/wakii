@@ -1,10 +1,12 @@
 import React from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
+import { ChevronsDownUp, ChevronsUpDown } from 'lucide-react'
 import type {
   SearchFileResult,
   SearchMatch,
   SearchResult
 } from '../../../../shared/code-search-types'
+import { getNextMatchRowIndex } from './search-rows'
 import type { SearchRow } from './search-rows'
 import { FileResultRow, MatchResultRow } from './SearchResultItems'
 import { translate } from '@/i18n/i18n'
@@ -19,6 +21,8 @@ type SearchResultsPaneProps = {
   rows: SearchRow[]
   scrollRef: React.RefObject<HTMLDivElement | null>
   onToggleCollapsedFile: (filePath: string) => void
+  onExpandAll: () => void
+  onCollapseAll: () => void
   onMatchClick: (fileResult: SearchFileResult, match: SearchMatch) => void
 }
 
@@ -30,6 +34,8 @@ export function SearchResultsPane({
   rows,
   scrollRef,
   onToggleCollapsedFile,
+  onExpandAll,
+  onCollapseAll,
   onMatchClick
 }: SearchResultsPaneProps): React.JSX.Element {
   const virtualizer = useVirtualizer({
@@ -64,25 +70,100 @@ export function SearchResultsPane({
     }
   })
 
+  const handleResultsKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Escape') {
+      const active = document.activeElement
+      if (active instanceof HTMLElement && active.closest('[data-search-row-type="match"]')) {
+        event.stopPropagation()
+        active.blur()
+      }
+      return
+    }
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') {
+      return
+    }
+    const rowEl = (event.target as HTMLElement).closest('[data-search-row-type="match"]')
+    if (!rowEl) {
+      return
+    }
+    const currentIndex = Number(rowEl.getAttribute('data-search-row-index'))
+    if (Number.isNaN(currentIndex)) {
+      return
+    }
+    const next = getNextMatchRowIndex(rows, currentIndex, event.key === 'ArrowDown' ? 1 : -1)
+    if (next === null) {
+      return
+    }
+    event.preventDefault()
+    virtualizer.scrollToIndex(next, { align: 'auto' })
+    // Why: scrollToIndex swaps virtual items on the next render, so the row's
+    // button only exists in the DOM after the frame it triggers.
+    requestAnimationFrame(() => {
+      scrollRef.current
+        ?.querySelector<HTMLElement>(`[data-search-row-index="${next}"] button`)
+        ?.focus()
+    })
+  }
+
   return (
     <>
       {/* Why: the summary is rendered outside the virtualizer so it stays
          pinned at the top while the user scrolls through results. */}
       {results && rows.length > 0 && (
-        <div className="px-2 py-1 text-[10px] text-muted-foreground border-b border-border">
-          {results.totalMatches}{' '}
-          {translate('auto.components.right.sidebar.Search.6aeda362ed', 'result')}
-          {results.totalMatches !== 1 ? 's' : ''}{' '}
-          {translate('auto.components.right.sidebar.Search.4107975b3a', 'in')}{' '}
-          {results.files.length}{' '}
-          {translate('auto.components.right.sidebar.Search.0b8104eaf2', 'file')}
-          {results.files.length !== 1 ? 's' : ''}
-          {results.truncated &&
-            translate('auto.components.right.sidebar.Search.dcc294f28d', '(results truncated)')}
+        <div className="flex items-center gap-1 px-2 py-1 text-[10px] text-muted-foreground border-b border-border">
+          <span>
+            {results.totalMatches}{' '}
+            {translate('auto.components.right.sidebar.Search.6aeda362ed', 'result')}
+            {results.totalMatches !== 1 ? 's' : ''}{' '}
+            {translate('auto.components.right.sidebar.Search.4107975b3a', 'in')}{' '}
+            {results.files.length}{' '}
+            {translate('auto.components.right.sidebar.Search.0b8104eaf2', 'file')}
+            {results.files.length !== 1 ? 's' : ''}
+            {results.truncated &&
+              translate('auto.components.right.sidebar.Search.dcc294f28d', '(results truncated)')}
+          </span>
+          <span className="ml-auto flex items-center gap-0.5">
+            <button
+              type="button"
+              data-testid="search-expand-all"
+              aria-label={translate(
+                'auto.components.right.sidebar.SearchResultsPane.9a1c2e3f4b',
+                'Expand All'
+              )}
+              title={translate(
+                'auto.components.right.sidebar.SearchResultsPane.9a1c2e3f4b',
+                'Expand All'
+              )}
+              onClick={onExpandAll}
+              className="rounded-sm p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+            >
+              <ChevronsUpDown className="size-3" />
+            </button>
+            <button
+              type="button"
+              data-testid="search-collapse-all"
+              aria-label={translate(
+                'auto.components.right.sidebar.SearchResultsPane.7d2b4f6a8c',
+                'Collapse All'
+              )}
+              title={translate(
+                'auto.components.right.sidebar.SearchResultsPane.7d2b4f6a8c',
+                'Collapse All'
+              )}
+              onClick={onCollapseAll}
+              className="rounded-sm p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+            >
+              <ChevronsDownUp className="size-3" />
+            </button>
+          </span>
         </div>
       )}
 
-      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto scrollbar-sleek">
+      <div
+        ref={scrollRef}
+        className="flex-1 min-h-0 overflow-y-auto scrollbar-sleek"
+        onKeyDown={handleResultsKeyDown}
+      >
         {rows.length > 0 && (
           <div className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
             {virtualizer.getVirtualItems().map((virtualRow) => {
@@ -94,6 +175,8 @@ export function SearchResultsPane({
               return (
                 <div
                   key={virtualRow.key}
+                  data-search-row-index={virtualRow.index}
+                  data-search-row-type={row.type}
                   className="absolute left-0 top-0 w-full"
                   style={{ transform: `translateY(${virtualRow.start}px)` }}
                 >
