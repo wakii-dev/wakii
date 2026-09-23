@@ -4,7 +4,7 @@ Destination: feature/clone-vs-vscode
 
 ## SF-1 Search Replace/Replace All + toolbar New buttons
 Tier: 0
-linear:
+linear: FI-31
 Design: none
 What: mở explorer thấy 2 nút New File/New Folder trên toolbar tạo file/folder như VS Code (inline input, undo được); mở search panel bật ô Replace → Replace All → modal preview dry-run (counts chính xác + diff top-10) → confirm → toàn bộ match thay trên đĩa qua runtime file commands (local + SSH worktree), summary tường minh replaced/skipped-dirty/skipped-stale/error/unprocessed, nút Undo trong panel khôi phục các file đã ghi; agent đổi file giữa preview→confirm → skip có tên; chặn truncated/>200 file/regex JS-invalid; cancel bằng nút/đóng panel/đổi worktree.
 Depends on: —
