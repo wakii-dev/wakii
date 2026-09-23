@@ -13,6 +13,7 @@ import type { ExecutionHostId } from '../../../../shared/execution-host'
 import type { GitFileStatus } from '../../../../shared/git-status-types'
 import { STATUS_LABELS } from './status-display'
 import { RENAME_HOTSPOT_ATTR } from './file-explorer-dir-toggle-timing'
+import { getIndentGuideLefts } from './file-explorer-indent-guides'
 import type { TreeNode } from './file-explorer-types'
 import { useFileExplorerRowDrag } from './useFileExplorerRowDrag'
 import { translate } from '@/i18n/i18n'
@@ -140,7 +141,7 @@ export function FileExplorerRow({
           data-file-explorer-row=""
           data-selected={isSelected ? 'true' : undefined}
           className={cn(
-            'flex w-full items-center gap-1 rounded-sm px-2 py-1 text-left text-xs transition-colors',
+            'relative flex w-full items-center gap-1 rounded-sm px-2 py-1 text-left text-xs transition-colors',
             !isSelected && 'hover:bg-accent hover:text-foreground',
             isSelected && 'text-accent-foreground',
             isFlashing && 'bg-amber-400/20 ring-1 ring-inset ring-amber-400/70'
@@ -187,6 +188,16 @@ export function FileExplorerRow({
           onClick={(e) => onClick(e)}
           onDoubleClick={onDoubleClick}
         >
+          {/* Why: `relative` on the button makes it the positioning context for
+             these per-level indent guides. */}
+          {getIndentGuideLefts(node.depth).map((left) => (
+            <span
+              key={left}
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 w-px bg-muted-foreground/20"
+              style={{ left: `${left}px` }}
+            />
+          ))}
           {node.isDirectory ? (
             <>
               <ChevronRight
@@ -212,9 +223,7 @@ export function FileExplorerRow({
                 React.createElement(FileIcon, {
                   className: cn(
                     'size-3 shrink-0',
-                    iconColorGroup
-                      ? FILE_ICON_COLOR_CLASS[iconColorGroup]
-                      : 'text-muted-foreground'
+                    iconColorGroup ? FILE_ICON_COLOR_CLASS[iconColorGroup] : 'text-muted-foreground'
                   )
                 })
               )}

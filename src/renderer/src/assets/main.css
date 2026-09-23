@@ -199,19 +199,16 @@
   --workspace-status-done: #c7a594;
   --workspace-status-review: #16a34a;
   --workspace-status-progress: #d4a300;
-  /* File-type icon groups (spec FI-28 C2). Light ratios vs #ffffff (floor incl.
-     #fafafa sidebar ≥3:1): ts-js 5.17 · code 3.74 · data-config 3.19 ·
-     markup-doc 5.70 · web-style 4.60 · shell 5.02 · binary-build 4.99 ·
-     asset 6.32 · name-based 4.83. */
-  --file-icon-code-ts-js: #2563eb;
-  --file-icon-code: #0d9488;
-  --file-icon-data-config: #d97706;
-  --file-icon-markup-doc: #7c3aed;
-  --file-icon-web-style: #db2777;
-  --file-icon-shell: #15803d;
-  --file-icon-binary-build: #4d7c0f;
-  --file-icon-asset: #a21caf;
-  --file-icon-name-based: #dc2626;
+  /* File-type icon groups (spec FI-28 C2). Light ratios vs #ffffff — all ≥4.5:1. */
+  --file-icon-code-ts-js: #2563eb; /* blue-600 · 5.17:1 */
+  --file-icon-code: #0f766e; /* teal-700 · 5.47:1 (was #0d9488 · 3.74:1) */
+  --file-icon-data-config: #b45309; /* amber-700 · 5.02:1 (was #d97706 · 3.19:1) */
+  --file-icon-markup-doc: #7c3aed; /* violet-600 · 5.70:1 */
+  --file-icon-web-style: #db2777; /* pink-600 · 4.60:1 */
+  --file-icon-shell: #15803d; /* green-700 · 5.02:1 */
+  --file-icon-binary-build: #4d7c0f; /* lime-700 · 4.99:1 */
+  --file-icon-asset: #a21caf; /* fuchsia-700 · 6.32:1 */
+  --file-icon-name-based: #dc2626; /* red-600 · 4.83:1 */
   --chart-1: var(--color-blue-300);
   --chart-2: var(--color-blue-500);
   --chart-3: var(--color-blue-600);
