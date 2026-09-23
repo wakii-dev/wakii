@@ -73,10 +73,11 @@ describe('buildReplaceAllIo — real runtime file clients', () => {
 
     expect(summary.counts.replaced).toBe(1)
     expect(fsWriteFile).toHaveBeenCalledTimes(1)
-    const writeArgs = fsWriteFile.mock.calls[0][0] as { filePath: string; content: string }
-    expect(writeArgs.filePath).toBe('/wt/file.md')
     // BOM preserved at the front, CRLF line endings intact, VN replacement text intact.
-    expect(writeArgs.content).toBe('﻿name\r\ngiá trị\r\n')
+    expect(fsWriteFile.mock.calls[0]?.[0]).toMatchObject({
+      filePath: '/wt/file.md',
+      content: '﻿name\r\ngiá trị\r\n'
+    })
   })
 
   it('detects dirty files through the open editor tabs store', async () => {

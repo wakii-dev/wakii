@@ -13,6 +13,7 @@ import { FileExplorerToolbar } from './FileExplorerToolbar'
 import { SearchFilters } from './SearchFilters'
 import { SearchQueryRow } from './SearchQueryRow'
 import { SearchResultsPane } from './SearchResultsPane'
+import { SearchReplacePreviewModal } from './search-replace-preview-modal'
 import { selectOpenEditorsEntries } from './file-explorer-open-editors'
 import { useFileSearchPanel } from './useFileSearchPanel'
 import {
@@ -321,6 +322,8 @@ function FileExplorerFiles(): React.JSX.Element {
           </div>
         </div>
       </div>
+
+      <SearchReplacePreviewModal {...searchPanel.replacePreviewProps} />
 
       <FileExplorerBackgroundMenu
         open={bgMenuOpen}

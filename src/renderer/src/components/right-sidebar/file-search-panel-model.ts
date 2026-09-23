@@ -7,6 +7,7 @@ import type {
 import type { buildSearchRows } from './search-rows'
 import type { SearchQueryRowProps } from './SearchQueryRow'
 import type { SearchFiltersProps } from './SearchFilters'
+import type { SearchReplacePreviewModalProps } from './search-replace-preview-modal'
 
 export type FileSearchResultsProps = {
   results: SearchResult | null
@@ -26,9 +27,9 @@ export type FileSearchPanelModel = {
   queryRowProps: SearchQueryRowProps
   filtersProps: SearchFiltersProps
   resultsProps: FileSearchResultsProps
-  replacePreviewProps: {
-    open: boolean
-    onClose: () => void
-  }
+  replacePreviewProps: Pick<
+    SearchReplacePreviewModalProps,
+    'open' | 'onClose' | 'onConfirm' | 'loading' | 'summary' | 'replaceTerm' | 'totalOccurrences'
+  >
   focusQueryInput: () => void
 }

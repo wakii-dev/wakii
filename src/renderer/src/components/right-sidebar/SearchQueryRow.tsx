@@ -181,7 +181,7 @@ export function SearchQueryRow({
             type="button"
             variant="ghost"
             size="icon-xs"
-            className="h-auto w-auto shrink-0 gap-1 rounded-sm px-1 text-muted-foreground hover:text-foreground"
+            className="shrink-0"
             aria-label={translate(
               'auto.components.right.sidebar.SearchQueryRow.replaceAllLabel',
               'Replace All'
