@@ -13,6 +13,7 @@ import { FileExplorerToolbar } from './FileExplorerToolbar'
 import { SearchFilters } from './SearchFilters'
 import { SearchQueryRow } from './SearchQueryRow'
 import { SearchResultsPane } from './SearchResultsPane'
+import { selectOpenEditorsEntries } from './file-explorer-open-editors'
 import { useFileSearchPanel } from './useFileSearchPanel'
 import {
   getNameFilterCollapsedPathsAfterExpand,
@@ -40,6 +41,10 @@ function FileExplorerFiles(): React.JSX.Element {
   const collapseAllDirs = useAppStore((s) => s.collapseAllDirs)
   const activeFileId = useAppStore((s) => s.activeFileId)
   const openFiles = useAppStore((s) => s.openFiles)
+  const setActiveFile = useAppStore((s) => s.setActiveFile)
+  const closeFile = useAppStore((s) => s.closeFile)
+  const openEditorsCollapsed = useAppStore((s) => s.openEditorsCollapsed)
+  const setOpenEditorsCollapsed = useAppStore((s) => s.setOpenEditorsCollapsed)
   const rightSidebarOpen = useAppStore((s) => s.rightSidebarOpen)
   const showDotfiles = useAppStore((s) =>
     activeWorktreeId ? (s.showDotfilesByWorktree[activeWorktreeId] ?? true) : true
@@ -111,6 +116,24 @@ function FileExplorerFiles(): React.JSX.Element {
     [expanded, hasNameFilter, nameFilterExpandedPaths]
   )
   const visibleRowCount = rowProjection.getVisibleCount()
+  const openEditors = useMemo(
+    () => ({
+      entries: selectOpenEditorsEntries(openFiles, activeWorktreeId, activeFileId),
+      collapsed: openEditorsCollapsed,
+      onToggleCollapsed: () => setOpenEditorsCollapsed(!openEditorsCollapsed),
+      onActivate: setActiveFile,
+      onClose: closeFile
+    }),
+    [
+      activeFileId,
+      activeWorktreeId,
+      closeFile,
+      openEditorsCollapsed,
+      openFiles,
+      setActiveFile,
+      setOpenEditorsCollapsed
+    ]
+  )
   const manualRefresh = useFileExplorerManualRefresh(tree.refreshTree)
   const canCollapseAll = isFilesViewActive && !hasNameFilter && expanded.size > 0
   const handleCollapseAll = useCallback(() => {
@@ -275,6 +298,7 @@ function FileExplorerFiles(): React.JSX.Element {
             ignoredByRelativePath={ignoredByRelativePath}
             rowExpandedPaths={rowExpandedPaths}
             visibleRowCount={visibleRowCount}
+            openEditors={openEditors}
             handleExplorerBackgroundContextMenuCapture={handleExplorerBackgroundContextMenuCapture}
             handleExplorerBackgroundDoubleClick={handleExplorerBackgroundDoubleClick}
           />
