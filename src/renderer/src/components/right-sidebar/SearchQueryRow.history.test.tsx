@@ -48,6 +48,8 @@ function renderQueryRow(overrides: {
     replaceVisible: false,
     replaceQuery: '',
     replaceDisabledReason: null,
+    hasReplaceUndo: false,
+    onReplaceUndo: vi.fn(),
     onToggleReplaceVisible: vi.fn(),
     onReplaceQueryChange: vi.fn(),
     onReplaceAll: vi.fn(),

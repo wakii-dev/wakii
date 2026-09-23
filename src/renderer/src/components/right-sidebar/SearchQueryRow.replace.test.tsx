@@ -43,6 +43,8 @@ function renderQueryRow(overrides: {
   onToggleReplaceVisible?: () => void
   onReplaceQueryChange?: (event: unknown) => void
   onReplaceAll?: () => void
+  hasReplaceUndo?: boolean
+  onReplaceUndo?: () => void
 }) {
   return SearchQueryRow({
     inputRef: { current: null },
@@ -56,6 +58,8 @@ function renderQueryRow(overrides: {
     replaceVisible: overrides.replaceVisible ?? false,
     replaceQuery: overrides.replaceQuery ?? '',
     replaceDisabledReason: overrides.replaceDisabledReason ?? null,
+    hasReplaceUndo: overrides.hasReplaceUndo ?? false,
+    onReplaceUndo: overrides.onReplaceUndo ?? vi.fn(),
     onQueryChange: vi.fn(),
     onKeyDown: vi.fn(),
     onClearSearch: vi.fn(),
@@ -134,5 +138,24 @@ describe('SearchQueryRow replace field', () => {
   it('mirrors the typed replace value into the input', () => {
     const ids = findTestIds(renderQueryRow({ replaceVisible: true, replaceQuery: 'bar' }))
     expect(ids.get('search-replace-input')?.props['value']).toBe('bar')
+  })
+
+  it('shows the undo button only while a replace op can be undone', () => {
+    const withoutOp = collectTestIds(renderQueryRow({ replaceVisible: true }))
+    expect(withoutOp).not.toContain('search-replace-undo')
+
+    const withOp = findTestIds(
+      renderQueryRow({ replaceVisible: true, hasReplaceUndo: true })
+    )
+    expect(withOp.has('search-replace-undo')).toBe(true)
+  })
+
+  it('triggers the undo through the undo button', () => {
+    const onReplaceUndo = vi.fn()
+    const ids = findTestIds(
+      renderQueryRow({ replaceVisible: true, hasReplaceUndo: true, onReplaceUndo })
+    )
+    invokeHandler(ids.get('search-replace-undo'), 'onClick')
+    expect(onReplaceUndo).toHaveBeenCalledTimes(1)
   })
 })

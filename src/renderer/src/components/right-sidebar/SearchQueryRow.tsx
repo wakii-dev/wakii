@@ -8,6 +8,7 @@ import {
   Loader2,
   Replace,
   ReplaceAll,
+  Undo2,
   ChevronDown,
   ChevronRight
 } from 'lucide-react'
@@ -34,6 +35,8 @@ export type SearchQueryRowProps = {
   replaceVisible: boolean
   replaceQuery: string
   replaceDisabledReason: ReplaceDisabledReason | null
+  hasReplaceUndo: boolean
+  onReplaceUndo: () => void
   onQueryChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   onKeyDown: (e: React.KeyboardEvent) => void
   onClearSearch: () => void
@@ -60,6 +63,8 @@ export function SearchQueryRow({
   replaceVisible,
   replaceQuery,
   replaceDisabledReason,
+  hasReplaceUndo,
+  onReplaceUndo,
   onQueryChange,
   onKeyDown,
   onClearSearch,
@@ -205,6 +210,26 @@ export function SearchQueryRow({
               <ReplaceAll className="size-3.5" />
             )}
           </Button>
+          {hasReplaceUndo ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              className="shrink-0"
+              aria-label={translate(
+                'auto.components.right.sidebar.SearchQueryRow.undoReplaceLabel',
+                'Undo Replace All'
+              )}
+              title={translate(
+                'auto.components.right.sidebar.SearchQueryRow.undoReplaceLabel',
+                'Undo Replace All'
+              )}
+              onClick={onReplaceUndo}
+              data-testid="search-replace-undo"
+            >
+              <Undo2 className="size-3.5" />
+            </Button>
+          ) : null}
         </div>
       ) : null}
       {replaceVisible && replaceDisabledReason === 'invalid-regex' ? (

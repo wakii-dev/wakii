@@ -11,6 +11,7 @@ import { useFileSearchHistory } from './use-file-search-history'
 import { useFileSearchReplaceCancelGuard } from './use-file-search-replace-cancel'
 import { useFileSearchReplacePreview } from './use-file-search-replace-preview'
 import { useFileSearchReplaceRun } from './use-file-search-replace-run'
+import { useFileSearchReplaceUndo } from './use-file-search-replace-undo'
 import { isInvalidReplaceRegex } from './search-replace-engine'
 import { REPLACE_ALL_MAX_FILES } from './search-replace-all-runner'
 import { buildReplaceAllIo } from './search-replace-runtime-io'
@@ -48,6 +49,7 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
   const fileSearchReplaceVisible = searchState?.replaceVisible ?? false
   const fileSearchReplaceQuery = searchState?.replaceQuery ?? ''
   const fileSearchReplaceAllInProgress = searchState?.replaceAllInProgress ?? false
+  const fileSearchHasReplaceUndo = (searchState?.lastReplaceOp?.files.length ?? 0) > 0
 
   const updateFileSearchState = useAppStore((s) => s.updateFileSearchState)
   const consumeFileSearchSeedRequest = useAppStore((s) => s.consumeFileSearchSeedRequest)
@@ -291,6 +293,11 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
 
   const [replacePreviewOpen, setReplacePreviewOpen] = useState(false)
   const { runReplaceAll } = useFileSearchReplaceRun({ activeWorktreeId, worktreePath })
+  const { undoReplaceAll } = useFileSearchReplaceUndo({ activeWorktreeId, worktreePath })
+
+  const handleReplaceUndo = useCallback(() => {
+    void undoReplaceAll()
+  }, [undoReplaceAll])
 
   // Why: the preview is a real dry-run over fresh disk content — counts shown
   // in the modal come from re-derivation, never the stored match list (P0).
@@ -438,6 +445,8 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
       replaceVisible: fileSearchReplaceVisible,
       replaceQuery: fileSearchReplaceQuery,
       replaceDisabledReason,
+      hasReplaceUndo: fileSearchHasReplaceUndo,
+      onReplaceUndo: handleReplaceUndo,
       onToggleReplaceVisible: handleToggleReplaceVisible,
       onReplaceQueryChange: handleReplaceQueryChange,
       onReplaceAll: handleReplaceAll,
