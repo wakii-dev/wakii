@@ -8,6 +8,7 @@ import { cancelRevealFrame, openMatchResult } from './search-match-open'
 import type { FileSearchPanelModel } from './file-search-panel-model'
 import { useFileSearchRunner } from './useFileSearchRunner'
 import { useFileSearchHistory } from './use-file-search-history'
+import { useFileSearchReplaceCancelGuard } from './use-file-search-replace-cancel'
 
 const EMPTY_COLLAPSED_FILES = new Set<string>()
 
@@ -45,6 +46,10 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
   const seededInputSelectionRafRef = useRef<number | null>(null)
   const includeInputRef = useRef<HTMLInputElement>(null)
   const excludeInputRef = useRef<HTMLInputElement>(null)
+
+  // Leaving the search view, switching worktrees, or unmounting cancels an
+  // in-flight replace-all (criterion 5) — already-written files stay written.
+  useFileSearchReplaceCancelGuard({ activeWorktreeId, explorerView })
 
   const updateActiveSearchState = useCallback(
     (updates: Partial<NonNullable<typeof searchState>>) => {
