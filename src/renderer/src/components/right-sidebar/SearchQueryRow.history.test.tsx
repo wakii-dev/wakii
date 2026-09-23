@@ -2,13 +2,18 @@ import { describe, expect, it, vi } from 'vitest'
 import { SearchQueryRow } from './SearchQueryRow'
 import { visit, type ReactElementLike } from './file-explorer-element-tree-test-harness'
 
+function readTestId(entry: ReactElementLike): string | undefined {
+  const testId = entry.props['data-testid']
+  return typeof testId === 'string' ? testId : undefined
+}
+
 function findTestIds(node: ReactElementLike): Map<string, ReactElementLike> {
   const found = new Map<string, ReactElementLike>()
   visit(node, (entry) => {
-    const testId = (entry.props as { 'data-testid'?: string })['data-testid']
+    const testId = readTestId(entry)
     // Why: last-wins keeps presence checks simple; duplicate ids (history
     // items) are counted separately via collectTestIds.
-    if (typeof testId === 'string') {
+    if (testId !== undefined) {
       found.set(testId, entry)
     }
   })
@@ -18,8 +23,8 @@ function findTestIds(node: ReactElementLike): Map<string, ReactElementLike> {
 function collectTestIds(node: ReactElementLike): string[] {
   const ids: string[] = []
   visit(node, (entry) => {
-    const testId = (entry.props as { 'data-testid'?: string })['data-testid']
-    if (typeof testId === 'string') {
+    const testId = readTestId(entry)
+    if (testId !== undefined) {
       ids.push(testId)
     }
   })
@@ -71,12 +76,14 @@ describe('SearchQueryRow history dropdown', () => {
     const tree = renderQueryRow({ history: ['alpha', 'beta'], historyOpen: true, onHistorySelect })
     const items: ReactElementLike[] = []
     visit(tree, (entry) => {
-      if ((entry.props as { 'data-testid'?: string })['data-testid'] === 'search-history-item') {
+      if (readTestId(entry) === 'search-history-item') {
         items.push(entry)
       }
     })
-    const onClick = (items[0]?.props as { onClick: (event?: unknown) => void } | undefined)?.onClick
-    onClick?.()
+    const onClick = items[0]?.props.onClick
+    if (typeof onClick === 'function') {
+      onClick()
+    }
     expect(onHistorySelect).toHaveBeenCalledWith('alpha')
   })
 

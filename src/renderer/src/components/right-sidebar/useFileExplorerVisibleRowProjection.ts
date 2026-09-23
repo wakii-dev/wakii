@@ -110,7 +110,7 @@ export function createVisibleFileExplorerRowProjection(
       if (!only.isDirectory || only.isSymlink || expanded.has(only.path)) {
         break
       }
-      name += '/' + only.name
+      name += `/${only.name}`
       cursorPath = only.path
     }
     return name

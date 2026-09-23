@@ -82,7 +82,10 @@ export function SearchResultsPane({
     if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') {
       return
     }
-    const rowEl = (event.target as HTMLElement).closest('[data-search-row-type="match"]')
+    if (!(event.target instanceof HTMLElement)) {
+      return
+    }
+    const rowEl = event.target.closest('[data-search-row-type="match"]')
     if (!rowEl) {
       return
     }

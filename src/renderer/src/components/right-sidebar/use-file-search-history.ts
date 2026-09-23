@@ -23,10 +23,13 @@ export function useFileSearchHistory({
   recordCurrentQuery: () => void
 } {
   const historyBlurCloseTimerRef = useRef<number | null>(null)
-
-  const [searchHistory, setSearchHistory] = useState<string[]>(() =>
-    loadSearchHistory(localStorage)
-  )
+  // Why: recording needs the latest list to persist synchronously; keeping it
+  // in a ref avoids side effects inside a state updater (React may re-invoke).
+  const historyRef = useRef<string[]>([])
+  const [searchHistory, setSearchHistory] = useState<string[]>(() => {
+    historyRef.current = loadSearchHistory(localStorage)
+    return historyRef.current
+  })
   const [historyOpen, setHistoryOpen] = useState(false)
 
   const recordCurrentQuery = useCallback(() => {
@@ -37,11 +40,10 @@ export function useFileSearchHistory({
     if (!query.trim()) {
       return
     }
-    setSearchHistory((current) => {
-      const next = recordSearchQuery(current, query)
-      saveSearchHistory(localStorage, next)
-      return next
-    })
+    const next = recordSearchQuery(historyRef.current, query)
+    historyRef.current = next
+    saveSearchHistory(localStorage, next)
+    setSearchHistory(next)
   }, [activeWorktreeId, getCurrentQuery])
 
   const handleHistoryFocus = useCallback(() => {

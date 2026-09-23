@@ -80,7 +80,10 @@ describe('FileExplorerOpenEditors', () => {
     })
 
     const row = findByTestId(element, 'open-editors-row')
-    ;(row.props.onClick as () => void)()
+    const rowClick = row.props.onClick
+    if (typeof rowClick === 'function') {
+      rowClick()
+    }
     expect(onActivate).toHaveBeenCalledWith('f1')
   })
 
@@ -98,9 +101,10 @@ describe('FileExplorerOpenEditors', () => {
     const closeButtons = collectByTestId(element, 'open-editors-close')
     expect(closeButtons).toHaveLength(2)
     const stopPropagation = vi.fn()
-    ;(closeButtons[0].props.onClick as (event: { stopPropagation: () => void }) => void)({
-      stopPropagation
-    })
+    const closeClick = closeButtons[0].props.onClick
+    if (typeof closeClick === 'function') {
+      closeClick({ stopPropagation })
+    }
     expect(stopPropagation).toHaveBeenCalled()
     expect(onClose).toHaveBeenCalledWith('f1')
     expect(onActivate).not.toHaveBeenCalled()
@@ -117,7 +121,10 @@ describe('FileExplorerOpenEditors', () => {
     })
 
     const header = findByTestId(element, 'open-editors-header')
-    ;(header.props.onClick as () => void)()
+    const headerClick = header.props.onClick
+    if (typeof headerClick === 'function') {
+      headerClick()
+    }
     expect(onToggleCollapsed).toHaveBeenCalled()
   })
 

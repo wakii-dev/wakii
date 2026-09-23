@@ -3,14 +3,16 @@ import type { OpenFile } from '@/store/slices/editor/types/open-file'
 import { selectOpenEditorsEntries } from './file-explorer-open-editors'
 
 function openFile(overrides: Partial<OpenFile> & Pick<OpenFile, 'id' | 'relativePath'>): OpenFile {
-  return {
+  const base: OpenFile = {
+    id: overrides.id,
     filePath: `/repo/${overrides.relativePath}`,
+    relativePath: overrides.relativePath,
     worktreeId: 'wt-1',
     language: 'typescript',
     isDirty: false,
-    mode: 'edit',
-    ...overrides
-  } as OpenFile
+    mode: 'edit'
+  }
+  return { ...base, ...overrides }
 }
 
 describe('selectOpenEditorsEntries', () => {
