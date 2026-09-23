@@ -163,10 +163,20 @@ verify_sf() { # $1 worktree → in "<sf>|<verdict>|<detail>|<b1>|<b2>|<b3>|<b4>|
   linear=""; dest=""
   # ƯU TIÊU orca worktree metadata (linked issue + base branch) — bracket glob
   # chỉ là fallback (repo nhiều bracket → glob-first chọn nhầm story cũ)
-  mline=$(printf '%s\n' "$WT_META" | grep -F "$wt|" | head -1)
+  # MSYS/Git Bash: $HOME-derived wt is /c/... but orca JSON emits C:/... —
+  # normalize or metadata priority never matches on Windows.
+  wt_norm=$(cygpath -m "$wt" 2>/dev/null || printf '%s' "$wt")
+  mline=$(printf '%s\n' "$WT_META" | grep -F "$wt_norm|" | head -1)
   if [ -n "$mline" ]; then
     linear=$(printf '%s' "$mline" | cut -d'|' -f2)
     dest=$(printf '%s' "$mline" | cut -d'|' -f3)
+  fi
+  # Metadata-first tiếp: dest rỗng (worktree tạo trước khi orca lưu baseRef,
+  # hoặc tạo manual) → branch của worktree cha là đích merge của SF (cấu trúc
+  # workflow quy định SF fork từ cha) — bracket glob vẫn là lớp cuối.
+  if [ -z "$dest" ]; then
+    pline=$(printf '%s\n' "$WT_META" | grep -F "$wt_norm|" | head -1)
+    [ -n "$pline" ] && dest=$(printf '%s' "$pline" | cut -d'|' -f4)
   fi
   if [ -z "$linear" ] || [ -z "$dest" ]; then
   for bf in "$wt"/docs/superpowers/brackets/*.md; do
@@ -176,10 +186,14 @@ verify_sf() { # $1 worktree → in "<sf>|<verdict>|<detail>|<b1>|<b2>|<b3>|<b4>|
     # (fi28-sf-1) — that cut yields FI28-SF, which matches no `## SF-<n>`
     # section. Extract the sf-<n> token wherever it sits in the name.
     sfnum=$(echo "$sf" | grep -oE 'sf-?[0-9]+' | head -1 | tr 'a-z' 'A-Z')
-    linear=$(awk -v sfx="$sfnum" '
-      $0 ~ "^## " sfx "([ :]|$)" { in_sf = 1; next }
-      /^## SF-/ { in_sf = 0 }
-      in_sf && /linear:/ { gsub(/.*linear: /,""); print; exit }' "$bf" 2>/dev/null)
+    # Metadata linear wins — fallback awk only fills an empty value
+    # (unconditional overwrite let a stale bracket clobber a correct link).
+    if [ -z "$linear" ]; then
+      linear=$(awk -v sfx="$sfnum" '
+        $0 ~ "^## " sfx "([ :]|$)" { in_sf = 1; next }
+        /^## SF-/ { in_sf = 0 }
+        in_sf && /linear:/ { gsub(/.*linear: /,""); print; exit }' "$bf" 2>/dev/null)
+    fi
     [ -n "$linear" ] && break
   done
   fi
@@ -337,11 +351,14 @@ WT_META=$(orca worktree list --json 2>/dev/null | python3 -c "
 import json, sys
 try: wts = json.load(sys.stdin)['result']['worktrees']
 except Exception: wts = []
+by_id = {w.get('id'): w for w in wts}
 for w in wts:
     p = (w.get('git') or {}).get('path') or w.get('path') or ''
     li = w.get('linkedLinearIssue') or ''
     br = w.get('baseRef') or ''
-    if p: print(p + '|' + li + '|' + br)
+    pw = by_id.get((w.get('lineage') or {}).get('parentWorktreeId'))
+    pb = ((pw or {}).get('git') or {}).get('branch') or ''
+    if p: print(p + '|' + li + '|' + br + '|' + pb)
 ") || WT_META=""
 
 # SF-2 remote-safe: distributed flag đọc 1 lần (zero-diff khi OFF — B4 không fetch)
