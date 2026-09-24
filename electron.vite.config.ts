@@ -305,7 +305,30 @@ export const electronViteConfig: UserConfig = {
     resolve: {
       alias: {
         '@renderer': resolve('src/renderer/src'),
-        '@': resolve('src/renderer/src')
+        '@': resolve('src/renderer/src'),
+        // Why: @xterm/addon-ligatures imports node:diagnostics_channel (tracing
+        // only); Vite browser-externalizes it into a stub that throws on
+        // `.channel` and crashes the terminal workbench chunk. Both aliases are
+        // required: resolve.alias for build, esbuildOptions.alias for the dev
+        // dep prebundle (see node-diagnostics-channel-browser-stub.ts).
+        'node:diagnostics_channel': resolve(
+          'src/renderer/src/lib/node-diagnostics-channel-browser-stub.ts'
+        ),
+        diagnostics_channel: resolve(
+          'src/renderer/src/lib/node-diagnostics-channel-browser-stub.ts'
+        )
+      }
+    },
+    optimizeDeps: {
+      esbuildOptions: {
+        alias: {
+          'node:diagnostics_channel': resolve(
+            'src/renderer/src/lib/node-diagnostics-channel-browser-stub.ts'
+          ),
+          diagnostics_channel: resolve(
+            'src/renderer/src/lib/node-diagnostics-channel-browser-stub.ts'
+          )
+        }
       }
     },
     plugins: [react(), tailwindcss(), createPdfjsViewerAssetsPlugin()],
