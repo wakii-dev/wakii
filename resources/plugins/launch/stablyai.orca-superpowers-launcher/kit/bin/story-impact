@@ -6,8 +6,10 @@
 // Zero-dep: chỉ Node builtins (chuẩn wakii-mcp-server). Git chạy qua PATH.
 //
 // Usage:
-//   story-impact [--base <ref>] [--run-tests] [--vitest-config <path>] [--json]
+//   story-impact [--base <ref>] [--targets "p1,p2"] [--run-tests] [--vitest-config <path>] [--json]
 //     --base          ref so diff (default: merge-base với 'main', fallback 'wakii-dev')
+//     --targets       KHÔNG diff git — phân tích đúng danh sách file cho trước
+//                     (P0 dùng: blast radius của touch targets TRƯỚC khi viết code)
 //     --run-tests     chạy luôn vitest --related sau khi in map (env VITEST_BIN seam cho test)
 //     --vitest-config path vitest config (default: config/vitest.config.ts nếu có)
 //     --json          machine-readable
@@ -86,23 +88,38 @@ function areaOf(relFile) {
   const parts = relFile.split('/');
   const ci = parts.indexOf('components');
   if (ci > -1 && parts[ci + 1]) return parts[ci + 1];
+  if (parts.length === 2) return parts[0];
   return parts.slice(0, 2).join('/') || parts[0];
 }
 
 function main() {
   const argv = process.argv.slice(2);
+  // indexOf(-1) trap: không được dùng argv[-1+1]=argv[0] làm giá trị flag
+  const flagValue = name => {
+    const i = argv.indexOf(name);
+    return i === -1 ? '' : (argv[i + 1] || '').trim();
+  };
   const flags = {
-    base: (argv[argv.indexOf('--base') + 1] || '').trim(),
+    base: flagValue('--base'),
+    targets: flagValue('--targets'),
     runTests: argv.includes('--run-tests'),
     json: argv.includes('--json'),
-    vitestConfig: (argv[argv.indexOf('--vitest-config') + 1] || '').trim(),
+    vitestConfig: flagValue('--vitest-config'),
   };
   const repo = process.cwd();
 
-  const base = flags.base || detectBase(repo);
-  const changedAll = git(['diff', '--name-only', `${base}...HEAD`], repo)
-    .split('\n').map(s => s.trim()).filter(Boolean);
-  const changed = changedAll.filter(f => SOURCE_EXT.has(path.extname(f)));
+  let base = flags.base;
+  let changed;
+  if (flags.targets) {
+    // P0 target mode: không git — blast radius của danh sách file cho trước
+    changed = flags.targets.split(',').map(s => s.trim()).filter(Boolean)
+      .filter(f => SOURCE_EXT.has(path.extname(f)));
+  } else {
+    base = base || detectBase(repo);
+    const changedAll = git(['diff', '--name-only', `${base}...HEAD`], repo)
+      .split('\n').map(s => s.trim()).filter(Boolean);
+    changed = changedAll.filter(f => SOURCE_EXT.has(path.extname(f)));
+  }
   const changedTests = changed.filter(f => /\.test\.[tj]sx?$/.test(f));
 
   const { index } = buildImportIndex(repo);
@@ -130,7 +147,8 @@ function main() {
   if (flags.json) {
     console.log(JSON.stringify({ base, changed, changedTests, impact, affectedAreas }, null, 2));
   } else {
-    console.log(`story-impact — base ${base}...HEAD: ${changed.length} file đổi (${changedTests.length} test)`);
+    const scopeLabel = flags.targets ? `targets: ${changed.length} file` : `base ${base}...HEAD: ${changed.length} file đổi`;
+    console.log(`story-impact — ${scopeLabel} (${changedTests.length} test)`);
     for (const i of impact) {
       const total = i.importers.reduce((n, x) => n + x.files.length, 0);
       console.log(`├─ ${i.file}  ← ${total} importer trực tiếp`);

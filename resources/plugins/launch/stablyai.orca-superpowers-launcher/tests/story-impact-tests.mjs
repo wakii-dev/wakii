@@ -125,5 +125,21 @@ function tempRepo(tag, files) {
   rmSync(dir, { recursive: true, force: true })
 }
 
+// ══ case 6: --targets — P0 target mode, không cần git ══
+{
+  const dir = mkdtempSync(join(tmpdir(), `story-impact-targets-`))
+  // cố ý KHÔNG git init — targets mode phải chạy được không repo
+  writeFileSync(join(dir, 'core.ts'), 'export const c = 1\n')
+  mkdirSync(join(dir, 'ui'), { recursive: true })
+  writeFileSync(join(dir, 'ui', 'view.ts'), 'import { c } from "../core"\n')
+  const r = run(['--targets', 'core.ts', '--json'], dir)
+  check('c6', 'exit 0 (không git vẫn chạy)', r.code === 0, `code=${r.code} out=${r.out.slice(0, 200)}`)
+  const data = JSON.parse(r.out)
+  check('c6', 'changed = targets', data.changed.length === 1 && data.changed[0] === 'core.ts', JSON.stringify(data.changed))
+  check('c6', 'importer ui/view.ts tìm thấy', data.impact[0].importers.some(g => g.files.some(f => f.endsWith('view.ts'))), JSON.stringify(data.impact))
+  check('c6', 'area ui', data.affectedAreas.includes('ui'), JSON.stringify(data.affectedAreas))
+  rmSync(dir, { recursive: true, force: true })
+}
+
 console.log(`\n== TOTAL: ${pass + fail} asserts — ${pass} PASS / ${fail} FAIL ==`)
 process.exit(fail ? 1 : 0)
