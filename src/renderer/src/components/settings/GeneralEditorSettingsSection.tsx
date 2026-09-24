@@ -21,6 +21,8 @@ import { RichMarkdownSpellcheckSetting } from './RichMarkdownSpellcheckSetting'
 import { StickyScrollSetting } from './StickyScrollSetting'
 import { DiffShowWhitespaceSetting } from './DiffShowWhitespaceSetting'
 import { EditorWordWrapSetting } from './EditorWordWrapSetting'
+import { EditorCaretAnimationSetting } from './EditorCaretAnimationSetting'
+import { EditorRenderWhitespaceSetting } from './EditorRenderWhitespaceSetting'
 import { EditorFontFamilySetting } from './EditorFontFamilySetting'
 import {
   createAutoSaveDelayDraftState,
@@ -234,6 +236,10 @@ export function GeneralEditorSettingsSection({
       />
 
       <EditorWordWrapSetting settings={settings} updateSettings={updateSettings} />
+
+      <EditorCaretAnimationSetting settings={settings} updateSettings={updateSettings} />
+
+      <EditorRenderWhitespaceSetting settings={settings} updateSettings={updateSettings} />
 
       <DiffShowWhitespaceSetting settings={settings} updateSettings={updateSettings} />
 

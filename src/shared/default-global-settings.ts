@@ -54,6 +54,9 @@ export function buildDefaultSettings(args: {
     editorFontFamily: '',
     editorWordWrap: true,
     editorStickyScroll: false,
+    // VS Code-parity file editor options; explicit so upgrades can't silently change them.
+    editorCursorSmoothCaretAnimation: 'on',
+    editorRenderWhitespace: 'selection',
     richMarkdownSpellcheckEnabled: true,
     markdownReviewToolsEnabled: true,
     primarySelectionMiddleClickPaste: args.primarySelectionMiddleClickPaste,

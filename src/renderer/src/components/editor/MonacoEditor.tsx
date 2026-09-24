@@ -166,11 +166,20 @@ export default function MonacoEditor({
       fontSize: editorFontSize,
       fontFamily: editorFontFamily,
       ...buildFileEditorWordWrapOptions(editorWordWrap),
+      cursorSmoothCaretAnimation: settings?.editorCursorSmoothCaretAnimation ?? 'on',
+      renderWhitespace: settings?.editorRenderWhitespace ?? 'selection',
       // Keep a retained Monaco instance aligned when a tab changes between
       // a read-only surface and a normal editable file.
       readOnly
     })
-  }, [editorFontFamily, editorFontSize, editorWordWrap, readOnly])
+  }, [
+    editorFontFamily,
+    editorFontSize,
+    editorWordWrap,
+    readOnly,
+    settings?.editorCursorSmoothCaretAnimation,
+    settings?.editorRenderWhitespace
+  ])
 
   const decorations = useMonacoEditorDecorations({
     editorRef,
@@ -255,6 +264,11 @@ export default function MonacoEditor({
           quickSuggestions: { other: 'on', comments: 'off', strings: 'off' },
           wordBasedSuggestions: 'currentDocument',
           snippetSuggestions: 'inline',
+          // Why explicit: bracket colorization is Monaco's model default today (textModelDefaults
+          // enabled:true); pinning it here guarantees the VS Code-parity visuals survive upgrades.
+          bracketPairColorization: { enabled: true },
+          cursorSmoothCaretAnimation: settings?.editorCursorSmoothCaretAnimation ?? 'on',
+          renderWhitespace: settings?.editorRenderWhitespace ?? 'selection',
           scrollBeyondLastLine: false,
           ...buildFileEditorWordWrapOptions(editorWordWrap),
           fontSize: editorFontSize,
@@ -271,7 +285,6 @@ export default function MonacoEditor({
               }
             : undefined,
           smoothScrolling: true,
-          cursorSmoothCaretAnimation: 'off',
           padding: { top: 0 },
           find: monacoFindOptions,
           // Why: Monaco owns its rendered line surface, so align its selection-clipboard with the app opt-out (the global DOM hook can't).
