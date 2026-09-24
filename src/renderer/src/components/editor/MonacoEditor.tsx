@@ -250,6 +250,11 @@ export default function MonacoEditor({
           minimap: { enabled: settings?.editorMinimapEnabled ?? false },
           // Why: sticky scroll defaults off (VS Code parity is opt-in here); diff editors pin it separately.
           stickyScroll: { enabled: settings?.editorStickyScroll ?? false },
+          // Why explicit: pin VS Code-parity suggest behavior on the file editor (Monaco defaults
+          // match today; explicit values guarantee it survives Monaco upgrades).
+          quickSuggestions: { other: 'on', comments: 'off', strings: 'off' },
+          wordBasedSuggestions: 'currentDocument',
+          snippetSuggestions: 'inline',
           scrollBeyondLastLine: false,
           ...buildFileEditorWordWrapOptions(editorWordWrap),
           fontSize: editorFontSize,
