@@ -114,7 +114,9 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
     handleHistoryFocus,
     handleHistoryBlur,
     handleHistorySelect,
-    recordCurrentQuery
+    recordCurrentQuery,
+    openHistory,
+    closeHistory
   } = useFileSearchHistory({
     activeWorktreeId,
     getCurrentQuery: getCurrentSearchQuery,
@@ -211,16 +213,22 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
         return
       }
       if (e.key === 'Escape') {
+        closeHistory()
         if (fileSearchQuery) {
           handleClearSearch()
         }
+      }
+      if (e.key === 'ArrowDown') {
+        // Why: history is opt-in (VS Code behavior) — never auto-opened on focus.
+        e.preventDefault()
+        openHistory()
       }
       if (e.key === 'Enter') {
         executeSearch(fileSearchQuery)
         recordCurrentQuery()
       }
     },
-    [fileSearchQuery, handleClearSearch, executeSearch, recordCurrentQuery]
+    [fileSearchQuery, handleClearSearch, executeSearch, recordCurrentQuery, closeHistory, openHistory]
   )
 
   return {

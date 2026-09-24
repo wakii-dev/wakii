@@ -21,6 +21,8 @@ export function useFileSearchHistory({
   handleHistoryBlur: () => void
   handleHistorySelect: (selected: string) => void
   recordCurrentQuery: () => void
+  openHistory: () => void
+  closeHistory: () => void
 } {
   const historyBlurCloseTimerRef = useRef<number | null>(null)
   // Why: recording needs the latest list to persist synchronously; keeping it
@@ -47,11 +49,21 @@ export function useFileSearchHistory({
   }, [activeWorktreeId, getCurrentQuery])
 
   const handleHistoryFocus = useCallback(() => {
+    // Why: focus must NOT open the history dropdown (user directive — it read
+    // as a pre-filled value); only an explicit ArrowDown opens it. This only
+    // cancels a pending blur-close so a just-opened dropdown survives refocus.
     if (historyBlurCloseTimerRef.current !== null) {
       clearTimeout(historyBlurCloseTimerRef.current)
       historyBlurCloseTimerRef.current = null
     }
+  }, [])
+
+  const openHistory = useCallback(() => {
     setHistoryOpen(true)
+  }, [])
+
+  const closeHistory = useCallback(() => {
+    setHistoryOpen(false)
   }, [])
 
   const handleHistoryBlur = useCallback(() => {
@@ -82,6 +94,8 @@ export function useFileSearchHistory({
     handleHistoryFocus,
     handleHistoryBlur,
     handleHistorySelect,
-    recordCurrentQuery
+    recordCurrentQuery,
+    openHistory,
+    closeHistory
   }
 }
