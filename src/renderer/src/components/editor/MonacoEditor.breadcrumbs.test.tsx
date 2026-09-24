@@ -2,9 +2,10 @@
 import { cleanup, render } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-const settingsRef = vi.hoisted(() => ({
-  current: {} as Record<string, unknown>
-}))
+const settingsRef = vi.hoisted(() => {
+  const ref: { current: Record<string, unknown> } = { current: {} }
+  return ref
+})
 
 const revealRef = vi.hoisted(() => ({ current: vi.fn() }))
 

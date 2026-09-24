@@ -20,9 +20,9 @@ describe('web-preferences-store editor minimap one-shot stamp', () => {
     expect(settings.editorMinimapEnabled).toBe(true)
     expect(settings.editorMinimapEnabledDefaultedOnForAllUsers).toBe(true)
 
-    const persisted = JSON.parse(
+    const persisted: Record<string, unknown> = JSON.parse(
       window.localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}'
-    ) as Record<string, unknown>
+    )
     expect(persisted.editorMinimapEnabled).toBe(true)
     expect(persisted.editorMinimapEnabledDefaultedOnForAllUsers).toBe(true)
   })

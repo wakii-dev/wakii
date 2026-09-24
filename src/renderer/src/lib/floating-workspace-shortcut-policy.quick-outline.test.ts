@@ -6,15 +6,20 @@ import { describe, expect, it } from 'vitest'
 import { matchFloatingWorkspacePanelOwnedAction } from './floating-workspace-shortcut-policy'
 import { QUICK_OUTLINE_EDITOR_ATTRIBUTE } from './quick-outline-editor-target'
 
-function shortcutEvent(overrides: Partial<KeyboardEvent>): KeyboardEvent {
+type ShortcutInput = Partial<
+  Pick<KeyboardEvent, 'altKey' | 'code' | 'ctrlKey' | 'key' | 'metaKey' | 'shiftKey'>
+> & { target: EventTarget | null }
+
+function shortcutEvent(overrides: Partial<ShortcutInput>): ShortcutInput {
   return {
     altKey: false,
     ctrlKey: false,
     key: 't',
     metaKey: false,
     shiftKey: false,
+    target: null,
     ...overrides
-  } as KeyboardEvent
+  }
 }
 
 function editorTarget(attributeValue: string | null): HTMLElement {

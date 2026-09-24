@@ -19,6 +19,10 @@ export function EditorBreadcrumbs({
   onReveal
 }: EditorBreadcrumbsProps): React.JSX.Element {
   const segments = relativePath.split('/').filter(Boolean)
+  // Stable unique keys: the accumulated path at each depth (segment names can repeat).
+  const segmentKeys = segments.map(
+    (_, depth) => `/${segments.slice(0, depth + 1).join('/')}`
+  )
   const ariaLabel = translate('auto.components.editor.EditorBreadcrumbs.7a0b97acc9', 'File breadcrumbs')
   const revealTitle = translate(
     'auto.components.editor.EditorBreadcrumbs.deb1973b7d',
@@ -36,7 +40,7 @@ export function EditorBreadcrumbs({
         if (isFileSegment || !onReveal || !worktreeId) {
           return (
             <span
-              key={`${segment}-${index}`}
+              key={segmentKeys[index]}
               data-testid="breadcrumb-segment"
               aria-current={isFileSegment ? 'page' : undefined}
               title={isFileSegment ? undefined : revealTitle}
@@ -47,7 +51,7 @@ export function EditorBreadcrumbs({
           )
         }
         return (
-          <span key={`${segment}-${index}`} className="flex min-w-0 items-center gap-0.5">
+          <span key={segmentKeys[index]} className="flex min-w-0 items-center gap-0.5">
             <button
               type="button"
               data-testid="breadcrumb-segment"

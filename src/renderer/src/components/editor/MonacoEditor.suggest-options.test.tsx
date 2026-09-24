@@ -2,11 +2,15 @@
 import { cleanup, render } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-const settingsRef = vi.hoisted(() => ({
-  current: {} as Record<string, unknown>
-}))
+const settingsRef = vi.hoisted(() => {
+  const ref: { current: Record<string, unknown> } = { current: {} }
+  return ref
+})
 
-const editorProps = vi.hoisted(() => ({ current: null as Record<string, unknown> | null }))
+const editorProps = vi.hoisted(() => {
+  const ref: { current: Record<string, unknown> | null } = { current: null }
+  return ref
+})
 
 vi.mock('@monaco-editor/react', () => ({
   default: (props: Record<string, unknown>) => {

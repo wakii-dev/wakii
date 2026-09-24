@@ -2,9 +2,10 @@
 import { cleanup, render } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-const settingsRef = vi.hoisted(() => ({
-  current: {} as Record<string, unknown>
-}))
+const settingsRef = vi.hoisted(() => {
+  const ref: { current: Record<string, unknown> } = { current: {} }
+  return ref
+})
 
 vi.mock('@monaco-editor/react', () => ({
   default: () => null,
@@ -40,7 +41,7 @@ afterEach(() => {
   settingsRef.current = {}
 })
 
-function renderEditor(language: string, filePath: string): HTMLElement {
+function renderEditor(language: string, filePath: string): Element {
   const { container } = render(
     <MonacoEditor
       fileId="file"
@@ -53,7 +54,11 @@ function renderEditor(language: string, filePath: string): HTMLElement {
       onSave={vi.fn()}
     />
   )
-  return container.firstElementChild as HTMLElement
+  const root = container.firstElementChild
+  if (!root) {
+    throw new Error('MonacoEditor rendered no root element')
+  }
+  return root
 }
 
 describe('MonacoEditor quick-outline ownership (chord policy)', () => {
