@@ -88,6 +88,8 @@ export type GlobalSettings = {
   editorAutoSave: boolean
   editorAutoSaveDelayMs: number
   editorMinimapEnabled: boolean
+  /** One-shot stamp marking that the minimap default flipped on for every existing profile. */
+  editorMinimapEnabledDefaultedOnForAllUsers?: boolean
   /** Opt-in code-editor font; empty (the default) keeps following `terminalFontFamily`. */
   editorFontFamily?: string
   /** Defaults on for profiles saved before file-editor wrapping became configurable. */

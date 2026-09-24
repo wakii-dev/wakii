@@ -256,7 +256,8 @@ export default function MonacoEditor({
           // which overflowed at ~17_000 chars, under this cap. See the budget module.
           maxTokenizationLineLength: MAX_TOKENIZATION_LINE_LENGTH,
           // Why: only the file editor honors this; Monaco 0.55 DiffEditor hard-overrides minimap.enabled=false on sub-editors (see diffEditorEditors._adjustOptionsForSubEditor).
-          minimap: { enabled: settings?.editorMinimapEnabled ?? false },
+          // Why `?? true`: pre-hydration renders must not flash the minimap off before settings arrive.
+          minimap: { enabled: settings?.editorMinimapEnabled ?? true },
           // Why: sticky scroll defaults off (VS Code parity is opt-in here); diff editors pin it separately.
           stickyScroll: { enabled: settings?.editorStickyScroll ?? false },
           // Why explicit: pin VS Code-parity suggest behavior on the file editor (Monaco defaults

@@ -49,7 +49,12 @@ export function buildDefaultSettings(args: {
     appFontFamily: args.appFontFamily,
     editorAutoSave: false,
     editorAutoSaveDelayMs: args.editorAutoSaveDelayMs,
-    editorMinimapEnabled: false,
+    // Why on: minimap is core VS Code parity. This default only covers new profiles;
+    // existing ones persisted `false` and are flipped once by the stamp below
+    // (shared/editor-minimap-settings.ts, applied by both the Electron store and
+    // the web client's localStorage store). A manual opt-out after the stamp survives.
+    editorMinimapEnabled: true,
+    editorMinimapEnabledDefaultedOnForAllUsers: true,
     // Why empty: the editor keeps following the terminal font unless the user opts in.
     editorFontFamily: '',
     editorWordWrap: true,

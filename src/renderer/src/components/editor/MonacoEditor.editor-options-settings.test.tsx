@@ -93,4 +93,18 @@ describe('MonacoEditor bracket/caret/whitespace options (editor parity)', () => 
     expect(defaults.editorCursorSmoothCaretAnimation).toBe('on')
     expect(defaults.editorRenderWhitespace).toBe('selection')
   })
+
+  it('defaults the minimap on before settings hydrate (no off-flash)', () => {
+    settingsRef.current = { theme: 'dark' }
+    renderEditor()
+
+    expect(editorProps.current?.options).toMatchObject({ minimap: { enabled: true } })
+  })
+
+  it('keeps the minimap off when the preference is explicitly false', () => {
+    settingsRef.current = { theme: 'dark', editorMinimapEnabled: false }
+    renderEditor()
+
+    expect(editorProps.current?.options).toMatchObject({ minimap: { enabled: false } })
+  })
 })

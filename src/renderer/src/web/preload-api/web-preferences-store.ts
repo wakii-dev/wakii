@@ -11,6 +11,7 @@ import {
   normalizeOsc52ClipboardDefaultOn,
   osc52ClipboardDefaultOnOverridesPersistedOff
 } from '../../../../shared/osc52-clipboard-settings'
+import { normalizeEditorMinimapDefaultOn } from '../../../../shared/editor-minimap-settings'
 import type { PersistedUIState } from '../../../../shared/persisted-ui-state-types'
 import {
   applyPRBotAuthorOverride,
@@ -38,6 +39,7 @@ export function getStoredSettings(): GlobalSettings {
     ...normalizeAutoRenameBranchFromWorkDefaultOn(stored),
     ...normalizeTerminalCursorStyleDefault(stored),
     ...normalizeOsc52ClipboardDefaultOn(stored),
+    ...normalizeEditorMinimapDefaultOn(stored),
     terminalCustomThemes: normalizeTerminalCustomThemes(stored.terminalCustomThemes),
     uiLanguage: normalizeUiLanguage(stored.uiLanguage)
   }
@@ -54,6 +56,9 @@ export function getStoredSettings(): GlobalSettings {
       stored.terminalAllowOsc52Clipboard !== migratedStored.terminalAllowOsc52Clipboard ||
       stored.terminalAllowOsc52ClipboardDefaultedOnForAllUsers !==
         migratedStored.terminalAllowOsc52ClipboardDefaultedOnForAllUsers ||
+      stored.editorMinimapEnabled !== migratedStored.editorMinimapEnabled ||
+      stored.editorMinimapEnabledDefaultedOnForAllUsers !==
+        migratedStored.editorMinimapEnabledDefaultedOnForAllUsers ||
       stored.terminalCustomThemes !== migratedStored.terminalCustomThemes ||
       stored.uiLanguage !== migratedStored.uiLanguage)
   ) {

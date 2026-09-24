@@ -35,3 +35,40 @@ describe('retired Agents sidebar setting', () => {
     expect(normalized.agentsSidebarMigratedFromExperimental).toBe(true)
   })
 })
+
+describe('editor minimap one-shot stamp (desktop store wiring)', () => {
+  // Why a bespoke harness: normalizeLegacyProfile seeds defaults, which now carry the
+  // stamp; a legacy profile predates the stamp entirely, so it must be stripped.
+  function normalizePreStampProfile(overrides: Record<string, unknown>): PersistedState['settings'] {
+    const defaults = getDefaultPersistedState(homedir())
+    const settings: Partial<GlobalSettings> = { ...defaults.settings }
+    delete settings.editorMinimapEnabledDefaultedOnForAllUsers
+    Object.assign(settings, overrides)
+    const parsed: PersistedState = { ...defaults, settings: settings as GlobalSettings }
+    const noop = (): void => {}
+    const terminal = prepareLoadedTerminalSettings(parsed, noop)
+    const profile = prepareLoadedProfileSettings(parsed, defaults, noop)
+    return normalizeLoadedGlobalSettings(parsed, terminal, profile)
+  }
+
+  it('flips a legacy persisted-off profile on exactly once', () => {
+    const normalized = normalizePreStampProfile({ editorMinimapEnabled: false })
+    expect(normalized.editorMinimapEnabled).toBe(true)
+    expect(normalized.editorMinimapEnabledDefaultedOnForAllUsers).toBe(true)
+  })
+
+  it('honors a stamped opt-out', () => {
+    const normalized = normalizePreStampProfile({
+      editorMinimapEnabled: false,
+      editorMinimapEnabledDefaultedOnForAllUsers: true
+    })
+    expect(normalized.editorMinimapEnabled).toBe(false)
+    expect(normalized.editorMinimapEnabledDefaultedOnForAllUsers).toBe(true)
+  })
+
+  it('defaults fresh profiles on', () => {
+    const defaults = getDefaultPersistedState(homedir())
+    expect(defaults.settings.editorMinimapEnabled).toBe(true)
+    expect(defaults.settings.editorMinimapEnabledDefaultedOnForAllUsers).toBe(true)
+  })
+})
