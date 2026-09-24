@@ -4,7 +4,7 @@ Destination: feature/clone-vs-vscode
 
 ## SF-1 Editor parity: suggest/options + minimap stamp + breadcrumbs + quick outline
 Tier: 0
-linear:
+linear: FI-33
 Design: none
 What: mở file ts/js gõ code thấy suggestions (word-based + snippets) mà không xuất hiện squiggle nào; breadcrumb bar trên editor hiển thị path, click segment cấp trên reveal file trong explorer đúng worktree; Shift+Alt+F format JSON, undo được, draft giữ nguyên; minimap bật mặc định cho cả profile cũ (one-shot stamp migration); Settings → Editor có các toggle bracket colorization/smooth caret/renderWhitespace; Ctrl+Shift+O trong editor mở quick outline còn ngoài editor vẫn mở markdown preview như cũ. Renderer-only, 0 file main-process.
 Depends on: —
