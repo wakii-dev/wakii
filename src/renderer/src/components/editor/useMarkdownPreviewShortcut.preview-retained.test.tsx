@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
-// Exit test (ii) FI-33 task 8: with the markdown SOURCE editor focused, Mod+Shift+O
-// still opens the preview (markdown has no DocumentSymbolProvider, so the quick
-// outline never claims the chord).
+// Exit test (ii) FI-33 task 8: the panel preview binding Mod+Shift+V still opens
+// the preview with the markdown SOURCE editor focused. The Mod+Shift+O yield half
+// (markdown keeps its new-tab claim) is covered by
+// floating-workspace-shortcut-policy.quick-outline.test.ts.
 import { act, cleanup, render } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { RefObject } from 'react'

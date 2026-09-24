@@ -43,7 +43,6 @@ export function EditorBreadcrumbs({
               key={segmentKeys[index]}
               data-testid="breadcrumb-segment"
               aria-current={isFileSegment ? 'page' : undefined}
-              title={isFileSegment ? undefined : revealTitle}
               className="truncate text-xs text-muted-foreground"
             >
               {segment}
