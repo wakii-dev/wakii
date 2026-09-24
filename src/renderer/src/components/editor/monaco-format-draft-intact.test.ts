@@ -1,7 +1,10 @@
 // @vitest-environment happy-dom
 import * as monaco from 'monaco-editor'
 import { afterEach, describe, expect, it } from 'vitest'
-import type { DocumentFormattingEditProvider, IDisposable } from 'monaco-editor'
+import type { IDisposable } from 'monaco-editor'
+
+// Root 'monaco-editor' does not re-export this type at top level; it lives on the languages namespace.
+type DocumentFormattingEditProvider = monaco.languages.DocumentFormattingEditProvider
 
 // Verifies the Shift+Alt+F contract the file editor relies on WITHOUT re-registering
 // the built-in action: a document formatting provider's edits flow through the model,

@@ -6,6 +6,7 @@ import {
   type KeybindingOverrides,
   type PhysicalModifierToken
 } from '../../../shared/keybindings'
+import { isQuickOutlineEditorTarget } from './quick-outline-editor-target'
 
 // Partial<> on the key/modifier fields so a synthetic double-tap input (which
 // carries no key/modifier flags) satisfies this shape; target stays required.
@@ -54,9 +55,14 @@ export function matchFloatingWorkspacePanelOwnedAction(
   keybindings: KeybindingOverrides | undefined,
   options: KeybindingMatchOptions
 ): FloatingWorkspacePanelOwnedAction | null {
+  const matchesAction = (actionId: FloatingWorkspacePanelOwnedAction): boolean =>
+    keybindingMatchesAction(actionId, event, platform, keybindings, options)
   return (
     FLOATING_WORKSPACE_PANEL_SHORTCUT_ACTIONS.find((actionId) =>
-      keybindingMatchesAction(actionId, event, platform, keybindings, options)
+      actionId === 'tab.openMarkdown' && isQuickOutlineEditorTarget(event.target)
+        ? // Why: the same chord is Monaco's built-in quick outline in a symbol-provider editor — yield it.
+          false
+        : matchesAction(actionId)
     ) ?? null
   )
 }

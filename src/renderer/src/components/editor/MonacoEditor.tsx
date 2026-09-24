@@ -22,6 +22,7 @@ import { useMonacoMarkdownAnnotations } from './use-monaco-markdown-annotations'
 import { useMonacoEditorDecorations } from './use-monaco-editor-decorations'
 import { useMonacoEditorMount } from './use-monaco-editor-mount'
 import { EditorBreadcrumbs } from './EditorBreadcrumbs'
+import { QUICK_OUTLINE_EDITOR_ATTRIBUTE, hasQuickOutlineSymbols } from '@/lib/quick-outline-editor-target'
 import { snapshotMonacoViewState } from './monaco-view-state-persistence'
 import { MonacoMarkdownAnnotationOverlay } from './MonacoMarkdownAnnotationOverlay'
 
@@ -236,6 +237,9 @@ export default function MonacoEditor({
         autoHeight ? 'relative flex flex-col' : 'relative flex h-full flex-col'
       }
       style={renderedEditorHeight === null ? undefined : { height: renderedEditorHeight }}
+      // Why: shortcut eaters (floating panel, markdown preview) yield Mod+Shift+O to
+      // Monaco's built-in quick outline only when the target lives in a symbol-provider editor.
+      {...(hasQuickOutlineSymbols(language) ? { [QUICK_OUTLINE_EDITOR_ATTRIBUTE]: 'true' } : {})}
     >
       {/* Why gated on !autoHeight: the inline-overview pin renders compact excerpts, not file surfaces. */}
       {!autoHeight && (settings?.editorBreadcrumbsEnabled ?? true) ? (
