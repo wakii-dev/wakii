@@ -10317,6 +10317,26 @@
           "saveFailed": "No se pudieron guardar los valores predeterminados de visibilidad.",
           "updateServer": "Actualiza este servidor para configurar los valores predeterminados de las fuentes.",
           "updateServerDefaults": "Actualiza este servidor para configurar los valores predeterminados de visibilidad."
+        },
+        "EditorCaretAnimationSetting": {
+          "8e0f5141a1": "Activado",
+          "8dc4f98620": "Explícito",
+          "84ecf4f030": "Desactivado",
+          "63ef2747f7": "Animación suave del cursor",
+          "a181845e72": "Anima el cursor de texto al moverse en los editores de archivos."
+        },
+        "EditorRenderWhitespaceSetting": {
+          "f08dbab703": "Ninguno",
+          "6bce99b8b5": "Límite",
+          "e1f52833fb": "Selección",
+          "09b41c31fb": "Final",
+          "b0974f678a": "Todas",
+          "085871d375": "Mostrar espacios en blanco",
+          "628ef71b4c": "Muestra los caracteres de espacio en blanco en los editores de archivos."
+        },
+        "EditorBreadcrumbsSetting": {
+          "fe2cb0ef78": "Ruta de navegación",
+          "9e7a1f613e": "Muestra la ruta del archivo sobre el editor de archivos."
         }
       },
       "right": {
@@ -13401,6 +13421,10 @@
               }
             }
           }
+        },
+        "EditorBreadcrumbs": {
+          "7a0b97acc9": "Ruta de navegación del archivo",
+          "deb1973b7d": "Mostrar en el explorador"
         }
       },
       "diff": {

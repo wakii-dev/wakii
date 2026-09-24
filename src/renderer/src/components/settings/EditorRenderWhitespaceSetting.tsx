@@ -4,9 +4,6 @@ import { SearchableSetting } from './SearchableSetting'
 import { Label } from '../ui/label'
 import { SettingsSegmentedControl } from './SettingsFormControls'
 
-const TITLE_KEY = 'auto.components.settings.EditorRenderWhitespaceSetting.085871d375'
-const DESCRIPTION_KEY = 'auto.components.settings.EditorRenderWhitespaceSetting.628ef71b4c'
-
 type EditorRenderWhitespaceSettingProps = {
   settings: GlobalSettings
   updateSettings: (updates: Partial<GlobalSettings>) => void
@@ -18,39 +15,68 @@ export function EditorRenderWhitespaceSetting({
 }: EditorRenderWhitespaceSettingProps): React.JSX.Element {
   return (
     <SearchableSetting
-      title={translate(TITLE_KEY, 'Render Whitespace')}
+      title={translate(
+        'auto.components.settings.EditorRenderWhitespaceSetting.085871d375',
+        'Render Whitespace'
+      )}
       description={translate(
-        DESCRIPTION_KEY,
+        'auto.components.settings.EditorRenderWhitespaceSetting.628ef71b4c',
         'Show whitespace characters in file editors.'
       )}
       keywords={['editor', 'whitespace', 'spaces', 'tabs', 'render']}
       className="flex items-center justify-between gap-4 py-2"
     >
       <div className="min-w-0 flex-1 space-y-0.5">
-        <Label>{translate(TITLE_KEY, 'Render Whitespace')}</Label>
+        <Label>
+          {translate(
+            'auto.components.settings.EditorRenderWhitespaceSetting.085871d375',
+            'Render Whitespace'
+          )}
+        </Label>
         <p className="text-xs text-muted-foreground">
-          {translate(DESCRIPTION_KEY, 'Show whitespace characters in file editors.')}
+          {translate(
+            'auto.components.settings.EditorRenderWhitespaceSetting.628ef71b4c',
+            'Show whitespace characters in file editors.'
+          )}
         </p>
       </div>
       <SettingsSegmentedControl
-        ariaLabel={translate(TITLE_KEY, 'Render Whitespace')}
+        ariaLabel={translate(
+          'auto.components.settings.EditorRenderWhitespaceSetting.085871d375',
+          'Render Whitespace'
+        )}
         value={settings.editorRenderWhitespace ?? 'selection'}
         onChange={(option) => updateSettings({ editorRenderWhitespace: option })}
         options={[
-          { value: 'none', label: translate('auto.components.settings.EditorRenderWhitespaceSetting.f08dbab703', 'None') },
+          {
+            value: 'none',
+            label: translate('auto.components.settings.EditorRenderWhitespaceSetting.f08dbab703', 'None')
+          },
           {
             value: 'boundary',
-            label: translate('auto.components.settings.EditorRenderWhitespaceSetting.6bce99b8b5', 'Boundary')
+            label: translate(
+              'auto.components.settings.EditorRenderWhitespaceSetting.6bce99b8b5',
+              'Boundary'
+            )
           },
           {
             value: 'selection',
-            label: translate('auto.components.settings.EditorRenderWhitespaceSetting.e1f52833fb', 'Selection')
+            label: translate(
+              'auto.components.settings.EditorRenderWhitespaceSetting.e1f52833fb',
+              'Selection'
+            )
           },
           {
             value: 'trailing',
-            label: translate('auto.components.settings.EditorRenderWhitespaceSetting.09b41c31fb', 'Trailing')
+            label: translate(
+              'auto.components.settings.EditorRenderWhitespaceSetting.09b41c31fb',
+              'Trailing'
+            )
           },
-          { value: 'all', label: translate('auto.components.settings.EditorRenderWhitespaceSetting.b0974f678a', 'All') }
+          {
+            value: 'all',
+            label: translate('auto.components.settings.EditorRenderWhitespaceSetting.b0974f678a', 'All')
+          }
         ]}
       />
     </SearchableSetting>

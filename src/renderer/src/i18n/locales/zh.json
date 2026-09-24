@@ -10397,6 +10397,26 @@
           "saveFailed": "无法保存可见性默认设置。",
           "updateServer": "请更新此服务器以配置来源默认设置。",
           "updateServerDefaults": "请更新此服务器以配置可见性默认设置。"
+        },
+        "EditorCaretAnimationSetting": {
+          "8e0f5141a1": "开启",
+          "8dc4f98620": "显式",
+          "84ecf4f030": "关闭",
+          "63ef2747f7": "平滑光标动画",
+          "a181845e72": "在文件编辑器中为文本光标的移动添加动画。"
+        },
+        "EditorRenderWhitespaceSetting": {
+          "f08dbab703": "无",
+          "6bce99b8b5": "边界",
+          "e1f52833fb": "选区",
+          "09b41c31fb": "尾随",
+          "b0974f678a": "全部",
+          "085871d375": "显示空白",
+          "628ef71b4c": "在文件编辑器中显示空白字符。"
+        },
+        "EditorBreadcrumbsSetting": {
+          "fe2cb0ef78": "面包屑导航",
+          "9e7a1f613e": "在文件编辑器上方显示文件路径。"
         }
       },
       "right": {
@@ -13481,6 +13501,10 @@
               }
             }
           }
+        },
+        "EditorBreadcrumbs": {
+          "7a0b97acc9": "文件面包屑导航",
+          "deb1973b7d": "在资源管理器中显示"
         }
       },
       "diff": {

@@ -19,10 +19,7 @@ export function EditorBreadcrumbs({
   onReveal
 }: EditorBreadcrumbsProps): React.JSX.Element {
   const segments = relativePath.split('/').filter(Boolean)
-  const ariaLabel = translate(
-    'auto.components.editor.EditorBreadcrumbs.7a0b97acc9',
-    'File breadcrumbs'
-  )
+  const ariaLabel = translate('auto.components.editor.EditorBreadcrumbs.7a0b97acc9', 'File breadcrumbs')
   const revealTitle = translate(
     'auto.components.editor.EditorBreadcrumbs.deb1973b7d',
     'Reveal in explorer'

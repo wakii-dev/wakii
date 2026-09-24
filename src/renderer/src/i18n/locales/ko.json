@@ -10359,6 +10359,26 @@
           "reviewStepDescription": "최근 실행을 검토하고 필요할 때 언제든지 작업을 계속할 수 있습니다.",
           "openAutomations": "자동화 열기",
           "openAutomationsDescription": "일정을 생성하고 최근 실행을 확인합니다."
+        },
+        "EditorCaretAnimationSetting": {
+          "8e0f5141a1": "켜짐",
+          "8dc4f98620": "명시적",
+          "84ecf4f030": "꺼짐",
+          "63ef2747f7": "부드러운 캐럿 애니메이션",
+          "a181845e72": "파일 편집기에서 텍스트 커서 이동에 애니메이션을 적용합니다."
+        },
+        "EditorRenderWhitespaceSetting": {
+          "f08dbab703": "없음",
+          "6bce99b8b5": "경계",
+          "e1f52833fb": "선택 영역",
+          "09b41c31fb": "후행",
+          "b0974f678a": "전체",
+          "085871d375": "공백 표시",
+          "628ef71b4c": "파일 편집기에서 공백 문자를 표시합니다."
+        },
+        "EditorBreadcrumbsSetting": {
+          "fe2cb0ef78": "이동 경로",
+          "9e7a1f613e": "파일 편집기 위에 파일 경로를 표시합니다."
         }
       },
       "right": {
@@ -13467,6 +13487,10 @@
               }
             }
           }
+        },
+        "EditorBreadcrumbs": {
+          "7a0b97acc9": "파일 이동 경로",
+          "deb1973b7d": "탐색기에 표시"
         }
       },
       "diff": {

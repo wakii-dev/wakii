@@ -3,9 +3,6 @@ import { translate } from '@/i18n/i18n'
 import { SearchableSetting } from './SearchableSetting'
 import { SettingsSwitchRow } from './SettingsFormControls'
 
-const TITLE_KEY = 'auto.components.settings.EditorBreadcrumbsSetting.fe2cb0ef78'
-const DESCRIPTION_KEY = 'auto.components.settings.EditorBreadcrumbsSetting.9e7a1f613e'
-
 type EditorBreadcrumbsSettingProps = {
   settings: GlobalSettings
   updateSettings: (updates: Partial<GlobalSettings>) => void
@@ -17,17 +14,17 @@ export function EditorBreadcrumbsSetting({
 }: EditorBreadcrumbsSettingProps): React.JSX.Element {
   return (
     <SearchableSetting
-      title={translate(TITLE_KEY, 'Breadcrumbs')}
+      title={translate('auto.components.settings.EditorBreadcrumbsSetting.fe2cb0ef78', 'Breadcrumbs')}
       description={translate(
-        DESCRIPTION_KEY,
+        'auto.components.settings.EditorBreadcrumbsSetting.9e7a1f613e',
         'Show the file path above the file editor.'
       )}
       keywords={['breadcrumbs', 'path', 'editor', 'reveal', 'explorer']}
     >
       <SettingsSwitchRow
-        label={translate(TITLE_KEY, 'Breadcrumbs')}
+        label={translate('auto.components.settings.EditorBreadcrumbsSetting.fe2cb0ef78', 'Breadcrumbs')}
         description={translate(
-          DESCRIPTION_KEY,
+          'auto.components.settings.EditorBreadcrumbsSetting.9e7a1f613e',
           'Show the file path above the file editor.'
         )}
         checked={settings.editorBreadcrumbsEnabled ?? true}

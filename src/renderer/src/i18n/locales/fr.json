@@ -11338,6 +11338,26 @@
         },
         "shortcutDefinitionCatalog": {
           "missionControlConflict": "Bloqué par Mission Control. Remappez ici ou changez-le dans Réglages Système."
+        },
+        "EditorCaretAnimationSetting": {
+          "8e0f5141a1": "Activé",
+          "8dc4f98620": "Explicite",
+          "84ecf4f030": "Désactivé",
+          "63ef2747f7": "Animation fluide du curseur",
+          "a181845e72": "Anime le curseur de texte lorsqu’il se déplace dans les éditeurs de fichiers."
+        },
+        "EditorRenderWhitespaceSetting": {
+          "f08dbab703": "Aucun",
+          "6bce99b8b5": "Frontières",
+          "e1f52833fb": "Sélection",
+          "09b41c31fb": "Fins de ligne",
+          "b0974f678a": "Tout",
+          "085871d375": "Afficher les espaces",
+          "628ef71b4c": "Affiche les caractères d’espacement dans les éditeurs de fichiers."
+        },
+        "EditorBreadcrumbsSetting": {
+          "fe2cb0ef78": "Fil d’Ariane",
+          "9e7a1f613e": "Affiche le chemin du fichier au-dessus de l’éditeur de fichiers."
         }
       },
       "right": {
@@ -14619,6 +14639,10 @@
           "insertColumnRight": "Insérer une colonne à droite",
           "deleteRow": "Supprimer la ligne",
           "deleteColumn": "Supprimer la colonne"
+        },
+        "EditorBreadcrumbs": {
+          "7a0b97acc9": "Fil d’Ariane du fichier",
+          "deb1973b7d": "Révéler dans l’Explorateur"
         }
       },
       "diff": {

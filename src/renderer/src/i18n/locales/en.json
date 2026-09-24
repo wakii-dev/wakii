@@ -12027,6 +12027,26 @@
         "TerminalRenderingSection": {
           "6d4c55bacc": "Inline Images",
           "fffab5890b": "Display images directly in the terminal using SIXEL, iTerm2 (IIP), and Kitty graphics protocols."
+        },
+        "EditorCaretAnimationSetting": {
+          "8e0f5141a1": "On",
+          "8dc4f98620": "Explicit",
+          "84ecf4f030": "Off",
+          "63ef2747f7": "Smooth Caret Animation",
+          "a181845e72": "Animate the text cursor as it moves in file editors."
+        },
+        "EditorRenderWhitespaceSetting": {
+          "f08dbab703": "None",
+          "6bce99b8b5": "Boundary",
+          "e1f52833fb": "Selection",
+          "09b41c31fb": "Trailing",
+          "b0974f678a": "All",
+          "085871d375": "Render Whitespace",
+          "628ef71b4c": "Show whitespace characters in file editors."
+        },
+        "EditorBreadcrumbsSetting": {
+          "fe2cb0ef78": "Breadcrumbs",
+          "9e7a1f613e": "Show the file path above the file editor."
         }
       },
       "right": {
@@ -12178,7 +12198,9 @@
             "d95e30fe28": "Refresh Explorer",
             "6026b16950": "Collapse All",
             "693cbeadd0": "Search",
-            "c1f3f3ec70": "Search file contents"
+            "c1f3f3ec70": "Search file contents",
+            "71c2f04be8": "New File",
+            "83d3015cf9": "New Folder"
           },
           "FileExplorerTreeStatus": {
             "ce03835e1f": "No files in this workspace",
@@ -12319,7 +12341,12 @@
           },
           "SearchQueryRow": {
             "queryLabel": "Search files",
-            "clearLabel": "Clear search"
+            "clearLabel": "Clear search",
+            "toggleReplaceLabel": "Toggle Replace",
+            "replaceLabel": "Replace",
+            "replaceAllLabel": "Replace All",
+            "undoReplaceLabel": "Undo Replace All",
+            "invalidRegexMessage": "Invalid regular expression"
           },
           "SearchResultItems": {
             "cc06595a3b": "Copy Line Path",
@@ -13540,6 +13567,34 @@
             "sourceMissing": "Transcript is no longer available",
             "metadataMatch": "Match in session metadata",
             "sourceActionsUnavailable": "The transcript source is unavailable."
+          },
+          "FileExplorerOpenEditors": {
+            "7b21c3f4a9": "Open Editors",
+            "5e8b4c2d17": "Close editor",
+            "d3f9a2c1e8": "Unsaved changes"
+          },
+          "SearchReplacePreview": {
+            "6c04a1f2b3": "Replace All Preview",
+            "1d8e77c9a4": "Counts are re-derived from the files on disk before anything is written.",
+            "2b91c0e5f7": "Reading files...",
+            "4f3a92d1c8": "{{occurrences}} occurrences in {{files}} files would be replaced.",
+            "5e6b81d0a2": "The search listed {{searched}} — stale matches are skipped at replace time.",
+            "7a20cf4b19": "The replace field is empty — matched text will be removed.",
+            "8c31da6e05": "Skipped — unsaved {{dirty}}, stale {{stale}}, errors {{errors}}, not attempted {{unprocessed}}.",
+            "3d86cf135a": "Cancel",
+            "4e97d0246b": "Replace All"
+          },
+          "SearchResultsPane": {
+            "9a1c2e3f4b": "Expand All",
+            "7d2b4f6a8c": "Collapse All"
+          },
+          "useFileSearchReplaceRun": {
+            "transportStopped": "Replace stopped — lost contact with the workspace. Already-written files were kept.",
+            "summary": "Replaced {{replaced}} — skipped unsaved {{dirty}}, stale {{stale}}, errors {{errors}}, not attempted {{unprocessed}}."
+          },
+          "useFileSearchReplaceUndo": {
+            "transportStopped": "Undo stopped — lost contact with the workspace. Restorable files were kept.",
+            "summary": "Restored {{restored}} — skipped unsaved {{dirty}}, changed-on-disk/undone {{stale}}, errors {{errors}}, not attempted {{unprocessed}}."
           }
         }
       },
@@ -15420,6 +15475,10 @@
           "a0af0198aa": "Large diffs are not rendered by default.",
           "c3d9f4a712": "This diff's size isn't known yet, so it loads on request.",
           "f7fa7a40d0": "Load diff"
+        },
+        "EditorBreadcrumbs": {
+          "7a0b97acc9": "File breadcrumbs",
+          "deb1973b7d": "Reveal in explorer"
         }
       },
       "diff": {
