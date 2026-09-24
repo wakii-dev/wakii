@@ -100,6 +100,8 @@ export type GlobalSettings = {
   editorCursorSmoothCaretAnimation?: 'on' | 'explicit' | 'off'
   /** VS Code editor.renderWhitespace parity for the file editor; defaults 'selection'. */
   editorRenderWhitespace?: 'none' | 'boundary' | 'selection' | 'trailing' | 'all'
+  /** Breadcrumb path bar above the file editor; defaults on. */
+  editorBreadcrumbsEnabled?: boolean
   /** Persisted opt-out for browser spellcheck noise in rich Markdown editing surfaces. */
   richMarkdownSpellcheckEnabled?: boolean
   /** Whether local markdown review note controls and the review panel are shown. */

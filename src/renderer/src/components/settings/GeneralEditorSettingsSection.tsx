@@ -23,6 +23,7 @@ import { DiffShowWhitespaceSetting } from './DiffShowWhitespaceSetting'
 import { EditorWordWrapSetting } from './EditorWordWrapSetting'
 import { EditorCaretAnimationSetting } from './EditorCaretAnimationSetting'
 import { EditorRenderWhitespaceSetting } from './EditorRenderWhitespaceSetting'
+import { EditorBreadcrumbsSetting } from './EditorBreadcrumbsSetting'
 import { EditorFontFamilySetting } from './EditorFontFamilySetting'
 import {
   createAutoSaveDelayDraftState,
@@ -240,6 +241,8 @@ export function GeneralEditorSettingsSection({
       <EditorCaretAnimationSetting settings={settings} updateSettings={updateSettings} />
 
       <EditorRenderWhitespaceSetting settings={settings} updateSettings={updateSettings} />
+
+      <EditorBreadcrumbsSetting settings={settings} updateSettings={updateSettings} />
 
       <DiffShowWhitespaceSetting settings={settings} updateSettings={updateSettings} />
 

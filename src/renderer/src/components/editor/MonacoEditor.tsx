@@ -21,6 +21,7 @@ import { useMonacoContentSyncBridge } from './use-monaco-content-sync-bridge'
 import { useMonacoMarkdownAnnotations } from './use-monaco-markdown-annotations'
 import { useMonacoEditorDecorations } from './use-monaco-editor-decorations'
 import { useMonacoEditorMount } from './use-monaco-editor-mount'
+import { EditorBreadcrumbs } from './EditorBreadcrumbs'
 import { snapshotMonacoViewState } from './monaco-view-state-persistence'
 import { MonacoMarkdownAnnotationOverlay } from './MonacoMarkdownAnnotationOverlay'
 
@@ -90,6 +91,7 @@ export default function MonacoEditor({
   const editorFontZoomLevel = useAppStore((s) => s.editorFontZoomLevel)
   const setPendingEditorReveal = useAppStore((s) => s.setPendingEditorReveal)
   const setEditorCursorLine = useAppStore((s) => s.setEditorCursorLine)
+  const revealInExplorer = useAppStore((s) => s.revealInExplorer)
   const editorFontSize = computeEditorFontSize(
     settings?.terminalFontSize ?? 13,
     editorFontZoomLevel
@@ -230,10 +232,22 @@ export default function MonacoEditor({
   return (
     <div
       ref={editorContainerRef}
-      className={autoHeight ? 'relative' : 'relative h-full'}
+      className={
+        autoHeight ? 'relative flex flex-col' : 'relative flex h-full flex-col'
+      }
       style={renderedEditorHeight === null ? undefined : { height: renderedEditorHeight }}
     >
-      <MonacoMarkdownAnnotationOverlay
+      {/* Why gated on !autoHeight: the inline-overview pin renders compact excerpts, not file surfaces. */}
+      {!autoHeight && (settings?.editorBreadcrumbsEnabled ?? true) ? (
+        <EditorBreadcrumbs
+          filePath={filePath}
+          relativePath={relativePath}
+          worktreeId={worktreeId}
+          onReveal={revealInExplorer}
+        />
+      ) : null}
+      <div className="relative min-h-0 flex-1">
+        <MonacoMarkdownAnnotationOverlay
         shouldShowMarkdownAnnotations={annotations.shouldShowMarkdownAnnotations}
         commentPopover={annotations.commentPopover}
         setCommentPopover={annotations.setCommentPopover}
@@ -297,6 +311,7 @@ export default function MonacoEditor({
         saveViewState={false}
         keepCurrentModel
       />
+      </div>
 
       {toastNode}
       <MonacoGutterContextMenu
