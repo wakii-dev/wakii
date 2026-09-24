@@ -181,6 +181,18 @@
       "description": "tự review diff trước commit — chặn debug code, commented-out code, secrets, files ngoài plan"
     },
     {
+      "name": "story-impact",
+      "type": "bin",
+      "description": "Bản đồ tác động nhánh: file đổi → importer ngược theo feature area → lưới test vitest --related",
+      "inputs": [
+        "git base ref (tự detect nếu bỏ)",
+        "--run-tests",
+        "--json"
+      ],
+      "outputs": "bản đồ reverse-import + areas bị chạm + lệnh lưới test; exit != 0 khi base sai",
+      "owner": "wakii"
+    },
+    {
       "name": "story-launch",
       "type": "bin",
       "description": "nguồn duy nhất dựng SF launch prompt + tạo worktree — PM/watchdog/panel đều gọi"
@@ -408,5 +420,5 @@
       "description": "state machine Linear rate-limit — check/note/clear/pending/classify (policy skip+note+resume 2026-09-20)"
     }
   ],
-  "kitHash": "4747088c8930081a"
+  "kitHash": "f79f3be1b116cba1"
 }
