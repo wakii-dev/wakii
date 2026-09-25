@@ -39,6 +39,7 @@ import {
 } from '../listing/runtime-worktree-rpc-errors'
 import { recordRemovedWorktreeSnapshotPrune } from './removed-worktree-snapshot-prune'
 import { clearSessionCommitDraftForWorktree } from '@/lib/source-control-commit-draft-session'
+import { clearGitBlameCacheForWorktree } from '@/components/editor/git-blame-cache'
 import { dispatchWorktreeRemoval } from './dispatch-worktree-removal'
 import { tearDownRemovedWorktreeRendererState } from './removed-worktree-renderer-teardown'
 
@@ -255,6 +256,7 @@ export function createRemoveWorktree(
       })
       // Why: Source Control may be unmounted during deletion, so it can't be the only stale-draft cleanup path.
       clearSessionCommitDraftForWorktree(worktreeId)
+      clearGitBlameCacheForWorktree(worktreeId)
       const preservedBranch = removalResult?.preservedBranch
       const cleanup = preservedBranch
         ? {

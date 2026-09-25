@@ -10,24 +10,16 @@ import {
   appendGitBlameHover,
   formatInlineBlameAnnotation,
   getBlameSkipReason,
-  GitBlameCache,
   type BlameSkipReason,
   type HoverTextSink
 } from './git-blame-annotation-model'
+import { clearGitBlameCacheForFile, clearGitBlameCacheForWorktree, gitBlameCache } from './git-blame-cache'
 import { getGitBlameStrings } from './git-blame-strings'
 
-// Module-level: blame survives editor remounts and is shared across surfaces.
-const blameCache = new GitBlameCache()
+// Re-exports keep the established import path for tests and future callers.
+export { clearGitBlameCacheForFile, clearGitBlameCacheForWorktree }
 
-/** Eviction hook for worktree removal — wired by the store teardown flow. */
-export function clearGitBlameCacheForWorktree(worktreeId: string): void {
-  blameCache.clearWorktree(worktreeId)
-}
-
-/** Eviction hook for tab close — wired by the editor teardown flow. */
-export function clearGitBlameCacheForFile(worktreeId: string, filePath: string): void {
-  blameCache.clearFile(worktreeId, filePath)
-}
+const blameCache = gitBlameCache
 
 export type UseMonacoGitBlameArgs = {
   enabled: boolean
