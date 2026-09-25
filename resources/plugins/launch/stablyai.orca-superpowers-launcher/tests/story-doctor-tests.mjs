@@ -255,6 +255,13 @@ console.log('== [DR10] KB fail-open WARN + --kb-dir ==')
   writeFileSync(join(kbFx, 'adr', '0001-x.md'), '# x\n')
   const r2 = run(['--root', fx, '--kb-dir', kbFx], { cwd: emptyCwd, env: noKbEnv })
   check('DR10', '--kb-dir → [PASS] kb configured', r2.stdout.includes('[PASS] kb:') && r2.stdout.includes(kbFx), r2.stdout)
+  // --kb-dir trỏ dir KHÔNG marker → WARN (không PASS false-healthy — review P1,
+  // par story-kb:75 is_kb_dir)
+  const junkFx = mkdtempSync(join(tmpdir(), 'doctor-tests-kb-junk-'))
+  const r3 = run(['--root', fx, '--kb-dir', junkFx], { cwd: emptyCwd, env: noKbEnv })
+  check('DR10', '--kb-dir dir-rác → [WARN] kb (không PASS)', r3.stdout.includes('[WARN] kb:') && !r3.stdout.includes('[PASS] kb:'), r3.stdout)
+  check('DR10', 'dir-rác exit vẫn 0', r3.status === 0, `code=${r3.status}`)
+  rmSync(junkFx, { recursive: true, force: true })
   rmSync(fx, { recursive: true, force: true })
   rmSync(kbFx, { recursive: true, force: true })
 }

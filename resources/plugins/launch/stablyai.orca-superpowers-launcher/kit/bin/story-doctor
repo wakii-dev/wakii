@@ -166,7 +166,8 @@ def is_kb_dir(path):
 
 def resolve_kb_dir(cli_dir):
     if cli_dir:
-        return os.path.abspath(cli_dir), [os.path.abspath(cli_dir)]
+        probed = [os.path.abspath(cli_dir)]
+        return (probed[0] if is_kb_dir(probed[0]) else None), probed
     probed = []
     env_dir = os.environ.get("WAKII_KB_DIR")
     if env_dir:
