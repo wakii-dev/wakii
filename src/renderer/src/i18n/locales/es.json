@@ -88,6 +88,33 @@
       "mr": "MR",
       "port": "Puerto",
       "pr": "PR"
+    },
+    "filter": {
+      "emptyTitle": "Ningún resultado coincide con el filtro activo",
+      "emptySubtitle": "Borra el filtro de arriba o amplíalo a más hosts y proyectos.",
+      "tabKey": "Tab",
+      "label": "Filtrar",
+      "activeCount": "{{value0}} activos",
+      "removeChip": "Quitar filtro {{value0}}",
+      "chipOverflow": "+{{value0}}",
+      "clearAll": "Borrar todo",
+      "hosts": "Hosts",
+      "projects": "Proyectos",
+      "trigger": "Filtrar resultados",
+      "search": "Filtrar por host o proyecto...",
+      "searchHosts": "Filtrar hosts...",
+      "searchProjects": "Filtrar proyectos...",
+      "noOptions": "No hay hosts ni proyectos coincidentes",
+      "noHosts": "No hay hosts coincidentes",
+      "noProjects": "No hay proyectos coincidentes",
+      "moreOptions": "{{value0}} más: sigue escribiendo para acotar",
+      "selectAllMatching": "Seleccionar todas las coincidencias ({{value0}})",
+      "selectedCollapsed": "{{value0}} seleccionados: quítalos con los chips o con Borrar",
+      "clearHosts": "Borrar hosts",
+      "clearProjects": "Borrar proyectos",
+      "back": "Atrás",
+      "ariaActive": "Filtro: {{value0}} activos.",
+      "scopedTo": "Ámbito:"
     }
   },
   "auto": {
@@ -356,7 +383,9 @@
           "da41abbdd4": "Ante",
           "060d152fb5": "Trae",
           "d443a47995": "Prime Agent",
-          "mimo_code_label": "MiMo Code"
+          "mimo_code_label": "MiMo Code",
+          "muse_label": "Muse",
+          "zcode_label": "ZCode"
         },
         "skill": {
           "cli": {
@@ -2890,6 +2919,14 @@
             "retryingBody": "Wakii is retrying automatically. This terminal will resume if the connection returns.",
             "disconnectedBody": "Automatic retries stopped. Reconnect to resume this terminal session.",
             "reconnectButton": "Reconnect"
+          },
+          "zcode": {
+            "missing": {
+              "tui": {
+                "title": "This ZCode build has no terminal UI",
+                "description": "Wakii's hooks installed correctly — the zcode on your PATH just cannot open a session. The ZCode desktop app bundles the agent runtime without its terminal UI. Install a zcode that ships the TUI, then run zcode outside Wakii to confirm."
+              }
+            }
           }
         }
       },
@@ -3753,7 +3790,9 @@
           "ca6bc5fded": "Actualizar",
           "e06d1baf5c": "Actualizar resumen de uso",
           "c760c481c5": "Resumen de uso",
-          "55c910f4f1": "- algunos precios de modelos no están disponibles"
+          "55c910f4f1": "- algunos precios de modelos no están disponibles",
+          "enableMuse": "Activar Muse",
+          "noLocalUsageYet": "Aún no se encontró uso local de Claude, Codex, OpenCode ni Muse. El resumen se completará después de que la próxima sesión de agente escriba registros de tokens."
         },
         "share": {
           "card": {
@@ -3790,7 +3829,8 @@
             "e7f0a1b2c3": "suscripción",
             "d6e9f0a1b2": "créditos",
             "a3b6c7d8e9": "uso de grok",
-            "9f2a3b4c5d": "xai"
+            "9f2a3b4c5d": "xai",
+            "museKeyword": "muse"
           }
         },
         "usage": {
@@ -3821,7 +3861,8 @@
               "6762f6a682": "tokens",
               "a7f937fb29": "{{value0}} sesiones - {{value1}} {{value2}}",
               "c8f3a2d1e0b4": "turnos",
-              "d9a4b3e2f1c5": "eventos"
+              "d9a4b3e2f1c5": "eventos",
+              "recentCombinedActivity": "Actividad combinada reciente de tokens de Claude, Codex, OpenCode y Muse."
             }
           }
         },
@@ -3851,6 +3892,17 @@
           "e5a6b7c8d9": "Créditos semanales usados",
           "f6b7c8d9e0": "Restablecimiento del periodo de facturación",
           "a7b8c9d0e1": "Configuración de la cuenta de Grok"
+        },
+        "MuseUsagePane": {
+          "title": "Seguimiento de uso de Muse",
+          "enableLabel": "Activar análisis de uso de Muse",
+          "disabledDescription": "Lee los registros de sesión locales de Muse para mostrar estadísticas de tokens, modelos y sesiones.",
+          "scopeAll": "Todo el uso local de Muse",
+          "optionsLabel": "Opciones de uso de Muse",
+          "refreshAriaLabel": "Actualizar uso de Muse",
+          "emptyMessage": "Aún no se encontró uso local de Muse para este ámbito.",
+          "noCostNote": "Los registros de sesión de Muse registran tokens pero no el costo, por lo que no se muestra una estimación de costo.",
+          "recentSessionsDescription": "Sesiones locales de Muse más recientes en este ámbito."
         }
       },
       "sparse": {
@@ -4704,7 +4756,8 @@
           "setParentWorkspace": "Establecer worktree padre...",
           "workspaceSection": "Espacio de trabajo",
           "primaryDeleteDisabled": "El worktree principal no se puede eliminar. Quita el proyecto en su lugar.",
-          "deleteWorktree": "Eliminar worktree"
+          "deleteWorktree": "Eliminar worktree",
+          "copyWorktreeName": "Copiar nombre del worktree"
         },
         "WorktreeList": {
           "d880ea0744": "Crea un grupo y mueve este proyecto a él.",
@@ -5971,7 +6024,16 @@
             "defaultCopy": "Elige cómo se abren las nuevas pestañas de terminal de agentes compatibles.",
             "defaultViewLabel": "Vista predeterminada de Chat UI",
             "defaultViewTerminal": "Chat en terminal",
-            "defaultViewNative": "Chat UI"
+            "defaultViewNative": "Chat UI",
+            "shellEnvNamesLabel": "Variables que se pasan desde tu shell",
+            "shellEnvNamePlaceholder": "Nombre de la variable",
+            "shellEnvNameAdd": "Agregar",
+            "shellEnvNameRemove": "Quitar {{value0}}",
+            "shellEnvNamesEmpty": "Aún no se han agregado variables.",
+            "shellEnvNamesAlwaysPassed": "PATH, la configuración regional y SSH_AUTH_SOCK se pasan siempre. Se aplica la próxima vez que un chat se inicie o se reanude.",
+            "shellEnvTitle": "Usar el entorno de tu shell",
+            "shellEnvCopy": "Los chats de Codex y Claude empiezan con todas las variables que exporta tu shell de inicio de sesión, igual que un terminal. Desactívalo para elegir cuáles reciben.",
+            "shellEnvToggleLabel": "Alternar el uso del entorno de tu shell"
           },
           "agentDashboard": {
             "title": "Panel de agentes",
@@ -10351,6 +10413,26 @@
         "InlineBlameSetting": {
           "683fd9af0f": "Blame integrado",
           "9142b8bc2f": "Muestra el autor, la fecha y el resumen del commit al final de la línea actual en el editor de archivos."
+        },
+        "machine": {
+          "name": {
+            "search": {
+              "title": "Nombre del equipo",
+              "description": "Elige el nombre con el que otros dispositivos y hosts muestran este equipo.",
+              "machineName": "nombre del equipo",
+              "machine": "máquina",
+              "hostname": "hostname",
+              "computer": "equipo",
+              "rename": "renombrar",
+              "name": "nombre"
+            }
+          }
+        },
+        "MachineNameField": {
+          "label": "Nombre del equipo",
+          "description": "Otros dispositivos y hosts ven “{{name}}”. Déjalo en blanco para usar el nombre propio del equipo.",
+          "pending": "Otros dispositivos y hosts ven este nombre. Déjalo en blanco para usar el nombre detectado del equipo.",
+          "placeholder": "Detectado automáticamente"
         }
       },
       "right": {
@@ -14601,6 +14683,43 @@
           "deleteTitle": "¿Eliminar el artefacto?",
           "deleteDescription": "“{{name}}” ya no estará disponible en su enlace público.",
           "delete": "Eliminar"
+        },
+        "ArtifactPublishButton": {
+          "a4a49da6af": "Compartir como artefacto",
+          "confirmTitle": "Compartir como artefacto",
+          "confirmDescription": "Esto publica el archivo actual en un enlace que cualquier persona con la URL puede ver.",
+          "accountTitle": "Cuenta de Wakii",
+          "accountDescription": "Inicia sesión para crear y gestionar este enlace.",
+          "signInAgain": "Iniciar sesión de nuevo",
+          "signIn": "Iniciar sesión",
+          "publishingOffTitle": "El uso compartido de artefactos está desactivado",
+          "publishingOffDescription": "Obtén más información sobre los enlaces públicos y activa el uso compartido en Ajustes.",
+          "openSettings": "Abrir los ajustes de artefactos",
+          "sharing": "Compartiendo…",
+          "sharePublicLink": "Generar enlace",
+          "publishedDescription": "Cualquier persona con este enlace puede ver el archivo compartido.",
+          "checkingLink": "Comprobando si existe un enlace…",
+          "checkFailed": "No se pudo comprobar si existe un enlace.",
+          "tryAgain": "Reintentar"
+        },
+        "artifact-publish-flow": {
+          "9a078a0c65": "El uso compartido de artefactos no está disponible",
+          "bba20daa6d": "Inicia sesión en Wakii e inténtalo de nuevo.",
+          "54b1805328": "No se pudo compartir el artefacto",
+          "430019efd0": "Artefacto compartido",
+          "2fc727c831": "Artefacto actualizado",
+          "5cb4f5ec36": "Copiar enlace",
+          "fbb5018602": "Este archivo está vacío.",
+          "6112db5a1c": "Este artefacto es demasiado grande para compartirlo.",
+          "e2ed5acd8c": "Wakii no pudo leer este archivo. Ábrelo desde un espacio de trabajo e inténtalo de nuevo.",
+          "6d475e9b25": "Solo los archivos HTML y Markdown locales se pueden compartir como artefactos.",
+          "29a406be09": "Los artefactos deben contener texto."
+        },
+        "ArtifactPublishedLinkPanel": {
+          "copyLink": "Copiar enlace",
+          "openLink": "Abrir enlace",
+          "updating": "Actualizando…",
+          "update": "Actualizar el contenido compartido"
         }
       },
       "ComposerParentWorktreePicker": {
@@ -14609,6 +14728,13 @@
         "description": "Anida este espacio de trabajo bajo otro en la barra lateral. No cambia la rama base.",
         "searchPlaceholder": "Buscar espacios de trabajo...",
         "noMatches": "No hay coincidencias."
+      },
+      "native": {
+        "chat": {
+          "NativeChatStructuredSessionStatus": {
+            "starting": "{{value0}} todavía se está iniciando. Los mensajes esperan hasta que esté listo; cierra este chat para abandonarlo."
+          }
+        }
       }
     },
     "i18n": {
@@ -14783,7 +14909,8 @@
         "allow": "Permitir",
         "deny": "Denegar"
       },
-      "launchPromptNotDelivered": "No entregado — revisa la terminal"
+      "launchPromptNotDelivered": "No entregado — revisa la terminal",
+      "loadingEarlierMessages": "Cargando mensajes anteriores…"
     },
     "tab": {
       "bar": {
