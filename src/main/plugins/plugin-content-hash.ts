@@ -19,7 +19,8 @@ const MAX_PLUGIN_TOTAL_BYTES = 50 * 1024 * 1024
 // bao giờ có trong CI checkout, tính vào hash làm fingerprint lệch theo máy
 // (1.4.209 fail 2 lần vì 2 file .pyc). Phải mirror đúng skip-set + seed của
 // config/scripts/verify-packaged-plugin-resources.cjs — hai implementation
-// này phải cùng giá trị trên cùng một cây.
+// này phải cùng giá trị trên cùng một cây; lockstep được chốt máy móc bởi
+// config/scripts/plugin-tree-hash-lockstep.test.mjs (sửa 1 bên → chạy test đó).
 const JUNK_ENTRY_NAMES = new Set(['.DS_Store'])
 const JUNK_EXTENSIONS = ['.pyc']
 
@@ -43,7 +44,10 @@ async function collectFiles(
     if (dir === root && entry.name === '.git') {
       continue
     }
-    if (JUNK_ENTRY_NAMES.has(entry.name) || JUNK_EXTENSIONS.some((ext) => entry.name.endsWith(ext))) {
+    if (
+      JUNK_ENTRY_NAMES.has(entry.name) ||
+      JUNK_EXTENSIONS.some((ext) => entry.name.endsWith(ext))
+    ) {
       continue
     }
     if (entry.isDirectory() && entry.name === '__pycache__') {

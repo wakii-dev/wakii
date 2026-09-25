@@ -1,6 +1,6 @@
 {
   "name": "story-team-kit",
-  "version": "2.17.0",
+  "version": "2.17.2",
   "description": "9-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới.",
   "requires": {
     "claude-code": ">=2.0",
@@ -179,6 +179,19 @@
       "name": "story-diff-review",
       "type": "bin",
       "description": "tự review diff trước commit — chặn debug code, commented-out code, secrets, files ngoài plan"
+    },
+    {
+      "name": "story-impact",
+      "type": "bin",
+      "description": "Bản đồ tác động: file đổi/targets → importer ngược theo feature area → lưới test vitest --related; P0 dùng --targets ký hợp đồng blast radius, review đo actual so expected",
+      "inputs": [
+        "git base ref (tự detect nếu bỏ)",
+        "--targets \"p1,p2\" (P0: blast radius touch targets, không cần git)",
+        "--run-tests",
+        "--json"
+      ],
+      "outputs": "bản đồ reverse-import + areas bị chạm + lệnh lưới test; exit != 0 khi base sai",
+      "owner": "wakii"
     },
     {
       "name": "story-launch",
@@ -386,6 +399,18 @@
       "description": "thư viện ownership probe dùng chung — run/worktree nào đang có worker live của coordinator nào (LOCAL-1 SF-3)"
     },
     {
+      "name": "story-medic",
+      "type": "agent",
+      "description": "Story cấp cứu — chẩn đoán + điều trị SF stall và xung đột session (watchdog báo STALLED, session chết giữa turn, nghi double-dispatch, absorb provenance run cũ). KHÔNG sửa code, KHÔNG quyết done-semantics, KHÔNG xoá state.",
+      "inputs": [
+        "sf-* worktree stall report",
+        "session/terminal state",
+        "Linear story bracket"
+      ],
+      "outputs": "verdict per worktree (live/idle/resumed/escalate) + actions taken + còn treo",
+      "owner": "wakii"
+    },
+    {
       "name": "story-close",
       "type": "bin",
       "description": "chuẩn hoá CLOSE phase — audit sf-branches merged → ownership probe → cleanup worktree/branch (3 guards) → next-steps; BLOCK liệt kê rõ, fail-open khi probe chết (20/09)"
@@ -396,5 +421,5 @@
       "description": "state machine Linear rate-limit — check/note/clear/pending/classify (policy skip+note+resume 2026-09-20)"
     }
   ],
-  "kitHash": "372b520314bca5b5"
+  "kitHash": "6ce3d81fcd58eeee"
 }

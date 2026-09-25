@@ -211,7 +211,6 @@ export function useMobileBrowserStream(args: MobileBrowserStreamArgs) {
         setError('Update the Wakii app to stream browser tabs here.')
       } else if (screencastSupported === false) {
         setError('Update desktop Wakii to stream browser tabs on mobile.')
-
       } else if (screencastSupported === null) {
         setError('Checking desktop browser streaming support.')
       } else if (!tab.browserPageId) {

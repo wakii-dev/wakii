@@ -20,9 +20,8 @@ import { colors } from '../theme/mobile-theme'
 import { hostScreenStyles as styles } from './host-screen-styles'
 import type { HostScreenController } from './use-host-screen-controller'
 
-function isErrorVerdict(v: ConnectionVerdict): boolean {
-  return v.kind === 'warning' || v.kind === 'unreachable' || v.kind === 'auth-failed'
-}
+const isErrorVerdict = (v: ConnectionVerdict): boolean =>
+  v.kind === 'warning' || v.kind === 'unreachable' || v.kind === 'auth-failed'
 
 export function HostScreenHeader({ controller }: { controller: HostScreenController }) {
   const {
@@ -71,9 +70,8 @@ export function HostScreenHeader({ controller }: { controller: HostScreenControl
               {connState !== 'connected' &&
                 (() => {
                   // Why: auth-failed has its own banner, so suppress the Reconnect button for that verdict.
-                  const verdict = headerVerdict
-                  const isError = isErrorVerdict(verdict)
-                  const showReconnectButton = isError && hostId && verdict.kind !== 'auth-failed'
+                  const showReconnectButton =
+                    isErrorVerdict(headerVerdict) && hostId && headerVerdict.kind !== 'auth-failed'
                   if (!showReconnectButton) {
                     return null
                   }

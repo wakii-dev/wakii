@@ -5,6 +5,32 @@ const { isAbsolute, join, relative, resolve, sep } = require('node:path')
 const MAX_PLUGIN_FILES = 2_000
 const MAX_PLUGIN_TOTAL_BYTES = 50 * 1024 * 1024
 
+// Mirror của pluginPathSegmentError (src/shared/plugins/plugin-path-safety.ts) —
+// TS side check cùng luật trước khi hash; lockstep chốt bởi
+// plugin-tree-hash-lockstep.test.mjs. CJS copy tay vì script chạy node thuần.
+const WINDOWS_DEVICE_NAME_RE =
+  /^(?:con|prn|aux|nul|clock\$|conin\$|conout\$|com[1-9¹²³]|lpt[1-9¹²³])(?:\..*)?$/i
+const WINDOWS_FORBIDDEN_CHAR_RE = /[<>:"|?]/
+
+function pluginPathSegmentError(segment) {
+  if (segment.length === 0 || segment === '.' || segment === '..') {
+    return 'empty and dot path segments are not allowed'
+  }
+  if (segment.endsWith('.') || segment.endsWith(' ')) {
+    return 'path segments may not end with a dot or space'
+  }
+  if (
+    WINDOWS_FORBIDDEN_CHAR_RE.test(segment) ||
+    [...segment].some((character) => character.charCodeAt(0) <= 31)
+  ) {
+    return 'path segment contains a Windows-forbidden character or alternate-data-stream colon'
+  }
+  if (WINDOWS_DEVICE_NAME_RE.test(segment)) {
+    return 'path segment is a Windows reserved device name'
+  }
+  return null
+}
+
 function hashLength(hash, length) {
   const framedLength = Buffer.allocUnsafe(8)
   framedLength.writeBigUInt64BE(BigInt(length))
@@ -14,7 +40,9 @@ function hashLength(hash, length) {
 // Junk bỏ qua khi hash: gitignored và sinh lại cục bộ mỗi lần chạy test
 // (kit/bin/__pycache__/*.pyc) hoặc Finder (.DS_Store) — có mặt trên máy rehash
 // nhưng không bao giờ tồn tại trong CI checkout. Tính vào hash làm fingerprint
-// lệch theo máy (1.4.209 fail 2 lần vì 2 file .pyc). Seed bump v1 → v2.
+// lệch theo máy (1.4.209 fail 2 lần vì 2 file .pyc). Seed bump v1 → v2. Phải
+// mirror plugin-content-hash.ts (TS runtime) — lockstep chốt bởi
+// plugin-tree-hash-lockstep.test.mjs (sửa 1 bên → chạy test đó).
 const JUNK_ENTRY_NAMES = new Set(['.DS_Store'])
 const JUNK_EXTENSIONS = ['.pyc']
 
@@ -30,11 +58,18 @@ function hashPackagedPluginTree(root) {
       if (directory === root && entry.name === '.git') {
         continue
       }
-      if (JUNK_ENTRY_NAMES.has(entry.name) || JUNK_EXTENSIONS.some(ext => entry.name.endsWith(ext))) {
+      if (
+        JUNK_ENTRY_NAMES.has(entry.name) ||
+        JUNK_EXTENSIONS.some((ext) => entry.name.endsWith(ext))
+      ) {
         continue
       }
       if (entry.isDirectory() && entry.name === '__pycache__') {
         continue
+      }
+      const segmentError = pluginPathSegmentError(entry.name)
+      if (segmentError) {
+        throw new Error(`unsafe plugin path segment "${entry.name}": ${segmentError}`)
       }
       const entryPath = join(directory, entry.name)
       const metadata = lstatSync(entryPath)

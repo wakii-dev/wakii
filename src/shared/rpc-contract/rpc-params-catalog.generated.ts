@@ -349,6 +349,7 @@ import {
   NotificationGetMissedSinceParams,
   NotificationRegisterPushParams,
   NotificationUnsubscribeParams,
+  NotificationsShowParams,
   NotificationsSubscribeParams
 } from './notifications-params'
 import {
@@ -971,6 +972,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'network.browserTunnel': BrowserNetworkTunnelAttachParams,
   'notifications.getMissedSince': NotificationGetMissedSinceParams,
   'notifications.registerPush': NotificationRegisterPushParams,
+  'notifications.show': NotificationsShowParams,
   'notifications.subscribe': NotificationsSubscribeParams,
   'notifications.testPush': null,
   'notifications.unregisterPush': null,

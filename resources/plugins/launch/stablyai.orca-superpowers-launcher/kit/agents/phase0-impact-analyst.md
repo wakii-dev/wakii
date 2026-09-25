@@ -38,7 +38,11 @@ You do NOT see the coordinator's conversation — only what's in the briefing.
 
 ### 2. Touch map
 - Files/modules to modify: <list, paths>
-- Consumers/callers that depend on them (regression candidates): <list>
+- **Ground bằng máy (bắt buộc khi kit có `story-impact`):** với từng file dự kiến
+  đụng → `story-impact --targets "<path1>,<path2>"` → số importer thật theo area.
+  Con số này là **hợp đồng blast radius** — review cuối sẽ đo actual trên cùng
+  thước và so; area nào xuất hiện sau mà không có ở đây = sửa tràn ranh giới.
+- Consumers/callers that depend on them (regression candidates): <list + số importer từ story-impact>
 - Shared surfaces: API contracts, DB schema, config, env vars, events — <which>
 
 ### 3. Second-order effects

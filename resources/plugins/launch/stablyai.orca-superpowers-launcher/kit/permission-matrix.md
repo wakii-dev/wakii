@@ -1,4 +1,4 @@
-# Permission matrix — 9 agent defs (nguồn truth duy nhất)
+# Permission matrix — 10 agent defs (nguồn truth duy nhất)
 
 Profile quyền của story team, 1 chỗ duy nhất. Frontmatter `disallowedTools` của
 mỗi def trong `kit/agents/*.md` PHẢI khớp bảng dưới — lint test
@@ -14,6 +14,7 @@ lệch matrix → test FAIL. Sửa profile = sửa BỘ (bảng + frontmatter) t
 | phase0-impact-analyst | Edit, Write, NotebookEdit | phân tích ảnh hưởng, không viết code | như trên |
 | verifier | Edit, Write, NotebookEdit | verify gate criteria bằng bằng chứng, không sửa implementation | như trên |
 | rollback-fixer | Edit, Write, NotebookEdit | revert-only — git qua Bash (revert/restore/checkpoint) GIỮ nguyên; không tự viết file fix | như trên |
+| story-medic | Edit, Write, NotebookEdit | mutation CHỈ qua CLI có fence (story-resume, orca orchestration run-use/terminal send) — 1 attempt/mutation; đọc result/bracket để absorb provenance; không ghi file, không xoá state | như trên |
 | designer | Edit, Write, NotebookEdit | prototype qua huashu-design skill — không code production | như trên |
 | task-executor | (không deny) | ghi code CHỈ trong worktree được giao (path scope qua briefing) | hậu kiểm: story-diff-review — diff ngoài scope → rollback-fixer |
 

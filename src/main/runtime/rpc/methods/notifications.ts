@@ -4,6 +4,7 @@ import {
   NotificationGetMissedSinceParams,
   NotificationRegisterPushParams,
   NotificationUnsubscribeParams,
+  NotificationsShowParams,
   NotificationsSubscribeParams
 } from '../../../../shared/rpc-contract/notifications-params'
 
@@ -52,6 +53,15 @@ export const NOTIFICATION_METHODS = [
     handler: async (params, { runtime }) => {
       runtime.cleanupSubscription(params.subscriptionId)
       return { unsubscribed: true }
+    }
+  }),
+  defineMethod({
+    // CLI-originated desktop/mobile banner (kit story-notify and friends).
+    // Source stays 'plugin' on the wire — no new union value for old clients.
+    name: 'notifications.show',
+    params: NotificationsShowParams,
+    handler: async (params, { runtime }) => {
+      return runtime.dispatchCliNotification({ title: params.title, body: params.body })
     }
   }),
   defineMethod({
