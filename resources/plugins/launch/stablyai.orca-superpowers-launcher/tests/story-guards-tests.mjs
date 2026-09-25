@@ -195,9 +195,38 @@ console.log('== [GP] perf — wall-time spawn (bao gồm python startup) ==')
   console.log(`  [INFO] 3 spawns secrets: ${dt}ms (~${Math.round(dt / 3)}ms/spawn gồm python startup)`)
 }
 
+// ---- GO: escape WAKII_GUARD_OFF=1 — mọi guard × mọi input → exit 0 -------------
+console.log('== [GO] escape WAKII_GUARD_OFF=1 — mọi guard mọi input exit 0 ==')
+{
+  const hostile = {
+    secrets: { tool_name: 'Bash', tool_input: { command: 'export AWS_KEY=AKIAIOSFODNN7EXAMPLE' } },
+    dangerous: { tool_name: 'Bash', tool_input: { command: 'rm -rf /' } },
+    envfiles: { tool_name: 'Edit', tool_input: { file_path: 'C:/proj/.env' } },
+  }
+  const offEnv = { ...process.env, WAKII_GUARD_OFF: '1' }
+  for (const name of Object.keys(GUARDS)) {
+    // input độc hại + OFF → exit 0
+    const r = spawnSync(PY, [GUARDS[name]], { input: JSON.stringify(hostile[name]), encoding: 'utf8', timeout: 30000, env: offEnv })
+    check('GO', `${name}: hostile input + OFF → exit 0`, r.status === 0, `code=${r.status} stderr=${r.stderr.trim()}`)
+    // stdin rác + OFF → exit 0
+    const r2 = spawnSync(PY, [GUARDS[name]], { input: 'khong-phai-json', encoding: 'utf8', timeout: 30000, env: offEnv })
+    check('GO', `${name}: malformed stdin + OFF → exit 0`, r2.status === 0, `code=${r2.status}`)
+    // env KHÔNG set (xoá biến) + input độc hại → guard hoạt động lại (exit 2)
+    const noOff = { ...process.env }
+    delete noOff.WAKII_GUARD_OFF
+    const r3 = spawnSync(PY, [GUARDS[name]], { input: JSON.stringify(hostile[name]), encoding: 'utf8', timeout: 30000, env: noOff })
+    check('GO', `${name}: env không set + hostile → exit 2 (guard hoạt động)`, r3.status === 2,
+      `code=${r3.status} stderr=${r3.stderr.trim()}`)
+  }
+  // WAKII_GUARD_OFF giá trị khác "1" → KHÔNG tắt (escape phải tường minh)
+  const env0 = { ...process.env, WAKII_GUARD_OFF: '0' }
+  const r0 = spawnSync(PY, [GUARDS.secrets], { input: JSON.stringify(hostile.secrets), encoding: 'utf8', timeout: 30000, env: env0 })
+  check('GO', 'secrets: WAKII_GUARD_OFF=0 → vẫn block (exit 2)', r0.status === 2, `code=${r0.status}`)
+}
+
 console.log(`\n== TOTAL: ${pass} PASS / ${fail} FAIL ==`)
 if (failures.length) {
   console.log('FAILURES:\n- ' + failures.join('\n- '))
   process.exit(1)
 }
-console.log('HARNESS GREEN (story-guards GS/GD/GE/GF/GA/GP)')
+console.log('HARNESS GREEN (story-guards GS/GD/GE/GF/GA/GO/GP)')
