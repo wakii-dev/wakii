@@ -1,0 +1,175 @@
+#!/usr/bin/env node
+// story-impact — bản đồ tác động của 1 nhánh: file nào đổi → ai import ngược
+// → feature area nào bị chạm → lưới test liên quan. Trả lời bằng MÁY câu hỏi
+// "có ảnh hưởng tới feature khác không" thay vì nhìn diff mà phỏng đoán.
+//
+// Zero-dep: chỉ Node builtins (chuẩn wakii-mcp-server). Git chạy qua PATH.
+//
+// Usage:
+//   story-impact [--base <ref>] [--targets "p1,p2"] [--run-tests] [--vitest-config <path>] [--json]
+//     --base          ref so diff (default: merge-base với 'main', fallback 'wakii-dev')
+//     --targets       KHÔNG diff git — phân tích đúng danh sách file cho trước
+//                     (P0 dùng: blast radius của touch targets TRƯỚC khi viết code)
+//     --run-tests     chạy luôn vitest --related sau khi in map (env VITEST_BIN seam cho test)
+//     --vitest-config path vitest config (default: config/vitest.config.ts nếu có)
+//     --json          machine-readable
+//
+// Limitation MVP (ghi thẳng ra output): chỉ import TRỰC TIẾP — không đuổi
+// transitive qua index re-export (components/x/index.ts). Lưới thật vẫn là
+// vitest --related, phần map chỉ để MẮT nhìn blast radius.
+'use strict';
+const { execFileSync } = require('node:child_process');
+const fs = require('node:fs');
+const path = require('node:path');
+
+const SOURCE_EXT = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.css', '.scss']);
+const SCAN_SKIP = new Set(['node_modules', 'dist', 'out', '.git', '.next', '__pycache__', 'test-results', '.cross-version-checkouts']);
+
+function git(args, cwd) {
+  return execFileSync('git', args, { cwd, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+}
+
+function sh(cmd, cwd) {
+  return execFileSync(cmd, { cwd, encoding: 'utf8', shell: true, maxBuffer: 64 * 1024 * 1024 });
+}
+
+function detectBase(repo) {
+  for (const ref of ['main', 'wakii-dev']) {
+    try {
+      git(['rev-parse', '--verify', ref], repo);
+      return git(['merge-base', ref, 'HEAD'], repo).trim() ? ref : ref;
+    } catch { /* thử ref kế */ }
+  }
+  throw new Error('Không tự tìm được base — truyền --base <ref>');
+}
+
+function listSourceFiles(dir, acc = []) {
+  for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (ent.isDirectory()) {
+      if (SCAN_SKIP.has(ent.name)) continue;
+      listSourceFiles(path.join(dir, ent.name), acc);
+    } else if (SOURCE_EXT.has(path.extname(ent.name))) {
+      acc.push(path.join(dir, ent.name));
+    }
+  }
+  return acc;
+}
+
+// index specifier → file: 1 lượt quét, map "đuôi đường dẫn import" → list file
+// ("@/components/x/y" và "../x/y" cùng rơi vào key "x/y")
+function buildImportIndex(repo) {
+  const files = listSourceFiles(repo);
+  const index = new Map(); // key: "dir/basename-noext" → Set(file tuyệt đối)
+  const importRe = /(?:from|import|require)\s*\(?\s*['"]([^'"]+)['"]/g;
+  for (const f of files) {
+    let text;
+    try { text = fs.readFileSync(f, 'utf8'); } catch { continue; }
+    let m;
+    while ((m = importRe.exec(text))) {
+      const spec = m[1];
+      if (!spec.startsWith('.') && !spec.startsWith('@/') && !spec.startsWith('~/')) continue;
+      const key = spec.replace(/^(\.\.?|@|~)\/(src\/)?/, '').replace(/\.(ts|tsx|js|jsx|mjs|cjs|css)$/, '');
+      if (!index.has(key)) index.set(key, new Set());
+      index.get(key).add(f);
+    }
+  }
+  return { files, index };
+}
+
+// một file đổi F match index theo mọi tiền tố đường dẫn của nó (y.tsx trong
+// components/x/ → key "components/x/y", "x/y", "y")
+function keysForFile(relFile) {
+  const noExt = relFile.replace(/\.(ts|tsx|js|jsx|mjs|cjs|css)$/, '');
+  const parts = noExt.split('/');
+  return parts.map((_, i) => parts.slice(i).join('/'));
+}
+
+function areaOf(relFile) {
+  const parts = relFile.split('/');
+  const ci = parts.indexOf('components');
+  if (ci > -1 && parts[ci + 1]) return parts[ci + 1];
+  if (parts.length === 2) return parts[0];
+  return parts.slice(0, 2).join('/') || parts[0];
+}
+
+function main() {
+  const argv = process.argv.slice(2);
+  // indexOf(-1) trap: không được dùng argv[-1+1]=argv[0] làm giá trị flag
+  const flagValue = name => {
+    const i = argv.indexOf(name);
+    return i === -1 ? '' : (argv[i + 1] || '').trim();
+  };
+  const flags = {
+    base: flagValue('--base'),
+    targets: flagValue('--targets'),
+    runTests: argv.includes('--run-tests'),
+    json: argv.includes('--json'),
+    vitestConfig: flagValue('--vitest-config'),
+  };
+  const repo = process.cwd();
+
+  let base = flags.base;
+  let changed;
+  if (flags.targets) {
+    // P0 target mode: không git — blast radius của danh sách file cho trước
+    changed = flags.targets.split(',').map(s => s.trim()).filter(Boolean)
+      .filter(f => SOURCE_EXT.has(path.extname(f)));
+  } else {
+    base = base || detectBase(repo);
+    const changedAll = git(['diff', '--name-only', `${base}...HEAD`], repo)
+      .split('\n').map(s => s.trim()).filter(Boolean);
+    changed = changedAll.filter(f => SOURCE_EXT.has(path.extname(f)));
+  }
+  const changedTests = changed.filter(f => /\.test\.[tj]sx?$/.test(f));
+
+  const { index } = buildImportIndex(repo);
+  const impact = []; // { file, importers[], areas Map }
+  for (const rel of changed) {
+    const abs = path.resolve(repo, rel);
+    const importers = new Set();
+    for (const key of keysForFile(rel)) {
+      for (const f of index.get(key) || []) if (f !== abs) importers.add(f);
+    }
+    const byArea = new Map();
+    for (const f of importers) {
+      const relImp = path.relative(repo, f);
+      const a = areaOf(relImp);
+      if (!byArea.has(a)) byArea.set(a, []);
+      byArea.get(a).push(relImp);
+    }
+    impact.push({ file: rel, importers: [...byArea.entries()]
+      .map(([area, files]) => ({ area, files: files.sort() }))
+      .sort((x, y) => y.files.length - x.files.length) });
+  }
+
+  const affectedAreas = [...new Set(impact.flatMap(i => i.importers.map(x => x.area)))];
+
+  if (flags.json) {
+    console.log(JSON.stringify({ base, changed, changedTests, impact, affectedAreas }, null, 2));
+  } else {
+    const scopeLabel = flags.targets ? `targets: ${changed.length} file` : `base ${base}...HEAD: ${changed.length} file đổi`;
+    console.log(`story-impact — ${scopeLabel} (${changedTests.length} test)`);
+    for (const i of impact) {
+      const total = i.importers.reduce((n, x) => n + x.files.length, 0);
+      console.log(`├─ ${i.file}  ← ${total} importer trực tiếp`);
+      for (const g of i.importers.slice(0, 4)) {
+        console.log(`│   ├─ ${g.area} (${g.files.length}): ${g.files.slice(0, 3).join(', ')}${g.files.length > 3 ? ' …' : ''}`);
+      }
+    }
+    console.log(`└─ Feature areas bị chạm (reverse): ${affectedAreas.length ? affectedAreas.join(', ') : '(không ai import — leaf/isolated)'}`);
+    const cfg = flags.vitestConfig || (fs.existsSync(path.join(repo, 'config/vitest.config.ts')) ? 'config/vitest.config.ts' : '');
+    const related = `pnpm vitest run${cfg ? ` --config ${cfg}` : ''} --related ${changed.slice(0, 20).join(' ')}`;
+    console.log(`Lưới test: ${related}`);
+    console.log('Limitation: import TRỰC TIẾP — transitive qua index re-export không đuổi; lưới thật = vitest --related.');
+    if (flags.runTests) {
+      const bin = process.env.VITEST_BIN || related;
+      console.log(`\n── chạy lưới ──`);
+      try { console.log(sh(bin, repo)); } catch (e) {
+        console.log(e.stdout || ''); console.error(e.stderr || String(e));
+        process.exitCode = 1;
+      }
+    }
+  }
+}
+
+main();

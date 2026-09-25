@@ -29,6 +29,13 @@ Phase 4 workers (via `worker-start`) execute in isolated worktrees — the coord
 re-verify criteria nghiệp vụ hay exit-gate của phase (việc của verifier). Spec
 đọc để phán theo intent, không để chấm điểm criteria.
 
+**Impact check (bắt buộc trước APPROVED khi kit có `story-impact`):** chạy
+`story-impact --base <base>` (hoặc `--targets` với các file đổi) → so areas bị
+chạm với **Touch map của context pack (P0 ký)**. Area ngoài expected → bắt buộc
+lý giải từng cái: (a) false-positive chain, (b) backward-compatible + lưới test
+xanh, (c) breaking → sửa importer trong cùng PR hoặc block. Ghi vào report (P7):
+`impact: areas X,Y — lưới n/n xanh — lý giải các area ngoài expected`.
+
 ## Input you receive (from coordinator briefing)
 
 - **The task** (task ID + title + spec slice it implements)
