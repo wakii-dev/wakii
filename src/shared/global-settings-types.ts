@@ -96,6 +96,8 @@ export type GlobalSettings = {
   editorWordWrap?: boolean
   /** Opt-in sticky scroll (scope header) in the file editor; diff views stay pinned off. */
   editorStickyScroll?: boolean
+  /** GitLens-lite inline blame on the cursor line of the file editor; defaults on. */
+  editorInlineBlameEnabled?: boolean
   /** VS Code editor.cursorSmoothCaretAnimation parity for the file editor; defaults 'on'. */
   editorCursorSmoothCaretAnimation?: 'on' | 'explicit' | 'off'
   /** VS Code editor.renderWhitespace parity for the file editor; defaults 'selection'. */

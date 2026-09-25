@@ -8473,6 +8473,16 @@
             "editorFontFamilyDesc": "文件编辑器和差异视图使用的字体，留空则跟随终端字体。",
             "externalWorktrees": "外部工作树",
             "externalWorktreesDescription": "选择是否默认显示在 Wakii 外部创建的工作树。"
+          },
+          "editor": {
+            "search": {
+              "21e1aaf2ef": "行内 Blame",
+              "f83e419695": "在文件编辑器当前行末尾显示提交作者、日期和摘要。",
+              "622b5fa095": "行内",
+              "97afa04b81": "blame",
+              "c307a3153a": "gitlens",
+              "f912660d8c": "注解"
+            }
           }
         },
         "git": {
@@ -10417,6 +10427,10 @@
         "EditorBreadcrumbsSetting": {
           "fe2cb0ef78": "面包屑导航",
           "9e7a1f613e": "在文件编辑器上方显示文件路径。"
+        },
+        "InlineBlameSetting": {
+          "683fd9af0f": "行内 Blame",
+          "9142b8bc2f": "在文件编辑器当前行末尾显示提交作者、日期和摘要。"
         }
       },
       "right": {
@@ -13505,6 +13519,19 @@
         "EditorBreadcrumbs": {
           "7a0b97acc9": "文件面包屑导航",
           "deb1973b7d": "在资源管理器中显示"
+        },
+        "git": {
+          "blame": {
+            "strings": {
+              "f553e19e41": "你",
+              "e6fc8a66b3": "未保存的更改",
+              "5d58990105": "文件过大，无法进行行内 blame。",
+              "1f32d46ce0": "文件行数过多，无法进行行内 blame。",
+              "1f078da5df": "提交",
+              "6f3313de46": "作者",
+              "2f33a41d63": "日期"
+            }
+          }
         }
       },
       "diff": {

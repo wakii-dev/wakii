@@ -19,6 +19,7 @@ import {
 import { translate } from '@/i18n/i18n'
 import { RichMarkdownSpellcheckSetting } from './RichMarkdownSpellcheckSetting'
 import { StickyScrollSetting } from './StickyScrollSetting'
+import { InlineBlameSetting } from './InlineBlameSetting'
 import { DiffShowWhitespaceSetting } from './DiffShowWhitespaceSetting'
 import { EditorWordWrapSetting } from './EditorWordWrapSetting'
 import { EditorCaretAnimationSetting } from './EditorCaretAnimationSetting'
@@ -380,6 +381,8 @@ export function GeneralEditorSettingsSection({
       </SearchableSetting>
 
       <StickyScrollSetting settings={settings} updateSettings={updateSettings} />
+
+      <InlineBlameSetting settings={settings} updateSettings={updateSettings} />
 
       <RichMarkdownSpellcheckSetting settings={settings} updateSettings={updateSettings} />
 

@@ -8408,6 +8408,16 @@
             "editorFontFamilyDesc": "파일 편집기 및 diff 보기에서 사용되는 글꼴입니다. 비워두면 터미널 글꼴을 따릅니다.",
             "externalWorktrees": "외부 작업 트리",
             "externalWorktreesDescription": "Wakii 외부에서 만든 작업 트리를 기본적으로 표시할지 선택합니다."
+          },
+          "editor": {
+            "search": {
+              "21e1aaf2ef": "인라인 Blame",
+              "f83e419695": "파일 편집기의 현재 줄 끝에 커밋 작성자, 날짜, 요약을 표시합니다.",
+              "622b5fa095": "인라인",
+              "97afa04b81": "blame",
+              "c307a3153a": "gitlens",
+              "f912660d8c": "주석"
+            }
           }
         },
         "git": {
@@ -10379,6 +10389,10 @@
         "EditorBreadcrumbsSetting": {
           "fe2cb0ef78": "이동 경로",
           "9e7a1f613e": "파일 편집기 위에 파일 경로를 표시합니다."
+        },
+        "InlineBlameSetting": {
+          "683fd9af0f": "인라인 Blame",
+          "9142b8bc2f": "파일 편집기의 현재 줄 끝에 커밋 작성자, 날짜, 요약을 표시합니다."
         }
       },
       "right": {
@@ -13491,6 +13505,19 @@
         "EditorBreadcrumbs": {
           "7a0b97acc9": "파일 이동 경로",
           "deb1973b7d": "탐색기에 표시"
+        },
+        "git": {
+          "blame": {
+            "strings": {
+              "f553e19e41": "나",
+              "e6fc8a66b3": "저장되지 않은 변경 사항",
+              "5d58990105": "파일이 너무 커서 인라인 blame을 표시할 수 없습니다.",
+              "1f32d46ce0": "줄 수가 너무 많아 인라인 blame을 표시할 수 없습니다.",
+              "1f078da5df": "커밋",
+              "6f3313de46": "작성자",
+              "2f33a41d63": "날짜"
+            }
+          }
         }
       },
       "diff": {

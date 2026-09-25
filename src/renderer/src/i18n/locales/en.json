@@ -9790,6 +9790,16 @@
             "f82e3682fd": "scroll",
             "8c14dc21a4": "scope",
             "8d7a8880d7": "header"
+          },
+          "editor": {
+            "search": {
+              "21e1aaf2ef": "Inline Blame",
+              "f83e419695": "Show commit author, date and summary at the end of the current line in the file editor.",
+              "622b5fa095": "inline",
+              "97afa04b81": "blame",
+              "c307a3153a": "gitlens",
+              "f912660d8c": "annotation"
+            }
           }
         },
         "git": {
@@ -12047,6 +12057,10 @@
         "EditorBreadcrumbsSetting": {
           "fe2cb0ef78": "Breadcrumbs",
           "9e7a1f613e": "Show the file path above the file editor."
+        },
+        "InlineBlameSetting": {
+          "683fd9af0f": "Inline Blame",
+          "9142b8bc2f": "Show commit author, date and summary at the end of the current line in the file editor."
         }
       },
       "right": {
@@ -15479,6 +15493,19 @@
         "EditorBreadcrumbs": {
           "7a0b97acc9": "File breadcrumbs",
           "deb1973b7d": "Reveal in explorer"
+        },
+        "git": {
+          "blame": {
+            "strings": {
+              "f553e19e41": "You",
+              "e6fc8a66b3": "unsaved changes",
+              "5d58990105": "File is too large for inline blame.",
+              "1f32d46ce0": "File has too many lines for inline blame.",
+              "1f078da5df": "Commit",
+              "6f3313de46": "Author",
+              "2f33a41d63": "Date"
+            }
+          }
         }
       },
       "diff": {

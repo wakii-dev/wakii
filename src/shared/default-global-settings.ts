@@ -59,6 +59,9 @@ export function buildDefaultSettings(args: {
     editorFontFamily: '',
     editorWordWrap: true,
     editorStickyScroll: false,
+    // Why on: GitLens-lite inline blame is the core value of the feature; existing
+    // profiles without the field also render it on (the renderer defaults to true).
+    editorInlineBlameEnabled: true,
     // VS Code-parity file editor options; explicit so upgrades can't silently change them.
     editorCursorSmoothCaretAnimation: 'on',
     editorRenderWhitespace: 'selection',

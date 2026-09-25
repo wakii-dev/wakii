@@ -27,29 +27,29 @@ export const GIT_BLAME_STRINGS_EN: GitBlameStrings = {
 
 export function getGitBlameStrings(): GitBlameStrings {
   return {
-    you: translate('auto.components.editor.git-blame-strings.you', GIT_BLAME_STRINGS_EN.you),
+    you: translate('auto.components.editor.git.blame.strings.f553e19e41', GIT_BLAME_STRINGS_EN.you),
     stale: translate(
-      'auto.components.editor.git-blame-strings.stale',
+      'auto.components.editor.git.blame.strings.e6fc8a66b3',
       GIT_BLAME_STRINGS_EN.stale
     ),
     skipReasonTooLarge: translate(
-      'auto.components.editor.git-blame-strings.skip-too-large',
+      'auto.components.editor.git.blame.strings.5d58990105',
       GIT_BLAME_STRINGS_EN.skipReasonTooLarge
     ),
     skipReasonTooManyLines: translate(
-      'auto.components.editor.git-blame-strings.skip-too-many-lines',
+      'auto.components.editor.git.blame.strings.1f32d46ce0',
       GIT_BLAME_STRINGS_EN.skipReasonTooManyLines
     ),
     hashLabel: translate(
-      'auto.components.editor.git-blame-strings.hash-label',
+      'auto.components.editor.git.blame.strings.1f078da5df',
       GIT_BLAME_STRINGS_EN.hashLabel
     ),
     authorLabel: translate(
-      'auto.components.editor.git-blame-strings.author-label',
+      'auto.components.editor.git.blame.strings.6f3313de46',
       GIT_BLAME_STRINGS_EN.authorLabel
     ),
     dateLabel: translate(
-      'auto.components.editor.git-blame-strings.date-label',
+      'auto.components.editor.git.blame.strings.2f33a41d63',
       GIT_BLAME_STRINGS_EN.dateLabel
     )
   }
