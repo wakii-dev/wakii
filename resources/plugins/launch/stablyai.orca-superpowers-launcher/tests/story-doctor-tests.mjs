@@ -64,6 +64,12 @@ function hookSettings(root) {
       SessionStart: [{ hooks: [hook('hook-session-start')] }],
       PostToolUse: [{ matcher: 'Bash', hooks: [hook('hook-post-tool-use')] }],
       Stop: [{ hooks: [hook('hook-stop')] }],
+      // c9 (GH-87): guards wired — command chứa /story-guard-* mà doctor quét
+      PreToolUse: [
+        { matcher: 'Bash', hooks: [hook('story-guard-secrets')] },
+        { matcher: 'Bash', hooks: [hook('story-guard-dangerous')] },
+        { matcher: 'Edit|Write|MultiEdit', hooks: [hook('story-guard-envfiles')] },
+      ],
     },
   }, null, 2)
 }
@@ -94,12 +100,12 @@ console.log('== [DR1] khoẻ — full fixture, exit 0, --json parse ==')
   let out = null
   try { out = JSON.parse(r.stdout) } catch (e) { check('DR1', 'json parse', false, String(e)) }
   if (out) {
-    check('DR1', '8 checks', Array.isArray(out.checks) && out.checks.length === 8, `got ${out.checks && out.checks.length}`)
+    check('DR1', '9 checks', Array.isArray(out.checks) && out.checks.length === 9, `got ${out.checks && out.checks.length}`)
     check('DR1', 'exit field ok', out.exit === 'ok', `got ${JSON.stringify(out.exit)}`)
     const by = Object.fromEntries((out.checks || []).map(c => [c.name, c]))
-    for (const name of ['marker', 'kit-hash', 'bins', 'deps', 'hooks', 'kb', 'orphans', 'agents-skills'])
+    for (const name of ['marker', 'kit-hash', 'bins', 'deps', 'hooks', 'kb', 'orphans', 'agents-skills', 'hooks-manifests'])
       check('DR1', `check ${name} hiện diện`, !!by[name])
-    for (const name of ['marker', 'kit-hash', 'bins', 'deps', 'hooks', 'orphans', 'agents-skills'])
+    for (const name of ['marker', 'kit-hash', 'bins', 'deps', 'hooks', 'orphans', 'agents-skills', 'hooks-manifests'])
       check('DR1', `${name} PASS`, by[name] && by[name].status === 'pass', by[name] && by[name].status + ': ' + by[name].detail)
     check('DR1', 'kb WARN (KB chưa config)', by.kb && by.kb.status === 'warn', by.kb && by.kb.status)
     for (const c of out.checks || [])
