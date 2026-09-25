@@ -37,8 +37,6 @@ describe('git.blame surface policy', () => {
 
     registerGitHandlers(relayDispatcher, operations, () => {}, () => {})
 
-    registerGitHandlers(dispatcher, noOpHandlers, () => {}, () => {})
-
     expect(registered).toContain('git.history')
     expect(registered).toContain('git.status')
     expect(registered).not.toContain('git.blame')

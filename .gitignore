@@ -176,6 +176,7 @@ validation-screenshots/
 # Local scratch notes and PR evidence screenshots (not part of the product).
 /notes/
 /pr-evidence/
+/.evidence-gitlens-lite/
 
 # Playwright
 test-results/
