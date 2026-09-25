@@ -41,7 +41,8 @@ command -v "$PY" >/dev/null 2>&1 || PY=py
 # kit dir = bin/.. — manifests kit/hooks/*.json đọc từ kit SOURCE (chạy tay).
 KIT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
-"$PY" - "$ROOT" "$KIT_DIR" "${ONLY[@]}" <<'PYEOF' || exit 1
+# bash 3.2 (macOS): ${ONLY[@]} rỗng + set -u → unbound trước khi python chạy.
+"$PY" - "$ROOT" "$KIT_DIR" ${ONLY[@]+"${ONLY[@]}"} <<'PYEOF' || exit 1
 import glob
 import json
 import os

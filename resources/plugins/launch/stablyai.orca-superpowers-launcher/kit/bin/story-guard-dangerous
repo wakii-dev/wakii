@@ -97,5 +97,6 @@ def main():
 if __name__ == "__main__":
     try:
         sys.exit(main())
-    except Exception:
-        sys.exit(0)  # fail-open — guard không được treo Bash
+    except Exception as e:
+        print(f"story-guard: exception {e}", file=sys.stderr)
+        sys.exit(0)  # fail-open — guard không được treo Bash (Q3: có dấu vết)
