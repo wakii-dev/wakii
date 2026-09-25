@@ -1,3 +1,10 @@
+/**
+ * Main-side marker for "the remote host predates git.blame": the SSH relay answers
+ * -32601, the provider converts it to this marker, and the renderer degrades
+ * per-host (in-memory, never persisted). Marker text is a contract — both ends ship together.
+ */
+export const GIT_BLAME_UNSUPPORTED_HOST_MARKER = 'git-blame-unsupported-host'
+
 export type GitBlameOptions = {
   /** Repo-relative (or worktree-relative) path of the file to blame. */
   filePath: string

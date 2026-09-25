@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { SshGitProvider } from './ssh-git-provider'
 import { createMockMux, type MockMultiplexer } from './ssh-git-provider-test-harness'
+import { GIT_BLAME_UNSUPPORTED_HOST_MARKER } from '../../shared/git-blame-types'
 
 describe('SshGitProvider blame', () => {
   let mux: MockMultiplexer
@@ -42,5 +43,14 @@ describe('SshGitProvider blame', () => {
     await expect(
       provider.getBlame('/home/user/repo', { filePath: 'src/index.ts' })
     ).rejects.toThrow('Unknown method: git.blame')
+  })
+
+  it('getBlame converts a -32601 old-relay miss into the shared unsupported-host marker', async () => {
+    const rpcMiss = Object.assign(new Error('Method not found: git.blame'), { code: -32601 })
+    mux.request.mockRejectedValue(rpcMiss)
+
+    await expect(
+      provider.getBlame('/home/user/repo', { filePath: 'src/index.ts' })
+    ).rejects.toThrow(GIT_BLAME_UNSUPPORTED_HOST_MARKER)
   })
 })

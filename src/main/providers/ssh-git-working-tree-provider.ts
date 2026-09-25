@@ -3,9 +3,14 @@ import type {
   GitCommitCompareResult
 } from '../../shared/git-diff-compare-types'
 import type { GitHistoryOptions, GitHistoryResult } from '../../shared/git-history'
-import type { GitBlameOptions, GitBlameResult } from '../../shared/git-blame-types'
+import type {
+  GitBlameOptions,
+  GitBlameResult
+} from '../../shared/git-blame-types'
+import { GIT_BLAME_UNSUPPORTED_HOST_MARKER } from '../../shared/git-blame-types'
 import type { GitConflictOperation } from '../../shared/git-status-types'
 import type { GitAdmissionTier } from '../git/command-runner/git-exec-options'
+import { isJsonRpcMethodNotFoundError } from './ssh-git-relay-errors'
 import { SshGitNoninteractiveProvider } from './ssh-git-noninteractive-provider'
 
 export class SshGitWorkingTreeProvider extends SshGitNoninteractiveProvider {
@@ -27,10 +32,21 @@ export class SshGitWorkingTreeProvider extends SshGitNoninteractiveProvider {
   }
 
   async getBlame(worktreePath: string, options: GitBlameOptions): Promise<GitBlameResult> {
-    return (await this.mux.request('git.blame', {
-      worktreePath,
-      filePath: options.filePath
-    })) as GitBlameResult
+    try {
+      return (await this.mux.request('git.blame', {
+        worktreePath,
+        filePath: options.filePath
+      })) as GitBlameResult
+    } catch (error) {
+      if (isJsonRpcMethodNotFoundError(error)) {
+        // Why: the renderer only sees an Error message over IPC, so the shared
+        // marker is the degrade contract for an old relay (in-memory disable).
+        throw new Error(
+          `${GIT_BLAME_UNSUPPORTED_HOST_MARKER}: the remote host's Wakii predates inline blame`
+        )
+      }
+      throw error
+    }
   }
 
   async commit(
