@@ -8,12 +8,13 @@
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, readdirSync, cpSync, rmSync } from 'node:fs'
 import { join, dirname, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const testsDir = dirname(fileURLToPath(import.meta.url))
 const mainPath = resolve(testsDir, process.env.KIT_MAIN || '../main.mjs')
 const realKitDir = resolve(testsDir, '../kit')
-const { installKit, runKit, assertCapability, kitBinCatalog, setKitGuardLogger, resetKitRepeatGuard } = await import(mainPath)
+// Windows: ESM dynamic import cần file:// URL — path dạng C:\ bị ERR_UNSUPPORTED_ESM_URL_SCHEME
+const { installKit, runKit, assertCapability, kitBinCatalog, setKitGuardLogger, resetKitRepeatGuard } = await import(pathToFileURL(mainPath).href)
 
 // ---- mock orca: capture notifications.show + log -------------------------
 function mockOrca({ toastFails = false } = {}) {

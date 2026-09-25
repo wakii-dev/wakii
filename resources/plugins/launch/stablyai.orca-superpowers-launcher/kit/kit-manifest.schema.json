@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://github.com/VuHoi/story-team-kit/kit-manifest.schema.json",
   "title": "story-team-kit manifest (kit.json)",
-  "description": "Máy-đọc-được manifest của story-team-kit. Lưu ý terminology: `provides` ở đây KHÔNG liên quan `capabilities` của orca-plugin.json (tránh collision tên). provides[] 49 entries = 26 full contracts (17 skill + 9 agent) + 39 bin minimal. bin = upstream 41 TRỪ story-dashboard-server + story-dashboard.html (sync-loại có chủ đích — sync-kit.sh remove khi vendor). Schema này là doc/CI artifact — runtime installer KHÔNG parse schema, validator tự viết trong installKit (SF-2).",
+  "description": "Máy-đọc-được manifest của story-team-kit. Lưu ý terminology: `provides` ở đây KHÔNG liên quan `capabilities` của orca-plugin.json (tránh collision tên). provides[] 64 entries = 16 full contracts (6 skill + 10 agent) + 48 bin minimal. bin = upstream 41 TRỪ story-dashboard-server + story-dashboard.html (sync-loại có chủ đích — sync-kit.sh remove khi vendor). Schema này là doc/CI artifact — runtime installer KHÔNG parse schema, validator tự viết trong installKit (SF-2).",
   "type": "object",
   "required": ["name", "version", "description", "provides"],
   "properties": {
@@ -14,7 +14,8 @@
       "properties": {
         "claude-code": { "type": "string" },
         "external": { "type": "object", "additionalProperties": { "type": "string" } },
-        "optional": { "type": "object", "additionalProperties": { "type": "string" } }
+        "optional": { "type": "object", "additionalProperties": { "type": "string" } },
+        "python": { "type": "string" }
       },
       "additionalProperties": false
     },
@@ -39,6 +40,11 @@
       "properties": {
         "name": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
         "type": { "enum": ["skill", "agent"] },
+        "category": {
+          "type": "string",
+          "enum": ["execution", "review", "ops", "knowledge", "infra"],
+          "description": "Taxonomy bucket (GH-86) — execution = làm việc, review = phê bình/kiểm artifact, ops = vận hành process, knowledge = memory/KB, infra = plumbing/hook/server."
+        },
         "inputs": {
           "type": "array",
           "minItems": 1,
@@ -50,7 +56,12 @@
           "minLength": 1,
           "description": "1 dòng verdict/report format."
         },
-        "owner": { "const": "wakii" }
+        "owner": { "const": "wakii" },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional mô tả 1 dòng (story-medic entry dùng — giữ tương thích schema với manifest thật)."
+        }
       }
     },
     "binEntry": {
@@ -61,7 +72,19 @@
       "properties": {
         "name": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
         "type": { "const": "bin" },
-        "description": { "type": "string", "minLength": 1 }
+        "category": {
+          "type": "string",
+          "enum": ["execution", "review", "ops", "knowledge", "infra"],
+          "description": "Taxonomy bucket (GH-86) — execution/review/ops/knowledge/infra."
+        },
+        "description": { "type": "string", "minLength": 1 },
+        "inputs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Optional — bin có contract đầy đủ hơn mức minimal (story-impact dùng)."
+        },
+        "outputs": { "type": "string", "minLength": 1 },
+        "owner": { "const": "wakii" }
       }
     }
   }

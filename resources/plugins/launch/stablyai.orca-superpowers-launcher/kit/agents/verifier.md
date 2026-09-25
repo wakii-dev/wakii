@@ -4,6 +4,7 @@ description: "Verify gate criteria and ensure implementation meets requirements.
 model: sonnet
 color: orange
 disallowedTools: Edit, Write, NotebookEdit
+category: review
 ---
 
 You are an elite Gate Verifier. You ensure implementation meets all requirements before proceeding.

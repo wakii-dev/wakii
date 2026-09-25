@@ -1,0 +1,63 @@
+#!/usr/bin/env python3
+"""story-guard-envfiles — PreToolUse guard: chặn ghi vào file nhạy cảm.
+
+Đọc stdin JSON Claude Code PreToolUse; chỉ xử lý tool_name ∈ {Edit, Write,
+MultiEdit}. file_path lấy từ tool_input.file_path (fallback .file). Chặn
+basename match deny-list hẹp (GH-87):
+  .env  .env.*  *.pem  id_rsa*  *.key
+Match → exit 2 + stderr lý do; khác → exit 0. Mọi exception/parse error/
+malformed stdin → exit 0 fail-open. WAKII_GUARD_OFF=1 → exit 0 ngay.
+Perf: fnmatch basename, không subprocess.
+"""
+import fnmatch
+import json
+import os
+import sys
+
+# Bin chạy trực tiếp — không đẻ __pycache__ (GH-27).
+sys.dont_write_bytecode = True
+
+# Pipe/stdin Windows mặc định cp1252 → chết UnicodeError (GH-27).
+for _s in (sys.stdin, sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
+GUARD_NAME = "story-guard-envfiles"
+TOOLS = {"Edit", "Write", "MultiEdit"}
+PATTERNS = (".env", ".env.*", "*.pem", "id_rsa*", "*.key")
+# Example/sample/template được commit bình thường — exempt trước deny-list
+# (review P1-1: .env.example chặn oan = treo Edit/Write dùng chéo project).
+EXEMPT = ("*.example", "*.sample", "*.template")
+
+
+def main():
+    if os.environ.get("WAKII_GUARD_OFF") == "1":
+        return 0
+    data = json.loads(sys.stdin.read())
+    if not isinstance(data, dict) or data.get("tool_name") not in TOOLS:
+        return 0
+    tool_input = data.get("tool_input")
+    if not isinstance(tool_input, dict):
+        return 0
+    file_path = tool_input.get("file_path") or tool_input.get("file")
+    if not isinstance(file_path, str) or not file_path:
+        return 0
+    base = os.path.basename(file_path.replace("\\", "/"))
+    if any(fnmatch.fnmatch(base, pat) for pat in EXEMPT):
+        return 0
+    for pat in PATTERNS:
+        if fnmatch.fnmatch(base, pat):
+            sys.stderr.write(
+                f"BLOCKED {GUARD_NAME}: {pat} — đặt WAKII_GUARD_OFF=1 để tắt nếu nhầm\n")
+            return 2
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except Exception as e:
+        print(f"story-guard: exception {e}", file=sys.stderr)
+        sys.exit(0)  # fail-open — guard không được treo Bash (Q3: có dấu vết)

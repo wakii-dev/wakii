@@ -247,6 +247,30 @@ console.log(`\n== [gh42-blocked] BLOCKED behavior note trong 8 defs restricted =
   check('gh42-blocked', 'task-executor KHÔNG có section Permission profile', !tex.includes('### Permission profile'))
 }
 
+// =====================================================================
+// GH-86 — taxonomy category + Use when: trigger trên mọi agent defs.
+// story-medic nằm ngoài GH42 lists (matrix scope 9 defs) — def thứ 10 vẫn phải
+// tuân protocol category/description vì là agent entry trong kit.json.
+const GH86_CATEGORY_ENUM = ['execution', 'review', 'ops', 'knowledge', 'infra']
+const GH86_AGENT_FILES = [...GH42_AGENT_FILES, 'story-medic']
+
+console.log(`\n== [gh86] category + Use when: trên ${GH86_AGENT_FILES.length} agent defs ==`)
+{
+  for (const name of GH86_AGENT_FILES) {
+    const md = readFileSync(join(AGENTS, `${name}.md`), 'utf8')
+    const fm = parseFrontmatter(md)
+    check('gh86', `${name}.md frontmatter parse được`, fm !== null && !fm.invalid)
+    if (!fm || fm.invalid) continue
+    check('gh86', `${name}.md category ∈ enum`, GH86_CATEGORY_ENUM.includes(fm.category), `got: ${JSON.stringify(fm.category ?? null)}`)
+    check('gh86', `${name}.md description có Use when: máy đọc được`, /Use when:/.test(fm.description ?? ''))
+  }
+  // category không đụng name/model/color/disallowedTools — spot-check field vẫn nguyên
+  for (const name of GH86_AGENT_FILES) {
+    const md = readFileSync(join(AGENTS, `${name}.md`), 'utf8')
+    check('gh86', `${name}.md name field không đổi`, new RegExp(`^name: "${name}"`, 'm').test(md))
+  }
+}
+
 console.log(`\n== TOTAL: ${pass} PASS / ${fail} FAIL ==`)
 if (failures.length) {
   console.log('FAILURES:\n- ' + failures.join('\n- '))

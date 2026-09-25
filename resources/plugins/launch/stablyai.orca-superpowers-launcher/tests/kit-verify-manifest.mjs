@@ -144,6 +144,32 @@ ok('permission-matrix.md ở kit ROOT — ngoài scan two-way, KHÔNG entry prov
 ok('entry story-report-validate trong provides', kitJson.provides.some(e => e.name === 'story-report-validate' && e.type === 'bin'))
 ok('entry story-surface-lint trong provides', kitJson.provides.some(e => e.name === 'story-surface-lint' && e.type === 'bin'))
 ok('entry story-kb trong provides', kitJson.provides.some(e => e.name === 'story-kb' && e.type === 'bin'))
+// Taxonomy category (GH-86): mọi provides entry có category ∈ 5 enum + agent def
+// frontmatter category khớp kit.json — entry thiếu/sai category phải bắt được ở đây.
+{
+  const CATEGORY_ENUM = ['execution', 'review', 'ops', 'knowledge', 'infra']
+  const badCat = kitJson.provides.filter(e => !CATEGORY_ENUM.includes(e.category))
+  ok(`mọi provides entry có category ∈ enum (${kitJson.provides.length} entries)`, badCat.length === 0,
+    `thiếu/sai: ${badCat.map(e => e.name).join(',') || '(không)'}`)
+  // frontmatter mini-parser (cùng shape agent-def-protocol-tests — zero-dep)
+  const fmCategory = md => {
+    const m = md.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/)
+    if (!m) return null
+    for (const line of m[1].split(/\r?\n/)) {
+      const kv = line.match(/^category:(?:[ \t]*(.*))?$/)
+      if (kv) return (kv[1] ?? '').trim()
+    }
+    return null
+  }
+  const agentEntries = kitJson.provides.filter(e => e.type === 'agent')
+  const mismatch = agentEntries.filter(e => {
+    let cat
+    try { cat = fmCategory(readFileSync(join(kitRoot, 'agents', `${e.name}.md`), 'utf8')) } catch { /* không đọc được */ }
+    return cat !== e.category
+  })
+  ok('agent defs frontmatter category khớp kit.json', mismatch.length === 0,
+    `lệch/thiếu: ${mismatch.map(e => e.name).join(',') || '(không)'}`)
+}
 // Review đa chiều (2.14.0): coverage + position-verify + meta-test trong code-reviewer def
 // Input + policy (2.14.1, học tiếp open-code-review): deterministic-first + precision + adaptive depth
 {

@@ -1,5 +1,5 @@
 #!/bin/bash
-# story-hooks-install — merge 3 story-team-kit hook entries vào settings.json
+# story-hooks-install — merge story-team-kit hook entries vào settings.json
 # (SF-2 GH-26). Runtime chính là Node trong main.mjs installKit (tránh spawn
 # bash từ Node worker trên Windows); bin này để chạy tay/CI — CÙNG semantics:
 #   - PostToolUse (matcher Bash) → hook-post-tool-use wrapper
@@ -10,22 +10,48 @@
 # Idempotent (không ghi khi nội dung đã đúng). Atomic RMW: temp cùng dir +
 # rename. Malformed settings.json → KHÔNG đụng, exit 1.
 #
-# Usage: story-hooks-install [--root <dir>]   (default ~/.claude)
-# Exit: 0 = merged hoặc up-to-date · 1 = lỗi (malformed/không ghi được)
+# GH-87 SF-1: + đọc per-hook manifests kit/hooks/*.json (glob; nằm cạnh bin —
+# chạy tay từ kit source) và merge PreToolUse groups sau wrappers (STORY_HOOK_
+# WRAPPERS giữ nguyên — manifests BỔ SUNG, backward-compat). Placeholder
+# {KIT_BIN} trong command → <root>/bin. Malformed manifest → skip + cảnh báo
+# (không phá settings). Flag `--only <name>` (lặp được): name = wrapper event
+# (PostToolUse/SessionStart/Stop) hoặc manifest stem (story-guard-secrets…);
+# không match cái nào → exit 1. Không có flag → cài tất cả (mặc định).
+#
+# Usage: story-hooks-install [--root <dir>] [--only <name>…]   (default ~/.claude)
+# Exit: 0 = merged hoặc up-to-date · 1 = lỗi (malformed/không ghi được/--only hụt)
 set -u
 ROOT="${HOME:-}/.claude"
-if [ "${1:-}" = "--root" ] && [ -n "${2:-}" ]; then ROOT="$2"; fi
+ONLY=()
+shift_count=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --root)
+      if [ -n "${2:-}" ]; then ROOT="$2"; shift 2; else echo "story-hooks-install: --root cần <dir>" >&2; exit 1; fi ;;
+    --only)
+      if [ -n "${2:-}" ]; then ONLY+=("$2"); shift 2; else echo "story-hooks-install: --only cần <name>" >&2; exit 1; fi ;;
+    *)
+      echo "story-hooks-install: flag không rõ: $1" >&2; exit 1 ;;
+  esac
+done
 PY=python3
 command -v python3 >/dev/null 2>&1 || PY=python
 command -v "$PY" >/dev/null 2>&1 || PY=py
 
-"$PY" - "$ROOT" <<'PYEOF' || exit 1
+# kit dir = bin/.. — manifests kit/hooks/*.json đọc từ kit SOURCE (chạy tay).
+KIT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+
+# bash 3.2 (macOS): ${ONLY[@]} rỗng + set -u → unbound trước khi python chạy.
+"$PY" - "$ROOT" "$KIT_DIR" ${ONLY[@]+"${ONLY[@]}"} <<'PYEOF' || exit 1
+import glob
 import json
 import os
 import pathlib
 import sys
 
 root = pathlib.Path(sys.argv[1])
+kit_dir = pathlib.Path(sys.argv[2])
+only = set(sys.argv[3:])
 WRAPPERS = {
     "PostToolUse": ("hook-post-tool-use", "Bash"),
     "SessionStart": ("hook-session-start", None),
@@ -48,13 +74,64 @@ def canon_groups(claude_dir):
     return out
 
 
-def merge(settings, claude_dir):
+def manifest_groups(kit_dir, claude_dir):
+    """Đọc kit/hooks/*.json — [{event, group}] đã thay {KIT_BIN}."""
+    hooks_dir = kit_dir / "hooks"
+    out = []
+    for path in sorted(glob.glob(str(hooks_dir / "*.json"))):
+        name = pathlib.Path(path).stem
+        if only and name not in only:
+            continue
+        try:
+            with open(path, encoding="utf-8") as f:
+                manifest = json.load(f)
+            groups = manifest["hooks"]["PreToolUse"]
+            for group in groups:
+                for hook in group.get("hooks") or []:
+                    cmd = str(hook.get("command") or "")
+                    if "{KIT_BIN}" in cmd:
+                        hook["command"] = cmd.replace(
+                            "{KIT_BIN}", norm(claude_dir / "bin"))
+                out.append((name, "PreToolUse", group))
+        except (OSError, ValueError, KeyError, TypeError, AttributeError) as e:
+            print(f"story-hooks-install: manifest {name} hỏng — skip ({e})",
+                  file=sys.stderr)
+    return out
+
+
+def event_has_cmd(hooks, event, needle):
+    for group in (hooks.get(event) or []):
+        if not isinstance(group, dict):
+            continue
+        for hook in (group.get("hooks") or []):
+            if needle in norm(hook.get("command") if isinstance(hook, dict) else None):
+                return True
+    return False
+
+
+def merge(settings, claude_dir, kit_dir):
     if not isinstance(settings, dict):
-        return None
+        return None, 0, 0
     canon = canon_groups(claude_dir)
     kit_cmds = {norm(g["hooks"][0]["command"]) for g in canon.values()}
     hooks = dict(settings.get("hooks") or {}) if isinstance(settings.get("hooks"), dict) else {}
-    for event, group in canon.items():
+    wanted = []
+    matched = 0
+    for event, (fname, _m) in WRAPPERS.items():
+        if only and event not in only:
+            continue
+        matched += 1
+        wanted.append((fname, event, canon[event]))
+    for name, event, group in manifest_groups(kit_dir, claude_dir):
+        matched += 1
+        bin_name = next((h["command"].rsplit("/", 1)[-1]
+                         for h in (group.get("hooks") or [])
+                         if isinstance(h, dict) and "/" in str(h.get("command"))), name)
+        if event_has_cmd(hooks, event, f"/{bin_name}"):
+            continue  # đã wired — idempotent
+        wanted.append((name, event, group))
+    added = 0
+    for _name, event, group in wanted:
         arr = list(hooks.get(event) or [])
         want = norm(group["hooks"][0]["command"])
         replaced = False
@@ -73,8 +150,9 @@ def merge(settings, claude_dir):
         if not replaced:
             arr.append(json.loads(json.dumps(group)))
         hooks[event] = arr
+        added += 1
     settings["hooks"] = hooks
-    return settings
+    return settings, matched, added
 
 
 def atomic_write(path, content):
@@ -102,9 +180,13 @@ def main():
             return 1
     else:
         current = {}
-    merged = merge(current, root)
+    merged, matched, added = merge(current, root, kit_dir)
     if merged is None:
         print("story-hooks-install: settings.json không phải object", file=sys.stderr)
+        return 1
+    if only and matched == 0:
+        print(f"story-hooks-install: --only không khớp hook nào: {', '.join(sorted(only))}",
+              file=sys.stderr)
         return 1
     next_text = json.dumps(merged, ensure_ascii=False, indent=2) + "\n"
     if current_text is not None and current_text == next_text:
@@ -112,7 +194,7 @@ def main():
         return 0
     root.mkdir(parents=True, exist_ok=True)
     atomic_write(path, next_text)
-    print("story-hooks-install: merged 3 hook entries -> " + str(path))
+    print(f"story-hooks-install: merged {matched} hook entries -> " + str(path))
     return 0
 
 
