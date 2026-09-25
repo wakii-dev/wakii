@@ -304,7 +304,7 @@ describe('web git preload API', () => {
     installWebPreloadApi()
 
     await expect(
-      globals.window.api.git.blame({ worktreePath: '/workspace/repo', filePath: 'src/app.ts' })
+      globals.window.api.git.blame?.({ worktreePath: '/workspace/repo', filePath: 'src/app.ts' })
     ).resolves.toEqual(blameResult)
     expect(runtimeCalls[runtimeCalls.length - 1]).toEqual({
       method: 'git.blame',

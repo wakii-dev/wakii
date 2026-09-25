@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  GIT_BLAME_UNCOMMITTED_HASH,
   isGitBlameUncommittedHash,
   loadGitBlameFromExecutor,
   parseGitBlamePorcelain

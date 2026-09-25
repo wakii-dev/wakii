@@ -6,7 +6,6 @@ import type {
 } from '../../../shared/git-status-types'
 import type { GitDiffResult } from '../../../shared/git-diff-compare-types'
 import type { GitHistoryOptions, GitHistoryResult } from '../../../shared/git-history'
-import type { GitBlameOptions, GitBlameResult } from '../../../shared/git-blame-types'
 import type { GitStatusUpstreamRefWatchRequest } from '../git-status-upstream-ref-watch-request'
 import type { GitAdmissionTier } from '../../git/command-runner/git-exec-options'
 import {
@@ -18,7 +17,6 @@ import {
   getDiff
 } from '../../git/status'
 import { getHistory } from '../../git/history'
-import { getBlame } from '../../git/blame'
 import { checkIgnoredPaths } from '../../git/check-ignored-paths'
 import {
   appendFolderToGitignore,
@@ -207,31 +205,6 @@ export function registerFilesystemGitStatusHandlers(context: FilesystemHandlerCo
         worktreePath
       )
       return getHistory(worktreePath, { ...options, ...gitOptions })
-    }
-  )
-
-  ipcMain.handle(
-    'git:blame',
-    async (
-      _event,
-      args: { worktreePath: string; connectionId?: string } & GitBlameOptions
-    ): Promise<GitBlameResult> => {
-      // Why 'interactive': blame is user-waiting (cursor/hover-triggered) — tier 0.
-      const options: GitBlameOptions = { filePath: args.filePath }
-      if (args.connectionId) {
-        const provider = getSshGitProvider(args.connectionId)
-        if (!provider) {
-          throw new Error(SSH_GIT_PROVIDER_UNAVAILABLE_MESSAGE)
-        }
-        return provider.getBlame(args.worktreePath, options)
-      }
-      const worktreePath = await resolveRegisteredWorktreePath(args.worktreePath, store)
-      const gitOptions = getLocalGitOptionsForRegisteredWorktree(
-        store,
-        args.worktreePath,
-        worktreePath
-      )
-      return getBlame(worktreePath, { ...options, ...gitOptions, admissionTier: 'interactive' })
     }
   )
 

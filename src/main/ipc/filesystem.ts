@@ -11,6 +11,7 @@ import { registerFilesystemDownloadHandlers } from './filesystem/filesystem-down
 import { registerFilesystemWriteHandlers } from './filesystem/filesystem-write-handlers'
 import { registerFilesystemSearchHandlers } from './filesystem/filesystem-search-handlers'
 import { registerFilesystemGitStatusHandlers } from './filesystem/filesystem-git-status-handlers'
+import { registerFilesystemGitBlameHandlers } from './filesystem/filesystem-git-blame-handlers'
 import { registerFilesystemGitCommitHandlers } from './filesystem/filesystem-git-commit-handlers'
 import { registerFilesystemGitCommitGenerationHandlers } from './filesystem/filesystem-git-commit-generation-handlers'
 import { registerFilesystemGitModelDiscoveryHandlers } from './filesystem/filesystem-git-model-discovery-handlers'
@@ -36,6 +37,7 @@ export function registerFilesystemHandlers(
   registerFilesystemWriteHandlers(context)
   registerFilesystemSearchHandlers(context)
   registerFilesystemGitStatusHandlers(context)
+  registerFilesystemGitBlameHandlers(context)
   registerFilesystemGitCommitHandlers(context)
   registerFilesystemGitCommitGenerationHandlers(context)
   registerFilesystemGitModelDiscoveryHandlers(context)
