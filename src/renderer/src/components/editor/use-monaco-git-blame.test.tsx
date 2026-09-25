@@ -71,10 +71,21 @@ function createFakeModel() {
   return { getLineMaxColumn: vi.fn(() => 40) }
 }
 
+// Deterministic scrolled-visible geometry: line N renders 20px tall at top
+// (N-1)*20 — overlay position math pins against these numbers.
+const FAKE_LINE_HEIGHT_PX = 20
+
 function createFakeEditor(model = createFakeModel()) {
   const cursorListeners: ((event: { position: { lineNumber: number; column: number } }) => void)[] = []
-  const decorationCollections: { set: ReturnType<typeof vi.fn> }[] = []
+  const scrollListeners: (() => void)[] = []
+  const layoutListeners: (() => void)[] = []
   const disposers: ReturnType<typeof vi.fn>[] = []
+  const domNode = document.createElement('div')
+  const scrolledVisible = vi.fn((position: { lineNumber: number }) => ({
+    top: (position.lineNumber - 1) * FAKE_LINE_HEIGHT_PX,
+    left: 0,
+    height: FAKE_LINE_HEIGHT_PX
+  }))
   const editor = {
     onDidChangeCursorPosition: vi.fn((listener) => {
       cursorListeners.push(listener)
@@ -82,20 +93,48 @@ function createFakeEditor(model = createFakeModel()) {
       disposers.push(dispose)
       return { dispose }
     }),
-    createDecorationsCollection: vi.fn(() => {
-      const collection = { set: vi.fn() }
-      decorationCollections.push(collection)
-      return collection
+    onDidScrollChange: vi.fn((listener) => {
+      scrollListeners.push(listener)
+      const dispose = vi.fn()
+      disposers.push(dispose)
+      return { dispose }
     }),
+    onDidLayoutChange: vi.fn((listener) => {
+      layoutListeners.push(listener)
+      const dispose = vi.fn()
+      disposers.push(dispose)
+      return { dispose }
+    }),
+    getDomNode: vi.fn(() => domNode),
+    getScrolledVisiblePosition: scrolledVisible,
     getModel: vi.fn(() => model),
     getPosition: vi.fn(() => ({ lineNumber: 3, column: 1 })),
     fireCursor(lineNumber: number): void {
       for (const listener of cursorListeners) {
         listener({ position: { lineNumber, column: 1 } })
       }
+    },
+    fireScroll(): void {
+      for (const listener of scrollListeners) {
+        listener()
+      }
+    },
+    fireLayout(): void {
+      for (const listener of layoutListeners) {
+        listener()
+      }
     }
   }
-  return { editor, model, cursorListeners, decorationCollections, disposers }
+  return {
+    editor,
+    model,
+    domNode,
+    scrolledVisible,
+    cursorListeners,
+    scrollListeners,
+    layoutListeners,
+    disposers
+  }
 }
 
 type HookArgs = Parameters<typeof useMonacoGitBlame>[0]
@@ -118,33 +157,21 @@ function baseArgs(
   }
 }
 
-function setLastDecorationContent(fake: ReturnType<typeof createFakeEditor>): string {
-  const collections = fake.decorationCollections
-  const last = collections.at(-1)
-  if (!last) {
-    return ''
-  }
-  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: vi.fn() call args are untyped at the mock boundary; the hook only ever sets whole-line after-decorations.
-  const calls = last.set.mock.calls as unknown as [
-    { options: { after: { content: string } } }[]][]
-  if (calls.length === 0) {
-    return ''
-  }
-  const decorations = calls.at(-1)?.[0]
-  return decorations?.[0]?.options.after.content ?? ''
+function overlayFor(fake: ReturnType<typeof createFakeEditor>): HTMLDivElement | null {
+  return fake.domNode.querySelector<HTMLDivElement>('.orca-git-blame-overlay')
 }
 
-function lastDecorationShowsIfCollapsed(fake: ReturnType<typeof createFakeEditor>): boolean {
-  const collections = fake.decorationCollections
-  const last = collections.at(-1)
-  if (!last) {
-    return false
-  }
-  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: vi.fn() call args are untyped at the mock boundary; the hook only ever sets whole-line after-decorations.
-  const calls = last.set.mock.calls as unknown as [
-    { options: { showIfCollapsed?: boolean } }[]][]
-  const decorations = calls.at(-1)?.[0]
-  return decorations?.[0]?.options.showIfCollapsed === true
+function overlayText(fake: ReturnType<typeof createFakeEditor>): string {
+  return overlayFor(fake)?.textContent ?? ''
+}
+
+function overlayHidden(fake: ReturnType<typeof createFakeEditor>): boolean {
+  const overlay = overlayFor(fake)
+  return !overlay || overlay.style.display === 'none'
+}
+
+function overlayTop(fake: ReturnType<typeof createFakeEditor>): string {
+  return overlayFor(fake)?.style.top ?? ''
 }
 
 beforeEach(() => {
@@ -159,7 +186,7 @@ beforeEach(() => {
 })
 
 describe('useMonacoGitBlame', () => {
-  it('fetches blame once on mount and paints the cursor line annotation', async () => {
+  it('fetches blame once on mount and paints the cursor line overlay', async () => {
     const fake = createFakeEditor()
     const { unmount } = renderHook((args: HookArgs) => useMonacoGitBlame(args), {
       initialProps: baseArgs(fake)
@@ -170,14 +197,20 @@ describe('useMonacoGitBlame', () => {
       expect.objectContaining({ worktreeId: 'wt-1' }),
       'src/app.ts'
     )
-    await waitFor(() => expect(setLastDecorationContent(fake)).toContain('Jane Dev'))
-    // Regression pin (Electron walkthrough): a whole-line range at column 1 is
-    // collapsed, and Monaco hides injected text on it unless showIfCollapsed is set.
-    expect(lastDecorationShowsIfCollapsed(fake)).toBe(true)
+    await waitFor(() => expect(overlayText(fake)).toContain('Jane Dev'))
+    // Regression pin (user directive): the overlay is a single right-anchored
+    // div on the editor DOM — never an injected span inside token spans, whose
+    // absolute positioning resolved against the wrong containing block.
+    const overlay = overlayFor(fake)
+    expect(overlay?.parentElement).toBe(fake.domNode)
+    expect(overlay?.classList.contains('orca-git-blame-overlay')).toBe(true)
+    // Line 3 of the fake geometry: top (3-1)*20, vertically centered offset
+    // (20-16)/2 -> 42px.
+    expect(overlayTop(fake)).toBe('42px')
     unmount()
   })
 
-  it('follows the cursor imperatively — decoration updates with zero additional git calls', async () => {
+  it('follows the cursor imperatively — overlay repaints with zero additional git calls', async () => {
     const fake = createFakeEditor()
     const { unmount } = renderHook((args: HookArgs) => useMonacoGitBlame(args), {
       initialProps: baseArgs(fake)
@@ -189,7 +222,25 @@ describe('useMonacoGitBlame', () => {
     fake.editor.fireCursor(4)
 
     expect(blameClient.getRuntimeGitBlame).toHaveBeenCalledTimes(1)
-    expect(setLastDecorationContent(fake)).toContain(GIT_BLAME_STRINGS_EN.you)
+    expect(overlayText(fake)).toContain(GIT_BLAME_STRINGS_EN.you)
+    expect(overlayTop(fake)).toBe('62px')
+    unmount()
+  })
+
+  it('repositions the overlay when the editor scrolls or relayouts', async () => {
+    const fake = createFakeEditor()
+    const { unmount } = renderHook((args: HookArgs) => useMonacoGitBlame(args), {
+      initialProps: baseArgs(fake)
+    })
+    await waitFor(() => expect(overlayText(fake)).toContain('Jane Dev'))
+    const paintsBefore = fake.scrolledVisible.mock.calls.length
+
+    fake.editor.fireScroll()
+    fake.editor.fireLayout()
+
+    expect(fake.scrolledVisible.mock.calls.length).toBeGreaterThan(paintsBefore)
+    // The cursor line is still line 3 — the overlay stays pinned to it.
+    expect(overlayTop(fake)).toBe('42px')
     unmount()
   })
 
@@ -203,7 +254,7 @@ describe('useMonacoGitBlame', () => {
     rerender(baseArgs(fake, { isDirty: true }))
     fake.editor.fireCursor(99)
 
-    expect(setLastDecorationContent(fake)).toContain(GIT_BLAME_STRINGS_EN.you)
+    expect(overlayText(fake)).toContain(GIT_BLAME_STRINGS_EN.you)
     unmount()
   })
 
@@ -216,7 +267,7 @@ describe('useMonacoGitBlame', () => {
 
     fake.editor.fireCursor(99)
 
-    expect(setLastDecorationContent(fake)).toBe('')
+    expect(overlayHidden(fake)).toBe(true)
     unmount()
   })
 
@@ -259,7 +310,7 @@ describe('useMonacoGitBlame', () => {
     const { unmount } = renderHook((args: HookArgs) => useMonacoGitBlame(args), {
       initialProps: baseArgs(fake, { isDirty: true })
     })
-    await waitFor(() => expect(setLastDecorationContent(fake)).toContain(GIT_BLAME_STRINGS_EN.stale))
+    await waitFor(() => expect(overlayText(fake)).toContain(GIT_BLAME_STRINGS_EN.stale))
     unmount()
   })
 
@@ -331,12 +382,12 @@ describe('useMonacoGitBlame', () => {
     })
     await act(async () => {})
     expect(blameClient.getRuntimeGitBlame).toHaveBeenCalledTimes(1)
-    expect(fake.decorationCollections.every((c) => c.set.mock.calls.length === 0)).toBe(true)
+    expect(overlayText(fake)).toBe('')
 
     blameClient.getRuntimeGitBlame.mockResolvedValue(BLAME_RESULT)
     storeMock.gitStatusHeadByWorktree = { 'wt-1': 'sha-2' }
     rerender(baseArgs(fake))
-    await waitFor(() => expect(setLastDecorationContent(fake)).toContain('Jane Dev'))
+    await waitFor(() => expect(overlayText(fake)).toContain('Jane Dev'))
     unmount()
   })
 
@@ -362,18 +413,20 @@ describe('useMonacoGitBlame', () => {
     unmount()
   })
 
-  it('disposes the hover provider and cursor listener when disabled or unmounted', async () => {
+  it('removes the overlay and disposes listeners when disabled or unmounted', async () => {
     const fake = createFakeEditor()
     const { rerender, unmount } = renderHook((args: HookArgs) => useMonacoGitBlame(args), {
       initialProps: baseArgs(fake)
     })
     await waitFor(() => expect(blameClient.getRuntimeGitBlame).toHaveBeenCalledTimes(1))
+    expect(overlayFor(fake)).not.toBeNull()
 
     rerender(baseArgs(fake, { enabled: false }))
     expect(fake.disposers.length).toBeGreaterThan(0)
     for (const dispose of fake.disposers) {
       expect(dispose).toHaveBeenCalled()
     }
+    expect(overlayFor(fake)).toBeNull()
 
     unmount()
   })

@@ -38,7 +38,9 @@ type BlameView = {
   isDirty: boolean
 }
 
-const ANNOTATION_CLASS = 'orca-git-blame-annotation'
+const OVERLAY_CLASS = 'orca-git-blame-overlay'
+// 11px text on a taller line box — used to center the overlay vertically.
+const OVERLAY_TEXT_LINE_BOX_PX = 16
 
 function makeWholeLineRange(lineNumber: number): IRange {
   return { startLineNumber: lineNumber, startColumn: 1, endLineNumber: lineNumber, endColumn: 1 }
@@ -88,7 +90,7 @@ export function useMonacoGitBlame(args: UseMonacoGitBlameArgs): void {
     (state) => state.settings?.activeRuntimeEnvironmentId
   )
 
-  const decorationsRef = useRef<editor.IEditorDecorationsCollection | null>(null)
+  const overlayRef = useRef<HTMLDivElement | null>(null)
   const viewRef = useRef<BlameView>({ lineByNumber: new Map(), skipReason: null, isDirty: false })
 
   // Keep the live view's dirty flag in sync so cursor repaints (imperative,
@@ -97,67 +99,64 @@ export function useMonacoGitBlame(args: UseMonacoGitBlameArgs): void {
     viewRef.current.isDirty = args.isDirty
   }, [args.isDirty])
 
-  const applyDecorationForLine = (lineNumber: number): void => {
-    const collection = decorationsRef.current
-    if (!collection) {
+  // One overlay div anchored to the editor DOM (right edge), moved to the
+  // cursor line's scrolled-visible position. Never an injected span: Monaco
+  // token spans break absolute positioning (wrong containing block), and an
+  // in-flow span reflows code. Right-anchored content cannot shift the layout.
+  const paintAnnotationForLine = (
+    activeEditor: editor.IStandaloneCodeEditor,
+    lineNumber: number
+  ): void => {
+    const overlay = overlayRef.current
+    if (!overlay) {
       return
     }
     const view = viewRef.current
     const line = lineNumber > 0 ? view.lineByNumber.get(lineNumber) : undefined
-    if (!line) {
+    let content: string | null
+    if (line) {
+      content = formatInlineBlameAnnotation(line, {
+        isDirty: view.isDirty,
+        strings: getGitBlameStrings()
+      })
+    } else if (view.isDirty && lineNumber > 0) {
       // Spec: a newly inserted line blame has never seen reads as "You" while
       // the buffer has unsaved edits; a clean buffer only has the EOF-only
       // tail line unknown, which stays silent.
-      if (!view.isDirty || lineNumber <= 0) {
-        collection.set([])
-        return
-      }
-      collection.set([
+      content = formatInlineBlameAnnotation(
         {
-          range: makeWholeLineRange(lineNumber),
-          options: {
-            showIfCollapsed: true,
-            after: {
-              content: ` ${formatInlineBlameAnnotation(
-                {
-                  lineNumber,
-                  hash: '',
-                  abbreviatedHash: '',
-                  author: '',
-                  authorTime: 0,
-                  summary: '',
-                  committed: false
-                },
-                { isDirty: view.isDirty, strings: getGitBlameStrings() }
-              )}`,
-              inlineClassName: ANNOTATION_CLASS
-            }
-          }
-        }
-      ])
+          lineNumber,
+          hash: '',
+          abbreviatedHash: '',
+          author: '',
+          authorTime: 0,
+          summary: '',
+          committed: false
+        },
+        { isDirty: view.isDirty, strings: getGitBlameStrings() }
+      )
+    } else {
+      content = null
+    }
+    const visible = content
+      ? activeEditor.getScrolledVisiblePosition({
+          lineNumber,
+          column: activeEditor.getModel()?.getLineMaxColumn(lineNumber) ?? 1
+        })
+      : null
+    if (content === null || !visible) {
+      overlay.style.display = 'none'
       return
     }
-    const content = formatInlineBlameAnnotation(line, {
-      isDirty: view.isDirty,
-      strings: getGitBlameStrings()
-    })
-    collection.set([
-      {
-        range: makeWholeLineRange(lineNumber),
-        options: {
-          // Why: a whole-line range at column 1 is collapsed, and Monaco hides
-          // injected text on collapsed ranges unless this flag is set.
-          showIfCollapsed: true,
-          after: { content: ` ${content}`, inlineClassName: ANNOTATION_CLASS }
-        }
-      }
-    ])
+    overlay.textContent = content
+    overlay.style.top = `${visible.top + Math.max(0, Math.round(((visible.height ?? OVERLAY_TEXT_LINE_BOX_PX) - OVERLAY_TEXT_LINE_BOX_PX) / 2))}px`
+    overlay.style.display = ''
   }
 
-  // Cursor-follow is imperative on purpose: decoration repaints come from the
+  // Cursor-follow is imperative on purpose: overlay repaints come from the
   // in-memory blame view — zero git calls, zero React re-renders.
-  const cursorHandlerRef = useRef(applyDecorationForLine)
-  cursorHandlerRef.current = applyDecorationForLine
+  const paintHandlerRef = useRef(paintAnnotationForLine)
+  paintHandlerRef.current = paintAnnotationForLine
 
   // Fetch effect — mount, HEAD change, save/external reload (buffer re-becomes
   // clean with new content), host and path changes.
@@ -167,9 +166,6 @@ export function useMonacoGitBlame(args: UseMonacoGitBlameArgs): void {
     const activeEditor = enabled ? mountedEditor : null
     if (!activeEditor || !worktreeId || !worktreePath || !relativePath) {
       return
-    }
-    if (!decorationsRef.current) {
-      decorationsRef.current = activeEditor.createDecorationsCollection()
     }
     if (!headSha) {
       // Empty repository (unborn HEAD) — nothing to blame against, stay silent.
@@ -198,7 +194,7 @@ export function useMonacoGitBlame(args: UseMonacoGitBlameArgs): void {
     const cached = blameCache.get(worktreeId, relativePath, headSha, cleanRevision ?? '')
     if (cached) {
       viewRef.current = viewFromResult(cached, isDirty)
-      applyDecorationForLine(activeEditor.getPosition()?.lineNumber ?? 0)
+      paintHandlerRef.current(activeEditor, activeEditor.getPosition()?.lineNumber ?? 0)
       return
     }
 
@@ -217,7 +213,7 @@ export function useMonacoGitBlame(args: UseMonacoGitBlameArgs): void {
         }
         blameCache.set(worktreeId, relativePath, headSha, result, cleanRevision ?? '')
         viewRef.current = viewFromResult(result, isDirty)
-        applyDecorationForLine(activeEditor.getPosition()?.lineNumber ?? 0)
+        paintHandlerRef.current(activeEditor, activeEditor.getPosition()?.lineNumber ?? 0)
       })
       .catch(() => {
         // Taxonomy is client-level: a host-unsupported answer was disabled
@@ -241,12 +237,23 @@ export function useMonacoGitBlame(args: UseMonacoGitBlameArgs): void {
     activeRuntimeEnvironmentId
   ])
 
-  // Hover provider + cursor subscription — one registration per editor mount.
+  // Overlay lifecycle + hover provider + subscriptions — one per editor mount.
+  // Cleanup removes the overlay node, so a settings toggle (enabled flip)
+  // hides it and re-enabling recreates it fresh on the current editor DOM.
   useEffect(() => {
     const activeEditor = args.enabled ? args.mountedEditor : null
     if (!activeEditor) {
       return
     }
+    const domNode = activeEditor.getDomNode()
+    if (!domNode) {
+      return
+    }
+    const overlay = document.createElement('div')
+    overlay.className = OVERLAY_CLASS
+    overlay.style.display = 'none'
+    domNode.appendChild(overlay)
+    overlayRef.current = overlay
 
     const provideHover = (
       model: editor.ITextModel,
@@ -279,19 +286,24 @@ export function useMonacoGitBlame(args: UseMonacoGitBlameArgs): void {
       provideHover: (model, position, _token) => provideHover(model, position)
     })
     const cursorDisposable = activeEditor.onDidChangeCursorPosition((event) => {
-      cursorHandlerRef.current(event.position.lineNumber)
+      paintHandlerRef.current(activeEditor, event.position.lineNumber)
     })
+    // Scroll and layout move the scrolled-visible position of the cursor line
+    // without a cursor event — re-pin the overlay or it drifts off its line.
+    const repaintCurrentLine = (): void => {
+      paintHandlerRef.current(activeEditor, activeEditor.getPosition()?.lineNumber ?? 0)
+    }
+    const scrollDisposable = activeEditor.onDidScrollChange(repaintCurrentLine)
+    const layoutDisposable = activeEditor.onDidLayoutChange(repaintCurrentLine)
+    repaintCurrentLine()
 
     return () => {
       hoverDisposable.dispose()
       cursorDisposable.dispose()
+      scrollDisposable.dispose()
+      layoutDisposable.dispose()
+      overlay.remove()
+      overlayRef.current = null
     }
   }, [args.enabled, args.mountedEditor])
-
-  // Clear the painted annotation when the feature turns off.
-  useEffect(() => {
-    if (!args.enabled) {
-      decorationsRef.current?.set([])
-    }
-  }, [args.enabled])
 }

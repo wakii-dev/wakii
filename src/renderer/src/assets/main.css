@@ -2328,16 +2328,16 @@ html.native-shell .app-layout {
   opacity: 0.92;
 }
 
-.monaco-editor .orca-git-blame-annotation {
-  /* Absolute vs the content line: floats right after the line's text WITHOUT
-     contributing width — zero layout impact, never wraps over code, never
-     grows the horizontal scroll area (overflow-guard clips past viewport).
-     Content is truncated to a fixed budget at the format layer. */
+.monaco-editor .orca-git-blame-overlay {
+  /* Single right-anchored overlay div on the editor DOM (top set inline from
+     the cursor line's scrolled-visible position). Never an injected span:
+     Monaco token spans break absolute positioning (wrong containing block).
+     Right-anchored => no reflow, no wrap over code, no horizontal scroll. */
   position: absolute;
-  left: 100%;
-  margin-left: 16px;
+  right: 12px;
   white-space: pre;
   pointer-events: none;
+  z-index: 6;
   color: var(--muted-foreground);
   font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 11px;
