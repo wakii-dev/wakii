@@ -1,0 +1,101 @@
+#!/usr/bin/env python3
+"""story-guard-dangerous — PreToolUse Bash guard: chặn lệnh phá hỏng có chủ đích.
+
+Đọc stdin JSON Claude Code PreToolUse; chỉ xử lý tool_name == "Bash". Deny-list
+HẸP, đúng literal (GH-87):
+  rm-rf-root            rm -rf /   (token path đúng "/", space-normalized)
+  rm-rf-home            rm -rf ~
+  force-push-protected  git push kèm --force/-f lên wakii-dev|main|master
+                        (branch space-boundary — feature/wakii-dev-x không khớp)
+  reset-hard-main-repo  git reset --hard khi cwd = repo chính wakii
+                        (git rev-parse --show-toplevel, chỉ chạy khi pattern khớp)
+Match → exit 2 + stderr lý do; khác → exit 0. Mọi exception/parse error →
+exit 0 fail-open. WAKII_GUARD_OFF=1 → exit 0 ngay. subprocess duy nhất
+(rev-parse) chỉ chạy sau khi pattern khớp — perf path thường là regex-only.
+"""
+import json
+import os
+import re
+import subprocess
+import sys
+
+# Bin chạy trực tiếp — không đẻ __pycache__ (GH-27).
+sys.dont_write_bytecode = True
+
+# Pipe/stdin Windows mặc định cp1252 → chết UnicodeError (GH-27).
+for _s in (sys.stdin, sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
+GUARD_NAME = "story-guard-dangerous"
+# Repo chính wakii — guard chỉ cứng trên máy này (máy khác → khác toplevel →
+# không bao giờ block, fail-open đúng hướng).
+MAIN_REPO = "C:/Users/hoivk/Documents/wakii"
+
+RE_RM = re.compile(r"(?:^|\s)rm(?:\s|$)")
+RE_RM_FLAGS = {"-rf", "-fr"}
+RE_GIT_PUSH = re.compile(r"(?:^|\s)git\s+push(?:\s|$)")
+RE_FORCE = re.compile(r"(?:^|\s)(?:--force(?![\w-])|-f)(?:\s|$)")
+RE_PROTECTED = re.compile(r"(?:^|\s)(?:wakii-dev|main|master)(?:\s|$)")
+RE_RESET_HARD = re.compile(r"(?:^|\s)git\s+reset(?:\s+-{1,2}[\w-]+)*\s+--hard(?![\w-])(?:\s|$)")
+
+
+def is_main_repo():
+    try:
+        r = subprocess.run(["git", "rev-parse", "--show-toplevel"],
+                           capture_output=True, encoding="utf-8",
+                           errors="replace", timeout=5)
+        top = (r.stdout or "").strip() if r.returncode == 0 else ""
+    except Exception:
+        return False
+    if not top:
+        return False
+    return os.path.normcase(os.path.normpath(top)) == \
+        os.path.normcase(os.path.normpath(MAIN_REPO))
+
+
+def block(reason):
+    sys.stderr.write(
+        f"BLOCKED {GUARD_NAME}: {reason} — đặt WAKII_GUARD_OFF=1 để tắt nếu nhầm\n")
+    return 2
+
+
+def scan(cmd):
+    tokens = cmd.split()
+    # rm -rf / · rm -rf ~ — token path đúng literal "/" hoặc "~"
+    for i, t in enumerate(tokens[:-2]):
+        if t == "rm" and tokens[i + 1] in RE_RM_FLAGS and tokens[i + 2] in ("/", "~"):
+            return f"rm-rf-{'root' if tokens[i + 2] == '/' else 'home'}"
+    norm = " ".join(tokens)
+    # git push --force/-f lên nhánh bảo vệ
+    if RE_GIT_PUSH.search(norm) and RE_FORCE.search(norm) and RE_PROTECTED.search(norm):
+        return "force-push-protected"
+    # git reset --hard trên repo chính (subprocess chỉ chạy khi pattern khớp)
+    if RE_RESET_HARD.search(norm) and is_main_repo():
+        return "reset-hard-main-repo"
+    return None
+
+
+def main():
+    if os.environ.get("WAKII_GUARD_OFF") == "1":
+        return 0
+    data = json.loads(sys.stdin.read())
+    if not isinstance(data, dict) or data.get("tool_name") != "Bash":
+        return 0
+    tool_input = data.get("tool_input")
+    cmd = tool_input.get("command") if isinstance(tool_input, dict) else None
+    if not isinstance(cmd, str):
+        return 0
+    reason = scan(cmd)
+    if reason:
+        return block(reason)
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except Exception:
+        sys.exit(0)  # fail-open — guard không được treo Bash
