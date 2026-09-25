@@ -3,6 +3,7 @@ import type {
   GitCommitCompareResult
 } from '../../shared/git-diff-compare-types'
 import type { GitHistoryOptions, GitHistoryResult } from '../../shared/git-history'
+import type { GitBlameOptions, GitBlameResult } from '../../shared/git-blame-types'
 import type { GitConflictOperation } from '../../shared/git-status-types'
 import type { GitAdmissionTier } from '../git/command-runner/git-exec-options'
 import { SshGitNoninteractiveProvider } from './ssh-git-noninteractive-provider'
@@ -23,6 +24,13 @@ export class SshGitWorkingTreeProvider extends SshGitNoninteractiveProvider {
       worktreePath,
       ...options
     })) as GitHistoryResult
+  }
+
+  async getBlame(worktreePath: string, options: GitBlameOptions): Promise<GitBlameResult> {
+    return (await this.mux.request('git.blame', {
+      worktreePath,
+      filePath: options.filePath
+    })) as GitBlameResult
   }
 
   async commit(
