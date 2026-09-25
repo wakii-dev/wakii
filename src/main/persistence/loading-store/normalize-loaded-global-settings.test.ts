@@ -39,7 +39,9 @@ describe('retired Agents sidebar setting', () => {
 describe('editor minimap one-shot stamp (desktop store wiring)', () => {
   // Why a bespoke harness: normalizeLegacyProfile seeds defaults, which now carry the
   // stamp; a legacy profile predates the stamp entirely, so it must be stripped.
-  function normalizePreStampProfile(overrides: Record<string, unknown>): PersistedState['settings'] {
+  function normalizePreStampProfile(
+    overrides: Record<string, unknown>
+  ): PersistedState['settings'] {
     const defaults = getDefaultPersistedState(homedir())
     const settings: Partial<GlobalSettings> = { ...defaults.settings }
     delete settings.editorMinimapEnabledDefaultedOnForAllUsers
@@ -70,5 +72,46 @@ describe('editor minimap one-shot stamp (desktop store wiring)', () => {
     const defaults = getDefaultPersistedState(homedir())
     expect(defaults.settings.editorMinimapEnabled).toBe(true)
     expect(defaults.settings.editorMinimapEnabledDefaultedOnForAllUsers).toBe(true)
+  })
+})
+
+describe('structured chat shell environment settings', () => {
+  it('keeps a valid saved list and an explicit opt-out', () => {
+    const normalized = normalizeLegacyProfile({
+      nativeChatInheritShellEnvironment: false,
+      nativeChatShellEnvironmentVariables: ['HTTPS_PROXY', 'CODEX_LB_API_KEY']
+    })
+    expect(normalized.nativeChatInheritShellEnvironment).toBe(false)
+    expect(normalized.nativeChatShellEnvironmentVariables).toEqual([
+      'HTTPS_PROXY',
+      'CODEX_LB_API_KEY'
+    ])
+  })
+
+  it('degrades a malformed hand-edited value to the defaults instead of failing a chat', () => {
+    const normalized = normalizeLegacyProfile({
+      nativeChatInheritShellEnvironment: 'no',
+      nativeChatShellEnvironmentVariables: 'HTTPS_PROXY, CODEX_LB_API_KEY'
+    })
+    expect(normalized.nativeChatInheritShellEnvironment).toBe(true)
+    expect(normalized.nativeChatShellEnvironmentVariables).toEqual([])
+  })
+
+  it('drops non-string and invalid entries from a saved list', () => {
+    expect(
+      normalizeLegacyProfile({
+        nativeChatShellEnvironmentVariables: ['HTTPS_PROXY', 7, null, 'not valid', 'HTTPS_PROXY']
+      }).nativeChatShellEnvironmentVariables
+    ).toEqual(['HTTPS_PROXY'])
+  })
+})
+
+describe('machine name setting', () => {
+  it('trims persisted names and defaults missing legacy values to automatic detection', () => {
+    expect(normalizeLegacyProfile({ machineName: '  Build server  ' }).machineName).toBe(
+      'Build server'
+    )
+    expect(normalizeLegacyProfile({ machineName: undefined }).machineName).toBe('')
+    expect(normalizeLegacyProfile({ machineName: 'x'.repeat(300) }).machineName).toHaveLength(255)
   })
 })

@@ -13,6 +13,7 @@ import type {
 } from './agent-session-wire'
 import { backgroundTaskStatesEqual } from './agent-session-background-task-state-equality'
 import { agentJournalSubmissionKey } from './agent-session-journal-item-key'
+import { readAgentJournalTurn } from './agent-session-turn-record'
 
 /** The last host clock sample: `hostNow - receivedAt` is the client's skew from the host,
  *  which is what lets a client attaching mid-turn anchor its live counter on the real start. */
@@ -38,6 +39,9 @@ export type StructuredAgentSessionState = {
   activity?: AgentSessionTurnActivity | null
   /** Absent until a frame from a host that stamps `hostNow` has been applied. */
   hostClock?: StructuredAgentHostClock
+  /** Bumped per live batch that leaves a turn row's newest revision outside the window
+   *  (dropped or trimmed), so a whole-journal answer derived from turn rows is asked for again. */
+  unloadedTurnRevisions?: number
 }
 
 export type StructuredAgentSessionAction =
@@ -117,6 +121,26 @@ function mergeItems(
     }
   }
   return [...byId.values()].sort((left, right) => left.sequence - right.sequence)
+}
+
+/**
+ * Live rows the loaded window can take. The window is a contiguous suffix of the
+ * journal, and its oldest row is the load-older anchor. A revision of a row older
+ * than the window keeps that row's original sequence, so admitting it would move
+ * the anchor below the window and paging `before` it would skip every row between.
+ * The journal keeps the revision; the page reader serves it once the window
+ * reaches the row. With nothing older on the host the window is the whole journal
+ * and a row below the head (a revived tombstone) leaves no hole, so it is admitted.
+ */
+function liveItemsWithinWindow(
+  state: StructuredAgentSessionState,
+  incoming: readonly AgentJournalRenderItem[]
+): readonly AgentJournalRenderItem[] {
+  const head = state.items[0]
+  if (!head || !state.hasOlder) {
+    return incoming
+  }
+  return incoming.filter((item) => item.sequence >= head.sequence)
 }
 
 function trimRetainedItems(
@@ -220,8 +244,9 @@ export function reduceStructuredAgentSession(
   const backgroundTasks =
     event.backgroundTasks !== undefined ? event.backgroundTasks : state.backgroundTasks
   const activity = event.activity !== undefined ? event.activity : state.activity
+  const liveItems = liveItemsWithinWindow(state, event.batch.items)
   const journalUnchanged =
-    event.batch.items.length === 0 &&
+    liveItems.length === 0 &&
     event.batch.removedItemIds.length === 0 &&
     event.batch.submissions.length === 0
   if (
@@ -240,8 +265,15 @@ export function reduceStructuredAgentSession(
   }
   const merged = journalUnchanged
     ? state.items
-    : mergeItems(state.items, event.batch.items, event.batch.removedItemIds)
+    : mergeItems(state.items, liveItems, event.batch.removedItemIds)
   const items = trimRetainedItems(merged, state.retainedItemLimit)
+  const outsideWindow = [
+    ...(liveItems.length < event.batch.items.length
+      ? event.batch.items.filter((item) => !liveItems.includes(item))
+      : []),
+    ...merged.slice(0, merged.length - items.length)
+  ]
+  const lostTurnRow = outsideWindow.some((item) => readAgentJournalTurn(item.body) !== null)
   return {
     ...state,
     cursor: event.batch.cursor,
@@ -259,6 +291,7 @@ export function reduceStructuredAgentSession(
     commands: event.commands !== undefined ? event.commands : state.commands,
     ...(backgroundTasks !== undefined ? { backgroundTasks } : {}),
     ...(activity !== undefined ? { activity } : {}),
+    ...(lostTurnRow ? { unloadedTurnRevisions: (state.unloadedTurnRevisions ?? 0) + 1 } : {}),
     ...hostClockField(event.hostNow, receivedAt, state.hostClock)
   }
 }

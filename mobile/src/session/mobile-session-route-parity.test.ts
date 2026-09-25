@@ -69,10 +69,33 @@ const HOST_COMPONENT_NAMES = new Set([
 // the attachment probe. The screen's other four clipboard sites (the terminal's paste, the sheets,
 // the quick-command row, the diff-review send) sit outside the walk from `MobileSessionRouteScreen`
 // and so do not move this pin. The copy-path sheet also gained the failure toast the other two had.
-const HEAD_MAIN_HOOK_SHA256 = '7560aab8542f5cb28b0a559508f0b066ef9af22dceed0cf5c963ed4267f58add'
-const HEAD_HOOK_BINDING_SHA256 = 'a31554a477edda7abeb23b5b9b4f1e9add29434cc38aa6ced4035649c270a602'
+// Refreshed for `reportDictationFailure`, the whole of that +1: the composer's two dictation
+// failure handlers were one policy written twice, and only `onError`'s copy knew about the setup
+// sheet, so a refused start showed the desktop's own `voice_dictation_disabled` as a toast.
+//
+// Refreshed again for the page's keyboard: the screen's own `Keyboard.addListener` pair became the
+// `useSoftKeyboard` seam, because react-native-web never fires those events and the live input row
+// laid itself out under the IME. +2 hooks (the seam, and the one effect split into a visibility one
+// and a height one), +1 effect, -2 registrations and -2 removals for the listener pair, and -6
+// strings: the four event names and the two `'ios'` guards that chose between them. Re-recorded
+// against the merged tree, since neither side's hash covers the other's change.
+//
+// Refreshed for the terminal fields' submit seam: react-native-web withholds `onSubmitEditing`
+// when the Enter keydown reports an open composition, which is a soft keyboard's normal mid-word
+// state, so both of the dock's fields also bind the page's own line-break signal. +4 hooks and +2
+// callbacks in the send actions — `submitLiveInput` and `submitBufferedDraft`, each with a
+// `useTerminalTextFieldSubmitBinding` beside it — and both fields moved their ref, the live one
+// its submit handler too.
+// Moved once more, -1 hook and -1 callback: `submitBufferedDraft` stopped being a `useCallback`.
+// Memoizing it on `[]` froze the per-render `handleSend` it reads, whose guard needs a `client`
+// and an `activeHandle` the first render does not have, so the page's line-break submit could
+// never pass it. Found by pullfrog on #22300.
+// Moved, count unchanged, when the Markdown actions' Back `useEffect` became `useBackClaim`, the
+// seam that also claims the key on the page while a draft is dirty.
+const HEAD_MAIN_HOOK_SHA256 = '016a87856164feabbf5e9ed3a55f7f05b0dd928d8b372aa5e4eba6004b78ea05'
+const HEAD_HOOK_BINDING_SHA256 = 'df7549ba40bbeab9bdf82555dcbfc3ca09c1148efc85318e6246c0de0145b13d'
 const HEAD_CALLBACK_IDENTITY_SHA256 =
-  'ed45268b61372abcfeb29e9ce91822f1fb5214542b78356c7cef869824a09d37'
+  'e396ab759b2401acef45dea428e97c7f8f24fff41aae7fb7858da5a5b145c64c'
 // Pins that no callback body in the route changed unnoticed. Body text, not behaviour: the sends
 // and repo reads inside them now name their `RpcOperation` instead of the raw `sendRequest` port.
 // Refreshed in step 6 for the gesture flush, whose `terminal.send` became `terminalInputSend` and
@@ -90,7 +113,9 @@ const HEAD_CALLBACK_IDENTITY_SHA256 =
 // frame cap inside the shell's page, and the Markdown copy action gained the failure branch that
 // answers a refused write. Re-recorded against the merged tree, since neither side's hash covers
 // the other's body. The hook and string counts are C7.2's and stand.
-const HEAD_CALLBACK_BODY_SHA256 = '5845c3b85217a3af9d3d2bfafe564a2b29a1b2c6776b5c2c9ec5afbf365a5157'
+// Refreshed once more for the two dictation failure handlers, which now both call
+// `reportDictationFailure` instead of each choosing between the setup sheet and a toast.
+const HEAD_CALLBACK_BODY_SHA256 = '349ad6f766da14b3bce23a13f3a67f2b013efadd8896f63b7b68e724b9726d9b'
 // Refreshed for the startup effect: both `worktree.activate` sends became `worktreeActivate`, and
 // the sleeping-agent check reads that operation's verdict instead of the reply envelope. Refreshed
 // again when the reporter took the reply and interpreted it itself, retiring the hand-built
@@ -98,7 +123,9 @@ const HEAD_CALLBACK_BODY_SHA256 = '5845c3b85217a3af9d3d2bfafe564a2b29a1b2c6776b5
 // last-visited-worktree effect, whose bare store write became the one writer of that key, so the
 // hybrid shell's page mirror sees it as it is written rather than one `init` later. Refreshed for
 // the diff-comments effect, which now catches the loader's rejection. Count unchanged.
-const HEAD_EFFECT_SHA256 = '56f79e07165ef18b918f4bd7773b678b47fc568080445baa4604e6be614fda09'
+// Moved again by the keyboard seam above, which is the +1 effect.
+// -1 effect for the Markdown actions' Back registration, which is `useBackClaim`'s own now.
+const HEAD_EFFECT_SHA256 = '61ae541ab5b9df23ebbd8e2f4703fef9e1bb58ba39af9aefbecdf1078b125c3b'
 const HEAD_CONTENT_HOOK_SHA256 = '9c3b612fef3f370d66873aefdbe1d701f20cb64ded31fef5cc45fde6f8189581'
 // Same pin for the 12 bodies that sit in nested functions rather than callbacks, moved by the same
 // rewrite of those send and read expressions. Count unchanged. Refreshed again in step 6 for
@@ -109,10 +136,11 @@ const HEAD_CONTENT_HOOK_SHA256 = '9c3b612fef3f370d66873aefdbe1d701f20cb64ded31fe
 // optimistic placement, which defers to legacy host snapshots when ownership paths disagree.
 const HEAD_NESTED_FUNCTION_SHA256 =
   '97a0648f0afa5891bba4b6efd2fb6b61887ba7aaedb04789385a53f41eeaa400'
+// -1 registration and -1 removal: the Markdown actions' `BackHandler` pair is `useBackClaim`'s.
 const HEAD_NATIVE_REGISTRATION_SHA256 =
-  'cab85e4e4a3f43289ba93ddea9ccce57aea83e0bf14fd1620a965aad0c1cb49e'
+  '87d4599f475575131d4d5daa20f0dac579ca6c829353cbb654206ea6965dadae'
 const HEAD_NATIVE_REMOVAL_SHA256 =
-  '4c994574675a2a0f9c607b3ea89ab7a2ed5a83f7c72fa42342ddcb5f00fc3f4f'
+  '089bebbc1e4f2e68c5dbaf189bb605d8d5bb247ef5ca52b9db08cc2661afc097'
 const HEAD_TIMER_CREATION_SHA256 =
   '1a31b625e2174c3db77272249843196d2b6b06ab1e654a96d8f7858e3082e66b'
 const HEAD_TIMER_CLEANUP_SHA256 = 'c73f1d1c2cc89642f3d727d6f3b6b81860a9d6f34234541a2065ec3d1a8cd116'
@@ -131,9 +159,22 @@ const HEAD_TIMER_CLEANUP_SHA256 = 'c73f1d1c2cc89642f3d727d6f3b6b81860a9d6f342345
 // hash. The effect hash moved a second time and back: the diff-notes loader's uncaught rejection
 // was caught and then reverted, because the fix moves `matrix-session.diff-notes-worktree.show-1`
 // and a golden is a review event — so this hash is the one the uncaught `void` call produces.
+//
+// 536 -> 530 for the keyboard seam above: the four event names and the two `'ios'` guards left
+// with the listener pair.
+//
+// The host-JSX hash moved for the header's reconnect tap, which now also checks the re-dial exists:
+// the page's provider hands out none. Nothing a phone renders or does changed.
+//
+// 530 -> 529: `'hardwareBackPress'` left with the Markdown actions' registration for `useBackClaim`.
+//
+// 529 -> 530, and the host-JSX hash: `key="terminal-frame"`, so the page's frame mounts with its
+// onLayout rather than reusing the loading View. Native measured 47 rows before and after: its
+// frame reported either way, and its window is its frame, so both measure paths agree there.
 const HEAD_RUNTIME_STRING_SHA256 =
-  '875f5171cfbaebb41cbe5490e504c5216a964199d340bb40f5110b47df5adc9b'
-const HEAD_HOST_JSX_SHA256 = '4075dd9dd39274c77dca58fba2cd94ea0b41e067e34a4ad32fb8988f4ed0133a'
+  'a8e819600a86825c2fa5ed0b9054d1466f627e203e78a077494fd6f55d4397a3'
+// Moved by both of the dock's fields: their refs, and the live one's submit handler, are the seam's now.
+const HEAD_HOST_JSX_SHA256 = 'fac74d054b78cc2d6018cb88d03164bd1caf20b7bc1c04c9bfb0508747e2ead5'
 const HEAD_LEAF_JSX_SHA256 = '2b55522041585b87f4b80c5f456e4f2c892999cc2f19d0b75414c8bd57729a03'
 const HEAD_STYLE_REFERENCE_SHA256 =
   '3da91c93b9b4ac469e64c2aed000ef92f54e0876bebeae70a75ec7e7e97d7c96'
@@ -525,10 +566,10 @@ describe('mobile session route extraction parity', () => {
     const contentBindings = CONTENT_COMPONENT_NAMES.flatMap(
       (name) => readHookFacts(name, definitions).bindings
     )
-    expect(main.hooks).toHaveLength(274)
+    expect(main.hooks).toHaveLength(280)
     expect(hash(main.hooks)).toBe(HEAD_MAIN_HOOK_SHA256)
     expect(hash(main.bindings)).toBe(HEAD_HOOK_BINDING_SHA256)
-    expect(main.callbacks).toHaveLength(77)
+    expect(main.callbacks).toHaveLength(79)
     expect(hash(main.callbacks)).toBe(HEAD_CALLBACK_IDENTITY_SHA256)
     expect(hash(main.callbackBodies)).toBe(HEAD_CALLBACK_BODY_SHA256)
     expect(main.effects).toHaveLength(24)
@@ -543,9 +584,9 @@ describe('mobile session route extraction parity', () => {
   it('preserves native listeners, timers, identity payloads, and compatibility gates', () => {
     const definitions = readDefinitions()
     const native = readNativeAndTimerFacts(definitions)
-    expect(native.registrations).toHaveLength(7)
+    expect(native.registrations).toHaveLength(4)
     expect(hash(native.registrations)).toBe(HEAD_NATIVE_REGISTRATION_SHA256)
-    expect(native.removals).toHaveLength(9)
+    expect(native.removals).toHaveLength(6)
     expect(hash(native.removals)).toBe(HEAD_NATIVE_REMOVAL_SHA256)
     expect(native.creations.filter((fact) => fact.startsWith('setTimeout'))).toHaveLength(7)
     expect(native.creations.filter((fact) => fact.startsWith('setInterval'))).toHaveLength(1)
@@ -570,7 +611,7 @@ describe('mobile session route extraction parity', () => {
 
   it('preserves runtime strings, styles, and the expanded JSX tree', () => {
     const strings = readRuntimeStrings()
-    expect(strings).toHaveLength(535)
+    expect(strings).toHaveLength(529)
     expect(hash(strings)).toBe(HEAD_RUNTIME_STRING_SHA256)
     const jsx = readJsxFacts(readDefinitions())
     expect(jsx.host).toHaveLength(122)

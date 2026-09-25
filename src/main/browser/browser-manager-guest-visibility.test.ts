@@ -52,8 +52,7 @@ const {
   guestSetBackgroundThrottlingMock,
   guestSetWindowOpenHandlerMock,
   guestOpenDevToolsMock,
-  webContentsFromIdMock,
-  browserWindowFromWebContentsMock
+  webContentsFromIdMock
 } = browserMocks
 
 describe('browserManager', () => {
@@ -66,74 +65,7 @@ describe('browserManager', () => {
     vi.useRealTimers()
   })
 
-  it('activates the owning browser workspace when ensuring a page-backed guest is visible', async () => {
-    const rendererExecuteJavaScriptMock = vi
-      .fn()
-      .mockResolvedValueOnce({
-        prevTabType: 'terminal',
-        prevActiveWorktreeId: 'wt-1',
-        prevActiveBrowserWorkspaceId: 'workspace-prev',
-        prevActiveBrowserPageId: 'page-prev',
-        prevFocusedGroupTabId: 'tab-prev',
-        targetWorktreeId: 'wt-1',
-        targetBrowserWorkspaceId: 'workspace-1',
-        targetBrowserPageId: 'page-1'
-      })
-      .mockResolvedValueOnce(undefined)
-    const guest = {
-      id: 707,
-      isDestroyed: vi.fn(() => false),
-      getType: vi.fn(() => 'webview'),
-      setBackgroundThrottling: guestSetBackgroundThrottlingMock,
-      setWindowOpenHandler: guestSetWindowOpenHandlerMock,
-      on: guestOnMock,
-      off: guestOffMock,
-      openDevTools: guestOpenDevToolsMock
-    }
-    const renderer = {
-      id: rendererWebContentsId,
-      isDestroyed: vi.fn(() => false),
-      executeJavaScript: rendererExecuteJavaScriptMock
-    }
-    browserWindowFromWebContentsMock.mockReturnValue({ isFocused: vi.fn(() => true) })
-    webContentsFromIdMock.mockImplementation((id: number) => {
-      if (id === guest.id) {
-        return guest
-      }
-      if (id === rendererWebContentsId) {
-        return renderer
-      }
-      return null
-    })
-
-    browserManager.attachGuestPolicies(guest as never)
-    browserManager.registerGuest({
-      browserPageId: 'page-1',
-      workspaceId: 'workspace-1',
-      worktreeId: 'wt-1',
-      webContentsId: guest.id,
-      rendererWebContentsId
-    })
-
-    const restore = await browserManager.ensureWebviewVisible(guest.id)
-
-    const activationScript = rendererExecuteJavaScriptMock.mock.calls[0]?.[0]
-    expect(activationScript).toContain('var browserWorkspaceId = "workspace-1";')
-    expect(activationScript).toContain('var browserPageId = "page-1";')
-    expect(activationScript).toContain('state.setActiveBrowserTab(browserWorkspaceId);')
-    expect(activationScript).toContain(
-      'state.setActiveBrowserPage(browserWorkspaceId, browserPageId);'
-    )
-    expect(activationScript).toContain('var targetWorktreeId = "wt-1";')
-
-    restore()
-  })
-
-  it('acquires renderer automation visibility without changing active browser state', async () => {
-    const rendererExecuteJavaScriptMock = vi
-      .fn()
-      .mockResolvedValueOnce('lease-1')
-      .mockResolvedValueOnce(true)
+  it('holds capture paint one-way and keeps the renderer unthrottled until the last release', () => {
     const guest = {
       id: 1707,
       isDestroyed: vi.fn(() => false),
@@ -147,7 +79,9 @@ describe('browserManager', () => {
     const renderer = {
       id: rendererWebContentsId,
       isDestroyed: vi.fn(() => false),
-      executeJavaScript: rendererExecuteJavaScriptMock
+      executeJavaScript: vi.fn(() => new Promise(() => {})),
+      send: vi.fn(),
+      setBackgroundThrottling: vi.fn()
     }
     webContentsFromIdMock.mockImplementation((id: number) => {
       if (id === guest.id) {
@@ -158,27 +92,36 @@ describe('browserManager', () => {
       }
       return null
     })
-
     browserManager.attachGuestPolicies(guest as never)
     browserManager.registerGuest({
-      browserPageId: 'page-automation',
+      browserPageId: 'page-capture',
       workspaceId: 'workspace-1',
       worktreeId: 'wt-1',
       webContentsId: guest.id,
       rendererWebContentsId
     })
 
-    const restore = await browserManager.acquireAutomationVisibility(guest.id)
-    const acquireScript = rendererExecuteJavaScriptMock.mock.calls[0]?.[0]
-    expect(acquireScript).toContain('__orcaBrowserAutomationVisibility')
-    expect(acquireScript).toContain('bridge.acquire("page-automation")')
-    expect(acquireScript).not.toContain('setActiveBrowserTab')
-    expect(acquireScript).not.toContain('setActiveTabType')
+    // Synchronous: a capture never waits on the desktop renderer.
+    const releaseFirst = browserManager.holdPaintForCapture(guest.id)
+    const releaseSecond = browserManager.holdPaintForCapture(guest.id)
 
-    restore()
+    expect(renderer.executeJavaScript).not.toHaveBeenCalled()
+    expect(renderer.send.mock.calls).toEqual([
+      ['browser:capturePaintHold', { browserPageId: 'page-capture', held: true }]
+    ])
+    expect(renderer.setBackgroundThrottling.mock.calls).toEqual([[false]])
 
-    const releaseScript = rendererExecuteJavaScriptMock.mock.calls[1]?.[0]
-    expect(releaseScript).toContain('bridge.release("lease-1")')
+    releaseFirst()
+    releaseFirst()
+    expect(renderer.send).toHaveBeenCalledTimes(1)
+    expect(renderer.setBackgroundThrottling.mock.calls).toEqual([[false]])
+
+    releaseSecond()
+    expect(renderer.send.mock.calls.at(-1)).toEqual([
+      'browser:capturePaintHold',
+      { browserPageId: 'page-capture', held: false }
+    ])
+    expect(renderer.setBackgroundThrottling.mock.calls).toEqual([[false], [true]])
   })
 
   it('returns a no-op automation visibility restore when renderer acquire hangs', async () => {
@@ -513,5 +456,10 @@ describe('browserManager', () => {
     await browserManager.ensureWebviewVisible(guest.id)
 
     expect(browserWindowFromWebContentsMock).not.toHaveBeenCalled()
+  })
+
+  it('returns a no-op capture hold for a guest no page owns', () => {
+    const release = browserManager.holdPaintForCapture(424242)
+    expect(() => release()).not.toThrow()
   })
 })
