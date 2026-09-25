@@ -1,0 +1,17 @@
+{
+  "description": "PreToolUse guard chặn Bash phá hỏng: rm -rf /|~ , git push --force/-f lên wakii-dev|main|master, git reset --hard trên repo chính wakii — exit 2 block, fail-open, WAKII_GUARD_OFF=1 tắt. Command dùng placeholder {KIT_BIN}: story-hooks-install thay bằng <install-dir>/bin khi merge.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 {KIT_BIN}/story-guard-dangerous",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
