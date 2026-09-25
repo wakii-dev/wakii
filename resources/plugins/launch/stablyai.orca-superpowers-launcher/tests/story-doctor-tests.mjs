@@ -64,6 +64,12 @@ function hookSettings(root) {
       SessionStart: [{ hooks: [hook('hook-session-start')] }],
       PostToolUse: [{ matcher: 'Bash', hooks: [hook('hook-post-tool-use')] }],
       Stop: [{ hooks: [hook('hook-stop')] }],
+      // c9 (GH-87): guards wired — command chứa /story-guard-* mà doctor quét
+      PreToolUse: [
+        { matcher: 'Bash', hooks: [hook('story-guard-secrets')] },
+        { matcher: 'Bash', hooks: [hook('story-guard-dangerous')] },
+        { matcher: 'Edit|Write|MultiEdit', hooks: [hook('story-guard-envfiles')] },
+      ],
     },
   }, null, 2)
 }
@@ -94,12 +100,12 @@ console.log('== [DR1] khoẻ — full fixture, exit 0, --json parse ==')
   let out = null
   try { out = JSON.parse(r.stdout) } catch (e) { check('DR1', 'json parse', false, String(e)) }
   if (out) {
-    check('DR1', '8 checks', Array.isArray(out.checks) && out.checks.length === 8, `got ${out.checks && out.checks.length}`)
+    check('DR1', '9 checks', Array.isArray(out.checks) && out.checks.length === 9, `got ${out.checks && out.checks.length}`)
     check('DR1', 'exit field ok', out.exit === 'ok', `got ${JSON.stringify(out.exit)}`)
     const by = Object.fromEntries((out.checks || []).map(c => [c.name, c]))
-    for (const name of ['marker', 'kit-hash', 'bins', 'deps', 'hooks', 'kb', 'orphans', 'agents-skills'])
+    for (const name of ['marker', 'kit-hash', 'bins', 'deps', 'hooks', 'kb', 'orphans', 'agents-skills', 'hooks-manifests'])
       check('DR1', `check ${name} hiện diện`, !!by[name])
-    for (const name of ['marker', 'kit-hash', 'bins', 'deps', 'hooks', 'orphans', 'agents-skills'])
+    for (const name of ['marker', 'kit-hash', 'bins', 'deps', 'hooks', 'orphans', 'agents-skills', 'hooks-manifests'])
       check('DR1', `${name} PASS`, by[name] && by[name].status === 'pass', by[name] && by[name].status + ': ' + by[name].detail)
     check('DR1', 'kb WARN (KB chưa config)', by.kb && by.kb.status === 'warn', by.kb && by.kb.status)
     for (const c of out.checks || [])
@@ -314,6 +320,55 @@ console.log('== [DR14] usage ==')
   check('DR14', '--root thiếu value → exit 2', r.status === 2, `code=${r.status}`)
   const r2 = run(['--root', emptyCwd, '--kb-dir'])
   check('DR14', '--kb-dir thiếu value → exit 2', r2.status === 2, `code=${r2.status}`)
+}
+
+// ---- DR15: c9 hooks-manifests — WARN thiếu wiring · skip kit/hooks vắng · manifest hỏng
+console.log('== [DR15] c9 hooks-manifests ==')
+{
+  // 15a: settings không wiring guards (kit root = KIT source có manifests) → WARN + fix hint
+  const fx = makeFixture({
+    settings: root => JSON.stringify({
+      hooks: {
+        SessionStart: [{ hooks: [{ type: 'command', command: join(root, 'bin', 'hook-session-start'), timeout: 10 }] }],
+        PostToolUse: [{ matcher: 'Bash', hooks: [{ type: 'command', command: join(root, 'bin', 'hook-post-tool-use'), timeout: 10 }] }],
+        Stop: [{ hooks: [{ type: 'command', command: join(root, 'bin', 'hook-stop'), timeout: 10 }] }],
+      },
+    }),
+  })
+  const r = run(['--root', fx, '--json'], { cwd: emptyCwd, env: noKbEnv })
+  check('DR15', '15a exit 0 (WARN không FAIL)', r.status === 0, `code=${r.status}`)
+  const out = JSON.parse(r.stdout)
+  const c = out.checks.find(x => x.name === 'hooks-manifests')
+  check('DR15', '15a WARN thiếu wiring', c && c.status === 'warn' && c.detail.includes('story-guard-secrets'), c && JSON.stringify(c))
+  check('DR15', '15a fix hint chạy story-hooks-install', c && c.fix && c.fix.includes('story-hooks-install'), c && c.fix)
+  rmSync(fx, { recursive: true, force: true })
+
+  // 15b: kit root riêng KHÔNG hooks/ → skip im lặng (check không xuất hiện)
+  const fx2 = makeFixture()
+  cpSync(BIN, join(fx2, 'bin', 'story-doctor'))
+  writeFileSync(join(fx2, 'kit.json'), JSON.stringify(kitJson, null, 2))
+  const r2 = spawnSync(PY, [join(fx2, 'bin', 'story-doctor'), '--root', fx2, '--json'],
+    { encoding: 'utf8', timeout: 60000, cwd: emptyCwd, env: noKbEnv })
+  const out2 = JSON.parse(r2.stdout)
+  check('DR15', '15b kit/hooks vắng → skip im lặng',
+    !out2.checks.some(x => x.name === 'hooks-manifests'),
+    JSON.stringify(out2.checks.map(x => x.name)))
+  check('DR15', '15b 8 checks (không c9)', out2.checks.length === 8, `got ${out2.checks.length}`)
+  rmSync(fx2, { recursive: true, force: true })
+
+  // 15c: manifest JSON hỏng trong kit root riêng → WARN manifest hỏng
+  const fx3 = makeFixture()
+  cpSync(BIN, join(fx3, 'bin', 'story-doctor'))
+  writeFileSync(join(fx3, 'kit.json'), JSON.stringify(kitJson, null, 2))
+  mkdirSync(join(fx3, 'hooks'), { recursive: true })
+  cpSync(join(KIT_ROOT, 'hooks', 'story-guard-secrets.json'), join(fx3, 'hooks', 'story-guard-secrets.json'))
+  writeFileSync(join(fx3, 'hooks', 'story-guard-broken.json'), '{hong')
+  const r3 = spawnSync(PY, [join(fx3, 'bin', 'story-doctor'), '--root', fx3, '--json'],
+    { encoding: 'utf8', timeout: 60000, cwd: emptyCwd, env: noKbEnv })
+  const out3 = JSON.parse(r3.stdout)
+  const c3 = out3.checks.find(x => x.name === 'hooks-manifests')
+  check('DR15', '15c manifest hỏng → WARN broken (wired hợp lệ vẫn đếm)', c3 && c3.status === 'warn' && c3.detail.includes('story-guard-broken'), c3 && JSON.stringify(c3))
+  rmSync(fx3, { recursive: true, force: true })
 }
 
 rmSync(emptyCwd, { recursive: true, force: true })

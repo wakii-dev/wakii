@@ -1,0 +1,17 @@
+{
+  "description": "PreToolUse guard chặn ghi file nhạy cảm (.env, .env.*, *.pem, id_rsa*, *.key) qua Edit|Write|MultiEdit — exit 2 block, fail-open, WAKII_GUARD_OFF=1 tắt. Command dùng placeholder {KIT_BIN}: story-hooks-install thay bằng <install-dir>/bin khi merge.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 {KIT_BIN}/story-guard-envfiles",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

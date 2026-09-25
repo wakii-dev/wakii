@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""story-doctor — kit health check (GH-85 SF-1).
+"""story-doctor — kit health check (GH-85 SF-1, c9 GH-87 SF-1).
 
-Read-only chẩn đoán kit story-team đã cài: 8 checks PASS/WARN/FAIL, mỗi
+Read-only chẩn đoán kit story-team đã cài: 9 checks PASS/WARN/FAIL, mỗi
 WARN/FAIL kèm dòng `fix:`. KHÔNG auto-fix, KHÔNG đụng installKit — máy khoẻ
 exit 0 (WARN không FAIL), ≥1 FAIL → exit 1. Học pattern --health-check của
 claude-code-templates (aitmpl.com 31.7k★).
@@ -11,7 +11,9 @@ CLI: story-doctor [--root <install-dir>] [--kb-dir <path>] [--json]
   --kb-dir override KB dir (resolve như story-kb: --kb-dir > WAKII_KB_DIR > candidates)
   --json   machine-readable: {"checks":[{name,status,detail,fix}],"exit":"ok|fail"}
 
-Checks: marker · kit-hash · bins · deps · hooks · kb · orphans · agents-skills.
+Checks: marker · kit-hash · bins · deps · hooks · kb · orphans · agents-skills
+· hooks-manifests (c9 — mỗi kit/hooks/*.json phải có entry command chứa tên bin
+tương ứng trong settings.json; kit/hooks vắng → skip im lặng).
 Chạy từ kit/bin (dev): kit.json sibling có → full check. Chạy từ ~/.claude/bin:
 installKit không copy kit.json → checks phụ thuộc manifest fail-open WARN
 (marker vẫn là nguồn truth). Exit: 0 (chỉ PASS/WARN) · 1 (≥1 FAIL) · 2 (usage).
@@ -379,6 +381,58 @@ def check_agents_skills(root, kit_json):
     return Check("agents-skills", "pass", f"{len(agents)} agents + {len(skills)} skills đủ ở {root}")
 
 
+def check_hooks_manifests(kit_root, root):
+    """c9 (GH-87): mỗi kit/hooks/*.json phải wired trong settings.json — có entry
+    command chứa tên bin tương ứng. kit/hooks vắng → None (skip im lặng — máy
+    cài qua installKit không có manifests, không phải lỗi). Chỉ WARN (c5 hooks
+    đã FAIL đường settings hỏng — c9 không nhân đôi)."""
+    hooks_dir = os.path.join(kit_root, "hooks")
+    try:
+        manifests = sorted(f for f in os.listdir(hooks_dir) if f.endswith(".json")) \
+            if os.path.isdir(hooks_dir) else []
+    except OSError:
+        return None
+    if not manifests:
+        return None
+    wired_cmds = ""
+    settings_path = os.path.join(root, "settings.json")
+    try:
+        with open(settings_path, encoding="utf-8") as f:
+            settings = json.load(f)
+        for group in (settings.get("hooks") or {}).values():
+            if not isinstance(group, list):
+                continue
+            for ent in group:
+                for hook in ((ent or {}).get("hooks") or []):
+                    wired_cmds += str((hook or {}).get("command") or "").replace("\\", "/") + "\n"
+    except (OSError, ValueError, AttributeError):
+        return Check("hooks-manifests", "warn",
+                     f"settings.json không đọc được ({settings_path}) — không xác minh được wiring manifests",
+                     f"chạy {os.path.join(root, 'bin', 'story-hooks-install')} sau khi sửa settings")
+    missing, broken = [], []
+    for mf in manifests:
+        bin_name = mf[:-len(".json")]
+        if f"/{bin_name}" in wired_cmds:
+            try:
+                with open(os.path.join(hooks_dir, mf), encoding="utf-8") as f:
+                    json.load(f)
+            except (OSError, ValueError) as e:
+                broken.append(f"{mf} (manifest hỏng: {e})")
+            continue
+        missing.append(mf)
+    if missing:
+        return Check("hooks-manifests", "warn",
+                     f"manifest chưa wired: {', '.join(missing)}",
+                     f"chạy {os.path.join(root, 'bin', 'story-hooks-install')}")
+    if broken:
+        return Check("hooks-manifests", "warn",
+                     f"manifest JSON hỏng — skip validate: {'; '.join(broken)}",
+                     "sửa JSON manifest trong kit/hooks/")
+    return Check("hooks-manifests", "pass",
+                 f"{len(manifests)} manifests wired: "
+                 + ", ".join(m[:-len('.json')] for m in manifests))
+
+
 # ── main ──────────────────────────────────────────────────────────────────────
 
 def parse_args(argv):
@@ -443,6 +497,9 @@ def main(argv):
         check_orphans(root, kit_json),
         check_agents_skills(root, kit_json),
     ]
+    c9 = check_hooks_manifests(kit_root, root)
+    if c9 is not None:
+        checks.append(c9)
     exit_fail = any(c.status == "fail" for c in checks)
 
     if as_json:
