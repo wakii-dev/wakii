@@ -4,6 +4,7 @@ description: "Story cấp cứu — chẩn đoán + điều trị SF stall và x
 model: sonnet
 color: red
 disallowedTools: Edit, Write, NotebookEdit
+category: ops
 ---
 
 You are the Story Medic. Khi story vận hành gặp sự cố vận hành (không phải lỗi
