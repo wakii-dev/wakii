@@ -292,7 +292,8 @@
       "clearHosts": "Clear hosts",
       "clearProjects": "Clear projects",
       "back": "Back",
-      "ariaActive": "Filter: {{value0}} active."
+      "ariaActive": "Filter: {{value0}} active.",
+      "scopedTo": "Scoped to"
     },
     "taskUrl": {
       "loadingHint": "Loading {{value0}}…",
@@ -611,7 +612,9 @@
           "060d152fb5": "Trae",
           "d443a47995": "Prime Agent",
           "mimo_code_label": "MiMo Code",
-          "opencode2_label": "OpenCode 2"
+          "opencode2_label": "OpenCode 2",
+          "muse_label": "Muse",
+          "zcode_label": "ZCode"
         },
         "skill": {
           "cli": {
@@ -985,7 +988,8 @@
             "tooMany": "You can attach up to {{maxCount}} images.",
             "dimensionsTooLarge": "{{fileName}} has dimensions that are too large to preview safely.",
             "invalidImage": "{{fileName}} is not a valid supported image.",
-            "additionalErrors": "{{count}} additional images could not be attached."
+            "additionalErrors": "{{count}} additional images could not be attached.",
+            "totalTooLarge": "{{fileName}} would bring the attachments over {{maxSize}} in total."
           }
         }
       },
@@ -1172,7 +1176,10 @@
         "title": "macOS permissions may not reach Wakii terminals",
         "description": "Running Wakii terminals are hosted by a daemon started by a previous Wakii installation. macOS may not apply Wakii’s Accessibility, Automation, or protected-file permissions to them. Restart the daemon from Manage Sessions to restore access. This will close all running Wakii terminals.",
         "openManageSessions": "Open Manage Sessions",
-        "dismiss": "Dismiss"
+        "dismiss": "Dismiss",
+        "folderAccessTitle": "Terminals can’t read your {{folder}}",
+        "folderAccessDescription": "macOS is blocking Wakii’s terminal service from this folder, so commands run there may fail until it’s fixed.",
+        "folderAccessFix": "Fix"
       },
       "ipc": {
         "events": {
@@ -1973,7 +1980,23 @@
         "continueRefused_one": "{{value0}} chat could not be continued. Open it to continue manually.",
         "continueRefused_other": "{{value0}} chats could not be continued. Open them to continue manually.",
         "dismissAll": "Dismiss all",
-        "dismissUnconfirmed": "Dismissing the resume offer was not confirmed — it may still be in the status bar."
+        "dismissUnconfirmed": "Dismissing the resume offer was not confirmed — it may still be in the status bar.",
+        "notContinuedOne": "1 chat couldn’t be resumed",
+        "notContinuedMany": "{{value0}} chats couldn’t be resumed",
+        "notConfirmedOne": "Couldn’t confirm 1 chat was resumed",
+        "notConfirmedMany": "Couldn’t confirm {{value0}} chats were resumed",
+        "notConfirmedOtherOne": "Couldn’t confirm 1 other chat was resumed",
+        "notConfirmedOtherMany": "Couldn’t confirm {{value0}} other chats were resumed",
+        "show": "Show",
+        "dismiss": "Dismiss",
+        "activityUnnamed": "unnamed",
+        "activityApproval": "Waiting for your approval: {{value0}}",
+        "activityQuestion": "Waiting for your answer: {{value0}}",
+        "activityMidReply": "Was mid-reply",
+        "activitySubagentOne": "Subagent running: {{value0}}",
+        "activitySubagentMany": "{{value0}} subagents running",
+        "activityMonitorOne": "Monitoring: {{value0}}",
+        "activityMonitorMany": "Monitoring {{value0}} background tasks"
       },
       "StarNagCard": {
         "92b0f9d921": "is authenticated and try again.",
@@ -3374,6 +3397,14 @@
           "TerminalQuickCommandsSubmenu": {
             "3ccc7981bb": "Host unavailable",
             "54f29b7c0d": "Loading host…"
+          },
+          "zcode": {
+            "missing": {
+              "tui": {
+                "title": "This ZCode build has no terminal UI",
+                "description": "Wakii's hooks installed correctly — the zcode on your PATH just cannot open a session. The ZCode desktop app bundles the agent runtime without its terminal UI. Install a zcode that ships the TUI, then run zcode outside Wakii to confirm."
+              }
+            }
           }
         }
       },
@@ -3979,6 +4010,11 @@
                 "apiKey": "MiniMax API key expired. Replace it in Settings.",
                 "cookie": "MiniMax session cookie expired. Replace it in Settings."
               }
+            },
+            "usage": {
+              "noSubscription": {
+                "label": "No subscription"
+              }
             }
           },
           "SshTargetStatusRow": {
@@ -4069,7 +4105,17 @@
             "label": "{{value0}} chats to resume",
             "ariaLabelOne": "1 chat available to resume",
             "ariaLabel": "{{value0}} chats available to resume",
-            "tooltip": "Open interrupted chats available to resume"
+            "tooltip": "Open interrupted chats available to resume",
+            "failedLabelOne": "1 chat failed to resume",
+            "failedLabel": "{{value0}} chats failed to resume",
+            "failedAriaOne": "1 chat failed to resume. Click for details.",
+            "failedAria": "{{value0}} chats failed to resume. Click for details.",
+            "failedTooltip": "Chats Wakii could not resume after the restart. Click for details.",
+            "checkLabelOne": "1 chat to check",
+            "checkLabel": "{{value0}} chats to check",
+            "checkAriaOne": "1 chat to check after resuming. Click for details.",
+            "checkAria": "{{value0}} chats to check after resuming. Click for details.",
+            "checkTooltip": "Chats Wakii couldn’t resume, or couldn’t confirm it resumed, after the restart. Click for details."
           }
         }
       },
@@ -4278,7 +4324,9 @@
           "ca6bc5fded": "Refresh",
           "e06d1baf5c": "Refresh usage overview",
           "c760c481c5": "Usage Overview",
-          "55c910f4f1": "- some model prices are unavailable"
+          "55c910f4f1": "- some model prices are unavailable",
+          "enableMuse": "Enable Muse",
+          "noLocalUsageYet": "No local Claude, Codex, OpenCode, or Muse usage found yet. The overview will populate after the next agent session writes token logs."
         },
         "share": {
           "card": {
@@ -4315,7 +4363,8 @@
             "e7f0a1b2c3": "subscription",
             "d6e9f0a1b2": "credits",
             "a3b6c7d8e9": "grok usage",
-            "9f2a3b4c5d": "xai"
+            "9f2a3b4c5d": "xai",
+            "museKeyword": "muse"
           }
         },
         "usage": {
@@ -4349,7 +4398,8 @@
               "d9a4b3e2f1c5": "events",
               "statusScanning": "Scanning",
               "statusEnabled": "Enabled",
-              "statusOff": "Off"
+              "statusOff": "Off",
+              "recentCombinedActivity": "Recent combined Claude, Codex, OpenCode, and Muse token activity."
             }
           }
         },
@@ -4382,6 +4432,17 @@
           "e5a6b7c8d9": "Weekly credits used",
           "f6b7c8d9e0": "Billing period reset",
           "a7b8c9d0e1": "Grok account settings"
+        },
+        "MuseUsagePane": {
+          "title": "Muse Usage Tracking",
+          "enableLabel": "Enable Muse usage analytics",
+          "disabledDescription": "Reads local Muse session logs to show token, model, and session stats.",
+          "scopeAll": "All local Muse usage",
+          "optionsLabel": "Muse usage options",
+          "refreshAriaLabel": "Refresh Muse usage",
+          "emptyMessage": "No local Muse usage found yet for this scope.",
+          "noCostNote": "Muse session logs record tokens but not cost, so no cost estimate is shown.",
+          "recentSessionsDescription": "Most recent local Muse sessions in this scope."
         }
       },
       "sparse": {
@@ -5345,7 +5406,9 @@
           "69969ba364": "Sending…",
           "imageReadFailed": "Could not read the attached images. Try attaching them again.",
           "attachWhileSending": "Wait for the current feedback to finish sending before attaching more images.",
-          "imagesNotDelivered": "Feedback sent, but image delivery could not be confirmed."
+          "imagesNotDelivered": "Feedback sent, but image delivery could not be confirmed.",
+          "imagesRejected": "Feedback sent. Your screenshots were too large to upload and were not included.",
+          "imagesNotIncluded": "Feedback sent. Your screenshots could not be uploaded and were not included."
         },
         "SidebarFilter": {
           "e3b3898218": "Add project",
@@ -5680,7 +5743,8 @@
           "deleteWorktree": "Delete Worktree",
           "sleepWithDescendants": "Sleep with Descendants ({{value0}})",
           "sleepWithDescendantsDescription": "Close active panels in this workspace and every nested descendant to free up memory and CPU.",
-          "deleteWithDescendants": "Delete with Descendants…"
+          "deleteWithDescendants": "Delete with Descendants…",
+          "copyWorktreeName": "Copy Worktree Name"
         },
         "WorktreeList": {
           "7a8b9c0d1e": "Update required",
@@ -6367,6 +6431,18 @@
           "architectureMismatch": "A Git-related executable could not run because its CPU architecture is incompatible with this execution host. Install Git and related tools for the host architecture.",
           "copyCommand": "Copy command",
           "copyDiagnostics": "Copy diagnostics"
+        },
+        "LocalGitToolchainScanBanner": {
+          "xcodeLicenseTitle": "Accept the Xcode license to use Git",
+          "xcodeLicenseBody": "macOS blocks Git until you accept it. Run this in Terminal, then switch back to Wakii. It will check again automatically.",
+          "developerToolsTitle": "Install Apple's command line tools",
+          "developerToolsBody": "Git needs Apple's developer tools. Run this in Terminal, then switch back to Wakii. It will check again automatically.",
+          "affectedOne": "Worktree scan paused for {{value0}}",
+          "affectedMany": "Worktree scan paused for {{value0}} projects",
+          "copyCommand": "Copy command",
+          "copied": "Command copied",
+          "retry": "Retry now",
+          "restored": "Git is working again. Worktrees refreshed."
         }
       },
       "shared": {
@@ -6398,6 +6474,32 @@
           "d9657ac204": "Terminal session shutdown requested.",
           "e8f25bd903": "Couldn’t finish terminal cleanup.",
           "a702d4196e": "This closes every terminal tab across all workspaces and requests shutdown for its current terminal sessions. Any unsaved terminal work is lost. The daemon itself keeps running, and new terminals can be opened immediately. This can't be undone."
+        },
+        "MacFolderAccessFixDialog": {
+          "stepAllow": "Allow Wakii under Files and Folders",
+          "openSystemSettings": "Open System Settings",
+          "stepRestart": "Restart Wakii’s terminal service",
+          "restartConsequence": "Open terminals and agents will restart.",
+          "restarting": "Restarting…",
+          "restart": "Restart",
+          "restartFailed": "Restart failed. Try again from Settings → Terminal → Manage Sessions.",
+          "title": "Fix access to your {{folder}}",
+          "lead": "macOS is blocking Wakii’s terminal service from this folder.",
+          "done": "Done",
+          "cancel": "Cancel",
+          "stepAllowUnknown": "Couldn’t verify. Skip if already allowed.",
+          "stepAllowDenied": "Wakii is already allowed, but macOS isn’t applying it to the terminal service. Reset asks macOS for the permission again. Click Allow when it prompts.",
+          "stepReallow": "Re-allow Wakii for your {{folder}}",
+          "reset": "Reset permission",
+          "resetting": "Resetting…",
+          "resetFailed": "Couldn’t reset the permission. Use System Settings instead.",
+          "resetStillBlocked": "Still blocked after the reset."
+        },
+        "macFolderAccessFolderName": {
+          "documents": "Documents folder",
+          "desktop": "Desktop folder",
+          "downloads": "Downloads folder",
+          "workspace": "workspace folder"
         }
       },
       "setup": {
@@ -6587,7 +6689,16 @@
           "4e32e030b2": "Stored locally. Wakii sends it only to platform.minimax.io for usage refreshes.",
           "5e08b0fe57": "Stored locally and sent only to platform.minimax.io for usage refreshes.",
           "79418c782a": "Open platform.minimax.io/console/usage in your browser, sign in, then copy the Cookie request header from DevTools (Network → any remains request → Cookie).",
-          "f5d8d2a6a1": "Open platform.minimax.io/console/usage in your browser and sign in."
+          "f5d8d2a6a1": "Open platform.minimax.io/console/usage in your browser and sign in.",
+          "opencodeGo": {
+            "apiKey": {
+              "title": "OpenCode Go API Key",
+              "description": "Optional override. Wakii otherwise uses the key OpenCode saved when you ran /connect, then OPENCODE_API_KEY.",
+              "label": "OpenCode Go API key",
+              "placeholder": "Leave blank to use the key saved by /connect or OPENCODE_API_KEY",
+              "help": "Used for OpenCode Go usage in the status bar. The session cookie below is only needed for legacy console (OpenCode Black) accounts."
+            }
+          }
         },
         "AdvancedPane": {
           "40b29e0bf3": "Restart",
@@ -7135,7 +7246,16 @@
             "structuredToggleLabel": "Toggle updated structured native chat",
             "resumeTitle": "Resume working chats automatically after a restart",
             "resumeCopy": "When Wakii quits or installs an update, chats that were mid-turn are automatically resumed when Wakii is reopened.",
-            "resumeToggleLabel": "Toggle automatic resume after a restart"
+            "resumeToggleLabel": "Toggle automatic resume after a restart",
+            "shellEnvNamesLabel": "Variables to pass from your shell",
+            "shellEnvNamePlaceholder": "Variable name",
+            "shellEnvNameAdd": "Add",
+            "shellEnvNameRemove": "Remove {{value0}}",
+            "shellEnvNamesEmpty": "No variables added yet.",
+            "shellEnvNamesAlwaysPassed": "PATH, locale, and SSH_AUTH_SOCK are always passed. Applies the next time a chat starts or resumes.",
+            "shellEnvTitle": "Use your shell environment",
+            "shellEnvCopy": "Codex and Claude chats start with every variable your login shell exports, the same as a terminal. Turn off to choose which ones they get.",
+            "shellEnvToggleLabel": "Toggle using your shell environment"
           },
           "agentDashboard": {
             "title": "Agent Dashboard",
@@ -7233,7 +7353,9 @@
           "5cb5475664": "Confirm before closing pinned tabs",
           "36b2a5dc6d": "Show a confirmation dialog before a pinned tab is closed.",
           "projectRuntime": "Project Runtime",
-          "projectRuntimeDescription": "Default runtime for local Windows projects that do not override it."
+          "projectRuntimeDescription": "Default runtime for local Windows projects that do not override it.",
+          "editor_preview_tabs": "Reuse a preview tab when browsing files",
+          "editor_preview_tabs_description": "Single-clicking a file in the Explorer, or following a link in Markdown source, reuses one italic preview tab per group instead of opening a new one. Editing, double-clicking, or pinning keeps that tab open. Turn this off to give every file its own tab."
         },
         "GeneralSupportSection": {
           "af7d9f4396": "Thanks for the support!",
@@ -9789,7 +9911,14 @@
             "8f4357c2dc": "sticky",
             "f82e3682fd": "scroll",
             "8c14dc21a4": "scope",
-            "8d7a8880d7": "header"
+            "8d7a8880d7": "header",
+            "editor_preview_tabs_short": "Browsing files reuses one preview tab instead of opening a new one.",
+            "preview": "preview",
+            "reuse": "reuse",
+            "replace": "replace",
+            "explorer": "explorer",
+            "italic": "italic",
+            "browsing": "browsing"
           },
           "editor": {
             "search": {
@@ -12061,6 +12190,26 @@
         "InlineBlameSetting": {
           "683fd9af0f": "Inline Blame",
           "9142b8bc2f": "Show commit author, date and summary at the end of the current line in the file editor."
+        },
+        "machine": {
+          "name": {
+            "search": {
+              "title": "Machine name",
+              "description": "Choose the name other devices and hosts list this computer under.",
+              "machineName": "machine name",
+              "machine": "machine",
+              "hostname": "hostname",
+              "computer": "computer",
+              "rename": "rename",
+              "name": "name"
+            }
+          }
+        },
+        "MachineNameField": {
+          "label": "Machine name",
+          "description": "Other devices and hosts see “{{name}}”. Leave this blank to use the computer’s own name.",
+          "pending": "Other devices and hosts see this name. Leave it blank to use the detected computer name.",
+          "placeholder": "Detected automatically"
         }
       },
       "right": {
@@ -15015,7 +15164,47 @@
           "1833dbbc43": "Markdown",
           "7005960d73": "Code",
           "59b6cd874b": "code",
-          "ba149053d5": "markdown"
+          "ba149053d5": "markdown",
+          "8dbe39a152": "More cell actions",
+          "fa8fd99cf1": "Cell type",
+          "kernelStarting": "Starting…",
+          "kernelInstalling": "Installing ipykernel…",
+          "kernelDead": "Kernel died",
+          "selectKernel": "Select Kernel",
+          "notPython": "That file is not a Python interpreter.",
+          "interrupt": "Interrupt",
+          "restart": "Restart kernel",
+          "runAll": "Run all",
+          "clearAll": "Clear all outputs",
+          "notResponding": "Not responding. Restart kernel",
+          "findingPython": "Finding Python environments…",
+          "recommended": "Recommended",
+          "pythonOnPath": "Python on PATH",
+          "browsePython": "Browse for Python…",
+          "missingIpykernelTitle": "Install ipykernel?",
+          "missingIpykernel": "Running cells with '{{env}}' requires the ipykernel package.",
+          "copyCommand": "Copy command",
+          "commandCopied": "Command copied",
+          "install": "Install",
+          "useAnotherPython": "Use another Python…",
+          "venvDescription": "Wakii will create a .venv in {{folder}} from '{{env}}', install ipykernel into it, and run this notebook there.",
+          "installingTitle": "Installing ipykernel…",
+          "installingDescription": "Installing ipykernel into '{{env}}' with pip. This can take a minute.",
+          "creatingVenvTitle": "Creating virtual environment…",
+          "creatingVenvDescription": "Creating .venv in {{folder}} and installing ipykernel into it. This can take a minute.",
+          "createVenvTitle": "Create a virtual environment?",
+          "setupFailed": "That did not work. Output from Python:",
+          "installingButton": "Installing…",
+          "creatingButton": "Creating…",
+          "createVenv": "Create .venv",
+          "tryAgain": "Try again",
+          "kernelCreatingVenv": "Creating .venv…",
+          "createVenvItem": "Create virtual environment…",
+          "kernelStartFailed": "The kernel failed to start.",
+          "noPython": "Python was not found on this computer. Install it from [python.org](https://www.python.org/downloads/), then run the cell again.",
+          "kernelDied": "The kernel died.",
+          "localOnly": "Notebook cells can only run for files on this computer.",
+          "pythonOnly": "Only Python notebooks can run in Wakii."
         },
         "MarkdownPreview": {
           "e4683f70c4": "Cancel",
@@ -17158,6 +17347,9 @@
             "failed": "Chat could not be started.",
             "unknown": "Chat connection could not be confirmed.",
             "retry": "Retry"
+          },
+          "NativeChatStructuredSessionStatus": {
+            "starting": "{{value0}} is still starting. Messages wait until it is ready; close this chat to give up on it."
           }
         }
       },
@@ -17192,6 +17384,26 @@
         "9a4c6b2d7e": "Skill sharing",
         "3d8e5f1b9c": "Share skills behind an unlisted link and install them on any machine you use.",
         "c5b3e8a17d": "Sign in to Wakii"
+      },
+      "NativeChatResumeOutcomeRow": {
+        "openChat": "Open chat",
+        "retry": "Retry",
+        "dismiss": "Dismiss",
+        "unconfirmed": "Couldn’t confirm the chat was resumed",
+        "failed": "Couldn’t resume",
+        "statusFor": "{{value0}}: {{value1}}",
+        "dismissChat": "Dismiss \"{{value0}}\" in {{value1}}",
+        "toResume": "To resume:"
+      },
+      "NativeChatResumeFailureGuidance": {
+        "unconfirmed": "Wakii couldn’t confirm the “continue” message was delivered. Open the chat and check before sending another.",
+        "superseded": "Open the chat and reply. New work arrived in it right after the restart, so Wakii didn’t send its “continue” message.",
+        "conflict": "Another Wakii window or terminal still owns this session. Close it, then retry.",
+        "ownershipUnknown": "Wakii is still working out which process owns this session. Wait a moment, then retry.",
+        "notAttached": "The chat didn’t reconnect. Retry, or open it to start a fresh turn.",
+        "dispatchRejected": "The agent refused the “continue” message. Open the chat and send one yourself.",
+        "unsupported": "This chat can’t be resumed by Wakii. Open it to see where it stopped.",
+        "fallback": "Wakii couldn’t resume this chat. Open it to continue manually."
       }
     },
     "i18n": {
@@ -17448,7 +17660,27 @@
         "runToolOne": "Used 1 tool",
         "runToolMany": "Used {{value0}} tools",
         "runPair": "{{value0}} and {{value1}}",
-        "runList": "{{value0}}, and {{value1}}"
+        "runList": "{{value0}}, and {{value1}}",
+        "runLiveReadOne": "Reading 1 file",
+        "runLiveReadMany": "Reading {{value0}} files",
+        "runLiveSearchOne": "Searching 1 time",
+        "runLiveSearchMany": "Searching {{value0}} times",
+        "runLiveListFilesOne": "Listing 1 directory",
+        "runLiveListFilesMany": "Listing {{value0}} directories",
+        "runLiveCommandOne": "Running 1 command",
+        "runLiveCommandMany": "Running {{value0}} commands",
+        "runLiveFileChangeOne": "Editing 1 file",
+        "runLiveFileChangeMany": "Editing {{value0}} files",
+        "runLiveWebSearchOne": "Searching the web 1 time",
+        "runLiveWebSearchMany": "Searching the web {{value0}} times",
+        "runLiveIntegrationOne": "Using 1 integration",
+        "runLiveIntegrationMany": "Using {{value0}} integrations",
+        "runLiveAgentOne": "Running 1 agent",
+        "runLiveAgentMany": "Running {{value0}} agents",
+        "runLivePlanOne": "Updating the plan",
+        "runLivePlanMany": "Updating the plan {{value0}} times",
+        "runLiveToolOne": "Using 1 tool",
+        "runLiveToolMany": "Using {{value0}} tools"
       },
       "providerFrame": {
         "byteLength": "{{value0}} bytes"
@@ -17628,7 +17860,34 @@
         "title": "Drop to attach to this chat",
         "subtitle": "Files are added to your message as paths the agent can read."
       },
-      "copyCode": "Copy code"
+      "copyCode": "Copy code",
+      "loadingEarlierMessages": "Loading earlier messages…",
+      "goal": {
+        "placeholder": "Describe your goal, define measurable outcomes for best results",
+        "clear": "Clear goal",
+        "chip": "Goal",
+        "exitMode": "Exit goal mode",
+        "sentAsGoal": "Sent as goal",
+        "collapse": "Hide full goal",
+        "expand": "Show full goal",
+        "pause": "Pause goal",
+        "resume": "Resume goal",
+        "pursuing": "Pursuing goal",
+        "paused": "Paused goal",
+        "blocked": "Goal blocked",
+        "limited": "Goal limited",
+        "attachmentsUnsupported": "Remove attachments before setting a goal."
+      },
+      "fileLinks": {
+        "notFound": "File not found: {{value0}}",
+        "unverifiable": "Couldn't check {{value0}}: {{value1}}",
+        "unresolved": "Couldn't resolve {{value0}} in this workspace"
+      },
+      "contextUsage": {
+        "label": "Context {{used}} of {{window}} tokens, {{percent}}% used",
+        "title": "Context",
+        "estimated": "Estimated from the last response."
+      }
     },
     "tab": {
       "bar": {
@@ -17908,7 +18167,9 @@
       "agentUnavailable": "{{agent}} was not detected on this workspace host.",
       "sent": "Session context sent to {{agent}} in a new session.",
       "deliveryFailed": "The new {{agent}} session started, but its context could not be sent.",
-      "launchFailed": "Could not start a new {{agent}} session."
+      "launchFailed": "Could not start a new {{agent}} session.",
+      "deliveryUnconfirmed": "Wakii could not confirm {{agent}} received the session context. Check the new session, and paste it yourself if its input is empty.",
+      "copyPrompt": "Copy prompt"
     },
     "status": {
       "bar": {

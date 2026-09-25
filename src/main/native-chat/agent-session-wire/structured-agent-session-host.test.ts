@@ -138,13 +138,16 @@ describe('attach', () => {
     })
     const params = attachParams()
 
-    await expect(host.attach(CALLER, params)).rejects.toThrow(
-      'agent_session_provider_handle_stale_fence'
-    )
-    expect(await host.attach(CALLER, params)).toMatchObject({
+    const refused = {
       ok: false,
-      refusal: { code: 'agent_session_operation_invalid' }
-    })
+      refusal: {
+        code: 'agent_session_operation_invalid',
+        message: 'agent_session_provider_handle_stale_fence',
+        ownerVerdict: 'exited'
+      }
+    }
+    expect(await host.attach(CALLER, params)).toEqual(refused)
+    expect(await host.attach(CALLER, params)).toEqual(refused)
     const releasedFence = store.getRecord(SESSION)?.lease.runtimeFence ?? 0
     expect(await host.attach(CALLER, ensureParams(releasedFence))).toMatchObject({ ok: true })
     expect(acquire).toHaveBeenCalledTimes(2)
@@ -155,7 +158,10 @@ describe('attach', () => {
   it('reaps an acquisition when process identity commit fails', async () => {
     vi.spyOn(store, 'commitProcessIdentity').mockRejectedValueOnce(new Error('commit failed'))
 
-    await expect(host.attach(CALLER, attachParams())).rejects.toThrow('commit failed')
+    await expect(host.attach(CALLER, attachParams())).resolves.toMatchObject({
+      ok: false,
+      refusal: { message: 'commit failed', ownerVerdict: 'exited' }
+    })
 
     expect(releaseAcquisition).toHaveBeenCalledWith({ sessionId: SESSION })
   })
@@ -356,6 +362,46 @@ describe('respondToPrompt', () => {
       value: { resolution: { state: 'resolved', selectedOptionId: 'allow' } }
     })
     expect(answerPrompt).toHaveBeenCalledTimes(1)
+  })
+
+  it("keeps a subagent's approval the subagent's once the user answers it", async () => {
+    // The answer revises the row without naming a producer, so it keeps the asker's.
+    await attach()
+    const child = { agentId: 'thread-child', producerKind: 'agent' as const }
+    const identity = {
+      provider: 'codex' as const,
+      threadId: 'thread-child',
+      turnId: 'c',
+      ordinal: 1
+    }
+    acquire.mock.calls.at(-1)?.[0].events?.appendItem(
+      identity,
+      {
+        kind: 'approval',
+        title: 'Run ls?',
+        detail: null,
+        options: [{ id: 'allow', label: 'Allow' }],
+        resolution: { state: 'pending', selectedOptionId: null, resolvedBy: null, resolvedAt: null }
+      },
+      child
+    )
+    await host.flushStreamedEvents(SESSION)
+    const itemId = agentJournalItemKey(identity)
+    const fields = { itemId, expectedRevision: 1, optionId: 'allow' }
+
+    await host.respondToPrompt(CALLER, {
+      envelope: envelope('agentSession.respondTo:approval', fields),
+      kind: 'approval',
+      ...fields
+    })
+
+    const page = host.history({ sessionId: SESSION, direction: 'tail' })
+    const answered = page.ok ? page.page.items.find((item) => item.itemId === itemId) : null
+    expect(answered).toMatchObject({
+      revision: 2,
+      body: { resolution: { state: 'resolved' } },
+      ...child
+    })
   })
 
   it('refuses a second answer to one prompt and says which answer won', async () => {
