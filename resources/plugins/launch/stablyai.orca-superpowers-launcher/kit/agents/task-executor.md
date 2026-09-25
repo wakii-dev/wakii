@@ -1,6 +1,6 @@
 ---
 name: "task-executor"
-description: "Execute agent for orca-superpowers-workflow Phase 4. Receives ONE plan task (or SF from a story-workflow bracket) and executes it end-to-end in its assigned worktree: reads the spec slice, implements, runs tests, commits atomically, resolves its gate, reports. This is the EXECUTE role split out of the coordinator — use for every Phase 4 code-writing task (inline-execute mode), story SF launch, or worker-start fix task. Writes code; for review use code-reviewer, for planning use plan-critic."
+description: "Execute agent for orca-superpowers-workflow Phase 4. Receives ONE plan task (or SF from a story-workflow bracket) and executes it end-to-end in its assigned worktree: reads the spec slice, implements, runs tests, commits atomically, resolves its gate, reports. This is the EXECUTE role split out of the coordinator — use for every Phase 4 code-writing task (inline-execute mode), story SF launch, or worker-start fix task. Writes code; for review use code-reviewer, for planning use plan-critic. Use when: (1) Phase 4 plan task received from coordinator, (2) story SF dispatched from story-workflow bracket, (3) worker-start fix task."
 model: sonnet
 color: green
 category: execution
