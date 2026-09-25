@@ -4,7 +4,7 @@ Destination: feature/clone-vs-vscode
 
 ## SF-1 GitLens-lite: git.blame dual-path + blame hook + toggle
 Tier: 0
-linear:
+linear: FI-35
 Design: none
 What: mở file trong worktree → cursor lên dòng nào → cuối dòng hiện `author, relative-date · subject` muted; hover lên dòng bất kỳ → popup chi tiết commit (hash, author, date, subject) an toàn injection; worktree SSH hoạt động như local còn host cũ thì feature tự im lặng không báo lỗi; Settings → Editor có toggle Inline Blame (default ON); dòng chưa commit và dòng mới gõ hiện "You"; agent commit file đang mở → blame refresh đúng kể cả khi nội dung đĩa không đổi. Renderer + main git + runtime surface git.blame dual-path; không mobile/relay parity.
 Depends on: —
