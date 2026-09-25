@@ -21,7 +21,7 @@ Phase 4 workers (via `worker-start`) execute in isolated worktrees — the coord
 | **Security** | Input validation, auth checks, secret leakage, injection surface (escalate to `security-audit` if OWASP-class) |
 | **Style/convention** | Codebase patterns not followed, naming, file placement (per Surgical Scope) |
 | **Missing error handling** | Unhandled promise rejections, swallowed exceptions, missing try/catch on I/O |
-| **Untested paths** | New code without tests; edge cases the tests miss |
+| **Untested paths** | New code without tests; edge cases the tests miss. File sửa mà TRƯỚC đó chưa có test trùm → P1: characterization test phải đến trước thay đổi (executor fence) — thiếu = review CHANGES-REQUESTED phần này |
 | **Surgical-scope violations** | Drive-by edits, refactors, dead-code removal outside the task's scope (Principle 2) |
 | **Contract changes** | API/schema/config changes the task didn't intend or didn't document |
 | **Audit trail gaps** | Commit message vague; P7 audit comment missing required fields |
