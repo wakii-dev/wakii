@@ -1,0 +1,470 @@
+#!/usr/bin/env python3
+"""story-doctor — kit health check (GH-85 SF-1).
+
+Read-only chẩn đoán kit story-team đã cài: 8 checks PASS/WARN/FAIL, mỗi
+WARN/FAIL kèm dòng `fix:`. KHÔNG auto-fix, KHÔNG đụng installKit — máy khoẻ
+exit 0 (WARN không FAIL), ≥1 FAIL → exit 1. Học pattern --health-check của
+claude-code-templates (aitmpl.com 31.7k★).
+
+CLI: story-doctor [--root <install-dir>] [--kb-dir <path>] [--json]
+  --root   install dir (mặc định ~/.claude); kit root luôn resolve từ vị trí bin
+  --kb-dir override KB dir (resolve như story-kb: --kb-dir > WAKII_KB_DIR > candidates)
+  --json   machine-readable: {"checks":[{name,status,detail,fix}],"exit":"ok|fail"}
+
+Checks: marker · kit-hash · bins · deps · hooks · kb · orphans · agents-skills.
+Chạy từ kit/bin (dev): kit.json sibling có → full check. Chạy từ ~/.claude/bin:
+installKit không copy kit.json → checks phụ thuộc manifest fail-open WARN
+(marker vẫn là nguồn truth). Exit: 0 (chỉ PASS/WARN) · 1 (≥1 FAIL) · 2 (usage).
+"""
+import hashlib
+import json
+import os
+import re
+import subprocess
+import sys
+
+# Bin chạy trực tiếp — không đẻ __pycache__ vào kit/ (contentHash ổn định).
+sys.dont_write_bytecode = True
+
+# Pipe stdout trên Windows mặc định cp1252 → chết UnicodeEncodeError (GH-27).
+for _s in (sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
+MARKER_NAME = ".story-team-kit-version"
+MARKER_RE = re.compile(r"^([1-9]\d*\.\d+\.\d+)(?::([0-9a-f]{8,64}))?$")
+HOOK_WRAPPERS = (
+    ("SessionStart", "hook-session-start"),
+    ("PostToolUse", "hook-post-tool-use"),
+    ("Stop", "hook-stop"),
+)
+# Bỏ qua khi hash/walk cây kit — giống kitTreeFiles (main.mjs).
+SKIP_NAMES = {"__pycache__", ".git", "node_modules", ".DS_Store"}
+KB_MARKERS = ("adr", "repos", "glossary.md", "MOC.md")
+MIN_NODE_MAJOR = 20
+
+
+def usage(msg=None):
+    if msg:
+        print(f"usage error: {msg}", file=sys.stderr)
+    print("usage: story-doctor [--root <install-dir>] [--kb-dir <path>] [--json]",
+          file=sys.stderr)
+    sys.exit(2)
+
+
+class Check:
+    def __init__(self, name, status, detail, fix=None):
+        self.name, self.status, self.detail, self.fix = name, status, detail, fix
+
+
+def run_cmd(cmd):
+    """subprocess arg-list, utf-8/replace (GH-27). Returns (rc, stdout)."""
+    try:
+        r = subprocess.run(cmd, capture_output=True, encoding="utf-8",
+                           errors="replace", timeout=15)
+        return r.returncode, (r.stdout or "")
+    except Exception:
+        return None, ""
+
+
+# ── kit.json + provides ───────────────────────────────────────────────────────
+
+def load_kit_json(kit_root):
+    """Returns (dict|None, err|None). kit.json KHÔNG được cài vào ~/.claude →
+    máy user trả None (checks phụ thuộc nó fail-open WARN)."""
+    path = os.path.join(kit_root, "kit.json")
+    if not os.path.isfile(path):
+        return None, "không tồn tại"
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f), None
+    except (OSError, ValueError) as e:
+        return None, str(e)
+
+
+def provides(kit_json):
+    bins, agents, skills = set(), set(), set()
+    for e in (kit_json.get("provides") or []):
+        if not isinstance(e, dict) or not e.get("name"):
+            continue
+        {"bin": bins, "agent": agents, "skill": skills}.setdefault(
+            e.get("type"), set()).add(e["name"])
+    return bins, agents, skills
+
+
+# ── computeKitHash python-port (main.mjs) ────────────────────────────────────
+
+def _walk_files(base):
+    out = []
+    stack = [""]
+    while stack:
+        rel = stack.pop()
+        d = os.path.join(base, rel) if rel else base
+        for ent in os.listdir(d):
+            if ent in SKIP_NAMES or ent.endswith(".pyc"):
+                continue
+            sub = f"{rel}/{ent}" if rel else ent
+            full = os.path.join(base, sub)
+            if os.path.isdir(full):
+                stack.append(sub)
+            elif os.path.isfile(full):
+                out.append(sub)
+    return out
+
+
+def compute_kit_hash_py(kit_root):
+    """sha256(sort(files) · rel·\\0·bytes·\\0)[:16] — port 1:1 computeKitHash.
+    Sort key utf-16-be = đúng UTF-16 code-unit order của JS Array.sort."""
+    h = hashlib.sha256()
+    files = []
+    for sub in ("skills", "agents", "bin"):
+        base = os.path.join(kit_root, sub)
+        if os.path.isdir(base):
+            files.extend(f"{sub}/{f}" for f in _walk_files(base))
+    files.sort(key=lambda s: s.encode("utf-16-be"))
+    for rel in files:
+        with open(os.path.join(kit_root, rel), "rb") as f:
+            h.update(rel.encode("utf-8"))
+            h.update(b"\0")
+            h.update(f.read())
+            h.update(b"\0")
+    return h.hexdigest()[:16]
+
+
+# ── deps resolve (Windows Store stub 9009 — pattern surface-lint-tests) ──────
+
+def resolve_python():
+    for name in ("python3", "python", "py"):
+        rc, out = run_cmd([name, "--version"])
+        if rc == 0 and out.strip():
+            return name, out.strip()
+    return None, None
+
+
+def node_version():
+    rc, out = run_cmd(["node", "--version"])
+    if rc != 0:
+        return None
+    m = re.match(r"^v(\d+)\.", out.strip())
+    return int(m.group(1)) if m else None
+
+
+# ── KB resolve (như story-kb: cli > WAKII_KB_DIR > candidates) ───────────────
+
+def git_root():
+    rc, out = run_cmd(["git", "rev-parse", "--show-toplevel"])
+    return out.strip() if rc == 0 and out.strip() else None
+
+
+def is_kb_dir(path):
+    if not path or not os.path.isdir(path):
+        return False
+    return any(os.path.exists(os.path.join(path, m)) for m in KB_MARKERS)
+
+
+def resolve_kb_dir(cli_dir):
+    if cli_dir:
+        return os.path.abspath(cli_dir), [os.path.abspath(cli_dir)]
+    probed = []
+    env_dir = os.environ.get("WAKII_KB_DIR")
+    if env_dir:
+        probed.append(os.path.abspath(env_dir))
+        if is_kb_dir(probed[0]):
+            return probed[0], probed
+    base = git_root() or os.getcwd()
+    candidates = [
+        os.path.join(base, "docs", "knowledge"),
+        os.path.normpath(os.path.join(base, os.pardir, "wakii-site", "docs", "knowledge")),
+    ]
+    for c in candidates:
+        probed.append(c)
+        if is_kb_dir(c):
+            return c, probed
+    return None, probed
+
+
+# ── 8 checks ──────────────────────────────────────────────────────────────────
+
+def check_marker(root, kit_json):
+    path = os.path.join(root, MARKER_NAME)
+    if not os.path.isfile(path):
+        return Check("marker", "fail",
+                     f"{MARKER_NAME} không tồn tại ở {root} (chưa cài kit?)",
+                     "kích hoạt lại plugin launcher (installKit tự cài) hoặc copy kit/ sang install dir")
+    try:
+        with open(path, encoding="utf-8") as f:
+            text = f.read().strip()
+    except OSError as e:
+        return Check("marker", "fail", f"đọc {MARKER_NAME} lỗi: {e}", "cài lại kit")
+    m = MARKER_RE.match(text)
+    if not m:
+        return Check("marker", "fail", f"marker sai format: {text!r} (kỳ vọng version[:kitHash])",
+                     "cài lại kit (installKit ghi lại marker)")
+    ver, mhash = m.group(1), m.group(2)
+    if kit_json:
+        kver = str(kit_json.get("version") or "")
+        khash = str(kit_json.get("kitHash") or "").strip()
+        if kver and ver != kver:
+            return Check("marker", "fail",
+                         f"marker version {ver} ≠ kit.json {kver}",
+                         "cài lại kit (marker stale so với kit source)")
+        if mhash and khash and mhash != khash:
+            return Check("marker", "fail",
+                         f"marker kitHash {mhash} ≠ kit.json {khash} (drift)",
+                         "kit/ đổi mà version chưa bump — rehash kit.json (computeKitHash) rồi cài lại")
+        return Check("marker", "pass", f"marker {text} khớp kit.json")
+    return Check("marker", "pass", f"marker {text} (không có kit.json sibling để đối chiếu)")
+
+
+def check_kit_hash(kit_root, kit_json, marker_hash):
+    declared = str(kit_json.get("kitHash") or "").strip() if kit_json else ""
+    if not declared:
+        declared = marker_hash or ""
+    if not declared:
+        return Check("kit-hash", "warn",
+                     f"không có kit.json ở {kit_root} và marker không mang kitHash — không xác minh được drift",
+                     "chạy story-doctor từ kit source (kit/bin) hoặc cài lại kit mới")
+    if kit_json is None:
+        return Check("kit-hash", "warn",
+                     f"kit.json không có ở {kit_root} — marker hash {declared} không đối chiếu được tree",
+                     "chạy story-doctor từ kit source (kit/bin) để xác minh đầy đủ")
+    try:
+        actual = compute_kit_hash_py(kit_root)
+    except OSError as e:
+        return Check("kit-hash", "warn", f"hash tree lỗi: {e}", "kiểm quyền đọc kit/")
+    if actual != declared:
+        return Check("kit-hash", "fail",
+                     f"kit.json kitHash {declared} ≠ tree {actual} (đổi kit mà không rehash)",
+                     "rehash: node -e computeKitHash(kit/) rồi cập nhật kit.json")
+    return Check("kit-hash", "pass", f"kitHash {actual} khớp tree")
+
+
+def check_bins(kit_root, root):
+    src_dir = os.path.join(kit_root, "bin")
+    if not os.path.isdir(src_dir):
+        return Check("bins", "fail", f"kit/bin không tồn tại ở {kit_root}",
+                     "kit hỏng — checkout lại repo/plugin")
+    src = sorted(f for f in os.listdir(src_dir)
+                 if os.path.isfile(os.path.join(src_dir, f)) and not f.endswith(".html"))
+    dst = os.path.join(root, "bin")
+    missing = [f for f in src if not os.path.isfile(os.path.join(dst, f))]
+    if missing:
+        return Check("bins", "fail",
+                     f"thiếu {len(missing)} bin ở {dst}: {', '.join(missing[:5])}"
+                     + ("…" if len(missing) > 5 else ""),
+                     f"cài lại kit hoặc copy thủ công từ {src_dir}")
+    if sys.platform != "win32":
+        nonexec = [f for f in src if not os.access(os.path.join(dst, f), os.X_OK)]
+        if nonexec:
+            return Check("bins", "fail",
+                         f"bin không executable (POSIX): {', '.join(nonexec[:5])}",
+                         f"chmod +x {dst}/* hoặc cài lại (installKit chmod 755)")
+    return Check("bins", "pass", f"{len(src)} bins đủ ở {dst}"
+                 + ("" if sys.platform == "win32" else ", executable"))
+
+
+def check_deps():
+    py, py_ver = resolve_python()
+    node_major = node_version()
+    problems, detail = [], []
+    if py:
+        detail.append(f"python {py_ver.replace('Python ', '')} (via {py})")
+    else:
+        problems.append("python3/python/py không chạy được (Windows Store stub?)")
+    if node_major is None:
+        problems.append("node không chạy được")
+        detail.append("node: không có")
+    elif node_major < MIN_NODE_MAJOR:
+        problems.append(f"node v{node_major} < {MIN_NODE_MAJOR}")
+        detail.append(f"node v{node_major}")
+    else:
+        rc, out = run_cmd(["node", "--version"])
+        detail.append(f"node {out.strip()}")
+    if problems:
+        return Check("deps", "fail", "; ".join(problems),
+                     "cài Python 3.10+ (python.org, bỏ Store alias) và Node.js ≥ 20")
+    return Check("deps", "pass", " · ".join(detail))
+
+
+def check_hooks(root):
+    path = os.path.join(root, "settings.json")
+    if not os.path.isfile(path):
+        return Check("hooks", "fail", f"settings.json không tồn tại ở {root}",
+                     f"chạy {root}/bin/story-hooks-install hoặc cài lại kit")
+    try:
+        with open(path, encoding="utf-8") as f:
+            settings = json.load(f)
+    except (OSError, ValueError) as e:
+        return Check("hooks", "fail", f"settings.json malformed (không parse được JSON): {e}",
+                     "sửa JSON hoặc xoá file rồi cài lại kit")
+    if not isinstance(settings, dict):
+        return Check("hooks", "fail", f"settings.json không phải object (got {type(settings).__name__})",
+                     "sửa settings.json rồi chạy story-hooks-install")
+    hooks = settings.get("hooks")
+    missing, broken = [], []
+    for event, wrapper in HOOK_WRAPPERS:
+        found_cmd = None
+        groups = hooks.get(event) if isinstance(hooks, dict) else None
+        for group in (groups or []):
+            if not isinstance(group, dict):
+                continue
+            for hook in (group.get("hooks") or []):
+                cmd = str((hook or {}).get("command") or "")
+                if f"bin/{wrapper}" in cmd.replace("\\", "/"):
+                    found_cmd = cmd
+        if found_cmd is None:
+            missing.append(event)
+        elif not os.path.isfile(found_cmd.replace("\\", "/")):
+            broken.append(f"{event} → {found_cmd}")
+    if missing:
+        return Check("hooks", "fail",
+                     f"settings.json thiếu hook entries: {', '.join(missing)}",
+                     f"chạy {root}/bin/story-hooks-install hoặc cài lại kit")
+    if broken:
+        return Check("hooks", "fail",
+                     f"hook entry trỏ file không tồn tại: {'; '.join(broken)}",
+                     "cài lại kit (bin/ wrappers copy lại)")
+    return Check("hooks", "pass", "wired: " + ", ".join(e for e, _ in HOOK_WRAPPERS))
+
+
+def check_kb(cli_dir):
+    kb_dir, probed = resolve_kb_dir(cli_dir)
+    if kb_dir:
+        return Check("kb", "pass", f"KB configured: {kb_dir}")
+    return Check("kb", "warn", f"KB not configured — probed: {', '.join(probed)}",
+                 "đặt WAKII_KB_DIR hoặc --kb-dir trỏ dir KB (adr/repos/glossary.md/MOC.md) — tuỳ chọn")
+
+
+def check_orphans(root, kit_json):
+    bin_dir = os.path.join(root, "bin")
+    if kit_json is None:
+        return Check("orphans", "warn",
+                     f"kit.json vắng — không có manifest provides để xác định orphan ở {bin_dir}",
+                     "chạy story-doctor từ kit source để quét orphan")
+    if not os.path.isdir(bin_dir):
+        return Check("orphans", "warn", f"{bin_dir} không tồn tại — bỏ qua quét orphan")
+    bins, _, _ = provides(kit_json)
+    extra = sorted(
+        f for f in os.listdir(bin_dir)
+        if os.path.isfile(os.path.join(bin_dir, f))
+        and f not in bins
+        and not f.endswith(".html")
+        and not f.endswith(".pyc")
+        and f != ".DS_Store")
+    if extra:
+        return Check("orphans", "warn",
+                     f"orphan bins (retire sót): {', '.join(extra)}",
+                     "xoá tay các file trên — không thuộc kit.json provides")
+    return Check("orphans", "pass", f"không orphan trong {bin_dir}")
+
+
+def check_agents_skills(root, kit_json):
+    if kit_json is None:
+        return Check("agents-skills", "warn",
+                     f"kit.json vắng — không có manifest để xác minh agents/skills ở {root}",
+                     "chạy story-doctor từ kit source để xác minh đầy đủ")
+    _, agents, skills = provides(kit_json)
+    missing = [f"agents/{a}.md" for a in sorted(agents)
+               if not os.path.isfile(os.path.join(root, "agents", f"{a}.md"))]
+    missing += [f"skills/{s}/SKILL.md" for s in sorted(skills)
+                if not os.path.isfile(os.path.join(root, "skills", s, "SKILL.md"))]
+    if missing:
+        return Check("agents-skills", "fail",
+                     f"thiếu {len(missing)}: {', '.join(missing[:5])}"
+                     + ("…" if len(missing) > 5 else ""),
+                     "cài lại kit (skills/ + agents/ được copy lại)")
+    return Check("agents-skills", "pass", f"{len(agents)} agents + {len(skills)} skills đủ ở {root}")
+
+
+# ── main ──────────────────────────────────────────────────────────────────────
+
+def parse_args(argv):
+    root = kb_dir = None
+    as_json = False
+    i = 0
+    while i < len(argv):
+        a = argv[i]
+        if a == "--root":
+            if i + 1 >= len(argv):
+                usage("--root cần <install-dir>")
+            root = argv[i + 1]
+            i += 2
+        elif a.startswith("--root="):
+            root = a.split("=", 1)[1]
+            i += 1
+        elif a == "--kb-dir":
+            if i + 1 >= len(argv):
+                usage("--kb-dir cần <path>")
+            kb_dir = argv[i + 1]
+            i += 2
+        elif a.startswith("--kb-dir="):
+            kb_dir = a.split("=", 1)[1]
+            i += 1
+        elif a == "--json":
+            as_json = True
+            i += 1
+        elif a in ("-h", "--help"):
+            print(__doc__.strip())
+            sys.exit(0)
+        else:
+            usage(f"flag không rõ: {a}")
+    return root, kb_dir, as_json
+
+
+def main(argv):
+    root_arg, kb_dir, as_json = parse_args(argv)
+    root = os.path.abspath(root_arg) if root_arg else os.path.join(
+        os.path.expanduser("~"), ".claude")
+    # kit root = bin/../ — story-doctor luôn nằm trong kit/bin (repo lẫn install).
+    kit_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    kit_json, _err = load_kit_json(kit_root)
+
+    marker_text = ""
+    marker_path = os.path.join(root, MARKER_NAME)
+    if os.path.isfile(marker_path):
+        try:
+            with open(marker_path, encoding="utf-8") as f:
+                marker_text = f.read().strip()
+        except OSError:
+            marker_text = ""
+    mm = MARKER_RE.match(marker_text)
+    marker_hash = mm.group(2) if mm else None
+
+    checks = [
+        check_marker(root, kit_json),
+        check_kit_hash(kit_root, kit_json, marker_hash),
+        check_bins(kit_root, root),
+        check_deps(),
+        check_hooks(root),
+        check_kb(kb_dir),
+        check_orphans(root, kit_json),
+        check_agents_skills(root, kit_json),
+    ]
+    exit_fail = any(c.status == "fail" for c in checks)
+
+    if as_json:
+        print(json.dumps({
+            "checks": [{"name": c.name, "status": c.status, "detail": c.detail,
+                        "fix": c.fix} for c in checks],
+            "exit": "fail" if exit_fail else "ok",
+        }, ensure_ascii=False, indent=2))
+    else:
+        print("story-doctor — kit health check")
+        print(f"root: {root}")
+        print(f"kit:  {kit_root}")
+        for c in checks:
+            line = f"[{c.status.upper()}] {c.name}: {c.detail}"
+            if c.fix:
+                line += f" — fix: {c.fix}"
+            print(line)
+        n_pass = sum(1 for c in checks if c.status == "pass")
+        n_warn = sum(1 for c in checks if c.status == "warn")
+        n_fail = sum(1 for c in checks if c.status == "fail")
+        print(f"== {n_pass} PASS / {n_warn} WARN / {n_fail} FAIL ==")
+    sys.exit(1 if exit_fail else 0)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
