@@ -138,6 +138,8 @@ export class GitBlameCache {
   }
 }
 
+const INLINE_ANNOTATION_MAX_CHARS = 72
+
 export function formatInlineBlameAnnotation(
   line: GitBlameLine,
   options: { isDirty: boolean; strings: GitBlameStrings; now?: number }
@@ -146,7 +148,12 @@ export function formatInlineBlameAnnotation(
   const base = line.committed
     ? `${authorLabel} · ${formatRelativeBlameDate(line.authorTime, options.now ?? Date.now())} · ${line.summary}`
     : authorLabel
-  return options.isDirty ? `${base} · ${options.strings.stale}` : base
+  const withStale = options.isDirty ? `${base} · ${options.strings.stale}` : base
+  // Why: a fixed budget keeps every line's annotation the same length class so
+  // cursor moves never change the line's rendered width (no layout shift).
+  return withStale.length > INLINE_ANNOTATION_MAX_CHARS
+    ? `${withStale.slice(0, INLINE_ANNOTATION_MAX_CHARS - 1)}…`
+    : withStale
 }
 
 /**

@@ -148,7 +148,7 @@ export function useMonacoGitBlame(args: UseMonacoGitBlameArgs): void {
           // Why: a whole-line range at column 1 is collapsed, and Monaco hides
           // injected text on collapsed ranges unless this flag is set.
           showIfCollapsed: true,
-          after: { content, inlineClassName: ANNOTATION_CLASS }
+          after: { content: ` ${content}`, inlineClassName: ANNOTATION_CLASS }
         }
       }
     ])
