@@ -1,15 +1,1 @@
-{
-  "version": 1,
-  "plugins": [
-    {
-      "pluginKey": "stablyai.orca-navigation-shortcuts",
-      "path": "stablyai.orca-navigation-shortcuts",
-      "contentHash": "ec6cefc26cee8708272aeb3550b20b2593d099d69c256713ededc9f31e2517d7"
-    },
-    {
-      "pluginKey": "stablyai.orca-superpowers-launcher",
-      "path": "stablyai.orca-superpowers-launcher",
-      "contentHash": "038f66f4a57672ee17e1128a17eecce7407d7773589c642283ede1b52d1a9d1b"
-    }
-  ]
-}
+{"version":1,"plugins":[{"pluginKey":"stablyai.orca-navigation-shortcuts","path":"stablyai.orca-navigation-shortcuts","contentHash":"ec6cefc26cee8708272aeb3550b20b2593d099d69c256713ededc9f31e2517d7"},{"pluginKey":"stablyai.orca-superpowers-launcher","path":"stablyai.orca-superpowers-launcher","contentHash":"c730cf22131354da1bb854063c7b51f097614305fa6e0c9c89bc98ea825e56a1"}]}
