@@ -113,7 +113,36 @@ export function useMonacoGitBlame(args: UseMonacoGitBlameArgs): void {
     const view = viewRef.current
     const line = lineNumber > 0 ? view.lineByNumber.get(lineNumber) : undefined
     if (!line) {
-      collection.set([])
+      // Spec: a newly inserted line blame has never seen reads as "You" while
+      // the buffer has unsaved edits; a clean buffer only has the EOF-only
+      // tail line unknown, which stays silent.
+      if (!view.isDirty || lineNumber <= 0) {
+        collection.set([])
+        return
+      }
+      collection.set([
+        {
+          range: makeWholeLineRange(lineNumber),
+          options: {
+            showIfCollapsed: true,
+            after: {
+              content: ` ${formatInlineBlameAnnotation(
+                {
+                  lineNumber,
+                  hash: '',
+                  abbreviatedHash: '',
+                  author: '',
+                  authorTime: 0,
+                  summary: '',
+                  committed: false
+                },
+                { isDirty: view.isDirty, strings: getGitBlameStrings() }
+              )}`,
+              inlineClassName: ANNOTATION_CLASS
+            }
+          }
+        }
+      ])
       return
     }
     const content = formatInlineBlameAnnotation(line, {
@@ -124,6 +153,9 @@ export function useMonacoGitBlame(args: UseMonacoGitBlameArgs): void {
       {
         range: makeWholeLineRange(lineNumber),
         options: {
+          // Why: a whole-line range at column 1 is collapsed, and Monaco hides
+          // injected text on collapsed ranges unless this flag is set.
+          showIfCollapsed: true,
           after: { content: ` ${content}`, inlineClassName: ANNOTATION_CLASS }
         }
       }

@@ -134,6 +134,42 @@ describe('parseGitBlamePorcelain', () => {
     expect(result.lines[1].summary).toBe('Fix the parsing bug')
   })
 
+  it('parses git 2.54+ per-line short headers inside a counted group without duplicating lines', () => {
+    // Real git 2.54 porcelain (captured from 2.54.0.windows.1): a group header
+    // carries numLines, but every line inside the group still gets its own
+    // short header — the group's tail lines must not be emitted twice.
+    const stdout = [
+      `${FULL_SHA} 1 1 2`,
+      'author haianh',
+      'author-mail <author@example.com>',
+      'author-time 1676022333',
+      'author-tz +0700',
+      'summary Migration project',
+      'filename src/file.ts',
+      '\t{',
+      `${FULL_SHA} 2 2`,
+      '\t  "key": 1',
+      `${FULL_SHA} 12 3 2`,
+      '\t  "next": {',
+      `${FULL_SHA} 13 4`,
+      '\t    "inner": 2',
+      `${PREV_SHA} 14 5 1`,
+      'author Later Dev',
+      'author-mail <later@example.com>',
+      'author-time 1704167490',
+      'author-tz +0000',
+      'summary Later commit',
+      'filename src/file.ts',
+      '\t    tail'
+    ].join('\n')
+    const result = parseGitBlamePorcelain(stdout, 'src/file.ts')
+    expect(result.lines.map((line) => line.lineNumber)).toEqual([1, 2, 3, 4, 5])
+    // Group-following lines reuse the cached commit metadata.
+    expect(result.lines[1].author).toBe('haianh')
+    expect(result.lines[1].summary).toBe('Migration project')
+    expect(result.lines[4].author).toBe('Later Dev')
+  })
+
   it('returns an empty line list for empty porcelain output', () => {
     const result = parseGitBlamePorcelain('', 'src/file.ts')
     expect(result.lines).toEqual([])

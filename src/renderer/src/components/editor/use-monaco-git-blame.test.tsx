@@ -134,6 +134,19 @@ function setLastDecorationContent(fake: ReturnType<typeof createFakeEditor>): st
   return decorations?.[0]?.options.after.content ?? ''
 }
 
+function lastDecorationShowsIfCollapsed(fake: ReturnType<typeof createFakeEditor>): boolean {
+  const collections = fake.decorationCollections
+  const last = collections.at(-1)
+  if (!last) {
+    return false
+  }
+  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: vi.fn() call args are untyped at the mock boundary; the hook only ever sets whole-line after-decorations.
+  const calls = last.set.mock.calls as unknown as [
+    { options: { showIfCollapsed?: boolean } }[]][]
+  const decorations = calls.at(-1)?.[0]
+  return decorations?.[0]?.options.showIfCollapsed === true
+}
+
 beforeEach(() => {
   blameClient.getRuntimeGitBlame.mockReset()
   blameClient.getRuntimeGitBlame.mockResolvedValue(BLAME_RESULT)
@@ -158,6 +171,9 @@ describe('useMonacoGitBlame', () => {
       'src/app.ts'
     )
     await waitFor(() => expect(setLastDecorationContent(fake)).toContain('Jane Dev'))
+    // Regression pin (Electron walkthrough): a whole-line range at column 1 is
+    // collapsed, and Monaco hides injected text on it unless showIfCollapsed is set.
+    expect(lastDecorationShowsIfCollapsed(fake)).toBe(true)
     unmount()
   })
 
@@ -174,6 +190,33 @@ describe('useMonacoGitBlame', () => {
 
     expect(blameClient.getRuntimeGitBlame).toHaveBeenCalledTimes(1)
     expect(setLastDecorationContent(fake)).toContain(GIT_BLAME_STRINGS_EN.you)
+    unmount()
+  })
+
+  it('paints You on a never-blamed inserted line while the buffer is dirty', async () => {
+    const fake = createFakeEditor()
+    const { unmount, rerender } = renderHook((args: HookArgs) => useMonacoGitBlame(args), {
+      initialProps: baseArgs(fake)
+    })
+    await waitFor(() => expect(blameClient.getRuntimeGitBlame).toHaveBeenCalledTimes(1))
+
+    rerender(baseArgs(fake, { isDirty: true }))
+    fake.editor.fireCursor(99)
+
+    expect(setLastDecorationContent(fake)).toContain(GIT_BLAME_STRINGS_EN.you)
+    unmount()
+  })
+
+  it('stays silent on a never-blamed line when the buffer is clean', async () => {
+    const fake = createFakeEditor()
+    const { unmount } = renderHook((args: HookArgs) => useMonacoGitBlame(args), {
+      initialProps: baseArgs(fake)
+    })
+    await waitFor(() => expect(blameClient.getRuntimeGitBlame).toHaveBeenCalledTimes(1))
+
+    fake.editor.fireCursor(99)
+
+    expect(setLastDecorationContent(fake)).toBe('')
     unmount()
   })
 

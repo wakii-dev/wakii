@@ -39,7 +39,7 @@ export function parseGitBlamePorcelain(stdout: string, filePath: string): GitBla
       index += 1
       continue
     }
-    const [, , sha, , finalLineGroup, groupSize] = header
+    const [, , sha, , finalLineGroup] = header
     index += 1
 
     let meta = commitsBySha.get(sha)
@@ -67,9 +67,17 @@ export function parseGitBlamePorcelain(stdout: string, filePath: string): GitBla
     }
 
     const startLine = Number.parseInt(finalLineGroup, 10)
-    const lineCount = groupSize ? Number.parseInt(groupSize, 10) : 1
+    // The content lines attached to this entry are the emission truth: classic
+    // git follows a group header with numLines content lines, while git 2.54+
+    // also gives every in-group line its own short header. Counting the real
+    // content lines (not the numLines field) avoids double-emitting tail lines.
+    let attachedContentLines = 0
+    while (index < rawLines.length && rawLines[index]?.startsWith('\t')) {
+      attachedContentLines += 1
+      index += 1
+    }
     const committed = !isGitBlameUncommittedHash(sha)
-    for (let offset = 0; offset < lineCount; offset += 1) {
+    for (let offset = 0; offset < attachedContentLines; offset += 1) {
       lines.push({
         lineNumber: startLine + offset,
         hash: sha,
