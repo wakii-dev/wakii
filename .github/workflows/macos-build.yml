@@ -51,6 +51,13 @@ jobs:
         # Why: packaging builds x64 + arm64; plain install is host-CPU-only since upstream #20420
         run: pnpm install --frozen-lockfile --cpu=current,x64,arm64
 
+      - name: Install mobile workspace deps
+        # Why: build:desktop bundles the mobile web app (upstream OTA phase A) —
+        # its esbuild resolves react-native/expo from mobile/node_modules, a
+        # separate workspace with its own lockfile not covered by the root install.
+        run: pnpm install --frozen-lockfile
+        working-directory: mobile
+
       # Full chain — INCLUDING build:computer-macos (needs Swift 6 tools = Xcode 16)
       - name: Build native helpers + app
         env:

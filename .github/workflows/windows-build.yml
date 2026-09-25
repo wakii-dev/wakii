@@ -43,6 +43,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install mobile workspace deps
+        # Why: build:desktop bundles the mobile web app (upstream OTA phase A) —
+        # its esbuild resolves react-native/expo from mobile/node_modules, a
+        # separate workspace with its own lockfile not covered by the root install.
+        run: pnpm install --frozen-lockfile
+        working-directory: mobile
+
       - name: Build Windows app
         run: pnpm run build:win
         env:
