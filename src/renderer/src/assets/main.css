@@ -2329,6 +2329,16 @@ html.native-shell .app-layout {
 }
 
 .monaco-editor .orca-git-blame-annotation {
+  /* Fixed-width right slot: annotation sits right of the code, same width on
+     every line — cursor moves never shift the layout (user directive). */
+  display: inline-block;
+  box-sizing: border-box;
+  width: min(64ch, 40vw);
+  margin-left: 4ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: pre;
+  vertical-align: top;
   color: var(--muted-foreground);
   font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 11px;
