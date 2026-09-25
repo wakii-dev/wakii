@@ -25,6 +25,9 @@ import { EditorBreadcrumbs } from './EditorBreadcrumbs'
 import { QUICK_OUTLINE_EDITOR_ATTRIBUTE, hasQuickOutlineSymbols } from '@/lib/quick-outline-editor-target'
 import { snapshotMonacoViewState } from './monaco-view-state-persistence'
 import { MonacoMarkdownAnnotationOverlay } from './MonacoMarkdownAnnotationOverlay'
+import { getWorktreeMapFromState } from '@/store/selectors'
+import { getConnectionId } from '@/lib/connection-context'
+import { useMonacoGitBlame } from './use-monaco-git-blame'
 
 type MonacoEditorProps = {
   fileId: string
@@ -44,6 +47,11 @@ type MonacoEditorProps = {
   worktreeId?: string
   markdownAnnotationsEnabled?: boolean
   conflictDecorationsEnabled?: boolean
+  // Why opt-in: only surfaces with a real worktree file context (edit surface) show blame;
+  // diff/conflict/preview surfaces stay annotation-free.
+  inlineBlameEnabled?: boolean
+  // Why here: dirty lives on the open tab, not the editor model; blame uses it to skip fetches while typing.
+  isDirty?: boolean
   readOnly?: boolean
   liveTail?: boolean
   autoHeight?: boolean
@@ -66,6 +74,8 @@ export default function MonacoEditor({
   worktreeId,
   markdownAnnotationsEnabled = false,
   conflictDecorationsEnabled = false,
+  inlineBlameEnabled = false,
+  isDirty = false,
   readOnly = false,
   liveTail = false,
   autoHeight = false
@@ -191,6 +201,22 @@ export default function MonacoEditor({
     language,
     markdownDocuments,
     conflictDecorationsEnabled
+  })
+
+  // Why store-select: PTY activity replaces worktree metadata; subscribe by id like markdown documents do.
+  const blameWorktreePath = useAppStore((s) =>
+    worktreeId ? (getWorktreeMapFromState(s).get(worktreeId)?.path ?? null) : null
+  )
+
+  useMonacoGitBlame({
+    enabled: inlineBlameEnabled && (settings?.editorInlineBlameEnabled ?? true),
+    mountedEditor,
+    worktreeId: worktreeId ?? null,
+    worktreePath: blameWorktreePath,
+    relativePath,
+    connectionId: worktreeId ? getConnectionId(worktreeId) : null,
+    content,
+    isDirty
   })
 
   const handleMount = useMonacoEditorMount({

@@ -306,7 +306,7 @@ describe('web git preload API', () => {
     await expect(
       globals.window.api.git.blame?.({ worktreePath: '/workspace/repo', filePath: 'src/app.ts' })
     ).resolves.toEqual(blameResult)
-    expect(runtimeCalls[runtimeCalls.length - 1]).toEqual({
+    expect(runtimeCalls.at(-1)).toEqual({
       method: 'git.blame',
       params: { worktree: 'id:wt-1', filePath: 'src/app.ts' }
     })

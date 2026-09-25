@@ -262,7 +262,6 @@ export function useMonacoGitBlame(args: UseMonacoGitBlameArgs): void {
       hoverDisposable.dispose()
       cursorDisposable.dispose()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [args.enabled, args.mountedEditor])
 
   // Clear the painted annotation when the feature turns off.

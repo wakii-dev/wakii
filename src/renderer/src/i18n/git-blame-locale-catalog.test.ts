@@ -37,7 +37,7 @@ function readCatalogValue(catalog: unknown, key: string): unknown {
     if (!current || typeof current !== 'object') {
       return undefined
     }
-    current = (current as Record<string, unknown>)[segment]
+    current = Reflect.get(current, segment)
   }
   return current
 }
@@ -53,9 +53,9 @@ describe('inline blame settings defaults', () => {
       terminalFontFamily: 'monospace',
       terminalInactivePaneOpacity: 1,
       terminalRightClickToPaste: false,
-      // SAFETY: notification/voice defaults are irrelevant to editor settings
-      // under test; the sections are exercised by their own suites.
+      // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: notification/voice defaults are irrelevant to editor settings under test; those sections are exercised by their own suites.
       notifications: {} as NotificationSettings,
+      // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: voice defaults are irrelevant to editor settings under test; those sections are exercised by their own suites.
       voice: {} as VoiceSettings
     })
     expect(defaults.editorInlineBlameEnabled).toBe(true)
@@ -68,7 +68,7 @@ describe('git blame locale catalog', () => {
       for (const key of ALL_KEYS) {
         const value = readCatalogValue(catalog, key)
         expect(value, `${locale} missing ${key}`).toBeTypeOf('string')
-        expect(value as string, `${locale} empty ${key}`).not.toBe('')
+        expect(value, `${locale} empty ${key}`).not.toBe('')
       }
     }
   })

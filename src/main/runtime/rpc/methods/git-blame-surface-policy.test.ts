@@ -23,13 +23,19 @@ describe('git.blame surface policy', () => {
         registered.push(method)
       },
       onNotification: () => {}
-    } as unknown as RelayDispatcher
+    }
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: probe dispatcher records method names; registration must never call other dispatcher members.
+    const relayDispatcher = dispatcher as unknown as RelayDispatcher
     const noOpHandlers = new Proxy(
       {},
       {
         get: () => () => {}
       }
-    ) as GitHandlerOperationSet
+    )
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: no-op operation set; registration reads member functions only.
+    const operations = noOpHandlers as GitHandlerOperationSet
+
+    registerGitHandlers(relayDispatcher, operations, () => {}, () => {})
 
     registerGitHandlers(dispatcher, noOpHandlers, () => {}, () => {})
 

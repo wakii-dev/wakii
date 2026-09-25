@@ -9,6 +9,7 @@ describe('SshGitProvider blame', () => {
 
   beforeEach(() => {
     mux = createMockMux()
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: fake mux stubs only request(); the provider contract is exercised through it.
     provider = new SshGitProvider('conn-1', mux as never)
   })
 

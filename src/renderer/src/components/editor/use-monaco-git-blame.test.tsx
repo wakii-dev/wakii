@@ -32,8 +32,8 @@ const blameClient = vi.hoisted(() => ({
 }))
 vi.mock('@/runtime/runtime-git-blame-client', () => blameClient)
 
-const storeMock = vi.hoisted(() => ({
-  gitStatusHeadByWorktree: {} as Record<string, string>
+const storeMock = vi.hoisted<{ gitStatusHeadByWorktree: Record<string, string> }>(() => ({
+  gitStatusHeadByWorktree: {}
 }))
 vi.mock('@/store', () => ({
   useAppStore: (selector: (state: typeof storeMock) => unknown) => selector(storeMock)
@@ -106,6 +106,7 @@ function baseArgs(
 ): HookArgs {
   return {
     enabled: true,
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: fake editor stubs only the API the hook touches; no full Monaco instance in unit tests.
     mountedEditor: fake.editor as never,
     worktreeId: 'wt-1',
     worktreePath: '/repo',
@@ -123,6 +124,7 @@ function setLastDecorationContent(fake: ReturnType<typeof createFakeEditor>): st
   if (!last) {
     return ''
   }
+  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: vi.fn() call args are untyped at the mock boundary; the hook only ever sets whole-line after-decorations.
   const calls = last.set.mock.calls as unknown as [
     { options: { after: { content: string } } }[]][]
   if (calls.length === 0) {
@@ -228,6 +230,7 @@ describe('useMonacoGitBlame', () => {
 
     expect(blameClient.getRuntimeGitBlame).not.toHaveBeenCalled()
     expect(monacoMocks.registerHoverProvider).toHaveBeenCalled()
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: vi.fn() call args are untyped at the mock boundary; the hook registers exactly this provider shape.
     const provider = monacoMocks.registerHoverProvider.mock.calls[0][1] as {
       provideHover: (model: unknown, position: unknown) => { contents: { value: string }[] } | null
     }
@@ -302,6 +305,7 @@ describe('useMonacoGitBlame', () => {
     })
     await waitFor(() => expect(monacoMocks.registerHoverProvider).toHaveBeenCalled())
 
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: vi.fn() call args are untyped at the mock boundary; the hook registers exactly this provider shape.
     const provider = monacoMocks.registerHoverProvider.mock.calls[0][1] as {
       provideHover: (model: unknown, position: unknown) => { contents: { value: string }[] } | null
     }

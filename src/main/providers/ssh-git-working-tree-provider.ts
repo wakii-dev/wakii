@@ -33,6 +33,7 @@ export class SshGitWorkingTreeProvider extends SshGitNoninteractiveProvider {
 
   async getBlame(worktreePath: string, options: GitBlameOptions): Promise<GitBlameResult> {
     try {
+      // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the mux returns untyped JSON-RPC results; blame payload shape is pinned by the wire catalog.
       return (await this.mux.request('git.blame', {
         worktreePath,
         filePath: options.filePath

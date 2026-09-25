@@ -1,5 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { RuntimeRpcCallError } from './runtime-rpc-result'
+import type * as runtimeRpcClientModule from './runtime-rpc-client'
 import {
   GitBlameHostUnsupportedError,
   getRuntimeGitBlame,
@@ -9,7 +10,7 @@ import {
 
 const callRuntimeRpc = vi.hoisted(() => vi.fn())
 vi.mock('./runtime-rpc-client', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('./runtime-rpc-client')>()
+  const actual = await importOriginal<typeof runtimeRpcClientModule>()
   return { ...actual, callRuntimeRpc }
 })
 
@@ -38,7 +39,7 @@ function rpcFailure(code: string): RuntimeRpcCallError {
 }
 
 function withWindow(api: Record<string, unknown>): void {
-  ;(globalThis as { window?: unknown }).window = { api: { git: api } }
+  vi.stubGlobal('window', { api: { git: api } })
 }
 
 const localContext = {
@@ -58,6 +59,9 @@ const runtimeContext = {
 beforeEach(() => {
   callRuntimeRpc.mockReset()
   resetGitBlameDisabledHosts()
+})
+afterEach(() => {
+  vi.unstubAllGlobals()
 })
 
 describe('getRuntimeGitBlame', () => {
