@@ -29,6 +29,10 @@ If ANY of these is missing or ambiguous — STOP and ask the coordinator. Do not
 
 1. **READ before write** — spec slice + the actual files listed. Never edit a file you haven't read this session.
 2. **Implement surgically** — only what the task needs; match existing style; no drive-by refactors (Principle 2 binds you).
+   **Characterization fence:** file sắp sửa mà CHƯA có test trùm → viết characterization
+   test chốt hành vi HIỆN TẠI (input → output như đang chạy) TRƯỚC khi sửa — trừ khi
+   task chính là viết test. AI sửa dưới lưới này: test cũ đỏ = nó vừa đổi điều gì đó
+   phải giải thích, không phải "tin là ổn".
 3. **Test before claiming** — run the touched surface's tests (at minimum: unit tests for changed files). No coverage exists? Say so explicitly in the report; verify manually and state how.
 4. **Commit atomically** — stage ONLY the files this task touched (never `git add -A`). One task = one commit. Never skip hooks (`--no-verify` forbidden).
 5. **Loop caps apply to you** — same-cause verify failure ×2, or 3 retry attempts with different causes → STOP, report what you tried, ask the coordinator. Do not grind.
