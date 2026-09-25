@@ -9263,6 +9263,16 @@
             "editorFontFamilyDesc": "Police utilisée par les éditeurs de fichiers et les vues de diff. Laissez vide pour suivre la police du terminal.",
             "externalWorktrees": "Worktrees externes",
             "externalWorktreesDescription": "Choisissez si les worktrees créés en dehors d'Wakii apparaissent par défaut."
+          },
+          "editor": {
+            "search": {
+              "21e1aaf2ef": "Blame intégré",
+              "f83e419695": "Affiche l’auteur, la date et le résumé du commit à la fin de la ligne actuelle dans l’éditeur de fichiers.",
+              "622b5fa095": "intégré",
+              "97afa04b81": "blame",
+              "c307a3153a": "gitlens",
+              "f912660d8c": "annotation"
+            }
           }
         },
         "git": {
@@ -11338,6 +11348,30 @@
         },
         "shortcutDefinitionCatalog": {
           "missionControlConflict": "Bloqué par Mission Control. Remappez ici ou changez-le dans Réglages Système."
+        },
+        "EditorCaretAnimationSetting": {
+          "8e0f5141a1": "Activé",
+          "8dc4f98620": "Explicite",
+          "84ecf4f030": "Désactivé",
+          "63ef2747f7": "Animation fluide du curseur",
+          "a181845e72": "Anime le curseur de texte lorsqu’il se déplace dans les éditeurs de fichiers."
+        },
+        "EditorRenderWhitespaceSetting": {
+          "f08dbab703": "Aucun",
+          "6bce99b8b5": "Frontières",
+          "e1f52833fb": "Sélection",
+          "09b41c31fb": "Fins de ligne",
+          "b0974f678a": "Tout",
+          "085871d375": "Afficher les espaces",
+          "628ef71b4c": "Affiche les caractères d’espacement dans les éditeurs de fichiers."
+        },
+        "EditorBreadcrumbsSetting": {
+          "fe2cb0ef78": "Fil d’Ariane",
+          "9e7a1f613e": "Affiche le chemin du fichier au-dessus de l’éditeur de fichiers."
+        },
+        "InlineBlameSetting": {
+          "683fd9af0f": "Blame intégré",
+          "9142b8bc2f": "Affiche l’auteur, la date et le résumé du commit à la fin de la ligne actuelle dans l’éditeur de fichiers."
         }
       },
       "right": {
@@ -14619,6 +14653,23 @@
           "insertColumnRight": "Insérer une colonne à droite",
           "deleteRow": "Supprimer la ligne",
           "deleteColumn": "Supprimer la colonne"
+        },
+        "EditorBreadcrumbs": {
+          "7a0b97acc9": "Fil d’Ariane du fichier",
+          "deb1973b7d": "Révéler dans l’Explorateur"
+        },
+        "git": {
+          "blame": {
+            "strings": {
+              "f553e19e41": "Vous",
+              "e6fc8a66b3": "modifications non enregistrées",
+              "5d58990105": "Le fichier est trop volumineux pour le blame intégré.",
+              "1f32d46ce0": "Le fichier contient trop de lignes pour le blame intégré.",
+              "1f078da5df": "Commit",
+              "6f3313de46": "Auteur",
+              "2f33a41d63": "Date"
+            }
+          }
         }
       },
       "diff": {

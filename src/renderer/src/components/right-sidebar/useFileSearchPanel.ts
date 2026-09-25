@@ -1,36 +1,17 @@
 import type React from 'react'
-import { useCallback, useDeferredValue, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useAppStore } from '@/store'
 import { useActiveWorktree } from '@/store/selectors'
-import type {
-  SearchFileResult,
-  SearchMatch,
-  SearchResult
-} from '../../../../shared/code-search-types'
-import { buildSearchRows } from './search-rows'
-import { cancelRevealFrame, openMatchResult } from './search-match-open'
-import type { SearchQueryRowProps } from './SearchQueryRow'
-import type { SearchFiltersProps } from './SearchFilters'
+import { cancelRevealFrame } from './search-match-open'
+import type { FileSearchPanelModel } from './file-search-panel-model'
 import { useFileSearchRunner } from './useFileSearchRunner'
+import { useFileSearchHistory } from './use-file-search-history'
+import { useFileSearchReplaceCancelGuard } from './use-file-search-replace-cancel'
+import { useFileSearchReplacePanel } from './use-file-search-replace-panel'
+import { useFileSearchResultsPanel } from './use-file-search-results-panel'
+import { useFileSearchInputFocus } from './use-file-search-input-focus'
 
 const EMPTY_COLLAPSED_FILES = new Set<string>()
-
-export type FileSearchPanelModel = {
-  activeWorktreeId: string | null
-  queryRowProps: SearchQueryRowProps
-  filtersProps: SearchFiltersProps
-  resultsProps: {
-    results: SearchResult | null
-    hasCommittedResults: boolean
-    query: string
-    loading: boolean
-    rows: ReturnType<typeof buildSearchRows>
-    scrollRef: React.RefObject<HTMLDivElement | null>
-    onToggleCollapsedFile: (filePath: string) => void
-    onMatchClick: (fileResult: SearchFileResult, match: SearchMatch) => void
-  }
-  focusQueryInput: () => void
-}
 
 export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearchPanelModel {
   const activeWorktree = useActiveWorktree()
@@ -53,6 +34,10 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
   const fileSearchCollapsedFiles = searchState?.collapsedFiles ?? EMPTY_COLLAPSED_FILES
   const fileSearchSeedRequestId = searchState?.seedRequestId
   const fileSearchFocusRequestId = searchState?.focusRequestId
+  const fileSearchReplaceVisible = searchState?.replaceVisible ?? false
+  const fileSearchReplaceQuery = searchState?.replaceQuery ?? ''
+  const fileSearchReplaceAllInProgress = searchState?.replaceAllInProgress ?? false
+  const fileSearchHasReplaceUndo = (searchState?.lastReplaceOp?.files.length ?? 0) > 0
 
   const updateFileSearchState = useAppStore((s) => s.updateFileSearchState)
   const consumeFileSearchSeedRequest = useAppStore((s) => s.consumeFileSearchSeedRequest)
@@ -63,9 +48,12 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
   const resultsScrollRef = useRef<HTMLDivElement>(null)
   const revealRafRef = useRef<number | null>(null)
   const revealInnerRafRef = useRef<number | null>(null)
-  const seededInputSelectionRafRef = useRef<number | null>(null)
   const includeInputRef = useRef<HTMLInputElement>(null)
   const excludeInputRef = useRef<HTMLInputElement>(null)
+
+  // Leaving the search view, switching worktrees, or unmounting cancels an
+  // in-flight replace-all (criterion 5) — already-written files stay written.
+  useFileSearchReplaceCancelGuard({ activeWorktreeId, explorerView })
 
   const updateActiveSearchState = useCallback(
     (updates: Partial<NonNullable<typeof searchState>>) => {
@@ -101,88 +89,75 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
     updateActiveSearchState
   })
 
-  const cancelSeededInputSelectionFrame = useCallback(() => {
-    if (seededInputSelectionRafRef.current !== null) {
-      cancelAnimationFrame(seededInputSelectionRafRef.current)
-      seededInputSelectionRafRef.current = null
-    }
-  }, [])
-
-  const scheduleSeededInputSelection = useCallback(() => {
-    cancelSeededInputSelectionFrame()
-    seededInputSelectionRafRef.current = requestAnimationFrame(() => {
-      seededInputSelectionRafRef.current = null
-      inputRef.current?.focus()
-      inputRef.current?.select()
-    })
-  }, [cancelSeededInputSelectionFrame])
-
   const focusQueryInput = useCallback(() => {
     inputRef.current?.focus()
   }, [])
 
+  const getCurrentSearchQuery = useCallback(() => {
+    if (!activeWorktreeId) {
+      return ''
+    }
+    return useAppStore.getState().fileSearchStateByWorktree[activeWorktreeId]?.query ?? ''
+  }, [activeWorktreeId])
+
+  const selectHistoryQuery = useCallback(
+    (selected: string) => {
+      updateActiveSearchState({ query: selected })
+      executeSearch(selected)
+    },
+    [executeSearch, updateActiveSearchState]
+  )
+
+  const {
+    searchHistory,
+    historyOpen,
+    handleHistoryFocus,
+    handleHistoryBlur,
+    handleHistorySelect,
+    recordCurrentQuery,
+    openHistory,
+    closeHistory
+  } = useFileSearchHistory({
+    activeWorktreeId,
+    getCurrentQuery: getCurrentSearchQuery,
+    onSelectQuery: selectHistoryQuery,
+    focusInput: focusQueryInput
+  })
+
   useEffect(() => {
     return () => {
-      cancelSeededInputSelectionFrame()
       cancelRevealFrame(revealRafRef)
       cancelRevealFrame(revealInnerRafRef)
     }
-  }, [cancelSeededInputSelectionFrame])
+  }, [])
 
-  useEffect(() => {
-    if (!worktreePath) {
-      cancelPendingSearch()
-      updateActiveSearchState({ results: null, resultOwner: null })
-    }
-  }, [worktreePath, cancelPendingSearch, updateActiveSearchState])
-
-  const committedSearchResults = useMemo(
-    () => ({ results: fileSearchResults, owner: fileSearchResultOwner }),
-    [fileSearchResultOwner, fileSearchResults]
-  )
-  const deferredSearchResults = useDeferredValue(committedSearchResults)
-  const searchRows = useMemo(
-    () =>
-      buildSearchRows(
-        fileSearchQuery.trim() && worktreePath ? deferredSearchResults.results : null,
-        fileSearchCollapsedFiles
-      ),
-    [deferredSearchResults.results, fileSearchCollapsedFiles, fileSearchQuery, worktreePath]
-  )
-
-  useEffect(() => {
-    if (!activeWorktreeId || fileSearchSeedRequestId === undefined) {
-      return
-    }
-
-    if (fileSearchQuery.trim()) {
-      executeSearch(fileSearchQuery)
-    }
-    scheduleSeededInputSelection()
-    consumeFileSearchSeedRequest(activeWorktreeId, fileSearchSeedRequestId)
-  }, [
+  useFileSearchInputFocus({
+    inputRef,
     activeWorktreeId,
-    consumeFileSearchSeedRequest,
-    executeSearch,
+    worktreePath,
     fileSearchQuery,
     fileSearchSeedRequestId,
-    scheduleSeededInputSelection
-  ])
+    fileSearchFocusRequestId,
+    explorerView,
+    executeSearch,
+    cancelPendingSearch,
+    updateActiveSearchState,
+    consumeFileSearchSeedRequest
+  })
 
-  useEffect(() => {
-    if (!activeWorktreeId || fileSearchFocusRequestId === undefined) {
-      return
-    }
-    inputRef.current?.focus()
-  }, [activeWorktreeId, fileSearchFocusRequestId])
-
-  const previousExplorerViewRef = useRef(explorerView)
-  useEffect(() => {
-    if (previousExplorerViewRef.current !== 'search' && explorerView === 'search') {
-      focusQueryInput()
-    }
-    previousExplorerViewRef.current = explorerView
-  }, [explorerView, focusQueryInput])
+  const resultsPanel = useFileSearchResultsPanel({
+    results: fileSearchResults,
+    resultOwner: fileSearchResultOwner,
+    collapsedFiles: fileSearchCollapsedFiles,
+    query: fileSearchQuery,
+    worktreePath,
+    toggleCollapsedFile: toggleActiveCollapsedFile,
+    updateActiveSearchState,
+    openFile,
+    setPendingEditorReveal,
+    revealRafRef,
+    revealInnerRafRef
+  })
 
   const handleClearSearch = useCallback(() => {
     cancelPendingSearch()
@@ -199,6 +174,30 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
     }
   }, [executeSearch, activeWorktreeId])
 
+  const {
+    replaceDisabledReason,
+    onReplaceUndo,
+    onToggleReplaceVisible,
+    onReplaceQueryChange,
+    onReplaceAll,
+    replacePreviewProps
+  } = useFileSearchReplacePanel({
+    activeWorktreeId,
+    worktreePath,
+    results: fileSearchResults,
+    query: fileSearchQuery,
+    replaceTerm: fileSearchReplaceQuery,
+    replaceVisible: fileSearchReplaceVisible,
+    flags: {
+      caseSensitive: fileSearchCaseSensitive,
+      wholeWord: fileSearchWholeWord,
+      useRegex: fileSearchUseRegex
+    },
+    replaceAllInProgress: fileSearchReplaceAllInProgress,
+    updateActiveSearchState,
+    rerunSearch
+  })
+
   const handleQueryChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const val = e.target.value
@@ -214,30 +213,22 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
         return
       }
       if (e.key === 'Escape') {
+        closeHistory()
         if (fileSearchQuery) {
           handleClearSearch()
         }
       }
+      if (e.key === 'ArrowDown') {
+        // Why: history is opt-in (VS Code behavior) — never auto-opened on focus.
+        e.preventDefault()
+        openHistory()
+      }
       if (e.key === 'Enter') {
         executeSearch(fileSearchQuery)
+        recordCurrentQuery()
       }
     },
-    [fileSearchQuery, handleClearSearch, executeSearch]
-  )
-
-  const handleMatchClick = useCallback(
-    (fileResult: SearchFileResult, match: SearchMatch) => {
-      openMatchResult({
-        resultOwner: deferredSearchResults.owner,
-        fileResult,
-        match,
-        openFile,
-        setPendingEditorReveal,
-        revealRafRef,
-        revealInnerRafRef
-      })
-    },
-    [deferredSearchResults.owner, openFile, setPendingEditorReveal]
+    [fileSearchQuery, handleClearSearch, executeSearch, recordCurrentQuery, closeHistory, openHistory]
   )
 
   return {
@@ -249,6 +240,16 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
       caseSensitive: fileSearchCaseSensitive,
       wholeWord: fileSearchWholeWord,
       useRegex: fileSearchUseRegex,
+      history: searchHistory,
+      historyOpen: historyOpen && fileSearchQuery.trim() === '',
+      replaceVisible: fileSearchReplaceVisible,
+      replaceQuery: fileSearchReplaceQuery,
+      replaceDisabledReason,
+      hasReplaceUndo: fileSearchHasReplaceUndo,
+      onReplaceUndo,
+      onToggleReplaceVisible,
+      onReplaceQueryChange,
+      onReplaceAll,
       onQueryChange: handleQueryChange,
       onKeyDown: handleKeyDown,
       onClearSearch: handleClearSearch,
@@ -263,7 +264,10 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
       onToggleRegex: () => {
         updateActiveSearchState({ useRegex: !fileSearchUseRegex })
         rerunSearch()
-      }
+      },
+      onHistoryFocus: handleHistoryFocus,
+      onHistoryBlur: handleHistoryBlur,
+      onHistorySelect: handleHistorySelect
     },
     filtersProps: {
       includePattern: fileSearchIncludePattern,
@@ -280,15 +284,18 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
       }
     },
     resultsProps: {
-      results: deferredSearchResults.results,
+      results: resultsPanel.results,
       hasCommittedResults: fileSearchResults !== null,
       query: fileSearchQuery,
       loading: fileSearchLoading,
-      rows: searchRows,
+      rows: resultsPanel.rows,
       scrollRef: resultsScrollRef,
-      onToggleCollapsedFile: toggleActiveCollapsedFile,
-      onMatchClick: handleMatchClick
+      onToggleCollapsedFile: resultsPanel.onToggleCollapsedFile,
+      onExpandAll: resultsPanel.onExpandAll,
+      onCollapseAll: resultsPanel.onCollapseAll,
+      onMatchClick: resultsPanel.onMatchClick
     },
+    replacePreviewProps,
     focusQueryInput
   }
 }

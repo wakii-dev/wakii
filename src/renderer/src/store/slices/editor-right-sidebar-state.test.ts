@@ -296,6 +296,21 @@ describe('createEditorSlice right sidebar state', () => {
     expect(store.getState().expandedDirs['wt-1']).toEqual(new Set(['/repo/src2', '/repo/tests']))
     expect(store.getState().expandedDirs['wt-2']).toEqual(new Set(['/other/src']))
   })
+
+  it('keeps the Open Editors section expanded by default', () => {
+    const store = createEditorStore()
+    expect(store.getState().openEditorsCollapsed).toBe(false)
+  })
+
+  it('persists the Open Editors collapsed flag for the session', () => {
+    const store = createEditorStore()
+
+    store.getState().setOpenEditorsCollapsed(true)
+    expect(store.getState().openEditorsCollapsed).toBe(true)
+
+    store.getState().setOpenEditorsCollapsed(false)
+    expect(store.getState().openEditorsCollapsed).toBe(false)
+  })
 })
 
 describe('createEditorSlice file search seed state', () => {

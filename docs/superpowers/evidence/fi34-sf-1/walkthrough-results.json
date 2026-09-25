@@ -1,0 +1,37 @@
+[
+  {
+    "sc": "SC1",
+    "ok": true,
+    "detail": "inline blame decoration visible on cursor line (count=1)"
+  },
+  {
+    "sc": "SC1b",
+    "ok": true,
+    "detail": "annotation follows cursor to next line (count=1)"
+  },
+  {
+    "sc": "SC2",
+    "ok": true,
+    "detail": "hover text present=true, labels=true, no-email=true, no-html=true; text=\"Commit: b089edc\\n\\nAuthor: haianh\\n\\nDate: 2/10/2023\\n\\nMigration project\""
+  },
+  {
+    "sc": "SC5",
+    "ok": true,
+    "detail": "You/inserted annotation (count=1, text=[\" You · unsaved changes\"])"
+  },
+  {
+    "sc": "SC5b",
+    "ok": true,
+    "detail": "draft fully undone, tab clean=true"
+  },
+  {
+    "sc": "SC3",
+    "ok": true,
+    "detail": "toggle OFF removes decorations instantly (count=0)"
+  },
+  {
+    "sc": "SC3b",
+    "ok": true,
+    "detail": "toggle ON restores decorations (count=1)"
+  }
+]

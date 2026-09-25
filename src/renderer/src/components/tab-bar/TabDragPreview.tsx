@@ -1,6 +1,7 @@
 import { createElement } from 'react'
 import { Globe, Terminal as TerminalIcon } from 'lucide-react'
-import { getFileTypeIcon } from '@/lib/file-type-icons'
+import { FILE_ICON_COLOR_CLASS, getFileTypeIcon, getFileTypeIconColor } from '@/lib/file-type-icons'
+import { cn } from '@/lib/utils'
 import { AgentIcon } from '@/lib/agent-catalog'
 import type { TabDragItemData } from '../tab-group/useTabDragSplit'
 
@@ -11,8 +12,15 @@ function LeadingIcon({ drag }: { drag: TabDragItemData }): React.JSX.Element {
     return <Globe className="h-3.5 w-3.5 shrink-0" />
   }
   if (drag.tabType === 'editor') {
-    const FileIcon = getFileTypeIcon(drag.iconPath ?? drag.label)
-    return createElement(FileIcon, { className: 'h-3.5 w-3.5 shrink-0' })
+    const path = drag.iconPath ?? drag.label
+    const FileIcon = getFileTypeIcon(path)
+    const iconColorGroup = getFileTypeIconColor(path)
+    return createElement(FileIcon, {
+      className: cn(
+        'h-3.5 w-3.5 shrink-0',
+        iconColorGroup ? FILE_ICON_COLOR_CLASS[iconColorGroup] : undefined
+      )
+    })
   }
   if (drag.agent) {
     return <AgentIcon agent={drag.agent} size={14} />

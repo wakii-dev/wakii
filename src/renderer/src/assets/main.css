@@ -107,6 +107,15 @@
   --color-workspace-status-done: var(--workspace-status-done);
   --color-workspace-status-review: var(--workspace-status-review);
   --color-workspace-status-progress: var(--workspace-status-progress);
+  --color-file-icon-code-ts-js: var(--file-icon-code-ts-js);
+  --color-file-icon-code: var(--file-icon-code);
+  --color-file-icon-data-config: var(--file-icon-data-config);
+  --color-file-icon-markup-doc: var(--file-icon-markup-doc);
+  --color-file-icon-web-style: var(--file-icon-web-style);
+  --color-file-icon-shell: var(--file-icon-shell);
+  --color-file-icon-binary-build: var(--file-icon-binary-build);
+  --color-file-icon-asset: var(--file-icon-asset);
+  --color-file-icon-name-based: var(--file-icon-name-based);
   --color-tab-group-split-divider: var(--tab-group-split-divider);
   --color-tab-group-split-divider-strong: var(--tab-group-split-divider-strong);
   --color-git-graph-ref: var(--git-graph-ref);
@@ -190,6 +199,16 @@
   --workspace-status-done: #c7a594;
   --workspace-status-review: #16a34a;
   --workspace-status-progress: #d4a300;
+  /* File-type icon groups (spec FI-28 C2). Light ratios vs #ffffff — all ≥4.5:1. */
+  --file-icon-code-ts-js: #2563eb; /* blue-600 · 5.17:1 */
+  --file-icon-code: #0f766e; /* teal-700 · 5.47:1 (was #0d9488 · 3.74:1) */
+  --file-icon-data-config: #b45309; /* amber-700 · 5.02:1 (was #d97706 · 3.19:1) */
+  --file-icon-markup-doc: #7c3aed; /* violet-600 · 5.70:1 */
+  --file-icon-web-style: #db2777; /* pink-600 · 4.60:1 */
+  --file-icon-shell: #15803d; /* green-700 · 5.02:1 */
+  --file-icon-binary-build: #4d7c0f; /* lime-700 · 4.99:1 */
+  --file-icon-asset: #a21caf; /* fuchsia-700 · 6.32:1 */
+  --file-icon-name-based: #dc2626; /* red-600 · 4.83:1 */
   --chart-1: var(--color-blue-300);
   --chart-2: var(--color-blue-500);
   --chart-3: var(--color-blue-600);
@@ -302,6 +321,19 @@
   --workspace-status-done: #c7a594;
   --workspace-status-review: #16a34a;
   --workspace-status-progress: #d4a300;
+  /* File-type icon groups — dark ratios vs #171717 card (floor; #0a0a0a canvas
+     and #262626 panels higher): ts-js 7.05 · code 9.63 · data-config 10.74 ·
+     markup-doc 6.59 · web-style 6.77 · shell 10.80 · binary-build 11.88 ·
+     asset 7.29 · name-based 6.48. */
+  --file-icon-code-ts-js: #60a5fa;
+  --file-icon-code: #2dd4bf;
+  --file-icon-data-config: #fbbf24;
+  --file-icon-markup-doc: #a78bfa;
+  --file-icon-web-style: #f472b6;
+  --file-icon-shell: #4ade80;
+  --file-icon-binary-build: #a3e635;
+  --file-icon-asset: #e879f9;
+  --file-icon-name-based: #f87171;
   --chart-1: var(--color-blue-300);
   --chart-2: var(--color-blue-500);
   --chart-3: var(--color-blue-600);
@@ -2294,6 +2326,24 @@ html.native-shell .app-layout {
   font-weight: 600;
   font-style: normal;
   opacity: 0.92;
+}
+
+.monaco-editor .orca-git-blame-overlay {
+  /* Single right-anchored overlay div on the editor DOM (top set inline from
+     the cursor line's scrolled-visible position). Never an injected span:
+     Monaco token spans break absolute positioning (wrong containing block).
+     Right-anchored => no reflow, no wrap over code, no horizontal scroll. */
+  position: absolute;
+  right: 12px;
+  white-space: pre;
+  pointer-events: none;
+  z-index: 6;
+  color: var(--muted-foreground);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 11px;
+  font-weight: 400;
+  font-style: normal;
+  opacity: 0.85;
 }
 
 /* Why: Monaco's find-widget button tooltips (Close, Find in Selection, etc.)

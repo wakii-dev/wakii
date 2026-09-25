@@ -3,6 +3,7 @@ import type { GitForkSyncExpectedUpstream, GitForkSyncResult } from '../../share
 import type { GitStagingArea, GitUpstreamStatus } from '../../shared/git-status-types'
 import type { GitPushTarget } from '../../shared/worktree/types'
 import type { GitHistoryOptions, GitHistoryResult } from '../../shared/git-history'
+import type { GitBlameOptions, GitBlameResult } from '../../shared/git-blame-types'
 import type { PreloadApi } from '../api-types'
 
 export const gitApi = {
@@ -43,6 +44,9 @@ export const gitApi = {
   history: (
     args: { worktreePath: string; connectionId?: string } & GitHistoryOptions
   ): Promise<GitHistoryResult> => ipcRenderer.invoke('git:history', args),
+  blame: (
+    args: { worktreePath: string; connectionId?: string } & GitBlameOptions
+  ): Promise<GitBlameResult> => ipcRenderer.invoke('git:blame', args),
   conflictOperation: (args: { worktreePath: string; connectionId?: string }) =>
     ipcRenderer.invoke('git:conflictOperation', args),
   abortMerge: (args: { worktreePath: string; connectionId?: string }): Promise<void> =>

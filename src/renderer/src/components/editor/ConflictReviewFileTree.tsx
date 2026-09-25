@@ -1,7 +1,7 @@
 import React from 'react'
 import { ChevronDown, Folder, FolderOpen, PanelLeftClose } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { getFileTypeIcon } from '@/lib/file-type-icons'
+import { FILE_ICON_COLOR_CLASS, getFileTypeIcon, getFileTypeIconColor } from '@/lib/file-type-icons'
 import { cn } from '@/lib/utils'
 import {
   buildSourceControlTree,
@@ -166,6 +166,7 @@ function ConflictReviewFileTreeRow({
   }
 
   const FileIcon = getFileTypeIcon(node.entry.path)
+  const iconColorGroup = getFileTypeIconColor(node.entry.path)
   const liveEntry = node.entry.liveEntry
   const isStillUnresolved = liveEntry?.conflictStatus === 'unresolved'
 
@@ -188,7 +189,11 @@ function ConflictReviewFileTreeRow({
       }}
     >
       {React.createElement(FileIcon, {
-        className: cn('size-3.5 shrink-0', isStillUnresolved && 'text-destructive')
+        className: cn(
+          'size-3.5 shrink-0',
+          iconColorGroup ? FILE_ICON_COLOR_CLASS[iconColorGroup] : 'text-muted-foreground',
+          isStillUnresolved && 'text-destructive'
+        )
       })}
       <span className="min-w-0 flex-1 truncate">
         <span className="text-foreground">{node.name}</span>

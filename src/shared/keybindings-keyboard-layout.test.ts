@@ -22,6 +22,19 @@ describe('keybindings', () => {
     ).toBe(true)
   })
 
+  it('defaults file explorer rename to bare F2 on every platform', () => {
+    expect(getEffectiveKeybindingsForAction('fileExplorer.rename', 'darwin')).toEqual(['F2'])
+    expect(getEffectiveKeybindingsForAction('fileExplorer.rename', 'linux')).toEqual(['F2'])
+    expect(getEffectiveKeybindingsForAction('fileExplorer.rename', 'win32')).toEqual(['F2'])
+    expect(
+      keybindingMatchesAction(
+        'fileExplorer.rename',
+        { key: 'F2', code: 'F2', control: false, meta: false, alt: false, shift: false },
+        'win32'
+      )
+    ).toBe(true)
+  })
+
   it('matches file explorer undo and redo by produced logical key', () => {
     expect(getEffectiveKeybindingsForAction('fileExplorer.undo', 'darwin')).toEqual(['Mod+Z'])
     expect(getEffectiveKeybindingsForAction('fileExplorer.redo', 'darwin')).toEqual(['Mod+Shift+Z'])

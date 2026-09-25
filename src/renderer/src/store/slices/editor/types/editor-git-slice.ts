@@ -1,4 +1,5 @@
 import type { RemoteOpKind } from '@/components/right-sidebar/source-control-primary-action'
+import type { SearchReplaceOp } from '@/components/right-sidebar/search-replace-op'
 import type { WorkspaceSessionHydrationOptions } from '@/lib/workspace-session-hydration-keys'
 import type {
   GitBranchChangeEntry,
@@ -122,6 +123,10 @@ export type EditorGitSlice = {
   consumeFileSearchSeedRequest: (worktreeId: string, seedRequestId: number) => void
   toggleFileSearchCollapsedFile: (worktreeId: string, filePath: string) => void
   clearFileSearch: (worktreeId: string) => void
+  beginFileReplaceAll: (worktreeId: string) => void
+  finishFileReplaceAll: (worktreeId: string, op: SearchReplaceOp | null) => void
+  requestCancelFileReplaceAll: (worktreeId: string) => void
+  clearLastFileReplaceOp: (worktreeId: string) => void
 
   // Editor navigation (for search result → go-to-line)
   pendingEditorReveal: PendingEditorReveal | null

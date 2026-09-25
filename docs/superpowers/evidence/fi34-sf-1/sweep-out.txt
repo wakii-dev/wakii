@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 C:/Users/hoivk/orca/workspaces/wakii/fi34-sf-1
+
+
+ Test Files  12 passed (12)
+      Tests  71 passed (71)
+   Start at  12:58:17
+   Duration  25.65s (transform 40.69s, setup 657ms, import 51.03s, tests 5.32s, environment 3.72s)
+

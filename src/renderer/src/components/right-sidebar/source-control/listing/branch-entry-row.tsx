@@ -1,6 +1,7 @@
 import React from 'react'
 import { MessageSquare } from 'lucide-react'
-import { getFileTypeIcon } from '@/lib/file-type-icons'
+import { FILE_ICON_COLOR_CLASS, getFileTypeIcon, getFileTypeIconColor } from '@/lib/file-type-icons'
+import { cn } from '@/lib/utils'
 import { basename, dirname, joinPath } from '@/lib/path'
 import { WORKSPACE_FILE_PATH_MIME } from '@/lib/workspace-file-drag'
 import { writeWorkspaceFileDragSourceForWorkspace } from '@/lib/workspace-file-drag-source'
@@ -34,6 +35,7 @@ export function BranchEntryRow({
   showPathHint?: boolean
 }): React.JSX.Element {
   const FileIcon = getFileTypeIcon(entry.path)
+  const iconColorGroup = getFileTypeIconColor(entry.path)
   const fileName = basename(entry.path)
   const parentDir = dirname(entry.path)
   const dirPath = parentDir === '.' ? '' : parentDir
@@ -62,9 +64,12 @@ export function BranchEntryRow({
         onClick={(e) => onOpen(e)}
         onDoubleClick={(e) => onOpen(toPermanentSourceControlRowOpenEvent(e))}
       >
+        {/* Why: icon carries the file-type color; git status color stays on the badge below (C4). */}
         {React.createElement(FileIcon, {
-          className: 'size-3.5 shrink-0',
-          style: { color: STATUS_COLORS[entry.status] }
+          className: cn(
+            'size-3.5 shrink-0',
+            iconColorGroup ? FILE_ICON_COLOR_CLASS[iconColorGroup] : 'text-muted-foreground'
+          )
         })}
         <span className="min-w-0 flex-1 truncate text-xs">
           <span className="text-foreground">{fileName}</span>

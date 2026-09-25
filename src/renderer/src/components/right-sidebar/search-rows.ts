@@ -53,3 +53,30 @@ export function buildSearchRows(
 
   return rows
 }
+
+/** Collapsed-file set covering every result file (collapse-all) or none (expand-all). */
+export function setAllSearchFilesCollapsed(
+  results: SearchResult | null,
+  collapsed: boolean
+): Set<string> {
+  if (!results || !collapsed) {
+    return new Set<string>()
+  }
+  return new Set(results.files.map((fileResult) => fileResult.filePath))
+}
+
+/** Index of the next/previous match row relative to the given row, or null at the boundary. */
+export function getNextMatchRowIndex(
+  rows: readonly SearchRow[],
+  fromIndex: number,
+  direction: 1 | -1
+): number | null {
+  let index = fromIndex + direction
+  while (index >= 0 && index < rows.length) {
+    if (rows[index].type === 'match') {
+      return index
+    }
+    index += direction
+  }
+  return null
+}

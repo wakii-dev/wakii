@@ -88,10 +88,22 @@ export type GlobalSettings = {
   editorAutoSave: boolean
   editorAutoSaveDelayMs: number
   editorMinimapEnabled: boolean
+  /** One-shot stamp marking that the minimap default flipped on for every existing profile. */
+  editorMinimapEnabledDefaultedOnForAllUsers?: boolean
   /** Opt-in code-editor font; empty (the default) keeps following `terminalFontFamily`. */
   editorFontFamily?: string
   /** Defaults on for profiles saved before file-editor wrapping became configurable. */
   editorWordWrap?: boolean
+  /** Opt-in sticky scroll (scope header) in the file editor; diff views stay pinned off. */
+  editorStickyScroll?: boolean
+  /** GitLens-lite inline blame on the cursor line of the file editor; defaults on. */
+  editorInlineBlameEnabled?: boolean
+  /** VS Code editor.cursorSmoothCaretAnimation parity for the file editor; defaults 'on'. */
+  editorCursorSmoothCaretAnimation?: 'on' | 'explicit' | 'off'
+  /** VS Code editor.renderWhitespace parity for the file editor; defaults 'selection'. */
+  editorRenderWhitespace?: 'none' | 'boundary' | 'selection' | 'trailing' | 'all'
+  /** Breadcrumb path bar above the file editor; defaults on. */
+  editorBreadcrumbsEnabled?: boolean
   /** Persisted opt-out for browser spellcheck noise in rich Markdown editing surfaces. */
   richMarkdownSpellcheckEnabled?: boolean
   /** Whether local markdown review note controls and the review panel are shown. */

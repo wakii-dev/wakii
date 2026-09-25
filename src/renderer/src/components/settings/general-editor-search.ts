@@ -128,6 +128,35 @@ export const getGeneralEditorSearchEntries = createLocalizedCatalog(() => [
     ]
   },
   {
+    title: translate('auto.components.settings.general.search.42b5df9a24', 'Sticky Scroll'),
+    description: translate(
+      'auto.components.settings.general.search.663d0a40e2',
+      'Keep the current scope header pinned at the top of the file editor.'
+    ),
+    keywords: [
+      ...translateSearchKeyword('auto.components.settings.general.search.8f4357c2dc', 'sticky'),
+      ...translateSearchKeyword('auto.components.settings.general.search.f82e3682fd', 'scroll'),
+      ...translateSearchKeyword('auto.components.settings.general.search.8c14dc21a4', 'scope'),
+      ...translateSearchKeyword('auto.components.settings.general.search.8d7a8880d7', 'header')
+    ]
+  },
+  {
+    title: translate('auto.components.settings.general.editor.search.21e1aaf2ef', 'Inline Blame'),
+    description: translate(
+      'auto.components.settings.general.editor.search.f83e419695',
+      'Show commit author, date and summary at the end of the current line in the file editor.'
+    ),
+    keywords: [
+      ...translateSearchKeyword('auto.components.settings.general.editor.search.622b5fa095', 'inline'),
+      ...translateSearchKeyword('auto.components.settings.general.editor.search.97afa04b81', 'blame'),
+      ...translateSearchKeyword('auto.components.settings.general.editor.search.c307a3153a', 'gitlens'),
+      ...translateSearchKeyword(
+        'auto.components.settings.general.editor.search.f912660d8c',
+        'annotation'
+      )
+    ]
+  },
+  {
     title: translate(
       'auto.components.settings.general.search.d2d2d929c0',
       'Rich Markdown Spellcheck'

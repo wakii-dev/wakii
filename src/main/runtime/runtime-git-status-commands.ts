@@ -1,4 +1,5 @@
 import type { GitHistoryOptions, GitHistoryResult } from '../../shared/git-history'
+import type { GitBlameOptions, GitBlameResult } from '../../shared/git-blame-types'
 import type {
   GitConflictOperation,
   GitStagingArea,
@@ -8,6 +9,7 @@ import type { RuntimeGitCheckoutResult, RuntimeGitLocalBranches } from '../../sh
 import { checkIgnoredPaths } from '../git/check-ignored-paths'
 import { checkoutBranch, listLocalBranches } from '../git/checkout'
 import { getHistory as getGitHistory } from '../git/history'
+import { getBlame as getGitBlame } from '../git/blame'
 import {
   detectConflictOperation,
   getStatus as getGitStatus,
@@ -89,6 +91,24 @@ export class RuntimeGitStatusCommands {
       return provider.getHistory(target.worktree.path, options)
     }
     return getGitHistory(target.worktree.path, {
+      ...options,
+      ...localGitOptionsForTarget(target),
+      admissionTier: 'interactive'
+    })
+  }
+
+  // Why 'interactive': blame is user-waiting (cursor/hover-triggered), tier 0 — it must
+  // preempt background status work instead of queueing behind it.
+  async getRuntimeGitBlame(
+    worktreeSelector: string,
+    options: GitBlameOptions
+  ): Promise<GitBlameResult> {
+    const target = await this.host.resolveRuntimeGitTarget(worktreeSelector)
+    const provider = requireRuntimeGitProvider(target)
+    if (provider) {
+      return provider.getBlame(target.worktree.path, options)
+    }
+    return getGitBlame(target.worktree.path, {
       ...options,
       ...localGitOptionsForTarget(target),
       admissionTier: 'interactive'

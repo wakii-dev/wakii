@@ -208,6 +208,8 @@ export function DiffSectionBody({
             originalEditable: false,
             renderSideBySide: sideBySide,
             minimap: { enabled: false },
+            // Why: Monaco 0.55 pins stickyScroll off for inline diff only; side-by-side sub-editors would inherit the on default.
+            stickyScroll: { enabled: false },
             scrollBeyondLastLine: false,
             fontSize: diffEditorFontSize,
             fontFamily: editorFontFamily || 'monospace',

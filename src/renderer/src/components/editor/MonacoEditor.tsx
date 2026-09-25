@@ -21,8 +21,13 @@ import { useMonacoContentSyncBridge } from './use-monaco-content-sync-bridge'
 import { useMonacoMarkdownAnnotations } from './use-monaco-markdown-annotations'
 import { useMonacoEditorDecorations } from './use-monaco-editor-decorations'
 import { useMonacoEditorMount } from './use-monaco-editor-mount'
+import { EditorBreadcrumbs } from './EditorBreadcrumbs'
+import { QUICK_OUTLINE_EDITOR_ATTRIBUTE, hasQuickOutlineSymbols } from '@/lib/quick-outline-editor-target'
 import { snapshotMonacoViewState } from './monaco-view-state-persistence'
 import { MonacoMarkdownAnnotationOverlay } from './MonacoMarkdownAnnotationOverlay'
+import { getWorktreeMapFromState } from '@/store/selectors'
+import { getConnectionId } from '@/lib/connection-context'
+import { useMonacoGitBlame } from './use-monaco-git-blame'
 
 type MonacoEditorProps = {
   fileId: string
@@ -42,6 +47,11 @@ type MonacoEditorProps = {
   worktreeId?: string
   markdownAnnotationsEnabled?: boolean
   conflictDecorationsEnabled?: boolean
+  // Why opt-in: only surfaces with a real worktree file context (edit surface) show blame;
+  // diff/conflict/preview surfaces stay annotation-free.
+  inlineBlameEnabled?: boolean
+  // Why here: dirty lives on the open tab, not the editor model; blame uses it to skip fetches while typing.
+  isDirty?: boolean
   readOnly?: boolean
   liveTail?: boolean
   autoHeight?: boolean
@@ -64,6 +74,8 @@ export default function MonacoEditor({
   worktreeId,
   markdownAnnotationsEnabled = false,
   conflictDecorationsEnabled = false,
+  inlineBlameEnabled = false,
+  isDirty = false,
   readOnly = false,
   liveTail = false,
   autoHeight = false
@@ -90,6 +102,7 @@ export default function MonacoEditor({
   const editorFontZoomLevel = useAppStore((s) => s.editorFontZoomLevel)
   const setPendingEditorReveal = useAppStore((s) => s.setPendingEditorReveal)
   const setEditorCursorLine = useAppStore((s) => s.setEditorCursorLine)
+  const revealInExplorer = useAppStore((s) => s.revealInExplorer)
   const editorFontSize = computeEditorFontSize(
     settings?.terminalFontSize ?? 13,
     editorFontZoomLevel
@@ -166,11 +179,20 @@ export default function MonacoEditor({
       fontSize: editorFontSize,
       fontFamily: editorFontFamily,
       ...buildFileEditorWordWrapOptions(editorWordWrap),
+      cursorSmoothCaretAnimation: settings?.editorCursorSmoothCaretAnimation ?? 'on',
+      renderWhitespace: settings?.editorRenderWhitespace ?? 'selection',
       // Keep a retained Monaco instance aligned when a tab changes between
       // a read-only surface and a normal editable file.
       readOnly
     })
-  }, [editorFontFamily, editorFontSize, editorWordWrap, readOnly])
+  }, [
+    editorFontFamily,
+    editorFontSize,
+    editorWordWrap,
+    readOnly,
+    settings?.editorCursorSmoothCaretAnimation,
+    settings?.editorRenderWhitespace
+  ])
 
   const decorations = useMonacoEditorDecorations({
     editorRef,
@@ -179,6 +201,22 @@ export default function MonacoEditor({
     language,
     markdownDocuments,
     conflictDecorationsEnabled
+  })
+
+  // Why store-select: PTY activity replaces worktree metadata; subscribe by id like markdown documents do.
+  const blameWorktreePath = useAppStore((s) =>
+    worktreeId ? (getWorktreeMapFromState(s).get(worktreeId)?.path ?? null) : null
+  )
+
+  useMonacoGitBlame({
+    enabled: inlineBlameEnabled && (settings?.editorInlineBlameEnabled ?? true),
+    mountedEditor,
+    worktreeId: worktreeId ?? null,
+    worktreePath: blameWorktreePath,
+    relativePath,
+    connectionId: worktreeId ? getConnectionId(worktreeId) : null,
+    content,
+    isDirty
   })
 
   const handleMount = useMonacoEditorMount({
@@ -221,10 +259,25 @@ export default function MonacoEditor({
   return (
     <div
       ref={editorContainerRef}
-      className={autoHeight ? 'relative' : 'relative h-full'}
+      className={
+        autoHeight ? 'relative flex flex-col' : 'relative flex h-full flex-col'
+      }
       style={renderedEditorHeight === null ? undefined : { height: renderedEditorHeight }}
+      // Why: shortcut eaters (floating panel, markdown preview) yield Mod+Shift+O to
+      // Monaco's built-in quick outline only when the target lives in a symbol-provider editor.
+      {...(hasQuickOutlineSymbols(language) ? { [QUICK_OUTLINE_EDITOR_ATTRIBUTE]: 'true' } : {})}
     >
-      <MonacoMarkdownAnnotationOverlay
+      {/* Why gated on !autoHeight: the inline-overview pin renders compact excerpts, not file surfaces. */}
+      {!autoHeight && (settings?.editorBreadcrumbsEnabled ?? true) ? (
+        <EditorBreadcrumbs
+          filePath={filePath}
+          relativePath={relativePath}
+          worktreeId={worktreeId}
+          onReveal={revealInExplorer}
+        />
+      ) : null}
+      <div className="relative min-h-0 flex-1">
+        <MonacoMarkdownAnnotationOverlay
         shouldShowMarkdownAnnotations={annotations.shouldShowMarkdownAnnotations}
         commentPopover={annotations.commentPopover}
         setCommentPopover={annotations.setCommentPopover}
@@ -247,7 +300,20 @@ export default function MonacoEditor({
           // which overflowed at ~17_000 chars, under this cap. See the budget module.
           maxTokenizationLineLength: MAX_TOKENIZATION_LINE_LENGTH,
           // Why: only the file editor honors this; Monaco 0.55 DiffEditor hard-overrides minimap.enabled=false on sub-editors (see diffEditorEditors._adjustOptionsForSubEditor).
-          minimap: { enabled: settings?.editorMinimapEnabled ?? false },
+          // Why `?? true`: pre-hydration renders must not flash the minimap off before settings arrive.
+          minimap: { enabled: settings?.editorMinimapEnabled ?? true },
+          // Why: sticky scroll defaults off (VS Code parity is opt-in here); diff editors pin it separately.
+          stickyScroll: { enabled: settings?.editorStickyScroll ?? false },
+          // Why explicit: pin VS Code-parity suggest behavior on the file editor (Monaco defaults
+          // match today; explicit values guarantee it survives Monaco upgrades).
+          quickSuggestions: { other: 'on', comments: 'off', strings: 'off' },
+          wordBasedSuggestions: 'currentDocument',
+          snippetSuggestions: 'inline',
+          // Why explicit: bracket colorization is Monaco's model default today (textModelDefaults
+          // enabled:true); pinning it here guarantees the VS Code-parity visuals survive upgrades.
+          bracketPairColorization: { enabled: true },
+          cursorSmoothCaretAnimation: settings?.editorCursorSmoothCaretAnimation ?? 'on',
+          renderWhitespace: settings?.editorRenderWhitespace ?? 'selection',
           scrollBeyondLastLine: false,
           ...buildFileEditorWordWrapOptions(editorWordWrap),
           fontSize: editorFontSize,
@@ -264,7 +330,6 @@ export default function MonacoEditor({
               }
             : undefined,
           smoothScrolling: true,
-          cursorSmoothCaretAnimation: 'off',
           padding: { top: 0 },
           find: monacoFindOptions,
           // Why: Monaco owns its rendered line surface, so align its selection-clipboard with the app opt-out (the global DOM hook can't).
@@ -276,6 +341,7 @@ export default function MonacoEditor({
         saveViewState={false}
         keepCurrentModel
       />
+      </div>
 
       {toastNode}
       <MonacoGutterContextMenu

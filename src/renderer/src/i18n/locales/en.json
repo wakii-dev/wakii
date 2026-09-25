@@ -7208,7 +7208,9 @@
           "7ddd66fede": "Editor Word Wrap",
           "9b18de6eea": "Wrap long lines in file editors instead of requiring horizontal scrolling.",
           "collapseUnchangedTitle": "Collapse Unchanged Regions",
-          "collapseUnchangedDescription": "Show only changed lines and a little surrounding context in a file diff, hiding the rest behind expandable bands. The View All Changes diff always collapses this way."
+          "collapseUnchangedDescription": "Show only changed lines and a little surrounding context in a file diff, hiding the rest behind expandable bands. The View All Changes diff always collapses this way.",
+          "7fef986df3": "Sticky Scroll",
+          "e9731181a3": "Keep the current scope header pinned at the top of the file editor."
         },
         "AdvancedNetworkSettingsSection": {
           "3e431564b5": "localhost, 127.0.0.1, *.internal",
@@ -9781,7 +9783,23 @@
             "command": "command",
             "confirm": "confirm",
             "close": "close",
-            "omp": "OMP"
+            "omp": "OMP",
+            "42b5df9a24": "Sticky Scroll",
+            "663d0a40e2": "Keep the current scope header pinned at the top of the file editor.",
+            "8f4357c2dc": "sticky",
+            "f82e3682fd": "scroll",
+            "8c14dc21a4": "scope",
+            "8d7a8880d7": "header"
+          },
+          "editor": {
+            "search": {
+              "21e1aaf2ef": "Inline Blame",
+              "f83e419695": "Show commit author, date and summary at the end of the current line in the file editor.",
+              "622b5fa095": "inline",
+              "97afa04b81": "blame",
+              "c307a3153a": "gitlens",
+              "f912660d8c": "annotation"
+            }
           }
         },
         "git": {
@@ -12019,6 +12037,30 @@
         "TerminalRenderingSection": {
           "6d4c55bacc": "Inline Images",
           "fffab5890b": "Display images directly in the terminal using SIXEL, iTerm2 (IIP), and Kitty graphics protocols."
+        },
+        "EditorCaretAnimationSetting": {
+          "8e0f5141a1": "On",
+          "8dc4f98620": "Explicit",
+          "84ecf4f030": "Off",
+          "63ef2747f7": "Smooth Caret Animation",
+          "a181845e72": "Animate the text cursor as it moves in file editors."
+        },
+        "EditorRenderWhitespaceSetting": {
+          "f08dbab703": "None",
+          "6bce99b8b5": "Boundary",
+          "e1f52833fb": "Selection",
+          "09b41c31fb": "Trailing",
+          "b0974f678a": "All",
+          "085871d375": "Render Whitespace",
+          "628ef71b4c": "Show whitespace characters in file editors."
+        },
+        "EditorBreadcrumbsSetting": {
+          "fe2cb0ef78": "Breadcrumbs",
+          "9e7a1f613e": "Show the file path above the file editor."
+        },
+        "InlineBlameSetting": {
+          "683fd9af0f": "Inline Blame",
+          "9142b8bc2f": "Show commit author, date and summary at the end of the current line in the file editor."
         }
       },
       "right": {
@@ -12170,7 +12212,9 @@
             "d95e30fe28": "Refresh Explorer",
             "6026b16950": "Collapse All",
             "693cbeadd0": "Search",
-            "c1f3f3ec70": "Search file contents"
+            "c1f3f3ec70": "Search file contents",
+            "71c2f04be8": "New File",
+            "83d3015cf9": "New Folder"
           },
           "FileExplorerTreeStatus": {
             "ce03835e1f": "No files in this workspace",
@@ -12311,7 +12355,12 @@
           },
           "SearchQueryRow": {
             "queryLabel": "Search files",
-            "clearLabel": "Clear search"
+            "clearLabel": "Clear search",
+            "toggleReplaceLabel": "Toggle Replace",
+            "replaceLabel": "Replace",
+            "replaceAllLabel": "Replace All",
+            "undoReplaceLabel": "Undo Replace All",
+            "invalidRegexMessage": "Invalid regular expression"
           },
           "SearchResultItems": {
             "cc06595a3b": "Copy Line Path",
@@ -13532,6 +13581,34 @@
             "sourceMissing": "Transcript is no longer available",
             "metadataMatch": "Match in session metadata",
             "sourceActionsUnavailable": "The transcript source is unavailable."
+          },
+          "FileExplorerOpenEditors": {
+            "7b21c3f4a9": "Open Editors",
+            "5e8b4c2d17": "Close editor",
+            "d3f9a2c1e8": "Unsaved changes"
+          },
+          "SearchReplacePreview": {
+            "6c04a1f2b3": "Replace All Preview",
+            "1d8e77c9a4": "Counts are re-derived from the files on disk before anything is written.",
+            "2b91c0e5f7": "Reading files...",
+            "4f3a92d1c8": "{{occurrences}} occurrences in {{files}} files would be replaced.",
+            "5e6b81d0a2": "The search listed {{searched}} — stale matches are skipped at replace time.",
+            "7a20cf4b19": "The replace field is empty — matched text will be removed.",
+            "8c31da6e05": "Skipped — unsaved {{dirty}}, stale {{stale}}, errors {{errors}}, not attempted {{unprocessed}}.",
+            "3d86cf135a": "Cancel",
+            "4e97d0246b": "Replace All"
+          },
+          "SearchResultsPane": {
+            "9a1c2e3f4b": "Expand All",
+            "7d2b4f6a8c": "Collapse All"
+          },
+          "useFileSearchReplaceRun": {
+            "transportStopped": "Replace stopped — lost contact with the workspace. Already-written files were kept.",
+            "summary": "Replaced {{replaced}} — skipped unsaved {{dirty}}, stale {{stale}}, errors {{errors}}, not attempted {{unprocessed}}."
+          },
+          "useFileSearchReplaceUndo": {
+            "transportStopped": "Undo stopped — lost contact with the workspace. Restorable files were kept.",
+            "summary": "Restored {{restored}} — skipped unsaved {{dirty}}, changed-on-disk/undone {{stale}}, errors {{errors}}, not attempted {{unprocessed}}."
           }
         }
       },
@@ -15412,6 +15489,23 @@
           "a0af0198aa": "Large diffs are not rendered by default.",
           "c3d9f4a712": "This diff's size isn't known yet, so it loads on request.",
           "f7fa7a40d0": "Load diff"
+        },
+        "EditorBreadcrumbs": {
+          "7a0b97acc9": "File breadcrumbs",
+          "deb1973b7d": "Reveal in explorer"
+        },
+        "git": {
+          "blame": {
+            "strings": {
+              "f553e19e41": "You",
+              "e6fc8a66b3": "unsaved changes",
+              "5d58990105": "File is too large for inline blame.",
+              "1f32d46ce0": "File has too many lines for inline blame.",
+              "1f078da5df": "Commit",
+              "6f3313de46": "Author",
+              "2f33a41d63": "Date"
+            }
+          }
         }
       },
       "diff": {

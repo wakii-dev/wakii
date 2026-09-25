@@ -17,6 +17,9 @@ export type RightSidebarState = {
   rightSidebarTabByWorktree: Record<string, ActiveRightSidebarTab>
   rightSidebarExplorerViewByWorktree: Record<string, RightSidebarExplorerView>
   activityBarPosition: ActivityBarPosition
+  /** Session-scoped collapsed flag for the explorer's Open Editors section (not persisted). */
+  openEditorsCollapsed: boolean
+  setOpenEditorsCollapsed: (collapsed: boolean) => void
   toggleRightSidebar: () => void
   setRightSidebarOpen: (open: boolean) => void
   setRightSidebarWidth: (width: number) => void
@@ -43,6 +46,8 @@ export function createRightSidebarState(set: EditorSet, _get: EditorGet): RightS
     rightSidebarTabByWorktree: {},
     rightSidebarExplorerViewByWorktree: {},
     activityBarPosition: 'top',
+    openEditorsCollapsed: false,
+    setOpenEditorsCollapsed: (collapsed) => set({ openEditorsCollapsed: collapsed }),
     toggleRightSidebar: () => set((s) => ({ rightSidebarOpen: !s.rightSidebarOpen })),
     setRightSidebarOpen: (open) => set({ rightSidebarOpen: open }),
     setRightSidebarWidth: (width) => set({ rightSidebarWidth: width }),

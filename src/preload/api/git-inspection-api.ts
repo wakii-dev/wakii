@@ -11,6 +11,7 @@ import type {
 } from '../../shared/git-status-types'
 import type { GitPushTarget } from '../../shared/worktree/types'
 import type { GitHistoryOptions, GitHistoryResult } from '../../shared/git-history'
+import type { GitBlameOptions, GitBlameResult } from '../../shared/git-blame-types'
 import type {
   CommitMessageAgentCapability,
   CommitMessageModelCapability
@@ -53,6 +54,8 @@ export type GitInspectionApi = {
   history: (
     args: { worktreePath: string; connectionId?: string } & GitHistoryOptions
   ) => Promise<GitHistoryResult>
+  /** Why optional: browser/web runtimes without the blame surface omit it; clients degrade silently. */
+  blame?: (args: { worktreePath: string; connectionId?: string } & GitBlameOptions) => Promise<GitBlameResult>
   conflictOperation: (args: {
     worktreePath: string
     connectionId?: string

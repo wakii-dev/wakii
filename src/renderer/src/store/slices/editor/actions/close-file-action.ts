@@ -4,6 +4,7 @@ import { getRecentlyClosedTabPosition, pushRecentlyClosedTabKind } from '../../r
 import { notifyHostOfMirroredEditorClose } from '@/runtime/close-mirrored-editor-tab'
 import { type ClosedEditorTabSnapshot, MAX_RECENT_CLOSED_EDITOR_TABS } from '../types/open-file'
 import { removeMarkdownVisibilityKeys } from '../tabs/workspace-editor-item'
+import { clearGitBlameCacheForFile } from '@/components/editor/git-blame-cache'
 import {
   deleteUntouchedUntitledFile,
   shouldDeleteUntouchedUntitledFile
@@ -197,6 +198,11 @@ export function createCloseFileAction(
       // Why: untitled unedited files exist on disk only because createUntitledMarkdownFile() eagerly writes a bindable path; delete the clutter (fire-and-forget).
       if (shouldDeleteFromDisk && preClose && typeof window !== 'undefined') {
         deleteUntouchedUntitledFile(get(), preClose)
+      }
+
+      // Why: the inline-blame cache is keyed by worktree+path; a closed tab's entries must not outlive the tab.
+      if (preClose?.worktreeId && preClose.relativePath) {
+        clearGitBlameCacheForFile(preClose.worktreeId, preClose.relativePath)
       }
 
       // Why: route editor/diff closes through the unified close path (MRU + visual-neighbor fallback) so they match terminal/browser tab-close behavior.

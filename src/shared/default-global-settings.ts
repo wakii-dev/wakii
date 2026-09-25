@@ -49,10 +49,23 @@ export function buildDefaultSettings(args: {
     appFontFamily: args.appFontFamily,
     editorAutoSave: false,
     editorAutoSaveDelayMs: args.editorAutoSaveDelayMs,
-    editorMinimapEnabled: false,
+    // Why on: minimap is core VS Code parity. This default only covers new profiles;
+    // existing ones persisted `false` and are flipped once by the stamp below
+    // (shared/editor-minimap-settings.ts, applied by both the Electron store and
+    // the web client's localStorage store). A manual opt-out after the stamp survives.
+    editorMinimapEnabled: true,
+    editorMinimapEnabledDefaultedOnForAllUsers: true,
     // Why empty: the editor keeps following the terminal font unless the user opts in.
     editorFontFamily: '',
     editorWordWrap: true,
+    editorStickyScroll: false,
+    // Why on: GitLens-lite inline blame is the core value of the feature; existing
+    // profiles without the field also render it on (the renderer defaults to true).
+    editorInlineBlameEnabled: true,
+    // VS Code-parity file editor options; explicit so upgrades can't silently change them.
+    editorCursorSmoothCaretAnimation: 'on',
+    editorRenderWhitespace: 'selection',
+    editorBreadcrumbsEnabled: true,
     richMarkdownSpellcheckEnabled: true,
     markdownReviewToolsEnabled: true,
     primarySelectionMiddleClickPaste: args.primarySelectionMiddleClickPaste,

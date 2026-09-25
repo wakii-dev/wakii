@@ -16,3 +16,18 @@ describe('collapse unchanged settings search', () => {
     }
   )
 })
+
+describe('sticky scroll settings search', () => {
+  it.each(['sticky scroll', 'sticky', 'scope header'])(
+    'keeps the setting reachable through both search gates for "%s"',
+    (query) => {
+      const editorEntries = getGeneralEditorSearchEntries()
+      const entry = editorEntries.find((item) => item.title === 'Sticky Scroll')
+
+      expect(entry).toBeDefined()
+      expect(matchesSettingsSearch(query, entry!)).toBe(true)
+      expect(matchesSettingsSearch(query, editorEntries)).toBe(true)
+      expect(matchesSettingsSearch(query, getGeneralPaneSearchEntries())).toBe(true)
+    }
+  )
+})

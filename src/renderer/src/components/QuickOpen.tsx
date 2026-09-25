@@ -3,7 +3,8 @@ import { useAppStore } from '@/store'
 import { useActiveWorktree } from '@/store/selectors'
 import { detectLanguage } from '@/lib/language-detect'
 import { joinPath } from '@/lib/path'
-import { getFileTypeIcon } from '@/lib/file-type-icons'
+import { FILE_ICON_COLOR_CLASS, getFileTypeIcon, getFileTypeIconColor } from '@/lib/file-type-icons'
+import { cn } from '@/lib/utils'
 import {
   CommandDialog,
   CommandInput,
@@ -171,6 +172,7 @@ function QuickOpenContent({ visible }: { visible: boolean }): React.JSX.Element 
           filtered.map((item) => {
             const { directory, filename } = splitTrailingSegment(item.path)
             const FileIcon = getFileTypeIcon(item.path)
+            const iconColorGroup = getFileTypeIconColor(item.path)
 
             return (
               <CommandItem
@@ -185,7 +187,14 @@ function QuickOpenContent({ visible }: { visible: boolean }): React.JSX.Element 
                     drops the one Radix needs to open the tooltip. */}
                 <FilePathCursorTooltip path={item.path}>
                   <div className="flex w-full min-w-0 items-center gap-2 px-3 py-1">
-                    <FileIcon className="size-3.5 shrink-0 text-muted-foreground" />
+                    <FileIcon
+                      className={cn(
+                        'size-3.5 shrink-0',
+                        iconColorGroup
+                          ? FILE_ICON_COLOR_CLASS[iconColorGroup]
+                          : 'text-muted-foreground'
+                      )}
+                    />
                     {/* shrink-0 + max-w-full: the directory gives up all of its
                         width before the filename loses a character. */}
                     <span className="min-w-0 max-w-full shrink-0 truncate text-foreground">

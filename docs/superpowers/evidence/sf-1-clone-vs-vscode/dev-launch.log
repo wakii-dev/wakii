@@ -1,0 +1,912 @@
+[orca-dev] Prepared wrapper in C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\bin
+[orca-dev] Instance: fi30-sf-1
+[orca-dev] Background launch: window stays off screen; automate through CDP
+[orca-dev] Remote debugging on http://127.0.0.1:9444
+[orca-dev] Web client bundle missing; skipping pairing web build. Run `pnpm run build:web` or set ORCA_DEV_WEB_PREPARE=1 when you need browser pairing.
+[36mrolldown-vite v7.3.1 [32mbuilding ssr environment for development...[36m[39m
+[2Ktransforming...[2Ktransforming...[2Ktransforming...[2Ktransforming...[2Ktransforming...✓ 6086 modules transformed.
+rendering chunks...
+[33m[plugin builtin:vite-reporter] 
+(!) C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/github/gh-account-token.ts is dynamically imported by C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/git/command-runner/gh-bound-account-env.ts but also statically imported by C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/github/gh-account-binding-inventory.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/persistence/tracking-repos/repo-update-operations.ts, dynamic import will not move module into another chunk.
+[39m
+[33m[plugin builtin:vite-reporter] 
+(!) C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ssh/ssh-target-registry.ts is dynamically imported by C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/browser/browser-network-execution-route-dispatch.ts but also statically imported by C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/automations/external-manager-discovery.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/automations/external-manager-relay.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/preflight-remote-windows-terminal-capabilities.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/repos/remote-home-path.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/repos/remote-repo-registration.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/ssh-active-relay-sessions.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/ssh-connect-flow.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/ssh-connection-handlers.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/ssh-connection-state-callbacks.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/ssh-port-forward-persistence.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/ssh-relay-session-callbacks.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/ssh-session-teardown.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/ssh-target-crud-handlers.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/ssh-worktree-create-root-registration.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/ssh.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/preflight/agent-detection.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/remote-agent-trust-presets.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/runtime/orca-runtime-resolve-authoritative-terminal-wait-permission.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/runtime/orca-runtime-resolve-browser-network-execution-host-for-worktree.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/runtime/orca-runtime-terminal-create-deduplication.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/runtime/rpc/methods/client-events.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/runtime/rpc/methods/ssh.ts, dynamic import will not move module into another chunk.
+[39m
+[33m[plugin builtin:vite-reporter] 
+(!) C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ssh/ssh-provider-authority.ts is dynamically imported by C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/browser/browser-network-execution-route-dispatch.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/browser/local-ssh-browser-route.ts but also statically imported by C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/repos/host-repo-catalog-snapshot.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/ssh-connect-attempt-registry.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/ssh-connect-flow.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/ssh-connection-handlers.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/ssh-connection-state-callbacks.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/ssh-relay-session-callbacks.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/ssh-renderer-broadcast.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/ssh-target-crud-handlers.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/ssh.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/worktrees/listing/host-qualified-worktree-listing.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/worktrees/listing/register-detected-worktree-handlers.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/worktrees/metadata/host-lineage-listing.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/provisioned-root-ssh-adoption.ts, dynamic import will not move module into another chunk.
+[39m
+[33m[plugin builtin:vite-reporter] 
+(!) C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ssh/sftp-upload.ts is dynamically imported by C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ssh/ssh-connection.ts but also statically imported by C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/providers/ssh-filesystem-file-upload.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/providers/ssh-filesystem-provider.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ssh/ssh-relay-deploy-helpers.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ssh/ssh-relay-install-transfers.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ssh/ssh-relay-session.ts, dynamic import will not move module into another chunk.
+[39m
+[33m[plugin builtin:vite-reporter] 
+(!) C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ssh/ssh-relay-deploy-helpers.ts is dynamically imported by C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ssh/ssh-connection.ts but also statically imported by C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ssh/remote-install-gc.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ssh/ssh-relay-build-toolchain.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ssh/ssh-relay-deploy.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ssh/ssh-relay-endpoint-incumbent.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ssh/ssh-relay-endpoint-takeover.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ssh/ssh-relay-gc-claim.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ssh/ssh-relay-gc-tombstone.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ssh/ssh-relay-install-lock.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ssh/ssh-relay-install-transfers.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ssh/ssh-relay-native-deps-cache-gc.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ssh/ssh-relay-native-deps-cache-install.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ssh/ssh-relay-repair-lock.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ssh/ssh-relay-reset.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ssh/ssh-relay-session.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ssh/ssh-relay-superseded-endpoints.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ssh/ssh-relay-versioned-install.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ssh/ssh-remote-node-install-guidance.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ssh/ssh-remote-node-resolution.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ssh/ssh-remote-platform-detection.ts, dynamic import will not move module into another chunk.
+[39m
+[33m[plugin builtin:vite-reporter] 
+(!) C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/providers/ssh-filesystem-provider-sftp.ts is dynamically imported by C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ssh/ssh-connection.ts but also statically imported by C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/providers/ssh-filesystem-download.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/providers/ssh-filesystem-provider.ts, dynamic import will not move module into another chunk.
+[39m
+[33m[plugin builtin:vite-reporter] 
+(!) C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/browser/browser-network-execution-route-dispatch.ts is dynamically imported by C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/browser/local-ssh-browser-route.ts but also statically imported by C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/runtime/rpc/methods/browser-network-tunnel.ts, dynamic import will not move module into another chunk.
+[39m
+[33m[plugin builtin:vite-reporter] 
+(!) C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/ssh.ts is dynamically imported by C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/browser.ts but also statically imported by C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ai-vault/ssh-session-list.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/automations/precheck-runner.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ephemeral-vm-runtime-ssh.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/ai-vault-search.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/ai-vault-session-title-routing.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/ai-vault.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/filesystem-import-ssh.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/remote-workspace-connected-clients.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/remote-workspace-relay-sync.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/remote-workspace.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/repos/nested-repo-import-handler.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/repos/nested-repo-scan-ipc.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/repos/remote-repo-clone.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/window/attach-main-window-services.ts, dynamic import will not move module into another chunk.
+[39m
+[33m[plugin builtin:vite-reporter] 
+(!) C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/browser/local-ssh-browser-route.ts is dynamically imported by C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/startup/main-process-quit.ts but also statically imported by C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/browser/local-ssh-browser-partitions.ts, dynamic import will not move module into another chunk.
+[39m
+[33m[plugin builtin:vite-reporter] 
+(!) C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/browser/local-ssh-browser-partitions.ts is dynamically imported by C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/browser.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/ssh-session-teardown.ts but also statically imported by C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/window/main-window-webview-security.ts, dynamic import will not move module into another chunk.
+[39m
+[33m[plugin builtin:vite-reporter] 
+(!) C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/browser/browser-route-partition-storage-runtime.ts is dynamically imported by C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/ssh-session-teardown.ts but also statically imported by C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/browser/browser-session-startup.ts, C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/main/ipc/runtime-environment-connectivity-handlers.ts, dynamic import will not move module into another chunk.
+[39m
+out/main/chunks/ssh-filesystem-provider-sftp-BFfIM5ja.js                  0.05 kB
+out/main/chunks/ssh-relay-deploy-helpers-CCW4hzMn.js                      0.05 kB
+out/main/chunks/local-ssh-browser-route-C6P7TzHp.js                       0.07 kB
+out/main/chunks/browser-network-execution-route-dispatch-CbfhwRu9.js      0.07 kB
+out/main/chunks/sftp-upload-PdN1GipM.js                                   0.11 kB
+out/main/chunks/color-validation-C78yKVNP.js                              0.11 kB │ map:      0.29 kB
+out/main/chunks/runtime-client-error-D1pijmsQ.js                          0.17 kB │ map:      0.49 kB
+out/main/browser-window-close-preload.js                                  0.22 kB │ map:      1.23 kB
+out/main/chunks/ssh-provider-authority-9d_kuIac.js                        0.23 kB
+out/main/chunks/absolute-dir-override-DcQaHI3F.js                         0.26 kB │ map:      1.20 kB
+out/main/chunks/filesystem-watcher-event-batch-Bfod-RCM.js                0.32 kB │ map:      1.55 kB
+out/main/chunks/stt-audio-resample-DlJBU3WG.js                            0.36 kB │ map:      1.62 kB
+out/main/chunks/opencode-data-directory-b7ENX6WY.js                       0.45 kB │ map:      1.05 kB
+out/main/chunks/gh-account-token-B7XE51iE.js                              0.46 kB
+out/main/chunks/port-scan-command-protocol-QJzkRZZ3.js                    0.47 kB │ map:      1.87 kB
+out/main/chunks/ssh-target-registry-D4PaI0Ym.js                           0.47 kB
+out/main/chunks/windows-system-binary-GxKTxFM6.js                         0.47 kB │ map:      1.96 kB
+out/main/chunks/session-scanner-opencode-sqlite-paths-BqV5qY1U.js         0.47 kB │ map:      3.18 kB
+out/main/chunks/app-environment-eHT8OB1g.js                               0.54 kB │ map:      4.30 kB
+out/main/chunks/links-D1n_cRTK.js                                         0.56 kB │ map:      3.99 kB
+out/main/wsl-transcript-fs-process-entry.js                               0.57 kB │ map:      2.56 kB
+out/main/chunks/codex-home-wsl-env-Cd_wZ8I5.js                            0.59 kB │ map:      1.45 kB
+out/main/chunks/event-loop-yield-DCl6QHn7.js                              0.60 kB │ map:      2.86 kB
+out/main/claude-accounts/keychain.js                                      0.62 kB
+out/main/codex/managed-home-shell-preflight.js                            0.68 kB
+out/main/chunks/chunk-BbcaJTa5.js                                         0.68 kB
+out/main/chunks/own-retained-string-BnzOAfjP.js                           0.69 kB │ map:      3.96 kB
+out/main/chunks/browser-route-partition-storage-runtime-teuxILI5.js       0.70 kB
+out/main/chunks/hang-detection-marker-CDeH3327.js                         0.80 kB │ map:      2.69 kB
+out/main/chunks/macos-native-provider-paths-BFQzGxCM.js                   0.82 kB │ map:      1.81 kB
+out/main/chunks/priority-semaphore-Bs5RBXf6.js                            0.85 kB │ map:      3.15 kB
+out/main/chunks/local-ssh-browser-partitions-De0Uyuiy.js                  0.86 kB
+out/main/chunks/tui-agent-display-names-DsT5PYlX.js                       0.87 kB │ map:      2.37 kB
+out/main/chunks/map-with-concurrency-dswZCtwO.js                          0.90 kB │ map:      3.34 kB
+out/main/chunks/windows-transient-lock-removal-CTYreRuX.js                1.07 kB │ map:      3.73 kB
+out/main/chunks/json-text-structure-limit-D7RnvR_o.js                     1.15 kB │ map:      4.34 kB
+out/main/chunks/tui-agent-selection-B-JROLRC.js                           1.17 kB │ map:      3.93 kB
+out/main/chunks/windows-terminal-shell-DdkjXCAs.js                        1.19 kB │ map:      5.22 kB
+out/main/port-scan-command-worker-entry.js                                1.23 kB │ map:      7.58 kB
+out/main/chunks/opencode-database-discovery-Bcpf_o6N.js                   1.24 kB │ map:      4.80 kB
+out/main/chunks/wsl-transcript-fs-process-operations-ZBI-7c8B.js          1.30 kB │ map:      5.58 kB
+out/main/chunks/parcel-watcher-event-delivery-iMWsCrCH.js                 1.32 kB │ map:      6.22 kB
+out/main/chunks/sync-database-D_x_zbjr.js                                 1.34 kB │ map:      5.14 kB
+out/main/agent-hooks/managed-agent-hook-controls.js                       1.36 kB
+out/main/chunks/local-build-feed-server-DtFTiI0f.js                       1.42 kB │ map:      4.59 kB
+out/main/doc-preview-link-preload.js                                      1.42 kB │ map:      8.41 kB
+out/main/chunks/session-scanner-opencode-sqlite-list-CSaEyw_b.js          1.42 kB │ map:      6.49 kB
+out/main/main-thread-hang-watchdog-entry.js                               1.50 kB │ map:      6.56 kB
+out/main/chunks/plugin-host-protocol-C8f1u4tr.js                          1.62 kB │ map:      6.42 kB
+out/main/chunks/ssh-cq5YSWwx.js                                           1.84 kB
+out/main/chunks/wsl-paths-DKHHDhBW.js                                     1.89 kB │ map:     10.19 kB
+out/main/chunks/capability-probe-cache-SNPYY5J6.js                        1.98 kB │ map:      7.70 kB
+out/main/chunks/node-bounded-file-reader-BLuHkzdo.js                      2.01 kB │ map:      6.64 kB
+out/main/chunks/computer-use-key-spec-kIAhNgLG.js                         2.33 kB │ map:      7.88 kB
+out/main/chunks/git-bash-C2SLnjKT.js                                      2.34 kB │ map:      8.41 kB
+out/main/session-scanner-worker-entry.js                                  2.49 kB │ map:      5.60 kB
+out/main/chunks/execution-host-CSW1LKaa.js                                2.55 kB │ map:     12.49 kB
+out/main/chunks/wsl-login-shell-command-BKCQ9kOc.js                       2.62 kB │ map:      7.71 kB
+out/main/chunks/terminal-custom-themes-1c7eM7CJ.js                        2.77 kB │ map:     10.19 kB
+out/main/plugin-host-entry.js                                             2.78 kB │ map:     12.94 kB
+out/main/chunks/cross-platform-path-CTnIa67M.js                           2.90 kB │ map:     16.39 kB
+out/main/warp-theme-parser-worker.js                                      2.97 kB │ map:     11.36 kB
+out/main/chunks/main-process-ndjson-framer-irbLJAZE.js                    3.04 kB │ map:     15.32 kB
+out/main/chunks/id-B5eOOp0y.js                                            3.22 kB │ map:     13.92 kB
+out/main/chunks/fs-utils-HgBku5qy.js                                      3.31 kB │ map:     14.92 kB
+out/main/chunks/clipboard-text-CfRf58ej.js                                3.63 kB │ map:     14.73 kB
+out/main/chunks/claude-project-dir-encoding-BY_Scwgk.js                   3.73 kB │ map:     20.62 kB
+out/main/chunks/keychain-gUVjiJKz.js                                      3.78 kB │ map:     14.52 kB
+out/main/chunks/win32-utils-f1dv12FX.js                                   3.86 kB │ map:     16.11 kB
+out/main/chunks/wsl-browser-network-execution-route-CZ_F5C8p.js           4.31 kB │ map:     15.56 kB
+out/main/chunks/wsl-browser-network-relay-launch-DreTvUaC.js              4.48 kB │ map:     15.75 kB
+out/main/chunks/workspace-statuses-DF1Ow6N6.js                            4.51 kB │ map:     18.84 kB
+out/main/chunks/tui-agent-config-BKPrfdnA.js                              4.66 kB │ map:     18.15 kB
+out/main/chunks/session-scanner-opencode-sqlite-CW1_X0r1.js               4.76 kB │ map:     17.71 kB
+out/main/chunks/grok-session-paths-DeAjyB3r.js                            4.84 kB │ map:     20.67 kB
+out/main/chunks/ai-vault-search-client-9GIrxqYQ.js                        4.86 kB │ map:     16.61 kB
+out/main/parcel-watcher-process-entry.js                                  4.88 kB │ map:     27.90 kB
+out/main/chunks/codex-home-paths-DQ4kxKWf.js                              5.00 kB │ map:     22.61 kB
+out/main/chunks/macos-computer-use-permissions-BLp2w39K.js                5.01 kB │ map:     17.50 kB
+out/main/chunks/tracer-CpCMJyyi.js                                        5.33 kB │ map:     27.89 kB
+out/main/chunks/terminal-output-side-effects-DOHXZ72f.js                  5.95 kB │ map:     43.24 kB
+out/main/stt-worker.js                                                    6.21 kB │ map:     25.05 kB
+out/main/chunks/wsl-B6X8tA4m.js                                           6.96 kB │ map:     42.60 kB
+out/main/chunks/session-search-sqlite-support-Uk_7xYKe.js                 7.64 kB │ map:     42.80 kB
+out/main/chunks/ssh-browser-network-execution-route-CVSgF6Au.js           8.12 kB │ map:     28.98 kB
+out/main/chunks/tui-agent-startup-shell-BBIEqp32.js                       8.28 kB │ map:     47.65 kB
+out/main/chunks/plugin-manifest-DBoPH7gG.js                               8.60 kB │ map:     31.76 kB
+out/main/session-scanner-opencode-sqlite-worker-entry.js                 10.12 kB │ map:     44.97 kB
+out/main/chunks/session-scanner-accumulator-BkKcwkbM.js                  10.27 kB │ map:     51.62 kB
+out/main/chunks/run-process-Cy1cj8ex.js                                  10.31 kB │ map:     71.11 kB
+out/main/chunks/local-build-switch-LY4gUaZV.js                           10.49 kB │ map:     29.09 kB
+out/main/chunks/session-title-request-paths-B6O3-Hcn.js                  10.77 kB │ map:     56.95 kB
+out/main/chunks/codex-session-bridge-B7g4_0UK.js                         11.12 kB │ map:     46.04 kB
+out/main/chunks/transcript-stream-lines-CaYTkscO.js                      11.49 kB │ map:     54.74 kB
+out/main/chunks/worktree-logic-BDFJ_GkS.js                               11.88 kB │ map:     56.20 kB
+out/main/chunks/session-scanner-opencode-sqlite-open-CJbQEfgs.js         14.84 kB │ map:     58.48 kB
+out/main/chunks/schema-helpers-BVfxVwhu.js                               17.18 kB │ map:     83.03 kB
+out/main/chunks/working-directory-validation-DYI5HD63.js                 17.31 kB │ map:     91.89 kB
+out/main/chunks/keybindings-BxQozf3N.js                                  30.93 kB │ map:    107.73 kB
+out/main/usage-scan-worker-entry.js                                      33.79 kB │ map:    163.34 kB
+out/main/computer-sidecar.js                                             40.85 kB │ map:    168.19 kB
+out/main/chunks/windows-shell-args-DsDz5g1b.js                           44.08 kB │ map:    111.57 kB
+out/main/session-scanner-service-entry.js                                50.98 kB │ map:    301.25 kB
+out/main/chunks/schemas-DqY8r5S3.js                                      95.11 kB │ map:    478.51 kB
+out/main/chunks/codex-rollout-session-meta-DAFoVPNI.js                   97.66 kB │ map:    493.70 kB
+out/main/daemon-entry.js                                                108.46 kB │ map:    437.33 kB
+out/main/chunks/managed-agent-hook-controls-36vlzNcM.js                 108.66 kB │ map:    400.93 kB
+out/main/chunks/managed-home-shell-preflight-Cuov0GQK.js                113.94 kB │ map:    577.84 kB
+out/main/chunks/daemon-cgroup-scope-BQIxNYcx.js                         411.74 kB │ map:  1,464.95 kB
+out/main/chunks/zh-J5QeHf25.js                                          568.29 kB │ map:    855.93 kB
+out/main/chunks/es-DliwjxTg.js                                          639.64 kB │ map:    924.40 kB
+out/main/chunks/ko-Cax0L4Ba.js                                          677.94 kB │ map:    966.38 kB
+out/main/chunks/fr-D6gSk00X.js                                          737.37 kB │ map:  1,052.42 kB
+out/main/chunks/ja-10aPHnxi.js                                          764.62 kB │ map:  1,049.95 kB
+out/main/index.js                                                     8,002.23 kB │ map: 34,382.66 kB
+[32m✓ built in 6.49s[39m
+[32m
+electron main process built successfully[39m
+[90m
+-----
+[39m
+[36mrolldown-vite v7.3.1 [32mbuilding ssr environment for development...[36m[39m
+[2Ktransforming...✓ 272 modules transformed.
+rendering chunks...
+out/preload/index.js  368.85 kB
+[32m✓ built in 955ms[39m
+[32m
+electron preload scripts built successfully[39m
+[90m
+-----
+[39m
+Port 5173 is in use, trying another one...
+[32mdev server running for the electron renderer process at:
+[39m
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5174[22m/[39m
+[2m  [32m➜[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
+[32m
+starting electron app...
+[39m
+
+
+DevTools listening on ws://127.0.0.1:9444/devtools/browser/d6e7df2d-026a-402c-b355-399daf23890e
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at $ye.startOpenCodeBinderLoop (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84375)
+    at $ye.start (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:99384)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async startAgentHookServer (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:7181:48917)
+[ws-transport] Failed to bind port 6769 (listen EADDRINUSE: address already in use 127.0.0.1:6769), trying next candidate
+[ws-transport] All configured ports failed to bind, using an OS-assigned port
+[pty:history:gc] Skipped: live worktree set is empty
+[skills] scan roots=16 present=6 walked=16 skills=1 ms=263 ids=home-codex,home-agents,home-claude,home-grok,home-opencode,home-pi,home-omp,home-hermes,home-prime-agent,home-gemini,home-antigravity,home-cursor
+Error occurred in handler for 'gh:checkOrcaStarred': Error: No handler registered for 'gh:checkOrcaStarred'
+    at Session.<anonymous> (node:electron/js2c/browser_init:2:120175)
+    at Session.emit (node:events:514:28)
+Error occurred in handler for 'gh:checkOrcaStarred': Error: No handler registered for 'gh:checkOrcaStarred'
+    at Session.<anonymous> (node:electron/js2c/browser_init:2:120175)
+    at Session.emit (node:events:514:28)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[skills] scan roots=16 present=6 walked=16 skills=1 ms=94 ids=home-codex,home-agents,home-claude,home-grok,home-opencode,home-pi,home-omp,home-hermes,home-prime-agent,home-gemini,home-antigravity,home-cursor
+[runtime-graph] reload revision=1 window=1 outcome=success durationMs=11724
+[skills] scan roots=16 present=6 walked=16 skills=1 ms=702 ids=home-codex,home-agents,home-claude,home-grok,home-opencode,home-pi,home-omp,home-hermes,home-prime-agent,home-gemini,home-antigravity,home-cursor
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[skills] scan roots=16 present=6 walked=16 skills=1 ms=35 ids=home-codex,home-agents,home-claude,home-grok,home-opencode,home-pi,home-omp,home-hermes,home-prime-agent,home-gemini,home-antigravity,home-cursor
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[skills] scan roots=16 present=6 walked=16 skills=1 ms=38 ids=home-codex,home-agents,home-claude,home-grok,home-opencode,home-pi,home-omp,home-hermes,home-prime-agent,home-gemini,home-antigravity,home-cursor
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[skills] scan roots=16 present=6 walked=16 skills=1 ms=78 ids=home-codex,home-agents,home-claude,home-grok,home-opencode,home-pi,home-omp,home-hermes,home-prime-agent,home-gemini,home-antigravity,home-cursor
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[2m8:12:50 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/main.css[22m
+[2m8:13:06 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/main.css[22m
+[2m8:13:40 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/i18n/I18nProvider.tsx, /src/components/skills/SkillWarningPreviewLauncher.tsx, /src/components/skills/SkillFreshnessNudge.tsx, /src/components/WorktreeBaseFallbackDialog.tsx, /src/components/link-routing-preference-dialog.tsx, /src/components/browser-webauthn-account-dialog.tsx, /src/components/browser-pane/workspace-doc/doc-preview-external-link-confirmation.tsx, /src/App.tsx, /src/components/confirmation-dialog.tsx, /src/app-shell/AppBackgroundServices.tsx, /src/components/terminal-pane/PinnedTabCloseDialog.tsx, /src/components/terminal-pane/RunningTerminalCloseDialog.tsx, /src/app-shell/AppRootSurfaces.tsx, /src/main.tsx, /src/components/error-boundaries/RecoverableRenderErrorBoundary.tsx, /src/components/crash-report/CrashReportDialog.tsx, /src/components/ui/sonner.tsx, /src/components/skills/SkillFreshnessUpdateDialog.tsx, /src/components/sidebar/SetupGuideSidebarEntry.tsx, /src/components/sidebar/SidebarSettingsHelpMenu.tsx, /src/components/setup-guide/SetupGuideTelemetryObserver.tsx, /src/components/emulator-pane/MobileEmulatorAgentSetupGuideSteps.tsx, /src/components/AgentHibernationGate.tsx, /src/components/TelemetryFirstLaunchSurface.tsx, /src/components/NewWorkspaceComposerModal.tsx, /src/components/AiVaultTabTitleSyncGate.tsx, /src/components/NativeChatResumeOnRestartModal.tsx, /src/app-shell/TitlebarMainStrip.tsx, /src/app-shell/TitlebarLeftControls.tsx, /src/components/right-sidebar/FileExplorer.tsx, /src/components/tab-bar/EditorFileTab.tsx, /src/components/Terminal.tsx, /src/components/native-chat/StructuredAgentSessionStatusBridge.tsx, /src/components/native-chat/StructuredAgentSessionAttentionBridge.tsx, /src/components/ports/WorkspacePortScanner.tsx, /src/components/tab-bar/RecentTabSwitcher.tsx, /src/components/tab-bar/TabBar.tsx, /src/components/tab-bar/QuickLaunchButton.tsx, /src/components/tab-bar/TabBarQuickCommandsButton.tsx, /src/components/terminal-pane/TerminalPane.tsx, /src/components/terminal-pane/TerminalAgentSessionForkDialog.tsx, /src/components/agent-session-continuation/AgentSessionContinuationDialog.tsx, /src/components/tab-bar/TabBarCreateEntry.tsx, /src/components/native-chat/NativeChatStructuredSession.tsx, /src/components/tab-group/AiVaultSessionDropLayer.tsx, /src/components/star-nag/StarNagAgentValueMomentObserver.tsx, /src/components/floating-terminal/FloatingTerminalToggleButton.tsx, /src/components/right-sidebar/index.tsx, /src/components/sidebar/WorkspaceKanbanDrawer.tsx, /src/components/sidebar/WorktreeList.tsx, /src/components/sidebar/WorktreeCard.tsx, /src/components/sidebar/WorktreeContextMenu.tsx, /src/components/status-bar/ResourceUsageStatusSegment.tsx, /src/components/terminal-pane/TerminalSshReconnectOverlay.tsx, /src/components/sidebar/SetupScriptPromptCard.tsx, /src/components/sidebar/WorktreeCardPorts.tsx, /src/components/status-bar/PortsStatusSegment.tsx, /src/components/status-bar/ports-status-popover-rows.tsx, /src/components/sidebar/worktree-list/viewport/VirtualizedWorktreeViewport.tsx, /src/components/sidebar/WorktreeCardAgents.tsx, /src/components/native-chat/NativeChatResolvedView.tsx, /src/components/sidebar/SidebarFilter.tsx, /src/components/sidebar/workspace-options-menu-items.tsx, /src/components/sidebar/SidebarTaskNavButton.tsx, /src/components/tab-group/TabGroupPanel.tsx, /src/components/shared/useDaemonActions.tsx, /src/components/terminal-pane/TerminalPaneOverlayLayer.tsx, /src/components/terminal-pane/TerminalOverlaySlot.tsx, /src/components/right-sidebar/file-explorer-row-context-menu.tsx, /src/components/browser-pane/ClientHostedBrowserPagePane.tsx, /src/components/browser-pane/stream-remote/remote-browser-page-pane.tsx, /src/components/browser-pane/assemble-chrome/browser-page-pane.tsx, /src/components/browser-pane/assemble-chrome/browser-page-toolbar.tsx, /src/components/browser-pane/workspace-doc/HtmlDocPreview.tsx, /src/components/browser-pane/workspace-doc/doc-preview-address-edit.tsx, /src/components/tab-bar/SortableTab.tsx, /src/components/tab-bar/BrowserTab.tsx, /src/components/tab-group/TabGroupSplitLayout.tsx, /src/components/tab-bar/TabWorkspaceLayoutMenuSection.tsx, /src/components/browser-pane/ReopenBrowserPageOnServerButton.tsx, /src/components/new-workspace/ComposerBaseRefPicker.tsx, /src/components/new-workspace/ProjectCombobox.tsx, /src/components/sidebar/HostRemoveDialog.tsx, /src/components/sidebar/WorktreeParentPickerPopover.tsx, /src/components/status-bar/StatusBarSurface.tsx, /src/components/status-bar/resource-usage-resource-tree.tsx, /src/components/NativeChatResumeOnRestartGroups.tsx, /src/hooks/MacosTccPromptNoticeHost.tsx, /src/components/NewWorkspaceComposerCard.tsx, /src/components/status-bar/NativeChatResumeStatusSegment.tsx, /src/components/status-bar/SkillUpdateStatusSegment.tsx, /src/components/sidebar/LinearAgentSkillSetupPrompt.tsx, /src/components/emulator-pane/MobileEmulatorAgentSetupGuideLayer.tsx, /src/components/settings/AgentSkillSetupPanel.tsx, /src/components/sidebar/SidebarNav.tsx, /src/components/sidebar/sidebar-header-actions.tsx, /src/components/sidebar/WorktreeContextMenuView.tsx, /src/components/Landing.tsx, /src/components/tab-bar/SortableTabContextMenu.tsx, /src/components/tab-bar/tab-bar-static-create-menu.tsx, /src/components/terminal-pane/TerminalContextMenu.tsx, /src/components/tab-bar/EditorFileTabCloseButton.tsx, /src/components/tab-bar/EditorFileTabContextMenu.tsx, /src/components/tab-bar/TabBarQuickCommandsMenu.tsx, /src/components/editor/DiffViewer.tsx, /src/components/TerminalWorkbenchContainer.tsx, /src/components/TerminalSurface.tsx, /src/components/TerminalSplitWorkspaceSurfaces.tsx, /src/components/TerminalWorktreeSplitSurface.tsx, /src/components/browser-pane/assemble-chrome/BrowserPaneOverlayLayer.tsx, /src/components/editor/EditorAutosaveController.tsx, /src/components/right-sidebar/FileExplorerVirtualRows.tsx, /src/components/terminal-pane/TerminalPaneSurface.tsx, /src/components/terminal-pane/TerminalPaneHeaderOverlay.tsx, /src/components/native-chat/NativeChatComposer.tsx, /src/components/dashboard/RetainedAgentsSyncGate.tsx, /src/components/floating-terminal/FloatingTerminalIconContextMenu.tsx, /src/components/agent/AgentSettingsDialog.tsx, /src/components/sidebar/index.tsx, /src/components/activity/ActivityTitlebarControls.tsx, /src/components/status-bar/CodexSwitcherMenu.tsx, /src/components/sidebar/AddRemoteHostDialog.tsx, /src/components/editor/ReviewNotesSendMenuContent.tsx, /src/components/sidebar/SidebarHeader.tsx, /src/components/sidebar/SidebarToolbar.tsx, /src/components/browser-pane/assemble-chrome/browser-workspace-pane.tsx, /src/components/settings/TerminalTccAttributionNotice.tsx, /src/components/settings/AgentsPane.tsx, /src/components/native-chat/NativeChatComposerField.tsx, /src/components/new-workspace/ComposerParentWorktreePicker.tsx, /src/components/settings/AgentCacheTimerSection.tsx, /src/components/sidebar/WorktreeCardSshHostControl.tsx, /src/components/sparse/SparseCheckoutPresetSelect.tsx, /src/components/emulator-pane/EmulatorPane.tsx, /src/components/sidebar/preserved-branch-batch-toast.tsx, /src/components/repo/CreateFromPicker.tsx, /src/components/settings/SearchableSetting.tsx, /src/components/new-workspace/SmartWorkspaceNameField.tsx, /src/components/sidebar/SidebarWorkspaceFilterSection.tsx, /src/components/sidebar/SidebarRepositoryFilterSection.tsx, /src/components/sidebar/WorktreeCardDisplayMenuSection.tsx, /src/components/sidebar/worktree-list/rows/RepoScanUnavailableIndicator.tsx, /src/components/sidebar/HostSectionHeaderMenu.tsx, /src/components/sidebar/PendingWorktreeRow.tsx, /src/components/dashboard/DashboardAgentRow.tsx, /src/components/sidebar/worktree-card-compact-agent-row.tsx, /src/components/sidebar/NoticeHostGlyph.tsx, /src/components/sidebar/HostRenameDialog.tsx, /src/components/sidebar/CacheTimer.tsx, /src/components/sidebar/worktree-card-surface.tsx, /src/components/sidebar/WorktreeCardStatusSlot.tsx, /src/components/sidebar/WorktreeOpenInMenu.tsx, /src/components/UnexpectedSignoutCard.tsx, /src/components/settings/RemoteServerUpdateDialog.tsx, /src/components/status-bar/ClaudeSwitcherMenu.tsx, /src/components/status-bar/InlineProviderUsage.tsx, /src/components/status-bar/ProviderDetailsMenu.tsx, /src/components/status-bar/UsagePercentageDisplayChangeNotice.tsx, /src/components/status-bar/RemoteServerUpdateStatusSegment.tsx, /src/components/status-bar/UpdateStatusSegment.tsx, /src/components/status-bar/StatusBarUsageEmptyCta.tsx, /src/components/status-bar/StatusBarAccountControls.tsx, /src/components/status-bar/CaffeinateStatusSegment.tsx, /src/components/status-bar/SshStatusSegment.tsx, /src/components/status-bar/SshTargetStatusRow.tsx, /src/components/status-bar/WorkspaceSpaceCompactPanel.tsx, /src/components/TerminalTitlebarTabs.tsx, /src/components/native-chat/StructuredAgentSessionPaneOverlayLayer.tsx, /src/components/emulator-pane/EmulatorPaneOverlayLayer.tsx, /src/components/tab-bar/ClientHostedBrowserTabRows.tsx, /src/components/native-chat/NativeChatView.tsx, /src/components/browser-pane/workspace-doc/workspace-doc-page-pane.tsx, /src/components/terminal-pane/TerminalQuickCommandEditorDialog.tsx, /src/components/terminal-pane/TerminalPaneNativeChatPortal.tsx, /src/components/link-actions/LinkActionPopover.tsx, /src/components/terminal-pane/TerminalQuickCommandsSubmenu.tsx, /src/components/emulator-pane/MobileEmulatorTabIntroCallout.tsx, /src/components/native-chat/NativeChatInteractiveCard.tsx, /src/components/browser-pane/assemble-chrome/browser-egress-indicator.tsx, /src/components/browser-pane/assemble-chrome/browser-page-context-menu.tsx, /src/components/browser-pane/assemble-chrome/BrowserAddressBar.tsx, /src/components/browser-pane/assemble-chrome/ssh-routed-browser-page-gate.tsx, /src/components/browser-pane/assemble-chrome/browser-page-viewport-overlays.tsx, /src/components/emulator-pane/MobileEmulatorAgentSetupGuide.tsx, /src/components/CodexRestartChip.tsx, /src/components/browser-pane/stream-remote/remote-browser-page-viewport.tsx, /src/components/artifacts/ArtifactPublishButton.tsx, /src/components/browser-pane/assemble-chrome/BrowserImportHintButton.tsx, /src/components/browser-pane/assemble-chrome/BrowserToolbarMenu.tsx, /src/components/browser-pane/annotate/MarkupDrawButton.tsx, /src/components/BrowserCookieImportMachineNotice.tsx, /src/components/browser-pane/assemble-chrome/browser-toolbar-menu-dropdown.tsx, /src/components/onboarding/OnboardingInlineCommandTerminal.tsx, /src/components/sidebar/CommentMermaidBlock.tsx, /src/components/diff-comments/DiffCommentPopover.tsx, /src/components/editor/diff-navigation-context.tsx, /src/components/editor/NotesSendMenu.tsx, /src/assets/main.css[22m
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [33mhmr invalidate [39m[2m/src/components/link-routing-preference-dialog.tsx[22m Could not Fast Refresh ("useLinkRoutingPreferenceDialog" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/components/terminal-pane/TerminalPane.tsx[22m
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [33mhmr invalidate [39m[2m/src/components/browser-pane/workspace-doc/doc-preview-external-link-confirmation.tsx[22m Could not Fast Refresh ("subscribeDocPreviewExternalLinkConfirmation" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.tsx[22m
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [33mhmr invalidate [39m[2m/src/main.tsx[22m Could not Fast Refresh ("true" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/main.tsx[22m
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [33mhmr invalidate [39m[2m/src/components/sidebar/SetupGuideSidebarEntry.tsx[22m Could not Fast Refresh ("getSetupGuideSidebarEntryReady" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/sidebar/SidebarNav.tsx[22m
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [33mhmr invalidate [39m[2m/src/components/tab-bar/QuickLaunchButton.tsx[22m Could not Fast Refresh ("shouldShowLaunchWatchdogTimeout" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/tab-bar/TabBar.tsx, /src/components/editor/ReviewNotesSendMenuContent.tsx[22m
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [33mhmr invalidate [39m[2m/src/components/sidebar/workspace-options-menu-items.tsx[22m Could not Fast Refresh ("useWorkspaceOptionsFilterBadge" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/sidebar/SidebarWorkspaceOptionsMenu.tsx[22m
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [33mhmr invalidate [39m[2m/src/components/shared/useDaemonActions.tsx[22m Could not Fast Refresh ("useDaemonActions" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/status-bar/ResourceUsageStatusSegment.tsx, /src/components/terminal-pane/TerminalPaneSurface.tsx, /src/components/terminal-pane/TerminalPane.tsx[22m
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [33mhmr invalidate [39m[2m/src/components/tab-bar/BrowserTab.tsx[22m Could not Fast Refresh ("formatBrowserTabUrlLabel" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/tab-bar/TabBar.tsx, /src/components/tab-bar/tab-bar-static-create-menu.tsx, /src/components/tab-bar/ClientHostedBrowserTab.tsx[22m
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [33mhmr invalidate [39m[2m/src/components/sidebar/WorktreeParentPickerPopover.tsx[22m Could not Fast Refresh ("getWorktreeParentPickerFocusRestoreTarget" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/sidebar/WorktreeContextMenuOverlays.tsx[22m
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [33mhmr invalidate [39m[2m/src/components/sidebar/LinearAgentSkillSetupPrompt.tsx[22m Could not Fast Refresh ("_linearAgentSkillSetupPromptInternalsForTests" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/sidebar/worktree-card-secondary-rows.tsx[22m
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [33mhmr invalidate [39m[2m/src/components/sidebar/SidebarNav.tsx[22m Could not Fast Refresh ("getSetupGuideSidebarEntryReady" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/sidebar/index.tsx[22m
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [33mhmr invalidate [39m[2m/src/components/settings/TerminalTccAttributionNotice.tsx[22m Could not Fast Refresh ("useMacTccAttributionSevered" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/hooks/MacosTccPromptNoticeHost.tsx[22m
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [33mhmr invalidate [39m[2m/src/components/sidebar/preserved-branch-batch-toast.tsx[22m Could not Fast Refresh ("forceDeletePreservedBranchBatch" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/components/sidebar/WorktreeCard.tsx, /src/components/sidebar/WorktreeContextMenu.tsx, /src/components/status-bar/ResourceUsageStatusSegment.tsx, /src/components/terminal-pane/TerminalSshReconnectOverlay.tsx[22m
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [33mhmr invalidate [39m[2m/src/components/sidebar/worktree-card-compact-agent-row.tsx[22m Could not Fast Refresh ("getCompactAgentSecondary" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/sidebar/worktree-card-compact-agents.tsx[22m
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [33mhmr invalidate [39m[2m/src/components/sidebar/CacheTimer.tsx[22m Could not Fast Refresh ("usePromptCacheCountdownForPane" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/sidebar/worktree-card-compact-agent-row.tsx, /src/components/sidebar/WorktreeCard.tsx, /src/components/sidebar/worktree-card-meta-row.tsx[22m
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [33mhmr invalidate [39m[2m/src/components/sidebar/WorktreeOpenInMenu.tsx[22m Could not Fast Refresh ("getOpenInEntryAvailability" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/sidebar/WorktreeContextMenuView.tsx, /src/components/right-sidebar/FileExplorerToolbar.tsx[22m
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [33mhmr invalidate [39m[2m/src/components/status-bar/InlineProviderUsage.tsx[22m Could not Fast Refresh ("isUnavailableInactiveUsage" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/status-bar/StatusBar.tsx, /src/components/status-bar/ClaudeSwitcherMenu.tsx, /src/components/status-bar/CodexSwitcherMenu.tsx[22m
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [33mhmr invalidate [39m[2m/src/components/status-bar/ProviderDetailsMenu.tsx[22m Could not Fast Refresh ("useStatusBarMenuFocusHandoff" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/status-bar/StatusBar.tsx, /src/components/status-bar/ClaudeSwitcherMenu.tsx, /src/components/status-bar/CodexSwitcherMenu.tsx, /src/components/status-bar/StatusBarSurface.tsx[22m
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [33mhmr invalidate [39m[2m/src/components/status-bar/SshStatusSegment.tsx[22m Could not Fast Refresh ("connectRuntimeHostForNavigation" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/status-bar/StatusBarSurface.tsx[22m
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [33mhmr invalidate [39m[2m/src/components/editor/diff-navigation-context.tsx[22m Could not Fast Refresh ("useDiffEditorRegistration" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/editor/DiffViewer.tsx[22m
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [33mhmr invalidate [39m[2m/src/components/editor/NotesSendMenu.tsx[22m Could not Fast Refresh ("buildNotesSendTargetModeId" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m8:13:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/editor/DiffViewer.tsx[22m
+[skills] scan roots=16 present=6 walked=16 skills=1 ms=170 ids=home-codex,home-agents,home-claude,home-grok,home-opencode,home-pi,home-omp,home-hermes,home-prime-agent,home-gemini,home-antigravity,home-cursor
+[2m8:13:50 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/main.css, /src/components/right-sidebar/SearchQueryRow.tsx[22m
+[memory] PowerShell process enumeration failed; falling back to typeperf Error: powershell.exe exited on timeout
+    at m9r (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:6955:5542)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async f9r (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:6955:5030)
+    at async u9r (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:6955:4007)
+    at async q9r (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:6955:9302)
+    at async Promise.all (index 0)
+    at async eei (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:6955:11158)
+    at async Session.<anonymous> (node:electron/js2c/browser_init:2:120062)
+[skills] scan roots=16 present=6 walked=16 skills=1 ms=122 ids=home-codex,home-agents,home-claude,home-grok,home-opencode,home-pi,home-omp,home-hermes,home-prime-agent,home-gemini,home-antigravity,home-cursor
+[runtime-graph] reload revision=2 window=1 outcome=success durationMs=11183
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[2m8:15:23 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/main.css, /src/components/right-sidebar/FileExplorer.tsx[22m
+[2m8:15:31 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/main.css, /src/components/right-sidebar/FileExplorer.tsx[22m
+[2m8:15:31 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Identifier `replaceDisabledReason` has already been declared
+  Plugin: [35mvite:oxc[39m
+  File: [36mC:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/renderer/src/components/right-sidebar/useFileSearchPanel.ts[39m:221:6
+[33m  `replaceDisabledReason` has already been declared here
+  228 |      activeWorktreeId,
+  229 |      worktreePath,
+  230 |      results: fileSearchResults,
+      |            ^^^^^^^^^^^^^^^^^^^^^
+  231 |      query: fileSearchQuery,
+  232 |      replaceTerm: fileSearchReplaceQuery,
+  It can not be redeclared here
+  278 |        return 'running'
+  279 |      }
+  280 |      if (fileSearchResults.truncated) {
+      |                                 ^^^^^^^
+  281 |        return 'truncated'
+      |  ^^^^^^^^^^^^^^
+  282 |      }[39m
+[2m8:15:34 PM[22m [31m[1m[vite][22m[39m [31mInternal server error: Identifier `replaceDisabledReason` has already been declared[39m
+  Plugin: [35mvite:oxc[39m
+  File: [36mC:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/src/renderer/src/components/right-sidebar/useFileSearchPanel.ts[39m:221:6
+[33m  `replaceDisabledReason` has already been declared here
+  228 |      activeWorktreeId,
+  229 |      worktreePath,
+  230 |      results: fileSearchResults,
+      |            ^^^^^^^^^^^^^^^^^^^^^
+  231 |      query: fileSearchQuery,
+  232 |      replaceTerm: fileSearchReplaceQuery,
+  It can not be redeclared here
+  278 |        return 'running'
+  279 |      }
+  280 |      if (fileSearchResults.truncated) {
+      |                                 ^^^^^^^
+  281 |        return 'truncated'
+      |  ^^^^^^^^^^^^^^
+  282 |      }[39m
+      at transformWithOxc (file:///C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/node_modules/.pnpm/rolldown-vite@7.3.1_@emnapi+core@1.11.2_@emnapi+runtime@1.11.2_@types+node@25.9.8_esbuild@0.25.12_jiti@2.7.0_yaml@2.9.1/node_modules/rolldown-vite/dist/node/chunks/node.js:4913:19)
+      at async TransformPluginContext.transform (file:///C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/node_modules/.pnpm/rolldown-vite@7.3.1_@emnapi+core@1.11.2_@emnapi+runtime@1.11.2_@types+node@25.9.8_esbuild@0.25.12_jiti@2.7.0_yaml@2.9.1/node_modules/rolldown-vite/dist/node/chunks/node.js:4993:20)
+      at async EnvironmentPluginContainer.transform (file:///C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/node_modules/.pnpm/rolldown-vite@7.3.1_@emnapi+core@1.11.2_@emnapi+runtime@1.11.2_@types+node@25.9.8_esbuild@0.25.12_jiti@2.7.0_yaml@2.9.1/node_modules/rolldown-vite/dist/node/chunks/node.js:29825:14)
+      at async loadAndTransform (file:///C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/node_modules/.pnpm/rolldown-vite@7.3.1_@emnapi+core@1.11.2_@emnapi+runtime@1.11.2_@types+node@25.9.8_esbuild@0.25.12_jiti@2.7.0_yaml@2.9.1/node_modules/rolldown-vite/dist/node/chunks/node.js:20950:26)
+      at async viteTransformMiddleware (file:///C:/Users/hoivk/orca/workspaces/wakii/fi30-sf-1/node_modules/.pnpm/rolldown-vite@7.3.1_@emnapi+core@1.11.2_@emnapi+runtime@1.11.2_@types+node@25.9.8_esbuild@0.25.12_jiti@2.7.0_yaml@2.9.1/node_modules/rolldown-vite/dist/node/chunks/node.js:25507:20)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[2m8:15:50 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/main.css, /src/components/right-sidebar/FileExplorer.tsx[22m
+[2m8:16:06 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/main.css, /src/components/right-sidebar/FileExplorer.tsx[22m
+[2m8:16:23 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/main.css, /src/components/right-sidebar/FileExplorer.tsx[22m
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[2m8:18:58 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/main.css, /src/components/right-sidebar/FileExplorer.tsx[22m
+[2m8:19:05 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/main.css, /src/components/right-sidebar/FileExplorer.tsx[22m
+[2m8:19:14 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/main.css, /src/components/right-sidebar/FileExplorer.tsx[22m
+[2m8:19:22 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/main.css, /src/components/right-sidebar/FileExplorer.tsx[22m
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[2m8:20:29 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/main.css, /src/components/right-sidebar/FileExplorer.tsx[22m
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[2m8:20:48 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/main.css, /src/components/right-sidebar/FileExplorer.tsx[22m
+[2m8:21:07 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/main.css, /src/components/right-sidebar/FileExplorer.tsx[22m
+[2m8:21:14 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/main.css, /src/components/right-sidebar/FileExplorer.tsx[22m
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+[opencode-binder] session store read failed; skipping round Error: SQLite database does not exist: C:\Users\hoivk\.local\share\opencode/opencode.db
+    at new c (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\sync-database-D_x_zbjr.js:1:561)
+    at it (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4412)
+    at Object.at (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\chunks\session-scanner-opencode-sqlite-open-CJbQEfgs.js:3:4569)
+    at Pge (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:1989)
+    at Object.listSessions (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84032)
+    at $ye.runOpenCodeBinderRoundOnce (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:85189)
+    at Timeout._onTimeout (C:\Users\hoivk\orca\workspaces\wakii\fi30-sf-1\out\main\index.js:214:84270)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)

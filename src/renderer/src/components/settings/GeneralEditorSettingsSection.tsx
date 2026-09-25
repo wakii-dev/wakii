@@ -18,8 +18,13 @@ import {
 } from './SettingsFormControls'
 import { translate } from '@/i18n/i18n'
 import { RichMarkdownSpellcheckSetting } from './RichMarkdownSpellcheckSetting'
+import { StickyScrollSetting } from './StickyScrollSetting'
+import { InlineBlameSetting } from './InlineBlameSetting'
 import { DiffShowWhitespaceSetting } from './DiffShowWhitespaceSetting'
 import { EditorWordWrapSetting } from './EditorWordWrapSetting'
+import { EditorCaretAnimationSetting } from './EditorCaretAnimationSetting'
+import { EditorRenderWhitespaceSetting } from './EditorRenderWhitespaceSetting'
+import { EditorBreadcrumbsSetting } from './EditorBreadcrumbsSetting'
 import { EditorFontFamilySetting } from './EditorFontFamilySetting'
 import {
   createAutoSaveDelayDraftState,
@@ -234,6 +239,12 @@ export function GeneralEditorSettingsSection({
 
       <EditorWordWrapSetting settings={settings} updateSettings={updateSettings} />
 
+      <EditorCaretAnimationSetting settings={settings} updateSettings={updateSettings} />
+
+      <EditorRenderWhitespaceSetting settings={settings} updateSettings={updateSettings} />
+
+      <EditorBreadcrumbsSetting settings={settings} updateSettings={updateSettings} />
+
       <DiffShowWhitespaceSetting settings={settings} updateSettings={updateSettings} />
 
       <CollapseUnchangedRegionsSetting settings={settings} updateSettings={updateSettings} />
@@ -368,6 +379,10 @@ export function GeneralEditorSettingsSection({
           onChange={() => updateSettings({ editorMinimapEnabled: !settings.editorMinimapEnabled })}
         />
       </SearchableSetting>
+
+      <StickyScrollSetting settings={settings} updateSettings={updateSettings} />
+
+      <InlineBlameSetting settings={settings} updateSettings={updateSettings} />
 
       <RichMarkdownSpellcheckSetting settings={settings} updateSettings={updateSettings} />
 

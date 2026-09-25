@@ -190,6 +190,16 @@ export const KEYBINDING_DEFINITION_CORE_3: readonly KeybindingDefinition[] = [
     allowBareKeybindings: true
   },
   {
+    // Why: the F2 label belongs in the title — many Mac keyboards need fn+F2 to send F2.
+    id: 'fileExplorer.rename',
+    title: 'Rename file (F2)',
+    group: 'File Explorer',
+    scope: 'fileExplorer',
+    searchKeywords: ['shortcut', 'file explorer', 'rename', 'f2'],
+    defaultBindings: platformBindings(['F2']),
+    allowBareKeybindings: true
+  },
+  {
     id: 'settings.search',
     title: 'Search Settings',
     group: 'Settings',

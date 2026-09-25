@@ -180,7 +180,21 @@ vi.mock('@/lib/file-type-icons', () => ({
   getFileTypeIcon: () =>
     function FileIcon(props: Record<string, unknown>) {
       return { type: 'FileIcon', props }
-    }
+    },
+  // Why: mirrors the real classifier's simulator short-circuit so the tab guard below is exercised.
+  getFileTypeIconColor: (filePath: string | null) =>
+    filePath && /mobile emulator|simulator/i.test(filePath) ? null : 'codeTsJs',
+  FILE_ICON_COLOR_CLASS: {
+    codeTsJs: 'text-file-icon-code-ts-js',
+    code: 'text-file-icon-code',
+    dataConfig: 'text-file-icon-data-config',
+    markupDoc: 'text-file-icon-markup-doc',
+    webStyle: 'text-file-icon-web-style',
+    shell: 'text-file-icon-shell',
+    binaryBuild: 'text-file-icon-binary-build',
+    asset: 'text-file-icon-asset',
+    nameBased: 'text-file-icon-name-based'
+  }
 }))
 
 vi.mock('@/store/selectors', () => ({
@@ -241,7 +255,8 @@ function baseFile(overrides: Partial<OpenFile> = {}): OpenFile {
 async function renderEditorFileTab(
   file: OpenFile,
   onActivate = vi.fn(),
-  onMakePermanent = vi.fn()
+  onMakePermanent = vi.fn(),
+  isActive = true
 ): Promise<{
   element: unknown
   onActivate: ReturnType<typeof vi.fn>
@@ -251,7 +266,7 @@ async function renderEditorFileTab(
   const module = await import('./EditorFileTab')
   const element = module.default({
     file,
-    isActive: true,
+    isActive,
     isPinned: false,
     hasTabsToRight: false,
     hasTabsToLeft: false,
@@ -517,5 +532,49 @@ describe('EditorFileTab rename menu', () => {
       (await renderEditorFileTab(file, onActivate, onMakePermanent)).element
     )
     expect(findElementsByType(secondRender, 'input')).toHaveLength(0)
+  })
+})
+
+describe('EditorFileTab icon color', () => {
+  beforeEach(() => {
+    reactHookRuntime.states = []
+    reactHookRuntime.index = 0
+    vi.clearAllMocks()
+    vi.resetModules()
+    vi.stubGlobal('navigator', { userAgent: 'Mac' })
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+      callback(0)
+      return 1
+    })
+    vi.stubGlobal('cancelAnimationFrame', vi.fn())
+  })
+
+  function iconClassName(element: unknown): string {
+    const icons = findElementsByType(element, 'FileIcon')
+    expect(icons).toHaveLength(1)
+    return String(icons[0].props.className ?? '')
+  }
+
+  it('colors an inactive file tab from the file-type class map', async () => {
+    const file = baseFile({ relativePath: 'src/App.tsx', filePath: '/repo/src/App.tsx' })
+    const element = expandNode((await renderEditorFileTab(file, vi.fn(), vi.fn(), false)).element)
+
+    expect(iconClassName(element)).toContain('text-file-icon-code-ts-js')
+  })
+
+  it('keeps simulator tabs on the neutral tab color even when inactive', async () => {
+    const file = baseFile({ relativePath: 'mobile emulator', filePath: '/repo/mobile emulator' })
+    const element = expandNode((await renderEditorFileTab(file, vi.fn(), vi.fn(), false)).element)
+
+    expect(iconClassName(element)).not.toContain('text-file-icon-')
+    expect(iconClassName(element)).toContain('text-muted-foreground')
+  })
+
+  it('keeps the active tab on the foreground color regardless of file type', async () => {
+    const file = baseFile({ relativePath: 'src/App.tsx', filePath: '/repo/src/App.tsx' })
+    const element = expandNode((await renderEditorFileTab(file)).element)
+
+    expect(iconClassName(element)).toContain('text-foreground')
+    expect(iconClassName(element)).not.toContain('text-file-icon-')
   })
 })

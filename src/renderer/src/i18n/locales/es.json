@@ -8418,6 +8418,16 @@
             "editorFontFamilyDesc": "Fuente utilizada por los editores de archivos y vistas de diferencias. Dejar vacío para seguir la fuente de la terminal.",
             "externalWorktrees": "Worktrees externos",
             "externalWorktreesDescription": "Elige si los worktrees creados fuera de Wakii aparecen de forma predeterminada."
+          },
+          "editor": {
+            "search": {
+              "21e1aaf2ef": "Blame integrado",
+              "f83e419695": "Muestra el autor, la fecha y el resumen del commit al final de la línea actual en el editor de archivos.",
+              "622b5fa095": "integrado",
+              "97afa04b81": "blame",
+              "c307a3153a": "gitlens",
+              "f912660d8c": "anotación"
+            }
           }
         },
         "git": {
@@ -10317,6 +10327,30 @@
           "saveFailed": "No se pudieron guardar los valores predeterminados de visibilidad.",
           "updateServer": "Actualiza este servidor para configurar los valores predeterminados de las fuentes.",
           "updateServerDefaults": "Actualiza este servidor para configurar los valores predeterminados de visibilidad."
+        },
+        "EditorCaretAnimationSetting": {
+          "8e0f5141a1": "Activado",
+          "8dc4f98620": "Explícito",
+          "84ecf4f030": "Desactivado",
+          "63ef2747f7": "Animación suave del cursor",
+          "a181845e72": "Anima el cursor de texto al moverse en los editores de archivos."
+        },
+        "EditorRenderWhitespaceSetting": {
+          "f08dbab703": "Ninguno",
+          "6bce99b8b5": "Límite",
+          "e1f52833fb": "Selección",
+          "09b41c31fb": "Final",
+          "b0974f678a": "Todas",
+          "085871d375": "Mostrar espacios en blanco",
+          "628ef71b4c": "Muestra los caracteres de espacio en blanco en los editores de archivos."
+        },
+        "EditorBreadcrumbsSetting": {
+          "fe2cb0ef78": "Ruta de navegación",
+          "9e7a1f613e": "Muestra la ruta del archivo sobre el editor de archivos."
+        },
+        "InlineBlameSetting": {
+          "683fd9af0f": "Blame integrado",
+          "9142b8bc2f": "Muestra el autor, la fecha y el resumen del commit al final de la línea actual en el editor de archivos."
         }
       },
       "right": {
@@ -13399,6 +13433,23 @@
               "notice": {
                 "8c59ce5075": "Failed to save the file. Please try again."
               }
+            }
+          }
+        },
+        "EditorBreadcrumbs": {
+          "7a0b97acc9": "Ruta de navegación del archivo",
+          "deb1973b7d": "Mostrar en el explorador"
+        },
+        "git": {
+          "blame": {
+            "strings": {
+              "f553e19e41": "Tú",
+              "e6fc8a66b3": "cambios sin guardar",
+              "5d58990105": "El archivo es demasiado grande para el blame integrado.",
+              "1f32d46ce0": "El archivo tiene demasiadas líneas para el blame integrado.",
+              "1f078da5df": "Commit",
+              "6f3313de46": "Autor",
+              "2f33a41d63": "Fecha"
             }
           }
         }
