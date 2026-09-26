@@ -1,7 +1,7 @@
 # Story: VI-1 — Hỗ trợ tiếng Việt (UI language built-in thứ 7)
 Destination: story/vi-1-vietnamese-i18n
 Epic spec: docs/superpowers/specs/2026-09-25-vietnamese-i18n-design.md
-Context packs: docs/superpowers/contexts/sf-1.md · sf-2.md · sf-3.md (SF ĐỌC PACK thay tự tổng hợp)
+Context packs: docs/superpowers/contexts/vi-1-sf-1.md · vi-1-sf-2.md · vi-1-sf-3.md (SF ĐỌC PACK thay tự tổng hợp — prefix vi-1 tránh collision sf-*.md của story khác, bài học FI-458 B2)
 Linear: ⏳ epic + sub-issues deferred — workspace FI unreachable (memory 21/09), remap lúc APPROVE khi workspace sống
 
 ## SF-1 Registry + wiring + pipeline enablement

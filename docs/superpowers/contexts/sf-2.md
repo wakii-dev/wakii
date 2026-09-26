@@ -1,32 +1,32 @@
-# SF-2 Context Pack — Catalog vi.json full production
-> Đọc file này THAY VÌ tự tổng hợp từ bracket + epic + comments. Epic spec: `docs/superpowers/specs/2026-09-25-vietnamese-i18n-design.md`. Branch đích: `story/vi-1-vietnamese-i18n`.
+# SF-2 Context Pack — Explorer VSCode-parity
+> Đọc file này THAY VÌ tự tổng hợp. Epic spec: `docs/superpowers/specs/2026-09-21-editor-vscode-parity-design.md`. Bracket: `docs/superpowers/brackets/fi478-editor-vscode-parity.md`. Design: mock-prototype (designer phase TRƯỚC dev). Reference behavior: `~/Desktop/projects/vscode/src/vs/workbench/contrib/files/browser/views/` (`explorerView.ts`, `explorerViewer.ts`, `openEditorsView.ts`) — clone behavior, không vendor code.
 
 ## Spec slice (chỉ phần SF-2 chịu trách nhiệm)
-1. **Flag `--prefix <p>` cho bootstrap-locale-catalog.mjs** — lọc key-prefix khi dịch (cơ chế chia lô chưa tồn tại: script hiện clone toàn cây en và dịch mọi value chưa có trong cache mỗi lượt; 11-12k request Google Translate / lượt full). Cache vẫn là backstop (run lại full = chỉ dịch phần thiếu).
-1b. **Metric script translatedness (`--prefix` aware)** — đếm leaf keys có giá trị vi ≠ en theo prefix; DỰNG TRƯỚC lô 1. Exit criterion MỖI LÔ = `metric --prefix <lô>` = 100% trên domain đó. KHÔNG tự chế định nghĩa thứ hai — SF-3 ratchet TÁI DÙNG script này.
-1c. **Pipeline ops protocol**: run nền từng lô (`nohup … > log`), monitor tiến độ, chết giữa chừng → resume qua cache (script save cache mỗi 25 items), retry 429. **5 lô CHẠY TUẦN TỰ bắt buộc** (cùng vi.json + cùng cache — parallel = merge conflict chắc chắn): lô N+1 chỉ start khi `metric --prefix <lô N>` = 100%.
-2. **Glossary cơ chế (chốt TRƯỚC lô đầu — cache lưu giá trị ĐÃ repair, nhiễm là bền vững):** map glossary onto `config/scripts/locale-translation-policy.mjs` — `LOCALE_VALUE_OVERRIDES.vi` (giá trị đích cụ thể) / `LOCALE_KEY_OVERRIDES` (key vi dịch khác) / `BRAND_MISTRANSLATIONS.vi` (brand Wakii/Orca/Linear/Claude/Codex bị GT biến dạng → repair) — tái dùng cấu trúc `locale-generic-ui-terms.mjs`. Thuật ngữ giữ Anh: commit, worktree, merge, branch, gate, plugin, staging, push/pull/rebase, sidebar, tab…
-3. **`NATIVE_PICKER_LABELS.vi` pin đủ 6 endonym** (english/chinese/korean/japanese/spanish/french/vietnamese — repairCatalog pin label picker; thiếu entry = label vi.json không deterministic). 5 locale khác thiếu key `vietnamese` là CHẤP NHẬN (runtime fallback endonym qua getUiLanguageChoiceLabel) — không "sửa".
-4. **5 lô dịch — TUẦN TỰ (1c)**: lô 1 `--prefix settings.` / lô 2 terminal+git / lô 3 sidebar+worktree / lô 4 onboarding+dialogs+menus / lô 5 còn lại. Mỗi lô: bootstrap (`--prefix`) → **exit `metric --prefix` = 100%** → spot-check sample ≤10 key trong plan → commit vi.json.
-5. **Plural:** mọi key plural en (`*_one`/`*_other`) có `*_other`; `_one` clone từ en là dead key (chấp nhận — pattern ja.json).
-6. **Metric exit SF-2: translatedness = số leaf keys có giá trị vi ≠ giá trị en → 100%** (bootstrap clone full tree nên key KHÔNG BAO GIỜ thiếu — so-sánh-key-only là vacuous; phải so GIÁ TRỊ).
-7. Re-run `pnpm run sync:localization-runtime-catalog` (en.json đã thêm key picker từ SF-1).
-8. Native menu smoke: translateMain với vi trả chuỗi Việt cho vài menu chính.
+1. **Reveal active file**: mở file ở editor (bất kỳ đường nào) → cây explorer auto-reveal + scroll tới file, ĐÚNG 1 LẦN (debounce 150ms). Verify: switch worktree 5 lần liên tiếp → 0 reveal event cho file worktree cũ. Setting toggle on/off.
+2. **Open Editors section**: collapsible phía trên cây, liệt kê tab đang mở của worktree hiện tại; click focus tab; middle-click close; dirty indicator.
+3. Indentation guides trong cây (VSCode-parity).
+4. Keyboard nav: ↑↓ di chuyển, ←→ collapse/expand, Enter mở, F2 rename inline, Delete xóa, type-ahead (gõ chữ nhảy tới entry).
+5. Context menu thêm: Reveal in Finder (local) / mở terminal tại thư mục. (Copy path đã có — giữ.)
+6. New file/folder inline: giữ flow hiện có, chuẩn hóa focus/commit/cancel như VSCode (Enter commit, Esc cancel, auto-edit-name mới tạo).
+7. Delete: local (kể cả folder workspace) → OS trash (đã có `shell.trashItem` + WSL fallback); **remote SSH host → xóa VĨNH VIỄN sau confirm dialog nói rõ "xóa vĩnh viễn (remote không có thùng rác)"** [QĐ-8].
+8. Compact folders (folder 1-con gộp node) — setting on/off.
+9. Settings: **section RIÊNG `ExplorerSettingsSection`** (KHÔNG thả vào GeneralEditorSettingsSection — tránh đụng chạm SF-4): auto-reveal, compact folders.
+10. Lệnh mới register vào palette qua contract SF-1 (`PaletteCommandEntry`, source 'core').
 
-## Touch map
-- Sở hữu: `config/scripts/bootstrap-locale-catalog.mjs` (flag --prefix), `config/scripts/locale-translation-policy.mjs` (vi entries), `src/renderer/src/i18n/locales/vi.json` (nội dung), cache file (gitignored).
-- Append-only: `.gitignore` nếu cache file tên khác quy ước.
-- Read-only: `locale-generic-ui-terms.mjs` (pattern tham khảo), các mistranslation test (SF-3 sở hữu).
-- KHÔNG đụng: registry/loaders/picker (SF-1 đã chốt), mọi test guard (SF-3).
+## Touch map (files SF-N tạo/sở hữu)
+- Sở hữu: `src/renderer/src/components/right-sidebar/FileExplorer*.tsx`, `file-explorer-row-context-menu.tsx`, `file-explorer-inline-input-row.tsx`, `useFileExplorerKeys.ts`, `useFileExplorerMoveDrop.ts`, `use-file-explorer-name-filter.ts`, explorer slice action files MỚI (1 concern/file theo pattern `store/slices/editor/actions/*`), `ExplorerSettingsSection` mới.
+- Append-only 2 dòng mỗi field (đụng chung, CẨN THẬN merge): `src/renderer/src/store/slices/editor/create-editor-slice.ts` (combiner), `store/slices/editor/types/editor-slice.ts`, `src/shared/global-settings-types.ts`, `src/main/persistence/applying-settings/settings-update.ts`, `src/main/persistence/loading-store/normalize-loaded-global-settings.ts`. Lưu ý: toggle explorer hiện có (gitignored/dotfiles) KHÔNG nằm trong global-settings — promote lên settings schema theo pattern SF-4 dùng.
+- READ-ONLY: `EditorPanel*`/tab model (SF-4 sở hữu — đọc active-tab qua store thôi); `shared/tab-types.ts`; search panel files (SF-3).
 
-## ACCEPTANCE (user-visible — verifier Phase 5 kiểm)
-- Switch vi → Settings/Appearance, sidebar, worktree pages, dialogs hiển thị tiếng Việt thực sự (không phải en, không phải GT-literal awkward theo glossary).
-- Native menu bar vài mục chính tiếng Việt (File/Edit/View… theo translateMain).
-- Translatedness = 100% leaf keys (script in số: vi≠en trên toàn leaf).
-- Brand "Wakii" không bị dịch sai trong sample spot-check.
+## ACCEPTANCE (user-visible)
+- Mở `src/App.tsx` từ QuickOpen → explorer cuộn tới và highlight `App.tsx` ngay, 1 lần.
+- Open Editors hiện đúng tab đang mở; middle-click đóng; tab dirty có chấm.
+- Bàn phím: ↓↑ đi lại, Enter mở file, F2 rename giữ focus trong cây, Delete xóa vào trash (local).
+- Trên SSH worktree: xóa file → dialog "xóa vĩnh viễn", confirm mới mất.
+- Folder workspace (non-git): toàn bộ flow trên chạy không lỗi.
 
-## Boundary
-- KHÔNG sửa registry/loaders/picker/search (SF-1 chốt).
-- KHÔNG thêm/chữa test guard (SF-3) — kể cả thấy giá trị dịch chưa chuẩn nghiêm trọng: ghi vào plan notes cho SF-3.
-- KHÔNG dịch key thuộc `ENGLISH_ONLY_KEY_PREFIXES` (giữ giá trị en nguyên văn).
-- Rate-limit Google Translate: chạy nền từng lô (nohup > log), KHÔNG chạy full không-cache; cache chặn re-request.
+## Boundary (KHÔNG làm)
+- KHÔNG đụng search panel / results (SF-3), tab context menu / breadcrumbs / split (SF-4), palette modal (SF-1 — chỉ register entries).
+- KHÔNG đổi tab model shape (`shared/tab-types.ts`).
+- KHÔNG tự dựng i18n scaffolding — add entries vào catalog SF-1.
+- KHÔNG đổi hành vi drag-drop hiện có ngoài spec.
