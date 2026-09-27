@@ -187,6 +187,7 @@ export async function main(root = process.cwd(), locale = parseLocaleArg(process
   )
 
   let completed = 0
+  let failed = 0
   // Why: sustained >4 req/s tripped sustained 429s — single worker keeps the gtx endpoint under the throttle.
   await mapWithConcurrency(toTranslate, 1, async (value) => {
     completed += 1
@@ -195,12 +196,19 @@ export async function main(root = process.cwd(), locale = parseLocaleArg(process
       await saveCache(cachePath, cache)
     }
     const { protectedText, tokens } = protectPlaceholders(value)
-    const translated = await translateText(protectedText, config.targetLanguage)
-    const restored = restorePlaceholders(translated, tokens)
-    cache.set(
-      value,
-      repairTranslatedValue({ key: '', enValue: value, localeValue: restored, locale })
-    )
+    try {
+      const translated = await translateText(protectedText, config.targetLanguage)
+      const restored = restorePlaceholders(translated, tokens)
+      cache.set(
+        value,
+        repairTranslatedValue({ key: '', enValue: value, localeValue: restored, locale })
+      )
+    } catch (error) {
+      // Why: one throttled value must not kill a hours-long batch — leave it uncached
+      // (falls back to en), the per-batch metric gate + re-run resume catch the holes.
+      failed += 1
+      console.log(`  failed (${completed}/${toTranslate.length}): ${String(error).slice(0, 140)}`)
+    }
     await new Promise((resolve) => setTimeout(resolve, 300))
   })
 
@@ -229,8 +237,12 @@ export async function main(root = process.cwd(), locale = parseLocaleArg(process
   repairCatalog(enCatalog, localeCatalog, locale)
 
   await fs.writeFile(localePath, `${JSON.stringify(localeCatalog, null, 2)}\n`, 'utf8')
-  console.log(`Wrote ${localePath}`)
-  return 0
+  console.log(
+    failed > 0
+      ? `Wrote ${localePath} with ${failed} untranslated value(s) — re-run the same command to resume them.`
+      : `Wrote ${localePath}`
+  )
+  return failed > 0 ? 1 : 0
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
