@@ -19,8 +19,68 @@
 # Verdict: OK · INVALID (có FAIL). WARN không chặn.
 #
 # Usage: story-validate <bracket-file> [--json] [--linear]
+#        story-validate --resolve-primary [--primary <ref>] [--repo <path>]
 # Exit: 0 hợp lệ · 1 có FAIL · 2 usage/lỗi đọc file
+#       (--resolve-primary: 0 resolve được · 1 không, stdout in <ref> khi 0)
 set -u
+
+# --resolve-primary — thang 6 bậc resolve primary branch (spec story-worktree-
+# hub). Early exit TRƯỚC bracket-validate: mode này không đọc bracket file.
+if [ "${1:-}" = "--resolve-primary" ]; then
+  shift
+  PRIMARY_EXPLICIT=""
+  REPO="."
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --primary) PRIMARY_EXPLICIT="${2:-}"; if [ $# -ge 2 ]; then shift 2; else shift; fi ;;
+      --repo) REPO="${2:-.}"; if [ $# -ge 2 ]; then shift 2; else shift; fi ;;
+      *) shift ;;
+    esac
+  done
+  # try_ref <ref>: in <ref> + exit 0 khi ref tồn tại (local hoặc origin/<ref>)
+  try_ref() {
+    git -C "$REPO" rev-parse --verify --quiet "${1}^{commit}" >/dev/null 2>&1 && { echo "$1"; exit 0; }
+    git -C "$REPO" rev-parse --verify --quiet "origin/${1}^{commit}" >/dev/null 2>&1 && { echo "$1"; exit 0; }
+    return 1
+  }
+  # Bậc 1: explicit — fail-closed, KHÔNG fallback sang bậc kế
+  if [ -n "$PRIMARY_EXPLICIT" ]; then
+    try_ref "$PRIMARY_EXPLICIT" || { echo "PRIMARY-UNRESOLVED: --primary $PRIMARY_EXPLICIT không tồn tại"; exit 1; }
+  fi
+  # Bậc 2: orca baseRef (seam ORCA_BIN) — fail im lặng (chỉ warn stderr) → bậc kế
+  base=$( { "${ORCA_BIN:-orca}" repo show --repo "path:$(cd "$REPO" 2>/dev/null && pwd)" --json 2>/dev/null; } 2>/dev/null \
+    | python3 -c 'import json,sys
+try: print(json.load(sys.stdin)["result"]["repo"].get("baseRef") or "")
+except Exception: print("")' 2>/dev/null)
+  if [ -n "$base" ]; then
+    try_ref "$base"
+  else
+    echo "WARN: bậc 2 orca baseRef rỗng/lỗi — bỏ qua" >&2
+  fi
+  # Bậc 3: git config wakii.primaryBranch
+  cfg=$(git -C "$REPO" config --get wakii.primaryBranch 2>/dev/null)
+  [ -n "$cfg" ] && try_ref "$cfg"
+  # Bậc 4: kit config primaryBranchByRemote theo remote identity (host+path,
+  # bỏ scheme/prefix: git@gitlab.com:x/y.git ≡ https://gitlab.com/x/y.git)
+  KC="${STORY_KIT_CONFIG:-$HOME/.claude/story-kit.json}"
+  if [ -f "$KC" ]; then
+    url=$(git -C "$REPO" remote get-url origin 2>/dev/null || true)
+    rid=$(echo "$url" | sed -E 's#^(git@|ssh://git@|https://)##; s#[:/]#/#; s#\.git$##')
+    kb=$(KC="$KC" RID="$rid" python3 -c 'import json,os
+try:
+  d=json.load(open(os.environ["KC"]))
+  print(d.get("primaryBranchByRemote",{}).get(os.environ["RID"],""))
+except Exception: print("")' 2>/dev/null)
+    [ -n "$kb" ] && try_ref "$kb"
+  fi
+  # Bậc 5: remote HEAD (origin/HEAD)
+  rh=$(git -C "$REPO" symbolic-ref --quiet refs/remotes/origin/HEAD 2>/dev/null | sed 's#^refs/remotes/origin/##')
+  [ -n "$rh" ] && try_ref "$rh"
+  echo "PRIMARY-UNRESOLVED — hỏi user primary branch (thang 6 bậc spec story-worktree-hub)"
+  exit 1
+fi
+
+
 
 FILE=""
 JSON_OUT=0

@@ -4,8 +4,8 @@
 // G3 dup, --linear không key → WARN skip exit 0, --linear key rỗng file →
 // WARN skip, usage exit 2, --json shape, Primary + Worktree model (H2b/H2c).
 // Chạy: node tests/story-validate-tests.mjs
-import { spawnSync } from 'node:child_process'
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
+import { spawnSync, execFileSync } from 'node:child_process'
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, chmodSync } from 'node:fs'
 import { join, dirname, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
@@ -149,6 +149,70 @@ function runValidate(file, { flags = [], env = {} } = {}) {
   return { code: r.status, out: (r.stdout || ''), err: (r.stderr || '') }
 }
 
+// ── --resolve-primary fixtures (thang 6 bậc, spec story-worktree-hub) ──
+// Hermetic: ORCA_BIN luôn stub (không gọi orca thật), STORY_KIT_CONFIG +
+// HOME trỏ temp (không đụng kit config máy). Git ≥ 2.25 only.
+function gitSync(cwd, ...args) {
+  return execFileSync('git', args, { cwd, encoding: 'utf8' })
+}
+
+// makeRepo — temp git repo với branch chỉ định; extraBranches tạo thêm branch
+// local; remoteUrl thêm remote origin (không fetch — cho bậc 4 theo url);
+// remote=true → origin bare sibling + origin/HEAD (bậc 5); config → git config
+// entries trong repo. Trả { repo, root } — root để đặt stub/fixture + cleanup.
+function makeRepo(tag, { branch = 'master', extraBranches = [], remoteUrl = null, remote = false, config = [] } = {}) {
+  const root = mkdtempSync(join(tmpdir(), `story-validate-${tag}-`))
+  const seed = join(root, 'seed')
+  mkdirSync(seed, { recursive: true })
+  gitSync(seed, 'init', '-q')
+  gitSync(seed, 'symbolic-ref', 'HEAD', `refs/heads/${branch}`)
+  gitSync(seed, 'config', 'user.email', 't@t')
+  gitSync(seed, 'config', 'user.name', 't')
+  writeFileSync(join(seed, 'f.txt'), 'x\n')
+  gitSync(seed, 'add', '-A')
+  gitSync(seed, 'commit', '-qm', 'init')
+  for (const b of extraBranches) gitSync(seed, 'branch', b)
+  for (const [k, v] of config) gitSync(seed, 'config', k, v)
+  if (remoteUrl) {
+    gitSync(seed, 'remote', 'add', 'origin', remoteUrl)
+    return { repo: seed, root }
+  }
+  if (!remote) return { repo: seed, root }
+  const originPath = join(root, 'origin.git')
+  gitSync(seed, 'clone', '-q', '--bare', seed, originPath)
+  const work = join(root, 'work')
+  gitSync(root, 'clone', '-q', originPath, work)
+  gitSync(work, 'config', 'user.email', 't@t')
+  gitSync(work, 'config', 'user.name', 't')
+  for (const [k, v] of config) gitSync(work, 'config', k, v)
+  gitSync(work, 'remote', 'set-head', 'origin', '--auto')
+  return { repo: work, root }
+}
+
+// orca dead stub — exit 1 (bậc 2 phải fail im lặng + warn stderr)
+function makeOrcaDeadStub(root) {
+  const stub = join(root, 'orca-dead.sh')
+  writeFileSync(stub, '#!/bin/sh\nexit 1\n')
+  chmodSync(stub, 0o755)
+  return stub
+}
+
+// orca JSON stub — in JSON KHÔNG có baseRef (bậc 2 skip, warn stderr)
+function makeOrcaJsonStub(root) {
+  const stub = join(root, 'orca-json.sh')
+  writeFileSync(stub, `#!/bin/sh\necho '{"result":{"repo":{}}}'\n`)
+  chmodSync(stub, 0o755)
+  return stub
+}
+
+function runResolve(repo, { flags = [], env = {} } = {}) {
+  const r = spawnSync(BASH, [BIN, '--resolve-primary', ...flags], {
+    encoding: 'utf8', timeout: 30000,
+    env: { ...process.env, ...env },
+  })
+  return { code: r.status, out: (r.stdout || ''), err: (r.stderr || '') }
+}
+
 console.log('== V1 bracket hợp lệ → OK exit 0 ==')
 {
   const dir = tempDir('v1')
@@ -261,6 +325,90 @@ console.log('== V10 model story-hub + thiếu Primary → FAIL (fail-closed) =='
   check('V10', 'exit 1', r.code === 1, `code=${r.code}`)
   check('V10', 'FAIL chứa Primary:', r.out.includes('Primary:'), r.out)
   rmSync(dir, { recursive: true, force: true })
+}
+
+// ══ --resolve-primary — thang 6 bậc (spec story-worktree-hub) ══
+
+console.log('== R1 (t1) --primary explicit → in ref, exit 0 (bậc 1 thắng trước orca) ==')
+{
+  const { repo, root } = makeRepo('r1', { branch: 'main', extraBranches: ['my-main'] })
+  const r = runResolve(repo, {
+    flags: ['--primary', 'my-main', '--repo', repo],
+    env: { ORCA_BIN: makeOrcaDeadStub(root), STORY_KIT_CONFIG: join(root, 'khong-ton-tai.json'), HOME: root },
+  })
+  check('R1', 'exit 0', r.code === 0, `code=${r.code} out=${r.out} err=${r.err}`)
+  check('R1', 'stdout đúng my-main (duy nhất)', r.out.trim() === 'my-main', `out=${JSON.stringify(r.out)}`)
+  check('R1', 'bậc 2 không chạy (explicit chặn trước — không warn orca)', !r.err.includes('bậc 2'), r.err)
+  rmSync(root, { recursive: true, force: true })
+}
+
+console.log('== R2 (t2) bậc 5 thuần: origin/HEAD → remote default (master) ==')
+{
+  const { repo, root } = makeRepo('r2', { branch: 'master', remote: true })
+  const r = runResolve(repo, {
+    flags: ['--repo', repo],
+    env: { ORCA_BIN: makeOrcaDeadStub(root), STORY_KIT_CONFIG: join(root, 'khong-ton-tai.json'), HOME: root },
+  })
+  check('R2', 'exit 0', r.code === 0, `code=${r.code} out=${r.out} err=${r.err}`)
+  check('R2', 'stdout đúng master (remote HEAD)', r.out.trim() === 'master', `out=${JSON.stringify(r.out)}`)
+  rmSync(root, { recursive: true, force: true })
+}
+
+console.log('== R3 (t3) bậc 3: git config wakii.primaryBranch (bậc 2 stub JSON không baseRef → skip warn) ==')
+{
+  const { repo, root } = makeRepo('r3', {
+    branch: 'main', extraBranches: ['dev-int'],
+    config: [['wakii.primaryBranch', 'dev-int']],
+  })
+  const r = runResolve(repo, {
+    flags: ['--repo', repo],
+    env: { ORCA_BIN: makeOrcaJsonStub(root), STORY_KIT_CONFIG: join(root, 'khong-ton-tai.json'), HOME: root },
+  })
+  check('R3', 'exit 0', r.code === 0, `code=${r.code} out=${r.out} err=${r.err}`)
+  check('R3', 'stdout đúng dev-int (git config)', r.out.trim() === 'dev-int', `out=${JSON.stringify(r.out)}`)
+  check('R3', 'bậc 2 skip có warn stderr', r.err.includes('bậc 2'), r.err)
+  rmSync(root, { recursive: true, force: true })
+}
+
+console.log('== R4 (t4) bậc 4: STORY_KIT_CONFIG primaryBranchByRemote theo remote identity ==')
+{
+  const { repo, root } = makeRepo('r4', {
+    branch: 'main', extraBranches: ['gl-main'],
+    remoteUrl: 'git@gitlab.com:x/y.git',
+  })
+  const kcPath = join(root, 'story-kit.json')
+  writeFileSync(kcPath, '{"primaryBranchByRemote":{"gitlab.com/x/y":"gl-main"}}')
+  const r = runResolve(repo, {
+    flags: ['--repo', repo],
+    env: { ORCA_BIN: makeOrcaDeadStub(root), STORY_KIT_CONFIG: kcPath, HOME: root },
+  })
+  check('R4', 'exit 0', r.code === 0, `code=${r.code} out=${r.out} err=${r.err}`)
+  check('R4', 'stdout đúng gl-main (kit config)', r.out.trim() === 'gl-main', `out=${JSON.stringify(r.out)}`)
+  rmSync(root, { recursive: true, force: true })
+}
+
+console.log('== R5 (t5) không resolve được gì → exit 1 + PRIMARY-UNRESOLVED ==')
+{
+  const { repo, root } = makeRepo('r5', { branch: 'main' })
+  const r = runResolve(repo, {
+    flags: ['--repo', repo],
+    env: { ORCA_BIN: makeOrcaDeadStub(root), STORY_KIT_CONFIG: join(root, 'khong-ton-tai.json'), HOME: root },
+  })
+  check('R5', 'exit 1', r.code === 1, `code=${r.code} out=${r.out}`)
+  check('R5', 'stdout chứa PRIMARY-UNRESOLVED (hỏi user)', r.out.includes('PRIMARY-UNRESOLVED'), r.out)
+  rmSync(root, { recursive: true, force: true })
+}
+
+console.log('== R6 (t6) --primary nhánh-không-tồn-tại → exit 1 (fail-closed verify) ==')
+{
+  const { repo, root } = makeRepo('r6', { branch: 'main' })
+  const r = runResolve(repo, {
+    flags: ['--primary', 'branch-ma-khong-ton-tai', '--repo', repo],
+    env: { ORCA_BIN: makeOrcaDeadStub(root), STORY_KIT_CONFIG: join(root, 'khong-ton-tai.json'), HOME: root },
+  })
+  check('R6', 'exit 1', r.code === 1, `code=${r.code} out=${r.out}`)
+  check('R6', 'stdout chứa PRIMARY-UNRESOLVED', r.out.includes('PRIMARY-UNRESOLVED'), r.out)
+  rmSync(root, { recursive: true, force: true })
 }
 
 console.log(`\n== TOTAL: ${pass} PASS / ${fail} FAIL ==`)
