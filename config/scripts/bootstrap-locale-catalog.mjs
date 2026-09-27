@@ -189,6 +189,12 @@ export async function main(root = process.cwd(), locale = parseLocaleArg(process
   let completed = 0
   let failed = 0
   // Why: sustained >4 req/s tripped sustained 429s — single worker keeps the gtx endpoint under the throttle.
+  // A 429 starts an IP penalty window of tens of minutes; hammering the remaining list at 300ms/value
+  // extends it (vi lô 1: 3 passes all-failed). Latch a shared cooldown, wait it out, retry the value.
+  const THROTTLE_COOLDOWN_MS = 15 * 60 * 1000
+  const MAX_THROTTLE_WAITS = 8
+  let throttleCooldownUntil = 0
+  let throttleWaits = 0
   await mapWithConcurrency(toTranslate, 1, async (value) => {
     completed += 1
     if (completed % 25 === 0) {
@@ -196,20 +202,44 @@ export async function main(root = process.cwd(), locale = parseLocaleArg(process
       await saveCache(cachePath, cache)
     }
     const { protectedText, tokens } = protectPlaceholders(value)
-    try {
+    const translateAndCache = async () => {
       const translated = await translateText(protectedText, config.targetLanguage)
       const restored = restorePlaceholders(translated, tokens)
       cache.set(
         value,
         repairTranslatedValue({ key: '', enValue: value, localeValue: restored, locale })
       )
+    }
+    try {
+      await translateAndCache()
     } catch (error) {
+      let reportError = error
+      const throttled = /status 429/.test(String(error))
+      if (throttled && throttleWaits < MAX_THROTTLE_WAITS) {
+        throttleWaits += 1
+        const waitUntil = Math.max(Date.now() + THROTTLE_COOLDOWN_MS, throttleCooldownUntil)
+        throttleCooldownUntil = waitUntil
+        console.log(
+          `  429 at ${completed}/${toTranslate.length} — cooling down until ${new Date(waitUntil).toISOString()}`
+        )
+        await new Promise((resolve) => setTimeout(resolve, waitUntil - Date.now()))
+        try {
+          await translateAndCache()
+          console.log(`  resumed after cooldown (${completed}/${toTranslate.length})`)
+          await new Promise((resolve) => setTimeout(resolve, 750))
+          return
+        } catch (retryError) {
+          reportError = retryError
+        }
+      }
       // Why: one throttled value must not kill a hours-long batch — leave it uncached
       // (falls back to en), the per-batch metric gate + re-run resume catch the holes.
       failed += 1
-      console.log(`  failed (${completed}/${toTranslate.length}): ${String(error).slice(0, 140)}`)
+      console.log(
+        `  failed (${completed}/${toTranslate.length}): ${String(reportError).slice(0, 140)}`
+      )
     }
-    await new Promise((resolve) => setTimeout(resolve, 300))
+    await new Promise((resolve) => setTimeout(resolve, 750 + Math.random() * 250))
   })
 
   for (const value of uniqueValues) {
