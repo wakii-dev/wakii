@@ -97,6 +97,10 @@ if [ ${#BLOCKED[@]} -gt 0 ]; then
   exit 1
 fi
 
+# mindmap snapshot chốt (VU-14 SF-1 — fail-open; force-add + commit trước cleanup)
+MT="$SELF_DIR/story-mindmap-trigger"
+[ -f "$MT" ] && "$MT" --reason close --commit >/dev/null 2>&1 || true
+
 # ── 4. Cleanup (chỉ branch đã merge + worktree sạch) ────────────────────────
 CLOSED=0
 if [ "$DRY" != "1" ]; then

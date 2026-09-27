@@ -1,0 +1,69 @@
+#!/bin/bash
+# story-mindmap-trigger — wrapper fail-open cho 3 lifecycle trigger của story-mindmap
+# (VU-14 SF-1): (a) --reason launch — story-launch gọi sau khi worktree create thành
+# công; (b) --reason sweep — vòng sweep/automation gọi định kỳ (bin idempotent:
+# payload không đổi → không ghi); (c) --reason close --commit — story-close gọi
+# trước cleanup, force-add + commit file .wakii (docs/** ignored nên phải force-add).
+# NUỐT missing-bin + mọi lỗi + timeout 30s (khi có `timeout`): sinh mindmap
+# KHÔNG ĐƯỢC kéo chết story flow — luôn exit 0 im lặng.
+set -u
+REASON="run"; COMMIT=0; BRACKET=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --reason) REASON="$2"; shift ;;
+    --bracket) BRACKET="$2"; shift ;;
+    --commit) COMMIT=1 ;;
+  esac
+  shift
+done
+
+DIR="$(cd "$(dirname "$0")" && pwd)"
+BIN="${STORY_MINDMAP_BIN:-}"
+if [ -n "$BIN" ] && [ ! -f "$BIN" ]; then exit 0; fi  # env chỉ định mà thiếu → tắt chủ ý
+[ -n "$BIN" ] || BIN="$DIR/story-mindmap"
+[ -f "$BIN" ] || BIN="$HOME/.claude/bin/story-mindmap"
+[ -f "$BIN" ] || exit 0
+
+TO=()
+command -v timeout >/dev/null 2>&1 && TO=(timeout 30)
+run_bin() { # args... — bin thiếu exec-bit thì chạy qua node
+  if [ -x "$BIN" ]; then
+    ${TO[@]+"${TO[@]}"} "$BIN" "$@" 2>/dev/null
+  else
+    ${TO[@]+"${TO[@]}"} node "$BIN" "$@" 2>/dev/null
+  fi
+}
+
+ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || ROOT="$PWD"
+STAGED=0
+
+gen_one() { # $1 bracket — sinh 1 story; --commit thì force-add file vừa sinh
+  [ -f "$1" ] || return 0
+  local abs out p
+  abs="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
+  out=$(cd "$ROOT" && run_bin --bracket "$abs") || return 0
+  case "$out" in *"(unchanged)"*) return 0 ;; esac
+  p=$(printf '%s\n' "$out" | sed -n 's/^out: //p' | head -1)
+  [ -n "$p" ] || return 0
+  if [ "$COMMIT" = "1" ]; then
+    git -C "$ROOT" add -f -- "$p" >/dev/null 2>&1 && STAGED=1
+  fi
+  return 0
+}
+
+if [ -n "$BRACKET" ]; then
+  gen_one "$BRACKET"
+else
+  for b in "$ROOT"/docs/superpowers/brackets/*.md; do
+    [ -f "$b" ] && gen_one "$b"
+  done
+fi
+
+if [ "$STAGED" = "1" ]; then
+  if git -C "$ROOT" diff --cached --quiet >/dev/null 2>&1; then
+    git -C "$ROOT" reset -q >/dev/null 2>&1
+  else
+    git -C "$ROOT" commit -q -m "chore(story): mindmap snapshot (${REASON})" >/dev/null 2>&1
+  fi
+fi
+exit 0
