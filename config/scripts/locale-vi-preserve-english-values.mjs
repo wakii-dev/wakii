@@ -184,5 +184,40 @@ export const VI_PRESERVE_ENGLISH_VALUES = new Set([
   '·',
   '···',
   'API',
-  'Web'
+  'Web',
+  // Lô 3 remainder (27/09): sidebar/worktree templates (brand+issue refs, durations), git vocab
+  // (Repo/Unstage per 25/09 ruling), panel labels (PID/GSD/vs/bot/X) — nothing translatable.
+  '+{{value0}}',
+  'Repo',
+  'X',
+  '{{value0}} #{{value1}}',
+  'Linear {{value0}}',
+  'Linear {{value}}',
+  'Jira {{value0}}',
+  'GitHub #{{value}}',
+  '{{value0}}, {{value1}}',
+  '{{value0}} tok',
+  'Merge {{count}} PR',
+  '1 worktree',
+  '{{value0}} worktrees',
+  'PR #{{value0}}',
+  'PR / MR',
+  'Branch: {{value0}}',
+  '{{count}}m',
+  '{{count}}h',
+  '{{count}}d',
+  'GitHub:',
+  'Wakii Mobile',
+  'GH PR',
+  'GitLab MR',
+  'GSD',
+  'PID',
+  'Unstage',
+  'vs',
+  'bot',
+  // Subagent brand-reverts restored the Latin term inside these templates, making them
+  // identical to en — pinned here so keyed translatedness stays 100% (same shape as lô 2).
+  '{{value0}} subagents',
+  '{{count}} subagent',
+  '{{count}} subagents'
 ])
