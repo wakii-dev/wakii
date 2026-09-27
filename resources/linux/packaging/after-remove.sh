@@ -21,4 +21,14 @@ if [ -L "$link" ]; then
   esac
 fi
 
+# Symmetric cleanup for the .wakii MIME type (application/vnd.wakii-mindmap)
+# that after-install.sh registered in /usr/share/mime/packages.
+wakii_mime="/usr/share/mime/packages/orca-ide.wakii.xml"
+if [ -f "$wakii_mime" ]; then
+  rm -f "$wakii_mime"
+  if command -v update-mime-database >/dev/null 2>&1; then
+    update-mime-database /usr/share/mime || true
+  fi
+fi
+
 exit 0
