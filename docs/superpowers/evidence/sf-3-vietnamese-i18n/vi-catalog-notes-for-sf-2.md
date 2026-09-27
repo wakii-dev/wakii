@@ -42,6 +42,8 @@ Keyword values là thuật ngữ người dùng gõ để tìm setting — brand
 
 - "merge": 32 vi values dùng `hợp nhất` (vd `Đã hợp nhất Pull request`), trong khi 6 exact-label keys giữ `Merge` và ~96/97 keys khác giữ "merge" trong câu. Hai style song song — SF-2 chọn 1 hướng (giữ Anh như glossary, hoặc chuẩn hoá `hợp nhất`).
 - "push/pushing": nút chính giữ `Push`, nhưng `SshStatusSegment.95e4ff5b4b` `pushing` → `đẩy`. Nếu glossary giữ git-verb Anh thì value này lệch; nếu cho phép dịch động từ thì hiện trạng là chủ đích.
+- badge worktree "primary" → `sơ đẳng` (WorktreeJumpPalette.739bda980c, WorktreeCard.7d517f82e2) — GT lấy nghĩa "primordial"; badge này nên là "chính" hoặc giữ "primary". Thấy trên UI thật trong RULE-0 (27/09).
+- nút "Command" (quick commands, TabBarQuickCommandsButton.a2c7a33831 + 3 keys khác) → `Yêu cầu` — "command" (lệnh) ≠ "yêu cầu" (request); đề xuất "Lệnh".
 
 ## D. Đã khoá bởi guard SF-3 (không cần SF-2 làm gì)
 

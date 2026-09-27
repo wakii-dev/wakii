@@ -1,0 +1,96 @@
+  screenshot: docs/superpowers/evidence/sf-3-vietnamese-i18n/10-sidebar-en.png
+FAIL: project path input not found — landing buttons:
+  ? Tìm kiếm⌘J
+  ? Nhiệm vụ
+  ? Tự động hóa
+  ? Wakii Mobile
+  ? mxs-cms
+  ? Cấu hình
+  ? category.service.ts
+  ? ..p/mxs/mxs-cms
+  ? Yêu cầu
+  ? /Users/hoivu/Desktop/mxs/mxs-cms/src/features/category/category.service.ts
+  ? src
+  ? features
+  ? category
+  ? Tên
+  ? Nội dung
+  ? Mở trình chỉnh sửa1
+  ? category.service.tssrc/features/category
+  ? .next
+  ? .storybook
+  ? .vscode
+  ? dist
+  ? public
+  ? srcM
+  ? app
+  ? components
+  ? config
+  ? containers
+  ? css
+  ? featuresM
+  ? auth
+  ? category
+  ? categories.tsx
+  ? category.service.ts
+  ? category.type.ts
+  ? categoryDetail.tsx
+  ? collectionM
+  ? fonts
+  ? hooks
+  ? utils
+  ? .DS_Store
+  screenshot: docs/superpowers/evidence/sf-3-vietnamese-i18n/10-sidebar-en.png
+FAIL: project path input not found — landing buttons:
+  ? Search⌘J
+  ? Onboarding checklist
+  ? Tasks
+  ? Automations
+  ? Wakii MobileNew
+  ? Add project
+  ? Create workspace
+  ? Star on GitHub
+  ? Off
+  ? 713.9 MB·0
+  ? 0
+  ? 00
+  ? Local Mac
+  ? Browse folderLocal project, Git repo, or folder with many repos⏎
+  ? Clone from URLClone a remote Git repository
+  ? Create new projectStart from an empty folder
+  ? Close
+  screenshot: docs/superpowers/evidence/sf-3-vietnamese-i18n/10-sidebar-en.png
+  (Add project button not visible — a project may already be open)
+  screenshot: docs/superpowers/evidence/sf-3-vietnamese-i18n/11-workbench-en.png
+  (no New Terminal affordance visible — workbench shot stands in)
+  screenshot: docs/superpowers/evidence/sf-3-vietnamese-i18n/12-terminal-en.png
+  screenshot: docs/superpowers/evidence/sf-3-vietnamese-i18n/13-palette-en.png
+PASS en phase
+  screenshot: docs/superpowers/evidence/sf-3-vietnamese-i18n/10-sidebar-en.png
+FAIL: locator.fill: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('input[placeholder="Repository URL"]').first()[22m
+
+  screenshot: docs/superpowers/evidence/sf-3-vietnamese-i18n/10-sidebar-en.png
+FAIL: locator.fill: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('input[placeholder="Repository URL"]').first()[22m
+
+  screenshot: docs/superpowers/evidence/sf-3-vietnamese-i18n/10-sidebar-en.png
+  project cloned /tmp/sf3-demo-project → /tmp/sf3-demo-project-workbench
+  screenshot: docs/superpowers/evidence/sf-3-vietnamese-i18n/11-workbench-en.png
+  (no New Terminal affordance visible — workbench shot stands in)
+  screenshot: docs/superpowers/evidence/sf-3-vietnamese-i18n/12-terminal-en.png
+  screenshot: docs/superpowers/evidence/sf-3-vietnamese-i18n/13-palette-en.png
+PASS en phase
+  palette toggled via main inspector
+  screenshot: docs/superpowers/evidence/sf-3-vietnamese-i18n/14-palette-vi.png
+  screenshot: docs/superpowers/evidence/sf-3-vietnamese-i18n/15-terminal-vi.png
+  screenshot: docs/superpowers/evidence/sf-3-vietnamese-i18n/16-workbench-vi.png
+PASS vi phase
+FAIL: browserType.connectOverCDP: connect ECONNREFUSED 127.0.0.1:9333
+Call log:
+[2m  - <ws preparing> retrieving websocket url from http://127.0.0.1:9333[22m
+
+PASS persist: Vietnamese markers after restart: Tìm kiếm, Dự án, Nhiệm vụ
+  screenshot: docs/superpowers/evidence/sf-3-vietnamese-i18n/06-after-restart-vi.png
