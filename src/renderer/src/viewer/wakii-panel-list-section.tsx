@@ -41,8 +41,8 @@ export function WakiiPanelListSection({
       </button>
       {open ? (
         <div>
-          {items.map((item) => (
-            <div key={`${item}:${items.indexOf(item)}`} className="wakii-p-list-item">
+          {items.map((item, i) => (
+            <div key={`${item}:${i}`} className="wakii-p-list-item">
               <span className="wakii-p-bullet">–</span>
               {item}
             </div>

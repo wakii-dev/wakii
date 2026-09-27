@@ -74,3 +74,12 @@ P2 KHÔNG fix (ghi chú): payload không xoá khi đóng tab (bounded, re-push r
 cần đụng thêm store surface, để SF-4 cân nhắc); click-sau-pan đóng panel (giữ nguyên
 hành vi prototype, không moved-guard).
 Bỗ sung test: +2 (reset-section, owned-id lookup) → viewer suites 42 test.
+
+## Review round 2 → APPROVED (27/09)
+Round 2 trên commit 85e4fc3541: **VERDICT: APPROVED** — 2 P1 xác nhận đóng (meta-test
+discriminate thật), boundary nguyên vẹn, CHECKLIST-4Q PASS. 2 gợi ý 1 dòng của reviewer
+đã fix ngay (commit polish): composite key dùng map-index (indexOf trả cùng index đầu cho
+duplicate → key vẫn trùng), e2e await updateSettings trước dispatch toggle (bỏ flake race).
+P2 còn lại deferred SF-4: payload-retention khi đóng tab. Battery cuối: tc 0 · viewer suites
++ EditorContent + bridge + slice xanh · quality gate (base 241fed8aed) PASSED · e2e golden
+re-run PASSED (6.1s).

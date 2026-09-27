@@ -16,8 +16,8 @@ export function ViewerWarningsPopover({
       className={open ? 'wakii-warnbox wakii-warnbox-show' : 'wakii-warnbox'}
       data-testid="wakii-warnbox"
     >
-      {warnings.map((warning) => (
-        <div key={`${warning}:${warnings.indexOf(warning)}`}>{warning}</div>
+      {warnings.map((warning, i) => (
+        <div key={`${warning}:${i}`}>{warning}</div>
       ))}
       {warnings.length === 0 ? (
         <div>

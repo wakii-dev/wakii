@@ -45,14 +45,14 @@ test.describe('wakii viewer mindmap golden', () => {
    */
   async function revealFloatingWorkspace(page: Page): Promise<void> {
     // Why the arg: page.evaluate serializes the function — module imports don't cross.
-    await page.evaluate((toggleEvent) => {
+    await page.evaluate(async (toggleEvent) => {
       const store = window.__store
       if (!store) {
         throw new Error('window.__store unavailable')
       }
       const { settings } = store.getState()
       if (settings?.floatingTerminalEnabled !== true) {
-        void store.getState().updateSettings({ floatingTerminalEnabled: true })
+        await store.getState().updateSettings({ floatingTerminalEnabled: true })
       }
       window.dispatchEvent(new CustomEvent(toggleEvent))
     }, TOGGLE_FLOATING_TERMINAL_EVENT)
