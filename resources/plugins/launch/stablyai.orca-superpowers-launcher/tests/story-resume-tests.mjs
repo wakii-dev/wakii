@@ -34,13 +34,15 @@ function tempDir(tag) {
 const GIT = (args) => spawnSync('git', args, { encoding: 'utf8' })
 
 // worktree giả: git repo thật (rev-parse + log) + bracket có SF-77/linear
-function makeWorktree(home, { terminals = [], freshLog = false } = {}) {
+// model: ghi thêm dòng `Worktree model:` vào bracket (final review C2 —
+// resume prompt phải theo model: story-hub push-only, legacy merge-ngược)
+function makeWorktree(home, { terminals = [], freshLog = false, model = '' } = {}) {
   const wt = join(home, 'orca', 'workspaces', 'ws1', SF)
   const bd = join(wt, 'docs', 'superpowers', 'brackets')
   mkdirSync(bd, { recursive: true })
   writeFileSync(join(bd, 'fi777-fixture.md'), `# Story: FI-777 — fixture
 Destination: story/fi777-fixture
-
+${model ? `Worktree model: ${model}\n` : ''}
 ## SF-77 Harness fixture
 Tier: 0
 linear: FI-777
@@ -90,11 +92,11 @@ function runResume(home, stub, args, env = {}) {
 }
 
 // turn : term_status decode — '✳ Agent' idle · '⠂ Agent' busy · 'zsh' shell
-function scenario(tag, { title = '✳ Agent', terminalsFrom = SF, freshLog = false, listEmpty = false } = {}) {
+function scenario(tag, { title = '✳ Agent', terminalsFrom = SF, freshLog = false, listEmpty = false, model } = {}) {
   const dir = tempDir(tag)
   const home = join(dir, 'fakehome')
   mkdirSync(home, { recursive: true })
-  makeWorktree(home, { freshLog })
+  makeWorktree(home, { freshLog, model })
   const stub = makeOrcaStub(dir)
   const terminals = listEmpty
     ? []
@@ -207,6 +209,27 @@ console.log('== R12 --check không có worktree nào → exit 0 im lặng ==')
   const r = runResume(home, stub, ['--check'])
   check('R12', 'exit 0 không output', r.code === 0 && r.out.trim() === '', `code=${r.code} out=${r.out}`)
   rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== R13 plan story-hub: prompt push-only — KHÔNG merge/Done (C2) ==')
+{
+  const s = scenario('r13', { model: 'story-hub' })
+  const r = runResume(s.home, s.stub, [SF, '--stall-hours', '0'], s.env)
+  check('R13', 'RESUME PLAN header', r.out.includes(`RESUME PLAN cho ${SF}`), r.out)
+  check('R13', 'prompt ghi story-hub push nhánh sf', r.out.includes(`git push -u origin ${SF}`), r.out)
+  check('R13', 'KHÔNG merge + KHÔNG tự set Done', r.out.includes('KHÔNG merge') && r.out.includes('KHÔNG tự set'), r.out)
+  check('R13', 'không còn chỉ thị MERGE vào dest', !r.out.includes('MERGE vào'), r.out)
+  rmSync(s.dir, { recursive: true, force: true })
+}
+
+console.log('== R14 plan legacy (không model): giữ nguyên văn merge-ngược + Done ==')
+{
+  const s = scenario('r14')
+  const r = runResume(s.home, s.stub, [SF, '--stall-hours', '0'], s.env)
+  check('R14', 'prompt giữ MERGE vào dest', r.out.includes('MERGE vào story/fi777-fixture'), r.out)
+  check('R14', 'prompt giữ Done cuối checklist', r.out.includes('RỒI MỚI FI-777 Done'), r.out)
+  check('R14', 'không dính protocol story-hub', !r.out.includes('KHÔNG merge'), r.out)
+  rmSync(s.dir, { recursive: true, force: true })
 }
 
 console.log(`\n== TOTAL: ${pass} PASS / ${fail} FAIL ==`)

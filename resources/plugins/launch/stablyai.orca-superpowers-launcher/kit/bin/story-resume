@@ -211,6 +211,18 @@ $dest_note"
   brk=$(ls "$wt"/docs/superpowers/brackets/*.md 2>/dev/null | head -1)
   ctx_line="${ctx:-docs/superpowers/contexts/$(echo "$sf" | cut -d- -f1-2).md}"
   plan_line="${plan:+Plan: ${ticks}/${total} tasks đã xong — tiếp task kế tiếp.}"
+  # Worktree model điều khiển protocol cuối (cùng conditional story-launch):
+  # story-hub → push-only + report DONE (merge + Linear Done là việc coordinator
+  # trong story worktree); legacy/không model → giữ nguyên văn merge-ngược.
+  wmodel=""
+  if [ -n "$brk" ] && [ -f "$brk" ]; then
+    wmodel=$(grep -m1 '^Worktree model:' "$brk" | sed 's/Worktree model: *//;s/ *$//')
+  fi
+  if [ "$wmodel" = "story-hub" ]; then
+    step3="3. COMPLETE-RUN CHECKLIST (story-hub — không dừng trước bước 5): (1) code+tests (2) tick plan file (3) code-reviewer APPROVED (4) COMMIT + PUSH nhánh $sf (git push -u origin $sf) + chạy ~/.claude/bin/story-verify $sf — sạch mới tiếp; KHÔNG merge, KHÔNG đụng $dest, KHÔNG tự set $linear Done — merge + Linear Done là việc coordinator trong story worktree (merge-playbook). (5) RỒI MỚI report DONE."
+  else
+    step3="3. COMPLETE-RUN CHECKLIST (không dừng trước bước 5): (1) code+tests (2) tick plan file (3) code-reviewer APPROVED (4) MERGE vào $dest — merge-ngược + ancestor-guard (4b) chạy ~/.claude/bin/story-verify <sf> — phải sạch mới tiếp (5) RỒI MỚI $linear Done."
+  fi
   # ── Memory auto-inject (SF-3 — optional layer, fail-safe tuyệt đối: story-memory
   # absent/lỗi/không match → mem_inject rỗng → prompt y nguyên, resume không bị ảnh hưởng)
   mem_inject=""
@@ -221,7 +233,7 @@ $dest_note"
 RESUME $sf ($linear) — stall detected, resume theo story-workflow protocol:
 1. ĐỌC TRƯỚC: $ctx_line + bracket $(basename "${brk:-<bracket>}"). Epic đã trả lời mọi câu — KHÔNG re-analyze. Có REQUIREMENT-GAP / GAP-ANSWER mới trên epic comments → đọc trước khi tiếp.
 2. git log cho biết đã đi tới đâu. ${plan_line:-Xác định phase hiện tại rồi tiếp tục.}${dest_line}
-3. COMPLETE-RUN CHECKLIST (không dừng trước bước 5): (1) code+tests (2) tick plan file (3) code-reviewer APPROVED (4) MERGE vào $dest — merge-ngược + ancestor-guard (4b) chạy ~/.claude/bin/story-verify <sf> — phải sạch mới tiếp (5) RỒI MỚI $linear Done.
+$step3
 4. Shell rules: servers nohup > log; probes cmd > log; echo \$? — KHÔNG pipe head/tail. orca CLI: JSON parse python3, multiline --body-file.
 5. Blocked 2 lần cùng nguyên nhân → báo cụ thể, không lặp. API error SSL/cert → đợi 30s, tự retry tối đa 3 lần.
 PROMPT
