@@ -35,6 +35,9 @@ function tConnectedHostCount(count: number): string {
 describe('vi plural resolution probe', () => {
   beforeAll(async () => {
     await i18n.changeLanguage('vi')
+    // The switch must have delivered the (empty) stub through the lazy
+    // backend — a missing NON_DEFAULT_LOCALE_LOADERS.vi entry leaves no bundle.
+    expect(i18n.hasResourceBundle('vi', 'translation')).toBe(true)
     i18n.addResourceBundle('vi', 'translation', PLURAL_PATH, true, true)
   })
 

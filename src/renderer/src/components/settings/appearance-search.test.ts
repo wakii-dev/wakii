@@ -34,4 +34,14 @@ describe('getLanguageEntries', () => {
     await i18n.changeLanguage('en')
     expect(matchesSettingsSearch('Français', getLanguageEntries()[0])).toBe(true)
   })
+
+  it('matches the Vietnamese native language name in English UI', async () => {
+    await i18n.changeLanguage('en')
+    expect(matchesSettingsSearch('Tiếng Việt', getLanguageEntries()[0])).toBe(true)
+  })
+
+  it('matches the English exonym "vietnamese" via keyword alias', async () => {
+    await i18n.changeLanguage('en')
+    expect(matchesSettingsSearch('vietnamese', getLanguageEntries()[0])).toBe(true)
+  })
 })
