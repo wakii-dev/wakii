@@ -240,8 +240,10 @@ if check_linear:
             q = ("query($ids:[String!]!){issues(filter:{or:[{identifier:{in:$ids}},"
                  "{id:{in:$ids}}]}){nodes{identifier id}}}")
             try:
+                # seam LINEAR_GRAPHQL_ENDPOINT (khớp pattern ORCA_BIN/STORY_KIT_CONFIG)
+                # — test hermetic trỏ endpoint chết, không gọi mạng thật
                 req = urllib.request.Request(
-                    "https://api.linear.app/graphql",
+                    os.environ.get("LINEAR_GRAPHQL_ENDPOINT", "https://api.linear.app/graphql"),
                     data=json.dumps({"query": q, "variables": {"ids": ids}}).encode(),
                     headers={"Authorization": key, "Content-Type": "application/json"})
                 nodes = json.load(urllib.request.urlopen(req, timeout=15))["data"]["issues"]["nodes"]

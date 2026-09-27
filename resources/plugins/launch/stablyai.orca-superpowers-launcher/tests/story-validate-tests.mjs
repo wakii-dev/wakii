@@ -385,9 +385,11 @@ console.log('== V13 --linear + state rác → bin fail-open, KHÔNG crash ==')
   const home = tempDir('v13-home')
   const state = join(home, 'rac.json')
   writeFileSync(state, 'khong-phai-json{{{')
-  const r = runValidate(f, { flags: ['--linear'], env: { LINEAR_API_KEY: 'test-key-hermetic', LINEAR_RATE_LIMIT_STATE: state, HOME: home } })
+  // hermetic: G4 endpoint qua seam LINEAR_GRAPHQL_ENDPOINT — port chết
+  // (127.0.0.1:1 fail ngay), KHÔNG gọi mạng thật api.linear.app
+  const r = runValidate(f, { flags: ['--linear'], env: { LINEAR_API_KEY: 'test-key-hermetic', LINEAR_RATE_LIMIT_STATE: state, LINEAR_GRAPHQL_ENDPOINT: 'http://127.0.0.1:1', HOME: home } })
   check('V13', 'exit 0 (không crash)', r.code === 0, `code=${r.code} out=${r.out} err=${r.err}`)
-  check('V13', 'G4 degrade theo WARN (không FAIL do state rác)', r.out.includes('G4') && r.out.includes('OK — 2 SF'), r.out)
+  check('V13', 'G4 degrade theo WARN (không FAIL do state rác)', r.out.includes('G4: --linear bỏ qua — Linear lỗi') && r.out.includes('OK — 2 SF'), r.out)
   check('V13', 'không traceback python', !r.out.includes('Traceback') && !r.err.includes('Traceback'), r.err)
   rmSync(dir, { recursive: true, force: true })
   rmSync(home, { recursive: true, force: true })
