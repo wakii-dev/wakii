@@ -132,6 +132,15 @@ Quy ước:
 - **`generatedAt` chỉ bump khi payload đổi**: so sánh nội dung loại trừ trường
   `generatedAt`; giống nhau → KHÔNG ghi lại (idempotent thật, không refresh ảo).
 - **Input không tin cậy**: cap 5MB; decode = `JSON.parse` thuần (không eval/Function).
+- **Mục tiêu tự-chứa tri thức (user 27/09)**: đọc file `.wakii` phải nắm được toàn bộ
+  story KHÔNG cần mở bracket/pack → SF node tùy chọn mang thêm:
+  - `summary` (1 câu SF làm gì), `acceptance: string[]` (từ ACCEPTANCE pack),
+    `tests: string[]` (lưới test: unit/golden/e2e), `notes: string[]` (chú ý/
+    boundary/cẩn trọng), `filesTouched: string[]` (denormalized cho tìm nhanh);
+  - `meta.summary`: 1 câu story làm gì; `meta.phases` (nếu chia phase);
+  - `evidence[]` BẮT BUỘC ≥1 dòng/SF ở trạng thái done (ref = commit/linear/test);
+  - toàn bộ trường trên là OPTIONAL (file cũ không vỡ), generator (SF-1) đổ từ
+    context pack + plan; viewer hiển thị trong panel (section collapsible).
 
 ## 4. Sinh file khi story chạy — bin `story-mindmap` (kit)
 
