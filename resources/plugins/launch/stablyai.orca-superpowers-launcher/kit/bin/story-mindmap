@@ -155,12 +155,26 @@ function parsePack(text, sf) {
 }
 
 // ── nguồn phụ: orchestration + story-impact (fail-open, timeout budget) ─────
-function readOrcaStates(orcaBin, warnings) {
+// task-list cần run bound; ngoài terminal bound → tự discovery qua run-list
+// (unbound chạy được) match epic-id trong objective; override bằng STORY_MINDMAP_RUN.
+function orcaJson(orcaBin, args, timeoutMs) {
+  return execFileSync(orcaBin, args, { encoding: 'utf8', timeout: timeoutMs, stdio: ['ignore', 'pipe', 'ignore'] });
+}
+
+function readOrcaStates(orcaBin, epic, warnings) {
   try {
-    const out = execFileSync(orcaBin, ['orchestration', 'task-list', '--json'],
-      { encoding: 'utf8', timeout: 6000, stdio: ['ignore', 'pipe', 'ignore'] });
+    let runId = process.env.STORY_MINDMAP_RUN || '';
+    if (!runId) {
+      const runs = (JSON.parse(orcaJson(orcaBin, ['orchestration', 'run-list', '--json'], 6000)).result?.runs) || [];
+      const hit = runs
+        .filter(r => !r.legacy && new RegExp(`\\b${epic.replace(/[^A-Za-z0-9-]/g, '')}\\b`).test(String(r.objective || '')))
+        .sort((a, b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')))[0];
+      if (!hit) { warnings.push('orchestration: không tìm thấy run cho story — SF state=pending'); return new Map(); }
+      runId = hit.id;
+    }
+    const tasks = (JSON.parse(orcaJson(orcaBin, ['orchestration', 'task-list', '--json', '--run', runId], 6000)).result?.tasks) || [];
     const map = new Map();
-    for (const t of (JSON.parse(out).result?.tasks) || []) {
+    for (const t of tasks) {
       const m = String(t.task_title || '').match(/\bSF-(\d+)\b/i);
       if (!m) continue;
       const st = String(t.status || '');
@@ -306,7 +320,7 @@ function cmdGenerate(argv) {
   const br = parseBracket(fs.readFileSync(bracketPath, 'utf8'));
   if (!br.story) die(2, 'bracket thiếu dòng "# Story: <epic-id> — <tên story>"');
   const warnings = [];
-  const orcaStatus = readOrcaStates(process.env.STORY_ORCA_BIN || 'orca', warnings);
+  const orcaStatus = readOrcaStates(process.env.STORY_ORCA_BIN || 'orca', br.epic, warnings);
   const stem = br.dest ? br.dest.replace(/^.*\//, '') : path.basename(bracketPath, '.md');
   const prefix = stem.split('-')[0];
   for (const sf of br.sfs) {
