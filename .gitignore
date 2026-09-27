@@ -104,6 +104,10 @@ docs/**
 # diff/HEAD (GH-30): ignored → rename thật đầu tiên MISSING-GUIDE vĩnh viễn.
 !docs/superpowers/migrations/
 !docs/superpowers/migrations/**
+# Mindmap story (.wakii) do story-mindmap sinh — commit kèm bracket làm audit
+# trail trên nhánh đích (single-writer: chỉ checkout đích ghi).
+!docs/superpowers/mindmaps/
+!docs/superpowers/mindmaps/**
 # ADE knowledge ADR phải track được — story-kb + agents đọc decision record
 # (GH-45/#38): ADR là source-of-truth, chỉ adr/** negate; data KB thực
 # (repos/, glossary.md, MOC.md) thuộc wakii-site — vẫn ignored.
