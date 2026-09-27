@@ -11,8 +11,10 @@ bảng Worktree SF trong `references/cli-verified.md`.
 
 **Definition of DONE for an SF run (bài học SF-7: agent đặt Linear Done rồi kết
 thúc mà công sức kẹt trên máy local — 468 dòng. Commit + PUSH nhánh sf là một
-phần của DONE; merge vào nhánh đích là việc COORDINATOR trong story worktree
-(xem merge-playbook) — executor KHÔNG đụng nhánh đích):**
+phần của DONE với MỌI model; phần merge/Done theo `Worktree model:` trong
+bracket — story-hub: merge vào nhánh đích là việc COORDINATOR trong story
+worktree (xem merge-playbook), executor KHÔNG đụng nhánh đích; legacy: executor
+tự merge-ngược vào nhánh đích như protocol cũ):**
 
 ```
 "Use orca-superpowers-workflow skill for ONE sub-feature: <SF name> (<SF-id>).
@@ -44,9 +46,13 @@ phần của DONE; merge vào nhánh đích là việc COORDINATOR trong story w
        (cyan) trên diff SF — KHÔNG Dev tự duyệt. CHANGES-REQUESTED → Dev fix
        rồi re-review. APPROVED mới qua bước 3. (Team Model: tách bạch
        Dev/Test — self-test không thay thế reviewer độc lập.)
-   3. COMMIT + PUSH nhánh sf lên remote (`git push origin sf-<n>-<slug>`) rồi
-      report DONE — KHÔNG merge, KHÔNG đụng nhánh đích story/<epic-id>-<slug>
-      (merge là việc coordinator trong story worktree — merge-playbook)
+   3. theo `Worktree model:` trong bracket — story-hub: COMMIT + PUSH nhánh sf
+      lên remote (`git push -u origin sf-<n>-<slug>`) rồi report DONE — KHÔNG
+      merge, KHÔNG đụng nhánh đích story-<epic-id>-<slug> (merge là việc
+      coordinator trong story worktree — merge-playbook); legacy (bracket không
+      ghi `Worktree model: story-hub`): MERGE vào nhánh đích
+      story/<epic-id>-<slug> (merge-ngược + ancestor guard) + audit comment
+      merge-hash — protocol cũ
    4. GATE CỨNG (learned 2026-08-28 FI-187: sf-1 merge TRƯỚC reviewer dù prompt
       ghi thứ tự — lời nhắc không đủ): chạy `~/.claude/bin/story-verify <sf>`
       — phải sạch (không FAIL, không VIOLATION) thì mới qua bước 5. Còn FAIL

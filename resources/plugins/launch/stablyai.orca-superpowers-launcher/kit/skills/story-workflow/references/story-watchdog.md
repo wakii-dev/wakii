@@ -15,7 +15,9 @@ claude "/goal STORY <EPIC-ID> COMPLETE theo ĐÚNG checklist sau: (1) mọi SF s
   worktrees đã remove — git worktree list chỉ còn main + story parent (5) Epic
   state Done. Chứng minh MỖI điều bằng output lệnh thật trong transcript. Bound:
   hoặc stop sau 40 turns. Trong mỗi turn: stall-check 3 tầng mọi SF chưa Done →
-  resume idle / launch tier sẵn / merge hộ Done-chưa-merge (merge-ngược an toàn +
+  resume idle / launch tier sẵn / merge hộ Done-chưa-merge (theo `Worktree model:`
+  trong bracket — story-hub: coordinator merge THẬT origin/sf-branch trong story
+  worktree + push dest, xem merge-playbook; legacy: merge-ngược an toàn +
   ancestor guards) / cleanup-on-merge. Blocked SF ≥2 cùng nguyên nhân → đánh dấu
   bỏ, mọi SF còn lại blocked → báo STORY-BLOCKED trong output (goal sẽ bị đánh
   impossible → tự clear). KHÔNG merge nhánh đích vào main."

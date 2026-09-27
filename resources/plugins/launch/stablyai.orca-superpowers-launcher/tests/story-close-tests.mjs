@@ -120,12 +120,32 @@ console.log('== T5 --json verdict parse được ==')
   rmSync(repo, { recursive: true, force: true })
 }
 
-console.log('== T6 next-steps nhắc story-hub cleanup (sau PR merge) ==')
+console.log('== T6 bracket story-hub → next-steps nhắc story-hub cleanup (sau PR merge) ==')
 {
   const repo = makeRepo('t6', { sfMerged: true })
   const wt = makeSfWorktree(repo)
+  // bracket khớp dest + Worktree model: story-hub → cleanup line ĐƯỢC in
+  const bd = join(repo, 'docs', 'superpowers', 'brackets')
+  mkdirSync(bd, { recursive: true })
+  writeFileSync(join(bd, 't-close.md'), `# Story: T-1 — close fixture
+Destination: story/t-close
+Primary: wakii-dev
+Worktree model: story-hub
+`, 'utf8')
   const r = runClose(repo, 'story/t-close')
   check('T6', 'next-steps chứa story-hub cleanup', r.out.includes('story-hub cleanup'), r.out)
+  check('T6', 'next-steps trỏ <primary> (không hardcode main)', r.out.includes('<primary>'), r.out)
+  rmSync(repo, { recursive: true, force: true })
+}
+
+console.log('== T7 legacy (không bracket) → KHÔNG in cleanup story-hub ==')
+{
+  const repo = makeRepo('t7', { sfMerged: true })
+  const wt = makeSfWorktree(repo)
+  const r = runClose(repo, 'story/t-close')
+  check('T7', 'exit 0', r.code === 0, `code=${r.code} out=${r.out}`)
+  check('T7', 'không dính chú story-hub cleanup', !r.out.includes('story-hub cleanup'), r.out)
+  check('T7', 'vẫn trỏ <primary>', r.out.includes('<primary>'), r.out)
   rmSync(repo, { recursive: true, force: true })
 }
 

@@ -35,7 +35,14 @@ Không bao giờ push/merge/reset primary.
 # 0. Primary từ bracket — BẮT BUỘC merge primary vào dest 1 lần trước PR
 #    (chống drift — spec story-worktree-hub §5.4):
 PRIMARY=$(grep -m1 '^Primary:' <bracket> | cut -d' ' -f2)
-git fetch origin "$PRIMARY" && git merge origin/"$PRIMARY" --no-edit
+#    Legacy transition: bracket cũ KHÔNG có dòng `Primary:` → KHÔNG BAO GIỜ để
+#    PRIMARY rỗng chạy `gh pr create --base ""` (fail mù). Base theo quy trình
+#    cũ (main) HOẶC dừng ở READY-FOR-MANUAL-MERGE + lý do "bracket thiếu Primary".
+if [ -z "$PRIMARY" ]; then
+  echo "READY-FOR-MANUAL-MERGE: bracket thiếu Primary — merge tay nhánh đích → main (quy trình cũ), không tạo PR" # hoặc: PRIMARY=main
+else
+  git fetch origin "$PRIMARY" && git merge origin/"$PRIMARY" --no-edit
+fi
 # 1. Có remote?   git remote get-url origin
 # 2. gh auth?     gh auth status
 # 3. Nhánh đích sạch?  git -C <story-worktree> status --short

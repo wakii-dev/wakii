@@ -19,7 +19,9 @@ Executor xong SF: commit + PUSH nhánh sf-N lên remote (executor KHÔNG BAO GI�
 ```bash
 cd <story-worktree>                        # checkout story/<epic>-<slug>
 git fetch origin sf-<N>-<slug>             # nhánh executor: lấy state mới nhất đã push
-git merge sf-<N>-<slug> --no-edit          # merge THẬT — nhánh chỉ đi tới
+git merge origin/sf-<N>-<slug> --no-edit   # merge THẬT ref remote vừa fetch — local
+#    sf-<N>-<slug> có thể stale/không có (multi-machine spec §7: executor ở máy
+#    khác, máy coordinator không có ref local) — KHÔNG merge local ref
 #    conflict improvements-log → giữ CẢ HAI entries (protocol)
 git push origin story/<epic>-<slug>        # dest tiến trên remote (multi-machine + verify B4)
 ```

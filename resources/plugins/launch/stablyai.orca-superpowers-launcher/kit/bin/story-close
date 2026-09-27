@@ -30,6 +30,17 @@ done
 ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || { echo "❌ không phải git repo"; exit 2; }
 SELF_DIR="$(cd "$(dirname "$0")" && pwd)"
 
+# Worktree model của dest (bracket trong repo này) — story-hub → next-steps in
+# thêm cleanup note; legacy/không bracket → không in (story cũ khỏi nhìn chú dọn story-hub)
+BRK_MODEL=""
+for bf in "$ROOT"/docs/superpowers/brackets/*.md; do
+  [ -f "$bf" ] || continue
+  d=$(grep -m1 '^Destination:' "$bf" | sed 's/Destination: *//;s/ *$//' | tr '/' '-')
+  [ "$d" = "$(printf '%s' "$DEST" | tr '/' '-')" ] || continue
+  grep -q '^Worktree model: story-hub' "$bf" && BRK_MODEL="story-hub"
+  break
+done
+
 # ── 1. Audit branch sf-* vs dest ─────────────────────────────────────────────
 # Mỗi branch CLEAN kèm worktree path (rỗng nếu không có worktree).
 CLEAN=(); CLEAN_WT=(); BLOCKED=()
@@ -117,7 +128,9 @@ else
   echo "✓ CLOSE xong: $CLOSED branch dọn. Next:"
   echo "  1. story-verify COMPLETE trên $DEST"
   echo "  2. Linear Done (deferred nếu local-first)"
-  echo "  3. dest ──▶ main: của USER (pr-playbook)"
-  echo "  story-hub cleanup (SAU khi PR merge): orca worktree rm story worktree + branch -d <dest> + push --delete"
+  echo "  3. $DEST ──▶ <primary>: của USER (pr-playbook)"
+  if [ "$BRK_MODEL" = "story-hub" ]; then
+    echo "  story-hub cleanup (SAU khi PR merge): orca worktree rm story worktree + branch -d <dest> + push --delete"
+  fi
 fi
 exit 0

@@ -38,8 +38,9 @@ re-analyzing, never re-asking.
 | Trước approve/launch/watchdog/merge | DEFENSIVE PATTERNS | `references/defensive-patterns.md` (REQUIRED) |
 | Watchdog / self-check loop | STORY-WATCHDOG | `references/story-watchdog.md` |
 
-Naming: nhánh đích DUY NHẤT của story = `story/<epic-id>-<slug>` (KHÔNG dùng
-legacy `story-base`).
+Naming: nhánh đích DUY NHẤT của story = `story-<epic-id>-<slug>` dash-form
+(story-hub — form thật trên git, orca fold `/`→`-`); story legacy ghi
+slash-form `story/<epic-id>-<slug>`. (KHÔNG dùng legacy `story-base`.)
 
 ## Team Model — PM + Developers + Tester (vai trò trong story)
 
@@ -338,7 +339,10 @@ Tasks: <Tasks>" \
 Then write `linear: <ID>` back into each SF block in the bracket file.
 Create the STORY WORKTREE (story-hub model — spec story-worktree-hub):
 ```bash
-PRIMARY=$(~/.claude/bin/story-validate --resolve-primary --repo .)  # thang 6 bậc; exit 1 → hỏi user
+# exit 1 = PRIMARY-UNRESOLVED → DỪNG + hỏi user primary branch — KHÔNG dùng
+# chuỗi PRIMARY-UNRESOLVED làm tên branch (guard bắt exit trước khi tạo worktree)
+PRIMARY=$(~/.claude/bin/story-validate --resolve-primary --repo .) || {
+  echo "PRIMARY-UNRESOLVED — DỪNG, hỏi user primary branch (thang 6 bậc spec story-worktree-hub)"; exit 1; }
 orca worktree create --name story-<epic-id>-<slug> --base-branch "$PRIMARY" --agent claude
 ```
 Chú thích: orca sanitizeWorktreeName fold `/`→`-` — story-hub dest = dash-form;
@@ -491,9 +495,11 @@ thực thi. Giờ là trường bracket bắt buộc + bước launch — bỏ q
   `git diff <parent>..HEAD`). Syntax: `references/cli-verified.md`.
 ```bash
 orca worktree create --name sf-<n>-<slug> --linear-issue <SF-ISSUE> \
-  --base-branch story/<epic-id>-<slug> \
+  --base-branch story-<epic-id>-<slug> \
   --agent claude --prompt "<SF prompt>" --no-parent --json
 ```
+(`--base-branch` = nhánh đích từ bracket `Destination:` — story-hub dash-form
+`story-<epic-id>-<slug>`; story legacy slash-form `story/<epic-id>-<slug>`.)
 SF prompt (the WHOLE handoff — everything else lives in bracket + Linear):
 **REQUIRED — dùng nguyên văn template trong
 `references/sf-launch-prompt.md`.** Bất biến không được rút gọn khi gửi:
@@ -508,18 +514,21 @@ agent (green) with the same prompt content — it runs the workflow loop for
 one SF and reports DONE/BLOCKED.
 
 ### Story destination branch (merge topology)
-- **Nhánh đích là branch DUY NHẤT của story: `story/<epic-id>-<slug>`.** (Tên
-  legacy `story-base` trong các run FI cũ — KHÔNG dùng lại; mọi command mới
-  dùng đúng `story/<epic-id>-<slug>`.)
-- APPROVE creates the STORY WORKTREE with nhánh đích `story/<epic-id>-<slug>`
-  fork từ primary (bracket `Primary:`) BEFORE any SF starts.
+- **Nhánh đích là branch DUY NHẤT của story: `story-<epic-id>-<slug>`
+  (story-hub dash-form — form thật trên git, orca fold `/`→`-`).** Story legacy
+  dùng slash-form `story/<epic-id>-<slug>`; (tên legacy `story-base` trong các
+  run FI cũ — KHÔNG dùng lại.)
+- APPROVE creates the STORY WORKTREE with nhánh đích `story-<epic-id>-<slug>`
+  (story-hub; legacy slash-form) fork từ primary (bracket `Primary:`) BEFORE
+  any SF starts.
 - Every SF worktree forks from nhánh đích (not primary).
 - SF merges back to its PARENT branch on completion (nhánh đích normally;
   nested SF → its parent SF). See CLOSE — parent-merge rule.
 - Tier boundaries = merge points: a tier-N SF's base includes all merged
   tier-(N-1) work.
 - **Branch ownership (THỐNG NHẤT — nhánh đích riêng mỗi story):** mỗi story
-  có MỘT nhánh đích riêng: `story/<epic-id>-<slug>` (vd `story/fi151-3d-redesign`)
+  có MỘT nhánh đích riêng: `story-<epic-id>-<slug>` dash-form (vd
+  `story-fi151-3d-redesign`; legacy slash `story/<epic-id>-<slug>`)
   — sinh ra trong story worktree lúc APPROVE, fork từ primary (bracket
   `Primary:`). Mọi SF fork từ nó và merge về nó; nó là "main của story". Khi
   story hoàn thành: code hoàn chỉnh nằm TRÊN NHÁNH ĐÍCH và agents KHÔNG TỰ
