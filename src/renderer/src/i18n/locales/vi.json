@@ -1533,7 +1533,7 @@
         "commentTooLarge": "Nhận xét quá lớn để gửi một cách an toàn."
       },
       "Landing": {
-        "76a95f7f47": "Tạo nên",
+        "76a95f7f47": "Tạo",
         "f05d237049": "Thêm dự án trước",
         "f9eaa9e12d": "Thêm dự án",
         "6ca6ff404e": "ORCA",
@@ -1605,7 +1605,7 @@
         "8b5b593053": "Không thể cập nhật dự án",
         "f9d4ef9807": "Đã cập nhật dự án",
         "38b80780c2": "Không thể tải dự án",
-        "42589845bc": "Tạo nên",
+        "42589845bc": "Tạo",
         "c182e02de5": "Tiêu đề vấn đề phụ",
         "8c55d6696a": "Thêm vấn đề phụ",
         "b25e453c9d": "Không tạo được vấn đề phụ",
@@ -6949,7 +6949,7 @@
           "3e46903ad4": "Được sử dụng khi nhập văn bản không phải URL vào thanh địa chỉ.",
           "0d9c987f21": "Công cụ tìm kiếm mặc định",
           "7b225c78f5": "Công cụ tìm kiếm được sử dụng khi nhập văn bản không phải URL vào thanh địa chỉ.",
-          "64898ecdab": "Tạo nên",
+          "64898ecdab": "Tạo",
           "7b649a578a": "Đang tạo…",
           "4399c77caa": "Mặc định",
           "4af9a17947": "kagi"
@@ -11743,7 +11743,7 @@
           "invalidPluginError": "Tệp kê khai plugin hoặc tệp đã cài đặt không hợp lệ. Sửa plugin rồi làm mới."
         },
         "PluginVmRecipeConsentPreview": {
-          "create": "Tạo nên",
+          "create": "Tạo",
           "suspend": "Đình chỉ",
           "resume": "Bản tóm tắt",
           "destroy": "Hủy hoại",
@@ -16047,7 +16047,7 @@
             "a7a86702b3": "Đã tạo và chuyển sang hồ sơ {{value0}}",
             "4d2f9f13a7": "Không tạo được hồ sơ.",
             "3ccd29d771": "Đã chuyển sang hồ sơ {{value0}}",
-            "569bce8eb1": "Tạo nên",
+            "569bce8eb1": "Tạo",
             "bf648471c5": "Đang tạo…",
             "53bbe3dab4": "Đã nhập {{value0}} cookie từ tệp.",
             "c5f0e4d3b2a1": "Đã nhập {{value0}} cookie từ {{value1}} ({{value2}}).",
@@ -16203,7 +16203,7 @@
           "6d778190b7": "Chạy kiểm tra phần phụ thuộc hàng tuần và tóm tắt các thay đổi có rủi ro.",
           "058c23cb3f": "Lời nhắc",
           "c4b19094c2": "Lịch trình",
-          "e46c1aa9ad": "Tạo nên",
+          "e46c1aa9ad": "Tạo",
           "a9d9dccf77": "Lưu",
           "777548c2d6": "Lưu thay đổi",
           "e8c2a14f70": "Sau khi lưu, sẽ tự động chạy cho đến khi tạm dừng.",
