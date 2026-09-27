@@ -132,6 +132,15 @@ Quy ước:
 - **`generatedAt` chỉ bump khi payload đổi**: so sánh nội dung loại trừ trường
   `generatedAt`; giống nhau → KHÔNG ghi lại (idempotent thật, không refresh ảo).
 - **Input không tin cậy**: cap 5MB; decode = `JSON.parse` thuần (không eval/Function).
+- **Mục tiêu tự-chứa tri thức (user 27/09)**: đọc file `.wakii` phải nắm được toàn bộ
+  story KHÔNG cần mở bracket/pack → SF node tùy chọn mang thêm:
+  - `summary` (1 câu SF làm gì), `acceptance: string[]` (từ ACCEPTANCE pack),
+    `tests: string[]` (lưới test: unit/golden/e2e), `notes: string[]` (chú ý/
+    boundary/cẩn trọng), `filesTouched: string[]` (denormalized cho tìm nhanh);
+  - `meta.summary`: 1 câu story làm gì; `meta.phases` (nếu chia phase);
+  - `evidence[]` BẮT BUỘC ≥1 dòng/SF ở trạng thái done (ref = commit/linear/test);
+  - toàn bộ trường trên là OPTIONAL (file cũ không vỡ), generator (SF-1) đổ từ
+    context pack + plan; viewer hiển thị trong panel (section collapsible).
 
 ## 4. Sinh file khi story chạy — bin `story-mindmap` (kit)
 
@@ -266,8 +275,29 @@ chết im lặng.
 |---|---|---|
 | SF-1 | Schema `.wakii` 3 lớp + bin `story-mindmap` (bracket/context pack/story-impact; output phụ `--mermaid-md` chi phí ~0) + 3 trigger wrapper + **kit chore bắt buộc**: provides[] kit.json + kitHash rehash + fingerprint bundled + lockstep test qua `pnpm test` + `.gitignore` allowlist `docs/superpowers/mindmaps/` | 0 |
 | SF-2 | Main process open-file `.wakii` (state/IPC/latch theo §5) + association theo target (§6) + assert `electron-builder-config.test.mjs` | 1 |
-| SF-3 | Viewer renderer (2 chế độ xem + panel chi tiết + preload bridge + dedupe glue) — **bề mặt chốt trước dispatch** | 1 |
+| SF-3 | Viewer renderer (direction C — `designs/vu-14-sf-3-direction.md`) + preload bridge glue | 1 |
 | SF-4 | Convergence: round-trip E2E 3 lớp (automated) + manual checklist 3 OS + fixtures + docs reference `.wakii` format (kể cả limitation AppImage) | 2 |
+| SF-5 | **Chuyển đổi nền tảng (user 27/09): .wakii canonical, retire bracket** — xem §11 | 3 |
+
+## 11. SF-5 — .wakii canonical, bracket retired (amendment 27/09)
+
+Quyết định user: "xoá bracket đi và sử dụng .wakii thôi" — .wakii trở thành NGUỒN
+SỰ THẬT của story, bracket retired hoàn toàn.
+
+- **Field ownership trong .wakii**: structure/knowledge (nodes cấu trúc, summary,
+  acceptance, tests, notes, edges cấu trúc) = **người/PM owned** — sửa tay được;
+  state (node `state`, `evidence`, `generatedAt`) = **machine owned** — updater
+  sửa in-place, KHÔNG full-regen đè phần người.
+- **Bootstrap mode** của `story-mindmap` (SF-1 đã xây regen-từ-bracket): trở thành
+  đường migrate 1 lần cho story cũ (VI-1 và các bracket hiện hữu) → sinh .wakii
+  đầy đủ → bracket xoá sau khi migrate.
+- **Consumer migration**: Story tab parser (app), `story-launch` (validate deps +
+  derive linear + dựng prompt), `story-verify` (B3/B4 derive), watchdog/
+  coordinator-pass, `story-validate` → **thay bằng bin mới `wakii-validate`**
+  (schema + structural + linear-id checks tương đương).
+- **Retirement**: xoá bracket files đã migrate + bin `story-validate` khỏi kit
+  (provides[] update + rehash); docs story-workflow đổi format tham chiếu.
+- VI-1 đang chạy: migrate khi tới milestone phù hợp của nó — không cưỡng bức giữa run.
 
 **Lưu ý đặt tên**: thư mục runtime `/.wakii/` (session-memory, gitignore:90) đã
 tồn tại — file map là `*.wakii` trong `docs/superpowers/mindmaps/`; 2 khái niệm
