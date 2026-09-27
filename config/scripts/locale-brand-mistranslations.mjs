@@ -199,7 +199,10 @@ export const BRAND_MISTRANSLATIONS = {
     Remote: ['điều khiển từ xa', 'Điều khiển từ xa'],
     remote: ['điều khiển từ xa', 'Điều khiển từ xa'],
     origin: ['nguồn gốc', 'Nguồn gốc'],
-    upstream: ['thượng nguồn', 'Thượng nguồn'],
+    upstream: ['thượng nguồn', 'Thượng nguồn', 'ngược dòng', 'Ngược dòng'],
+    'Source Control': ['Kiểm soát nguồn', 'kiểm soát nguồn', 'Kiểm soát nguồn'],
+    'Source control': ['Kiểm soát nguồn', 'kiểm soát nguồn'],
+    'source control': ['kiểm soát nguồn', 'Kiểm soát nguồn'],
     'Claude Code': ['Mã Claude'],
     Claude: ['Mã Claude'],
     Terminal: [

@@ -14,5 +14,8 @@ export const VI_VALUE_OVERRIDES = {
   'Stage changes': 'Stage thay đổi',
   On: 'Bật',
   Off: 'Tắt',
+  Remove: 'Gỡ bỏ',
+  Edit: 'Sửa',
+  general: 'Chung',
   'WSL default': 'WSL mặc định'
 }
