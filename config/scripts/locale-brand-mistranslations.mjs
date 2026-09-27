@@ -172,6 +172,10 @@ export const BRAND_MISTRANSLATIONS = {
     Antigravity: ['phản trọng lực', 'Phản trọng lực'],
     OpenCode: ['Mã mở', 'mã mở'],
     Linear: ['tuyến tính', 'Tuyến tính'],
+    // Review P1 (27/09): 'Linear' is case-sensitive so the lowercase slash-command
+    // token leaked — GT renders /orca-linear as /orca-tuyến tính (and the search
+    // keyword reorders to "tuyến tính orca").
+    'orca-linear': ['orca-tuyến tính', 'tuyến tính orca'],
     Commit: ['cam kết', 'Cam kết'],
     Commits: ['cam kết', 'Cam kết'],
     commit: ['cam kết', 'Cam kết'],
@@ -234,7 +238,7 @@ export const BRAND_MISTRANSLATIONS = {
     subagents: ['đại lý phụ', 'Đại lý phụ', 'các đại lý phụ'],
     origin: ['nguồn gốc', 'Nguồn gốc'],
     upstream: ['thượng nguồn', 'Thượng nguồn', 'ngược dòng', 'Ngược dòng'],
-    'Source Control': ['Kiểm soát nguồn', 'kiểm soát nguồn', 'Kiểm soát nguồn'],
+    'Source Control': ['Kiểm soát nguồn', 'kiểm soát nguồn'],
     'Source control': ['Kiểm soát nguồn', 'kiểm soát nguồn'],
     'source control': ['kiểm soát nguồn', 'Kiểm soát nguồn'],
     Close: ['gần gũi', 'Gần gũi'],

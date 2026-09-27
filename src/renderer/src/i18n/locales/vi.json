@@ -11334,7 +11334,7 @@
                 "tickets": "vé",
                 "issues": "vấn đề",
                 "skill": "kỹ năng",
-                "orcaLinear": "tuyến tính orca"
+                "orcaLinear": "orca-linear"
               }
             }
           }
@@ -11778,7 +11778,7 @@
           "manageKeys": "Quản lý khóa",
           "addAccess": "Thêm quyền truy cập",
           "setupSkillTitle": "2. Cài đặt kỹ năng agent",
-          "setupSkillBody": "Cung cấp các agents mã hóa /orca-tuyến tính để đọc, cập nhật, phân loại và đính kèm các yêu cầu pull hoặc merge.",
+          "setupSkillBody": "Cung cấp các agents mã hóa /orca-linear để đọc, cập nhật, phân loại và đính kèm các yêu cầu pull hoặc merge.",
           "setupVisibleTitle": "3. Hiển thị Linear trong nhiệm vụ",
           "setupVisibleBody": "Giữ Linear trong bộ chọn nguồn Nhiệm vụ và các phím tắt trên sidebar.",
           "openTaskSources": "Nguồn tác vụ",
@@ -11790,8 +11790,8 @@
           "notesIntro": "Lời nhắc nhanh khi Linear được kết nối và kỹ năng được cài đặt.",
           "noteLinkedTitle": "Bắt đầu từ một vấn đề Linear",
           "noteLinkedBody": "Hành động yêu cầu hoạt động tốt nhất trong worktree được tạo từ Nhiệm vụ để vấn đề vẫn được liên kết dưới dạng ngữ cảnh.",
-          "noteSlashTitle": "Đề cập đến /orca-tuyến tính",
-          "noteSlashBody": "Trong trò chuyện, hãy sử dụng /orca-tuyến tính (hoặc hỏi bằng ngôn ngữ đơn giản) để nhân viên hỗ trợ tải kỹ năng cho lượt đó.",
+          "noteSlashTitle": "Đề cập đến /orca-linear",
+          "noteSlashBody": "Trong trò chuyện, hãy sử dụng /orca-linear (hoặc hỏi bằng ngôn ngữ đơn giản) để nhân viên hỗ trợ tải kỹ năng cho lượt đó.",
           "noteKeysTitle": "Các phím theo thời gian chạy",
           "noteKeysBody": "Khóa API và không gian làm việc được lưu trữ trong thời gian chạy hoạt động.",
           "noteVisibilityTitle": "Ẩn ≠ ngắt kết nối",
@@ -11807,7 +11807,7 @@
           "connectedHint": "Không gian làm việc và khóa được lưu trữ trong thời gian chạy hoạt động. Bạn có thể thêm nhiều quyền truy cập hơn bất cứ lúc nào.",
           "recheck": "Kiểm tra lại kết nối",
           "skillTitle": "Cài đặt kỹ năng agent Linear",
-          "skillDescription": "Cung cấp cho các agents /orca-tuyến tính để đọc vé, đăng thông tin cập nhật, di chuyển trạng thái và đính kèm các yêu cầu pull hoặc merge.",
+          "skillDescription": "Cung cấp cho các agents /orca-linear để đọc vé, đăng thông tin cập nhật, di chuyển trạng thái và đính kèm các yêu cầu pull hoặc merge.",
           "skillBlocked": "Kết nối Linear trước, sau đó cài đặt kỹ năng cho đặc vụ.",
           "skillPanelTitle": "Kỹ năng Linear",
           "terminalTitle": "Thiết lập kỹ năng Linear",
@@ -14957,7 +14957,7 @@
       },
       "editor": {
         "ChangesModeView": {
-          "ef25ae2d09": "Không có thay đổi không được cam kết.",
+          "ef25ae2d09": "Không có thay đổi chưa commit.",
           "052c184f24": "Văn bản khác biệt không có sẵn cho tập tin này.",
           "7dffb0f563": "Tệp nhị phân",
           "54e0035b15": "Đang tải khác biệt..."
