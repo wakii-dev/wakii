@@ -14,7 +14,8 @@ vi.mock('@/i18n/i18n', () => ({
     fallback.replace(/\{\{(\w+)\}\}/g, (_match, name: string) => String(options?.[name] ?? ''))
 }))
 
-type WakiiFileOpenListener = (payloads: WakiiFileOpenPayload[]) => void
+// The push channel delivers one decoded payload per event (the pull drains a batch).
+type WakiiFileOpenListener = (payload: WakiiFileOpenPayload) => void
 
 let unhandledRejections: unknown[] = []
 const recordUnhandledRejection = (reason: unknown): void => void unhandledRejections.push(reason)
@@ -140,7 +141,7 @@ describe('registerOsWakiiFileOpenBridge', () => {
     })
 
     registerOsWakiiFileOpenBridge([])
-    expect(() => listeners[0]([validPayload()])).not.toThrow()
+    expect(() => listeners[0](validPayload())).not.toThrow()
     await settle()
 
     expect(mocks.toastError).toHaveBeenCalledExactlyOnceWith(

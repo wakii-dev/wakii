@@ -18,11 +18,8 @@ export type WakiiMindmapValidation =
   | { ok: true; mindmap: Record<string, unknown> }
   | { ok: false; reason: string }
 
-function asRecord(value: unknown): Record<string, unknown> | null {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-    return null
-  }
-  return value as Record<string, unknown>
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 /**
@@ -30,17 +27,17 @@ function asRecord(value: unknown): Record<string, unknown> | null {
  * checks (duplicate ids, dangling edges, unknown enums) belong to the viewer's decoder.
  */
 export function validateWakiiMindmapFile(value: unknown): WakiiMindmapValidation {
-  const document = asRecord(value)
-  if (!document) {
+  if (!isRecord(value)) {
     return { ok: false, reason: 'document is not a JSON object' }
   }
+  const document = value
   if (document.wakiiMindmap !== 1) {
     return { ok: false, reason: 'wakiiMindmap must be 1' }
   }
-  const meta = asRecord(document.meta)
-  if (!meta) {
+  if (!isRecord(document.meta)) {
     return { ok: false, reason: 'meta is missing' }
   }
+  const meta = document.meta
   for (const field of ['story', 'generatedAt', 'generator']) {
     const fieldValue = meta[field]
     if (typeof fieldValue !== 'string' || fieldValue === '') {
@@ -75,12 +72,11 @@ function isNamedNode(
   value: unknown,
   fields: readonly string[] = ['id', 'kind', 'title']
 ): value is Record<string, unknown> {
-  const record = asRecord(value)
-  if (!record) {
+  if (!isRecord(value)) {
     return false
   }
   return fields.every((field) => {
-    const fieldValue = record[field]
+    const fieldValue = value[field]
     return typeof fieldValue === 'string' && fieldValue !== ''
   })
 }
