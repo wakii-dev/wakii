@@ -62,6 +62,7 @@ export type WakiiMindmapMeta = {
 }
 
 export type WakiiMindmap = {
+  /** Contract with the viewer layout: the central disc node is expected to carry id `epic`. */
   wakiiMindmap: 1
   meta: WakiiMindmapMeta
   nodes: WakiiMindmapNode[]

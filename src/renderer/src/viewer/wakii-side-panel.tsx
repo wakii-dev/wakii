@@ -182,7 +182,7 @@ export function WakiiSidePanel({
       {knowledge.map(([section, label, items]) =>
         items && items.length ? (
           <WakiiPanelListSection
-            key={section}
+            key={`${node.id}:${section}`}
             label={translate(label.key, label.fallback)}
             items={items}
             defaultOpen={items.length <= 3}

@@ -188,6 +188,23 @@ describe('panel per kind (t-3)', () => {
     expect(panel.textContent).toContain('Renderer không đọc fs, không JSON.parse lại.')
   })
 
+  it('knowledge sections reset open/collapsed state when the selection changes', () => {
+    render(<WakiiViewer payload={wakiiGoldenPayload()} />)
+    clickNode('sf-1')
+    let panel = query('[data-testid="wakii-panel"]')
+    const notesButton = (): HTMLButtonElement =>
+      [...panel.querySelectorAll<HTMLButtonElement>('button')].find((b) =>
+        b.textContent?.includes('NOTES')
+      )!
+    fireEvent.click(notesButton())
+    expect(panel.textContent).toContain('Single-writer') // sf-1 NOTES expanded
+    clickNode('sf-2')
+    panel = query('[data-testid="wakii-panel"]')
+    // sf-2 also carries >3 notes → must start collapsed again (reset per selectedId).
+    expect(panel.textContent).toContain('NOTES (4)')
+    expect(panel.textContent).not.toContain('EDR posture')
+  })
+
   it('clicking the canvas background closes the panel', () => {
     render(<WakiiViewer payload={wakiiGoldenPayload()} />)
     clickNode('sf-1')

@@ -1,25 +1,11 @@
-import type {
-  WakiiMindmapEdge,
-  WakiiMindmapMeta,
-  WakiiMindmapNode,
-  WakiiEvidenceEntry
-} from '../../../shared/wakii-mindmap-types'
+import type { WakiiMindmapEdge, WakiiMindmapNode } from '../../../shared/wakii-mindmap-types'
 
 /**
  * Raw data of the golden render graph — the prototype c.html payload (VU-14,
  * 35 nodes / 40 edges, all three layers), upgraded to schema v1 strictness
- * (file nodes carry `title`; SF-1 carries the knowledge arrays).
+ * (file nodes carry `title`; sf-1/sf-2 carry knowledge arrays).
  * `t-3.3` carries a `<script>` title on purpose: it must render as plain text.
  */
-export const WAKII_GOLDEN_META: WakiiMindmapMeta = {
-  story: 'VU-14 — mindmap.wakii viewer',
-  epic: 'VU-14',
-  linear: 'VU-14',
-  dest: 'story/vu-14-mindmap-viewer',
-  generatedAt: '2026-09-27T13:00:00Z',
-  generator: 'story-mindmap 1.0.0',
-  summary: 'File .wakii snapshot đồ thị story + app Wakii mở được thành mindmap tương tác.'
-}
 
 export const WAKII_GOLDEN_NODES: WakiiMindmapNode[] = [
   {
@@ -55,7 +41,13 @@ export const WAKII_GOLDEN_NODES: WakiiMindmapNode[] = [
     title: 'Main open-file + association 3 OS',
     state: 'in-progress',
     linear: 'VU-14-2',
-    tier: 1
+    tier: 1,
+    notes: [
+      'EDR posture: chỉ reg-write, không spawn mới',
+      'KHÔNG đụng khối isUpdated daemon sweep',
+      'AppImage không đăng ký MIME được',
+      'claim default Windows là chủ đích'
+    ]
   },
   {
     id: 'sf-3',
@@ -299,24 +291,4 @@ export const WAKII_GOLDEN_EDGES: WakiiMindmapEdge[] = [
   { from: 'sf-2', to: 'f-nsis', rel: 'writes' },
   { from: 'sf-3', to: 'f-editor-slice', rel: 'writes' },
   { from: 'sf-3', to: 'f-viewer', rel: 'writes' }
-]
-
-export const WAKII_GOLDEN_EVIDENCE: WakiiEvidenceEntry[] = [
-  {
-    node: 'sf-1',
-    summary: 'Suite kit xanh 25 asserts + fingerprint rehash',
-    ref: 'tests/kit-verify-manifest.mjs'
-  },
-  {
-    node: 'sf-2',
-    summary: 'IPC wiring test restore-on-failure đạt',
-    ref: 'os-opened-wakii-wiring.test.ts'
-  },
-  { node: 'f-main-index', summary: 'reverse-import 12 module đụng', ref: 'story-impact --json' },
-  { node: 't-2.3', summary: 'Chờ review NSIS macro cặp đối xứng', ref: 'Linear comment VU-14-2' }
-]
-
-export const WAKII_GOLDEN_DECODE_WARNINGS = [
-  'Bỏ node "w-1" — kind "note" không nhận diện (drop-unknown-field)',
-  'Bỏ edge "e-90" — rel "relates" không nhận diện'
 ]

@@ -1,5 +1,7 @@
 import path from 'node:path'
 import type { Page } from '@stablyai/playwright-test'
+import { TOGGLE_FLOATING_TERMINAL_EVENT } from '../../src/renderer/src/lib/floating-terminal'
+import type { WakiiFileOpenPayload } from '../../src/shared/wakii-mindmap-types'
 import { expect, test } from './helpers/orca-app'
 import {
   GOLDEN_LOGIC_EDGE_COUNT,
@@ -27,13 +29,9 @@ test.describe('wakii viewer mindmap golden', () => {
     'screenshots'
   )
 
-  async function seedPayload(page: Page, payload: unknown): Promise<void> {
+  async function seedPayload(page: Page, payload: WakiiFileOpenPayload): Promise<void> {
     await page.evaluate((value) => {
-      const store = (
-        window as unknown as {
-          __store?: { getState: () => { openWakiiViewerFile: (p: unknown) => void } }
-        }
-      ).__store
+      const store = window.__store
       if (!store) {
         throw new Error('window.__store unavailable — is the e2e build exposing the store?')
       }
@@ -46,24 +44,18 @@ test.describe('wakii viewer mindmap golden', () => {
    * bridge's enable-then-reveal — replicated here because the spec seeds directly.
    */
   async function revealFloatingWorkspace(page: Page): Promise<void> {
-    await page.evaluate(() => {
-      const store = (
-        window as unknown as {
-          __store?: {
-            getState: () => { settings?: { floatingTerminalEnabled?: boolean } }
-            setState: (patch: unknown) => void
-          }
-        }
-      ).__store
+    // Why the arg: page.evaluate serializes the function — module imports don't cross.
+    await page.evaluate((toggleEvent) => {
+      const store = window.__store
       if (!store) {
         throw new Error('window.__store unavailable')
       }
       const { settings } = store.getState()
       if (settings?.floatingTerminalEnabled !== true) {
-        store.setState({ settings: { ...settings, floatingTerminalEnabled: true } })
+        void store.getState().updateSettings({ floatingTerminalEnabled: true })
       }
-      window.dispatchEvent(new CustomEvent('orca-toggle-floating-terminal'))
-    })
+      window.dispatchEvent(new CustomEvent(toggleEvent))
+    }, TOGGLE_FLOATING_TERMINAL_EVENT)
     await page.waitForFunction(
       () => Boolean(document.querySelector('[data-floating-terminal-panel][aria-hidden="false"]')),
       undefined,
@@ -84,13 +76,9 @@ test.describe('wakii viewer mindmap golden', () => {
   }
 
   test('renders the golden mindmap end to end (DOM + flow + visual)', async ({ orcaPage }) => {
-    await orcaPage.waitForFunction(
-      () => Boolean((window as unknown as { __store?: unknown }).__store),
-      undefined,
-      {
-        timeout: 60_000
-      }
-    )
+    await orcaPage.waitForFunction(() => Boolean(window.__store), undefined, {
+      timeout: 60_000
+    })
     await revealFloatingWorkspace(orcaPage)
 
     // ── error payload first: the card must be the whole surface, no half render ──
@@ -111,7 +99,10 @@ test.describe('wakii viewer mindmap golden', () => {
     expect(await edgeCount(orcaPage)).toBe(GOLDEN_PROGRESS_EDGE_COUNT)
     const radii = await orcaPage.evaluate(() => {
       const center = (id: string): { x: number; y: number } => {
-        const el = document.querySelector(`[data-node-id="${id}"]`) as HTMLElement
+        const el = document.querySelector<HTMLElement>(`[data-node-id="${id}"]`)
+        if (!el) {
+          throw new Error(`node ${id} missing`)
+        }
         return {
           x: Number.parseFloat(el.style.left) + Number.parseFloat(el.style.width) / 2,
           y: Number.parseFloat(el.style.top) + Number.parseFloat(el.style.minHeight) / 2

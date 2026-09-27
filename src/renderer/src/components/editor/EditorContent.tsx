@@ -153,7 +153,9 @@ export function EditorContent({
   }
 
   if (activeFile.mode === 'wakii-viewer') {
-    const wakiiPayload = wakiiViewerFiles[activeFile.id]
+    // Why filePath, not id: the tab id becomes an owned id when another owner
+    // occupies the path, but the payload map is keyed by the absolute path.
+    const wakiiPayload = wakiiViewerFiles[activeFile.filePath]
     if (!wakiiPayload) {
       // Why: the payload lives in wakiiViewerFiles (in-memory), so a session-restored
       // tab has none — show a clean notice instead of a half graph.

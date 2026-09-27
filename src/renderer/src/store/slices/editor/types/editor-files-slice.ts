@@ -30,7 +30,7 @@ import type {
 export type EditorFilesSlice = {
   // Open files / editor tabs
   openFiles: OpenFile[]
-  /** Decoded `.wakii` payloads keyed by tab id (= absolute path). In-memory only:
+  /** Decoded `.wakii` payloads keyed by absolute path (= `payload.path`). In-memory only:
    *  the payload arrives via IPC push, so a session-restored tab without one renders
    *  the viewer's placeholder instead of a half graph. */
   wakiiViewerFiles: Record<string, WakiiFileOpenPayload>

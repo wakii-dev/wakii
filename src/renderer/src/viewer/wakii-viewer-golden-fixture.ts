@@ -1,11 +1,39 @@
-import type { WakiiFileOpenPayload, WakiiMindmap } from '../../../shared/wakii-mindmap-types'
-import {
-  WAKII_GOLDEN_DECODE_WARNINGS,
-  WAKII_GOLDEN_EDGES,
-  WAKII_GOLDEN_EVIDENCE,
-  WAKII_GOLDEN_META,
-  WAKII_GOLDEN_NODES
-} from './wakii-golden-graph'
+import type {
+  WakiiEvidenceEntry,
+  WakiiFileOpenPayload,
+  WakiiMindmap
+} from '../../../shared/wakii-mindmap-types'
+import { WAKII_GOLDEN_EDGES, WAKII_GOLDEN_NODES } from './wakii-golden-graph'
+
+const WAKII_GOLDEN_META = {
+  story: 'VU-14 — mindmap.wakii viewer',
+  epic: 'VU-14',
+  linear: 'VU-14',
+  dest: 'story/vu-14-mindmap-viewer',
+  generatedAt: '2026-09-27T13:00:00Z',
+  generator: 'story-mindmap 1.0.0',
+  summary: 'File .wakii snapshot đồ thị story + app Wakii mở được thành mindmap tương tác.'
+} as const
+
+const WAKII_GOLDEN_EVIDENCE: WakiiEvidenceEntry[] = [
+  {
+    node: 'sf-1',
+    summary: 'Suite kit xanh 25 asserts + fingerprint rehash',
+    ref: 'tests/kit-verify-manifest.mjs'
+  },
+  {
+    node: 'sf-2',
+    summary: 'IPC wiring test restore-on-failure đạt',
+    ref: 'os-opened-wakii-wiring.test.ts'
+  },
+  { node: 'f-main-index', summary: 'reverse-import 12 module đụng', ref: 'story-impact --json' },
+  { node: 't-2.3', summary: 'Chờ review NSIS macro cặp đối xứng', ref: 'Linear comment VU-14-2' }
+] as const
+
+const WAKII_GOLDEN_DECODE_WARNINGS: string[] = [
+  'Bỏ node "w-1" — kind "note" không nhận diện (drop-unknown-field)',
+  'Bỏ edge "e-90" — rel "relates" không nhận diện'
+] as const
 
 /**
  * Golden render fixture — assembles the prototype c.html graph (see
