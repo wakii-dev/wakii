@@ -8,6 +8,7 @@ import es from './locales/es.json'
 import fr from './locales/fr.json'
 import ja from './locales/ja.json'
 import ko from './locales/ko.json'
+import vi from './locales/vi.json'
 import zh from './locales/zh.json'
 
 // Keys follow the localize-renderer-strings formula: sha1(filePath:fallback)[:10]
@@ -27,9 +28,12 @@ const INLINE_BLAME_SETTING_KEYS = {
   description: 'auto.components.settings.InlineBlameSetting.9142b8bc2f'
 } as const
 
-const ALL_KEYS = [...Object.values(GIT_BLAME_CATALOG_KEYS), ...Object.values(INLINE_BLAME_SETTING_KEYS)]
+const ALL_KEYS = [
+  ...Object.values(GIT_BLAME_CATALOG_KEYS),
+  ...Object.values(INLINE_BLAME_SETTING_KEYS)
+]
 
-const CATALOGS: Record<string, unknown> = { en, es, fr, ja, ko, zh }
+const CATALOGS: Record<string, unknown> = { en, es, fr, ja, ko, vi, zh }
 
 function readCatalogValue(catalog: unknown, key: string): unknown {
   let current: unknown = catalog
@@ -63,7 +67,7 @@ describe('inline blame settings defaults', () => {
 })
 
 describe('git blame locale catalog', () => {
-  it('ships every git blame string in all six locales', () => {
+  it('ships every git blame string in all seven locales', () => {
     for (const [locale, catalog] of Object.entries(CATALOGS)) {
       for (const key of ALL_KEYS) {
         const value = readCatalogValue(catalog, key)
