@@ -1,0 +1,69 @@
+SF-2 Catalog vi.json full production — test evidence
+Date: 2026-09-27
+HEAD: 4e7cbad605 (HEAD sau stale-bracket cleanup; battery 47/47 re-run) (fix(i18n): apply Create → Tạo override in vi.json — final pin; battery re-run tại HEAD này, 47/47)
+Merge base: 72fdd1cb7a (SF-1) — SF-2 chain: fe2d55830a → … → 936a9496ca (review P1) → b48ace29e2
+
+== Independent code review (3 rounds) ==
+Round 1: CHANGES-REQUESTED — 3 P1 (global never-translate silent-revert 137 ja/ko/zh/es/fr
+renderings; ORCA_GItea_* mangling 4 keys; smoke tool vacuous-pass) → fixed 936a9496ca.
+Round 2: CHANGES-REQUESTED — 1 P1 (missing regression test pinning the split invariant,
+meta-test rule) + P2 (smoke regex missed double-quoted fallback) → fixed b48ace29e2.
+Round 3: APPROVED — RED→GREEN meta-test verified by auditor (real keys, mechanism audit),
+P2 verified 62→63 call sites, all gates exit 0. Battery at HEAD: 47/47 tests.
+Branch: wakii-dev/sf-2-vietnamese-i18n
+
+tdd: RED→GREEN — locale-translation-policy.vi.test.mjs viết trước (5/11 FAIL trên
+policy chưa có vi glossary: preserve-set/Claude Code/Save pin/translatednessMetric),
+rồi implement locale-vi-preserve-english-values.mjs + BRAND_MISTRANSLATIONS.vi +
+VI_VALUE_OVERRIDES → 11/11 GREEN. bootstrap-locale-catalog.test.mjs RED tương tự
+(absorb session 09:34: parsePrefixArg/filterLeavesByPrefix — fe2d55830a).
+
+== Translatedness (exit criterion SF-2) ==
+$ node config/scripts/locale-translatedness-metric.mjs vi
+translatedness[vi]: 14764/14764 = 100.00%
+(per-lô gates: lô1 5148/5148 · lô2 1390/1390 · lô3 3004/3004 · lô4 382/382 · lô5 full)
+
+== Test battery (config/vitest.config.ts) — 6 files, 47 tests, ALL PASS ==
+- config/scripts/locale-vi-plural-other.test.mjs (plural *_other structural contract)
+- config/scripts/locale-translation-policy.vi.test.mjs (vi glossary contract + never-translate split invariant, 13 tests)
+- config/scripts/locale-translation-policy.test.mjs (shared policy — no regression)
+- config/scripts/locale-translatedness-metric.test.mjs
+- config/scripts/bootstrap-locale-catalog.test.mjs (--prefix flag)
+- src/main/i18n/main-i18n-lazy-locale.test.ts (native menu smoke: translateMain(vi)
+  returns Vietnamese for menu.file/menu.settings/menu.view — 7/7)
+
+== Catalog verifier ==
+$ pnpm run verify:localization-catalog → exit 0
+vi.json coverage: 14764/14764 translated, 0 missing
+(ko/zh 14695/14764 — vi là locale duy nhất đạt 100% coverage)
+
+== Runtime catalog resync ==
+$ pnpm run sync:localization-runtime-catalog → en-runtime-required.json 0 diff
+
+== Native menu vi values (translateMain/replay) ==
+file: Tệp · edit: Sửa · view: Xem · settings: Cài đặt · exploreWakii: Khám phá Wakii
+
+== Provenance ==
+2 session song song 09:34/09:37 (user chốt: session 09:37 tiếp tục) — commits
+fe2d55830a + 81854b6739 + b4608d316c absorb từ session 09:34. Lô 5 full-run do
+overnight PM runner điều phối (single process + caffeinate + latch 25').
+Pipeline: nohup > log, cache save mỗi 25 giá trị, retry 6× exponential + AbortSignal
+20s, cooldown latch 25', skip-not-crash + exit code, resume-via-cache.
+
+== Pre-existing (không thuộc SF-2) ==
+pnpm tc đỏ tại browser-manager-guest-visibility.test.ts +
+lineage-and-scan-cache-part-02.spec.ts — từ upstream merge 1284b048f9
+(refactor #22526 bỏ helpers + rename service). SF-2 diff không đụng 2 file này.
+
+== Addendum (completion session 27/09 — final evidence + review rounds 4-5) ==
+Final RULE-0 browser evidence (fresh-profile CDP route, ORCA_BACKGROUND_LAUNCH=1):
+- live-switch run: real en→vi qua picker, tier 1/2/3 PASS (evidence/sf-2-catalog-vi/live-switch-run1/)
+- final run trên catalog đã fix: tier 2/3 PASS (evidence/sf-2-catalog-vi/)
+- phát hiện → pin: 6 key "Create"→"Tạo nên" → override Create:'Tạo' (65b028b4c7, 571dd0280a)
+Menu smoke re-run: 63/63 call sites PASS (sau review round 4).
+Review rounds 4-5 (completion session): R4 CHANGES-REQUESTED — 3 P1 (phrase-form
+'không được cam kết'; /orca-linear bị GT dịch 5 key; boundary e5a0c43f76) → fix
+027670a8b7 (regen 0 GT) → R5 APPROVED. Full record: evidence/sf-2-catalog-vi/review-verdict.md.
+Boundary ruling: e5a0c43f76 (sửa test cũ SF-1 main-i18n-lazy-locale.test.ts) — accept
+with audit; assertion cũ encode stub pre-translation, revert sẽ làm B1 đỏ; SF-3 sở hữu guard-test.
+Battery tại 027670a8b7: 47/47 · metric 14764/14764 = 100.00% exit 0 · grep leak forms = 0.
