@@ -2,7 +2,12 @@ VU-14 SF-3 — viewer mindmap tương tác — test run evidence
 Date: 2026-09-27
 Worktree: sf-3-viewer-mindmap (base 241fed8aed91)
 Code commit: 052f420410 (feat(viewer): SF-3 .wakii mindmap viewer — direction C orbital render)
-tdd: RED→GREEN (layout/component/slice/bridge tests written with implementation; failing expectations fixed until 40/40, regression suites re-run green)
+             + be74e88317 (e2e golden spec + evidence) · 85e4fc3541 (review round-1 fixes) · f371717931 (review APPROVED + polish) = HEAD pushed
+PUSHED: refs/heads/sf-3-viewer-mindmap @ f371717931 → github.com/wakii-dev/wakii (remote branch
+        KHÔNG mang prefix wakii-dev/ — branch `wakii-dev` trên remote chặn namespace wakii-dev/*,
+        convention trùng SF-1: sf-1-schema-sinh-file)
+tdd: RED→GREEN (layout/component/slice/bridge tests viết cùng implementation; 40/40 rồi 42 test
+sau review fixes; 2 meta-test P1 xác nhận RED trên code cũ trước khi fix)
 
 == Battery (exit codes captured, không qua pipe) ==
 1. pnpm vitest run --config config/vitest.config.ts src/renderer/src/viewer/ + bridge + slice tests
