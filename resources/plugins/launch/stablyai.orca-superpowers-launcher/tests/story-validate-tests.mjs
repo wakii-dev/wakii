@@ -411,6 +411,22 @@ console.log('== R6 (t6) --primary nhánh-không-tồn-tại → exit 1 (fail-clo
   rmSync(root, { recursive: true, force: true })
 }
 
+console.log('== R7 --primary không giá trị → exit 2 (bare flag + flag nuốt flag) ==')
+{
+  const { repo, root } = makeRepo('r7', { branch: 'main', config: [['wakii.primaryBranch', 'main']] })
+  const env = { ORCA_BIN: makeOrcaDeadStub(root), STORY_KIT_CONFIG: join(root, 'khong-ton-tai.json'), HOME: root }
+  // biến thể 1: --primary nuốt --repo làm giá trị (phải exit 2, không phải thử ref '--repo')
+  const r1 = runResolve(repo, { flags: ['--primary', '--repo', repo], env })
+  check('R7', 'flag nuốt flag → exit 2', r1.code === 2, `code=${r1.code} out=${r1.out}`)
+  check('R7', 'biến thể 1 in Usage', r1.out.includes('Usage'), r1.out)
+  // biến thể 2: --primary bare cuối argv — KHÔNG được lặng lẽ rơi xuống ladder
+  // (repo này có wakii.primaryBranch=main → ladder sẽ exit 0 nếu rơi xuống)
+  const r2 = runResolve(repo, { flags: ['--primary'], env })
+  check('R7', 'bare flag → exit 2 (không degrade xuống ladder)', r2.code === 2, `code=${r2.code} out=${r2.out}`)
+  check('R7', 'biến thể 2 in Usage', r2.out.includes('Usage'), r2.out)
+  rmSync(root, { recursive: true, force: true })
+}
+
 console.log(`\n== TOTAL: ${pass} PASS / ${fail} FAIL ==`)
 if (failures.length) {
   console.log('FAILURES:\n- ' + failures.join('\n- '))

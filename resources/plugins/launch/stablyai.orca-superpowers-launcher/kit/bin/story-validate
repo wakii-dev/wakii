@@ -32,7 +32,11 @@ if [ "${1:-}" = "--resolve-primary" ]; then
   REPO="."
   while [ $# -gt 0 ]; do
     case "$1" in
-      --primary) PRIMARY_EXPLICIT="${2:-}"; if [ $# -ge 2 ]; then shift 2; else shift; fi ;;
+      --primary)
+        # đòi giá trị: rỗng hoặc là flag kế → usage exit 2 (chặn argv trap:
+        # nuốt flag / bare flag lặng lẽ rơi xuống ladder)
+        case "${2:-}" in ""|-*) echo "Usage: --resolve-primary --primary <ref> [--repo <path>]"; exit 2 ;; esac
+        PRIMARY_EXPLICIT="$2"; shift 2 ;;
       --repo) REPO="${2:-.}"; if [ $# -ge 2 ]; then shift 2; else shift; fi ;;
       *) shift ;;
     esac
