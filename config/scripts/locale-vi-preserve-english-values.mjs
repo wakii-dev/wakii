@@ -245,6 +245,9 @@ export const VI_PRESERVE_ENGLISH_VALUES = new Set([
   'Back to Explorer',
   'Resource Manager, {{sessions}}',
   'Resource Manager, {{sessions}}, {{spaceScan}}',
+  // Review P1 (27/09): the slash-command token is brand-reverted in the search
+  // keyword value, landing en-identical — pinned like the dev-tool nouns above.
+  'orca-linear',
   // Review-round 27/09: CJK-MT-transliterated tokens moved OUT of the global
   // NEVER_TRANSLATE extensions — a global entry silently reverted existing
   // ja/ko/zh/es/fr renderings (e.g. ja WebSocket→ウェブソケット) on their next repair.

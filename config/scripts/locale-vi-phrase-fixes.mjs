@@ -7,6 +7,11 @@ export const VI_PHRASE_FIXES = [
   { pattern: /không cam kết/g, replacement: 'chưa commit', whenEnMatches: /\buncommitted\b/i },
   { pattern: /Không cam kết/g, replacement: 'Chưa commit', whenEnMatches: /\bUncommitted\b/ },
   { pattern: /chưa cam kết/g, replacement: 'chưa commit', whenEnMatches: /\buncommitted\b/i },
+  // Why: review P1 (27/09) — GT also emits the "không được cam kết" form, which the
+  // patterns above miss and the /\bcommit/i catch-all can't catch ("uncommitted" has
+  // no word boundary before the c).
+  { pattern: /không được cam kết/g, replacement: 'chưa commit', whenEnMatches: /\buncommitted\b/i },
+  { pattern: /Không được cam kết/g, replacement: 'Chưa commit', whenEnMatches: /\buncommitted\b/i },
   { pattern: /cam kết/g, replacement: 'commit', whenEnMatches: /\bcommit/i },
   { pattern: /Cam kết/g, replacement: 'Commit', whenEnMatches: /\bCommit/ },
   // Why: GT renders "kill them" (processes) with the human pronoun — vi dev usage keeps "kill".
