@@ -277,6 +277,14 @@ export const BRAND_MISTRANSLATIONS = {
     Agents: ['Các đại lý', 'các đại lý', 'Đại lý', 'đại lý', 'Tác nhân', 'tác nhân'],
     agents: ['các đại lý', 'đại lý', 'Đại lý', 'tác nhân'],
     Agent: ['Đại lý', 'đại lý', 'Tác nhân', 'tác nhân'],
-    agent: ['đại lý', 'Đại lý', 'tác nhân']
+    agent: ['đại lý', 'Đại lý', 'tác nhân'],
+    // 27/09 RULE-0 live-UI dry-run finds: dev-tool nouns GT renders as absurd
+    // Vietnamese (Explorer→"Nhà thám hiểm" adventurer, Resource Manager→
+    // "Người quản lý tài nguyên"). Whole-value instances are pinned in
+    // VI_PRESERVE_ENGLISH_VALUES instead — 'Cổng' (Ports) is NOT listed here
+    // because it collides with Gate's existing 'cổng' forms.
+    Explorer: ['Nhà thám hiểm'],
+    'Resource Manager': ['Người quản lý tài nguyên'],
+    Checks: ['Séc']
   }
 }

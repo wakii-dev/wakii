@@ -231,5 +231,18 @@ export const VI_PRESERVE_ENGLISH_VALUES = new Set([
   '{{value0}}h',
   '{{value0}}d',
   '<1m',
-  'Wakii v{{version}}'
+  'Wakii v{{version}}',
+  // RULE-0 live-UI dry-run (27/09): keep-English dev-tool nouns per the 25/09
+  // glossary ruling — GT renders them as absurd Vietnamese ("Nhà thám hiểm",
+  // "Séc", "Hộp đựng trận đấu"). Brand reverts turn the in-sentence/template
+  // forms back into these Latin terms, so they land en-identical — pinned
+  // like the subagent block above.
+  'Explorer',
+  'Checks',
+  'Match Case',
+  'Ports',
+  'Resource Manager',
+  'Back to Explorer',
+  'Resource Manager, {{sessions}}',
+  'Resource Manager, {{sessions}}, {{spaceScan}}'
 ])

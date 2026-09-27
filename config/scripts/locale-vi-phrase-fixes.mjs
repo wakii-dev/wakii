@@ -11,5 +11,9 @@ export const VI_PHRASE_FIXES = [
   { pattern: /Cam kết/g, replacement: 'Commit', whenEnMatches: /\bCommit/ },
   // Why: GT renders "kill them" (processes) with the human pronoun — vi dev usage keeps "kill".
   { pattern: /giết họ/g, replacement: 'kill chúng', whenEnMatches: /\bkill them\b/i },
-  { pattern: /giết chúng/g, replacement: 'kill chúng', whenEnMatches: /\bkill\b/i }
+  { pattern: /giết chúng/g, replacement: 'kill chúng', whenEnMatches: /\bkill\b/i },
+  // Why: GT reads "terminal" as the adjective "cuối" (last) — "terminal session" becomes
+  // "phiên cuối" ("last session"), wrong on 18 keys (27/09 full-catalog grep).
+  { pattern: /phiên cuối/g, replacement: 'phiên terminal', whenEnMatches: /terminal session/i },
+  { pattern: /Phiên cuối/g, replacement: 'Phiên terminal', whenEnMatches: /terminal session/i }
 ]

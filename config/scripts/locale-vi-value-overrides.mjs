@@ -21,5 +21,11 @@ export const VI_VALUE_OVERRIDES = {
   '{{value0}} agents': '{{value0}} agent',
   Show: 'Hiện',
   'split chat right': 'chia trò chuyện sang phải',
-  'WSL default': 'WSL mặc định'
+  'WSL default': 'WSL mặc định',
+  // 27/09 RULE-0 live-UI find: GT "Giúp đỡ" reads as a verb plea; "Trợ giúp" is
+  // the standard Vietnamese UI rendering of Help.
+  Help: 'Trợ giúp',
+  // Lô-5 spot-check: the sole "Ordering" key is the Linear issue-toolbar sort
+  // label (IssueToolbar.tsx) — GT "Đặt hàng" is the shopping sense.
+  Ordering: 'Thứ tự'
 }
