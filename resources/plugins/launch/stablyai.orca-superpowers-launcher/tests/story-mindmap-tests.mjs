@@ -67,8 +67,13 @@ const PACK2 = `# Context pack SF-2 — Lớp xem
 ## ACCEPTANCE
 - double-click mở được
 `
-// orca stub: SF-1 đang chạy, SF-2 chưa — SF state từ orchestration
-const ORCA_STUB = '#!/bin/sh\necho \'{"result":{"tasks":[{"task_title":"SF-1 Lớp nền","status":"in_progress"},{"task_title":"SF-2 Lớp xem","status":"pending"}]}}\'\n'
+// orca stub: dispatch theo subcommand — run-list (discovery) → 1 run; task-list → SF states
+const ORCA_STUB = `#!/bin/sh
+case "$2" in
+  run-list) echo '{"result":{"runs":[{"id":"run_stub1","objective":"VX-1: đồ án thử — mindmap fixture","legacy":0,"updated_at":"2026-09-27T00:00:00Z"}]}}' ;;
+  *) echo '{"result":{"tasks":[{"task_title":"SF-1 Lớp nền","status":"in_progress"},{"task_title":"SF-2 Lớp xem","status":"pending"}]}}' ;;
+esac
+`
 // impact stub: 1 area computed
 const IMPACT_STUB = '#!/bin/sh\necho \'{"base":"main","changed":[],"affectedAreas":["src/terminal"],"impact":[]}\'\n'
 
@@ -120,9 +125,12 @@ function tempStory(tag, { pack2 = PACK2, bracket = BRACKET } = {}) {
   check('c1', 'file curated không computed / area computed', doc.nodes.find(n => n.id === 'f-kit-bin-lam-schema').computed === undefined && doc.nodes.find(n => n.kind === 'area').computed === true, '')
   check('c1', 'evidence có bracket + pack + impact refs', doc.evidence.length >= 3 && doc.evidence.some(e => e.ref === 'story-impact --json'), JSON.stringify(doc.evidence))
   check('c1', 'decodeWarnings rỗng (nguồn lành)', Array.isArray(doc.decodeWarnings) && doc.decodeWarnings.length === 0, JSON.stringify(doc.decodeWarnings))
-  // byte-match trừ generatedAt: golden tái serialize ổn định
+  // byte-match trừ generatedAt: tái sinh Ổ OUT KHÁC (chống tautology — so file với chính nó là vô nghĩa)
   const strip = d => { const c = { ...d, meta: { ...d.meta } }; delete c.meta.generatedAt; return JSON.stringify(c, null, 2) }
-  check('c1', 'byte-match khi tái sinh (trừ generatedAt)', strip(JSON.parse(readFileSync(file, 'utf8'))) === strip(doc), 'regen lệch bytes')
+  const out2 = join(dir, 'docs/superpowers/mindmaps/regen.wakii')
+  const r2g = run(bin, ['--bracket', 'docs/superpowers/brackets/vx-1-do-an-thu.md', '--out', out2], dir, env)
+  check('c1', 'tái sinh --out khác exit 0', r2g.code === 0, `code=${r2g.code}`)
+  check('c1', 'byte-match khi tái sinh (trừ generatedAt)', existsSync(out2) && strip(JSON.parse(readFileSync(out2, 'utf8'))) === strip(doc), 'regen lệch bytes')
   // mermaid
   check('c1', 'mermaid fence + đủ node', existsSync(md) && readFileSync(md, 'utf8').includes('```mermaid') && readFileSync(md, 'utf8').includes('sf_1'), readFileSync(md, 'utf8').slice(0, 120))
   }
