@@ -122,6 +122,18 @@ Depends on: —
 Tasks: t1 / t2
 `
 
+const HUB_NO_PRIMARY_BRACKET = `# Story: FI-995 — hub no primary
+Destination: story/fi-995-hub-no-primary
+Worktree model: story-hub
+
+## SF-1 A (Phase 1/1)
+Tier: 0
+linear:
+What: story-hub thiếu Primary
+Depends on: —
+Tasks: t1 / t2
+`
+
 function writeBracket(dir, name, content) {
   mkdirSync(dir, { recursive: true })
   const p = join(dir, name)
@@ -209,13 +221,14 @@ console.log('== V6 bracket story-hub đầy đủ → OK, không warn Primary/mo
   rmSync(dir, { recursive: true, force: true })
 }
 
-console.log('== V7 thiếu Primary → FAIL ==')
+console.log('== V7 thiếu Primary + không model (legacy) → WARN Primary, verdict OK ==')
 {
   const dir = tempDir('v7')
   const f = writeBracket(dir, 'no-primary.md', NO_PRIMARY_BRACKET)
   const r = runValidate(f)
-  check('V7', 'exit 1', r.code === 1, `code=${r.code}`)
-  check('V7', 'FAIL chứa Primary:', r.out.includes('Primary:'), r.out)
+  check('V7', 'exit 0 (WARN không chặn)', r.code === 0, `code=${r.code} out=${r.out}`)
+  check('V7', 'WARN chứa Primary:', r.out.includes('WARN: Primary:'), r.out)
+  check('V7', 'verdict vẫn OK', r.out.includes('OK — 1 SF'), r.out)
   rmSync(dir, { recursive: true, force: true })
 }
 
@@ -237,6 +250,16 @@ console.log('== V9 thiếu Worktree model → WARN backward-compat, verdict vẫ
   check('V9', 'exit 0 (WARN không chặn)', r.code === 0, `code=${r.code} out=${r.out}`)
   check('V9', 'WARN chứa Worktree model', r.out.includes('WARN: Worktree model'), r.out)
   check('V9', 'verdict vẫn OK', r.out.includes('OK — 1 SF'), r.out)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== V10 model story-hub + thiếu Primary → FAIL (fail-closed) ==')
+{
+  const dir = tempDir('v10')
+  const f = writeBracket(dir, 'hub-no-primary.md', HUB_NO_PRIMARY_BRACKET)
+  const r = runValidate(f)
+  check('V10', 'exit 1', r.code === 1, `code=${r.code}`)
+  check('V10', 'FAIL chứa Primary:', r.out.includes('Primary:'), r.out)
   rmSync(dir, { recursive: true, force: true })
 }
 
