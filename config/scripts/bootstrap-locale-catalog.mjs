@@ -260,7 +260,10 @@ export async function main(root = process.cwd(), locale = parseLocaleArg(process
 
   await saveCache(cachePath, cache)
 
-  for (const leaf of leaves) {
+  // Why: --prefix scopes TRANSLATION, not the write — applying the whole cache over
+  // the full tree keeps previously translated domains alive in intermediate batch
+  // states (lô 2's prefix-only write wiped lô 1 back to en-clone values).
+  for (const leaf of collectStringLeaves(enCatalog)) {
     const cached = cache.get(leaf.value) ?? leaf.value
     setLeaf(
       localeCatalog,
