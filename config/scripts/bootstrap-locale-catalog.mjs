@@ -135,6 +135,28 @@ function parseLocaleArg(argv) {
   return argv[2]
 }
 
+export function parsePrefixArg(argv) {
+  const prefixes = []
+  for (let index = 0; index < argv.length; index += 1) {
+    if (argv[index] === '--prefix' && argv[index + 1]) {
+      prefixes.push(
+        ...argv[index + 1]
+          .split(',')
+          .map((prefix) => prefix.trim())
+          .filter(Boolean)
+      )
+    }
+  }
+  return prefixes
+}
+
+export function filterLeavesByPrefix(leaves, prefixes) {
+  if (prefixes.length === 0) {
+    return leaves
+  }
+  return leaves.filter((leaf) => prefixes.some((prefix) => leaf.key.startsWith(prefix)))
+}
+
 export async function main(root = process.cwd(), locale = parseLocaleArg(process.argv)) {
   const config = LOCALE_CONFIG[locale]
   if (!config) {
@@ -144,12 +166,13 @@ export async function main(root = process.cwd(), locale = parseLocaleArg(process
     return 1
   }
 
+  const prefixes = parsePrefixArg(process.argv)
   const enPath = path.join(root, LOCALES_DIR, 'en.json')
   const localePath = path.join(root, LOCALES_DIR, `${locale}.json`)
   const cachePath = path.join(root, LOCALES_DIR, config.cacheFile)
   const enCatalog = JSON.parse(await fs.readFile(enPath, 'utf8'))
   const localeCatalog = structuredClone(enCatalog)
-  const leaves = collectStringLeaves(enCatalog)
+  const leaves = filterLeavesByPrefix(collectStringLeaves(enCatalog), prefixes)
   const uniqueValues = [...new Set(leaves.map((leaf) => leaf.value))]
   const cache = await loadCache(cachePath)
   const toTranslate = uniqueValues.filter(
@@ -157,7 +180,8 @@ export async function main(root = process.cwd(), locale = parseLocaleArg(process
   )
 
   console.log(
-    `Translating ${toTranslate.length} unique strings to ${config.displayName} (${cache.size} cached)...`
+    `Translating ${toTranslate.length} unique strings to ${config.displayName} (${cache.size} cached)` +
+      `${prefixes.length ? ` [prefix: ${prefixes.join(', ')}]` : ''}...`
   )
 
   let completed = 0
