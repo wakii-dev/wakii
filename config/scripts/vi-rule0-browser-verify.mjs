@@ -118,18 +118,25 @@ async function main() {
 
   // --- Tier 1: switch vi → Settings opens in Vietnamese -------------------
   // Two entry states: main view (gear button opens settings) or already inside.
+  // Why: right after boot the landing/settings surfaces mount at different
+  // times — poll briefly for either entry point before failing.
   let gear = null
-  for (const label of ['Settings', 'Cài đặt']) {
-    const candidate = page.locator(`button[aria-label="${label}"]`).first()
-    if ((await candidate.count()) > 0) {
-      gear = candidate
-      break
-    }
-  }
   let alreadyInSettings = false
-  for (const label of LABELS.appearanceNav) {
-    if ((await page.getByText(label, { exact: true }).count()) > 0) {
-      alreadyInSettings = true
+  for (let attempt = 0; attempt < 14 && !gear && !alreadyInSettings; attempt += 1) {
+    for (const label of ['Settings', 'Cài đặt']) {
+      const candidate = page.locator(`button[aria-label="${label}"]`).first()
+      if ((await candidate.count()) > 0) {
+        gear = candidate
+        break
+      }
+    }
+    for (const label of LABELS.appearanceNav) {
+      if ((await page.getByText(label, { exact: true }).count()) > 0) {
+        alreadyInSettings = true
+      }
+    }
+    if (!gear && !alreadyInSettings) {
+      await page.waitForTimeout(1500)
     }
   }
   if (!alreadyInSettings && gear) {
