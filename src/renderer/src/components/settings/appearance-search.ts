@@ -63,7 +63,7 @@ export const getLanguageEntries = createLocalizedCatalog((): SettingsSearchEntry
       '言語', // Japanese
       'Idioma', // Spanish
       'Langue', // French
-      'Tiếng Việt', // Vietnamese
+      'Ngôn ngữ', // Vietnamese
       ...translateSearchKeyword(
         'auto.components.settings.appearance.search.language.locale',
         'locale'
