@@ -11,5 +11,8 @@ export const VI_VALUE_OVERRIDES = {
   'Uncommitted changes': 'Thay đổi chưa commit',
   'Commit message': 'Thông điệp commit',
   'Staging area': 'Vùng staging',
-  'Stage changes': 'Stage thay đổi'
+  'Stage changes': 'Stage thay đổi',
+  On: 'Bật',
+  Off: 'Tắt',
+  'WSL default': 'WSL mặc định'
 }
