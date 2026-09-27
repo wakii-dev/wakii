@@ -163,5 +163,41 @@ export const BRAND_MISTRANSLATIONS = {
     Repos: ['Repositorios', 'repositorios'],
     repo: ['repositorio'],
     repos: ['repositorios']
+  },
+  // vi forms observed from the GT pipeline (probe 2026-09-27, en→vi). Keep-English
+  // vocabulary per the 25/09 glossary decision — GT-vi literal renderings get reverted.
+  vi: {
+    Orca: ['cá kình', 'Cá kình'],
+    Gemini: ['Song Tử', 'song tử'],
+    Antigravity: ['phản trọng lực', 'Phản trọng lực'],
+    OpenCode: ['Mã mở', 'mã mở'],
+    Linear: ['tuyến tính', 'Tuyến tính'],
+    Commit: ['cam kết', 'Cam kết'],
+    Commits: ['cam kết', 'Cam kết'],
+    commit: ['cam kết', 'Cam kết'],
+    commits: ['cam kết', 'Cam kết'],
+    Branch: ['chi nhánh', 'Chi nhánh'],
+    branch: ['chi nhánh', 'Chi nhánh'],
+    branches: ['chi nhánh', 'Chi nhánh'],
+    Worktree: ['cây công việc', 'cây làm việc', 'Cây công việc', 'Cây làm việc'],
+    Worktrees: ['cây công việc', 'cây làm việc', 'Cây công việc', 'Cây làm việc'],
+    worktree: ['cây công việc', 'cây làm việc', 'Cây công việc', 'Cây làm việc'],
+    worktrees: ['cây công việc', 'cây làm việc', 'Cây công việc', 'Cây làm việc'],
+    Merge: ['hợp nhất', 'Hợp nhất'],
+    merge: ['hợp nhất', 'Hợp nhất'],
+    Gate: ['cổng', 'Cổng'],
+    gate: ['cổng', 'Cổng'],
+    Stash: ['bỏ đi', 'Bỏ đi'],
+    stash: ['bỏ đi', 'Bỏ đi'],
+    Fork: ['nhánh', 'Nhánh'],
+    fork: ['nhánh', 'Nhánh'],
+    Checkout: ['kiểm tra', 'Kiểm tra'],
+    checkout: ['kiểm tra', 'Kiểm tra'],
+    Sidebar: ['thanh bên', 'Thanh bên'],
+    sidebar: ['thanh bên', 'Thanh bên'],
+    Remote: ['điều khiển từ xa', 'Điều khiển từ xa'],
+    remote: ['điều khiển từ xa', 'Điều khiển từ xa'],
+    origin: ['nguồn gốc', 'Nguồn gốc'],
+    upstream: ['thượng nguồn', 'Thượng nguồn']
   }
 }
