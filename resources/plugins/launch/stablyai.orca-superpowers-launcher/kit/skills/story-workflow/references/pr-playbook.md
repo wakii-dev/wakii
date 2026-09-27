@@ -2,23 +2,24 @@
 
 Git flow chuẩn + quy trình tạo PR cho story. Engine = **`gh` CLI** (cùng
 engine với Source Control panel của Orca — panel cũng gọi `gh` dưới nắp).
-Mỗi story đúng **1 PR**: nhánh đích → main. Merge main VẪN LÀ QUYỀN NGƯỜI.
+Mỗi story đúng **1 PR**: nhánh đích → primary (đọc từ bracket `Primary:`).
+Merge primary VẪN LÀ QUYỀN NGƯỜI.
 
 ## Git flow — branch taxonomy
 
 ```
-main  ←  story/<epic-id>-<slug>  ←  sf-1-*, sf-2-* ...
-         (nhánh đích = "main của story")   (worktree riêng mỗi SF)
+<primary>  ←  story/<epic-id>-<slug>  ←  sf-1-*, sf-2-* ...
+              (nhánh đích = "main của story")   (worktree riêng mỗi SF)
 ```
 
 | Nhánh | Ai tạo | Ai merge vào nó | Ai push | Ai xóa |
 |---|---|---|---|---|
-| `main` | — | **NGƯỜI** (merge nhánh đích) | KHÔNG AI (agents không đụng) | — |
-| `story/<epic>-<slug>` | APPROVE (fork từ main) | các sf-* merge về | agent (lúc COMPLETE) | NGƯỜI (khi không cần audit) |
+| `<primary>` (bracket `Primary:`) | — | **NGƯỜI** (merge nhánh đích qua PR) | KHÔNG AI (agents không đụng) | — |
+| `story/<epic>-<slug>` | APPROVE (fork từ primary) | các sf-* merge về | agent (lúc COMPLETE) | Agent — cleanup story-level SAU khi PR merge (merge-playbook "Story-level cleanup", với guards) |
 | `sf-N-*` | launch/worktree | merge về nhánh đích | tùy chọn (backup) | CLOSE cleanup |
 
 Push policy: agents được push **sf-\* và nhánh đích** (nếu repo có remote).
-Không bao giờ push/merge/reset main.
+Không bao giờ push/merge/reset primary.
 
 ## Tạo PR (lúc STORY-COMPLETE — agent chạy)
 
