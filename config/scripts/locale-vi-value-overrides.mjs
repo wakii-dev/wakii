@@ -27,5 +27,8 @@ export const VI_VALUE_OVERRIDES = {
   Help: 'Trợ giúp',
   // Lô-5 spot-check: the sole "Ordering" key is the Linear issue-toolbar sort
   // label (IssueToolbar.tsx) — GT "Đặt hàng" is the shopping sense.
-  Ordering: 'Thứ tự'
+  Ordering: 'Thứ tự',
+  // Final RULE-0 evidence run (27/09): standalone "Create" buttons render as
+  // "Tạo nên" (modal awkwardness); "Tạo" is the standard vi UI verb.
+  Create: 'Tạo'
 }
