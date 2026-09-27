@@ -216,6 +216,68 @@ export const NEVER_TRANSLATE_VALUES = new Set([
   'orca · zsh'
 ])
 
+// Per-locale whole-value labels kept Latin by glossary ruling (vi tech vocabulary:
+// commit/worktree/merge/branch… stay English in Vietnamese dev usage). In-sentence
+// occurrences go through BRAND_MISTRANSLATIONS.vi instead; GT also returns some of
+// these verbatim, so preserve is what lets translatedness reach 100%.
+export const LOCALE_PRESERVE_ENGLISH_VALUES = {
+  vi: new Set([
+    'Rebase',
+    'rebase',
+    'Push',
+    'push',
+    'Pull',
+    'pull',
+    'Merge',
+    'merge',
+    'Branch',
+    'branches',
+    'Branch',
+    'branch',
+    'Branches',
+    'Commit',
+    'commits',
+    'commit',
+    'commits',
+    'Worktree',
+    'worktrees',
+    'worktree',
+    'worktrees',
+    'Staging',
+    'staging',
+    'Gate',
+    'gate',
+    'Plugin',
+    'plugins',
+    'plugin',
+    'plugins',
+    'Tab',
+    'tabs',
+    'tab',
+    'tabs',
+    'Agent',
+    'agents',
+    'agent',
+    'agents',
+    'Terminal',
+    'terminals',
+    'terminal',
+    'terminals',
+    'Sidebar',
+    'sidebar',
+    'Stash',
+    'stash',
+    'Fork',
+    'fork',
+    'Checkout',
+    'checkout',
+    'Remote',
+    'remote',
+    'origin',
+    'upstream'
+  ])
+}
+
 export const NATIVE_PICKER_LABELS = {
   zh: {
     chinese: '中文（简体）',
@@ -269,7 +331,7 @@ export function isEnglishOnlyKey(key) {
   return ENGLISH_ONLY_KEY_PREFIXES.some((prefix) => key.startsWith(prefix))
 }
 
-export function shouldPreserveEnglishValue(enValue, key = '') {
+export function shouldPreserveEnglishValue(enValue, key = '', locale = '') {
   if (!enValue?.trim()) {
     return true
   }
@@ -280,6 +342,9 @@ export function shouldPreserveEnglishValue(enValue, key = '') {
     return true
   }
   if (isStyleValue(enValue)) {
+    return true
+  }
+  if (LOCALE_PRESERVE_ENGLISH_VALUES[locale]?.has(enValue)) {
     return true
   }
   return NEVER_TRANSLATE_VALUES.has(enValue)
@@ -430,7 +495,7 @@ export function repairTranslatedValue({ key, enValue, localeValue, locale }) {
     return result
   }
 
-  if (shouldPreserveEnglishValue(enValue, key)) {
+  if (shouldPreserveEnglishValue(enValue, key, locale)) {
     return enValue
   }
 
@@ -551,7 +616,7 @@ export function repairCatalog(enCatalog, localeCatalog, locale) {
 export function repairCacheMap(cache, locale) {
   let repaired = 0
   for (const [enValue, translated] of cache.entries()) {
-    const next = shouldPreserveEnglishValue(enValue)
+    const next = shouldPreserveEnglishValue(enValue, '', locale)
       ? enValue
       : repairTranslatedValue({
           key: '',

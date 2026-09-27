@@ -43,14 +43,14 @@ function isEndonymLabelLeaf(key, enValue) {
 // expected; preserve-by-design leaves (policy preserves, endonym labels) are
 // satisfied by staying equal to en. So-sánh-key-only là vacuous — bootstrap
 // clone full tree nên key không bao giờ thiếu, chỉ giá trị mới nói lên việc dịch.
-function isLeafTranslated(key, enValue, viValue) {
+function isLeafTranslated(key, enValue, viValue, locale) {
   if (isEndonymLabelLeaf(key, enValue)) {
     return viValue === enValue
   }
   if (typeof viValue !== 'string') {
     return false
   }
-  if (shouldPreserveEnglishValue(enValue, key)) {
+  if (shouldPreserveEnglishValue(enValue, key, locale)) {
     return viValue === enValue
   }
   return viValue !== enValue
@@ -63,7 +63,7 @@ export function computeTranslatedness(enCatalog, localeCatalog, locale, prefixes
 
   for (const leaf of leaves) {
     const viValue = lookupLeafValue(localeCatalog, leaf.key)
-    if (isLeafTranslated(leaf.key, leaf.value, viValue)) {
+    if (isLeafTranslated(leaf.key, leaf.value, viValue, locale)) {
       translated += 1
     } else {
       untranslated.push({ key: leaf.key, enValue: leaf.value, viValue })

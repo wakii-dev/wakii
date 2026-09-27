@@ -68,8 +68,8 @@ function restorePlaceholders(text, tokens) {
   return result
 }
 
-function shouldSkipTranslation(text) {
-  return shouldPreserveEnglishValue(text)
+function shouldSkipTranslation(text, locale) {
+  return shouldPreserveEnglishValue(text, '', locale)
 }
 
 async function translateText(text, targetLanguage) {
@@ -81,7 +81,7 @@ async function translateText(text, targetLanguage) {
   url.searchParams.set('q', text)
 
   let lastError
-  for (let attempt = 0; attempt < 5; attempt += 1) {
+  for (let attempt = 0; attempt < 6; attempt += 1) {
     try {
       const response = await fetch(url)
       if (!response.ok) {
@@ -91,7 +91,9 @@ async function translateText(text, targetLanguage) {
       return payload[0].map((part) => part[0]).join('')
     } catch (error) {
       lastError = error
-      await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)))
+      // Why: gtx throttles in bursts — a 429 needs seconds-long backoff (vi lô 1 died at 1.3k values on 500ms steps).
+      const backoff = Math.min(20000, 1000 * 2 ** attempt) + Math.random() * 500
+      await new Promise((resolve) => setTimeout(resolve, backoff))
     }
   }
   throw lastError
@@ -176,7 +178,7 @@ export async function main(root = process.cwd(), locale = parseLocaleArg(process
   const uniqueValues = [...new Set(leaves.map((leaf) => leaf.value))]
   const cache = await loadCache(cachePath)
   const toTranslate = uniqueValues.filter(
-    (value) => !shouldSkipTranslation(value) && !cache.has(value)
+    (value) => !shouldSkipTranslation(value, locale) && !cache.has(value)
   )
 
   console.log(
@@ -185,7 +187,8 @@ export async function main(root = process.cwd(), locale = parseLocaleArg(process
   )
 
   let completed = 0
-  await mapWithConcurrency(toTranslate, 2, async (value) => {
+  // Why: sustained >4 req/s tripped sustained 429s — single worker keeps the gtx endpoint under the throttle.
+  await mapWithConcurrency(toTranslate, 1, async (value) => {
     completed += 1
     if (completed % 25 === 0) {
       console.log(`  ${completed}/${toTranslate.length}`)
@@ -198,11 +201,11 @@ export async function main(root = process.cwd(), locale = parseLocaleArg(process
       value,
       repairTranslatedValue({ key: '', enValue: value, localeValue: restored, locale })
     )
-    await new Promise((resolve) => setTimeout(resolve, 200))
+    await new Promise((resolve) => setTimeout(resolve, 300))
   })
 
   for (const value of uniqueValues) {
-    if (shouldSkipTranslation(value) && !cache.has(value)) {
+    if (shouldSkipTranslation(value, locale) && !cache.has(value)) {
       cache.set(value, value)
     }
   }
