@@ -10,6 +10,8 @@ import { LOCALE_KEY_OVERRIDES } from './locale-key-overrides.mjs'
 import { LOCALE_PHRASE_FIXES } from './locale-phrase-fixes.mjs'
 import { SEARCH_KEYWORD_OVERRIDES } from './locale-search-keyword-overrides.mjs'
 import { LOCALE_VALUE_OVERRIDES } from './locale-value-overrides.mjs'
+import { NEVER_TRANSLATE_EXTENSIONS } from './locale-never-translate-extensions.mjs'
+import { VI_PRESERVE_ENGLISH_VALUES } from './locale-vi-preserve-english-values.mjs'
 
 export { BRAND_MISTRANSLATIONS } from './locale-brand-mistranslations.mjs'
 export { LOCALE_KEY_OVERRIDES } from './locale-key-overrides.mjs'
@@ -213,8 +215,15 @@ export const NEVER_TRANSLATE_VALUES = new Set([
   'upstream',
   'LIN-329',
   'GH #1799',
-  'orca · zsh'
+  'orca · zsh',
+  ...NEVER_TRANSLATE_EXTENSIONS
 ])
+
+// Per-locale whole-value labels kept Latin by glossary ruling — see
+// locale-vi-preserve-english-values.mjs for the vi list and rationale.
+export const LOCALE_PRESERVE_ENGLISH_VALUES = {
+  vi: VI_PRESERVE_ENGLISH_VALUES
+}
 
 export const NATIVE_PICKER_LABELS = {
   zh: {
@@ -251,6 +260,15 @@ export const NATIVE_PICKER_LABELS = {
     japanese: '日本語',
     spanish: 'Español',
     french: 'Français'
+  },
+  vi: {
+    english: 'English',
+    chinese: '中文（简体）',
+    korean: '한국어',
+    japanese: '日本語',
+    spanish: 'Español',
+    french: 'Français',
+    vietnamese: 'Tiếng Việt'
   }
 }
 
@@ -260,7 +278,7 @@ export function isEnglishOnlyKey(key) {
   return ENGLISH_ONLY_KEY_PREFIXES.some((prefix) => key.startsWith(prefix))
 }
 
-export function shouldPreserveEnglishValue(enValue, key = '') {
+export function shouldPreserveEnglishValue(enValue, key = '', locale = '') {
   if (!enValue?.trim()) {
     return true
   }
@@ -271,6 +289,9 @@ export function shouldPreserveEnglishValue(enValue, key = '') {
     return true
   }
   if (isStyleValue(enValue)) {
+    return true
+  }
+  if (LOCALE_PRESERVE_ENGLISH_VALUES[locale]?.has(enValue)) {
     return true
   }
   return NEVER_TRANSLATE_VALUES.has(enValue)
@@ -421,7 +442,7 @@ export function repairTranslatedValue({ key, enValue, localeValue, locale }) {
     return result
   }
 
-  if (shouldPreserveEnglishValue(enValue, key)) {
+  if (shouldPreserveEnglishValue(enValue, key, locale)) {
     return enValue
   }
 
@@ -542,7 +563,7 @@ export function repairCatalog(enCatalog, localeCatalog, locale) {
 export function repairCacheMap(cache, locale) {
   let repaired = 0
   for (const [enValue, translated] of cache.entries()) {
-    const next = shouldPreserveEnglishValue(enValue)
+    const next = shouldPreserveEnglishValue(enValue, '', locale)
       ? enValue
       : repairTranslatedValue({
           key: '',

@@ -163,5 +163,128 @@ export const BRAND_MISTRANSLATIONS = {
     Repos: ['Repositorios', 'repositorios'],
     repo: ['repositorio'],
     repos: ['repositorios']
+  },
+  // vi forms observed from the GT pipeline (probe 2026-09-27, en→vi). Keep-English
+  // vocabulary per the 25/09 glossary decision — GT-vi literal renderings get reverted.
+  vi: {
+    Orca: ['cá kình', 'Cá kình'],
+    Gemini: ['Song Tử', 'song tử'],
+    Antigravity: ['phản trọng lực', 'Phản trọng lực'],
+    OpenCode: ['Mã mở', 'mã mở'],
+    Linear: ['tuyến tính', 'Tuyến tính'],
+    Commit: ['cam kết', 'Cam kết'],
+    Commits: ['cam kết', 'Cam kết'],
+    commit: ['cam kết', 'Cam kết'],
+    commits: ['cam kết', 'Cam kết'],
+    Branch: ['chi nhánh', 'Chi nhánh', 'Nhánh', 'nhánh'],
+    branch: ['chi nhánh', 'Chi nhánh', 'nhánh', 'Nhánh'],
+    branches: ['các nhánh', 'các chi nhánh', 'chi nhánh', 'Chi nhánh', 'nhánh'],
+    Branches: ['Các nhánh', 'các nhánh', 'các chi nhánh', 'Chi nhánh', 'chi nhánh'],
+    Worktree: [
+      'cây công việc',
+      'cây làm việc',
+      'Cây công việc',
+      'Cây làm việc',
+      'sơ đồ công việc',
+      'Sơ đồ công việc'
+    ],
+    Worktrees: [
+      'cây công việc',
+      'cây làm việc',
+      'Cây công việc',
+      'Cây làm việc',
+      'sơ đồ công việc',
+      'Sơ đồ công việc'
+    ],
+    worktree: [
+      'cây công việc',
+      'cây làm việc',
+      'Cây công việc',
+      'Cây làm việc',
+      'sơ đồ công việc',
+      'Sơ đồ công việc'
+    ],
+    worktrees: [
+      'cây công việc',
+      'cây làm việc',
+      'Cây công việc',
+      'Cây làm việc',
+      'sơ đồ công việc',
+      'Sơ đồ công việc'
+    ],
+    Merge: ['hợp nhất', 'Hợp nhất'],
+    merge: ['hợp nhất', 'Hợp nhất'],
+    Gate: ['cổng', 'Cổng'],
+    gate: ['cổng', 'Cổng'],
+    Stash: ['bỏ đi', 'Bỏ đi'],
+    stash: ['bỏ đi', 'Bỏ đi'],
+    Fork: ['nhánh', 'Nhánh'],
+    fork: ['nhánh', 'Nhánh'],
+    Checkout: ['kiểm tra', 'Kiểm tra'],
+    checkout: ['kiểm tra', 'Kiểm tra'],
+    Sidebar: ['thanh bên', 'Thanh bên'],
+    sidebar: ['thanh bên', 'Thanh bên'],
+    Remote: ['điều khiển từ xa', 'Điều khiển từ xa'],
+    remote: ['điều khiển từ xa', 'Điều khiển từ xa'],
+    Remotes: ['điều khiển từ xa', 'Điều khiển từ xa'],
+    remotes: ['điều khiển từ xa', 'Điều khiển từ xa'],
+    Subagent: ['đại lý phụ', 'Đại lý phụ', 'các đại lý phụ'],
+    Subagents: ['đại lý phụ', 'Đại lý phụ', 'các đại lý phụ'],
+    subagent: ['đại lý phụ', 'Đại lý phụ', 'các đại lý phụ'],
+    subagents: ['đại lý phụ', 'Đại lý phụ', 'các đại lý phụ'],
+    origin: ['nguồn gốc', 'Nguồn gốc'],
+    upstream: ['thượng nguồn', 'Thượng nguồn', 'ngược dòng', 'Ngược dòng'],
+    'Source Control': ['Kiểm soát nguồn', 'kiểm soát nguồn', 'Kiểm soát nguồn'],
+    'Source control': ['Kiểm soát nguồn', 'kiểm soát nguồn'],
+    'source control': ['kiểm soát nguồn', 'Kiểm soát nguồn'],
+    Close: ['gần gũi', 'Gần gũi'],
+    close: ['gần gũi', 'Gần gũi'],
+    'Claude Code': ['Mã Claude'],
+    Claude: ['Mã Claude'],
+    Terminal: [
+      'Nhà ga',
+      'nhà ga',
+      'Phần cuối',
+      'phần cuối',
+      'Thiết bị đầu cuối',
+      'thiết bị đầu cuối',
+      'đầu cuối'
+    ],
+    Terminals: [
+      'Nhà ga',
+      'nhà ga',
+      'Phần cuối',
+      'phần cuối',
+      'Thiết bị đầu cuối',
+      'thiết bị đầu cuối'
+    ],
+    terminal: ['nhà ga', 'Nhà ga', 'phần cuối', 'Phần cuối', 'thiết bị đầu cuối', 'đầu cuối'],
+    terminals: ['nhà ga', 'phần cuối', 'thiết bị đầu cuối'],
+    'Pull request': ['Yêu cầu kéo', 'yêu cầu kéo', 'kéo yêu cầu', 'Kéo yêu cầu'],
+    'pull request': ['yêu cầu kéo', 'kéo yêu cầu', 'Yêu cầu kéo'],
+    Pull: ['Sự lôi kéo', 'sự lôi kéo', 'Kéo', 'kéo'],
+    pull: ['lôi kéo', 'kéo', 'Kéo'],
+    Push: ['Xô', 'xô', 'Đẩy', 'đẩy'],
+    push: ['xô', 'Xô', 'đẩy', 'Đẩy'],
+    Staging: ['Dàn dựng', 'dàn dựng', 'Giai đoạn', 'giai đoạn'],
+    staging: ['dàn dựng', 'Dàn dựng', 'giai đoạn', 'Giai đoạn'],
+    Stage: ['Giai đoạn', 'giai đoạn', 'Dàn dựng', 'dàn dựng'],
+    stage: ['giai đoạn', 'Giai đoạn', 'dàn dựng'],
+    Tabs: ['Các thẻ', 'các thẻ', 'Thẻ', 'thẻ'],
+    tabs: ['các thẻ', 'thẻ', 'Thẻ'],
+    Tab: ['Thẻ', 'thẻ'],
+    tab: ['thẻ', 'Thẻ'],
+    Agents: ['Các đại lý', 'các đại lý', 'Đại lý', 'đại lý', 'Tác nhân', 'tác nhân'],
+    agents: ['các đại lý', 'đại lý', 'Đại lý', 'tác nhân'],
+    Agent: ['Đại lý', 'đại lý', 'Tác nhân', 'tác nhân'],
+    agent: ['đại lý', 'Đại lý', 'tác nhân'],
+    // 27/09 RULE-0 live-UI dry-run finds: dev-tool nouns GT renders as absurd
+    // Vietnamese (Explorer→"Nhà thám hiểm" adventurer, Resource Manager→
+    // "Người quản lý tài nguyên"). Whole-value instances are pinned in
+    // VI_PRESERVE_ENGLISH_VALUES instead — 'Cổng' (Ports) is NOT listed here
+    // because it collides with Gate's existing 'cổng' forms.
+    Explorer: ['Nhà thám hiểm'],
+    'Resource Manager': ['Người quản lý tài nguyên'],
+    Checks: ['Séc']
   }
 }

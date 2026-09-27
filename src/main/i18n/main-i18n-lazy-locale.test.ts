@@ -60,13 +60,14 @@ describe('main-i18n lazy locale loading', () => {
     expect(translateMain('menu.file', 'File')).not.toBe('File')
   })
 
-  it('loads the vi stub through the lazy backend on switch', async () => {
-    // SF-1 stub is empty, so a translation diff cannot prove the load — the
-    // backend delivering the (empty) bundle to the vi resource store can.
+  it('loads the vi catalog through the lazy backend and serves native menus in Vietnamese', async () => {
     expect(mainI18n.hasResourceBundle('vi', 'translation')).toBe(false)
     expect(await setMainUiLanguage(UI_LANGUAGE_VIETNAMESE)).toBe('vi')
     expect(mainI18n.hasResourceBundle('vi', 'translation')).toBe(true)
-    expect(translateMain('menu.file', 'File')).toBe('File')
+    // SF-2 catalog: native menu chrome renders Vietnamese, not the en fallback.
+    expect(translateMain('menu.file', 'File')).not.toBe('File')
+    expect(translateMain('menu.settings', 'Settings')).not.toBe('Settings')
+    expect(translateMain('menu.view', 'View')).not.toBe('View')
   })
 
   it('uses caller English when a target catalog omits a key', async () => {

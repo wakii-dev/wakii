@@ -68,8 +68,8 @@ function restorePlaceholders(text, tokens) {
   return result
 }
 
-function shouldSkipTranslation(text) {
-  return shouldPreserveEnglishValue(text)
+function shouldSkipTranslation(text, locale) {
+  return shouldPreserveEnglishValue(text, '', locale)
 }
 
 async function translateText(text, targetLanguage) {
@@ -81,9 +81,11 @@ async function translateText(text, targetLanguage) {
   url.searchParams.set('q', text)
 
   let lastError
-  for (let attempt = 0; attempt < 5; attempt += 1) {
+  for (let attempt = 0; attempt < 6; attempt += 1) {
     try {
-      const response = await fetch(url)
+      // Why: undici waits indefinitely on a throttled connection — an orphan batch
+      // hung socket-less for 6+ min; cap each attempt so the retry loop keeps moving.
+      const response = await fetch(url, { signal: AbortSignal.timeout(20_000) })
       if (!response.ok) {
         throw new Error(`Translation request failed with status ${response.status}`)
       }
@@ -91,7 +93,9 @@ async function translateText(text, targetLanguage) {
       return payload[0].map((part) => part[0]).join('')
     } catch (error) {
       lastError = error
-      await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)))
+      // Why: gtx throttles in bursts — a 429 needs seconds-long backoff (vi lô 1 died at 1.3k values on 500ms steps).
+      const backoff = Math.min(20000, 1000 * 2 ** attempt) + Math.random() * 500
+      await new Promise((resolve) => setTimeout(resolve, backoff))
     }
   }
   throw lastError
@@ -135,6 +139,28 @@ function parseLocaleArg(argv) {
   return argv[2]
 }
 
+export function parsePrefixArg(argv) {
+  const prefixes = []
+  for (let index = 0; index < argv.length; index += 1) {
+    if (argv[index] === '--prefix' && argv[index + 1]) {
+      prefixes.push(
+        ...argv[index + 1]
+          .split(',')
+          .map((prefix) => prefix.trim())
+          .filter(Boolean)
+      )
+    }
+  }
+  return prefixes
+}
+
+export function filterLeavesByPrefix(leaves, prefixes) {
+  if (prefixes.length === 0) {
+    return leaves
+  }
+  return leaves.filter((leaf) => prefixes.some((prefix) => leaf.key.startsWith(prefix)))
+}
+
 export async function main(root = process.cwd(), locale = parseLocaleArg(process.argv)) {
   const config = LOCALE_CONFIG[locale]
   if (!config) {
@@ -144,48 +170,101 @@ export async function main(root = process.cwd(), locale = parseLocaleArg(process
     return 1
   }
 
+  const prefixes = parsePrefixArg(process.argv)
   const enPath = path.join(root, LOCALES_DIR, 'en.json')
   const localePath = path.join(root, LOCALES_DIR, `${locale}.json`)
   const cachePath = path.join(root, LOCALES_DIR, config.cacheFile)
   const enCatalog = JSON.parse(await fs.readFile(enPath, 'utf8'))
   const localeCatalog = structuredClone(enCatalog)
-  const leaves = collectStringLeaves(enCatalog)
+  const leaves = filterLeavesByPrefix(collectStringLeaves(enCatalog), prefixes)
   const uniqueValues = [...new Set(leaves.map((leaf) => leaf.value))]
   const cache = await loadCache(cachePath)
   const toTranslate = uniqueValues.filter(
-    (value) => !shouldSkipTranslation(value) && !cache.has(value)
+    (value) => !shouldSkipTranslation(value, locale) && !cache.has(value)
   )
 
   console.log(
-    `Translating ${toTranslate.length} unique strings to ${config.displayName} (${cache.size} cached)...`
+    `Translating ${toTranslate.length} unique strings to ${config.displayName} (${cache.size} cached)` +
+      `${prefixes.length ? ` [prefix: ${prefixes.join(', ')}]` : ''}...`
   )
 
   let completed = 0
-  await mapWithConcurrency(toTranslate, 2, async (value) => {
+  let failed = 0
+  // Why: sustained >4 req/s tripped sustained 429s — single worker keeps the gtx endpoint under the throttle.
+  // A 429 starts an IP penalty window of tens of minutes; hammering the remaining list at 300ms/value
+  // extends it (vi lô 1: 3 passes all-failed). Latch a shared cooldown, wait it out, retry the value.
+  // Why: 16-min waits still re-enter the penalty (vi lô 5, 27/09) — PM ruling: 25 min + single process.
+  const THROTTLE_COOLDOWN_MS = 25 * 60 * 1000
+  const MAX_THROTTLE_WAITS = 8
+  let throttleCooldownUntil = 0
+  let throttleWaits = 0
+  await mapWithConcurrency(toTranslate, 1, async (value) => {
     completed += 1
     if (completed % 25 === 0) {
       console.log(`  ${completed}/${toTranslate.length}`)
       await saveCache(cachePath, cache)
     }
     const { protectedText, tokens } = protectPlaceholders(value)
-    const translated = await translateText(protectedText, config.targetLanguage)
-    const restored = restorePlaceholders(translated, tokens)
-    cache.set(
-      value,
-      repairTranslatedValue({ key: '', enValue: value, localeValue: restored, locale })
-    )
-    await new Promise((resolve) => setTimeout(resolve, 200))
+    const translateAndCache = async () => {
+      const translated = await translateText(protectedText, config.targetLanguage)
+      const restored = restorePlaceholders(translated, tokens)
+      cache.set(
+        value,
+        repairTranslatedValue({ key: '', enValue: value, localeValue: restored, locale })
+      )
+    }
+    try {
+      await translateAndCache()
+    } catch (error) {
+      let reportError = error
+      const throttled = /status 429/.test(String(error))
+      if (throttled && throttleWaits < MAX_THROTTLE_WAITS) {
+        throttleWaits += 1
+        const waitUntil = Math.max(Date.now() + THROTTLE_COOLDOWN_MS, throttleCooldownUntil)
+        throttleCooldownUntil = waitUntil
+        console.log(
+          `  429 at ${completed}/${toTranslate.length} — cooling down until ${new Date(waitUntil).toISOString()}`
+        )
+        await new Promise((resolve) => setTimeout(resolve, waitUntil - Date.now()))
+        try {
+          await translateAndCache()
+          console.log(`  resumed after cooldown (${completed}/${toTranslate.length})`)
+          await new Promise((resolve) => setTimeout(resolve, 750))
+          return
+        } catch (retryError) {
+          reportError = retryError
+        }
+      } else if (throttled) {
+        // Why: a window outlasting the latch budget means every remaining value 429s too —
+        // burning the list extends the penalty (lo1d). Bail out; monitor relaunch resumes via cache.
+        console.log(
+          `  429 persists after ${MAX_THROTTLE_WAITS} cooldowns — aborting; re-run the same command to resume.`
+        )
+        await saveCache(cachePath, cache)
+        process.exit(1)
+      }
+      // Why: one throttled value must not kill a hours-long batch — leave it uncached
+      // (falls back to en), the per-batch metric gate + re-run resume catch the holes.
+      failed += 1
+      console.log(
+        `  failed (${completed}/${toTranslate.length}): ${String(reportError).slice(0, 140)}`
+      )
+    }
+    await new Promise((resolve) => setTimeout(resolve, 750 + Math.random() * 250))
   })
 
   for (const value of uniqueValues) {
-    if (shouldSkipTranslation(value) && !cache.has(value)) {
+    if (shouldSkipTranslation(value, locale) && !cache.has(value)) {
       cache.set(value, value)
     }
   }
 
   await saveCache(cachePath, cache)
 
-  for (const leaf of leaves) {
+  // Why: --prefix scopes TRANSLATION, not the write — applying the whole cache over
+  // the full tree keeps previously translated domains alive in intermediate batch
+  // states (lô 2's prefix-only write wiped lô 1 back to en-clone values).
+  for (const leaf of collectStringLeaves(enCatalog)) {
     const cached = cache.get(leaf.value) ?? leaf.value
     setLeaf(
       localeCatalog,
@@ -202,8 +281,12 @@ export async function main(root = process.cwd(), locale = parseLocaleArg(process
   repairCatalog(enCatalog, localeCatalog, locale)
 
   await fs.writeFile(localePath, `${JSON.stringify(localeCatalog, null, 2)}\n`, 'utf8')
-  console.log(`Wrote ${localePath}`)
-  return 0
+  console.log(
+    failed > 0
+      ? `Wrote ${localePath} with ${failed} untranslated value(s) — re-run the same command to resume them.`
+      : `Wrote ${localePath}`
+  )
+  return failed > 0 ? 1 : 0
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
