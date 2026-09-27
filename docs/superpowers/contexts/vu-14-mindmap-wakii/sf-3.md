@@ -11,7 +11,7 @@
 8. Không lib mới — tư duy vanilla DOM/SVG của C giữ nguyên, implement React component (canvas div + SVG edges + nodelayer absolute; camera = transform trong ref, không re-render React trên mỗi pan).
 
 ## Touch map
-- Sở hữu: `src/renderer/src/components/wakii-mindmap/` (viewer mới: MindmapCanvas + MindmapNode + MindmapEdge + MindmapPanel + useMindmapCamera) · golden render tests mới (Playwright `_electron` — pattern real-smoke plugin).
+- Sở hữu: viewer component mới **theo component map trong `docs/superpowers/designs/vu-14-sf-3-direction.md`** (thư mục `src/renderer/src/viewer/`: wakii-viewer + toolbar + canvas + graph-layout/edges/nodes + side-panel + panel-list-section + legend + warnings + error-overlay) · golden render tests mới (Playwright `_electron` — pattern real-smoke plugin). Direction doc là nguồn sự thật design — pack này tóm tắt, lệch thì theo direction.
 - Append-only: `src/renderer/src/store/slices/editor/` (nhận diện `.wakii` → viewer mode) · consumer bridge `os-wakii-file-open-bridge` (SF-2 giao) đăng ký qua `app-lifetime-ipc-bridge` (2 importers hiện tại) · `src/renderer/src/assets/main.css` CHỈ khi thiếu token (báo PM trước khi thêm).
 - Read-only: `open-markdown-in-floating-workspace.ts` (3 importers — không đổi hành vi markdown) · hook bridge SF-2 · prototype `c.html` (tham chiếu cấu trúc + layout constants).
 - Cấm: `dangerouslySetInnerHTML` (title fixture chứa `<script>` — JSX tự escape là đủ) · palette/màu mới · đụng tab strip chính / AppWorkspaceShell · fs từ renderer · sửa markdown flow · dependency npm mới.
