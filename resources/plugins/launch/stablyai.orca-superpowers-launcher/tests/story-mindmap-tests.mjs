@@ -153,6 +153,18 @@ function tempStory(tag, { pack2 = PACK2, bracket = BRACKET } = {}) {
   rmSync(dir, { recursive: true, force: true })
 }
 
+// ══ c2b: payload unchanged vẫn render --mermaid-md khi caller yêu cầu (P1 review 27/09) ══
+{
+  const { dir, env } = tempStory('md-unchanged')
+  const args = ['--bracket', 'docs/superpowers/brackets/vx-1-do-an-thu.md']
+  run(bin, args, dir, env)
+  const md = join(dir, 'docs/superpowers/mindmaps/vx-1-do-an-thu.md')
+  const r = run(bin, [...args, '--mermaid-md', md], dir, env)
+  check('c2b', 'exit 0 + unchanged', r.code === 0 && r.out.includes('unchanged'), r.out)
+  check('c2b', 'md vẫn được render khi unchanged', existsSync(md) && readFileSync(md, 'utf8').includes('```mermaid'), 'md bị nuốt khi unchanged')
+  rmSync(dir, { recursive: true, force: true })
+}
+
 // ══ c3: payload đổi → ghi lại + generatedAt mới ══
 {
   const { dir, env } = tempStory('bump')
@@ -310,6 +322,9 @@ function tempStory(tag, { pack2 = PACK2, bracket = BRACKET } = {}) {
   const { dir, env } = tempStory('close')
   git(dir, 'add', '-A'); git(dir, 'commit', '-qm', 'base')
   writeFileSync(join(dir, '.gitignore'), 'docs/\n')
+  // P1 review: file lạ đang staged KHÔNG được kéo vào commit mindmap
+  writeFileSync(join(dir, 'staged-lai.txt'), 'lạ\n')
+  git(dir, 'add', 'staged-lai.txt')
   const r = execFileSync('bash', [wrapper, '--reason', 'close', '--commit'], {
     cwd: dir, encoding: 'utf8', env: { ...process.env, ...env },
   })
@@ -317,6 +332,9 @@ function tempStory(tag, { pack2 = PACK2, bracket = BRACKET } = {}) {
   check('c8', 'file được sinh', existsSync(join(dir, f)), r)
   check('c8', 'file được force-add + commit', git(dir, 'ls-files').includes(f), git(dir, 'log', '--oneline'))
   check('c8', 'commit có trong log', git(dir, 'log', '--oneline').toLowerCase().includes('mindmap'), git(dir, 'log', '--oneline'))
+  const committed = git(dir, 'show', '--name-only', '--format=', 'HEAD')
+  check('c8', 'commit CHỈ chứa .wakii (không quét staged lạ)', committed.trim() === f, committed)
+  check('c8', 'file lạ vẫn còn staged (không bị đụng)', git(dir, 'diff', '--cached', '--name-only').includes('staged-lai.txt'), git(dir, 'diff', '--cached', '--name-only'))
   // chạy lần nữa — idempotent → không commit rác
   execFileSync('bash', [wrapper, '--reason', 'close', '--commit'], { cwd: dir, encoding: 'utf8', env: { ...process.env, ...env } })
   check('c8', 'lần 2 không commit thêm', git(dir, 'rev-list', '--count', 'HEAD').trim() === '2', git(dir, 'log', '--oneline'))

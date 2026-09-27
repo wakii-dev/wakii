@@ -164,6 +164,11 @@ function orcaJson(orcaBin, args, timeoutMs) {
 function readOrcaStates(orcaBin, epic, warnings) {
   try {
     let runId = process.env.STORY_MINDMAP_RUN || '';
+    // epic-id phải ASCII-anh thì regex match mới đáng tin — lệch → bỏ discovery (P2 review 27/09)
+    if (!runId && !/^[A-Za-z0-9][A-Za-z0-9.-]*$/.test(epic)) {
+      warnings.push(`orchestration: epic-id "${epic}" không ASCII-anh — bỏ run discovery`);
+      return new Map();
+    }
     if (!runId) {
       const runs = (JSON.parse(orcaJson(orcaBin, ['orchestration', 'run-list', '--json'], 6000)).result?.runs) || [];
       const hit = runs
@@ -349,6 +354,9 @@ function cmdGenerate(argv) {
       const prevPayload = { nodes: prev.nodes, edges: prev.edges, evidence: prev.evidence, decodeWarnings: prev.decodeWarnings, meta: { ...prevMeta, generatedAt: undefined } };
       const samePayload = stable(curPayload) === stable(prevPayload);
       if (samePayload) {
+        // unchanged vẫn phải render --mermaid-md nếu caller yêu cầu (P1 review 27/09)
+        const mdNow = flagValue('--mermaid-md');
+        if (mdNow) writeMermaid(prev, path.resolve(mdNow));
         console.log(`story-mindmap — ${path.basename(outPath)} unchanged (idempotent)`);
         console.log(`out: ${relOut} (unchanged)`);
         return;

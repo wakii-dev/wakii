@@ -10,8 +10,8 @@ set -u
 REASON="run"; COMMIT=0; BRACKET=""
 while [ $# -gt 0 ]; do
   case "$1" in
-    --reason) REASON="$2"; shift ;;
-    --bracket) BRACKET="$2"; shift ;;
+    --reason) if [ $# -ge 2 ]; then REASON="$2"; shift; fi ;;  # thiếu giá trị → giữ default, không vỡ set -u
+    --bracket) if [ $# -ge 2 ]; then BRACKET="$2"; shift; fi ;;
     --commit) COMMIT=1 ;;
   esac
   shift
@@ -36,6 +36,7 @@ run_bin() { # args... — bin thiếu exec-bit thì chạy qua node
 
 ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || ROOT="$PWD"
 STAGED=0
+ADDED=()
 
 gen_one() { # $1 bracket — sinh 1 story; --commit thì force-add file vừa sinh
   [ -f "$1" ] || return 0
@@ -46,7 +47,9 @@ gen_one() { # $1 bracket — sinh 1 story; --commit thì force-add file vừa si
   p=$(printf '%s\n' "$out" | sed -n 's/^out: //p' | head -1)
   [ -n "$p" ] || return 0
   if [ "$COMMIT" = "1" ]; then
-    git -C "$ROOT" add -f -- "$p" >/dev/null 2>&1 && STAGED=1
+    if git -C "$ROOT" add -f -- "$p" >/dev/null 2>&1; then
+      STAGED=$((STAGED + 1)); ADDED+=("$p")
+    fi
   fi
   return 0
 }
@@ -59,11 +62,8 @@ else
   done
 fi
 
-if [ "$STAGED" = "1" ]; then
-  if git -C "$ROOT" diff --cached --quiet >/dev/null 2>&1; then
-    git -C "$ROOT" reset -q >/dev/null 2>&1
-  else
-    git -C "$ROOT" commit -q -m "chore(story): mindmap snapshot (${REASON})" >/dev/null 2>&1
-  fi
+if [ "$STAGED" -gt 0 ]; then
+  # commit CHỈ path .wakii mình vừa add — không quét staged lạ vào commit (P1 review 27/09)
+  git -C "$ROOT" commit -q -m "chore(story): mindmap snapshot (${REASON})" -- ${ADDED[@]+"${ADDED[@]}"} >/dev/null 2>&1
 fi
 exit 0
