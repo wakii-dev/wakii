@@ -167,5 +167,22 @@ export const VI_PRESERVE_ENGLISH_VALUES = new Set([
   '{{value0}} MB',
   '{{value0}} v{{value1}} · {{value2}}',
   '{{value0}} → {{value1}}',
-  '{{value0}}: {{value1}}'
+  '{{value0}}: {{value1}}',
+  // Lô 2 remainder (27/09): enum identifiers, GitHub line anchors, brands, punctuation separators,
+  // and pure-placeholder templates from terminal/git surfaces — nothing translatable between tokens.
+  '{{value0}} PR #{{value1}}?',
+  ':L{{value0}}',
+  '-L{{value0}}',
+  'PULL_REQUEST',
+  'BOARD_LAYOUT',
+  'TABLE_LAYOUT',
+  'DRAFT_ISSUE',
+  '{{value0}} — {{value1}}',
+  '{{title}}, {{status}}',
+  'CPU',
+  'Wakii',
+  '·',
+  '···',
+  'API',
+  'Web'
 ])
