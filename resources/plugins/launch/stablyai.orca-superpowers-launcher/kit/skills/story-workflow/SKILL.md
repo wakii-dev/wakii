@@ -294,19 +294,14 @@ Run the full-strictness epic pipeline:
 11. Print `STORY-READY: <ISSUE> — bracket file: <path>` → STOP. Await user approval.
 
 ### APPROVE (user says "approve story" / duyệt)
-**Coordinator worktree (worktree CHA — kit ≥2.16.7):** tạo worktree coordinator
-của story TRƯỚC khi launch SF đầu — mọi SF worktree sau đó là CON lineage của nó
-(`story-launch` tự gắn `--parent-worktree` khi thấy cha tồn tại):
-
-```bash
-# <dest-slug> = nhánh đích không chữ "story/" — vd fi458-distributed-bracket
-orca worktree create --name "<dest-slug>-coordinator" \
-  --base-branch "story/<epic>-<slug>" --no-parent --agent claude --json
-```
-
-Coordinator terminal sống ở worktree cha này: aggregate, duyệt gate, merge con
-về branch cha (branch cha = checkout đích). 1 story = 1 cây lineage = 1
-coordinator (ONE COORDINATOR PER STORY — xem OPERATE).
+**Story worktree = worktree coordinator (story-hub):** tạo TRƯỚC khi launch SF
+đầu — mọi SF worktree sau đó là CON lineage của nó (`story-launch` tự gắn
+`--parent-worktree` khi thấy cha tồn tại). Lệnh: khối "Create the STORY WORKTREE"
+bên dưới — coordinator terminal sống NGAY trong story worktree (checkout nhánh
+đích): aggregate, duyệt gate, merge SF thật về đích. 1 story = 1 cây lineage = 1
+coordinator (ONE COORDINATOR PER STORY — xem OPERATE). (Story legacy
+`Worktree model: legacy` giữ pattern cũ: worktree cha `<dest-slug>-coordinator`
+kit ≥2.16.7 — xem `git log` section này.)
 
 **Idempotency first:** read the bracket — any SF already carrying `linear: <ID>`
 is DONE (skip creating; verify the issue exists and is active, else recreate).
@@ -340,8 +335,14 @@ Tasks: <Tasks>" \
 # (or via save-issue) so they're visible as ready work.
 ```
 Then write `linear: <ID>` back into each SF block in the bracket file.
-Create the story DESTINATION branch `story/<epic-id>-<slug>` from main
-(see Story destination branch below) — mọi SF fork từ đây và merge về đây.
+Create the STORY WORKTREE (story-hub model — spec story-worktree-hub):
+```bash
+PRIMARY=$(~/.claude/bin/story-validate --resolve-primary --repo .)  # thang 6 bậc; exit 1 → hỏi user
+orca worktree create --name story/<epic-id>-<slug> --base-branch "$PRIMARY" --agent claude
+```
+Nhánh đích sinh ra trong story worktree — coordinator session LÀM VIỆC TRONG
+ĐÓ suốt story. Bracket ghi `Primary: $PRIMARY` + `Worktree model: story-hub`
+(story-validate check). SF worktrees fork từ nhánh đích như cũ.
 Create the orchestration DAG mirroring tiers:
 ```bash
 RUN=$(orca orchestration run-create --objective "<EPIC>: <title>" --json | python3 -c "import json,sys; print(json.load(sys.stdin)['result']['run']['id'])")
@@ -445,24 +446,14 @@ khi rời tier, coordinator xử hết design gate của tier — SF đã clear 
 tự chạy (bài học FI-187: rule chỉ nằm trong doc thì không ai thực thi; giờ relay
 là cơ chế, doc mô tả đúng cơ chế).
 
-**Destination-freshness guard (trước khi fork SF đầu tiên của tier):** nhánh đích
-phải chứa mọi story-meta commit mới nhất trên main (bracket remaps, context-pack
-backfills). **DÙNG NGUYÊN CỤM LỆNH — đừng tự ghép branch -f tay** (sự cố thật
-21:57 tối 28/8: coordinator chạy `git branch -f <đích> main` không kèm guard
-khi đích ĐANG chứa SF merges — đè mất 2 SF merges; reflog cứu trong 60s, nhưng
-60s đó không nên tồn tại):
-```bash
-if git merge-base --is-ancestor story/<đích> main; then
-  git branch -f story/<đích> main          # đích chưa có SF merges → ff an toàn
-else
-  # đích ĐANG chứa SF merges → KHÔNG BAO GIỜ branch -f (mất merges!)
-  git worktree add /tmp/dest-sync story/<đích>
-  git -C /tmp/dest-sync merge main --no-edit   # meta commits vào đích qua merge
-  git worktree remove /tmp/dest-sync
-fi
-```
-(learned 2026-08-28 FI-187: nhánh đích stale @CREATE — thiếu APPROVE remap;
-tier-1 fork từ đích sẽ mất linear IDs + ACCEPTANCE backfills.)
+**Destination-freshness (story-hub — hết branch -f surgery):** primary (bracket
+`Primary:`) tiến trong lúc story chạy → merge vào nhánh đích ĐỊNH KỲ trong
+story worktree, merge thường KHÔNG rebase — lệnh: section "Merge primary vào
+dest" trong `references/merge-playbook.md`; BẮT BUỘC 1 lần trước khi tạo PR.
+KHÔNG BAO GIỜ `git branch -f` lên nhánh đích — kể cả dạng "an toàn có guard"
+(sự cố thật 21:57 tối 28/8: branch -f không guard khi đích đang chứa SF merges
+— đè mất 2 merges; learn FI-187: nhánh đích stale @CREATE làm tier-1 fork mất
+linear IDs + ACCEPTANCE backfills — giờ giải bằng merge định kỳ, không surgery).
 
 **Design gate TRƯỚC dev (khi bracket ghi `Design: mock-prototype`; `Design:
 figma` → bỏ qua gate này — Figma là direction đã duyệt, implement per P8):** KHÔNG
@@ -517,22 +508,25 @@ one SF and reports DONE/BLOCKED.
 - **Nhánh đích là branch DUY NHẤT của story: `story/<epic-id>-<slug>`.** (Tên
   legacy `story-base` trong các run FI cũ — KHÔNG dùng lại; mọi command mới
   dùng đúng `story/<epic-id>-<slug>`.)
-- APPROVE creates `story/<epic-id>-<slug>` from main BEFORE any SF starts.
-- Every SF worktree forks from nhánh đích (not main).
+- APPROVE creates the STORY WORKTREE with nhánh đích `story/<epic-id>-<slug>`
+  fork từ primary (bracket `Primary:`) BEFORE any SF starts.
+- Every SF worktree forks from nhánh đích (not primary).
 - SF merges back to its PARENT branch on completion (nhánh đích normally;
   nested SF → its parent SF). See CLOSE — parent-merge rule.
 - Tier boundaries = merge points: a tier-N SF's base includes all merged
   tier-(N-1) work.
 - **Branch ownership (THỐNG NHẤT — nhánh đích riêng mỗi story):** mỗi story
   có MỘT nhánh đích riêng: `story/<epic-id>-<slug>` (vd `story/fi151-3d-redesign`)
-  — tạo lúc APPROVE, fork từ main. Mọi SF fork từ nó và merge về nó; nó là
-  "main của story". Khi story hoàn thành: code hoàn chỉnh nằm TRÊN NHÁNH ĐÍCH
-  và agents KHÔNG TỰ merge vào main. **PR được agent tạo (gh CLI — 1 PR/story,
-  xem `references/pr-playbook.md`) nhưng MERGE là quyền của NGƯỜI** (merge PR
-  hoặc local merge — hoàn toàn quyền của người). Agents/watchdog chỉ: đưa
-  nhánh đích tới trạng thái sạch + verify + tạo PR (nếu đủ điều kiện) + báo
-  STORY-COMPLETE. Sau NGƯỜI merge xong: dọn sf-* worktrees; nhánh đích GIỮ LẠI
-  (audit trail) tới khi người tự xóa.
+  — sinh ra trong story worktree lúc APPROVE, fork từ primary (bracket
+  `Primary:`). Mọi SF fork từ nó và merge về nó; nó là "main của story". Khi
+  story hoàn thành: code hoàn chỉnh nằm TRÊN NHÁNH ĐÍCH và agents KHÔNG TỰ
+  merge vào primary. **PR được agent tạo (gh CLI — 1 PR/story, dest → primary,
+  xem `references/pr-playbook.md`) nhưng MERGE PR là quyền của NGƯỜI** (human
+  gate cuối trên GitHub/Source Control panel — merge primary vào dest là việc
+  coordinator trong story worktree, không phải merge-thay-người). Agents/
+  watchdog chỉ: đưa nhánh đích tới trạng thái sạch + verify + tạo PR (nếu đủ
+  điều kiện) + báo STORY-COMPLETE. Sau khi NGƯỜI merge PR: story-level cleanup
+  xoá story worktree + nhánh đích (merge-playbook "Story-level cleanup").
 
 ### OPERATE (progress)
 
@@ -582,15 +576,13 @@ bundle sau này hạ cấp mất fixes.
 nhánh nó được fork từ đó trong cây topology — không hardcode đích/main:
 
 ```
-main
- └─ story/<epic>-<slug>   (NHÁNH ĐÍCH — fork từ main lúc APPROVE)
-     │
-     └─ <dest-slug>-coordinator   (WORKTREE CHA kit ≥2.16.7 — coordinator
-         │                         terminal sống đây, giữ checkout đích)
-         ├─ sf-1             (lineage CON của cha; git fork từ đích → merge về cha)
-         ├─ sf-2..sf-7       (như trên — 1 story = 1 cây lineage)
-         └─ sf-nested        (SF con fork từ SF cha → merge về SF cha)
-đích ──▶ main            (NGƯỜI DÙNG tự merge khi story xong — agents không làm)
+<primary>
+ └─ story/<epic>-<slug>   (NHÁNH ĐÍCH — fork từ primary lúc APPROVE; checkout
+     │                      của STORY WORKTREE — coordinator sống đây, merge thật)
+     ├─ sf-1             (lineage CON; git fork từ đích → merge về đích)
+     ├─ sf-2..sf-7       (như trên — 1 story = 1 cây lineage)
+     └─ sf-nested        (SF con fork từ SF cha → merge về SF cha)
+đích ──▶ <primary>       (1 PR/story — NGƯỜI merge PR; agents không merge primary)
 ```
 
 Ngoại lệ đa máy: worktree trên host KHÁC không thể là con lineage
@@ -601,10 +593,12 @@ Xác định parent khi launch: `--base-branch <X>` đã dùng = merge target.
 Ghi rõ parent vào orchestration task spec để agent SF không đoán.
 
 **Per-SF merge / snapshot merge / CLEANUP-ON-MERGE — REQUIRED:
-`references/merge-playbook.md`** (lệnh đã verify FI-151/191). Tóm tắt bất biến:
-- Per-SF merge: chuỗi merge-ngược an toàn (merge PARENT vào sf-branch trước →
-  `update-ref refs/heads/<PARENT>` FULL refname + 2 ancestor guards). KHÔNG BAO
-  GIỜ update-ref khi sf-branch chưa chứa PARENT cũ (đã mất 6 SF merges thật).
+`references/merge-playbook.md`** (story-hub protocol). Tóm tắt bất biến:
+- Per-SF merge (story-hub): coordinator merge sf-branch THẬT trong story
+  worktree + push dest (xem merge-playbook — story-hub). Executor không đụng
+  nhánh đích; merge commit không thể kéo dest LÙI — hết ref surgery + ancestor
+  guards (class lỗi "ghi đè mất 6 SF merges thật" FI-151/191 biến mất cùng
+  protocol).
 - Snapshot merge mid-run cho SF nhiều tasks — KHÔNG đánh dấu task completed.
 - Merge cuối xong → comment hash lên sub-issue → `task-update --status completed`
   → DAG mở khóa tier sau.
@@ -629,7 +623,7 @@ Sau một đêm chạy: KIỂM TRA TOÀN BỘ SF In Progress theo 3 tầng trên
 (Tự động hóa việc này: STORY-WATCHDOG bên dưới chạy vòng check này định kỳ.)
 
 **Story CLOSE (một lần, khi tất cả SF Done) — DỪNG Ở NHÁNH ĐÍCH:**
-Agents KHÔNG merge vào main — người dùng tự merge sau khi muốn. CLOSE của agent:
+Agents KHÔNG merge vào primary — push dest + PR để NGƯỜI merge. CLOSE của agent:
 
 1. Convergence SF (tier cuối) merge về nhánh đích xong.
 2. **Final verify TRÊN NHÁNH ĐÍCH**: smoke + tests + build + visual check
@@ -640,25 +634,30 @@ Agents KHÔNG merge vào main — người dùng tự merge sau khi muốn. CLOS
    `orca "set device" --name "iPhone 12"`; xong `orca tab close`.
    `screenshot` cần window focus — ưu tiên snapshot/get/is (xem reviewer
    browser notes trong agents/code-reviewer.md).
-3. Dọn sf-* worktrees + branches (GIỮ nhánh đích) — lệnh: section "Story CLOSE
-   cleanup" trong `references/merge-playbook.md`.
+3. Dọn sf-* worktrees + branches còn sót (GIỮ nhánh đích — dest chỉ bị xoá ở
+   story-level cleanup SAU khi PR merge; lệnh: sections "CLEANUP-ON-MERGE" +
+   "Story-level cleanup" trong `references/merge-playbook.md`).
 4. Orca cleanup: worktrees sf-* đăng ký Orca → `orca worktree rm` (registry đồng bộ).
 5. Linear: mọi sub-issue Done → **Epic → Done** + final audit comment
    (SF→issue→merge-hash map + tên nhánh đích + hướng dẫn merge cho người).
 6. **Tạo PR (agent chạy — `references/pr-playbook.md`):** push nhánh đích +
-   `gh pr create --base main` (1 PR/story) + comment PR URL vào Linear epic.
+   `gh pr create --base "$PRIMARY"` — base đọc từ bracket `Primary:`, KHÔNG
+   hardcode main (1 PR/story) + comment PR URL vào Linear epic.
    Thiếu remote/gh → `READY-FOR-MANUAL-MERGE` vào audit comment, không chặn.
 7. In **STORY-COMPLETE: PR đã mở (hoặc READY-FOR-MANUAL-MERGE) — NGƯỜI review
    và merge** → agents kết thúc. (Merge PR là human gate cuối — không agent
-   hay watchdog nào merge main.)
+   hay watchdog nào merge primary.)
 
-**Sau khi NGƯỜI merge nhánh đích → main:** tùy chọn xóa nhánh đích khi không
-cần audit trail nữa. Bracket file + Linear audit giữ vĩnh viễn.
+**Sau khi NGƯỜI merge PR (dest → primary):** story-level cleanup — xoá story
+worktree + nhánh đích (local + remote), guards bắt buộc: section "Story-level
+cleanup" trong `references/merge-playbook.md`. Bracket file + Linear audit giữ
+vĩnh viễn.
 
 **Verification trước khi declare STORY-COMPLETE (không tin mù):**
 - nhánh đích chứa TẤT CẢ SF (mỗi sf-branch: rev-list count đích..sf == 0)
 - mọi sub-issue state = Done (list children check)
-- worktrees sf-* đã remove + `git worktree list` sạch (chỉ main + story parent)
+- worktrees sf-* đã remove + `git worktree list` sạch (chỉ primary worktree +
+  story worktree)
 - branches sf-* đã xóa; NHÁNH ĐÍCH còn (đó chính là sản phẩm)
 - final verify pass trên nhánh đích (smoke/tests/visual)
 - Epic → Done.
