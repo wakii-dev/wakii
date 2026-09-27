@@ -1,0 +1,59 @@
+VU-14 SF-3 — viewer mindmap tương tác — test run evidence
+Date: 2026-09-27
+Worktree: sf-3-viewer-mindmap (base 241fed8aed91)
+Code commit: 052f420410 (feat(viewer): SF-3 .wakii mindmap viewer — direction C orbital render)
+tdd: RED→GREEN (layout/component/slice/bridge tests written with implementation; failing expectations fixed until 40/40, regression suites re-run green)
+
+== Battery (exit codes captured, không qua pipe) ==
+1. pnpm vitest run --config config/vitest.config.ts src/renderer/src/viewer/ + bridge + slice tests
+   → exit=0, 40 passed (layout 13, component 22, bridge 5... wakii suites)
+2. Regression: vitest src/renderer/src/components/editor/ → 1731 passed, 1 failed
+   (MonacoEditor.breadcrumbs — PRE-EXISTING: test mounts MonacoEditor directly,
+    store mock thiếu getState; file + connection-context.ts không nằm trong diff SF-3)
+3. Regression: os-markdown-file-open-bridge.test + editor slice + locale-english-regression → green
+4. pnpm tc → exit=0
+5. oxlint (changed files) → exit=0
+6. pnpm run check:code-quality:changed 241fed8aed9125f169f53c5af709986bcb329ce0 → exit=0 (PASSED,
+   scoped đúng base SF; base mặc định trỏ upstream cũ 841d06a969 → 351 findings branch-wide PRE-EXISTING)
+7. pnpm run verify:localization-extraction → exit=0 (53 keys mới khớp en.json)
+8. pnpm run lint:design-system → report-only; 0 finding trong file SF-3
+9. e2e golden (Rule 0): SKIP_BUILD=1 npx playwright test tests/e2e/wakii-viewer-mindmap-golden.spec.ts
+   --project=electron-headless → 1 passed (6.3s) — DOM+FLOW+VISUAL trên app thật
+
+== PRE-EXISTING RED (không thuộc SF-3, báo PM) ==
+- src/renderer/src/i18n/runtime-required-catalog.test.ts: 2 fail — drift
+  en-runtime-required.json vs en.json (118 entry, brand Wakii/Orca). Diff en.json
+  của SF-3 = 53 additions thuần (0 sửa/0 xoá, đã verify bằng script).
+- MonacoEditor.breadcrumbs.test.tsx: 1 fail — mock '@/store' thiếu getState,
+  render MonacoEditor trực tiếp (không qua EditorContent).
+- tests/e2e typecheck: 4 lỗi ở worktree-scroll-to-current.spec.ts + tests/tools/* (pre-existing).
+
+== 10 test case của pack ==
+1  golden progress render    → wakii-viewer.test.tsx (16 node/19 cạnh, tier 200/385/500, dot token) + e2e DOM
+2  golden logic+impact       → wakii-viewer.test.tsx (13/14 → 24/26, computed≠curated) + e2e
+3  panel click per-kind      → wakii-viewer.test.tsx (sf/epic/file/step + collapsible ≤3) + e2e flow
+4  hover dim/hot + wedge     → wakii-viewer.test.tsx + e2e hover sf-3
+5  escape <script> (t-3.3)   → wakii-viewer.test.tsx (textContent, 0 <script>) + e2e
+6  error + decodeWarnings    → wakii-viewer.test.tsx + e2e errbox/badge(2)
+7  mode toggle + chips       → wakii-viewer.test.tsx + e2e
+8  camera wheel/pan/fit      → wakii-viewer.test.tsx (transform ref) + e2e wheel
+9  theme light/dark          → e2e screenshot progress-light (token .dark toggle) — viewer không owned theme
+10 editor slice .wakii/.md   → wakii-viewer-actions.test.ts + regression editor suites xanh
+
+== Rule 0 browser verify (3 tầng, tự nhìn) ==
+- DOM: assert trong spec (counts, radii, panel, wedge, escape) — PASS
+- VISUAL: screenshots/progress-dark.png · logic-impact-dark.png · progress-light.png
+  — đã Read từng ảnh: orbital epic giữa + 3 ring tier + panel TRÁI đầy đủ
+  (evidence/ACCEPTANCE(2)/TESTS(3)/NOTES(4) đúng luật ≤3), wedge quạt quanh sf-3,
+  legend đổi theo mode, light/dark chỉ đổi token. Khớp prototype c.html.
+- FLOW: error→card; seed→tab viewer; click SF→panel; canvas click→đóng;
+  logic→impact; hover→wedge; wheel→zoom transform; theme flip. PASS.
+
+== Lệch design đã ghi (đúng theo A1/pack) ==
+- Prototype có #tabbar giả → trong app tab strip là editor tab thật (A1); viewer không render tabbar.
+- Golden fixture = payload prototype NÂNG cấp theo schema v1 strict (file node thêm title bắt buộc);
+  SF-1 fixture mang thêm summary/acceptance/tests/notes + meta.summary (mục tiêu tự-chứa 27/09).
+- main.css: +1 dòng @import './wakii-viewer.css' (pattern surface css có sẵn:
+  markdown-preview.css/terminal.css); KHÔNG thêm token mới.
+- src/shared/wakii-mindmap-types.ts (file MỚI, ngoài component map): contract type
+  cho glue + preload type; tách riêng để SF-2 import không xung đột.
