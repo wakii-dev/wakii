@@ -1,12 +1,12 @@
 // SF-3 RULE-0 extra captures on top of vi-rule0-browser-verify.mjs: the main
 // script owns Settings/Appearance + sidebar + the live en→vi switch; this
 // driver adds the two surfaces the pack's visual pass requires that the main
-// script does not cover — the ⌘J jump palette (opened by clicking the sidebar
-// search box, avoiding hidden-window keyboard delivery) and the terminal pane
-// (needs a project open; the add-project wizard accepts a typed path, so no
-// native folder picker is involved). Also carries the restart-persistence
-// check for the FLOW tier: --verify-persist exits 0 when the freshly relaunched
-// profile still renders Vietnamese.
+// script does not cover — the ⌘J jump palette (opened via the main-process
+// toggle IPC over the inspector, see togglePaletteViaMainInspector) and the
+// terminal pane (needs a project open; the add-project wizard accepts a typed
+// path, so no native folder picker is involved). Also carries the restart-
+// persistence check for the FLOW tier: --verify-persist exits 0 when the
+// freshly relaunched profile still renders Vietnamese.
 // Usage: node config/scripts/vi-rule0-extra-captures.mjs --port 9333 --out <dir> --phase en|vi [--project /path] [--verify-persist]
 import fs from 'node:fs/promises'
 import path from 'node:path'
@@ -52,28 +52,33 @@ async function togglePaletteViaMainInspector() {
       ws.addEventListener('open', resolve)
       ws.addEventListener('error', reject)
     })
-    const result = await new Promise((resolve) => {
-      const onMessage = (event) => {
-        const message = JSON.parse(event.data)
-        if (message.id === 1) {
-          ws.removeEventListener('message', onMessage)
-          resolve(message)
-        }
-      }
-      ws.addEventListener('message', onMessage)
-      ws.send(
-        JSON.stringify({
-          id: 1,
-          method: 'Runtime.evaluate',
-          params: {
-            expression:
-              '(() => { const req = process.mainModule && process.mainModule.require; if (!req) return "no mainModule";' +
-              'req("electron").webContents.getAllWebContents()[0].send("ui:toggleWorktreePalette"); return "ipc sent" })()',
-            returnByValue: true
+    const result = await Promise.race([
+      new Promise((resolve) => {
+        const onMessage = (event) => {
+          const message = JSON.parse(event.data)
+          if (message.id === 1) {
+            ws.removeEventListener('message', onMessage)
+            resolve(message)
           }
-        })
-      )
-    })
+        }
+        ws.addEventListener('message', onMessage)
+        ws.send(
+          JSON.stringify({
+            id: 1,
+            method: 'Runtime.evaluate',
+            params: {
+              expression:
+                '(() => { const req = process.mainModule && process.mainModule.require; if (!req) return "no mainModule";' +
+                'req("electron").webContents.getAllWebContents()[0].send("ui:toggleWorktreePalette"); return "ipc sent" })()',
+              returnByValue: true
+            }
+          })
+        )
+      }),
+      // Why: an inspector that accepts the socket but never replies would hang
+      // the driver forever.
+      new Promise((resolve) => setTimeout(() => resolve({ timeout: true }), 8000))
+    ])
     ws.close()
     const value = result?.result?.result?.value
     if (value !== 'ipc sent') {
@@ -103,6 +108,16 @@ async function main() {
   }
 
   const browser = await chromium.connectOverCDP(`http://127.0.0.1:${args.port}`)
+  // Why: a leaked playwright CDP session wedges the app's CDP server for every
+  // later client — always close, including on the early-return paths.
+  try {
+    await capture(browser, args, shot)
+  } finally {
+    await browser.close().catch(() => {})
+  }
+}
+
+async function capture(browser, args, shot) {
   const pages = browser.contexts().flatMap((context) => context.pages())
   const page = pages.find((candidate) => !candidate.url().startsWith('devtools')) ?? pages[0]
   if (!page) {
@@ -189,9 +204,11 @@ async function main() {
       }
     }
     if (!terminalOpened) {
+      // The clone lands on a workbench whose terminal pane is already visible;
+      // the workbench shot stands in for a dedicated terminal frame (no
+      // separate affordance to click) — keeps evidence free of duplicate files.
       report('  (no New Terminal affordance visible — workbench shot stands in)')
     }
-    await shot(page, '12-terminal-en.png')
 
     await openPalette()
     await shot(page, '13-palette-en.png')
@@ -206,8 +223,8 @@ async function main() {
     await shot(page, '14-palette-vi.png')
     await page.keyboard.press('Escape')
     await page.waitForTimeout(600)
+    // Terminal pane + worktree list share this frame in the vi workbench.
     await shot(page, '15-terminal-vi.png')
-    await shot(page, '16-workbench-vi.png')
     report('PASS vi phase')
     return
   }

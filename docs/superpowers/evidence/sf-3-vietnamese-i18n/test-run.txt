@@ -32,12 +32,14 @@ attach phải đổi sang userData riêng) + CDP 9333; project thử nghiệm cl
 không native picker).
 - TIER 1 DOM/FLOW: live switch en→vi qua Settings→Appearance→Ngôn ngữ→Tiếng Việt
   — "Ngôn ngữ" render ngay (PASS, rule0-verify.txt của script SF-2 tái dụng)
-- TIER 2 VISUAL: 11 screenshot BEFORE en / AFTER vi — settings/appearance
+- TIER 2 VISUAL: 9 distinct frames BEFORE en / AFTER vi — settings/appearance
   (01 en · 02 vi), sidebar+worktree list (10 en · 03 vi), workbench+terminal
-  pane (11, 12 en · 15, 16 vi), command palette ⌘J (13 en · 14 vi), sau
-  restart (06 vi). Mọi màn tiếng Việt, term kỹ thuật (worktree/terminal/
-  Source Control/Git) giữ Latin, không raw key, không vỡ layout với chuỗi vi
-  dài hơn (kiểm bằng mắt từng ảnh, không chỉ DOM).
+  pane (11 en · 15 vi — terminal pane hiển thị trong cùng frame workbench),
+  command palette ⌘J (13 en · 14 vi), sau restart (06 vi). Mọi màn tiếng Việt,
+  term kỹ thuật (worktree/terminal/Source Control/Git) giữ Latin, không raw
+  key, không vỡ layout với chuỗi vi dài hơn (kiểm bằng mắt từng ảnh, không
+  chỉ DOM). Reviewer round 1 (P2): 2 frame trùng hash (12, 16) đã xoá —
+  số liệu này phản ánh bộ ảnh sau xử lý.
 - TIER 3 FLOW en→vi→RESTART: kill app → relaunch cùng profile → vi giữ nguyên
   (markers Tìm kiếm/Dự án/Nhiệm vụ) — PASS persist + screenshot 06.
 - Hygiene scans (script SF-2): 0 raw catalog key, 0 GT-literal trong text render.

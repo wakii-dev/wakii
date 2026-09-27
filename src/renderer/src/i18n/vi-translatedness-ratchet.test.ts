@@ -8,8 +8,11 @@
  * metric 14764/14764 = 100%), not a ratio: an English-side key addition
  * lowers a ratio while the catalog is untranslated and would create a
  * blanket gate on normal en growth (banned, cf. locale-english-regression).
- * A count only drops when an existing vi value reverts toward English —
- * exactly the regression this ratchet exists to catch.
+ * A count drops only when translated content disappears — an existing vi
+ * value reverting toward English, or a translated key being removed from
+ * en.json (the metric walks the en tree). Both are worth failing the build
+ * over; for a deliberate en-side removal, bump the baseline in the same
+ * commit so the drop is a reviewed decision.
  */
 import { describe, expect, it } from 'vitest'
 

@@ -12,7 +12,7 @@ Everything that claims "vi is translated" goes through `computeTranslatedness()`
 `config/scripts/locale-translatedness-metric.mjs`. A leaf counts as translated when the vi
 value **differs from the English value** — comparing values, not keys, because the bootstrap
 clones the full English tree, so a missing key can never happen; only the value tells you
-whether a string was actually translated. Two classes are satisfied by *staying equal* to
+whether a string was actually translated. Two classes are satisfied by _staying equal_ to
 English: preserve-policy leaves (`shouldPreserveEnglishValue`) and the seven language-picker
 endonym labels (`Tiếng Việt`, `中文（简体）, …`), which every catalog pins verbatim.
 
@@ -20,8 +20,9 @@ The SF-3 ratchet test (`src/renderer/src/i18n/vi-translatedness-ratchet.test.ts`
 that same function against a hard-coded floor: the translated-leaf **count** at ship
 (14764). The floor is a count, not a percentage, on purpose — a percentage drops whenever
 `en.json` grows a key that isn't translated yet, which would gate normal English growth. A
-count only drops when an existing vi value reverts toward English, which is exactly the
-regression worth failing a build for.
+count drops only when translated content disappears: a vi value reverting toward English,
+or a translated key removed from `en.json` (the metric walks the en tree). For a deliberate
+en-side removal, bump the baseline in the same commit so the drop is a reviewed decision.
 
 ## How vi.json is produced
 
@@ -31,7 +32,7 @@ regression worth failing a build for.
 2. It translates leaf values through a machine-translation provider (value-level cache on
    disk — re-running a batch is free, interrupted batches resume by re-running the command).
 3. It repairs the result through `repairCatalog` (`locale-translation-policy.mjs`), which
-   applies the glossary *after* translation so the cache never holds poisoned values.
+   applies the glossary _after_ translation so the cache never holds poisoned values.
 
 `--prefix` scopes a run to dotted-key prefixes (batching). A full run without `--prefix`
 sweeps the long tail; the per-batch exit gate is the metric above with the same `--prefix`.
@@ -46,7 +47,7 @@ Three repair entry points in `config/scripts/`, all applied by `repairCatalog`:
   wrong-form list was built from real translator probes, not guesses.
 - `locale-vi-value-overrides.mjs` (`LOCALE_VALUE_OVERRIDES.vi`) — pins a specific English
   value to a specific Vietnamese value (wrong-button class: Save → `Lưu`, not `Cứu`).
-- `locale-vi-key-overrides.mjs` (`LOCALE_KEY_OVERRIDES.vi`) — pins a specific *key*.
+- `locale-vi-key-overrides.mjs` (`LOCALE_KEY_OVERRIDES.vi`) — pins a specific _key_.
 
 Vi-specific support files: `locale-vi-preserve-english-values.mjs` (whole-value tech labels
 that stay English for vi only), `locale-vi-phrase-fixes.mjs` (phrase-level repairs), and
@@ -63,7 +64,7 @@ through `*_other`; `*_one` entries copied from `en.json` are dead but harmless.
    `pnpm run sync:localization-catalog` fold it into `en.json` — or edit `en.json` directly
    if that is how the surface you touch is maintained.
 2. Run the bootstrap for the new leaves: `node config/scripts/bootstrap-locale-catalog.mjs
-   vi --prefix <affected prefixes>` (the value cache keeps the untouched catalog free).
+vi --prefix <affected prefixes>` (the value cache keeps the untouched catalog free).
 3. Check the result: `node config/scripts/locale-translatedness-metric.mjs vi --prefix …`
    per batch, then full — and the guard tests
    (`pnpm vitest run --config config/vitest.config.ts src/renderer/src/i18n/`), which pin
