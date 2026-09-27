@@ -2,7 +2,7 @@
 // story-validate tests — spawn bin thật trên bracket fixtures trong temp dir
 // (KHÔNG đụng docs/superpowers/brackets/ thật). Phủ: verdict OK/INVALID,
 // G3 dup, --linear không key → WARN skip exit 0, --linear key rỗng file →
-// WARN skip, usage exit 2, --json shape.
+// WARN skip, usage exit 2, --json shape, Primary + Worktree model (H2b/H2c).
 // Chạy: node tests/story-validate-tests.mjs
 import { spawnSync } from 'node:child_process'
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
@@ -34,6 +34,8 @@ function tempDir(tag) {
 
 const OK_BRACKET = `# Story: FI-900 — Test story
 Destination: story/fi900-test-story
+Primary: main
+Worktree model: legacy
 
 ## SF-1 First (Phase 1/1)
 Tier: 0
@@ -68,6 +70,56 @@ linear: FI-999
 What: cái kia
 Depends on: —
 Tasks: t3 / t4
+`
+
+// story-hub bracket đầy đủ — Primary + Worktree model: story-hub (contract mới)
+const HUB_BRACKET = `# Story: FI-999 — hub test
+Destination: story/fi-999-hub
+Primary: wakii-dev
+Worktree model: story-hub
+
+## SF-1 Hub (Phase 1/1)
+Tier: 0
+linear:
+What: bracket story-hub đầy đủ trường mới
+Depends on: —
+Tasks: task-mot / task-hai
+`
+
+const NO_PRIMARY_BRACKET = `# Story: FI-998 — no primary
+Destination: story/fi-998-no-primary
+
+## SF-1 A (Phase 1/1)
+Tier: 0
+linear:
+What: thiếu Primary
+Depends on: —
+Tasks: t1 / t2
+`
+
+const BAD_MODEL_BRACKET = `# Story: FI-997 — bad model
+Destination: story/fi-997-bad-model
+Primary: wakii-dev
+Worktree model: spinach
+
+## SF-1 A (Phase 1/1)
+Tier: 0
+linear:
+What: model lạ
+Depends on: —
+Tasks: t1 / t2
+`
+
+const NO_MODEL_BRACKET = `# Story: FI-996 — legacy no model
+Destination: story/fi-996-legacy
+Primary: main
+
+## SF-1 A (Phase 1/1)
+Tier: 0
+linear:
+What: legacy thiếu Worktree model
+Depends on: —
+Tasks: t1 / t2
 `
 
 function writeBracket(dir, name, content) {
@@ -141,6 +193,50 @@ console.log('== V5 usage: thiếu file / flag lạ → exit 2 ==')
   const f = writeBracket(dir, 'ok.md', OK_BRACKET)
   const r2 = spawnSync(BASH, [BIN, f, '--bogus'], { encoding: 'utf8', timeout: 15000 })
   check('V5', 'flag lạ exit 2', r2.status === 2, `status=${r2.status}`)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== V6 bracket story-hub đầy đủ → OK, không warn Primary/model ==')
+{
+  const dir = tempDir('v6')
+  const f = writeBracket(dir, 'hub.md', HUB_BRACKET)
+  const r = runValidate(f)
+  check('V6', 'exit 0', r.code === 0, `code=${r.code} out=${r.out}`)
+  check('V6', 'verdict OK', r.out.includes('OK — 1 SF'), r.out)
+  const warns = r.out.split('\n').filter(l => l.startsWith('WARN:'))
+  check('V6', 'không warn nào chứa Primary / Worktree model',
+    !warns.some(l => l.includes('Primary') || l.includes('Worktree model')), warns.join(' | '))
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== V7 thiếu Primary → FAIL ==')
+{
+  const dir = tempDir('v7')
+  const f = writeBracket(dir, 'no-primary.md', NO_PRIMARY_BRACKET)
+  const r = runValidate(f)
+  check('V7', 'exit 1', r.code === 1, `code=${r.code}`)
+  check('V7', 'FAIL chứa Primary:', r.out.includes('Primary:'), r.out)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== V8 Worktree model lạ → FAIL ==')
+{
+  const dir = tempDir('v8')
+  const f = writeBracket(dir, 'bad-model.md', BAD_MODEL_BRACKET)
+  const r = runValidate(f)
+  check('V8', 'exit 1', r.code === 1, `code=${r.code}`)
+  check('V8', 'FAIL chứa Worktree model', r.out.includes('Worktree model'), r.out)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== V9 thiếu Worktree model → WARN backward-compat, verdict vẫn OK ==')
+{
+  const dir = tempDir('v9')
+  const f = writeBracket(dir, 'no-model.md', NO_MODEL_BRACKET)
+  const r = runValidate(f)
+  check('V9', 'exit 0 (WARN không chặn)', r.code === 0, `code=${r.code} out=${r.out}`)
+  check('V9', 'WARN chứa Worktree model', r.out.includes('WARN: Worktree model'), r.out)
+  check('V9', 'verdict vẫn OK', r.out.includes('OK — 1 SF'), r.out)
   rmSync(dir, { recursive: true, force: true })
 }
 

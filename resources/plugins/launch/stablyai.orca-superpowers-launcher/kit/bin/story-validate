@@ -68,6 +68,21 @@ if not dest:
 elif not re.match(r"^Destination: story/[a-z0-9-]+-[a-z0-9-]+$", dest):
     warn(f"H2: Destination không khớp `story/<epic-id>-<slug>` (got: {dest!r})")
 
+# H2b — Primary (story-hub model): bắt buộc, fail-closed — mọi bước sau
+# (fork story worktree, PR --base) đọc từ đây, không rediscovery
+primary = next((l for l in lines if l.startswith("Primary:")), None)
+if not primary:
+    fail("Primary: thiếu — story-hub đòi primary branch resolve lúc CREATE (thang 6 bậc, xem spec story-worktree-hub)")
+elif not re.match(r"^Primary: [a-zA-Z0-9][a-zA-Z0-9./-]*$", primary):
+    fail(f"Primary: không khớp `[a-zA-Z0-9./-]` (got: {primary!r})")
+
+# H2c — Worktree model: WARN khi thiếu (story legacy đang bay), FAIL khi giá trị lạ
+wmodel = next((l for l in lines if l.startswith("Worktree model:")), None)
+if not wmodel:
+    warn("Worktree model: thiếu — story legacy (chạy playbook cũ). Story mới ghi `Worktree model: story-hub`")
+elif wmodel.split(":", 1)[1].strip() not in ("story-hub", "legacy"):
+    fail(f"Worktree model: chỉ nhận story-hub|legacy (got: {wmodel!r})")
+
 # Parse SF blocks
 sf_re = re.compile(r"^## (SF-(\d+))\s+(.*)$")
 sfs, current = {}, None
