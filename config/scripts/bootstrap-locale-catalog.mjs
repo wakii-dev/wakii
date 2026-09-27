@@ -83,7 +83,9 @@ async function translateText(text, targetLanguage) {
   let lastError
   for (let attempt = 0; attempt < 6; attempt += 1) {
     try {
-      const response = await fetch(url)
+      // Why: undici waits indefinitely on a throttled connection — an orphan batch
+      // hung socket-less for 6+ min; cap each attempt so the retry loop keeps moving.
+      const response = await fetch(url, { signal: AbortSignal.timeout(20_000) })
       if (!response.ok) {
         throw new Error(`Translation request failed with status ${response.status}`)
       }
