@@ -6,7 +6,8 @@
 # Kiểm:
 #   H1  Header `# Story: <ID> — <title>`
 #   H2  `Destination: story[-/]<epic-id>-<slug>` (WARN nếu thiếu — 2 form:
-#       legacy slash `story/<...>`, story-hub dash `story-<...>`)
+#       legacy slash `story/<...>`, story-hub dash `story-<...>`; FAIL khi
+#       story-hub + slash — form đó không launch được, dash mới chạy)
 #   SF  Mỗi block `## SF-N <name>` đủ: Tier (số), linear (rỗng @CREATE hoặc
 #       <TEAM>-<số>), What (không rỗng), Depends on (`—` hoặc SF-x hợp lệ),
 #       Tasks (slash-separated không rỗng), Design (optional: mock-prototype|
@@ -53,10 +54,11 @@ if [ "${1:-}" = "--resolve-primary" ]; then
   if [ -n "$PRIMARY_EXPLICIT" ]; then
     try_ref "$PRIMARY_EXPLICIT" || { echo "PRIMARY-UNRESOLVED: --primary $PRIMARY_EXPLICIT không tồn tại"; exit 1; }
   fi
-  # Bậc 2: orca baseRef (seam ORCA_BIN) — fail im lặng (chỉ warn stderr) → bậc kế
+  # Bậc 2: orca worktreeBaseRef (seam ORCA_BIN) — fail im lặng (chỉ warn stderr)
+  # → bậc kế; `baseRef` giữ làm fallback (orca bản cũ)
   base=$( { "${ORCA_BIN:-orca}" repo show --repo "path:$(cd "$REPO" 2>/dev/null && pwd)" --json 2>/dev/null; } 2>/dev/null \
     | python3 -c 'import json,sys
-try: print(json.load(sys.stdin)["result"]["repo"].get("baseRef") or "")
+try: r = json.load(sys.stdin).get("result", {}).get("repo", {}); print(r.get("worktreeBaseRef") or r.get("baseRef") or "")
 except Exception: print("")' 2>/dev/null)
   if [ -n "$base" ]; then
     try_ref "$base"
@@ -147,22 +149,29 @@ header = next((l for l in lines if l.startswith("# Story:")), None)
 if not header or not re.match(r"^# Story: [A-Z]+-\d+ — .+", header):
     fail(f"H1: header `# Story: <ID> — <title>` thiếu/sai định dạng (got: {header!r})")
 
-# H2 — destination
-dest = next((l for l in lines if l.startswith("Destination:")), None)
-if not dest:
-    warn("H2: thiếu `Destination: story[-/]<epic-id>-<slug>` — APPROVE sẽ không biết tên nhánh đích")
-# 2 form: legacy slash `story/<epic-id>-<slug>`, story-hub dash `story-<epic-id>-<slug>`
-# (orca sanitizeWorktreeName fold /→- — dest thật trên git luôn dash-form)
-elif not re.match(r"^Destination: story[-/][a-z0-9-]+-[a-z0-9-]+$", dest):
-    warn(f"H2: Destination không khớp form nào — legacy `story/<epic-id>-<slug>` hoặc story-hub dash `story-<epic-id>-<slug>` (got: {dest!r})")
-
-# H2b — Worktree model: WARN khi thiếu (story legacy đang bay), FAIL khi giá trị lạ
+# H2b — Worktree model: WARN khi thiếu (story legacy đang bay), FAIL khi giá trị
+# lạ. Parse TRƯỚC H2 — cross-check naming story-hub xài `model`.
 wmodel = next((l for l in lines if l.startswith("Worktree model:")), None)
 model = wmodel.split(":", 1)[1].strip() if wmodel else ""
 if not wmodel:
     warn("Worktree model: thiếu — story legacy (chạy playbook cũ). Story mới ghi `Worktree model: story-hub`")
 elif model not in ("story-hub", "legacy"):
     fail(f"Worktree model: chỉ nhận story-hub|legacy (got: {wmodel!r})")
+
+# H2 — destination
+dest = next((l for l in lines if l.startswith("Destination:")), None)
+if not dest:
+    warn("H2: thiếu `Destination: story[-/]<epic-id>-<slug>` — APPROVE sẽ không biết tên nhánh đích")
+else:
+    dest_val = dest.split(":", 1)[1].strip()
+    # 2 form: legacy slash `story/<epic-id>-<slug>`, story-hub dash `story-<epic-id>-<slug>`
+    # (orca sanitizeWorktreeName fold /→- — dest thật trên git luôn dash-form)
+    if not re.match(r"^story[-/][a-z0-9-]+-[a-z0-9-]+$", dest_val):
+        warn(f"H2: Destination không khớp form nào — legacy `story/<epic-id>-<slug>` hoặc story-hub dash `story-<epic-id>-<slug>` (got: {dest!r})")
+    elif model == "story-hub" and dest_val.startswith("story/"):
+        # naming cross-check: story-hub đòi dash-form — slash-form không launch
+        # được (worktree/branch thật sau orca fold là dash, dest lệch tên)
+        fail(f"H2: Worktree model story-hub đòi Destination dash-form `story-<epic-id>-<slug>` — slash-form không launch được (got: {dest!r})")
 
 # H2c — Primary (story-hub model): fail-closed khi model story-hub — mọi bước
 # sau (fork story worktree, PR --base) đọc từ đây, không rediscovery; legacy /

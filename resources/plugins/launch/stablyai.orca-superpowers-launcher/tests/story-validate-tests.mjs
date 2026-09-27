@@ -136,6 +136,21 @@ Depends on: —
 Tasks: t1 / t2
 `
 
+// naming cross-check (final review I3): story-hub + dest slash-form → FAIL —
+// form đó không launch được (V11 hướng ngược: dash-form OK)
+const HUB_SLASH_DEST_BRACKET = `# Story: FI-993 — hub slash dest
+Destination: story/fi-993-hub-slash
+Primary: wakii-dev
+Worktree model: story-hub
+
+## SF-1 A (Phase 1/1)
+Tier: 0
+linear:
+What: story-hub + dest slash-form phải FAIL
+Depends on: —
+Tasks: t1 / t2
+`
+
 // dash-form dest (story-hub naming — regex mới `story[-/]` nhận cả 2 form)
 const DASH_DEST_BRACKET = `# Story: FI-994 — dash dest
 Destination: story-fi-994-dash
@@ -217,6 +232,15 @@ function makeOrcaDeadStub(root) {
 function makeOrcaJsonStub(root) {
   const stub = join(root, 'orca-json.sh')
   writeFileSync(stub, `#!/bin/sh\necho '{"result":{"repo":{}}}'\n`)
+  chmodSync(stub, 0o755)
+  return stub
+}
+
+// orca stub phát worktreeBaseRef (trường orca thật — bậc 2 dương; bug final
+// review C1: bin từng đọc `baseRef` không tồn tại → bậc 2 dead code)
+function makeOrcaBaseRefStub(root, ref) {
+  const stub = join(root, 'orca-baseref.sh')
+  writeFileSync(stub, `#!/bin/sh\necho '{"result":{"repo":{"worktreeBaseRef":"${ref}"}}}'\n`)
   chmodSync(stub, 0o755)
   return stub
 }
@@ -351,6 +375,16 @@ console.log('== V11 dest dash-form (story-hub naming) → OK, không warn Destin
   check('V11', 'exit 0', r.code === 0, `code=${r.code} out=${r.out}`)
   check('V11', 'verdict OK', r.out.includes('OK — 1 SF'), r.out)
   check('V11', 'không warn Destination', !r.out.includes('Destination'), r.out)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== V14 story-hub + dest slash-form → FAIL (naming cross-check — slash không launch được) ==')
+{
+  const dir = tempDir('v14')
+  const f = writeBracket(dir, 'hub-slash.md', HUB_SLASH_DEST_BRACKET)
+  const r = runValidate(f)
+  check('V14', 'exit 1', r.code === 1, `code=${r.code} out=${r.out}`)
+  check('V14', 'FAIL đòi dash-form', r.out.includes('dash-form'), r.out)
   rmSync(dir, { recursive: true, force: true })
 }
 
@@ -492,6 +526,31 @@ console.log('== R7 --primary không giá trị → exit 2 (bare flag + flag nu�
   const r2 = runResolve(repo, { flags: ['--primary'], env })
   check('R7', 'bare flag → exit 2 (không degrade xuống ladder)', r2.code === 2, `code=${r2.code} out=${r2.out}`)
   check('R7', 'biến thể 2 in Usage', r2.out.includes('Usage'), r2.out)
+  rmSync(root, { recursive: true, force: true })
+}
+
+console.log('== R8 bậc 2 dương: orca worktreeBaseRef → resolve đúng (bắt lại bug đọc baseRef) ==')
+{
+  const { repo, root } = makeRepo('r8', { branch: 'main', extraBranches: ['int-branch'] })
+  const r = runResolve(repo, {
+    flags: ['--repo', repo],
+    env: { ORCA_BIN: makeOrcaBaseRefStub(root, 'int-branch'), STORY_KIT_CONFIG: join(root, 'khong-ton-tai.json'), HOME: root },
+  })
+  check('R8', 'exit 0', r.code === 0, `code=${r.code} out=${r.out} err=${r.err}`)
+  check('R8', 'stdout đúng int-branch (worktreeBaseRef)', r.out.trim() === 'int-branch', `out=${JSON.stringify(r.out)}`)
+  check('R8', 'bậc 2 đọc được → không warn skip', !r.err.includes('bậc 2'), r.err)
+  rmSync(root, { recursive: true, force: true })
+}
+
+console.log('== R8b worktreeBaseRef trỏ branch không tồn tại → rơi bậc kế, PRIMARY-UNRESOLVED ==')
+{
+  const { repo, root } = makeRepo('r8b', { branch: 'main' })
+  const r = runResolve(repo, {
+    flags: ['--repo', repo],
+    env: { ORCA_BIN: makeOrcaBaseRefStub(root, 'branch-ma'), STORY_KIT_CONFIG: join(root, 'khong-ton-tai.json'), HOME: root },
+  })
+  check('R8b', 'exit 1', r.code === 1, `code=${r.code} out=${r.out}`)
+  check('R8b', 'stdout chứa PRIMARY-UNRESOLVED', r.out.includes('PRIMARY-UNRESOLVED'), r.out)
   rmSync(root, { recursive: true, force: true })
 }
 
