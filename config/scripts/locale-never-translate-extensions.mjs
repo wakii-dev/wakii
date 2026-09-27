@@ -1,92 +1,42 @@
-// Never-translate tokens discovered from vi pipeline probes (2026-09-27): language-picker
-// endonyms MT mangles, code tokens/env names/brands GT-vi returns verbatim. Adding here is a
-// no-op for locales whose value is already the en string.
+// Never-translate extensions shared by EVERY locale — review-round hardening (27/09):
+// empirically verified against the ja/ko/zh/es/fr catalogs — each entry here renders
+// identically under CJK MT, so a global entry never silently reverts an existing
+// translation. Everything CJK MT transliterates (WebSocket, Bluetooth, Grep, enums
+// like BOARD_LAYOUT, ···/· SSH middle-dot variants, …) lives in
+// locale-vi-preserve-english-values.mjs instead. 'Wakii' follows the upstream 'Orca'
+// precedent of enforcing the fork brand globally.
 export const NEVER_TRANSLATE_EXTENSIONS = [
-  // Language-picker endonyms: MT renders them as the vi/zh word for the language
-  // ("Korean") — a picker must keep the endonym (repairCatalog also pins the keys).
-  '한국어',
-  '日本語',
-  '中文（简体）',
-  'Español',
-  'Français',
-  '"',
-  'Yolo',
-  // vi pass-throughs (probe 2026-09-27): code tokens/env names/brands GT-vi returns
-  // verbatim — keep them Latin; adding here is a no-op for locales whose value is
-  // already the en string.
+  '·',
+  '>',
+  '...',
+  'lin_api_...',
+  'md',
+  'C++',
+  'SHA-256',
+  'Ctrl+C',
   '.mcp.json',
-  'Azure DevOps',
-  'Bluetooth',
-  'Gitea',
-  'MiniMax',
-  'Wakii CLI',
-  'CLI',
-  'cli',
-  'CLI.',
-  'env:',
-  'github',
-  'gitlab',
+  'GitHub · Linear',
   '{{artifact_url}}',
+  '{{value0}} — {{value1}}',
+  '{{count}} × {{label}}',
+  '{{count}} × {{reason}}',
+  '{{count}} {{label}}',
+  '{{name}} +{{count}}',
+  '{{value0}} px',
+  ':L{{value0}}',
+  '-L{{value0}}',
+  'PULL_REQUEST',
+  'DRAFT_ISSUE',
   'auth=Fe26.2**…',
   'Fe26.2**…',
-  'opencode.ai/workspace/wrk_…/go',
   'ORCA_AZURE_DEVOPS_ACCESS_TOKEN',
   'ORCA_AZURE_DEVOPS_API_BASE_URL',
   'ORCA_AZURE_DEVOPS_TOKEN',
   'ORCA_BITBUCKET_ACCESS_TOKEN',
   'ORCA_BITBUCKET_API_TOKEN',
   'ORCA_BITBUCKET_EMAIL',
-  // Lô 2 remainder (27/09): diff line markers, GitHub project enums, placeholder-only
-  // templates, separators, and Latin tokens (CPU/API/Web/Wakii) with no vi rendering.
-  ':L{{value0}}',
-  '-L{{value0}}',
-  '{{value0}} PR #{{value1}}?',
-  '{{value0}} — {{value1}}',
-  '{{title}}, {{status}}',
-  'PULL_REQUEST',
-  'BOARD_LAYOUT',
-  'TABLE_LAYOUT',
-  'DRAFT_ISSUE',
-  'CPU',
-  'API',
-  'Web',
-  'Wakii',
-  '·',
-  '···',
-  // Lô 5 remainder (27/09): symbols, key chords, brand combos, placeholder-only
-  // templates — no vi rendering exists for any of these.
-  '...',
-  'lin_api_...',
-  'md',
-  'Ctrl+C',
-  'SHA-256',
-  'WebSocket',
-  'MacBook Pro',
-  'Claudino',
-  'Gremlin',
-  'Sonar',
-  'GitHub · Linear',
-  'WSL ·',
-  '· SSH',
-  '{{count}} × {{label}}',
-  '{{count}} × {{reason}}',
-  '{{count}} {{label}}',
-  '{{name}} +{{count}}',
-  // Lô 5 remainder pass 2 (27/09): file paths, language tokens, code refs.
-  '.md',
-  '>',
-  'C++',
-  'Grep',
-  'JSON',
-  'JavaScript',
-  'SCSS',
-  'dev@mac',
-  'new_per_run',
-  'mobile/orca-mobile-sidebar-mock-v3.html',
-  'orca/feat-mobile-page',
   'src/auth/session.test.ts',
   'src/auth/session.ts',
   'src/cache/worktree-cache.test.ts',
-  'src/transport/host-store.test.ts',
-  '{{value0}} px'
+  'src/transport/host-store.test.ts'
 ]

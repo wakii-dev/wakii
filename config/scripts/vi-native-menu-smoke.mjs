@@ -7,13 +7,35 @@ import path from 'node:path'
 import process from 'node:process'
 
 const LOCALES_DIR = path.join('src', 'renderer', 'src', 'i18n', 'locales')
+const MAIN_DIR = path.join('src', 'main')
 
-// 48 literal key+fallback pairs grepped from translateMain call sites in src/main.
-// Non-literal fallbacks (templates) resolve through the same catalog — sampled via
-// menu.* coverage below.
+async function collectTranslateMainCallSites(dir) {
+  const entries = await fs.readdir(dir, { withFileTypes: true })
+  const callSites = []
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name)
+    if (entry.isDirectory()) {
+      callSites.push(...(await collectTranslateMainCallSites(fullPath)))
+      continue
+    }
+    if (!entry.name.endsWith('.ts') || entry.name.includes('.test.')) {
+      continue
+    }
+    const source = await fs.readFile(fullPath, 'utf8')
+    const callSitePattern = /translateMain\(\s*'([^']+)'\s*,\s*'((?:[^'\\]|\\.)*)'/g
+    for (const [, key, fallback] of source.matchAll(callSitePattern)) {
+      callSites.push([key, fallback.replace(/\\'/g, "'")])
+    }
+  }
+  return callSites
+}
+
+// Literal key+fallback pairs scanned from translateMain call sites in src/main
+// (or an explicit JSON file of pairs). Zero call sites is a hard failure — an
+// empty scan must not produce a vacuous PASS.
 const MENU_CALL_SITES = process.argv[2]
   ? JSON.parse(await fs.readFile(process.argv[2], 'utf8'))
-  : []
+  : await collectTranslateMainCallSites(MAIN_DIR)
 
 function resolvePath(catalog, key) {
   return key.split('.').reduce((cursor, part) => (cursor == null ? cursor : cursor[part]), catalog)
@@ -45,6 +67,11 @@ console.log(
     ` · resolved identical-to-en (preserve): ${resolvedPreserved}` +
     ` · vi.json menu.* leaf keys: ${menuViTotal}`
 )
+
+if (MENU_CALL_SITES.length === 0) {
+  console.error('SMOKE FAILED: zero translateMain call sites scanned — nothing was verified.')
+  process.exit(1)
+}
 
 if (failures.length > 0) {
   console.error('SMOKE FAILED:')
