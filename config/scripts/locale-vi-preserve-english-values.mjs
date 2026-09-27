@@ -219,5 +219,6 @@ export const VI_PRESERVE_ENGLISH_VALUES = new Set([
   // identical to en — pinned here so keyed translatedness stays 100% (same shape as lô 2).
   '{{value0}} subagents',
   '{{count}} subagent',
-  '{{count}} subagents'
+  '{{count}} subagents',
+  'ORCA'
 ])

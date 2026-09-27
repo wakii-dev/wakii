@@ -9,10 +9,10 @@
   },
   "app": {
     "recoverableError": {
-      "rootTitle": "Wakii hit a renderer error.",
-      "rootDescription": "The app shell could not finish rendering. Retry to remount it, or relaunch Wakii if the error persists.",
-      "webTitle": "Wakii web hit a renderer error.",
-      "webDescription": "Retry the web client or reconnect to the paired runtime."
+      "rootTitle": "Wakii gặp lỗi kết xuất.",
+      "rootDescription": "Vỏ ứng dụng không thể hoàn tất hiển thị. Hãy thử gắn lại hoặc khởi chạy lại Wakii nếu lỗi vẫn còn.",
+      "webTitle": "Trang web Wakii gặp lỗi kết xuất.",
+      "webDescription": "Hãy thử lại máy khách web hoặc kết nối lại với thời gian chạy được ghép nối."
     }
   },
   "browser": {
@@ -88,7 +88,7 @@
       "sshUnavailableTitle": "SSH connection unavailable",
       "forwardingBlockedDescription": "This server refuses TCP forwarding (often “AllowTcpForwarding no” in its sshd config), which browsing through it requires. Ask its administrator to allow forwarding, or browse from this device instead.",
       "sshUnavailableDescription": "Pages in this workspace browse through its SSH host, and that connection isn't available right now. Reconnect the host, then retry.",
-      "showDetails": "Show details"
+      "showDetails": "Hiển thị chi tiết"
     },
     "sshEgress": {
       "routedTooltip": "Browsing through {{value0}}",
@@ -210,35 +210,35 @@
     }
   },
   "menu": {
-    "checkForUpdates": "Check for Updates...",
+    "checkForUpdates": "Kiểm tra cập nhật...",
     "settings": "Cài đặt",
-    "exploreOrca": "Explore Wakii",
-    "gettingStarted": "Getting Started with Wakii",
-    "reportCrash": "Report Crash...",
+    "exploreOrca": "Khám phá Wakii",
+    "gettingStarted": "Bắt đầu với Wakii",
+    "reportCrash": "Báo cáo sự cố...",
     "file": "Tài liệu",
-    "exit": "Exit",
+    "exit": "Ra",
     "edit": "Sửa",
     "appearance": "Giao diện",
-    "toggleLeftSidebar": "Toggle Left Sidebar",
-    "toggleRightSidebar": "Toggle Right Sidebar",
-    "showStatusBar": "Show Status Bar",
+    "toggleLeftSidebar": "Chuyển đổi Sidebar trái",
+    "toggleRightSidebar": "Chuyển đổi Sidebar phải",
+    "showStatusBar": "Hiển thị thanh trạng thái",
     "showTasksButton": "Hiển thị nút nhiệm vụ",
     "showAutomationsButton": "Hiển thị nút tự động hóa",
     "showMobileButton": "Hiển thị nút di động Wakii",
-    "showTitlebarAppName": "Show Titlebar App Name",
+    "showTitlebarAppName": "Hiển thị tên ứng dụng trên thanh tiêu đề",
     "view": "Xem",
     "reload": "Tải lại",
-    "forceReload": "Force Reload",
-    "resetSize": "Reset Size",
-    "zoomIn": "Zoom In",
-    "zoomOut": "Zoom Out",
-    "openWorktreePalette": "Open Worktree Palette",
+    "forceReload": "Buộc tải lại",
+    "resetSize": "Đặt lại kích thước",
+    "zoomIn": "Phóng to",
+    "zoomOut": "Thu nhỏ",
+    "openWorktreePalette": "Mở bảng Worktree",
     "window": "Cửa sổ",
     "help": "Giúp đỡ",
     "paste": "Dán",
     "copy": "Sao chép",
     "selectAll": "Chọn tất cả",
-    "exploreWakii": "Explore Wakii"
+    "exploreWakii": "Khám phá Wakii"
   },
   "tray": {
     "openOrca": "Mở Wakii",
@@ -1534,23 +1534,23 @@
       },
       "Landing": {
         "76a95f7f47": "Tạo nên",
-        "f05d237049": "Add a project first",
+        "f05d237049": "Thêm dự án trước",
         "f9eaa9e12d": "Thêm dự án",
         "6ca6ff404e": "ORCA",
-        "520304a067": "Wakii logo",
-        "ce44fad849": "Missing dependencies",
+        "520304a067": "Logo Wakii",
+        "ce44fad849": "Thiếu phần phụ thuộc",
         "c1cf168479": "Trốn",
-        "00cee697c1": "Run \"gh auth login\" in a terminal to connect your GitHub account.",
-        "9f96d018b7": "GitHub CLI is not authenticated",
-        "73e1ad4282": "Wakii uses the GitHub CLI (gh) to show pull requests, issues, and checks.",
-        "5beaef5f9e": "GitHub CLI is not installed",
-        "b673e7cf1b": "Git is required for Git projects, source control, and workspace management.",
-        "e5b7296d9d": "Git is not installed",
-        "cd21242762": "Add a project to get started.",
-        "9c00bd4adf": "Select a workspace from the sidebar to begin.",
+        "00cee697c1": "Chạy \"gh auth login\" trong terminal để kết nối tài khoản GitHub của bạn.",
+        "9f96d018b7": "GitHub CLI không được xác thực",
+        "73e1ad4282": "Wakii sử dụng GitHub CLI (gh) để hiển thị các pull request, sự cố và kiểm tra.",
+        "5beaef5f9e": "GitHub CLI chưa được cài đặt",
+        "b673e7cf1b": "Git cần thiết cho các dự án Git, source control và quản lý không gian làm việc.",
+        "e5b7296d9d": "Git chưa được cài đặt",
+        "cd21242762": "Thêm một dự án để bắt đầu.",
+        "9c00bd4adf": "Chọn một không gian làm việc từ sidebar để bắt đầu.",
         "16e9e3df89": "được gắn dấu sao",
-        "0d0ace8861": "Star on GitHub",
-        "ec43b38ba7": "Starred on GitHub",
+        "0d0ace8861": "Sao trên GitHub",
+        "ec43b38ba7": "Được gắn dấu sao trên GitHub",
         "157bb5ecbb": "Mở GitHub",
         "preflightDismiss": "Miễn nhiệm"
       },
@@ -1961,58 +1961,58 @@
         "9b40d7b018": "Sao chép"
       },
       "NativeChatResumeOnRestartModal": {
-        "title": "Resume interrupted chats?",
-        "body": "These chats were mid-turn when Wakii closed. Resuming restores each one where it stopped, with its full context, and asks the agent to check its last action before carrying on. Your own prompt is not re-sent.",
-        "updateBody": "These chats were mid-turn when Wakii installed an update. Resuming restores each one where it stopped, with its full context, and asks the agent to check its last action before carrying on. Your own prompt is not re-sent.",
-        "resuming": "Resuming…",
-        "untitled": "Untitled chat",
-        "listLabel": "Chats that would be resumed",
-        "dontAskAgain": "Don't ask again (resume automatically)",
-        "dontAskAgainHint": "You can turn this off in Settings → Experimental → Chat UI.",
-        "continuedOne": "Resumed 1 chat and asked it to continue",
-        "continuedMany": "Resumed {{value0}} chats and asked them to continue",
-        "selectAgent": "Resume {{value0}} chat \"{{value1}}\" in {{value2}}",
-        "resumeSelected": "Resume {{value0}} chats",
-        "resumeSelectedOne": "Resume 1 chat",
-        "continueUnconfirmed": "Continuation delivery is unconfirmed for {{value0}} chats. Open them to check before sending another message.",
-        "continueUnconfirmed_one": "Continuation delivery is unconfirmed for {{value0}} chat. Open it to check before sending another message.",
-        "continueUnconfirmed_other": "Continuation delivery is unconfirmed for {{value0}} chats. Open them to check before sending another message.",
-        "continueRefused": "{{value0}} chats could not be continued. Open them to continue manually.",
-        "continueRefused_one": "{{value0}} chat could not be continued. Open it to continue manually.",
-        "continueRefused_other": "{{value0}} chats could not be continued. Open them to continue manually.",
-        "dismissAll": "Dismiss all",
-        "dismissUnconfirmed": "Dismissing the resume offer was not confirmed — it may still be in the status bar.",
-        "notContinuedOne": "1 chat couldn’t be resumed",
-        "notContinuedMany": "{{value0}} chats couldn’t be resumed",
-        "notConfirmedOne": "Couldn’t confirm 1 chat was resumed",
-        "notConfirmedMany": "Couldn’t confirm {{value0}} chats were resumed",
-        "notConfirmedOtherOne": "Couldn’t confirm 1 other chat was resumed",
-        "notConfirmedOtherMany": "Couldn’t confirm {{value0}} other chats were resumed",
+        "title": "Tiếp tục cuộc trò chuyện bị gián đoạn?",
+        "body": "Những cuộc trò chuyện này diễn ra ở giữa lượt khi Wakii đóng cửa. Việc tiếp tục khôi phục từng thao tác tại nơi nó đã dừng, với ngữ cảnh đầy đủ và yêu cầu agent kiểm tra hành động cuối cùng trước khi tiếp tục. Lời nhắc của riêng bạn sẽ không được gửi lại.",
+        "updateBody": "Những cuộc trò chuyện này diễn ra vào giữa lượt khi Wakii cài đặt bản cập nhật. Việc tiếp tục khôi phục từng thao tác tại nơi nó đã dừng, với ngữ cảnh đầy đủ và yêu cầu agent kiểm tra hành động cuối cùng trước khi tiếp tục. Lời nhắc của riêng bạn sẽ không được gửi lại.",
+        "resuming": "Đang tiếp tục…",
+        "untitled": "Trò chuyện không có tiêu đề",
+        "listLabel": "Các cuộc trò chuyện sẽ được tiếp tục",
+        "dontAskAgain": "Đừng hỏi lại (tự động tiếp tục)",
+        "dontAskAgainHint": "Bạn có thể tắt tính năng này trong Cài đặt → Thử nghiệm → Giao diện người dùng trò chuyện.",
+        "continuedOne": "Đã tiếp tục 1 cuộc trò chuyện và yêu cầu tiếp tục",
+        "continuedMany": "Đã tiếp tục {{value0}} cuộc trò chuyện và yêu cầu họ tiếp tục",
+        "selectAgent": "Tiếp tục {{value0}} trò chuyện \"{{value1}}\" trong {{value2}}",
+        "resumeSelected": "Tiếp tục {{value0}} cuộc trò chuyện",
+        "resumeSelectedOne": "Tiếp tục 1 cuộc trò chuyện",
+        "continueUnconfirmed": "Việc gửi tiếp tục chưa được xác nhận cho {{value0}} cuộc trò chuyện. Hãy mở chúng để kiểm tra trước khi gửi tin nhắn khác.",
+        "continueUnconfirmed_one": "Việc gửi tiếp tục chưa được xác nhận cho cuộc trò chuyện {{value0}}. Mở nó ra để kiểm tra trước khi gửi tin nhắn khác.",
+        "continueUnconfirmed_other": "Việc gửi tiếp tục chưa được xác nhận cho {{value0}} cuộc trò chuyện. Hãy mở chúng để kiểm tra trước khi gửi tin nhắn khác.",
+        "continueRefused": "Không thể tiếp tục cuộc trò chuyện {{value0}}. Mở chúng để tiếp tục theo cách thủ công.",
+        "continueRefused_one": "{{value0}} trò chuyện không thể tiếp tục. Mở nó để tiếp tục bằng tay.",
+        "continueRefused_other": "Không thể tiếp tục cuộc trò chuyện {{value0}}. Mở chúng để tiếp tục theo cách thủ công.",
+        "dismissAll": "Loại bỏ tất cả",
+        "dismissUnconfirmed": "Việc loại bỏ lời đề nghị tiếp tục chưa được xác nhận — nó có thể vẫn còn trên thanh trạng thái.",
+        "notContinuedOne": "Không thể tiếp tục 1 cuộc trò chuyện",
+        "notContinuedMany": "{{value0}} cuộc trò chuyện không thể tiếp tục được",
+        "notConfirmedOne": "Không thể xác nhận 1 cuộc trò chuyện đã được tiếp tục",
+        "notConfirmedMany": "Không thể xác nhận cuộc trò chuyện {{value0}} đã được tiếp tục",
+        "notConfirmedOtherOne": "Không thể xác nhận 1 cuộc trò chuyện khác đã được tiếp tục",
+        "notConfirmedOtherMany": "Không thể xác nhận {{value0}} cuộc trò chuyện khác đã được tiếp tục",
         "show": "Trình diễn",
         "dismiss": "Miễn nhiệm",
-        "activityUnnamed": "unnamed",
-        "activityApproval": "Waiting for your approval: {{value0}}",
-        "activityQuestion": "Waiting for your answer: {{value0}}",
-        "activityMidReply": "Was mid-reply",
-        "activitySubagentOne": "Subagent running: {{value0}}",
-        "activitySubagentMany": "{{value0}} subagents running",
-        "activityMonitorOne": "Monitoring: {{value0}}",
-        "activityMonitorMany": "Monitoring {{value0}} background tasks"
+        "activityUnnamed": "vô danh",
+        "activityApproval": "Đang chờ sự chấp thuận của bạn: {{value0}}",
+        "activityQuestion": "Đang chờ câu trả lời của bạn: {{value0}}",
+        "activityMidReply": "Đã trả lời giữa chừng",
+        "activitySubagentOne": "Subagent đang chạy: {{value0}}",
+        "activitySubagentMany": "{{value0}} subagents đang chạy",
+        "activityMonitorOne": "Giám sát: {{value0}}",
+        "activityMonitorMany": "Giám sát các tác vụ nền {{value0}}"
       },
       "StarNagCard": {
-        "92b0f9d921": "is authenticated and try again.",
+        "92b0f9d921": "được xác thực và thử lại.",
         "cd8c34aac1": "gh",
-        "cf82170065": "Could not star the repo. Make sure",
-        "30c36231c1": "Wakii is open source. If it helped today, a GitHub star helps other developers find it.",
+        "cf82170065": "Không thể gắn dấu sao cho repo. Hãy chắc chắn",
+        "30c36231c1": "Wakii là nguồn mở. Nếu nó hữu ích ngày hôm nay thì một ngôi sao GitHub sẽ giúp các nhà phát triển khác tìm thấy nó.",
         "b5e685e4d9": "Miễn nhiệm",
-        "5f6df21046": "Enjoying Wakii?",
-        "2d67b6c849": "Star on GitHub",
-        "af3c9bbb37": "Starring…",
-        "68a41bc3aa": "Could not star with",
-        "996bf76e46": "Open GitHub to finish in your browser.",
+        "5f6df21046": "Bạn đang thưởng thức Wakii?",
+        "2d67b6c849": "Sao trên GitHub",
+        "af3c9bbb37": "Diễn viên chính…",
+        "68a41bc3aa": "Không thể gắn dấu sao với",
+        "996bf76e46": "Mở GitHub để hoàn tất trong trình duyệt của bạn.",
         "d32015fec7": "Khai mạc...",
         "157bb5ecbb": "Mở GitHub",
-        "8c967b4d15": "Later",
+        "8c967b4d15": "Sau đó",
         "73dfd4eb8d": "Đừng hỏi lại"
       },
       "TaskPage": {
@@ -2376,53 +2376,53 @@
         "10e039b591": "No results"
       },
       "UpdateCard": {
-        "68b235d264": "Restart to Update",
-        "6714206e5a": "Wakii v{{value0}} is downloaded. Restart when you're ready.",
-        "93794ea932": "Wakii v{{value0}} is downloading.",
-        "8acbdd3961": "Minimize to status bar",
-        "17412483da": "Ready to Install",
-        "47126bcf57": "Download Manually",
+        "68b235d264": "Khởi động lại để cập nhật",
+        "6714206e5a": "Wakii v{{value0}} đã được tải xuống. Khởi động lại khi bạn đã sẵn sàng.",
+        "93794ea932": "Wakii v{{value0}} đang tải xuống.",
+        "8acbdd3961": "Thu nhỏ về thanh trạng thái",
+        "17412483da": "Sẵn sàng để cài đặt",
+        "47126bcf57": "Tải xuống thủ công",
         "3553a8672f": "Chi tiết",
-        "90559b14e3": "This turns on a process-wide Electron networking switch after restart. Use it for corporate VPNs or proxies that reject HTTP/2 update downloads.",
-        "6e45bfa2e0": "Downloading...",
-        "558842597d": "Downloading Update",
-        "f58b5c57a6": "New:",
+        "90559b14e3": "Thao tác này sẽ bật công tắc mạng Electron trên toàn quy trình sau khi khởi động lại. Sử dụng nó cho các VPN hoặc proxy công ty từ chối tải xuống bản cập nhật HTTP/2.",
+        "6e45bfa2e0": "Đang tải xuống...",
+        "558842597d": "Đang tải xuống bản cập nhật",
+        "f58b5c57a6": "Mới:",
         "ec8fe71cfc": "Cập nhật",
         "44324ef542": "Ghi chú phát hành",
-        "fdd4a364fa": "Sessions won't be interrupted.",
-        "05ad78a6d1": "Wakii v{{value0}} is ready.",
-        "318d3b4bc7": "Dismiss update",
-        "9abc59f814": "Update Available",
-        "aad383aecc": "Read the full release notes",
-        "ccd8b0a793": "more since your last update",
-        "b1d867f4fb": "Your terminal sessions won't be interrupted during the update.",
-        "09a55c39b5": "Installing...",
-        "ea2a41adbe": "You're on the latest version.",
+        "fdd4a364fa": "Phiên sẽ không bị gián đoạn.",
+        "05ad78a6d1": "Wakii v{{value0}} đã sẵn sàng.",
+        "318d3b4bc7": "Loại bỏ cập nhật",
+        "9abc59f814": "Cập nhật có sẵn",
+        "aad383aecc": "Đọc ghi chú phát hành đầy đủ",
+        "ccd8b0a793": "nhiều hơn kể từ lần cập nhật cuối cùng của bạn",
+        "b1d867f4fb": "Phiên cuối của bạn sẽ không bị gián đoạn trong quá trình cập nhật.",
+        "09a55c39b5": "Đang cài đặt...",
+        "ea2a41adbe": "Bạn đang dùng phiên bản mới nhất.",
         "ba5ffc949c": "Đang kiểm tra cập nhật...",
         "2c2d3e03ca": "Thử lại",
-        "4cf109845a": "Update Error",
+        "4cf109845a": "Lỗi cập nhật",
         "6b0085010d": "Kiểm tra lại",
-        "48565a32bc": "Retry Download",
-        "933c6fdf5b": "Enable & Restart",
-        "1339b82cee": "HTTP/2 Download Blocked",
-        "7274ef6e59": "Dismiss tip",
+        "48565a32bc": "Thử tải xuống lại",
+        "933c6fdf5b": "Kích hoạt & Khởi động lại",
+        "1339b82cee": "Đã chặn tải xuống HTTP/2",
+        "7274ef6e59": "Mẹo loại bỏ",
         "a726967bd3": "Miễn nhiệm",
         "d5253b54af": "lỗi",
         "7ffc08506e": "kiểm tra",
-        "522df222b9": "spinner",
-        "e944c2de43": "Update Verification Blocked",
-        "5b309b19f3": "Update Wasn't Installed",
-        "092f09fc14": "The installer's publisher doesn't match Wakii, so we stopped the update. Don't install this download; check official releases for a corrected version.",
-        "c9ff9b9ec2": "Check official releases",
-        "a05992a26b": "The signature check couldn't run — usually because antivirus software blocked it. Retry the download, or get the installer from our official releases.",
-        "5194358929": "Hide details",
-        "8bc9e17d8f": "Show details",
-        "8cf17b10af": "Local Build Error",
-        "a4650b0dc4": "Could Not Use Local Build",
-        "b1e390250d": "Could not complete the local build switch.",
-        "d29740d175": "The selected build could not be used.",
-        "37d45c9ec1": "Choose Another Build",
-        "7f1a4c9e02": "Your system package manager installed Wakii, so update it from there — Wakii cannot install this release itself."
+        "522df222b9": "máy quay",
+        "e944c2de43": "Đã chặn xác minh cập nhật",
+        "5b309b19f3": "Bản cập nhật chưa được cài đặt",
+        "092f09fc14": "Nhà phát hành trình cài đặt không khớp với Wakii nên chúng tôi đã dừng cập nhật. Đừng cài đặt bản tải xuống này; kiểm tra các bản phát hành chính thức để biết phiên bản đã sửa.",
+        "c9ff9b9ec2": "Kiểm tra bản phát hành chính thức",
+        "a05992a26b": "Kiểm tra chữ ký không thể chạy — thường là do phần mềm chống vi-rút đã chặn nó. Hãy thử tải xuống lại hoặc tải trình cài đặt từ các bản phát hành chính thức của chúng tôi.",
+        "5194358929": "Ẩn chi tiết",
+        "8bc9e17d8f": "Hiển thị chi tiết",
+        "8cf17b10af": "Lỗi xây dựng cục bộ",
+        "a4650b0dc4": "Không thể sử dụng bản dựng cục bộ",
+        "b1e390250d": "Không thể hoàn thành quá trình chuyển đổi bản dựng cục bộ.",
+        "d29740d175": "Không thể sử dụng bản dựng đã chọn.",
+        "37d45c9ec1": "Chọn bản dựng khác",
+        "7f1a4c9e02": "Trình quản lý gói hệ thống của bạn đã cài đặt Wakii, vì vậy hãy cập nhật nó từ đó - Wakii không thể tự cài đặt bản phát hành này."
       },
       "WorktreeJumpPalette": {
         "ac037cfac2": "Di chuyển",
@@ -13818,166 +13818,166 @@
       },
       "onboarding": {
         "AgentStep": {
-          "e6a369bd04": "Popular agents",
-          "d7b3ef168b": "Detected on your system",
-          "9c163bb0e0": "Install instructions",
-          "69af7e9c1c": "isn't on your PATH yet. Wakii will set it as your default and you can install it any time.",
-          "1eee1c7bd8": "No agents detected on your PATH. Pick one to install later, or continue with a blank terminal.",
-          "hideAgents": "Hide agents",
-          "showMoreAgents": "Show {{value0}} more agents→",
-          "yoloPermissionsLabel": "Yolo / Dangerously skip permissions",
-          "yoloPermissionsInfo": "Agent permission info",
-          "yoloPermissionsTooltip": "Skip permission checks for agents for less interruptions"
+          "e6a369bd04": "agents phổ biến",
+          "d7b3ef168b": "Được phát hiện trên hệ thống của bạn",
+          "9c163bb0e0": "Hướng dẫn cài đặt",
+          "69af7e9c1c": "chưa có trên PATH của bạn. Wakii sẽ đặt nó làm mặc định và bạn có thể cài đặt nó bất cứ lúc nào.",
+          "1eee1c7bd8": "Không có agents nào được phát hiện trên PATH của bạn. Chọn một cái để cài đặt sau hoặc tiếp tục với một terminal trống.",
+          "hideAgents": "Ẩn agents",
+          "showMoreAgents": "Hiển thị thêm {{value0}} agents→",
+          "yoloPermissionsLabel": "Yolo / Bỏ qua quyền một cách nguy hiểm",
+          "yoloPermissionsInfo": "Thông tin cho phép Agent",
+          "yoloPermissionsTooltip": "Bỏ qua việc kiểm tra quyền cho các tổng đài viên để ít bị gián đoạn hơn"
         },
         "FeatureSetupInlineTerminal": {
-          "789b59936e": "Press Enter to run the command and confirm npx if asked. You can also set this up later in Settings.",
-          "47fc6cc6dc": "Skill setup command",
-          "c767ab7061": "Skill setup"
+          "789b59936e": "Nhấn Enter để chạy lệnh và xác nhận npx nếu được hỏi. Bạn cũng có thể thiết lập tính năng này sau trong Cài đặt.",
+          "47fc6cc6dc": "Lệnh thiết lập kỹ năng",
+          "c767ab7061": "Thiết lập kỹ năng"
         },
         "IntegrationsStep": {
-          "277f30eb34": "Linear, GitLab, Bitbucket, Azure DevOps, Gitea, and Jira live in Settings > Integrations.",
-          "3a3e360289": "More task sources",
+          "277f30eb34": "Linear, GitLab, Bitbucket, Azure DevOps, Gitea và Jira có trong Cài đặt > Tích hợp.",
+          "3a3e360289": "Nhiều nguồn nhiệm vụ hơn",
           "80e3ce0bc9": "Kiểm tra lại",
           "04ef416712": "Thêm truy cập Linear",
           "dd9c186a8b": "Thêm quyền truy cập không gian làm việc",
           "c91a5782f1": "Đã kết nối",
           "27743304b1": "Linear",
-          "af69f42372": "Press Enter to run GitHub CLI auth. Re-check GitHub after the browser or device flow finishes.",
-          "f9d2e12d17": "GitHub sign in command",
-          "6d469169f2": "GitHub setup",
-          "bd5d976fb2": "Install gh",
-          "50db38cf4b": "Pull requests, issues, and check status.",
+          "af69f42372": "Nhấn Enter để chạy xác thực GitHub CLI. Kiểm tra lại GitHub sau khi luồng trình duyệt hoặc thiết bị kết thúc.",
+          "f9d2e12d17": "Lệnh đăng nhập GitHub",
+          "6d469169f2": "thiết lập GitHub",
+          "bd5d976fb2": "cài đặt gh",
+          "50db38cf4b": "Pull các yêu cầu, vấn đề và kiểm tra trạng thái.",
           "c1547656f0": "Đang kiểm tra…",
-          "8405043962": "Sign in needed",
-          "5c115cb713": "CLI not installed",
+          "8405043962": "Cần đăng nhập",
+          "5c115cb713": "CLI chưa được cài đặt",
           "217beb0658": "GitHub",
-          "4983ae7433": "Add Linear access with a Personal API key. Full-access keys can show every team the key owner can access.",
-          "b08a6ac93c": "{{value0}} workspace{{value1}} linked. Add another workspace or replace a restricted key any time.",
-          "93f0c49ad1": "not-authenticated",
+          "4983ae7433": "Thêm quyền truy cập Linear bằng khóa API cá nhân. Khóa toàn quyền truy cập có thể hiển thị mọi nhóm mà chủ sở hữu khóa có thể truy cập.",
+          "b08a6ac93c": "{{value0}} không gian làm việc{{value1}} được liên kết. Thêm không gian làm việc khác hoặc thay thế khóa bị hạn chế bất kỳ lúc nào.",
+          "93f0c49ad1": "không được xác thực",
           "a3bcf13694": "đã kết nối",
           "d6e5dba05a": "Đăng nhập",
-          "0b4a7d23ab": "Signing in",
+          "0b4a7d23ab": "Đăng nhập",
           "a74c6d6b18": "chưa được cài đặt"
         },
         "NotificationStep": {
           "3bede04483": "Gửi thông báo kiểm tra",
           "dc897423e1": "Chọn âm thanh thông báo",
           "53aaffe49a": "Âm thanh thông báo",
-          "0fe570690c": "Pick the alert Wakii plays after a desktop notification is delivered.",
-          "0af746e41f": "Choose a sound",
-          "8124d085a6": "Open Mac Settings",
-          "aa36281b00": "Open System Settings and make sure Wakii is allowed to send notifications.",
-          "d2dba86837": "Allow Wakii in macOS",
-          "e52aacf380": "Loading notification settings…",
-          "3cd5374e22": "Notification settings are still loading",
+          "0fe570690c": "Chọn cảnh báo mà Wakii phát sau khi thông báo trên màn hình được gửi.",
+          "0af746e41f": "Chọn một âm thanh",
+          "8124d085a6": "Mở cài đặt Mac",
+          "aa36281b00": "Mở Cài đặt hệ thống và đảm bảo Wakii được phép gửi thông báo.",
+          "d2dba86837": "Cho phép Wakii trong macOS",
+          "e52aacf380": "Đang tải cài đặt thông báo…",
+          "3cd5374e22": "Cài đặt thông báo vẫn đang tải",
           "b6a994e36e": "Không thể phát âm thanh thông báo",
           "c0692baa52": "Chọn tệp tùy chỉnh",
           "ac80d97e02": "Thay đổi tệp tùy chỉnh",
-          "56b836215c": "Checking notification permission…",
-          "fd84d3e9b8": "Notifications are enabled",
-          "4f7bce5644": "macOS will alert you when agents finish or terminals need attention.",
-          "95d99b52fa": "Allow notifications for Wakii",
-          "94562ba367": "macOS is asking for permission. Click Allow in the dialog and this step updates automatically.",
+          "56b836215c": "Đang kiểm tra quyền thông báo…",
+          "fd84d3e9b8": "Thông báo được kích hoạt",
+          "4f7bce5644": "macOS sẽ thông báo cho bạn khi agents kết thúc hoặc terminals cần chú ý.",
+          "95d99b52fa": "Cho phép thông báo cho Wakii",
+          "94562ba367": "macOS đang xin phép. Nhấp vào Cho phép trong hộp thoại và bước này sẽ tự động cập nhật.",
           "4f6a1da718": "Mở cài đặt hệ thống",
-          "90b5d2e363": "macOS is not delivering Wakii notifications",
-          "2c47f5465f": "Turn on Allow notifications for Wakii in System Settings. This step updates automatically once enabled."
+          "90b5d2e363": "macOS không gửi thông báo Wakii",
+          "2c47f5465f": "Bật Cho phép thông báo cho Wakii trong Cài đặt hệ thống. Bước này sẽ tự động cập nhật sau khi được bật."
         },
         "OnboardingFlow": {
-          "1b5e182e9f": "Welcome to Wakii",
+          "1b5e182e9f": "Chào mừng đến với Wakii",
           "4db04f2f57": "của",
-          "adaa0aa627": "Go to onboarding step {{value0}}: {{value1}}",
+          "adaa0aa627": "Chuyển tới bước giới thiệu {{value0}}: {{value1}}",
           "a249f81538": "Wakii",
-          "277ba45540": "Wakii onboarding",
-          "97c42cda00": "Install the GitHub CLI to:",
-          "ae3b00ca82": "Set up GitHub tasks",
-          "ff92d15436": "Wakii will notify you when agents are done or need help.",
-          "b054332836": "Set up notifications",
-          "04ae28d8ca": "Pick the look you want to stare at for hours.",
-          "f396db9f20": "Make it feel like home",
-          "322fc50a18": "Wakii works with every CLI agent. Choose the one you'll reach for most. Switch any time.",
-          "198b148b3c": "Pick your default agent",
-          "a5e5da02f7": "integrations",
+          "277ba45540": "Giới thiệu Wakii",
+          "97c42cda00": "Cài đặt GitHub CLI để:",
+          "ae3b00ca82": "Thiết lập tác vụ GitHub",
+          "ff92d15436": "Wakii sẽ thông báo cho bạn khi nhân viên hoàn thành công việc hoặc cần trợ giúp.",
+          "b054332836": "Thiết lập thông báo",
+          "04ae28d8ca": "Chọn giao diện bạn muốn nhìn chằm chằm trong nhiều giờ.",
+          "f396db9f20": "Làm cho nó cảm thấy như ở nhà",
+          "322fc50a18": "Wakii làm việc với mọi agent CLI. Chọn một trong những bạn sẽ đạt được nhiều nhất. Chuyển đổi bất cứ lúc nào.",
+          "198b148b3c": "Chọn agent mặc định của bạn",
+          "a5e5da02f7": "tích hợp",
           "35bbaf5ae0": "thông báo",
           "984338477a": "chủ đề",
           "c47e1bd149": "agent",
-          "windowsTerminalTitle": "Set Windows terminal defaults",
-          "windowsTerminalSubtitle": "Choose the DEFAULT Shell for new panes and how right-click behaves in the terminal."
+          "windowsTerminalTitle": "Đặt mặc định của terminal Windows",
+          "windowsTerminalSubtitle": "Chọn Shell MẶC ĐỊNH cho các bảng mới và cách hoạt động của nhấp chuột phải trong terminal."
         },
         "OnboardingFooter": {
           "ba58547306": "Mặt sau",
-          "111d3f8d92": "Skip to project setup"
+          "111d3f8d92": "Chuyển đến phần thiết lập dự án"
         },
         "OnboardingInlineCommandTerminal": {
-          "4123609efd": "Starting terminal..."
+          "4123609efd": "Đang khởi động terminal..."
         },
         "OnboardingSkipConfirmationDialog": {
-          "9f47f345a4": "It won't take long!",
-          "e4726b2d50": "Skip onboarding?"
+          "9f47f345a4": "Sẽ không mất nhiều thời gian đâu!",
+          "e4726b2d50": "Bỏ qua quá trình giới thiệu?"
         },
         "ThemeStep": {
-          "a4b254779d": "macOS Option key",
-          "6c51398942": "Mouse",
-          "8ca01945f2": "Dividers",
+          "a4b254779d": "Phím tùy chọn macOS",
+          "6c51398942": "Chuột",
+          "8ca01945f2": "Bộ chia",
           "b3a99a2d29": "Cửa sổ",
-          "86c0f1caa2": "Padding",
-          "06a24f4f2d": "Colors",
-          "c021e9dddd": "Theme palette",
+          "86c0f1caa2": "Phần đệm",
+          "06a24f4f2d": "Màu sắc",
+          "c021e9dddd": "Bảng chủ đề",
           "ab2a583a97": "Cursor",
-          "cc1858e19e": "Font",
+          "cc1858e19e": "Phông chữ",
           "248c812283": "Nhập khẩu",
-          "7ee9234e54": "Ghostty config detected.",
-          "78b6386140": "Imported from Ghostty.",
-          "2c3aa538f8": "Looking for a Ghostty config…",
-          "94b9dc561d": "Settings → Terminal",
-          "dd5c16ad1b": "More terminal options, including font, cursor, and palette, in",
+          "7ee9234e54": "Đã phát hiện cấu hình ghostty.",
+          "78b6386140": "Được nhập khẩu từ Ghostty.",
+          "2c3aa538f8": "Đang tìm kiếm cấu hình Ghostty…",
+          "94b9dc561d": "Cài đặt → Terminal",
+          "dd5c16ad1b": "Nhiều tùy chọn terminal hơn, bao gồm phông chữ, con trỏ và bảng màu, trong",
           "ad192706e6": "Ánh sáng",
           "fa7b673ea9": "Tối tăm",
           "827ea7b4a2": "Hệ thống",
-          "699ddf83c2": "Failed to import Ghostty settings",
-          "16a9f0446a": "No Ghostty settings found to import",
+          "699ddf83c2": "Không thể nhập cài đặt Ghostty",
+          "16a9f0446a": "Không tìm thấy cài đặt Ghostty nào để nhập",
           "ad19e5c916": "Đang nhập khẩu...",
           "906c4373fe": "cài đặt"
         },
         "use": {
           "onboarding": {
             "flow": {
-              "52acfbef51": "Could not save progress"
+              "52acfbef51": "Không thể lưu tiến trình"
             }
           }
         },
         "WindowsTerminalStep": {
           "powerShell": "PowerShell",
-          "powerShellPwsh": "Uses PowerShell 7+ when available, with Windows PowerShell as fallback.",
-          "powerShellInbox": "Uses the Windows PowerShell available on every supported Windows install.",
+          "powerShellPwsh": "Sử dụng PowerShell 7+ khi khả dụng, với Windows PowerShell làm dự phòng.",
+          "powerShellInbox": "Sử dụng Windows PowerShell có sẵn trên mọi bản cài đặt Windows được hỗ trợ.",
           "commandPrompt": "Dấu nhắc lệnh",
-          "commandPromptDescription": "Opens new terminal panes with classic cmd.exe behavior.",
+          "commandPromptDescription": "Mở các bảng terminal mới với hành vi cmd.exe cổ điển.",
           "gitBash": "Git Bash",
-          "gitBashDescription": "Uses Git for Windows bash.exe for Unix-style shell workflows.",
-          "gitBashUnavailable": "Selected, but Git Bash was not detected on this machine.",
+          "gitBashDescription": "Sử dụng Git cho Windows bash.exe cho quy trình công việc shell kiểu Unix.",
+          "gitBashUnavailable": "Đã chọn, nhưng Git Bash không được phát hiện trên máy này.",
           "wsl": "WSL",
-          "wslDescription": "Starts new terminal panes inside your Windows Subsystem for Linux default.",
-          "wslUnavailable": "Selected, but WSL was not detected on this machine.",
-          "rightClickPaste": "Paste on right-click",
+          "wslDescription": "Khởi động các ngăn terminal mới bên trong Hệ thống con Windows dành cho Linux mặc định của bạn.",
+          "wslUnavailable": "Đã chọn, nhưng WSL không được phát hiện trên máy này.",
+          "rightClickPaste": "Dán vào nhấp chuột phải",
           "rightClickPasteDescription": "Nhấp chuột phải để dán bảng tạm. Ctrl + nhấp chuột phải sẽ mở menu ngữ cảnh.",
-          "rightClickMenu": "Open context menu",
-          "rightClickMenuDescription": "Right-click opens the terminal menu. Paste from the menu or keyboard.",
-          "loading": "Loading terminal settings...",
+          "rightClickMenu": "Mở menu ngữ cảnh",
+          "rightClickMenuDescription": "Nhấp chuột phải sẽ mở menu terminal. Dán từ menu hoặc bàn phím.",
+          "loading": "Đang tải cài đặt terminal...",
           "defaultShell": "Vỏ mặc định",
-          "defaultShellDescription": "Choose the shell Wakii opens for new Windows terminal panes.",
+          "defaultShellDescription": "Chọn shell Wakii mở cho các bảng terminal Windows mới.",
           "wslDistribution": "Phân phối WSL",
-          "wslDistributionDescription": "Use the Windows default distribution or choose a specific installed distro.",
+          "wslDistributionDescription": "Sử dụng bản phân phối mặc định của Windows hoặc chọn một bản phân phối được cài đặt cụ thể.",
           "loadingDistros": "Đang tải bản phân phối",
           "windowsDefault": "Windows mặc định",
-          "rightClickBehavior": "Right-click behavior",
-          "rightClickBehaviorDescription": "Pick the terminal mouse behavior that matches your Windows muscle memory."
+          "rightClickBehavior": "Hành vi nhấp chuột phải",
+          "rightClickBehaviorDescription": "Chọn hành vi của chuột terminal phù hợp với bộ nhớ cơ Windows của bạn."
         },
         "mac": {
           "notification": {
             "permission": {
               "card": {
-                "f696515944": "Click Allow in the macOS dialog.",
-                "3d18cf71f9": "Updates automatically.",
-                "721d2bedb6": "Turn on Allow notifications for Wakii in System Settings."
+                "f696515944": "Bấm vào Cho phép trong hộp thoại macOS.",
+                "3d18cf71f9": "Cập nhật tự động.",
+                "721d2bedb6": "Bật Cho phép thông báo cho Wakii trong Cài đặt hệ thống."
               }
             }
           }
@@ -14245,7 +14245,7 @@
             "0e3e809a4b": "Lọc",
             "b4271864bd": "MacBook Pro",
             "cefd048225": "Mặt sau",
-            "c5ad56786d": "spinner"
+            "c5ad56786d": "máy quay"
           }
         },
         "CustomNetworkAddressDialog": {
@@ -14708,7 +14708,7 @@
                 "4e71d72912": "Claude sign-in failed.",
                 "9ddeb558f9": "Claude account added.",
                 "29d0653961": "Đăng nhập",
-                "945865332e": "Signing in",
+                "945865332e": "Đăng nhập",
                 "accountStatusUnknown": "Account status unknown"
               },
               "UsagePage": {
@@ -14788,7 +14788,7 @@
           "CliSkillSetupTerminal": {
             "1953e90447": "Press Enter to install the Wakii CLI orchestration skill for your agents.",
             "43b60ec5c3": "Wakii CLI and orchestration skill install terminal",
-            "84e9576dac": "Skill setup",
+            "84e9576dac": "Thiết lập kỹ năng",
             "5c3aee22c0": "Sao chép lệnh",
             "5eca672aac": "Copy skill install command",
             "6ff813fc1d": "Failed to copy skill command.",
@@ -15626,18 +15626,18 @@
           }
         },
         "RichMarkdownTableControls": {
-          "deleteTable": "Delete table",
+          "deleteTable": "Xóa bảng",
           "tableActions": "Table actions",
           "addColumn": "Add column",
           "addRow": "Add row",
           "rowActions": "Row actions",
           "columnActions": "Column actions",
-          "insertRowAbove": "Insert row above",
-          "insertColumnLeft": "Insert column left",
-          "insertRowBelow": "Insert row below",
-          "insertColumnRight": "Insert column right",
-          "deleteRow": "Delete row",
-          "deleteColumn": "Delete column"
+          "insertRowAbove": "Chèn hàng phía trên",
+          "insertColumnLeft": "Chèn cột bên trái",
+          "insertRowBelow": "Chèn hàng bên dưới",
+          "insertColumnRight": "Chèn cột bên phải",
+          "deleteRow": "Xóa hàng",
+          "deleteColumn": "Xóa cột"
         },
         "CheckRunAnnotations": {
           "copy": "Copy annotations"
@@ -15762,35 +15762,35 @@
       "crash": {
         "report": {
           "CrashReportDialog": {
-            "b4951cd27c": "Send Report",
-            "88fea8e84e": "Don't Send",
+            "b4951cd27c": "Gửi báo cáo",
+            "88fea8e84e": "Đừng gửi",
             "50b00dc327": "Sao chép chi tiết",
-            "6d3ebe216a": "Diagnostic text",
+            "6d3ebe216a": "Văn bản chẩn đoán",
             "835037edc9": "Wakii",
-            "56a3dfa283": "Failed to send crash report.",
-            "8e24fe4f75": "Crash report sent.",
-            "8b8473c544": "Crash report copied.",
-            "b175e90213": "No crash report is available.",
-            "765591798d": "Checking for crash reports...",
-            "b2e36f53a1": "Failed to send crash report. Diagnostic ticket {{value0}} was uploaded but not linked.",
-            "ead6fc0510": "No automatic crash report was captured. You can still send details and include recent diagnostic logs when available.",
-            "b082f27490": "Attach recent diagnostic logs",
-            "e59f0b9427": "Sends a capped redacted log bundle with the report."
+            "56a3dfa283": "Không gửi được báo cáo sự cố.",
+            "8e24fe4f75": "Đã gửi báo cáo sự cố.",
+            "8b8473c544": "Đã sao chép báo cáo sự cố.",
+            "b175e90213": "Không có báo cáo sự cố có sẵn.",
+            "765591798d": "Đang kiểm tra các báo cáo sự cố...",
+            "b2e36f53a1": "Không gửi được báo cáo sự cố. Phiếu chẩn đoán {{value0}} đã được tải lên nhưng chưa được liên kết.",
+            "ead6fc0510": "Không có báo cáo sự cố tự động nào được ghi lại. Bạn vẫn có thể gửi thông tin chi tiết và bao gồm nhật ký chẩn đoán gần đây nếu có.",
+            "b082f27490": "Đính kèm nhật ký chẩn đoán gần đây",
+            "e59f0b9427": "Gửi gói nhật ký được xử lý lại có giới hạn cùng với báo cáo."
           },
           "submit": {
             "notice": {
-              "unknownError": "The crash report request failed before it returned a reason.",
-              "ticketUploaded": "Diagnostic ticket {{value0}} was uploaded but not linked.",
-              "uncheckDiagnostics": "Uncheck \"Attach recent diagnostic logs\" and try again, or copy the details.",
-              "checkConnection": "Check your connection and try again, or copy the details.",
-              "notSent": "Crash report wasn't sent",
+              "unknownError": "Yêu cầu báo cáo sự cố không thành công trước khi nó trả về lý do.",
+              "ticketUploaded": "Phiếu chẩn đoán {{value0}} đã được tải lên nhưng chưa được liên kết.",
+              "uncheckDiagnostics": "Bỏ chọn \"Đính kèm nhật ký chẩn đoán gần đây\" và thử lại hoặc sao chép chi tiết.",
+              "checkConnection": "Hãy kiểm tra kết nối của bạn và thử lại hoặc sao chép thông tin chi tiết.",
+              "notSent": "Báo cáo sự cố chưa được gửi",
               "copyDetails": "Sao chép chi tiết",
-              "sentWithoutDiagnostics": "Crash report sent without diagnostic logs",
-              "diagnosticsReason": "Diagnostic logs were not attached: {{value0}}"
+              "sentWithoutDiagnostics": "Báo cáo sự cố được gửi mà không có nhật ký chẩn đoán",
+              "diagnosticsReason": "Nhật ký chẩn đoán không được đính kèm: {{value0}}"
             }
           },
           "copy": {
-            "copyFailed": "Crash report details could not be copied."
+            "copyFailed": "Không thể sao chép chi tiết báo cáo sự cố."
           }
         }
       },
@@ -17077,13 +17077,13 @@
             "starredThanks": "Starred — thank you!",
             "githubOpened": "GitHub opened",
             "opening": "Opening…",
-            "starring": "Starring…",
+            "starring": "Diễn viên chính…",
             "openGithub": "Mở GitHub",
-            "starOnGithub": "Star on GitHub",
+            "starOnGithub": "Sao trên GitHub",
             "onboardingCompleted": "Onboarding completed!",
             "body": "If you’re enjoying Wakii so far, a GitHub star helps other developers discover it.",
             "dismiss": "Miễn nhiệm",
-            "later": "Later"
+            "later": "Sau đó"
           }
         }
       },
@@ -17373,17 +17373,17 @@
         "description": "Wakii will hide {{value0}} {{value1}} details for this workspace. The {{value0}} and branch on {{value2}} won’t be changed."
       },
       "UnexpectedSignoutCard": {
-        "9f2c1a4b7d": "You've been signed out",
+        "9f2c1a4b7d": "Bạn đã đăng xuất",
         "3e8f5c2a91": "Miễn nhiệm",
-        "7b4d9e1f2a": "Sign in again as {{value0}} to restore Artifact sharing, Wakii Relay, and skill sharing.",
-        "5a1c8d3e6f": "Sign in again to restore Artifact sharing, Wakii Relay, and skill sharing.",
-        "1f6b2c9d4e": "What you get back",
+        "7b4d9e1f2a": "Đăng nhập lại bằng {{value0}} để khôi phục tính năng chia sẻ Cổ vật, Wakii Relay và chia sẻ kỹ năng.",
+        "5a1c8d3e6f": "Đăng nhập lại để khôi phục tính năng chia sẻ Cổ vật, Wakii Relay và chia sẻ kỹ năng.",
+        "1f6b2c9d4e": "Những gì bạn nhận lại",
         "8d2e4f7a1b": "Chia sẻ hiện vật",
-        "2c9a5b6e8d": "Publish HTML and Markdown files and manage every shared link from Wakii.",
+        "2c9a5b6e8d": "Xuất bản các tệp HTML và Markdown cũng như quản lý mọi liên kết được chia sẻ từ Wakii.",
         "6e3f1a9c5b": "Tiếp sức Wakii",
         "4b7d2e8f1a": "Kết nối Wakii Mobile với máy tính để bàn này qua mạng di động hoặc bất kỳ Wi-Fi nào.",
         "9a4c6b2d7e": "Chia sẻ kỹ năng",
-        "3d8e5f1b9c": "Share skills behind an unlisted link and install them on any machine you use.",
+        "3d8e5f1b9c": "Chia sẻ các kỹ năng đằng sau một liên kết không công khai và cài đặt chúng trên bất kỳ máy nào bạn sử dụng.",
         "c5b3e8a17d": "Đăng nhập vào Wakii"
       },
       "NativeChatResumeOutcomeRow": {
@@ -17460,13 +17460,13 @@
       "window": {
         "editableContextMenu": {
           "table": "Bàn",
-          "insertRowAbove": "Insert row above",
-          "insertRowBelow": "Insert row below",
-          "deleteRow": "Delete row",
-          "insertColumnLeft": "Insert column left",
-          "insertColumnRight": "Insert column right",
-          "deleteColumn": "Delete column",
-          "deleteTable": "Delete table"
+          "insertRowAbove": "Chèn hàng phía trên",
+          "insertRowBelow": "Chèn hàng bên dưới",
+          "deleteRow": "Xóa hàng",
+          "insertColumnLeft": "Chèn cột bên trái",
+          "insertColumnRight": "Chèn cột bên phải",
+          "deleteColumn": "Xóa cột",
+          "deleteTable": "Xóa bảng"
         }
       }
     }
@@ -17477,33 +17477,33 @@
         "stepTooltip": {
           "agent": "Agent mặc định",
           "theme": "Giao diện",
-          "windowsTerminal": "Windows Terminal",
+          "windowsTerminal": "Terminal Windows",
           "notifications": "Thông báo",
           "integrations": "Tích hợp"
         },
         "actions": {
-          "addFirstProject": "Add your first project",
+          "addFirstProject": "Thêm dự án đầu tiên của bạn",
           "continue": "Tiếp tục",
-          "openingAddProject": "Opening Add Project..."
+          "openingAddProject": "Đang mở Thêm dự án..."
         }
       },
       "skipConfirmation": {
-        "skip": "Skip",
-        "keepGoing": "No, keep going"
+        "skip": "Nhảy",
+        "keepGoing": "Không, tiếp tục đi"
       },
       "theme": {
         "hints": {
-          "system": "Match OS",
-          "dark": "Easy on the eyes",
-          "light": "Bright & crisp"
+          "system": "Hệ điều hành phù hợp",
+          "dark": "Dễ nhìn",
+          "light": "Sáng và sắc nét"
         }
       },
       "integrations": {
         "capabilities": {
-          "startWorkspaceFromIssue": "Start a workspace from any GitHub issue or pull request, prefilled with its title and context",
-          "browseIssues": "Browse GitHub issues and pull requests in the Tasks view without leaving Wakii",
-          "reviewStatus": "See issue state, review status, and CI checks on every worktree",
-          "managePullRequests": "Read, comment on, and merge pull requests without leaving Wakii"
+          "startWorkspaceFromIssue": "Bắt đầu một không gian làm việc từ bất kỳ vấn đề hoặc pull request nào của GitHub, được điền sẵn tiêu đề và ngữ cảnh của nó",
+          "browseIssues": "Duyệt các sự cố GitHub và lấy yêu cầu trong chế độ xem Nhiệm vụ mà không cần rời khỏi Wakii",
+          "reviewStatus": "Xem trạng thái sự cố, trạng thái đánh giá và kiểm tra CI trên mỗi worktree",
+          "managePullRequests": "Đọc, nhận xét và merge các pull request mà không cần rời khỏi Wakii"
         }
       }
     },
@@ -17555,7 +17555,7 @@
         "placeholder": "Send a message…",
         "mentionHint": "Referencing file:",
         "attach": "Attach file",
-        "startDictation": "Start dictation",
+        "startDictation": "Bắt đầu đọc chính tả",
         "stopDictation": "Stop dictation",
         "noSkills": "No matching skills",
         "noCommandsOrSkills": "No matching commands or skills",
@@ -17723,7 +17723,7 @@
         "stateWaiting": "chờ",
         "stateBlocked": "blocked",
         "stateDone": "xong",
-        "stateIdle": "stopped",
+        "stateIdle": "dừng lại",
         "stateUnverifiable": "unverifiable",
         "reasonWaiting": "needs approval",
         "reasonUnverifiable": "no contact",
@@ -17776,7 +17776,7 @@
         "cancel": "Hủy",
         "send": "Submit",
         "next": "Next",
-        "skip": "Skip",
+        "skip": "Nhảy",
         "sending": "Đang gửi…"
       },
       "ask": {
@@ -17839,7 +17839,7 @@
           "working": "đang làm việc",
           "idle": "idle",
           "failed": "failed",
-          "stopped": "stopped",
+          "stopped": "dừng lại",
           "unverifiable": "unverifiable",
           "workingCount": "{{value0}} working",
           "idleCount": "{{value0}} idle",
@@ -18304,32 +18304,32 @@
   },
   "runtimeRpc": {
     "startupFailure": {
-      "unknownCause": "No additional error details were available.",
-      "continueButton": "Continue without CLI",
-      "title": "Wakii CLI unavailable",
-      "message": "Wakii couldn't start its local command transport.",
-      "detail": "Wakii will continue to work, but commands such as orca status, orca terminal, and orchestration are unavailable for this session.\n\n{{guidance}}\n\nCause: {{cause}}",
+      "unknownCause": "Không có chi tiết lỗi bổ sung có sẵn.",
+      "continueButton": "Tiếp tục mà không cần CLI",
+      "title": "Wakii CLI không có sẵn",
+      "message": "Wakii không thể khởi động quá trình vận chuyển lệnh cục bộ của mình.",
+      "detail": "Wakii sẽ tiếp tục hoạt động nhưng các lệnh như trạng thái orca, terminal orca và điều phối không khả dụng cho phiên này.\n\n{{guidance}}\n\nNguyên nhân: {{cause}}",
       "guidance": {
-        "permissionDenied": "Wakii couldn't write its runtime file. Check permissions on Wakii's data folder, then restart.",
-        "storageUnavailable": "Your disk may be full or read-only. Free up space, then restart Wakii.",
-        "invalidPath": "Wakii's data folder may be missing, moved, or at a path that is too long. Restore it or use a shorter path, then restart Wakii.",
-        "addressInUse": "Another process may be holding the port. Restart Wakii to try again.",
-        "unknown": "Restart Wakii to try again."
+        "permissionDenied": "Wakii không thể ghi tập tin thời gian chạy của nó. Kiểm tra quyền trên thư mục dữ liệu của Wakii, sau đó khởi động lại.",
+        "storageUnavailable": "Đĩa của bạn có thể đầy hoặc chỉ đọc. Giải phóng dung lượng, sau đó khởi động lại Wakii.",
+        "invalidPath": "Thư mục dữ liệu của Wakii có thể bị thiếu, bị di chuyển hoặc ở đường dẫn quá dài. Khôi phục nó hoặc sử dụng đường dẫn ngắn hơn, sau đó khởi động lại Wakii.",
+        "addressInUse": "Một quá trình khác có thể đang giữ cổng. Khởi động lại Wakii để thử lại.",
+        "unknown": "Khởi động lại Wakii để thử lại."
       }
     }
   },
   "featureTips": {
     "voice": {
-      "demoPrompt": "Review this diff for edge cases and add tests for anything you find.",
-      "startDictation": "Start dictation",
-      "agentPromptTitle": "Agent prompt",
-      "listening": "Listening...",
-      "focusPaneInstruction": "Focus a terminal, editor, or agent prompt, then press",
-      "startInstruction": "to start voice dictation. Press",
-      "stopInstruction": "again to stop.",
-      "unassignedInstruction": "Assign a dictation shortcut before starting voice dictation in a focused pane.",
-      "settingsInstruction": "Change the model, dictation mode, or shortcut anytime in",
-      "settingsLink": "Settings → Voice"
+      "demoPrompt": "Xem lại điểm khác biệt này để biết các trường hợp đặc biệt và thêm các bài kiểm tra cho bất kỳ điều gì bạn tìm thấy.",
+      "startDictation": "Bắt đầu đọc chính tả",
+      "agentPromptTitle": "Lời nhắc của Agent",
+      "listening": "Đang nghe...",
+      "focusPaneInstruction": "Tập trung vào dấu nhắc của terminal, trình soạn thảo hoặc agent, sau đó nhấn",
+      "startInstruction": "để bắt đầu đọc chính tả bằng giọng nói. Nhấn",
+      "stopInstruction": "lần nữa phải dừng lại.",
+      "unassignedInstruction": "Gán một phím tắt đọc chính tả trước khi bắt đầu đọc chính tả trong ngăn có tiêu điểm.",
+      "settingsInstruction": "Thay đổi kiểu máy, chế độ đọc chính tả hoặc phím tắt bất kỳ lúc nào trong",
+      "settingsLink": "Cài đặt → Giọng nói"
     }
   },
   "quickOpen": {
@@ -18364,22 +18364,22 @@
   },
   "rendererRecovery": {
     "reload": "Tải lại",
-    "copyCommands": "Copy Commands",
+    "copyCommands": "Sao chép lệnh",
     "quit": "Thoát",
-    "stalledDetail": "Wakii reloaded the window after a crash, but it never finished loading.",
-    "crashLoopDetail": "Wakii tried to recover {{recoveryCount}} times in a row without success.",
-    "driverFallback": "If that does not help, the cause is usually a graphics driver.",
-    "genericDetail": "This is often a graphics-driver or installation problem. Reload to try again, or quit and relaunch Wakii.",
-    "title": "Wakii keeps failing to load",
-    "stalledMessage": "The app window stopped responding while reloading after a crash.",
-    "crashLoopMessage": "The app window crashed repeatedly and stopped reloading automatically."
+    "stalledDetail": "Wakii đã tải lại cửa sổ sau một sự cố nhưng nó chưa bao giờ tải xong.",
+    "crashLoopDetail": "Wakii đã cố gắng khôi phục {{recoveryCount}} lần liên tiếp nhưng không thành công.",
+    "driverFallback": "Nếu điều đó không giúp ích được thì nguyên nhân thường là do trình điều khiển đồ họa.",
+    "genericDetail": "Đây thường là vấn đề về trình điều khiển đồ họa hoặc cài đặt. Tải lại để thử lại hoặc thoát và khởi chạy lại Wakii.",
+    "title": "Wakii liên tục không tải được",
+    "stalledMessage": "Cửa sổ ứng dụng đã ngừng phản hồi khi tải lại sau sự cố.",
+    "crashLoopMessage": "Cửa sổ ứng dụng bị lỗi liên tục và ngừng tự động tải lại."
   },
   "notifications": {
     "agentStatus": {
-      "needsInput": "needs input",
+      "needsInput": "cần đầu vào",
       "working": "đang làm việc",
-      "stopped": "stopped",
-      "finished": "finished"
+      "stopped": "dừng lại",
+      "finished": "hoàn thành"
     }
   },
   "sessionSearch": {
