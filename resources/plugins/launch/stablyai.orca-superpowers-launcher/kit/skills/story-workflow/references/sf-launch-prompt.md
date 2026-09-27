@@ -10,8 +10,9 @@ Viết ra `/tmp/sf-prompt-<sf>.md`, launch `--prompt "$(cat ...)"`. Chi tiết:
 bảng Worktree SF trong `references/cli-verified.md`.
 
 **Definition of DONE for an SF run (bài học SF-7: agent đặt Linear Done rồi kết
-thúc mà bỏ merge — 468 dòng kẹt ngoài nhánh đích. Merge là một phần của DONE,
-không phải bước tùy chọn sau):**
+thúc mà công sức kẹt trên máy local — 468 dòng. Commit + PUSH nhánh sf là một
+phần của DONE; merge vào nhánh đích là việc COORDINATOR trong story worktree
+(xem merge-playbook) — executor KHÔNG đụng nhánh đích):**
 
 ```
 "Use orca-superpowers-workflow skill for ONE sub-feature: <SF name> (<SF-id>).
@@ -43,15 +44,15 @@ không phải bước tùy chọn sau):**
        (cyan) trên diff SF — KHÔNG Dev tự duyệt. CHANGES-REQUESTED → Dev fix
        rồi re-review. APPROVED mới qua bước 3. (Team Model: tách bạch
        Dev/Test — self-test không thay thế reviewer độc lập.)
-   3. MERGE worktree branch vào nhánh đích story/<epic-id>-<slug> (no-ff; nếu
-      conflict improvements-log → giữ CẢ HAI entries) + audit comment merge-hash
-      lên issue
+   3. COMMIT + PUSH nhánh sf lên remote (`git push origin sf-<n>-<slug>`) rồi
+      report DONE — KHÔNG merge, KHÔNG đụng nhánh đích story/<epic-id>-<slug>
+      (merge là việc coordinator trong story worktree — merge-playbook)
    4. GATE CỨNG (learned 2026-08-28 FI-187: sf-1 merge TRƯỚC reviewer dù prompt
       ghi thứ tự — lời nhắc không đủ): chạy `~/.claude/bin/story-verify <sf>`
       — phải sạch (không FAIL, không VIOLATION) thì mới qua bước 5. Còn FAIL
       → quay lại đúng bước checklist tương ứng, KHÔNG tick Done.
    5. RỒI MỚI set issue Done.
- Linear Done TRƯỚC merge = run INCOMPLETE (coordinator sẽ phải merge hộ + flag)."
+ Linear Done TRƯỚC push = run INCOMPLETE (coordinator không có gì để merge + flag)."
 ```
 
 ## Memory patterns khi launch (PM gọi — optional, fail-safe như story-resume)
