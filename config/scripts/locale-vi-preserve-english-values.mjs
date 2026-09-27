@@ -220,5 +220,16 @@ export const VI_PRESERVE_ENGLISH_VALUES = new Set([
   '{{value0}} subagents',
   '{{count}} subagent',
   '{{count}} subagents',
-  'ORCA'
+  'ORCA',
+  // Lô 5 full-run leftovers (27/09, {{value0}}-variable shapes): placeholder-only
+  // templates GT passes through verbatim, the dead plural *_one value (vi resolves
+  // *_other for every count — SF-1 runtime probe), brand+version template.
+  '{{value0}} {{value1}}',
+  '{{value0}}ms',
+  '1 agent',
+  '{{value0}}m',
+  '{{value0}}h',
+  '{{value0}}d',
+  '<1m',
+  'Wakii v{{version}}'
 ])

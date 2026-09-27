@@ -18,5 +18,8 @@ export const VI_VALUE_OVERRIDES = {
   Edit: 'Sửa',
   general: 'Chung',
   'Choose close reason': 'Chọn lý do đóng',
+  '{{value0}} agents': '{{value0}} agent',
+  Show: 'Hiện',
+  'split chat right': 'chia trò chuyện sang phải',
   'WSL default': 'WSL mặc định'
 }
