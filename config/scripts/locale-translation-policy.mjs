@@ -10,6 +10,8 @@ import { LOCALE_KEY_OVERRIDES } from './locale-key-overrides.mjs'
 import { LOCALE_PHRASE_FIXES } from './locale-phrase-fixes.mjs'
 import { SEARCH_KEYWORD_OVERRIDES } from './locale-search-keyword-overrides.mjs'
 import { LOCALE_VALUE_OVERRIDES } from './locale-value-overrides.mjs'
+import { NEVER_TRANSLATE_EXTENSIONS } from './locale-never-translate-extensions.mjs'
+import { VI_PRESERVE_ENGLISH_VALUES } from './locale-vi-preserve-english-values.mjs'
 
 export { BRAND_MISTRANSLATIONS } from './locale-brand-mistranslations.mjs'
 export { LOCALE_KEY_OVERRIDES } from './locale-key-overrides.mjs'
@@ -213,69 +215,14 @@ export const NEVER_TRANSLATE_VALUES = new Set([
   'upstream',
   'LIN-329',
   'GH #1799',
-  'orca · zsh'
+  'orca · zsh',
+  ...NEVER_TRANSLATE_EXTENSIONS
 ])
 
-// Per-locale whole-value labels kept Latin by glossary ruling (vi tech vocabulary:
-// commit/worktree/merge/branch… stay English in Vietnamese dev usage). In-sentence
-// occurrences go through BRAND_MISTRANSLATIONS.vi instead; GT also returns some of
-// these verbatim, so preserve is what lets translatedness reach 100%.
+// Per-locale whole-value labels kept Latin by glossary ruling — see
+// locale-vi-preserve-english-values.mjs for the vi list and rationale.
 export const LOCALE_PRESERVE_ENGLISH_VALUES = {
-  vi: new Set([
-    'Rebase',
-    'rebase',
-    'Push',
-    'push',
-    'Pull',
-    'pull',
-    'Merge',
-    'merge',
-    'Branch',
-    'branches',
-    'Branch',
-    'branch',
-    'Branches',
-    'Commit',
-    'commits',
-    'commit',
-    'commits',
-    'Worktree',
-    'worktrees',
-    'worktree',
-    'worktrees',
-    'Staging',
-    'staging',
-    'Gate',
-    'gate',
-    'Plugin',
-    'plugins',
-    'plugin',
-    'plugins',
-    'Tab',
-    'tabs',
-    'tab',
-    'tabs',
-    'Agent',
-    'agents',
-    'agent',
-    'agents',
-    'Terminal',
-    'terminals',
-    'terminal',
-    'terminals',
-    'Sidebar',
-    'sidebar',
-    'Stash',
-    'stash',
-    'Fork',
-    'fork',
-    'Checkout',
-    'checkout',
-    'Remote',
-    'remote',
-    'origin',
-    'upstream'
-  ])
+  vi: VI_PRESERVE_ENGLISH_VALUES
 }
 
 export const NATIVE_PICKER_LABELS = {
