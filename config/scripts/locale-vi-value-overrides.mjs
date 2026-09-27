@@ -17,5 +17,6 @@ export const VI_VALUE_OVERRIDES = {
   Remove: 'Gỡ bỏ',
   Edit: 'Sửa',
   general: 'Chung',
+  'Choose close reason': 'Chọn lý do đóng',
   'WSL default': 'WSL mặc định'
 }

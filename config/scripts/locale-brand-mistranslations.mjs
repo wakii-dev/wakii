@@ -203,6 +203,8 @@ export const BRAND_MISTRANSLATIONS = {
     'Source Control': ['Kiểm soát nguồn', 'kiểm soát nguồn', 'Kiểm soát nguồn'],
     'Source control': ['Kiểm soát nguồn', 'kiểm soát nguồn'],
     'source control': ['kiểm soát nguồn', 'Kiểm soát nguồn'],
+    Close: ['gần gũi', 'Gần gũi'],
+    close: ['gần gũi', 'Gần gũi'],
     'Claude Code': ['Mã Claude'],
     Claude: ['Mã Claude'],
     Terminal: [

@@ -35,5 +35,22 @@ export const NEVER_TRANSLATE_EXTENSIONS = [
   'ORCA_AZURE_DEVOPS_TOKEN',
   'ORCA_BITBUCKET_ACCESS_TOKEN',
   'ORCA_BITBUCKET_API_TOKEN',
-  'ORCA_BITBUCKET_EMAIL'
+  'ORCA_BITBUCKET_EMAIL',
+  // Lô 2 remainder (27/09): diff line markers, GitHub project enums, placeholder-only
+  // templates, separators, and Latin tokens (CPU/API/Web/Wakii) with no vi rendering.
+  ':L{{value0}}',
+  '-L{{value0}}',
+  '{{value0}} PR #{{value1}}?',
+  '{{value0}} — {{value1}}',
+  '{{title}}, {{status}}',
+  'PULL_REQUEST',
+  'BOARD_LAYOUT',
+  'TABLE_LAYOUT',
+  'DRAFT_ISSUE',
+  'CPU',
+  'API',
+  'Web',
+  'Wakii',
+  '·',
+  '···'
 ]
