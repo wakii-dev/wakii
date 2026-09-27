@@ -37,6 +37,7 @@ import type { HangDetectionMarker } from '../hang-watchdog/hang-detection-marker
 import { ServeReadinessPublisher } from '../server/serve-readiness'
 import { SkillShareDeepLinkState } from './skill-share-deep-link-state'
 import { OsOpenedMarkdownFileState } from './os-opened-markdown-files'
+import { OsOpenedWakiiFileState } from './os-opened-wakii-files'
 import {
   DEFAULT_GPU_CRASH_FALLBACK_THRESHOLD,
   DEFAULT_GPU_CRASH_FALLBACK_WINDOW_MS,
@@ -94,10 +95,17 @@ export const mainProcessState = {
   skillShareDeepLinks: new SkillShareDeepLinkState(),
   // Why: a Finder/Explorer "Open With" can land before any window exists; the renderer pulls this buffer on mount.
   osOpenedMarkdownFiles: new OsOpenedMarkdownFileState(),
+  // Why: same as the markdown buffer, for double-clicked .wakii story files.
+  osOpenedWakiiFiles: new OsOpenedWakiiFileState(),
   // Why a latch and not just "a window exists": a window can be up while its renderer has not
   // attached the ui:openMarkdownFiles listener yet, and a push into that gap is dropped by
   // Electron with no error. Only the renderer's own pull proves the listener is live.
   markdownFileOpenListenerReady: false,
+  // Why: same latch contract as markdown, for the ui:openWakiiFile listener.
+  wakiiFileOpenListenerReady: false,
+  // Why: the spec's dedupe/refresh owner is the main process — re-opening an unchanged
+  // .wakii must not re-deliver; a changed one must. Keyed by path, valued by content hash.
+  wakiiDeliveredFileHashes: new Map<string, string>(),
   firstWindowStartupServicesReady: Promise.resolve(),
   // Why published: the default-session proxy must be applied before the first app-owned fetcher,
   // but window creation has no reason to queue behind it (the request guard already fences it).
