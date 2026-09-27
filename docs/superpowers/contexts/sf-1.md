@@ -28,3 +28,20 @@
 - KHÔNG thêm lệnh của explorer/search/chrome — đó của SF-2/3/4 (chỉ bảo đảm contract nhận được).
 - KHÔNG đụng Monaco keybindings hay tiptap shortcuts.
 - KHÔNG hardcode Meta key (AGENTS.md cross-platform).
+
+## Pinned verify queries (SF-1 implement xong — appended 2026-09-22)
+Fixture: `src/renderer/src/components/command-palette/palette-fuzzy-rank.test.ts` (describe
+"pinned SF-1 verify queries") — titles khớp production sources (core definitions + cmd-j
+catalog + plugin navigation-shortcuts). 5 cặp query → expected top command:
+
+| # | Query | Expected top command | Id | Nguồn |
+|---|-------|---------------------|----|-------|
+| 1 | `palette` | Command Palette | `app.commandPalette` | core |
+| 2 | `reopen` | Reopen closed tab | `tab.reopenClosed` | core |
+| 3 | `add quick` | Add Quick Command | `cmd-j.add-quick-command` | cmd-j |
+| 4 | `settings` | Open Settings | `app.settings` | core |
+| 5 | `toggle source` | Toggle Source Control | `plugin:stablyai.orca-navigation-shortcuts/toggle-source-control` | plugin |
+
+Cả 5 chạy được từ palette qua dispatcher (pin 2/4/5 có handler trong
+`createAppCommandHandlers`; pin 1 toggle chính palette; pin 3 chạy qua
+`CmdJQuickActionContext`). Tie-break khi bằng điểm: title ngắn hơn → id `localeCompare`.

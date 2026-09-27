@@ -132,4 +132,9 @@ describe('browserManager', () => {
     const release = browserManager.holdPaintForCapture(424242)
     expect(() => release()).not.toThrow()
   })
+
+  it('returns a no-op capture hold for a guest no page owns', () => {
+    const release = browserManager.holdPaintForCapture(424242)
+    expect(() => release()).not.toThrow()
+  })
 })
