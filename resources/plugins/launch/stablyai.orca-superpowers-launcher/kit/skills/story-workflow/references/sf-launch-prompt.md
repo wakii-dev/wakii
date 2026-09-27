@@ -51,7 +51,10 @@ phần của DONE; merge vào nhánh đích là việc COORDINATOR trong story w
       ghi thứ tự — lời nhắc không đủ): chạy `~/.claude/bin/story-verify <sf>`
       — phải sạch (không FAIL, không VIOLATION) thì mới qua bước 5. Còn FAIL
       → quay lại đúng bước checklist tương ứng, KHÔNG tick Done.
-   5. RỒI MỚI set issue Done.
+   5. Set issue Done theo Worktree model — legacy (bracket không ghi
+      `Worktree model: story-hub`): RỒI MỚI set Done. story-hub: KHÔNG set
+      Done — push sf-branch + report DONE là xong; coordinator set sau khi
+      merge sf-branch vào nhánh đích (merge-playbook).
  Linear Done TRƯỚC push = run INCOMPLETE (coordinator không có gì để merge + flag)."
 ```
 

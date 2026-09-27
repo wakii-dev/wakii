@@ -354,6 +354,45 @@ console.log('== V11 dest dash-form (story-hub naming) → OK, không warn Destin
   rmSync(dir, { recursive: true, force: true })
 }
 
+// ── G4 _lrl_limited — linear-rate-limit check qua bin sibling (hermetic qua
+// LINEAR_RATE_LIMIT_STATE; key dummy để chạm nhánh _lrl_limited) ──
+
+console.log('== V12 --linear + state rate-limited → G4 WARN skip, KHÔNG crash ==')
+{
+  const dir = tempDir('v12')
+  const f = writeBracket(dir, 'ok.md', OK_BRACKET)
+  const home = tempDir('v12-home')
+  // schema "limited" của bin linear-rate-limit: since (ISO, có offset) còn
+  // trong cooldownMinutes → `check` exit 3
+  const state = join(home, '.linear-rate-limit.state')
+  writeFileSync(state, JSON.stringify({
+    since: new Date().toISOString().replace('Z', '+00:00'),
+    cooldownMinutes: 15,
+    ops: [],
+  }))
+  const r = runValidate(f, { flags: ['--linear'], env: { LINEAR_API_KEY: 'test-key-hermetic', LINEAR_RATE_LIMIT_STATE: state, HOME: home } })
+  check('V12', 'exit 0 (WARN không chặn)', r.code === 0, `code=${r.code} out=${r.out} err=${r.err}`)
+  check('V12', 'WARN G4 rate-limited (không NameError)', r.out.includes('rate-limited'), r.out)
+  check('V12', 'không traceback python', !r.out.includes('Traceback') && !r.err.includes('Traceback'), r.err)
+  rmSync(dir, { recursive: true, force: true })
+  rmSync(home, { recursive: true, force: true })
+}
+
+console.log('== V13 --linear + state rác → bin fail-open, KHÔNG crash ==')
+{
+  const dir = tempDir('v13')
+  const f = writeBracket(dir, 'ok.md', OK_BRACKET)
+  const home = tempDir('v13-home')
+  const state = join(home, 'rac.json')
+  writeFileSync(state, 'khong-phai-json{{{')
+  const r = runValidate(f, { flags: ['--linear'], env: { LINEAR_API_KEY: 'test-key-hermetic', LINEAR_RATE_LIMIT_STATE: state, HOME: home } })
+  check('V13', 'exit 0 (không crash)', r.code === 0, `code=${r.code} out=${r.out} err=${r.err}`)
+  check('V13', 'G4 degrade theo WARN (không FAIL do state rác)', r.out.includes('G4') && r.out.includes('OK — 2 SF'), r.out)
+  check('V13', 'không traceback python', !r.out.includes('Traceback') && !r.err.includes('Traceback'), r.err)
+  rmSync(dir, { recursive: true, force: true })
+  rmSync(home, { recursive: true, force: true })
+}
+
 // ══ --resolve-primary — thang 6 bậc (spec story-worktree-hub) ══
 
 console.log('== R1 (t1) --primary explicit → in ref, exit 0 (bậc 1 thắng trước orca) ==')

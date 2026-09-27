@@ -14,8 +14,9 @@
 #   G1  Deps trỏ tới SF tồn tại; không self-dep
 #   G2  Không cycle; Tier của SF = 1 + max(Tier các deps) khi có deps
 #   G3  Không trùng SF-N, không trùng linear ID giữa các SF
-#   G4  (--linear) linear ID tồn tại thật trong Linear — thiếu key/mạng chết
-#       → WARN skip, không fail format verdict
+#   G4  (--linear) linear ID tồn tại thật trong Linear — thiếu key / đang
+#       rate-limited (linear-rate-limit check) / mạng chết → WARN skip,
+#       không fail format verdict
 #
 # Verdict: OK · INVALID (có FAIL). WARN không chặn.
 #
@@ -101,11 +102,15 @@ while [ $# -gt 0 ]; do
 done
 [ -n "$FILE" ] && [ -f "$FILE" ] || { echo "Usage: story-validate <bracket-file> [--json] [--linear]"; exit 2; }
 
+# bin dir cho helper python (_lrl_limited tìm linear-rate-limit sibling trước)
+export STORY_VALIDATE_BIN_DIR="$(cd "$(dirname "$0")" && pwd)"
+
 python3 - "$FILE" "$JSON_OUT" "$LINEAR" <<'PYEOF'
 import os
 import re
 import sys
 import json
+import subprocess
 import urllib.request
 
 path, json_out, check_linear = sys.argv[1], sys.argv[2] == "1", sys.argv[3] == "1"
@@ -118,6 +123,22 @@ except Exception as e:
 fails, warns = [], []
 def fail(msg): fails.append(msg)
 def warn(msg): warns.append(msg)
+
+def _lrl_limited():
+    # linear-rate-limit `check`: exit 3 = đang limited (state máy-level). Fail-open:
+    # thiếu bin / bin lỗi / timeout → False (G4 warn-skip key-missing xử lý riêng).
+    bdir = os.environ.get("STORY_VALIDATE_BIN_DIR", "")
+    rl = os.path.join(bdir, "linear-rate-limit") if bdir else ""
+    if not rl or not os.path.isfile(rl):
+        rl = os.path.expanduser("~/.claude/bin/linear-rate-limit")
+    if not os.path.isfile(rl):
+        return False
+    try:
+        return subprocess.run([rl, "check"], timeout=5,
+                              stdout=subprocess.DEVNULL,
+                              stderr=subprocess.DEVNULL).returncode == 3
+    except Exception:
+        return False
 
 lines = text.splitlines()
 
