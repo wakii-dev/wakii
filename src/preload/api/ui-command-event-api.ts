@@ -32,6 +32,7 @@ import type {
   SessionTabCloseRequest,
   SessionTabCloseResponse
 } from '../../shared/session-tab-close'
+import type { WakiiFileOpenPayload } from '../../shared/wakii-mindmap-types'
 
 export type CloseActiveTabPayload = { sourceId: string }
 
@@ -53,6 +54,10 @@ export type UiCommandEventApi = {
   onOpenMarkdownFiles: (callback: (documents: MarkdownDocument[]) => void) => () => void
   /** Drains the "Open With" paths queued before this renderer's listener attached. */
   consumePendingMarkdownFileOpens: () => Promise<MarkdownDocument[]>
+  /** OS "Open With" `.wakii` file pushed while a renderer is listening — already decoded by main (SF-2 wires the implementation). */
+  onOpenWakiiFile?: (callback: (payload: WakiiFileOpenPayload) => void) => () => void
+  /** Drains `.wakii` opens queued before this renderer's listener attached. */
+  consumePendingWakiiFileOpens?: () => Promise<WakiiFileOpenPayload[]>
   onOpenSetupGuide: (callback: () => void) => () => void
   onOpenFeatureTour: (callback: () => void) => () => void
   onOpenCrashReport: (callback: () => void) => () => void

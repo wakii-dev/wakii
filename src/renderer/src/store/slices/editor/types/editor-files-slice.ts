@@ -10,6 +10,7 @@ import type {
 } from '../../../../../../shared/git-diff-compare-types'
 import type { GitStatusEntry } from '../../../../../../shared/git-status-types'
 import type { WorkspaceVisibleTabType } from '../../../../../../shared/tab-types'
+import type { WakiiFileOpenPayload } from '../../../../../../shared/wakii-mindmap-types'
 import type {
   BranchCompareLike,
   ClosedEditorTabSnapshot,
@@ -29,6 +30,10 @@ import type {
 export type EditorFilesSlice = {
   // Open files / editor tabs
   openFiles: OpenFile[]
+  /** Decoded `.wakii` payloads keyed by tab id (= absolute path). In-memory only:
+   *  the payload arrives via IPC push, so a session-restored tab without one renders
+   *  the viewer's placeholder instead of a half graph. */
+  wakiiViewerFiles: Record<string, WakiiFileOpenPayload>
   activeFileId: string | null
   activeFileIdByWorktree: Record<string, string | null> // worktreeId -> last active file
   activeTabTypeByWorktree: Record<string, WorkspaceVisibleTabType> // worktreeId -> last active tab type
@@ -46,6 +51,8 @@ export type EditorFilesSlice = {
       reopenId?: string
     }
   ) => string
+  /** Opens (or refocuses, when main re-pushes the same path) a `.wakii` viewer tab. */
+  openWakiiViewerFile: (payload: WakiiFileOpenPayload) => void
   openNewMarkdownInActiveWorkspace: (groupId: string) => Promise<void>
   // Why: sequences openFile/setMarkdownViewMode/reveal around an async Monaco remount. See docs/markdown-internal-link-opening-design.md.
   activateMarkdownLink: (

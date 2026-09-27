@@ -7,6 +7,7 @@ export function createOpenFileState(
 ): Pick<
   EditorSlice,
   | 'openFiles'
+  | 'wakiiViewerFiles'
   | 'activeFileId'
   | 'activeFileIdByWorktree'
   | 'activeTabTypeByWorktree'
@@ -16,6 +17,7 @@ export function createOpenFileState(
 > {
   return {
     openFiles: [],
+    wakiiViewerFiles: {},
     activeFileId: null,
     activeFileIdByWorktree: {},
     activeTabTypeByWorktree: {},

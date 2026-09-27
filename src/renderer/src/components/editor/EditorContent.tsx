@@ -3,7 +3,7 @@ import type { MarkdownViewMode, OpenFile, PendingEditorReveal } from '@/store/sl
 import type { GitDiffResult } from '../../../../shared/git-diff-compare-types'
 import type { GitStatusEntry } from '../../../../shared/git-status-types'
 import { CheckRunDetailsPanel } from './CheckRunDetailsPanel'
-import { CombinedDiffViewer, MarkdownPreview } from './editor-lazy-views'
+import { CombinedDiffViewer, MarkdownPreview, WakiiViewer } from './editor-lazy-views'
 import { EditorConflictReviewSurface } from './EditorConflictReviewSurface'
 import { EditorDiffFileSurface } from './EditorDiffFileSurface'
 import { EditorEditFileSurface } from './EditorEditFileSurface'
@@ -112,6 +112,7 @@ export function EditorContent({
   const pdfPreferenceKey = buildPdfScalePreferenceKey(activeFile)
   const monacoLanguage = resolvedLanguage === 'notebook' ? 'json' : resolvedLanguage
   const reloadOpenCheckRunDetailsTab = useAppStore((state) => state.reloadOpenCheckRunDetailsTab)
+  const wakiiViewerFiles = useAppStore((state) => state.wakiiViewerFiles)
   const markdownDocuments = useMarkdownDocuments(activeFile, isMarkdown, mdViewMode, handleSave)
   const getConflictNavigation = useEditorConflictNavigation()
   const activeConflictEntry =
@@ -149,6 +150,23 @@ export function EditorContent({
         }}
       />
     )
+  }
+
+  if (activeFile.mode === 'wakii-viewer') {
+    const wakiiPayload = wakiiViewerFiles[activeFile.id]
+    if (!wakiiPayload) {
+      // Why: the payload lives in wakiiViewerFiles (in-memory), so a session-restored
+      // tab has none — show a clean notice instead of a half graph.
+      return (
+        <div className="flex h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">
+          {translate(
+            'auto.components.editor.EditorContent.3f8a1c2d4e',
+            'This mindmap is no longer in memory — reopen the .wakii file to view it.'
+          )}
+        </div>
+      )
+    }
+    return <WakiiViewer payload={wakiiPayload} />
   }
 
   if (activeFile.mode === 'conflict-review') {

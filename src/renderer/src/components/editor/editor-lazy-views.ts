@@ -9,6 +9,7 @@ export const RichMarkdownEditor = lazy(() => import('./RichMarkdownEditor'), {
   reloadKey: 'rich-markdown-editor'
 })
 export const MarkdownPreview = lazy(() => import('./MarkdownPreview'))
+export const WakiiViewer = lazy(() => import('@/viewer/wakii-viewer'))
 export const ImageViewer = lazy(() => import('./ImageViewer'))
 export const ImageDiffViewer = lazy(() => import('./ImageDiffViewer'))
 export const MermaidViewer = lazy(() => import('./MermaidViewer'))
