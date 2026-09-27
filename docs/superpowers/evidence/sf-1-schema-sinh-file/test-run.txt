@@ -1,0 +1,62 @@
+SF-1 Schema + sinh file .wakii (VU-14) — test run
+Ngày: 2026-09-27 · Worktree: sf-1-schema-sinh-file · Nhánh: wakii-dev/sf-1-schema-sinh-file
+HEAD: 0d97e6201c (chore(kit): rehash kitHash/fingerprint sau fix P1)
+
+tdd: RED→GREEN — RED: node tests/story-mindmap-tests.mjs trước khi có bin (exit 1, ENOENT
+.wakii — log /tmp/smm-red.log). GREEN: 61/61 sau implement. Meta-test review: c2b + c8
+mở rộng chạy lại trên code cũ = RED 58/61 (đúng 3 failure mode P1), code mới GREEN.
+
+═══ Gates (lệnh > log; echo $? — không pipe nuốt exit code) ═══
+
+1. node tests/story-mindmap-tests.mjs (mới — decoder/golden/idempotent/fail-open/close)
+   → exit 0, 61 asserts — 61 PASS / 0 FAIL
+2. Kit suite toàn bộ: for t in tests/*.mjs; do node $t; done
+   → 37 files, 0 red (36 có sẵn + story-mindmap-tests; *.mjs glob gồm kit-verify-manifest)
+3. node tests/kit-verify-manifest.mjs → exit 0, TOTAL: 30 PASS / 0 FAIL
+4. Lockstep qua pnpm test (node trực tiếp chết):
+   pnpm test config/scripts/plugin-tree-hash-lockstep.test.mjs → exit 0, 7/7 passed
+5. node config/scripts/verify-packaged-plugin-resources.cjs (từ repo root)
+   → exit 0
+6. story-launch-tests / story-close-tests (sau insertion 3-4 dòng): 8/8 · 13/13 exit 0
+7. Rule 0 CLI-equivalent (pure CLI/kit — không web port): bin INSTALLED THẬT ở
+   ~/.claude/bin chạy trên fixture VU-14 thật → file .wakii đủ 3 lớp + idempotent
+   (mtime không đổi) + decode valid. Bằng chứng: rule0-cli-equivalent.txt
+   · MARKER CLI-equivalent: SF-1 không có server/UI; proxy theo skill = suite exit 0
+     + sandbox demo bin installed thật + log mắt thấy file đúng (file trên).
+
+═══ ACCEPTANCE (context pack) — từng dòng ═══
+
+[✓] Fixture bracket + context pack → .wakii vàng so khớp byte (trừ generatedAt), đủ 3 lớp
+    → c1: tái sinh ra --out khác, strip generatedAt byte-equal; kinds epic/sf/task/step/file/area đủ
+[✓] Nguồn không đổi chạy 2 lần → lần 2 không ghi (mtime không đổi)
+    → c2: stdout "unchanged", mtime giữ nguyên, byte giống hệt; Rule-0 demo lần 2 mtime same
+[✓] Duplicate-id / dangling edge / unknown-enum → decoder verdict đúng luật
+    → c4: dup/dangle-edge/dangle-parent/self-loop/thiếu-bắt-buộc/bad-JSON/version-lạ/too-large
+      → INVALID exit 2; unknown kind/rel/state → drop + decodeWarnings, vẫn valid; parent≠contains → valid
+[✓] story-impact chết / timeout → file vẫn ra 2 lớp + decodeWarnings, exit 0
+    → c6: stub exit 1 + stub sleep 30 (timeout nội bộ 20s) → 2 lớp + warning, exit 0
+[✓] Wrapper thiếu bin / bin throw → exit 0 im lặng, story-launch flow không đổi
+    → c7: missing-bin/throw/bracket-thiếu/sweep-rỗng đều exit 0 out rỗng;
+      story-launch-tests 8/8 + story-close-tests 13/13 sau insertion
+[✓] kit-verify-manifest 30/30 + lockstep pnpm test xanh + verify-packaged EXIT 0
+    → gates 3, 4, 5 phía trên
+[✓] Suite kit 35→36 files exit 0
+    → gate 2: 37 files 0 red (đếm theo glob *.mjs; 35 *-tests.mjs + kit-verify-manifest + test mới)
+
+═══ Boundary check ═══
+
+[✓] KHÔNG bump version kit.json (2.20.0 nguyên vẹn — chỉ +2 provides + kitHash rehash)
+[✓] KHÔNG incremental state merge (full-regen mỗi lần)
+[✓] KHÔNG quét toàn cây src (touch map curated + story-impact area-level computed)
+[✓] KHÔNG đọc Linear trong bin (orchestration/bracket only — offline-safe)
+[✓] KHÔNG sửa story-verify (untouched); KHÔNG sửa 2 hash impl (chỉ rehash GIÁ TRỊ output);
+    KHÔNG đụng /.wakii/ runtime dir
+
+═══ Ghi chú trung thực ═══
+
+- Baseline red: kit-verify "mọi bins executable" đỏ TỪ BASELINE (5 bins mất exec-bit trên
+  worktree checkout; git lưu đúng 100755 — chmod worktree-only, không có diff để commit).
+- 1 vòng stale-rehash tự gây ra (Edit bin sau commit, rehash cũ) — suite bắt được (doctor
+  DR1 kitHash mismatch), fix bằng commit + rehash lại (6af8cb3d8f + d449fb1059).
+- Trigger (b) sweep: coordinator-pass/watchdog không thuộc touch map → wiring để owner
+  bins; wrapper --reason sweep là bề mặt chịu gọi ngoài (chi tiết phase4-notes.md).
