@@ -193,7 +193,8 @@ export async function main(root = process.cwd(), locale = parseLocaleArg(process
   // Why: sustained >4 req/s tripped sustained 429s — single worker keeps the gtx endpoint under the throttle.
   // A 429 starts an IP penalty window of tens of minutes; hammering the remaining list at 300ms/value
   // extends it (vi lô 1: 3 passes all-failed). Latch a shared cooldown, wait it out, retry the value.
-  const THROTTLE_COOLDOWN_MS = 15 * 60 * 1000
+  // Why: 16-min waits still re-enter the penalty (vi lô 5, 27/09) — PM ruling: 25 min + single process.
+  const THROTTLE_COOLDOWN_MS = 25 * 60 * 1000
   const MAX_THROTTLE_WAITS = 8
   let throttleCooldownUntil = 0
   let throttleWaits = 0
