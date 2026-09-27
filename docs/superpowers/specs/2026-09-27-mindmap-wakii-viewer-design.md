@@ -4,6 +4,25 @@
 - Trạng thái: spec chờ duyệt (brainstorm xong, trước writing-plans)
 - Nguồn: hội thoại brainstorm 27/09 — 4 quyết định đã chốt với user (mục 2)
 
+## 0. IDEA-BRIEF (8 chiều — story-workflow CREATE)
+
+- **Task**: khi story chạy → sinh file `.wakii`; app Wakii mở được file →
+  hiển thị mindmap tương tác của story
+- **Output**: bin kit `story-mindmap` + format `.wakii` (JSON schema v1) +
+  feature app desktop (open-file capture + viewer tab) trên mac/Win/Linux
+- **Users**: PM/coordinator (người vận hành story) + agents đọc cùng dữ liệu
+- **Constraints**: schema versioned (wire-compat); association clone pattern
+  markdown hiện có (NSIS additive + EDR posture trên Windows); màu dùng token
+  hệ design; kit bins zero-dep; sinh file fail-open (không chặn story)
+- **Input**: spec này + dữ liệu có sẵn (bracket, orchestration, Linear,
+  context pack, `story-impact --json`)
+- **Context**: kit 2.20.0; app đã có vòng `open-file` cho markdown
+  (`src/main/index.ts`, `src/main/startup/`); story mới có nhánh đích riêng
+- **Success criteria**: round-trip E2E — `story-launch` → file tồn tại đủ
+  3 lớp → double-click `.wakii` → viewer tab render đúng cả 2 chế độ xem
+- **Out-of-scope**: edit/save từ viewer; real-time; bản đồ tri thức dự án /
+  graph memory; phân tích code ngoài import graph của `story-impact`
+
 ## 1. Vấn đề & mục tiêu
 
 Story đang chạy chỉ nhìn được qua 3 kênh văn bản: bracket (markdown), Linear
@@ -88,16 +107,31 @@ JSON, UTF-8, một story một file, đặt tại `docs/superpowers/mindmaps/<ep
 ```
 
 Quy ước:
-- `state` cho sf/task: `pending | in-progress | done | blocked`; epic thêm `complete`.
+- `state` cho sf/task: `pending | in-progress | done | blocked`; epic: bin **derive**
+  `complete` khi mọi SF `done`, ngược lại `in-progress` — không ai tay.
 - Node `kind`: `epic | sf | task | step | area | file`. Node `step`/`file` không có
   `state` (chỉ tiến độ có state; logic/impact là cấu trúc).
 - `edge rel`: `contains | depends-on | flows-to | impacts | writes`. Trong đó
   `contains`/`depends-on` = tiến độ, `flows-to` = logic, `impacts`/`writes` = impact.
 - File node BÓNG GIỚI HẠN: chỉ từ touch map trong context pack (curated) + area-level
   từ `story-impact` (computed) — không quét toàn cây src (hàng nghìn file).
-- Decoder phải **drop unknown field an toàn** (thêm field sau này không vỡ viewer cũ —
-  nguyên tắc remote-wire-compat của repo); đổi `rel`/`kind`/`state` hợp lệ phải bump schema.
-- Node id duy nhất trong file; `parent` trên node `task`/`step` (cha là sf).
+- **Bảng bắt buộc/tùy chọn**: bắt buộc = `wakiiMindmap`, `meta.story`, `meta.generatedAt`,
+  `meta.generator`, ≥1 node epic, mọi node có `id`+`kind`+`title`, mọi edge có
+  `from`+`to`+`rel`; tùy chọn = mọi trường còn lại (`linear`, `tier`, `parent`,
+  `evidence[]`, `computed`, `detail`).
+- **Luật structural validation** (vi phạm → file INVALID, error tab, không render nửa vời):
+  duplicate `id`; edge/`parent` trỏ id không tồn tại (dangling); edge self-loop.
+  `parent` và edge `contains` mâu thuẫn → **edge `contains` là nguồn sự thật**,
+  `parent` chỉ convenience — lệch không invalidate.
+- **Unknown enum value** (`kind`/`rel`/`state` lạ): decoder cũ **drop node/edge đó,
+  giữ phần còn lại**, gắn `decodeWarnings[]` vào kết quả decode (không error-tab —
+  đúng nguyên tắc drop-unknown-field; thêm enum mới KHÔNG cần bump schema, thêm
+  field bắt buộc mới cần).
+- **Slug tên file**: lấy từ nhánh đích `story/<epic-id>-<slug>` → `<epic-id>-<slug>.wakii`
+  — 1 nguồn duy nhất, không 2 writer đặt tên khác nhau.
+- **`generatedAt` chỉ bump khi payload đổi**: so sánh nội dung loại trừ trường
+  `generatedAt`; giống nhau → KHÔNG ghi lại (idempotent thật, không refresh ảo).
+- **Input không tin cậy**: cap 5MB; decode = `JSON.parse` thuần (không eval/Function).
 
 ## 4. Sinh file khi story chạy — bin `story-mindmap` (kit)
 
@@ -111,40 +145,73 @@ Quy ước:
     --json` khi có git base (computed — importer ngược theo feature area)
 - CLI: `story-mindmap --bracket <file> [--out <path>]` — mặc định out theo quy ước
   mục 3; đọc được cả bracket lẫn orchestration để hợp nhất node/state.
-- **Trigger gắn lifecycle có sẵn của kit** (không daemon mới):
-  1. `story-launch` — gọi sau khi tạo worktree thành công (sinh/cập nhật file)
-  2. sau `story-verify` pass 1 SF (cập nhật state SF đó)
-  3. `story-close` — snapshot chốt trước khi dọn worktree
-- Ghi atomic (temp cùng dir + rename), idempotent (nội dung không đổi → không ghi).
+- **Write topology (single-writer)**: file `.wakii` canonical sống ở checkout
+  nhánh đích (coordinator worktree). SF worker KHÔNG BAO GIỜ ghi file — SF
+  worktree fork từ đích TRƯỚC khi file tồn tại, 2 SF cùng ghi 1 file = merge
+  conflict chắc chắn. `story-mindmap` chỉ chạy nơi có bracket canonical.
+- **Trigger gắn lifecycle** — attach qua **wrapper pattern có sẵn của kit**
+  (nuốt missing-bin, exit 0 im lặng), KHÔNG sửa 3 bin lõi (`story-verify` giữ
+  thuần-đọc — exit code + stdout `--json` là hợp đồng panel đang consume):
+  1. sau `story-launch` tạo worktree thành công (coordinator gọi; dry-run
+     exit trước create → không ghi)
+  2. vòng sweep `story-coordinator-pass` / `story-watchdog` — thấy state SF
+     đổi (Linear) → regen; đọc state qua `orca` CLI host-level nên chạy được
+     từ checkout đích
+  3. `story-close` — snapshot chốt + **commit force-add** trước khi dọn
+     worktree (file sống trên nhánh đích như audit trail, tiền lệ bracket)
+- **Full-regen** từ nguồn mỗi lần (trigger chỉ là re-invoke — không incremental
+  state merge). Timeout budget 30s quanh `story-impact` + orca CLI; quá giờ →
+  bỏ lớp impact, giữ tiến độ+logic, ghi `decodeWarnings` nguồn.
+- Ghi atomic (temp cùng dir + rename); idempotent theo luật `generatedAt` (§3).
 - Fail-open: sinh file lỗi KHÔNG chặn story chạy — log + report, story tiếp tục.
 
-## 5. App mở `.wakii` — main process
+## 5. App mở `.wakii` — main process + IPC contract (pin cho SF-2/SF-3 song song)
 
-Mở rộng vòng xử lý có sẵn trong `src/main/index.ts`:
+Mở rộng vòng xử lý có sẵn trong `src/main/index.ts` + `src/main/startup/`:
 
-- `open-file` (dòng 93) hiện capture markdown qua `state.osOpenedMarkdownFiles`.
-  Thêm capture `.wakii`: `state.osOpenedWakiiFiles` — cùng cơ chế capture argv
-  trước `ready` + publish khi renderer lên (pattern markdown đã giải xong bài
-  toán cold-start, ăn theo nguyên văn).
-- IPC publish + command mở viewer tab: mỗi path mở 1 tab viewer (dedupe theo
-  path + generatedAt — mở lại file mới hơn thì refresh tab cũ, không mở 2 tab
-  cùng file).
-- Đuôi lạ ngoài `.md`/`.wakii` → không claim, trả lại HĐH (giữ nguyên hành vi).
+- **State**: `OsOpenedWakiiFileState` — clone pattern `OsOpenedMarkdownFileState`
+  (`capture/consume/restore`, cap 32, `authorizeExternalPath` bắt buộc cho path
+  từ OS). Capture từ 3 nguồn như markdown: argv trước `ready`, event `open-file`
+  (chỉ claim `.wakii`, đuôi lạ trả lại HĐH), second-instance.
+- **IPC pull**: `ui:consumePendingWakiiFileOpens` — renderer gọi 1 lần khi
+  listener mount (pattern `ui:consumePendingMarkdownFileOpens`, restore-on-failure).
+- **IPC push**: `ui:openWakiiFile` — payload **đã decode từ main**:
+  `{path, mindmap}` hoặc `{path, error: {code: 'io'|'schema'|'too-large', message}}`.
+  Main đọc file (JSON.parse thuần, cap 5MB) — renderer không đọc fs lại.
+- **Dedupe/refresh owner = main process**: map `path → contentHash`; open-file
+  cùng path, hash khác → push refresh vào tab có sẵn; hash giống → focus tab.
+  Cold-start race (argv + event cùng path) → dedupe ở tầng capture theo
+  path+hash (pattern markdown đã có).
+- **Preload bridge**: `os-wakii-file-open-bridge` theo mẫu
+  `os-markdown-file-open-bridge` (register qua `app-lifetime-ipc-bridge`);
+  latch `wakiiFileOpenListenerReady` reset khi reload (`main-window-controller`).
 
-## 6. File association 3 OS — clone pattern markdown
+## 6. File association 3 OS — clone pattern markdown, scope theo packaging target
 
-Mẫu `.md` đã có đầy đủ trong `config/electron-builder.config.cjs` — `.wakii` làm
-tựa đấy, khác đúng một chỗ: `.wakii` là format của Wakii nên **claim Owner**.
+Mẫu `.md` đã có đầy đủ trong `config/electron-builder.config.cjs` + NSIS hooks —
+`.wakii` làm tựa đấy. `.wakii` là format mới không có incumbent → mac claim
+`rank: 'Owner'`; **Windows claim default luôn** (user ruling 27/09 — format mới
+không ai giữ default, set default không phải steal; lệch với rule additive của
+`.md` là CỐ Ý, ghi chú ở header NSIS hook).
 
-| OS | Cách | Ghi chú ràng buộc |
-|---|---|---|
-| mac | `fileAssociations` entry `.wakii`, `rank: 'Owner'` | mac build x64+arm64 — nhớ `pnpm install:release` trước packaging (AGENTS.md) |
-| Windows | NSIS hook additive trong `nsis/orca-installer-hooks.nsh` (KHÔNG `fileAssociations` — lý do "steal default" ghi tại config:465) | tuân thủ `docs/reference/windows-edr-posture.md`; uninstall phải gỡ registration sạch |
-| Linux | `mimeTypes: ['application/vnd.wakii-mindmap']` + glob override | MIME mới, không đụng mimeapps.list của user |
+| OS | Target | Cách | Ghi chú |
+|---|---|---|---|
+| mac | dmg (x64+arm64) | `fileAssociations` entry `.wakii`, `rank: 'Owner'` | `pnpm install:release` trước packaging (AGENTS.md) |
+| Windows | NSIS installer | ProgID mới + **set default** (`Software\Classes\.wakii` → ProgID) + macro register/unregister **cặp đối xứng** + `SHChangeNotify`, KHÔNG `fileAssociations` (config:465) | EDR posture: chỉ reg-write, không spawn mới; KHÔNG đụng khối `${isUpdated}` daemon sweep |
+| Linux | deb/rpm | MIME XML mới `application/vnd.wakii-mindmap` + glob override + `update-mime-database` qua after-install (pattern có sẵn) | desktop entry `MimeType=` chỉ tham chiếu được type ĐÃ đăng ký — bài học `.mdx` (config:566) |
+| Linux | AppImage | **limitation**: không có postinst → không đăng ký MIME hệ thống được | mở bằng drag-drop / Open With thủ công; ghi rõ docs + release notes |
 
-## 7. Viewer — tab mindmap trong renderer
+Đồng bộ 4 chỗ khi thêm extension (rule 4-place của markdown): `wakii-documents.ts`
+↔ NSIS ProgID ↔ electron-builder config ↔ main capture — lệch 1 chỗ = association
+chết im lặng.
 
-- Tab type mới: canvas đồ thị với **2 chế độ xem** (toggle trên toolbar):
+## 7. Viewer — editor tab floating workspace (A1, user chốt 27/09)
+
+- **Bề mặt**: file `.wakii` mở như một file trong floating workspace editor —
+  đúng nơi markdown OS-open đang đổ vào (`EditorFilesSlice.openFile` mode
+  preview, bridge pattern có sẵn). KHÔNG tạo tab type mới trong tab strip
+  terminal (kiến trúc non-terminal tab chưa từng có — loại A2).
+- Canvas đồ thị với **2 chế độ xem** (toggle trên toolbar):
   - **Tiến độ** (mặc định): epic → SF (tầng tier) → task, màu theo state;
     edge `depends-on` vẽ đường phụ.
   - **Logic & Impact**: steps nối nhau bằng `flows-to` trong từng SF
@@ -172,26 +239,43 @@ tựa đấy, khác đúng một chỗ: `.wakii` là format của Wakii nên **c
 - Không orphan-viewer: file `.wakii` hỏng schema → tab hiện lỗi rõ ràng + path,
   không render nửa vời.
 
-## 9. Verify strategy
+## 9. Verify strategy — tách automated vs manual (repo không có CI test ngoài release chain)
 
-- Kit: unit test schema (valid/invalid/version-mismatch), idempotent ghi,
-  fail-open trigger; fixture (bracket + context pack có touch map) → file
-  `.wakii` vàng so khớp — gồm cả steps (`flows-to`) lẫn area/file impact;
-  trường hợp context pack thiếu touch map → story chỉ có lớp tiến độ, không vỡ.
-- App: main-process capture `.wakii` trước/sau ready; renderer decode
-  schema-mismatch → error tab; packaging: association entry xuất hiện ở
-  artifact 3 OS (kiểm Info.plist / NSIS registry / desktop entry sau build).
-- Round-trip E2E: `story-launch` → file tồn tại đúng schema (3 lớp) →
-  `open-file` → tab viewer render đúng node/edge/state ở CẢ 2 chế độ xem.
+**Automated (chạy được trong story):**
+- Kit: unit test schema (valid/invalid/version-mismatch/unknown-enum/dangling/
+  duplicate-id), idempotent ghi (payload same → không ghi), fail-open trigger
+  (nguồn hỏng → exit 0 + report), timeout budget; fixture (bracket + context
+  pack có touch map) → file `.wakii` vàng so khớp 3 lớp; case pack thiếu touch
+  map → chỉ lớp tiến độ, không vỡ.
+- App main: wiring test capture `.wakii` trước/sau ready + restore-on-failure
+  (pattern `os-opened-markdown-wiring.test.ts` — đọc source-text pin cấu trúc).
+- Renderer: decode schema-mismatch → error tab; render fixture vàng qua
+  Playwright `_electron` (pattern real-smoke plugin).
+- Packaging: assert mới trong `electron-builder-config.test.mjs` (entry
+  association xuất hiện trong config sau build — kiểm Info.plist key / NSIS
+  macro cặp đối xứng / desktop entry + mime XML theo target).
+
+**Manual checklist (chỉ chạy khi release build — ghi trong SF-4):**
+- Double-click `.wakii` thật trên mac dmg + Windows NSIS + Linux deb/rpm
+  (AppImage: drag-drop path).
+- Claim/steal default: kiểm app khác (.md handler hiện có) không bị đụng.
 
 ## 10. Tách story (4 SF, đi story-workflow)
 
 | SF | Nội dung | Tier |
 |---|---|---|
-| SF-1 | Schema `.wakii` 3 lớp (tiến độ + logic + impact) + bin `story-mindmap` (đọc bracket/context pack/story-impact) + 3 trigger lifecycle + test | 0 |
-| SF-2 | Main process open-file `.wakii` + association mac/Windows/Linux + packaging gate | 1 |
-| SF-3 | Viewer tab renderer (2 chế độ xem + panel chi tiết + IPC glue) | 1 |
-| SF-4 | Convergence: round-trip E2E 3 lớp + fixtures + docs reference `.wakii` format | 2 |
+| SF-1 | Schema `.wakii` 3 lớp + bin `story-mindmap` (bracket/context pack/story-impact; output phụ `--mermaid-md` chi phí ~0) + 3 trigger wrapper + **kit chore bắt buộc**: provides[] kit.json + kitHash rehash + fingerprint bundled + lockstep test qua `pnpm test` + `.gitignore` allowlist `docs/superpowers/mindmaps/` | 0 |
+| SF-2 | Main process open-file `.wakii` (state/IPC/latch theo §5) + association theo target (§6) + assert `electron-builder-config.test.mjs` | 1 |
+| SF-3 | Viewer renderer (2 chế độ xem + panel chi tiết + preload bridge + dedupe glue) — **bề mặt chốt trước dispatch** | 1 |
+| SF-4 | Convergence: round-trip E2E 3 lớp (automated) + manual checklist 3 OS + fixtures + docs reference `.wakii` format (kể cả limitation AppImage) | 2 |
+
+**Lưu ý đặt tên**: thư mục runtime `/.wakii/` (session-memory, gitignore:90) đã
+tồn tại — file map là `*.wakii` trong `docs/superpowers/mindmaps/`; 2 khái niệm
+trùng tên "wakii", docs phải phân biệt rõ.
+
+**Nhợ trước review cuối**: touch map ~28 file đã đo bằng `story-impact --targets`
+(chi tiết trong context packs); các area importer xuất hiện thêm mà không có ở
+đó = tràn ranh giới — review đo lại trên cùng thước.
 
 SF-2 và SF-3 song song được sau SF-1 (đỌc chung schema, không chạm nhau);
 SF-4 cần cả hai.
