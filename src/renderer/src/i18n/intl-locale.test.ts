@@ -22,6 +22,9 @@ const PACK = {
   catalog: {}
 }
 
+// A fixed Sunday at local noon so the weekday assertion holds in every TZ.
+const SUNDAY = new Date(2026, 8, 27, 12, 0, 0)
+
 type Packs = Parameters<typeof setRendererPluginLanguagePacks>[0]
 
 async function activate(language: string, packs: Packs = []): Promise<void> {
@@ -75,5 +78,18 @@ describe('getIntlLocale', () => {
   it('keeps the synthetic resource language unusable for Intl directly', () => {
     // Unstubbed on purpose: this is a property of the tag, not of ICU data.
     expect(() => Intl.DateTimeFormat.supportedLocalesOf(PACK_RESOURCE)).toThrow(RangeError)
+  })
+
+  // Unstubbed on purpose: Chromium's ICU ships Vietnamese, so a real formatter
+  // must resolve the selected locale instead of silently falling back to the
+  // OS locale (the exact regression getIntlLocale exists to prevent).
+  it('formats dates and relative time with real ICU data for vi', async () => {
+    await activate('vi')
+    expect(getIntlLocale()).toBe('vi')
+    // 2026-09-27 is a Sunday; CLDR vi weekday names are Thứ Hai…Chủ Nhật.
+    expect(new Intl.DateTimeFormat(getIntlLocale(), { weekday: 'long' }).format(SUNDAY)).toBe(
+      'Chủ Nhật'
+    )
+    expect(new Intl.RelativeTimeFormat(getIntlLocale()).format(-1, 'day')).toBe('1 ngày trước')
   })
 })
