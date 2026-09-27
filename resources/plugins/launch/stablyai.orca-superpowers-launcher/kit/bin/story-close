@@ -118,5 +118,6 @@ else
   echo "  1. story-verify COMPLETE trên $DEST"
   echo "  2. Linear Done (deferred nếu local-first)"
   echo "  3. dest ──▶ main: của USER (pr-playbook)"
+  echo "  story-hub cleanup (SAU khi PR merge): orca worktree rm story worktree + branch -d <dest> + push --delete"
 fi
 exit 0

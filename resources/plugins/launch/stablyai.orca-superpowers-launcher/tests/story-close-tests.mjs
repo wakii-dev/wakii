@@ -120,6 +120,15 @@ console.log('== T5 --json verdict parse được ==')
   rmSync(repo, { recursive: true, force: true })
 }
 
+console.log('== T6 next-steps nhắc story-hub cleanup (sau PR merge) ==')
+{
+  const repo = makeRepo('t6', { sfMerged: true })
+  const wt = makeSfWorktree(repo)
+  const r = runClose(repo, 'story/t-close')
+  check('T6', 'next-steps chứa story-hub cleanup', r.out.includes('story-hub cleanup'), r.out)
+  rmSync(repo, { recursive: true, force: true })
+}
+
 console.log(`\n== TOTAL: ${pass} PASS / ${fail} FAIL ==`)
 if (failures.length) {
   console.log('FAILURES:\n- ' + failures.join('\n- '))
