@@ -1,9 +1,13 @@
 import { createHash } from 'node:crypto'
-import { readFile } from 'node:fs/promises'
+import { readFile, stat } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { WakiiFileOpenPayload } from '../../shared/wakii-file-open-payload'
-import { decodeWakiiContents, isWakiiDocumentName } from '../ipc/wakii-documents'
+import {
+  MAX_WAKII_DOCUMENT_BYTES,
+  decodeWakiiContents,
+  isWakiiDocumentName
+} from '../ipc/wakii-documents'
 
 // Why: a shell can only ever hand over the files the user selected; anything past this is a
 // runaway argv, and buffering it unbounded would pin the paths for the whole session.
@@ -131,11 +135,18 @@ export async function resolveOpenedWakiiFiles(
     let payload: WakiiFileOpenPayload
     let contentHash: string | null = null
     try {
-      const contents = await readFile(filePath, 'utf8')
-      // Why hash the raw bytes: identical content under the same path is the skip signal;
-      // formatting-only differences still count as a change.
-      contentHash = createHash('sha256').update(contents).digest('hex')
-      payload = decodeWakiiContents(filePath, contents)
+      // Why stat first: the shell can hand over arbitrarily large paths, and the size cap
+      // must reject them BEFORE a read pins gigabytes in the main process.
+      const stats = await stat(filePath)
+      if (stats.size > MAX_WAKII_DOCUMENT_BYTES) {
+        payload = wakiiTooLarge(filePath)
+      } else {
+        const contents = await readFile(filePath, 'utf8')
+        // Why hash the raw bytes: identical content under the same path is the skip signal;
+        // formatting-only differences still count as a change.
+        contentHash = createHash('sha256').update(contents).digest('hex')
+        payload = decodeWakiiContents(filePath, contents)
+      }
     } catch (error) {
       payload = {
         path: filePath,
@@ -150,6 +161,22 @@ export async function resolveOpenedWakiiFiles(
   return resolved
 }
 
+function wakiiTooLarge(filePath: string): WakiiFileOpenPayload {
+  return {
+    path: filePath,
+    error: { code: 'too-large', message: `File exceeds ${MAX_WAKII_DOCUMENT_BYTES} bytes` }
+  }
+}
+
+/**
+ * Map key for the delivered-hash table. Why normalized like the capture queue: on win32 the
+ * shell round-trips drive-letter/8.3 casing, and one file spelled two ways must not dedupe
+ * against itself inconsistently (the renderer still receives the raw path).
+ */
+function deliveredKey(filePath: string, platform: NodeJS.Platform = process.platform): string {
+  return platform === 'win32' ? filePath.toLowerCase() : filePath
+}
+
 /**
  * Keeps files worth delivering: every failed decode re-delivers (a retry after the user
  * fixed or moved the file must surface its error again), while successfully decoded files
@@ -158,24 +185,26 @@ export async function resolveOpenedWakiiFiles(
  */
 export function filterUnchangedWakiiFiles(
   files: readonly ResolvedWakiiFileOpen[],
-  deliveredHashes: Map<string, string>
+  deliveredHashes: Map<string, string>,
+  platform: NodeJS.Platform = process.platform
 ): ResolvedWakiiFileOpen[] {
   return files.filter((file) => {
     if (!('mindmap' in file.payload)) {
       return true
     }
-    return deliveredHashes.get(file.payload.path) !== file.contentHash
+    return deliveredHashes.get(deliveredKey(file.payload.path, platform)) !== file.contentHash
   })
 }
 
 /** Records successful deliveries so the next open of identical content is skipped. */
 export function recordDeliveredWakiiFiles(
   files: readonly ResolvedWakiiFileOpen[],
-  deliveredHashes: Map<string, string>
+  deliveredHashes: Map<string, string>,
+  platform: NodeJS.Platform = process.platform
 ): void {
   for (const file of files) {
     if ('mindmap' in file.payload && file.contentHash !== null) {
-      deliveredHashes.set(file.payload.path, file.contentHash)
+      deliveredHashes.set(deliveredKey(file.payload.path, platform), file.contentHash)
     }
   }
 }

@@ -67,7 +67,7 @@ export function registerMainProcessIpcHandlers(): void {
   // cold-start double-click queued before mount still opens. The pull doubles as the proof
   // that the listener is live, which is what lets main start pushing. Payloads arrive
   // already decoded (or carrying a per-file error) because main owns the file read.
-  ipcMain.handle('ui:consumePendingWakiiFileOpens', async () => {
+  ipcMain.handle('ui:consumePendingWakiiFileOpens', async (event) => {
     state.wakiiFileOpenListenerReady = true
     const filePaths = state.osOpenedWakiiFiles.consume()
     try {
@@ -75,6 +75,12 @@ export function registerMainProcessIpcHandlers(): void {
         await resolveOpenedWakiiFiles(filePaths),
         state.wakiiDeliveredFileHashes
       )
+      if (event.sender.isDestroyed()) {
+        // Why restored and not recorded: the reply has nowhere to land, so a later renderer
+        // must re-pull these; recording their hashes now would skip them forever.
+        state.osOpenedWakiiFiles.restore(filePaths)
+        return []
+      }
       recordDeliveredWakiiFiles(resolved, state.wakiiDeliveredFileHashes)
       return resolved.map(({ payload }) => payload)
     } catch (error) {

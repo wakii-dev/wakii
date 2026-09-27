@@ -1,4 +1,4 @@
-import { mkdir, rm, writeFile } from 'node:fs/promises'
+import { chmod, mkdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createHash } from 'node:crypto'
@@ -135,6 +135,35 @@ describe('resolveOpenedWakiiFiles', () => {
     expect(resolved[2]).toMatchObject({ payload: { error: { code: 'io' } }, contentHash: null })
   })
 
+  it('rejects an oversized file via stat BEFORE reading it into memory', async () => {
+    const hugePath = join(scratchDir, 'huge.wakii')
+    await writeFile(hugePath, 'x'.repeat(6 * 1024 * 1024), 'utf8')
+
+    const resolved = await resolveOpenedWakiiFiles([hugePath])
+
+    // contentHash stays null: nothing was read, so the size guard fired pre-read.
+    expect(resolved[0]).toMatchObject({
+      payload: { path: hugePath, error: { code: 'too-large' } },
+      contentHash: null
+    })
+  })
+
+  it('reports an unreadable file as an io error', async () => {
+    if (typeof process.getuid === 'function' && process.getuid() === 0) {
+      // Root reads through permission bits; the io shape is covered by the missing-file case.
+      return
+    }
+    const lockedPath = join(scratchDir, 'locked.wakii')
+    await writeFile(lockedPath, validWakiiJson, 'utf8')
+    await chmod(lockedPath, 0o000)
+    try {
+      const resolved = await resolveOpenedWakiiFiles([lockedPath])
+      expect(resolved[0]).toMatchObject({ payload: { error: { code: 'io' } }, contentHash: null })
+    } finally {
+      await chmod(lockedPath, 0o644)
+    }
+  })
+
   it('resolves an empty batch to nothing', async () => {
     await expect(resolveOpenedWakiiFiles([])).resolves.toEqual([])
   })
@@ -166,6 +195,35 @@ describe('hash dedupe (refresh owner = main)', () => {
     recordDeliveredWakiiFiles([invalid], deliveredHashes)
     expect(deliveredHashes.size).toBe(0)
     expect(filterUnchangedWakiiFiles([invalid], deliveredHashes)).toEqual([invalid])
+  })
+
+  it('dedupes win32 paths case-insensitively like the capture queue', () => {
+    const deliveredHashes = new Map<string, string>()
+    recordDeliveredWakiiFiles([wakiiOpen('C:\\Maps\\A.wakii', 'hash-1')], deliveredHashes, 'win32')
+    // Same file spelled with different casing must not re-deliver...
+    expect(
+      filterUnchangedWakiiFiles(
+        [wakiiOpen('C:\\maps\\a.wakii', 'hash-1')],
+        deliveredHashes,
+        'win32'
+      )
+    ).toEqual([])
+    // ...but changed content still does.
+    expect(
+      filterUnchangedWakiiFiles(
+        [wakiiOpen('C:\\Maps\\A.wakii', 'hash-2')],
+        deliveredHashes,
+        'win32'
+      )
+    ).toHaveLength(1)
+  })
+
+  it('treats differing path casing as distinct on case-sensitive platforms', () => {
+    const deliveredHashes = new Map<string, string>()
+    recordDeliveredWakiiFiles([wakiiOpen('/Maps/A.wakii', 'hash-1')], deliveredHashes, 'darwin')
+    expect(
+      filterUnchangedWakiiFiles([wakiiOpen('/maps/a.wakii', 'hash-1')], deliveredHashes, 'darwin')
+    ).toHaveLength(1)
   })
 
   it('passes everything through while the delivered map is empty', () => {

@@ -1,15 +1,10 @@
-import { chmod, mkdir, rm, writeFile } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
   MAX_WAKII_DOCUMENT_BYTES,
-  decodeWakiiFile,
+  decodeWakiiContents,
   isWakiiDocumentName,
   validateWakiiMindmapFile
 } from './wakii-documents'
-
-let scratchDir: string
 
 const validWakiiJson = JSON.stringify({
   wakiiMindmap: 1,
@@ -20,21 +15,6 @@ const validWakiiJson = JSON.stringify({
   },
   nodes: [{ id: 'epic', kind: 'epic', title: 'VU-14', state: 'in-progress' }],
   edges: []
-})
-
-async function writeWakiiFile(name: string, contents: string): Promise<string> {
-  const filePath = join(scratchDir, name)
-  await writeFile(filePath, contents, 'utf8')
-  return filePath
-}
-
-beforeAll(async () => {
-  scratchDir = join(tmpdir(), `wakii-documents-test-${process.pid}-${Date.now()}`)
-  await mkdir(scratchDir, { recursive: true })
-})
-
-afterAll(async () => {
-  await rm(scratchDir, { recursive: true, force: true })
 })
 
 describe('isWakiiDocumentName', () => {
@@ -121,52 +101,30 @@ describe('validateWakiiMindmapFile', () => {
   })
 })
 
-describe('decodeWakiiFile', () => {
-  it('decodes a valid document into a mindmap payload', async () => {
-    const filePath = await writeWakiiFile('valid.wakii', validWakiiJson)
-    const payload = await decodeWakiiFile(filePath)
+describe('decodeWakiiContents', () => {
+  it('decodes a valid document into a mindmap payload', () => {
+    const payload = decodeWakiiContents('/maps/valid.wakii', validWakiiJson)
     expect(payload).toEqual({
-      path: filePath,
+      path: '/maps/valid.wakii',
       mindmap: expect.objectContaining({ wakiiMindmap: 1 })
     })
   })
 
-  it('reports a missing file as an io error, not a throw', async () => {
-    const payload = await decodeWakiiFile(join(scratchDir, 'gone.wakii'))
-    expect(payload).toMatchObject({ path: join(scratchDir, 'gone.wakii'), error: { code: 'io' } })
-  })
-
-  it('reports an unreadable file as an io error', async () => {
-    if (typeof process.getuid === 'function' && process.getuid() === 0) {
-      // Root reads through permission bits; the io shape is already covered above.
-      return
-    }
-    const filePath = await writeWakiiFile('locked.wakii', validWakiiJson)
-    await chmod(filePath, 0o000)
-    try {
-      const payload = await decodeWakiiFile(filePath)
-      expect(payload).toMatchObject({ error: { code: 'io' } })
-    } finally {
-      await chmod(filePath, 0o644)
-    }
-  })
-
-  it('reports a 6MB file as too-large without parsing it', async () => {
-    const filePath = await writeWakiiFile('huge.wakii', 'x'.repeat(6 * 1024 * 1024))
-    const payload = await decodeWakiiFile(filePath)
+  // Why in-memory: this byteLength re-check is the production guard against growth between
+  // the caller's stat and read; a regression here must turn red without any fs.
+  it('rejects contents past the 5MB cap as too-large without parsing', () => {
+    const payload = decodeWakiiContents('/maps/huge.wakii', 'x'.repeat(6 * 1024 * 1024))
     expect(payload).toMatchObject({ error: { code: 'too-large' } })
     expect(MAX_WAKII_DOCUMENT_BYTES).toBeLessThan(6 * 1024 * 1024)
   })
 
-  it('reports broken JSON as a schema error', async () => {
-    const filePath = await writeWakiiFile('broken.wakii', '{"wakiiMindmap": 1,,,}')
-    const payload = await decodeWakiiFile(filePath)
+  it('reports broken JSON as a schema error', () => {
+    const payload = decodeWakiiContents('/maps/broken.wakii', '{"wakiiMindmap": 1,,,}')
     expect(payload).toMatchObject({ error: { code: 'schema' } })
   })
 
-  it('reports a valid-JSON document failing the required table as a schema error', async () => {
-    const filePath = await writeWakiiFile('badmeta.wakii', JSON.stringify({ nope: true }))
-    const payload = await decodeWakiiFile(filePath)
+  it('reports a valid-JSON document failing the required table as a schema error', () => {
+    const payload = decodeWakiiContents('/maps/badmeta.wakii', JSON.stringify({ nope: true }))
     expect(payload).toMatchObject({ error: { code: 'schema' } })
   })
 })

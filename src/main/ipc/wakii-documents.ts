@@ -1,4 +1,3 @@
-import { readFile, stat } from 'node:fs/promises'
 import { extname } from 'node:path'
 import type { WakiiFileOpenPayload } from '../../shared/wakii-file-open-payload'
 import { authorizeExternalPath } from './filesystem-auth'
@@ -85,22 +84,13 @@ function isNamedNode(
  * Reads and validates one OS-handed `.wakii` file. Never throws: every failure becomes the
  * payload's error half so the renderer always receives a per-file verdict.
  */
-export async function decodeWakiiFile(filePath: string): Promise<WakiiFileOpenPayload> {
-  try {
-    const stats = await stat(filePath)
-    if (stats.size > MAX_WAKII_DOCUMENT_BYTES) {
-      return wakiiFileError(filePath, 'too-large', `File exceeds ${MAX_WAKII_DOCUMENT_BYTES} bytes`)
-    }
-    const contents = await readFile(filePath, 'utf8')
-    return decodeWakiiContents(filePath, contents)
-  } catch (error) {
-    return wakiiFileError(filePath, 'io', error instanceof Error ? error.message : String(error))
-  }
-}
-
-/** Validates already-read `.wakii` contents; the caller owns the fs read. */
+/**
+ * Validates already-read `.wakii` contents. Never throws: every failure becomes the payload's
+ * error half so the renderer always receives a per-file verdict. The caller owns the fs read
+ * and must size-cap it BEFORE reading (see resolveOpenedWakiiFiles); the byteLength re-check
+ * below only covers growth between the caller's stat and read.
+ */
 export function decodeWakiiContents(filePath: string, contents: string): WakiiFileOpenPayload {
-  // Why re-checked: the file can grow between a caller's stat and read.
   if (Buffer.byteLength(contents, 'utf8') > MAX_WAKII_DOCUMENT_BYTES) {
     return wakiiFileError(filePath, 'too-large', `File exceeds ${MAX_WAKII_DOCUMENT_BYTES} bytes`)
   }
