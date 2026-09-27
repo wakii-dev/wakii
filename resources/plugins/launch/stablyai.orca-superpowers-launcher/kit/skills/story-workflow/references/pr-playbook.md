@@ -25,17 +25,17 @@ Không bao giờ push/merge/reset main.
 **Thứ tự trong CLOSE:** chạy SAU bước 5 (Epic → Done) — PR sinh ra phải thấy
 đủ nội dung audit. Trước khi báo STORY-COMPLETE.
 
-### Preconditions (kiểm cả 4 — thiếu gì bỏ qua PR, KHÔNG chặn story)
+### Preconditions (kiểm cả 5 — thiếu gì bỏ qua PR, KHÔNG chặn story)
 
 ```bash
-# 1. Có remote GitHub?
-git remote get-url origin        # không có → READY-FOR-MANUAL-MERGE, dừng
-# 2. gh đã auth?
-gh auth status                   # fail → READY-FOR-MANUAL-MERGE, dừng
-# 3. Nhánh đích sạch?
-git -C <story-parent-worktree> status --short   # dirty → commit/dọn trước
-# 4. Base branch tồn tại trên remote (thường main)?
-git ls-remote --heads origin main
+# 0. Primary từ bracket — BẮT BUỘC merge primary vào dest 1 lần trước PR
+#    (chống drift — spec story-worktree-hub §5.4):
+PRIMARY=$(grep -m1 '^Primary:' <bracket> | cut -d' ' -f2)
+git fetch origin "$PRIMARY" && git merge origin/"$PRIMARY" --no-edit
+# 1. Có remote?   git remote get-url origin
+# 2. gh auth?     gh auth status
+# 3. Nhánh đích sạch?  git -C <story-worktree> status --short
+# 4. Primary tồn tại trên remote?  git ls-remote --heads origin <PRIMARY>
 ```
 
 Fail-safe: mọi precondition fail → in `READY-FOR-MANUAL-MERGE: <lý do>` +
@@ -45,20 +45,15 @@ PR là tăng tốc, không phải gate.
 ### Tạo
 
 ```bash
-cd <story-parent-worktree>
-# 1. Push nhánh đích (lần đầu -u set upstream)
+cd <story-worktree>
 git push -u origin story/<epic-id>-<slug>
-
-# 2. Tạo PR — base main, head nhánh đích (1 PR duy nhất/story)
-gh pr create \
-  --base main \
-  --head story/<epic-id>-<slug> \
-  --title "<epic-id>: <story title>" \
-  --body-file /tmp/story-pr-body.md
-
-# 3. Lấy URL → comment vào Linear epic (audit)
-gh pr view --json url -q .url
+gh pr create --base "$PRIMARY" --head story/<epic-id>-<slug> \
+  --title "<epic-id>: <story title>" --body-file /tmp/story-pr-body.md
+gh pr view --json url -q .url    # → comment Linear epic (audit)
 ```
+
+KHÔNG hardcode `main`: primary đọc từ bracket — wakii = wakii-dev (GitHub
+default là main mirror upstream → remote-HEAD sẽ sai, xem spec §4).
 
 ### PR body template (viết vào file rồi --body-file)
 
@@ -95,7 +90,7 @@ hai cho cùng story (1 PR/story là contract — reviewer tracking theo số).
 | Push nhánh đích + `gh pr create` + comment URL vào Epic | PM agent (CLOSE) |
 | Review PR | NGƯỜI (trong GitHub hoặc Orca Source Control panel) |
 | **Merge PR** | **NGƯỜI** — human gate cuối, không agent/watchdog nào merge |
-| Xóa nhánh đích sau merge | NGƯỜI (tùy chọn) |
+| Xóa nhánh đích + story worktree sau merge | Agent — cleanup story-level (merge-playbook "Story-level cleanup": chạy SAU khi PR merge, với guards) — không còn tùy chọn thủ công |
 
 Watchdog KHÔNG retry `gh pr create` (không nằm trong launch/resume path).
 PR fail giữa chừng → log vào audit comment, chụp lại ở pass watchdog kế
