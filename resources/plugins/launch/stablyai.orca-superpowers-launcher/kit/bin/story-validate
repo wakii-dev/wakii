@@ -5,7 +5,8 @@
 #
 # Kiểm:
 #   H1  Header `# Story: <ID> — <title>`
-#   H2  `Destination: story/<epic-id>-<slug>` (WARN nếu thiếu)
+#   H2  `Destination: story[-/]<epic-id>-<slug>` (WARN nếu thiếu — 2 form:
+#       legacy slash `story/<...>`, story-hub dash `story-<...>`)
 #   SF  Mỗi block `## SF-N <name>` đủ: Tier (số), linear (rỗng @CREATE hoặc
 #       <TEAM>-<số>), What (không rỗng), Depends on (`—` hoặc SF-x hợp lệ),
 #       Tasks (slash-separated không rỗng), Design (optional: mock-prototype|
@@ -128,9 +129,11 @@ if not header or not re.match(r"^# Story: [A-Z]+-\d+ — .+", header):
 # H2 — destination
 dest = next((l for l in lines if l.startswith("Destination:")), None)
 if not dest:
-    warn("H2: thiếu `Destination: story/<epic-id>-<slug>` — APPROVE sẽ không biết tên nhánh đích")
-elif not re.match(r"^Destination: story/[a-z0-9-]+-[a-z0-9-]+$", dest):
-    warn(f"H2: Destination không khớp `story/<epic-id>-<slug>` (got: {dest!r})")
+    warn("H2: thiếu `Destination: story[-/]<epic-id>-<slug>` — APPROVE sẽ không biết tên nhánh đích")
+# 2 form: legacy slash `story/<epic-id>-<slug>`, story-hub dash `story-<epic-id>-<slug>`
+# (orca sanitizeWorktreeName fold /→- — dest thật trên git luôn dash-form)
+elif not re.match(r"^Destination: story[-/][a-z0-9-]+-[a-z0-9-]+$", dest):
+    warn(f"H2: Destination không khớp form nào — legacy `story/<epic-id>-<slug>` hoặc story-hub dash `story-<epic-id>-<slug>` (got: {dest!r})")
 
 # H2b — Worktree model: WARN khi thiếu (story legacy đang bay), FAIL khi giá trị lạ
 wmodel = next((l for l in lines if l.startswith("Worktree model:")), None)

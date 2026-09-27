@@ -5,6 +5,9 @@ engine với Source Control panel của Orca — panel cũng gọi `gh` dưới 
 Mỗi story đúng **1 PR**: nhánh đích → primary (đọc từ bracket `Primary:`).
 Merge primary VẪN LÀ QUYỀN NGƯỜI.
 
+> story-hub: nhánh đích thật = dash-form (`story-<epic-id>-<slug>` — orca
+> sanitizeWorktreeName fold `/`→`-`); ví dụ dưới giữ slash-form cho legacy.
+
 ## Git flow — branch taxonomy
 
 ```

@@ -182,8 +182,9 @@ Tasks: interface / mock / real-stub
 ```
 
 Rules: header line `# Story: <ID> — <title>` followed by optional line
-`Destination: story/<epic-id>-<slug>` (nhánh đích — approve dùng để tạo đúng
-tên). Each SF = `## SF-N <name>` followed by fields `Tier:`, `linear:`
+`Destination: story[-/]<epic-id>-<slug>` (nhánh đích — story-hub dash
+`story-<epic-id>-<slug>`, legacy slash `story/<epic-id>-<slug>`; approve dùng
+để tạo đúng tên). Each SF = `## SF-N <name>` followed by fields `Tier:`, `linear:`
 (empty until sub-issues exist), `Design:` (`mock-prototype` nếu SF chạm UI
 mà hướng thiết kế CHƯA có source of truth; `figma` nếu story có Figma 1:1 —
 Figma là design đã duyệt, không cần 3-hướng, implement theo P8; `none` hoặc
@@ -338,8 +339,10 @@ Then write `linear: <ID>` back into each SF block in the bracket file.
 Create the STORY WORKTREE (story-hub model — spec story-worktree-hub):
 ```bash
 PRIMARY=$(~/.claude/bin/story-validate --resolve-primary --repo .)  # thang 6 bậc; exit 1 → hỏi user
-orca worktree create --name story/<epic-id>-<slug> --base-branch "$PRIMARY" --agent claude
+orca worktree create --name story-<epic-id>-<slug> --base-branch "$PRIMARY" --agent claude
 ```
+Chú thích: orca sanitizeWorktreeName fold `/`→`-` — story-hub dest = dash-form;
+legacy story vẫn slash-form (`story/<epic-id>-<slug>`).
 Nhánh đích sinh ra trong story worktree — coordinator session LÀM VIỆC TRONG
 ĐÓ suốt story. Bracket ghi `Primary: $PRIMARY` + `Worktree model: story-hub`
 (story-validate check). SF worktrees fork từ nhánh đích như cũ.

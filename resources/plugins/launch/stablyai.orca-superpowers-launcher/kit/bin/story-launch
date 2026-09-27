@@ -136,6 +136,7 @@ $(awk -v sfx="$SF_NUM" '
   END { print title "|" linear "|" deps }' "$BRACKET")
 EOF
 DEST=$(grep -m1 '^Destination:' "$BRACKET" | sed 's/Destination: *//;s/ *$//')
+WTMODEL=$(grep -m1 '^Worktree model:' "$BRACKET" | sed 's/Worktree model: *//;s/ *$//')
 EPIC=$(grep -m1 '^# Story:' "$BRACKET" | sed 's/# Story: *//;s/ *—.*//;s/ *- .*//')
 [ -n "$LINEAR" ] || { echo "$SF_NUM chưa approve (không có linear ID) — không thuộc quyền launch"; exit 1; }
 
@@ -207,16 +208,30 @@ PACK="docs/superpowers/contexts/sf-$N.md"
 for cand in "docs/superpowers/contexts/${BRACKET_PREFIX}-sf-$N.md" "docs/superpowers/contexts/$STORY_DIR/sf-$N.md"; do
   [ -f "$cand" ] && { PACK="$cand"; break; }
 done
-PROMPT="Use orca-superpowers-workflow skill for ONE sub-feature: $TITLE ($LINEAR). Story: $EPIC — READ FIRST: context pack $PACK (spec slice + touch map + ACCEPTANCE + boundary) + bracket docs/superpowers/brackets/$BFILE. Epic đã trả lời mọi câu — KHÔNG re-ask; câu hỏi mới → REQUIREMENT-GAP comment lên epic. Run full Phase 0-5 cho SF này. Linear issue: $LINEAR (set In Progress at start). Worktree base: $DEST. GIỚI HẠN CỨNG: merge/ff CHỈ trong $DEST — TUYỆT ĐỐI KHÔNG đụng main (main là gate của USER).
+# Worktree model quyết định phần cuối protocol executor (spec story-worktree-hub):
+# story-hub → executor KHÔNG merge — commit + push sf-branch rồi DONE, coordinator
+# merge trong story worktree (merge-playbook); legacy/không model → merge-ngược như cũ.
+if [ "$WTMODEL" = "story-hub" ]; then
+  HARDLIMIT="GIỚI HẠN CỨNG: KHÔNG merge/ff vào $DEST — coordinator merge trong story worktree; TUYỆT ĐỐI KHÔNG đụng primary/main (main là gate của USER)."
+  CHECK5="CHECK 5 COMMIT + PUSH nhánh sf-$N-$SLUG (git push -u origin sf-$N-$SLUG) + chạy ~/.claude/bin/story-verify sf-$N-$SLUG — sạch mới tiếp. KHÔNG merge, KHÔNG đụng $DEST."
+  CHECK6="CHECK 6 DONE — CHỈ sau CHECK 5: report DONE. Cleanup: chỉ xoá worktree mình — GIỮ nhánh sf trên remote (coordinator merge từ đó), TUYỆT ĐỐI KHÔNG xoá $DEST."
+  DONE_RULE="Linear Done do coordinator set sau khi merge sf-branch vào $DEST — KHÔNG tự set Done."
+else
+  HARDLIMIT="GIỚI HẠN CỨNG: merge/ff CHỈ trong $DEST — TUYỆT ĐỐI KHÔNG đụng main (main là gate của USER)."
+  CHECK5="CHECK 5 MERGE vào $DEST (merge-ngược + ancestor-guard) + audit comment merge-hash + chạy ~/.claude/bin/story-verify sf-$N-$SLUG — sạch mới tiếp."
+  CHECK6="CHECK 6 DONE — CHỈ sau CHECK 5. Cleanup: chỉ xoá worktree + NHÁNH SF mình — TUYỆT ĐỐI KHÔNG xoá $DEST (nhánh đích giữ làm audit)."
+  DONE_RULE="Done TRƯỚC merge = INCOMPLETE."
+fi
+PROMPT="Use orca-superpowers-workflow skill for ONE sub-feature: $TITLE ($LINEAR). Story: $EPIC — READ FIRST: context pack $PACK (spec slice + touch map + ACCEPTANCE + boundary) + bracket docs/superpowers/brackets/$BFILE. Epic đã trả lời mọi câu — KHÔNG re-ask; câu hỏi mới → REQUIREMENT-GAP comment lên epic. Run full Phase 0-5 cho SF này. Linear issue: $LINEAR (set In Progress at start). Worktree base: $DEST. $HARDLIMIT
 
 CHECKLIST — chạy TUẦN TỰ, mỗi mục xong phải CÓ BẰNG CHỨNG (lệnh + output), cấm tick trước bằng chứng:
 CHECK 1 CODE+TESTS — TDD RED→GREEN khi khả thi (test thất bại trước → code tối thiểu); commit atomic; tick plan file sau mỗi task.
 CHECK 2 PLAN TICKED — mọi '- [ ]' trong plan → '- [x]' (meta-steps dùng numbered list, không dùng '- [ ]').
 CHECK 3 ROLLING REVIEW — mỗi 4-5 tasks dispatch code-reviewer ĐỘC LẬP trên diff nhóm đó (KHÔNG dồn 1 review lớn cuối SF — FI-187: đứng chờ 30+ phút). Verdict post lên $LINEAR, KHÔNG để kẹt outbox.
 CHECK 4 BROWSER VERIFY (Rule 0) — mở app (orca tab create --url http://localhost:<port> hoặc curl nếu chỉ API) → TỰ ĐI TRỌN FLOW (login/navigate/thao tác) + CHỤP SCREENSHOT; UI sai/flow đứt → FIX TRƯỚC KHI TIẾP. KHÔNG ĐƯỢC nói xong khi chưa thấy nó chạy.
-CHECK 5 MERGE vào $DEST (merge-ngược + ancestor-guard) + audit comment merge-hash + chạy ~/.claude/bin/story-verify sf-$N-$SLUG — sạch mới tiếp.
-CHECK 6 DONE — CHỈ sau CHECK 5. Cleanup: chỉ xoá worktree + NHÁNH SF mình — TUYỆT ĐỐI KHÔNG xoá $DEST (nhánh đích giữ làm audit).
-BLOCKED → report 4 mục evidence: đã thử gì / output nào / giả định nào / cần gì — không im lặng. Linear: orca keychain hỏng → đọc key ~/.claude/.linear-key gọi GraphQL (Authorization: <key>, POST https://api.linear.app/graphql). Shell: probes cmd > log; echo \$? — KHÔNG pipe head/tail. SSL/cert → đợi 30s retry tối đa 3 lần. Done TRƯỚC merge = INCOMPLETE."
+$CHECK5
+$CHECK6
+BLOCKED → report 4 mục evidence: đã thử gì / output nào / giả định nào / cần gì — không im lặng. Linear: orca keychain hỏng → đọc key ~/.claude/.linear-key gọi GraphQL (Authorization: <key>, POST https://api.linear.app/graphql). Shell: probes cmd > log; echo \$? — KHÔNG pipe head/tail. SSL/cert → đợi 30s retry tối đa 3 lần. $DONE_RULE"
 
 # HOLDS check (team discipline v1): repo đang được session khác giữ → WARN,
 # không chặn (người quyết). File: ~/.claude/holds.md — dòng: <repo-path> | <holder> | <since>

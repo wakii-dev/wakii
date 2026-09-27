@@ -2,7 +2,8 @@
 // story-validate tests — spawn bin thật trên bracket fixtures trong temp dir
 // (KHÔNG đụng docs/superpowers/brackets/ thật). Phủ: verdict OK/INVALID,
 // G3 dup, --linear không key → WARN skip exit 0, --linear key rỗng file →
-// WARN skip, usage exit 2, --json shape, Primary + Worktree model (H2b/H2c).
+// WARN skip, usage exit 2, --json shape, Primary + Worktree model (H2b/H2c),
+// Destination 2 form (legacy slash / story-hub dash — sweep story-worktree-hub).
 // Chạy: node tests/story-validate-tests.mjs
 import { spawnSync, execFileSync } from 'node:child_process'
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, chmodSync } from 'node:fs'
@@ -73,8 +74,9 @@ Tasks: t3 / t4
 `
 
 // story-hub bracket đầy đủ — Primary + Worktree model: story-hub (contract mới)
+// Destination dash-form = naming story-hub (orca sanitize /→-)
 const HUB_BRACKET = `# Story: FI-999 — hub test
-Destination: story/fi-999-hub
+Destination: story-fi-999-hub
 Primary: wakii-dev
 Worktree model: story-hub
 
@@ -123,7 +125,7 @@ Tasks: t1 / t2
 `
 
 const HUB_NO_PRIMARY_BRACKET = `# Story: FI-995 — hub no primary
-Destination: story/fi-995-hub-no-primary
+Destination: story-fi-995-hub-no-primary
 Worktree model: story-hub
 
 ## SF-1 A (Phase 1/1)
@@ -132,6 +134,20 @@ linear:
 What: story-hub thiếu Primary
 Depends on: —
 Tasks: t1 / t2
+`
+
+// dash-form dest (story-hub naming — regex mới `story[-/]` nhận cả 2 form)
+const DASH_DEST_BRACKET = `# Story: FI-994 — dash dest
+Destination: story-fi-994-dash
+Primary: wakii-dev
+Worktree model: story-hub
+
+## SF-1 Dash (Phase 1/1)
+Tier: 0
+linear:
+What: dest dash-form story-<epic-id>-<slug> validate OK
+Depends on: —
+Tasks: task-mot / task-hai
 `
 
 function writeBracket(dir, name, content) {
@@ -324,6 +340,17 @@ console.log('== V10 model story-hub + thiếu Primary → FAIL (fail-closed) =='
   const r = runValidate(f)
   check('V10', 'exit 1', r.code === 1, `code=${r.code}`)
   check('V10', 'FAIL chứa Primary:', r.out.includes('Primary:'), r.out)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== V11 dest dash-form (story-hub naming) → OK, không warn Destination ==')
+{
+  const dir = tempDir('v11')
+  const f = writeBracket(dir, 'dash.md', DASH_DEST_BRACKET)
+  const r = runValidate(f)
+  check('V11', 'exit 0', r.code === 0, `code=${r.code} out=${r.out}`)
+  check('V11', 'verdict OK', r.out.includes('OK — 1 SF'), r.out)
+  check('V11', 'không warn Destination', !r.out.includes('Destination'), r.out)
   rmSync(dir, { recursive: true, force: true })
 }
 

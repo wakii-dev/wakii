@@ -104,6 +104,13 @@ When the task is one SF of an approved story bracket:
 - Update your sub-issue state via `orca linear status set <ISSUE> --to <state>` at: start (In Progress), block (comment + stay).
 
 **COMPLETE-RUN CHECKLIST (thứ tự bắt buộc — KHÔNG dừng trước bước 7):**
+
+**Điều kiện theo `Worktree model:` trong bracket:**
+- `Worktree model: story-hub` → chạy bước 1-4, rồi CHỈ commit + PUSH nhánh sf
+  (`git push -u origin sf-<N>-<slug>`) + report DONE — KHÔNG merge, KHÔNG tự
+  set Linear Done. Bước 5-6 (MERGE + Done) là việc COORDINATOR trong story
+  worktree (merge-playbook). Bước 7 RELAY giữ nguyên.
+- Legacy (`legacy` / thiếu model) → giữ nguyên bước 5-6 dưới.
 ```
 1. code + tests pass
 2. TICK plan file: mỗi task xong → sửa - [ ] thành - [x] trong plan md

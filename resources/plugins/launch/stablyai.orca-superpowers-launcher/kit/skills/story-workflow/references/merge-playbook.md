@@ -5,6 +5,9 @@ coordinator là SINGLE WRITER của nhánh đích — merge THẬT trong story w
 hết ref surgery. Story legacy (`Worktree model:` thiếu/`legacy`) → chơi theo
 playbook cũ (update-ref + ancestor guards — xem `git log` file này).
 
+> story-hub: nhánh đích thật = dash-form (`story-<epic-id>-<slug>` — orca
+> sanitizeWorktreeName fold `/`→`-`); ví dụ dưới giữ slash-form cho legacy.
+
 > Playbook này phủ **SF → nhánh đích** (local git). Hướng nhánh đích → primary
 > (push + `gh pr create`, 1 PR/story) xem `references/pr-playbook.md`.
 
