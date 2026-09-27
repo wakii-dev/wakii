@@ -48,8 +48,10 @@ async function handleOsRequestedWakiiPayloads(payloads: WakiiFileOpenPayload[]):
 }
 
 export function registerOsWakiiFileOpenBridge(unsubs: (() => void)[]): void {
-  const unsubscribe = window.api.ui.onOpenWakiiFile?.((payloads) => {
-    void handleOsRequestedWakiiPayloads(payloads).catch(reportOsRequestedWakiiFailure)
+  // Why the push is singular while the pull is a batch: main pushes one decoded file per
+  // event (spec contract), and the cold-start pull drains the whole queue at once.
+  const unsubscribe = window.api.ui.onOpenWakiiFile?.((payload) => {
+    void handleOsRequestedWakiiPayloads([payload]).catch(reportOsRequestedWakiiFailure)
   })
   if (unsubscribe) {
     unsubs.push(unsubscribe)

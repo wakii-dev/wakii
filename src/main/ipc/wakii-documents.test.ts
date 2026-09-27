@@ -61,39 +61,62 @@ describe('validateWakiiMindmapFile', () => {
   })
 
   it('rejects missing required meta fields', () => {
-    const base = JSON.parse(validWakiiJson) as Record<string, unknown>
     for (const field of ['story', 'generatedAt', 'generator']) {
-      const meta = { ...base.meta }
+      const meta: Record<string, unknown> = {
+        story: 's',
+        generatedAt: '2026-09-27T13:00:00Z',
+        generator: 'g'
+      }
       delete meta[field]
-      expect(validateWakiiMindmapFile({ ...base, meta }).ok).toBe(false)
+      expect(
+        validateWakiiMindmapFile({
+          wakiiMindmap: 1,
+          meta,
+          nodes: [{ id: 'epic', kind: 'epic', title: 'E' }],
+          edges: []
+        }).ok
+      ).toBe(false)
     }
   })
 
   it('rejects documents without an epic node', () => {
-    const base = JSON.parse(validWakiiJson) as Record<string, unknown>
     expect(
       validateWakiiMindmapFile({
-        ...base,
-        nodes: [{ id: 'sf-1', kind: 'sf', title: 'SF-1', state: 'pending' }]
+        wakiiMindmap: 1,
+        meta: { story: 's', generatedAt: 'x', generator: 'g' },
+        nodes: [{ id: 'sf-1', kind: 'sf', title: 'SF-1', state: 'pending' }],
+        edges: []
       }).ok
     ).toBe(false)
   })
 
   it('rejects nodes without id, kind, or title', () => {
-    const base = JSON.parse(validWakiiJson) as Record<string, unknown>
     for (const field of ['id', 'kind', 'title']) {
-      const node = { id: 'epic', kind: 'epic', title: 'VU-14' }
-      delete node[field as 'id' | 'kind' | 'title']
-      expect(validateWakiiMindmapFile({ ...base, nodes: [node] }).ok).toBe(false)
+      const node: Record<string, unknown> = { id: 'epic', kind: 'epic', title: 'VU-14' }
+      delete node[field]
+      expect(
+        validateWakiiMindmapFile({
+          wakiiMindmap: 1,
+          meta: { story: 's', generatedAt: 'x', generator: 'g' },
+          nodes: [node],
+          edges: []
+        }).ok
+      ).toBe(false)
     }
   })
 
   it('rejects edges without from, to, or rel', () => {
-    const base = JSON.parse(validWakiiJson) as Record<string, unknown>
     for (const field of ['from', 'to', 'rel']) {
-      const edge = { from: 'epic', to: 'sf-1', rel: 'contains' }
-      delete edge[field as 'from' | 'to' | 'rel']
-      expect(validateWakiiMindmapFile({ ...base, edges: [edge] }).ok).toBe(false)
+      const edge: Record<string, unknown> = { from: 'epic', to: 'sf-1', rel: 'contains' }
+      delete edge[field]
+      expect(
+        validateWakiiMindmapFile({
+          wakiiMindmap: 1,
+          meta: { story: 's', generatedAt: 'x', generator: 'g' },
+          nodes: [{ id: 'epic', kind: 'epic', title: 'E' }],
+          edges: [edge]
+        }).ok
+      ).toBe(false)
     }
   })
 })

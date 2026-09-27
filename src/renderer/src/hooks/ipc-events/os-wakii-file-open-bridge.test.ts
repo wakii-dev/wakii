@@ -82,7 +82,8 @@ describe('registerOsWakiiFileOpenBridge', () => {
     registerOsWakiiFileOpenBridge(unsubs)
     expect(unsubs).toEqual([unsubscribe])
 
-    listeners[0]([validPayload({ path: '/maps/live.wakii' })])
+    // The push channel delivers one decoded payload per event (the pull drains a batch).
+    listeners[0](validPayload({ path: '/maps/live.wakii' }))
     await settle()
 
     expect(mocks.consoleInfo).toHaveBeenCalledTimes(1)
@@ -166,6 +167,7 @@ describe('registerOsWakiiFileOpenBridge', () => {
       onOpenWakiiFile: () => () => {},
       // Why: the payload crosses the preload boundary, so a stale preload can resolve with
       // something that is not an array. Iterating it would throw inside the promise chain.
+      // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the mismatched-preload case is only expressible by lying about the wire type.
       consumePendingWakiiFileOpens: () => Promise.resolve(null as unknown as WakiiFileOpenPayload[])
     })
 
