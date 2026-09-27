@@ -23,6 +23,52 @@ describe('vi preserve-English tech labels', () => {
   })
 })
 
+describe('never-translate split invariant (review round 2)', () => {
+  // The CJK-MT-transliterated tokens live in the vi preserve set, NOT the global
+  // NEVER_TRANSLATE extensions — a global entry silently reverts existing ja/ko/zh
+  // renderings on their next repair (review round-1 P1-1). These assertions are RED
+  // when e.g. 'WebSocket' is moved back into locale-never-translate-extensions.mjs.
+  it('never-translate extensions do not revert CJK-MT renderings of their tokens', async () => {
+    const { NEVER_TRANSLATE_EXTENSIONS } = await import('./locale-never-translate-extensions.mjs')
+    expect(NEVER_TRANSLATE_EXTENSIONS).not.toContain('WebSocket')
+    expect(
+      repairTranslatedValue({
+        key: 'auto.web.web.runtime.environment.07f788de83',
+        enValue: 'WebSocket',
+        localeValue: 'ウェブソケット',
+        locale: 'ja'
+      })
+    ).toBe('ウェブソケット')
+    expect(
+      repairTranslatedValue({
+        key: 'auto.components.settings.DeveloperPermissionsPane.b2210b1b4f',
+        enValue: 'Bluetooth',
+        localeValue: '블루투스',
+        locale: 'ko'
+      })
+    ).toBe('블루투스')
+  })
+
+  it('decorated/reordered brand renderings in other locales are left alone', () => {
+    expect(
+      repairTranslatedValue({
+        key: 'auto.components.status.bar.ResourceUsageStatusSegment.288a4dd177',
+        enValue: 'Wakii',
+        localeValue: '・ Wakii',
+        locale: 'ja'
+      })
+    ).toBe('・ Wakii')
+    expect(
+      repairTranslatedValue({
+        key: 'auto.components.settings.CliSection.c5c0f2641d',
+        enValue: 'Wakii CLI',
+        localeValue: 'CLI de Wakii',
+        locale: 'es'
+      })
+    ).toBe('CLI de Wakii')
+  })
+})
+
 describe('vi brand mistranslation reverts (GT en→vi observed forms)', () => {
   it('reverts Gemini zodiac homograph', () => {
     expect(

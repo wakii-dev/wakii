@@ -22,9 +22,9 @@ async function collectTranslateMainCallSites(dir) {
       continue
     }
     const source = await fs.readFile(fullPath, 'utf8')
-    const callSitePattern = /translateMain\(\s*'([^']+)'\s*,\s*'((?:[^'\\]|\\.)*)'/g
-    for (const [, key, fallback] of source.matchAll(callSitePattern)) {
-      callSites.push([key, fallback.replace(/\\'/g, "'")])
+    const callSitePattern = /translateMain\(\s*(['"])([^']+)\1\s*,\s*(['"])((?:[^\\]|\\.)*?)\3/g
+    for (const [, , key, , fallback] of source.matchAll(callSitePattern)) {
+      callSites.push([key, fallback.replace(/\\(['"])/g, '$1')])
     }
   }
   return callSites
