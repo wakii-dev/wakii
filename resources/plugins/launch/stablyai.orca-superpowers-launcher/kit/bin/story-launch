@@ -371,10 +371,15 @@ if [ "$CLAIM" = 1 ] && [ "$(distributed_enabled)" = "1" ]; then
   fi
 fi
 echo "── launch sf-$N-$SLUG ($LINEAR) ← $DEST"
-# lineage cha (kit ≥2.16.7): SF worktree là CON của coordinator worktree của
-# story — 1 story = 1 cây. Cha tên "<dest-slug>-coordinator" (tạo ở APPROVE);
-# chưa có cha → degrade --no-parent, không chặn launch (fail-open).
-COORD_WT="$(basename "$DEST")-coordinator"
+# lineage cha (kit ≥2.16.7): SF worktree là CON của worktree story — 1 story =
+# 1 cây. story-hub: không có legacy coordinator worktree — cha = chính story
+# worktree (basename DEST, tạo ở APPROVE). Legacy: cha "<dest-slug>-coordinator".
+# Chưa có cha → degrade --no-parent, không chặn launch (fail-open).
+if [ "$WTMODEL" = "story-hub" ]; then
+  COORD_WT="$(basename "$DEST")"
+else
+  COORD_WT="$(basename "$DEST")-coordinator"
+fi
 PARENT_FLAG="--no-parent"
 if orca worktree show --worktree "$COORD_WT" --json >/dev/null 2>&1; then
   PARENT_FLAG="--parent-worktree $COORD_WT"
