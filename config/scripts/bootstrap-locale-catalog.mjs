@@ -233,6 +233,14 @@ export async function main(root = process.cwd(), locale = parseLocaleArg(process
         } catch (retryError) {
           reportError = retryError
         }
+      } else if (throttled) {
+        // Why: a window outlasting the latch budget means every remaining value 429s too —
+        // burning the list extends the penalty (lo1d). Bail out; monitor relaunch resumes via cache.
+        console.log(
+          `  429 persists after ${MAX_THROTTLE_WAITS} cooldowns — aborting; re-run the same command to resume.`
+        )
+        await saveCache(cachePath, cache)
+        process.exit(1)
       }
       // Why: one throttled value must not kill a hours-long batch — leave it uncached
       // (falls back to en), the per-batch metric gate + re-run resume catch the holes.
