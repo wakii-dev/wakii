@@ -96,31 +96,36 @@ export async function decodeWakiiFile(filePath: string): Promise<WakiiFileOpenPa
       return wakiiFileError(filePath, 'too-large', `File exceeds ${MAX_WAKII_DOCUMENT_BYTES} bytes`)
     }
     const contents = await readFile(filePath, 'utf8')
-    // Why re-checked: the file can grow between stat and read.
-    if (Buffer.byteLength(contents, 'utf8') > MAX_WAKII_DOCUMENT_BYTES) {
-      return wakiiFileError(filePath, 'too-large', `File exceeds ${MAX_WAKII_DOCUMENT_BYTES} bytes`)
-    }
-    let parsed: unknown
-    try {
-      parsed = JSON.parse(contents)
-    } catch (error) {
-      return wakiiFileError(
-        filePath,
-        'schema',
-        error instanceof Error ? error.message : String(error)
-      )
-    }
-    const validation = validateWakiiMindmapFile(parsed)
-    if (!validation.ok) {
-      return wakiiFileError(filePath, 'schema', validation.reason)
-    }
-    // Why here, not before the read: only a successfully-read file is worth whitelisting for
-    // the renderer's later fs access (refresh/authorization), matching the markdown pattern.
-    authorizeExternalPath(filePath)
-    return { path: filePath, mindmap: validation.mindmap }
+    return decodeWakiiContents(filePath, contents)
   } catch (error) {
     return wakiiFileError(filePath, 'io', error instanceof Error ? error.message : String(error))
   }
+}
+
+/** Validates already-read `.wakii` contents; the caller owns the fs read. */
+export function decodeWakiiContents(filePath: string, contents: string): WakiiFileOpenPayload {
+  // Why re-checked: the file can grow between a caller's stat and read.
+  if (Buffer.byteLength(contents, 'utf8') > MAX_WAKII_DOCUMENT_BYTES) {
+    return wakiiFileError(filePath, 'too-large', `File exceeds ${MAX_WAKII_DOCUMENT_BYTES} bytes`)
+  }
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(contents)
+  } catch (error) {
+    return wakiiFileError(
+      filePath,
+      'schema',
+      error instanceof Error ? error.message : String(error)
+    )
+  }
+  const validation = validateWakiiMindmapFile(parsed)
+  if (!validation.ok) {
+    return wakiiFileError(filePath, 'schema', validation.reason)
+  }
+  // Why here, not before the read: only a successfully-read file is worth whitelisting for
+  // the renderer's later fs access (refresh/authorization), matching the markdown pattern.
+  authorizeExternalPath(filePath)
+  return { path: filePath, mindmap: validation.mindmap }
 }
 
 function wakiiFileError(
