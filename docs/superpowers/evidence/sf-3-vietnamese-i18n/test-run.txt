@@ -59,3 +59,11 @@ sau treo connect (đã gây 3 lần hang tưởng app chết).
 == Phát hiện UI thật (ghi notes cho SF-2, không sửa catalog trong SF-3) ==
 badge worktree 'primary' → 'sơ đẳng' · nút 'Command' → 'Yêu cầu' — chi tiết
 trong vi-catalog-notes-for-sf-2.md (bổ sung 27/09 sau RULE-0).
+
+== Addendum (28/09 — merge + gate) ==
+Merge: 800b5400b4 (Merge SF-3 completion) + merge da7b3efa07 (review-verdict
+record) trên story/vi-1-vietnamese-i18n. Code commit cuối: da7b3efa07 (chứa
+review verdict APPROVED). Battery re-run tại 9f0aeb2306: 26 files / 211 tests
+PASS · metric 14764/14764 = 100.00% exit 0 · tc:web exit 0 · oxlint 0 finding.
+story-verify sf-3 sau user xác nhận task 8: expect READY-TO-DONE (B3 UNKNOWN
+vì Linear deferred, B5 PENDING — không FAIL nào).
