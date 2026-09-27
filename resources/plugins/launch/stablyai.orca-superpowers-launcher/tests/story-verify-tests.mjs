@@ -18,6 +18,7 @@
 // - STORY_KIT_CONFIG ghim trong fake HOME: gate matrix + distributed.enabled=0
 //   không nhiễm từ máy chạy test (B4 local-only → không git fetch → không mạng).
 // Chạy: node tests/story-verify-tests.mjs
+// Refresh evidence/fixtures: tests/README-story-verify-refresh.md
 import { spawnSync } from 'node:child_process'
 import { chmodSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
 import { join, dirname, resolve } from 'node:path'
