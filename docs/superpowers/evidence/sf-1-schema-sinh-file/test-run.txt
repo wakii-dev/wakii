@@ -52,6 +52,33 @@ mở rộng chạy lại trên code cũ = RED 58/61 (đúng 3 failure mode P1), 
 [✓] KHÔNG sửa story-verify (untouched); KHÔNG sửa 2 hash impl (chỉ rehash GIÁ TRỊ output);
     KHÔNG đụng /.wakii/ runtime dir
 
+═══ GATE story-verify (bước 4 checklist) ═══
+
+~/.claude/bin/story-verify sf-1-schema-sinh-file → rc=1 INCOMPLETE
+[B1:PASS B2:WARN B2b:PASS B3:UNKNOWN B4:FAIL B5:PENDING]
+  dest:story/vu-14-mindmap-wakii (đúng) · code:12178c tests:10989f
+
+- B1 PASS — code+tests+evidence (hash HEAD/HEAD~1 + dòng tdd) ✓
+- B2 WARN — không có plan file *sf-1* trong docs/superpowers/plans/ (plan SF nằm ở
+  evidence/plan.md theo form context pack; WARN không chặn)
+- B2b PASS — surface lint ✓
+- B3 UNKNOWN — Linear-deferred: sạch (memory: "Linear-deferred sạch = READY-TO-DONE")
+- B4 FAIL — STRUCTURAL PRE-MERGE: gate check HEAD là ancestor của dest; merge vào
+  story/vu-14-mindmap-wakii là việc COORDINATOR (checklist bước 3 cấm SF worker merge).
+  Mọi bước thuộc SF worker đã xong (commit + push). B4 tự hết khi coordinator merge.
+- B5 PENDING — Linear Done deferred theo ruling 27/09.
+
+Root-cause chain đã xử lý để gate resolve đúng (tất cả WORKTREE-LOCAL, uncommitted,
+git checkout -- khôi phục được; KHÔNG commit):
+1. story-verify thử orca registry "orca-dev" TRƯỚC (orca() fallback chain) — registry
+   dev chỉ có 1 worktree, không chứa worktree này → WT_META thiếu dòng → rơi xuống
+   bracket glob. Registry prod (orca) có metadata ĐÚNG (baseRef=story/vu-14-mindmap-wakii).
+2. Bracket glob lấy nhầm FI-28 (alphabet-first) → dest sai + linear sai (FI-29).
+   → rm worktree-local 7 bracket story khác, chỉ giữ vu-14.
+3. awk linear-extract gsub(/.*linear: /) cần "linear: " có space; dòng `linear:`
+   trống (deferred) → extracted thành chuỗi "linear:" → coi là có Linear → B3 FAIL.
+   → sed worktree-local bỏ 4 dòng `linear:` trống trong bracket VU-14.
+
 ═══ Ghi chú trung thực ═══
 
 - Baseline red: kit-verify "mọi bins executable" đỏ TỪ BASELINE (5 bins mất exec-bit trên
