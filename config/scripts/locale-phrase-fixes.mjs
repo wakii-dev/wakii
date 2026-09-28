@@ -2,8 +2,10 @@ import { KO_PHRASE_FIXES_ROUND4 } from './locale-ko-phrase-fixes.mjs'
 import { ZH_PHRASE_FIXES_ROUND5 } from './locale-zh-phrase-fixes-round5.mjs'
 
 import { JA_PHRASE_FIXES } from './locale-ja-phrase-fixes.mjs'
+import { VI_PHRASE_FIXES } from './locale-vi-phrase-fixes.mjs'
 
 export const LOCALE_PHRASE_FIXES = {
+  vi: [...VI_PHRASE_FIXES],
   ko: [
     { pattern: /해고하다/g, replacement: '닫기', whenEnIncludes: 'Dismiss' },
     { pattern: /선택 과목/g, replacement: '선택 사항', whenEnIncludes: 'Optional' },
