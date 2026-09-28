@@ -51,9 +51,9 @@
 - Modify: `kit/bin/story-verify` (fallback bracket glob → mindmaps .wakii first)
 - Modify: `kit/tests/story-verify-tests.mjs` (case derive .wakii)
 
-- [ ] **Step 4.1 RED** — test: worktree KHÔNG có bracket, CHỈ có .wakii → B3/B4/B5 derive đúng linear+dest (hết FI-246 class); story-level derive loop đọc mindmaps/*.wakii nodes linear; exit contract 0/1/2 + --json shape KHÔNG ĐỔI.
-- [ ] **Step 4.2 GREEN** — helper đọc .wakii (python3): epic→linear map từ nodes; dest từ meta.dest; ưu tiên orca metadata như cũ, .wakii thay bracket ở lớp fallback cuối.
-- [ ] **Step 4.3** — commit.
+- [x] **Step 4.1 RED** — test: worktree KHÔNG có bracket, CHỈ có .wakii → B3/B4/B5 derive đúng linear+dest (hết FI-246 class); story-level derive loop đọc mindmaps/*.wakii nodes linear; exit contract 0/1/2 + --json shape KHÔNG ĐỔI.
+- [x] **Step 4.2 GREEN** — helper đọc .wakii (python3): epic→linear map từ nodes; dest từ meta.dest; ưu tiên orca metadata như cũ, .wakii thay bracket ở lớp fallback cuối.
+- [x] **Step 4.3** — commit.
 
 ### Task 5: watchdog-coordinator-wakii — status/top/watchdog/coordinator-pass derive .wakii
 
