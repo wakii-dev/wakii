@@ -21,9 +21,9 @@
 - Create: `kit/tests/wakii-validate-tests.mjs`
 - Modify: `kit/kit.json` (thêm provides entry)
 
-- [ ] **Step 1.1 RED** — test fixture .wakii: OK / INVALID mỗi luật §3 (magic, version, meta thiếu, node thiếu id/kind/title, edge thiếu from/to/rel, duplicate id, dangling edge, dangling parent, self-loop, >5MB, không epic, không SF) / WARN: linear-deferred (không key) + tier-derivation lệch / `--linear` key rỗng → WARN skip exit 0 / usage exit 2 / `--json` shape {verdict,sf_count,fails,warns} / `--resolve-primary` port contract (explicit hit, miss exit 1).
-- [ ] **Step 1.2 GREEN** — bin: decoder port từ story-mindmap decodeWakii (INVALID toàn file); + checks story-level: ≥1 sf node; linear format `<TEAM>-<số>` FAIL; deps từ edges depends-on → cycle FAIL, tier ≠ 1+max(dep tier) WARN; `--linear` GraphQL check (rate-limit + no-key fail-open WARN); `--resolve-primary` port VERBATIM từ story-validate (caller SKILL.md giữ contract). Exit 0/1/2 như story-validate.
-- [ ] **Step 1.3** — provides[] + wakii-validate; chạy test suite xanh; commit.
+- [x] **Step 1.1 RED** — test fixture .wakii: OK / INVALID mỗi luật §3 (magic, version, meta thiếu, node thiếu id/kind/title, edge thiếu from/to/rel, duplicate id, dangling edge, dangling parent, self-loop, >5MB, không epic, không SF) / WARN: linear-deferred (không key) + tier-derivation lệch / `--linear` key rỗng → WARN skip exit 0 / usage exit 2 / `--json` shape {verdict,sf_count,fails,warns} / `--resolve-primary` port contract (explicit hit, miss exit 1).
+- [x] **Step 1.2 GREEN** — bin: decoder port từ story-mindmap decodeWakii (INVALID toàn file); + checks story-level: ≥1 sf node; linear format `<TEAM>-<số>` FAIL; deps từ edges depends-on → cycle FAIL, tier ≠ 1+max(dep tier) WARN; `--linear` GraphQL check (rate-limit + no-key fail-open WARN); `--resolve-primary` port VERBATIM từ story-validate (caller SKILL.md giữ contract). Exit 0/1/2 như story-validate.
+- [x] **Step 1.3** — provides[] + wakii-validate; chạy test suite xanh; commit.
 
 ### Task 2: state-updater-inplace — cập nhật state không đè phần người
 
@@ -31,9 +31,9 @@
 - Modify: `kit/bin/story-mindmap` (chế độ `--update-state <file.wakii>`)
 - Create: `kit/tests/story-mindmap-update-state-tests.mjs`
 
-- [ ] **Step 2.1 RED** — fixture .wakii có notes[]/summary/acceptance sửa tay + state cũ → chạy updater với orchestration state mới → notes/summary/acceptance/titles/edges/steps/files GIỮ NGUYÊN byte-for-byte (stable compare); chỉ node.state (sf/task/epic), evidence, generatedAt, decodeWarnings đổi; idempotent (chạy 2 lần → file không đổi khi state không đổi); epic derive complete khi mọi SF done; orchestration chết → exit 0 + warning, không ghi.
-- [ ] **Step 2.2 GREEN** — `--update-state`: đọc file, decodeWakii gate (file INVALID → exit 1 không đè); states từ `readOrcaStates` (task-list SF-N match); ghi CHỈ state-machine-owned fields; ghi atomic + idempotent theo generatedAt rule.
-- [ ] **Step 2.3** — field-ownership table ghi ở header bin (structure/knowledge = người; state/evidence/generatedAt = machine); commit.
+- [x] **Step 2.1 RED** — fixture .wakii có notes[]/summary/acceptance sửa tay + state cũ → chạy updater với orchestration state mới → notes/summary/acceptance/titles/edges/steps/files GIỮ NGUYÊN byte-for-byte (stable compare); chỉ node.state (sf/task/epic), evidence, generatedAt, decodeWarnings đổi; idempotent (chạy 2 lần → file không đổi khi state không đổi); epic derive complete khi mọi SF done; orchestration chết → exit 0 + warning, không ghi.
+- [x] **Step 2.2 GREEN** — `--update-state`: đọc file, decodeWakii gate (file INVALID → exit 1 không đè); states từ `readOrcaStates` (task-list SF-N match); ghi CHỈ state-machine-owned fields; ghi atomic + idempotent theo generatedAt rule.
+- [x] **Step 2.3** — field-ownership table ghi ở header bin (structure/knowledge = người; state/evidence/generatedAt = machine); commit.
 
 ### Task 3: story-launch-wakii-derive — launch đọc .wakii
 

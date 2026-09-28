@@ -68,14 +68,12 @@ const PACK2 = `# Context pack SF-2 — Lớp xem
 - double-click mở được
 `
 // orca stub: dispatch theo subcommand — run-list (discovery) → 1 run; task-list → SF states
-const ORCA_STUB = `#!/bin/sh
-case "$2" in
-  run-list) echo '{"result":{"runs":[{"id":"run_stub1","objective":"VX-1: đồ án thử — mindmap fixture","legacy":0,"updated_at":"2026-09-27T00:00:00Z"}]}}' ;;
-  *) echo '{"result":{"tasks":[{"task_title":"SF-1 Lớp nền","status":"in_progress"},{"task_title":"SF-2 Lớp xem","status":"pending"}]}}' ;;
-esac
+const ORCA_STUB = `const a = process.argv.slice(2)
+if (a[1] === 'run-list') console.log('{"result":{"runs":[{"id":"run_stub1","objective":"VX-1: đồ án thử — mindmap fixture","legacy":0,"updated_at":"2026-09-27T00:00:00Z"}]}}')
+else console.log('{"result":{"tasks":[{"task_title":"SF-1 Lớp nền","status":"in_progress"},{"task_title":"SF-2 Lớp xem","status":"pending"}]}}')
 `
 // impact stub: 1 area computed
-const IMPACT_STUB = '#!/bin/sh\necho \'{"base":"main","changed":[],"affectedAreas":["src/terminal"],"impact":[]}\'\n'
+const IMPACT_STUB = `console.log('{"base":"main","changed":[],"affectedAreas":["src/terminal"],"impact":[]}')`
 
 function tempStory(tag, { pack2 = PACK2, bracket = BRACKET } = {}) {
   const dir = mkdtempSync(join(tmpdir(), `story-mindmap-${tag}-`))
@@ -89,7 +87,7 @@ function tempStory(tag, { pack2 = PACK2, bracket = BRACKET } = {}) {
   writeFileSync(join(dir, 'docs/superpowers/contexts/vx-1-do-an-thu/sf-2.md'), pack2)
   const stubs = join(dir, 'stubs')
   mkdirSync(stubs, { recursive: true })
-  const orca = join(stubs, 'orca'), impact = join(stubs, 'impact')
+  const orca = join(stubs, 'orca.mjs'), impact = join(stubs, 'impact.mjs')
   writeFileSync(orca, ORCA_STUB); writeFileSync(impact, IMPACT_STUB)
   chmodSync(orca, 0o755); chmodSync(impact, 0o755)
   return { dir, env: { STORY_ORCA_BIN: orca, STORY_IMPACT_BIN: impact } }
@@ -263,10 +261,10 @@ function tempStory(tag, { pack2 = PACK2, bracket = BRACKET } = {}) {
   writeFileSync(join(dir2, 'docs/superpowers/contexts/vx-1-do-an-thu/sf-1.md'), '# Context pack SF-1\n\n## Spec slice\n1. Viết schema.\n')
   const stubs = join(dir2, 'stubs')
   mkdirSync(stubs, { recursive: true })
-  writeFileSync(join(stubs, 'orca'), ORCA_STUB)
-  writeFileSync(join(stubs, 'impact'), '#!/bin/sh\nexit 1\n') // impact chết → không area
-  chmodSync(join(stubs, 'orca'), 0o755); chmodSync(join(stubs, 'impact'), 0o755)
-  const env2 = { STORY_ORCA_BIN: join(stubs, 'orca'), STORY_IMPACT_BIN: join(stubs, 'impact') }
+  writeFileSync(join(stubs, 'orca.mjs'), ORCA_STUB)
+  writeFileSync(join(stubs, 'impact.mjs'), 'process.exit(1)') // impact chết → không area
+  chmodSync(join(stubs, 'orca.mjs'), 0o755); chmodSync(join(stubs, 'impact.mjs'), 0o755)
+  const env2 = { STORY_ORCA_BIN: join(stubs, 'orca.mjs'), STORY_IMPACT_BIN: join(stubs, 'impact.mjs') }
   const r = run(bin, ['--bracket', 'docs/superpowers/brackets/vx-1-do-an-thu.md'], dir2, env2)
   check('c5', 'exit 0 (thiếu touch map/pack không vỡ)', r.code === 0, `code=${r.code} out=${r.out}`)
   const doc = JSON.parse(readFileSync(join(dir2, 'docs/superpowers/mindmaps/vx-1-do-an-thu.wakii'), 'utf8'))
@@ -278,19 +276,19 @@ function tempStory(tag, { pack2 = PACK2, bracket = BRACKET } = {}) {
 // ══ c6: story-impact chết / treo → 2 lớp + warning + exit 0 ══
 {
   const { dir } = tempStory('impact-dead')
-  const bad = join(dir, 'stubs', 'impact-bad')
-  writeFileSync(bad, '#!/bin/sh\necho "boom" >&2\nexit 1\n')
-  const slow = join(dir, 'stubs', 'impact-slow')
-  writeFileSync(slow, '#!/bin/sh\nsleep 30\n')
+  const bad = join(dir, 'stubs', 'impact-bad.mjs')
+  writeFileSync(bad, `console.error('boom'); process.exit(1)`)
+  const slow = join(dir, 'stubs', 'impact-slow.mjs')
+  writeFileSync(slow, 'setTimeout(() => {}, 30000)') // treo 30s — runImpact timeout 20s phải kill
   const args = ['--bracket', 'docs/superpowers/brackets/vx-1-do-an-thu.md']
   const f = join(dir, 'docs/superpowers/mindmaps/vx-1-do-an-thu.wakii')
-  let r = run(bin, args, dir, { STORY_ORCA_BIN: join(dir, 'stubs', 'orca'), STORY_IMPACT_BIN: bad })
+  let r = run(bin, args, dir, { STORY_ORCA_BIN: join(dir, 'stubs', 'orca.mjs'), STORY_IMPACT_BIN: bad })
   check('c6', 'impact chết → exit 0', r.code === 0, r.out)
   let doc = JSON.parse(readFileSync(f, 'utf8'))
   check('c6', 'vẫn đủ tiến độ + logic', doc.nodes.some(n => n.kind === 'sf') && doc.nodes.some(n => n.kind === 'step'), JSON.stringify(doc.nodes.map(n => n.kind)))
   check('c6', 'không area computed', !doc.nodes.some(n => n.kind === 'area'), '')
   check('c6', 'decodeWarnings ghi nguồn impact', doc.decodeWarnings.some(w => w.toLowerCase().includes('story-impact')), JSON.stringify(doc.decodeWarnings))
-  r = run(bin, args, dir, { STORY_ORCA_BIN: join(dir, 'stubs', 'orca'), STORY_IMPACT_BIN: slow })
+  r = run(bin, args, dir, { STORY_ORCA_BIN: join(dir, 'stubs', 'orca.mjs'), STORY_IMPACT_BIN: slow })
   check('c6', 'impact treo → timeout vẫn exit 0 nhanh', r.code === 0, r.out)
   rmSync(dir, { recursive: true, force: true })
 }

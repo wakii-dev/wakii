@@ -10,6 +10,14 @@
 // Usage:
 //   story-mindmap --bracket <file> [--out <path>] [--mermaid-md <path>]
 //   story-mindmap --decode <file>     # verdict decoder — JSON ra stdout, exit 0/2
+//   story-mindmap --update-state <file.wakii>
+//
+// Field ownership (spec 2026-09-27 §11) — --update-state chỉ sửa phần MÁY:
+//   người (KHÔNG đụng): node title/tier/linear/summary/acceptance/tests/notes/
+//     filesTouched, edges, evidence, nodes có kind lạ (không drop khi update)
+//   máy (updater sở hữu): node.state của sf + epic (derive), meta.generatedAt
+//     (bump CHỈ khi payload đổi). Orchestration không có data → không phán,
+//     không ghi (fail-open); file INVALID → exit 1 không đè.
 //
 // Decoder (hợp đồng cho SF-2/SF-3 tiêu thụ):
 //   INVALID cả file: magic thiếu/version lạ, thiếu meta bắt buộc (story/
@@ -157,8 +165,15 @@ function parsePack(text, sf) {
 // ── nguồn phụ: orchestration + story-impact (fail-open, timeout budget) ─────
 // task-list cần run bound; ngoài terminal bound → tự discovery qua run-list
 // (unbound chạy được) match epic-id trong objective; override bằng STORY_MINDMAP_RUN.
+// seam test: bin trỏ script .js/.mjs/.cjs → chạy qua node (Windows CreateProcess
+// không exec shebang trực tiếp)
+function execMaybe(bin, args, opts) {
+  const isScript = /\.(mjs|cjs|js)$/i.test(bin);
+  return execFileSync(isScript ? process.execPath : bin, isScript ? [bin, ...args] : args, opts);
+}
+
 function orcaJson(orcaBin, args, timeoutMs) {
-  return execFileSync(orcaBin, args, { encoding: 'utf8', timeout: timeoutMs, stdio: ['ignore', 'pipe', 'ignore'] });
+  return execMaybe(orcaBin, args, { encoding: 'utf8', timeout: timeoutMs, stdio: ['ignore', 'pipe', 'ignore'] });
 }
 
 function readOrcaStates(orcaBin, epic, warnings) {
@@ -201,7 +216,7 @@ function runImpact(repo, warnings) {
     return null;
   }
   try {
-    const out = execFileSync(binPath, ['--json'],
+    const out = execMaybe(binPath, ['--json'],
       { cwd: repo, encoding: 'utf8', timeout: 20000, maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'ignore'] });
     return (((JSON.parse(out).affectedAreas) || []).filter(a => typeof a === 'string' && a)).sort();
   } catch (e) {
@@ -380,6 +395,53 @@ function cmdGenerate(argv) {
   console.log(`out: ${relOut}`);
 }
 
+// ── update-state ────────────────────────────────────────────────────────────
+function cmdUpdateState(fileArg) {
+  const file = path.resolve(fileArg);
+  let raw;
+  try { raw = fs.readFileSync(file); } catch (e) {
+    die(2, `usage: story-mindmap --update-state <file.wakii> — đọc không được: ${e.message}`);
+  }
+  const gate = decodeWakii(raw);
+  if (!gate.valid) die(1, `story-mindmap --update-state: file INVALID — không đè (${gate.error})`);
+  // ghi trên bản gốc (không phải bản decoded) — node enum lạ của người giữ nguyên
+  let doc;
+  try { doc = JSON.parse(raw.toString('utf8')); } catch { die(1, 'story-mindmap --update-state: file INVALID — không đè'); }
+  const warnings = [];
+  const epicId = doc.meta && typeof doc.meta.epic === 'string' ? doc.meta.epic : '';
+  const states = readOrcaStates(process.env.STORY_ORCA_BIN || 'orca', epicId, warnings);
+  if (!states.size) {
+    for (const w of warnings) console.error(`WARN: ${w}`);
+    console.log(`story-mindmap --update-state — ${path.basename(file)} (unchanged — không có nguồn orchestration state, không phán)`);
+    return;
+  }
+  const changed = [];
+  for (const n of doc.nodes || []) {
+    if (!n || n.kind !== 'sf') continue;
+    const m = String(n.id).match(/^sf-(\d+)$/);
+    if (!m || !states.has(+m[1])) continue;
+    const next = states.get(+m[1]);
+    if (n.state !== next) { changed.push(`${n.id}: ${n.state || '—'} → ${next}`); n.state = next; }
+  }
+  const epicNode = (doc.nodes || []).find(n => n && n.kind === 'epic');
+  if (epicNode) {
+    const sfs = (doc.nodes || []).filter(n => n && n.kind === 'sf');
+    const next = sfs.length > 0 && sfs.every(s => s.state === 'done') ? 'complete' : 'in-progress';
+    if (epicNode.state !== next) { changed.push(`epic: ${epicNode.state || '—'} → ${next}`); epicNode.state = next; }
+  }
+  if (!changed.length) {
+    console.log(`story-mindmap --update-state — ${path.basename(file)} (unchanged — state khớp nguồn, idempotent)`);
+    return;
+  }
+  doc.meta.generatedAt = new Date().toISOString();
+  // self-validate trước khi ghi — updater bug không được ra file INVALID
+  const self = decodeWakii(Buffer.from(JSON.stringify(doc)));
+  if (!self.valid) die(1, `story-mindmap --update-state: output tự validation FAIL — ${self.error}`);
+  writeAtomic(file, JSON.stringify(doc, null, 2) + '\n');
+  console.log(`story-mindmap --update-state — ${path.basename(file)} (${changed.join('; ')})`);
+  console.log(`out: ${path.relative(process.cwd(), file) || file} (updated)`);
+}
+
 function cmdDecode(decodeArg) {
   let raw;
   try { raw = fs.readFileSync(path.resolve(decodeArg)); } catch (e) {
@@ -395,6 +457,8 @@ function main() {
   const argv = process.argv.slice(2);
   const decodeArg = argv.includes('--decode') ? (argv[argv.indexOf('--decode') + 1] || '') : '';
   if (decodeArg) return cmdDecode(decodeArg);
+  const updateArg = argv.includes('--update-state') ? (argv[argv.indexOf('--update-state') + 1] || '') : '';
+  if (updateArg) return cmdUpdateState(updateArg);
   return cmdGenerate(argv);
 }
 
