@@ -3,6 +3,11 @@ import { recoverLegacyWorkerTerminalsForRendererStartup } from './legacy-worker-
 import { logStartupMilestone } from './startup-diagnostics'
 import { mainProcessState as state } from './main-process-state'
 import { resolveOpenedMarkdownDocuments } from './os-opened-markdown-files'
+import {
+  filterUnchangedWakiiFiles,
+  recordDeliveredWakiiFiles,
+  resolveOpenedWakiiFiles
+} from './os-opened-wakii-files'
 
 export function registerMainProcessIpcHandlers(): void {
   ipcMain.handle('app:awaitFirstWindowStartupServices', async () => {
@@ -55,6 +60,32 @@ export function registerMainProcessIpcHandlers(): void {
     } catch (error) {
       // Why restored: the renderer never received these, so a later mount must still get them.
       state.osOpenedMarkdownFiles.restore(filePaths)
+      throw error
+    }
+  })
+  // Why: the renderer pulls this once its ui:openWakiiFile listener attaches, so a
+  // cold-start double-click queued before mount still opens. The pull doubles as the proof
+  // that the listener is live, which is what lets main start pushing. Payloads arrive
+  // already decoded (or carrying a per-file error) because main owns the file read.
+  ipcMain.handle('ui:consumePendingWakiiFileOpens', async (event) => {
+    state.wakiiFileOpenListenerReady = true
+    const filePaths = state.osOpenedWakiiFiles.consume()
+    try {
+      const resolved = filterUnchangedWakiiFiles(
+        await resolveOpenedWakiiFiles(filePaths),
+        state.wakiiDeliveredFileHashes
+      )
+      if (event.sender.isDestroyed()) {
+        // Why restored and not recorded: the reply has nowhere to land, so a later renderer
+        // must re-pull these; recording their hashes now would skip them forever.
+        state.osOpenedWakiiFiles.restore(filePaths)
+        return []
+      }
+      recordDeliveredWakiiFiles(resolved, state.wakiiDeliveredFileHashes)
+      return resolved.map(({ payload }) => payload)
+    } catch (error) {
+      // Why restored: the renderer never received these, so a later mount must still get them.
+      state.osOpenedWakiiFiles.restore(filePaths)
       throw error
     }
   })

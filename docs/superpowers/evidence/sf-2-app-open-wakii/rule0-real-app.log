@@ -1,0 +1,11 @@
+[rule0] launching real app: cwd=/Users/hoivu/orca/workspaces/orca/sf-2-app-open-wakii argv=[. /var/folders/rl/v_p7888d5x5f8vj563qt6yxw0000gn/T/wakii-rule0-3zLI6g/vu-14.wakii]
+[rule0] PASS — cold-start argv .wakii → renderer receipt marker · [wakii-open] received mindmap: /var/folders/rl/v_p7888d5x5f8vj563qt6yxw0000gn/T/wakii-rule0-3zLI6g/vu-14.wakii
+[rule0] PASS — consume-pending lần 2 → rỗng (consume semantics) · []
+[rule0] PASS — file hỏng → error payload → toast bề mặt
+[rule0] PASS — mở lại cùng path + cùng content-hash → KHÔNG đẩy lại (dedupe) · receipts=1
+[rule0] PASS — cùng path + hash khác → đẩy lại (refresh)
+[rule0] console markers:
+  · [wakii-open] received mindmap: /var/folders/rl/v_p7888d5x5f8vj563qt6yxw0000gn/T/wakii-rule0-3zLI6g/vu-14.wakii
+  · [wakii-open] failed: /var/folders/rl/v_p7888d5x5f8vj563qt6yxw0000gn/T/wakii-rule0-3zLI6g/broken.wakii (schema)
+  · [wakii-open] received mindmap: /var/folders/rl/v_p7888d5x5f8vj563qt6yxw0000gn/T/wakii-rule0-3zLI6g/vu-14.wakii
+[rule0] RESULT: ALL PASS

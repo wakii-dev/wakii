@@ -1,0 +1,39 @@
+═══ RULE 0 — CLI-EQUIVALENT (SF-1 pure CLI/kit — không web port) ═══
+Ngày: 2026-09-27 16:18:57 · HEAD repo: 0d97e6201cca977201b9e331877b4471116f3b9a
+MARKER: SF-1 là CLI/kit thuần (không server/UI) → Rule-0 proxy theo skill: test suite exit 0 + bin INSTALLED THẬT chạy trên fixture + log dưới đây là bằng chứng mắt thấy bin chạy ra file đúng.
+
+Cài đặt thật: kit/bin/{story-mindmap,story-mindmap-trigger} → ~/.claude/bin/ (chmod +x, diff -q = committed ✓, P1-fix cuối).
+story-impact có sẵn ~/.claude/bin (sibling resolution — lớp impact computed dùng bin THẬT).
+Fixture: /tmp/vu14-rule0-fixture — git -b main (2 commits) + branch feature (+1 commit đổi src/a/lib.ts → reverse-import thật) + bracket VU-14 + pack sf-1 VU-14 thật (copy từ worktree).
+
+── 1) sweep trigger (scan mode, không --bracket) lần 1 ──
+rc=0
+   kinds: {'epic': 1, 'sf': 4, 'task': 31, 'step': 8, 'file': 4, 'area': 1}
+   meta: {'story': 'VU-14 — mindmap.wakii — story mindmap file + Wakii viewer', 'epic': 'VU-14', 'dest': 'story/vu-14-mindmap-wakii', 'generator': 'story-mindmap 1.0.0'}
+   sf states (orchestration run discovery THẬT): [('sf-1', 'pending'), ('sf-2', 'pending'), ('sf-3', 'pending'), ('sf-4', 'pending')]
+   areas computed (story-impact THẬT): [('area-src-a', True)]
+   files curated (touch map pack thật): ['resources/plugins/launch/stablyai.orca-superpowers-launcher/kit/bin/story-mindmap', 'kit/kit.json', 'kit/bin/story-launch', 'kit/bin/story-close']
+   decodeWarnings: ['sf-2: context pack không tìm thấy — chỉ lớp tiến độ', 'sf-3: context pack không tìm thấy — chỉ lớp tiến độ', 'sf-4: context pack không tìm thấy — chỉ lớp tiến độ']
+
+── 2) lần 2 — idempotent (payload không đổi → KHÔNG ghi) ──
+rc=0
+mtime lần1=1790499707 lần2=1790499707 — KHÔNG ĐỔI ✓ idempotent thật
+
+── 3) --mermaid-md khi unchanged (case P1 vừa fix — md vẫn phải ra) ──
+story-mindmap — vu-14-mindmap-wakii.wakii unchanged (idempotent)
+out: docs/superpowers/mindmaps/vu-14-mindmap-wakii.wakii (unchanged)
+rc=0
+1
+md render được ✓ (kể cả khi unchanged)
+
+── 4) decoder verdict trên file vừa sinh ──
+rc=0
+   valid: True | nodes: 49 | edges: 51 | warnings: 3
+
+── 5) cấu trúc lớp logic (2 step đầu sf-1 + flows-to) ──
+   {"id": "s-1.1", "kind": "step", "title": "Schema `.wakii` v1", "parent": "sf-1", "detail": "Schema `.wakii` v1 (JSON): magic `wakiiMindmap: 
+   {"id": "s-1.2", "kind": "step", "title": "Luật decoder", "parent": "sf-1", "detail": "Luật decoder: bắt buộc = wakiiMindmap + meta.story + m
+   edge: s-1.1 → s-1.2 flows-to
+   edge: s-1.2 → s-1.3 flows-to
+
+KẾT LUẬN: bin cài thật chạy ra file .wakii đúng 3 lớp ✓ · idempotent thật (mtime giữ nguyên) ✓ · md render khi unchanged (P1 fix) ✓ · decoder valid ✓ · fail-open khi thiếu nguồn (pack sf-2/3/4) ✓

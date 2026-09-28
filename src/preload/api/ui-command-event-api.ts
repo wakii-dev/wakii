@@ -1,4 +1,5 @@
 import type { MarkdownDocument } from '../../shared/filesystem-entry-types'
+import type { WakiiFileOpenPayload } from '../../shared/wakii-file-open-payload'
 import type { PersistedUIState } from '../../shared/persisted-ui-state-types'
 import type { TuiAgent } from '../../shared/tui-agent'
 import type {
@@ -53,6 +54,10 @@ export type UiCommandEventApi = {
   onOpenMarkdownFiles: (callback: (documents: MarkdownDocument[]) => void) => () => void
   /** Drains the "Open With" paths queued before this renderer's listener attached. */
   consumePendingMarkdownFileOpens: () => Promise<MarkdownDocument[]>
+  /** OS-opened .wakii files pushed while a renderer is already listening; decoded by main. */
+  onOpenWakiiFile: (callback: (payload: WakiiFileOpenPayload) => void) => () => void
+  /** Drains the .wakii opens queued before this renderer's listener attached. */
+  consumePendingWakiiFileOpens: () => Promise<WakiiFileOpenPayload[]>
   onOpenSetupGuide: (callback: () => void) => () => void
   onOpenFeatureTour: (callback: () => void) => () => void
   onOpenCrashReport: (callback: () => void) => () => void

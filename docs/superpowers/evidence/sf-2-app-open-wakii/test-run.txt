@@ -1,0 +1,125 @@
+SF-2 App mở file .wakii (VU-14) — test run
+Ngày: 2026-09-27 · Worktree: sf-2-app-open-wakii · Nhánh: wakii-dev/sf-2-app-open-wakii
+HEAD (code): e4b9db4f14 (fix(wakii): stat-guard the live decode path before reading and test it there)
+Diff: story/vu-14-mindmap-wakii..HEAD — 8 commits, 22 files
+
+tdd: RED→GREEN — RED: wakii-documents.test.ts chạy trước khi có module (exit 1, "no tests",
+log /tmp/sf2-t1-red.log); config asserts 4/4 RED trước khi đổi packaging (log /tmp/sf2-t5-red.log).
+GREEN: battery 61/61 sau implement + review-fix round. 2 vòng fix giữa chừng do battery bắt:
+(1) TS2345 push-channel singular vs array, (2) consistent-type-assertions → type predicate.
+Vòng 3 (code-review P1): stat-guard live path + size tests chuyển sang production entry
+(e4b9db4f14) — battery 61/61 + Rule-0 ALL PASS trên build mới sau fix.
+
+═══ Gates (lệnh > log; echo $? — không pipe nuốt exit code) ═══
+
+1. pnpm tc → exit 0 (sau 2 vòng fix TS; log cuối /tmp/sf2-tc5.log)
+2. pnpm exec oxlint trên 16 file changed → exit 0
+3. pnpm run check:code-quality:changed → exit 1 NHƯNG 0 finding trong file của SF
+   (315 findings pre-existing từ base cũ 841d06a — files ngoài scope; gate base là
+   merge-base với main, không phải base SF. Cá biệt: 3 finding assertions của SF
+   ĐÃ bị gate bắt và đã fix — gate có tác dụng thật.)
+4. Battery (vitest --config config/vitest.config.ts), 7 files:
+   wakii-documents.test.ts (11) · os-opened-wakii-files.test.ts (16) ·
+   os-opened-wakii-wiring.test.ts (6) · os-opened-markdown-wiring.test.ts (5 — CŨ VẪN XANH) ·
+   os-opened-markdown-delivery.test.ts (3) · os-wakii-file-open-bridge.test.ts (8) ·
+   os-markdown-file-open-bridge.test.ts (12) → exit 0, 61/61 (trên code cuối e4b9db4f14)
+5. config/scripts/electron-builder-config.test.mjs toàn file (gồm arch guard + mobile bundle
+   build) → exit 0, 35/35 (4 assert wakii mới)
+6. pnpm build:desktop → exit 0 (out/main/index.js + out/renderer/index.html)
+7. Regression rộng src/main/startup + src/preload (74 files, 609 tests): 592 PASS / 9 FAIL
+   / 8 skip. CẢ 9 FAIL đều là 1 defect baseline có sẵn trên wakii-dev TRƯỚC khi SF bắt đầu:
+   commit rebrand 566d5c2f0a đổi expected-string trong 6 TEST file (desktop-startup-ordering,
+   headless-pty-hydration-ordering, host-port-bootstrap-wiring, run-electron-vite-dev,
+   secret-protection-report-deferral-wiring + useIpcEvents-lifecycle) nhưng KHÔNG đổi source
+   tương ứng (ensureActiveOrcaProfile, onOpenLinkInOrcaTab, orcad…) — anchor indexOf = -1.
+   Không file nào trong 6 đó thuộc touch map của SF; mọi test đọc code đổi của SF (os-opened-*,
+   ipc-bootstrap, main-window-controller, index.ts) đều PASS.
+
+═══ RULE 0 — BROWSER VERIFY (CLI-equivalent proxy, checklist mục 2b) ═══
+
+SF-2 là main-process/packaging — không có web port để mở browser. Proxy theo checklist:
+Playwright _electron launch APP THẬT (pnpm build:desktop, argv ['.', <file>.wakii],
+ORCA_BACKGROUND_LAUNCH=1, ORCA_DEV_USER_DATA_PATH isolate — không show(), không focus),
+gọi ipcMain handler thật qua renderer, bằng chứng = console markers + screenshots + log:
+
+node docs/superpowers/evidence/sf-2-app-open-wakii/rule0-real-app.mjs → exit 0, ALL PASS 5/5
+  [PASS] cold-start argv .wakii → renderer receipt marker '[wakii-open] received mindmap: …/vu-14.wakii'
+  [PASS] consume-pending lần 2 → [] (consume semantics — trên handler ipcMain THẬT)
+  [PASS] file hỏng JSON → error payload schema → toast hiện đúng message parse
+         (screenshot rule0-error-toast.png — toast thấy bằng mắt, góc phải-dưới)
+  [PASS] mở lại cùng path + cùng content-hash → KHÔNG đẩy lại (dedupe receipts=1)
+  [PASS] cùng path + hash khác → đẩy lại (refresh, receipts=2)
+Bằng chứng: rule0-real-app.log (stdout đầy đủ) · rule0-cold-start.png (app boot thật) ·
+rule0-error-toast.png (toast schema error) · marker '[wakii-open] failed: …broken.wakii (schema)'.
+Push path chạy qua handler 'open-file' THẬT: app.emit('open-file') → capture → publish →
+bridge renderer nhận. Packaging association: assert trong config test (manual double-click
+3 OS là việc SF-4 lúc release — theo checklist).
+Lưu ý trung thực: lần chạy 1 check-2 "PASS" ảo (waitFor không await probe async —
+secondPull in 'null'); đã sửa script + chạy lại — giá trị thật '[]' như trên.
+Lưu ý trung thực 2: 2 lần Rule-0 đầu chạy trên bundle out/ cũ (build trước 3 commit fix
+t6-t8) — phát hiện nhờ self-check, ĐÃ `pnpm build:desktop` lại (exit 0) và chạy lại lần
+cuối trên bundle của code cuối: ALL PASS 5/5 như trên (17:50, screenshots cùng mtime).
+
+═══ ACCEPTANCE (context pack) — từng dòng ═══
+
+[✓] Wiring test: argv trước ready → capture; sau ready → publish 1 lần; consume lỗi → restore
+    → os-opened-wakii-wiring.test.ts (6 asserts: capture-trước-serve-guard, capture(process.argv),
+    claim-kép + preventDefault sau guard không-claim, latch-gated push, restore cả 2 đường,
+    filter/record hash-dedupe cả 2 đường) + delivery-ownership unit (state giữ batch tới khi publish)
+[✓] Đuôi lạ open-file → không claim, không preventDefault
+    → wiring assert 'if (!claimedMarkdown && !claimedWakii)' TRƯỚC preventDefault; unit
+    wakiiPathsFromArguments drop .md/relative/flag; handler giữ preventDefault trong app.on('open-file')
+[✓] File 6MB → too-large; JSON hỏng → schema; permission → io — payload shape đúng
+    → wakii-documents.test.ts: 6MB'x' → too-large (không parse); '{nope' → schema; chmod 000
+    (guard root) → io; missing → io; magic/version/meta/nodes/edges thiếu → schema. Shape:
+    {path, error:{code,message}} — đúng payload type
+[✓] Consume-pending gọi 2 lần → lần 2 rỗng
+    → state unit (consume 2 lần) + Rule-0 real-app: pull thứ 2 trên handler thật = []
+[✓] electron-builder config test: mac .wakii Owner + linux MIME + NSIS macro cặp đối xứng
+    → 4 asserts mới: mac entry {ext wakii, rank Owner} + markdown vẫn Alternate; mimeTypes chứa
+    application/vnd.wakii-mindmap; after-install.sh có MIME+glob+update-mime-database và
+    after-remove.sh đối xứng; NSIS WriteRegStr .wakii default + DeleteRegKey + register/unregister
+    đếm bằng nhau + SHChangeNotify ≥2 + khối ${isUpdated} còn nguyên
+[✓] os-opened-markdown-wiring.test.ts cũ vẫn xanh → 5/5 trong battery (gate 4)
+
+═══ Reviewer độc lập (checklist mục 2c — KHÔNG tự duyệt) ═══
+
+Code-reviewer dispatch trên diff story/vu-14-mindmap-wakii..HEAD, coverage 22/22 file:
+· Round 1: CHANGES-REQUESTED — 2 P1 (live decode path đọc whole-file TRƯỚC khi check 5MB;
+  acceptance "6MB → too-large" chỉ test qua dead export decodeWakiiFile) + 3 P2.
+  → Fix commit e4b9db4f14: stat-guard trong resolveOpenedWakiiFiles (reject trước readFile,
+  contentHash null), xoá decodeWakiiFile, port size/io tests sang production entry, guard
+  event.sender.isDestroyed() trên pull path (restore + không record), deliveredKey normalize
+  win32 casing.
+· Round 2 (reviewer tự re-run: vitest 46/46 · tc EXIT 0 · oxlint EXIT 0 · builder 4/4,
+  position-verify từng fix, meta-test contentHash:null ĐỎ trên code cũ):
+  VERDICT: APPROVED — CHECKLIST-4Q 4/4 PASS. Verdict file: /tmp/story/wakii-sf-2/code-reviewer-sf-2-vu-14.md
+· Residual P2 không chặn: message-string duplicate giữa wakiiTooLarge/wakiiFileError (nit copy).
+
+═══ Boundary check ═══
+
+[✓] Markdown open không đổi (resolveOpenedMarkdownDocuments + wiring test cũ nguyên vẹn — chỉ
+    thêm song song, không sửa behavior)
+[✓] Main decode đúng mức JSON.parse + bảng bắt buộc §3 (edges[] bắt buộc khớp decoder kit
+    story-mindmap line 47; structural/enum = SF-3)
+[✓] Chỉ đăng ký .wakii (không ext khác); mac chỉ rank Owner cho .wakii, markdown giữ Alternate
+[✓] NSIS: không spawn process (chỉ reg-write + SHChangeNotify có sẵn), khối ${isUpdated} daemon
+    sweep untouched, include path config untouched; open-url skill-share flow untouched
+[✓] Windows/Linux script không viết file ngoài key/mime của mình; update-mime-database guard || true
+
+═══ Ghi chú trung thực ═══
+
+- Quality gate (check:code-quality:changed) exit 1: base diffusion cũ (841d06a — 2012 file,
+  315 findings pre-existing). File của SF: 0 finding sau 2 vòng fix. Gate ĐÃ bắt được 3
+  assertion violation ở vòng đầu → fixed bằng type predicate (598d649b09).
+- generate-runtime-required-english-catalog verify exit 1 ở BASELINE (98 entry pre-existing
+  trôi); key mới của SF rebuild được từ call-site fallback → không cần runtime entry (đúng luật).
+- i18n key mới đã đăng ký qua sync:localization-catalog --fix (en.json +1 entry, re-verify exit 0).
+- Worktree-local hygiene (uncommitted, git checkout -- khôi phục được, tiền lệ SF-1):
+  rm 7 bracket story khác (chặn bracket-glob misresolve FI-28), sed bỏ 5 dòng `linear:` rỗng
+  trong bracket vu-14 (chặn B3 FAIL ảo), git status hiện ` D` 7 bracket đó — KHÔNG stage.
+- Plan file nằm ở docs/superpowers/plans/2026-09-27-vu-14-sf-2-app-open-wakii-plan.md;
+  B2 glob sẽ đọc nhầm plan FI-458 (2026-09-05-fi458-sf-2-…) — plan FI-458 đã tick hết nên
+  B2 vẫn PASS; plan của SF cũng tick 100% (bằng chứng trong file).
+- Tasks 5+6 (association + asserts) gộp 1 commit 005d694e27 — asserts verify trực tiếp
+  chính file association, tách 2 commit chỉ làm rollback unit lệch nhau.

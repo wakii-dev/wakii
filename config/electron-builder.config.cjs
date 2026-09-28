@@ -147,6 +147,12 @@ const rpmElectronRuntimeDependencies = [
 // config/nsis/orca-installer-hooks.nsh, which registers the same set on Windows.
 const MARKDOWN_FILE_EXTENSIONS = ['md', 'markdown', 'mdx']
 
+// Keep in sync with isWakiiDocumentName() in src/main/ipc/wakii-documents.ts, the .wakii
+// ProgID block in config/nsis/orca-installer-hooks.nsh, and the main capture in
+// src/main/startup/os-opened-wakii-files.ts — a mismatch anywhere leaves the association
+// silently dead (the markdown rule of 4 places).
+const WAKII_FILE_EXTENSIONS = ['wakii']
+
 // Why: the config must load on a host-only install without resolving unused Windows addons.
 // This is load-time tolerance only; beforePack enforces that the target's natives are installed.
 // Why one package: @vscode/windows-process-tree is the only os: win32 npm addon;
@@ -470,13 +476,24 @@ module.exports = {
     // Why rank Alternate: Orca joins Finder's "Open With" list for Markdown without claiming
     // LSHandlerRank ownership, so whichever editor the user already prefers stays the default.
     // Why one entry per extension: app-builder-lib globs `*.${ext}`, which an array would break.
-    fileAssociations: MARKDOWN_FILE_EXTENSIONS.map((ext) => ({
-      ext,
-      name: 'Markdown Document',
-      description: 'Markdown Document',
-      role: 'Editor',
-      rank: 'Alternate'
-    })),
+    // Why the .wakii entry claims Owner instead: it is a brand-new format with no incumbent
+    // owner, so the app is its default handler from the first install (spec 2026-09-27 §6).
+    fileAssociations: [
+      ...MARKDOWN_FILE_EXTENSIONS.map((ext) => ({
+        ext,
+        name: 'Markdown Document',
+        description: 'Markdown Document',
+        role: 'Editor',
+        rank: 'Alternate'
+      })),
+      ...WAKII_FILE_EXTENSIONS.map((ext) => ({
+        ext,
+        name: 'Wakii Mindmap',
+        description: 'Wakii Mindmap Story File',
+        role: 'Editor',
+        rank: 'Owner'
+      }))
+    ],
     icon: 'resources/build/icon.icns',
     entitlements: 'resources/build/entitlements.mac.plist',
     entitlementsInherit: 'resources/build/entitlements.mac.plist',
@@ -568,7 +585,10 @@ module.exports = {
     // override. A desktop entry's MimeType only adds a handler - mimeapps.list still owns the
     // default. .mdx is deliberately absent: Ubuntu 24.04's mime database maps it to
     // application/x-genesis-32x-rom, so claiming it here would need a glob override.
-    mimeTypes: ['text/markdown'],
+    // .wakii is the opposite case: a brand-new type that shared-mime-info does NOT know, so
+    // resources/linux/packaging/after-install.sh registers the type + glob and refreshes the
+    // mime database; the desktop entry alone would reference an unknown type.
+    mimeTypes: ['text/markdown', 'application/vnd.wakii-mindmap'],
     // Why: Ubuntu desktop ships GNOME Orca as the `orca` package and /usr/bin/orca.
     // The Linux installer should not claim those system package/file names.
     executableName: 'orca-ide',

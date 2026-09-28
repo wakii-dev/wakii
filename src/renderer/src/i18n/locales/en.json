@@ -1188,6 +1188,15 @@
                   }
                 }
               }
+            },
+            "wakii": {
+              "file": {
+                "open": {
+                  "bridge": {
+                    "failed": "Failed to open the Wakii mindmap file: {{message}}"
+                  }
+                }
+              }
             }
           }
         }

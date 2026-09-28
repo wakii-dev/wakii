@@ -375,3 +375,6 @@ orca worktree create --name "sf-$N-$SLUG" --linear-issue "$LINEAR" \
       && echo "distributed: guard branch sf-$N-$SLUG còn trên remote — vô hại (máy khác sẽ skip)"
     exit 1
   }
+# mindmap snapshot (VU-14 SF-1 — fail-open; dry-run đã exit trước nên preview không ghi)
+MT="$(dirname "$0")/story-mindmap-trigger"
+[ -f "$MT" ] && "$MT" --reason launch --bracket "$BRACKET" >/dev/null 2>&1 || true
