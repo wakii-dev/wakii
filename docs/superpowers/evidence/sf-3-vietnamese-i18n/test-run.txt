@@ -1,0 +1,69 @@
+SF-3 Guardrails + convergence QA — test evidence
+Date: 2026-09-27 (hoàn tất 28/09 ~00:20)
+Code commit: 2b21b762c0 (test(i18n): vi guard tests) + 11265a9b56 (docs(i18n): reference + notes)
+Base: fbbd659675 (SF-2 merge trên story/vi-1-vietnamese-i18n)
+
+tdd: RED→GREEN — mutation-verified trên catalog thật:
+- Guard test (vi-technical-literal-mistranslations.test.ts, 5 tests):
+  GREEN 5/5 nguyên trạng · mutate `Push`→`Đẩy` (key 95550cff15) → RED 2 asserts
+  (exact-label scan + sample pin) → git restore → GREEN. RED proofs của
+  session 72 (protocol fi478 — xem Provenance trong plan): Push→Đẩy, chèn
+  `cam kết` vào pluginsDescription, brand `Wakki` — 3/3 bắt được rồi restore.
+- Ratchet (vi-translatedness-ratchet.test.ts): GREEN ≥14764 nguyên trạng ·
+  revert 1 giá trị vi về en (portsToggleDescription, preserve=false đã verify
+  bằng shouldPreserveEnglishValue) → count 14763 < baseline → RED → restore →
+  GREEN. (Mutation đầu chọn nhầm ngữ cảnh — RED check với policy-aware metric
+  chỉ ăn trên leaf dịch-được, ghi nhận để người sau khỏi lặp.)
+
+== Test battery (config/vitest.config.ts) ==
+- src/renderer/src/i18n/ — 23 files, 190 tests, ALL PASS (gồm 2 file mới SF-3
+  + 3 file mở rộng: intl-locale (6), lazy-locale (9 — có case vi + plugin
+  precedence 2 chiều), git-blame-locale-catalog (3, seven locales))
+- config/scripts metric + policy + plural + main-i18n — 4 files, 28 tests PASS
+- node config/scripts/locale-translatedness-metric.mjs vi → 14764/14764 = 100.00%, exit 0
+- pnpm tc:web → exit 0 (không có lỗi; baseline đỏ SF-2 ghi chú đã hết sau merge upstream)
+- oxlint 5 file changed → 0 finding (sau khi bỏ 1 disable thừa + 1 type assertion)
+
+== RULE-0 browser verify 3 tầng (app dev chạy catalog vi 100%) ==
+Launch: ORCA_BACKGROUND_LAUNCH=1 ORCA_DEV_USER_DATA_PATH=/tmp/sf3-userdata
+(fresh profile — lesson: profile dev chung bị nhiễm mxs-cms + vi sẵn, lần đầu
+attach phải đổi sang userData riêng) + CDP 9333; project thử nghiệm clone từ
+/tmp/sf3-demo-project qua wizard Add project → Clone from URL (typed path,
+không native picker).
+- TIER 1 DOM/FLOW: live switch en→vi qua Settings→Appearance→Ngôn ngữ→Tiếng Việt
+  — "Ngôn ngữ" render ngay (PASS, rule0-verify.txt của script SF-2 tái dụng)
+- TIER 2 VISUAL: 9 distinct frames BEFORE en / AFTER vi — settings/appearance
+  (01 en · 02 vi), sidebar+worktree list (10 en · 03 vi), workbench+terminal
+  pane (11 en · 15 vi — terminal pane hiển thị trong cùng frame workbench),
+  command palette ⌘J (13 en · 14 vi), sau restart (06 vi). Mọi màn tiếng Việt,
+  term kỹ thuật (worktree/terminal/Source Control/Git) giữ Latin, không raw
+  key, không vỡ layout với chuỗi vi dài hơn (kiểm bằng mắt từng ảnh, không
+  chỉ DOM). Reviewer round 1 (P2): 2 frame trùng hash (12, 16) đã xoá —
+  số liệu này phản ánh bộ ảnh sau xử lý.
+- TIER 3 FLOW en→vi→RESTART: kill app → relaunch cùng profile → vi giữ nguyên
+  (markers Tìm kiếm/Dự án/Nhiệm vụ) — PASS persist + screenshot 06.
+- Hygiene scans (script SF-2): 0 raw catalog key, 0 GT-literal trong text render.
+
+== Kỹ thuật mở palette ⌘J (ghi cho session sau) ==
+Shortcut ⌘J do main-process before-input-event forward (`ui:toggleWorktreePalette`)
+— CDP synthetic key KHÔNG tới được (window ẩn), click search box không mở palette.
+Route chắc ăn: app chạy `--inspect=9229` → từ inspector main process
+`process.mainModule.require('electron').webContents.getAllWebContents()[0]
+.send('ui:toggleWorktreePalette')` (đúng channel trong
+createMainWindow-terminal-focus-shortcuts.test.ts). ĐÃ WEDGE app 1 lần bằng
+webContents.sendInputEvent từ inspector — đừng lặp. Driver:
+config/scripts/vi-rule0-extra-captures.mjs (hàm togglePaletteViaMainInspector).
+Mọi playwright client PHẢI browser.close() — session CDP rò rỉ làm các client
+sau treo connect (đã gây 3 lần hang tưởng app chết).
+
+== Phát hiện UI thật (ghi notes cho SF-2, không sửa catalog trong SF-3) ==
+badge worktree 'primary' → 'sơ đẳng' · nút 'Command' → 'Yêu cầu' — chi tiết
+trong vi-catalog-notes-for-sf-2.md (bổ sung 27/09 sau RULE-0).
+
+== Addendum (28/09 — merge + gate) ==
+Merge: 800b5400b4 (Merge SF-3 completion) + merge da7b3efa07 (review-verdict
+record) trên story/vi-1-vietnamese-i18n. Code commit cuối: da7b3efa07 (chứa
+review verdict APPROVED). Battery re-run tại 9f0aeb2306: 26 files / 211 tests
+PASS · metric 14764/14764 = 100.00% exit 0 · tc:web exit 0 · oxlint 0 finding.
+story-verify sf-3 sau user xác nhận task 8: expect READY-TO-DONE (B3 UNKNOWN
+vì Linear deferred, B5 PENDING — không FAIL nào).

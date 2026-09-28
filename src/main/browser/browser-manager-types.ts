@@ -21,6 +21,7 @@ import type {
 } from '../../shared/browser-workspace-types'
 import type { BrowserAnnotationViewportBridgeOptions } from '../../shared/browser-annotation-viewport-bridge'
 import type { KeybindingOverrides } from '../../shared/keybindings'
+import type ElectronNS from 'electron'
 
 export function isChromiumInternalErrorUrl(url: string): boolean {
   return url.startsWith('chrome-error://')
@@ -163,4 +164,74 @@ export type {
   BrowserGrabScreenshot,
   KeybindingOverrides,
   PageInitiatedTabBudget
+}
+
+// ── Automation visibility helpers (fork) — restore sau merge upstream (bị drop):
+export const AUTOMATION_VISIBILITY_ACQUIRE_TIMEOUT_MS = 2_000
+
+export function resolveWithTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  fallbackValue: T
+): Promise<{ value: T; timedOut: boolean }> {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null
+  const timeoutPromise = new Promise<{ value: T; timedOut: boolean }>((resolve) => {
+    timeoutId = setTimeout(() => resolve({ value: fallbackValue, timedOut: true }), timeoutMs)
+  })
+  return Promise.race([
+    promise.then((value) => ({ value, timedOut: false })),
+    timeoutPromise
+  ]).finally(() => {
+    if (timeoutId) {
+      clearTimeout(timeoutId)
+    }
+  })
+}
+
+export function releaseAutomationVisibilityToken(
+  renderer: ElectronNS.WebContents,
+  token: string
+): void {
+  if (renderer.isDestroyed()) {
+    return
+  }
+  renderer
+    .executeJavaScript(
+      `(function() {
+        var bridge = window.__orcaBrowserAutomationVisibility;
+        if (!bridge || typeof bridge.release !== 'function') return false;
+        return bridge.release(${JSON.stringify(token)});
+      })()`
+    )
+    .catch(() => {})
+}
+
+export function cleanupLateAutomationVisibilityToken(
+  renderer: ElectronNS.WebContents,
+  acquirePromise: Promise<unknown>
+): void {
+  acquirePromise
+    .then((lateToken) => {
+      if (typeof lateToken !== 'string' || lateToken.length === 0) {
+        return
+      }
+      // Why: the lease is created before paint; if main's acquire timed out, release the late token so hidden webviews don't stay paintable.
+      releaseAutomationVisibilityToken(renderer, lateToken)
+    })
+    .catch(() => {})
+}
+
+export function createNoopRestoreForTimedOutAutomationAcquire(
+  renderer: ElectronNS.WebContents,
+  acquirePromise: Promise<unknown>,
+  timedOut: boolean
+): () => void {
+  if (timedOut) {
+    cleanupLateAutomationVisibilityToken(renderer, acquirePromise)
+  }
+  return () => {}
+}
+
+export function isAutomationVisibilityToken(token: unknown): token is string {
+  return typeof token === 'string' && token.length > 0
 }
