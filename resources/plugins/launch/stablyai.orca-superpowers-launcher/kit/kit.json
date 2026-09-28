@@ -309,12 +309,6 @@
       "description": "một màn hình theo dõi mọi agent đang chạy (Orca + ngoài Orca) — watch-style tự refresh"
     },
     {
-      "name": "story-validate",
-      "type": "bin",
-      "category": "review",
-      "description": "validate bracket file — exit 0/1/2, verdict OK/INVALID/WARN; --linear kiểm ID tồn tại thật trong Linear (thiếu key → WARN skip)"
-    },
-    {
       "name": "story-verify",
       "type": "bin",
       "category": "ops",
@@ -526,5 +520,5 @@
       "description": "PreToolUse Edit|Write|MultiEdit guard chặn ghi .env/.env.*/pem/id_rsa*/key — exit 2, fail-open, GUARD_OFF escape (GH-87)"
     }
   ],
-  "kitHash": "e89622a8192cf25e"
+  "kitHash": "85ba5402d1739a7d"
 }
