@@ -1,0 +1,112 @@
+VU-14 SF-4 convergence — test-run evidence
+code commit: 714f9cd76b (deliverables) · merge: 7412d802ce · kit exec-bit: 3297560924 ·
+evidence: 415b2a4e40 · slug-fix: ebf253fb18
+tdd: skipped-tdd: hội tụ merge không thêm feature path mới — lưới toàn diện thay thế
+     (86 vitest + e2e real-app trên cầu nối thật + kit suite + 2 loại typecheck),
+     RED→GREEN không áp dụng cho merge resolution
+
+== LƯỚI TEST (toàn bộ exit code đọc trực tiếp, không qua pipe) ==
+1. pnpm tc (desktop typecheck) → exit 0
+2. pnpm vitest run --config config/vitest.config.ts [8 file wakii] → 8 files / 86 tests PASS
+   SF-2 wiring: os-opened-wakii-files + os-opened-wakii-wiring + wakii-documents
+   bridge hội tụ (suite mới, 10 tests) · SF-3: wakii-viewer 18 + graph-layout 13 +
+   viewer-actions 5 · EditorContent wakii-viewer payload lookup
+3. npx tsc -p config/tsconfig.e2e.json → 236 lỗi (baseline pre-existing 244) —
+   0 lỗi wakii; golden-spec TS2305 do hội tụ introduit đã fix (review P1-2)
+4. e2e electron-headless (app thật, KHÔNG mock tầng app) → 2/2 PASS:
+   - tests/e2e/wakii-roundtrip-fixture.spec.ts (MỚI, SF-4): kit bin story-mindmap
+     sinh .wakii đủ 3 lớp từ fixture bracket + context pack trong temp repo →
+     app.emit('open-file') = event thật của macOS "Open With" → capture → stat+read
+     +hash+decode trong main → ui:openWakiiFile push → preload → renderer bridge →
+     editor slice → viewer. Assert: 2 chế độ xem (progress ẩn step, logic hiện step
+     + flows-to), impact layer hiện file touch-map, side panel (tier/linear/evidence),
+     dedupe content-hash (re-open cùng nội dung không mở kép/không refresh),
+     error card schema cho file hỏng. Chạy LẠI trên committed tree build tươi: PASS.
+   - tests/e2e/wakii-viewer-mindmap-golden.spec.ts (SF-3, render fixture VÀNG không
+     đổi sau khi merge cả 3 SF): counts + tier radii + panel + wedge + camera + theme.
+5. kit suite (node resources/…/stablyai.orca-superpowers-launcher/tests/*.mjs) →
+   all PASS. RED pre-existing được gate hội tụ bắt: 7 kit bins mất exec bit
+   (mode 100644 commit từ era SF-1; core.filemode=false trên máy khiến test đọc
+   stat đĩa xanh ảo) → fix update-index --chmod=+x commit 3297560924, committed
+   tree giờ 53/53 bins 100755. kit-verify-manifest 30/30.
+6. pnpm run check:code-quality:changed → 0 finding trong MỌI file hội tụ
+   (1 finding duy nhất thuộc diff — type assertion trong e2e spec — đã sửa bằng
+   in-narrowing; 303 finding còn lại = diff fork-wide pre-existing so baseline
+   upstream 841d06a969, ngoài boundary SF-4 — mobile tests, rebrand upstream)
+7. pnpm run lint:design-system (report, non-gate) → 0 finding wakii/viewer
+8. story-surface-lint wakii-dev → CLEAN (merge-base e55f43516887)
+9. story-impact --targets [8 file hội tụ] → areas: src/renderer, src/shared,
+   src/main, src/preload, editor = khớp phase0 touch map, KHÔNG area mới
+
+== RULE 0 — browser verify 3 tầng (tự nhìn, không DOM-query thay mắt) ==
+- Tầng FLOW: e2e round-trip đầu-cuối trên app thật (mục 4) — PASS
+- Tầng VISUAL: tự Read ảnh render thật:
+  evidence/sf-4-convergence-wakii/screenshots/roundtrip-progress-dark.png — tab .wakii trong floating
+  workspace, toolbar Progress/Logic&Impact + kind filters + badge decode warnings(2)
+  + Fit view, legend Done/In-progress/Pending/Blocked + contains/depends-on
+  evidence/sf-4-convergence-wakii/screenshots/roundtrip-logic-impact-dark.png — nút Impact layer,
+  legend flows-to/impacts/writes/curated file, step + file nodes
+  evidence/sf-4-convergence-wakii/screenshots/roundtrip-error-card.png — "Cannot open the file",
+  badge error.code = schema, message JSON, path, chữ "nothing was rendered
+  partially" — KHÔNG render nửa vời (spec §8)
+  evidence/sf-3-viewer-mindmap/screenshots/*.png — golden trên build ĐÃ HỘI TỤ
+  (panel tier/linear/evidence/acceptance/tests/notes + orbit rings theo tier)
+- So prototype: docs/superpowers/prototypes/vu-14-mindmap/c.html render headless
+  (npx playwright screenshot) rồi tự Read cạnh app: KHỚP cấu trúc — tab .wakii,
+  toggle 2 chế độ, kind filter chips, badge cảnh báo decode (amber), epic disc
+  trung tâm + tier rings + task chips, legend state/rel, status line
+  generator·nodes·edges·generatedAt, hint dòng dưới. Khác biệt có chủ đích:
+  app EN-fallback (vi thuộc VI-1), prototype VI; prototype có theme toggle riêng.
+
+== MERGE RESOLUTION (rubric user) ==
+1. bridge (add/add): SF-2 array handling + per-file error toast (key …bridge.failed,
+   interpolate message) ⊕ SF-3 routing+reveal từng payload — error payload VẪN route
+   (viewer error card) + toast; boundary failure dùng key …bridge.8b2c41de70 →
+   cả 2 key en.json đều sống có nghĩa
+2. ui-command-event-api: exposure hợp nhất 1 LẦN — giữ required (SF-2; SF-3 khai
+   báo optional chỉ vì dev lúc SF-2 chưa merge)
+3. bridge.test: giữ coverage CẢ HAI suites, dedupe phần chồng lấn (10 tests);
+   assertion thích ứng nơi behavior hội tụ thay (console.info marker → routing)
+4. en.json: GIỮ CẢ HAI key trong cùng object, JSON valid
+5. Type seam (1 nguồn): envelope sống 1 lần ở shared/wakii-file-open-payload.ts
+   (tham chiếu WakiiMindmap); wakii-mindmap-types bỏ envelope trùng + WakiiErrorCode;
+   6 consumer SF-3 đổi nguồn import (viewer-actions, editor-files-slice, viewer,
+   golden-fixture, bridge, bridge.test) + consumer thứ 7 (golden e2e spec — do
+   review bắt, grep ban đầu chỉ quét src/); main wakii-documents narrow ok-branch
+   → WakiiMindmap bằng ĐÚNG 1 SAFETY assertion ghi rõ cái KHÔNG check (enum values
+   — viewer degrade bằng kind filter/edge visibility, spec §8)
+
+== REVIEW ĐỘC LẬP (code-reviewer) ==
+Round 1: CHANGES-REQUESTED — 2 P1: (1) exec-bit fix rơi khỏi index sau khi tách
+khỏi merge commit + cơ chế mask stat-đĩa; (2) golden e2e spec import envelope từ
+module đã bỏ export. Round 2: APPROVED — cả 2 P1 đóng trong committed tree,
+CHECKLIST-4Q 4/4 PASS, delta scope sạch, 42/42 vitest trên HEAD cuối.
+
+== ACCEPTANCE PACK sf-4 ==
+- E2E round-trip 3 lớp automated: ✓ (mục 4, local chạy được)
+- Golden render fixture không đổi sau merge 3 SF: ✓ (golden e2e PASS trên build hội tụ)
+- Manual checklist 3 OS viết hoàn chỉnh: ✓ evidence/sf-4-convergence-wakii/manual-checklist-3os.md
+  (mac dmg / NSIS / deb-rpm từng bước + expected + steal check .md + uninstall
+  ProgID + AppImage drag-drop) — CHẠY LÚC RELEASE BUILD, không gate story
+- Docs reference đủ parse ngoài kit: ✓ docs/reference/wakii-mindmap-format.md
+  (schema v1 + luật decoder INVALID/DROP + filename rule từ Destination +
+  single-writer + limitation AppImage + phân biệt thư mục runtime /.wakii/)
+- story-impact --targets khớp touch map: ✓ (mục 9)
+
+== Linear DEFERRED (ruling 27/09) ==
+Audit vào evidence này + worktree comment. DONE = push + evidence + comment;
+merge nhánh đích là việc coordinator.
+
+== STORY-VERIFY CUỐI (0d64e1a1df tree) ==
+○ sf-4-convergence-wakii INCOMPLETE [B1:PASS B2:WARN B2b:PASS B3:FAIL B4:FAIL B5:PENDING]
+- B1 PASS (evidence hash + tdd line) · B2b surface-lint CLEAN
+- B2 WARN: không có plan file khớp token sf-4 (story VU-14 chạy theo bracket, không plan riêng) — không chặn
+- B3 FAIL: Linear DEFERRED (ruling 27/09) + bracket-glob fallback đọc nhầm story
+  (FI-309 của FI-305) — root cause: wrapper orca() của story-verify ưu tiên
+  instance orca-dev, instance này chỉ có registry mxs-cms → metadata miss.
+  Chi tiết: docs/superpowers/improvements-log.md (kit defect, FLAG không tự sửa)
+- B4 FAIL: ĐÚNG BẢN CHẤT — SF-4 push nhánh riêng, coordinator merge sau (theo
+  lệnh user). Đã verify: story/vu-14-mindmap-wakii ⊆ HEAD (11 commits SF-1..4
+  sẵn sàng merge) + metadata worktree đã set parent=story-coordinator nên tool
+  đọc prod sẽ thấy dest đúng. B4 sẽ PASS sau khi coordinator merge + re-verify.
+- B5 PENDING: Linear DEFERRED — DONE = push + evidence + worktree comment.

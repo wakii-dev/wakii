@@ -1,10 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { translate } from '@/i18n/i18n'
-import type {
-  WakiiFileOpenPayload,
-  WakiiMindmap,
-  WakiiNodeKind
-} from '../../../shared/wakii-mindmap-types'
+import type { WakiiFileOpenPayload } from '../../../shared/wakii-file-open-payload'
+import type { WakiiMindmap, WakiiNodeKind } from '../../../shared/wakii-mindmap-types'
 import {
   buildGraphIndex,
   computeLayout,

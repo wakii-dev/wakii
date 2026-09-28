@@ -10,7 +10,7 @@ import type {
 } from '../../../../../../shared/git-diff-compare-types'
 import type { GitStatusEntry } from '../../../../../../shared/git-status-types'
 import type { WorkspaceVisibleTabType } from '../../../../../../shared/tab-types'
-import type { WakiiFileOpenPayload } from '../../../../../../shared/wakii-mindmap-types'
+import type { WakiiFileOpenPayload } from '../../../../../../shared/wakii-file-open-payload'
 import type {
   BranchCompareLike,
   ClosedEditorTabSnapshot,

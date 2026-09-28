@@ -1,7 +1,7 @@
 import path from 'node:path'
 import type { Page } from '@stablyai/playwright-test'
 import { TOGGLE_FLOATING_TERMINAL_EVENT } from '../../src/renderer/src/lib/floating-terminal'
-import type { WakiiFileOpenPayload } from '../../src/shared/wakii-mindmap-types'
+import type { WakiiFileOpenPayload } from '../../src/shared/wakii-file-open-payload'
 import { expect, test } from './helpers/orca-app'
 import {
   GOLDEN_LOGIC_EDGE_COUNT,

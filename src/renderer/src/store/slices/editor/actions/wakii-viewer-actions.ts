@@ -1,5 +1,5 @@
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../../../shared/constants'
-import type { WakiiFileOpenPayload } from '../../../../../../shared/wakii-mindmap-types'
+import type { WakiiFileOpenPayload } from '../../../../../../shared/wakii-file-open-payload'
 import type { EditorGet, EditorSet } from '../types/editor-set-get'
 import type { EditorSlice } from '../types/editor-slice'
 

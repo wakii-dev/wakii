@@ -1,9 +1,9 @@
 /**
- * Decoded `.wakii` mindmap (schema v1) — the wire shape main hands the renderer
- * over `ui:openWakiiFile`. Mirrors the decoder in kit bin `story-mindmap`
+ * Decoded `.wakii` mindmap (schema v1) — mirrors the decoder in kit bin `story-mindmap`
  * (spec docs/superpowers/specs/2026-09-27-mindmap-wakii-viewer-design.md §3/§5):
  * unknown enum values are already dropped into `decodeWarnings`, so every union
  * here is closed. The renderer never re-reads the file or JSON.parses again.
+ * The `ui:openWakiiFile` envelope referencing `WakiiMindmap` lives in wakii-file-open-payload.
  */
 
 export type WakiiNodeKind = 'epic' | 'sf' | 'task' | 'step' | 'area' | 'file'
@@ -12,8 +12,6 @@ export type WakiiNodeKind = 'epic' | 'sf' | 'task' | 'step' | 'area' | 'file'
 export type WakiiNodeState = 'pending' | 'in-progress' | 'done' | 'blocked' | 'complete'
 
 export type WakiiEdgeRel = 'contains' | 'depends-on' | 'flows-to' | 'impacts' | 'writes'
-
-export type WakiiErrorCode = 'io' | 'schema' | 'too-large'
 
 export type WakiiMindmapNode = {
   id: string
@@ -70,8 +68,3 @@ export type WakiiMindmap = {
   evidence?: WakiiEvidenceEntry[]
   decodeWarnings?: string[]
 }
-
-/** Push payload of `ui:openWakiiFile` — decoded by main, error or mindmap. */
-export type WakiiFileOpenPayload =
-  | { path: string; mindmap: WakiiMindmap }
-  | { path: string; error: { code: WakiiErrorCode; message: string } }

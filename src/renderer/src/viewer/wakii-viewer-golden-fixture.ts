@@ -1,8 +1,5 @@
-import type {
-  WakiiEvidenceEntry,
-  WakiiFileOpenPayload,
-  WakiiMindmap
-} from '../../../shared/wakii-mindmap-types'
+import type { WakiiFileOpenPayload } from '../../../shared/wakii-file-open-payload'
+import type { WakiiEvidenceEntry, WakiiMindmap } from '../../../shared/wakii-mindmap-types'
 import { WAKII_GOLDEN_EDGES, WAKII_GOLDEN_NODES } from './wakii-golden-graph'
 
 const WAKII_GOLDEN_META = {

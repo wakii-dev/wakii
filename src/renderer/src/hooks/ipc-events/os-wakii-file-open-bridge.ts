@@ -1,16 +1,31 @@
 import { toast } from 'sonner'
-import type { WakiiFileOpenPayload } from '../../../../shared/wakii-mindmap-types'
+import type { WakiiFileOpenPayload } from '../../../../shared/wakii-file-open-payload'
 import { TOGGLE_FLOATING_TERMINAL_EVENT } from '@/lib/floating-terminal'
 import { isFloatingWorkspacePanelVisible } from '@/lib/floating-workspace-terminal-actions'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '../../store'
 
 /**
- * Opens `.wakii` files the OS shell handed to Wakii ("Open With" / double-click) in
- * the floating workspace as mindmap viewer tabs. Payloads are already decoded by
- * main — this glue only routes them into the editor slice.
+ * Receipt + routing surface for `.wakii` files the OS shell handed to Wakii (double-click /
+ * "Open With"). Main has already read, capped, and validated each file: payloads arrive
+ * decoded or carrying a per-file error. Each payload routes into the editor slice — the
+ * viewer tab renders the mindmap or the error card — and the floating workspace reveals.
  */
 async function openOsRequestedWakiiFile(payload: WakiiFileOpenPayload): Promise<void> {
+  // Why the runtime shape check: the payload crosses the preload boundary, so a stale or
+  // mismatched preload can hand back a malformed object. The toast acknowledges the failure
+  // up front; the routed payload still renders the viewer's error card.
+  if (payload && typeof payload === 'object' && 'error' in payload && payload.error) {
+    const message =
+      typeof payload.error.message === 'string' ? payload.error.message : 'unknown error'
+    toast.error(
+      translate(
+        'auto.hooks.ipc.events.os.wakii.file.open.bridge.failed',
+        'Failed to open the Wakii mindmap file: {{message}}',
+        { message }
+      )
+    )
+  }
   const store = useAppStore.getState()
   store.openWakiiViewerFile(payload)
   // Why enabled here: the user asked the OS for this file, and the tabs above are already in a
@@ -37,6 +52,7 @@ function reportOsRequestedWakiiFailure(error: unknown): void {
 }
 
 export function registerOsWakiiFileOpenBridge(unsubs: (() => void)[]): void {
+  // The push channel delivers one decoded payload per event; the pull drains the whole queue.
   const unsubscribe = window.api.ui.onOpenWakiiFile?.((payload) => {
     void openOsRequestedWakiiFile(payload).catch(reportOsRequestedWakiiFailure)
   })
@@ -44,12 +60,18 @@ export function registerOsWakiiFileOpenBridge(unsubs: (() => void)[]): void {
     unsubs.push(unsubscribe)
   }
 
-  // Why: a cold-start "Open With" resolves before this listener attaches; drain what main queued.
+  // Why: a cold-start double-click resolves before this listener attaches; drain what main queued.
   const pending = window.api.ui.consumePendingWakiiFileOpens?.()
   if (pending && typeof pending.then === 'function') {
     void pending
       .then((payloads) => {
-        for (const payload of payloads ?? []) {
+        // Why the shape check: this payload crosses the preload boundary, so a stale or
+        // mismatched preload can resolve with something that is not an array. Iterating that
+        // throws inside the promise chain rather than failing loudly at the boundary.
+        if (!Array.isArray(payloads) || payloads.length === 0) {
+          return
+        }
+        for (const payload of payloads) {
           void openOsRequestedWakiiFile(payload).catch(reportOsRequestedWakiiFailure)
         }
       })

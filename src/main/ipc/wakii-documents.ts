@@ -65,7 +65,7 @@ export function validateWakiiMindmapFile(value: unknown): WakiiMindmapValidation
       return { ok: false, reason: 'every edge requires from, to, and rel' }
     }
   }
-  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the required-field table above checked every non-optional WakiiMindmap field (wakiiMindmap===1, meta strings, node id/kind/title, edge from/to/rel); optional-field deep decode is the viewer's job.
+  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the table above verified every field the envelope type requires (wakiiMindmap=1, meta strings, node id/kind/title, edge from/to/rel); enum VALUES stay unchecked by design — the viewer drops unknown kinds via the kind filter and dangling edges via visibility (spec §8: no partial render).
   return { ok: true, mindmap: document as WakiiMindmap }
 }
 
@@ -82,10 +82,6 @@ function isNamedNode(
   })
 }
 
-/**
- * Reads and validates one OS-handed `.wakii` file. Never throws: every failure becomes the
- * payload's error half so the renderer always receives a per-file verdict.
- */
 /**
  * Validates already-read `.wakii` contents. Never throws: every failure becomes the payload's
  * error half so the renderer always receives a per-file verdict. The caller owns the fs read

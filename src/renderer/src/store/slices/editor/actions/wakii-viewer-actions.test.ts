@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../../../shared/constants'
-import type { WakiiFileOpenPayload } from '../../../../../../shared/wakii-mindmap-types'
+import type { WakiiFileOpenPayload } from '../../../../../../shared/wakii-file-open-payload'
 import type { EditorFilesSlice } from '../types/editor-files-slice'
 import type { EditorGet, EditorSet } from '../types/editor-set-get'
 import { createWakiiViewerActions } from './wakii-viewer-actions'
