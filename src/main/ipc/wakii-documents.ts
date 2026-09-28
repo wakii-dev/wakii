@@ -1,5 +1,6 @@
 import { extname } from 'node:path'
 import type { WakiiFileOpenPayload } from '../../shared/wakii-file-open-payload'
+import type { WakiiMindmap } from '../../shared/wakii-mindmap-types'
 import { authorizeExternalPath } from './filesystem-auth'
 
 // Keep this module in sync with WAKII_FILE_EXTENSIONS in config/electron-builder.config.cjs
@@ -14,7 +15,7 @@ export function isWakiiDocumentName(name: string): boolean {
 }
 
 export type WakiiMindmapValidation =
-  | { ok: true; mindmap: Record<string, unknown> }
+  | { ok: true; mindmap: WakiiMindmap }
   | { ok: false; reason: string }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -64,7 +65,8 @@ export function validateWakiiMindmapFile(value: unknown): WakiiMindmapValidation
       return { ok: false, reason: 'every edge requires from, to, and rel' }
     }
   }
-  return { ok: true, mindmap: document }
+  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the required-field table above checked every non-optional WakiiMindmap field (wakiiMindmap===1, meta strings, node id/kind/title, edge from/to/rel); optional-field deep decode is the viewer's job.
+  return { ok: true, mindmap: document as WakiiMindmap }
 }
 
 function isNamedNode(

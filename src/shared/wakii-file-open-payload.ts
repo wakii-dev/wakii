@@ -6,6 +6,7 @@
  * the schema v1 table; the renderer never touches fs. The deep decoder (enums, graph
  * structure, decodeWarnings) belongs to the viewer slice and narrows `mindmap` further.
  */
+import type { WakiiMindmap } from './wakii-mindmap-types'
 
 export type WakiiFileOpenErrorCode = 'io' | 'schema' | 'too-large'
 
@@ -15,5 +16,5 @@ export type WakiiFileOpenError = {
 }
 
 export type WakiiFileOpenPayload =
-  | { path: string; mindmap: Record<string, unknown> }
+  | { path: string; mindmap: WakiiMindmap }
   | { path: string; error: WakiiFileOpenError }

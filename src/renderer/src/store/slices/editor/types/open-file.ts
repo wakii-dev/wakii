@@ -144,7 +144,7 @@ export type OpenFile = {
   readOnly?: boolean
   /** Why: explicit live tail, only meaningful for a read-only local log. */
   liveTail?: boolean
-  mode: 'edit' | 'diff' | 'conflict-review' | 'markdown-preview' | 'check-details'
+  mode: 'edit' | 'diff' | 'conflict-review' | 'markdown-preview' | 'check-details' | 'wakii-viewer'
 }
 
 export type ActivityBarPosition = 'top' | 'side'

@@ -148,7 +148,10 @@ export function createRecentlyClosedEditorTabs(
           // Why: skip untitled non-dirty files (deleted from disk after close) and ephemeral preview tabs so the reopen stack has no vanished/junk paths.
           if (
             shouldDeleteUntouchedUntitledFile(f, !!s.editorDrafts[f.id]) ||
-            f.mode === 'markdown-preview'
+            f.mode === 'markdown-preview' ||
+            // Why: the decoded payload lives in wakiiViewerFiles, not on the tab — a
+            // reopened snapshot would render the placeholder, so keep it out of the stack.
+            f.mode === 'wakii-viewer'
           ) {
             continue
           }
