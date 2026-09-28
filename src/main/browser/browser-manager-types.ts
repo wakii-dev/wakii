@@ -21,7 +21,6 @@ import type {
 } from '../../shared/browser-workspace-types'
 import type { BrowserAnnotationViewportBridgeOptions } from '../../shared/browser-annotation-viewport-bridge'
 import type { KeybindingOverrides } from '../../shared/keybindings'
-import type ElectronNS from 'electron'
 
 export const AUTOMATION_VISIBILITY_ACQUIRE_TIMEOUT_MS = 2_000
 
