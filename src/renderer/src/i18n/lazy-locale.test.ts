@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import {
   UI_LANGUAGE_CHINESE,
   UI_LANGUAGE_ENGLISH,
-  UI_LANGUAGE_SPANISH
+  UI_LANGUAGE_SPANISH,
+  UI_LANGUAGE_VIETNAMESE
 } from '../../../shared/ui-language'
 import { i18n, setRendererPluginLanguagePacks, setRendererUiLanguage } from './i18n'
 import { pluginLanguageResourceId } from '../../../shared/plugins/plugin-language-pack-artifact'
@@ -50,6 +51,54 @@ describe('renderer i18n lazy locale loading', () => {
 
     await setRendererUiLanguage(UI_LANGUAGE_ENGLISH)
     expect(i18n.t('menu.file', { defaultValue: 'File' })).toBe('File')
+  })
+
+  // VI-1 SF-3: the Vietnamese catalog ships 100% translated, so the lazy load
+  // must deliver real Vietnamese — not the English fallback — for every
+  // built-in key, while keys the catalog legitimately omits still fall back.
+  it('lazy-loads Vietnamese via setRendererUiLanguage', async () => {
+    await setRendererUiLanguage(UI_LANGUAGE_VIETNAMESE)
+    expect(i18n.language).toBe('vi')
+    expect(i18n.t('menu.file', { defaultValue: 'File' })).toBe('Tệp')
+
+    await setRendererUiLanguage(UI_LANGUAGE_ENGLISH)
+    expect(i18n.t('menu.file', { defaultValue: 'File' })).toBe('File')
+  })
+
+  it('falls back to English for a key vi.json omits', async () => {
+    await setRendererUiLanguage(UI_LANGUAGE_VIETNAMESE)
+    expect(i18n.t('missing.renderer.feature', { defaultValue: 'English fallback' })).toBe(
+      'English fallback'
+    )
+  })
+
+  // Plugin-pack precedence: a pack declaring locale `vi` registers under its
+  // own synthetic resource language, so selecting the pack's UI language wins
+  // over the built-in vi catalog — while the built-in vi choice stays intact.
+  it('lets a plugin pack declaring vi override the built-in vi catalog', async () => {
+    const id = 'plugin:orca-samples.vietnamese/vi' as const
+    setRendererPluginLanguagePacks([
+      {
+        id,
+        resourceLanguage: pluginLanguageResourceId(id),
+        pluginKey: 'orca-samples.vietnamese',
+        locale: 'vi',
+        catalog: { menu: { file: 'Tệp Wakii' } }
+      }
+    ])
+
+    await setRendererUiLanguage(id)
+    expect(i18n.language).toBe(pluginLanguageResourceId(id))
+    expect(i18n.t('menu.file', { defaultValue: 'File' })).toBe('Tệp Wakii')
+
+    // The built-in vi pick still resolves the shipped catalog, not the pack's.
+    await setRendererUiLanguage(UI_LANGUAGE_VIETNAMESE)
+    expect(i18n.language).toBe('vi')
+    expect(i18n.t('menu.file', { defaultValue: 'File' })).toBe('Tệp')
+
+    setRendererPluginLanguagePacks([])
+    await setRendererUiLanguage(id)
+    expect(i18n.language).toBe('en')
   })
 
   it('loads an isolated catalog contributed by an enabled plugin', async () => {

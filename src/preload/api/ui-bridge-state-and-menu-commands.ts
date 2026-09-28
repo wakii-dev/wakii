@@ -1,4 +1,5 @@
 import type { MarkdownDocument } from '../../shared/filesystem-entry-types'
+import type { WakiiFileOpenPayload } from '../../shared/wakii-file-open-payload'
 import { ipcRenderer } from 'electron'
 import type { PersistedUIState } from '../../shared/persisted-ui-state-types'
 import type { KeybindingActionId } from '../../shared/keybindings'
@@ -36,6 +37,14 @@ export const uiStateAndMenuCommandsApi = {
   },
   consumePendingMarkdownFileOpens: (): Promise<MarkdownDocument[]> =>
     ipcRenderer.invoke('ui:consumePendingMarkdownFileOpens'),
+  onOpenWakiiFile: (callback: (payload: WakiiFileOpenPayload) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, payload: WakiiFileOpenPayload): void =>
+      callback(payload)
+    ipcRenderer.on('ui:openWakiiFile', listener)
+    return () => ipcRenderer.removeListener('ui:openWakiiFile', listener)
+  },
+  consumePendingWakiiFileOpens: (): Promise<WakiiFileOpenPayload[]> =>
+    ipcRenderer.invoke('ui:consumePendingWakiiFileOpens'),
   onOpenSetupGuide: (callback: () => void): (() => void) => {
     const listener = (_event: Electron.IpcRendererEvent) => callback()
     ipcRenderer.on('ui:openSetupGuide', listener)

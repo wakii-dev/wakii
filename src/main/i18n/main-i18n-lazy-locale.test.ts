@@ -15,10 +15,12 @@ import {
   UI_LANGUAGE_ENGLISH,
   UI_LANGUAGE_JAPANESE,
   UI_LANGUAGE_KOREAN,
-  UI_LANGUAGE_SPANISH
+  UI_LANGUAGE_SPANISH,
+  UI_LANGUAGE_VIETNAMESE
 } from '../../shared/ui-language'
 import {
   ensureMainI18n,
+  mainI18n,
   setMainPluginLanguagePacks,
   setMainUiLanguage,
   translateMain
@@ -56,6 +58,16 @@ describe('main-i18n lazy locale loading', () => {
 
     await setMainUiLanguage(UI_LANGUAGE_CHINESE)
     expect(translateMain('menu.file', 'File')).not.toBe('File')
+  })
+
+  it('loads the vi catalog through the lazy backend and serves native menus in Vietnamese', async () => {
+    expect(mainI18n.hasResourceBundle('vi', 'translation')).toBe(false)
+    expect(await setMainUiLanguage(UI_LANGUAGE_VIETNAMESE)).toBe('vi')
+    expect(mainI18n.hasResourceBundle('vi', 'translation')).toBe(true)
+    // SF-2 catalog: native menu chrome renders Vietnamese, not the en fallback.
+    expect(translateMain('menu.file', 'File')).not.toBe('File')
+    expect(translateMain('menu.settings', 'Settings')).not.toBe('Settings')
+    expect(translateMain('menu.view', 'View')).not.toBe('View')
   })
 
   it('uses caller English when a target catalog omits a key', async () => {

@@ -34,6 +34,32 @@
   DeleteRegValue SHELL_CONTEXT "Software\Classes\Applications\${APP_EXECUTABLE_FILENAME}\SupportedTypes" "${EXT}"
 !macroend
 
+; ---------------------------------------------------------------------------
+; Wakii mindmap file association (.wakii - spec 2026-09-27 §6)
+;
+; SET DEFAULT here is DELIBERATE and diverges from the markdown rules above
+; (user ruling 27/09): .wakii is a brand-new format invented by this app, so
+; there is no incumbent default to protect. Writing Software\Classes\.wakii
+; puts the app in charge of its own format instead of leaving it unassociated.
+; Uninstall removes the extension key entirely - there is no old handler to
+; restore, unlike the markdown OpenWithProgids hints.
+;
+; WAKII_PROGID must stay in sync with isWakiiDocumentName() in
+; src/main/ipc/wakii-documents.ts and WAKII_FILE_EXTENSIONS in
+; config/electron-builder.config.cjs (the markdown rule of 4 places).
+; ---------------------------------------------------------------------------
+!define WAKII_PROGID "Orca.WakiiMindmap"
+
+!macro ORCA_REGISTER_WAKII_DEFAULT
+  WriteRegStr SHELL_CONTEXT "Software\Classes\.wakii" "" "${WAKII_PROGID}"
+  WriteRegNone SHELL_CONTEXT "Software\Classes\.wakii\OpenWithProgids" "${WAKII_PROGID}"
+!macroend
+
+!macro ORCA_UNREGISTER_WAKII_DEFAULT
+  DeleteRegValue SHELL_CONTEXT "Software\Classes\.wakii\OpenWithProgids" "${WAKII_PROGID}"
+  DeleteRegKey SHELL_CONTEXT "Software\Classes\.wakii"
+!macroend
+
 !macro customInstall
   WriteRegStr SHELL_CONTEXT "Software\Classes\${MARKDOWN_PROGID}" "" "Markdown Document"
   WriteRegStr SHELL_CONTEXT "Software\Classes\${MARKDOWN_PROGID}\DefaultIcon" "" "$appExe,0"
@@ -42,6 +68,11 @@
   !insertmacro ORCA_REGISTER_MARKDOWN_OPEN_WITH ".md"
   !insertmacro ORCA_REGISTER_MARKDOWN_OPEN_WITH ".markdown"
   !insertmacro ORCA_REGISTER_MARKDOWN_OPEN_WITH ".mdx"
+  WriteRegStr SHELL_CONTEXT "Software\Classes\${WAKII_PROGID}" "" "Wakii Mindmap"
+  WriteRegStr SHELL_CONTEXT "Software\Classes\${WAKII_PROGID}\DefaultIcon" "" "$appExe,0"
+  WriteRegStr SHELL_CONTEXT "Software\Classes\${WAKII_PROGID}\shell\open" "" "Open with ${PRODUCT_NAME}"
+  WriteRegStr SHELL_CONTEXT "Software\Classes\${WAKII_PROGID}\shell\open\command" "" '"$appExe" "%1"'
+  !insertmacro ORCA_REGISTER_WAKII_DEFAULT
   ; Why: Explorer caches the association list until told otherwise.
   System::Call "shell32::SHChangeNotify(i,i,i,i) (0x08000000, 0x1000, 0, 0)"
 !macroend
@@ -101,5 +132,9 @@
   !insertmacro ORCA_UNREGISTER_MARKDOWN_OPEN_WITH ".md"
   !insertmacro ORCA_UNREGISTER_MARKDOWN_OPEN_WITH ".markdown"
   !insertmacro ORCA_UNREGISTER_MARKDOWN_OPEN_WITH ".mdx"
+  ; Same pair symmetry for .wakii; no incumbent default exists to restore, so the
+  ; extension key goes with it.
+  DeleteRegKey SHELL_CONTEXT "Software\Classes\${WAKII_PROGID}"
+  !insertmacro ORCA_UNREGISTER_WAKII_DEFAULT
   System::Call "shell32::SHChangeNotify(i,i,i,i) (0x08000000, 0x1000, 0, 0)"
 !macroend

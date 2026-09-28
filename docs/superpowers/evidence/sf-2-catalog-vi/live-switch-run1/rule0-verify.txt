@@ -1,0 +1,8 @@
+CDP pages: http://localhost:5173/
+  appearance nav via button: Appearance
+  screenshot: docs/superpowers/evidence/sf-2-catalog-vi/01-settings-before-switch.png
+PASS tier 1: switch vi applied live — Settings pane renders Vietnamese
+  screenshot: docs/superpowers/evidence/sf-2-catalog-vi/02-settings-vi.png
+  screenshot: docs/superpowers/evidence/sf-2-catalog-vi/03-sidebar-vi.png
+PASS tier 2: sidebar captured (visual check: Vietnamese labels, no layout break)
+PASS tier 3: no raw catalog keys, no GT-literal terms in rendered text

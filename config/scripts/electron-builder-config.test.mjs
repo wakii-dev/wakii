@@ -388,6 +388,75 @@ describe('electron-builder config', () => {
     expect(electronBuilderConfig.npmRebuild).toBe(true)
   })
 
+  // The .wakii association lives in 4 places that must agree (spec 2026-09-27 §6):
+  // wakii-documents.ts ↔ these builder targets ↔ the NSIS hooks ↔ the main capture.
+  describe('wakii file association contract', () => {
+    const WAKII_MIME_TYPE = 'application/vnd.wakii-mindmap'
+
+    it('claims .wakii ownership in the macOS build without touching markdown ranks', () => {
+      const association = electronBuilderConfig.mac.fileAssociations.find(
+        (entry) => entry.ext === 'wakii'
+      )
+      // Why Owner: .wakii is a brand-new format with no incumbent owner, so the app IS its default.
+      expect(association).toEqual(
+        expect.objectContaining({ name: 'Wakii Mindmap', role: 'Editor', rank: 'Owner' })
+      )
+      for (const entry of electronBuilderConfig.mac.fileAssociations) {
+        if (entry.ext !== 'wakii') {
+          expect(entry.rank).toBe('Alternate')
+        }
+      }
+    })
+
+    it('references the new MIME type from the Linux desktop entry', () => {
+      expect(electronBuilderConfig.linux.mimeTypes).toContain('text/markdown')
+      expect(electronBuilderConfig.linux.mimeTypes).toContain(WAKII_MIME_TYPE)
+    })
+
+    it('installs and removes the Linux MIME glob through the deb/rpm lifecycle pair', async () => {
+      for (const target of ['deb', 'rpm']) {
+        expect(electronBuilderConfig[target].afterInstall).toBe(
+          'resources/linux/packaging/after-install.sh'
+        )
+      }
+      const afterInstall = await readFile(
+        join(REPO_ROOT, 'resources', 'linux', 'packaging', 'after-install.sh'),
+        'utf8'
+      )
+      expect(afterInstall).toContain(WAKII_MIME_TYPE)
+      // Why the glob matters: a desktop entry can only reference a type the mime database
+      // already knows (the .mdx lesson), so the package must register the type itself.
+      expect(afterInstall).toContain('glob pattern="*.wakii"')
+      expect(afterInstall).toContain('update-mime-database')
+      const afterRemove = await readFile(
+        join(REPO_ROOT, 'resources', 'linux', 'packaging', 'after-remove.sh'),
+        'utf8'
+      )
+      expect(afterRemove).toContain(WAKII_MIME_TYPE)
+    })
+
+    it('registers and unregisters the Windows .wakii default as a symmetric pair', async () => {
+      const hooks = await readFile(
+        join(REPO_ROOT, 'config', 'nsis', 'orca-installer-hooks.nsh'),
+        'utf8'
+      )
+      // SET DEFAULT is deliberate for .wakii (new format, no incumbent) — the header must own it.
+      expect(hooks).toContain('DELIBERATE')
+      expect(hooks).toContain(
+        'WriteRegStr SHELL_CONTEXT "Software\\Classes\\.wakii" "" "${WAKII_PROGID}"'
+      )
+      expect(hooks).toContain('DeleteRegKey SHELL_CONTEXT "Software\\Classes\\.wakii"')
+      const registerInserts = hooks.match(/!insertmacro ORCA_REGISTER_WAKII/g) ?? []
+      const unregisterInserts = hooks.match(/!insertmacro ORCA_UNREGISTER_WAKII/g) ?? []
+      expect(registerInserts.length).toBeGreaterThan(0)
+      expect(registerInserts.length).toBe(unregisterInserts.length)
+      // Explorer caches association lists; both install and uninstall must shake it.
+      expect(hooks.match(/SHChangeNotify/g)?.length).toBeGreaterThanOrEqual(2)
+      // The ${isUpdated} daemon sweep is off-limits for this feature.
+      expect(hooks).toContain('${ifNot} ${isUpdated}')
+    })
+  })
+
   // Why: the .deb/.rpm update-recovery path keys entirely off the resources/package-type marker that
   // app-builder-lib's FpmTarget writes. If packaging silently stops shipping an fpm target, or adds
   // one the recovery path does not cover, getLinuxRootPackageType() returns null, autoInstallOnAppQuit

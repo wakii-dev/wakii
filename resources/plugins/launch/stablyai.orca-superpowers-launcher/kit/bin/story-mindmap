@@ -1,0 +1,401 @@
+#!/usr/bin/env node
+// story-mindmap — sinh file mindmap .wakii (schema v1) của 1 story từ nguồn workflow
+// có sẵn: bracket (epic/SF/tier/deps/tasks) + context pack (steps Spec slice + touch
+// map) + orchestration task-list (SF state) + story-impact --json (area computed).
+// 3 lớp: tiến độ (epic/sf/task) · logic (step + flows-to) · impact (area/file).
+//
+// Zero-dep: chỉ Node builtins (chuẩn kit bins). Offline-safe: không đọc Linear;
+// orca/story-impact chết/treo → bỏ nguồn đó + decodeWarnings[], vẫn ra file.
+//
+// Usage:
+//   story-mindmap --bracket <file> [--out <path>] [--mermaid-md <path>]
+//   story-mindmap --decode <file>     # verdict decoder — JSON ra stdout, exit 0/2
+//
+// Decoder (hợp đồng cho SF-2/SF-3 tiêu thụ):
+//   INVALID cả file: magic thiếu/version lạ, thiếu meta bắt buộc (story/
+//   generatedAt/generator), node thiếu id/kind/title, edge thiếu from/to/rel,
+//   duplicate id, dangling tới id CHẲNG TỪNG tồn tại, self-loop, >5MB.
+//   Unknown enum (kind/rel/state) → DROP node/edge + decodeWarnings[] (forward-
+//   compat); edge/parent trỏ node bị drop → drop kèm + warning, không invalidate.
+//   `parent` ≠ edge `contains` → KHÔNG invalidate — edge là nguồn sự thật,
+//   parent chỉ convenience (viewer dùng contains edge làm hierarchy).
+'use strict';
+const fs = require('node:fs');
+const path = require('node:path');
+const { execFileSync } = require('node:child_process');
+
+const VERSION = '1.0.0';
+const MAX_BYTES = 5 * 1024 * 1024;
+const KNOWN_KIND = new Set(['epic', 'sf', 'task', 'step', 'area', 'file']);
+const KNOWN_REL = new Set(['contains', 'depends-on', 'flows-to', 'impacts', 'writes']);
+const KNOWN_STATE = new Set(['pending', 'in-progress', 'done', 'blocked', 'complete']);
+
+// ── decoder ─────────────────────────────────────────────────────────────────
+function invalid(reason) { return { valid: false, error: `INVALID: ${reason}` }; }
+
+function decodeWakii(raw) {
+  if (raw.length > MAX_BYTES) return invalid(`too-large — ${raw.length} bytes > 5MB`);
+  let doc;
+  try { doc = JSON.parse(raw.toString('utf8')); } catch { return invalid('schema — JSON không đọc được'); }
+  if (!doc || typeof doc !== 'object' || Array.isArray(doc)) return invalid('schema — gốc không phải object');
+  if (doc.wakiiMindmap !== 1) return invalid(`version — wakiiMindmap=${JSON.stringify(doc.wakiiMindmap ?? null)} (decoder hỗ trợ 1)`);
+  const meta = doc.meta && typeof doc.meta === 'object' ? doc.meta : {};
+  for (const k of ['story', 'generatedAt', 'generator']) {
+    if (typeof meta[k] !== 'string' || !meta[k]) return invalid(`schema — thiếu meta.${k}`);
+  }
+  if (!Array.isArray(doc.nodes)) return invalid('schema — thiếu nodes[]');
+  if (!Array.isArray(doc.edges)) return invalid('schema — thiếu edges[]');
+
+  const warnings = Array.isArray(doc.decodeWarnings) ? [...doc.decodeWarnings] : [];
+  const rawIds = new Set();
+  for (const n of doc.nodes) {
+    if (!n || typeof n !== 'object') return invalid('schema — node không phải object');
+    if (typeof n.id !== 'string' || !n.id || typeof n.kind !== 'string' || !n.kind ||
+        typeof n.title !== 'string' || !n.title) {
+      return invalid(`schema — node thiếu id/kind/title: ${JSON.stringify((n && n.id) ?? null)}`);
+    }
+    if (rawIds.has(n.id)) return invalid(`structural — duplicate id: ${n.id}`);
+    rawIds.add(n.id);
+  }
+  // pass A — unknown enum: drop node, giữ phần còn lại (forward-compat)
+  const nodes = [];
+  const dropped = new Set();
+  for (const n of doc.nodes) {
+    if (!KNOWN_KIND.has(n.kind)) { warnings.push(`node ${n.id}: kind lạ "${n.kind}" — drop`); dropped.add(n.id); continue; }
+    if (n.state !== undefined && !KNOWN_STATE.has(n.state)) { warnings.push(`node ${n.id}: state lạ "${n.state}" — drop`); dropped.add(n.id); continue; }
+    nodes.push(n);
+  }
+  // pass B — edges: bắt buộc → INVALID; self-loop/dangling-thật → INVALID; lạ/dropped → drop
+  const edges = [];
+  for (const e of doc.edges) {
+    if (!e || typeof e !== 'object' || typeof e.from !== 'string' || !e.from ||
+        typeof e.to !== 'string' || !e.to || typeof e.rel !== 'string' || !e.rel) {
+      return invalid(`schema — edge thiếu from/to/rel: ${JSON.stringify(e ?? null)}`);
+    }
+    if (e.from === e.to) return invalid(`structural — self-loop: ${e.from}`);
+    if (!rawIds.has(e.from) || !rawIds.has(e.to)) return invalid(`structural — dangling edge: ${e.from} → ${e.to}`);
+    if (!KNOWN_REL.has(e.rel)) { warnings.push(`edge ${e.from}→${e.to}: rel lạ "${e.rel}" — drop`); continue; }
+    if (dropped.has(e.from) || dropped.has(e.to)) { warnings.push(`edge ${e.from}→${e.to}: trỏ node bị drop — drop kèm`); continue; }
+    edges.push(e);
+  }
+  // pass C — parent convenience: dangling-thật → INVALID; trỏ dropped → bỏ field + warning
+  for (const n of nodes) {
+    if (n.parent === undefined || n.parent === null) continue;
+    if (typeof n.parent !== 'string' || !n.parent || !rawIds.has(n.parent)) {
+      return invalid(`structural — dangling parent: ${n.id} → ${JSON.stringify(n.parent ?? null)}`);
+    }
+    if (dropped.has(n.parent)) { warnings.push(`node ${n.id}: parent trỏ node bị drop — bỏ parent`); delete n.parent; }
+  }
+  if (!nodes.some(n => n.kind === 'epic')) return invalid('schema — không có node epic');
+
+  const mindmap = { wakiiMindmap: 1, meta, nodes, edges, decodeWarnings: warnings };
+  if (Array.isArray(doc.evidence)) mindmap.evidence = doc.evidence;
+  return { valid: true, mindmap, decodeWarnings: warnings };
+}
+
+// ── parsers ─────────────────────────────────────────────────────────────────
+function parseBracket(text) {
+  const lines = text.split('\n');
+  const out = { story: '', epic: '', dest: '', sfs: [] };
+  let cur = null;
+  for (const line of lines) {
+    const mStory = line.match(/^#\s*Story:\s*(.+?)\s*$/);
+    if (mStory) { out.story = mStory[1]; out.epic = out.story.split(/\s+/)[0]; }
+    const mDest = line.match(/^Destination:\s*(\S+)/);
+    if (mDest) out.dest = mDest[1];
+    const mSf = line.match(/^##\s+SF-(\d+)\s+(.*)$/);
+    if (mSf) {
+      cur = { num: +mSf[1], id: `sf-${mSf[1]}`, title: mSf[2].trim(), tier: undefined, linear: '', deps: [], tasks: [], steps: [], files: [], packRel: '' };
+      out.sfs.push(cur);
+      continue;
+    }
+    if (!cur) continue;
+    let m;
+    if ((m = line.match(/^Tier:\s*(\S+)/))) cur.tier = /^\d+$/.test(m[1]) ? +m[1] : m[1];
+    else if ((m = line.match(/^linear:\s*(.*)$/))) cur.linear = m[1].trim();
+    else if ((m = line.match(/^Depends on:\s*(.*)$/))) cur.deps = m[1].split(/[,/]/).map(s => s.trim()).filter(d => d && d !== '—');
+    else if ((m = line.match(/^Tasks:\s*(.*)$/))) cur.tasks = m[1].split('/').map(s => s.trim()).filter(Boolean);
+  }
+  return out;
+}
+
+function findPack(repo, stem, prefix, num) {
+  for (const c of [
+    `docs/superpowers/contexts/${stem}/sf-${num}.md`,
+    `docs/superpowers/contexts/${prefix}-sf-${num}.md`,
+    `docs/superpowers/contexts/sf-${num}.md`,
+  ]) {
+    const p = path.join(repo, c);
+    if (fs.existsSync(p)) return p;
+  }
+  return '';
+}
+
+function parsePack(text, sf) {
+  let section = '';
+  for (const line of text.split('\n')) {
+    const h = line.match(/^##\s+(.+?)\s*$/);
+    if (h) { section = h[1]; continue; }
+    if (/^Spec slice$/i.test(section)) {
+      const m = line.match(/^\s*(\d+)\.\s+(.+?)\s*$/);
+      if (m) sf.steps.push({ n: +m[1], text: m[2] });
+    } else if (/^Touch map$/i.test(section)) {
+      const m = line.match(/^-\s*([^:]+):(.*)$/);
+      if (!m) continue;
+      const rel = /^(Sở hữu|Append-only)/i.test(m[1].trim()) ? 'writes'
+        : /^Read-only/i.test(m[1].trim()) ? 'impacts' : '';
+      if (!rel) continue; // Cấm: danh sách cấm đoán, không phải impact
+      for (const mm of m[2].matchAll(/`([^`]+)`/g)) {
+        const p = mm[1].trim();
+        if (!p.includes('/') || p.includes('*') || /\s/.test(p)) continue; // glob/free-text bỏ
+        sf.files.push({ path: p, rel });
+      }
+    }
+  }
+}
+
+// ── nguồn phụ: orchestration + story-impact (fail-open, timeout budget) ─────
+// task-list cần run bound; ngoài terminal bound → tự discovery qua run-list
+// (unbound chạy được) match epic-id trong objective; override bằng STORY_MINDMAP_RUN.
+function orcaJson(orcaBin, args, timeoutMs) {
+  return execFileSync(orcaBin, args, { encoding: 'utf8', timeout: timeoutMs, stdio: ['ignore', 'pipe', 'ignore'] });
+}
+
+function readOrcaStates(orcaBin, epic, warnings) {
+  try {
+    let runId = process.env.STORY_MINDMAP_RUN || '';
+    // epic-id phải ASCII-anh thì regex match mới đáng tin — lệch → bỏ discovery (P2 review 27/09)
+    if (!runId && !/^[A-Za-z0-9][A-Za-z0-9.-]*$/.test(epic)) {
+      warnings.push(`orchestration: epic-id "${epic}" không ASCII-anh — bỏ run discovery`);
+      return new Map();
+    }
+    if (!runId) {
+      const runs = (JSON.parse(orcaJson(orcaBin, ['orchestration', 'run-list', '--json'], 6000)).result?.runs) || [];
+      const hit = runs
+        .filter(r => !r.legacy && new RegExp(`\\b${epic.replace(/[^A-Za-z0-9-]/g, '')}\\b`).test(String(r.objective || '')))
+        .sort((a, b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')))[0];
+      if (!hit) { warnings.push('orchestration: không tìm thấy run cho story — SF state=pending'); return new Map(); }
+      runId = hit.id;
+    }
+    const tasks = (JSON.parse(orcaJson(orcaBin, ['orchestration', 'task-list', '--json', '--run', runId], 6000)).result?.tasks) || [];
+    const map = new Map();
+    for (const t of tasks) {
+      const m = String(t.task_title || '').match(/\bSF-(\d+)\b/i);
+      if (!m) continue;
+      const st = String(t.status || '');
+      map.set(+m[1], st === 'done' ? 'done'
+        : (st === 'in_progress' || st === 'in-progress') ? 'in-progress'
+        : (st === 'failed' || st === 'blocked') ? 'blocked' : 'pending');
+    }
+    return map;
+  } catch {
+    warnings.push('orchestration task-list không đọc được — SF state=pending (offline-safe)');
+    return new Map();
+  }
+}
+
+function runImpact(repo, warnings) {
+  const binPath = process.env.STORY_IMPACT_BIN || path.join(__dirname, 'story-impact');
+  if (!fs.existsSync(binPath)) {
+    warnings.push('story-impact không có — bỏ lớp impact computed');
+    return null;
+  }
+  try {
+    const out = execFileSync(binPath, ['--json'],
+      { cwd: repo, encoding: 'utf8', timeout: 20000, maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'ignore'] });
+    return (((JSON.parse(out).affectedAreas) || []).filter(a => typeof a === 'string' && a)).sort();
+  } catch (e) {
+    const why = e.killed ? 'timeout 20s' : String(e.code ?? e.status ?? 'lỗi');
+    warnings.push(`story-impact không chạy được (${why}) — bỏ lớp impact computed`);
+    return null;
+  }
+}
+
+// ── dựng graph 3 lớp (thứ tự cố định = output deterministic) ───────────────
+const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'x';
+const stripExt = p => p.replace(/\.[a-z0-9]+$/i, '');
+
+function stepTitle(text) {
+  const seps = [' — ', ': ', ' (', '; '].map(s => ({ s, i: text.indexOf(s) })).filter(x => x.i > 0).sort((a, b) => a.i - b.i);
+  let t = seps.length ? text.slice(0, seps[0].i) : text;
+  return (t.length > 80 ? t.slice(0, 79) + '…' : t).trim();
+}
+
+function buildGraph(br, bracketFile, orcaStatus, impactAreas) {
+  const nodes = [], edges = [], evidence = [];
+  const sfState = sf => orcaStatus.get(sf.num) || 'pending';
+  const allDone = br.sfs.length > 0 && br.sfs.every(sf => sfState(sf) === 'done');
+  nodes.push({ id: 'epic', kind: 'epic', title: br.story, state: allDone ? 'complete' : 'in-progress' });
+  for (const sf of br.sfs) {
+    const node = { id: sf.id, kind: 'sf', title: sf.title, state: sfState(sf) };
+    if (sf.tier !== undefined) node.tier = sf.tier;
+    if (sf.linear) node.linear = sf.linear;
+    nodes.push(node);
+    edges.push({ from: 'epic', to: sf.id, rel: 'contains' });
+  }
+  for (const sf of br.sfs) {
+    for (const d of sf.deps) {
+      const m = String(d).match(/^SF-(\d+)$/i);
+      if (m && br.sfs.some(x => x.num === +m[1])) edges.push({ from: sf.id, to: `sf-${m[1]}`, rel: 'depends-on' });
+    }
+  }
+  for (const sf of br.sfs) {
+    // task: không có nguồn state per-task — pending GHI RÕ, SF state là số thật
+    sf.tasks.forEach((t, i) => {
+      const id = `t-${sf.num}.${i + 1}`;
+      nodes.push({ id, kind: 'task', title: t, state: 'pending', parent: sf.id });
+      edges.push({ from: sf.id, to: id, rel: 'contains' });
+    });
+    sf.steps.forEach((s, i) => {
+      const id = `s-${sf.num}.${i + 1}`;
+      nodes.push({ id, kind: 'step', title: stepTitle(s.text), parent: sf.id, detail: `${s.text} (nguồn: Spec slice mục ${s.n}, best-effort)` });
+      if (i > 0) edges.push({ from: `s-${sf.num}.${i}`, to: id, rel: 'flows-to' });
+    });
+    if (sf.steps.length && sf.packRel) evidence.push({ node: sf.id, summary: 'steps từ Spec slice (best-effort)', ref: sf.packRel });
+  }
+  const fileIds = new Map();
+  for (const sf of br.sfs) {
+    for (const f of sf.files) {
+      let id = fileIds.get(f.path);
+      if (!id) {
+        id = `f-${slug(stripExt(f.path))}`;
+        fileIds.set(f.path, id);
+        // title bắt buộc trên MỌI node (luật decoder) — file dùng path làm title
+        nodes.push({ id, kind: 'file', title: f.path, path: f.path });
+      }
+      edges.push({ from: sf.id, to: id, rel: f.rel });
+    }
+  }
+  if (impactAreas) {
+    for (const a of impactAreas) {
+      const id = `area-${slug(a)}`;
+      nodes.push({ id, kind: 'area', title: a, computed: true });
+      edges.push({ from: 'epic', to: id, rel: 'impacts' });
+      evidence.push({ node: id, summary: 'reverse-import area (computed)', ref: 'story-impact --json' });
+    }
+  }
+  evidence.unshift({ node: 'epic', summary: 'nguồn sinh mindmap', ref: `docs/superpowers/brackets/${bracketFile}` });
+  return { nodes, edges, evidence };
+}
+
+// ── so sánh idempotent + ghi atomic ─────────────────────────────────────────
+function stable(v) {
+  if (Array.isArray(v)) return `[${v.map(stable).join(',')}]`;
+  if (v && typeof v === 'object') {
+    return `{${Object.keys(v).sort().filter(k => v[k] !== undefined)
+      .map(k => `${JSON.stringify(k)}:${stable(v[k])}`).join(',')}}`;
+  }
+  return JSON.stringify(v ?? null);
+}
+
+function writeAtomic(outPath, body) {
+  const tmp = path.join(path.dirname(outPath), `.${path.basename(outPath)}.tmp-${process.pid}`);
+  fs.writeFileSync(tmp, body);
+  fs.renameSync(tmp, outPath);
+}
+
+function writeMermaid(doc, mdPath) {
+  const mid = id => id.replace(/[^A-Za-z0-9_]/g, '_');
+  const L = ['# Mindmap — ' + doc.meta.story, '',
+    '> Sinh bởi story-mindmap từ bracket + context pack + story-impact. Lớp logic (steps) là best-effort — xem detail từng node.', '',
+    '```mermaid', 'graph TD'];
+  for (const n of doc.nodes) {
+    const label = `${n.kind}: ${n.title}${n.state ? ' · ' + n.state : ''}${n.computed ? ' · computed' : ''}`.replace(/"/g, "'");
+    L.push(`  ${mid(n.id)}["${label}"]`);
+  }
+  for (const e of doc.edges) {
+    const arrow = (e.rel === 'depends-on' || e.rel === 'impacts') ? '-.->' : '-->';
+    const label = (e.rel === 'writes' || e.rel === 'impacts') ? `|${e.rel}|` : '';
+    L.push(`  ${mid(e.from)} ${arrow}${label} ${mid(e.to)}`);
+  }
+  L.push('```', '');
+  fs.writeFileSync(mdPath, L.join('\n'));
+}
+
+// ── generate ────────────────────────────────────────────────────────────────
+function die(code, msg) { console.error(msg); process.exit(code); }
+
+function cmdGenerate(argv) {
+  const flagValue = name => { const i = argv.indexOf(name); return i === -1 ? '' : (argv[i + 1] || '').trim(); };
+  const bracketArg = flagValue('--bracket');
+  if (!bracketArg) die(2, 'usage: story-mindmap --bracket <file> [--out <path>] [--mermaid-md <path>] | --decode <file>');
+  const bracketPath = path.resolve(bracketArg);
+  if (!fs.existsSync(bracketPath)) die(2, `bracket không tồn tại: ${bracketArg}`);
+  const repo = path.resolve(path.dirname(bracketPath), '..', '..', '..'); // docs/superpowers/brackets → repo (3 cấp)
+  const br = parseBracket(fs.readFileSync(bracketPath, 'utf8'));
+  if (!br.story) die(2, 'bracket thiếu dòng "# Story: <epic-id> — <tên story>"');
+  const warnings = [];
+  const orcaStatus = readOrcaStates(process.env.STORY_ORCA_BIN || 'orca', br.epic, warnings);
+  const stem = br.dest ? br.dest.replace(/^.*\//, '') : path.basename(bracketPath, '.md');
+  const prefix = stem.split('-')[0];
+  for (const sf of br.sfs) {
+    const pack = findPack(repo, stem, prefix, sf.num);
+    if (!pack) { warnings.push(`sf-${sf.num}: context pack không tìm thấy — chỉ lớp tiến độ`); continue; }
+    sf.packRel = path.relative(repo, pack);
+    parsePack(fs.readFileSync(pack, 'utf8'), sf);
+  }
+  const impactAreas = runImpact(repo, warnings);
+  const graph = buildGraph(br, path.basename(bracketPath), orcaStatus, impactAreas);
+  const meta = { story: br.story, epic: br.epic };
+  if (br.dest) meta.dest = br.dest;
+
+  const outPath = flagValue('--out') || path.join(repo, 'docs/superpowers/mindmaps', `${stem}.wakii`);
+  fs.mkdirSync(path.dirname(outPath), { recursive: true });
+  const relOut = path.relative(process.cwd(), outPath) || outPath;
+
+  const existing = fs.existsSync(outPath) ? fs.readFileSync(outPath) : null;
+  if (existing) {
+    try {
+      const prev = JSON.parse(existing.toString('utf8'));
+      // payload = mọi trường TRỪ meta.generatedAt (bump chỉ khi payload đổi)
+      const prevMeta = prev && typeof prev.meta === 'object' && prev.meta ? prev.meta : {};
+      const cmpMeta = { ...meta, generator: `story-mindmap ${VERSION}` };
+      const curPayload = { nodes: graph.nodes, edges: graph.edges, evidence: graph.evidence, decodeWarnings: warnings, meta: cmpMeta };
+      const prevPayload = { nodes: prev.nodes, edges: prev.edges, evidence: prev.evidence, decodeWarnings: prev.decodeWarnings, meta: { ...prevMeta, generatedAt: undefined } };
+      const samePayload = stable(curPayload) === stable(prevPayload);
+      if (samePayload) {
+        // unchanged vẫn phải render --mermaid-md nếu caller yêu cầu (P1 review 27/09)
+        const mdNow = flagValue('--mermaid-md');
+        if (mdNow) writeMermaid(prev, path.resolve(mdNow));
+        console.log(`story-mindmap — ${path.basename(outPath)} unchanged (idempotent)`);
+        console.log(`out: ${relOut} (unchanged)`);
+        return;
+      }
+    } catch { /* file hỏng → ghi đè */ }
+  }
+
+  const now = new Date().toISOString();
+  const doc = { wakiiMindmap: 1, meta: { ...meta, generatedAt: now, generator: `story-mindmap ${VERSION}` },
+    nodes: graph.nodes, edges: graph.edges, evidence: graph.evidence, decodeWarnings: warnings };
+  // self-validate trước khi ghi — generator bug không được ra file INVALID
+  const self = decodeWakii(Buffer.from(JSON.stringify(doc)));
+  if (!self.valid) die(1, `story-mindmap: output tự validation FAIL — ${self.error}`);
+  writeAtomic(outPath, JSON.stringify(doc, null, 2) + '\n');
+
+  const mdPath = flagValue('--mermaid-md');
+  if (mdPath) writeMermaid(doc, path.resolve(mdPath));
+  const byKind = {};
+  for (const n of doc.nodes) byKind[n.kind] = (byKind[n.kind] || 0) + 1;
+  console.log(`story-mindmap — ${path.basename(outPath)} (epic ${byKind.epic || 0}, sf ${byKind.sf || 0}, task ${byKind.task || 0}, step ${byKind.step || 0}, file ${byKind.file || 0}, area ${byKind.area || 0}; edges ${doc.edges.length})`);
+  console.log(`out: ${relOut}`);
+}
+
+function cmdDecode(decodeArg) {
+  let raw;
+  try { raw = fs.readFileSync(path.resolve(decodeArg)); } catch (e) {
+    console.log(JSON.stringify({ valid: false, error: `INVALID: io — ${e.message}` }, null, 2));
+    process.exit(2);
+  }
+  const r = decodeWakii(raw);
+  console.log(JSON.stringify(r, null, 2));
+  process.exit(r.valid ? 0 : 2);
+}
+
+function main() {
+  const argv = process.argv.slice(2);
+  const decodeArg = argv.includes('--decode') ? (argv[argv.indexOf('--decode') + 1] || '') : '';
+  if (decodeArg) return cmdDecode(decodeArg);
+  return cmdGenerate(argv);
+}
+
+main();

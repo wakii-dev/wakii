@@ -1,0 +1,2 @@
+menu call sites checked: 62 · resolved Vietnamese: 62 · resolved identical-to-en (preserve): 0 · vi.json menu.* leaf keys: 29
+vi native-menu catalog smoke PASSED
