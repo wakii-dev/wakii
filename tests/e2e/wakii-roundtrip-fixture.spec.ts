@@ -15,7 +15,13 @@ import { expect, test } from './helpers/orca-app'
  * by emitting the exact event the shell delivers.
  */
 test.describe('wakii round-trip fixture', () => {
-  const evidenceDir = path.join('docs', 'superpowers', 'evidence', 'sf-4', 'screenshots')
+  const evidenceDir = path.join(
+    'docs',
+    'superpowers',
+    'evidence',
+    'sf-4-convergence-wakii',
+    'screenshots'
+  )
   const STORY_MINDMAP_BIN = path.resolve(
     __dirname,
     '../../resources/plugins/launch/stablyai.orca-superpowers-launcher/kit/bin/story-mindmap'

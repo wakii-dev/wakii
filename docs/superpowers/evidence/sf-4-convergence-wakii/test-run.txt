@@ -40,12 +40,12 @@ tdd: skipped-tdd: hội tụ merge không thêm feature path mới — lưới t
 == RULE 0 — browser verify 3 tầng (tự nhìn, không DOM-query thay mắt) ==
 - Tầng FLOW: e2e round-trip đầu-cuối trên app thật (mục 4) — PASS
 - Tầng VISUAL: tự Read ảnh render thật:
-  evidence/sf-4/screenshots/roundtrip-progress-dark.png — tab .wakii trong floating
+  evidence/sf-4-convergence-wakii/screenshots/roundtrip-progress-dark.png — tab .wakii trong floating
   workspace, toolbar Progress/Logic&Impact + kind filters + badge decode warnings(2)
   + Fit view, legend Done/In-progress/Pending/Blocked + contains/depends-on
-  evidence/sf-4/screenshots/roundtrip-logic-impact-dark.png — nút Impact layer,
+  evidence/sf-4-convergence-wakii/screenshots/roundtrip-logic-impact-dark.png — nút Impact layer,
   legend flows-to/impacts/writes/curated file, step + file nodes
-  evidence/sf-4/screenshots/roundtrip-error-card.png — "Cannot open the file",
+  evidence/sf-4-convergence-wakii/screenshots/roundtrip-error-card.png — "Cannot open the file",
   badge error.code = schema, message JSON, path, chữ "nothing was rendered
   partially" — KHÔNG render nửa vời (spec §8)
   evidence/sf-3-viewer-mindmap/screenshots/*.png — golden trên build ĐÃ HỘI TỤ
@@ -84,7 +84,7 @@ CHECKLIST-4Q 4/4 PASS, delta scope sạch, 42/42 vitest trên HEAD cuối.
 == ACCEPTANCE PACK sf-4 ==
 - E2E round-trip 3 lớp automated: ✓ (mục 4, local chạy được)
 - Golden render fixture không đổi sau merge 3 SF: ✓ (golden e2e PASS trên build hội tụ)
-- Manual checklist 3 OS viết hoàn chỉnh: ✓ evidence/sf-4/manual-checklist-3os.md
+- Manual checklist 3 OS viết hoàn chỉnh: ✓ evidence/sf-4-convergence-wakii/manual-checklist-3os.md
   (mac dmg / NSIS / deb-rpm từng bước + expected + steal check .md + uninstall
   ProgID + AppImage drag-drop) — CHẠY LÚC RELEASE BUILD, không gate story
 - Docs reference đủ parse ngoài kit: ✓ docs/reference/wakii-mindmap-format.md
