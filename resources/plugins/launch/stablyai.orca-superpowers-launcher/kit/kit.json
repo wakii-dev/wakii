@@ -520,5 +520,5 @@
       "description": "PreToolUse Edit|Write|MultiEdit guard chặn ghi .env/.env.*/pem/id_rsa*/key — exit 2, fail-open, GUARD_OFF escape (GH-87)"
     }
   ],
-  "kitHash": "85ba5402d1739a7d"
+  "kitHash": "ad5a378438209616"
 }

@@ -2,8 +2,8 @@
 
 Git flow chuẩn + quy trình tạo PR cho story. Engine = **`gh` CLI** (cùng
 engine với Source Control panel của Orca — panel cũng gọi `gh` dưới nắp).
-Mỗi story đúng **1 PR**: nhánh đích → primary (đọc từ bracket `Primary:`).
-Merge primary VẪN LÀ QUYỀN NGƯỜI.
+Mỗi story đúng **1 PR**: nhánh đích → primary (resolve qua
+`wakii-validate --resolve-primary`). Merge primary VẪN LÀ QUYỀN NGƯỜI.
 
 > story-hub: nhánh đích thật = dash-form (`story-<epic-id>-<slug>` — orca
 > sanitizeWorktreeName fold `/`→`-`); ví dụ dưới giữ slash-form cho legacy.
@@ -17,7 +17,7 @@ Merge primary VẪN LÀ QUYỀN NGƯỜI.
 
 | Nhánh | Ai tạo | Ai merge vào nó | Ai push | Ai xóa |
 |---|---|---|---|---|
-| `<primary>` (bracket `Primary:`) | — | **NGƯỜI** (merge nhánh đích qua PR) | KHÔNG AI (agents không đụng) | — |
+| `<primary>` (`wakii-validate --resolve-primary`) | — | **NGƯỜI** (merge nhánh đích qua PR) | KHÔNG AI (agents không đụng) | — |
 | `story/<epic>-<slug>` | APPROVE (fork từ primary) | các sf-* merge về | agent (lúc COMPLETE) | Agent — cleanup story-level SAU khi PR merge (merge-playbook "Story-level cleanup", với guards) |
 | `sf-N-*` | launch/worktree | merge về nhánh đích | tùy chọn (backup) | CLOSE cleanup |
 
@@ -32,14 +32,14 @@ Không bao giờ push/merge/reset primary.
 ### Preconditions (kiểm cả 5 — thiếu gì bỏ qua PR, KHÔNG chặn story)
 
 ```bash
-# 0. Primary từ bracket — BẮT BUỘC merge primary vào dest 1 lần trước PR
+# 0. Primary từ wakii-validate — BẮT BUỘC merge primary vào dest 1 lần trước PR
 #    (chống drift — spec story-worktree-hub §5.4):
-PRIMARY=$(grep -m1 '^Primary:' <bracket> | cut -d' ' -f2)
-#    Legacy transition: bracket cũ KHÔNG có dòng `Primary:` → KHÔNG BAO GIỜ để
+PRIMARY=$(~/.claude/bin/wakii-validate --resolve-primary --repo .)
+#    resolve-primary exit 1 = PRIMARY-UNRESOLVED → KHÔNG BAO GIỜ để
 #    PRIMARY rỗng chạy `gh pr create --base ""` (fail mù). Base theo quy trình
-#    cũ (main) HOẶC dừng ở READY-FOR-MANUAL-MERGE + lý do "bracket thiếu Primary".
+#    cũ (main) HOẶC dừng ở READY-FOR-MANUAL-MERGE + lý do "primary unresolved".
 if [ -z "$PRIMARY" ]; then
-  echo "READY-FOR-MANUAL-MERGE: bracket thiếu Primary — merge tay nhánh đích → main (quy trình cũ), không tạo PR" # hoặc: PRIMARY=main
+  echo "READY-FOR-MANUAL-MERGE: primary không resolve được — merge tay nhánh đích → main (quy trình cũ), không tạo PR" # hoặc: PRIMARY=main
 else
   git fetch origin "$PRIMARY" && git merge origin/"$PRIMARY" --no-edit
 fi
@@ -63,7 +63,8 @@ gh pr create --base "$PRIMARY" --head story/<epic-id>-<slug> \
 gh pr view --json url -q .url    # → comment Linear epic (audit)
 ```
 
-KHÔNG hardcode `main`: primary đọc từ bracket — wakii = wakii-dev (GitHub
+KHÔNG hardcode `main`: primary resolve qua `wakii-validate --resolve-primary`
+— wakii = wakii-dev (GitHub
 default là main mirror upstream → remote-HEAD sẽ sai, xem spec §4).
 
 ### PR body template (viết vào file rồi --body-file)
@@ -71,7 +72,7 @@ default là main mirror upstream → remote-HEAD sẽ sai, xem spec §4).
 ```markdown
 ## Story <epic-id>: <title>
 
-<1-2 câu mô tả từ bracket>
+<1-2 câu mô tả từ story .wakii epic title/summary>
 
 ## Sub-features
 | SF | Linear | Mô tả | Merge |

@@ -1,9 +1,9 @@
 # Context Packs — per SF (analyze-once materialized thành files)
 
 Mỗi SF có MỘT context pack: `docs/superpowers/contexts/sf-<n>.md`, viết lúc
-CREATE (sau spec-critic, trước bracket), nằm trong repo chính để mọi SF
+CREATE (sau spec-critic, trước .wakii), nằm trong repo chính để mọi SF
 worktree thấy sau khi fork. Đây là cách "analyze once, inherit many" trở thành
-vật thể — SF agent đọc file này THAY VÌ tự tổng hợp từ bracket + epic + comments.
+vật thể — SF agent đọc file này THAY VÌ tự tổng hợp từ story .wakii + epic + comments.
 
 ## Format (4 sections, đúng thứ tự — STRICT)
 

@@ -99,9 +99,9 @@
 - Modify: `resources/plugins/launch/bundled-plugins.json` (rehash contentHash)
 - Modify: consumer còn xài story-validate (watchdog đã đổi Task 5; SKILL.md Task 9)
 
-- [ ] **Step 8.1** — precondition gate: wakii-validate tests xanh + migration xanh (đúng thứ tự boundary); xoá bin + tests + provides; scan suite không còn tham chiếu chết.
-- [ ] **Step 8.2** — rehash kitHash + bundled contentHash (lockstep: verify-packaged-plugin-resources + plugin-launch-content.test.ts + kit-verify-manifest.mjs 25 asserts EXIT 0).
-- [ ] **Step 8.3** — commit.
+- [x] **Step 8.1** — precondition gate: wakii-validate tests xanh + migration xanh (đúng thứ tự boundary); xoá bin + tests + provides; scan suite không còn tham chiếu chết.
+- [x] **Step 8.2** — rehash kitHash + bundled contentHash (lockstep: verify-packaged-plugin-resources + plugin-launch-content.test.ts + kit-verify-manifest.mjs 25 asserts EXIT 0).
+- [x] **Step 8.3** — commit.
 
 ### Task 9: docs-story-format-wakii — SKILL.md + references
 
@@ -110,7 +110,7 @@
 - Modify: `kit/skills/orca-superpowers-workflow/SKILL.md` + references nhắc story-validate/bracket
 - Modify: `AGENTS.md` (nếu nhắc bracket)
 
-- [ ] **Step 9.1** — sweep `grep -rn "story-validate\|superpowers/brackets"` kit skills + docs repo; đổi tham chiếu theo format mới; giữ Note legacy-bracket-fallback.
+- [x] **Step 9.1** — sweep `grep -rn "story-validate\|superpowers/brackets"` kit skills + docs repo; đổi tham chiếu theo format mới; giữ Note legacy-bracket-fallback.
 - [ ] **Step 9.2** — kit-verify-manifest + skill manifest verify EXIT 0; commit.
 
 ### Task 10: verify — ACCEPTANCE battery + RULE 0 + review
