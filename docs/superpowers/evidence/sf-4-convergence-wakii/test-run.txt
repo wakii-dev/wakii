@@ -96,3 +96,17 @@ CHECKLIST-4Q 4/4 PASS, delta scope sạch, 42/42 vitest trên HEAD cuối.
 == Linear DEFERRED (ruling 27/09) ==
 Audit vào evidence này + worktree comment. DONE = push + evidence + comment;
 merge nhánh đích là việc coordinator.
+
+== STORY-VERIFY CUỐI (0d64e1a1df tree) ==
+○ sf-4-convergence-wakii INCOMPLETE [B1:PASS B2:WARN B2b:PASS B3:FAIL B4:FAIL B5:PENDING]
+- B1 PASS (evidence hash + tdd line) · B2b surface-lint CLEAN
+- B2 WARN: không có plan file khớp token sf-4 (story VU-14 chạy theo bracket, không plan riêng) — không chặn
+- B3 FAIL: Linear DEFERRED (ruling 27/09) + bracket-glob fallback đọc nhầm story
+  (FI-309 của FI-305) — root cause: wrapper orca() của story-verify ưu tiên
+  instance orca-dev, instance này chỉ có registry mxs-cms → metadata miss.
+  Chi tiết: docs/superpowers/improvements-log.md (kit defect, FLAG không tự sửa)
+- B4 FAIL: ĐÚNG BẢN CHẤT — SF-4 push nhánh riêng, coordinator merge sau (theo
+  lệnh user). Đã verify: story/vu-14-mindmap-wakii ⊆ HEAD (11 commits SF-1..4
+  sẵn sàng merge) + metadata worktree đã set parent=story-coordinator nên tool
+  đọc prod sẽ thấy dest đúng. B4 sẽ PASS sau khi coordinator merge + re-verify.
+- B5 PENDING: Linear DEFERRED — DONE = push + evidence + worktree comment.
