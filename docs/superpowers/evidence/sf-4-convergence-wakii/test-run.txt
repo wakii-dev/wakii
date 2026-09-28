@@ -1,5 +1,6 @@
 VU-14 SF-4 convergence — test-run evidence
-code commit: 714f9cd76b (deliverables) · merge: 7412d802ce · kit exec-bit: 3297560924
+code commit: 714f9cd76b (deliverables) · merge: 7412d802ce · kit exec-bit: 3297560924 ·
+evidence: 415b2a4e40 · slug-fix: ebf253fb18
 tdd: skipped-tdd: hội tụ merge không thêm feature path mới — lưới toàn diện thay thế
      (86 vitest + e2e real-app trên cầu nối thật + kit suite + 2 loại typecheck),
      RED→GREEN không áp dụng cho merge resolution
