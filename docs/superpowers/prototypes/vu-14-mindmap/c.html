@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>C · Quỹ đạo — Wakii Viewer (VU-14 prototype)</title>
+<style>
+  /* Tokens copy nguyên giá trị từ src/renderer/src/assets/main.css — không màu mới */
+  :root{
+    --background:#0a0a0a; --editor-surface:#1e1e1e; --card:#171717; --card-foreground:#fafafa;
+    --foreground:#fafafa; --muted:#262626; --muted-foreground:#a1a1a1; --accent:#404040;
+    --accent-foreground:#fafafa; --border:rgb(255 255 255 / 0.07); --ring:#737373;
+    --primary:#e5e5e5; --primary-foreground:#171717; --popover:#171717;
+    --destructive:#ff6568; --status-success:#86efac; --workspace-status-progress:#d4a300;
+    --shadow-floating:0 10px 24px rgb(0 0 0 / 0.18); --radius:0.625rem;
+    --font-sans:'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    --font-mono:ui-monospace,'SF Mono','Cascadia Code',Menlo,Consolas,monospace;
+  }
+  body.light{
+    --background:#fff; --editor-surface:#fff; --card:#fff; --card-foreground:#0a0a0a;
+    --foreground:#0a0a0a; --muted:#f5f5f5; --muted-foreground:#737373; --accent:#f5f5f5;
+    --accent-foreground:#171717; --border:#e5e5e5; --ring:#a1a1a1;
+    --primary:#171717; --primary-foreground:#fafafa; --popover:#fff;
+    --destructive:#e40014; --status-success:#15803d;
+  }
+  html,body{height:100%}
+  body{margin:0;background:var(--background);color:var(--foreground);font:14px/1.45 var(--font-sans);letter-spacing:.01em;overflow:hidden}
+  button{font-family:var(--font-sans)}
+  #app{display:flex;flex-direction:column;height:100%}
+
+  #tabbar{height:38px;flex:none;display:flex;align-items:flex-end;gap:2px;padding:0 12px;background:var(--background);border-bottom:1px solid var(--border)}
+  .tab{display:flex;align-items:center;gap:7px;height:30px;padding:0 12px;border-radius:8px 8px 0 0;font-size:12px;color:var(--muted-foreground)}
+  .tab.active{background:var(--editor-surface);color:var(--foreground);border:1px solid var(--border);border-bottom:none;margin-bottom:-1px}
+  .tab .mono{font-family:var(--font-mono);font-size:11.5px}
+
+  #toolbar{height:46px;flex:none;display:flex;align-items:center;gap:8px;padding:0 12px;background:var(--editor-surface);border-bottom:1px solid var(--border)}
+  .seg{display:flex;background:var(--card);border:1px solid var(--border);border-radius:9px;padding:2px}
+  .seg button{border:0;background:transparent;color:var(--muted-foreground);font-size:12px;font-weight:600;padding:5px 12px;border-radius:7px;cursor:pointer}
+  .seg button.on{background:var(--accent);color:var(--accent-foreground)}
+  .chips{display:flex;gap:4px;align-items:center}
+  .chip{border:1px solid var(--border);background:transparent;color:var(--muted-foreground);font-size:11px;font-weight:500;padding:4px 9px;border-radius:999px;cursor:pointer}
+  .chip.on{color:var(--foreground);background:var(--muted)}
+  .chip:disabled{opacity:.32;cursor:default}
+  .spacer{flex:1}
+  .tbtn{height:28px;padding:0 9px;display:inline-flex;align-items:center;gap:6px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted-foreground);font-size:11.5px;font-weight:500;cursor:pointer}
+  .tbtn:hover{background:var(--accent);color:var(--accent-foreground)}
+  .tbtn.on{color:var(--foreground);background:var(--muted)}
+  .tbtn svg{width:13px;height:13px}
+  #warnchip{display:flex;color:var(--workspace-status-progress);border-color:color-mix(in srgb,var(--workspace-status-progress) 35%,transparent)}
+
+  #main{flex:1;display:flex;min-height:0}
+  #canvas{position:relative;flex:1;overflow:hidden;background:var(--editor-surface);cursor:grab}
+  #canvas.panning{cursor:grabbing}
+  #viewport{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+  #edges{position:absolute;left:0;top:0;pointer-events:none;overflow:visible}
+  #nodelayer{position:absolute;left:0;top:0}
+
+  .ringguide{fill:none;stroke:var(--border);stroke-dasharray:2 6}
+  .ringlabel{fill:var(--muted-foreground);font-family:var(--font-mono);font-size:10px;letter-spacing:.08em}
+  #wedge{fill:color-mix(in srgb,var(--foreground) 4%,transparent);stroke:var(--border);opacity:0;transition:opacity .15s}
+  #wedge.show{opacity:1}
+
+  .edge{fill:none;stroke:var(--muted-foreground);stroke-width:1.2;opacity:.4;transition:opacity .12s}
+  .e-depends-on{stroke-dasharray:5 4;stroke-width:1.4;opacity:.65}
+  .e-flows-to{stroke-width:1.6;opacity:.75}
+  .e-impacts{stroke-dasharray:2 4;opacity:.4}
+  .e-writes{stroke-dasharray:6 3;opacity:.4}
+  .edge.faint{opacity:.14}
+  .edge.dim{opacity:.05}
+  .edge.hot{opacity:1;stroke:var(--foreground)}
+
+  .node{position:absolute;box-sizing:border-box;background:var(--card);border:1px solid var(--border);border-radius:9px;padding:7px 10px;cursor:pointer;user-select:none;transition:opacity .12s,border-color .12s,box-shadow .12s}
+  .node:hover{border-color:var(--ring)}
+  .node.dim{opacity:.15}
+  .node.hidden{display:none}
+  .node.sel{border-color:var(--ring);box-shadow:0 0 0 3px color-mix(in srgb,var(--ring) 32%,transparent)}
+  .kind-epic{border-radius:50%;border-width:1.5px;border-color:color-mix(in srgb,var(--foreground) 25%,var(--border));display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;padding:18px}
+  .epic-title{font-size:14px;font-weight:600;-webkit-line-clamp:3}
+  .kind-step{border-radius:999px}
+  .kind-area{border-radius:999px;background:transparent;border-style:dashed}
+  .kind-file{background:var(--editor-surface)}
+  .kind-file.computed{border-style:dashed}
+  .nrow{display:flex;align-items:center;gap:6px;min-width:0}
+  .dot{width:8px;height:8px;border-radius:50%;flex:none}
+  .tag{font-family:var(--font-mono);font-size:9px;font-weight:600;line-height:1;letter-spacing:.08em;color:var(--muted-foreground);border:1px solid var(--border);border-radius:4px;padding:2px 4px;flex:none}
+  .ntitle{font-size:12.5px;font-weight:500;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .nmeta{font-family:var(--font-mono);font-size:10.5px;color:var(--muted-foreground);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .kind-epic .nmeta{white-space:normal;text-align:center;margin-top:0}
+  .nbar{height:3px;border-radius:2px;background:var(--muted);margin-top:6px;overflow:hidden}
+  .nbar i{display:block;height:100%;background:var(--status-success)}
+
+  #legend{position:absolute;right:14px;bottom:14px;background:color-mix(in srgb,var(--card) 88%,transparent);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:11px;color:var(--muted-foreground);display:grid;grid-template-columns:auto auto;gap:5px 18px;pointer-events:none;backdrop-filter:blur(4px)}
+  .lg{display:flex;align-items:center;gap:6px}
+  .lg .dot{width:7px;height:7px}
+  .lgsample{width:22px;height:0;border-top:1.5px solid var(--muted-foreground);opacity:.6}
+  .lg.dash .lgsample{border-top-style:dashed}
+  .lg.dotd .lgsample{border-top-style:dotted}
+
+  #hint{position:absolute;left:14px;bottom:14px;font-family:var(--font-mono);font-size:10.5px;color:var(--muted-foreground);opacity:.7;pointer-events:none}
+
+  /* Panel C nổi bên TRÁI (khác A) */
+  #panel{position:absolute;top:14px;left:14px;width:300px;max-height:calc(100% - 28px);overflow:auto;background:var(--popover);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-floating);padding:14px;display:none;cursor:default}
+  #panel.show{display:block}
+  .p-head{display:flex;align-items:center;justify-content:space-between}
+  .p-kind{font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-foreground);border:1px solid var(--border);border-radius:4px;padding:3px 6px}
+  .p-close{border:0;background:transparent;color:var(--muted-foreground);cursor:pointer;padding:4px;border-radius:6px;display:flex}
+  .p-close:hover{background:var(--accent);color:var(--accent-foreground)}
+  .p-title{font-size:14px;font-weight:600;line-height:1.35;margin:8px 0 10px;word-break:break-word}
+  .p-state{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;border-radius:999px;padding:3px 9px;border:1px solid}
+  .p-row{display:flex;gap:8px;font-size:12px;margin-top:9px;align-items:baseline}
+  .p-row .k{flex:none;width:70px;color:var(--muted-foreground);font-size:11px}
+  .p-row .v{min-width:0;word-break:break-word}
+  .p-row .v.mono{font-family:var(--font-mono);font-size:11.5px}
+  .p-ev{margin-top:12px;border-top:1px solid var(--border);padding-top:10px}
+  .p-evh{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-foreground);margin-bottom:8px}
+  .p-evi{font-size:12px;margin-bottom:9px;line-height:1.4}
+  .p-evr{font-family:var(--font-mono);font-size:10.5px;color:var(--muted-foreground);margin-top:2px;word-break:break-all}
+
+  #warnbox{position:absolute;top:56px;right:12px;z-index:30;background:var(--popover);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-floating);padding:10px 12px;font-size:11.5px;color:var(--muted-foreground);display:none;max-width:360px}
+  #warnbox.show{display:block}
+  #warnbox div{margin:3px 0}
+
+  #errbox{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;background:color-mix(in srgb,var(--background) 72%,transparent);backdrop-filter:blur(3px)}
+  #errbox.show{display:flex}
+  .errcard{width:440px;background:var(--popover);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-floating);padding:22px}
+  .erricon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--destructive) 14%,transparent);color:var(--destructive);margin-bottom:12px}
+  .erricon svg{width:18px;height:18px}
+  .errh{font-size:15px;font-weight:600}
+  .errcode{display:inline-block;margin-top:8px;font-family:var(--font-mono);font-size:10.5px;color:var(--destructive);border:1px solid color-mix(in srgb,var(--destructive) 35%,transparent);background:color-mix(in srgb,var(--destructive) 10%,transparent);border-radius:4px;padding:2px 6px}
+  .errmsg{font-size:13px;margin-top:8px}
+  .errpath{font-family:var(--font-mono);font-size:11.5px;color:var(--muted-foreground);margin-top:10px;background:var(--muted);border-radius:8px;padding:8px 10px;word-break:break-all}
+  .errhint{font-size:11.5px;color:var(--muted-foreground);margin-top:10px}
+  .erractions{display:flex;justify-content:flex-end;margin-top:14px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="tabbar">
+    <div class="tab active">
+      <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 22 12 12 22 2 12Z"/></svg>
+      <span class="mono">VU-14-mindmap-viewer.wakii</span>
+    </div>
+  </div>
+  <div id="toolbar">
+    <div class="seg" id="modeseg">
+      <button data-mode="progress" class="on">Tiến độ</button>
+      <button data-mode="logic">Logic & Impact</button>
+    </div>
+    <div class="chips" id="kindchips"></div>
+    <button class="tbtn" id="impactbtn" style="display:none">Lớp impact</button>
+    <div class="spacer"></div>
+    <button class="tbtn" id="warnchip">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+      <span id="warncount"></span>
+    </button>
+    <button class="tbtn" id="errbtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+      Mô phỏng lỗi
+    </button>
+    <button class="tbtn" id="themebtn"><span id="themeico"></span></button>
+    <button class="tbtn" id="fitbtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+      Vừa khung
+    </button>
+  </div>
+  <div id="main">
+    <div id="canvas">
+      <div id="viewport">
+        <svg id="edges" width="1560" height="1360">
+          <defs>
+            <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="var(--muted-foreground)"/></marker>
+          </defs>
+          <g id="rings"></g>
+          <path id="wedge" d=""></path>
+          <g id="edgeg"></g>
+        </svg>
+        <div id="nodelayer"></div>
+      </div>
+      <div id="legend"></div>
+      <div id="hint">Lăn: thu phóng · Kéo nền: di chuyển · Click node: chi tiết · Hover: hàng xóm + quạt tier<br><span id="metaline"></span></div>
+      <div id="panel"></div>
+      <div id="warnbox"></div>
+      <div id="errbox">
+        <div class="errcard">
+          <div class="erricon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+          </div>
+          <div class="errh">Không mở được tệp</div>
+          <span class="errcode" id="errcode"></span>
+          <div class="errmsg" id="errmsg"></div>
+          <div class="errpath" id="errpath"></div>
+          <div class="errhint">File bị từ chối ở bước decode (main process) — không render nửa vời. Kiểm tra nội dung file hoặc mở lại từ ứng dụng.</div>
+          <div class="erractions"><button class="tbtn" id="errclose">Đóng</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+'use strict';
+/* ── Payload mô phỏng ui:openWakiiFile (đã decode từ main — renderer không đọc fs) ── */
+const PAYLOAD = {
+  path: 'docs/superpowers/mindmaps/VU-14-mindmap-viewer.wakii',
+  mindmap: {
+    wakiiMindmap: 1,
+    meta: { story:'VU-14 — mindmap.wakii viewer', epic:'VU-14', linear:'VU-14', dest:'story/vu-14-mindmap-viewer', generatedAt:'2026-09-27T13:00:00Z', generator:'story-mindmap 1.0.0' },
+    nodes: [
+      { id:'epic', kind:'epic', title:'VU-14 — mindmap.wakii viewer', state:'in-progress', linear:'VU-14' },
+      { id:'sf-1', kind:'sf', title:'Schema .wakii + bin story-mindmap', state:'done', linear:'VU-14-1', tier:0 },
+      { id:'sf-2', kind:'sf', title:'Main open-file + association 3 OS', state:'in-progress', linear:'VU-14-2', tier:1 },
+      { id:'sf-3', kind:'sf', title:'Viewer renderer 2 chế độ + panel', state:'in-progress', linear:'VU-14-3', tier:1 },
+      { id:'sf-4', kind:'sf', title:'E2E round-trip + checklist 3 OS', state:'pending', linear:'VU-14-4', tier:2 },
+      { id:'t-1.1', kind:'task', title:'Schema v1 + structural validation', state:'done', parent:'sf-1' },
+      { id:'t-1.2', kind:'task', title:'Bin story-mindmap: bracket + pack + impact', state:'done', parent:'sf-1' },
+      { id:'t-1.3', kind:'task', title:'3 trigger wrapper + kit chore', state:'done', parent:'sf-1' },
+      { id:'t-2.1', kind:'task', title:'OsOpenedWakiiFileState + IPC pull/push', state:'done', parent:'sf-2' },
+      { id:'t-2.2', kind:'task', title:'File association mac / Windows / Linux', state:'in-progress', parent:'sf-2' },
+      { id:'t-2.3', kind:'task', title:'Assert electron-builder-config.test.mjs', state:'blocked', parent:'sf-2' },
+      { id:'t-3.1', kind:'task', title:'Canvas 2 chế độ + pan/zoom', state:'in-progress', parent:'sf-3' },
+      { id:'t-3.2', kind:'task', title:'Side panel + hover hàng xóm bậc 1', state:'pending', parent:'sf-3' },
+      { id:'t-3.3', kind:'task', title:'Escape node title (title chứa <script>alert(1)<\\/script>)', state:'pending', parent:'sf-3' },
+      { id:'t-4.1', kind:'task', title:'Golden E2E fixture 3 lớp', state:'pending', parent:'sf-4' },
+      { id:'t-4.2', kind:'task', title:'Manual checklist dmg / NSIS / deb', state:'pending', parent:'sf-4' },
+      { id:'s-1.1', kind:'step', title:'Đọc bracket + orchestration task-list', parent:'sf-1', detail:'Hợp nhất node epic/SF/task từ bracket và orca CLI.' },
+      { id:'s-1.2', kind:'step', title:'Hợp nhất context pack → steps', parent:'sf-1', detail:'Mục spec slice thành node step + edge flows-to theo thứ tự.' },
+      { id:'s-1.3', kind:'step', title:'story-impact --json → lớp impact', parent:'sf-1', detail:'Cap 30s, quá giờ bỏ lớp impact, giữ tiến độ + logic.' },
+      { id:'s-1.4', kind:'step', title:'Ghi atomic + idempotent', parent:'sf-1', detail:'Temp cùng dir + rename; payload đổi mới bump generatedAt.' },
+      { id:'s-3.1', kind:'step', title:'Consume payload IPC (đã decode)', parent:'sf-3', detail:'Renderer không đọc fs, không JSON.parse lại.' },
+      { id:'s-3.2', kind:'step', title:'Layout graph theo kind + parent', parent:'sf-3', detail:'Cây tier cho tiến độ; dòng chảy cho logic.' },
+      { id:'s-3.3', kind:'step', title:'Render 2 chế độ + toolbar', parent:'sf-3', detail:'Toggle Tiến độ / Logic & Impact + filter kind.' },
+      { id:'s-3.4', kind:'step', title:'Panel chi tiết + hover highlight', parent:'sf-3', detail:'Click node → panel; hover → hàng xóm bậc 1.' },
+      { id:'area-kit', kind:'area', title:'Kit / CLI' },
+      { id:'area-main', kind:'area', title:'Main process' },
+      { id:'area-renderer', kind:'area', title:'Renderer' },
+      { id:'area-packaging', kind:'area', title:'Packaging' },
+      { id:'f-kit-bins', kind:'file', path:'kit/bins/story-mindmap', computed:false },
+      { id:'f-bridge', kind:'file', path:'src/main/os-wakii-file-open-bridge.ts', computed:true },
+      { id:'f-main-index', kind:'file', path:'src/main/index.ts', computed:true },
+      { id:'f-editor-slice', kind:'file', path:'src/renderer/src/store/slices/editor/', computed:false },
+      { id:'f-viewer', kind:'file', path:'src/renderer/src/viewer/wakii-viewer.tsx', computed:false },
+      { id:'f-builder', kind:'file', path:'config/electron-builder.config.cjs', computed:true },
+      { id:'f-nsis', kind:'file', path:'config/installer/nsis-wakii.nsh', computed:false }
+    ],
+    edges: [
+      { from:'epic', to:'sf-1', rel:'contains' }, { from:'epic', to:'sf-2', rel:'contains' },
+      { from:'epic', to:'sf-3', rel:'contains' }, { from:'epic', to:'sf-4', rel:'contains' },
+      { from:'sf-1', to:'t-1.1', rel:'contains' }, { from:'sf-1', to:'t-1.2', rel:'contains' }, { from:'sf-1', to:'t-1.3', rel:'contains' },
+      { from:'sf-2', to:'t-2.1', rel:'contains' }, { from:'sf-2', to:'t-2.2', rel:'contains' }, { from:'sf-2', to:'t-2.3', rel:'contains' },
+      { from:'sf-3', to:'t-3.1', rel:'contains' }, { from:'sf-3', to:'t-3.2', rel:'contains' }, { from:'sf-3', to:'t-3.3', rel:'contains' },
+      { from:'sf-4', to:'t-4.1', rel:'contains' }, { from:'sf-4', to:'t-4.2', rel:'contains' },
+      { from:'sf-2', to:'sf-1', rel:'depends-on' }, { from:'sf-3', to:'sf-1', rel:'depends-on' },
+      { from:'sf-4', to:'sf-2', rel:'depends-on' }, { from:'sf-4', to:'sf-3', rel:'depends-on' },
+      { from:'s-1.1', to:'s-1.2', rel:'flows-to' }, { from:'s-1.2', to:'s-1.3', rel:'flows-to' }, { from:'s-1.3', to:'s-1.4', rel:'flows-to' },
+      { from:'s-3.1', to:'s-3.2', rel:'flows-to' }, { from:'s-3.2', to:'s-3.3', rel:'flows-to' }, { from:'s-3.3', to:'s-3.4', rel:'flows-to' },
+      { from:'sf-1', to:'area-kit', rel:'impacts' },
+      { from:'sf-2', to:'area-main', rel:'impacts' }, { from:'sf-2', to:'area-packaging', rel:'impacts' },
+      { from:'sf-3', to:'area-renderer', rel:'impacts' }, { from:'sf-4', to:'area-packaging', rel:'impacts' },
+      { from:'sf-1', to:'f-kit-bins', rel:'writes' },
+      { from:'sf-2', to:'f-bridge', rel:'writes' }, { from:'sf-2', to:'f-main-index', rel:'writes' },
+      { from:'sf-2', to:'f-builder', rel:'writes' }, { from:'sf-2', to:'f-nsis', rel:'writes' },
+      { from:'sf-3', to:'f-editor-slice', rel:'writes' }, { from:'sf-3', to:'f-viewer', rel:'writes' }
+    ],
+    evidence: [
+      { node:'sf-1', summary:'Suite kit xanh 25 asserts + fingerprint rehash', ref:'tests/kit-verify-manifest.mjs' },
+      { node:'sf-2', summary:'IPC wiring test restore-on-failure đạt', ref:'os-opened-wakii-wiring.test.ts' },
+      { node:'f-main-index', summary:'reverse-import 12 module đụng', ref:'story-impact --json' },
+      { node:'t-2.3', summary:'Chờ review NSIS macro cặp đối xứng', ref:'Linear comment VU-14-2' }
+    ]
+  }
+};
+const WARNINGS = [
+  'Bỏ node "w-1" — kind "note" không nhận diện (drop-unknown-field)',
+  'Bỏ edge "e-90" — rel "relates" không nhận diện'
+];
+const ERROR_PAYLOAD = { code:'schema', message:'Thiếu trường bắt buộc "wakiiMindmap" (magic + schema version) — decoder từ chối file.', path: PAYLOAD.path };
+
+/* ── Map token: state → màu (chỉ token main.css) ── */
+const KIND = { epic:{label:'Epic'}, sf:{label:'SF'}, task:{label:'Task'}, step:{label:'Bước'}, area:{label:'Area'}, file:{label:'File'} };
+const STATE = {
+  'done':{label:'Hoàn thành', color:'var(--status-success)'},
+  'in-progress':{label:'Đang chạy', color:'var(--workspace-status-progress)'},
+  'pending':{label:'Chờ', color:'var(--muted-foreground)'},
+  'blocked':{label:'Bị chặn', color:'var(--destructive)'},
+  'complete':{label:'Hoàn tất', color:'var(--status-success)'}
+};
+
+const M = PAYLOAD.mindmap;
+const byId = new Map(M.nodes.map(n=>[n.id,n]));
+const outEdges = new Map(), inEdges = new Map();
+M.edges.forEach(e=>{
+  if(!outEdges.has(e.from)) outEdges.set(e.from,[]);
+  outEdges.get(e.from).push(e);
+  if(!inEdges.has(e.to)) inEdges.set(e.to,[]);
+  inEdges.get(e.to).push(e);
+});
+const children = id => M.nodes.filter(n=>n.parent===id);
+function neighbors(id){
+  const s = new Set([id]);
+  (outEdges.get(id)||[]).forEach(e=>s.add(e.to));
+  (inEdges.get(id)||[]).forEach(e=>s.add(e.from));
+  M.nodes.forEach(n=>{ if(n.parent===id) s.add(n.id); });
+  const me = byId.get(id); if (me && me.parent) s.add(me.parent);
+  s.delete(id); return s;
+}
+const evidenceFor = id => M.evidence.filter(ev=>ev.node===id);
+const sfWrites = id => (inEdges.get(id)||[]).filter(e=>e.rel==='writes').map(e=>byId.get(e.from)).filter(Boolean);
+
+/* ── Camera: pan/zoom ── */
+const WORLD = { w:1560, h:1360 };
+function makeCamera(container, viewportEl, world){
+  const st = { x:0, y:0, k:1 };
+  const apply = ()=>{ viewportEl.style.transform = 'translate('+st.x+'px,'+st.y+'px) scale('+st.k+')'; };
+  function fit(){
+    const r = container.getBoundingClientRect(); if (!r.width) return;
+    st.k = Math.min(r.width/world.w, r.height/world.h) * 0.93;
+    st.x = (r.width - world.w*st.k)/2; st.y = (r.height - world.h*st.k)/2; apply();
+  }
+  container.addEventListener('wheel', e=>{
+    e.preventDefault();
+    const r = container.getBoundingClientRect();
+    const mx = e.clientX-r.left, my = e.clientY-r.top;
+    const k2 = Math.min(2.6, Math.max(0.3, st.k*Math.exp(-e.deltaY*0.0016)));
+    st.x = mx-(mx-st.x)*(k2/st.k); st.y = my-(my-st.y)*(k2/st.k); st.k = k2; apply();
+  }, { passive:false });
+  let drag = null;
+  container.addEventListener('pointerdown', e=>{
+    if (e.target.closest('.node') || e.target.closest('#panel') || e.target.closest('#errbox')) return;
+    drag = { x:e.clientX, y:e.clientY, vx:st.x, vy:st.y };
+    container.classList.add('panning'); container.setPointerCapture(e.pointerId);
+  });
+  container.addEventListener('pointermove', e=>{ if(!drag) return; st.x = drag.vx+e.clientX-drag.x; st.y = drag.vy+e.clientY-drag.y; apply(); });
+  const up = ()=>{ drag=null; container.classList.remove('panning'); };
+  container.addEventListener('pointerup', up); container.addEventListener('pointercancel', up);
+  return { fit };
+}
+
+/* ── DOM refs ── */
+const $ = s => document.querySelector(s);
+const canvas = $('#canvas'), viewport = $('#viewport'), edgeg = $('#edgeg'), nodelayer = $('#nodelayer');
+const ringsG = $('#rings'), wedge = $('#wedge');
+const panel = $('#panel'), legend = $('#legend'), warnbox = $('#warnbox');
+const NS = 'http://www.w3.org/2000/svg';
+const cam = makeCamera(canvas, viewport, WORLD);
+
+/* ── State ── */
+let mode = 'progress', impactOn = false;
+const kindFilter = new Set(Object.keys(KIND));
+
+/* ── Toạ độ cực quanh tâm ── */
+const C = { x:780, y:680 };
+const rad = d => d*Math.PI/180;
+const polar = (angDeg, r) => ({ x: C.x + Math.sin(rad(angDeg))*r, y: C.y - Math.cos(rad(angDeg))*r });
+
+/* ── Layout C: quỹ đạo 3 vòng tier ── */
+const TIER_R = { 0:200, 1:385, 2:500 };
+/* Thứ tự vòng định sẵn để mọi cạnh depends-on nối 2 node KỀ nhau trên vòng */
+const SF_RING = [ {id:'sf-1',ang:-90}, {id:'sf-2',ang:0}, {id:'sf-4',ang:90}, {id:'sf-3',ang:180} ];
+const ringAng = new Map(SF_RING.map(s=>[s.id,s.ang]));
+const SIZES = { epic:[230,230], sf:[205,50], task:[178,38], step:[188,40], area:[110,32], file:[225,36] };
+const impactTargets = sfId => (outEdges.get(sfId)||[]).filter(e=>e.rel==='impacts'||e.rel==='writes').map(e=>byId.get(e.to)).filter(Boolean);
+
+function computeLayout(){
+  const pos = new Map();
+  pos.set('epic', { x:C.x, y:C.y, w:230, h:230 });
+  SF_RING.forEach(s=>{
+    const sf = byId.get(s.id);
+    const p = polar(s.ang, TIER_R[sf.tier||0]);
+    pos.set(sf.id, { x:p.x, y:p.y, w:SIZES.sf[0], h:SIZES.sf[1] });
+  });
+  SF_RING.forEach(s=>{
+    const sf = byId.get(s.id);
+    const ang = s.ang, r0 = TIER_R[sf.tier||0];
+    if (mode==='progress'){
+      const tasks = children(sf.id).filter(n=>n.kind==='task');
+      tasks.forEach((t,j)=>{
+        const p = polar(ang+(j-(tasks.length-1)/2)*13, r0+100+j*52);
+        pos.set(t.id, { x:p.x, y:p.y, w:SIZES.task[0], h:SIZES.task[1] });
+      });
+    } else {
+      const steps = children(sf.id).filter(n=>n.kind==='step');
+      steps.forEach((st,j)=>{
+        const p = polar(ang+(j-(steps.length-1)/2)*12, r0+90+j*56);
+        pos.set(st.id, { x:p.x, y:p.y, w:SIZES.step[0], h:SIZES.step[1] });
+      });
+      if (impactOn){
+        const tg = impactTargets(sf.id).filter(n=>!pos.has(n.id));
+        const areas = tg.filter(n=>n.kind==='area'), files = tg.filter(n=>n.kind==='file');
+        const place = (n,i,count,r)=>{
+          let off;
+          if (count===1){
+            off = n.kind==='area' ? (files.length ? -18 : 0) : (areas.length ? 18 : 0);
+          } else {
+            const half = n.kind==='area' ? (count>2 ? 30 : 20) : Math.min(50, Math.max(24, count*16));
+            off = -half + 2*half*(i/(count-1));
+          }
+          const p = polar(ang+off, r);
+          pos.set(n.id, { x:p.x, y:p.y, w:SIZES[n.kind][0], h:SIZES[n.kind][1] });
+        };
+        areas.forEach((a,i)=>place(a,i,areas.length,r0+95));
+        files.forEach((f,i)=>place(f,i,files.length,r0+210));
+      }
+    }
+  });
+  return pos;
+}
+
+/* ── Ring guides + nhãn tier ── */
+function buildRings(){
+  [200,385,500].forEach((r,i)=>{
+    const c = document.createElementNS(NS,'circle');
+    c.setAttribute('class','ringguide');
+    c.setAttribute('cx',C.x); c.setAttribute('cy',C.y); c.setAttribute('r',r);
+    ringsG.append(c);
+    const lp = polar(-45,r);
+    const t = document.createElementNS(NS,'text');
+    t.setAttribute('class','ringlabel');
+    t.setAttribute('x', lp.x+8); t.setAttribute('y', lp.y-8);
+    t.textContent = 'tier '+i;
+    ringsG.append(t);
+  });
+}
+
+/* ── Wedge spotlight: quạt ±24° quanh SF khi hover (chế độ logic) ── */
+function wedgePath(ang){
+  const i1 = polar(ang-24,60), i2 = polar(ang+24,60), o2 = polar(ang+24,680), o1 = polar(ang-24,680);
+  return 'M '+i1.x+' '+i1.y+' A 60 60 0 0 1 '+i2.x+' '+i2.y+' L '+o2.x+' '+o2.y+' A 680 680 0 0 0 '+o1.x+' '+o1.y+' Z';
+}
+
+/* ── Hidden rules + filter ── */
+function nodeModeHidden(n){
+  if (mode==='progress') return n.kind==='step'||n.kind==='area'||n.kind==='file';
+  if (n.kind==='task') return true;
+  if ((n.kind==='area'||n.kind==='file') && !impactOn) return true;
+  return false;
+}
+function edgeModeHidden(e){
+  if (mode==='progress') return e.rel==='flows-to'||e.rel==='impacts'||e.rel==='writes';
+  return false;
+}
+function applyFilter(){
+  const vis = new Set();
+  nodelayer.querySelectorAll('.node').forEach(el=>{
+    const n = byId.get(el.dataset.id);
+    const hid = nodeModeHidden(n) || !kindFilter.has(n.kind);
+    el.classList.toggle('hidden', hid);
+    if (!hid) vis.add(n.id);
+  });
+  edgeg.querySelectorAll('.edge').forEach(el=>{
+    const e = M.edges[+el.dataset.eid];
+    el.classList.toggle('hidden', edgeModeHidden(e) || !vis.has(e.from) || !vis.has(e.to));
+  });
+}
+
+/* ── Edge paths: cung tròn quanh tâm ── */
+function faintCls(e){ return (mode==='logic' && (e.rel==='contains'||e.rel==='depends-on')) ? ' faint' : ''; }
+function arcCtrl(pa, pb, extra){
+  const aa = Math.atan2(pa.y-C.y, pa.x-C.x), ab = Math.atan2(pb.y-C.y, pb.x-C.x);
+  let d = ab-aa;
+  while (d>Math.PI) d -= 2*Math.PI;
+  while (d<-Math.PI) d += 2*Math.PI;
+  const am = aa + d/2;
+  const rm = (Math.hypot(pa.x-C.x,pa.y-C.y) + Math.hypot(pb.x-C.x,pb.y-C.y))/2 + extra;
+  return { x:C.x+Math.cos(am)*rm, y:C.y+Math.sin(am)*rm };
+}
+function pullback(cp, pb, m){
+  const dx = pb.x-cp.x, dy = pb.y-cp.y, L = Math.hypot(dx,dy)||1;
+  return { x: pb.x-dx/L*m, y: pb.y-dy/L*m };
+}
+function pathFor(e, pa, pb){
+  if (e.rel==='contains') return 'M '+pa.x+' '+pa.y+' L '+pb.x+' '+pb.y; /* node che 2 đầu */
+  if (e.rel==='depends-on'){
+    const cp = arcCtrl(pa,pb,70);
+    const t = pullback(cp, pb, pb.w/2+8);
+    return 'M '+pa.x+' '+pa.y+' Q '+cp.x+' '+cp.y+' '+t.x+' '+t.y;
+  }
+  if (e.rel==='flows-to'){
+    const mx = (pa.x+pb.x)/2, my = (pa.y+pb.y)/2;
+    const dx = mx-C.x, dy = my-C.y, L = Math.hypot(dx,dy)||1;
+    const cp = { x: mx+dx/L*46, y: my+dy/L*46 }; /* đẩy control ra ngoài vòng */
+    const t = pullback(cp, pb, pb.w/2+8);
+    return 'M '+pa.x+' '+pa.y+' Q '+cp.x+' '+cp.y+' '+t.x+' '+t.y;
+  }
+  const cp = arcCtrl(pa,pb,50);
+  return 'M '+pa.x+' '+pa.y+' Q '+cp.x+' '+cp.y+' '+pb.x+' '+pb.y;
+}
+function drawEdges(pos){
+  edgeg.innerHTML = '';
+  M.edges.forEach((e,i)=>{
+    const pa = pos.get(e.from), pb = pos.get(e.to);
+    if (!pa || !pb) return;
+    const p = document.createElementNS(NS,'path');
+    p.setAttribute('class','edge e-'+e.rel+faintCls(e));
+    p.dataset.eid = String(i);
+    p.setAttribute('d', pathFor(e,pa,pb));
+    if (e.rel==='depends-on'||e.rel==='flows-to') p.setAttribute('marker-end','url(#arr)');
+    edgeg.appendChild(p);
+  });
+}
+
+/* ── Node DOM — mọi text qua textContent (escape tự nhiên) ── */
+function nodeEl(n, p){
+  const el = document.createElement('div');
+  el.className = 'node kind-'+n.kind + (n.kind==='file'&&n.computed ? ' computed' : '');
+  el.dataset.id = n.id;
+  el.style.left = (p.x-p.w/2)+'px'; el.style.top = (p.y-p.h/2)+'px';
+  el.style.width = p.w+'px'; el.style.minHeight = p.h+'px';
+  if (n.kind==='epic'){
+    const d = document.createElement('span'); d.className='dot';
+    d.style.background = STATE[n.state].color; d.style.width='12px'; d.style.height='12px';
+    const t = document.createElement('div'); t.className='ntitle epic-title'; t.textContent = n.title;
+    const meta = document.createElement('div'); meta.className='nmeta'; meta.textContent = (n.linear||'') + ' · ' + M.meta.dest;
+    el.append(d,t,meta);
+  } else {
+    const row = document.createElement('div'); row.className = 'nrow';
+    if (n.state){ const d = document.createElement('span'); d.className='dot'; d.style.background = STATE[n.state].color; row.append(d); }
+    const tag = document.createElement('span'); tag.className='tag';
+    tag.textContent = n.kind==='sf' ? 'SF·T'+(n.tier??'?') : n.kind==='task' ? 'T' : n.kind==='step' ? 'S' : n.kind==='area' ? 'A' : 'F';
+    row.append(tag);
+    const t = document.createElement('span'); t.className='ntitle'; t.textContent = n.title; row.append(t);
+    el.append(row);
+    if (n.kind==='sf'){
+      const tasks = children(n.id).filter(x=>x.kind==='task');
+      const done = tasks.filter(x=>x.state==='done').length;
+      const meta = document.createElement('div'); meta.className='nmeta';
+      meta.textContent = (n.linear||'—') + ' · ' + done + '/' + tasks.length + ' task';
+      el.append(meta);
+      const bar = document.createElement('div'); bar.className='nbar';
+      const fill = document.createElement('i'); fill.style.width = (tasks.length ? done/tasks.length*100 : 0)+'%';
+      bar.append(fill); el.append(bar);
+    }
+    if (n.kind==='file'){
+      const meta = document.createElement('div'); meta.className='nmeta'; meta.textContent = n.path;
+      el.append(meta);
+    }
+  }
+  el.addEventListener('click', ev=>{ ev.stopPropagation(); select(n.id); });
+  el.addEventListener('mouseenter', ()=>hoverSet(n.id));
+  el.addEventListener('mouseleave', clearHover);
+  return el;
+}
+
+/* ── Hover: dim + hàng xóm bậc 1 + wedge (SF, logic) ── */
+function hoverSet(id){
+  const nb = neighbors(id); nb.add(id);
+  nodelayer.querySelectorAll('.node').forEach(el=>el.classList.toggle('dim', !nb.has(el.dataset.id)));
+  edgeg.querySelectorAll('.edge').forEach(el=>{
+    const e = M.edges[+el.dataset.eid];
+    const act = nb.has(e.from) && nb.has(e.to);
+    el.classList.toggle('dim', !act);
+    el.classList.toggle('hot', act && (e.from===id||e.to===id));
+  });
+  const n = byId.get(id);
+  if (mode==='logic' && n.kind==='sf' && ringAng.has(id)){
+    wedge.setAttribute('d', wedgePath(ringAng.get(id)));
+    wedge.classList.add('show');
+  }
+}
+function clearHover(){
+  nodelayer.querySelectorAll('.node.dim').forEach(el=>el.classList.remove('dim'));
+  edgeg.querySelectorAll('.edge').forEach(el=>el.classList.remove('dim','hot'));
+  wedge.classList.remove('show');
+}
+
+/* ── Select + panel ── */
+let selected = null;
+function select(id){
+  selected = id;
+  nodelayer.querySelectorAll('.node').forEach(el=>el.classList.toggle('sel', el.dataset.id===id));
+  openPanel(id);
+}
+function closePanel(){
+  selected = null;
+  nodelayer.querySelectorAll('.node.sel').forEach(el=>el.classList.remove('sel'));
+  panel.classList.remove('show');
+}
+function el(cls, text){ const d = document.createElement('div'); d.className = cls; if (text!=null) d.textContent = text; return d; }
+function openPanel(id){
+  const n = byId.get(id);
+  panel.innerHTML = '';
+  const head = document.createElement('div'); head.className='p-head';
+  head.append(el('p-kind', KIND[n.kind].label + (n.kind==='sf'&&n.tier!=null ? ' · tier '+n.tier : '')));
+  const close = document.createElement('button'); close.className='p-close';
+  close.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+  close.onclick = closePanel; head.append(close);
+  panel.append(head, el('p-title', n.title));
+  if (n.state){
+    const st = STATE[n.state];
+    const chip = document.createElement('span'); chip.className='p-state';
+    chip.style.color = st.color;
+    chip.style.borderColor = 'color-mix(in srgb,'+st.color+' 40%,transparent)';
+    chip.style.background = 'color-mix(in srgb,'+st.color+' 10%,transparent)';
+    chip.textContent = st.label;
+    panel.append(chip);
+  }
+  const row = (k,v,mono)=>{ const r = el('p-row'); r.append(el('k',k)); const vv = el('v'+(mono?' mono':'')); vv.textContent = v; r.append(vv); panel.append(r); };
+  if (n.linear) row('Linear', n.linear, true);
+  if (n.kind==='epic') row('Nhánh đích', M.meta.dest, true);
+  if (n.kind==='file'){
+    row('Đường dẫn', n.path, true);
+    row('Nguồn', n.computed ? 'story-impact (tính toán)' : 'Touch map (curated)');
+    const sfs = sfWrites(n.id);
+    if (sfs.length) row('SF đụng', sfs.map(s=>s.linear||s.title).join(', '));
+  }
+  if (n.kind==='step' && n.detail) row('Cơ chế', n.detail);
+  const evs = evidenceFor(id);
+  if (evs.length){
+    panel.append(el('p-ev p-evh','Bằng chứng'));
+    evs.forEach(ev=>{
+      const item = el('p-evi', ev.summary);
+      item.append(el('p-evr', ev.ref));
+      panel.append(item);
+    });
+  }
+  panel.classList.add('show');
+}
+
+/* ── Legend theo mode ── */
+function refreshLegend(){
+  legend.innerHTML = '';
+  const add = c=>{ const d = document.createElement('div'); d.className='lg'+(c?' '+c:''); return d; };
+  Object.entries(STATE).forEach(([k,st])=>{
+    if (k==='complete') return;
+    const d = add(); d.innerHTML = '<span class="dot" style="background:'+st.color+'"></span>'+st.label; legend.append(d);
+  });
+  const rels = mode==='progress' ? [['','contains'],['dash','depends-on']] : [['','flows-to'],['dotd','impacts'],['dash','writes']];
+  rels.forEach(([c,label])=>{ const d = add(c); d.innerHTML = '<span class="lgsample"></span>'+label; legend.append(d); });
+  if (mode==='logic' && impactOn){
+    const d1 = add('dash'); d1.innerHTML = '<span class="lgsample"></span>file tính toán'; legend.append(d1);
+    const d2 = add(); d2.innerHTML = '<span class="lgsample"></span>file curated'; legend.append(d2);
+  }
+}
+
+/* ── Render ── */
+function renderAll(fit){
+  nodelayer.innerHTML = '';
+  const pos = computeLayout();
+  drawEdges(pos);
+  M.nodes.forEach(n=>{ const p = pos.get(n.id); if (p) nodelayer.append(nodeEl(n,p)); });
+  applyFilter(); refreshLegend();
+  if (fit) cam.fit();
+}
+
+/* ── Toolbar ── */
+const kindchips = $('#kindchips'), impactbtn = $('#impactbtn'), modeseg = $('#modeseg');
+[['epic','Epic'],['sf','SF'],['task','Task'],['step','Bước'],['area','Area'],['file','File']].forEach(([k,label])=>{
+  const b = document.createElement('button'); b.className='chip on'; b.dataset.kind=k; b.textContent=label;
+  b.onclick = ()=>{ if (kindFilter.has(k)) kindFilter.delete(k); else kindFilter.add(k); b.classList.toggle('on',kindFilter.has(k)); applyFilter(); };
+  kindchips.append(b);
+});
+function refreshChips(){
+  kindchips.querySelectorAll('.chip').forEach(b=>{
+    const k = b.dataset.kind;
+    b.disabled = (mode==='progress' && (k==='step'||k==='area'||k==='file')) || (mode==='logic' && k==='task');
+  });
+  impactbtn.style.display = mode==='logic' ? '' : 'none';
+}
+modeseg.querySelectorAll('button').forEach(b=>{
+  b.onclick = ()=>{
+    mode = b.dataset.mode;
+    if (mode==='progress') impactOn = false;
+    modeseg.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+    impactbtn.classList.toggle('on', impactOn);
+    refreshChips(); renderAll(true);
+  };
+});
+impactbtn.onclick = ()=>{ impactOn = !impactOn; impactbtn.classList.toggle('on', impactOn); renderAll(true); };
+$('#fitbtn').onclick = ()=>cam.fit();
+
+/* ── Warnings (decodeWarnings[] — render phần còn lại + badge) ── */
+$('#warncount').textContent = WARNINGS.length + ' cảnh báo decode';
+WARNINGS.forEach(w=>{ const d = document.createElement('div'); d.textContent = w; warnbox.append(d); });
+$('#warnchip').onclick = ()=>warnbox.classList.toggle('show');
+
+/* ── Error state (payload lỗi từ main) ── */
+const errbox = $('#errbox');
+$('#errcode').textContent = 'error.code = ' + ERROR_PAYLOAD.code;
+$('#errmsg').textContent = ERROR_PAYLOAD.message;
+$('#errpath').textContent = ERROR_PAYLOAD.path;
+$('#errbtn').onclick = ()=>errbox.classList.add('show');
+$('#errclose').onclick = ()=>errbox.classList.remove('show');
+errbox.addEventListener('click', e=>{ if (e.target===errbox) errbox.classList.remove('show'); });
+
+/* ── Theme ── */
+const SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>';
+const MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
+const themeico = $('#themeico');
+themeico.innerHTML = SUN;
+$('#themebtn').onclick = ()=>{
+  document.body.classList.toggle('light');
+  themeico.innerHTML = document.body.classList.contains('light') ? MOON : SUN;
+};
+
+/* ── Nền canvas click → deselect ── */
+canvas.addEventListener('click', e=>{ if (!e.target.closest('.node')) closePanel(); });
+
+/* ── Meta + init ── */
+$('#metaline').textContent = M.meta.generator + ' · ' + M.nodes.length + ' node · ' + M.edges.length + ' cạnh · sinh ' + M.meta.generatedAt.slice(0,16).replace('T',' ');
+buildRings();
+refreshChips();
+renderAll(true);
+window.addEventListener('resize', ()=>cam.fit());
+</script>
+</body>
+</html>

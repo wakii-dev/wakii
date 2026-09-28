@@ -8,7 +8,7 @@
 // không bị bracket clobber khi chỉ thiếu dest.
 // Chạy: node tests/story-verify-tests.mjs
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, chmodSync } from 'node:fs'
 import { join, dirname, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
@@ -62,6 +62,7 @@ case "\$1 \$2" in
   *) printf '{}' ;;
 esac
 `)
+  chmodSync(stub, 0o755) // story-verify đòi [ -x $ORCA_BIN ] — stub không exec bị thay bằng orca thật
   return { stub, env: { STUB_WT_JSON: wtJson } }
 }
 
