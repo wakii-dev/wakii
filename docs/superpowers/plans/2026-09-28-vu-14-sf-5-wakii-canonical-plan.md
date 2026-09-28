@@ -63,9 +63,9 @@
 - Modify: `kit/bin/story-coordinator-pass` (find_bracket → mindmaps `<epic>-*.wakii` trước)
 - Modify: `kit/tests/story-launch-tests.mjs` / qa suites nếu assert watchdog message
 
-- [ ] **Step 5.1 RED** — test launch-next: .wakii-only repo → SF rows từ nodes+edges, dest/epic từ meta, wakii-validate gate (bin thiếu → SKIP mọi story), STORY-COMPLETE derive; story-status in story từ .wakii.
-- [ ] **Step 5.2 GREEN** — watchdog awk bracket → python3 parse .wakii (sf-N node: title/linear; deps từ edges depends-on; dest/epic meta); story-top KHÔNG đọc bracket (không đổi — ghi chú plan).
-- [ ] **Step 5.3** — commit.
+- [x] **Step 5.1 RED** — test launch-next: .wakii-only repo → SF rows từ nodes+edges, dest/epic từ meta, wakii-validate gate (bin thiếu → SKIP mọi story), STORY-COMPLETE derive; story-status in story từ .wakii.
+- [x] **Step 5.2 GREEN** — watchdog awk bracket → python3 parse .wakii (sf-N node: title/linear; deps từ edges depends-on; dest/epic meta); story-top KHÔNG đọc bracket (không đổi — ghi chú plan). Fix phụ: python subprocess seam .sh/bash (story-coordinator-pass + story-ownership-probe) — Windows không exec stub shebang, 64/64 từ baseline 28/36.
+- [x] **Step 5.3** — commit.
 
 ### Task 6: story-tab-wakii-parser — app đọc mindmaps/*.wakii
 

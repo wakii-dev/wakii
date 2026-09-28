@@ -91,6 +91,15 @@ ORCA_DEV = os.environ.get("ORCA_DEV", "")
 ORCA_PROD = os.environ.get("ORCA_PROD", "")
 
 
+def sh_seam_argv(bin_path, args):
+    # Windows: python không exec được script #!/bin|env sh/bash (kit test seam,
+    # giống execMaybe của story-mindmap); file không đuôi trên nt cũng chỉ có
+    # thể là script — binary thật .exe/.cmd → argv nguyên vẹn như cũ
+    if bin_path.endswith(".sh") or (os.name == "nt" and not os.path.splitext(bin_path)[1]):
+        return ["bash", bin_path] + list(args)
+    return [bin_path] + list(args)
+
+
 def run_orca(args, timeout_s=45):
     """Spawn orca (dev→prod→plain runtime) → JSON parsed, hoặc None khi fail."""
     for ud in (ORCA_DEV, ORCA_PROD, None):
@@ -100,8 +109,8 @@ def run_orca(args, timeout_s=45):
         else:
             env.pop("ORCA_USER_DATA_PATH", None)
         try:
-            p = subprocess.run([orca_bin] + args, capture_output=True, text=True,
-                               timeout=timeout_s, env=env)
+            p = subprocess.run(sh_seam_argv(orca_bin, args), capture_output=True,
+                               text=True, timeout=timeout_s, env=env)
         except (subprocess.TimeoutExpired, OSError):
             continue
         if p.returncode == 0:

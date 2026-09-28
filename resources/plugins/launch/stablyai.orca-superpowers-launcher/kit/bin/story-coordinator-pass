@@ -132,6 +132,15 @@ needs_verify = []          # dòng NEEDS-VERIFY in trước summary
 wt_by_dispatch = {}        # dispatchId → worktree path (từ worker-list)
 
 
+def sh_seam_argv(bin_path, args):
+    # Windows: python không exec được script #!/bin|env sh/bash (kit test seam,
+    # giống execMaybe của story-mindmap); file không đuôi trên nt cũng chỉ có
+    # thể là script — binary thật .exe/.cmd → argv nguyên vẹn như cũ
+    if bin_path.endswith(".sh") or (os.name == "nt" and not os.path.splitext(bin_path)[1]):
+        return ["bash", bin_path] + list(args)
+    return [bin_path] + list(args)
+
+
 def log(msg):
     print(f"{time.strftime('%H:%M')} {msg}")
 
@@ -159,8 +168,8 @@ def run_orca(args, timeout_s=45):
         else:
             env.pop("ORCA_USER_DATA_PATH", None)
         try:
-            p = subprocess.run([ORCA_BIN] + args, capture_output=True, text=True,
-                               timeout=timeout_s, env=env)
+            p = subprocess.run(sh_seam_argv(ORCA_BIN, args), capture_output=True,
+                               text=True, timeout=timeout_s, env=env)
         except (subprocess.TimeoutExpired, OSError):
             continue
         if p.returncode == 0:
@@ -177,8 +186,8 @@ def run_orca_once(args, timeout_s=45):
     reply thành gửi ĐÔI — real-run 23:27). rc0 = thành công dù stdout có parse
     được JSON hay không."""
     try:
-        p = subprocess.run([ORCA_BIN] + args, capture_output=True, text=True,
-                           timeout=timeout_s, env=dict(os.environ))
+        p = subprocess.run(sh_seam_argv(ORCA_BIN, args), capture_output=True,
+                           text=True, timeout=timeout_s, env=dict(os.environ))
     except (subprocess.TimeoutExpired, OSError):
         return None
     if p.returncode != 0:
@@ -276,7 +285,8 @@ def save_needs_verify(run_id, msg):
 
 
 def find_bracket(run):
-    """Tìm bracket file theo epic-id trong objective (docs roots: env hoặc $PWD)."""
+    """Tìm story file theo epic-id trong objective (mindmaps/*.wakii trước —
+    canonical VU-14; brackets/*.md fallback legacy). Docs roots: env hoặc $PWD."""
     import re
     import glob
     obj = run.get("objective") or ""
@@ -286,9 +296,13 @@ def find_bracket(run):
     epic = m.group(1).lower()
     for root in DOCS_ROOTS:
         hits = sorted(glob.glob(os.path.join(
+            root, "docs", "superpowers", "mindmaps", f"{epic}-*.wakii")))
+        if hits:
+            return hits[0].replace(os.sep, "/")
+        hits = sorted(glob.glob(os.path.join(
             root, "docs", "superpowers", "brackets", f"{epic}-*.md")))
         if hits:
-            return hits[0]
+            return hits[0].replace(os.sep, "/")
     return ""
 
 
@@ -391,7 +405,7 @@ def load_ownership(runs, self_handle):
             json.dump(runs, f)
         env = dict(os.environ)
         env["OP_RUNS_FILE"] = tmp
-        p = subprocess.run([probe, "--json", "--self", self_handle or ""],
+        p = subprocess.run(sh_seam_argv(probe, ["--json", "--self", self_handle or ""]),
                            capture_output=True, text=True, timeout=300, env=env)
     except (subprocess.TimeoutExpired, OSError):
         return None
@@ -419,7 +433,8 @@ def stall_sweep():
         return 0
     resumed = 0
     try:
-        p = subprocess.run([RESUME_BIN, "--check"], capture_output=True, text=True, timeout=180)
+        p = subprocess.run(sh_seam_argv(RESUME_BIN, ["--check"]), capture_output=True,
+                           text=True, timeout=180)
     except (subprocess.TimeoutExpired, OSError):
         log("stall sweep skip — story-resume --check fail")
         return 0
@@ -437,8 +452,8 @@ def stall_sweep():
             log(f"RESUME SKIP {sf} (cap {MAX_RESUME} resume/pass)")
             continue
         try:
-            s = subprocess.run([RESUME_BIN, sf, "--send"], capture_output=True,
-                               text=True, timeout=300)
+            s = subprocess.run(sh_seam_argv(RESUME_BIN, [sf, "--send"]),
+                               capture_output=True, text=True, timeout=300)
         except (subprocess.TimeoutExpired, OSError):
             s = None
         if s is not None and "SENT" in (s.stdout or ""):
