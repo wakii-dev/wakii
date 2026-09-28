@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { OrcaRuntimeService, join, listWorktrees, tmpdir } from '../orca-runtime-test-mocks.spec'
+import { WakiiRuntimeService, join, listWorktrees, tmpdir } from '../orca-runtime-test-mocks.spec'
 import type { WorktreeLineage, WorktreeMeta } from '../orca-runtime-test-mocks.spec'
 import {
   TEST_REPO_ID,
@@ -8,6 +8,8 @@ import {
   makeWorktreeMeta,
   store
 } from '../orca-runtime-test-fixtures.spec'
+
+const anyCatalogVersion = { epoch: expect.any(String), sequence: expect.any(Number) }
 
 describe('WakiiRuntimeService', () => {
   it('strips Wakii provenance fields from runtime metadata updates', async () => {
@@ -24,7 +26,7 @@ describe('WakiiRuntimeService', () => {
       getWorktreeMeta: (worktreeId: string) => metaById[worktreeId],
       setWorktreeMeta
     }
-    const runtime = new OrcaRuntimeService(runtimeStore as never)
+    const runtime = new WakiiRuntimeService(runtimeStore as never)
 
     await runtime.updateManagedWorktreeMeta(`id:${TEST_WORKTREE_ID}`, {
       comment: 'keep me',
@@ -84,7 +86,7 @@ describe('WakiiRuntimeService', () => {
         isMainWorktree: false
       }
     ])
-    const runtime = new OrcaRuntimeService(runtimeStore as never)
+    const runtime = new WakiiRuntimeService(runtimeStore as never)
 
     await runtime.updateManagedWorktreeMeta(`id:${childId}`, {
       lineage: { parentWorktree: `id:${parentId}` }
@@ -137,7 +139,7 @@ describe('WakiiRuntimeService', () => {
         isMainWorktree: false
       }
     ])
-    const runtime = new OrcaRuntimeService(runtimeStore as never)
+    const runtime = new WakiiRuntimeService(runtimeStore as never)
 
     await expect(
       runtime.updateManagedWorktreeMeta(`id:${childId}`, {
@@ -210,7 +212,7 @@ describe('WakiiRuntimeService', () => {
           isMainWorktree: false
         }
       ])
-    const runtime = new OrcaRuntimeService(runtimeStore as never)
+    const runtime = new WakiiRuntimeService(runtimeStore as never)
 
     await runtime.showManagedWorktree(`id:${childId}`)
     const rotatedParentInstance = metaById[parentId].instanceId
@@ -268,7 +270,7 @@ describe('WakiiRuntimeService', () => {
       removeWorktreeLineage
     }
     vi.mocked(listWorktrees).mockRejectedValueOnce(new Error('git unavailable'))
-    const runtime = new OrcaRuntimeService(runtimeStore as never)
+    const runtime = new WakiiRuntimeService(runtimeStore as never)
 
     await expect(runtime.showManagedWorktree(`id:${childId}`)).rejects.toThrow('selector_not_found')
 
@@ -286,12 +288,13 @@ describe('WakiiRuntimeService', () => {
       removeWorktreeLineage
     }
     vi.mocked(listWorktrees).mockRejectedValueOnce(new Error('git unavailable'))
-    const runtime = new OrcaRuntimeService(runtimeStore as never)
+    const runtime = new WakiiRuntimeService(runtimeStore as never)
 
     await expect(runtime.listDetectedManagedWorktrees(`id:${TEST_REPO_ID}`)).resolves.toEqual({
       repoId: TEST_REPO_ID,
       authoritative: false,
       source: 'metadata-fallback',
+      catalogVersion: anyCatalogVersion,
       worktrees: []
     })
 
@@ -308,7 +311,7 @@ describe('WakiiRuntimeService', () => {
       ]),
       shutdown: vi.fn(async () => {})
     }
-    const runtime = new OrcaRuntimeService(store, undefined, {
+    const runtime = new WakiiRuntimeService(store, undefined, {
       getLocalProvider: () => localProvider as never
     })
     vi.spyOn(
@@ -348,7 +351,7 @@ describe('WakiiRuntimeService', () => {
       ]),
       shutdown: vi.fn(async () => {})
     }
-    const runtime = new OrcaRuntimeService(store, undefined, {
+    const runtime = new WakiiRuntimeService(store, undefined, {
       getLocalProvider: () => localProvider as never
     })
 
@@ -377,7 +380,7 @@ describe('WakiiRuntimeService', () => {
       listProcesses: vi.fn(async () => []),
       shutdown: vi.fn(async () => {})
     }
-    const runtime = new OrcaRuntimeService(store, undefined, {
+    const runtime = new WakiiRuntimeService(store, undefined, {
       getLocalProvider: () => localProvider as never
     })
     vi.spyOn(
@@ -409,7 +412,7 @@ describe('WakiiRuntimeService', () => {
       shutdown: vi.fn(async () => {})
     }
     const localRepo = store.getRepos()[0]
-    const runtime = new OrcaRuntimeService(
+    const runtime = new WakiiRuntimeService(
       { ...store, getRepos: () => [localRepo, { ...localRepo, connectionId: 'ssh-1' }] } as never,
       undefined,
       { getLocalProvider: () => localProvider as never }
@@ -452,7 +455,7 @@ describe('WakiiRuntimeService', () => {
     }
     const localRepo = store.getRepos()[0]
     const sshRepo = { ...localRepo, connectionId: 'ssh-1' }
-    const runtime = new OrcaRuntimeService(
+    const runtime = new WakiiRuntimeService(
       {
         ...store,
         getRepos: () => [localRepo, sshRepo]
@@ -503,7 +506,7 @@ describe('WakiiRuntimeService', () => {
         createdAt: 1
       }
     }
-    const runtime = new OrcaRuntimeService({
+    const runtime = new WakiiRuntimeService({
       ...store,
       getAllWorktreeMeta: () => metaById,
       getWorktreeMeta: (worktreeId: string) => metaById[worktreeId],
@@ -557,7 +560,7 @@ describe('WakiiRuntimeService', () => {
         createdAt: 1
       }
     }
-    const runtime = new OrcaRuntimeService({
+    const runtime = new WakiiRuntimeService({
       ...store,
       getRepos: () => [folderRepo],
       getRepo: (id: string) => (id === folderRepo.id ? folderRepo : undefined),
@@ -617,7 +620,7 @@ describe('WakiiRuntimeService', () => {
       })
     }
     const setWorktreeMeta = vi.fn()
-    const runtime = new OrcaRuntimeService({
+    const runtime = new WakiiRuntimeService({
       ...store,
       getRepos: () => [localRepo, remoteRepo],
       getAllWorktreeMeta: () => metaById,

@@ -1,6 +1,6 @@
-import { createElement, useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
-import { GitCompareArrows, Eye, ShieldAlert, Pin, ListChecks } from 'lucide-react'
+import { Pin } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { basename, normalizeRelativePath } from '@/lib/path'
@@ -8,8 +8,7 @@ import { getEditorDisplayLabel } from '@/components/editor/editor-labels'
 import { renameFileOnDisk } from '@/lib/rename-file'
 import { isImeCompositionKeyDown } from '@/lib/ime-composition-keyboard-event'
 import { detectLanguage } from '@/lib/language-detect'
-import { FILE_ICON_COLOR_CLASS, getFileTypeIcon, getFileTypeIconColor } from '@/lib/file-type-icons'
-import { cn } from '@/lib/utils'
+import { getFileTypeIconColor } from '@/lib/file-type-icons'
 import { useRepoById, useWorktreeById } from '@/store/selectors'
 import { useAppStore } from '@/store'
 import { STATUS_COLORS, STATUS_LABELS } from '../right-sidebar/status-display'
@@ -31,6 +30,7 @@ import { EditorFileTabContextMenu } from './EditorFileTabContextMenu'
 import { translate } from '@/i18n/i18n'
 import { TAB_CONTAINER_WIDTH_CLASSES, TAB_LABEL_WIDTH_CLASSES } from './tab-width-rules'
 import { EditorFileTabCloseButton } from './EditorFileTabCloseButton'
+import { EditorFileTabIcon } from './editor-file-tab-icon'
 import { useTabStripPointerActivation } from './tab-strip-pointer-activation'
 
 export default function EditorFileTab({
@@ -74,7 +74,6 @@ export default function EditorFileTab({
 }): React.JSX.Element {
   const worktree = useWorktreeById(file.worktreeId)
   const repo = useRepoById(worktree?.repoId ?? null)
-  const FileIcon = getFileTypeIcon(file.filePath)
   // Why: simulator tabs reuse this chrome with synthetic labels — the classifier
   // returns null for them, so they keep the neutral tab color.
   const iconColorGroup = getFileTypeIconColor(file.filePath)
@@ -109,6 +108,10 @@ export default function EditorFileTab({
     diffSource: file.diffSource
   })
   const openMarkdownPreview = useAppStore((s) => s.openMarkdownPreview)
+  // Why: the stored flag outlives the setting (sessions persist it, other windows change it), so preview-ness is derived, never reconciled.
+  const isPreviewTab = useAppStore(
+    (s) => file.isPreview === true && s.settings?.editorPreviewTabsEnabled !== false
+  )
   const [menuOpen, setMenuOpen] = useState(false)
   const [menuPoint, setMenuPoint] = useState({ x: 0, y: 0 })
   const [isRenaming, setIsRenaming] = useState(false)
@@ -246,7 +249,7 @@ export default function EditorFileTab({
         )
       }}
       onDoubleClick={() => {
-        if (file.isPreview && onMakePermanent) {
+        if (isPreviewTab && onMakePermanent) {
           onMakePermanent()
         }
       }}
@@ -268,34 +271,15 @@ export default function EditorFileTab({
       }}
     >
       {isActive && <span className={ACTIVE_TAB_INDICATOR_CLASSES} aria-hidden />}
-      {isConflictReview ? (
-        <ShieldAlert
-          className={`w-3 h-3 mr-1 shrink-0 ${isActive ? 'text-orange-400' : 'text-orange-400/70'}`}
-        />
-      ) : isCheckDetails ? (
-        <ListChecks
-          className={`w-3 h-3 mr-1 shrink-0 ${isActive ? 'text-foreground' : 'text-muted-foreground'}`}
-        />
-      ) : isDiff ? (
-        <GitCompareArrows
-          className={`w-3 h-3 mr-1 shrink-0 ${isActive ? 'text-foreground' : 'text-muted-foreground'}`}
-        />
-      ) : isMarkdownPreviewTab ? (
-        <Eye
-          className={`w-3.5 h-3.5 mr-1.5 shrink-0 ${isActive ? 'text-foreground' : 'text-muted-foreground'}`}
-        />
-      ) : (
-        createElement(FileIcon, {
-          className: cn(
-            'w-3 h-3 mr-1 shrink-0',
-            isActive
-              ? 'text-foreground'
-              : iconColorGroup
-                ? FILE_ICON_COLOR_CLASS[iconColorGroup]
-                : 'text-muted-foreground'
-          )
-        })
-      )}
+      <EditorFileTabIcon
+        file={file}
+        isActive={isActive}
+        isConflictReview={isConflictReview}
+        isCheckDetails={isCheckDetails}
+        isDiff={isDiff}
+        isMarkdownPreviewTab={isMarkdownPreviewTab}
+        iconColorGroup={iconColorGroup}
+      />
       {isPinned && <Pin className="mr-1 size-3 shrink-0 text-muted-foreground" aria-hidden />}
       <span className="mr-1 flex min-w-0 flex-1 items-baseline gap-1">
         {isRenaming ? (
@@ -337,10 +321,10 @@ export default function EditorFileTab({
           />
         ) : (
           <span
-            className={`${TAB_LABEL_WIDTH_CLASSES}${file.isPreview ? ' italic' : ''}${isMissingFileMutation ? ' line-through' : ''}`}
+            className={`${TAB_LABEL_WIDTH_CLASSES}${isPreviewTab ? ' italic' : ''}${isMissingFileMutation ? ' line-through' : ''}`}
             style={tabStatusColor ? { color: tabStatusColor } : undefined}
             onDoubleClick={(e) => {
-              if (file.isPreview && onMakePermanent) {
+              if (isPreviewTab && onMakePermanent) {
                 e.stopPropagation()
                 onMakePermanent()
                 return

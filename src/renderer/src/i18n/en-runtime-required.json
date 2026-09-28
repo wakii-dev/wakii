@@ -40,7 +40,6 @@
         "b0b7344684": "Request up to 15 reviewers",
         "b1157c78ff": "sheet",
         "ce8a85d209": "default",
-        "checkActionRequiredHint": "This check needs a manual action on GitHub (for example, approving the workflow run) before merging is unblocked.",
         "d0a05e73f5": "compact",
         "e517b4d641": "closed",
         "e9b7cb7d17": "Failed to {{value0}} PR"
@@ -72,7 +71,16 @@
         "af6e02c44a": "page",
         "f5a6b38a14": "sheet"
       },
+      "NativeChatResumeFailureGuidance": {
+        "conflict": "Another Wakii window or terminal still owns this session. Close it, then retry.",
+        "fallback": "Wakii couldn’t resume this chat. Open it to continue manually.",
+        "ownershipUnknown": "Wakii is still working out which process owns this session. Wait a moment, then retry.",
+        "superseded": "Open the chat and reply. New work arrived in it right after the restart, so Wakii didn’t send its “continue” message.",
+        "unconfirmed": "Wakii couldn’t confirm the “continue” message was delivered. Open the chat and check before sending another.",
+        "unsupported": "This chat can’t be resumed by Wakii. Open it to see where it stopped."
+      },
       "NativeChatResumeOnRestartModal": {
+        "continueRefused": "{{value0}} chats could not be continued. Open them to continue manually.",
         "continueRefused_one": "{{value0}} chat could not be continued. Open it to continue manually.",
         "continueRefused_other": "{{value0}} chats could not be continued. Open them to continue manually.",
         "continueUnconfirmed_one": "Continuation delivery is unconfirmed for {{value0}} chat. Open it to check before sending another message.",
@@ -82,7 +90,9 @@
         "0e587e31fb": "yaml",
         "2132b670da": "both",
         "7711ad5122": "Local setup command",
-        "addHostHint": "Register another machine or Orca server",
+        "addHostHint": "Register another machine or Wakii server",
+        "addRemoteOrcaServer": "Add Remote Wakii Server",
+        "addRemoteOrcaServerHint": "Pair another Wakii runtime",
         "cloneDestinationPlaceholder": "/parent/directory/on/host",
         "cloneHostSetup": "Clone",
         "cloneProjectOnHost": "Clone project",
@@ -123,12 +133,14 @@
         "b0e80f083d": "wants to merge into",
         "b6bda618cf": "compact",
         "c9de94b07a": "Show more lines above",
-        "checkActionRequiredHint": "This check needs a manual action on GitHub (for example, approving the workflow run) before merging is unblocked.",
         "d65f70786e": "closed",
         "e1f3641bfd": "from",
         "e295a78c11": "Show {{value0}} more lines above",
         "e6996f4024": "· updated",
         "ff84e1f54c": "{{value0}} {{value1}} as viewed"
+      },
+      "QuickOpen": {
+        "344f8a48dd": "on the host running the Quick Open scan to enable fast, gitignore-aware listing:"
       },
       "StarNagCard": {
         "68a41bc3aa": "Could not star with",
@@ -194,7 +206,6 @@
         "d5253b54af": "error"
       },
       "WorktreeJumpPalette": {
-        "c4afa68159": "Try a worktree, setting, action, tab title, agent prompt, URL, PR, or port.",
         "dabd819ca1": "Type to see all {{value0}} worktrees"
       },
       "activity": {
@@ -209,9 +220,7 @@
       },
       "artifacts": {
         "ArtifactsPage": {
-          "openArtifact": "Open artifact",
-          "signInCopy": "Sign in to view and manage artifacts shared through your account.",
-          "signInHeading": "Sign in to Orca"
+          "openArtifact": "Open artifact"
         },
         "artifact-publish-flow": {
           "5cb4f5ec36": "Copy link"
@@ -356,7 +365,6 @@
         "report": {
           "CrashReportDialog": {
             "56a3dfa283": "Failed to send crash report.",
-            "835037edc9": "· Orca",
             "b175e90213": "No crash report is available.",
             "b2e36f53a1": "Failed to send crash report. Diagnostic ticket {{value0}} was uploaded but not linked."
           }
@@ -385,12 +393,14 @@
           "d16e037f40": "rich"
         },
         "IpynbViewer": {
+          "329764e9fc": "BETA",
           "59b6cd874b": "code",
-          "ba149053d5": "markdown"
+          "8c3b21369a": "nbformat",
+          "ba149053d5": "markdown",
+          "pythonOnly": "Only Python notebooks can run in Wakii.",
+          "venvDescription": "Wakii will create a .venv in {{folder}} from '{{env}}', install ipykernel into it, and run this notebook there."
         },
         "ReviewNotesSendMenuContent": {
-          "50f7e753ea": "Sending notes to active agent...",
-          "bb9c69a0c9": "Notes sent to active agent.",
           "e84705f223": "Active agent session",
           "f5096c6e4e": "Could not send notes to the active agent."
         },
@@ -425,6 +435,19 @@
         },
         "RichMarkdownSlashMenu": {
           "e2e12b0e98": "component"
+        },
+        "git": {
+          "blame": {
+            "strings": {
+              "1f078da5df": "Commit",
+              "1f32d46ce0": "File has too many lines for inline blame.",
+              "2f33a41d63": "Date",
+              "5d58990105": "File is too large for inline blame.",
+              "6f3313de46": "Author",
+              "e6fc8a66b3": "unsaved changes",
+              "f553e19e41": "You"
+            }
+          }
         }
       },
       "emulator": {
@@ -486,7 +509,7 @@
                 }
               },
               "steps": {
-                "description": "Enable agents to manage and coordinate Orca workspaces to execute larger tasks.",
+                "description": "Enable agents to manage and coordinate Wakii workspaces to execute larger tasks.",
                 "name": "Orchestration",
                 "subtitle": "Orchestration"
               },
@@ -498,17 +521,6 @@
                 "coordinatorBeat1": "PR 1/2 ready",
                 "coordinatorBeat2": "PR 2/2 ready",
                 "coordinatorInitial": "Splitting auth rewrite into 2 PRs…"
-              }
-            }
-          },
-          "review": {
-            "animated": {
-              "visual": {
-                "ship": {
-                  "styles": {
-                    "90cdcd2ecc": ".ravs-ship-root { position: absolute; inset: 0; } .ravs-ship-stack { position: absolute; inset: 0; display: grid; grid-template-columns: 232px minmax(0,1fr); gap: 14px; padding: 4px 2px; /* Why: cards size to their content rather than stretch to the parent's full height, so the two cards don't show empty space below their content. */ align-items: start; } /* Source Control mini-sidebar — ahead-count header, commit textarea + split Commit button, then a CHANGES section with file rows. The file rows are the surface the \"reading\" pulse animates over. */ .ravs-sc-card { display: flex; flex-direction: column; background: var(--card, #fff); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; box-shadow: 0 1px 2px rgba(24,24,27,0.04); } /* Both card headers share the same fixed height so the SC card and PR dialog align across the top edge regardless of header content. */ .ravs-sc-header, .ravs-pr-head { height: 36px; box-sizing: border-box; } .ravs-sc-header { display: flex; align-items: center; justify-content: space-between; padding: 0 10px; border-bottom: 1px solid var(--border); } .ravs-sc-ahead { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 500; color: var(--foreground, #18181b); } .ravs-sc-ahead svg { color: var(--muted-foreground, #71717a); } .ravs-sc-commit-area { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; } .ravs-sc-textarea { position: relative; border: 1px solid var(--border); border-radius: 6px; background: var(--editor-surface, var(--card)); padding: 6px 26px 6px 8px; min-height: 56px; font-size: 12px; line-height: 1.45; color: var(--foreground, #18181b); white-space: pre-wrap; word-break: break-word; overflow: hidden; } .ravs-sc-textarea .ravs-placeholder { color: rgba(113,113,122,0.7); } .ravs-sc-sparkle { position: absolute; right: 6px; top: 6px; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; color: var(--muted-foreground, #71717a); background: transparent; transition: color 160ms ease, background 160ms ease; } .ravs-sc-sparkle.is-scanning { color: rgb(109 40 217); background: color-mix(in srgb, rgb(139 92 246) 18%, transparent); } .ravs-sc-split { display: flex; align-items: stretch; } /* Why: Commit + Create PR are surrounding chrome — the violet AI affordances are the focal points. Render them as quiet secondary buttons so they don't compete with the sparkle/scan signals. */ .ravs-sc-split .ravs-primary { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 5px 10px; background: var(--secondary, #f5f5f5); color: var(--secondary-foreground, #171717); font-size: 11px; font-weight: 500; border-radius: 6px 0 0 6px; border: 1px solid var(--border); transition: background 240ms ease, border-color 240ms ease, color 240ms ease; } .ravs-sc-split .ravs-chev { display: inline-flex; align-items: center; justify-content: center; width: 22px; background: var(--secondary, #f5f5f5); color: var(--muted-foreground, #71717a); border-radius: 0 6px 6px 0; border: 1px solid var(--border); border-left: 1px solid var(--border); transition: background 240ms ease, border-color 240ms ease, color 240ms ease; } /* Why: when AI has filled the commit message, tint the Commit button green to signal \"ready to commit\". Uses the same success-green family as the PR flash so the two beats rhyme. Mix is intentionally strong (~28%) — at 14% it disappeared next to the violet sparkle and PR flash, so users only saw the PR change color. */ .ravs-sc-split.is-ready .ravs-primary, .ravs-sc-split.is-ready .ravs-chev { background: color-mix(in srgb, rgb(34 197 94) 28%, var(--secondary, #f5f5f5)); border-color: rgb(34 197 94); color: rgb(21 128 61); transition: background 220ms ease, border-color 220ms ease, color 220ms ease; } .ravs-sc-split.is-ready .ravs-chev { border-left-color: rgba(34, 197, 94, 0.55); } .ravs-sc-changes-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px 4px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted-foreground, #71717a); } .ravs-sc-changes-count { color: var(--foreground, #18181b); font-weight: 600; margin-left: 2px; } .ravs-sc-view-all { font-size: 10px; font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--muted-foreground, #71717a); } .ravs-sc-files { display: flex; flex-direction: column; padding: 2px 6px 8px; flex: 1; min-height: 0; overflow: hidden; } .ravs-sc-file { display: grid; grid-template-columns: 14px minmax(0,1fr) 12px; align-items: center; gap: 6px; padding: 3px 6px; border-radius: 4px; font-size: 11px; line-height: 1.35; color: var(--foreground, #18181b); position: relative; transition: background 220ms ease; } .ravs-sc-ficon { color: rgb(180 83 9); display: inline-flex; } .ravs-sc-fname { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .ravs-sc-fmark { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; text-align: right; color: rgb(180 83 9); } .ravs-sc-file.is-reading { background: color-mix(in srgb, rgb(139 92 246) 14%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, rgb(139 92 246) 28%, transparent); } /* PR dialog — matches the .ravs-sc-card chrome (same border, radius, elevation) so the two cards read as one design language. */ .ravs-pr-dialog { background: var(--card, #fff); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 1px 2px rgba(24,24,27,0.04); display: flex; flex-direction: column; min-width: 0; overflow: hidden; } .ravs-pr-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 0 10px; border-bottom: 1px solid var(--border); } .ravs-pr-title-text { font-size: 11px; font-weight: 500; color: var(--foreground, #18181b); } /* Icon-only AI-assist chip — mirrors .ravs-sc-sparkle so the affordance reads identically across both cards. */ .ravs-pr-gen-btn { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; padding: 0; border-radius: 4px; color: var(--muted-foreground, #71717a); background: transparent; border: 0; cursor: pointer; transition: color 160ms ease, background 160ms ease; } .ravs-pr-gen-btn:hover { background: rgba(24,24,27,0.06); color: var(--foreground, #18181b); } .ravs-pr-gen-btn.is-scanning { color: rgb(109 40 217); background: color-mix(in srgb, rgb(139 92 246) 18%, transparent); } .ravs-pr-body { display: flex; flex-direction: column; gap: 8px; padding: 10px; } .ravs-pr-field { display: flex; flex-direction: column; gap: 4px; } .ravs-pr-field-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted-foreground, #71717a); } .ravs-pr-base { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border: 1px solid var(--border); border-radius: 6px; font-size: 11px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--foreground, #18181b); background: var(--editor-surface, var(--card)); align-self: flex-start; } .ravs-pr-base svg { color: var(--muted-foreground, #71717a); } .ravs-pr-input { position: relative; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--editor-surface, var(--card)); min-height: 28px; font-size: 12px; line-height: 1.45; color: var(--foreground, #18181b); white-space: pre-wrap; word-break: break-word; overflow: hidden; } .ravs-pr-input.is-body { min-height: 50px; font-size: 11px; line-height: 1.4; } .ravs-pr-input .ravs-placeholder { color: rgba(113,113,122,0.7); } .ravs-pr-footer { display: flex; align-items: center; gap: 6px; justify-content: flex-end; margin-top: 2px; } .ravs-pr-btn { font-size: 11px; font-weight: 500; padding: 5px 10px; border-radius: 6px; line-height: 1; border: 1px solid transparent; outline: none; } .ravs-pr-btn:focus, .ravs-pr-btn:focus-visible { outline: none; } /* Cancel reads as a quiet ghost button so it doesn't compete with the affirmative Create PR action. */ .ravs-pr-btn.is-outline { background: transparent; color: var(--muted-foreground, #71717a); border-color: transparent; } .ravs-pr-btn.is-outline:hover { background: rgba(24,24,27,0.05); color: var(--foreground, #18181b); } /* Quiet secondary fill — see the .ravs-sc-split note above. The flash ring still uses success-green so the \"PR created\" beat reads. The Create-PR button is slightly larger than Cancel so the affirmative action remains the bigger target. */ .ravs-pr-btn.is-solid { background: var(--secondary, #f5f5f5); color: var(--secondary-foreground, #171717); border-color: var(--border); font-size: 12px; padding: 7px 14px; transition: background 220ms ease, border-color 220ms ease, color 220ms ease, box-shadow 220ms ease; } .ravs-pr-btn.is-solid.is-ready { background: color-mix(in srgb, rgb(34 197 94) 28%, var(--secondary, #f5f5f5)); border-color: rgb(34 197 94); color: rgb(21 128 61); } .ravs-pr-btn.is-solid.is-flash { box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.30); } .ravs-cursor { position: absolute; z-index: 40; pointer-events: none; transition: transform 600ms cubic-bezier(.45,.05,.2,1), opacity 200ms ease; transform: translate(-30px, 220px); opacity: 0; } .ravs-cursor.is-visible { opacity: 1; } .ravs-cursor .ravs-ripple { position: absolute; left: -6px; top: -6px; width: 28px; height: 28px; border-radius: 999px; border: 2px solid rgba(24,24,27,0.5); opacity: 0; } .ravs-cursor.is-clicking .ravs-ripple { animation: ravs-ripple 460ms ease-out forwards; } @keyframes ravs-ripple { 0% { transform: scale(0.4); opacity: 0.9; } 100% { transform: scale(1.4); opacity: 0; } } .ravs-caret { display: inline-block; width: 1.5px; height: 1em; background: currentColor; vertical-align: -2px; margin-left: 1px; animation: ravs-caret-blink 1.05s steps(1) infinite; } @keyframes ravs-caret-blink { 0%, 50% { opacity: 1 } 51%, 100% { opacity: 0 } }"
-                  }
-                }
               }
             }
           }
@@ -597,7 +609,7 @@
             "c3b81ddea2": "DRAFT_ISSUE"
           },
           "ProjectViewWrapper": {
-            "1bf8c01c8b": "Switch to a Table view to work with this project in Orca."
+            "1bf8c01c8b": "Switch to a Table view to work with this project in Wakii."
           }
         }
       },
@@ -667,21 +679,17 @@
           "a74c6d6b18": "not-installed"
         },
         "NotificationStep": {
-          "2c47f5465f": "Turn on Allow notifications for Orca in System Settings. This step updates automatically once enabled.",
+          "2c47f5465f": "Turn on Allow notifications for Wakii in System Settings. This step updates automatically once enabled.",
           "8124d085a6": "Open Mac Settings",
           "94562ba367": "macOS is asking for permission. Click Allow in the dialog and this step updates automatically.",
-          "aa36281b00": "Open System Settings and make sure Orca is allowed to send notifications.",
-          "d2dba86837": "Allow Orca in macOS"
+          "aa36281b00": "Open System Settings and make sure Wakii is allowed to send notifications.",
+          "d2dba86837": "Allow Wakii in macOS"
         },
         "OnboardingFlow": {
           "35bbaf5ae0": "notifications",
           "984338477a": "theme",
           "a5e5da02f7": "integrations",
-          "c47e1bd149": "agent",
-          "ff92d15436": "Orca will notify you know when agents are done or need help."
-        },
-        "ThemeStep": {
-          "ad19e5c916": "Importing…"
+          "c47e1bd149": "agent"
         },
         "mac": {
           "notification": {
@@ -752,7 +760,6 @@
           "ChecksPanel": {
             "3c3ad3a1d2": "Started the agent. No selected comments can be marked resolved on the host.",
             "7202f4a40a": "unlink PR",
-            "abf59262fb": "Review the prompt before starting an agent.",
             "e56c42122e": "destructive",
             "gitlabUnlink": "Unlink MR"
           },
@@ -826,7 +833,6 @@
             "03d238218c": "Details",
             "04832d8047": "rebase",
             "0fad573938": "Uncommitted",
-            "15b7f210d7": "Review the prompt before starting an agent.",
             "1f7119f604": "Base",
             "2830dd64a2": "deleted",
             "3636d0f686": "ready",
@@ -839,7 +845,6 @@
             "77afaa8152": "All",
             "783a808870": "Close",
             "7a09d7f9d2": "base",
-            "901140f47d": "Review the prompt before starting an agent.",
             "9bb062a886": "uncommitted",
             "9febd8ab5f": "create_pr",
             "a0cc0e6b4e": "loading",
@@ -852,14 +857,13 @@
             "d62bc0c7d8": "untracked",
             "e59bca888a": "markdown",
             "f3a1b8c204": "upstream",
-            "f62ce91ade": "origin",
-            "tooManyChanges": "Too many changes detected. Only the first {{value0}} changes are shown."
+            "f62ce91ade": "origin"
           },
           "SourceControlAgentActionDialogForm": {
-            "1bb611240f": "Use {basePrompt} for Orca's default prompt.",
+            "1bb611240f": "Use {basePrompt} for Wakii's default prompt.",
             "3e8f21954f": "error",
             "74168d7ada": "idle",
-            "d8f40128ee": "{basePrompt} is Orca's default prompt."
+            "d8f40128ee": "{basePrompt} is Wakii's default prompt."
           },
           "activity": {
             "bar": {
@@ -879,7 +883,6 @@
                 "95ad090b01": "thread",
                 "9fecebb29d": "Add",
                 "a916648574": "Open details",
-                "actionRequiredHint": "This check needs a manual action on GitHub (for example, approving the workflow run) before merging is unblocked.",
                 "d098e5529a": "Output"
               },
               "empty": {
@@ -907,7 +910,7 @@
                   "title": "{{provider}} authentication failed"
                 },
                 "auth_required": {
-                  "body": "{{provider}} must be connected in this environment before Orca can create a {{reviewLabel}}.",
+                  "body": "{{provider}} must be connected in this environment before Wakii can create a {{reviewLabel}}.",
                   "title": "Connect {{provider}}"
                 },
                 "base_missing": {
@@ -915,7 +918,7 @@
                   "title": "Base branch not on remote"
                 },
                 "cli": {
-                  "body": "Orca could not run {{provider}} CLI in this environment. Set it up here, then retry.",
+                  "body": "Wakii could not run {{provider}} CLI in this environment. Set it up here, then retry.",
                   "title": "{{provider}} CLI unavailable"
                 },
                 "default_branch": {
@@ -931,7 +934,7 @@
                   "title": "Commit changes first"
                 },
                 "fork": {
-                  "body": "Orca cannot create a {{reviewLabel}} from this fork head here.",
+                  "body": "Wakii cannot create a {{reviewLabel}} from this fork head here.",
                   "title": "Fork head unsupported"
                 },
                 "needs_sync": {
@@ -952,7 +955,7 @@
                 },
                 "skipped": {
                   "archived": {
-                    "body": "This repository is archived, so Orca is not refreshing {{reviewLabel}} status.",
+                    "body": "This repository is archived, so Wakii is not refreshing {{reviewLabel}} status.",
                     "title": "Repository archived"
                   },
                   "bare": {
@@ -960,20 +963,20 @@
                     "title": "Bare repository"
                   },
                   "disconnected": {
-                    "body": "This repository's execution host is disconnected, so Orca cannot refresh {{reviewLabel}} status.",
+                    "body": "This repository's execution host is disconnected, so Wakii cannot refresh {{reviewLabel}} status.",
                     "title": "Host disconnected"
                   },
                   "not_git": {
-                    "body": "Orca could not treat this folder as a Git repository for {{reviewLabel}} status.",
+                    "body": "Wakii could not treat this folder as a Git repository for {{reviewLabel}} status.",
                     "title": "Not a Git repository"
                   },
                   "remote": {
-                    "body": "Orca could not refresh {{reviewLabel}} status for this remote context. Retry after the host is available.",
+                    "body": "Wakii could not refresh {{reviewLabel}} status for this remote context. Retry after the host is available.",
                     "title": "Remote-only context"
                   }
                 },
                 "unsupported": {
-                  "body": "This repository provider does not support creating a {{reviewLabel}} from Orca.",
+                  "body": "This repository provider does not support creating a {{reviewLabel}} from Wakii.",
                   "title": "{{reviewLabelCap}} not supported here"
                 }
               }
@@ -1072,7 +1075,7 @@
           "338820326a": ") or the full cookie header (e.g.",
           "3455cf43fa": "Claude login.",
           "350b2a1aa7": "Use your current",
-          "4e32e030b2": "Stored locally. Orca sends it only to platform.minimax.io for usage refreshes.",
+          "4e32e030b2": "Stored locally. Wakii sends it only to platform.minimax.io for usage refreshes.",
           "566d9a99ab": "_token=…; minimax_group_id_v2=…",
           "5e08b0fe57": "Stored locally and sent only to platform.minimax.io for usage refreshes.",
           "79418c782a": "Open platform.minimax.io/console/usage in your browser, sign in, then copy the Cookie request header from DevTools (Network → any remains request → Cookie).",
@@ -1086,7 +1089,12 @@
           "b2b1aa936d": "Paste your opencode.ai session cookie for rate limit fetching.",
           "b43e761fe5": "MiniMax cookie update failed.",
           "b8c2905c2b": "Could not load Codex accounts.",
-          "f5d8d2a6a1": "Open platform.minimax.io/console/usage in your browser and sign in."
+          "f5d8d2a6a1": "Open platform.minimax.io/console/usage in your browser and sign in.",
+          "opencodeGo": {
+            "apiKey": {
+              "description": "Optional override. Wakii otherwise uses the key OpenCode saved when you ran /connect, then OPENCODE_API_KEY."
+            }
+          }
         },
         "AdvancedNetworkSettingsSection": {
           "d93c7cd531": "Configure app-level network routing.",
@@ -1114,11 +1122,11 @@
           "df123171d1": "Not installed"
         },
         "AppearancePane": {
-          "0f28e7b30c": "Choose how Orca looks in the app window.",
-          "2df8f79aa5": "Show Orca in the titlebar.",
-          "42554f615f": "Choose the font used by the Orca interface.",
+          "0f28e7b30c": "Choose how Wakii looks in the app window.",
+          "2df8f79aa5": "Show Wakii in the titlebar.",
+          "42554f615f": "Choose the font used by the Wakii interface.",
           "4de76f6902": "Control what appears in the application titlebar.",
-          "5db6ba961f": "Show the Orca Mobile button at the top of the left sidebar.",
+          "5db6ba961f": "Show the Wakii Mobile button at the top of the left sidebar.",
           "622e1c3465": "Scale the entire application interface.",
           "661942ab7f": "Show the Tasks button at the top of the left sidebar.",
           "6a272ca553": "Titlebar",
@@ -1131,13 +1139,10 @@
           "statusBarCount": "{{value0}} indicators visible.",
           "workspaceCardLayoutGuidance": "Managed from the workspace sidebar."
         },
-        "AutoRenameBranchFromWorkSetting": {
-          "ef787db0e3": "Auto-Rename Branch"
-        },
         "AutoRenameBranchPromptEditor": {
           "0691753cf2": "Unsaved changes",
           "182d419b97": "built-in branch-name prompt",
-          "2f5dc661fe": "Appended to Orca's",
+          "2f5dc661fe": "Appended to Wakii's",
           "39278f4411": "; your branch prefix setting still applies.",
           "4416b25d29": "Prefer domain nouns from the task, avoid ticket IDs, and keep names reviewer-friendly.",
           "54ac229ad4": "Saving...",
@@ -1145,8 +1150,12 @@
           "63121132c0": "Discard",
           "7d6176f506": "Prompt",
           "af0831a590": "Saved",
-          "af2d9a2cc6": ". Orca generates only the final segment, like",
+          "af2d9a2cc6": ". Wakii generates only the final segment, like",
           "ebb942a2ec": "fix-login-flow"
+        },
+        "BrowserLinkRoutingModifierSetting": {
+          "descriptionOrca": "Links open in your system browser. When enabled, {{chord}}+click opens one in Wakii's built-in browser instead.",
+          "titleOrca": "Hold Shift to open in Wakii"
         },
         "BrowserPane": {
           "4af9a17947": "kagi"
@@ -1169,7 +1178,7 @@
         },
         "CliSkillRuntimeSetup": {
           "04325573f8": "WSL",
-          "0c9f3cf9da": "Choose where Orca checks and installs global agent skills.",
+          "0c9f3cf9da": "Choose where Wakii checks and installs global agent skills.",
           "7c776ff9d8": "wsl",
           "a58ba464ad": "Skill location",
           "f00d6aa9b5": "WSL is not available on this machine."
@@ -1200,10 +1209,11 @@
           "9762364929": "Uses APFS clone-copy on macOS when possible, otherwise symlinks configured folders or files into created worktrees.",
           "a05bcdaf57": "Agents View",
           "f63ea281e3": "Threaded left-sidebar feed for agent completions and blocking states.",
-          "fb82ea1d7a": "Automatically materialize configured files or folders into newly created worktrees.",
-          "newWorktreeCardStyle": {
-            "copy": "Preview updated worktree-card layout, metadata placement, card-display menu options, and status presentation."
-          }
+          "fb82ea1d7a": "Automatically materialize configured files or folders into newly created worktrees."
+        },
+        "GeneralEditorSettingsSection": {
+          "7fef986df3": "Sticky Scroll",
+          "e9731181a3": "Keep the current scope header pinned at the top of the file editor."
         },
         "GeneralRemoteServerUpdates": {
           "reviewUpdateOne": "1 update available",
@@ -1211,7 +1221,6 @@
         },
         "GeneralSupportSection": {
           "1e29570462": "starring",
-          "511782265b": "Support the project with a GitHub star via the gh CLI.",
           "5c49f02662": "hidden",
           "73b327e793": "Try Again",
           "9d181300e3": "starred",
@@ -1228,7 +1237,6 @@
           "a0832ccdb1": "downloaded"
         },
         "GeneralWorkspaceSettingsSection": {
-          "externalWorktreesDescription": "Choose whether worktrees created outside Orca appear by default.",
           "hide": "Hide",
           "show": "Show"
         },
@@ -1236,8 +1244,12 @@
           "f35007e6e8": "git-username"
         },
         "GrokAccountsSection": {
-          "c3d4e5f6a7": "Signed in. Orca only reads that file on disk — run grok login again if usage fails.",
+          "c3d4e5f6a7": "Signed in. Wakii only reads that file on disk — run grok login again if usage fails.",
           "d4e5f6a7b8": "Session expired — run grok login in a terminal to refresh."
+        },
+        "InlineBlameSetting": {
+          "683fd9af0f": "Inline Blame",
+          "9142b8bc2f": "Show commit author, date and summary at the end of the current line in the file editor."
         },
         "IntegrationsPane": {
           "01f6c7582e": "Learn more",
@@ -1247,7 +1259,7 @@
           "0879860c58": "Pull requests and build statuses via Bitbucket Cloud API tokens.",
           "09285e9fe6": "The GitHub CLI is installed but not authenticated. Run this command in a terminal:",
           "15cf990798": "Not authenticated",
-          "1a62c295c6": "Gitea credentials are configured but could not authenticate. Check the token, API base URL, and repository permissions, then restart Orca if environment variables changed.",
+          "1a62c295c6": "Gitea credentials are configured but could not authenticate. Check the token, API base URL, and repository permissions, then restart Wakii if environment variables changed.",
           "1fac9b4910": "{{value0}} · Pull requests and commit statuses",
           "2122e15517": "Each connected Linear workspace has one key stored by the active runtime. Full-access keys can cover all teams the key owner can access; restricted keys can be replaced any time.",
           "264a9b6128": "Linear",
@@ -1258,7 +1270,7 @@
           "35a3379372": "Install the GitLab CLI to enable merge requests, issues, and pipelines.",
           "3614887c40": "checking",
           "399cf46867": "Install GitHub CLI",
-          "3c3cf05c63": "Bitbucket credentials are configured but could not authenticate. Check the token and repository permissions, then restart Orca if environment variables changed.",
+          "3c3cf05c63": "Bitbucket credentials are configured but could not authenticate. Check the token and repository permissions, then restart Wakii if environment variables changed.",
           "44cde4aa01": "ORCA_BITBUCKET_API_TOKEN",
           "45bf5e6e4b": "Auth failed",
           "4831ba1083": "Re-check",
@@ -1268,7 +1280,7 @@
           "4ee74d1470": "Set",
           "51000487c4": "gh auth login",
           "513abfe47d": "GitLab",
-          "5a1f86225a": "only when Orca cannot derive the API URL from the remote.",
+          "5a1f86225a": "only when Wakii cannot derive the API URL from the remote.",
           "5ee6ef6405": "ORCA_AZURE_DEVOPS_TOKEN",
           "5efce6953d": "Azure DevOps",
           "6193444689": "ORCA_GITEA_API_BASE_URL",
@@ -1279,12 +1291,12 @@
           "67a9f26a80": ". Set",
           "6bd148dcb5": "Pull requests and commit statuses via the Gitea REST API.",
           "6e0ff3403e": "ORCA_BITBUCKET_ACCESS_TOKEN",
-          "6f317f5132": "only when Orca cannot derive the API base URL from the git remote.",
+          "6f317f5132": "only when Wakii cannot derive the API base URL from the git remote.",
           "70c5f74f36": "GitHub",
           "8489c0aa49": "Bitbucket",
           "8e078e480c": "Disconnect {{value0}}",
           "8f960935c1": "ORCA_AZURE_DEVOPS_ACCESS_TOKEN",
-          "953b7bf6f7": "Azure DevOps credentials are configured but could not authenticate. Check the token, API base URL, and repository permissions, then restart Orca if environment variables changed.",
+          "953b7bf6f7": "Azure DevOps credentials are configured but could not authenticate. Check the token, API base URL, and repository permissions, then restart Wakii if environment variables changed.",
           "95b9a87e7e": "Test",
           "9707523939": "Pull requests and build statuses",
           "98ded79cd7": "{{value0}} workspace{{value1}} connected",
@@ -1323,11 +1335,11 @@
         },
         "MobileEmulatorAgentControlRow": {
           "1861982430": "Failed to load CLI status.",
-          "cdeaed9e37": "Registered the Orca CLI in PATH."
+          "cdeaed9e37": "Registered the Wakii CLI in PATH."
         },
         "MobileEmulatorSdkStatus": {
           "536026130e": "Emulator SDKs",
-          "dde0ec1cd8": "Toolchains Orca uses to run emulators. Android works on any OS via the Android SDK; iOS Simulators need Xcode on macOS."
+          "dde0ec1cd8": "Toolchains Wakii uses to run emulators. Android works on any OS via the Android SDK; iOS Simulators need Xcode on macOS."
         },
         "MobileNetworkInterfaceSection": {
           "1dc87a7fbc": "Tailscale",
@@ -1336,10 +1348,10 @@
           "39fad211d9": "Connect outside your Wi-Fi with a tailnet",
           "406a35121c": "Network Interface",
           "51d29927eb": "Install",
-          "63d5e4ae1e": "Regenerate the QR code and scan it from the Orca mobile app.",
+          "63d5e4ae1e": "Regenerate the QR code and scan it from the Wakii mobile app.",
           "668016be7a": "on your computer and phone.",
           "87985ba6f5": "In this Network Interface menu, choose the Tailscale address, usually a 100.x.y.z IP.",
-          "9fc5d203ff": "Orca Mobile connects directly to this computer. To use it away from the same LAN, put your computer and phone on the same private overlay network, then generate the QR code with that network address selected.",
+          "9fc5d203ff": "Wakii Mobile connects directly to this computer. To use it away from the same LAN, put your computer and phone on the same private overlay network, then generate the QR code with that network address selected.",
           "a9db5d771d": "Refresh network interfaces",
           "c541f67790": "Generate QR Code",
           "d536b5e20d": "Choose which network address to advertise in the QR code. Use your LAN address for same-network pairing, or an overlay network address (Tailscale, ZeroTier) for cross-network access."
@@ -1348,7 +1360,7 @@
           "relayDegradedNotice": "Relay couldn’t be reached — this code only works on your LAN or Tailscale. Regenerate to try again."
         },
         "MobileRelayBetaAvailability": {
-          "about": "About the Orca Relay beta",
+          "about": "About the Wakii Relay beta",
           "androidApk": "Android APK",
           "availability": "Available on",
           "beta": "Beta",
@@ -1365,13 +1377,13 @@
           "signIn": "Sign in",
           "signInPrompt": "Sign in on this desktop to connect from anywhere",
           "standby": "Standby — no relay devices",
-          "title": "Orca Relay",
+          "title": "Wakii Relay",
           "unavailable": "Unavailable"
         },
         "MobileSettingsPane": {
           "9a3c280e49": "GitHub Releases",
           "b0088412a1": "or the Android APK from",
-          "c8491c17ef": "Control Orca from your phone by scanning a QR code. Beta / early preview - expect bugs and breaking changes. Get the iOS app from the"
+          "c8491c17ef": "Control Wakii from your phone by scanning a QR code. Beta / early preview - expect bugs and breaking changes. Get the iOS app from the"
         },
         "NotificationsPane": {
           "274af61bc0": "system",
@@ -1402,7 +1414,6 @@
         },
         "RemoteServerUpdateDialog": {
           "checkAgain": "Check for Server Updates",
-          "restartWarning": "Updating restarts these servers. {{value0}} live tabs and {{value1}} terminal panes may briefly disconnect.",
           "updateOne": "Update server",
           "updating": "Updating servers…"
         },
@@ -1418,15 +1429,13 @@
           "c90b858573": "text-amber-700 dark:text-amber-300"
         },
         "RepositoryIconPicker": {
-          "2b7d27b93c": "Use {{value0}} repo color"
+          "2b7d27b93c": "Use {{value0}} repo icon"
         },
         "RepositoryPane": {
           "createPendingSetup": "Track setup",
-          "creatingPendingSetup": "Creating...",
-          "settingUpHost": "Importing...",
+          "settingUpHost": "Adding...",
           "setupExistingFolder": "Import existing folder",
           "setupExistingFolderHelp": "Make this project available on another host by linking a checkout that already exists there.",
-          "setupHost": "Import",
           "setupProjectOnHost": "Set up on another host",
           "setupProjectOnHostHelp": "Choose a host, then import an existing checkout, clone the repository there, or track a setup that will be provisioned later."
         },
@@ -1449,11 +1458,10 @@
           "1826bd0608": "Saved Servers",
           "54ebacc600": "Server name",
           "55fcc964cd": "on the server and paste the printed pairing URL.",
-          "7b5986c8df": "Saved {{value0}}. Use Active Server to switch when ready.",
-          "8cf8790697": "Saved servers route this browser through a paired Orca runtime.",
+          "8cf8790697": "Saved servers route this browser through a paired Wakii runtime.",
           "960e901ae4": "orca serve --pairing-address <host>",
           "9bc9b83474": "Pairing code",
-          "9f7665a01b": "Removing the active server first switches Orca back to Local desktop. Existing host sessions are left alone.",
+          "9f7665a01b": "Removing the active server first switches Wakii back to Local desktop. Existing host sessions are left alone.",
           "b2fda48c39": "Removing the active server disconnects this browser from that host. Existing host sessions are left alone.",
           "c3d772c514": "orca://pair?code=...",
           "e038625857": "Dev box",
@@ -1464,7 +1472,6 @@
         },
         "RuntimePairingUrlGenerator": {
           "279e0dcb57": "127.0.0.1 only works on this computer. Use a LAN, Tailscale, or custom address for another device.",
-          "add-custom": "Add custom address…",
           "b91e36a986": "web",
           "de6d5cff95": "This computer ("
         },
@@ -1473,6 +1480,7 @@
           "2309068a6f": "destructive",
           "23931df7e8": "Remote Hosts",
           "23c6874fdf": "AI Capabilities",
+          "8acf3f22e0": "Wakii stats plus Claude, Codex, OpenCode token analytics and Grok subscription usage.",
           "8bd117d669": "Interface",
           "9abb9be3bc": "Set Up",
           "dd72ed437a": "Choose which task providers appear in the Tasks page and sidebar.",
@@ -1489,16 +1497,12 @@
         "SparsePresetSettingsSection": {
           "68bbcd864a": "new"
         },
-        "SshPane": {
-          "94c5284560": "Targets",
-          "a7d28dff81": "Add a remote host to connect to it in Orca."
-        },
         "SshTargetCard": {
           "47e94bd6ba": "connected",
           "f0871e6bfb": "connect"
         },
         "SshTargetForm": {
-          "137e88ce8d": "Remote terminals keep running after Orca disconnects from this host.",
+          "137e88ce8d": "Remote terminals keep running after Wakii disconnects from this host.",
           "29af933cd5": "New SSH Target",
           "4a342f44c1": "Advanced Connection",
           "92f80edbfd": "Remote Terminal Persistence",
@@ -1563,9 +1567,9 @@
         },
         "agent-awake-copy": {
           "95d3031db2": "Keeps this computer and display awake while agents are working. Lid-close behavior follows this device's power settings.",
-          "a42f6fbdd8": "Keeps this computer and display awake while agents are working. Orca also asks this device to stay awake when the lid is closed, subject to its power policy.",
+          "a42f6fbdd8": "Keeps this computer and display awake while agents are working. Wakii also asks this device to stay awake when the lid is closed, subject to its power policy.",
           "e5995ce268": "Keep computer awake while agents are working",
-          "modeDescriptionDefault": "Choose On, Agent, or Off. Agent mode stays awake while agents are working. Orca also asks this device to stay awake when the lid is closed, subject to its power policy.",
+          "modeDescriptionDefault": "Choose On, Agent, or Off. Agent mode stays awake while agents are working. Wakii also asks this device to stay awake when the lid is closed, subject to its power policy.",
           "modeDescriptionWindows": "Choose On, Agent, or Off. Agent mode stays awake while agents are working; lid-close behavior follows this device's power settings.",
           "modeTitle": "Keep computer awake"
         },
@@ -1575,7 +1579,7 @@
         },
         "agent-status-hooks-copy": {
           "7707c15abb": "Agent status hooks",
-          "a68a642835": "Shows working, waiting, and done states in Orca. Turn off to remove Orca-managed hooks and stop reinstalling them."
+          "a68a642835": "Shows working, waiting, and done states in Wakii. Turn off to remove Wakii-managed hooks and stop reinstalling them."
         },
         "agents": {
           "search": {
@@ -1622,28 +1626,12 @@
           }
         },
         "artifacts": {
-          "account": "Orca account",
+          "account": "Wakii account",
           "connected": "Connected",
           "enable": "Enable Artifacts",
           "enableDescription": "Add Artifacts to the sidebar so you can open and delete shared files.",
           "openArtifactsDescription": "View and delete links shared through your account.",
           "signInRequired": "Sign in is required to upload and manage artifacts."
-        },
-        "auto": {
-          "rename": {
-            "branch": {
-              "search": {
-                "427f2cd1eb": "Auto-Rename Branch"
-              }
-            }
-          }
-        },
-        "bitbucket": {
-          "credentials": {
-            "dialog": {
-              "remoteRuntime": "Bitbucket credentials saved here are stored on this local machine only. Set ORCA_BITBUCKET_* environment variables on the remote runtime instead."
-            }
-          }
         },
         "computerUseSkillRuntime": {
           "thisDevice": "This device"
@@ -1693,7 +1681,7 @@
             "c61b14be7c": "grok",
             "db11502270": "Default Agent",
             "e2da948f59": "Pre-select an AI coding agent in the new-workspace composer.",
-            "e3b1d42f95": "Proxy URL for Orca network requests and local terminal children.",
+            "e3b1d42f95": "Proxy URL for Wakii network requests and local terminal children.",
             "e55d62dfa4": "launchpad",
             "eb8946b2c9": "Hosts that should bypass the configured HTTP proxy.",
             "f472e97440": "aider"
@@ -1734,13 +1722,6 @@
             }
           }
         },
-        "mobile": {
-          "settings": {
-            "search": {
-              "b730ff7049": "experimental"
-            }
-          }
-        },
         "providerAccountScope": {
           "localMac": "Local Mac"
         },
@@ -1754,27 +1735,12 @@
             "vm": "vm"
           }
         },
-        "runtime": {
-          "environments": {
-            "search": {
-              "3517fb2ec0": "Active Server",
-              "4575341c77": "Choose local desktop, add a saved remote Orca server, or generate a pairing URL."
-            }
-          }
-        },
         "settingOwnership": {
           "clientDefaultProjectScopes": "Client default + project scopes",
           "terminalQuickCommands": "Commands are saved on this client, then scoped globally or to a project setup so they run from the selected terminal context."
         },
         "shareSkills": {
-          "refreshLinks": "Refresh",
-          "showButton": "Show Skills button"
-        },
-        "ssh": {
-          "search": {
-            "62826efbe9": "Add a new remote SSH target.",
-            "74c6d90d78": "Manage remote SSH targets."
-          }
+          "refreshLinks": "Refresh"
         },
         "terminal": {
           "windows": {
@@ -1819,11 +1785,20 @@
         }
       },
       "shared": {
+        "MacFolderAccessFixDialog": {
+          "lead": "macOS is blocking Wakii’s terminal service from this folder.",
+          "stepAllow": "Allow Wakii under Files and Folders",
+          "stepAllowDenied": "Wakii is already allowed, but macOS isn’t applying it to the terminal service. Reset asks macOS for the permission again. Click Allow when it prompts.",
+          "stepReallow": "Re-allow Wakii for your {{folder}}",
+          "stepRestart": "Restart Wakii’s terminal service"
+        },
         "useDaemonActions": {
+          "01d6b7c64e": "Kills every running terminal pane and restarts the daemon process. Panes show \"Process exited\" and can be reopened immediately. Legacy-protocol sessions from a previous app version are preserved. This can't be undone.",
           "28c8e53176": "This force-quits every running terminal pane across all workspaces. Any unsaved work in those sessions is lost. The daemon itself keeps running, and new terminals can be opened immediately. This can't be undone.",
           "2b4efdc162": "Couldn’t kill sessions.",
           "63520148e2": "{{value0}} session refused to exit.",
           "87412c2a68": "Killed {{value0}} session.",
+          "922548bc66": "Restart the terminal daemon?",
           "a2f040ac1c": "Killed {{value0}} sessions.",
           "baad8cd651": "No sessions running.",
           "cc0a26cb14": "{{value0}} sessions refused to exit.",
@@ -1834,17 +1809,14 @@
       },
       "sidebar": {
         "AddRemoteHostDialog": {
-          "pairingCode": "Pairing code",
           "pairingCommand": "orca serve --pairing-address <host>",
           "pairingHelpPrefix": "Run",
-          "pairingHelpSuffix": "on the server and paste the printed pairing URL.",
-          "serverName": "Server name",
           "sshConfigPickerBulkHint": "Bulk sync stays in Settings → SSH",
-          "sshConfigPickerDescription": "Pick a host to fill the form. Nothing is saved until you click Save.",
+          "sshConfigPickerInOrca": "In Wakii",
           "sshPersistenceDefault": "Remote terminals on this host stay alive until you end them or reset the relay."
         },
         "AddRepoHostSelector": {
-          "addRemoteHostTooltip": "Choose SSH for a machine you can log into, or remote server for an Orca server.",
+          "addRemoteHostTooltip": "Choose SSH for a machine you can log into, or remote server for an Wakii server.",
           "local": "Local",
           "runtime": "Server",
           "ssh": "SSH"
@@ -1873,9 +1845,13 @@
           "63f36455cc": "Reconnect"
         },
         "LinearAgentSkillSetupPrompt": {
-          "missingBoth": "Orca CLI and Linear agent skill are missing.",
+          "missingBoth": "Wakii CLI and Linear agent skill are missing.",
           "panelDescription": "Install the host agent skill for linked Linear task handoffs.",
           "panelTitle": "Linear agent skill"
+        },
+        "LocalGitToolchainScanBanner": {
+          "developerToolsBody": "Git needs Apple's developer tools. Run this in Terminal, then switch back to Wakii. It will check again automatically.",
+          "xcodeLicenseBody": "macOS blocks Git until you accept it. Run this in Terminal, then switch back to Wakii. It will check again automatically."
         },
         "NewExternalWorktreesInboxLine": {
           "5e1b8d3f62": "Hide external worktrees permanently"
@@ -1887,7 +1863,7 @@
         "ProjectGroupDeleteDialog": {
           "897e5d3d4c": "Delete Group and Remove Projects",
           "9be10d49ea": "and ungroup its projects.",
-          "eeabb8e8e4": "Remove {{value0}} contained {{value1}} from Orca"
+          "eeabb8e8e4": "Remove {{value0}} contained {{value1}} from Wakii"
         },
         "ProjectOrderManualDefaultNotice": {
           "822ff300ad": "Dismiss",
@@ -1895,8 +1871,15 @@
           "b7e3a91c4f": "Drag project headers to reorder, or switch to",
           "e8c1f4a2b9": "in workspace options."
         },
+        "RepoScanUnavailableIndicator": {
+          "copyCommand": "Copy command",
+          "retained": "Existing worktrees are kept until a scan succeeds. Click to retry."
+        },
         "SetupScriptPromptCard": {
           "dcaa645da5": "ok"
+        },
+        "SidebarFeedbackImageAttachments": {
+          "screenshotsHint": "Attach up to {count} screenshots"
         },
         "SidebarHeader": {
           "49f62c5665": "Workspace board",
@@ -1924,7 +1907,7 @@
           "2d4f0eb933": "Default",
           "631b97eea9": "Host scope",
           "680043342f": "compact",
-          "bc96dbd041": "Workspace options ({{value0}})",
+          "bc96dbd041": "Workspace options ({{value0}} active)",
           "c7591b6014": "repo"
         },
         "WorkspaceKanbanSettingsMenu": {
@@ -1945,7 +1928,8 @@
         },
         "WorktreeCardMeta": {
           "ae76907ca6": "Unlink {{value0}}",
-          "eace1d2cf6": "neutral"
+          "eace1d2cf6": "neutral",
+          "openInOrcaBrowser": "Open in Wakii browser"
         },
         "WorktreeCardMetadataStatusBadges": {
           "29df45afa2": "MR"
@@ -1980,17 +1964,6 @@
           "8372e4bbd9": "{{value0}} currently shown",
           "f1f71b9f02": "Always show"
         },
-        "add": {
-          "repo": {
-            "local": {
-              "start": {
-                "actions": {
-                  "a6c20dca96": "Open a project from an SSH target"
-                }
-              }
-            }
-          }
-        },
         "index": {
           "b826a98b6f": "busy"
         },
@@ -2002,8 +1975,8 @@
                 "0e0379f24a_other": "{{count}} branches kept",
                 "6310412304_one": "Review {{count}} Branch",
                 "6310412304_other": "Review {{count}} Branches",
-                "a3cdd9d9e6_one": "Git kept {{count}} local branch because it may contain unmerged commits. Kept branches do not retain workspace folders; their commits remain in the repository. Orca may continue freeing workspace disk space in the background.",
-                "a3cdd9d9e6_other": "Git kept {{count}} local branches because they may contain unmerged commits. Kept branches do not retain workspace folders; their commits remain in the repository. Orca may continue freeing workspace disk space in the background.",
+                "a3cdd9d9e6_one": "Git kept {{count}} local branch because it may contain unmerged commits. Kept branches do not retain workspace folders; their commits remain in the repository. Wakii may continue freeing workspace disk space in the background.",
+                "a3cdd9d9e6_other": "Git kept {{count}} local branches because they may contain unmerged commits. Kept branches do not retain workspace folders; their commits remain in the repository. Wakii may continue freeing workspace disk space in the background.",
                 "cea24c2b7d_one": "{{count}} workspace removed",
                 "cea24c2b7d_other": "{{count}} workspaces removed",
                 "d42f1f14e0_one": "Retry {{count}} Branch",
@@ -2061,18 +2034,15 @@
           "linkCopied": "Share link copied"
         },
         "SkillInstallDialog": {
-          "4a00d133c5": "Orca verifies access and package identity before changing the selected machine."
+          "4a00d133c5": "Wakii verifies access and package identity before changing the selected machine."
         },
         "SkillInstallManagementDialog": {
-          "070654c6d1": "Orca will preserve them unless you explicitly discard the local changes.",
+          "070654c6d1": "Wakii will preserve them unless you explicitly discard the local changes.",
           "1c9e7f420a": "Installed bundle skills",
           "2ae587d39c": "Retry incomplete coverage",
           "34c2ef9e71": "Install {{count}} skills",
-          "3677ae58e7": "Update, roll back, or safely remove versions installed by Orca.",
-          "44d118a8f7": "Manage installed skills",
           "470d8d2476": "Confirm remove",
           "561e49ccd1": "Install selected version",
-          "64c71cf7b9": "No Orca-managed skill installs were found on this machine.",
           "74b70892ea": "Local files were modified",
           "86ed219b55": "Choose a version",
           "9c04bd0120": "Installed version",
@@ -2109,7 +2079,7 @@
           "descriptionV2": "Review the exact files, then publish an immutable version behind an unlisted link.",
           "newVersionDescription": "Review the exact files, then publish an immutable version to the existing Cloud package.",
           "peopleRequired": "Select at least one teammate.",
-          "readyDescription": "Recipients authenticate with Orca before they can inspect or install it.",
+          "readyDescription": "Recipients authenticate with Wakii before they can inspect or install it.",
           "readyDescriptionV2": "Anyone with this unlisted link can inspect and install the skills."
         },
         "SkillShareReviewContent": {
@@ -2141,7 +2111,6 @@
           "01c5a15e05": "Share {{value0}} skills"
         },
         "SkillsPage": {
-          "08a321a984": "Adjust the search or filters.",
           "0bc1379f4c": "All sources",
           "0c74e7ff34": "Installed",
           "38e0951c3a": "Agent Skills",
@@ -2169,8 +2138,6 @@
           "agentsNoneChosen": "No extra agents",
           "agentsSummary": "Also: {{value0}}",
           "bundleDestinationSummary": "{{value0}} new · {{value1}} already installed · {{value2}} need a decision",
-          "deselectAll": "Deselect optional",
-          "reviewSupportingFiles": "Includes supporting files",
           "trustNote": "Skills are instructions and code from their author. Install what you trust."
         },
         "managedInstall": {
@@ -2203,12 +2170,16 @@
         "OpenCodeUsagePane": {
           "1e5d410df0": "events",
           "8095a63426": "n/a",
-          "bc0cb89901": "sessions •"
+          "bc0cb89901": "sessions •",
+          "e04c58327c": "Wakii worktrees only"
         },
         "StatsPane": {
           "908c470587": "codex",
           "eb6a066185": "claude",
           "eee19cfade": "overview"
+        },
+        "UsageOverviewPane": {
+          "60002bb22f": "No local Claude, Codex, or OpenCode usage found yet. The overview will populate after the next agent session writes token logs."
         },
         "UsageSessionsTable": {
           "01476891c7": "Last active",
@@ -2222,16 +2193,26 @@
           "f6a2c8d019": "Model",
           "faf3444859": "Input"
         },
+        "stats": {
+          "search": {
+            "26bb901fcd": "Wakii stats plus Claude, Codex, OpenCode token analytics and Grok subscription usage."
+          }
+        },
         "usage": {
           "overview": {
             "sections": {
-              "9564a3b21b": "sessions -"
+              "9564a3b21b": "sessions -",
+              "f28ff1f852": "Recent combined Claude, Codex, and OpenCode token activity."
             }
           }
         }
       },
       "status": {
         "bar": {
+          "NativeChatResumeStatusSegment": {
+            "checkTooltip": "Chats Wakii couldn’t resume, or couldn’t confirm it resumed, after the restart. Click for details.",
+            "failedTooltip": "Chats Wakii could not resume after the restart. Click for details."
+          },
           "PortsStatusSegment": {
             "4ae65d871a": "external",
             "9aa11005bf": "workspace ·",
@@ -2240,10 +2221,10 @@
           "ResourceUsageStatusSegment": {
             "1b24a32d3a": "Memory",
             "4bb076fa89": "Kill",
-            "6449a95c78": "How much of this machine's physical RAM the Orca-tracked processes are sitting on.",
+            "6449a95c78": "How much of this machine's physical RAM the Wakii-tracked processes are sitting on.",
             "6d9793d4bc": "Resource Manager - Terminals",
             "996295bff2": "orphan terminal",
-            "9e2525c89f": "Resident memory held by Orca plus the processes under each worktree's terminals.",
+            "9e2525c89f": "Resident memory held by Wakii plus the processes under each worktree's terminals.",
             "e7ccce7e87": "of system RAM"
           },
           "SshStatusSegment": {
@@ -2470,9 +2451,6 @@
           "MobileDriverOverlay": {
             "3eed73394f": "Your keyboard is paused"
           },
-          "TerminalRemoteRuntimeReconnectBanner": {
-            "retryingBody": "Orca will retry for up to one minute. This terminal will resume if the connection returns."
-          },
           "TerminalSshReconnectOverlay": {
             "connectButton": "Connect",
             "connectingButton": "Connecting..."
@@ -2481,6 +2459,13 @@
             "drop": {
               "handler": {
                 "29c031b49a": "Uploading {{value0}} file{{value1}} to runtime…"
+              }
+            }
+          },
+          "zcode": {
+            "missing": {
+              "tui": {
+                "description": "Wakii's hooks installed correctly — the zcode on your PATH just cannot open a session. The ZCode desktop app bundles the agent runtime without its terminal UI. Install a zcode that ships the TUI, then run zcode outside Wakii to confirm."
               }
             }
           }
@@ -2544,11 +2529,11 @@
             "d1094dd529": "Needs review",
             "d3eef9463d": "No inactive workspaces to delete.",
             "dba753e94f": "to delete",
-            "e0b5a4deaa": "Review inactive workspaces before deleting their local files and Orca state.",
+            "e0b5a4deaa": "Review inactive workspaces before deleting their local files and Wakii state.",
             "e94b1f8bb4": "Clear filters",
             "ee81adfcef": "View",
             "efb3843e75": "Filter and sort workspaces",
-            "f637f63882": "Resource Manager counts {{value0}}; this list found {{value1}}. That counter reads Orca's activity record alone, while this scan also checks each workspace's git history and skips disconnected remotes.",
+            "f637f63882": "Resource Manager counts {{value0}}; this list found {{value1}}. That counter reads Wakii's activity record alone, while this scan also checks each workspace's git history and skips disconnected remotes.",
             "f68d538c63": "No workspaces in this cleanup set.",
             "fc49f79434": "mixed",
             "gitFilter": "Git",
@@ -2580,16 +2565,27 @@
         "60428567b4": "Local terminal reveal is unavailable while a remote runtime is active",
         "f6300deb8b": "New Browser Tab"
       },
+      "useMacTccAttributionSeveredNotice": {
+        "description": "Running Wakii terminals are hosted by a daemon started by a previous Wakii installation. macOS may not apply Wakii’s Accessibility, Automation, or protected-file permissions to them. Restart the daemon from Manage Sessions to restore access. This will close all running Wakii terminals.",
+        "folderAccessDescription": "macOS is blocking Wakii’s terminal service from this folder, so commands run there may fail until it’s fixed.",
+        "title": "macOS permissions may not reach Wakii terminals"
+      },
       "useSettingsNavigationMetadata": {
-        "5235c215ca": "Choose which task providers appear in the Tasks page and sidebar."
+        "5235c215ca": "Choose which task providers appear in the Tasks page and sidebar.",
+        "b351014180": "Wakii stats plus Claude, Codex, OpenCode token analytics and Grok subscription usage."
       }
     },
     "lib": {
+      "agent": {
+        "catalog": {
+          "b0b350de65": "Freebuff"
+        }
+      },
       "browser": {
         "cookie": {
           "import": {
             "toast": {
-              "googleCookiesSkipped": "Google cookies were not imported. Open a browser in Orca on {{value0}} with this profile, then sign into Google."
+              "googleCookiesSkipped": "Google cookies were not imported. Open a browser in Wakii on {{value0}} with this profile, then sign into Google."
             }
           }
         }
@@ -2640,7 +2636,7 @@
           "4e6496f3d2": "{{value0}} deleted, branch kept",
           "670864ab52": "Keeping local {{value0}} up to date",
           "889487d8bb": "Dismiss",
-          "d1d78a7baa": "Git could not safely delete branch \"{{value0}}\"{{value1}}, so Orca kept it to avoid losing local commits.",
+          "d1d78a7baa": "Git could not safely delete branch \"{{value0}}\"{{value1}}, so Wakii kept it to avoid losing local commits.",
           "f4503ca505": "Open Settings > Git and try again.",
           "fa9299a66f": "Your new worktree is current, but local {{value0}} is {{value1}} {{value2}} behind. AI diffs may miss recent commits."
         }
@@ -2653,12 +2649,12 @@
     },
     "sshEgress": {
       "localChip": "This device"
-    },
-    "sshRoute": {
-      "errorDescription": "Pages in this workspace browse through its SSH host, and that connection is not available right now."
     }
   },
   "components": {
+    "agentSessionContinuation": {
+      "deliveryUnconfirmed": "Wakii could not confirm {{agent}} received the session context. Check the new session, and paste it yourself if its input is empty."
+    },
     "native-chat": {
       "ask": {
         "asked": "Asked:",
@@ -2697,6 +2693,8 @@
         "workedFor": "Worked for {{value0}}",
         "workingFor": "Working for {{value0}}"
       },
+      "structuredSessionCloseFailed": "Could not close this chat session",
+      "structuredSessionCloseFailedDescription": "The terminal stayed open so the provider remains recoverable.",
       "tool": {
         "countN": "{{value0}} tool calls",
         "countOne": "1 tool call",
@@ -2719,8 +2717,8 @@
     "onboarding": {
       "integrations": {
         "capabilities": {
-          "browseIssues": "Browse GitHub issues and pull requests in the Tasks view without leaving Orca",
-          "managePullRequests": "Read, comment on, and merge pull requests without leaving Orca",
+          "browseIssues": "Browse GitHub issues and pull requests in the Tasks view without leaving Wakii",
+          "managePullRequests": "Read, comment on, and merge pull requests without leaving Wakii",
           "reviewStatus": "See issue state, review status, and CI checks on every worktree",
           "startWorkspaceFromIssue": "Start a workspace from any GitHub issue or pull request, prefilled with its title and context"
         }
@@ -2773,14 +2771,17 @@
       "title": "Agent dashboard"
     }
   },
+  "menu": {
+    "exploreOrca": "Explore Wakii"
+  },
   "runtimeRpc": {
     "startupFailure": {
       "guidance": {
-        "addressInUse": "Another process may be holding the port. Restart Orca to try again.",
-        "invalidPath": "Orca's data folder may be missing, moved, or at a path that is too long. Restore it or use a shorter path, then restart Orca.",
-        "permissionDenied": "Orca couldn't write its runtime file. Check permissions on Orca's data folder, then restart.",
-        "storageUnavailable": "Your disk may be full or read-only. Free up space, then restart Orca.",
-        "unknown": "Restart Orca to try again."
+        "addressInUse": "Another process may be holding the port. Restart Wakii to try again.",
+        "invalidPath": "Wakii's data folder may be missing, moved, or at a path that is too long. Restore it or use a shorter path, then restart Wakii.",
+        "permissionDenied": "Wakii couldn't write its runtime file. Check permissions on Wakii's data folder, then restart.",
+        "storageUnavailable": "Your disk may be full or read-only. Free up space, then restart Wakii.",
+        "unknown": "Restart Wakii to try again."
       }
     }
   },
@@ -2799,15 +2800,15 @@
       }
     }
   },
+  "tray": {
+    "openOrca": "Open Wakii"
+  },
   "worktreeJumpPalette": {
     "filter": {
       "chipOverflow": "+{{value0}}",
       "moreOptions": "{{value0}} more - keep typing to narrow",
       "noOptions": "No matching hosts or projects",
       "search": "Filter by host or project..."
-    },
-    "matchLabel": {
-      "automation": "Run"
     }
   }
 }

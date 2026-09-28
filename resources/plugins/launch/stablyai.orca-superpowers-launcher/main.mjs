@@ -867,6 +867,27 @@ export function buildStoryHookGroups(claudeDir) {
     const hook = { type: 'command', command: `${binDir}/${w.file}`, timeout: STORY_HOOK_TIMEOUT }
     out[event] = w.matcher ? { matcher: w.matcher, hooks: [hook] } : { hooks: [hook] }
   }
+  // PreToolUse guards — đọc CÙNG nguồn với bin story-hooks-install (kit/hooks/*.json,
+  // sorted, {KIT_BIN} → bin dir). Lockstep: bin và Node diverge = hooks-factpack đỏ.
+  try {
+    const hooksDir = join(KIT_ROOT, 'hooks')
+    const groups = []
+    for (const name of readdirSync(hooksDir).sort()) {
+      if (!name.endsWith('.json')) continue
+      let manifest
+      try {
+        manifest = JSON.parse(readFileSync(join(hooksDir, name), 'utf8'))
+      } catch { continue } // manifest hỏng — skip như bin
+      for (const group of manifest?.hooks?.PreToolUse || []) {
+        const g = JSON.parse(JSON.stringify(group))
+        for (const h of g.hooks || []) {
+          h.command = String(h.command || '').replaceAll('{KIT_BIN}', binDir)
+        }
+        groups.push(g)
+      }
+    }
+    if (groups.length) out.PreToolUse = groups // array → merge loop flatten
+  } catch { /* không có kit/hooks (plugin chạy riêng) — bỏ qua như bin */ }
   return out
 }
 
@@ -932,10 +953,13 @@ export function readKitHookManifests(kitDir, claudeDir) {
 export function mergeStoryHookSettings(settings, claudeDir, kitDir) {
   if (!settings || typeof settings !== 'object' || Array.isArray(settings)) return null
   const canon = buildStoryHookGroups(claudeDir)
-  const kitCmds = new Set(Object.values(canon).map(g => normCmdPath(g.hooks[0].command)))
+  // canon value có thể là 1 group (wrappers) hoặc array groups (PreToolUse guards)
+  const canonList = Object.entries(canon).flatMap(([event, g]) =>
+    (Array.isArray(g) ? g : [g]).map(gg => [event, gg]))
+  const kitCmds = new Set(canonList.map(([, g]) => normCmdPath(g.hooks[0].command)))
   const next = { ...settings }
   const hooks = { ...(next.hooks && typeof next.hooks === 'object' && !Array.isArray(next.hooks) ? next.hooks : {}) }
-  for (const [event, group] of Object.entries(canon)) {
+  for (const [event, group] of canonList) {
     upsertHookGroup(hooks, event, group, kitCmds)
   }
   for (const { name, event, group } of readKitHookManifests(kitDir || KIT_ROOT, claudeDir)) {

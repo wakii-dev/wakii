@@ -15,10 +15,12 @@ import {
   UI_LANGUAGE_ENGLISH,
   UI_LANGUAGE_JAPANESE,
   UI_LANGUAGE_KOREAN,
-  UI_LANGUAGE_SPANISH
+  UI_LANGUAGE_SPANISH,
+  UI_LANGUAGE_VIETNAMESE
 } from '../../shared/ui-language'
 import {
   ensureMainI18n,
+  mainI18n,
   setMainPluginLanguagePacks,
   setMainUiLanguage,
   translateMain
@@ -56,6 +58,15 @@ describe('main-i18n lazy locale loading', () => {
 
     await setMainUiLanguage(UI_LANGUAGE_CHINESE)
     expect(translateMain('menu.file', 'File')).not.toBe('File')
+  })
+
+  it('loads the vi stub through the lazy backend on switch', async () => {
+    // SF-1 stub is empty, so a translation diff cannot prove the load — the
+    // backend delivering the (empty) bundle to the vi resource store can.
+    expect(mainI18n.hasResourceBundle('vi', 'translation')).toBe(false)
+    expect(await setMainUiLanguage(UI_LANGUAGE_VIETNAMESE)).toBe('vi')
+    expect(mainI18n.hasResourceBundle('vi', 'translation')).toBe(true)
+    expect(translateMain('menu.file', 'File')).toBe('File')
   })
 
   it('uses caller English when a target catalog omits a key', async () => {
