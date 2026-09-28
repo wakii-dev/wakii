@@ -9,6 +9,7 @@ import type { PluginHostServices } from './plugin-host-methods'
 import { PluginSecretsStore } from './plugin-secrets-store'
 import { PluginKvStore } from './plugin-storage-store'
 import type { TerminalInputKind } from '../../shared/terminal-input-kind'
+import type { RuntimeAgentPromptWriteOptions } from '../runtime/runtime-terminal-contracts'
 import {
   describeAgentSessionPtyWriteRefusal,
   isAgentSessionPtyWriteRefusedError
@@ -32,7 +33,11 @@ export type PluginRuntimeDelegate = {
     action: { text?: string; enter?: boolean },
     options: { inputKind: TerminalInputKind }
   ): Promise<{ accepted: boolean }>
-  sendTerminalAgentPrompt(handle: string, prompt: string): Promise<{ accepted: boolean }>
+  sendTerminalAgentPrompt(
+    handle: string,
+    prompt: string,
+    options: RuntimeAgentPromptWriteOptions
+  ): Promise<{ accepted: boolean }>
   dispatchPluginNotification(input: {
     pluginId: string
     title: string
@@ -138,7 +143,10 @@ export function bindPluginHostServices(input: {
         // to settle before submitting — a raw multi-line write reaches the agent
         // as one fragment per newline (the composer submits on every newline).
         if (action.enter === true && typeof delegate.sendTerminalAgentPrompt === 'function') {
-          const agentResult = await delegate.sendTerminalAgentPrompt(terminalId, action.text)
+          // Why: a panel send drives a running agent, so it takes the driving input kind.
+          const agentResult = await delegate.sendTerminalAgentPrompt(terminalId, action.text, {
+            inputKind: 'driving'
+          })
           return { accepted: agentResult.accepted }
         }
         const result = await delegate.sendTerminal(terminalId, action, { inputKind: 'driving' })

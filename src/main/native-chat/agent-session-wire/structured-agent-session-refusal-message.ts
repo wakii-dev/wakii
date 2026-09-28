@@ -17,9 +17,6 @@ function ownerDescription(record: AgentSessionRecord): string {
 }
 
 function latchedMessage(record: AgentSessionRecord): string {
-  if (record.lease.settlementRetryRequired) {
-    return 'The provider exited, but Wakii has not finished settling the terminal chat state. Reopen this chat to retry the settlement.'
-  }
   if (record.lease.claimStatus === 'conflicted') {
     return terminalOwnerRefusalMessage(record.lease)
   }

@@ -26,17 +26,19 @@ describe('runtime terminal writer pacing', () => {
     const { writer, write } = makeWriter()
     const text = 'git status'
     const holdMs = getAgentPromptSubmitDelayMs('linux', Buffer.byteLength(text, 'utf8'))
-    const done = writer.writeAction('pty-1', { text, enter: true }, `${text}\r`)
+    const done = writer.writeAction('pty-1', { text, enter: true }, `${text}\r`, {
+      inputKind: 'driving'
+    })
 
     await vi.advanceTimersByTimeAsync(0)
     expect(write).toHaveBeenCalledTimes(1)
-    expect(write).toHaveBeenNthCalledWith(1, 'pty-1', text)
+    expect(write).toHaveBeenNthCalledWith(1, 'pty-1', text, 'driving')
 
     await vi.advanceTimersByTimeAsync(holdMs - 1)
     expect(write).toHaveBeenCalledTimes(1)
 
     await vi.advanceTimersByTimeAsync(1)
-    expect(write).toHaveBeenNthCalledWith(2, 'pty-1', '\r')
+    expect(write).toHaveBeenNthCalledWith(2, 'pty-1', '\r', 'driving')
     await done
   })
 
@@ -46,7 +48,9 @@ describe('runtime terminal writer pacing', () => {
     const text = 'y'.repeat(TERMINAL_INPUT_CHUNK_MAX_BYTES + 1)
     const holdMs = getAgentPromptSubmitDelayMs('linux', Buffer.byteLength(text, 'utf8'))
     expect(holdMs).toBeGreaterThan(getAgentPromptSubmitDelayMs('linux', 0))
-    const done = writer.writeAction('pty-1', { text, enter: true }, `${text}\r`)
+    const done = writer.writeAction('pty-1', { text, enter: true }, `${text}\r`, {
+      inputKind: 'driving'
+    })
 
     await vi.advanceTimersByTimeAsync(0)
     expect(write).toHaveBeenCalledTimes(2)
@@ -55,7 +59,7 @@ describe('runtime terminal writer pacing', () => {
     expect(write).toHaveBeenCalledTimes(2)
 
     await vi.advanceTimersByTimeAsync(1)
-    expect(write).toHaveBeenNthCalledWith(3, 'pty-1', '\r')
+    expect(write).toHaveBeenNthCalledWith(3, 'pty-1', '\r', 'driving')
     await done
   })
 })

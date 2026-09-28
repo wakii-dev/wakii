@@ -23,7 +23,7 @@ describe('exemptions', () => {
     expect(admission).toEqual({ admitted: true, sessionId: null, runtimeFence: null })
   })
 
-  it('admits a proven-live TUI owner', () => {
+  it('admits a proven-live owner', () => {
     const lease = agentSessionLeaseFixture()
     expect(evaluateAgentSessionPtyWriteAdmission(bindingFor(lease))).toEqual({
       admitted: true,
@@ -34,22 +34,9 @@ describe('exemptions', () => {
 })
 
 describe('refusal matrix', () => {
+  // Why no legacy-stage cases: preparing/old-owner-stopped/manual-recovery exist only on disk and
+  // decode to 'recovering' (agent-session-legacy-handoff-lease), so no in-memory lease holds them.
   const cases: { name: string; lease: Partial<AgentSessionLease>; code: string }[] = [
-    {
-      name: 'native chat owns the session',
-      lease: { runtimeKind: 'native' },
-      code: 'agent_session_conflict'
-    },
-    {
-      name: 'a handoff is preparing',
-      lease: { handoffStage: 'preparing' },
-      code: 'agent_session_conflict'
-    },
-    {
-      name: 'the old owner stopped mid-handoff',
-      lease: { handoffStage: 'old-owner-stopped' },
-      code: 'agent_session_conflict'
-    },
     {
       name: 'the new owner has not proved itself',
       lease: { handoffStage: 'new-owner-proving' },
@@ -68,11 +55,6 @@ describe('refusal matrix', () => {
     {
       name: 'recovery is running',
       lease: { handoffStage: 'recovering' },
-      code: 'execution_owner_reconciling'
-    },
-    {
-      name: 'a human must finish recovery',
-      lease: { handoffStage: 'manual-recovery' },
       code: 'execution_owner_reconciling'
     },
     {
@@ -103,20 +85,20 @@ describe('refusal matrix', () => {
     })
   }
 
-  it('distinguishes a reconciling window from a session another runtime owns', () => {
+  it('distinguishes a reconciling window from a handoff another owner will finish', () => {
     // Phase-2 clients render "recovering, retry shortly" only when these two do not collapse.
     const reconciling = evaluateAgentSessionPtyWriteAdmission(
       bindingFor(agentSessionLeaseFixture({ unreconciled: true }))
     )
-    const owned = evaluateAgentSessionPtyWriteAdmission(
-      bindingFor(agentSessionLeaseFixture({ runtimeKind: 'native' }))
+    const handedOff = evaluateAgentSessionPtyWriteAdmission(
+      bindingFor(agentSessionLeaseFixture({ handoffStage: 'new-owner-proving' }))
     )
     expect(reconciling.admitted).toBe(false)
-    expect(owned.admitted).toBe(false)
-    if (reconciling.admitted || owned.admitted) {
+    expect(handedOff.admitted).toBe(false)
+    if (reconciling.admitted || handedOff.admitted) {
       return
     }
-    expect(reconciling.refusal.code).not.toBe(owned.refusal.code)
+    expect(reconciling.refusal.code).not.toBe(handedOff.refusal.code)
   })
 
   it('fails closed when a bound PTY has no readable record', () => {
@@ -198,7 +180,7 @@ describe('in-flight fence race', () => {
   it('refuses the rest of a write when the lease stopped admitting a writer', () => {
     const next = reevaluateAgentSessionPtyWriteAdmission({
       admitted,
-      binding: bindingFor(agentSessionLeaseFixture({ handoffStage: 'preparing' }))
+      binding: bindingFor(agentSessionLeaseFixture({ handoffStage: 'new-owner-proving' }))
     })
     expect(next.admitted).toBe(false)
     if (next.admitted) {
@@ -210,7 +192,7 @@ describe('in-flight fence race', () => {
   it('judges a write admitted while unbound on whatever binding appeared', () => {
     const next = reevaluateAgentSessionPtyWriteAdmission({
       admitted: { sessionId: null, runtimeFence: null },
-      binding: bindingFor(agentSessionLeaseFixture({ runtimeKind: 'native' }))
+      binding: bindingFor(agentSessionLeaseFixture({ handoffStage: 'new-owner-proving' }))
     })
     expect(next.admitted).toBe(false)
   })
@@ -219,7 +201,7 @@ describe('in-flight fence race', () => {
 describe('typed error', () => {
   it('carries the refusal and reports its code as the message', () => {
     const admission = evaluateAgentSessionPtyWriteAdmission(
-      bindingFor(agentSessionLeaseFixture({ runtimeKind: 'native' }))
+      bindingFor(agentSessionLeaseFixture({ handoffStage: 'new-owner-proving' }))
     )
     if (admission.admitted) {
       throw new Error('expected a refusal')
@@ -233,7 +215,7 @@ describe('typed error', () => {
 
   it('describes who holds the session and what stage it is in', () => {
     const admission = evaluateAgentSessionPtyWriteAdmission(
-      bindingFor(agentSessionLeaseFixture({ runtimeKind: 'native', handoffStage: 'preparing' }))
+      bindingFor(agentSessionLeaseFixture({ handoffStage: 'new-owner-proving' }))
     )
     if (admission.admitted) {
       throw new Error('expected a refusal')
@@ -242,6 +224,6 @@ describe('typed error', () => {
     expect(described).toContain('session-alpha-1')
     expect(described).toContain('native chat')
     expect(described).toContain('pid 4242')
-    expect(described).toContain('preparing')
+    expect(described).toContain('new-owner-proving')
   })
 })

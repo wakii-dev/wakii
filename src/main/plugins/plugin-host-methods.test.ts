@@ -2,6 +2,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
 import { PLUGIN_WORKSPACE_TERMINAL_LIMIT } from '../../shared/plugins/plugin-host-api'
+import { AgentSessionPtyWriteRefusedError } from '../../shared/agent-session-pty-write-admission'
 import { bindPluginHostServices, type PluginRuntimeDelegate } from './plugin-host-service-bindings'
 import { executePluginHostCall, type PluginHostServices } from './plugin-host-methods'
 
@@ -199,7 +200,9 @@ describe('terminal.sendText explicit worktree routing', () => {
       // Submit-carrying plugin sends ride the agent-prompt path (one atomic
       // bracketed paste) — raw multi-line writes fragment in a TUI composer.
       expect(delegate.sendTerminalAgentPrompt).toHaveBeenCalledTimes(1)
-      expect(delegate.sendTerminalAgentPrompt).toHaveBeenCalledWith(terminalId, 'echo hi')
+      expect(delegate.sendTerminalAgentPrompt).toHaveBeenCalledWith(terminalId, 'echo hi', {
+        inputKind: 'driving'
+      })
       expect(vi.mocked(delegate.listTerminals).mock.invocationCallOrder[0]!).toBeLessThan(
         vi.mocked(delegate.sendTerminalAgentPrompt).mock.invocationCallOrder[0]!
       )

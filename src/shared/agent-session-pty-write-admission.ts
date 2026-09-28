@@ -1,10 +1,9 @@
 /**
  * PTY-write admission for agent sessions that have a durable record.
  *
- * A PTY is the TUI runtime's write surface, so bytes may enter it only while the session's lease
- * admits a writer and that writer is the TUI. The admit decision is `agentSessionLeaseAdmitsWriter`
- * verbatim; everything here only decides whether the lease is even the TUI's to hold, and — once
- * that helper has already refused — which refusal a client should be shown.
+ * Bytes may enter a bound PTY only while the session's lease admits a writer. The admit decision
+ * is `agentSessionLeaseAdmitsWriter` verbatim; everything here only decides, once that helper has
+ * already refused, which refusal a client should be shown.
  *
  * A PTY with no binding is a session this host knows nothing about: every ordinary shell and every
  * legacy agent terminal. Those are never consulted and never refused. A binding whose record is
@@ -59,7 +58,7 @@ const UNBOUND_ADMISSION: AgentSessionPtyWriteAdmission = {
   runtimeFence: null
 }
 
-/** Runs only after `agentSessionLeaseAdmitsWriter` (or the runtime-kind test) already refused. */
+/** Runs only after `agentSessionLeaseAdmitsWriter` already refused. */
 function classifyRefusal(lease: AgentSessionLease): AgentSessionPtyWriteRefusalCode {
   if (lease.unreconciled) {
     return 'execution_owner_reconciling'
@@ -67,12 +66,12 @@ function classifyRefusal(lease: AgentSessionLease): AgentSessionPtyWriteRefusalC
   if (lease.claimStatus === 'conflicted') {
     return 'agent_session_conflict'
   }
-  if (lease.handoffStage === 'recovering' || lease.handoffStage === 'manual-recovery') {
+  if (lease.handoffStage === 'recovering') {
     return 'execution_owner_reconciling'
   }
-  if (lease.handoffStage !== null || lease.runtimeKind !== 'tui') {
-    // Why: a live native owner and a mid-flight handoff are both "someone else holds it", which is
-    // actionable in a way "we cannot tell" is not.
+  if (lease.handoffStage !== null) {
+    // Why: a mid-flight handoff is "someone else is about to hold it", actionable in a way
+    // "we cannot tell" is not.
     return 'agent_session_conflict'
   }
   return 'agent_session_ownership_unknown'
@@ -111,7 +110,7 @@ export function evaluateAgentSessionPtyWriteAdmission(
     return refuse('agent_session_ownership_unknown', binding.sessionId, record.lease)
   }
   const lease = record.lease
-  if (lease.runtimeKind === 'tui' && agentSessionLeaseAdmitsWriter(lease)) {
+  if (agentSessionLeaseAdmitsWriter(lease)) {
     return { admitted: true, sessionId: record.sessionId, runtimeFence: lease.runtimeFence }
   }
   return refuse(classifyRefusal(lease), binding.sessionId, lease)
@@ -168,9 +167,7 @@ export function describeAgentSessionPtyWriteRefusal(refusal: AgentSessionPtyWrit
   const owner =
     refusal.ownerRuntimeKind === null
       ? 'no recorded owner'
-      : `${refusal.ownerRuntimeKind === 'native' ? 'native chat' : 'the agent TUI'}${
-          refusal.ownerPid === null ? '' : ` (pid ${refusal.ownerPid})`
-        }`
+      : `native chat${refusal.ownerPid === null ? '' : ` (pid ${refusal.ownerPid})`}`
   const stage =
     refusal.handoffStage === null ? 'no handoff in progress' : `handoff ${refusal.handoffStage}`
   return `Agent session ${refusal.sessionId} is held by ${owner}; ${stage} (${refusal.code}).`

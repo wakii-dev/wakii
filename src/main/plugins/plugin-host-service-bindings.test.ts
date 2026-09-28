@@ -38,7 +38,9 @@ describe('sendTerminalText routing', () => {
       enter: true
     })
     expect(result.accepted).toBe(true)
-    expect(delegate.sendTerminalAgentPrompt).toHaveBeenCalledWith(TERMINAL_ID, 'a\nb\nc')
+    expect(delegate.sendTerminalAgentPrompt).toHaveBeenCalledWith(TERMINAL_ID, 'a\nb\nc', {
+      inputKind: 'driving'
+    })
     expect(delegate.sendTerminal).not.toHaveBeenCalled()
   })
 
