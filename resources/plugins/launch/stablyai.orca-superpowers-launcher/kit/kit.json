@@ -429,6 +429,12 @@
       "description": "sinh file mindmap .wakii schema v1 của story từ bracket + context pack + story-impact — 3 lớp tiến độ/logic/impact, idempotent (generatedAt chỉ bump khi payload đổi), atomic; --decode verdict cho consumer"
     },
     {
+      "name": "wakii-validate",
+      "type": "bin",
+      "category": "review",
+      "description": "validate file .wakii schema v1 — exit 0/1/2, verdict OK/INVALID/WARN; luật §3 + story-level (sf/linear/tier/deps) + --linear kiểm ID tồn tại (fail-open) + --resolve-primary"
+    },
+    {
       "name": "story-mindmap-trigger",
       "type": "bin",
       "category": "infra",

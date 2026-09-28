@@ -1,0 +1,287 @@
+#!/usr/bin/env node
+// wakii-validate — kiểm file .wakii (schema v1) theo luật spec 2026-09-27 §3
+// (VU-14 SF-5 — thay story-validate khi .wakii canonical; story-validate retired).
+//
+// Kiểm (2 tầng):
+//   §3  Schema + structural (decoder chuẩn kit — INVALID toàn file): magic
+//       wakiiMindmap=1, meta bắt buộc (story/generatedAt/generator), node
+//       id/kind/title, edge from/to/rel, duplicate id, dangling edge/parent,
+//       self-loop, >5MB; unknown enum (kind/rel/state) → DROP + decodeWarnings
+//       (WARN, forward-compat — không INVALID).
+//   S   Story-level (luật story-workflow trên .wakii): phải có ≥1 node sf;
+//       linear sai format (không khớp <TEAM>-<số>) → FAIL; duplicate linear
+//       giữa các SF → FAIL; depends-on cycle → FAIL; tier ≠ 1+max(tier deps)
+//       → WARN G2 (như story-validate).
+//   G4  (--linear) linear ID tồn tại thật trong Linear — thiếu key / rate-
+//       limited (linear-rate-limit check) / mạng chết → WARN skip, fail-open.
+//
+// Verdict: OK · INVALID (có FAIL). WARN không chặn.
+//
+// Usage: wakii-validate <file.wakii> [--json] [--linear]
+//        wakii-validate --resolve-primary [--primary <ref>] [--repo <path>]
+// Exit: 0 hợp lệ · 1 có FAIL · 2 usage/lỗi đọc file
+//       (--resolve-primary: 0 resolve được · 1 không, stdout in <ref> khi 0)
+'use strict';
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+const { execFileSync } = require('node:child_process');
+
+const MAX_BYTES = 5 * 1024 * 1024;
+const KNOWN_KIND = new Set(['epic', 'sf', 'task', 'step', 'area', 'file']);
+const KNOWN_REL = new Set(['contains', 'depends-on', 'flows-to', 'impacts', 'writes']);
+const KNOWN_STATE = new Set(['pending', 'in-progress', 'done', 'blocked', 'complete']);
+
+// ── decoder chuẩn kit — port từ story-mindmap decodeWakii (nguồn duy nhất
+// luật §3; wakii-validate thêm tầng story-level, KHÔNG nới luật) ────────────
+function invalid(reason) { return { valid: false, error: `INVALID: ${reason}` }; }
+
+function decodeWakii(raw) {
+  if (raw.length > MAX_BYTES) return invalid(`too-large — ${raw.length} bytes > 5MB`);
+  let doc;
+  try { doc = JSON.parse(raw.toString('utf8')); } catch { return invalid('schema — JSON không đọc được'); }
+  if (!doc || typeof doc !== 'object' || Array.isArray(doc)) return invalid('schema — gốc không phải object');
+  if (doc.wakiiMindmap !== 1) return invalid(`version — wakiiMindmap=${JSON.stringify(doc.wakiiMindmap ?? null)} (decoder hỗ trợ 1)`);
+  const meta = doc.meta && typeof doc.meta === 'object' ? doc.meta : {};
+  for (const k of ['story', 'generatedAt', 'generator']) {
+    if (typeof meta[k] !== 'string' || !meta[k]) return invalid(`schema — thiếu meta.${k}`);
+  }
+  if (!Array.isArray(doc.nodes)) return invalid('schema — thiếu nodes[]');
+  if (!Array.isArray(doc.edges)) return invalid('schema — thiếu edges[]');
+
+  const warnings = Array.isArray(doc.decodeWarnings) ? [...doc.decodeWarnings] : [];
+  const rawIds = new Set();
+  for (const n of doc.nodes) {
+    if (!n || typeof n !== 'object') return invalid('schema — node không phải object');
+    if (typeof n.id !== 'string' || !n.id || typeof n.kind !== 'string' || !n.kind ||
+        typeof n.title !== 'string' || !n.title) {
+      return invalid(`schema — node thiếu id/kind/title: ${JSON.stringify((n && n.id) ?? null)}`);
+    }
+    if (rawIds.has(n.id)) return invalid(`structural — duplicate id: ${n.id}`);
+    rawIds.add(n.id);
+  }
+  const nodes = [];
+  const dropped = new Set();
+  for (const n of doc.nodes) {
+    if (!KNOWN_KIND.has(n.kind)) { warnings.push(`node ${n.id}: kind lạ "${n.kind}" — drop`); dropped.add(n.id); continue; }
+    if (n.state !== undefined && !KNOWN_STATE.has(n.state)) { warnings.push(`node ${n.id}: state lạ "${n.state}" — drop`); dropped.add(n.id); continue; }
+    nodes.push(n);
+  }
+  const edges = [];
+  for (const e of doc.edges) {
+    if (!e || typeof e !== 'object' || typeof e.from !== 'string' || !e.from ||
+        typeof e.to !== 'string' || !e.to || typeof e.rel !== 'string' || !e.rel) {
+      return invalid(`schema — edge thiếu from/to/rel: ${JSON.stringify(e ?? null)}`);
+    }
+    if (e.from === e.to) return invalid(`structural — self-loop: ${e.from}`);
+    if (!rawIds.has(e.from) || !rawIds.has(e.to)) return invalid(`structural — dangling edge: ${e.from} → ${e.to}`);
+    if (!KNOWN_REL.has(e.rel)) { warnings.push(`edge ${e.from}→${e.to}: rel lạ "${e.rel}" — drop`); continue; }
+    if (dropped.has(e.from) || dropped.has(e.to)) { warnings.push(`edge ${e.from}→${e.to}: trỏ node bị drop — drop kèm`); continue; }
+    edges.push(e);
+  }
+  for (const n of nodes) {
+    if (n.parent === undefined || n.parent === null) continue;
+    if (typeof n.parent !== 'string' || !n.parent || !rawIds.has(n.parent)) {
+      return invalid(`structural — dangling parent: ${n.id} → ${JSON.stringify(n.parent ?? null)}`);
+    }
+    if (dropped.has(n.parent)) { warnings.push(`node ${n.id}: parent trỏ node bị drop — bỏ parent`); delete n.parent; }
+  }
+  if (!nodes.some(n => n.kind === 'epic')) return invalid('schema — không có node epic');
+
+  return { valid: true, nodes, edges, warnings };
+}
+
+// ── tầng story-level ────────────────────────────────────────────────────────
+function storyChecks(nodes, edges, fails, warns) {
+  const sfs = nodes.filter(n => n.kind === 'sf');
+  if (sfs.length === 0) fails.push('S: không có node sf nào — story không launch được SF');
+
+  const linearOf = new Map(); // id -> linear
+  for (const sf of sfs) {
+    if (sf.linear !== undefined && sf.linear !== null && sf.linear !== '') {
+      if (!/^[A-Z]+-\d+$/.test(sf.linear)) fails.push(`S: ${sf.id} linear không khớp <TEAM>-<số> (got: ${JSON.stringify(sf.linear)})`);
+      linearOf.set(sf.id, sf.linear);
+    }
+  }
+  // G3 — duplicate linear giữa các SF
+  const seen = new Map();
+  for (const [id, lin] of linearOf) {
+    if (seen.has(lin)) fails.push(`S: linear ID ${lin} dùng cho nhiều SF (${seen.get(lin)}, ${id})`);
+    else seen.set(lin, id);
+  }
+  // deps graph từ edges depends-on giữa sf nodes
+  const depsOf = new Map();
+  for (const e of edges) {
+    if (e.rel !== 'depends-on') continue;
+    if (nodes.some(n => n.id === e.from && n.kind !== 'sf')) continue;
+    if (nodes.some(n => n.id === e.to && n.kind !== 'sf')) continue;
+    if (!depsOf.has(e.from)) depsOf.set(e.from, []);
+    depsOf.get(e.from).push(e.to);
+  }
+  // G2 cycle detection (DFS, như story-validate)
+  const state = new Map();
+  const visit = (id, stack) => {
+    if (state.get(id) === 2) return;
+    if (state.get(id) === 1) { fails.push(`S: dependency cycle: ${[...stack, id].join(' → ')}`); return; }
+    state.set(id, 1);
+    for (const d of depsOf.get(id) || []) visit(d, [...stack, id]);
+    state.set(id, 2);
+  };
+  for (const sf of sfs) visit(sf.id, []);
+  // G2 tier-derivation — WARN (không chặn, như story-validate)
+  const tierOf = new Map(sfs.filter(n => typeof n.tier === 'number').map(n => [n.id, n.tier]));
+  for (const sf of sfs) {
+    const deps = (depsOf.get(sf.id) || []).filter(d => tierOf.has(d));
+    if (!deps.length || !tierOf.has(sf.id)) continue;
+    const maxDep = Math.max(...deps.map(d => tierOf.get(d)));
+    if (tierOf.get(sf.id) !== maxDep + 1) {
+      warns.push(`G2: ${sf.id} Tier=${tierOf.get(sf.id)} nhưng max(Tier deps)=${maxDep} — Tier nên = 1 + max (derived)`);
+    }
+  }
+  return { sfs };
+}
+
+// ── G4 — linear reality check (fail-open) ───────────────────────────────────
+function linearRateLimited() {
+  const rl = path.join(__dirname, 'linear-rate-limit');
+  if (!fs.existsSync(rl)) return false;
+  try {
+    // execFileSync throw khi exit ≠ 0 — status 3 (limited) lộ qua e.status
+    return execFileSync(rl, ['check'], { timeout: 5000, stdio: ['ignore', 'ignore', 'ignore'] }).status === 3;
+  } catch (e) {
+    return e && e.status === 3;
+  }
+}
+
+function linearExists(ids, warns, fails) {
+  let key = process.env.LINEAR_API_KEY || '';
+  if (!key) {
+    const kp = path.join(os.homedir(), '.claude', '.linear-key');
+    try { key = fs.readFileSync(kp, 'utf8').trim(); } catch { key = ''; }
+  }
+  if (!key) { warns.push('G4: --linear bỏ qua — không có LINEAR_API_KEY / ~/.claude/.linear-key'); return; }
+  if (linearRateLimited()) { warns.push('G4: --linear bỏ qua — Linear rate-limited (state máy-level)'); return; }
+  const q = 'query($ids:[String!]!){issues(filter:{or:[{identifier:{in:$ids}},{id:{in:$ids}}]}){nodes{identifier id}}}';
+  const endpoint = process.env.LINEAR_GRAPHQL_ENDPOINT || 'https://api.linear.app/graphql';
+  const body = JSON.stringify({ query: q, variables: { ids } });
+  try {
+    const res = execFileSync('curl', ['-s', '-m', '15', '-X', 'POST', endpoint,
+      '-H', `Authorization: ${key}`, '-H', 'Content-Type: application/json', '-d', body],
+      { encoding: 'utf8', timeout: 20000, stdio: ['ignore', 'pipe', 'ignore'] });
+    const nodes = ((JSON.parse(res).data || {}).issues || {}).nodes || [];
+    const found = new Set();
+    for (const n of nodes) { if (n.identifier) found.add(n.identifier); if (n.id) found.add(n.id); }
+    for (const id of ids) if (!found.has(id)) fails.push(`G4: linear ID ${id} không tồn tại trong Linear`);
+  } catch (e) {
+    warns.push(`G4: --linear bỏ qua — Linear lỗi: ${e && e.message ? e.message : e}`);
+  }
+}
+
+// ── --resolve-primary — thang 6 bậc (port contract từ story-validate) ──────
+function tryRef(repo, ref) {
+  for (const r of [ref, `origin/${ref}`]) {
+    try {
+      execFileSync('git', ['-C', repo, 'rev-parse', '--verify', '--quiet', `${r}^{commit}`], { stdio: 'ignore' });
+      return true;
+    } catch { /* thử bậc kế */ }
+  }
+  return false;
+}
+
+function remoteIdentity(repo) {
+  let url = '';
+  try { url = execFileSync('git', ['-C', repo, 'remote', 'get-url', 'origin'], { encoding: 'utf8' }).trim(); } catch { return ''; }
+  return url.replace(/^(git@|ssh:\/\/git@|https:\/\/)/, '').replace(/[:/]/, '/').replace(/\.git$/, '');
+}
+
+function cmdResolvePrimary(argv) {
+  const val = name => { const i = argv.indexOf(name); return i === -1 ? '' : (argv[i + 1] || ''); };
+  const explicit = val('--primary').trim();
+  const repo = path.resolve(val('--repo') || '.');
+  if (!explicit && argv.includes('--primary')) { console.error('Usage: --resolve-primary --primary <ref> [--repo <path>]'); process.exit(2); }
+  // Bậc 1: explicit — fail-closed
+  if (explicit) {
+    if (tryRef(repo, explicit)) { console.log(explicit); process.exit(0); }
+    console.log(`PRIMARY-UNRESOLVED: --primary ${explicit} không tồn tại`);
+    process.exit(1);
+  }
+  // Bậc 2: orca worktreeBaseRef/baseRef (seam ORCA_BIN) — fail im lặng
+  try {
+    const out = execFileSync(process.env.ORCA_BIN || 'orca', ['repo', 'show', '--repo', `path:${repo}`, '--json'],
+      { encoding: 'utf8', timeout: 10000, stdio: ['ignore', 'pipe', 'ignore'] });
+    const r = (JSON.parse(out).result || {}).repo || {};
+    const base = r.worktreeBaseRef || r.baseRef || '';
+    if (base && tryRef(repo, base)) { console.log(base); process.exit(0); }
+  } catch { /* bậc kế */ }
+  // Bậc 3: git config wakii.primaryBranch
+  try {
+    const cfg = execFileSync('git', ['-C', repo, 'config', '--get', 'wakii.primaryBranch'], { encoding: 'utf8' }).trim();
+    if (cfg && tryRef(repo, cfg)) { console.log(cfg); process.exit(0); }
+  } catch { /* bậc kế */ }
+  // Bậc 4: kit config primaryBranchByRemote theo remote identity
+  const kc = process.env.STORY_KIT_CONFIG || path.join(os.homedir(), '.claude', 'story-kit.json');
+  try {
+    const rid = remoteIdentity(repo);
+    const kb = rid ? ((JSON.parse(fs.readFileSync(kc, 'utf8')).primaryBranchByRemote || {})[rid] || '') : '';
+    if (kb && tryRef(repo, kb)) { console.log(kb); process.exit(0); }
+  } catch { /* bậc kế */ }
+  // Bậc 5: remote HEAD
+  try {
+    const rh = execFileSync('git', ['-C', repo, 'symbolic-ref', '--quiet', 'refs/remotes/origin/HEAD'], { encoding: 'utf8' })
+      .trim().replace(/^refs\/remotes\/origin\//, '');
+    if (rh && tryRef(repo, rh)) { console.log(rh); process.exit(0); }
+  } catch { /* hết bậc */ }
+  console.log('PRIMARY-UNRESOLVED — hỏi user primary branch (thang 6 bậc spec story-worktree-hub)');
+  process.exit(1);
+}
+
+// ── main ────────────────────────────────────────────────────────────────────
+function main() {
+  const argv = process.argv.slice(2);
+  if (argv.includes('--resolve-primary')) return cmdResolvePrimary(argv);
+
+  let file = '';
+  let jsonOut = false;
+  let checkLinear = false;
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    if (a === '--json') jsonOut = true;
+    else if (a === '--linear') checkLinear = true;
+    else if (a.startsWith('-')) {
+      console.error(`Usage: wakii-validate <file.wakii> [--json] [--linear]`);
+      process.exit(2);
+    } else file = a;
+  }
+  if (!file) { console.error('Usage: wakii-validate <file.wakii> [--json] [--linear]'); process.exit(2); }
+  let raw;
+  try { raw = fs.readFileSync(file); } catch (e) {
+    if (jsonOut) console.log(JSON.stringify({ verdict: 'INVALID', sf_count: 0, fails: [`FAIL: cannot read file: ${e.message}`], warns: [] }));
+    else console.error(`FAIL: cannot read file: ${e.message}`);
+    process.exit(2);
+  }
+
+  const fails = [];
+  const warns = [];
+  const dec = decodeWakii(raw);
+  if (!dec.valid) fails.push(dec.error);
+  else {
+    for (const w of dec.warnings) warns.push(w);
+    const { sfs } = storyChecks(dec.nodes, dec.edges, fails, warns);
+    if (checkLinear) {
+      const ids = [...new Set(sfs.map(s => s.linear).filter(Boolean))];
+      if (ids.length) linearExists(ids, warns, fails);
+    }
+  }
+
+  const verdict = fails.length ? 'INVALID' : 'OK';
+  if (jsonOut) {
+    console.log(JSON.stringify({ verdict, sf_count: dec.valid ? dec.nodes.filter(n => n.kind === 'sf').length : 0, fails, warns }));
+  } else {
+    for (const m of fails) console.log(m);
+    for (const m of warns) console.log(`WARN: ${m}`);
+    console.log(`${verdict} — ${dec.valid ? dec.nodes.filter(n => n.kind === 'sf').length : 0} SF, ${fails.length} FAIL, ${warns.length} WARN`);
+  }
+  process.exit(fails.length ? 1 : 0);
+}
+
+main();
