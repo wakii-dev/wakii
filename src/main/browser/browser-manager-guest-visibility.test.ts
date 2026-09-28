@@ -56,8 +56,7 @@ const {
   guestSetBackgroundThrottlingMock,
   guestSetWindowOpenHandlerMock,
   guestOpenDevToolsMock,
-  webContentsFromIdMock,
-  browserWindowFromWebContentsMock
+  webContentsFromIdMock
 } = browserMocks
 
 describe('browserManager', () => {
