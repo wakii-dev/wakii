@@ -41,9 +41,9 @@
 - Modify: `kit/bin/story-launch` (`--wakii <file>`; discovery mindmaps trước, brackets fallback)
 - Modify: `kit/tests/story-launch-tests.mjs` (case .wakii)
 
-- [ ] **Step 3.1 RED** — test: `--wakii` parse title/linear/deps/dest/epic từ nodes+edges+meta (python inline); deps Done check qua depends-on edges + linear; discovery không `--bracket/--wakii` tìm mindmaps/*.wakii trước brackets/*.md; prompt trỏ .wakii; WTMODEL từ meta.worktreeModel (thiếu → legacy behavior); dry-run không ghi.
-- [ ] **Step 3.2 GREEN** — parse .wakii bằng python3 json (bash không parse JSON); giữ `--bracket` cho story legacy; mindmap-trigger gọi giữ nguyên.
-- [ ] **Step 3.3** — kiểm story-distributed-claim `--list-claims` vẫn chạy với bracket path (fallback legacy); commit.
+- [x] **Step 3.1 RED** — test: `--wakii` parse title/linear/deps/dest/epic từ nodes+edges+meta (python inline); deps Done check qua depends-on edges + linear; discovery không `--bracket/--wakii` tìm mindmaps/*.wakii trước brackets/*.md; prompt trỏ .wakii; WTMODEL từ meta.worktreeModel (thiếu → legacy behavior); dry-run không ghi.
+- [x] **Step 3.2 GREEN** — parse .wakii bằng python3 json (bash không parse JSON); giữ `--bracket` cho story legacy; mindmap-trigger gọi giữ nguyên.
+- [x] **Step 3.3** — kiểm story-distributed-claim `--list-claims` vẫn chạy với bracket path (fallback legacy); commit.
 
 ### Task 4: story-verify-wakii-derive — B3/B4 derive từ .wakii
 
