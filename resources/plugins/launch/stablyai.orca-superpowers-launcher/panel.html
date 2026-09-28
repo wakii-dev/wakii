@@ -6195,7 +6195,7 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
           creativeLine = '\n\nCREATIVITY: BALANCED — spec là khung cứng (acceptance + boundary không đổi); chi tiết chưa ghi agent tự quyết hợp lý theo conventions, flag quyết định lớn trong notes.'
         }
         var prompt = 'Use the story-workflow skill to CREATE A STORY:\n' + idea +
-          '\n(run the full CREATE pipeline: prompt-master, P0 analyst 10 chiều, Figma Principle 8, đọc source code thật, rubric C1-C5/V1-V3, brainstorm, spec-critic, plan-critic; ghi bracket file docs/superpowers/brackets/ (gồm dòng \"Destination: story/<epic-id>-<slug>\" ngay sau header); CHẠY `story-validate <bracket-file>` — phải OK trước khi in STORY-READY, INVALID → sửa theo fails[] rồi chạy lại; tạo epic issue; in STORY-READY rồi STOP chờ approve; TEAM: dùng đúng 9 agents — SF visual-heavy note design-first qua designer)' + packLine + creativeLine + scopeLine
+          '\n(run the full CREATE pipeline: prompt-master, P0 analyst 10 chiều, Figma Principle 8, đọc source code thật, rubric C1-C5/V1-V3, brainstorm, spec-critic, plan-critic; ghi story .wakii file docs/superpowers/mindmaps/<slug>.wakii — JSON schema v1, meta.dest = \"story-<epic-id>-<slug>\"; CHẠY `wakii-validate <file.wakii>` — phải OK trước khi in STORY-READY, INVALID → sửa theo fails[] rồi chạy lại; tạo epic issue; in STORY-READY rồi STOP chờ approve; TEAM: dùng đúng 9 agents — SF visual-heavy note design-first qua designer)' + packLine + creativeLine + scopeLine
         call('terminal.sendText', { terminalId, text: prompt, enter: true }).then((r) => {
           if (r.ok) {
             status.textContent = 'prompt epic đã gửi — agent đang phân tích. Sau STORY-READY: ⌘J chạy "Superpowers: Story Load" rồi ↻'

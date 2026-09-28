@@ -4,8 +4,9 @@
 # 3 chỗ (bài học 2026-08-28: gate 4b phải sửa 2 chỗ, launch tay viết lần 3).
 #
 # Usage:
-#   story-launch SF-2 [--repo <path>] [--dry-run]      # tự tìm bracket
-#   story-launch --sf SF-2 --bracket <file> [--dry-run] # caller đã có context
+#   story-launch SF-2 [--repo <path>] [--dry-run]      # tự tìm nguồn: mindmaps/*.wakii trước, brackets/*.md fallback
+#   story-launch --sf SF-2 --bracket <file> [--dry-run] # caller đã có context (legacy)
+#   story-launch --sf SF-2 --wakii <file.wakii> [--dry-run]
 # Validate: đã approve (có linear) · chưa Done · chưa có worktree · deps Done.
 set -u
 
@@ -60,7 +61,7 @@ dest_fetch_check() { # $1 repo $2 dest — fetch + timeout + stderr capture; rc 
   FERR=$(GIT_HTTP_LOW_SPEED_LIMIT=1000 GIT_HTTP_LOW_SPEED_TIME=30 "${fc[@]}" 2>&1 1>/dev/null)
 }
 
-SF_ARG=""; BRACKET=""; REPO_ARG=""; DRY_RUN=0
+SF_ARG=""; BRACKET=""; WAKII=""; REPO_ARG=""; DRY_RUN=0
 CLAIM=0; CLAIM_MACHINE_ID=""; HOST_ID=""  # distributed flags (SF-1: nhận + resolve)
 GUARD_EXPECT=""; DEST_SHA=""  # C1 git-guard: tip SF branch remote (takeover) + tip dest vừa fetch
 LIST_CLAIMS=0
@@ -68,6 +69,7 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --sf) SF_ARG="$2"; shift ;;
     --bracket) BRACKET="$2"; shift ;;
+    --wakii) WAKII="$2"; shift ;;
     --repo) REPO_ARG="$2"; shift ;;
     --dry-run) DRY_RUN=1 ;;
     --claim) CLAIM=1 ;;
@@ -102,8 +104,9 @@ if [ "$CLAIM" = 1 ]; then
   distributed_config_load
 fi
 
-# ── tìm bracket nếu chưa có
-if [ -z "$BRACKET" ]; then
+# ── tìm nguồn story: mindmaps/*.wakii TRƯỚC (canonical VU-14), brackets/*.md
+# fallback cho story CHƯA migrate (không ép migrate giữa run — VI-1)
+if [ -z "$BRACKET" ] && [ -z "$WAKII" ]; then
   roots=()
   rl=$(orca repo list --json 2>/dev/null | python3 -c "
 import json,sys
@@ -115,19 +118,67 @@ except: pass" 2>/dev/null)
   for p in "$HOME"/orca/projects/*; do [ -d "$p" ] && roots+=("$p"); done
   [ -n "$REPO_ARG" ] && roots=("$REPO_ARG" "${roots[@]}")
   for repo in "${roots[@]}"; do
+    for wf in "$repo"/docs/superpowers/mindmaps/*.wakii; do
+      [ -f "$wf" ] || continue
+      if grep -q "\"sf-$N\"" "$wf" 2>/dev/null; then WAKII="$wf"; REPO="${repo%/}"; break 2; fi
+    done
     for bf in "$repo"/docs/superpowers/brackets/*.md; do
       [ -f "$bf" ] || continue
       if grep -q "^## ${SF_NUM}[ :]" "$bf" 2>/dev/null; then BRACKET="$bf"; REPO="${repo%/}"; break 2; fi
     done
   done
 else
-  REPO="${REPO_ARG:-$(dirname "$(dirname "$(dirname "$(dirname "$BRACKET")")")")}"
+  REPO="${REPO_ARG:-$(dirname "$(dirname "$(dirname "$(dirname "${WAKII:-$BRACKET}")")")")}"
 fi
-[ -f "$BRACKET" ] || { echo "không tìm thấy bracket chứa $SF_NUM"; exit 2; }
+if [ -n "$WAKII" ]; then
+  [ -f "$WAKII" ] || { echo "không tìm thấy mindmap: $WAKII"; exit 2; }
+elif [ -f "$BRACKET" ]; then
+  : # legacy nguồn
+else
+  echo "không tìm thấy mindmap/bracket chứa $SF_NUM"; exit 2
+fi
+SRC_FILE="${WAKII:-$BRACKET}"
 REPOB=$(basename "$REPO")
 
-# ── parse SF section
-IFS='|' read -r TITLE LINEAR DEPS << EOF
+# ── parse SF section — .wakii qua python3 (bash không parse JSON), bracket giữ awk
+DEPMAP=""
+if [ -n "$WAKII" ]; then
+  PARSED=$(python3 - "$WAKII" "$N" <<'PYWAKII'
+import json, sys
+path, n = sys.argv[1], sys.argv[2]
+try:
+    with open(path, encoding='utf-8') as f:
+        doc = json.load(f)
+except Exception as e:
+    sys.stderr.write(f'wakii khong doc duoc: {e}\n'); sys.exit(2)
+nodes = [x for x in (doc.get('nodes') or []) if isinstance(x, dict)]
+edges = [x for x in (doc.get('edges') or []) if isinstance(x, dict)]
+meta = doc.get('meta') or {}
+sf = next((x for x in nodes if x.get('kind') == 'sf' and x.get('id') == f'sf-{n}'), None)
+if not sf:
+    sys.stderr.write(f'khong co node sf-{n}\n'); sys.exit(2)
+title = str(sf.get('title') or '').replace('|', '/')
+linear = str(sf.get('linear') or '')
+deps, depmap = [], []
+for e in edges:
+    if e.get('rel') != 'depends-on' or e.get('from') != sf.get('id'):
+        continue
+    to = str(e.get('to') or '')
+    m = to[3:] if to.startswith('sf-') else ''
+    if not m.isdigit():
+        continue
+    deps.append('SF-' + m)
+    dep = next((str(x.get('linear') or '') for x in nodes if x.get('id') == to), '')
+    depmap.append(f'SF-{m}={dep}')
+dest = str(meta.get('dest') or '')
+wtmodel = str(meta.get('worktreeModel') or '')
+epic = str(meta.get('epic') or (str(meta.get('story') or '').split(' ')[0]))
+sys.stdout.write('|'.join([title, linear, ','.join(deps), dest, wtmodel, epic, ','.join(depmap)]))
+PYWAKII
+  ) || { echo "$SF_NUM — mindmap không đọc được"; exit 2; }
+  IFS='|' read -r TITLE LINEAR DEPS DEST WTMODEL EPIC DEPMAP <<< "$PARSED"
+else
+  IFS='|' read -r TITLE LINEAR DEPS << EOF
 $(awk -v sfx="$SF_NUM" '
   $0 ~ "^## " sfx "([ :]|$)" { in_sf = 1; t = $0; sub(/^## SF-[0-9]+ +/, "", t); title = t; next }
   /^## / { in_sf = 0 }
@@ -135,9 +186,10 @@ $(awk -v sfx="$SF_NUM" '
   in_sf && /^Depends on:/ { sub(/^Depends on: */, ""); deps = $0 }
   END { print title "|" linear "|" deps }' "$BRACKET")
 EOF
-DEST=$(grep -m1 '^Destination:' "$BRACKET" | sed 's/Destination: *//;s/ *$//')
-WTMODEL=$(grep -m1 '^Worktree model:' "$BRACKET" | sed 's/Worktree model: *//;s/ *$//')
-EPIC=$(grep -m1 '^# Story:' "$BRACKET" | sed 's/# Story: *//;s/ *—.*//;s/ *- .*//')
+  DEST=$(grep -m1 '^Destination:' "$BRACKET" | sed 's/Destination: *//;s/ *$//')
+  WTMODEL=$(grep -m1 '^Worktree model:' "$BRACKET" | sed 's/Worktree model: *//;s/ *$//')
+  EPIC=$(grep -m1 '^# Story:' "$BRACKET" | sed 's/# Story: *//;s/ *—.*//;s/ *- .*//')
+fi
 [ -n "$LINEAR" ] || { echo "$SF_NUM chưa approve (không có linear ID) — không thuộc quyền launch"; exit 1; }
 
 # ── resolve machineId claim: flag --machine-id thắng config; --host chỉ lưu
@@ -186,24 +238,29 @@ for d in $(echo "$DEPS" | tr ',' ' '); do
   d=$(echo "$d" | tr -d ' ')
   echo "$d" | grep -q '^SF-' || continue
   dn=$(echo "$d" | sed 's/SF-//')
-  depid=$(awk -v dn="SF-$dn" '
-    $0 ~ "^## " dn "([ :]|$)" { in_sf = 1; next }
-    /^## / { in_sf = 0 }
-    in_sf && /^linear:/ { gsub(/.*linear: /,""); print; exit }' "$BRACKET")
+  if [ -n "$WAKII" ]; then
+    depid=$(printf '%s' "$DEPMAP" | tr ',' '\n' | grep "^${d}=" | head -1 | cut -d= -f2)
+  else
+    depid=$(awk -v dn="SF-$dn" '
+      $0 ~ "^## " dn "([ :]|$)" { in_sf = 1; next }
+      /^## / { in_sf = 0 }
+      in_sf && /^linear:/ { gsub(/.*linear: /,""); print; exit }' "$BRACKET")
+  fi
   [ -n "$depid" ] || { echo "chờ: dep $d chưa có linear ID"; exit 1; }
   dst=$(linear_state "$depid")
   [ "$dst" = "Done" ] || { echo "chờ: dep $d = $depid ($dst)"; exit 1; }
 done
 
 # ── prompt CHUẨN (nguồn duy nhất — mọi caller dùng bản này)
-BFILE=$(basename "$BRACKET")
+BFILE=$(basename "$SRC_FILE")
+if [ -n "$WAKII" ]; then SRC_REL="docs/superpowers/mindmaps/$BFILE"; else SRC_REL="docs/superpowers/brackets/$BFILE"; fi
 # slug: chỉ giữ từ ASCII ≥3 chữ (tiếng Việt strip hết dash-xấu — bài học
 # 'sf-5-print-convergence-v-n-n-bi-n-b'), fallback gọn
 SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/ /g' \
   | tr ' ' '\n' | awk 'length($0)>=3' | head -3 | paste -sd- - | cut -c1-30)
 [ -n "$SLUG" ] || SLUG="sf-$N-convergence"
-STORY_DIR=$(basename "$BRACKET" .md)
-BRACKET_PREFIX=$(basename "$BRACKET" .md | cut -d- -f1 | tr 'A-Z' 'a-z')
+STORY_DIR=${BFILE%.*}
+BRACKET_PREFIX=$(echo "${BFILE%.*}" | cut -d- -f1 | tr 'A-Z' 'a-z')
 PACK="docs/superpowers/contexts/sf-$N.md"
 for cand in "docs/superpowers/contexts/${BRACKET_PREFIX}-sf-$N.md" "docs/superpowers/contexts/$STORY_DIR/sf-$N.md"; do
   [ -f "$cand" ] && { PACK="$cand"; break; }
@@ -222,7 +279,7 @@ else
   CHECK6="CHECK 6 DONE — CHỈ sau CHECK 5. Cleanup: chỉ xoá worktree + NHÁNH SF mình — TUYỆT ĐỐI KHÔNG xoá $DEST (nhánh đích giữ làm audit)."
   DONE_RULE="Done TRƯỚC merge = INCOMPLETE."
 fi
-PROMPT="Use orca-superpowers-workflow skill for ONE sub-feature: $TITLE ($LINEAR). Story: $EPIC — READ FIRST: context pack $PACK (spec slice + touch map + ACCEPTANCE + boundary) + bracket docs/superpowers/brackets/$BFILE. Epic đã trả lời mọi câu — KHÔNG re-ask; câu hỏi mới → REQUIREMENT-GAP comment lên epic. Run full Phase 0-5 cho SF này. Linear issue: $LINEAR (set In Progress at start). Worktree base: $DEST. $HARDLIMIT
+PROMPT="Use orca-superpowers-workflow skill for ONE sub-feature: $TITLE ($LINEAR). Story: $EPIC — READ FIRST: context pack $PACK (spec slice + touch map + ACCEPTANCE + boundary) + story doc $SRC_REL. Epic đã trả lời mọi câu — KHÔNG re-ask; câu hỏi mới → REQUIREMENT-GAP comment lên epic. Run full Phase 0-5 cho SF này. Linear issue: $LINEAR (set In Progress at start). Worktree base: $DEST. $HARDLIMIT
 
 CHECKLIST — chạy TUẦN TỰ, mỗi mục xong phải CÓ BẰNG CHỨNG (lệnh + output), cấm tick trước bằng chứng:
 CHECK 1 CODE+TESTS — TDD RED→GREEN khi khả thi (test thất bại trước → code tối thiểu); commit atomic; tick plan file sau mỗi task.
@@ -236,7 +293,7 @@ BLOCKED → report 4 mục evidence: đã thử gì / output nào / giả địn
 # HOLDS check (team discipline v1): repo đang được session khác giữ → WARN,
 # không chặn (người quyết). File: ~/.claude/holds.md — dòng: <repo-path> | <holder> | <since>
 HOLDS_FILE="$HOME/.claude/holds.md"
-REPO_ABS=$(cd "$(dirname "$BRACKET")/../.." 2>/dev/null && pwd)
+REPO_ABS=$(cd "$(dirname "$SRC_FILE")/../.." 2>/dev/null && pwd)
 if [ -f "$HOLDS_FILE" ] && [ -n "$REPO_ABS" ]; then
   HOLD_HIT=$(grep -F "$REPO_ABS" "$HOLDS_FILE" | head -1)
   [ -n "$HOLD_HIT" ] && echo "⚠ HOLDS: repo đang bị giữ — $HOLD_HIT (liên hệ holder trước khi launch)"
@@ -395,3 +452,9 @@ orca worktree create --name "sf-$N-$SLUG" --linear-issue "$LINEAR" \
       && echo "distributed: guard branch sf-$N-$SLUG còn trên remote — vô hại (máy khác sẽ skip)"
     exit 1
   }
+# mindmap snapshot (VU-14 SF-1 — fail-open; dry-run đã exit trước nên preview không ghi).
+# Nguồn .wakii canonical → mindmap đã có, không regenerate từ bracket.
+if [ -z "$WAKII" ]; then
+  MT="$(dirname "$0")/story-mindmap-trigger"
+  [ -f "$MT" ] && "$MT" --reason launch --bracket "$BRACKET" >/dev/null 2>&1 || true
+fi

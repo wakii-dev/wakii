@@ -1,7 +1,7 @@
 # SF Launch Prompt — the WHOLE handoff template
 
 Bản đầy đủ của SF prompt gửi khi launch worktree (hoặc dispatch task-executor
-in-session — same content). everything else lives in bracket + Linear.
+in-session — same content). everything else lives in story .wakii + Linear.
 
 **Transport rule (learned 2026-09-03, aihero/handoff):** prompt chứa backticks
 và paths — KHÔNG ghép trực tiếp vào `--prompt "..."` trong shell (command
@@ -11,8 +11,9 @@ bảng Worktree SF trong `references/cli-verified.md`.
 
 **Definition of DONE for an SF run (bài học SF-7: agent đặt Linear Done rồi kết
 thúc mà công sức kẹt trên máy local — 468 dòng. Commit + PUSH nhánh sf là một
-phần của DONE với MỌI model; phần merge/Done theo `Worktree model:` trong
-bracket — story-hub: merge vào nhánh đích là việc COORDINATOR trong story
+phần của DONE với MỌI model; phần merge/Done theo worktree model trong
+story .wakii (`meta.worktreeModel`) — story-hub: merge vào nhánh đích là việc
+COORDINATOR trong story
 worktree (xem merge-playbook), executor KHÔNG đụng nhánh đích; legacy: executor
 tự merge-ngược vào nhánh đích như protocol cũ):**
 
@@ -22,9 +23,9 @@ tự merge-ngược vào nhánh đích như protocol cũ):**
  <1 dòng — SF này phục vụ success criterion nào của epic; reasoning để agent
  ra quyết định đúng khi gặp việc ngoài spec>.
  Skills to load: orca-superpowers-workflow (bắt buộc); + figma-orientation /
- image-to-code nếu SF chạm UI theo bracket Design field.
+ image-to-code nếu SF chạm UI theo sf node `design` field trong .wakii.
  Story: <epic-id> — READ FIRST: context pack docs/superpowers/contexts/sf-<n>.md
- (spec slice + touch map + ACCEPTANCE user-visible + boundary) + bracket file:
+ (spec slice + touch map + ACCEPTANCE user-visible + boundary) + story .wakii:
  <path>. All epic-level questions are already answered — do not re-ask; câu
  hỏi mới → REQUIREMENT-GAP comment lên epic (xem EXECUTE MODEL). Pick your
  tier by size (Standard if small).
@@ -46,19 +47,20 @@ tự merge-ngược vào nhánh đích như protocol cũ):**
        (cyan) trên diff SF — KHÔNG Dev tự duyệt. CHANGES-REQUESTED → Dev fix
        rồi re-review. APPROVED mới qua bước 3. (Team Model: tách bạch
        Dev/Test — self-test không thay thế reviewer độc lập.)
-   3. theo `Worktree model:` trong bracket — story-hub: COMMIT + PUSH nhánh sf
+   3. theo worktree model trong .wakii (`meta.worktreeModel`) — story-hub:
+      COMMIT + PUSH nhánh sf
       lên remote (`git push -u origin sf-<n>-<slug>`) rồi report DONE — KHÔNG
       merge, KHÔNG đụng nhánh đích story-<epic-id>-<slug> (merge là việc
-      coordinator trong story worktree — merge-playbook); legacy (bracket không
-      ghi `Worktree model: story-hub`): MERGE vào nhánh đích
+      coordinator trong story worktree — merge-playbook); legacy (worktreeModel
+      không phải story-hub): MERGE vào nhánh đích
       story/<epic-id>-<slug> (merge-ngược + ancestor guard) + audit comment
       merge-hash — protocol cũ
    4. GATE CỨNG (learned 2026-08-28 FI-187: sf-1 merge TRƯỚC reviewer dù prompt
       ghi thứ tự — lời nhắc không đủ): chạy `~/.claude/bin/story-verify <sf>`
       — phải sạch (không FAIL, không VIOLATION) thì mới qua bước 5. Còn FAIL
       → quay lại đúng bước checklist tương ứng, KHÔNG tick Done.
-   5. Set issue Done theo Worktree model — legacy (bracket không ghi
-      `Worktree model: story-hub`): RỒI MỚI set Done. story-hub: KHÔNG set
+   5. Set issue Done theo Worktree model — legacy (worktreeModel không phải
+      story-hub): RỒI MỚI set Done. story-hub: KHÔNG set
       Done — push sf-branch + report DONE là xong; coordinator set sau khi
       merge sf-branch vào nhánh đích (merge-playbook).
  Linear Done TRƯỚC push = run INCOMPLETE (coordinator không có gì để merge + flag)."
@@ -66,7 +68,7 @@ tự merge-ngược vào nhánh đích như protocol cũ):**
 
 ## Memory patterns khi launch (PM gọi — optional, fail-safe như story-resume)
 
-Trước khi gửi SF prompt, chạy `story-memory inject "<sf-name + story/bracket
+Trước khi gửi SF prompt, chạy `story-memory inject "<sf-name + story .wakii
 context>"` — có kết quả thì đính block `## Patterns liên quan (từ memory graph)`
 vào CUỐI launch prompt (≤3 dòng, đã kèm provenance). CLI chưa install / chưa
 index / không match → bỏ qua, launch như bình thường (inject là optional layer).

@@ -843,7 +843,8 @@ function notifyKitBlocked(orca, summary) {
 // ---- Story hooks auto-install (SF-2 GH-26) --------------------------------
 // Merge ĐÚNG 3 hook entries vào <root>/settings.json: PostToolUse (matcher
 // Bash → checkpoint record), SessionStart (→ fact-pack), Stop (wrapper no-op,
-// logic thật SF-3 thay sau). Detection theo ĐÚNG command path (normalized) của
+// logic thật SF-3 thay sau) + các group từ manifests kit/hooks/*.json (GH-87
+// SF-1, PreToolUse guards). Detection theo ĐÚNG command path (normalized) của
 // kit — KHÔNG prefix-match `story-` (entry legacy story-compact-recovery và
 // claude-hook.cmd của Orca phải nguyên vẹn). Idempotent: chỉ ghi khi nội dung
 // đổi (chạy lần 2 → file byte-for-byte không đổi). Atomic: temp cùng dir +
@@ -893,7 +894,63 @@ export function buildStoryHookGroups(claudeDir) {
 // Pure merge — settings hiện tại + canonical groups → settings mới. Group chứa
 // ĐÚNG command của kit (và không trộn lệnh lạ) → thay nguyên group; chưa có →
 // append. Group trộn command kit + lệnh lạ → không đụng, append canonical riêng.
-export function mergeStoryHookSettings(settings, claudeDir) {
+// kitDir đưa vào → group từ manifests kit/hooks/*.json (GH-87 SF-1) merge CÙNG
+// semantics với bin story-hooks-install: {KIT_BIN} → <claudeDir>/bin, event đã
+// có command kết thúc /<bin-name> → skip (idempotent).
+function eventHasHookCmd(hooks, event, needle) {
+  for (const group of (hooks[event] || [])) {
+    if (!group || typeof group !== 'object') continue
+    for (const h of (group.hooks || [])) {
+      if (normCmdPath(h?.command).includes(needle)) return true
+    }
+  }
+  return false
+}
+
+function upsertHookGroup(hooks, event, group, kitCmds) {
+  const arr = Array.isArray(hooks[event]) ? [...hooks[event]] : []
+  const want = normCmdPath(group.hooks[0].command)
+  let replaced = false
+  for (let i = 0; i < arr.length; i++) {
+    const ent = arr[i]
+    if (!ent || typeof ent !== 'object' || !Array.isArray(ent.hooks)) continue
+    const cmds = ent.hooks.map(h => normCmdPath(h?.command))
+    if (!cmds.includes(want)) continue
+    const hasForeign = cmds.some(c => c && !kitCmds.has(c))
+    if (hasForeign) continue // mixed — giữ nguyên, append canonical riêng bên dưới
+    arr[i] = JSON.parse(JSON.stringify(group))
+    replaced = true
+    break
+  }
+  if (!replaced) arr.push(JSON.parse(JSON.stringify(group)))
+  hooks[event] = arr
+}
+
+// Đọc manifests kit/hooks/*.json → [{name, event, group}] đã thay {KIT_BIN}.
+// Manifest hỏng/thiếu → skip im lặng (fail-open như bin story-hooks-install).
+export function readKitHookManifests(kitDir, claudeDir) {
+  const out = []
+  let files = []
+  try { files = readdirSync(join(kitDir, 'hooks')).sort() } catch { return out }
+  for (const f of files) {
+    if (!f.endsWith('.json')) continue
+    try {
+      const manifest = JSON.parse(readFileSync(join(kitDir, 'hooks', f), 'utf8'))
+      for (const raw of manifest.hooks.PreToolUse) {
+        const group = JSON.parse(JSON.stringify(raw))
+        for (const h of group.hooks || []) {
+          if (typeof h?.command === 'string' && h.command.includes('{KIT_BIN}')) {
+            h.command = h.command.replaceAll('{KIT_BIN}', normCmdPath(join(claudeDir, 'bin')))
+          }
+        }
+        out.push({ name: f.replace(/\.json$/, ''), event: 'PreToolUse', group })
+      }
+    } catch { /* manifest hỏng — skip cả file như bin */ }
+  }
+  return out
+}
+
+export function mergeStoryHookSettings(settings, claudeDir, kitDir) {
   if (!settings || typeof settings !== 'object' || Array.isArray(settings)) return null
   const canon = buildStoryHookGroups(claudeDir)
   // canon value có thể là 1 group (wrappers) hoặc array groups (PreToolUse guards)
@@ -903,22 +960,13 @@ export function mergeStoryHookSettings(settings, claudeDir) {
   const next = { ...settings }
   const hooks = { ...(next.hooks && typeof next.hooks === 'object' && !Array.isArray(next.hooks) ? next.hooks : {}) }
   for (const [event, group] of canonList) {
-    const arr = Array.isArray(hooks[event]) ? [...hooks[event]] : []
-    const want = normCmdPath(group.hooks[0].command)
-    let replaced = false
-    for (let i = 0; i < arr.length; i++) {
-      const ent = arr[i]
-      if (!ent || typeof ent !== 'object' || !Array.isArray(ent.hooks)) continue
-      const cmds = ent.hooks.map(h => normCmdPath(h?.command))
-      if (!cmds.includes(want)) continue
-      const hasForeign = cmds.some(c => c && !kitCmds.has(c))
-      if (hasForeign) continue // mixed — giữ nguyên, append canonical riêng bên dưới
-      arr[i] = JSON.parse(JSON.stringify(group))
-      replaced = true
-      break
-    }
-    if (!replaced) arr.push(JSON.parse(JSON.stringify(group)))
-    hooks[event] = arr
+    upsertHookGroup(hooks, event, group, kitCmds)
+  }
+  for (const { name, event, group } of readKitHookManifests(kitDir || KIT_ROOT, claudeDir)) {
+    const firstCmd = (group.hooks || []).map(h => normCmdPath(h?.command)).find(c => c.includes('/'))
+    const binName = firstCmd ? firstCmd.split('/').pop() : name
+    if (eventHasHookCmd(hooks, event, `/${binName}`)) continue // đã wired — idempotent
+    upsertHookGroup(hooks, event, group, kitCmds)
   }
   next.hooks = hooks
   return next
@@ -926,7 +974,7 @@ export function mergeStoryHookSettings(settings, claudeDir) {
 
 // RMW lên đĩa — fail-open phía caller (không throw). changed=false khi nội dung
 // đã đúng (không đụng mtime → idempotent byte-for-byte).
-export function mergeStoryHooks(claudeDir) {
+export function mergeStoryHooks(claudeDir, kitDir) {
   try {
     const settingsPath = join(claudeDir, 'settings.json')
     let current = {}
@@ -939,7 +987,7 @@ export function mergeStoryHooks(claudeDir) {
         return { ok: false, changed: false, error: `settings.json malformed — không ghi đè: ${err.message}` }
       }
     }
-    const merged = mergeStoryHookSettings(current, claudeDir)
+    const merged = mergeStoryHookSettings(current, claudeDir, kitDir)
     if (!merged) return { ok: false, changed: false, error: 'settings.json không phải object' }
     const nextText = JSON.stringify(merged, null, 2) + '\n'
     if (currentText !== null && currentText === nextText) return { ok: true, changed: false }
@@ -1023,10 +1071,12 @@ export function installKit(orca, { root, kitRoot: kitRootOverride } = {}) {
     }
     mkdirSync(claude, { recursive: true })
     writeFileSync(marker, expectedMarker)
-    // Hooks auto-install (SF-2): merge 3 entries vào settings.json trong Node
-    // (KHÔNG spawn bash bin từ worker — runProcess seam risk trên Windows).
-    // Fail không chặn install: bin đã copy, hook wrapper tự nuốt missing-bin.
-    const merged = mergeStoryHooks(claude)
+    // Hooks auto-install (SF-2 + GH-87 SF-1): merge 3 wrapper entries + guard
+    // manifests vào settings.json trong Node (KHÔNG spawn bash bin từ worker —
+    // runProcess seam risk trên Windows). CÙNG semantics với bin — negative
+    // harness cross-check 2 đường deep-equal. Fail không chặn install: bin đã
+    // copy, hook wrapper tự nuốt missing-bin.
+    const merged = mergeStoryHooks(claude, kitRoot)
     if (merged.ok) orca.log(`story-team-kit v${manifest.version}: hooks ${merged.changed ? 'merged' : 'up-to-date'}`)
     else orca.log(`story-team-kit v${manifest.version}: hooks merge skip — ${merged.error}`)
     // Verify gates config (FI-380 review plan): seed mặc định lần đầu —

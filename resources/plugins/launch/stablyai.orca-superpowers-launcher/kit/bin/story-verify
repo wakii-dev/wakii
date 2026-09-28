@@ -179,6 +179,33 @@ verify_sf() { # $1 worktree → in "<sf>|<verdict>|<detail>|<b1>|<b2>|<b3>|<b4>|
     [ -n "$pline" ] && dest=$(printf '%s' "$pline" | cut -d'|' -f4)
   fi
   if [ -z "$linear" ] || [ -z "$dest" ]; then
+  # lớp fallback 1: mindmaps/*.wakii (canonical VU-14) — dest từ meta.dest,
+  # linear từ node sf-<n>; lớp fallback 2: bracket legacy
+  for wf in "$wt"/docs/superpowers/mindmaps/*.wakii; do
+    [ -f "$wf" ] || continue
+    sfnum=$(echo "$sf" | grep -oE 'sf-?[0-9]+' | head -1 | tr 'a-z' 'A-Z')
+    wline=$(SFNUM="$sfnum" python3 - "$wf" <<'PYVW'
+import json, os, sys
+try:
+    doc = json.load(open(sys.argv[1], encoding='utf-8'))
+except Exception:
+    sys.exit(0)
+meta = doc.get('meta') or {}
+lin = ''
+for x in doc.get('nodes') or []:
+    if isinstance(x, dict) and x.get('kind') == 'sf' and x.get('id') == os.environ.get('SFNUM', '').lower():
+        lin = str(x.get('linear') or '')
+        break
+print(str(meta.get('dest') or '') + '|' + lin)
+PYVW
+    ) || wline=""
+    [ -z "$dest" ] && dest=${wline%%|*}
+    if [ -z "$linear" ]; then
+      linear=${wline#*|}
+      [ "$linear" = "|" ] && linear=""
+    fi
+    [ -n "$linear" ] && [ -n "$dest" ] && break
+  done
   for bf in "$wt"/docs/superpowers/brackets/*.md; do
     [ -f "$bf" ] || continue
     [ -z "$dest" ] && dest=$(grep -m1 '^Destination:' "$bf" | sed 's/Destination: //')
@@ -391,6 +418,14 @@ for wt in "${WTS[@]}"; do ROWS+=("$(verify_sf "$wt")"); done
 BR_SEEN=""; BR_LIST=""
 LIN_TOTAL=0; LIN_DONE=0; LIN_OPEN=0; LIN_UNKNOWN=0; LIN_OPEN_IDS=""; DERIVE_ROWS=""
 for wt in ${WTS[@]+"${WTS[@]}"}; do
+  # mindmaps/*.wakii trước (canonical) — dedupe basename như bracket
+  for wf in "$wt"/docs/superpowers/mindmaps/*.wakii; do
+    [ -f "$wf" ] || continue
+    wbase=$(basename "$wf")
+    case "$BR_SEEN" in *"|$wbase|"*) continue ;; esac
+    BR_SEEN="$BR_SEEN|$wbase|"
+    BR_LIST="$BR_LIST$wf"$'\n'
+  done
   for bf in "$wt"/docs/superpowers/brackets/*.md; do
     [ -f "$bf" ] || continue
     bbase=$(basename "$bf")   # dedupe basename — full-path chứa wt → 2 wt cùng story đếm nhân (review B P1)
@@ -406,6 +441,29 @@ if [ -n "$BR_LIST" ]; then
   # batch chỉ đáng khi curl fallback — rào rate-limit đã ở watchdog batch.
   while IFS= read -r bf; do
     [ -n "$bf" ] || continue
+    case "$bf" in
+      *.wakii)
+        # .wakii: SF rows từ nodes (kind sf, có linear) — python3 JSON parse
+        SFROWS=$(python3 - "$bf" <<'PYVROWS'
+import json, sys
+try:
+    doc = json.load(open(sys.argv[1], encoding='utf-8'))
+except Exception:
+    sys.exit(0)
+for x in doc.get('nodes') or []:
+    if isinstance(x, dict) and x.get('kind') == 'sf':
+        i, lin = str(x.get('id') or ''), str(x.get('linear') or '')
+        if lin and i.startswith('sf-') and i[3:].isdigit():
+            print(i.upper() + '|' + lin)
+PYVROWS
+        ) ;;
+      *) SFROWS=$(awk '
+      function emit() { if (sf != "" && lin != "") print sf "|" lin }
+      /^## / { if ($0 !~ /^## SF-/) { emit(); sf = ""; next }
+               emit(); sf = $2; lin = ""; next }
+      /^linear:/ && sf != "" { lin = $2 }
+      END { emit() }' "$bf") ;;
+    esac
     while IFS='|' read -r sfnum lin; do
       [ -n "$lin" ] || continue
       LIN_TOTAL=$((LIN_TOTAL+1))
@@ -426,12 +484,7 @@ if [ -n "$BR_LIST" ]; then
           LIN_OPEN=$((LIN_OPEN+1)); LIN_OPEN_IDS="$LIN_OPEN_IDS $lin"
           DERIVE_ROWS="${DERIVE_ROWS}  ○ $sfnum ($lin) chưa Done [derive]"$'\n' ;;
       esac
-    done <<< "$(awk '
-      function emit() { if (sf != "" && lin != "") print sf "|" lin }
-      /^## / { if ($0 !~ /^## SF-/) { emit(); sf = ""; next }
-               emit(); sf = $2; lin = ""; next }
-      /^linear:/ && sf != "" { lin = $2 }
-      END { emit() }' "$bf")"
+    done <<< "$SFROWS"
   done <<< "$BR_LIST"
 fi
 LIN_READ=0
@@ -476,9 +529,9 @@ else
   if [ "$LIN_TOTAL" -gt 0 ] && [ "$LIN_READ" = 1 ]; then
     if [ "$LIN_OPEN" -gt 0 ]; then
       all_done=0
-      echo "⚠ Linear derive:${LIN_OPEN_IDS# } chưa Done theo bracket — story chưa hoàn thành."
+      echo "⚠ Linear derive:${LIN_OPEN_IDS# } chưa Done theo bracket/mindmap — story chưa hoàn thành."
     else
-      echo "Linear derive: $LIN_DONE/$LIN_TOTAL SF Done theo bracket."
+      echo "Linear derive: $LIN_DONE/$LIN_TOTAL SF Done theo bracket/mindmap."
     fi
     [ "$LIN_UNKNOWN" -gt 0 ] && echo "⚠ Linear derive: $LIN_UNKNOWN issue không đọc được — bỏ qua (fail-open)."
   elif [ "$LIN_TOTAL" -gt 0 ]; then

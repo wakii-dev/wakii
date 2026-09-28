@@ -29,7 +29,8 @@ const NON_DEFAULT_LOCALE_LOADERS: Record<
   fr: () => import('./locales/fr.json'),
   ja: () => import('./locales/ja.json'),
   ko: () => import('./locales/ko.json'),
-  zh: () => import('./locales/zh.json')
+  zh: () => import('./locales/zh.json'),
+  vi: () => import('./locales/vi.json')
 }
 
 const lazyLocaleBackend: BackendModule = {

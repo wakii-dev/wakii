@@ -410,3 +410,134 @@ describe('superpowers.storyDetail', () => {
     expect(linearGetIssue).toHaveBeenCalledTimes(1)
   })
 })
+
+describe('superpowers.storyDetail — mindmaps/*.wakii source (VU-14 SF-5)', () => {
+  let roots: string[] = []
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    resetSfStatusCacheForTests()
+    linearGetStatus.mockReturnValue({ connected: false })
+  })
+
+  afterEach(() => {
+    for (const root of roots) {
+      rmSync(root, { recursive: true, force: true })
+    }
+    roots = []
+  })
+
+  function track(root: string): string {
+    roots.push(root)
+    return root
+  }
+
+  function makeWakiiWorktree(prefix: string, files: Record<string, string>): string {
+    const root = mkdtempSync(join(tmpdir(), `${prefix}-`))
+    const mindmapsDir = join(root, 'docs', 'superpowers', 'mindmaps')
+    mkdirSync(mindmapsDir, { recursive: true })
+    for (const [name, content] of Object.entries(files)) {
+      writeFileSync(join(mindmapsDir, name), content)
+    }
+    return root
+  }
+
+  const GOLDEN_WAKII = JSON.stringify({
+    wakiiMindmap: 1,
+    meta: {
+      story: 'WI-9 — Golden story',
+      epic: 'WI-9',
+      dest: 'story/wi-9',
+      generatedAt: '2026-09-28T00:00:00Z',
+      generator: 'story-mindmap'
+    },
+    nodes: [
+      { id: 'epic', kind: 'epic', title: 'WI-9 — Golden story' },
+      { id: 'sf-1', kind: 'sf', title: 'First SF', tier: 1, summary: 'RPC foundation', linear: 'FI-901' },
+      { id: 'sf-2', kind: 'sf', title: 'Second SF', tier: 2, summary: 'Client UI' }
+    ],
+    edges: [
+      { from: 'epic', to: 'sf-1', rel: 'contains' },
+      { from: 'epic', to: 'sf-2', rel: 'contains' },
+      { from: 'sf-2', to: 'sf-1', rel: 'depends-on' }
+    ],
+    decodeWarnings: ['node 7: unknown kind "widget" dropped']
+  })
+
+  it('projects sfs/destination/decodeWarnings from .wakii nodes + edges', async () => {
+    const db = new OrchestrationDb(':memory:')
+    const wtPath = track(makeWakiiWorktree('orca-story-detail-wakii', { 'wi-9.wakii': GOLDEN_WAKII }))
+    const runtime = makeRuntime([makeCatalogEntry(`repo::${wtPath}`, wtPath, 'golden')], db)
+
+    const result = (await callStoryDetail(runtime, 'mindmaps/wi-9.wakii')) as {
+      story: Record<string, unknown>
+    }
+
+    expect(result).not.toHaveProperty('error')
+    expect(result.story).toMatchObject({
+      storyId: 'mindmaps/wi-9.wakii',
+      title: 'WI-9 — Golden story',
+      epicId: 'WI-9',
+      destination: 'story/wi-9',
+      worktreeId: `repo::${wtPath}`,
+      workspaceName: 'golden',
+      parseError: false
+    })
+    expect(result.story.sfs).toEqual([
+      {
+        name: 'SF-1',
+        title: 'First SF',
+        tier: 1,
+        what: 'RPC foundation',
+        dependsOn: [],
+        linear: 'FI-901',
+        status: 'unknown'
+      },
+      {
+        name: 'SF-2',
+        title: 'Second SF',
+        tier: 2,
+        what: 'Client UI',
+        dependsOn: ['SF-1'],
+        linear: null,
+        status: 'unknown'
+      }
+    ])
+    expect(result.story.decodeWarnings).toEqual(['node 7: unknown kind "widget" dropped'])
+  })
+
+  it('joins sf status from Linear by node linear id', async () => {
+    const db = new OrchestrationDb(':memory:')
+    const wtPath = track(makeWakiiWorktree('orca-story-detail-wakii-lin', { 'wi-9.wakii': GOLDEN_WAKII }))
+    const runtime = makeRuntime([makeCatalogEntry(`repo::${wtPath}`, wtPath, 'wt')], db)
+    linearGetStatus.mockReturnValue({ connected: true })
+    linearGetIssue.mockResolvedValue({ state: { name: 'Done', type: 'completed', color: '' } })
+
+    const result = (await callStoryDetail(runtime, 'mindmaps/wi-9.wakii')) as {
+      story: { sfs: { name: string; status: string }[] }
+    }
+
+    expect(result.story.sfs[0]).toMatchObject({ name: 'SF-1', status: 'done' })
+    expect(result.story.sfs[1]).toMatchObject({ name: 'SF-2', status: 'unknown' })
+    expect(linearGetIssue).toHaveBeenCalledTimes(1)
+    expect(linearGetIssue).toHaveBeenCalledWith('FI-901')
+  })
+
+  it('degrades a broken .wakii to parseError true without crashing', async () => {
+    const db = new OrchestrationDb(':memory:')
+    const wtPath = track(makeWakiiWorktree('orca-story-detail-wakii-bad', { 'bad.wakii': '{ vỡ' }))
+    const runtime = makeRuntime([makeCatalogEntry(`repo::${wtPath}`, wtPath, 'wt')], db)
+
+    const result = (await callStoryDetail(runtime, 'mindmaps/bad.wakii')) as {
+      story: Record<string, unknown>
+    }
+
+    expect(result).not.toHaveProperty('error')
+    expect(result.story).toMatchObject({
+      storyId: 'mindmaps/bad.wakii',
+      parseError: true,
+      destination: null,
+      sfs: []
+    })
+  })
+})

@@ -309,12 +309,6 @@
       "description": "một màn hình theo dõi mọi agent đang chạy (Orca + ngoài Orca) — watch-style tự refresh"
     },
     {
-      "name": "story-validate",
-      "type": "bin",
-      "category": "review",
-      "description": "validate bracket file — exit 0/1/2, verdict OK/INVALID/WARN; --linear kiểm ID tồn tại thật trong Linear (thiếu key → WARN skip)"
-    },
-    {
       "name": "story-verify",
       "type": "bin",
       "category": "ops",
@@ -423,6 +417,24 @@
       "description": "Mermaid sequenceDiagram quá trình chạy thật của story — git + Linear verdicts + evidence, không cần LLM"
     },
     {
+      "name": "story-mindmap",
+      "type": "bin",
+      "category": "knowledge",
+      "description": "sinh file mindmap .wakii schema v1 của story từ bracket + context pack + story-impact — 3 lớp tiến độ/logic/impact, idempotent (generatedAt chỉ bump khi payload đổi), atomic; --decode verdict cho consumer"
+    },
+    {
+      "name": "wakii-validate",
+      "type": "bin",
+      "category": "review",
+      "description": "validate file .wakii schema v1 — exit 0/1/2, verdict OK/INVALID/WARN; luật §3 + story-level (sf/linear/tier/deps) + --linear kiểm ID tồn tại (fail-open) + --resolve-primary"
+    },
+    {
+      "name": "story-mindmap-trigger",
+      "type": "bin",
+      "category": "infra",
+      "description": "wrapper fail-open 3 lifecycle trigger story-mindmap (launch/sweep/close) — nuốt missing-bin + timeout 30s, --commit force-add cho close"
+    },
+    {
       "name": "story-distributed-claim",
       "type": "bin",
       "category": "infra",
@@ -508,5 +520,5 @@
       "description": "PreToolUse Edit|Write|MultiEdit guard chặn ghi .env/.env.*/pem/id_rsa*/key — exit 2, fail-open, GUARD_OFF escape (GH-87)"
     }
   ],
-  "kitHash": "7606a0c228bccf6c"
+  "kitHash": "125b4ead1ce8090b"
 }

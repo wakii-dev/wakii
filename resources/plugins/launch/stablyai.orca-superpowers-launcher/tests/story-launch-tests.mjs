@@ -211,6 +211,130 @@ console.log('== L7 launch legacy: lineage cha giữ <dest>-coordinator ==')
   rmSync(dir, { recursive: true, force: true })
 }
 
+console.log('== L8 launch .wakii: --wakii parse title/linear/deps/dest/epic/wtmodel từ nodes+meta ==')
+{
+  const dir = tempDir('l8')
+  const stub = makeOrcaStub(dir)
+  const md = join(dir, 'docs', 'superpowers', 'mindmaps')
+  mkdirSync(md, { recursive: true })
+  const wf = join(md, 'test-1.wakii')
+  writeFileSync(wf, JSON.stringify({
+    wakiiMindmap: 1,
+    meta: { story: 'TEST-1 — Wakii launch fixture', epic: 'TEST-1', dest: 'story/test-1',
+      worktreeModel: 'story-hub', generatedAt: '2026-09-28T00:00:00Z', generator: 'test' },
+    nodes: [
+      { id: 'epic', kind: 'epic', title: 'TEST-1 — Wakii launch fixture' },
+      { id: 'sf-1', kind: 'sf', title: 'First SF wakii', state: 'pending', linear: 'FI-101' },
+      { id: 'sf-2', kind: 'sf', title: 'Second SF wakii', state: 'pending', linear: 'FI-102' }
+    ],
+    edges: [
+      { from: 'epic', to: 'sf-1', rel: 'contains' },
+      { from: 'epic', to: 'sf-2', rel: 'contains' },
+      { from: 'sf-2', to: 'sf-1', rel: 'depends-on' }
+    ]
+  }, null, 2))
+  const r = runLaunch(dir, stub, ['SF-1', '--wakii', wf, '--dry-run'])
+  check('L8', 'exit 0 + DRY-RUN sf-1', r.code === 0 && r.out.includes('DRY-RUN launch sf-1'), `code=${r.code} out=${r.out}`)
+  check('L8', 'linear từ node FI-101', r.out.includes('FI-101'), r.out)
+  check('L8', 'WTMODEL từ meta.worktreeModel=story-hub (HARDLIMIT coordinator merge)', r.out.includes('coordinator merge trong story worktree'), r.out)
+  check('L8', 'prompt trỏ mindmap file', r.out.includes('test-1.wakii'), r.out)
+  const r2 = runLaunch(dir, stub, ['SF-2', '--wakii', wf])
+  check('L8', 'dep từ edges depends-on: SF-1 Todo → chờ', r2.code === 1 && r2.out.includes('chờ: dep SF-1'), `code=${r2.code} out=${r2.out}`)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== L9 discovery: mindmaps/*.wakii TRƯỚC brackets/*.md (không flag) ==')
+{
+  const dir = tempDir('l9')
+  const stub = makeOrcaStub(dir)
+  writeBracket(dir) // bracket có FI-101
+  const proj = join(dir, 'fakehome', 'orca', 'projects', 'proj-wakii')
+  const md = join(proj, 'docs', 'superpowers', 'mindmaps')
+  mkdirSync(md, { recursive: true })
+  writeFileSync(join(md, 'proj-wakii-story.wakii'), JSON.stringify({
+    wakiiMindmap: 1,
+    meta: { story: 'PROJ-1 — Discovery fixture', epic: 'PROJ-1', dest: 'story/proj-1',
+      generatedAt: '2026-09-28T00:00:00Z', generator: 'test' },
+    nodes: [
+      { id: 'epic', kind: 'epic', title: 'PROJ-1 — Discovery fixture' },
+      { id: 'sf-1', kind: 'sf', title: 'Wakii only SF', state: 'pending', linear: 'FI-701' }
+    ],
+    edges: [{ from: 'epic', to: 'sf-1', rel: 'contains' }]
+  }, null, 2))
+  // repo chỉ có .wakii → discovery nhặt nó
+  const r1 = runLaunch(dir, stub, ['SF-1', '--dry-run'], { STUB_ONLY_FI701_TODO: '1' })
+  check('L9', 'discovery .wakii-only → linear FI-701', r1.code === 0 && r1.out.includes('FI-701'), `code=${r1.code} out=${r1.out}`)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== L10 cùng repo có CẢ hai: .wakii thắng bracket ==')
+{
+  const dir = tempDir('l10')
+  const stub = makeOrcaStub(dir)
+  const proj = join(dir, 'fakehome', 'orca', 'projects', 'proj-both')
+  const md = join(proj, 'docs', 'superpowers', 'mindmaps')
+  const bd = join(proj, 'docs', 'superpowers', 'brackets')
+  mkdirSync(md, { recursive: true }); mkdirSync(bd, { recursive: true })
+  writeFileSync(join(md, 'proj-both.wakii'), JSON.stringify({
+    wakiiMindmap: 1,
+    meta: { story: 'BOTH-1 — Both fixture', epic: 'BOTH-1', dest: 'story/both-1',
+      generatedAt: '2026-09-28T00:00:00Z', generator: 'test' },
+    nodes: [
+      { id: 'epic', kind: 'epic', title: 'BOTH-1 — Both fixture' },
+      { id: 'sf-1', kind: 'sf', title: 'Wakii SF', state: 'pending', linear: 'FI-702' }
+    ],
+    edges: [{ from: 'epic', to: 'sf-1', rel: 'contains' }]
+  }, null, 2))
+  writeFileSync(join(bd, 'both-1.md'), BRACKET) // FI-101
+  const r = runLaunch(dir, stub, ['SF-1', '--dry-run'])
+  check('L10', '.wakii FI-702 thắng', r.out.includes('FI-702'), r.out)
+  check('L10', 'không rơi về bracket FI-101', !r.out.includes('FI-101'), r.out)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== L11 --wakii file hỏng / thiếu SF → exit 2 ==')
+{
+  const dir = tempDir('l11')
+  const stub = makeOrcaStub(dir)
+  const bad = join(dir, 'bad.wakii')
+  writeFileSync(bad, '{ vỡ')
+  const r1 = runLaunch(dir, stub, ['SF-1', '--wakii', bad, '--dry-run'])
+  check('L11', 'file hỏng → exit 2', r1.code === 2, `code=${r1.code} out=${r1.out}`)
+  const okf = join(dir, 'ok.wakii')
+  writeFileSync(okf, JSON.stringify({ wakiiMindmap: 1, meta: { story: 'x', generatedAt: 't', generator: 'g' },
+    nodes: [{ id: 'epic', kind: 'epic', title: 'e' }], edges: [] }))
+  const r2 = runLaunch(dir, stub, ['SF-3', '--wakii', okf, '--dry-run'])
+  check('L11', 'thiếu sf-3 → exit 2', r2.code === 2, `code=${r2.code} out=${r2.out}`)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== L12 launch thật .wakii: LAUNCHED + prompt trỏ mindmaps (không bracket) + dest từ meta ==')
+{
+  const dir = tempDir('l12')
+  const stub = makeOrcaLaunchStub(dir)
+  const proj = join(dir, 'fakehome', 'orca', 'projects', 'proj-real')
+  const md = join(proj, 'docs', 'superpowers', 'mindmaps')
+  mkdirSync(md, { recursive: true })
+  const wf = join(md, 'proj-real.wakii')
+  writeFileSync(wf, JSON.stringify({
+    wakiiMindmap: 1,
+    meta: { story: 'REAL-1 — Real launch', epic: 'REAL-1', dest: 'story/real-1',
+      generatedAt: '2026-09-28T00:00:00Z', generator: 'test' },
+    nodes: [
+      { id: 'epic', kind: 'epic', title: 'REAL-1 — Real launch' },
+      { id: 'sf-1', kind: 'sf', title: 'Real SF', state: 'pending', linear: 'FI-101' }
+    ],
+    edges: [{ from: 'epic', to: 'sf-1', rel: 'contains' }]
+  }, null, 2))
+  const orcaLog = join(dir, 'orca.log')
+  const r = runLaunch(dir, stub, ['SF-1', '--wakii', wf, '--repo', proj], { STUB_ORCA_LOG: orcaLog })
+  check('L12', 'exit 0 + LAUNCHED', r.code === 0 && r.out.includes('LAUNCHED ✓'), `code=${r.code} out=${r.out}`)
+  const log = existsSync(orcaLog) ? readFileSync(orcaLog, 'utf8') : ''
+  check('L12', 'create --base-branch story/real-1 (dest từ meta)', log.includes('story/real-1'), log)
+  check('L12', 'prompt trỏ mindmaps/proj-real.wakii', log.includes('mindmaps/proj-real.wakii'), log)
+  rmSync(dir, { recursive: true, force: true })
+}
+
 console.log(`\n== TOTAL: ${pass} PASS / ${fail} FAIL ==`)
 if (failures.length) {
   console.log('FAILURES:\n- ' + failures.join('\n- '))

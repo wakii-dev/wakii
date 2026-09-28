@@ -5,8 +5,8 @@ description: >-
   sub-issues per sub-feature (SF), structured as a vertical tier-bracket. Use when the
   user says "create story", "story mode", "epic mode", "approve story", "launch SF",
   "story bracket", or when a feature is large enough to need multiple parallel workflows
-  (rubric: >3 sub-features or >10 tasks). Writes bracket files to
-  docs/superpowers/brackets/<issue>-<slug>.md that the Wakii Story tab renders.
+  (rubric: >3 sub-features or >10 tasks). Writes .wakii mindmap files to
+  docs/superpowers/mindmaps/<slug>.wakii that the Wakii Story tab renders.
   Also "story watchdog", "story stall", "story incomplete" — the self-check loop
   that resumes stalled SFs and drives the story to completion.
 ---
@@ -25,7 +25,7 @@ re-analyzing, never re-asking.
 
 | Khi cần... | Đọc section | Chi tiết lệnh/template |
 |---|---|---|
-| Tạo story mới từ mô tả | CREATE | `~/.claude/bin/story-validate` (bước 9b) |
+| Tạo story mới từ mô tả | CREATE | `~/.claude/bin/wakii-validate` (bước 9b) |
 | Tạo sub-issues + nhánh đích + DAG | APPROVE | `references/cli-verified.md` |
 | Viết context pack cho SF | Context packs | `references/context-packs.md` |
 | Chạy 1 SF (full workflow run) | EXECUTE MODEL | — |
@@ -139,7 +139,7 @@ Chi tiết 3 tầng nhận thức (DOM / screenshot / flow) + fallback đầy đ
    (`--description` vs `--body`, worker PATH, relation vs parent). Trước MỖI nhóm lệnh
    mới: dry-test 1 lệnh đại diện (2 phút) — bug rẻ nhất là bug chưa chạy vào thật.
 2. **Làm cho sai lầm rẻ và observable.** Không xóa gì cả (Duplicate/Cancel + audit
-   comment); mọi thay đổi Linear/git đều để lại vết; bracket file là record duy nhất
+   comment); mọi thay đổi Linear/git đều để lại vết; story .wakii là record duy nhất
    có thể remap. Hệ thống chịu được sai vì mọi thứ revert-able — đừng phá tính chất đó.
 3. **Lắng nghe agents hơn dạy chúng.** Agents tự phát minh snapshot-merge, conflict
    resolution đúng tinh thần, tự flag bug của hệ thống (P6). Khi agent làm điều hợp lý
@@ -157,11 +157,51 @@ Chi tiết 3 tầng nhận thức (DOM / screenshot / flow) + fallback đầy đ
 STORY (epic Linear issue)
  ├─ SF-N nodes — one sub-issue each, organized in TIERS
  │    Tier 0 = foundation (no deps) → Tier N = convergence
- │    Depends on: SF-x edges define the vertical bracket layout
- └bracket file (repo): docs/superpowers/brackets/<issue>-<slug>.md
+ │    Depends on: SF-x edges define the vertical tier layout
+ └story mindmap (repo): docs/superpowers/mindmaps/<slug>.wakii
 ```
 
-## Bracket file format (STRICT — the Story tab parser reads this)
+## Story .wakii format (STRICT — the Story tab parser reads this)
+
+Story file = `docs/superpowers/mindmaps/<slug>.wakii` — JSON schema v1
+(`"wakiiMindmap": 1`). CREATE viết TRỰC TIẾP; gate bằng
+`~/.claude/bin/wakii-validate <file>` (OK mới qua bước APPROVE):
+
+```json
+{
+  "wakiiMindmap": 1,
+  "meta": { "story": "MY-133", "generator": "story-workflow CREATE",
+            "generatedAt": "<iso>", "dest": "story-my133-slug" },
+  "nodes": [
+    { "id": "epic", "kind": "epic", "title": "<story title>" },
+    { "id": "sf-1", "kind": "sf", "title": "Types + Contract", "tier": 0,
+      "summary": "What — behavior đầu-cuối demo được khi SF xong" },
+    { "id": "sf-2", "kind": "sf", "title": "Adapter + Mock", "tier": 1 }
+  ],
+  "edges": [
+    { "from": "epic", "to": "sf-1", "rel": "contains" },
+    { "from": "epic", "to": "sf-2", "rel": "contains" },
+    { "from": "sf-2", "to": "sf-1", "rel": "depends-on" }
+  ]
+}
+```
+
+Rules: meta bắt buộc `story`/`generator`/`generatedAt`; `meta.dest` = nhánh
+đích dash-form (story-hub); optional `meta.worktreeModel: story-hub`.
+Node bắt buộc `id`/`kind`/`title`; sf node thêm `tier` (dependency depth),
+`linear` (bỏ trống lúc CREATE — APPROVE ghi ngược ID vào node), `summary`
+(What — behavior ĐẦU-CUỐI demo được, KHÔNG file path/line — stale sau 1
+refactor; `design: "mock-prototype"|"figma"` khi SF chạm UI). Deps = edges
+`depends-on` (sf→sf); `Tasks:` cũ → task nodes (`contains`). Cycle/tier lệch
+deps → wakii-validate FAIL/WARN. Field ownership: structure/knowledge = người
+sửa tay; state/evidence/generatedAt = machine (`story-mindmap --update-state`).
+Schema + luật validate đầy đủ: header `~/.claude/bin/wakii-validate` +
+spec `docs/superpowers/specs/2026-09-27-mindmap-wakii-viewer-design.md` §3.
+
+**Legacy bracket fallback (story CHƯA migrate — VI-1 đang chạy):** consumer
+đọc thêm `docs/superpowers/brackets/*.md` theo format dưới — story MỚI KHÔNG
+tạo bracket nữa, bootstrap (`story-mindmap --bootstrap`) chỉ dùng 1 lần để
+migrate story cũ:
 
 ```markdown
 # Story: MY-133 — <title>
@@ -261,8 +301,8 @@ Run the full-strictness epic pipeline:
      toàn phase) → **RELEASE CHECKPOINT**: cut release/ship TRƯỚC khi launch
      tier kế. Cấm big-bang release cuối story — user chờ lâu, bug tích tụ
      nhiều phase mới lộ (1.4.204 ship icon trắng + kit nửa cho tới 1.4.205).
-   - Bracket: ghi phase ở `What` của SF đầu tier (vd "Phase 1/2 — shippable:
-     X") — text tự do, không thêm field (parser STRICT).
+   - .wakii: ghi phase ở `summary` của sf node đầu tier (vd "Phase 1/2 —
+     shippable: X") — text tự do (schema node mở).
    - Tier không shippable độc lập (chỉ có nghĩa khi tier sau xong) → gộp vào
      phase sau. Watchdog --launch-next cần người duyệt phase-gate nếu đặt
      RELEASE_GATE=1 (env, mặc định off).
@@ -288,12 +328,12 @@ Run the full-strictness epic pipeline:
      thuộc câu chưa trả lời → lượt sau. Hết khi frontier rỗng — không còn gì
      được giả định lặng lẽ.
 7. `spec-critic` gate → revise → 8. `plan-critic` gate
-9. Write the bracket FILE (format above; `linear:` empty for all SFs at this
-   stage; include the `Destination:` line with the story-branch name)
-   9b. TOOL GATE: chạy `~/.claude/bin/story-validate <bracket-file>` — phải
-   OK (không FAIL) mới qua bước 10. FAIL → sửa bracket rồi chạy lại.
+9. Write the story .wakii FILE (format above; `linear` empty/omit for all SFs
+   at this stage; `meta.dest` = the story-branch name)
+   9b. TOOL GATE: chạy `~/.claude/bin/wakii-validate <file.wakii>` — phải
+   OK (không FAIL) mới qua bước 10. FAIL → sửa .wakii rồi chạy lại.
 10. Create the EPIC Linear issue (In Progress). Do NOT create sub-issues yet.
-11. Print `STORY-READY: <ISSUE> — bracket file: <path>` → STOP. Await user approval.
+11. Print `STORY-READY: <ISSUE> — story .wakii: <path>` → STOP. Await user approval.
 
 ### APPROVE (user says "approve story" / duyệt)
 **Story worktree = worktree coordinator (story-hub):** tạo TRƯỚC khi launch SF
@@ -305,10 +345,10 @@ coordinator (ONE COORDINATOR PER STORY — xem OPERATE). (Story legacy
 `Worktree model: legacy` giữ pattern cũ: worktree cha `<dest-slug>-coordinator`
 kit ≥2.16.7 — xem `git log` section này.)
 
-**Idempotency first:** read the bracket — any SF already carrying `linear: <ID>`
-is DONE (skip creating; verify the issue exists and is active, else recreate).
-Only create sub-issues for SFs with empty `linear:`. A second APPROVE must be a
-no-op, never a duplicate batch.
+**Idempotency first:** read the story .wakii — any sf node already carrying
+`linear: <ID>` is DONE (skip creating; verify the issue exists and is active,
+else recreate). Only create sub-issues for sf nodes with empty `linear`. A
+second APPROVE must be a no-op, never a duplicate batch.
 **Command guard (facts độc lập — không suy từ 1 flag):** mỗi CLI call kiểm 3 lớp
 riêng: (a) exit code, (b) `.ok` trong JSON (nếu parse được), (c) HIỆU ỨNG mong đợi
 tồn tại (read-back: list/show). Lớng bất kỳ mâu thuẫn — exit 0 + parse-fail → lệnh
@@ -328,7 +368,7 @@ ISSUE=$(orca linear create \
   --estimate <task count / 3, round up> \
   --body "Tier: N
 Depends on: SF-x
-Bracket: docs/superpowers/brackets/<file>
+Story: docs/superpowers/mindmaps/<file>.wakii
 What: <What>
 Tasks: <Tasks>" \
   --json | python3 -c "import json,sys; print(json.load(sys.stdin)['result']['issue']['identifier'])")
@@ -336,32 +376,34 @@ Tasks: <Tasks>" \
 # --estimate. New issues land in Backlog — set --state Todo after create
 # (or via save-issue) so they're visible as ready work.
 ```
-Then write `linear: <ID>` back into each SF block in the bracket file.
+Then write `linear: <ID>` back into each sf node in the .wakii.
 Create the STORY WORKTREE (story-hub model — spec story-worktree-hub):
 ```bash
 # exit 1 = PRIMARY-UNRESOLVED → DỪNG + hỏi user primary branch — KHÔNG dùng
 # chuỗi PRIMARY-UNRESOLVED làm tên branch (guard bắt exit trước khi tạo worktree)
-PRIMARY=$(~/.claude/bin/story-validate --resolve-primary --repo .) || {
+PRIMARY=$(~/.claude/bin/wakii-validate --resolve-primary --repo .) || {
   echo "PRIMARY-UNRESOLVED — DỪNG, hỏi user primary branch (thang 6 bậc spec story-worktree-hub)"; exit 1; }
 orca worktree create --name story-<epic-id>-<slug> --base-branch "$PRIMARY" --agent claude
 ```
 Chú thích: orca sanitizeWorktreeName fold `/`→`-` — story-hub dest = dash-form;
 legacy story vẫn slash-form (`story/<epic-id>-<slug>`).
 Nhánh đích sinh ra trong story worktree — coordinator session LÀM VIỆC TRONG
-ĐÓ suốt story. Bracket ghi `Primary: $PRIMARY` + `Worktree model: story-hub`
-(story-validate check). SF worktrees fork từ nhánh đích như cũ.
+ĐÓ suốt story. Ghi `meta.worktreeModel: "story-hub"` vào .wakii
+(wakii-validate check); primary KHÔNG ghi file — resolve runtime khi cần bằng
+`~/.claude/bin/wakii-validate --resolve-primary --repo .`. SF worktrees fork
+từ nhánh đích như cũ.
 Create the orchestration DAG mirroring tiers:
 ```bash
 RUN=$(orca orchestration run-create --objective "<EPIC>: <title>" --json | python3 -c "import json,sys; print(json.load(sys.stdin)['result']['run']['id'])")
-# task-create per SF with --deps chaining per bracket Depends on
+# task-create per SF with --deps chaining per .wakii depends-on edges
 ```
 Audit-log the phase transition on the epic (comment: SFs → issue IDs, tiers).
 
 ### Context packs (per SF — analyze-once materialized thành files)
 Mỗi SF có MỘT context pack: `docs/superpowers/contexts/sf-<n>.md`, viết lúc
-CREATE (sau spec-critic, trước bracket), nằm trong repo chính để mọi SF
+CREATE (sau spec-critic, trước .wakii), nằm trong repo chính để mọi SF
 worktree thấy sau khi fork. Đây là cách "analyze once, inherit many" trở thành
-vật thể — SF agent đọc file này THAY VÌ tự tổng hợp từ bracket + epic + comments.
+vật thể — SF agent đọc file này THAY VÌ tự tổng hợp từ story .wakii + epic + comments.
 **REQUIRED — format 4 sections STRICT (Spec slice / Touch map / ACCEPTANCE
 user-visible / Boundary):** `references/context-packs.md`. ACCEPTANCE là thứ
 verifier Phase 5 kiểm — KHÔNG chỉ process-pass.
@@ -375,11 +417,11 @@ ritual, loop caps with coordinator enforcement, Linear audit per phase.
 Do NOT build a parallel protocol here — inherit it.
 
 What "inherit, don't re-analyze" means per phase inside an SF run:
-- **Phase 0-2 (mini)**: read bracket + context pack (spec slice + touch map +
+- **Phase 0-2 (mini)**: read story .wakii + context pack (spec slice + touch map +
   ACCEPTANCE) for this SF. All clarifying questions were already answered at
   epic CREATE — do NOT ask the user again, do NOT guess.
-  **Câu hỏi mới thật sự (REQUIREMENT-GAP protocol):** context pack + bracket +
-  code đều không trả lời được → probe TRƯỚC khi block (learned 2026-09-03
+  **Câu hỏi mới thật sự (REQUIREMENT-GAP protocol):** context pack + story
+  .wakii + code đều không trả lời được → probe TRƯỚC khi block (learned 2026-09-03
   aihero/handoff fork case): câu kỹ thuật 1 probe 10' giải được (đọc sâu hơn,
   chạy thử, dispatch agent phụ) → probe, KHÔNG GAP. GAP chỉ cho thứ probe
   không giải được → KHÔNG đoán, KHÔNG hỏi user trực tiếp qua
@@ -453,8 +495,8 @@ khi rời tier, coordinator xử hết design gate của tier — SF đã clear 
 tự chạy (bài học FI-187: rule chỉ nằm trong doc thì không ai thực thi; giờ relay
 là cơ chế, doc mô tả đúng cơ chế).
 
-**Destination-freshness (story-hub — hết branch -f surgery):** primary (bracket
-`Primary:`) tiến trong lúc story chạy → merge vào nhánh đích ĐỊNH KỲ trong
+**Destination-freshness (story-hub — hết branch -f surgery):** primary (resolve
+qua `wakii-validate --resolve-primary`) tiến trong lúc story chạy → merge vào nhánh đích ĐỊNH KỲ trong
 story worktree, merge thường KHÔNG rebase — lệnh: section "Merge primary vào
 dest" trong `references/merge-playbook.md`; BẮT BUỘC 1 lần trước khi tạo PR.
 KHÔNG BAO GIỜ `git branch -f` lên nhánh đích — kể cả dạng "an toàn có guard"
@@ -462,15 +504,16 @@ KHÔNG BAO GIỜ `git branch -f` lên nhánh đích — kể cả dạng "an to�
 — đè mất 2 merges; learn FI-187: nhánh đích stale @CREATE làm tier-1 fork mất
 linear IDs + ACCEPTANCE backfills — giờ giải bằng merge định kỳ, không surgery).
 
-**Design gate TRƯỚC dev (khi bracket ghi `Design: mock-prototype`; `Design:
-figma` → bỏ qua gate này — Figma là direction đã duyệt, implement per P8):** KHÔNG
+**Design gate TRƯỚC dev (khi sf node ghi `design: "mock-prototype"`;
+`design: "figma"` → bỏ qua gate này — Figma là direction đã duyệt, implement
+per P8):** KHÔNG
 launch dev ngay. Trước tiên chạy designer phase cho SF đó — designer agent /
 mock-prototype skill: 3 hướng HTML → artifacts links → USER CHỌN (gate bắt
 buộc) → hand-off `docs/superpowers/designs/<sf-slug>-direction.md` (tokens/
 structure/behavior). RỒI mới launch dev, prompt trỏ rõ hand-off file.
 (learned 2026-08-28 FI-187-review: qua 3 stories designer 0 lần được trigger —
 "SF visual-heavy → design-first" chỉ là mô tả trong Team Model, không ai
-thực thi. Giờ là trường bracket bắt buộc + bước launch — bỏ qua = launch sai.)
+thực thi. Giờ là trường sf `design` bắt buộc + bước launch — bỏ qua = launch sai.)
 
 **Before creating, CHECK existing state (launch must be idempotent):**
 - No worktree + issue Todo/Backlog → fresh launch (below).
@@ -498,9 +541,9 @@ orca worktree create --name sf-<n>-<slug> --linear-issue <SF-ISSUE> \
   --base-branch story-<epic-id>-<slug> \
   --agent claude --prompt "<SF prompt>" --no-parent --json
 ```
-(`--base-branch` = nhánh đích từ bracket `Destination:` — story-hub dash-form
+(`--base-branch` = nhánh đích từ .wakii `meta.dest` — story-hub dash-form
 `story-<epic-id>-<slug>`; story legacy slash-form `story/<epic-id>-<slug>`.)
-SF prompt (the WHOLE handoff — everything else lives in bracket + Linear):
+SF prompt (the WHOLE handoff — everything else lives in story .wakii + Linear):
 **REQUIRED — dùng nguyên văn template trong
 `references/sf-launch-prompt.md`.** Bất biến không được rút gọn khi gửi:
 (1) merge về nhánh đích là MỘT PHẦN của DONE — Linear Done trước merge = run
@@ -519,8 +562,8 @@ one SF and reports DONE/BLOCKED.
   dùng slash-form `story/<epic-id>-<slug>`; (tên legacy `story-base` trong các
   run FI cũ — KHÔNG dùng lại.)
 - APPROVE creates the STORY WORKTREE with nhánh đích `story-<epic-id>-<slug>`
-  (story-hub; legacy slash-form) fork từ primary (bracket `Primary:`) BEFORE
-  any SF starts.
+  (story-hub; legacy slash-form) fork từ primary (`wakii-validate
+  --resolve-primary`) BEFORE any SF starts.
 - Every SF worktree forks from nhánh đích (not primary).
 - SF merges back to its PARENT branch on completion (nhánh đích normally;
   nested SF → its parent SF). See CLOSE — parent-merge rule.
@@ -529,8 +572,8 @@ one SF and reports DONE/BLOCKED.
 - **Branch ownership (THỐNG NHẤT — nhánh đích riêng mỗi story):** mỗi story
   có MỘT nhánh đích riêng: `story-<epic-id>-<slug>` dash-form (vd
   `story-fi151-3d-redesign`; legacy slash `story/<epic-id>-<slug>`)
-  — sinh ra trong story worktree lúc APPROVE, fork từ primary (bracket
-  `Primary:`). Mọi SF fork từ nó và merge về nó; nó là "main của story". Khi
+  — sinh ra trong story worktree lúc APPROVE, fork từ primary (resolve qua
+  `wakii-validate --resolve-primary`). Mọi SF fork từ nó và merge về nó; nó là "main của story". Khi
   story hoàn thành: code hoàn chỉnh nằm TRÊN NHÁNH ĐÍCH và agents KHÔNG TỰ
   merge vào primary. **PR được agent tạo (gh CLI — 1 PR/story, dest → primary,
   xem `references/pr-playbook.md`) nhưng MERGE PR là quyền của NGƯỜI** (human
@@ -653,7 +696,8 @@ Agents KHÔNG merge vào primary — push dest + PR để NGƯỜI merge. CLOSE 
 5. Linear: mọi sub-issue Done → **Epic → Done** + final audit comment
    (SF→issue→merge-hash map + tên nhánh đích + hướng dẫn merge cho người).
 6. **Tạo PR (agent chạy — `references/pr-playbook.md`):** push nhánh đích +
-   `gh pr create --base "$PRIMARY"` — base đọc từ bracket `Primary:`, KHÔNG
+   `gh pr create --base "$PRIMARY"` — base đọc từ `~/.claude/bin/wakii-validate
+   --resolve-primary --repo .`, KHÔNG
    hardcode main (1 PR/story) + comment PR URL vào Linear epic.
    Thiếu remote/gh → `READY-FOR-MANUAL-MERGE` vào audit comment, không chặn.
 7. In **STORY-COMPLETE: PR đã mở (hoặc READY-FOR-MANUAL-MERGE) — NGƯỜI review
@@ -662,7 +706,7 @@ Agents KHÔNG merge vào primary — push dest + PR để NGƯỜI merge. CLOSE 
 
 **Sau khi NGƯỜI merge PR (dest → primary):** story-level cleanup — xoá story
 worktree + nhánh đích (local + remote), guards bắt buộc: section "Story-level
-cleanup" trong `references/merge-playbook.md`. Bracket file + Linear audit giữ
+cleanup" trong `references/merge-playbook.md`. Story .wakii + Linear audit giữ
 vĩnh viễn.
 
 **Verification trước khi declare STORY-COMPLETE (không tin mù):**
@@ -681,7 +725,7 @@ vĩnh viễn.
 Nếu phát hiện 2 sub-issue cho cùng SF (approve chạy 2 lần / remap race):
 1. Giữ issue có AUDIT THẬT (comments/commits) làm record chính
 2. Issue kia → state Duplicate (không xóa), comment dẫn về issue chính
-3. Bracket file remap `linear:` về issue chính
+3. .wakii remap sf node `linear` về issue chính
 4. Audit comment lên epic ghi rõ sự hợp nhất
 
 ## DEFENSIVE PATTERNS — bắt buộc đọc trước approve/launch/watchdog/merge

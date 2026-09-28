@@ -1,8 +1,9 @@
 # Merge Playbook — story-workflow (story-hub model)
 
-Quy trình git merge cho story có bracket `Worktree model: story-hub`:
+Quy trình git merge cho story có `meta.worktreeModel: "story-hub"` trong
+story .wakii (bracket legacy: dòng `Worktree model: story-hub`):
 coordinator là SINGLE WRITER của nhánh đích — merge THẬT trong story worktree,
-hết ref surgery. Story legacy (`Worktree model:` thiếu/`legacy`) → chơi theo
+hết ref surgery. Story legacy (worktreeModel thiếu/`legacy`) → chơi theo
 playbook cũ (update-ref + ancestor guards — xem `git log` file này).
 
 > story-hub: nhánh đích thật = dash-form (`story-<epic-id>-<slug>` — orca
@@ -44,7 +45,8 @@ Snapshot merge KHÔNG đánh dấu task completed — chỉ merge cuối (full D
 
 ## Merge primary vào dest (định kỳ + BẮT BUỘC trước PR)
 
-Primary (bracket `Primary:`) tiến trong lúc story chạy → dest nạp primary định
+Primary (resolve qua `wakii-validate --resolve-primary`) tiến trong lúc story
+chạy → dest nạp primary định
 kỳ để tránh conflict dồn cuối:
 
 ```bash

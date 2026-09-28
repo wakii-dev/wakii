@@ -1,0 +1,523 @@
+{
+  "wakiiMindmap": 1,
+  "meta": {
+    "story": "FI-305 — Superpowers on Android — story workflow từ điện thoại (view + gates + notifications)",
+    "epic": "FI-305",
+    "dest": "story/fi305-superpowers-android",
+    "generatedAt": "2026-09-28T07:54:31.323Z",
+    "generator": "story-mindmap 1.0.0"
+  },
+  "nodes": [
+    {
+      "id": "epic",
+      "kind": "epic",
+      "title": "FI-305 — Superpowers on Android — story workflow từ điện thoại (view + gates + notifications)",
+      "state": "in-progress"
+    },
+    {
+      "id": "sf-1",
+      "kind": "sf",
+      "title": "Desktop RPC foundation + gate notifications",
+      "state": "pending",
+      "tier": 0,
+      "linear": "FI-306"
+    },
+    {
+      "id": "sf-2",
+      "kind": "sf",
+      "title": "Mobile story screens + Linear status",
+      "state": "pending",
+      "tier": 1,
+      "linear": "FI-307"
+    },
+    {
+      "id": "sf-3",
+      "kind": "sf",
+      "title": "Gate resolve UX + notification handling",
+      "state": "pending",
+      "tier": 1,
+      "linear": "FI-308"
+    },
+    {
+      "id": "sf-4",
+      "kind": "sf",
+      "title": "Convergence QA + deep-link wiring",
+      "state": "pending",
+      "tier": 2,
+      "linear": "FI-309"
+    },
+    {
+      "id": "t-1.1",
+      "kind": "task",
+      "title": "bracket-parse-shared-module",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.2",
+      "kind": "task",
+      "title": "story-list-method",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.3",
+      "kind": "task",
+      "title": "story-detail-method",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.4",
+      "kind": "task",
+      "title": "gate-resolve-method-pending-guard",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.5",
+      "kind": "task",
+      "title": "mobile-allowlist-entries-enforcement-test",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.6",
+      "kind": "task",
+      "title": "notification-source-union-routing-payload",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.7",
+      "kind": "task",
+      "title": "gate-transition-store-hooks",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.8",
+      "kind": "task",
+      "title": "gate-story-derivation-db-probe",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.9",
+      "kind": "task",
+      "title": "wire-compat-doc-update",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.10",
+      "kind": "task",
+      "title": "fixture-parity-test-vs-plugin",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.11",
+      "kind": "task",
+      "title": "contract-types-shared-location",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-2.1",
+      "kind": "task",
+      "title": "contract-conformance-smoke-test",
+      "state": "pending",
+      "parent": "sf-2"
+    },
+    {
+      "id": "t-2.2",
+      "kind": "task",
+      "title": "host-scoped-story-routes-boundary-test",
+      "state": "pending",
+      "parent": "sf-2"
+    },
+    {
+      "id": "t-2.3",
+      "kind": "task",
+      "title": "story-list-data-module-cache-reconnect",
+      "state": "pending",
+      "parent": "sf-2"
+    },
+    {
+      "id": "t-2.4",
+      "kind": "task",
+      "title": "story-detail-data-module",
+      "state": "pending",
+      "parent": "sf-2"
+    },
+    {
+      "id": "t-2.5",
+      "kind": "task",
+      "title": "story-list-ui-group-worktree",
+      "state": "pending",
+      "parent": "sf-2"
+    },
+    {
+      "id": "t-2.6",
+      "kind": "task",
+      "title": "story-detail-ui-tiers-progress",
+      "state": "pending",
+      "parent": "sf-2"
+    },
+    {
+      "id": "t-2.7",
+      "kind": "task",
+      "title": "linear-subissue-status-read-desktop",
+      "state": "pending",
+      "parent": "sf-2"
+    },
+    {
+      "id": "t-2.8",
+      "kind": "task",
+      "title": "strings-inline-convention-probe",
+      "state": "pending",
+      "parent": "sf-2"
+    },
+    {
+      "id": "t-2.9",
+      "kind": "task",
+      "title": "stale-malformed-handling",
+      "state": "pending",
+      "parent": "sf-2"
+    },
+    {
+      "id": "t-2.10",
+      "kind": "task",
+      "title": "responsive-dark-pass",
+      "state": "pending",
+      "parent": "sf-2"
+    },
+    {
+      "id": "t-3.1",
+      "kind": "task",
+      "title": "contract-conformance-smoke-test",
+      "state": "pending",
+      "parent": "sf-3"
+    },
+    {
+      "id": "t-3.2",
+      "kind": "task",
+      "title": "pending-gates-surface-other-group",
+      "state": "pending",
+      "parent": "sf-3"
+    },
+    {
+      "id": "t-3.3",
+      "kind": "task",
+      "title": "resolve-flow-options-freetext-confirm",
+      "state": "pending",
+      "parent": "sf-3"
+    },
+    {
+      "id": "t-3.4",
+      "kind": "task",
+      "title": "resolve-error-states-safe-retry",
+      "state": "pending",
+      "parent": "sf-3"
+    },
+    {
+      "id": "t-3.5",
+      "kind": "task",
+      "title": "gate-events-pending-list-handling",
+      "state": "pending",
+      "parent": "sf-3"
+    },
+    {
+      "id": "t-3.6",
+      "kind": "task",
+      "title": "reconnect-catchup-verification",
+      "state": "pending",
+      "parent": "sf-3"
+    },
+    {
+      "id": "t-3.7",
+      "kind": "task",
+      "title": "resolve-unit-tests",
+      "state": "pending",
+      "parent": "sf-3"
+    },
+    {
+      "id": "t-4.1",
+      "kind": "task",
+      "title": "deep-link-route-wiring",
+      "state": "pending",
+      "parent": "sf-4"
+    },
+    {
+      "id": "t-4.2",
+      "kind": "task",
+      "title": "device-session-e2e-serialized",
+      "state": "pending",
+      "parent": "sf-4"
+    },
+    {
+      "id": "t-4.3",
+      "kind": "task",
+      "title": "security-review-allowlist-guard",
+      "state": "pending",
+      "parent": "sf-4"
+    },
+    {
+      "id": "t-4.4",
+      "kind": "task",
+      "title": "wire-compat-regression-unit-test",
+      "state": "pending",
+      "parent": "sf-4"
+    },
+    {
+      "id": "t-4.5",
+      "kind": "task",
+      "title": "multi-root-multi-host-assertion",
+      "state": "pending",
+      "parent": "sf-4"
+    },
+    {
+      "id": "t-4.6",
+      "kind": "task",
+      "title": "strings-audit",
+      "state": "pending",
+      "parent": "sf-4"
+    },
+    {
+      "id": "t-4.7",
+      "kind": "task",
+      "title": "docs-update-mobile-notifications",
+      "state": "pending",
+      "parent": "sf-4"
+    }
+  ],
+  "edges": [
+    {
+      "from": "epic",
+      "to": "sf-1",
+      "rel": "contains"
+    },
+    {
+      "from": "epic",
+      "to": "sf-2",
+      "rel": "contains"
+    },
+    {
+      "from": "epic",
+      "to": "sf-3",
+      "rel": "contains"
+    },
+    {
+      "from": "epic",
+      "to": "sf-4",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-2",
+      "to": "sf-1",
+      "rel": "depends-on"
+    },
+    {
+      "from": "sf-3",
+      "to": "sf-1",
+      "rel": "depends-on"
+    },
+    {
+      "from": "sf-4",
+      "to": "sf-2",
+      "rel": "depends-on"
+    },
+    {
+      "from": "sf-4",
+      "to": "sf-3",
+      "rel": "depends-on"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.1",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.2",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.3",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.4",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.5",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.6",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.7",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.8",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.9",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.10",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.11",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-2",
+      "to": "t-2.1",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-2",
+      "to": "t-2.2",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-2",
+      "to": "t-2.3",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-2",
+      "to": "t-2.4",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-2",
+      "to": "t-2.5",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-2",
+      "to": "t-2.6",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-2",
+      "to": "t-2.7",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-2",
+      "to": "t-2.8",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-2",
+      "to": "t-2.9",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-2",
+      "to": "t-2.10",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-3",
+      "to": "t-3.1",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-3",
+      "to": "t-3.2",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-3",
+      "to": "t-3.3",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-3",
+      "to": "t-3.4",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-3",
+      "to": "t-3.5",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-3",
+      "to": "t-3.6",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-3",
+      "to": "t-3.7",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-4",
+      "to": "t-4.1",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-4",
+      "to": "t-4.2",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-4",
+      "to": "t-4.3",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-4",
+      "to": "t-4.4",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-4",
+      "to": "t-4.5",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-4",
+      "to": "t-4.6",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-4",
+      "to": "t-4.7",
+      "rel": "contains"
+    }
+  ],
+  "evidence": [
+    {
+      "node": "epic",
+      "summary": "nguồn sinh mindmap",
+      "ref": "docs/superpowers/brackets/fi305-superpowers-android.md"
+    }
+  ],
+  "decodeWarnings": [
+    "orchestration: không tìm thấy run cho story — SF state=pending",
+    "story-impact không chạy được (ENOENT) — bỏ lớp impact computed"
+  ]
+}

@@ -111,17 +111,31 @@ function pinKitConfig(home) {
 
 // 1 chuỗi path script sẽ derive ra: HOME forward-slash → bash glob + cygpath -m
 // đều ổn; stub JSON dùng CÙNG chuỗi đó → match hoặc không là hành vi thật.
-function runScenario(tag, buildWorktrees, { withBracket = true } = {}) {
+function runScenario(tag, buildWorktrees, { withBracket = true, withWakii = false, jsonOut = false } = {}) {
   const home = mkdtempSync(join(tmpdir(), `story-verify-${tag}-`))
   pinKitConfig(home)
   const wt = makeWorktree(home)
   if (!withBracket) {
     rmSync(join(wt, 'docs', 'superpowers', 'brackets'), { recursive: true, force: true })
   }
+  if (withWakii) {
+    const md = join(wt, 'docs', 'superpowers', 'mindmaps')
+    mkdirSync(md, { recursive: true })
+    writeFileSync(join(md, 'fi777-wakii.wakii'), JSON.stringify({
+      wakiiMindmap: 1,
+      meta: { story: 'FI-777 — wakii derive fixture', epic: 'FI-777', dest: 'story/wakii-dest',
+        generatedAt: '2026-09-28T00:00:00Z', generator: 'test' },
+      nodes: [
+        { id: 'epic', kind: 'epic', title: 'FI-777 — wakii derive fixture' },
+        { id: 'sf-91', kind: 'sf', title: 'Wakii SF', state: 'pending', linear: 'FI-777' }
+      ],
+      edges: [{ from: 'epic', to: 'sf-91', rel: 'contains' }]
+    }, null, 2))
+  }
   const wtPath = wt.replaceAll('\\', '/')
   const worktrees = buildWorktrees(wtPath)
   const { stub, env } = makeOrcaStub(home, JSON.stringify({ result: { worktrees } }))
-  const r = spawnSync('bash', [BIN, SF], {
+  const r = spawnSync('bash', [BIN, SF, ...(jsonOut ? ['--json'] : [])], {
     encoding: 'utf8',
     timeout: 60_000,
     env: { ...process.env, HOME: wtPath.slice(0, wtPath.lastIndexOf('/orca/')) || home, ORCA_BIN: stub, STORY_KIT_CONFIG: join(home, '.claude', 'story-kit.json'), PYTHONUTF8: '1', ...env }
@@ -130,7 +144,7 @@ function runScenario(tag, buildWorktrees, { withBracket = true } = {}) {
   // lọt detail qua đường dẫn evidence trong note lỗi (coupling ngẫu nhiên — hết
   // khi evidence gate PASS).
   const line = (r.stdout || '').split('\n').find((l) => l.includes('code:') && l.includes('dest:')) || ''
-  return { line, wtPath, home }
+  return { line, wtPath, home, stdout: r.stdout || '' }
 }
 
 const PARENT_ID = 'wt-parent-x1'
@@ -170,6 +184,41 @@ const PARENT_ID = 'wt-parent-x1'
 {
   const { line, home } = runScenario('s4', (wtPath) => [wtEntry('wt-sf', wtPath, { linear: 'FI-999' })], { withBracket: false })
   check('S4', 'linear metadata không bị mất khi chỉ thiếu dest', line.includes('review:FI-999') && line.includes('dest:?'), line.trim())
+  rmSync(home, { recursive: true, force: true })
+}
+
+// 5. Không metadata + KHÔNG bracket + có .wakii → derive linear/dest từ nodes+meta
+{
+  const { line, home } = runScenario('s5', () => [
+    wtEntry('wt-other', 'C:/elsewhere/unrelated', { linear: 'FI-1', baseRef: 'refs/heads/o' })
+  ], { withBracket: false, withWakii: true })
+  check('S5', 'linear từ node sf-91 (.wakii fallback)', line.includes('review:FI-777'), line.trim())
+  check('S5', 'dest từ meta.dest', line.includes('dest:story/wakii-dest'), line.trim())
+  rmSync(home, { recursive: true, force: true })
+}
+
+// 6. Story-level derive đọc mindmaps/*.wakii (SF-91 Done theo stub → 1/1)
+{
+  const { stdout, home } = runScenario('s6', () => [
+    wtEntry('wt-other', 'C:/elsewhere/unrelated', { linear: 'FI-1', baseRef: 'refs/heads/o' })
+  ], { withBracket: false, withWakii: true })
+  check('S6', 'story-level derive 1/1 từ .wakii', stdout.includes('Linear derive: 1/1 SF Done'), stdout)
+  rmSync(home, { recursive: true, force: true })
+}
+
+// 7. --json shape KHÔNG ĐỔI: [{sf, verdict, steps{code_tests,...}, detail}]
+{
+  const { stdout, home } = runScenario('s7', () => [
+    wtEntry('wt-other', 'C:/elsewhere/unrelated', { linear: 'FI-1', baseRef: 'refs/heads/o' })
+  ], { withBracket: false, withWakii: true, jsonOut: true })
+  let arr = null
+  try { arr = JSON.parse(stdout || '') } catch { /* để check */ }
+  check('S7', '--json parse được (mảng)', Array.isArray(arr), stdout.slice(0, 200))
+  const row = Array.isArray(arr) && arr[0]
+  check('S7', 'row có sf + verdict', !!row && row.sf === SF && typeof row.verdict === 'string', JSON.stringify(row))
+  const st = row && row.steps
+  check('S7', 'steps đủ 7 khóa contract', !!st && ['code_tests', 'plan_ticked', 'surface_lint', 'review', 'merged', 'linear_done', 'runtime_smoke'].every(k => k in st), JSON.stringify(st))
+  check('S7', 'detail derive từ .wakii', !!row && String(row.detail).includes('FI-777'), row && row.detail)
   rmSync(home, { recursive: true, force: true })
 }
 

@@ -28,6 +28,7 @@ import { createFileSearchActions } from './actions/file-search-actions'
 import { createEditorRevealFocusState } from './actions/editor-reveal-focus-state'
 import { createMarkdownLinkAction } from './actions/markdown-link-action'
 import { createHydrateEditorSession } from './actions/hydrate-editor-session'
+import { createWakiiViewerActions } from './actions/wakii-viewer-actions'
 
 export const createEditorSlice: StateCreator<AppState, [], [], EditorSlice> = (set, get) => ({
   ...createEditorDraftState(set, get),
@@ -56,5 +57,6 @@ export const createEditorSlice: StateCreator<AppState, [], [], EditorSlice> = (s
   ...createFileSearchActions(set, get),
   ...createEditorRevealFocusState(set, get),
   ...createMarkdownLinkAction(set, get),
+  ...createWakiiViewerActions(set, get),
   ...createHydrateEditorSession(set, get)
 })

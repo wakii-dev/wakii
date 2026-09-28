@@ -1,0 +1,151 @@
+{
+  "wakiiMindmap": 1,
+  "meta": {
+    "story": "FI-32 — clone-vs-vscode phase 3: editor parity",
+    "epic": "FI-32",
+    "dest": "feature/clone-vs-vscode",
+    "generatedAt": "2026-09-28T07:55:21.827Z",
+    "generator": "story-mindmap 1.0.0"
+  },
+  "nodes": [
+    {
+      "id": "epic",
+      "kind": "epic",
+      "title": "FI-32 — clone-vs-vscode phase 3: editor parity",
+      "state": "in-progress"
+    },
+    {
+      "id": "sf-1",
+      "kind": "sf",
+      "title": "Editor parity: suggest/options + minimap stamp + breadcrumbs + quick outline",
+      "state": "pending",
+      "tier": 0,
+      "linear": "FI-33"
+    },
+    {
+      "id": "t-1.1",
+      "kind": "task",
+      "title": "probe-cluster-symbols-suggest-format",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.2",
+      "kind": "task",
+      "title": "suggest-options-explicit-enum",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.3",
+      "kind": "task",
+      "title": "bracket-smoothcaret-whitespace-settings",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.4",
+      "kind": "task",
+      "title": "minimap-default-on-stamp-migration-two-stores",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.5",
+      "kind": "task",
+      "title": "format-reuse-bridge-verification",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.6",
+      "kind": "task",
+      "title": "breadcrumb-bar-matrix-reveal",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.7",
+      "kind": "task",
+      "title": "i18n-six-locales",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.8",
+      "kind": "task",
+      "title": "quick-outline-chord-policy-gated",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.9",
+      "kind": "task",
+      "title": "verify-gates-electron-walkthrough",
+      "state": "pending",
+      "parent": "sf-1"
+    }
+  ],
+  "edges": [
+    {
+      "from": "epic",
+      "to": "sf-1",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.1",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.2",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.3",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.4",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.5",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.6",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.7",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.8",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.9",
+      "rel": "contains"
+    }
+  ],
+  "evidence": [
+    {
+      "node": "epic",
+      "summary": "nguồn sinh mindmap",
+      "ref": "docs/superpowers/brackets/fi32-editor-parity.md"
+    }
+  ],
+  "decodeWarnings": [
+    "story-impact không chạy được (ENOENT) — bỏ lớp impact computed"
+  ]
+}

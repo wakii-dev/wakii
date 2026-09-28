@@ -39,6 +39,8 @@ export type SuperpowersStoryDetailResult = {
     workspaceName: string
     parseError: boolean
     sfs: SuperpowersStoryDetailSf[]
+    /** .wakii only (VU-14 SF-5) — decoder warnings for dropped unknown enums; absent for brackets. */
+    decodeWarnings?: string[]
   }
   gates: {
     gateId: string

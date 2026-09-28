@@ -14,10 +14,15 @@ ORCA_BIN="${ORCA_BIN:-/opt/homebrew/bin/orca}"
 ORCA_DEV="$HOME/Library/Application Support/orca-dev"
 ORCA_PROD="$HOME/Library/Application Support/orca"
 
-# 1. Bracket files = story registry — quét repo chính + mọi sf-* worktree
-#    (bracket thường do SF-1 author, nằm trong worktree của nó)
+# 1. Story files = registry — mindmaps/*.wakii TRƯỚC (canonical VU-14), rồi
+#    brackets/*.md legacy. Quét repo chính + mọi sf-* worktree (story file thường
+#    do SF-1 author, nằm trong worktree của nó)
 BRACKETS=()
 for d in "$REPO" "$HOME"/orca/workspaces/*/* "$HOME"/orca/workspaces/*; do
+  md="$d/docs/superpowers/mindmaps"
+  [ -d "$md" ] && for f in "$md"/*.wakii; do
+    [ -f "$f" ] && BRACKETS+=("$f")
+  done
   bd="$d/docs/superpowers/brackets"
   [ -d "$bd" ] && for f in "$bd"/*.md; do
     [ -f "$f" ] && BRACKETS+=("$f")
@@ -37,22 +42,47 @@ for f in "${BRACKETS[@]}"; do
   done
   [ -z "$dup" ] && FINAL+=("$f")
 done
-[ ${#FINAL[@]} -eq 0 ] && { echo "No brackets found — không có story."; exit 0; }
+[ ${#FINAL[@]} -eq 0 ] && { echo "No mindmaps/brackets found — không có story."; exit 0; }
 
-echo "═══ STORIES (from brackets/) ═══"
+echo "═══ STORIES (mindmaps/ + brackets/) ═══"
 for bf in "${FINAL[@]}"; do
   [ -f "$bf" ] || continue
-  name=$(basename "$bf" .md)
-  epic=$(grep -m1 '^# Story:' "$bf" | sed 's/# Story: //')
-  dest=$(grep -m1 '^Destination:' "$bf" | sed 's/Destination: //')
-  sfs=$(grep -c '^## SF-' "$bf")
+  case "$bf" in
+    *.wakii)
+      name=$(basename "$bf")
+      meta_line=$(python3 - "$bf" <<'PYST'
+import json, sys
+try:
+    doc = json.load(open(sys.argv[1], encoding='utf-8'))
+except Exception:
+    sys.exit(1)
+meta = doc.get('meta') or {}
+epic = str(meta.get('epic') or str(meta.get('story') or ''))
+dest = str(meta.get('dest') or '')
+sfs = sum(1 for x in doc.get('nodes') or [] if isinstance(x, dict) and x.get('kind') == 'sf')
+ids = ' '.join(str(x.get('linear')) for x in doc.get('nodes') or []
+               if isinstance(x, dict) and x.get('kind') == 'sf' and x.get('linear'))
+print(epic + '|' + dest + '|' + str(sfs) + '|' + ids)
+PYST
+      ) || continue
+      IFS='|' read -r epic dest sfs ids_all <<< "$meta_line"
+      label="mindmap: $name"
+      ;;
+    *)
+      name=$(basename "$bf" .md)
+      epic=$(grep -m1 '^# Story:' "$bf" | sed 's/# Story: //')
+      dest=$(grep -m1 '^Destination:' "$bf" | sed 's/Destination: //')
+      sfs=$(grep -c '^## SF-' "$bf")
+      ids_all=$(grep -oE 'linear: [A-Z]+-[0-9]+' "$bf" | awk '{print $2}')
+      label="bracket: $name"
+      ;;
+  esac
 
   # Linear states cho SFs của story này (nếu có linear: IDs + orca auth)
   # Rate-limit gate (policy 2026-09-20): limited → 1 dòng chú thích, 0 Linear call
   # (tránh N+1 tự tái gây limit trong SessionStart hot path)
   LRL_BIN="${LRL_BIN:-$HOME/.claude/bin/linear-rate-limit}"
   states=""
-  ids_all=$(grep -oE 'linear: [A-Z]+-[0-9]+' "$bf" | awk '{print $2}')
   if [ -x "$LRL_BIN" ] && "$LRL_BIN" check >/dev/null 2>&1; then
     [ -n "$ids_all" ] && states=" ⇩ Linear rate-limited — states tạm bỏ qua"
   else
@@ -86,7 +116,7 @@ except Exception:
   # không auth → gọn thành 1 ghi chú thay vì dãy "?"
   echo ""
   echo "● $epic"
-  echo "  bracket: $name · $sfs SFs · đích: ${dest:-?}"
+  echo "  $label · $sfs SFs · đích: ${dest:-?}"
   if echo "$states" | grep -q .; then
     if echo "$states" | grep -qv ':' ; then :; fi
     unknowns=$(echo "$states" | grep -o ':?' | wc -l | tr -d ' ')
@@ -153,4 +183,4 @@ for t in d.get('result', {}).get('terminals', []):
 fi
 
 echo ""
-echo "Tips: story-status [--repo <path>] · --tail: activity mỗi SF · bracket: cat <file ở trên>"
+echo "Tips: story-status [--repo <path>] · --tail: activity mỗi SF · story file: cat <file ở trên>"

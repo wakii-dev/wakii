@@ -1,0 +1,636 @@
+/* .wakii mindmap viewer (direction C · Quỹ đạo) — ported from
+   docs/superpowers/prototypes/vu-14-mindmap/c.html. Colors only via main.css tokens. */
+
+.wakii-viewer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+.wakii-viewer-body {
+  position: relative;
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+/* toolbar */
+.wakii-toolbar {
+  height: 46px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  background: var(--editor-surface);
+  border-bottom: 1px solid var(--border);
+}
+.wakii-seg {
+  display: flex;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 2px;
+}
+.wakii-seg button {
+  border: 0;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.wakii-seg button.wakii-on {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+.wakii-chips {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.wakii-chip {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 9px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.wakii-chip.wakii-on {
+  color: var(--foreground);
+  background: var(--muted);
+}
+.wakii-chip:disabled {
+  opacity: 0.32;
+  cursor: default;
+}
+.wakii-spacer {
+  flex: 1;
+}
+.wakii-tbtn {
+  height: 28px;
+  padding: 0 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 11.5px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: var(--font-sans);
+}
+.wakii-tbtn:hover {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+.wakii-tbtn.wakii-on {
+  color: var(--foreground);
+  background: var(--muted);
+}
+.wakii-tbtn svg {
+  width: 13px;
+  height: 13px;
+}
+.wakii-tbtn-warn {
+  display: flex;
+  color: var(--workspace-status-progress);
+  border-color: color-mix(in srgb, var(--workspace-status-progress) 35%, transparent);
+}
+
+/* canvas + camera viewport */
+.wakii-canvas {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  background: var(--editor-surface);
+  cursor: grab;
+}
+.wakii-canvas.wakii-panning {
+  cursor: grabbing;
+}
+.wakii-viewport {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+.wakii-edges {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+.wakii-nodelayer {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+/* ring guides + wedge spotlight */
+.wakii-ringguide {
+  fill: none;
+  stroke: var(--border);
+  stroke-dasharray: 2 6;
+}
+.wakii-ringlabel {
+  fill: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+.wakii-wedge {
+  fill: color-mix(in srgb, var(--foreground) 4%, transparent);
+  stroke: var(--border);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.wakii-wedge.wakii-wedge-show {
+  opacity: 1;
+}
+
+/* edges */
+.wakii-edge {
+  fill: none;
+  stroke: var(--muted-foreground);
+  stroke-width: 1.2;
+  opacity: 0.4;
+  transition: opacity 0.12s;
+}
+.wakii-e-contains {
+  stroke-width: 1.2;
+}
+.wakii-e-depends-on {
+  stroke-dasharray: 5 4;
+  stroke-width: 1.4;
+  opacity: 0.65;
+}
+.wakii-e-flows-to {
+  stroke-width: 1.6;
+  opacity: 0.75;
+}
+.wakii-e-impacts {
+  stroke-dasharray: 2 4;
+  opacity: 0.4;
+}
+.wakii-e-writes {
+  stroke-dasharray: 6 3;
+  opacity: 0.4;
+}
+.wakii-edge.wakii-faint {
+  opacity: 0.14;
+}
+.wakii-edge.wakii-dim {
+  opacity: 0.05;
+}
+.wakii-edge.wakii-hot {
+  opacity: 1;
+  stroke: var(--foreground);
+}
+
+/* nodes */
+.wakii-node {
+  position: absolute;
+  box-sizing: border-box;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 7px 10px;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    opacity 0.12s,
+    border-color 0.12s,
+    box-shadow 0.12s;
+}
+.wakii-node:hover {
+  border-color: var(--ring);
+}
+.wakii-node.wakii-dim {
+  opacity: 0.15;
+}
+.wakii-node.wakii-sel {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 32%, transparent);
+}
+.wakii-kind-epic {
+  border-radius: 50%;
+  border-width: 1.5px;
+  border-color: color-mix(in srgb, var(--foreground) 25%, var(--border));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 6px;
+  padding: 18px;
+}
+.wakii-epic-title {
+  font-size: 14px;
+  font-weight: 600;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.wakii-kind-step {
+  border-radius: 999px;
+}
+.wakii-kind-area {
+  border-radius: 999px;
+  background: transparent;
+  border-style: dashed;
+}
+.wakii-kind-file {
+  background: var(--editor-surface);
+}
+.wakii-kind-file.wakii-computed {
+  border-style: dashed;
+}
+.wakii-nrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.wakii-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+.wakii-dot-epic {
+  width: 12px;
+  height: 12px;
+}
+.wakii-tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  color: var(--muted-foreground);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 4px;
+  flex: none;
+}
+.wakii-ntitle {
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.wakii-nmeta {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--muted-foreground);
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.wakii-kind-epic .wakii-nmeta {
+  white-space: normal;
+  text-align: center;
+  margin-top: 0;
+}
+.wakii-nbar {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--muted);
+  margin-top: 6px;
+  overflow: hidden;
+}
+.wakii-nbar i {
+  display: block;
+  height: 100%;
+  background: var(--status-success);
+}
+
+/* legend + hint */
+.wakii-legend-slot {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  pointer-events: none;
+}
+.wakii-legend {
+  background: color-mix(in srgb, var(--card) 88%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 11px;
+  color: var(--muted-foreground);
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 5px 18px;
+  backdrop-filter: blur(4px);
+}
+.wakii-lg {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.wakii-lg .wakii-dot {
+  width: 7px;
+  height: 7px;
+}
+.wakii-lgsample {
+  width: 22px;
+  height: 0;
+  border-top: 1.5px solid var(--muted-foreground);
+  opacity: 0.6;
+}
+.wakii-dash .wakii-lgsample {
+  border-top-style: dashed;
+}
+.wakii-dotd .wakii-lgsample {
+  border-top-style: dotted;
+}
+.wakii-hint {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--muted-foreground);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* side panel (left float) */
+.wakii-panel {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  width: 300px;
+  max-height: calc(100% - 28px);
+  overflow: auto;
+  background: var(--popover);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-floating);
+  padding: 14px;
+  cursor: default;
+  z-index: 20;
+}
+.wakii-p-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.wakii-p-kind {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 6px;
+}
+.wakii-p-close {
+  border: 0;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+}
+.wakii-p-close:hover {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+.wakii-p-title {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  margin: 8px 0 10px;
+  word-break: break-word;
+}
+.wakii-p-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 3px 9px;
+  border: 1px solid;
+}
+.wakii-p-summary {
+  font-size: 12px;
+  color: var(--muted-foreground);
+  margin: 8px 0 0;
+  line-height: 1.4;
+}
+.wakii-p-row {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  margin-top: 9px;
+  align-items: baseline;
+}
+.wakii-p-rowk {
+  flex: none;
+  width: 70px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+.wakii-p-rowv {
+  min-width: 0;
+  word-break: break-word;
+}
+.wakii-mono {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+}
+.wakii-p-ev {
+  margin-top: 12px;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+.wakii-p-evh {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  margin-bottom: 8px;
+}
+.wakii-p-evi {
+  font-size: 12px;
+  margin-bottom: 9px;
+  line-height: 1.4;
+}
+.wakii-p-evr {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--muted-foreground);
+  margin-top: 2px;
+  word-break: break-all;
+}
+.wakii-p-section {
+  margin-top: 10px;
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+.wakii-p-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  padding: 2px 0;
+  cursor: pointer;
+  font-family: var(--font-sans);
+}
+.wakii-p-count {
+  font-family: var(--font-mono);
+  color: var(--muted-foreground);
+  text-transform: none;
+}
+.wakii-p-chevron {
+  transition: transform 0.12s;
+  color: var(--muted-foreground);
+}
+.wakii-p-chevron-open {
+  transform: rotate(180deg);
+}
+.wakii-p-list-item {
+  display: flex;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--foreground);
+  line-height: 1.4;
+  word-break: break-word;
+  margin-bottom: 6px;
+}
+.wakii-p-bullet {
+  font-family: var(--font-mono);
+  color: var(--muted-foreground);
+  flex: none;
+}
+
+/* warnings popover */
+.wakii-warnbox {
+  position: absolute;
+  top: 56px;
+  right: 12px;
+  z-index: 30;
+  background: var(--popover);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-floating);
+  padding: 10px 12px;
+  font-size: 11.5px;
+  color: var(--muted-foreground);
+  display: none;
+  max-width: 360px;
+}
+.wakii-warnbox.wakii-warnbox-show {
+  display: block;
+}
+.wakii-warnbox div {
+  margin: 3px 0;
+}
+
+/* dev-only simulate button */
+.wakii-dev-error-btn {
+  position: absolute;
+  top: 56px;
+  right: 12px;
+  z-index: 25;
+}
+
+/* error overlay */
+.wakii-errbox {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--background) 72%, transparent);
+  backdrop-filter: blur(3px);
+}
+.wakii-errcard {
+  width: 440px;
+  max-width: calc(100% - 32px);
+  background: var(--popover);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-floating);
+  padding: 22px;
+}
+.wakii-erricon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--destructive) 14%, transparent);
+  color: var(--destructive);
+  margin-bottom: 12px;
+}
+.wakii-erricon svg {
+  width: 18px;
+  height: 18px;
+}
+.wakii-errh {
+  font-size: 15px;
+  font-weight: 600;
+}
+.wakii-errcode {
+  display: inline-block;
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--destructive);
+  border: 1px solid color-mix(in srgb, var(--destructive) 35%, transparent);
+  background: color-mix(in srgb, var(--destructive) 10%, transparent);
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+.wakii-errmsg {
+  font-size: 13px;
+  margin-top: 8px;
+}
+.wakii-errpath {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--muted-foreground);
+  margin-top: 10px;
+  background: var(--muted);
+  border-radius: 8px;
+  padding: 8px 10px;
+  word-break: break-all;
+}
+.wakii-errhint {
+  font-size: 11.5px;
+  color: var(--muted-foreground);
+  margin-top: 10px;
+}
+.wakii-erractions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}

@@ -15,8 +15,8 @@ claude "/goal STORY <EPIC-ID> COMPLETE theo ĐÚNG checklist sau: (1) mọi SF s
   worktrees đã remove — git worktree list chỉ còn main + story parent (5) Epic
   state Done. Chứng minh MỖI điều bằng output lệnh thật trong transcript. Bound:
   hoặc stop sau 40 turns. Trong mỗi turn: stall-check 3 tầng mọi SF chưa Done →
-  resume idle / launch tier sẵn / merge hộ Done-chưa-merge (theo `Worktree model:`
-  trong bracket — story-hub: coordinator merge THẬT origin/sf-branch trong story
+  resume idle / launch tier sẵn / merge hộ Done-chưa-merge (theo worktree model
+  trong story .wakii `meta.worktreeModel` — story-hub: coordinator merge THẬT origin/sf-branch trong story
   worktree + push dest, xem merge-playbook; legacy: merge-ngược an toàn +
   ancestor guards) / cleanup-on-merge. Blocked SF ≥2 cùng nguyên nhân → đánh dấu
   bỏ, mọi SF còn lại blocked → báo STORY-BLOCKED trong output (goal sẽ bị đánh
@@ -68,11 +68,11 @@ chạy tay lệnh `/goal` ở trên sau khi launch SFs. Kiểm tra watchdog số
 
 **Bảo hiểm khi watchdog cũng chết:** cuối mỗi ngày làm việc, chạy thủ công 1 vòng
 check 3-tầng cho mọi SF In Progress (5 phút) — watchdog là lớp tự động, không phải
-sự thay thế con người nhìn bracket.
+sự thay thế con người nhìn story .wakii.
 
-## Bracket-vs-reality check khi resume (learned 2026-09-10 FI-380)
+## Story-vs-reality check khi resume (learned 2026-09-10 FI-380)
 
-Trước khi làm theo context pack/bracket của story resume sau ≥1 ngày: so
-version/target trong bracket với hiện trạng repo (kit.json version, contract
+Trước khi làm theo context pack/story .wakii của story resume sau ≥1 ngày: so
+version/target trong story với hiện trạng repo (kit.json version, contract
 đã drop chưa, vendored đi trước bao nhiêu). Story khác cùng lúc có thể đã
 kéo thế giới đi lên — bracket stale + làm theo mù = thiết kế sai từ đầu.

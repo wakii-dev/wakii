@@ -28,12 +28,29 @@ LAUNCH="$DIR/story-launch"
 # index hook chỉ cần khi --with-index — resolve sẵn, die muộn hơn (sau arg parse)
 IDX_HOOK="$DIR/story-memory-index-hook"
 [ -x "$IDX_HOOK" ] || IDX_HOOK="$HOME/.claude/bin/story-memory-index-hook"
-# validator gate cho launch-next (2 parser độc lập = drift lặng lẽ — giờ awk chỉ
-# chạy sau khi story-validate OK; bracket hỏng thì SKIP, không đoán)
-VALIDATE="$DIR/story-validate"
-[ -x "$VALIDATE" ] || VALIDATE="$HOME/.claude/bin/story-validate"
+# validator gate cho launch-next (parser chỉ chạy sau khi validator OK; file hỏng
+# thì SKIP, không đoán). .wakii → wakii-validate fail-closed; bracket legacy →
+# story-validate còn thì gate (transition), đã retire thì qua không gate.
+VALIDATE="${STORY_VALIDATE_BIN:-$DIR/wakii-validate}"
+[ -x "$VALIDATE" ] || VALIDATE="$HOME/.claude/bin/wakii-validate"
+LEGACY_VALIDATE="$DIR/story-validate"
+[ -x "$LEGACY_VALIDATE" ] || LEGACY_VALIDATE="$HOME/.claude/bin/story-validate"
 VERIFY="$DIR/story-verify"
 [ -x "$VERIFY" ] || VERIFY="$HOME/.claude/bin/story-verify"
+
+wakii_sf_linear() { # $1 file.wakii, $2 SF-N → in linear ID (rỗng nếu không có)
+  SFNUM="$2" python3 - "$1" <<'PYWKL'
+import json, os, sys
+try:
+    doc = json.load(open(sys.argv[1], encoding='utf-8'))
+except Exception:
+    sys.exit(0)
+for x in doc.get('nodes') or []:
+    if isinstance(x, dict) and x.get('kind') == 'sf' and x.get('id') == os.environ.get('SFNUM', '').lower():
+        print(str(x.get('linear') or ''))
+        break
+PYWKL
+}
 
 # cron PATH tối giản — resolve production binary + runtime dev-trước-prod-sau
 ORCA_BIN="${ORCA_BIN:-/opt/homebrew/bin/orca}"
@@ -247,37 +264,93 @@ except: pass" 2>/dev/null)
   done
   roots=(${FILTERED[@]+"${FILTERED[@]}"})
   for repo in ${roots[@]+"${roots[@]}"}; do
-    local bdir="$repo/docs/superpowers/brackets"
-    [ -d "$bdir" ] || continue
     local repob=$(basename "$repo")
-    local bf
-    for bf in "$bdir"/*.md; do
-      [ -f "$bf" ] || continue
-      # ── validator gate: bracket phải story-validate OK trước khi awk parse ──
-      # (awk parser lỏng — format trôi nó im lặng; validator là nguồn sự thật.
-      #  Validator thiếu/hỏng → fail-closed: không launch gì cả, in cảnh báo 1 lần)
-      if [ ! -x "$VALIDATE" ]; then
-        echo "  ⚠ story-validate không tìm thấy — launch-next SKIP mọi bracket (fail-closed)"
+    local srcf
+    # mindmaps/*.wakii TRƯỚC (canonical VU-14), brackets/*.md fallback legacy —
+    # cùng bộ xử lý, khác: validator (wakii-validate / story-validate), parser
+    # (python3 JSON / awk), deps map (edges depends-on / "Depends on:" lines)
+    for srcf in "$repo"/docs/superpowers/mindmaps/*.wakii "$repo"/docs/superpowers/brackets/*.md; do
+      [ -f "$srcf" ] || continue
+      local fkind fvalidator vlabel
+      case "$srcf" in
+        *.wakii) fkind=wakii; fvalidator="$VALIDATE"; vlabel="wakii-validate" ;;
+        *) fkind=bracket; fvalidator="$LEGACY_VALIDATE"; vlabel="story-validate" ;;
+      esac
+      # ── validator gate: .wakii phải wakii-validate OK trước khi parse (fail-
+      # closed: bin thiếu → SKIP mọi story, không đoán). Bracket legacy: gate nếu
+      # story-validate còn tồn tại (transition); đã retire → qua không gate.
+      if [ "$fkind" = wakii ] && [ ! -x "$fvalidator" ]; then
+        echo "  ⚠ $vlabel không tìm thấy — launch-next SKIP mọi story (fail-closed)"
         return 0
       fi
-      local vjson vverdict
-      vjson=$("$VALIDATE" "$bf" --json 2>/dev/null) || true
-      vverdict=$(printf '%s' "$vjson" | python3 -c "import json,sys
+      local vjson vverdict=""
+      if [ -x "$fvalidator" ]; then
+        vjson=$("$fvalidator" "$srcf" --json 2>/dev/null) || true
+        vverdict=$(printf '%s' "$vjson" | python3 -c "import json,sys
 try: print(json.load(sys.stdin).get('verdict',''))
 except: print('')" 2>/dev/null)
-      if [ "$vverdict" != "OK" ]; then
-        echo "  ⚠ skip $(basename "$bf") — story-validate: ${vverdict:-KHÔNG-ĐỌC-ĐƯỢC} (sửa bracket rồi cron pass kế sẽ launch)"
-        [ "$DRY_RUN" = 1 ] && printf '%s' "$vjson" | python3 -m json.tool 2>/dev/null | sed 's/^/    /'
-        continue
+        if [ "$vverdict" != "OK" ]; then
+          echo "  ⚠ skip $(basename "$srcf") — $vlabel: ${vverdict:-KHÔNG-ĐỌC-ĐƯỢC} (sửa file rồi cron pass kế sẽ launch)"
+          [ "$DRY_RUN" = 1 ] && printf '%s' "$vjson" | python3 -m json.tool 2>/dev/null | sed 's/^/    /'
+          continue
+        fi
       fi
-      local dest epic
-      dest=$(grep -m1 '^Destination:' "$bf" | sed 's/Destination: *//;s/ *$//')
-      epic=$(grep -m1 '^# Story:' "$bf" | sed 's/# Story: *\([A-Za-z]*-[0-9]*\).*/\1/')
+      # ── parse: dest + epic + SF rows "SF-N|title|linear|deps" (+dep map .wakii)
+      local dest epic sfrows depmap=""
+      if [ "$fkind" = wakii ]; then
+        local parsed
+        parsed=$(python3 - "$srcf" <<'PYWL'
+import json, sys
+try:
+    doc = json.load(open(sys.argv[1], encoding='utf-8'))
+except Exception:
+    sys.exit(1)
+meta = doc.get('meta') or {}
+print(str(meta.get('dest') or ''))
+print(str(meta.get('epic') or str(meta.get('story') or '').split(' ')[0]))
+nodes = [x for x in (doc.get('nodes') or []) if isinstance(x, dict)]
+dmap = []
+for x in nodes:
+    if x.get('kind') != 'sf':
+        continue
+    i = str(x.get('id') or '')
+    if not (i.startswith('sf-') and i[3:].isdigit()):
+        continue
+    lin = str(x.get('linear') or '')
+    deps = sorted({str(e.get('to')) for e in (doc.get('edges') or [])
+                   if isinstance(e, dict) and e.get('rel') == 'depends-on'
+                   and e.get('from') == i and str(e.get('to') or '').startswith('sf-')})
+    title = str(x.get('title') or '').replace('|', '/').replace('\n', ' ')
+    print(i.upper() + '|' + title + '|' + lin + '|' + ','.join('SF-' + d[3:] for d in deps))
+    if lin:
+        dmap.append(i.upper() + '=' + lin)
+print('MAP:' + ','.join(dmap))
+PYWL
+        ) || { echo "  ⚠ skip $(basename "$srcf") — .wakii không đọc được"; continue; }
+        dest=$(printf '%s\n' "$parsed" | sed -n 1p)
+        epic=$(printf '%s\n' "$parsed" | sed -n 2p)
+        sfrows=$(printf '%s\n' "$parsed" | sed -n '3,$p' | grep -v '^MAP:' || true)
+        depmap=$(printf '%s\n' "$parsed" | grep '^MAP:' | head -1 | sed 's/^MAP://')
+      else
+        dest=$(grep -m1 '^Destination:' "$srcf" | sed 's/Destination: *//;s/ *$//')
+        epic=$(grep -m1 '^# Story:' "$srcf" | sed 's/# Story: *\([A-Za-z]*-[0-9]*\).*/\1/')
+        sfrows=$(awk '
+          function emit() { if (sf != "") print sf "|" title "|" linear "|" deps }
+          /^## / { if ($0 !~ /^## SF-/) { emit(); sf = ""; insf = 0; next } }
+          /^## SF-/ {
+            emit()
+            sf = $2
+            title = $0; sub(/^## SF-[0-9]+ +/, "", title)
+            linear = ""; deps = ""; insf = 1; next
+          }
+          insf && /^linear:/ { linear = $2 }
+          insf && /^Depends on:/ { sub(/^Depends on: */, ""); deps = $0 }
+          END { emit() }' "$srcf")
+      fi
       [ -n "$dest" ] || continue
-      # các SF: "num|title|linear|deps" (deps = "SF-2, SF-3")
-      # 1 request duy nhất cho mọi issue của bracket (linear_state per-issue → rate-limit khi nhiều SF)
+      # 1 request duy nhất cho mọi issue của story (per-issue → rate-limit khi nhiều SF)
       local state_map="" bid
-      bid=$(grep -oE 'linear: *[A-Za-z]+-[0-9]+' "$bf" | awk '{print $2}' | sort -u)
+      bid=$(printf '%s\n' "$sfrows" | awk -F'|' '$3 != "" {print $3}' | sort -u)
       [ -n "$bid" ] && state_map=$(linear_states_batch $bid)
       local bk_total=0 bk_done=0 bk_noid=0
       while IFS='|' read -r sfnum title linear deps; do
@@ -302,10 +375,15 @@ except: print('')" 2>/dev/null)
           case "$d" in ""|—|—|*) ;; esac
           echo "$d" | grep -q '^SF-' || continue
           local dn=$(echo "$d" | sed 's/SF-//')
-          local depid=$(awk -v dn="SF-$dn" '
-            $0 ~ "^## " dn "([ :]|$)" { in_sf = 1; next }
-            /^## / { in_sf = 0 }
-            in_sf && /^linear:/ { gsub(/.*linear: /,""); print; exit }' "$bf")
+          local depid
+          if [ "$fkind" = wakii ]; then
+            depid=$(printf '%s' "$depmap" | tr ',' '\n' | grep "^SF-$dn=" | head -1 | cut -d= -f2)
+          else
+            depid=$(awk -v dn="SF-$dn" '
+              $0 ~ "^## " dn "([ :]|$)" { in_sf = 1; next }
+              /^## / { in_sf = 0 }
+              in_sf && /^linear:/ { gsub(/.*linear: /,""); print; exit }' "$srcf")
+          fi
           [ -n "$depid" ] || { ok=0; why="$why $d(?id)"; continue; }
           local st=$(printf '%s\n' "$state_map" | awk -v id="$depid" -F'\t' '$1==id{print $2}')
           if [ "$st" != "Done" ]; then ok=0; why="$why $d=$st"; fi
@@ -318,40 +396,30 @@ except: print('')" 2>/dev/null)
           continue
         fi
         if [ "$DRY_RUN" = 1 ]; then
-          echo "  SẴN SÀNG LAUNCH: sf-$n-$slug ($linear) ← bracket $repob · đích $dest"
+          echo "  SẴN SÀNG LAUNCH: sf-$n-$slug ($linear) ← $fkind $repob · đích $dest"
           continue
         fi
         if [ "$launched" -ge "$max_launch" ]; then
           echo "  cap: sf-$n-$slug ($linear) sẵn sàng — đạt giới hạn $max_launch launch/pass, chờ pass kế (STORY_WATCHDOG_MAX_LAUNCH để tăng)"
           continue
         fi
-        local launch_out
+        local launch_out srcflag="--bracket"
+        [ "$fkind" = wakii ] && srcflag="--wakii"
         if [ "$DRY_RUN" = 1 ]; then
-          launch_out=$("$LAUNCH" --sf "$sfnum" --bracket "$bf" $claim_arg --dry-run 2>&1 | head -3)
+          launch_out=$("$LAUNCH" --sf "$sfnum" "$srcflag" "$srcf" $claim_arg --dry-run 2>&1 | head -3)
         else
-          launch_out=$("$LAUNCH" --sf "$sfnum" --bracket "$bf" $claim_arg 2>&1)
+          launch_out=$("$LAUNCH" --sf "$sfnum" "$srcflag" "$srcf" $claim_arg 2>&1)
         fi
         echo "$launch_out" | sed 's/^/    /'
         if echo "$launch_out" | grep -q "LAUNCHED"; then
           notify "story-watchdog ▶" "$sfnum launched — tier kế tự tiến"
           launched=$((launched+1))
         fi
-      done < <(awk '
-        function emit() { if (sf != "") print sf "|" title "|" linear "|" deps }
-        /^## / { if ($0 !~ /^## SF-/) { emit(); sf = ""; insf = 0; next } }
-        /^## SF-/ {
-          emit()
-          sf = $2
-          title = $0; sub(/^## SF-[0-9]+ +/, "", title)
-          linear = ""; deps = ""; insf = 1; next
-        }
-        insf && /^linear:/ { linear = $2 }
-        insf && /^Depends on:/ { sub(/^Depends on: */, ""); deps = $0 }
-        END { emit() }' "$bf")
-      # ── STORY-COMPLETE per bracket (SF-4): derive từ Linear — mọi SF có id
+      done <<< "$sfrows"
+      # ── STORY-COMPLETE per story (SF-4): derive từ Linear — mọi SF có id
       # đều Done → story xong thật (kể khi worktree máy khác đã dọn)
       if [ "$bk_total" -gt 0 ] && [ "$bk_total" -eq "$bk_done" ] && [ "$bk_noid" = "0" ]; then
-        echo "  STORY-COMPLETE: $epic — mọi SF Done theo Linear (bracket $(basename "$bf"))"
+        echo "  STORY-COMPLETE: $epic — mọi SF Done theo Linear ($fkind $(basename "$srcf"))"
       fi
     done
   done
@@ -398,29 +466,39 @@ except: pass" 2>/dev/null)
       # commit mới trong TTL trên branch worktree? không có → có thể agent đứng
       # im — không renew (nhường takeover logic tự phán)
       git -C "$wt" log --since "$ttl minutes ago" -1 --oneline 2>/dev/null | grep -q . || continue
-      for bf in "$repo"/docs/superpowers/brackets/*.md; do
-        [ -f "$bf" ] || continue
-        grep -q "^## SF-$sfnum[ :]" "$bf" 2>/dev/null || continue
-        linear=$(awk -v sfx="SF-$sfnum" '
-          $0 ~ "^## " sfx "([ :]|$)" { in_sf = 1; next }
-          /^## / { in_sf = 0 }
-          in_sf && /^linear:/ { gsub(/.*linear: /,""); print; exit }' "$bf")
-        [ -n "$linear" ] || continue
-        # read fail phải lộ ra — im lặng khiến heartbeat chết mà không ai biết
-        cinfo=$(claim_read "$linear") || { echo "$(date '+%H:%M') heartbeat: claim read fail $sf" >&2; continue; }
-        cmid=$(printf '%s' "$cinfo" | cut -f1)
-        [ "$cmid" = "$mid" ] || continue   # chỉ renew claim của máy mình
-        ccid=$(printf '%s' "$cinfo" | cut -f3)
-        cn=$(printf '%s' "$cinfo" | cut -f6)
-        ci=$(printf '%s' "$cinfo" | cut -f5)
-        if claim_renew "$linear" "$ccid" "$mid" "$cn" "$ci" >/dev/null 2>&1; then
-          echo "$(date '+%H:%M') heartbeat: $sf renew ($linear)"
-        else
-          echo "$(date '+%H:%M') heartbeat: $sf renew FAIL — tiếp tục (fail-open)"
-        fi
-        break 2   # bracket đầu khớp là đủ — ≤1 renew/SF/pass
+      # linear ID của SF — mindmaps/*.wakii trước (canonical), brackets legacy
+      linear=""
+      for wf in "$repo"/docs/superpowers/mindmaps/*.wakii; do
+        [ -f "$wf" ] || continue
+        grep -q "\"sf-$sfnum\"" "$wf" 2>/dev/null || continue
+        linear=$(wakii_sf_linear "$wf" "SF-$sfnum")
+        [ -n "$linear" ] && break
       done
-      break
+      if [ -z "$linear" ]; then
+        for bf in "$repo"/docs/superpowers/brackets/*.md; do
+          [ -f "$bf" ] || continue
+          grep -q "^## SF-$sfnum[ :]" "$bf" 2>/dev/null || continue
+          linear=$(awk -v sfx="SF-$sfnum" '
+            $0 ~ "^## " sfx "([ :]|$)" { in_sf = 1; next }
+            /^## / { in_sf = 0 }
+            in_sf && /^linear:/ { gsub(/.*linear: /,""); print; exit }' "$bf")
+          [ -n "$linear" ] && break
+        done
+      fi
+      [ -n "$linear" ] || continue
+      # read fail phải lộ ra — im lặng khiến heartbeat chết mà không ai biết
+      cinfo=$(claim_read "$linear") || { echo "$(date '+%H:%M') heartbeat: claim read fail $sf" >&2; continue; }
+      cmid=$(printf '%s' "$cinfo" | cut -f1)
+      [ "$cmid" = "$mid" ] || break   # chỉ renew claim của máy mình
+      ccid=$(printf '%s' "$cinfo" | cut -f3)
+      cn=$(printf '%s' "$cinfo" | cut -f6)
+      ci=$(printf '%s' "$cinfo" | cut -f5)
+      if claim_renew "$linear" "$ccid" "$mid" "$cn" "$ci" >/dev/null 2>&1; then
+        echo "$(date '+%H:%M') heartbeat: $sf renew ($linear)"
+      else
+        echo "$(date '+%H:%M') heartbeat: $sf renew FAIL — tiếp tục (fail-open)"
+      fi
+      break   # nguồn đầu khớp là đủ — ≤1 renew/SF/pass
     done
   done
   return 0
@@ -440,12 +518,21 @@ enforce_done_pass() {
     sf=$(basename "$wt")
     linear_id=""
     sfnum=$(echo "$sf" | grep -oE '[0-9]+' | head -1)
-    for bf in "$wt"/docs/superpowers/brackets/*.md; do
+    # mindmaps/*.wakii trước (canonical), bracket legacy fallback
+    for wf in "$wt"/docs/superpowers/mindmaps/*.wakii; do
+      [ -f "$wf" ] || continue
+      grep -q "\"sf-$sfnum\"" "$wf" 2>/dev/null || continue
+      linear_id=$(wakii_sf_linear "$wf" "SF-$sfnum")
+      [ -n "$linear_id" ] && break
+    done
+    if [ -z "$linear_id" ]; then
+      for bf in "$wt"/docs/superpowers/brackets/*.md; do
       [ -f "$bf" ] || continue
       grep -q "^## SF-$sfnum[ :]" "$bf" 2>/dev/null || continue
       linear_id=$(awk -v sfx="SF-$sfnum" '$0 ~ "^## " sfx "([ :]|$)" { in_sf=1; next } /^## SF-/ { in_sf=0 } in_sf && /^linear:/ { gsub(/.*linear: /,""); print; exit }' "$bf" 2>/dev/null)
       [ -n "$linear_id" ] && break
     done
+    fi
     [ -n "$linear_id" ] || continue
     st=$(linear_state "$linear_id")
     [ "$st" = "Done" ] || continue

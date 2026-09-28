@@ -26,6 +26,11 @@ import {
   readProfileStateCopySavedTimes
 } from './persistence/profile-state/profile-state-startup-recovery-dialog'
 import { profileStateDesktopRecoveryArgs } from './startup/profile-state-recovery-preflight'
+import {
+  filterUnchangedWakiiFiles,
+  recordDeliveredWakiiFiles,
+  resolveOpenedWakiiFiles
+} from './startup/os-opened-wakii-files'
 
 function openMainWindow(options: { revealOnDidFinishLoad?: boolean } = {}): BrowserWindow {
   return openMainWindowController(options)
@@ -42,6 +47,7 @@ function requestDesktopActivation(argv: readonly string[] = []): void {
     state.mainWindow?.webContents.send('ui:openSkillShare', shareId)
   })
   state.osOpenedMarkdownFiles.capture(argv, publishOsOpenedMarkdownFiles)
+  state.osOpenedWakiiFiles.capture(argv, publishOsOpenedWakiiFiles)
   // Why: a duplicate `orca serve` must not drag a headless server into opening a desktop window (#11935).
   if (!shouldActivateDesktopForSecondInstance(argv)) {
     return
@@ -82,6 +88,40 @@ function publishOsOpenedMarkdownFiles(): void {
     })
 }
 
+/**
+ * Decodes buffered OS-opened .wakii files and hands the payloads to a renderer that has
+ * proven it is listening. Main owns dedupe: same path + same content is skipped, changed
+ * content re-delivers (the tab refresh/focus layer arrives with the viewer slice).
+ */
+function publishOsOpenedWakiiFiles(): void {
+  const targetWindow = state.mainWindow
+  if (!state.wakiiFileOpenListenerReady || !targetWindow || targetWindow.isDestroyed()) {
+    return
+  }
+  // Why consumed before the await: a renderer pull racing this resolve must not take the same
+  // batch again. The restore() call hands it back if delivery turns out to be impossible.
+  const filePaths = state.osOpenedWakiiFiles.consume()
+  if (filePaths.length === 0) {
+    return
+  }
+  void resolveOpenedWakiiFiles(filePaths)
+    .then((resolved) => {
+      if (targetWindow.isDestroyed() || targetWindow.webContents.isDestroyed()) {
+        state.osOpenedWakiiFiles.restore(filePaths)
+        return
+      }
+      const changed = filterUnchangedWakiiFiles(resolved, state.wakiiDeliveredFileHashes)
+      for (const { payload } of changed) {
+        targetWindow.webContents.send('ui:openWakiiFile', payload)
+      }
+      recordDeliveredWakiiFiles(changed, state.wakiiDeliveredFileHashes)
+    })
+    .catch((error) => {
+      state.osOpenedWakiiFiles.restore(filePaths)
+      console.warn('[os-open] Failed to resolve OS-opened .wakii files:', error)
+    })
+}
+
 const handleMacAppActivation = createMacAppActivationHandler({
   getWindow: () => state.mainWindow,
   requestActivation: requestDesktopActivation
@@ -102,9 +142,17 @@ if (preflightReady) {
     requestDesktopActivation([url])
   })
   // Why: macOS delivers "Open With" as open-file, often before `ready`, and only to a handler
-  // that claims the event. Non-markdown paths stay unclaimed so the OS default handler wins.
+  // that claims the event. Paths neither flow owns stay unclaimed so the OS default handler wins.
   app.on('open-file', (event, filePath) => {
-    if (!state.osOpenedMarkdownFiles.captureFilePaths([filePath], publishOsOpenedMarkdownFiles)) {
+    const claimedMarkdown = state.osOpenedMarkdownFiles.captureFilePaths(
+      [filePath],
+      publishOsOpenedMarkdownFiles
+    )
+    const claimedWakii = state.osOpenedWakiiFiles.captureFilePaths(
+      [filePath],
+      publishOsOpenedWakiiFiles
+    )
+    if (!claimedMarkdown && !claimedWakii) {
       return
     }
     event.preventDefault()
@@ -117,6 +165,7 @@ if (preflightReady) {
   state.skillShareDeepLinks.capture(process.argv)
   // Why no publish: nothing is listening this early, so the first renderer pulls these on mount.
   state.osOpenedMarkdownFiles.capture(process.argv)
+  state.osOpenedWakiiFiles.capture(process.argv)
   registerMainProcessIpcHandlers()
   installMainProcessQuitHandlers()
   void app.whenReady().then(async () => {
