@@ -183,6 +183,7 @@ validation-screenshots/
 /notes/
 /pr-evidence/
 /.evidence-gitlens-lite/
+/.evidence-wakii-open/
 
 # Playwright
 test-results/
