@@ -21,7 +21,18 @@ const validWakiiJson = JSON.stringify({
 })
 
 function wakiiOpen(path: string, contentHash: string | null): ResolvedWakiiFileOpen {
-  return { payload: { path, mindmap: {} }, contentHash }
+  return {
+    payload: {
+      path,
+      mindmap: {
+        wakiiMindmap: 1,
+        meta: { story: 's', generatedAt: '2026-09-27T13:00:00Z', generator: 'g' },
+        nodes: [{ id: 'epic', kind: 'epic', title: 'E' }],
+        edges: []
+      }
+    },
+    contentHash
+  }
 }
 
 function wakiiError(path: string): ResolvedWakiiFileOpen {
