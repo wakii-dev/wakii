@@ -6,7 +6,7 @@ Phase checkpoint: tier 0+1 xong = shippable (file sinh + mở được); SF-4 = 
 
 ## SF-5 .wakii canonical — retire bracket
 Tier: 3
-linear:
+linear: FI-43
 What: story vận hành hoàn toàn bằng .wakii — Story tab đọc .wakii thay bracket; story-launch/verify + watchdog/coordinator-pass derive từ .wakii; .wakii là nguồn sự thật (structure/knowledge do người giữ, state do machine cập nhật in-place); story cũ migrate 1 lần bằng bootstrap mode của story-mindmap; bracket + story-validate retired (xoá file + bin), thay bằng wakii-validate
 Depends on: SF-4
 Tasks: field-ownership-semantics / state-updater-inplace / story-tab-wakii-parser / story-launch-wakii-derive / story-verify-wakii-derive / wakii-validate-bin / watchdog-coordinator-wakii / migrate-existing-stories-bootstrap / retire-bracket-and-story-validate / docs-story-format-wakii
