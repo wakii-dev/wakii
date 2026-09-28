@@ -8,7 +8,7 @@ import type { ResolvedWorktree } from '../../runtime-worktree-path-identity'
 import { resetSfStatusCacheForTests } from '../../../superpowers/story-linear-status'
 import {
   listStoriesForRuntime,
-  scanWorktreeBracketStories,
+  scanWorktreeStoryFiles,
   SUPERPOWERS_STORY_LIST_METHODS
 } from './superpowers-story-list'
 
@@ -90,7 +90,7 @@ describe('superpowers.storyList', () => {
 
   it('enumerates one entry per bracket file across two worktrees', async () => {
     const db = new OrchestrationDb(':memory:')
-    const scansByPath: Record<string, ReturnType<typeof scanWorktreeBracketStories>> = {
+    const scansByPath: Record<string, ReturnType<typeof scanWorktreeStoryFiles>> = {
       '/wt/a': [
         {
           storyId: 'brackets/fi305-android.md',
@@ -301,14 +301,14 @@ describe('superpowers.storyList', () => {
       linearGetIssue.mockResolvedValue({ state: { name: 'Done', type: 'completed', color: '' } })
       const clock = { now: () => 7_000 }
 
-      await listStoriesForRuntime(runtime, scanWorktreeBracketStories, clock)
-      await listStoriesForRuntime(runtime, scanWorktreeBracketStories, clock)
+      await listStoriesForRuntime(runtime, scanWorktreeStoryFiles, clock)
+      await listStoriesForRuntime(runtime, scanWorktreeStoryFiles, clock)
 
       expect(linearGetIssue).toHaveBeenCalledTimes(1)
     })
   })
 
-  describe('scanWorktreeBracketStories (fs scanner)', () => {
+  describe('scanWorktreeStoryFiles (fs scanner)', () => {
     let root: string | null = null
 
     afterEach(() => {
@@ -340,7 +340,7 @@ describe('superpowers.storyList', () => {
         new Date(1_700_000_000_000)
       )
 
-      const scans = scanWorktreeBracketStories(wtPath)
+      const scans = scanWorktreeStoryFiles(wtPath)
       const byStoryId = new Map(scans.map((s) => [s.storyId, s]))
 
       expect(byStoryId.get('brackets/good.md')).toEqual({
@@ -366,7 +366,7 @@ describe('superpowers.storyList', () => {
     it('returns no stories for a worktree without a brackets dir', () => {
       const wtPath = mkdtempSync(join(tmpdir(), 'orca-story-list-empty-'))
       root = wtPath
-      expect(scanWorktreeBracketStories(wtPath)).toEqual([])
+      expect(scanWorktreeStoryFiles(wtPath)).toEqual([])
     })
 
     it('full path: tmpdir worktree brackets become sorted entries via the default scanner', async () => {
@@ -400,6 +400,120 @@ describe('superpowers.storyList', () => {
         sfDone: 0,
         pendingGates: 0
       })
+    })
+  })
+})
+
+describe('superpowers.storyList — mindmaps/*.wakii discovery (VU-14 SF-5)', () => {
+  let root: string | null = null
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    resetSfStatusCacheForTests()
+    linearGetStatus.mockReturnValue({ connected: false })
+  })
+
+  afterEach(() => {
+    if (root) {
+      rmSync(root, { recursive: true, force: true })
+      root = null
+    }
+  })
+
+  function makeStoryWorktree(files: {
+    mindmaps?: Record<string, string>
+    brackets?: Record<string, string>
+  }): string {
+    root = mkdtempSync(join(tmpdir(), 'orca-story-list-wakii-'))
+    for (const [dir, entries] of Object.entries(files)) {
+      const dirPath = join(root, 'docs', 'superpowers', dir)
+      mkdirSync(dirPath, { recursive: true })
+      for (const [name, content] of Object.entries(entries)) {
+        writeFileSync(join(dirPath, name), content)
+      }
+    }
+    return root
+  }
+
+  const GOLDEN_WAKII = JSON.stringify({
+    wakiiMindmap: 1,
+    meta: {
+      story: 'WI-9 — Golden story',
+      epic: 'WI-9',
+      dest: 'story/wi-9',
+      generatedAt: '2026-09-28T00:00:00Z',
+      generator: 'story-mindmap'
+    },
+    nodes: [
+      { id: 'epic', kind: 'epic', title: 'WI-9 — Golden story' },
+      { id: 'sf-1', kind: 'sf', title: 'First SF', tier: 1, summary: 'RPC', linear: 'FI-901' },
+      { id: 'sf-2', kind: 'sf', title: 'Second SF', tier: 2, summary: 'UI' }
+    ],
+    edges: [
+      { from: 'epic', to: 'sf-1', rel: 'contains' },
+      { from: 'epic', to: 'sf-2', rel: 'contains' },
+      { from: 'sf-2', to: 'sf-1', rel: 'depends-on' }
+    ]
+  })
+
+  it('lists a .wakii-only worktree with storyId mindmaps/<name>.wakii and sfTotal from sf nodes', async () => {
+    const db = new OrchestrationDb(':memory:')
+    const wtPath = makeStoryWorktree({ mindmaps: { 'wi-9.wakii': GOLDEN_WAKII } })
+    const runtime = makeRuntime([makeCatalogEntry(`repo::${wtPath}`, wtPath, 'wt')], db)
+
+    const stories = await listStoriesForRuntime(runtime)
+
+    expect(stories).toHaveLength(1)
+    expect(stories[0]).toMatchObject({
+      storyId: 'mindmaps/wi-9.wakii',
+      epicId: 'WI-9',
+      title: 'WI-9 — Golden story',
+      sfTotal: 2,
+      sfDone: 0,
+      parseError: false
+    })
+  })
+
+  it('counts sfDone from Linear using linear ids from .wakii nodes', async () => {
+    const db = new OrchestrationDb(':memory:')
+    const wtPath = makeStoryWorktree({ mindmaps: { 'wi-9.wakii': GOLDEN_WAKII } })
+    const runtime = makeRuntime([makeCatalogEntry(`repo::${wtPath}`, wtPath, 'wt')], db)
+    linearGetStatus.mockReturnValue({ connected: true })
+    linearGetIssue.mockResolvedValue({ state: { name: 'Done', type: 'completed', color: '' } })
+
+    const stories = await listStoriesForRuntime(runtime)
+
+    expect(stories[0]).toMatchObject({ sfTotal: 2, sfDone: 1 })
+    expect(linearGetIssue).toHaveBeenCalledTimes(1)
+    expect(linearGetIssue).toHaveBeenCalledWith('FI-901')
+  })
+
+  it('flags a broken .wakii as a parseError entry without failing the method', async () => {
+    const db = new OrchestrationDb(':memory:')
+    const wtPath = makeStoryWorktree({ mindmaps: { 'bad.wakii': '{ vỡ' } })
+    const runtime = makeRuntime([makeCatalogEntry(`repo::${wtPath}`, wtPath, 'wt')], db)
+
+    const stories = await listStoriesForRuntime(runtime)
+
+    expect(stories).toHaveLength(1)
+    expect(stories[0]).toMatchObject({ storyId: 'mindmaps/bad.wakii', parseError: true, sfTotal: 0 })
+  })
+
+  it('lists both sources: mindmaps .wakii and legacy brackets coexist', async () => {
+    const db = new OrchestrationDb(':memory:')
+    const wtPath = makeStoryWorktree({
+      mindmaps: { 'wi-9.wakii': GOLDEN_WAKII },
+      brackets: { 'legacy.md': VALID_BRACKET }
+    })
+    const runtime = makeRuntime([makeCatalogEntry(`repo::${wtPath}`, wtPath, 'wt')], db)
+
+    const stories = await listStoriesForRuntime(runtime)
+    const ids = stories.map((s) => s.storyId).sort()
+
+    expect(ids).toEqual(['brackets/legacy.md', 'mindmaps/wi-9.wakii'])
+    expect(stories.find((s) => s.storyId === 'brackets/legacy.md')).toMatchObject({
+      sfTotal: 2,
+      parseError: false
     })
   })
 })

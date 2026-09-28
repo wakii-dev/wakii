@@ -6,6 +6,7 @@ import { runtimeWorktreeIdsEqual } from '../../runtime-worktree-path-identity'
 import type { OrchestrationDb } from '../../orchestration/db'
 import { deriveWorktreeIdForGate } from '../../../superpowers/gate-worktree-derivation'
 import { parseBracketHeading, parseBracketSfs } from '../../../superpowers/bracket-file-parse'
+import { parseWakiiStory } from '../../../superpowers/wakii-story-parse'
 import { readSfStatuses } from '../../../superpowers/story-linear-status'
 import type {
   SuperpowersStoryListItem,
@@ -13,21 +14,76 @@ import type {
 } from '../../../../shared/superpowers/story-rpc-contract'
 
 // Catalog source is PINNED to the runtime resolved-worktree snapshot — do not
-// substitute (gate-worktree-derivation.ts header). Malformed brackets never
+// substitute (gate-worktree-derivation.ts header). Malformed story files never
 // fail the method: they surface as parseError entries.
 
-export type BracketStoryScan = {
-  storyId: string // 'brackets/<name.md>' — extension included (spec §3b)
-  epicId: string // '' when the '# Story:' heading is missing
+export type StoryFileScan = {
+  storyId: string // 'mindmaps/<name>.wakii' (canonical) or 'brackets/<name.md>' (legacy) — extension included (spec §3b)
+  epicId: string // '' when missing (wakii: meta.epic; bracket: '# Story:' heading)
   title: string
   sfTotal: number
-  updatedAt: number // bracket mtime, epoch ms
+  updatedAt: number // story file mtime, epoch ms
   parseError: boolean
 }
 
-export type BracketStoryScanner = (worktreePath: string) => BracketStoryScan[]
+export type StoryFileScanner = (worktreePath: string) => StoryFileScan[]
 
-export function scanWorktreeBracketStories(worktreePath: string): BracketStoryScan[] {
+// mindmaps/*.wakii first (canonical VU-14), brackets/*.md as the legacy
+// fallback for stories not yet migrated (VI-1 — no forced migration mid-run).
+export function scanWorktreeStoryFiles(worktreePath: string): StoryFileScan[] {
+  return [...scanWorktreeWakiiStories(worktreePath), ...scanWorktreeBracketStories(worktreePath)]
+}
+
+function scanWorktreeWakiiStories(worktreePath: string): StoryFileScan[] {
+  const mindmapsDir = join(worktreePath, 'docs', 'superpowers', 'mindmaps')
+  let names: string[]
+  try {
+    names = readdirSync(mindmapsDir)
+  } catch {
+    return []
+  }
+  const scans: StoryFileScan[] = []
+  for (const name of names.filter((entry) => entry.endsWith('.wakii'))) {
+    let updatedAt = 0
+    try {
+      updatedAt = statSync(join(mindmapsDir, name)).mtimeMs
+    } catch {
+      // vanished between readdir and stat — keep 0, sort tail
+    }
+    let text = ''
+    try {
+      text = readFileSync(join(mindmapsDir, name), 'utf8')
+    } catch {
+      // unreadable → parsed as broken below (parse-error entry)
+    }
+    const doc = parseWakiiStory(text)
+    const fallbackTitle = name.replace(/\.wakii$/, '')
+    if (doc === 'parse-error') {
+      scans.push({
+        storyId: `mindmaps/${name}`,
+        epicId: '',
+        title: fallbackTitle,
+        sfTotal: 0,
+        updatedAt,
+        parseError: true
+      })
+      continue
+    }
+    // Zero sf nodes mirrors the bracket ruling: an entry that cannot describe
+    // a single SF is a parse error, not a story.
+    scans.push({
+      storyId: `mindmaps/${name}`,
+      epicId: doc.epicId,
+      title: doc.title,
+      sfTotal: doc.sfs.length,
+      updatedAt,
+      parseError: doc.sfs.length === 0
+    })
+  }
+  return scans
+}
+
+function scanWorktreeBracketStories(worktreePath: string): StoryFileScan[] {
   const bracketsDir = join(worktreePath, 'docs', 'superpowers', 'brackets')
   let names: string[]
   try {
@@ -35,7 +91,7 @@ export function scanWorktreeBracketStories(worktreePath: string): BracketStorySc
   } catch {
     return []
   }
-  const scans: BracketStoryScan[] = []
+  const scans: StoryFileScan[] = []
   for (const name of names.filter((entry) => entry.endsWith('.md'))) {
     let updatedAt = 0
     try {
@@ -68,14 +124,18 @@ export function scanWorktreeBracketStories(worktreePath: string): BracketStorySc
 
 type StoryListRuntime = Pick<OrcaRuntimeService, 'listWorktreeCatalog' | 'getOrchestrationDb'>
 
-// The SF-1-frozen scanner drops raw text; re-read the bracket for `linear:` ids
+// The SF-1-frozen scanner drops raw text; re-read the story file for linear ids
 // in the same pass (spec-critic P0 pin) — no scanner change, no third parser.
 function readStoryLinearIds(worktreePath: string, storyId: string): string[] {
+  const isWakii = storyId.startsWith('mindmaps/')
+  const dir = isWakii ? 'mindmaps' : 'brackets'
+  const fileName = storyId.slice(`${dir}/`.length)
   try {
-    const text = readFileSync(
-      join(worktreePath, 'docs', 'superpowers', 'brackets', storyId.slice('brackets/'.length)),
-      'utf8'
-    )
+    const text = readFileSync(join(worktreePath, 'docs', 'superpowers', dir, fileName), 'utf8')
+    if (isWakii) {
+      const doc = parseWakiiStory(text)
+      return doc === 'parse-error' ? [] : doc.sfs.flatMap((sf) => (sf.linear ? [sf.linear] : []))
+    }
     const sfs = parseBracketSfs(text)
     return sfs === 'parse-error' ? [] : sfs.flatMap((sf) => (sf.linear ? [sf.linear] : []))
   } catch {
@@ -100,7 +160,7 @@ function countPendingGatesByWorktreeId(db: OrchestrationDb): Map<string, number>
 
 export async function listStoriesForRuntime(
   runtime: StoryListRuntime,
-  scanBrackets: BracketStoryScanner = scanWorktreeBracketStories,
+  scanStories: StoryFileScanner = scanWorktreeStoryFiles,
   opts?: { now?: () => number }
 ): Promise<SuperpowersStoryListItem[]> {
   const catalog = await runtime.listWorktreeCatalog()
@@ -110,12 +170,12 @@ export async function listStoriesForRuntime(
   const pendingGates = countPendingGatesByWorktreeId(runtime.getOrchestrationDb())
   const entries: {
     worktree: (typeof catalog)[number]
-    scan: BracketStoryScan
+    scan: StoryFileScan
     pendingGates: number
     linearIds: string[]
   }[] = []
   for (const worktree of catalog) {
-    for (const scan of scanBrackets(worktree.path)) {
+    for (const scan of scanStories(worktree.path)) {
       let pendingGatesForStory = 0
       for (const [gateWorktreeId, count] of pendingGates) {
         if (runtimeWorktreeIdsEqual(gateWorktreeId, worktree.id)) {
