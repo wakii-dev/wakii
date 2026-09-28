@@ -7,12 +7,14 @@ import { ipcMain } from 'electron'
 import { readdir, readFile, stat } from 'node:fs/promises'
 import { extname } from 'node:path'
 import type { DirEntry, MarkdownDocument } from '../../../shared/filesystem-entry-types'
+import type { WakiiFileOpenPayload } from '../../../shared/wakii-file-open-payload'
 import { sortDirEntries } from '../../../shared/file-name-sort'
 import { requireSshFilesystemProvider } from '../../providers/ssh-filesystem-dispatch'
 import { resolveRegisteredWorktreePath } from '../registered-worktree-roots-cache'
 import { resolveAuthorizedPath } from '../filesystem-auth'
 import { isENOENT } from '../filesystem-path-containment'
 import { listMarkdownDocuments, markdownDocumentsFromRelativePaths } from '../markdown-documents'
+import { resolveOpenedWakiiFiles } from '../../startup/os-opened-wakii-files'
 import { recordCrashBreadcrumb } from '../../crash-reporting/crash-breadcrumb-store'
 import { buildReadDirErrorBreadcrumb, type ReadDirThrowSite } from '../readdir-error-diagnostics'
 import type { FilesystemHandlerContext } from './filesystem-handler-context'
@@ -132,6 +134,17 @@ export function registerFilesystemReadHandlers(context: FilesystemHandlerContext
       }
       const rootPath = await resolveRegisteredWorktreePath(args.rootPath, store)
       return listMarkdownDocuments(rootPath)
+    }
+  )
+
+  // Why: the explorer routes .wakii rows through main so the size cap + schema table run
+  // before anything reaches the renderer, and decode grants the path like the OS-open flow.
+  ipcMain.handle(
+    'fs:readWakiiDocument',
+    async (_event, args: { filePath: string }): Promise<WakiiFileOpenPayload> => {
+      const filePath = await resolveAuthorizedPath(args.filePath, store)
+      const [resolved] = await resolveOpenedWakiiFiles([filePath])
+      return resolved.payload
     }
   )
 

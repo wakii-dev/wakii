@@ -6,11 +6,13 @@ import { translate } from '@/i18n/i18n'
 import { useAppStore } from '../../store'
 
 /**
- * Opens `.wakii` files the OS shell handed to Wakii ("Open With" / double-click) in
- * the floating workspace as mindmap viewer tabs. Payloads are already decoded by
- * main — this glue only routes them into the editor slice.
+ * Opens a decoded `.wakii` payload as a mindmap viewer tab in the floating workspace,
+ * enabling + revealing that panel when it is hidden. Shared by the OS-open bridge and
+ * the file explorer's .wakii route — both are explicit asks for the file.
  */
-async function openOsRequestedWakiiFile(payload: WakiiFileOpenPayload): Promise<void> {
+export async function openWakiiFileRevealingFloatingWorkspace(
+  payload: WakiiFileOpenPayload
+): Promise<void> {
   const store = useAppStore.getState()
   store.openWakiiViewerFile(payload)
   // Why enabled here: the user asked the OS for this file, and the tabs above are already in a
@@ -38,7 +40,7 @@ function reportOsRequestedWakiiFailure(error: unknown): void {
 
 export function registerOsWakiiFileOpenBridge(unsubs: (() => void)[]): void {
   const unsubscribe = window.api.ui.onOpenWakiiFile?.((payload) => {
-    void openOsRequestedWakiiFile(payload).catch(reportOsRequestedWakiiFailure)
+    void openWakiiFileRevealingFloatingWorkspace(payload).catch(reportOsRequestedWakiiFailure)
   })
   if (unsubscribe) {
     unsubs.push(unsubscribe)
@@ -50,7 +52,7 @@ export function registerOsWakiiFileOpenBridge(unsubs: (() => void)[]): void {
     void pending
       .then((payloads) => {
         for (const payload of payloads ?? []) {
-          void openOsRequestedWakiiFile(payload).catch(reportOsRequestedWakiiFailure)
+          void openWakiiFileRevealingFloatingWorkspace(payload).catch(reportOsRequestedWakiiFailure)
         }
       })
       .catch(reportOsRequestedWakiiFailure)

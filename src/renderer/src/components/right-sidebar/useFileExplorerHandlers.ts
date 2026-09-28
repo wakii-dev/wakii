@@ -11,6 +11,11 @@ import {
   getFileExplorerOwnerUnresolvedMessage,
   requireMatchingFileExplorerOperationRoute
 } from './file-explorer-operation-owner'
+import {
+  activateWakiiExplorerFile,
+  isWakiiDocumentFileName,
+  type WakiiExplorerViewerRoute
+} from './file-explorer-wakii-open'
 
 type UseFileExplorerHandlersParams = {
   activeWorktreeId: string | null
@@ -42,6 +47,8 @@ type UseFileExplorerHandlersParams = {
   authorizeExternalPath: (args: { targetPath: string }) => Promise<void>
   markPathAsDirectory: (path: string) => void
   setSelectedPath: (path: string) => void
+  /** Null where the reader IPC is unavailable (web) — .wakii rows then open as text. */
+  wakiiViewer?: WakiiExplorerViewerRoute | null
   scrollRef: RefObject<HTMLDivElement | null>
 }
 
@@ -66,6 +73,7 @@ export async function activateFileExplorerNode(args: {
   authorizeExternalPath: UseFileExplorerHandlersParams['authorizeExternalPath']
   markPathAsDirectory: (path: string) => void
   setSelectedPath: (path: string) => void
+  wakiiViewer?: WakiiExplorerViewerRoute | null
 }): Promise<void> {
   const {
     node,
@@ -77,7 +85,8 @@ export async function activateFileExplorerNode(args: {
     statPath,
     authorizeExternalPath,
     markPathAsDirectory,
-    setSelectedPath
+    setSelectedPath,
+    wakiiViewer
   } = args
   if (!activeWorktreeId) {
     return
@@ -135,6 +144,12 @@ export async function activateFileExplorerNode(args: {
     toast.error(getFileExplorerOwnerUnresolvedMessage())
     return
   }
+  if (wakiiViewer && isWakiiDocumentFileName(node.name)) {
+    const routed = await activateWakiiExplorerFile({ filePath: node.path, viewer: wakiiViewer })
+    if (routed) {
+      return
+    }
+  }
   openFile(
     {
       filePath: node.path,
@@ -168,6 +183,7 @@ export function useFileExplorerHandlers({
   authorizeExternalPath,
   markPathAsDirectory,
   setSelectedPath,
+  wakiiViewer,
   scrollRef
 }: UseFileExplorerHandlersParams): UseFileExplorerHandlersReturn {
   const handleClick = useCallback(
@@ -189,7 +205,8 @@ export function useFileExplorerHandlers({
         statPath,
         authorizeExternalPath,
         markPathAsDirectory,
-        setSelectedPath
+        setSelectedPath,
+        wakiiViewer
       })
     },
     [
@@ -202,7 +219,8 @@ export function useFileExplorerHandlers({
       statPath,
       authorizeExternalPath,
       toggleDir,
-      setSelectedPath
+      setSelectedPath,
+      wakiiViewer
     ]
   )
 
