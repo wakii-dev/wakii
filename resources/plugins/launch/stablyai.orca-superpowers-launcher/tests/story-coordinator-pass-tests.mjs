@@ -14,7 +14,7 @@
 //   khi osascript thiếu.
 // Chạy: node tests/story-coordinator-pass-tests.mjs
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, writeFileSync, chmodSync, rmSync, existsSync, readFileSync, mkdirSync } from 'node:fs'
+import { mkdtempSync, writeFileSync, copyFileSync, chmodSync, rmSync, existsSync, readFileSync, mkdirSync } from 'node:fs'
 import { join, dirname, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
@@ -655,6 +655,49 @@ console.log('== C24 run-use fail → bỏ inbox, KHÔNG check (F2 degrade) ==')
   check('C24', 'run-use fail → bỏ qua inbox (run-use fail trong out)', r.out.includes('run-use fail'), r.out)
   check('C24', 'KHÔNG gọi check sau run-use fail', !r.argv.includes('check --run'), r.argv)
   check('C24', 'exit 0 (pass là hành vi, không fail hard)', r.code === 0, `code=${r.code}`)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== C25 Windows MSYS-path ORCA_BIN → seam OSError → which(.EXE) resolve ==')
+{
+  const dir = tempDir('c25')
+  // Case reviewer round 2/3: `command -v orca` trả path MSYS KHÔNG đuôi của
+  // file đĩa orca.exe (MSYS strip .exe). Bash [ -x ] pass (exec-eval), msys
+  // convert env → python nhận 'C:/…/orca' KHÔNG đuôi → open OSError (chỉ có
+  // orca.exe trên đĩa) → seam phải which(basename) → dir\orca.EXE → chạy.
+  // Stub: node.exe copy tên orca.exe; hook qua NODE_OPTIONS --require chặn
+  // argv orca-CLI → log + fixture JSON (node resolve argv[1] absolute trước
+  // hook → match theo basename).
+  const hook = join(dir, 'orca-hook.cjs')
+  writeFileSync(hook, `const fs=require('fs');const p=require('path');` +
+    `const a=process.argv.slice(1);` +
+    `const b=p.basename(a[0]||'');` +
+    `if(!['orchestration','terminal'].includes(b))return;` +
+    `fs.appendFileSync(process.env.ARGV_LOG,a.join(' ')+String.fromCharCode(10));` +
+    `const k=['run-list','worker-list','check','list','run-current'].indexOf(a[1]);` +
+    `const v=['RL_FIXTURE','WL_FIXTURE','CHECK_FIXTURE','TERM_FIXTURE','TL_FIXTURE'][k];` +
+    `if(v&&process.env[v]){process.stdout.write(fs.readFileSync(process.env[v],'utf8'))}` +
+    `process.exit(0)`)
+  copyFileSync(process.execPath, join(dir, 'orca.exe'))
+  const msys = dir.replace(/^([A-Za-z]):[\\/]/, (_, d) => '/' + d.toLowerCase() + '/')
+    .replace(/\\/g, '/') + '/orca'
+  const r = runPass(dir, 'UNUSED-STUB-PATH', {
+    RL_FIXTURE: fixture(dir, 'rl.json', { ok: true, result: { runs: [] } }),
+    WL_FIXTURE: fixture(dir, 'wl.json', NO_WORKERS),
+    TL_FIXTURE: fixture(dir, 'tl.json', OPEN_TASK),
+    CHECK_FIXTURE: fixture(dir, 'ck.json', NO_MSGS),
+    TERM_FIXTURE: fixture(dir, 'tm.json', TERM_ME_ONLY),
+    PATH: dir + ';' + process.env.PATH,
+    NODE_OPTIONS: '--require ' + hook.replace(/\\/g, '/'),
+    // ép python nhận RAW MSYS path (một số Git Bash không convert biến tự do —
+    // env reviewer reproduce) — không có fix which() → WinError 2 chết toàn vòng
+    MSYS2_ENV_CONV_EXCL: 'ORCA_BIN',
+    PASS_CWD: dir,
+    ORCA_BIN: msys,
+  })
+  check('C25', 'stub chạy qua seam (argv log có run-list)', r.argv.includes('run-list'), r.argv || '(rỗng)')
+  check('C25', 'exit 0', r.code === 0, `code=${r.code} out=${r.out}`)
+  check('C25', 'idle=no-active-runs (không degrade orca-unavailable)', r.out.includes('idle=no-active-runs'), r.out)
   rmSync(dir, { recursive: true, force: true })
 }
 

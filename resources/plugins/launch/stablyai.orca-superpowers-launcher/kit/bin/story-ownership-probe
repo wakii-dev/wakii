@@ -96,16 +96,22 @@ def sh_seam_argv(bin_path, args):
     # giống execMaybe của story-mindmap). File không đuôi trên nt: bash-spawn
     # CHỈ khi là script — `command -v orca` trả path MSYS không đuôi cho binary
     # thật (MZ/ELF) → bash rc 126, nên đọc 2 byte đầu để tách binary/script.
+    # Path MSYS (/c/...) python không open được (Errno 2) → which(basename)
+    # resolve lại Windows-native (MSYS strip .exe trong PATH lookup).
     if bin_path.endswith(".sh"):
         return ["bash", bin_path] + list(args)
     if os.name == "nt" and not os.path.splitext(bin_path)[1]:
         try:
             with open(bin_path, "rb") as f:
                 magic = f.read(2)
-            if magic not in (b"MZ", b"\x7fE"):  # không phải PE/ELF → coi là script
-                return ["bash", bin_path] + list(args)
         except OSError:
+            import shutil
+            resolved = shutil.which(os.path.basename(bin_path))
+            if resolved:
+                bin_path = resolved
             return [bin_path] + list(args)
+        if magic not in (b"MZ", b"\x7fE"):  # không phải PE/ELF → coi là script
+            return ["bash", bin_path] + list(args)
     return [bin_path] + list(args)
 
 

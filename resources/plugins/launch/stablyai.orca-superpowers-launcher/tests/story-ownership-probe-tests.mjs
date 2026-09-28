@@ -7,7 +7,7 @@
 // foreign/mine/orphan/blind, watchdog + top owner column, e2e 2 coordinator.
 // Chạy: node tests/story-ownership-probe-tests.mjs
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, writeFileSync, mkdirSync, chmodSync, rmSync, existsSync, readFileSync } from 'node:fs'
+import { mkdtempSync, writeFileSync, copyFileSync, mkdirSync, chmodSync, rmSync, existsSync, readFileSync } from 'node:fs'
 import { join, dirname, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
@@ -490,6 +490,43 @@ console.log('== E1 e2e 2-coordinator: A giữ worker live, B bị chặn + skip-
     env: { ...process.env, HOME: dir, ...baseEnv, STORY_RESUME_BIN: resume, STATE_FILE: join(dir, 'state') },
   })
   check('E1', 'watchdog: owner=term_coorda', /sf-4-collision: RUNNING.*owner=term_coorda/.test(rWd.stdout), rWd.stdout)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== M1 Windows: OP_ORCA_BIN MSYS ext-less → which(orca.EXE) resolve, fetch sống ==')
+{
+  // Case reviewer round 2/3 cho probe: caller set OP_ORCA_BIN từ
+  // `command -v orca` (MSYS strip .exe). resolve layer: os.access False →
+  // which(basename) qua PATH → dir\orca.EXE → fetch hoạt động.
+  const dir = tempDir('m1')
+  const hook = join(dir, 'orca-hook.cjs')
+  writeFileSync(hook, `const fs=require('fs');const p=require('path');` +
+    `const a=process.argv.slice(1);` +
+    `const b=p.basename(a[0]||'');` +
+    `if(!['orchestration','terminal'].includes(b))return;` +
+    `fs.appendFileSync(process.env.ARGV_LOG,a.join(' ')+String.fromCharCode(10));` +
+    `const k=['run-list','worker-list','check','list','run-current'].indexOf(a[1]);` +
+    `const v=['RL_FIXTURE','WL_FIXTURE','CHECK_FIXTURE','TERM_FIXTURE','TL_FIXTURE'][k];` +
+    `if(v&&process.env[v]){process.stdout.write(fs.readFileSync(process.env[v],'utf8'))}` +
+    `process.exit(0)`)
+  copyFileSync(process.execPath, join(dir, 'orca.exe'))
+  const msys = dir.replace(/^([A-Za-z]):[\\/]/, (_, d) => '/' + d.toLowerCase() + '/')
+    .replace(/\\/g, '/') + '/orca'
+  const rl = fixture(dir, 'rl.json', { ok: true, result: { runs: [] } })
+  const wl = fixture(dir, 'wl.json', { ok: true, result: { workers: [] } })
+  const argvLog = join(dir, 'argv.log')
+  writeFileSync(argvLog, '')
+  const r = spawnSync('bash', ['-c', `
+    . "${LIB}"
+    ownership_probe_load && echo LOADED=yes || echo LOADED=no
+  `], { encoding: 'utf8', timeout: 60000,
+    env: { ...process.env, ORCA_BIN: msys, MSYS2_ENV_CONV_EXCL: 'ORCA_BIN',
+      PATH: dir + ';' + process.env.PATH,
+      NODE_OPTIONS: '--require ' + hook.replace(/\\/g, '/'),
+      ORCA_COORDINATOR_HANDLE: 'term_self', RL_FIXTURE: rl, WL_FIXTURE: wl,
+      ARGV_LOG: argvLog } })
+  check('M1', 'load rc0 (orca resolve được)', r.stdout.includes('LOADED=yes'), (r.stdout || '') + (r.stderr || ''))
+  check('M1', 'stub chạy (argv log có run-list)', readFileSync(argvLog, 'utf8').includes('run-list'), readFileSync(argvLog, 'utf8') || '(rỗng)')
   rmSync(dir, { recursive: true, force: true })
 }
 
