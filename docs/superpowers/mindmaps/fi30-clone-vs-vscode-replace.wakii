@@ -1,0 +1,163 @@
+{
+  "wakiiMindmap": 1,
+  "meta": {
+    "story": "FI-30 — clone-vs-vscode: search replace parity",
+    "epic": "FI-30",
+    "dest": "feature/clone-vs-vscode",
+    "generatedAt": "2026-09-28T07:55:20.397Z",
+    "generator": "story-mindmap 1.0.0"
+  },
+  "nodes": [
+    {
+      "id": "epic",
+      "kind": "epic",
+      "title": "FI-30 — clone-vs-vscode: search replace parity",
+      "state": "in-progress"
+    },
+    {
+      "id": "sf-1",
+      "kind": "sf",
+      "title": "Search Replace/Replace All + toolbar New buttons",
+      "state": "pending",
+      "tier": 0,
+      "linear": "FI-31"
+    },
+    {
+      "id": "t-1.1",
+      "kind": "task",
+      "title": "dependency-gate-pin-base",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.2",
+      "kind": "task",
+      "title": "verify-first-cluster-crlf-offset-dirty",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.3",
+      "kind": "task",
+      "title": "replace-engine-rederive-unicode-eol",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.4",
+      "kind": "task",
+      "title": "replace-state-store-slice",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.5",
+      "kind": "task",
+      "title": "replace-field-ui-block-matrix",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.6",
+      "kind": "task",
+      "title": "preview-modal-dryrun-diff",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.7",
+      "kind": "task",
+      "title": "replace-all-runner-toctou-taxonomy-cancel",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.8",
+      "kind": "task",
+      "title": "undo-panel-statrecheck-closure",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.9",
+      "kind": "task",
+      "title": "toolbar-new-buttons-startnew",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.10",
+      "kind": "task",
+      "title": "verify-gates-electron-walkthrough",
+      "state": "pending",
+      "parent": "sf-1"
+    }
+  ],
+  "edges": [
+    {
+      "from": "epic",
+      "to": "sf-1",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.1",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.2",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.3",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.4",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.5",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.6",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.7",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.8",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.9",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.10",
+      "rel": "contains"
+    }
+  ],
+  "evidence": [
+    {
+      "node": "epic",
+      "summary": "nguồn sinh mindmap",
+      "ref": "docs/superpowers/brackets/fi30-clone-vs-vscode-replace.md"
+    }
+  ],
+  "decodeWarnings": [
+    "story-impact không chạy được (ENOENT) — bỏ lớp impact computed"
+  ]
+}

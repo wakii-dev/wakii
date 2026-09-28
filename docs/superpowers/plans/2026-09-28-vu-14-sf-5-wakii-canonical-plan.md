@@ -75,9 +75,9 @@
 - Modify: `src/main/runtime/rpc/methods/superpowers-story-detail.ts` (detail từ .wakii)
 - Create/Modify tests: `wakii-story-parse.test.ts` + list/detail test fixtures .wakii
 
-- [ ] **Step 6.1 RED** — vitest: fixture .wakii golden → storyList storyId `mindmaps/<name>.wakii`, sfTotal từ sf nodes, linearIds từ nodes; detail sfs từ nodes + dependsOn từ edges, destination từ meta.dest; file hỏng → parseError entry không crash; bracket fallback cho story chưa migrate; wire shape KHÔNG ĐỔI (remote-wire-compat).
-- [ ] **Step 6.2 GREEN** — implement; `pnpm tc` + vitest xanh.
-- [ ] **Step 6.3** — commit.
+- [x] **Step 6.1 RED** — vitest: fixture .wakii golden → storyList storyId `mindmaps/<name>.wakii`, sfTotal từ sf nodes, linearIds từ nodes; detail sfs từ nodes + dependsOn từ edges, destination từ meta.dest; file hỏng → parseError entry không crash; bracket fallback cho story chưa migrate; wire shape KHÔNG ĐỔI (remote-wire-compat).
+- [x] **Step 6.2 GREEN** — implement; `pnpm tc` + vitest xanh. (wire thêm optional decodeWarnings?: string[] — safe-add duy nhất; 4 fail vitest gate-seeding pre-existing tại HEAD, không thuộc scope.)
+- [x] **Step 6.3** — commit.
 
 ### Task 7: migrate-existing-stories-bootstrap — bootstrap + migrate story cũ
 
@@ -87,9 +87,9 @@
 - Delete (repo): brackets ĐÃ migrate (trừ vi-1 — giữa run)
 - Create: `kit/tests/story-mindmap-bootstrap-tests.mjs` (round-trip VI-1 fixture copy)
 
-- [ ] **Step 7.1 RED** — round-trip: fixture copy bracket VI-1 + packs → `--bootstrap` → .wakii ra đủ 3 lớp khớp bracket → wakii-validate PASS.
-- [ ] **Step 7.2 GREEN** — `--bootstrap` alias; migrate THẬT: brackets/ fi28, fi30, fi32, fi34, fi305, fi458, vu-14 → sinh .wakii + validate PASS; xoá bracket tương ứng (trừ vi-1); audit danh sách trong commit message.
-- [ ] **Step 7.3** — commit.
+- [x] **Step 7.1 RED** — round-trip: fixture copy bracket VI-1 + packs → `--bootstrap` → .wakii ra đủ 3 lớp khớp bracket → wakii-validate PASS.
+- [x] **Step 7.2 GREEN** — `--bootstrap` alias; migrate THẬT: brackets/ fi28, fi30, fi32, fi34, fi305, fi458, vu-14 → sinh .wakii + validate PASS; xoá bracket tương ứng (trừ vi-1); audit danh sách trong commit message. (Fix phụ: parseBracket normalize CRLF — `.` JS không match \r, bracket soạn trên Windows parse ra 0 SF.)
+- [x] **Step 7.3** — commit.
 
 ### Task 8: retire-bracket-and-story-validate — xoá bin cũ + provides + rehash
 

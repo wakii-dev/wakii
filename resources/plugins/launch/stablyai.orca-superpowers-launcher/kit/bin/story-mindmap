@@ -9,6 +9,7 @@
 //
 // Usage:
 //   story-mindmap --bracket <file> [--out <path>] [--mermaid-md <path>]
+//   story-mindmap --bootstrap <file> [...]  # alias --bracket — migrate story cũ
 //   story-mindmap --decode <file>     # verdict decoder — JSON ra stdout, exit 0/2
 //   story-mindmap --update-state <file.wakii>
 //
@@ -103,7 +104,8 @@ function decodeWakii(raw) {
 
 // ── parsers ─────────────────────────────────────────────────────────────────
 function parseBracket(text) {
-  const lines = text.split('\n');
+  // CRLF (bracket soạn trên Windows) — `.` không match \r nên regex `## SF-N …$` vỡ
+  const lines = text.replace(/\r\n/g, '\n').split('\n');
   const out = { story: '', epic: '', dest: '', sfs: [] };
   let cur = null;
   for (const line of lines) {
@@ -111,6 +113,8 @@ function parseBracket(text) {
     if (mStory) { out.story = mStory[1]; out.epic = out.story.split(/\s+/)[0]; }
     const mDest = line.match(/^Destination:\s*(\S+)/);
     if (mDest) out.dest = mDest[1];
+    const mWt = line.match(/^Worktree model:\s*(\S+)/);
+    if (mWt) out.worktreeModel = mWt[1];
     const mSf = line.match(/^##\s+SF-(\d+)\s+(.*)$/);
     if (mSf) {
       cur = { num: +mSf[1], id: `sf-${mSf[1]}`, title: mSf[2].trim(), tier: undefined, linear: '', deps: [], tasks: [], steps: [], files: [], packRel: '' };
@@ -332,8 +336,10 @@ function die(code, msg) { console.error(msg); process.exit(code); }
 
 function cmdGenerate(argv) {
   const flagValue = name => { const i = argv.indexOf(name); return i === -1 ? '' : (argv[i + 1] || '').trim(); };
-  const bracketArg = flagValue('--bracket');
-  if (!bracketArg) die(2, 'usage: story-mindmap --bracket <file> [--out <path>] [--mermaid-md <path>] | --decode <file>');
+  // --bootstrap: alias của --bracket (VU-14 SF-5 T7 — migrate story cũ 1 lần;
+  // semantics giống hệt, tên mới cho mục đích migration)
+  const bracketArg = flagValue('--bracket') || flagValue('--bootstrap');
+  if (!bracketArg) die(2, 'usage: story-mindmap --bracket <file> | --bootstrap <file> [--out <path>] [--mermaid-md <path>] | --decode <file> | --update-state <file.wakii>');
   const bracketPath = path.resolve(bracketArg);
   if (!fs.existsSync(bracketPath)) die(2, `bracket không tồn tại: ${bracketArg}`);
   const repo = path.resolve(path.dirname(bracketPath), '..', '..', '..'); // docs/superpowers/brackets → repo (3 cấp)
@@ -353,6 +359,7 @@ function cmdGenerate(argv) {
   const graph = buildGraph(br, path.basename(bracketPath), orcaStatus, impactAreas);
   const meta = { story: br.story, epic: br.epic };
   if (br.dest) meta.dest = br.dest;
+  if (br.worktreeModel) meta.worktreeModel = br.worktreeModel; // optional (schema v1 vẫn hợp lệ)
 
   const outPath = flagValue('--out') || path.join(repo, 'docs/superpowers/mindmaps', `${stem}.wakii`);
   fs.mkdirSync(path.dirname(outPath), { recursive: true });

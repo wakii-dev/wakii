@@ -1,0 +1,528 @@
+{
+  "wakiiMindmap": 1,
+  "meta": {
+    "story": "FI-458 — Bracket phân tán đa máy trong mạng local (distributed bracket execution)",
+    "epic": "FI-458",
+    "dest": "story/fi458-distributed-bracket",
+    "generatedAt": "2026-09-28T07:54:32.167Z",
+    "generator": "story-mindmap 1.0.0"
+  },
+  "nodes": [
+    {
+      "id": "epic",
+      "kind": "epic",
+      "title": "FI-458 — Bracket phân tán đa máy trong mạng local (distributed bracket execution)",
+      "state": "in-progress"
+    },
+    {
+      "id": "sf-1",
+      "kind": "sf",
+      "title": "Claim core + distributed config (Phase 1/2 — shippable: launch an toàn 1 máy, sẵn sàng đa máy)",
+      "state": "pending",
+      "tier": 0,
+      "linear": "FI-459"
+    },
+    {
+      "id": "sf-2",
+      "kind": "sf",
+      "title": "Remote-safe verify (Phase 1/2)",
+      "state": "pending",
+      "tier": 1,
+      "linear": "FI-460"
+    },
+    {
+      "id": "sf-3",
+      "kind": "sf",
+      "title": "Panel ⚙ Machines read-only + worker ops (Phase 1/2)",
+      "state": "pending",
+      "tier": 1,
+      "linear": "FI-461"
+    },
+    {
+      "id": "sf-4",
+      "kind": "sf",
+      "title": "Claim-protocol infra — 2-machine simulation (Phase 2/2 — release checkpoint)",
+      "state": "pending",
+      "tier": 2,
+      "linear": "FI-462"
+    },
+    {
+      "id": "t-1.1",
+      "kind": "task",
+      "title": "pre-flight-launcher-dirty-clean-va-pr47-merge-truoc-T1",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.2",
+      "kind": "task",
+      "title": "gitignore-negation-brackets-contexts",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.3",
+      "kind": "task",
+      "title": "dest-contract-wakii-dev-push-fetch-race",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.4",
+      "kind": "task",
+      "title": "distributed-config-schema-fail-open",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.5",
+      "kind": "task",
+      "title": "claim-storage-label-plus-comment-renew-voi---list-claims-json-export",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.6",
+      "kind": "task",
+      "title": "linear-mutation-atomicity-verify-partial-claim-label-race",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.7",
+      "kind": "task",
+      "title": "claim-takeover-stale-2x-ttl-revoke-comment",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.8",
+      "kind": "task",
+      "title": "git-guard-push-sf-branch-sf-n-slug-at-launch-vendored-tier",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.9",
+      "kind": "task",
+      "title": "fail-closed-inversion-zero-diff-test-5-mat",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.10",
+      "kind": "task",
+      "title": "machineid-sanitize-graphql",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.11",
+      "kind": "task",
+      "title": "heartbeat-renew-agent-liveness-gated-linear-server-ts",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.12",
+      "kind": "task",
+      "title": "version-bump-2.12.0-sync-kit-marker-checklist",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.13",
+      "kind": "task",
+      "title": "race-harness-2-process",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.14",
+      "kind": "task",
+      "title": "linear-offline-fail-closed-error-classification",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-2.1",
+      "kind": "task",
+      "title": "b4-fetch-gated-after-enabled",
+      "state": "pending",
+      "parent": "sf-2"
+    },
+    {
+      "id": "t-2.2",
+      "kind": "task",
+      "title": "b4-zero-diff-regression",
+      "state": "pending",
+      "parent": "sf-2"
+    },
+    {
+      "id": "t-2.3",
+      "kind": "task",
+      "title": "fetch-fail-stale-fallback",
+      "state": "pending",
+      "parent": "sf-2"
+    },
+    {
+      "id": "t-2.4",
+      "kind": "task",
+      "title": "resume-dest-fetch",
+      "state": "pending",
+      "parent": "sf-2"
+    },
+    {
+      "id": "t-2.5",
+      "kind": "task",
+      "title": "resume-dest-fetch-e2e",
+      "state": "pending",
+      "parent": "sf-2"
+    },
+    {
+      "id": "t-3.1",
+      "kind": "task",
+      "title": "distributed-config-op-get-set",
+      "state": "pending",
+      "parent": "sf-3"
+    },
+    {
+      "id": "t-3.2",
+      "kind": "task",
+      "title": "claims-derive-tu-linear-git",
+      "state": "pending",
+      "parent": "sf-3"
+    },
+    {
+      "id": "t-3.3",
+      "kind": "task",
+      "title": "machines-section-ui-collapsed-cta",
+      "state": "pending",
+      "parent": "sf-3"
+    },
+    {
+      "id": "t-3.4",
+      "kind": "task",
+      "title": "mode-switch-runtime-off-on",
+      "state": "pending",
+      "parent": "sf-3"
+    },
+    {
+      "id": "t-3.5",
+      "kind": "task",
+      "title": "stale-claim-highlight",
+      "state": "pending",
+      "parent": "sf-3"
+    },
+    {
+      "id": "t-3.6",
+      "kind": "task",
+      "title": "zero-local-storage-assumption",
+      "state": "pending",
+      "parent": "sf-3"
+    },
+    {
+      "id": "t-3.7",
+      "kind": "task",
+      "title": "fail-closed-error-classification",
+      "state": "pending",
+      "parent": "sf-3"
+    },
+    {
+      "id": "t-4.1",
+      "kind": "task",
+      "title": "phase1-checkpoint-cut-2.12.0",
+      "state": "pending",
+      "parent": "sf-4"
+    },
+    {
+      "id": "t-4.2",
+      "kind": "task",
+      "title": "sim-harness-2-clone-linear-isolated-sim-prefix",
+      "state": "pending",
+      "parent": "sf-4"
+    },
+    {
+      "id": "t-4.3",
+      "kind": "task",
+      "title": "takeover-2x-ttl-e2e",
+      "state": "pending",
+      "parent": "sf-4"
+    },
+    {
+      "id": "t-4.4",
+      "kind": "task",
+      "title": "git-guard-worst-case-e2e",
+      "state": "pending",
+      "parent": "sf-4"
+    },
+    {
+      "id": "t-4.5",
+      "kind": "task",
+      "title": "mixed-kit-version-test",
+      "state": "pending",
+      "parent": "sf-4"
+    },
+    {
+      "id": "t-4.6",
+      "kind": "task",
+      "title": "enabled-false-regression-5-mat",
+      "state": "pending",
+      "parent": "sf-4"
+    },
+    {
+      "id": "t-4.7",
+      "kind": "task",
+      "title": "story-complete-derive-linear-watchdog-verify",
+      "state": "pending",
+      "parent": "sf-4"
+    },
+    {
+      "id": "t-4.8",
+      "kind": "task",
+      "title": "regen-bundled-vendored-orca-bundled-hash",
+      "state": "pending",
+      "parent": "sf-4"
+    },
+    {
+      "id": "t-4.9",
+      "kind": "task",
+      "title": "readme-distributed-setup-kit-repo",
+      "state": "pending",
+      "parent": "sf-4"
+    }
+  ],
+  "edges": [
+    {
+      "from": "epic",
+      "to": "sf-1",
+      "rel": "contains"
+    },
+    {
+      "from": "epic",
+      "to": "sf-2",
+      "rel": "contains"
+    },
+    {
+      "from": "epic",
+      "to": "sf-3",
+      "rel": "contains"
+    },
+    {
+      "from": "epic",
+      "to": "sf-4",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-2",
+      "to": "sf-1",
+      "rel": "depends-on"
+    },
+    {
+      "from": "sf-3",
+      "to": "sf-1",
+      "rel": "depends-on"
+    },
+    {
+      "from": "sf-4",
+      "to": "sf-1",
+      "rel": "depends-on"
+    },
+    {
+      "from": "sf-4",
+      "to": "sf-2",
+      "rel": "depends-on"
+    },
+    {
+      "from": "sf-4",
+      "to": "sf-3",
+      "rel": "depends-on"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.1",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.2",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.3",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.4",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.5",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.6",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.7",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.8",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.9",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.10",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.11",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.12",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.13",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.14",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-2",
+      "to": "t-2.1",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-2",
+      "to": "t-2.2",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-2",
+      "to": "t-2.3",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-2",
+      "to": "t-2.4",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-2",
+      "to": "t-2.5",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-3",
+      "to": "t-3.1",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-3",
+      "to": "t-3.2",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-3",
+      "to": "t-3.3",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-3",
+      "to": "t-3.4",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-3",
+      "to": "t-3.5",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-3",
+      "to": "t-3.6",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-3",
+      "to": "t-3.7",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-4",
+      "to": "t-4.1",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-4",
+      "to": "t-4.2",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-4",
+      "to": "t-4.3",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-4",
+      "to": "t-4.4",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-4",
+      "to": "t-4.5",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-4",
+      "to": "t-4.6",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-4",
+      "to": "t-4.7",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-4",
+      "to": "t-4.8",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-4",
+      "to": "t-4.9",
+      "rel": "contains"
+    }
+  ],
+  "evidence": [
+    {
+      "node": "epic",
+      "summary": "nguồn sinh mindmap",
+      "ref": "docs/superpowers/brackets/fi458-distributed-bracket.md"
+    }
+  ],
+  "decodeWarnings": [
+    "orchestration: không tìm thấy run cho story — SF state=pending",
+    "story-impact không chạy được (ENOENT) — bỏ lớp impact computed"
+  ]
+}

@@ -1,0 +1,1064 @@
+{
+  "wakiiMindmap": 1,
+  "meta": {
+    "story": "VU-14 — mindmap.wakii — story mindmap file + Wakii viewer",
+    "epic": "VU-14",
+    "dest": "story/vu-14-mindmap-wakii",
+    "generatedAt": "2026-09-28T07:54:06.090Z",
+    "generator": "story-mindmap 1.0.0"
+  },
+  "nodes": [
+    {
+      "id": "epic",
+      "kind": "epic",
+      "title": "VU-14 — mindmap.wakii — story mindmap file + Wakii viewer",
+      "state": "in-progress"
+    },
+    {
+      "id": "sf-5",
+      "kind": "sf",
+      "title": ".wakii canonical — retire bracket",
+      "state": "pending",
+      "tier": 3,
+      "linear": "FI-43"
+    },
+    {
+      "id": "sf-1",
+      "kind": "sf",
+      "title": "Schema + sinh file .wakii",
+      "state": "pending",
+      "tier": 0
+    },
+    {
+      "id": "sf-2",
+      "kind": "sf",
+      "title": "App mở file .wakii",
+      "state": "pending",
+      "tier": 1
+    },
+    {
+      "id": "sf-3",
+      "kind": "sf",
+      "title": "Viewer mindmap tương tác",
+      "state": "pending",
+      "tier": 1
+    },
+    {
+      "id": "sf-4",
+      "kind": "sf",
+      "title": "Convergence round-trip + docs",
+      "state": "pending",
+      "tier": 2
+    },
+    {
+      "id": "t-5.1",
+      "kind": "task",
+      "title": "field-ownership-semantics",
+      "state": "pending",
+      "parent": "sf-5"
+    },
+    {
+      "id": "t-5.2",
+      "kind": "task",
+      "title": "state-updater-inplace",
+      "state": "pending",
+      "parent": "sf-5"
+    },
+    {
+      "id": "t-5.3",
+      "kind": "task",
+      "title": "story-tab-wakii-parser",
+      "state": "pending",
+      "parent": "sf-5"
+    },
+    {
+      "id": "t-5.4",
+      "kind": "task",
+      "title": "story-launch-wakii-derive",
+      "state": "pending",
+      "parent": "sf-5"
+    },
+    {
+      "id": "t-5.5",
+      "kind": "task",
+      "title": "story-verify-wakii-derive",
+      "state": "pending",
+      "parent": "sf-5"
+    },
+    {
+      "id": "t-5.6",
+      "kind": "task",
+      "title": "wakii-validate-bin",
+      "state": "pending",
+      "parent": "sf-5"
+    },
+    {
+      "id": "t-5.7",
+      "kind": "task",
+      "title": "watchdog-coordinator-wakii",
+      "state": "pending",
+      "parent": "sf-5"
+    },
+    {
+      "id": "t-5.8",
+      "kind": "task",
+      "title": "migrate-existing-stories-bootstrap",
+      "state": "pending",
+      "parent": "sf-5"
+    },
+    {
+      "id": "t-5.9",
+      "kind": "task",
+      "title": "retire-bracket-and-story-validate",
+      "state": "pending",
+      "parent": "sf-5"
+    },
+    {
+      "id": "t-5.10",
+      "kind": "task",
+      "title": "docs-story-format-wakii",
+      "state": "pending",
+      "parent": "sf-5"
+    },
+    {
+      "id": "s-5.1",
+      "kind": "step",
+      "title": "**Flip kiến trúc**",
+      "parent": "sf-5",
+      "detail": "**Flip kiến trúc** (user 27/09): .wakii = nguồn sự thật của story; bracket retired. (nguồn: Spec slice mục 1, best-effort)"
+    },
+    {
+      "id": "s-5.2",
+      "kind": "step",
+      "title": "**wakii-validate**",
+      "parent": "sf-5",
+      "detail": "**wakii-validate** (bin mới thay story-validate): validate schema v1 (decoder (nguồn: Spec slice mục 2, best-effort)"
+    },
+    {
+      "id": "s-5.3",
+      "kind": "step",
+      "title": "**story-launch đọc .wakii**",
+      "parent": "sf-5",
+      "detail": "**story-launch đọc .wakii**: parse SF slice từ nodes/edges (thay awk bracket); (nguồn: Spec slice mục 3, best-effort)"
+    },
+    {
+      "id": "s-5.4",
+      "kind": "step",
+      "title": "**story-verify derive từ .wakii**",
+      "parent": "sf-5",
+      "detail": "**story-verify derive từ .wakii**: B3/B4 đọc nodes thay bracket glob — hết (nguồn: Spec slice mục 4, best-effort)"
+    },
+    {
+      "id": "s-5.5",
+      "kind": "step",
+      "title": "**Story tab",
+      "parent": "sf-5",
+      "detail": "**Story tab (app)**: parser đọc `docs/superpowers/mindmaps/*.wakii` thay (nguồn: Spec slice mục 5, best-effort)"
+    },
+    {
+      "id": "s-5.6",
+      "kind": "step",
+      "title": "**Watchdog/coordinator-pass**",
+      "parent": "sf-5",
+      "detail": "**Watchdog/coordinator-pass**: story-status/story-top/launch-next derive từ (nguồn: Spec slice mục 6, best-effort)"
+    },
+    {
+      "id": "s-5.7",
+      "kind": "step",
+      "title": "**Bootstrap migration**",
+      "parent": "sf-5",
+      "detail": "**Bootstrap migration**: `story-mindmap --bootstrap <bracket>` (SF-1 regen (nguồn: Spec slice mục 7, best-effort)"
+    },
+    {
+      "id": "s-5.8",
+      "kind": "step",
+      "title": "**Docs**",
+      "parent": "sf-5",
+      "detail": "**Docs**: story-workflow SKILL.md + references đổi bracket → .wakii (format, (nguồn: Spec slice mục 8, best-effort)"
+    },
+    {
+      "id": "t-1.1",
+      "kind": "task",
+      "title": "schema-v1-decoder",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.2",
+      "kind": "task",
+      "title": "story-mindmap-bin",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.3",
+      "kind": "task",
+      "title": "context-pack-parse",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.4",
+      "kind": "task",
+      "title": "story-impact-fan-in",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.5",
+      "kind": "task",
+      "title": "lifecycle-trigger-wrappers",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.6",
+      "kind": "task",
+      "title": "idempotent-atomic-write",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.7",
+      "kind": "task",
+      "title": "kit-manifest-provides-rehash",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.8",
+      "kind": "task",
+      "title": "gitignore-mindmaps-allowlist",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.9",
+      "kind": "task",
+      "title": "golden-fixture-tests",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "s-1.1",
+      "kind": "step",
+      "title": "Schema `.wakii` v1",
+      "parent": "sf-1",
+      "detail": "Schema `.wakii` v1 (JSON): magic `wakiiMindmap: 1` + `meta{story,epic,linear,dest,generatedAt,generator}` + `nodes[]` (kind: epic|sf|task|step|area|file; state chỉ trên epic/sf/task) + `edges[]` (rel: contains|depends-on|flows-to|impacts|writes) + `evidence[]`. (nguồn: Spec slice mục 1, best-effort)"
+    },
+    {
+      "id": "s-1.2",
+      "kind": "step",
+      "title": "Luật decoder",
+      "parent": "sf-1",
+      "detail": "Luật decoder: bắt buộc = wakiiMindmap + meta.story + meta.generatedAt + meta.generator + ≥1 epic node + node có id/kind/title + edge có from/to/rel. INVALID → reject cả file: duplicate id, dangling edge/parent, self-loop. `parent` mâu thuẫn edge `contains` → edge thắng (không invalidate). Unknown enum → drop node/edge + `decodeWarnings[]`. (nguồn: Spec slice mục 2, best-effort)"
+    },
+    {
+      "id": "s-1.3",
+      "kind": "step",
+      "title": "`generatedAt` chỉ bump khi payload",
+      "parent": "sf-1",
+      "detail": "`generatedAt` chỉ bump khi payload (loại trừ timestamp) đổi — idempotent thật; ghi atomic temp+rename. (nguồn: Spec slice mục 3, best-effort)"
+    },
+    {
+      "id": "s-1.4",
+      "kind": "step",
+      "title": "Bin `story-mindmap` zero-dep node",
+      "parent": "sf-1",
+      "detail": "Bin `story-mindmap` zero-dep node (mẫu `story-impact`, 175 dòng, chỉ builtins): đọc bracket (epic/SF/Tier/Depends on) + context pack (steps từ mục Spec slice đánh số, flows-to theo thứ tự — best-effort GHI RÕ trong output; touch map: Sở hữu/Append-only → `writes`, Read-only → `impacts`, tc-batched bỏ) + `story-impact --json` khi có base (area-level, node `computed: true`). **Tự-chứa tri thức (27/09)**: đổ thêm vào SF node các trường optional từ pack — `summary`, `acceptance[]` (mục ACCEPTANCE), `tests[]` (lưới test trong ACCEPTANCE/plan), `notes[]` (mục Boundary), `filesTouched[]` (từ touch map Sở hữu+Append-only); `meta.summary` 1 câu; `evidence[]` ≥1 dòng/SF done (nguồn: commit hash + tên test). Mục tiêu: đọc .wakii hiểu toàn bộ story không cần mở bracket. (nguồn: Spec slice mục 4, best-effort)"
+    },
+    {
+      "id": "s-1.5",
+      "kind": "step",
+      "title": "Single-writer",
+      "parent": "sf-1",
+      "detail": "Single-writer: chỉ chạy ở checkout chứa bracket canonical; SF worker không ghi. Full-regen mỗi lần. (nguồn: Spec slice mục 5, best-effort)"
+    },
+    {
+      "id": "s-1.6",
+      "kind": "step",
+      "title": "3 trigger dạng wrapper ăn-theo kit",
+      "parent": "sf-1",
+      "detail": "3 trigger dạng wrapper ăn-theo kit (nuốt missing-bin, exit 0 im lặng, timeout 30s): (a) sau story-launch worktree create thật (dry-run exit trước create — không ghi), (b) vòng sweep story-coordinator-pass/story-watchdog thấy state đổi, (c) story-close snapshot + commit force-add. KHÔNG sửa story-verify (giữ thuần-đọc — exit/stdout là hợp đồng panel). (nguồn: Spec slice mục 6, best-effort)"
+    },
+    {
+      "id": "s-1.7",
+      "kind": "step",
+      "title": "Output phụ `--mermaid-md`",
+      "parent": "sf-1",
+      "detail": "Output phụ `--mermaid-md`: cùng dữ liệu render mermaid fence .md (chi phí ~0, mở bằng pipeline markdown). (nguồn: Spec slice mục 7, best-effort)"
+    },
+    {
+      "id": "s-1.8",
+      "kind": "step",
+      "title": "Kit chore bắt buộc",
+      "parent": "sf-1",
+      "detail": "Kit chore bắt buộc: entry provides[] kit.json (type bin, category hợp lệ) + kitHash rehash (`node --input-type=module -e \"import {computeKitHash} from './main.mjs'\"` trong plugin dir) + rehash fingerprint bundled-plugins.json + `plugin-tree-hash-lockstep.test.mjs` chạy qua `pnpm test` (node trực tiếp chết) + `.gitignore` allowlist `docs/superpowers/mindmaps/` (mẫu negate dòng 105-106). (nguồn: Spec slice mục 8, best-effort)"
+    },
+    {
+      "id": "t-2.1",
+      "kind": "task",
+      "title": "wakii-open-capture-state",
+      "state": "pending",
+      "parent": "sf-2"
+    },
+    {
+      "id": "t-2.2",
+      "kind": "task",
+      "title": "ipc-pull-push-contract",
+      "state": "pending",
+      "parent": "sf-2"
+    },
+    {
+      "id": "t-2.3",
+      "kind": "task",
+      "title": "preload-bridge",
+      "state": "pending",
+      "parent": "sf-2"
+    },
+    {
+      "id": "t-2.4",
+      "kind": "task",
+      "title": "mac-association-owner",
+      "state": "pending",
+      "parent": "sf-2"
+    },
+    {
+      "id": "t-2.5",
+      "kind": "task",
+      "title": "windows-nsis-progid-default",
+      "state": "pending",
+      "parent": "sf-2"
+    },
+    {
+      "id": "t-2.6",
+      "kind": "task",
+      "title": "linux-mime-deb-rpm",
+      "state": "pending",
+      "parent": "sf-2"
+    },
+    {
+      "id": "t-2.7",
+      "kind": "task",
+      "title": "packaging-config-asserts",
+      "state": "pending",
+      "parent": "sf-2"
+    },
+    {
+      "id": "t-2.8",
+      "kind": "task",
+      "title": "authorize-external-path",
+      "state": "pending",
+      "parent": "sf-2"
+    },
+    {
+      "id": "s-2.1",
+      "kind": "step",
+      "title": "Main capture",
+      "parent": "sf-2",
+      "detail": "Main capture: `OsOpenedWakiiFileState` clone pattern `OsOpenedMarkdownFileState` (capture/consume/restore, cap 32, `authorizeExternalPath` — os-opened-markdown-files.ts:153). Capture 3 nguồn: argv trước `ready` (index.ts:106), event `open-file` (index.ts:93 — CHỈ claim `.wakii`, đuôi lạ KHÔNG preventDefault), second-instance qua `requestDesktopActivation`. (nguồn: Spec slice mục 1, best-effort)"
+    },
+    {
+      "id": "s-2.2",
+      "kind": "step",
+      "title": "IPC pull `ui:consumePendingWakiiFileOpens`",
+      "parent": "sf-2",
+      "detail": "IPC pull `ui:consumePendingWakiiFileOpens` (pattern `ui:consumePendingMarkdownFileOpens` — main-process-ipc-bootstrap.ts:50-60): renderer gọi 1 lần khi listener mount → set latch `wakiiFileOpenListenerReady` → consume + restore-on-failure. (nguồn: Spec slice mục 2, best-effort)"
+    },
+    {
+      "id": "s-2.3",
+      "kind": "step",
+      "title": "IPC push `ui:openWakiiFile`",
+      "parent": "sf-2",
+      "detail": "IPC push `ui:openWakiiFile`: payload ĐÃ DECODE từ main — `{path, mindmap}` | `{path, error:{code:'io'|'schema'|'too-large', message}}`. Main đọc file (JSON.parse thuần, cap 5MB). Renderer không đọc fs. (nguồn: Spec slice mục 3, best-effort)"
+    },
+    {
+      "id": "s-2.4",
+      "kind": "step",
+      "title": "Dedupe/refresh owner = main",
+      "parent": "sf-2",
+      "detail": "Dedupe/refresh owner = main: map `path → contentHash`; hash khác → push refresh; hash same → focus tab. Cold-start race (argv + event cùng path) → dedupe tầng capture theo path+hash. (nguồn: Spec slice mục 4, best-effort)"
+    },
+    {
+      "id": "s-2.5",
+      "kind": "step",
+      "title": "Preload bridge `os-wakii-file-open-bridge` theo mẫu `os-markdown-file-open-brid…",
+      "parent": "sf-2",
+      "detail": "Preload bridge `os-wakii-file-open-bridge` theo mẫu `os-markdown-file-open-bridge` (register `app-lifetime-ipc-bridge` — 2 importer); latch reset khi reload (`main-window-controller` — wiring test dòng 50 bắt). (nguồn: Spec slice mục 5, best-effort)"
+    },
+    {
+      "id": "s-2.6",
+      "kind": "step",
+      "title": "Association theo target",
+      "parent": "sf-2",
+      "detail": "Association theo target: mac `fileAssociations` `.wakii` rank Owner (config:473 pattern, 1 entry/ext); Windows NSIS ProgID mới + SET DEFAULT (ruling 27/09 — lệch chủ ý với rule additive .md, ghi chú header) + macro register/unregister cặp đối xứng + SHChangeNotify (hooks.nsh customInstall 37-47 / customUnInstall 66-105; KHÔNG đụng `${isUpdated}` daemon sweep); Linux deb/rpm MIME XML `application/vnd.wakii-mindmap` + glob override + update-mime-database qua after-install (bài học .mdx config:566); AppImage = limitation (docs ghi drag-drop). (nguồn: Spec slice mục 6, best-effort)"
+    },
+    {
+      "id": "s-2.7",
+      "kind": "step",
+      "title": "Assert mới `electron-builder-config.test.mjs`",
+      "parent": "sf-2",
+      "detail": "Assert mới `electron-builder-config.test.mjs` (7 importer của config file): entry association xuất hiện theo target. (nguồn: Spec slice mục 7, best-effort)"
+    },
+    {
+      "id": "s-2.8",
+      "kind": "step",
+      "title": "Rule 4-place đồng bộ",
+      "parent": "sf-2",
+      "detail": "Rule 4-place đồng bộ: `wakii-documents.ts` ↔ NSIS ProgID ↔ electron-builder config ↔ main capture — lệch 1 chỗ = association chết im lặng. (nguồn: Spec slice mục 8, best-effort)"
+    },
+    {
+      "id": "t-3.1",
+      "kind": "task",
+      "title": "editor-tab-surface",
+      "state": "pending",
+      "parent": "sf-3"
+    },
+    {
+      "id": "t-3.2",
+      "kind": "task",
+      "title": "graph-layout-hierarchy",
+      "state": "pending",
+      "parent": "sf-3"
+    },
+    {
+      "id": "t-3.3",
+      "kind": "task",
+      "title": "progress-view",
+      "state": "pending",
+      "parent": "sf-3"
+    },
+    {
+      "id": "t-3.4",
+      "kind": "task",
+      "title": "logic-impact-view",
+      "state": "pending",
+      "parent": "sf-3"
+    },
+    {
+      "id": "t-3.5",
+      "kind": "task",
+      "title": "node-detail-panel",
+      "state": "pending",
+      "parent": "sf-3"
+    },
+    {
+      "id": "t-3.6",
+      "kind": "task",
+      "title": "decode-error-state",
+      "state": "pending",
+      "parent": "sf-3"
+    },
+    {
+      "id": "t-3.7",
+      "kind": "task",
+      "title": "pan-zoom-filter",
+      "state": "pending",
+      "parent": "sf-3"
+    },
+    {
+      "id": "t-3.8",
+      "kind": "task",
+      "title": "design-token-colors",
+      "state": "pending",
+      "parent": "sf-3"
+    },
+    {
+      "id": "s-3.1",
+      "kind": "step",
+      "title": "**Direction C**",
+      "parent": "sf-3",
+      "detail": "**Direction C**: epic node TRÒN ở tâm, SF toả trên 3 vòng tier (200/385/500), task/step vệ tinh toả theo góc; `SF_RING` sắp thứ tự để mọi depends-on nối node kề nhau (không xuyên tâm); **wedge spotlight** ±24° quanh SF khi hover ở mode Logic; **panel float TRÁI**; ring guide + nhãn tier. Prototype tham chiếu: `docs/superpowers/prototypes/vu-14-mindmap/c.html` (vanilla DOM/SVG — port sang React GIỮ architecture, KHÔNG copy-paste mù). (nguồn: Spec slice mục 1, best-effort)"
+    },
+    {
+      "id": "s-3.2",
+      "kind": "step",
+      "title": "Bề mặt",
+      "parent": "sf-3",
+      "detail": "Bề mặt: file `.wakii` mở trong **editor tab floating workspace** (A1 — user chốt 27/09) — `EditorFilesSlice.openFile` nhận diện `.wakii` → viewer mode preview. KHÔNG tạo tab type mới trong tab strip terminal. (nguồn: Spec slice mục 2, best-effort)"
+    },
+    {
+      "id": "s-3.3",
+      "kind": "step",
+      "title": "2 chế độ xem",
+      "parent": "sf-3",
+      "detail": "2 chế độ xem (toggle toolbar): **Tiến độ** (mặc định: epic→SF tầng tier→task, màu state, depends-on cung quỹ đạo) / **Logic & Impact** (steps flows-to; toggle \"Lớp impact\" → area/file toả từ SF, file `computed` viền đứt khác curated; hover SF → wedge sáng quạt vùng đụng). (nguồn: Spec slice mục 3, best-effort)"
+    },
+    {
+      "id": "s-3.4",
+      "kind": "step",
+      "title": "**Tự-chứa tri thức",
+      "parent": "sf-3",
+      "detail": "**Tự-chứa tri thức (user 27/09)**: SF node mang `summary`/`acceptance[]`/`tests[]`/`notes[]`/`filesTouched[]` — panel hiển thị các mảng này dạng collapsible section dưới evidence; `meta.summary` hiện ở panel epic. Mục tiêu: đọc map hiểu toàn bộ story không cần mở bracket. (nguồn: Spec slice mục 4, best-effort)"
+    },
+    {
+      "id": "s-3.5",
+      "kind": "step",
+      "title": "Màu",
+      "parent": "sf-3",
+      "detail": "Màu: chỉ token `main.css` (status-success / workspace-status-progress / muted-foreground / destructive / border / ring...) light+dark. Không palette mới (STYLEGUIDE + lint gate). (nguồn: Spec slice mục 5, best-effort)"
+    },
+    {
+      "id": "s-3.6",
+      "kind": "step",
+      "title": "Payload vào viewer = đã decode từ main",
+      "parent": "sf-3",
+      "detail": "Payload vào viewer = đã decode từ main (`ui:openWakiiFile`): renderer không fs, không JSON.parse lại. Error payload → error card (code/message/path); `decodeWarnings[]` → badge đếm + box. (nguồn: Spec slice mục 6, best-effort)"
+    },
+    {
+      "id": "s-3.7",
+      "kind": "step",
+      "title": "Camera pan/zoom/fit",
+      "parent": "sf-3",
+      "detail": "Camera pan/zoom/fit; filter kind chips disable theo mode; theme toggle chỉ đổi token class. (nguồn: Spec slice mục 7, best-effort)"
+    },
+    {
+      "id": "s-3.8",
+      "kind": "step",
+      "title": "Không lib mới",
+      "parent": "sf-3",
+      "detail": "Không lib mới — tư duy vanilla DOM/SVG của C giữ nguyên, implement React component (canvas div + SVG edges + nodelayer absolute; camera = transform trong ref, không re-render React trên mỗi pan). (nguồn: Spec slice mục 8, best-effort)"
+    },
+    {
+      "id": "t-4.1",
+      "kind": "task",
+      "title": "e2e-roundtrip-fixture",
+      "state": "pending",
+      "parent": "sf-4"
+    },
+    {
+      "id": "t-4.2",
+      "kind": "task",
+      "title": "render-golden-tests",
+      "state": "pending",
+      "parent": "sf-4"
+    },
+    {
+      "id": "t-4.3",
+      "kind": "task",
+      "title": "manual-checklist-3os",
+      "state": "pending",
+      "parent": "sf-4"
+    },
+    {
+      "id": "t-4.4",
+      "kind": "task",
+      "title": "docs-wakii-format",
+      "state": "pending",
+      "parent": "sf-4"
+    },
+    {
+      "id": "t-4.5",
+      "kind": "task",
+      "title": "appimage-limitation-note",
+      "state": "pending",
+      "parent": "sf-4"
+    },
+    {
+      "id": "t-4.6",
+      "kind": "task",
+      "title": "final-verify",
+      "state": "pending",
+      "parent": "sf-4"
+    },
+    {
+      "id": "s-4.1",
+      "kind": "step",
+      "title": "Round-trip E2E **automated**",
+      "parent": "sf-4",
+      "detail": "Round-trip E2E **automated**: fixture story (bracket + context pack thật trong temp repo) → `story-mindmap` sinh file .wakii đủ 3 lớp → IPC mở vào app (Playwright `_electron`, pattern real-smoke) → viewer render đúng node/edge/state cả 2 chế độ xem (Tiến độ / Logic & Impact). (nguồn: Spec slice mục 1, best-effort)"
+    },
+    {
+      "id": "s-4.2",
+      "kind": "step",
+      "title": "Golden render tests",
+      "parent": "sf-4",
+      "detail": "Golden render tests: fixture vàng → snapshot render (node count + edge rel counts + màu theo token class) — chống regression chéo SF-2/SF-3. (nguồn: Spec slice mục 2, best-effort)"
+    },
+    {
+      "id": "s-4.3",
+      "kind": "step",
+      "title": "Manual checklist",
+      "parent": "sf-4",
+      "detail": "Manual checklist (chạy khi release build — KHÔNG gate story): double-click .wakii thật trên mac dmg + Windows NSIS + Linux deb/rpm; AppImage → drag-drop path; kiểm app .md handler mặc định KHÔNG bị đụng (steal check); uninstall Windows gỡ sạch ProgID. (nguồn: Spec slice mục 3, best-effort)"
+    },
+    {
+      "id": "s-4.4",
+      "kind": "step",
+      "title": "Docs reference format `.wakii`",
+      "parent": "sf-4",
+      "detail": "Docs reference format `.wakii` (docs/reference/wakii-mindmap-format.md mới): schema v1 + luật decoder + filename rule (từ nhánh đích) + single-writer topology + limitation AppImage + **phân biệt rõ** với thư mục runtime `/.wakii/` (session-memory, gitignore:90 — trùng tên, khác khái niệm). (nguồn: Spec slice mục 4, best-effort)"
+    },
+    {
+      "id": "s-4.5",
+      "kind": "step",
+      "title": "Regression đo blast radius",
+      "parent": "sf-4",
+      "detail": "Regression đo blast radius: touch map phase0 (~28 file) — review đo lại `story-impact --targets` trên diff cuối; area mới xuất hiện = tràn ranh giới → report. (nguồn: Spec slice mục 5, best-effort)"
+    },
+    {
+      "id": "s-4.6",
+      "kind": "step",
+      "title": "Tiêu chí story DONE",
+      "parent": "sf-4",
+      "detail": "Tiêu chí story DONE: tier 0+1 shippable checkpoint đã qua (SF-1/2/3 merged đích + story-verify sạch) + round-trip E2E xanh + docs có. (nguồn: Spec slice mục 6, best-effort)"
+    }
+  ],
+  "edges": [
+    {
+      "from": "epic",
+      "to": "sf-5",
+      "rel": "contains"
+    },
+    {
+      "from": "epic",
+      "to": "sf-1",
+      "rel": "contains"
+    },
+    {
+      "from": "epic",
+      "to": "sf-2",
+      "rel": "contains"
+    },
+    {
+      "from": "epic",
+      "to": "sf-3",
+      "rel": "contains"
+    },
+    {
+      "from": "epic",
+      "to": "sf-4",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-5",
+      "to": "sf-4",
+      "rel": "depends-on"
+    },
+    {
+      "from": "sf-2",
+      "to": "sf-1",
+      "rel": "depends-on"
+    },
+    {
+      "from": "sf-3",
+      "to": "sf-1",
+      "rel": "depends-on"
+    },
+    {
+      "from": "sf-4",
+      "to": "sf-2",
+      "rel": "depends-on"
+    },
+    {
+      "from": "sf-4",
+      "to": "sf-3",
+      "rel": "depends-on"
+    },
+    {
+      "from": "sf-5",
+      "to": "t-5.1",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-5",
+      "to": "t-5.2",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-5",
+      "to": "t-5.3",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-5",
+      "to": "t-5.4",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-5",
+      "to": "t-5.5",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-5",
+      "to": "t-5.6",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-5",
+      "to": "t-5.7",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-5",
+      "to": "t-5.8",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-5",
+      "to": "t-5.9",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-5",
+      "to": "t-5.10",
+      "rel": "contains"
+    },
+    {
+      "from": "s-5.1",
+      "to": "s-5.2",
+      "rel": "flows-to"
+    },
+    {
+      "from": "s-5.2",
+      "to": "s-5.3",
+      "rel": "flows-to"
+    },
+    {
+      "from": "s-5.3",
+      "to": "s-5.4",
+      "rel": "flows-to"
+    },
+    {
+      "from": "s-5.4",
+      "to": "s-5.5",
+      "rel": "flows-to"
+    },
+    {
+      "from": "s-5.5",
+      "to": "s-5.6",
+      "rel": "flows-to"
+    },
+    {
+      "from": "s-5.6",
+      "to": "s-5.7",
+      "rel": "flows-to"
+    },
+    {
+      "from": "s-5.7",
+      "to": "s-5.8",
+      "rel": "flows-to"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.1",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.2",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.3",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.4",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.5",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.6",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.7",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.8",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-1",
+      "to": "t-1.9",
+      "rel": "contains"
+    },
+    {
+      "from": "s-1.1",
+      "to": "s-1.2",
+      "rel": "flows-to"
+    },
+    {
+      "from": "s-1.2",
+      "to": "s-1.3",
+      "rel": "flows-to"
+    },
+    {
+      "from": "s-1.3",
+      "to": "s-1.4",
+      "rel": "flows-to"
+    },
+    {
+      "from": "s-1.4",
+      "to": "s-1.5",
+      "rel": "flows-to"
+    },
+    {
+      "from": "s-1.5",
+      "to": "s-1.6",
+      "rel": "flows-to"
+    },
+    {
+      "from": "s-1.6",
+      "to": "s-1.7",
+      "rel": "flows-to"
+    },
+    {
+      "from": "s-1.7",
+      "to": "s-1.8",
+      "rel": "flows-to"
+    },
+    {
+      "from": "sf-2",
+      "to": "t-2.1",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-2",
+      "to": "t-2.2",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-2",
+      "to": "t-2.3",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-2",
+      "to": "t-2.4",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-2",
+      "to": "t-2.5",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-2",
+      "to": "t-2.6",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-2",
+      "to": "t-2.7",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-2",
+      "to": "t-2.8",
+      "rel": "contains"
+    },
+    {
+      "from": "s-2.1",
+      "to": "s-2.2",
+      "rel": "flows-to"
+    },
+    {
+      "from": "s-2.2",
+      "to": "s-2.3",
+      "rel": "flows-to"
+    },
+    {
+      "from": "s-2.3",
+      "to": "s-2.4",
+      "rel": "flows-to"
+    },
+    {
+      "from": "s-2.4",
+      "to": "s-2.5",
+      "rel": "flows-to"
+    },
+    {
+      "from": "s-2.5",
+      "to": "s-2.6",
+      "rel": "flows-to"
+    },
+    {
+      "from": "s-2.6",
+      "to": "s-2.7",
+      "rel": "flows-to"
+    },
+    {
+      "from": "s-2.7",
+      "to": "s-2.8",
+      "rel": "flows-to"
+    },
+    {
+      "from": "sf-3",
+      "to": "t-3.1",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-3",
+      "to": "t-3.2",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-3",
+      "to": "t-3.3",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-3",
+      "to": "t-3.4",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-3",
+      "to": "t-3.5",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-3",
+      "to": "t-3.6",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-3",
+      "to": "t-3.7",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-3",
+      "to": "t-3.8",
+      "rel": "contains"
+    },
+    {
+      "from": "s-3.1",
+      "to": "s-3.2",
+      "rel": "flows-to"
+    },
+    {
+      "from": "s-3.2",
+      "to": "s-3.3",
+      "rel": "flows-to"
+    },
+    {
+      "from": "s-3.3",
+      "to": "s-3.4",
+      "rel": "flows-to"
+    },
+    {
+      "from": "s-3.4",
+      "to": "s-3.5",
+      "rel": "flows-to"
+    },
+    {
+      "from": "s-3.5",
+      "to": "s-3.6",
+      "rel": "flows-to"
+    },
+    {
+      "from": "s-3.6",
+      "to": "s-3.7",
+      "rel": "flows-to"
+    },
+    {
+      "from": "s-3.7",
+      "to": "s-3.8",
+      "rel": "flows-to"
+    },
+    {
+      "from": "sf-4",
+      "to": "t-4.1",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-4",
+      "to": "t-4.2",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-4",
+      "to": "t-4.3",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-4",
+      "to": "t-4.4",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-4",
+      "to": "t-4.5",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-4",
+      "to": "t-4.6",
+      "rel": "contains"
+    },
+    {
+      "from": "s-4.1",
+      "to": "s-4.2",
+      "rel": "flows-to"
+    },
+    {
+      "from": "s-4.2",
+      "to": "s-4.3",
+      "rel": "flows-to"
+    },
+    {
+      "from": "s-4.3",
+      "to": "s-4.4",
+      "rel": "flows-to"
+    },
+    {
+      "from": "s-4.4",
+      "to": "s-4.5",
+      "rel": "flows-to"
+    },
+    {
+      "from": "s-4.5",
+      "to": "s-4.6",
+      "rel": "flows-to"
+    }
+  ],
+  "evidence": [
+    {
+      "node": "epic",
+      "summary": "nguồn sinh mindmap",
+      "ref": "docs/superpowers/brackets/vu-14-mindmap-wakii.md"
+    },
+    {
+      "node": "sf-5",
+      "summary": "steps từ Spec slice (best-effort)",
+      "ref": "docs\\superpowers\\contexts\\vu-14-mindmap-wakii\\sf-5.md"
+    },
+    {
+      "node": "sf-1",
+      "summary": "steps từ Spec slice (best-effort)",
+      "ref": "docs\\superpowers\\contexts\\vu-14-mindmap-wakii\\sf-1.md"
+    },
+    {
+      "node": "sf-2",
+      "summary": "steps từ Spec slice (best-effort)",
+      "ref": "docs\\superpowers\\contexts\\vu-14-mindmap-wakii\\sf-2.md"
+    },
+    {
+      "node": "sf-3",
+      "summary": "steps từ Spec slice (best-effort)",
+      "ref": "docs\\superpowers\\contexts\\vu-14-mindmap-wakii\\sf-3.md"
+    },
+    {
+      "node": "sf-4",
+      "summary": "steps từ Spec slice (best-effort)",
+      "ref": "docs\\superpowers\\contexts\\vu-14-mindmap-wakii\\sf-4.md"
+    }
+  ],
+  "decodeWarnings": [
+    "story-impact không chạy được (ENOENT) — bỏ lớp impact computed"
+  ]
+}
