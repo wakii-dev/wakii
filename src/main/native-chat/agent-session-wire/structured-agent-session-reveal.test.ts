@@ -40,31 +40,37 @@ function harness(
   options: { supports?: (record: AgentSessionRecord) => boolean } = {}
 ) {
   const live = new Map<string, unknown>()
-  const restoreHandoff = vi.fn(async () => undefined)
   const serializedIds: string[] = []
   const serialize = <T>(sessionId: string, task: () => Promise<T>): Promise<T> => {
     serializedIds.push(sessionId)
     return task()
   }
   const restorer = new StructuredAgentSessionReadableRestorer({
-    store: {
-      getRecord: (sessionId: string) => records.find((r) => r.sessionId === sessionId) ?? null,
-      listRecords: () => records
-    } as never,
-    journalRoot: '/journals',
+    openDeps: {
+      store: {
+        getRecord: (sessionId: string) => records.find((r) => r.sessionId === sessionId) ?? null,
+        listRecords: () => records
+      },
+      journalRoot: '/journals',
+      adapter: {}
+    },
     supportsRecord: options.supports ?? (() => true),
     reconcile: async () => null,
     resolveRecovery: async () => undefined,
     serialize,
     hasSession: (sessionId) => live.has(sessionId),
-    onReadable: (sessionId, restored) => live.set(sessionId, restored),
-    retrySettlement: async () => true,
-    restoreHandoff
+    onReadable: (sessionId, restored) => {
+      live.set(sessionId, restored)
+    }
   })
-  return { restorer, live, restoreHandoff, serializedIds }
+  return { restorer, live, serializedIds }
 }
 
-const readable = { journal: {}, params: {}, fence: 1 } as never
+const readable = {
+  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the restorer only indexes the session it is handed; no member of it is read here.
+  session: { journal: {}, params: {}, fence: 1 } as never,
+  reset: null
+}
 
 afterEach(() => {
   vi.restoreAllMocks()

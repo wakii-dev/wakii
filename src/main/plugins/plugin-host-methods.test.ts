@@ -4,7 +4,6 @@ import { describe, expect, it, vi } from 'vitest'
 import { PLUGIN_WORKSPACE_TERMINAL_LIMIT } from '../../shared/plugins/plugin-host-api'
 import { bindPluginHostServices, type PluginRuntimeDelegate } from './plugin-host-service-bindings'
 import { executePluginHostCall, type PluginHostServices } from './plugin-host-methods'
-import { AgentSessionPtyWriteRefusedError } from '../../shared/agent-session-pty-write-admission'
 
 function createServices(storageSet: PluginHostServices['storage']['set']): PluginHostServices {
   return {

@@ -1,4 +1,7 @@
-import type { StructuredAgentSessionLifecycleEvent } from './structured-agent-session-adapter'
+import {
+  stopAgentSessionProviderRoot,
+  type StructuredAgentSessionLifecycleEvent
+} from './structured-agent-session-adapter'
 import type {
   StructuredAgentSessionHostDeps,
   StructuredAgentSessionHostSession
@@ -39,15 +42,14 @@ export class StructuredAgentSessionEventRecovery {
     this.sinkFailures.add(sessionId)
     void this.context
       .serialize(sessionId, async () => {
-        const session = this.context.sessions.get(sessionId)
+        const child = this.context.sessions.get(sessionId)?.child
         const stop =
           this.context.deps.adapter.forceCloseSession ?? this.context.deps.adapter.closeSession
-        if (!session?.hasProviderChild || !stop) {
+        if (!child || !stop) {
           return null
         }
-        const fence = session.fence
-        const acquisitionGeneration = session.acquisitionGeneration
-        const stopped = await stop(sessionId)
+        const { fence, generation: acquisitionGeneration } = child
+        const stopped = await stopAgentSessionProviderRoot(() => stop(sessionId))
         if (!stopped || !acquisitionGeneration) {
           return null
         }

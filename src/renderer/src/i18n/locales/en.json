@@ -150,7 +150,8 @@
         "resourceUsageToggleDescription": "Show the Resource Manager. Click it for CPU, memory, sessions, daemon controls, and workspace disk scans.",
         "portsToggleDescription": "Show live workspace ports. Click it for workspace-scoped ports and external listeners.",
         "antigravityToggleDescription": "Show Antigravity subscription usage for the active workspace.",
-        "grokToggleDescription": "Show Grok subscription credit usage when signed in via Grok CLI."
+        "grokToggleDescription": "Show Grok subscription credit usage when signed in via Grok CLI.",
+        "cursorToggleDescription": "Show Cursor plan usage when signed in through cursor-agent or Cursor IDE."
       },
       "menuBarIcon": {
         "title": "Show Menu Bar Icon",
@@ -614,7 +615,8 @@
           "mimo_code_label": "MiMo Code",
           "opencode2_label": "OpenCode 2",
           "muse_label": "Muse",
-          "zcode_label": "ZCode"
+          "zcode_label": "ZCode",
+          "dsh_label": "DeepSeek Harness"
         },
         "skill": {
           "cli": {
@@ -3232,7 +3234,9 @@
             "e16012e31e": "The terminal daemon that owned this session exited, so the session and its scrollback could not be recovered. Open a new terminal to continue.",
             "sessionUnavailable": "Wakii couldn't reattach to this pane's terminal session on the host. Open a new terminal to continue.",
             "sourceRestoring": "Reconnecting this terminal — its output is being re-established. The session is still running.",
-            "remoteTerminalClosed": "Remote terminal was closed."
+            "remoteTerminalClosed": "Remote terminal was closed.",
+            "terminalProcessLimit": "Your system cannot start another terminal process. Close unused terminals or quit unused processes, then try again.",
+            "ptyAllocationLimit": "Your system cannot allocate any more pty devices. Close some terminals you are not using, in Orca or another program, then try again."
           },
           "TerminalProcessExitOverlay": {
             "capacityTitle": "Git Bash console limit reached",
@@ -3405,6 +3409,9 @@
                 "description": "Wakii's hooks installed correctly — the zcode on your PATH just cannot open a session. The ZCode desktop app bundles the agent runtime without its terminal UI. Install a zcode that ships the TUI, then run zcode outside Wakii to confirm."
               }
             }
+          },
+          "TerminalRestoringPlaceholder": {
+            "restoring": "Restoring terminal…"
           }
         }
       },
@@ -3824,7 +3831,8 @@
             "grokUsageMenu": "Grok Usage",
             "floatingTerminalNewActivity": "{{label}}, new activity",
             "codexSignInSuccess": "Signed in to Codex",
-            "codexSignInError": "Codex sign-in failed. Please try again."
+            "codexSignInError": "Codex sign-in failed. Please try again.",
+            "cursorUsageMenu": "Cursor Usage"
           },
           "StatusBarUsageEmptyCta": {
             "828c764a79": "Connect an account",
@@ -4015,6 +4023,13 @@
               "noSubscription": {
                 "label": "No subscription"
               }
+            },
+            "cursor": {
+              "expired": {
+                "label": "Sign-in expired",
+                "message": "Run cursor-agent login in a terminal on the computer running Orca, then retry usage."
+              },
+              "plan": "Plan"
             }
           },
           "SshTargetStatusRow": {
@@ -9101,7 +9116,18 @@
             "b2c4e7f1a8": "endpoint",
             "3a9b6d2c4e": "api key",
             "5d8f1a3b7c": "china",
-            "7e2a4b8c1d": "overseas"
+            "7e2a4b8c1d": "overseas",
+            "cursor": {
+              "description": "Monthly plan usage read from the Cursor sign-in already on this computer (cursor-agent login).",
+              "title": "Cursor Usage",
+              "kw": {
+                "spend": "spend",
+                "statusBar": "status bar",
+                "rateLimit": "rate limit",
+                "usage": "usage",
+                "cursor": "cursor"
+              }
+            }
           }
         },
         "advanced": {
@@ -9357,6 +9383,13 @@
               "close": "close",
               "notification": "notification area",
               "background": "background"
+            },
+            "cursor": {
+              "description": "Show monthly Cursor plan usage from the Cursor sign-in on this computer.",
+              "title": "Cursor Usage",
+              "kw": {
+                "cursor": "cursor"
+              }
             }
           }
         },
@@ -12210,6 +12243,31 @@
           "description": "Other devices and hosts see “{{name}}”. Leave this blank to use the computer’s own name.",
           "pending": "Other devices and hosts see this name. Leave it blank to use the detected computer name.",
           "placeholder": "Detected automatically"
+        },
+        "CursorAccountsSection": {
+          "source": {
+            "desktop": "Cursor IDE",
+            "keychain": "macOS Keychain (cursor-agent)",
+            "cli": "Cursor CLI auth file"
+          },
+          "signedInGeneric": "Signed in. Orca reads the Cursor session stored on this computer.",
+          "signedOutHelp": "Sign in with Cursor IDE, or run cursor-agent login in a terminal, then click Refresh usage here.",
+          "refreshUsage": "Refresh usage",
+          "loading": "Loading…",
+          "expired": "Sign-in expired — run cursor-agent login on the computer running Orca, then click Refresh usage.",
+          "planTotal": "Plan",
+          "signedIn": "Signed in",
+          "usageDescription": "Cursor bills two pools that reset with your billing cycle, plus on-demand spend once they run out.",
+          "dashboardLink": "Cursor dashboard",
+          "usageTitle": "Monthly plan usage",
+          "signedOut": "No Cursor sign-in found on this computer",
+          "title": "Cursor",
+          "subtitle": "Shows your monthly Cursor plan usage from the sign-in already on this computer. Orca only reads it — it never changes your Cursor login.",
+          "staleUsage": "Last known usage — the latest refresh failed: {{reason}}",
+          "resets": "Resets {{when}}",
+          "signedInFrom": "Signed in. Orca reads the session stored in {{source}}.",
+          "noAllowance": "Cursor reported no usage allowance for this account.",
+          "usageLabel": "Usage"
         }
       },
       "right": {
@@ -15204,7 +15262,8 @@
           "noPython": "Python was not found on this computer. Install it from [python.org](https://www.python.org/downloads/), then run the cell again.",
           "kernelDied": "The kernel died.",
           "localOnly": "Notebook cells can only run for files on this computer.",
-          "pythonOnly": "Only Python notebooks can run in Wakii."
+          "pythonOnly": "Only Python notebooks can run in Wakii.",
+          "trustFirst": "Run a cell to trust this notebook first"
         },
         "MarkdownPreview": {
           "e4683f70c4": "Cancel",
@@ -15695,7 +15754,8 @@
               "2f33a41d63": "Date"
             }
           }
-        }
+        },
+        "diffCommentSaveFailed": "Failed to save comment"
       },
       "diff": {
         "comments": {
@@ -15712,7 +15772,10 @@
             "2b3ce6d394": "Cancel",
             "e05063cfc1": "Line {{value0}}",
             "c845170b3b": "Lines {{value0}}-{{value1}}",
-            "commentTooLarge": "Comment is too large to submit safely."
+            "commentTooLarge": "Comment is too large to submit safely.",
+            "f6c449191e": "Add note for the AI",
+            "5fa4bfebaa": "Add note",
+            "5e9b3d0c2e": "Adding..."
           },
           "useDiffCommentDecorator": {
             "995fa28b50": "This note"
@@ -17404,6 +17467,13 @@
         "dispatchRejected": "The agent refused the “continue” message. Open the chat and send one yourself.",
         "unsupported": "This chat can’t be resumed by Wakii. Open it to see where it stopped.",
         "fallback": "Wakii couldn’t resume this chat. Open it to continue manually."
+      },
+      "web": {
+        "preloadApi": {
+          "cursorAccounts": {
+            "hostOnly": "Cursor sign-in details are only readable on the computer running Orca."
+          }
+        }
       }
     },
     "i18n": {
@@ -17801,35 +17871,35 @@
       "structuredSessionCloseFailedDescription": "The terminal stayed open so the provider remains recoverable.",
       "handoff": {
         "stage": {
-          "finishingChat": "Finishing chat session…",
-          "finishingTerminal": "Finishing agent terminal…",
-          "openingTerminal": "Opening agent terminal…",
-          "resumingChat": "Resuming chat session…",
-          "verifyingTerminal": "Verifying agent terminal…",
-          "verifyingChat": "Verifying chat session…",
-          "recovering": "Recovering agent session…",
-          "manualRecovery": "Agent session needs recovery"
+          "finishingChat": null,
+          "finishingTerminal": null,
+          "openingTerminal": null,
+          "resumingChat": null,
+          "verifyingTerminal": null,
+          "verifyingChat": null,
+          "recovering": null,
+          "manualRecovery": null
         },
-        "switchingOwner": "Switching session owner…",
+        "switchingOwner": null,
         "mode": {
-          "switching": "Switching",
-          "terminal": "Terminal",
-          "chat": "Chat"
+          "switching": null,
+          "terminal": null,
+          "chat": null
         },
-        "switchingAfterTurn": "Switching after this turn",
-        "returningAfterTurn": "Returning after this turn",
-        "cancel": "Cancel",
-        "switchAfterTurn": "Switch after this turn",
-        "stopTurnAndSwitch": "Stop turn and switch",
-        "openAgentTui": "Open agent TUI",
-        "returnAfterTurn": "Return after this turn",
-        "returnToChat": "Return to chat",
-        "agentOpenOnHost": "Agent is open in terminal on {{value0}}.",
-        "agentOpen": "Agent is open in terminal.",
-        "exitTerminal": "Exit the agent terminal to continue in chat.",
-        "retryProof": "Retry proof",
-        "retry": "Retry",
-        "details": "Details"
+        "switchingAfterTurn": null,
+        "returningAfterTurn": null,
+        "cancel": null,
+        "switchAfterTurn": null,
+        "stopTurnAndSwitch": null,
+        "openAgentTui": null,
+        "returnAfterTurn": null,
+        "returnToChat": null,
+        "agentOpenOnHost": null,
+        "agentOpen": null,
+        "exitTerminal": null,
+        "retryProof": null,
+        "retry": null,
+        "details": null
       },
       "structuredSessionLaunchFailedDescription": "Wakii could not open a structured {{value0}} chat. See the logs for details.",
       "subagents": {
@@ -17887,6 +17957,24 @@
         "label": "Context {{used}} of {{window}} tokens, {{percent}}% used",
         "title": "Context",
         "estimated": "Estimated from the last response."
+      },
+      "writeNotice": {
+        "capacity": "Orca has received too many requests in the last day.",
+        "notDoneGoal": "The goal wasn't changed.",
+        "tryAgainComposerSend": "Send it again.",
+        "unreachable": "Orca couldn't reach the agent.",
+        "notDoneSend": "Your message was not sent.",
+        "restartFailed": "The agent couldn't restart.",
+        "notDoneStop": "The agent wasn't stopped.",
+        "notDoneAnswer": "Your answer was not sent.",
+        "unsupported": "The Orca running this chat doesn't support this. Update Orca, then try again.",
+        "notDoneStopTasks": "The background tasks weren't stopped.",
+        "questionChanged": "This question was already answered or has changed.",
+        "notDoneStopTask": "The background task wasn't stopped.",
+        "notDoneOption": "The setting wasn't changed.",
+        "historyUnreadable": "Orca couldn't read this chat's saved history.",
+        "outcomeUnknown": "Orca couldn't confirm what happened. Check the chat.",
+        "notDoneCommand": "The command didn't run."
       }
     },
     "tab": {
@@ -18329,6 +18417,52 @@
       "unassignedInstruction": "Assign a dictation shortcut before starting voice dictation in a focused pane.",
       "settingsInstruction": "Change the model, dictation mode, or shortcut anytime in",
       "settingsLink": "Settings → Voice"
+    },
+    "sessionSearch": {
+      "continueInBackground": "Continue in background",
+      "recent1Text": "Moved the search entries under Workflows and updated the tests.",
+      "demoHit2Title": "Session refresh after sleep",
+      "startSearching": "Start searching",
+      "demoHit5Snippet": "Can you write a [[migration]] [[rollback]] plan before we retry?",
+      "ageHours": "2h",
+      "ageMinutes": "12m",
+      "demoQuery": "login timeout",
+      "demoHit2Snippet": "Why does the [[login]] page hang after a [[timeout]] on wake?",
+      "demoHit3Age": "2w",
+      "recent2Title": "Bump the lockfile",
+      "demoHit1Age": "3d",
+      "demoHit4Title": "Orders table migration",
+      "readyToast": "Session search is ready",
+      "progressStarting": "Finding your sessions…",
+      "demoHit6Title": "Schema review notes",
+      "ageYesterday": "1d",
+      "demoHit6Age": "1mo",
+      "demoHit4Age": "5d",
+      "demoHit1Snippet": "Raised the [[login timeout]] to 30s and added a retry on the token refresh.",
+      "demoHit1Title": "Fix flaky auth redirect",
+      "indexingDescription": "Orca is reading your past agent transcripts so you can search them. This can take a few minutes.",
+      "recent3Text": "Here is a first pass at the notes, grouped by area.",
+      "demoHit5Title": "Staging deploy failed",
+      "demoHit3Title": "Auth e2e hardening",
+      "agentsInstruction": "Your agents can search it too. Ask one to “find the session where we fixed the login timeout.”",
+      "demoHit3Snippet": "Added a test that covers the [[login timeout]] path end to end.",
+      "demoHit5Age": "3w",
+      "readyDescription": "Every agent session on this computer can now be found by what was said in it.",
+      "indexingTitle": "Indexing your agent sessions",
+      "recent1Title": "Tidy the settings sidebar",
+      "recent3Title": "Release notes draft",
+      "demoHit6Snippet": "Every [[migration]] here is reversible except the enum rename.",
+      "demoQuery2": "migration rollback",
+      "readyTitle": "Session search is ready",
+      "recent2Text": "Update the dependencies and make sure the build still passes.",
+      "demoRoleUser": "User",
+      "enableFailed": "Could not turn on session search. Try again.",
+      "demoHit4Snippet": "The [[rollback]] drops the new index first, then restores the old column.",
+      "demoRoleAssistant": "Assistant",
+      "consentInstruction": "Change or turn it off anytime in",
+      "readyToastOpen": "Open",
+      "demoHit2Age": "1w",
+      "settingsLink": "Settings → Agent Session Search"
     }
   },
   "quickOpen": {
@@ -18378,7 +18512,8 @@
       "needsInput": "needs input",
       "working": "working",
       "stopped": "stopped",
-      "finished": "finished"
+      "finished": "finished",
+      "failed": "failed"
     }
   },
   "sessionSearch": {

@@ -139,6 +139,14 @@ async function seed(acceptedSubmissions = false) {
           }
         })
       ).toMatchObject({ ok: true })
+      // Accepted into the conversation first; the delivery loop hands it over after.
+      await vi.waitFor(() =>
+        expect(
+          host
+            .journalSnapshot(HOST_TEST_SESSION)
+            .submissions.find((entry) => entry.clientMessageId === clientOperationId)?.dispatchState
+        ).toBe('accepted')
+      )
       if (i === 1) {
         selectedItemId = agentJournalSubmissionKey(clientOperationId)
       }
@@ -229,14 +237,8 @@ describe('host rewind', () => {
     expect(recoverRewind).toHaveBeenCalledTimes(2)
     expect(rewind).toHaveBeenCalledTimes(1)
   })
-  it('fences stale owners and the second of two concurrent rewinds', async () => {
+  it('refuses the second of two concurrent rewinds by the epoch it targets', async () => {
     const target = await seed()
-    const stale = params(target)
-    stale.envelope.expectedRuntimeFence++
-    expect(await host.rewind(caller, stale)).toMatchObject({
-      ok: false,
-      refusal: { code: 'agent_session_checkpoint_stale' }
-    })
     let finish!: () => void
     rewind.mockImplementation(
       () =>

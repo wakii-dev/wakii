@@ -92,10 +92,11 @@ const HOST_COMPONENT_NAMES = new Set([
 // never pass it. Found by pullfrog on #22300.
 // Moved, count unchanged, when the Markdown actions' Back `useEffect` became `useBackClaim`, the
 // seam that also claims the key on the page while a draft is dirty.
-const HEAD_MAIN_HOOK_SHA256 = '016a87856164feabbf5e9ed3a55f7f05b0dd928d8b372aa5e4eba6004b78ea05'
-const HEAD_HOOK_BINDING_SHA256 = 'df7549ba40bbeab9bdf82555dcbfc3ca09c1148efc85318e6246c0de0145b13d'
+const HEAD_MAIN_HOOK_SHA256 = 'f161e14a9c53d80c3dc75f51dd8ecb339b59b7239c9c3e067791b8612f51ede2'
+// Moved when the prompt-cancel flag became one structured-session host support object.
+const HEAD_HOOK_BINDING_SHA256 = 'db9f32cc60fc68adbcbb2acf9f9384ad0d78bbc6feef5d581449fadb647405fc'
 const HEAD_CALLBACK_IDENTITY_SHA256 =
-  'e396ab759b2401acef45dea428e97c7f8f24fff41aae7fb7858da5a5b145c64c'
+  '373dca17a060e63d8cb4e32416ca2889b8404cee78f7b47e632940a9980baf23'
 // Pins that no callback body in the route changed unnoticed. Body text, not behaviour: the sends
 // and repo reads inside them now name their `RpcOperation` instead of the raw `sendRequest` port.
 // Refreshed in step 6 for the gesture flush, whose `terminal.send` became `terminalInputSend` and
@@ -115,7 +116,8 @@ const HEAD_CALLBACK_IDENTITY_SHA256 =
 // the other's body. The hook and string counts are C7.2's and stand.
 // Refreshed once more for the two dictation failure handlers, which now both call
 // `reportDictationFailure` instead of each choosing between the setup sheet and a toast.
-const HEAD_CALLBACK_BODY_SHA256 = '349ad6f766da14b3bce23a13f3a67f2b013efadd8896f63b7b68e724b9726d9b'
+// Moved when the metrics handler compared every field, the row pitch included.
+const HEAD_CALLBACK_BODY_SHA256 = '65f5c1274967cecef39660430169dcfde81b362e8aa5878833b9f20bc8e43a6a'
 // Refreshed for the startup effect: both `worktree.activate` sends became `worktreeActivate`, and
 // the sleeping-agent check reads that operation's verdict instead of the reply envelope. Refreshed
 // again when the reporter took the reply and interpreted it itself, retiring the hand-built
@@ -125,7 +127,8 @@ const HEAD_CALLBACK_BODY_SHA256 = '349ad6f766da14b3bce23a13f3a67f2b013efadd8896f
 // the diff-comments effect, which now catches the loader's rejection. Count unchanged.
 // Moved again by the keyboard seam above, which is the +1 effect.
 // -1 effect for the Markdown actions' Back registration, which is `useBackClaim`'s own now.
-const HEAD_EFFECT_SHA256 = '61ae541ab5b9df23ebbd8e2f4703fef9e1bb58ba39af9aefbecdf1078b125c3b'
+// Moved by the capability probe setting that host support object.
+const HEAD_EFFECT_SHA256 = '9b045a547ed269acf95db16cc87e33a9035a20c6888fd30e0363e58bb6b7d883'
 const HEAD_CONTENT_HOOK_SHA256 = '9c3b612fef3f370d66873aefdbe1d701f20cb64ded31fef5cc45fde6f8189581'
 // Same pin for the 12 bodies that sit in nested functions rather than callbacks, moved by the same
 // rewrite of those send and read expressions. Count unchanged. Refreshed again in step 6 for
@@ -135,7 +138,7 @@ const HEAD_CONTENT_HOOK_SHA256 = '9c3b612fef3f370d66873aefdbe1d701f20cb64ded31fe
 // branch became that operation's own throw-the-host-message acceptance. Refreshed for negotiated
 // optimistic placement, which defers to legacy host snapshots when ownership paths disagree.
 const HEAD_NESTED_FUNCTION_SHA256 =
-  '97a0648f0afa5891bba4b6efd2fb6b61887ba7aaedb04789385a53f41eeaa400'
+  '923b5ea7fe3330cbd98213b72736bf1f653115ddb5492cb8eb8306d8ca4f28e8'
 // -1 registration and -1 removal: the Markdown actions' `BackHandler` pair is `useBackClaim`'s.
 const HEAD_NATIVE_REGISTRATION_SHA256 =
   '87d4599f475575131d4d5daa20f0dac579ca6c829353cbb654206ea6965dadae'
@@ -171,17 +174,24 @@ const HEAD_TIMER_CLEANUP_SHA256 = 'c73f1d1c2cc89642f3d727d6f3b6b81860a9d6f342345
 // 529 -> 530, and the host-JSX hash: `key="terminal-frame"`, so the page's frame mounts with its
 // onLayout rather than reusing the loading View. Native measured 47 rows before and after: its
 // frame reported either way, and its window is its frame, so both measure paths agree there.
+//
+// 531 -> 530, and the host-JSX and style hashes: the key left, and one `contentFrame` View wraps
+// every branch and carries the frame's onLayout, so the page's frame mounts with it. The page measured
+// 47 rows before and after; native was measured only on main's bundle (47), and the wrapper is a
+// flex:1 View around the same flex:1 frame, so its box is the frame's.
 const HEAD_RUNTIME_STRING_SHA256 =
-  'a8e819600a86825c2fa5ed0b9054d1466f627e203e78a077494fd6f55d4397a3'
+  '7dd03af1ad61e2f394b8cba35a422f7195de60ae5d608923b52575a56a4dbe42'
 // Moved by both of the dock's fields: their refs, and the live one's submit handler, are the seam's now.
-const HEAD_HOST_JSX_SHA256 = 'fac74d054b78cc2d6018cb88d03164bd1caf20b7bc1c04c9bfb0508747e2ead5'
-const HEAD_LEAF_JSX_SHA256 = '2b55522041585b87f4b80c5f456e4f2c892999cc2f19d0b75414c8bd57729a03'
+const HEAD_HOST_JSX_SHA256 = '1478283a1597c88920aedfea9f6ed13d119ea8f93546e1628d0918cd0a5248ef'
+const HEAD_LEAF_JSX_SHA256 = 'c7e1a4b90197697f1eaa640c38da63281b4f7b84fb036ae2152f00c2f7d7cb77'
 const HEAD_STYLE_REFERENCE_SHA256 =
-  '3da91c93b9b4ac469e64c2aed000ef92f54e0876bebeae70a75ec7e7e97d7c96'
+  '56a005a1f65b30c11092e3422caef67810e1ec50f66fdd06471c370138b1eeb6'
 const HEAD_IDENTITY_FIELD_SHA256 =
   '91146853930a34dd1f3d80e5c97fbacd7cf19fb93dd26fe8fc6f29169622f9d6'
 const HEAD_NAVIGATION_SHA256 = '9d96f5dad7de555d6553eac39c0fab00efad507470fd562cb9beaa32db16f512'
-const HEAD_CAPABILITY_SHA256 = '67c3154b71b542bb63a4365d3ea75aef19ef133c02f509318619618221786fab'
+// Moved when structured-session features became one helper call; the capability strings it reads
+// are pinned by that helper's own test.
+const HEAD_CAPABILITY_SHA256 = 'ec1159d6e726383bf7121e9c642657fee5b4ebec049cb44ba132a303bb9a61e2'
 
 type Definition = { declaration: ts.FunctionDeclaration; sourceFile: ts.SourceFile }
 type HookFacts = {
@@ -550,7 +560,11 @@ function readCompatibilityFacts(definitions: ReadonlyMap<string, Definition>): {
         : ''
     const callText = canonical(node, sourceFile)
     if (
-      ['startRuntimeCapabilityProbe', 'supportsMobileQuickCommands'].includes(callName) ||
+      [
+        'startRuntimeCapabilityProbe',
+        'supportsMobileQuickCommands',
+        'structuredAgentSessionHostSupport'
+      ].includes(callName) ||
       (callName === 'includes' && callText.includes('capabilities.includes'))
     ) {
       capabilities.push(callText)
@@ -566,7 +580,7 @@ describe('mobile session route extraction parity', () => {
     const contentBindings = CONTENT_COMPONENT_NAMES.flatMap(
       (name) => readHookFacts(name, definitions).bindings
     )
-    expect(main.hooks).toHaveLength(280)
+    expect(main.hooks).toHaveLength(282)
     expect(hash(main.hooks)).toBe(HEAD_MAIN_HOOK_SHA256)
     expect(hash(main.bindings)).toBe(HEAD_HOOK_BINDING_SHA256)
     expect(main.callbacks).toHaveLength(79)
@@ -611,14 +625,14 @@ describe('mobile session route extraction parity', () => {
 
   it('preserves runtime strings, styles, and the expanded JSX tree', () => {
     const strings = readRuntimeStrings()
-    expect(strings).toHaveLength(529)
+    expect(strings).toHaveLength(530)
     expect(hash(strings)).toBe(HEAD_RUNTIME_STRING_SHA256)
     const jsx = readJsxFacts(readDefinitions())
-    expect(jsx.host).toHaveLength(122)
+    expect(jsx.host).toHaveLength(125)
     expect(hash(jsx.host)).toBe(HEAD_HOST_JSX_SHA256)
     expect(jsx.leaf).toHaveLength(61)
     expect(hash(jsx.leaf)).toBe(HEAD_LEAF_JSX_SHA256)
-    expect(jsx.styleReferences).toHaveLength(168)
+    expect(jsx.styleReferences).toHaveLength(173)
     expect(hash(jsx.styleReferences)).toBe(HEAD_STYLE_REFERENCE_SHA256)
   })
 })

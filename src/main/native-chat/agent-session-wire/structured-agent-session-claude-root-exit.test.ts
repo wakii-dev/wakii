@@ -43,7 +43,6 @@ describe('Claude root-exit eviction', () => {
       },
       provider: 'claude',
       accountHome: { variable: 'CLAUDE_CONFIG_DIR', path: root },
-      runtimeKind: 'native',
       expectedFence: null,
       spawnToken: 'spawn-1',
       claimKeyId: 'key-1',
@@ -104,10 +103,11 @@ describe('Claude root-exit eviction', () => {
         {
           journal,
           params,
-          fence,
-          hasProviderChild: true,
-          providerChildPhase: 'ready',
-          acquisitionGeneration: acquisition.acquisitionGeneration ?? null
+          child: {
+            generation: acquisition.acquisitionGeneration ?? null,
+            fence,
+            phase: 'ready'
+          }
         }
       ]
     ])
@@ -135,7 +135,7 @@ describe('Claude root-exit eviction', () => {
     })
     expect(sessions.size).toBe(0)
     expect(close).toHaveBeenCalledOnce()
-    // Why: releasing the root-owned lease does not claim unverifiable descendants stopped.
-    await expect(adapter.closeSession('session-1')).rejects.toThrow('provider exited')
+    // The adapter agrees the session is over: nothing is left to refuse the next start.
+    await expect(adapter.closeSession('session-1')).resolves.toBe(true)
   })
 })

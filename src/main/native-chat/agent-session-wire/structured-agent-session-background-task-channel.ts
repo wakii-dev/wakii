@@ -12,6 +12,7 @@ import type {
   StructuredAgentSessionHostDeps,
   StructuredAgentSessionHostSession
 } from './structured-agent-session-host-types'
+import { structuredAgentSessionConversationFence } from './structured-agent-session-provider-child'
 
 export class StructuredAgentSessionBackgroundTaskChannel {
   constructor(
@@ -19,9 +20,6 @@ export class StructuredAgentSessionBackgroundTaskChannel {
     private readonly sessions: Map<string, StructuredAgentSessionHostSession>,
     private readonly subscribers: AgentSessionSubscribers,
     private readonly requireSession: (sessionId: string) => StructuredAgentSessionHostSession,
-    private readonly handoffStatus: (
-      sessionId: string
-    ) => Parameters<AgentSessionSubscribers['open']>[0]['handoff'],
     /** Task edges change the status summary too; the feed's equality check
      *  keeps a no-op re-projection from reaching subscribers. */
     private readonly onPublished: (sessionId: string) => void
@@ -51,8 +49,7 @@ export class StructuredAgentSessionBackgroundTaskChannel {
     return this.subscribers.open({
       ...input,
       journal: session.journal,
-      fence: this.deps.store.getRecord(input.sessionId)?.lease.runtimeFence ?? 0,
-      handoff: this.handoffStatus(input.sessionId),
+      fence: structuredAgentSessionConversationFence(this.deps.store, input.sessionId),
       ...(backgroundTasks !== undefined ? { backgroundTasks } : {})
     })
   }
@@ -61,7 +58,11 @@ export class StructuredAgentSessionBackgroundTaskChannel {
     const session = this.sessions.get(sessionId)
     const state = publishedState !== undefined ? publishedState : this.state(sessionId)
     if (session && state !== undefined) {
-      this.subscribers.backgroundTasks(sessionId, state, session.fence)
+      this.subscribers.backgroundTasks(
+        sessionId,
+        state,
+        structuredAgentSessionConversationFence(this.deps.store, sessionId)
+      )
       this.onPublished(sessionId)
     }
   }

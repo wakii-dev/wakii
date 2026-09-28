@@ -34,7 +34,8 @@
         "resourceUsageToggleDescription": "リソースマネージャーを表示します。クリックすると、CPU、メモリ、セッション、デーモンコントロール、ワークスペースディスクスキャンの情報を確認できます。",
         "portsToggleDescription": "ライブワークスペースポートを表示します。ワークスペーススコープのポートと外部リスナーの場合はこれをクリックします。",
         "antigravityToggleDescription": "アクティブなワークスペースの Antigravity サブスクリプション使用量を表示します。",
-        "grokToggleDescription": "Grok CLI でサインインしている場合に Grok サブスクリプションのクレジット使用量を表示します。"
+        "grokToggleDescription": "Grok CLI でサインインしている場合に Grok サブスクリプションのクレジット使用量を表示します。",
+        "cursorToggleDescription": "cursor-agent または Cursor IDE でサインインしている場合に Cursor プランの使用状況を表示します。"
       },
       "menuBarIcon": {
         "title": "メニューバーアイコンを表示",
@@ -870,7 +871,8 @@
             "tooMany": "画像は最大 {{maxCount}} 件まで添付できます。",
             "dimensionsTooLarge": "{{fileName}} は画像サイズが大きすぎるため、安全にプレビューできません。",
             "invalidImage": "{{fileName}} は有効な画像として読み取れません。",
-            "additionalErrors": "ほかに {{count}} 件の画像を添付できませんでした。"
+            "additionalErrors": "ほかに {{count}} 件の画像を添付できませんでした。",
+            "totalTooLarge": "{{fileName}} を追加すると添付ファイルの合計が {{maxSize}} を超えます。"
           }
         }
       },
@@ -3068,7 +3070,9 @@
             "42b283ecfc": "ホストが保存されたセッションを確認できなかったため、Wakii はこのターミナルを安全に再接続できませんでした。 Wakii は保存されたセッションを変更せずに残しました。今すぐ再接続を試みるには、「再試行」をクリックします。それでも再接続できない場合は、新規ターミナルを開きます。",
             "e16012e31e": "このセッションを所有していたターミナルデーモンが終了したため、セッションとそのスクロールバックを回復できませんでした。続行するには、新規ターミナルを開いてください。",
             "sessionUnavailable": "Wakii はホスト上のこのペインのターミナルセッションに再接続できませんでした。続行するには、新規ターミナルを開いてください。",
-            "sourceRestoring": "このターミナルを再接続しています — その出力が再確立されています。セッションはまだ実行中です。"
+            "sourceRestoring": "このターミナルを再接続しています — その出力が再確立されています。セッションはまだ実行中です。",
+            "terminalProcessLimit": "システムはこれ以上ターミナルプロセスを起動できません。使っていないターミナルを閉じるか、不要なプロセスを終了してから、もう一度お試しください。",
+            "ptyAllocationLimit": "システムはこれ以上 pty デバイスを割り当てられません。Orca または他のプログラムで使っていないターミナルをいくつか閉じてから、もう一度お試しください。"
           },
           "TerminalProcessExitOverlay": {
             "capacityTitle": "Git Bash のコンソール上限に達しました",
@@ -3241,6 +3245,9 @@
           "TerminalQuickCommandsSubmenu": {
             "3ccc7981bb": "ホストが利用不可",
             "54f29b7c0d": "ホストを読み込み中…"
+          },
+          "TerminalRestoringPlaceholder": {
+            "restoring": "ターミナルを復元中…"
           }
         }
       },
@@ -3668,7 +3675,8 @@
             "grokUsageMenu": "Grok の使用状況",
             "floatingTerminalNewActivity": "{{label}}、新規アクティビティ",
             "codexSignInSuccess": "Codex にサインインしました",
-            "codexSignInError": "Codex のサインインに失敗しました。もう一度お試しください。"
+            "codexSignInError": "Codex のサインインに失敗しました。もう一度お試しください。",
+            "cursorUsageMenu": "Cursor の使用状況"
           },
           "StatusBarUsageEmptyCta": {
             "828c764a79": "アカウントを接続する",
@@ -3841,8 +3849,15 @@
             },
             "usage": {
               "noSubscription": {
-                "label": "購読なし"
+                "label": "サブスクリプションなし"
               }
+            },
+            "cursor": {
+              "expired": {
+                "label": "サインインの有効期限切れ",
+                "message": "Orca を実行しているコンピュータのターミナルで cursor-agent login を実行し、使用状況を再試行してください。"
+              },
+              "plan": "プラン"
             }
           },
           "SshTargetStatusRow": {
@@ -3943,15 +3958,15 @@
             "ariaLabel": "{{value0}} チャットを再開できます",
             "tooltip": "中断されたチャットを開いて再開可能",
             "failedLabelOne": "1 件のチャットを再開できませんでした",
-            "failedLabel": "{{value0}} チャットを再開できませんでした",
-            "failedAriaOne": "1 件のチャットを再開できませんでした。詳細については、クリックしてください。",
-            "failedAria": "{{value0}} チャットを再開できませんでした。詳細については、クリックしてください。",
-            "failedTooltip": "再起動後、チャット Wakii を再開できませんでした。詳細については、クリックしてください。",
-            "checkLabelOne": "1 チャットを確認する",
-            "checkLabel": "{{value0}} チャットを確認してください",
-            "checkAriaOne": "再開後に確認するチャットは1つ。詳細については、クリックしてください。",
-            "checkAria": "{{value0}} チャットは再開後に確認します。詳細については、クリックしてください。",
-            "checkTooltip": "再起動後、チャット Wakii が再開できなかったか、再開を確認できませんでした。詳細については、クリックしてください。"
+            "failedLabel": "{{value0}} 件のチャットを再開できませんでした",
+            "failedAriaOne": "1 件のチャットを再開できませんでした。詳細はクリックしてください。",
+            "failedAria": "{{value0}} 件のチャットを再開できませんでした。詳細はクリックしてください。",
+            "failedTooltip": "再起動後に Orca が再開できなかったチャット。詳細はクリックしてください。",
+            "checkLabelOne": "確認が必要なチャット 1 件",
+            "checkLabel": "確認が必要なチャット {{value0}} 件",
+            "checkAriaOne": "再開後に確認が必要なチャット 1 件。詳細はクリックしてください。",
+            "checkAria": "再開後に確認が必要なチャット {{value0}} 件。詳細はクリックしてください。",
+            "checkTooltip": "再起動後に Orca が再開できなかった、または再開を確認できなかったチャット。詳細はクリックしてください。"
           }
         }
       },
@@ -5208,7 +5223,9 @@
           "69969ba364": "送信中…",
           "imageReadFailed": "添付された画像を読み取れませんでした。もう一度添付してください。",
           "attachWhileSending": "現在のフィードバックの送信が完了してから、画像を追加してください。",
-          "imagesNotDelivered": "フィードバックを送信しましたが、画像が届いたかどうかは確認できませんでした。"
+          "imagesNotDelivered": "フィードバックを送信しましたが、画像が届いたかどうかは確認できませんでした。",
+          "imagesNotIncluded": "フィードバックを送信しました。スクリーンショットをアップロードできなかったため、含まれていません。",
+          "imagesRejected": "フィードバックを送信しました。スクリーンショットが大きすぎてアップロードできなかったため、含まれていません。"
         },
         "SidebarFilter": {
           "e3b3898218": "プロジェクトを追加",
@@ -6167,7 +6184,7 @@
           "parkTerminal": "ターミナルを退避"
         },
         "SidebarFeedbackImageAttachments": {
-          "screenshotsHint": "スクリーンショットは最大 {count} 件まで添付できます",
+          "screenshotsHint": "スクリーンショットを最大 {{count}} 件、合計 {{maxSize}} まで添付できます",
           "attachImages": "Attach",
           "removeImage": "{{fileName}} を削除"
         },
@@ -6264,16 +6281,16 @@
           "copyDiagnostics": "コピー診断"
         },
         "LocalGitToolchainScanBanner": {
-          "xcodeLicenseTitle": "Git を使用するには Xcode ライセンスに同意します",
-          "xcodeLicenseBody": "macOS は、ユーザーが受け入れるまで Git をブロックします。これをターミナルで実行し、Wakii に戻します。自動的に再度チェックされます。",
-          "developerToolsTitle": "Apple のコマンドラインツールをインストールする",
-          "developerToolsBody": "Git には Apple の開発者ツールが必要です。これをターミナルで実行し、Wakii に戻します。自動的に再度チェックされます。",
-          "affectedOne": "ワークツリーのスキャンは{{value0}}のために一時停止されました",
-          "affectedMany": "{{value0}} プロジェクトのワークツリースキャンが一時停止されました",
+          "xcodeLicenseTitle": "Git を使うには Xcode ライセンスに同意してください",
+          "xcodeLicenseBody": "承諾するまで macOS が Git をブロックします。ターミナルでこれを実行し、Orca に戻ってください。自動的に再確認します。",
+          "developerToolsTitle": "Apple のコマンドラインツールをインストール",
+          "developerToolsBody": "Git には Apple の開発者ツールが必要です。ターミナルでこれを実行し、Orca に戻ってください。自動的に再確認します。",
+          "affectedOne": "{{value0}} のワークツリースキャンを一時停止中",
+          "affectedMany": "{{value0}} 件のプロジェクトのワークツリースキャンを一時停止中",
           "copyCommand": "コマンドをコピー",
-          "copied": "コマンドがコピーされました",
-          "retry": "今すぐ再試行してください",
-          "restored": "Git が再び動作します。ワークツリーが更新されました。"
+          "copied": "コマンドをコピーしました",
+          "retry": "今すぐ再試行",
+          "restored": "Git が再び動作しています。ワークツリーを更新しました。"
         }
       },
       "shared": {
@@ -6509,10 +6526,10 @@
           "opencodeGo": {
             "apiKey": {
               "title": "OpenCode Go API キー",
-              "description": "オプションの上書き。それ以外の場合、Wakii は /connect を実行したときに保存されたキー OpenCode を使用し、次に OPENCODE_API_KEY を使用します。",
-              "label": "OpenCode Go APIキー",
-              "placeholder": "/connect または OPENCODE_API_KEY によって保存されたキーを使用する場合は、空白のままにします。",
-              "help": "ステータスバーで OpenCode Go を使用するために使用されます。以下のセッション Cookie は、従来のコンソール (OpenCode Black) アカウントにのみ必要です。"
+              "description": "任意のオーバーライド。指定しない場合、Orca は /connect 実行時に OpenCode が保存したキー（次に OPENCODE_API_KEY）を使用します。",
+              "label": "OpenCode Go API キー",
+              "placeholder": "/connect または OPENCODE_API_KEY で保存されたキーを使う場合は空欄のままにします",
+              "help": "ステータスバーの OpenCode Go 使用状況表示に使います。下のセッション Cookie はレガシーコンソール (OpenCode Black) アカウントでのみ必要です。"
             }
           }
         },
@@ -8905,7 +8922,18 @@
             "b2c4e7f1a8": "終点",
             "3a9b6d2c4e": "APIキー",
             "5d8f1a3b7c": "中国",
-            "7e2a4b8c1d": "海外"
+            "7e2a4b8c1d": "海外",
+            "cursor": {
+              "description": "このコンピュータに既にある Cursor のサインイン（cursor-agent login）から読み取った月間プラン使用状況。",
+              "title": "Cursor の使用状況",
+              "kw": {
+                "spend": "追加料金",
+                "statusBar": "ステータスバー",
+                "rateLimit": "レート制限",
+                "usage": "使用量",
+                "cursor": "cursor"
+              }
+            }
           }
         },
         "advanced": {
@@ -9161,6 +9189,13 @@
               "close": "近い",
               "notification": "通知領域",
               "background": "背景"
+            },
+            "cursor": {
+              "description": "このコンピュータの Cursor サインインから月間 Cursor プラン使用状況を表示します。",
+              "title": "Cursor の使用状況",
+              "kw": {
+                "cursor": "cursor"
+              }
             }
           }
         },
@@ -12031,6 +12066,31 @@
         "TerminalRenderingSection": {
           "6d4c55bacc": "インライン画像",
           "fffab5890b": "SIXEL、iTerm2 (IIP)、および Kitty グラフィックスプロトコルを使用して、ターミナルに画像を直接表示します。"
+        },
+        "CursorAccountsSection": {
+          "source": {
+            "desktop": "Cursor IDE",
+            "keychain": "macOS キーチェーン（cursor-agent）",
+            "cli": "Cursor CLI 認証ファイル"
+          },
+          "signedInGeneric": "サインイン済み。Orca はこのコンピュータに保存された Cursor セッションを読み取ります。",
+          "signedOutHelp": "Cursor IDE でサインインするか、ターミナルで cursor-agent login を実行してから、ここで「使用状況を更新」をクリックしてください。",
+          "refreshUsage": "使用状況を更新",
+          "loading": "読み込み中…",
+          "planTotal": "プラン",
+          "expired": "サインインの有効期限が切れています — Orca を実行しているコンピュータで cursor-agent login を実行し、「使用状況を更新」をクリックしてください。",
+          "signedIn": "サインイン済み",
+          "usageDescription": "Cursor は請求サイクルとともにリセットされる 2 つのプールの利用に課金し、使い切るとオンデマンドの追加料金が発生します。",
+          "dashboardLink": "Cursor ダッシュボード",
+          "usageTitle": "月間プラン使用状況",
+          "signedOut": "このコンピュータに Cursor のサインインが見つかりません",
+          "subtitle": "このコンピュータに既にある Cursor のサインインから、月間の Cursor プラン使用状況を表示します。Orca は読み取るだけで、Cursor のログインを変更することはありません。",
+          "title": "Cursor",
+          "staleUsage": "最後に確認できた使用状況 — 最新の更新に失敗しました: {{reason}}",
+          "resets": "{{when}} にリセット",
+          "signedInFrom": "サインイン済み。Orca は {{source}} に保存されたセッションを読み取ります。",
+          "noAllowance": "Cursor によると、このアカウントには使用量の割り当てがありません。",
+          "usageLabel": "使用量"
         }
       },
       "right": {
@@ -14951,35 +15011,51 @@
           "7005960d73": "コード",
           "59b6cd874b": "コード",
           "ba149053d5": "markdown",
-          "8dbe39a152": "さらなるセル操作",
-          "fa8fd99cf1": "細胞の種類",
-          "kernelStarting": "起動…",
-          "kernelInstalling": "ipykernel をインストールしています…",
-          "kernelDead": "カーネルが死んだ",
-          "selectKernel": "カーネルの選択",
+          "8dbe39a152": "その他のセル操作",
+          "fa8fd99cf1": "セルの種類",
+          "kernelStarting": "開始中…",
+          "kernelInstalling": "ipykernel をインストール中…",
+          "kernelDead": "カーネルが停止しました",
+          "selectKernel": "カーネルを選択",
           "notPython": "そのファイルは Python インタープリターではありません。",
-          "interrupt": "割り込み",
-          "restart": "カーネルを再起動します",
+          "interrupt": "中断",
+          "restart": "カーネルを再起動",
           "runAll": "すべて実行",
-          "clearAll": "すべての出力をクリアする",
-          "notResponding": "応答がありません。カーネルを再起動します",
-          "findingPython": "Python 環境を探しています…",
+          "clearAll": "すべての出力をクリア",
+          "notResponding": "応答がありません。カーネルを再起動してください",
+          "findingPython": "Python 環境を検索中…",
           "recommended": "推奨",
           "pythonOnPath": "PATH 上の Python",
-          "browsePython": "Python を参照してください…",
-          "missingIpykernelTitle": "ipykernelをインストールしますか?",
-          "missingIpykernel": "「{{env}}」を使用してセルを実行するには、ipykernel パッケージが必要です。",
+          "browsePython": "Python を参照…",
+          "missingIpykernelTitle": "ipykernel をインストールしますか?",
+          "missingIpykernel": "'{{env}}' でセルを実行するには ipykernel パッケージが必要です。",
           "copyCommand": "コマンドをコピー",
           "install": "インストール",
           "kernelStartFailed": "カーネルの起動に失敗しました。",
-          "noPython": "このコンピュータでは Python が見つかりませんでした。 [python.org](https://www.python.org/downloads/) からインストールし、セルを再度実行します。",
-          "kernelDied": "カーネルが死亡しました。",
-          "localOnly": "ノートブックセルは、このコンピュータ上のファイルに対してのみ実行できます。",
-          "pythonOnly": "Wakii で実行できるのは Python ノートブックのみです。"
+          "noPython": "このコンピュータに Python が見つかりません。[python.org](https://www.python.org/downloads/) からインストールして、セルを再実行してください。",
+          "kernelDied": "カーネルが停止しました。",
+          "localOnly": "ノートブックセルはこのコンピュータ上のファイルでのみ実行できます。",
+          "pythonOnly": "Orca では Python ノートブックのみ実行できます。",
+          "creatingVenvDescription": "{{folder}} に .venv を作成し、ipykernel をインストールしています。数分かかることがあります。",
+          "createVenvItem": "仮想環境を作成…",
+          "trustFirst": "先にセルを実行して、このノートブックを信頼してください",
+          "installingTitle": "ipykernel をインストール中…",
+          "venvDescription": "Orca は '{{env}}' から {{folder}} に .venv を作成し、ipykernel をインストールして、このノートブックをそこで実行します。",
+          "createVenv": ".venv を作成",
+          "creatingButton": "作成中…",
+          "tryAgain": "再試行",
+          "installingDescription": "pip で '{{env}}' に ipykernel をインストールしています。数分かかることがあります。",
+          "kernelCreatingVenv": ".venv を作成中…",
+          "createVenvTitle": "仮想環境を作成しますか？",
+          "creatingVenvTitle": "仮想環境を作成中…",
+          "installingButton": "インストール中…",
+          "setupFailed": "処理に失敗しました。Python の出力:",
+          "commandCopied": "コマンドをコピーしました",
+          "useAnotherPython": "別の Python を使用…"
         },
         "MarkdownPreview": {
           "e4683f70c4": "キャンセル",
-          "d737791433": "AI に関するメモを追加",
+          "d737791433": "AI 向けのメモを追加",
           "b1bfc04034": "選択したテキスト",
           "f37b98999e": "このメモ",
           "2b2b31382c": "フロントマター",
@@ -15466,7 +15542,8 @@
           "a0af0198aa": "デフォルトでは、大きな差分はレンダリングされません。",
           "c3d9f4a712": "この diff のサイズはまだ不明なので、リクエストに応じてロードされます。",
           "f7fa7a40d0": "負荷差"
-        }
+        },
+        "diffCommentSaveFailed": "コメントの保存に失敗しました"
       },
       "diff": {
         "comments": {
@@ -15483,7 +15560,10 @@
             "2b3ce6d394": "キャンセル",
             "e05063cfc1": "{{value0}} 行目",
             "c845170b3b": "行 {{value0}}-{{value1}}",
-            "commentTooLarge": "コメントが大きすぎるため安全に送信できません。"
+            "commentTooLarge": "コメントが大きすぎるため安全に送信できません。",
+            "f6c449191e": "AI 向けのメモを追加",
+            "5fa4bfebaa": "メモを追加",
+            "5e9b3d0c2e": "追加中…"
           },
           "useDiffCommentDecorator": {
             "995fa28b50": "このメモ"
@@ -17104,12 +17184,12 @@
         "dismissAll": "すべて閉じる",
         "dismissUnconfirmed": "履歴書のオファーの拒否は確認されていません。ステータスバーにまだ表示されている可能性があります。",
         "notContinuedOne": "1 件のチャットを再開できませんでした",
-        "notContinuedMany": "{{value0}} チャットを再開できませんでした",
+        "notContinuedMany": "{{value0}} 件のチャットを再開できませんでした",
         "notConfirmedOne": "1 件のチャットが再開されたことを確認できませんでした",
-        "notConfirmedMany": "{{value0}} チャットが再開されたことを確認できませんでした",
-        "notConfirmedOtherOne": "他の 1 件のチャットが再開されたことを確認できませんでした",
-        "notConfirmedOtherMany": "{{value0}} 他のチャットが再開されたことを確認できませんでした",
-        "show": "見せる",
+        "notConfirmedMany": "{{value0}} 件のチャットが再開されたことを確認できませんでした",
+        "notConfirmedOtherOne": "他のチャット 1 件が再開されたことを確認できませんでした",
+        "notConfirmedOtherMany": "他のチャット {{value0}} 件が再開されたことを確認できませんでした",
+        "show": "表示",
         "dismiss": "閉じる",
         "activityUnnamed": "名前なし",
         "activityApproval": "承認待ち: {{value0}}",
@@ -17197,24 +17277,31 @@
         "c5b3e8a17d": "Wakii にサインインする"
       },
       "NativeChatResumeOutcomeRow": {
-        "openChat": "オープンチャット",
+        "openChat": "チャットを開く",
         "retry": "再試行",
         "dismiss": "閉じる",
         "unconfirmed": "チャットが再開されたことを確認できませんでした",
         "failed": "再開できませんでした",
         "statusFor": "{{value0}}: {{value1}}",
-        "dismissChat": "{{value1}} の「{{value0}}」を無視します",
-        "toResume": "再開するには:"
+        "dismissChat": "\"{{value0}}\" ({{value1}}) を閉じる",
+        "toResume": "再開するチャット:"
       },
       "NativeChatResumeFailureGuidance": {
-        "unconfirmed": "Wakii は「続行」メッセージが配信されたことを確認できませんでした。別のチャットを送信する前に、チャットを開いて確認してください。",
-        "superseded": "チャットを開いて返信します。再起動直後に新規作業が到着したため、Wakii は「続行」メッセージを送信しませんでした。",
-        "conflict": "別の Wakii ウィンドウまたはターミナルがまだこのセッションを所有しています。閉じてから再試行してください。",
-        "ownershipUnknown": "Wakii は、どのプロセスがこのセッションを所有しているかをまだ調査中です。しばらく待ってから、再試行してください。",
-        "notAttached": "チャットは再接続されませんでした。再試行するか、開いて新しいターンを開始してください。",
-        "dispatchRejected": "Agent は「続行」メッセージを拒否しました。チャットを開いて自分でチャットを送信してください。",
-        "unsupported": "Wakii ではこのチャットを再開できません。開いてどこで止まったかを確認します。",
-        "fallback": "Wakii はこのチャットを再開できませんでした。手動で続行するには、それを開いてください。"
+        "unconfirmed": "Orca は “continue” メッセージが配信されたことを確認できませんでした。別のメッセージを送る前にチャットを開いて確認してください。",
+        "superseded": "チャットを開いて返信してください。再起動の直後に新規作業が届いたため、Orca は “continue” メッセージを送信しませんでした。",
+        "conflict": "別の Orca ウィンドウまたはターミナルがこのセッションをまだ保持しています。閉じてから再試行してください。",
+        "ownershipUnknown": "Orca はこのセッションを所有するプロセスを確認中です。少し待ってから再試行してください。",
+        "notAttached": "チャットが再接続されませんでした。再試行するか、開いて新しいターンを開始してください。",
+        "dispatchRejected": "Agent が “continue” メッセージを拒否しました。チャットを開いて自分で送信してください。",
+        "unsupported": "このチャットは Orca で再開できません。開いて停止位置を確認してください。",
+        "fallback": "Orca はこのチャットを再開できませんでした。開いて手動で続けてください。"
+      },
+      "web": {
+        "preloadApi": {
+          "cursorAccounts": {
+            "hostOnly": "Cursor のサインイン詳細は、Orca を実行しているコンピュータでのみ読み取れます。"
+          }
+        }
       }
     },
     "i18n": {
@@ -17458,8 +17545,8 @@
         "responding": "Agent が応答中です",
         "working": "処理中…",
         "thinking": "考え",
-        "workingFor": "{{value0}} で働いています",
-        "workedFor": "{{value0}}で働いていました",
+        "workingFor": "{{value0}} 処理中",
+        "workedFor": "{{value0}} で完了",
         "toggleDetails": "ターンの詳細を切り替えます"
       },
       "jumpToLatest": "最新にジャンプ",
@@ -17606,35 +17693,35 @@
       "structuredSessionLaunchFailed": "{{value0}} チャットを開けませんでした",
       "handoff": {
         "stage": {
-          "finishingChat": "チャットセッションを終了しています…",
-          "finishingTerminal": "仕上げ Agent ターミナル…",
-          "openingTerminal": "Agent ターミナルを開いています…",
-          "resumingChat": "チャットセッションを再開しています…",
-          "verifyingTerminal": "Agent ターミナルを確認しています…",
-          "verifyingChat": "チャットセッションを確認しています…",
-          "recovering": "Agent セッションを回復しています…",
-          "manualRecovery": "Agent セッションの回復が必要です"
+          "finishingChat": null,
+          "finishingTerminal": null,
+          "openingTerminal": null,
+          "resumingChat": null,
+          "verifyingTerminal": null,
+          "verifyingChat": null,
+          "recovering": null,
+          "manualRecovery": null
         },
-        "switchingOwner": "セッション所有者を切り替えています…",
+        "switchingOwner": null,
         "mode": {
-          "switching": "スイッチング",
-          "terminal": "ターミナル",
-          "chat": "チャット"
+          "switching": null,
+          "terminal": null,
+          "chat": null
         },
-        "switchingAfterTurn": "このターン後に切り替える",
-        "returningAfterTurn": "このターン後に戻る",
-        "cancel": "キャンセル",
-        "switchAfterTurn": "このターン後に切り替える",
-        "stopTurnAndSwitch": "回転を止めて切り替えます",
-        "openAgentTui": "Agent TUI を開く",
-        "returnAfterTurn": "このターン後に戻る",
-        "returnToChat": "チャットに戻る",
-        "agentOpenOnHost": "Agent は {{value0}} のターミナルで開いています。",
-        "agentOpen": "Agent はターミナルで開いています。",
-        "exitTerminal": "Agent ターミナルを終了してチャットを続行します。",
-        "retryProof": "再試行証明",
-        "retry": "再試行",
-        "details": "詳細"
+        "switchingAfterTurn": null,
+        "returningAfterTurn": null,
+        "cancel": null,
+        "switchAfterTurn": null,
+        "stopTurnAndSwitch": null,
+        "openAgentTui": null,
+        "returnAfterTurn": null,
+        "returnToChat": null,
+        "agentOpenOnHost": null,
+        "agentOpen": null,
+        "exitTerminal": null,
+        "retryProof": null,
+        "retry": null,
+        "details": null
       },
       "structuredSessionLaunchFailedDescription": "Wakii は構造化された {{value0}} チャットを開けませんでした。詳細についてはログを参照してください。",
       "subagents": {
@@ -17684,8 +17771,31 @@
       },
       "fileLinks": {
         "notFound": "ファイルが見つかりません: {{value0}}",
-        "unverifiable": "{{value0}} をチェックできませんでした: {{value1}}",
+        "unverifiable": "{{value0}} を確認できませんでした: {{value1}}",
         "unresolved": "このワークスペースで {{value0}} を解決できませんでした"
+      },
+      "contextUsage": {
+        "label": "コンテキスト {{used}} / {{window}} トークン、{{percent}}% 使用済み",
+        "title": "コンテキスト",
+        "estimated": "最後の応答から推定。"
+      },
+      "writeNotice": {
+        "capacity": "Orca が過去 1 日に受け取ったリクエストが多すぎます。",
+        "notDoneGoal": "目標は変更されませんでした。",
+        "tryAgainComposerSend": "もう一度送信してください。",
+        "unreachable": "Orca は Agent に接続できませんでした。",
+        "notDoneSend": "メッセージは送信されませんでした。",
+        "restartFailed": "Agent を再起動できませんでした。",
+        "notDoneStop": "Agent は停止されませんでした。",
+        "notDoneAnswer": "回答は送信されませんでした。",
+        "unsupported": "このチャットを実行している Orca はこの操作に対応していません。Orca を更新してから、もう一度お試しください。",
+        "notDoneStopTasks": "バックグラウンドタスクは停止されませんでした。",
+        "questionChanged": "この質問はすでに回答済みか、変更されています。",
+        "notDoneStopTask": "バックグラウンドタスクは停止されませんでした。",
+        "notDoneOption": "設定は変更されませんでした。",
+        "historyUnreadable": "Orca はこのチャットの保存済み履歴を読み取れませんでした。",
+        "outcomeUnknown": "Orca は何が起きたかを確認できませんでした。チャットを確認してください。",
+        "notDoneCommand": "コマンドは実行されませんでした。"
       }
     },
     "tab": {
@@ -17869,7 +17979,7 @@
           "appliedFilters": "適用されたフィルター",
           "removeFilter": "フィルター {{value0}} を削除します",
           "chip": {
-            "idleDays": "アイドル {{value0}}d+",
+            "idleDays": "アイドル {{value0}}日以上",
             "neverVisited": "訪れたことがない",
             "minSize": "少なくとも {{value0}} MB",
             "maxSize": "最大 {{value0}} MB",
@@ -17967,7 +18077,7 @@
       "sent": "セッションコンテキストを新規 {{agent}} セッションに送信しました。",
       "deliveryFailed": "新規 {{agent}} セッションは開始しましたが、コンテキストを送信できませんでした。",
       "launchFailed": "新規 {{agent}} セッションを開始できませんでした。",
-      "deliveryUnconfirmed": "Wakii は {{agent}} がセッションコンテキストを受信したことを確認できませんでした。新規セッションを確認し、入力が空の場合は自分で貼り付けます。",
+      "deliveryUnconfirmed": "Orca は {{agent}} がセッションコンテキストを受け取ったことを確認できませんでした。新規セッションを確認し、入力が空の場合は自分で貼り付けてください。",
       "copyPrompt": "プロンプトをコピー"
     },
     "terminalPane": {
@@ -17992,9 +18102,9 @@
     "cmd-j": {
       "paletteSessionAge": {
         "minutes": "{{value0}}分",
-        "hours": "{{value0}}h",
-        "days": "{{value0}}d",
-        "underOneMinute": "<1m"
+        "hours": "{{value0}}時間",
+        "days": "{{value0}}日",
+        "underOneMinute": "<1分"
       }
     },
     "settings": {
@@ -18240,7 +18350,8 @@
       "needsInput": "入力待ち",
       "working": "処理中",
       "stopped": "停止",
-      "finished": "完了"
+      "finished": "完了",
+      "failed": "失敗"
     }
   },
   "sidebar": {
@@ -18272,6 +18383,52 @@
       "unassignedInstruction": "フォーカスされたペインで音声ディクテーションを開始する前に、ディクテーションショートカットを割り当てます。",
       "settingsInstruction": "いつでもモデル、ディクテーションモード、ショートカットを変更できます。",
       "settingsLink": "設定→音声"
+    },
+    "sessionSearch": {
+      "continueInBackground": "バックグラウンドで続行",
+      "recent1Text": "検索エントリをワークフロー配下に移動し、テストを更新しました。",
+      "demoHit2Title": "スリープ後のセッション更新",
+      "demoHit5Snippet": "再試行の前に[[移行]][[ロールバック]]計画を書いてもらえますか？",
+      "startSearching": "検索を開始",
+      "ageHours": "2時間前",
+      "ageMinutes": "12分前",
+      "demoQuery": "ログインタイムアウト",
+      "demoHit2Snippet": "スリープ復帰後に[[ログイン]]ページが[[タイムアウト]]で止まるのはなぜですか？",
+      "demoHit3Age": "2週間前",
+      "recent2Title": "ロックファイルの更新",
+      "demoHit1Age": "3日前",
+      "demoHit4Title": "注文テーブルの移行",
+      "readyToast": "セッション検索の準備ができました",
+      "progressStarting": "セッションを探しています…",
+      "ageYesterday": "1日前",
+      "demoHit6Age": "1か月前",
+      "demoHit4Age": "5日前",
+      "demoHit1Snippet": "[[ログインタイムアウト]]を 30 秒に引き上げ、トークン更新時の再試行を追加しました。",
+      "demoHit1Title": "不安定な認証リダイレクトの修正",
+      "indexingDescription": "過去の Agent の会話を読み取り、検索できるようにしています。数分かかることがあります。",
+      "recent3Text": "メモの初版です。分野別にまとめています。",
+      "demoHit5Title": "ステージングのデプロイに失敗",
+      "demoHit3Title": "認証 E2E の強化",
+      "settingsLink": "設定 → Agent セッションの検索",
+      "agentsInstruction": "Agent も検索できます。「ログインタイムアウトを修正したセッションを探して」と頼んでみてください。",
+      "demoHit3Snippet": "[[ログインタイムアウト]]の経路をエンドツーエンドでカバーするテストを追加しました。",
+      "demoHit5Age": "3週間前",
+      "readyDescription": "このコンピュータ上のすべての Agent セッションを、会話内容から検索できるようになりました。",
+      "indexingTitle": "Agent セッションをインデックス作成中",
+      "recent1Title": "設定サイドバーの整理",
+      "recent3Title": "リリースノートの下書き",
+      "demoHit6Snippet": "ここの[[移行]]は enum の名前変更を除きすべて可逆です。",
+      "demoQuery2": "移行 ロールバック",
+      "readyTitle": "セッション検索の準備ができました",
+      "recent2Text": "依存関係を更新し、ビルドが通ることを確認します。",
+      "demoRoleUser": "ユーザー",
+      "enableFailed": "セッション検索をオンにできませんでした。再試行してください。",
+      "demoHit4Snippet": "[[ロールバック]]では新規インデックスを先に削除し、古いカラムを復元します。",
+      "demoRoleAssistant": "アシスタント",
+      "consentInstruction": "いつでも以下で変更またはオフにできます:",
+      "readyToastOpen": "オープン",
+      "demoHit2Age": "1週間前",
+      "demoHit6Title": "スキーマレビューメモ"
     }
   },
   "quickOpen": {

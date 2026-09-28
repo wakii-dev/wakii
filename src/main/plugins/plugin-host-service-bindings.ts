@@ -8,6 +8,7 @@ import {
 import type { PluginHostServices } from './plugin-host-methods'
 import { PluginSecretsStore } from './plugin-secrets-store'
 import { PluginKvStore } from './plugin-storage-store'
+import type { TerminalInputKind } from '../../shared/terminal-input-kind'
 import {
   describeAgentSessionPtyWriteRefusal,
   isAgentSessionPtyWriteRefusedError
@@ -28,7 +29,8 @@ export type PluginRuntimeDelegate = {
   ): Promise<{ terminals: { handle: string; title: string | null }[] }>
   sendTerminal(
     handle: string,
-    action: { text?: string; enter?: boolean }
+    action: { text?: string; enter?: boolean },
+    options: { inputKind: TerminalInputKind }
   ): Promise<{ accepted: boolean }>
   sendTerminalAgentPrompt(handle: string, prompt: string): Promise<{ accepted: boolean }>
   dispatchPluginNotification(input: {
@@ -139,7 +141,7 @@ export function bindPluginHostServices(input: {
           const agentResult = await delegate.sendTerminalAgentPrompt(terminalId, action.text)
           return { accepted: agentResult.accepted }
         }
-        const result = await delegate.sendTerminal(terminalId, action)
+        const result = await delegate.sendTerminal(terminalId, action, { inputKind: 'driving' })
         return { accepted: result.accepted }
       } catch (error) {
         // Why: the plugin API carries only `accepted`, so a lease refusal would read as a silent

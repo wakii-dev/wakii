@@ -4,6 +4,7 @@ import type {
 } from '../../../shared/agent-session-wire'
 import {
   requeueStructuredAgentSessionSendRefusal,
+  stageStructuredAgentSessionOutboxEntryForSend,
   structuredAgentSessionSendRequest,
   type StructuredAgentSessionOutboxEntry
 } from '../../../shared/structured-agent-session-outbox'
@@ -13,6 +14,7 @@ import {
   type StructuredAgentSessionLaunchPromptMutation
 } from '@/components/native-chat/structured-agent-session-outbox-storage'
 import { callStructuredAgentSession } from '@/runtime/structured-agent-session-client'
+import { createBrowserUuid } from '@/lib/browser-uuid'
 
 export type StructuredPromptDeliveryResult = {
   delivered: boolean
@@ -91,11 +93,9 @@ async function dispatchStructuredLaunchPrompt(
   receipt: LaunchReceipt
 ): Promise<boolean> {
   if (
-    !mutateEntry(entry, (current) => ({
-      ...current,
-      state: 'dispatching',
-      lastAttemptAt: Date.now()
-    }))
+    !mutateEntry(entry, (current) =>
+      stageStructuredAgentSessionOutboxEntryForSend(current, Date.now())
+    )
   ) {
     return false
   }
@@ -112,7 +112,7 @@ async function dispatchStructuredLaunchPrompt(
         requeueStructuredAgentSessionSendRefusal(
           current,
           result.refusal.code,
-          () => createStructuredAgentSessionOperationId(() => crypto.randomUUID()),
+          () => createStructuredAgentSessionOperationId(createBrowserUuid),
           entry.lastAttemptAt !== null
         )
       )

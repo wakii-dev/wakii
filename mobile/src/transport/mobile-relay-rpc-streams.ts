@@ -28,7 +28,7 @@ type StreamRecord = {
   receivedSnapshot?: boolean
 }
 
-type StreamUnsubscribe = { method: string; params: unknown }
+type StreamUnsubscribe = { method: string; params: Record<string, unknown> }
 
 /** Unsubscribe derived from the subscribe params alone (no server-assigned id). */
 function buildParamsUnsubscribe(
@@ -193,7 +193,7 @@ export class MobileRelayRpcStreams {
       const byParams = buildParamsUnsubscribe(stream.method, stream.params, id)
       if (stream.method === 'terminal.subscribe') {
         if (byParams) {
-          this.sendUnsubscribe(byParams)
+          this.sendUnsubscribe(byParams, id)
         }
       } else {
         const unsubscribe = stream.subscriptionId
@@ -223,11 +223,15 @@ export class MobileRelayRpcStreams {
 
   /** Skip the unsubscribe when a live sibling shares the host cleanup token (e.g. nativeChat's
    *  deterministic `agent:sessionId`), since the host would evict the sibling's registration. */
-  private sendUnsubscribe(unsubscribe: StreamUnsubscribe): void {
+  private sendUnsubscribe(unsubscribe: StreamUnsubscribe, terminalRequestId?: string): void {
     if (this.hasLiveOwner(unsubscribe)) {
       return
     }
-    this.options.sendFrame({ id: this.options.nextId(), ...unsubscribe })
+    // Why: added after the sibling check; an old host strips it and would evict the live sibling.
+    const params = terminalRequestId
+      ? { ...unsubscribe.params, requestId: terminalRequestId }
+      : unsubscribe.params
+    this.options.sendFrame({ id: this.options.nextId(), method: unsubscribe.method, params })
   }
 
   private hasLiveOwner(unsubscribe: StreamUnsubscribe): boolean {
