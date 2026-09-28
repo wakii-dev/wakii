@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createHash } from 'node:crypto'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import type { WakiiMindmap } from '../../shared/wakii-mindmap-types'
 import {
   MAX_PENDING_OS_OPENED_WAKII_FILES,
   OsOpenedWakiiFileState,
@@ -21,7 +22,16 @@ const validWakiiJson = JSON.stringify({
 })
 
 function wakiiOpen(path: string, contentHash: string | null): ResolvedWakiiFileOpen {
-  return { payload: { path, mindmap: {} }, contentHash }
+  return { payload: { path, mindmap: validWakiiMindmap() }, contentHash }
+}
+
+function validWakiiMindmap(): WakiiMindmap {
+  return {
+    wakiiMindmap: 1,
+    meta: { story: 's', generatedAt: '2026-09-27T13:00:00Z', generator: 'g' },
+    nodes: [{ id: 'epic', kind: 'epic', title: 'E' }],
+    edges: []
+  }
 }
 
 function wakiiError(path: string): ResolvedWakiiFileOpen {

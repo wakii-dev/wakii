@@ -116,6 +116,8 @@ export function disposeClosedEditorTabCaches(
         break
       case 'check-details':
         break
+      case 'wakii-viewer':
+        break
     }
   }
   deletePaneScopedCacheEntries(scrollTopCache, scrollTopOwners)
