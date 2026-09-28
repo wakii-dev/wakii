@@ -111,11 +111,11 @@
 - Modify: `AGENTS.md` (nếu nhắc bracket)
 
 - [x] **Step 9.1** — sweep `grep -rn "story-validate\|superpowers/brackets"` kit skills + docs repo; đổi tham chiếu theo format mới; giữ Note legacy-bracket-fallback.
-- [ ] **Step 9.2** — kit-verify-manifest + skill manifest verify EXIT 0; commit.
+- [x] **Step 9.2** — kit-verify-manifest + skill manifest verify EXIT 0; commit.
 
 ### Task 10: verify — ACCEPTANCE battery + RULE 0 + review
 
-- [ ] **Step 10.1** — kit suite TOÀN BỘ `PYTHONUTF8=1 node tests/*.mjs` exit 0; app: `pnpm tc` + vitest touched paths; lockstep + verify-packaged EXIT 0.
-- [ ] **Step 10.2** — ACCEPTANCE 8 mục đối chiếu từng dòng (evidence vào docs/superpowers/evidence/sf-5-wakii-canonical/test-run.txt + HEAD).
-- [ ] **Step 10.3 RULE 0** — ELECTRON `ORCA_BACKGROUND_LAUNCH=1`, CDP hidden renderer: Story tab/viewer render golden .wakii + decodeWarnings; screenshots `.evidence-sf5/`.
+- [x] **Step 10.1** — kit suite TOÀN BỘ `PYTHONUTF8=1 node tests/*.mjs` exit 0; app: `pnpm tc` + vitest touched paths; lockstep + verify-packaged EXIT 0.
+- [x] **Step 10.2** — ACCEPTANCE 8 mục đối chiếu từng dòng (evidence vào docs/superpowers/evidence/sf-5-wakii-canonical/test-run.txt + HEAD).
+- [x] **Step 10.3 RULE 0** — ELECTRON `ORCA_BACKGROUND_LAUNCH=1`, CDP hidden renderer: Story tab/viewer render golden .wakii + decodeWarnings; screenshots `.evidence-sf5/`.
 - [ ] **Step 10.4** — dispatch code-reviewer độc lập → `.review-verdict.md`; APPROVED mới READY-FOR-MERGE.
