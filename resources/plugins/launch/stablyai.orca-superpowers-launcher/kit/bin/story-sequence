@@ -60,7 +60,7 @@ out_path = os.environ.get('OUT', '')
 since = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
 
 def git(wt, *args):
-    return subprocess.run(['git', '-C', wt, *args], capture_output=True, text=True, timeout=30).stdout
+    return subprocess.run(['git', '-C', wt, *args], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30).stdout
 
 def bracket_meta(wt, sf):
     linear, dest = '', ''
@@ -115,7 +115,7 @@ def linear_events(issue_id):
         return evs
     try:
         raw = subprocess.run([orca, 'linear', 'issue', issue_id, '--comments', '--json'],
-                             capture_output=True, text=True, timeout=20).stdout
+                             capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=20).stdout
         r = json.loads(raw)['result']
         cs = r.get('comments')
         nodes = cs.get('nodes', []) if isinstance(cs, dict) else (cs or [])

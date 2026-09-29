@@ -63,7 +63,7 @@ def warn(msg):
 def run_git(repo, *args):
     r = subprocess.run(
         ["git", "-C", repo, *args],
-        capture_output=True, text=True, encoding="utf-8", errors="replace",
+        capture_output=True, text=True, encoding="utf-8", errors="replace", encoding="utf-8", errors="replace",
     )
     return r.returncode, (r.stdout or ""), (r.stderr or "")
 

@@ -117,7 +117,7 @@ def orca_plain(args, timeout_s=30):
     env = dict(os.environ)
     env.pop("ORCA_USER_DATA_PATH", None)
     try:
-        p = subprocess.run([ORCA_BIN] + args, capture_output=True, text=True,
+        p = subprocess.run([ORCA_BIN] + args, capture_output=True, text=True, encoding="utf-8", errors="replace",
                            timeout=timeout_s, env=env)
     except (subprocess.TimeoutExpired, OSError):
         return None
@@ -139,7 +139,7 @@ def orca_read(args, timeout_s=30):
         else:
             env.pop("ORCA_USER_DATA_PATH", None)
         try:
-            p = subprocess.run([ORCA_BIN] + args, capture_output=True, text=True,
+            p = subprocess.run([ORCA_BIN] + args, capture_output=True, text=True, encoding="utf-8", errors="replace",
                                timeout=timeout_s, env=env)
         except (subprocess.TimeoutExpired, OSError):
             continue
@@ -199,7 +199,7 @@ def do_install():
         owned = [a for a in autos if owns(a.get("name"), a.get("prompt"), coord=coord)]
         if owned:
             aid = owned[0].get("id")
-            d = orca_plain(["automations", "edit", aid] + target_args(cron, prompt))
+            d = orca_plain(["automations", "edit", aid, "--json"] + target_args(cron, prompt))
             if d is None:
                 print(f"  FAIL edit {name} ({aid})", file=sys.stderr)
                 failed += 1
@@ -210,7 +210,7 @@ def do_install():
             print(f"installed: {name} — updated {aid}{note}")
             updated += 1
         else:
-            d = orca_plain(["automations", "create", "--name", name,
+            d = orca_plain(["automations", "create", "--name", name, "--json",
                             *target_args(cron, prompt)])
             if d is None:
                 print(f"  FAIL create {name}", file=sys.stderr)
@@ -256,7 +256,7 @@ def do_briefing():
     orca_ok = True
     if status_bin:
         try:
-            p = subprocess.run([status_bin], capture_output=True, text=True,
+            p = subprocess.run([status_bin], capture_output=True, text=True, encoding="utf-8", errors="replace",
                                timeout=120)
         except (subprocess.TimeoutExpired, OSError):
             p = None
