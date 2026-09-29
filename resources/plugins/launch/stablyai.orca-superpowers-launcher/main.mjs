@@ -327,59 +327,61 @@ async function storyScanRoots() {
   return [...roots]
 }
 
-// story.list — story files in the FOCUSED WORKTREE + which is "current"
-// (current = the focused worktree's linked Linear issue matches a story file).
+// story.list — story files in the ACTIVE WORKTREE + which is "current"
+// (current = the active worktree's linked Linear issue matches a story file).
 // Canonical mindmaps/*.wakii first; a bracket with the same linear is shadowed.
+// Đọc qua HOST workspace fs (workspace.listFiles/fileRead) chứ không node fs +
+// CLI: đó là cùng root mà panel dùng khi mở story — list theo nguồn khác sẽ
+// gợi ý story panel không bao giờ mở được (lỗi "file not found").
 async function listStories(orca) {
   try {
-    const root = await focusedWorktreePath() // may be null — roots fallback below
-    let stories = []
-    if (root) {
-      stories = (await scanWakiiDir(root)).filter(st => st.linear)
-      // legacy brackets của focused root — shadowed bởi wakii cùng linear
-      const dir = join(root, 'docs', 'superpowers', 'brackets')
-      let entries = []
-      try { entries = await readdir(dir) } catch { /* no brackets dir here */ }
-      stories = stories.concat((await Promise.all(entries.filter(f => f.endsWith('.md')).map(async f => {
-        const text = await readFile(join(dir, f), 'utf8').catch(() => '')
-        return parseBracketFile(text, f)
-      }))).filter(st => st.linear && !stories.some(x => x.linear === st.linear)))
+    const listDir = async (rel) => {
+      try {
+        const r = await orca.host.call('workspace.listFiles', { dir: rel })
+        return ((r && r.files) || []).map((f) => f.name)
+      } catch {
+        return [] // dir chưa tồn tại trong active worktree
+      }
     }
-    // Scan ALL roots (registered repos + workspace trees), mindmaps first
-    for (const r of await storyScanRoots()) {
-      if (r === root) continue
-      const more = (await scanWakiiDir(r))
-        .filter(st => st.linear && !stories.some(x => x.linear === st.linear))
-      stories = stories.concat(more)
-      // legacy brackets — chỉ thêm khi chưa có wakii cùng linear
-      const d2 = join(r, 'docs', 'superpowers', 'brackets')
-      let ents2 = []
-      try { ents2 = await readdir(d2) } catch { continue }
-      const moreMd = (await Promise.all(ents2.filter(f => f.endsWith('.md')).map(async f => {
-        const text = await readFile(join(d2, f), 'utf8').catch(() => '')
-        return parseBracketFile(text, f)
-      }))).filter(st => st.linear && !stories.some(x => x.linear === st.linear))
-      stories = stories.concat(moreMd)
+    const readFile = async (rel) => {
+      try {
+        const r = await orca.host.call('workspace.fileRead', { path: rel })
+        return (r && r.content) || ''
+      } catch {
+        return ''
+      }
+    }
+    let stories = []
+    for (const f of await listDir('docs/superpowers/mindmaps')) {
+      if (!f.endsWith('.wakii')) continue
+      const meta = parseWakiiMeta(await readFile('docs/superpowers/mindmaps/' + f), f)
+      if (meta && meta.linear) stories.push(meta)
+    }
+    // legacy brackets — shadowed bởi wakii cùng linear
+    for (const f of await listDir('docs/superpowers/brackets')) {
+      if (!f.endsWith('.md')) continue
+      const meta = parseBracketFile(await readFile('docs/superpowers/brackets/' + f), f)
+      if (meta && meta.linear && !stories.some((x) => x.linear === meta.linear)) {
+        stories.push(meta)
+      }
     }
     stories.sort((a, b) => a.file.localeCompare(b.file))
     if (!stories.length) {
-      // Observability: scan-roots diagnostics in the storage payload —
+      // Observability: diagnostics in the storage payload —
       // silent-empty made the Windows autocomplete bug invisible for weeks.
-      const roots = await storyScanRoots()
       await orca.host.call('storage.set', {
         key: 'story.list',
         value: { stories: [], currentLinear: null, currentFile: null,
-                 error: 'no story files (.wakii/.md) found in any workspace',
-                 rootsProbed: roots, orcaBin: orcaBin(),
-                 root, fetchedAt: new Date().toISOString() }
+                 error: 'no story files (.wakii/.md) in the active worktree',
+                 fetchedAt: new Date().toISOString() }
       })
-      return { ok: true, count: 0, root }
+      return { ok: true, count: 0 }
     }
-    // current story: linked issue of focused worktree (run inside the worktree root)
+    // current story: linked issue of the active worktree
     let currentLinear = null
     try {
       const { stdout } = await execFileAsync(orcaBin(), ['linear', 'issue', '--current', '--json'],
-        { timeout: 15000, maxBuffer: 4 * 1024 * 1024, cwd: root })
+        { timeout: 15000, maxBuffer: 4 * 1024 * 1024 })
       const parsed = JSON.parse(stdout)
       if (parsed?.ok) currentLinear = parsed.result?.issue?.identifier ?? null
     } catch { /* no linked issue */ }
@@ -387,11 +389,10 @@ async function listStories(orca) {
       stories,
       currentLinear,
       currentFile: (stories.find(st => st.linear === currentLinear) || {}).file ?? null,
-      root,
       fetchedAt: new Date().toISOString()
     }
     await orca.host.call('storage.set', { key: 'story.list', value: list })
-    return { ok: true, count: stories.length, currentLinear, root }
+    return { ok: true, count: stories.length, currentLinear }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     orca.log('story list failed: ' + message)
