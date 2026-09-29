@@ -42,8 +42,9 @@ const HELPERS = [
   extractFn('toBranchId'), extractFn('toNodeId'), extractFn('parseWakiiDoc'),
   extractFn('validWakiiDoc'), extractFn('docSfNode'), extractFn('nextSfIdDoc'),
   extractFn('wakiiApply'), extractFn('wakiiDeleteNode'), extractFn('wakiiSave'),
-  extractFn('pollWakiiSaveResult'), extractFn('dfsCheck')
+  extractFn('dfsCheck')
 ].join('\n')
+const OPS_HELPERS = extractFn('pollOpsResult') + '\n' + extractFn('opsSend')
 
 // status element GHI ĐƯỢC — cycle guard/epic-missing viết message vào đây
 const document = { getElementById: () => ({ textContent: '', style: {} }) }
@@ -145,15 +146,13 @@ t('W5: wakiiDeleteNode — không ghost edges', () => {
 // W6 — wakiiSave: bump generatedAt + generator orca-panel + payload đầy đủ
 t('W6: wakiiSave — generatedAt/generator/payload', () => {
   const doc = mkDoc()
-  const calls = []
-  const call = (action, params) => { calls.push({ action, params }); return Promise.resolve({ ok: true }) }
+  let captured = null
   const graph = { sourceKind: 'wakii', doc, children: [], docFile: 'x.wakii', baseGeneratedAt: doc.meta.generatedAt }
-  const save = new Function('document', 'graph', 'curBracket', '__call', HELPERS + '\nvar call = __call; return wakiiSave')(
-    document, graph, null, call)
+  const save = new Function('document', 'graph', 'curBracket', '__send', HELPERS + '\nopsSend = __send; return wakiiSave')(
+    document, graph, null, (value, timeoutMs) => { captured = { value, timeoutMs }; return Promise.resolve({ ok: true, output: 'saved' }) })
   save(['sf-9'])
-  const set = calls.find(c => c.action === 'storage.set' && c.params.key === 'story.ops.request')
-  assert(set, 'không gửi story.ops.request: ' + JSON.stringify(calls))
-  const v = set.params.value
+  assert(captured, 'opsSend không được gọi')
+  const v = captured.value
   assert(v.action === 'wakii-save' && v.file === 'x.wakii', 'payload action/file sai')
   assert(v.baseGeneratedAt === '2026-01-01T00:00:00Z', 'baseGeneratedAt phải pre-bump: ' + v.baseGeneratedAt)
   assert(JSON.stringify(v.deletedIds) === '["sf-9"]', 'deletedIds sai')
@@ -201,6 +200,35 @@ t('W10: wakiiApply add — epic id tùy chỉnh được dùng cho contains', ()
   assert(!doc.edges.some(e => e.from === 'epic' && e.to === 'sf-3'), 'vẫn hardcode from epic')
 })
 
+// W11 — opsSend serialization: request sau PHẢI chờ result của request trước
+// (single-slot story.ops.request — ghi sớm = đè mất request đang chờ worker)
+t('W11: opsSend — hàng đợi trong panel, không đè slot', async () => {
+  const writes = []
+  let resultValue = null
+  const callShim = (action, params) => {
+    if (action === 'storage.set') {
+      writes.push(params.value)
+      const v = params.value
+      // giả lập worker: 20ms sau request → result
+      setTimeout(() => { resultValue = { action: v.action, at: new Date().toISOString(), ok: true, output: 'done' } }, 20)
+      return Promise.resolve({ ok: true })
+    }
+    return Promise.resolve({ ok: true, value: resultValue }) // story.ops.result
+  }
+  const send = new Function('__call', OPS_HELPERS + '\nvar call = __call; return opsSend')(callShim)
+  const FAST = { intervalMs: 10, firstDelayMs: 10 } // test nhanh; panel dùng mặc định 2500/1500
+  // gửi A rồi B NGAY LẬP TỨC — B chỉ được ghi sau khi result của A tới
+  const pA = send({ action: 'act-a' }, 2000, FAST)
+  const pB = send({ action: 'act-b' }, 2000, FAST)
+  await new Promise(r => setTimeout(r, 5))
+  assert(writes.length === 1, 'B bị ghi đè lên A (writes=' + writes.length + ')')
+  assert(writes[0].action === 'act-a', 'request đầu sai: ' + writes[0].action)
+  await pA
+  await pB
+  assert(writes.length === 2, 'B không được ghi sau A (writes=' + writes.length + ')')
+  assert(writes[1].action === 'act-b', 'request sau sai: ' + writes[1].action)
+})
+
 console.log(results.join('\n'))
-console.log(fail ? 'WAKII-EDIT-FAIL ' + fail : 'WAKII-EDIT-PASS 10/10')
+console.log(fail ? 'WAKII-EDIT-FAIL ' + fail : 'WAKII-EDIT-PASS 11/11')
 process.exit(fail ? 1 : 0)

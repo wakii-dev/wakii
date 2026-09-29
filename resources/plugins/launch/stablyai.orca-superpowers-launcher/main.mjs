@@ -352,10 +352,12 @@ async function listStories(orca) {
       }
     }
     let stories = []
+    const skipped = [] // observability — file bị drop phải để lại dấu vết
     for (const f of await listDir('docs/superpowers/mindmaps')) {
       if (!f.endsWith('.wakii')) continue
       const meta = parseWakiiMeta(await readFile('docs/superpowers/mindmaps/' + f), f)
       if (meta && meta.linear) stories.push(meta)
+      else skipped.push({ file: 'mindmaps/' + f, reason: 'malformed hoặc bị fileRead clamp 256KB (schema cho tới 5MB)' })
     }
     // legacy brackets — shadowed bởi wakii cùng linear
     for (const f of await listDir('docs/superpowers/brackets')) {
@@ -373,9 +375,9 @@ async function listStories(orca) {
         key: 'story.list',
         value: { stories: [], currentLinear: null, currentFile: null,
                  error: 'no story files (.wakii/.md) in the active worktree',
-                 fetchedAt: new Date().toISOString() }
+                 skipped, fetchedAt: new Date().toISOString() }
       })
-      return { ok: true, count: 0 }
+      return { ok: true, count: 0, skipped: skipped.length }
     }
     // current story: linked issue of the active worktree — cwd PHẢI là focused
     // root (CLI resolve --current theo cwd; worker cwd = Orca app, sai worktree)
@@ -390,6 +392,7 @@ async function listStories(orca) {
       stories,
       currentLinear,
       currentFile: (stories.find(st => st.linear === currentLinear) || {}).file ?? null,
+      skipped,
       fetchedAt: new Date().toISOString()
     }
     await orca.host.call('storage.set', { key: 'story.list', value: list })
