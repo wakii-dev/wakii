@@ -54,26 +54,60 @@ t('G2: inPanelConfirm định nghĩa + wire vào tier-snap + node-delete', () =>
   assert(/inPanelConfirm\('Xoá ' \+ item\.id/.test(main), 'node-delete chưa wire inPanelConfirm')
 })
 
-// G3 — edgeRemoveApply test được, không confirm, markdown đúng
-t('G3: edgeRemoveApply — bỏ dep → markdown "Depends on: —"', () => {
+// G3 — edgeRemoveApply: legacy .md path (bracketApplyMd) + canonical .wakii
+// path (wakiiApply doc-mutation) — không confirm
+t('G3: edgeRemoveApply — bỏ dep (legacy md + canonical wakii)', () => {
   const fn = extractFn('edgeRemoveApply')
   assert(!/confirm\(/.test(fn), 'edgeRemoveApply chứa confirm')
-  const sfBlocks = extractFn('sfBlocks')
-  const setSegLine = extractFn('setSegLine')
-  const bracketApply = extractFn('bracketApply')
   const document = { getElementById: () => ({ textContent: '', style: {} }) }
-  let saved = null
-  const MD = '# Story: GH-84 Test\n\n## SF-1 Core\nTier: 0\nDepends on: —\nTasks: a\n\n## SF-2 UI\nTier: 1\nDepends on: SF-1\nTasks: c\n'
-  const run = new Function('document', 'graph', 'saveBracketMd',
-    sfBlocks + '\n' + setSegLine + '\n' + bracketApply + '\n' + fn + '\nreturn edgeRemoveApply'
-  )(document,
-    {
-      planMarkdown: MD,
-      branches: [{ id: 'SF-1', title: 'Core', tier: 0, deps: [], tasks: [] }, { id: 'SF-2', title: 'UI', tier: 1, deps: ['SF-1'], tasks: ['c'] }]
-    },
-    md => { saved = md })
-  run('SF-1', 'SF-2')
-  assert(saved && /Depends on: —/.test(saved), 'markdown sau remove thiếu "Depends on: —": ' + String(saved).match(/Depends on: [^\n]*/)?.[0])
+  // legacy: bracketApplyMd splice → markdown "Depends on: —"
+  {
+    const sfBlocks = extractFn('sfBlocks')
+    const setSegLine = extractFn('setSegLine')
+    const bracketApply = extractFn('bracketApply')
+    const bracketApplyMd = extractFn('bracketApplyMd')
+    let saved = null
+    const MD = '# Story: GH-84 Test\n\n## SF-1 Core\nTier: 0\nDepends on: —\nTasks: a\n\n## SF-2 UI\nTier: 1\nDepends on: SF-1\nTasks: c\n'
+    const run = new Function('document', 'graph', 'saveBracketMd',
+      sfBlocks + '\n' + setSegLine + '\n' + bracketApply + '\n' + bracketApplyMd + '\n' + fn + '\nreturn edgeRemoveApply'
+    )(document,
+      {
+        sourceKind: 'bracket', planMarkdown: MD,
+        branches: [{ id: 'SF-1', title: 'Core', tier: 0, deps: [], tasks: [] }, { id: 'SF-2', title: 'UI', tier: 1, deps: ['SF-1'], tasks: ['c'] }]
+      },
+      md => { saved = md })
+    run('SF-1', 'SF-2')
+    assert(saved && /Depends on: —/.test(saved), 'markdown sau remove thiếu "Depends on: —": ' + String(saved).match(/Depends on: [^\n]*/)?.[0])
+  }
+  // canonical: graph.doc edges — dep SF-1 bị bỏ khỏi SF-2 (stub closure dùng
+  // graph của test scope — không thấy param của Function body)
+  {
+    const toBranchId = extractFn('toBranchId')
+    const toNodeId = extractFn('toNodeId')
+    const docSfNode = extractFn('docSfNode')
+    const wakiiApply = extractFn('wakiiApply')
+    const DOC = { wakiiMindmap: 1, meta: { story: 'S', generatedAt: 'g0', generator: 'x' },
+      nodes: [
+        { id: 'epic', kind: 'epic', title: 'S', state: 'in-progress' },
+        { id: 'sf-1', kind: 'sf', title: 'Core', state: 'done', tier: 0 },
+        { id: 'sf-2', kind: 'sf', title: 'UI', state: 'pending', tier: 1 }
+      ],
+      edges: [
+        { from: 'epic', to: 'sf-1', rel: 'contains' },
+        { from: 'epic', to: 'sf-2', rel: 'contains' },
+        { from: 'sf-2', to: 'sf-1', rel: 'depends-on' }
+      ] }
+    const graphRef = { sourceKind: 'wakii', doc: DOC, children: [], docFile: 't.wakii' }
+    let saveCalled = false
+    const run = new Function('document', 'graph', 'wakiiSave',
+      toBranchId + '\n' + toNodeId + '\n' + docSfNode + '\n' + wakiiApply + '\nreturn wakiiApply'
+    )(document, graphRef, () => { saveCalled = true })
+    run({ id: 'SF-2', title: 'UI', tier: 1, deps: '', tasks: '' })
+    assert(saveCalled, 'wakiiSave không được gọi')
+    const depEdges = DOC.edges.filter(e => e.rel === 'depends-on')
+    assert(depEdges.length === 0, 'wakii remove vẫn còn depends-on: ' + JSON.stringify(depEdges))
+    assert(DOC.nodes.length === 3 && DOC.nodes.every(n => n.kind !== 'task'), 'task reconcile sai')
+  }
 })
 
 // G4 — edgeConnectApply không chứa confirm
