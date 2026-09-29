@@ -151,9 +151,10 @@ Mô tả story (feature lớn) — markdown
       <div style="display:flex; align-items:center; gap:6px; margin-top:8px;">
         <span style="font-size:10px; font-weight:700; letter-spacing:.8px; color:var(--muted-foreground,#888); text-transform:uppercase;">Bracket</span>
         <span style="flex:1;"></span>
-        <div id="bracket-mode" style="display:flex; gap:2px; border:1px solid var(--border,#444); border-radius:7px; padding:2px;" title="Kiểu hiển thị bracket — Tier ladder (mặc định) hoặc Canvas tương tác">
-          <button id="bracket-mode-tier" class="tab-btn active" type="button" style="padding:3px 10px; font-size:11px;">Tier</button>
-          <button id="bracket-mode-canvas" class="tab-btn" type="button" style="padding:3px 10px; font-size:11px;">Canvas</button>
+        <!-- canvas-only: toggle Tier/Canvas đã bỏ — mindmap là view duy nhất -->
+        <div id="bracket-mode" style="display:none;">
+          <button id="bracket-mode-tier" class="tab-btn" type="button">Tier</button>
+          <button id="bracket-mode-canvas" class="tab-btn active" type="button">Canvas</button>
         </div>
         <button id="story-add-node" class="btn" style="padding: 4px 8px;" title="Thêm SF node mới vào bracket (ghi .md qua worker)">＋</button>
         <button id="story-share" class="btn" style="padding: 4px 8px;" title="Share bracket: publish HTML diagram (tier ladder) lên Orca artifacts — link public tự copy">⤓</button>
@@ -5300,7 +5301,7 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
       // 'tier' = SVG ladder (mặc định, renderBracket) | 'canvas' = cytoscape
       // pan/zoom/drag + edge editing. Canvas positions là VIEW-ONLY (không ghi
       // bracket .md) — cấu trúc (deps/tier/title) vẫn qua bracketApply.
-      var bracketMode = 'tier'
+      var bracketMode = 'canvas' // canvas-only — toggle Tier đã bỏ khỏi UI
       var cyCanvas = null
       var TIER_COLORS = ['#6ba1f8', '#eab308', '#34d399', '#d946ef', '#f97316', '#22d3ee']
       // Canvas elements từ graph.branches: node = SF (id + title, màu theo tier),
