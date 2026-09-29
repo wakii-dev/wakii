@@ -5260,6 +5260,7 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
       function validWakiiDoc(doc) {
         return !!(doc && doc.wakiiMindmap === 1 && doc.meta
           && typeof doc.meta.story === 'string' && doc.meta.story
+          && typeof doc.meta.epic === 'string' && /^[A-Za-z]+-\d+$/.test(doc.meta.epic)
           && typeof doc.meta.generator === 'string'
           && typeof doc.meta.generatedAt === 'string'
           && Array.isArray(doc.nodes) && Array.isArray(doc.edges)
@@ -6022,14 +6023,33 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
           node.title = fields.title || node.title
           node.tier = fields.tier || 0
         } else {
+          // contains edge trỏ epic node THẬT của doc (id không phải lúc nào cũng 'epic')
+          var epicId = ((doc.nodes || []).find(n => n && n.kind === 'epic') || {}).id
+          if (!epicId) { var stE = document.getElementById('story-status'); if (stE) stE.textContent = 'doc thiếu epic node — không thêm được ' + fields.id; return }
           node = { id: nid, kind: 'sf', title: fields.title || fields.id, state: 'pending', tier: fields.tier || 0 }
           doc.nodes = doc.nodes || []
           doc.nodes.push(node)
           doc.edges = doc.edges || []
-          doc.edges.push({ from: 'epic', to: nid, rel: 'contains' })
+          doc.edges.push({ from: epicId, to: nid, rel: 'contains' })
         }
         // deps: thay toàn bộ depends-on edges đi ra từ sf này
         var depsList = (String(fields.deps || '').match(/SF-\d+/gi) || []).map(toNodeId).filter(d => d !== nid)
+        // cycle guard như bracket path — chặn trong form thay vì để validator
+        // từ chối CẢ save (mất edit). Thêm nid→d tạo vòng ⇔ nid reachable từ d
+        // theo deps CŨ (đi từ d; không expand deps cũ của nid — nó bị thay).
+        if (depsList.length) {
+          var depsMap = {}
+          ;(doc.edges || []).forEach(e => {
+            if (e && e.rel === 'depends-on') depsMap[e.from] = (depsMap[e.from] || []).concat([e.to])
+          })
+          for (var ci = 0; ci < depsList.length; ci++) {
+            if (dfsCheck(depsMap, depsList[ci], nid)) {
+              var stC = document.getElementById('story-status')
+              if (stC) stC.textContent = '⛔ chặn cycle: ' + fields.id + ' → ' + toBranchId(depsList[ci]) + ' tạo vòng — bỏ dep này'
+              return
+            }
+          }
+        }
         doc.edges = (doc.edges || []).filter(e => !(e && e.rel === 'depends-on' && e.from === nid))
         depsList.forEach(d => doc.edges.push({ from: nid, to: d, rel: 'depends-on' }))
         // tasks: reconcile task nodes vị trí (t-<n>-<k>) + contains edges

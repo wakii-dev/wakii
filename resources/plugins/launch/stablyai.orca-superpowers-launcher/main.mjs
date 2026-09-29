@@ -377,11 +377,12 @@ async function listStories(orca) {
       })
       return { ok: true, count: 0 }
     }
-    // current story: linked issue of the active worktree
+    // current story: linked issue of the active worktree — cwd PHẢI là focused
+    // root (CLI resolve --current theo cwd; worker cwd = Orca app, sai worktree)
     let currentLinear = null
     try {
       const { stdout } = await execFileAsync(orcaBin(), ['linear', 'issue', '--current', '--json'],
-        { timeout: 15000, maxBuffer: 4 * 1024 * 1024 })
+        { timeout: 15000, maxBuffer: 4 * 1024 * 1024, cwd: root || undefined })
       const parsed = JSON.parse(stdout)
       if (parsed?.ok) currentLinear = parsed.result?.issue?.identifier ?? null
     } catch { /* no linked issue */ }
@@ -446,6 +447,11 @@ async function loadFromBracketFile(orca, fileName) {
 // file; Linear only enriches states. planMarkdown: null — panel renders the doc.
 async function loadFromWakiiFile(orca, fileName) {
   try {
+    // guard như write path — read không được escape workspace qua fileName
+    if (typeof fileName !== 'string' || !fileName.endsWith('.wakii')
+        || fileName.includes('..') || fileName.includes('/') || fileName.includes('\\')) {
+      return { ok: false, error: 'tên file .wakii không hợp lệ: ' + String(fileName) }
+    }
     let full = null
     for (const r of await storyScanRoots()) {
       const cand = join(r, 'docs', 'superpowers', 'mindmaps', fileName)
@@ -667,7 +673,8 @@ export async function runKit(bin, args, { kitRoot } = {}) {
 // wakii-validate trước khi đụng file đích. Merge machine-owned state khi disk
 // tiến trước panel (absorb story-mindmap --update-state); disk có sf id lạ
 // (file bị regenerate dưới chân panel) → 'stale-doc' để panel reload.
-const WAKII_SAVE_MAX_BYTES = 250 * 1024 // transport storage cap 256KB — margin
+const WAKII_SAVE_MAX_BYTES = 200 * 1024 // storage cap 256KB trừ JSON-escape
+// overhead của pretty-print doc (mỗi newline/quote escape phình 10-25%)
 const WAKII_STATE_ENUM = new Set(['pending', 'in-progress', 'blocked', 'done', 'complete'])
 
 export async function saveWakiiStory(orca, fileName, content, baseGeneratedAt, deletedIds, deps = {}) {
@@ -678,7 +685,7 @@ export async function saveWakiiStory(orca, fileName, content, baseGeneratedAt, d
     }
     if (typeof content !== 'string' || !content.trim()) return { ok: false, error: 'content rỗng' }
     if (Buffer.byteLength(content, 'utf8') > WAKII_SAVE_MAX_BYTES) {
-      return { ok: false, error: 'wakii doc vượt transport cap 250KB — không round-trip qua panel được' }
+      return { ok: false, error: 'wakii doc vượt transport cap 200KB (storage 256KB trừ JSON-escape overhead) — không round-trip qua panel được' }
     }
     const delSet = new Set(Array.isArray(deletedIds) ? deletedIds.filter(x => typeof x === 'string') : [])
     let incoming = null

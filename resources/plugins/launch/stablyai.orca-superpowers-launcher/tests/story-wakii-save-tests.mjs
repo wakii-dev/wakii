@@ -128,9 +128,9 @@ await t('S6: guards — .. / \\/ ký tự + size cap', async () => {
     const r = await saveWakiiStory(orca, bad, ser(mkDoc('G1')), null, [], { roots: [root], runKit: validatorOk })
     assert(!r.ok, 'phải reject: ' + JSON.stringify(bad))
   }
-  const big = 'x'.repeat(251 * 1024)
+  const big = 'x'.repeat(210 * 1024)
   const r = await saveWakiiStory(orca, 'vi-1.wakii', big, null, [], { roots: [root], runKit: validatorOk })
-  assert(!r.ok && /250KB/.test(r.error), 'size cap không chặn')
+  assert(!r.ok && /200KB/.test(r.error), 'size cap không chặn: ' + r.error)
   const r2 = await saveWakiiStory(orca, 'vi-1.wakii', 'not json', null, [], { roots: [root], runKit: validatorOk })
   assert(!r2.ok && /JSON/.test(r2.error), 'JSON parse không chặn')
 })

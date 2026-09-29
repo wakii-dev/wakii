@@ -42,9 +42,10 @@ const HELPERS = [
   extractFn('toBranchId'), extractFn('toNodeId'), extractFn('parseWakiiDoc'),
   extractFn('validWakiiDoc'), extractFn('docSfNode'), extractFn('nextSfIdDoc'),
   extractFn('wakiiApply'), extractFn('wakiiDeleteNode'), extractFn('wakiiSave'),
-  extractFn('pollWakiiSaveResult')
+  extractFn('pollWakiiSaveResult'), extractFn('dfsCheck')
 ].join('\n')
 
+// status element GHI ĐƯỢC — cycle guard/epic-missing viết message vào đây
 const document = { getElementById: () => ({ textContent: '', style: {} }) }
 
 function mkDoc() {
@@ -175,6 +176,31 @@ t('W8: routing wrapper — wakii → wakiiApply, bracket → bracketApplyMd', ()
   assert(/function bracketDeleteNodeMd\(/.test(main), 'mất legacy bracketDeleteNodeMd')
 })
 
+// W9 — cycle guard trong wakiiApply: deps tạo vòng bị chặn TRƯỚC khi save
+t('W9: wakiiApply cycle — SF-1 dep SF-2 (sf-2 đang dep sf-1) → chặn, không save', () => {
+  const doc = mkDoc() // sf-2 depends-on sf-1 có sẵn
+  let saved = false
+  const graph = { sourceKind: 'wakii', doc, children: [], docFile: 'x.wakii' }
+  const apply = new Function('document', 'graph', 'curBracket', '__save', HELPERS + '\nwakiiSave = __save; return wakiiApply')(
+    document, graph, null, () => { saved = true })
+  apply({ id: 'SF-1', title: 'Core', tier: 0, deps: 'SF-2', tasks: '' })
+  assert(!saved, 'save không được chặn khi tạo cycle')
+  assert(!doc.edges.some(e => e.rel === 'depends-on' && e.from === 'sf-1'), 'edges bị thay dù cycle')
+})
+
+// W10 — contains edge trỏ epic node THẬT (id ≠ 'epic')
+t('W10: wakiiApply add — epic id tùy chỉnh được dùng cho contains', () => {
+  const doc = mkDoc()
+  doc.nodes[0].id = 'root-vi-1'
+  doc.edges = doc.edges.map(e => e.from === 'epic' ? { ...e, from: 'root-vi-1' } : e)
+  const graph = { sourceKind: 'wakii', doc, children: [], docFile: 'x.wakii' }
+  const apply = new Function('document', 'graph', 'curBracket', '__save', HELPERS + '\nwakiiSave = __save; return wakiiApply')(
+    document, graph, null, () => {})
+  apply({ id: 'SF-3', title: 'Mới', tier: 1, deps: '', tasks: '' })
+  assert(doc.edges.some(e => e.rel === 'contains' && e.from === 'root-vi-1' && e.to === 'sf-3'), 'contains không trỏ epic thật: ' + JSON.stringify(doc.edges.filter(e => e.to === 'sf-3')))
+  assert(!doc.edges.some(e => e.from === 'epic' && e.to === 'sf-3'), 'vẫn hardcode from epic')
+})
+
 console.log(results.join('\n'))
-console.log(fail ? 'WAKII-EDIT-FAIL ' + fail : 'WAKII-EDIT-PASS 8/8')
+console.log(fail ? 'WAKII-EDIT-FAIL ' + fail : 'WAKII-EDIT-PASS 10/10')
 process.exit(fail ? 1 : 0)
