@@ -229,7 +229,7 @@ async function sendToTerminal(orca, text, { terminalId } = {}) {
 // Fallback source: issues-with-children from Linear (no bracket file yet).
 
 import { readFile, readdir, writeFile, unlink } from 'node:fs/promises'
-import { join, basename } from 'node:path'
+import { join, basename, extname } from 'node:path'
 import { tmpdir } from 'node:os'
 
 async function worktreeRoot(orca) {
@@ -649,6 +649,29 @@ export function assertCapability(name, catalog = kitBinCatalog()) {
     error: `capability '${name}' không có trong kit.json provides[] (bin) — không dispatch. Kit cũ/thiếu entry: sửa manifest + cài lại kit.` }
 }
 
+// Windows không exec được shebang script (extensionless → ENOENT). `bash <file>`
+// cũng KHÔNG được: bash interpret file, shebang thành comment → JS/python vỡ
+// (thật: "line 2: syntax error near '('"). Sniff shebang, ghép đúng interpreter:
+// node/python → thẳng interpreter; bash/sh → Git bash (fallback Program Files).
+let winBashCache = null
+function winBashBin() {
+  if (winBashCache) return winBashCache
+  const pf = process.env['ProgramFiles'] || 'C:\\Program Files'
+  const cand = join(pf, 'Git', 'bin', 'bash.exe')
+  winBashCache = existsSync(cand) ? cand : 'bash'
+  return winBashCache
+}
+function kitSpawnArgv(binPath, args) {
+  if (process.platform !== 'win32') return [binPath, args]
+  if (extname(binPath)) return [binPath, args]
+  let first = ''
+  try { first = readFileSync(binPath, 'utf8').split('\n', 1)[0] || '' } catch { return [binPath, args] }
+  const m = first.match(/^#!\s*\S*?(?:env\s+)?(node|python3?|bash|sh)\b/)
+  if (!m) return [binPath, args]
+  if (m[1] === 'bash' || m[1] === 'sh') return [winBashBin(), [binPath, ...args]]
+  return [m[1], [binPath, ...args]] // node/python3 — resolve qua PATH
+}
+
 export async function runKit(bin, args, { kitRoot } = {}) {
   const advisory = recordKitRepeat(bin, args)
   const cap = assertCapability(bin, kitBinCatalog(kitRoot))
@@ -658,7 +681,8 @@ export async function runKit(bin, args, { kitRoot } = {}) {
     return advisory ? { ...cap, advisory } : cap
   }
   try {
-    const { stdout } = await execFileAsync(join(KIT_BIN, bin), args,
+    const [spawnBin, spawnArgs] = kitSpawnArgv(join(KIT_BIN, bin), args)
+    const { stdout } = await execFileAsync(spawnBin, spawnArgs,
       { timeout: 90000, maxBuffer: 2 * 1024 * 1024 })
     return advisory ? { ok: true, stdout, advisory } : { ok: true, stdout }
   } catch (err) {
