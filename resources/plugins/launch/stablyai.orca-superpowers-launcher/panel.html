@@ -6574,7 +6574,7 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
             ? 'CREATIVITY: CREATIVE — SF prompts ghi: spec là khởi điểm, được đề xuất hướng tốt hơn (giữ acceptance), ghi rationale audit.'
             : 'CREATIVITY: BALANCED — SF prompts ghi: khung cứng + chi tiết tự quyết hợp lý + flag quyết lớn.'
         var autoLine = autoComplete
-          ? '\nAUTO-HOÀN-THÀNH: ON — watchdog chạy KHÔNG GIỚI HẠN vòng tới STORY-COMPLETE (mọi SF Done + merged đích + Epic Done + dọn worktrees + mở PR story: push đích + `gh pr create --base main` theo pr-playbook, 1 PR/story; thiếu remote/gh auth → ghi READY-FOR-MANUAL-MERGE + lý do vào Epic audit comment, KHÔNG chặn) hoặc BLOCKED. Người dùng KHÔNG cần nhắn tiếp tục. 3 vòng không tiến triển → 1 resume thử → BLOCKED exit.'
+          ? '\nAUTO-HOÀN-THÀNH: ON — watchdog chạy KHÔNG GIỚI HẠN vòng tới STORY-COMPLETE (mọi SF Done + merged đích + Epic Done + dọn worktrees + mở PR story: push đích + `gh pr create --base wakii-dev` theo pr-playbook — story PR CHỈ target wakii-dev, KHÔNG dùng main, 1 PR/story; thiếu remote/gh auth → ghi READY-FOR-MANUAL-MERGE + lý do vào Epic audit comment, KHÔNG chặn) hoặc BLOCKED. Người dùng KHÔNG cần nhắn tiếp tục. 3 vòng không tiến triển → 1 resume thử → BLOCKED exit.'
           : '\nAUTO-HOÀN-THÀNH: OFF — watchdog max 10 vòng (kiểu cũ), người chủ động đôn tiếp.'
         var costLine = autoLine + '\nSF-COST SETTINGS: ' +
           (thinPlan ? 'SF-script ON — SF ≤4 tasks: bracket What/Tasks là plan mỏng, KHÔNG plan file riêng, bỏ plan-critic SF đó. ' : 'SF-script OFF. ') +
