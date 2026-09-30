@@ -1,0 +1,41 @@
+SF-1 Pipeline smoke verify (VSC-901) — test run
+Ngày: 2026-09-30 · Worktree: sf-1-pipeline-smoke · Nhánh: wakii-dev/sf-1-pipeline-smoke
+HEAD (code): 4b72d43fb4 (docs(story): VSC-901 pipeline smoke — .wakii + context pack sf-1 (CREATE))
+Fix giữa chừng: 39087d77aa (fix(kit): story-surface-lint — dedupe encoding/errors kwargs)
+
+tdd: skipped-tdd: SF verification-only — KHÔNG có code production mới (diff = 2 file
+artifacts docs); không có unit test để RED→GREEN. Acceptance kiểm bằng lệnh thật,
+evidence nguyên văn — proxy CLI-equivalent theo precedent FI-460 (pure CLI, không
+web port → Rule 0 browser N/A).
+
+═══ ACCEPTANCE 4/4 (lệnh > output nguyên văn) ═══
+
+1. Linear parenting:
+   $ orca linear list-issues --parent-id FI-44 --json
+   → đúng 1 child: FI-45 "[SF-1] Pipeline smoke verify" — PASS
+2. States:
+   $ orca linear issue FI-44 --json → state "In Progress" — PASS
+   $ orca linear issue FI-45 --json → state "In Progress" — PASS
+3. .wakii validate + backfill:
+   $ ~/.claude/bin/wakii-validate docs/superpowers/mindmaps/vsc901-pipeline-smoke.wakii
+   OK — 1 SF, 0 FAIL, 0 WARN (exit 0); sf-1 node linear: "FI-45" — PASS
+4. Worktree lineage (story-hub):
+   story-vsc901-pipeline-smoke @ refs/heads/story-vsc901-pipeline-smoke
+   sf-1-pipeline-smoke @ refs/heads/sf-1-pipeline-smoke
+   cả 2 tip = 4b72d43fb4 (SF fork từ nhánh đích) — PASS
+
+═══ Gates (lệnh > log; echo $?) ═══
+
+1. story-surface-lint wakii-dev → exit 0, RESULT: CLEAN
+   (commits=1 trên merge-base 14a8cab77b — TRƯỚC fix 39087d77aa: lint CRASH
+   SyntaxError "keyword argument repeated: encoding" từ commit 5e1b0e439f —
+   kit bug thật, fix riêng commit 39087d77aa trên sf branch)
+2. Review độc lập: code-reviewer agent trên 4b72d43fb4 → VERDICT: APPROVED
+   (0 P0, 0 P1, coverage 2/2 clean, CHECKLIST-4Q 4/4 PASS — diff thuần
+   JSON + Markdown, không code thực thi)
+3. Push: git push -u origin sf-1-pipeline-smoke → new branch + tracking — exit 0
+4. B4 merge state: sf tip (39087d77aa → 4b72d43fb4) merge-fast-forward vào
+   nhánh đích story-vsc901-pipeline-smoke @4b72d43fb4 (coordinator merge).
+
+Pipeline verdict: epic/SF/Linear/worktree/evidence end-to-end ĐẠT — 2 bug thật
+bắt được (worktree create silent partial success; surface-lint SyntaxError).
