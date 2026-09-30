@@ -112,6 +112,13 @@ docs/**
 # (bin đọc/ghi mỗi pass; track để backlog bền qua máy + audit được).
 !docs/superpowers/vscode-sync/
 !docs/superpowers/vscode-sync/**
+# Distributed bracket (FI-458/FI-51): bracket + context pack PHẢI đi qua git —
+# Linear issue tham chiếu context pack; bracket không qua git = claim/machine
+# state không tới được máy khác (distributed chết âm thầm).
+!docs/superpowers/brackets/
+!docs/superpowers/brackets/**
+!docs/superpowers/contexts/
+!docs/superpowers/contexts/**
 # ADE knowledge ADR phải track được — story-kb + agents đọc decision record
 # (GH-45/#38): ADR là source-of-truth, chỉ adr/** negate; data KB thực
 # (repos/, glossary.md, MOC.md) thuộc wakii-site — vẫn ignored.
