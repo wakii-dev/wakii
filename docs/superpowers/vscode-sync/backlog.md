@@ -53,3 +53,6 @@ pass và chạy **story-workflow đầy đủ** cho nó (epic + SF + coordinator
      Format: - [ ] VSC-XXX: <tên feature> — <mô tả ngắn>
      Backlog trống → automation sẽ noop đến khi có feature. -->
 - [x] VSC-901: TEST pipeline smoke — story-workflow smoke test cho automation vscode-sync — SF nhỏ, chỉ xác nhận pipeline epic/SF/Linear hoạt động, không đụng code production <!-- epic: FI-44 | staged: 2026-09-30T03:23:49Z | done: 2026-09-30 FI-45 Done, PR #125 chờ người merge -->
+- [S] VSC-902: Rich GitHub links trong markdown preview <!-- epic: FI-46 | staged: 2026-09-30T09:01:39Z -->
+- [ ] VSC-903: Session attention badge
+- [ ] VSC-904: Auto-mark session done khi PR merge
