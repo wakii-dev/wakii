@@ -21,6 +21,9 @@ pass và chạy **story-workflow đầy đủ** cho nó (epic + SF + coordinator
 ## Lệnh
 
 ```bash
+# THÊM FEATURE XONG → fire automation NGAY (không chờ cron 15')
+~/.claude/bin/vscode-sync-dispatch now
+
 # dispatch feature kế tiếp (automation tự gọi)
 ~/.claude/bin/vscode-sync-dispatch next
 
@@ -30,6 +33,15 @@ pass và chạy **story-workflow đầy đủ** cho nó (epic + SF + coordinator
 # xem trạng thái
 ~/.claude/bin/vscode-sync-dispatch status
 ```
+
+## Story live ở đâu?
+
+- Dòng `[~]` trong backlog có comment `<!-- epic: <ID> | wt: <worktree> -->` —
+  epic Linear + worktree của story đang chạy.
+- Trên Linear: epic chứa description ghi Project/Repo/Worktree/Backlog-id,
+  comment mốc (STORY-READY / SF launched / blocked / merged).
+- Lát nhanh: `orca worktree list --json` (worktree `sf-*` = SF đang chạy),
+  `~/.claude/bin/story-status` (tổng hợp state).
 
 ## Backlog
 

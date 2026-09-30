@@ -109,6 +109,55 @@ case "$CMD" in
     echo "EMPTY: không còn feature chờ trong backlog" >&2
     exit 3
     ;;
+  should-run)
+    # precheck cho automation: exit 0 CHỈ khi có việc — feature chờ [ ] hoặc
+    # story in-flight [~] cần supervise. Không việc → exit 1 (agent không bắn).
+    reconcile
+    if [ "$(count_state '- [~]')" -gt 0 ] || [ "$(count_state '- [ ]')" -gt 0 ]; then
+      exit 0
+    fi
+    exit 1
+    ;;
+  now)
+    # fire automation NGAY theo tên (không chờ cron): tìm id trong store rồi run
+    ORCA="${ORCA_BIN:-orca}"
+    AUTO_ID="$(env -u ORCA_USER_DATA_PATH "$ORCA" automations list --json 2>/dev/null | \
+      python -c "import json,sys
+d = json.load(sys.stdin)
+autos = d.get('automations') or d.get('result', {}).get('automations') or []
+for a in autos:
+    if a.get('name') == 'vscode-sync-pass':
+        print(a['id']); break" 2>/dev/null)"
+    [ -n "$AUTO_ID" ] || { echo "automation vscode-sync-pass chưa được cài" >&2; exit 2; }
+    echo "firing vscode-sync-pass ($AUTO_ID)…"
+    exec env -u ORCA_USER_DATA_PATH "$ORCA" automations run "$AUTO_ID"
+    ;;
+  annotate)
+    # annotate <VSC-XXX> <text> — nối thông tin (epic/worktree) vào comment của
+    # dòng [~] đang chạy, để backlog tự mô tả story sống ở đâu
+    fid="${2:-}"; text="${3:-}"
+    [ -n "$fid" ] && [ -n "$text" ] || { echo "usage: vscode-sync-dispatch annotate VSC-001 'epic: VSC-1 | wt: vsc-1-coord'" >&2; exit 2; }
+    n=1
+    local_in_fence=0
+    while IFS= read -r line; do
+      case "$line" in '```'*) local_in_fence=$((1 - local_in_fence)); n=$((n + 1)); continue ;; esac
+      if [ "$local_in_fence" -eq 0 ]; then
+        case "$line" in
+          '- [~]'*)
+            if printf '%s' "$line" | grep -qi "$fid"; then
+              base="$(printf '%s' "$line" | sed 's/ *<!-- .*//')"
+              rewrite_line "$n" "$base <!-- $text -->"
+              echo "annotated: $fid ← $text"
+              exit 0
+            fi
+            ;;
+        esac
+      fi
+      n=$((n + 1))
+    done < "$BACKLOG"
+    echo "không thấy dòng [~] chứa $fid" >&2
+    exit 2
+    ;;
   mark-done)
     epic_id="${2:-}"
     [ -n "$epic_id" ] || { echo "usage: vscode-sync-dispatch mark-done VSC-001" >&2; exit 2; }
@@ -140,7 +189,7 @@ case "$CMD" in
     exit 0
     ;;
   *)
-    echo "usage: vscode-sync-dispatch [next|mark-done <VSC-XXX>|status]" >&2
+    echo "usage: vscode-sync-dispatch [next|now|should-run|annotate <VSC-XXX> <text>|mark-done <VSC-XXX>|status]" >&2
     exit 2
     ;;
 esac
