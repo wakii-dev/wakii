@@ -1,3 +1,4 @@
+import { AGENT_JOURNAL_THREAD_SCOPE } from '../../../shared/agent-session-journal-types'
 // What an open chat receives, asserted at its subscriber rather than in the journal: a fresh
 // subscribe re-reads the journal and hides a write that never reached the readers already open.
 
@@ -11,7 +12,8 @@ import type {
   AgentJournalSubmission
 } from '../../../shared/agent-session-journal-types'
 import type { AgentSessionSubscribeEvent } from '../../../shared/agent-session-wire'
-import { AgentSessionRecordStore } from '../../runtime/agent-session-record-store'
+import type { AgentSessionRecordStore } from '../../runtime/agent-session-record-store'
+import { openTestAgentSessionRecordStore } from '../../runtime/agent-session-record-store-test-harness'
 import type { StructuredAgentSessionAdapter } from './structured-agent-session-adapter'
 import { StructuredAgentSessionHost } from './structured-agent-session-host'
 import {
@@ -23,6 +25,7 @@ import {
   hostTestOperationId,
   resetHostTestOperationIds
 } from './structured-agent-session-host-test-data'
+import { openTestJournalHostDatabase } from '../agent-session-journal/journal-host-database-test-support'
 
 const CALLER = { callerKey: 'client-1' }
 const EXIT_REASON = 'Claude Code is not signed in. Sign in with the Claude CLI'
@@ -93,6 +96,7 @@ function exitBeforeProof(): Promise<void> {
     fence: store.getRecord(SESSION)?.lease.runtimeFence ?? 0,
     acquisitionGeneration: `generation-${generation}`,
     reason: EXIT_REASON,
+    failure: { kind: 'providerExited', detail: { text: EXIT_REASON, audience: 'log' } },
     cause: 'unexpected-exit',
     startupUnproven: true
   })
@@ -122,7 +126,7 @@ beforeEach(async () => {
     acquisitionGeneration: `generation-${++generation}`,
     providerChildPhase: 'starting' as const
   }))
-  store = await AgentSessionRecordStore.open({ directory: join(root, 'store'), hostId: 'local' })
+  store = await openTestAgentSessionRecordStore(root)
   host = new StructuredAgentSessionHost({
     store,
     adapter: {
@@ -134,7 +138,7 @@ beforeEach(async () => {
       answerPrompt: vi.fn(async () => undefined),
       setOption: vi.fn(async () => undefined)
     },
-    journalRoot: root,
+    journalDatabase: openTestJournalHostDatabase(root),
     claimKeyId: 'key-1',
     mintSpawnToken: () => `spawn-${generation + 1}`,
     now: () => NOW
@@ -166,7 +170,7 @@ describe('an open chat receives every row its journal commits', () => {
     )
     // One row, however many of its writers reported the start.
     expect(pane.received().statusRows).toEqual([
-      expect.stringMatching(/stopped before it finished starting: .*not signed in/)
+      'Codex stopped before it finished starting. Send your message to try again.'
     ])
   })
 
@@ -175,7 +179,11 @@ describe('an open chat receives every row its journal commits', () => {
     const identity = { provider: 'orca' as const, clientMessageId: 'context-usage' }
     const body = { kind: 'status' as const, text: 'context usage answered after the turn' }
 
-    expect(providerSink().tryReviseResolvedItem?.(4_096, () => ({ identity, body }))).toEqual({
+    expect(
+      providerSink().tryReviseResolvedItem?.(4_096, () => ({ identity, body }), {
+        turnScope: AGENT_JOURNAL_THREAD_SCOPE
+      })
+    ).toEqual({
       accepted: true
     })
     await host.flushStreamedEvents(SESSION)
@@ -193,7 +201,10 @@ describe('an open chat receives every row its journal commits', () => {
     await journal.appendItem(
       { provider: 'orca', clientMessageId: 'host-note' },
       { kind: 'status', text: 'written by a writer that publishes nothing' },
-      { fence: store.getRecord(SESSION)?.lease.runtimeFence ?? 0 }
+      {
+        fence: store.getRecord(SESSION)?.lease.runtimeFence ?? 0,
+        turnScope: AGENT_JOURNAL_THREAD_SCOPE
+      }
     )
 
     expect(pane.received().statuses).toEqual(['written by a writer that publishes nothing'])
@@ -212,7 +223,8 @@ describe('an open chat receives each row once', () => {
 
     sink.appendItem(
       { provider: 'orca', clientMessageId: 'streamed' },
-      { kind: 'status', text: 'streamed row' }
+      { kind: 'status', text: 'streamed row' },
+      { turnScope: AGENT_JOURNAL_THREAD_SCOPE }
     )
     sink.publish()
     await host.flushStreamedEvents(SESSION)
@@ -232,7 +244,10 @@ describe('an open chat receives each row once', () => {
     await journal.appendItem(
       { provider: 'orca', clientMessageId: 'host-row' },
       { kind: 'status', text: 'host row' },
-      { fence: store.getRecord(SESSION)?.lease.runtimeFence ?? 0 }
+      {
+        fence: store.getRecord(SESSION)?.lease.runtimeFence ?? 0,
+        turnScope: AGENT_JOURNAL_THREAD_SCOPE
+      }
     )
     host['subscribers'].publish(SESSION, journal)
 

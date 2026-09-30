@@ -134,7 +134,7 @@ describe('buildAiVaultProjectContext', () => {
       repos: [repo],
       worktrees: [worktree],
       projectHostSetupProjection: makeProjection({
-        projects: [makeProject({ id: 'github:stablyai/orca', displayName: 'Canonical Orca' })],
+        projects: [makeProject({ id: 'github:stablyai/orca', displayName: 'Canonical Wakii' })],
         setups: [
           makeSetup({
             repoId: repo.id,
@@ -169,7 +169,7 @@ describe('buildAiVaultProjectContext', () => {
       repos: [repo],
       worktrees: [worktree],
       projectHostSetupProjection: makeProjection({
-        projects: [makeProject({ id: 'github:stablyai/orca', displayName: 'Canonical Orca' })],
+        projects: [makeProject({ id: 'github:stablyai/orca', displayName: 'Canonical Wakii' })],
         setups: [
           makeSetup({
             repoId: repo.id,

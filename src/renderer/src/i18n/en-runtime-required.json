@@ -452,6 +452,14 @@
       },
       "emulator": {
         "pane": {
+          "MobileEmulatorAgentSetupGuide": {
+            "installSkillPrompt": "Install the Orca CLI skill when you want agents to drive this simulator."
+          },
+          "MobileEmulatorAgentSetupGuideSteps": {
+            "21f5687c07": "Wakii CLI skill",
+            "5c59ea96ca": "Mobile emulator Wakii CLI skill setup",
+            "bff5341ac3": "Mobile emulator Wakii CLI skill install terminal"
+          },
           "emulator": {
             "device": {
               "frame": {
@@ -501,6 +509,15 @@
           "TasksAnimatedVisual": {
             "72f9e516a3": "pressing"
           },
+          "agent": {
+            "capability": {
+              "setup": {
+                "status": {
+                  "requiresOrcaDesktop": "Requires Orca Desktop"
+                }
+              }
+            }
+          },
           "agents": {
             "orchestration": {
               "orchestration": {
@@ -521,6 +538,21 @@
                 "coordinatorBeat1": "PR 1/2 ready",
                 "coordinatorBeat2": "PR 2/2 ready",
                 "coordinatorInitial": "Splitting auth rewrite into 2 PRs…"
+              }
+            }
+          },
+          "feature": {
+            "wall": {
+              "setup": {
+                "checklist": {
+                  "localized": {
+                    "copy": {
+                      "42525ba8a4": "Bring your key repos into Wakii so you can start agent work without hunting for folders.",
+                      "agentSkillsDescription": "Install the skills agents use to drive Orca's browser, control your computer, and coordinate multi-step work.",
+                      "agentSkillsName": "Give agents Orca skills"
+                    }
+                  }
+                }
               }
             }
           }
@@ -1166,6 +1198,7 @@
           "d420c43729": "Imported {{value0}} cookies from {{value1}}{{value2}} into {{value3}}."
         },
         "BrowserUsePane": {
+          "de9b2f32f3": "Enable",
           "e44c5d681e": "From"
         },
         "CliSection": {
@@ -1174,7 +1207,8 @@
           "8a9b784c60": "stale",
           "8d96213669": "remove",
           "cliSkillTerminalAria": "CLI skill install terminal",
-          "cliSkillTerminalTitle": "CLI skill setup"
+          "cliSkillTerminalTitle": "CLI skill setup",
+          "outsideOrcaDescription": "Orca terminals already have `orca`. Turn this on to use `orca` from other terminals outside Orca."
         },
         "CliSkillRuntimeSetup": {
           "04325573f8": "WSL",
@@ -1335,7 +1369,10 @@
         },
         "MobileEmulatorAgentControlRow": {
           "1861982430": "Failed to load CLI status.",
-          "cdeaed9e37": "Registered the Wakii CLI in PATH."
+          "67e19ee03c": "Wakii CLI skill",
+          "cdeaed9e37": "Registered the Wakii CLI in PATH.",
+          "d94ca6a623": "Enables agents to use Wakii CLI commands, including mobile emulator control.",
+          "ff4b7e65d6": "Let coding agents control the active mobile emulator with Wakii CLI commands."
         },
         "MobileEmulatorSdkStatus": {
           "536026130e": "Emulator SDKs",
@@ -1495,7 +1532,19 @@
           "a9359c8aa9": "Unknown error"
         },
         "SparsePresetSettingsSection": {
-          "68bbcd864a": "new"
+          "2d7d45e991": "Cancel",
+          "3b6f1abd3e": "e.g. web-only",
+          "3dfa765ca7": "{{value0}} directories will be saved.",
+          "623b4cf910": "Edit Preset",
+          "68bbcd864a": "new",
+          "694cc55ecb": "Saved directories are used when creating sparse worktrees for this repository.",
+          "a05bc9183f": "Save Preset",
+          "a6fcdd9e3c": "Name",
+          "b532b9c17d": "1 directory will be saved.",
+          "b9922ec194": "Cancel preset edit",
+          "c240a16f25": "Use repo-relative paths like packages/web or apps/api.",
+          "caf33029cc": "Directories",
+          "fde7ff2cc3": "packages/web shared/ui"
         },
         "SshTargetCard": {
           "47e94bd6ba": "connected",
@@ -1591,6 +1640,7 @@
             "2afd3b5858": "enable",
             "2e188c771c": "hide",
             "32836788b0": "generated title",
+            "34337ed5c7": "isolate",
             "48f84d10f1": "running",
             "52115d0d7c": "auto",
             "5784ae8c43": "rename",
@@ -1600,16 +1650,22 @@
             "66b6b82eb4": "awake",
             "6956646a1e": "title",
             "6984d4291a": "status",
+            "7e15b89f6e": "server",
             "845ad9128a": "power",
             "848dcae8d3": "generated",
             "8599603496": "done",
             "87fffe6c20": "show",
             "8a17fd6026": "stable",
             "966890236d": "name",
+            "9a84e65118": "agents overview",
+            "9f3becc4e8": "shared",
             "a6d594c17d": "install",
             "a79d266f71": "session",
             "afbf35be68": "stable session",
             "affbf130f6": "working",
+            "agent-trust-folder": "folder",
+            "agent-trust-trust": "trust",
+            "agent-trust-worktree": "worktree",
             "be59907510": "override",
             "be7ea3553b": "tab",
             "c1317fe641": "restore",
@@ -1622,6 +1678,7 @@
             "ef804b7337": "Agent Location",
             "f2932bf22b": "detected",
             "f412abbba5": "claude",
+            "ff457e1e7b": "daemon",
             "ff8de8a2ad": "display"
           }
         },
@@ -1847,7 +1904,8 @@
         "LinearAgentSkillSetupPrompt": {
           "missingBoth": "Wakii CLI and Linear agent skill are missing.",
           "panelDescription": "Install the host agent skill for linked Linear task handoffs.",
-          "panelTitle": "Linear agent skill"
+          "panelTitle": "Linear agent skill",
+          "toastInstallSkillDescription": "Install the Linear skill to enable your agents to read and edit Linear tasks through the Wakii CLI."
         },
         "LocalGitToolchainScanBanner": {
           "developerToolsBody": "Git needs Apple's developer tools. Run this in Terminal, then switch back to Wakii. It will check again automatically.",
@@ -1981,6 +2039,15 @@
                 "cea24c2b7d_other": "{{count}} workspaces removed",
                 "d42f1f14e0_one": "Retry {{count}} Branch",
                 "d42f1f14e0_other": "Retry {{count}} Branches"
+              }
+            }
+          }
+        },
+        "worktree": {
+          "card": {
+            "compact": {
+              "agents": {
+                "a128d7006b": "{{value0}} {{value1}} child {{value2}}"
               }
             }
           }
@@ -2153,7 +2220,18 @@
       },
       "sparse": {
         "SparseCheckoutPresetSelect": {
-          "bd6cec2056": "new"
+          "064c1e2d12": "Renderer UI",
+          "0e9ad9c798": "Directories",
+          "14952d451e": "{{value0}} directories",
+          "69c020eddc": "Edit preset",
+          "7c3275d307": "Edit {{value0}}",
+          "8b12c0850a": "Save",
+          "b3a500c623": "Name",
+          "bd6cec2056": "new",
+          "c7f9b3f0c1": "Off",
+          "ddbcaef7be": "src/renderer packages/ui",
+          "de8fce5854": "Cancel",
+          "e9283eb171": "1 directory"
         }
       },
       "stats": {
@@ -2455,10 +2533,10 @@
             "ptyAllocationLimit": "Your system cannot allocate any more pty devices. Close some terminals you are not using, in Orca or another program, then try again.",
             "terminalProcessLimit": "Your system cannot start another terminal process. Close unused terminals or quit unused processes, then try again."
           },
-          "TerminalRemoteRuntimeReconnectBanner": {
-            "retryingBody": "Orca will retry for up to one minute. This terminal will resume if the connection returns."
+          "TerminalSessionStateSaveFailureDialog": {
+            "678c780a2c": "Disk space is unavailable",
+            "e2fcf07c0d": "Wakii could not save this terminal session because local storage is full or not writable. Open the disk space analyzer to find workspace storage you can clean up."
           },
-
           "TerminalSshReconnectOverlay": {
             "connectButton": "Connect",
             "connectingButton": "Connecting..."
@@ -2562,10 +2640,6 @@
     },
     "hooks": {
       "useComposerState": {
-        "attachSkipMissing": "No longer at its original path.",
-        "attachSkipPermissionDenied": "Permission denied.",
-        "attachSkipSymlink": "Symbolic links cannot be attached.",
-        "attachSkipUnsupported": "Unsupported file type.",
         "dropPartiallyAttached_one": "{{failureCount}} of {{count}} item could not be attached.",
         "dropPartiallyAttached_other": "{{failureCount}} of {{count}} items could not be attached."
       },
@@ -2597,6 +2671,12 @@
             }
           }
         }
+      },
+      "dropSkipReason": {
+        "missing": "No longer at its original path.",
+        "permissionDenied": "Permission denied.",
+        "symlink": "Symbolic links cannot be attached.",
+        "unsupported": "Unsupported file type."
       },
       "terminal": {
         "shortcut": {
@@ -2649,6 +2729,72 @@
           "fa9299a66f": "Your new worktree is current, but local {{value0}} is {{value1}} {{value2}} behind. AI diffs may miss recent commits."
         }
       }
+    },
+    "viewer": {
+      "viewer-toolbar": {
+        "kindArea": {
+          "e5f6a7b8c9": "Area"
+        },
+        "kindEpic": {
+          "a1b2c3d4e5": "Epic"
+        },
+        "kindFile": {
+          "f6a7b8c9d0": "File"
+        },
+        "kindSf": {
+          "b2c3d4e5f6": "SF"
+        },
+        "kindStep": {
+          "d4e5f6a7b8": "Step"
+        },
+        "kindTask": {
+          "c3d4e5f6a7": "Task"
+        }
+      },
+      "wakii-side-panel": {
+        "kindArea": {
+          "3a4b5c6d7e": "Area"
+        },
+        "kindEpic": {
+          "9c0d1e2f3a": "Epic"
+        },
+        "kindFile": {
+          "4b5c6d7e8f": "File"
+        },
+        "kindSf": {
+          "0d1e2f3a4b": "SF"
+        },
+        "kindStep": {
+          "2f3a4b5c6d": "Step"
+        },
+        "kindTask": {
+          "1e2f3a4b5c": "Task"
+        },
+        "sectionAcceptance": {
+          "a0b1c2d3e4": "ACCEPTANCE"
+        },
+        "sectionNotes": {
+          "c2d3e4f5a6": "NOTES"
+        },
+        "sectionTests": {
+          "b1c2d3e4f5": "TESTS"
+        },
+        "stateBlocked": {
+          "8f9a0b1c2d": "Blocked"
+        },
+        "stateComplete": {
+          "9a0b1c2d3e": "Complete"
+        },
+        "stateDone": {
+          "5c6d7e8f9a": "Done"
+        },
+        "stateInProgress": {
+          "6d7e8f9a0b": "In progress"
+        },
+        "statePending": {
+          "7e8f9a0b1c": "Pending"
+        }
+      }
     }
   },
   "browser": {
@@ -2667,6 +2813,7 @@
       "ask": {
         "asked": "Asked:",
         "awaiting": "Awaiting user input:",
+        "awaitingUnnamed": "Awaiting user input",
         "questionCount": "{{value0}} questions"
       },
       "composer": {
@@ -2682,6 +2829,7 @@
           "title": "Start a chat with {{value0}}"
         },
         "error": {
+          "retryingSubtitle": "The transcript could not be read. Orca keeps trying to load it.",
           "subtitle": "The transcript could not be read. Toggle back to the terminal to keep working.",
           "title": "Could not load conversation"
         },
@@ -2696,7 +2844,6 @@
       },
       "status": {
         "responding": "Agent is responding",
-        "thinking": "Thinking",
         "toggleDetails": "Toggle turn details",
         "workedFor": "Worked for {{value0}}",
         "workingFor": "Working for {{value0}}"
@@ -2722,22 +2869,56 @@
         "usedOneSummary": "Used 1 tool"
       },
       "writeNotice": {
+        "agentRefused": "The agent turned this down.",
+        "agentStarting": "The agent is still starting.",
+        "answerFirst": "Answer the question or approval first.",
+        "backgroundTasksRunning": "Background tasks are still running.",
         "capacity": "Orca has received too many requests in the last day.",
+        "chatNotFound": "The Orca running this chat has no record of it.",
+        "clearUnfinished": "The last /clear didn't finish.",
+        "commandRunning": "A /compact or /clear is still running.",
+        "conversationCleared": "This conversation has been cleared.",
+        "goalsUnsupported": "This agent doesn't support goals.",
+        "historyUnavailable": "Orca couldn't open this chat's history right now.",
         "historyUnreadable": "Orca couldn't read this chat's saved history.",
+        "historyUnusable": "Unable to load this chat.",
+        "hostReconciling": "Orca is still checking on this chat after restarting.",
+        "messagesUnsettled": "A message you sent earlier hasn't been confirmed yet.",
         "notDoneAnswer": "Your answer was not sent.",
         "notDoneCommand": "The command didn't run.",
         "notDoneGoal": "The goal wasn't changed.",
         "notDoneOption": "The setting wasn't changed.",
+        "notDoneReadHistory": "This chat's history couldn't be loaded.",
         "notDoneSend": "Your message was not sent.",
         "notDoneStop": "The agent wasn't stopped.",
         "notDoneStopTask": "The background task wasn't stopped.",
         "notDoneStopTasks": "The background tasks weren't stopped.",
+        "openCurrentConversation": "Open the current conversation to continue.",
+        "optionRejected": "The agent didn't accept this setting.",
         "outcomeUnknown": "Orca couldn't confirm what happened. Check the chat.",
+        "ownerUnproven": "Orca hasn't confirmed that this chat's previous agent stopped.",
+        "promptPending": "The agent is waiting for an answer to a question or approval.",
         "questionChanged": "This question was already answered or has changed.",
+        "quitTerminalAgent": "Quit that agent to continue the chat here.",
+        "recordFailed": "Orca couldn't record it in this chat's history.",
+        "recordUnreadable": "Orca couldn't read this chat's saved state.",
+        "reopenChat": "Reopen the chat to check again.",
         "restartFailed": "The agent couldn't restart.",
+        "savedByNewerOrca": "Chats were saved by a newer Orca.",
+        "settleEarlierMessage": "Wait for your earlier message to go through, or retry it.",
+        "startNewChat": "Start a new chat to continue.",
+        "terminalAgentHoldsChat": "This chat is still open in a terminal agent.",
+        "tryAgain": "Try again.",
         "tryAgainComposerSend": "Send it again.",
+        "turnActive": "The agent is still responding.",
         "unreachable": "Orca couldn't reach the agent.",
-        "unsupported": "The Orca running this chat doesn't support this. Update Orca, then try again."
+        "unsupported": "The Orca running this chat doesn't support this. Update Orca, then try again.",
+        "updateOrcaToKeepUsing": "Update Orca to keep using them.",
+        "waitForBackgroundTasks": "Wait for the background tasks to finish.",
+        "waitForCommand": "Wait for the /compact or /clear to finish.",
+        "waitForStart": "Wait for the agent to finish starting.",
+        "waitForTurn": "Wait for the agent to finish responding, or stop it.",
+        "waitMoment": "Wait a moment."
       }
     },
     "onboarding": {
@@ -2797,6 +2978,13 @@
       "title": "Agent dashboard"
     }
   },
+  "fileExplorer": {
+    "root": {
+      "omittedFiles": "Files omitted by sparse checkout are not searched.",
+      "viewOnly": "Sparse checkout · View changes do not change checked-out files.",
+      "viewing": "Viewing: {{path}}"
+    }
+  },
   "menu": {
     "exploreOrca": "Explore Wakii"
   },
@@ -2824,6 +3012,17 @@
         "probeSkippedHosts": "Hosts routed without the connection check (Try anyway):",
         "title": "Browse through SSH workspace hosts"
       }
+    }
+  },
+  "sparsePreset": {
+    "description": "Choose the folders a new workspace checks out.",
+    "findPath": "Find a folder…",
+    "finishEditing": "Save or cancel the preset to continue creating your workspace.",
+    "pathHelp": "One repository-relative directory per line. Spaces within a path are preserved."
+  },
+  "terminal": {
+    "sessionSaveFailure": {
+      "unknown": "Orca could not save the terminal state. Try again. If this continues, share the Orca logs with support so we can identify the cause."
     }
   },
   "tray": {

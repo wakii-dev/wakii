@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { AGENT_STATUS_MAX_FIELD_LENGTH } from './agent-status-field-normalization'
+import { agentSessionFailureWords } from './agent-session-failure-words'
 import type { AgentJournalRenderItem, AgentJournalSubmission } from './agent-session-journal-types'
 import { parsePaneKey } from './stable-pane-id'
 import {
@@ -7,13 +8,13 @@ import {
   hasUnansweredStructuredAgentSessionDispatch,
   projectStructuredItemToNativeChat,
   projectStructuredItemsToNativeChat,
-  latestStructuredAgentSessionAssistantMessage,
   projectStructuredAgentSessionStatus,
   projectStructuredAgentSessionStatusState,
   projectStructuredAgentSessionStatusSummary,
   structuredAgentSessionPaneKey
 } from './structured-agent-session-projection'
 import { statusStructuredAgentSessionToolCall } from './structured-agent-session-live-turn'
+import { latestStructuredAgentSessionAssistantMessage } from './structured-agent-session-latest-request'
 
 function item(
   itemId: string,
@@ -100,6 +101,26 @@ describe('structured agent session status projection', () => {
     expect(projectStructuredItemToNativeChat(resolved)).toMatchObject({
       id: 'approval',
       role: 'system'
+    })
+  })
+
+  it("forwards a status row's failure fact and drops one this build cannot place", () => {
+    const words = agentSessionFailureWords(
+      {
+        kind: 'providerExited',
+        detail: { text: 'stderr tail', audience: 'log' }
+      },
+      { surface: 'row' }
+    )
+    expect(
+      projectStructuredItemToNativeChat(item('exit', 1, { kind: 'status', ...words }))?.blocks[0]
+    ).toEqual({ type: 'text', ...words })
+    const future = item('future', 2, { kind: 'status', text: 'Stopped.' })
+    // A newer host's kind reads as no fact, so the row keeps its text and nothing else.
+    Object.assign(future.body, { failure: { kind: 'futureKind' } })
+    expect(projectStructuredItemToNativeChat(future)?.blocks[0]).toEqual({
+      type: 'text',
+      text: 'Stopped.'
     })
   })
 
@@ -642,6 +663,18 @@ describe("producer linkage — a subagent's output never speaks for the parent",
     )
     expect(prose).toContain('looking')
     expect(prose).toContain('delegating')
+  })
+
+  it("keeps the child's output as the child's: the transcript message names its producer", () => {
+    // Rendering the child's rows is not enough; unless the message still says who
+    // wrote it, the transcript can only present it as the parent speaking.
+    const messages = projectStructuredItemsToNativeChat(items)
+    const byId = new Map(messages.map((message) => [message.id, message]))
+    expect(byId.get('child-prose')).toMatchObject({ agentId: 'task-1', producerKind: 'agent' })
+    expect(byId.get('child-grep')).toMatchObject({ agentId: 'task-1' })
+    // The session's own rows name no producer: absence is the claim that they are its own.
+    expect(byId.get('root-prose')).not.toHaveProperty('agentId')
+    expect(byId.get('root-task')).not.toHaveProperty('agentId')
   })
 
   it("falls back to nothing rather than a child's line when the parent said nothing", () => {

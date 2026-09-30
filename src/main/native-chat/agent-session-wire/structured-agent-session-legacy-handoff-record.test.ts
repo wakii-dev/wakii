@@ -10,7 +10,8 @@ import type { AgentSessionOwnerProbe } from '../../../shared/agent-session-lease
 import { computeAgentSessionPayloadFingerprint } from '../../../shared/agent-session-mutation-envelope'
 import type { PersistedAgentSessionLease } from '../../../shared/agent-session-legacy-handoff-lease'
 import { writeOlderBuildLease } from '../../runtime/agent-session-older-build-lease.test-fixture'
-import { AgentSessionRecordStore } from '../../runtime/agent-session-record-store'
+import type { AgentSessionRecordStore } from '../../runtime/agent-session-record-store'
+import { openTestAgentSessionRecordStore } from '../../runtime/agent-session-record-store-test-harness'
 import type { StructuredAgentSessionAdapter } from './structured-agent-session-adapter'
 import { StructuredAgentSessionHost } from './structured-agent-session-host'
 import {
@@ -22,11 +23,12 @@ import {
   hostTestOperationId,
   resetHostTestOperationIds
 } from './structured-agent-session-host-test-data'
+import { openTestJournalHostDatabase } from '../agent-session-journal/journal-host-database-test-support'
 
 const CALLER = { callerKey: 'client-1' }
 
 /** Delivery runs on its own serialized steps; under a loaded runner they take more than a second. */
-function eventually(assertion: () => void): Promise<void> {
+function eventually(assertion: () => void | Promise<void>): Promise<void> {
   return vi.waitFor(assertion, { timeout: 10_000 })
 }
 
@@ -50,7 +52,7 @@ function openHost(): void {
       answerPrompt: vi.fn(async () => undefined),
       setOption: vi.fn(async () => undefined)
     },
-    journalRoot: root,
+    journalDatabase: openTestJournalHostDatabase(root),
     claimKeyId: 'key-1',
     mintSpawnToken: () => `spawn-${acquire.mock.calls.length}`,
     now: () => NOW,
@@ -71,8 +73,8 @@ async function persistFromOlderBuild(lease: OlderBuildLease): Promise<void> {
   const attached = store.getRecord(SESSION)?.lease
   await host.flushAllStreamedEvents()
   // Over the attached owner: the older build's stage or terminal owner kept it from releasing.
-  await writeOlderBuildLease(join(root, 'store'), SESSION, { ...attached, ...lease })
-  store = await AgentSessionRecordStore.open({ directory: join(root, 'store'), hostId: 'local' })
+  await writeOlderBuildLease(root, SESSION, { ...attached, ...lease })
+  store = await openTestAgentSessionRecordStore(root)
   acquire.mockClear()
   openHost()
 }
@@ -83,15 +85,14 @@ async function delivered(text: string) {
   const sent = await send(text)
   expect(sent).toMatchObject({ ok: true })
   const clientMessageId = sent.ok ? sent.value.clientMessageId : ''
-  const submission = () =>
-    host
-      .journalSnapshot(SESSION)
-      .submissions.find((candidate) => candidate.clientMessageId === clientMessageId)
-  await eventually(() =>
-    expect(
-      submission()?.dispatchState !== 'pending' || submission()?.handedOverAt !== undefined
-    ).toBe(true)
-  )
+  const submission = async () =>
+    (await host.journalSnapshot(SESSION)).submissions.find(
+      (candidate) => candidate.clientMessageId === clientMessageId
+    )
+  await eventually(async () => {
+    const current = await submission()
+    expect(current?.dispatchState !== 'pending' || current?.handedOverAt !== undefined).toBe(true)
+  })
   return submission()
 }
 
@@ -130,7 +131,7 @@ beforeEach(async () => {
       observedAt: NOW
     }
   }))
-  store = await AgentSessionRecordStore.open({ directory: join(root, 'store'), hostId: 'local' })
+  store = await openTestAgentSessionRecordStore(root)
   openHost()
 })
 
@@ -245,19 +246,20 @@ describe('a record an older build left mid terminal handoff', () => {
       handoffStage: 'recovering'
     })
     // Sending and opening the chat both say what frees it: quitting that terminal agent. A send is
-    // accepted, then rejected by the start that cannot take the lease, and the chat's row says why.
+    // accepted, then rejected by the start that cannot take the lease, and the chat's row says why,
+    // worded from the refusal's details; only the live refusal names the process.
     const quitTerminal =
       'This chat is still open in a terminal agent (process 4242). Quit that agent to continue the chat here.'
     expect(await delivered('while the terminal still runs')).toMatchObject({
       dispatchState: 'rejected'
     })
     expect(
-      host
-        .journalSnapshot(SESSION)
-        .items.flatMap((item) =>
-          item.body.kind === 'status' && item.body.tone === 'error' ? [item.body.text] : []
-        )
-    ).toEqual([expect.stringContaining(quitTerminal)])
+      (await host.journalSnapshot(SESSION)).items.flatMap((item) =>
+        item.body.kind === 'status' && item.body.tone === 'error' ? [item.body.text] : []
+      )
+    ).toEqual([
+      "Codex couldn't restart. This chat is still open in a terminal agent. Quit that agent to continue the chat here."
+    ])
     const fence = store.getRecord(SESSION)?.lease.runtimeFence ?? null
     expect(await host.attach(CALLER, hostTestAttachParams(fence))).toMatchObject({
       ok: false,
@@ -267,9 +269,8 @@ describe('a record an older build left mid terminal handoff', () => {
     expect(stopOwnerProcess).not.toHaveBeenCalled()
     expect(acquire).not.toHaveBeenCalled()
 
-    // The user closes the terminal; the next open proves it gone and the chat takes over.
+    // The user closes the terminal; the next send's start proves it gone and the chat takes over.
     probe.mockResolvedValue({ outcome: 'pid-absent' })
-    await host.hold(SESSION, 'surface-1')
 
     expect(stopOwnerProcess).not.toHaveBeenCalled()
     expect(await delivered('after the terminal closed')).toMatchObject({

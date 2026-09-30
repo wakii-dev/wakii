@@ -8,6 +8,7 @@ import {
   structuredAgentSessionSendRequest,
   type StructuredAgentSessionOutboxEntry
 } from '../../../shared/structured-agent-session-outbox'
+import { agentSessionRefusalFailure } from '../../../shared/agent-session-write-failure'
 import { createStructuredAgentSessionOperationId } from '../../../shared/structured-agent-session-mutation'
 import {
   mutateStructuredAgentSessionLaunchPrompt,
@@ -111,12 +112,17 @@ async function dispatchStructuredLaunchPrompt(
       mutateEntry(entry, (current) =>
         requeueStructuredAgentSessionSendRefusal(
           current,
-          result.refusal.code,
+          agentSessionRefusalFailure(result.refusal),
           () => createStructuredAgentSessionOperationId(createBrowserUuid),
           entry.lastAttemptAt !== null
         )
       )
       return false
+    }
+    if ('queued' in result.value) {
+      // The host holds the draft; the outbox entry is spent.
+      mutateEntry(entry, () => null)
+      return true
     }
     const dispatchState = result.value.submission.dispatchState
     mutateEntry(entry, (current) =>

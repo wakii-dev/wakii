@@ -1,7 +1,9 @@
+import { refuse } from '../../../shared/agent-session-wire-refusals'
 import { settlePostAcquisitionAttachFailure } from './structured-agent-session-attach-failure'
 import {
   failedAcquisitionRefusal,
-  failedAcquisitionSettlement
+  failedAcquisitionSettlement,
+  preSpawnFailureInWords
 } from './structured-agent-session-failed-create-refusal'
 import type {
   StructuredAgentSessionAdapter,
@@ -46,7 +48,6 @@ import type { AgentSessionJournal } from '../agent-session-journal/journal-store
 export type AttachFlowInput = {
   store: AgentSessionRecordStore
   adapter: StructuredAgentSessionAdapter
-  journalRoot: string
   authority: AgentSessionAttachAuthority
   callerKey: string
   params: AgentSessionAttachParams
@@ -72,6 +73,9 @@ export type AttachFlowInput = {
   /** A failure after acquisition released the session's acquisition; `cause` is that failure and
    *  `rootGone` whether the release saw the provider root go. */
   onAcquisitionReleased?: (cause: unknown, verdict: { rootGone: boolean }) => void
+  /** The error an acquisition failed with, for a host-side reader of the provider's words; the
+   *  refusal never carries them. */
+  onAcquisitionFailed?: (error: unknown) => void
 }
 
 export async function performAttach(
@@ -80,10 +84,11 @@ export async function performAttach(
   const { params, store } = input
   const unsupported = (): AgentSessionMutationResult<AgentSessionAttachResult> => ({
     ok: false,
-    refusal: {
-      code: 'structured_agent_session_unsupported',
-      message: 'This execution host cannot create the requested structured agent session.'
-    }
+    refusal: refuse(
+      'structured_agent_session_unsupported',
+      { reason: 'hostUnsupported' },
+      'This execution host cannot create the requested structured agent session.'
+    )
   })
   const sessionId = params.envelope.sessionId
   const admitted = admitAttachOrRefuse(params)
@@ -172,6 +177,10 @@ export async function performAttach(
       acquiredOwner = true
     }
   } catch (error) {
+    const wording = {
+      record: reservedRecord ?? store.getRecord(sessionId),
+      newSession: !params.providerHandle
+    }
     const spawnToken = reservedRecord?.lease.reservedSpawnToken
     if (reservedRecord && spawnToken && !unsupportedReservationSettlementAttempted) {
       // Settle processless proof and failed operation atomically.
@@ -182,7 +191,7 @@ export async function performAttach(
           spawnToken,
           callerKey: input.callerKey,
           operationId: params.envelope.clientOperationId,
-          ...failedAcquisitionSettlement(error),
+          ...failedAcquisitionSettlement(error, wording),
           now: input.now()
         })
       } catch (settlementError) {
@@ -192,11 +201,18 @@ export async function performAttach(
         )
       }
     }
+    input.onAcquisitionFailed?.(error)
+    const failed = failedAcquisitionRefusal(error, wording)
+    const thrown = failed ? error : preSpawnFailureInWords(error, wording)
+    if (failed || thrown !== error) {
+      // The answer carries only its sentence, so what failed is kept here.
+      console.warn('[agent-session] provider start failed:', error)
+    }
     return (
-      failedAcquisitionRefusal(error) ?? {
+      failed ?? {
         ok: false,
         refusal: classifyStoreFailure(
-          error,
+          thrown,
           store.getRecord(sessionId)?.lease.runtimeFence ?? null,
           store.getRecord(sessionId)
         )
@@ -210,7 +226,6 @@ export async function performAttach(
     attached = await attachJournal({
       record,
       params,
-      journalRoot: input.journalRoot,
       adapter: input.adapter,
       openConversation: input.openConversation,
       providerHistoryWindow
@@ -282,6 +297,7 @@ async function settleUnsupportedReservation(
       outcome: {
         status: 'failed',
         code: 'structured_agent_session_unsupported',
+        details: { reason: 'hostUnsupported' },
         message: 'Structured session support changed before the provider could start.'
       },
       exitProof: 'processless',

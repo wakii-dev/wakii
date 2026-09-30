@@ -1,3 +1,5 @@
+import { useMemo } from 'react'
+import { useAppStore } from '@/store'
 import { basename, dirname } from '@/lib/path'
 import type { OpenFile } from '@/store/slices/editor/types/open-file'
 
@@ -38,4 +40,34 @@ export function selectOpenEditorsEntries(
         externalMutation: file.externalMutation ?? null
       }
     })
+}
+
+/** Slot wiring for the open-editors section: entries plus collapse/activate/close callbacks. */
+export function useFileExplorerOpenEditorsSlot(
+  openFiles: OpenFile[],
+  activeWorktreeId: string | null,
+  activeFileId: string | null
+) {
+  const setActiveFile = useAppStore((s) => s.setActiveFile)
+  const closeFile = useAppStore((s) => s.closeFile)
+  const openEditorsCollapsed = useAppStore((s) => s.openEditorsCollapsed)
+  const setOpenEditorsCollapsed = useAppStore((s) => s.setOpenEditorsCollapsed)
+  return useMemo(
+    () => ({
+      entries: selectOpenEditorsEntries(openFiles, activeWorktreeId, activeFileId),
+      collapsed: openEditorsCollapsed,
+      onToggleCollapsed: () => setOpenEditorsCollapsed(!openEditorsCollapsed),
+      onActivate: setActiveFile,
+      onClose: closeFile
+    }),
+    [
+      activeFileId,
+      activeWorktreeId,
+      closeFile,
+      openEditorsCollapsed,
+      openFiles,
+      setActiveFile,
+      setOpenEditorsCollapsed
+    ]
+  )
 }

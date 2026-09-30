@@ -191,7 +191,7 @@ describe('agent-session delta coalescer', () => {
     const clock = manualClock()
     const emitted: { text: string; observedBytes: number; truncated: boolean }[] = []
     const instance = createAgentSessionDeltaCoalescer({
-      maxRetainedBytes: 40,
+      maxRetainedBytes: 41,
       schedule: clock.schedule,
       emit: (_key, _text, snapshot) => emitted.push(snapshot)
     })

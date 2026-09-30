@@ -24,8 +24,11 @@ import {
   resetHostTestOperationIds
 } from '../../../native-chat/agent-session-wire/structured-agent-session-host-test-data'
 import { setStructuredAgentSessionHost } from '../../../native-chat/agent-session-wire/structured-agent-session-registry'
-import { AgentSessionRecordStore } from '../../agent-session-record-store'
-import { agentSessionStorePath } from '../../agent-session-record-store-file'
+import type { AgentSessionRecordStore } from '../../agent-session-record-store'
+import {
+  openTestAgentSessionRecordStore,
+  testAgentSessionStoreFilePath
+} from '../../agent-session-record-store-test-harness'
 import { OrcaRuntimeService } from '../../orca-runtime'
 import { RpcDispatcher } from '../dispatcher'
 import type { RpcDispatchStreamingOptions } from '../dispatcher-stream-options'
@@ -33,6 +36,7 @@ import { SESSION_TAB_METHODS } from './session-tabs'
 import { STRUCTURED_AGENT_SESSION_METHODS } from './structured-agent-session'
 import { commitStructuredAgentSessionCreate } from './structured-agent-session-create'
 import { closeStructuredAgentSessionChild } from '../../structured-agent-session-close'
+import { openTestJournalHostDatabase } from '../../../native-chat/agent-session-journal/journal-host-database-test-support'
 
 const WORKTREE = `id:${HOST_TEST_LOCATION.workspaceId}`
 const SOURCE_TAB = `structured-agent-session-${HOST_TEST_SESSION}`
@@ -86,14 +90,11 @@ function providerAdapter(): StructuredAgentSessionAdapter {
 }
 
 async function openHost(): Promise<void> {
-  store = await AgentSessionRecordStore.open({
-    directory: join(directory, 'store'),
-    hostId: 'local'
-  })
+  store = await openTestAgentSessionRecordStore(directory)
   host = new StructuredAgentSessionHost({
     store,
     adapter: providerAdapter(),
-    journalRoot: directory,
+    journalDatabase: openTestJournalHostDatabase(directory),
     claimKeyId: 'key',
     now: () => HOST_TEST_NOW,
     mintSpawnToken: () => `spawn-${acquisitions}`
@@ -293,7 +294,7 @@ describe('a chat tab across /clear', () => {
     await host.flushAllStreamedEvents()
 
     // An older build rewrites the file from what it read, which drops the table.
-    const file = agentSessionStorePath(join(directory, 'store'))
+    const file = testAgentSessionStoreFilePath(directory)
     const raw = JSON.parse(await readFile(file, 'utf-8'))
     expect(raw.sessionTabs).toHaveLength(2)
     delete raw.sessionTabs

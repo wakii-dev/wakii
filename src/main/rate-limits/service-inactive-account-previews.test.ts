@@ -39,6 +39,10 @@ vi.mock('./opencode-go-usage-source-selection', () => ({
   fetchOpenCodeGoUsage: vi.fn()
 }))
 
+vi.mock('./zcode-usage-fetcher', () => ({
+  fetchZcodeRateLimits: vi.fn()
+}))
+
 vi.mock('./minimax/minimax-fetcher', () => ({
   fetchMiniMaxRateLimits: vi.fn()
 }))
@@ -140,7 +144,6 @@ describe('RateLimitService', () => {
     expect(fetchCodexRateLimits).toHaveBeenCalledWith(
       expect.objectContaining({
         codexHomePath: wslCodexHome,
-        allowPtyFallback: false,
         signal: expect.any(AbortSignal)
       })
     )

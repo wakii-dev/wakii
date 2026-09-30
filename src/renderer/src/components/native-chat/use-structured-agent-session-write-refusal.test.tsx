@@ -115,6 +115,78 @@ describe('a chat write the host refused', () => {
     )
   })
 
+  it('words a refusal the host threw from its data, never the bare code it carries as its message', async () => {
+    mocks.call.mockImplementation((_target, method) =>
+      method === 'agentSession.options'
+        ? Promise.resolve(OPTIONS)
+        : Promise.reject(
+            new RuntimeRpcCallError({
+              id: 'request-1',
+              ok: false,
+              error: {
+                code: 'runtime_error',
+                message: 'agent_session_journal_unreadable',
+                data: {
+                  refusal: {
+                    code: 'agent_session_journal_unreadable',
+                    details: { reason: 'journalUnavailable' }
+                  }
+                }
+              },
+              _meta: { runtimeId: 'runtime-1' }
+            })
+          )
+    )
+    const { result } = renderHook(() =>
+      useStructuredAgentSession({
+        sessionId: 'session-1',
+        target: LOCAL_TARGET,
+        agent: 'claude',
+        isVisible: true
+      })
+    )
+
+    await act(async () => {
+      await expect(result.current.cancel('turn-1')).resolves.toBeNull()
+    })
+
+    expect(mocks.toastError).toHaveBeenCalledExactlyOnceWith(
+      "Orca couldn't open this chat's history right now. The agent wasn't stopped. Try again."
+    )
+  })
+
+  it('says to update Orca for a Stop refused on a journal a newer Orca wrote', async () => {
+    mocks.call.mockImplementation((_target, method) =>
+      method === 'agentSession.options'
+        ? Promise.resolve(OPTIONS)
+        : Promise.resolve({
+            ok: false,
+            // As the host answers it (pinned in `journal-open-failure.test.ts`).
+            refusal: {
+              code: 'agent_session_journal_unreadable',
+              message: 'Chats were saved by a newer Orca. Update Orca to keep using them.',
+              details: { reason: 'journalWrittenByNewerOrca' }
+            }
+          })
+    )
+    const { result } = renderHook(() =>
+      useStructuredAgentSession({
+        sessionId: 'session-1',
+        target: LOCAL_TARGET,
+        agent: 'claude',
+        isVisible: true
+      })
+    )
+
+    await act(async () => {
+      await expect(result.current.cancel('turn-1')).resolves.toBeNull()
+    })
+
+    expect(mocks.toastError).toHaveBeenCalledExactlyOnceWith(
+      "Chats were saved by a newer Orca. The agent wasn't stopped. Update Orca to keep using them."
+    )
+  })
+
   it('answers a refused conversation command inline, where the command was typed', async () => {
     mocks.call.mockImplementation((_target, method) =>
       method === 'agentSession.options'
@@ -146,5 +218,48 @@ describe('a chat write the host refused', () => {
 
     expect(mocks.toastError).not.toHaveBeenCalled()
     expect(result.current.error).toBeNull()
+  })
+
+  it('says the reason the host named, for a Stop and for a command', async () => {
+    mocks.call.mockImplementation((_target, method) =>
+      method === 'agentSession.options'
+        ? Promise.resolve(OPTIONS)
+        : Promise.resolve({
+            ok: false,
+            refusal:
+              method === 'agentSession.cancel'
+                ? {
+                    code: 'agent_session_conflict',
+                    message: 'The chat is still starting.',
+                    details: { reason: 'chatStarting' }
+                  }
+                : {
+                    code: 'agent_session_operation_invalid',
+                    message: 'Wait for the current turn to finish before using this command.',
+                    details: { reason: 'turnActive' }
+                  }
+          })
+    )
+    const { result } = renderHook(() =>
+      useStructuredAgentSession({
+        sessionId: 'session-1',
+        target: LOCAL_TARGET,
+        agent: 'claude',
+        isVisible: true
+      })
+    )
+
+    await act(async () => {
+      await expect(result.current.cancel('turn-1')).resolves.toBeNull()
+      await expect(result.current.runConversationCommand('compact')).resolves.toEqual({
+        accepted: false,
+        error:
+          "The agent is still responding. The command didn't run. Wait for the agent to finish responding, or stop it."
+      })
+    })
+
+    expect(mocks.toastError).toHaveBeenCalledWith(
+      "The agent is still starting. The agent wasn't stopped. Wait for the agent to finish starting."
+    )
   })
 })

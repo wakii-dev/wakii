@@ -16,9 +16,11 @@ import {
   agentSessionRefusalOperationState,
   type AgentSessionRefusalOperationState
 } from '../../../shared/agent-session-refusal-retry'
-import { AgentSessionRecordStore } from '../../runtime/agent-session-record-store'
+import type { AgentSessionRecordStore } from '../../runtime/agent-session-record-store'
+import { openTestAgentSessionRecordStore } from '../../runtime/agent-session-record-store-test-harness'
 import type { StructuredAgentSessionAdapter } from './structured-agent-session-adapter'
 import { StructuredAgentSessionHost } from './structured-agent-session-host'
+import { abandonStructuredAgentSessionHost } from './structured-agent-session-host-test-abandon'
 import {
   HOST_TEST_NOW as NOW,
   HOST_TEST_SESSION as SESSION,
@@ -26,6 +28,7 @@ import {
   hostTestAttachParams,
   hostTestMessage
 } from './structured-agent-session-host-test-data'
+import { openTestJournalHostDatabase } from '../agent-session-journal/journal-host-database-test-support'
 
 const CALLER = { callerKey: 'client-1' }
 const METHODS = ['agentSession.setOption', 'agentSession.send'] as const
@@ -56,10 +59,7 @@ function operationId(timestamp = NOW): string {
 
 async function createHarness(options: { attached?: boolean } = {}) {
   const root = await mkdtemp(join(tmpdir(), 'orca-refusal-oracle-'))
-  const store = await AgentSessionRecordStore.open({
-    directory: join(root, 'store'),
-    hostId: 'local'
-  })
+  const store = await openTestAgentSessionRecordStore(root)
   const setOption = vi.fn<StructuredAgentSessionAdapter['setOption']>(async () => undefined)
   const adapter: StructuredAgentSessionAdapter = {
     acquire: async ({ fence }) => ({
@@ -90,7 +90,7 @@ async function createHarness(options: { attached?: boolean } = {}) {
   const host = new StructuredAgentSessionHost({
     store,
     adapter,
-    journalRoot: root,
+    journalDatabase: openTestJournalHostDatabase(root),
     claimKeyId: 'key-1',
     mintSpawnToken: () => 'spawn-a',
     now: () => NOW
@@ -103,17 +103,9 @@ async function createHarness(options: { attached?: boolean } = {}) {
   return harness
 }
 
-async function abandonHost(host: StructuredAgentSessionHost): Promise<void> {
-  host['runtimeState'].stopLeaseRenewal()
-  host['holds'].dispose()
-  host['conversationDelivery'].loop.dispose()
-  await Promise.all([...host['sessions'].values()].map((session) => session.journal.close()))
-  host['sessions'].clear()
-}
-
 afterEach(async () => {
   const completed = harnesses.splice(0)
-  await Promise.all(completed.map(async ({ host }) => abandonHost(host)))
+  await Promise.all(completed.map(async ({ host }) => abandonStructuredAgentSessionHost(host)))
   await Promise.all(completed.map(async ({ root }) => rm(root, { recursive: true })))
 })
 

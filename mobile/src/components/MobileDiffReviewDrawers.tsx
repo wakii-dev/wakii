@@ -1,13 +1,13 @@
 import { useMemo } from 'react'
-import { KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from 'react-native'
+import { KeyboardAvoidingView, Pressable, Text, TextInput, View } from 'react-native'
 import { Check, Copy, FileText, Plus, Send, Trash2, X } from 'lucide-react-native'
 import type { DiffComment } from '../../../src/shared/diff-comment-types'
-import { useKeyboardAvoidingPadding } from '../platform/keyboard-occlusion'
 import { colors } from '../theme/mobile-theme'
 import type { ActionSheetAction } from './ActionSheetModal'
 import { ActionSheetContent } from './ActionSheetModal'
 import { ConfirmContent } from './ConfirmModal'
 import { KeyedBottomDrawer } from './keyed-bottom-drawer'
+import { AGENT_LAUNCH_STATUS_UNREADABLE_MESSAGE } from '../session/mobile-existing-agent-launch'
 import {
   mobileReviewCountLabel,
   type ComposerState,
@@ -16,6 +16,7 @@ import {
 import { reviewSheetKey, type ReviewSheet } from '../session/mobile-diff-review-sheets'
 import type { useMobileDiffReviewController } from '../session/use-mobile-diff-review-controller'
 import { mobileDiffReviewStyles as styles } from './mobile-diff-review-screen-styles'
+import { hostOs } from '../platform/host-os'
 
 type Props = {
   controller: ReturnType<typeof useMobileDiffReviewController>
@@ -110,7 +111,12 @@ function useSendActions(
       {
         label: 'New Agent Session',
         icon: Plus,
-        disabled: comments.length === 0,
+        disabled: comments.length === 0 || controller.agentLaunchAvailability !== 'available',
+        ...(controller.agentLaunchAvailability === 'update-required'
+          ? { hint: 'Update Orca on your computer' }
+          : controller.agentLaunchAvailability === 'unverified'
+            ? { hint: AGENT_LAUNCH_STATUS_UNREADABLE_MESSAGE }
+            : {}),
         skipAutoClose: true,
         onPress: () => void controller.createTerminalAndSend(comments)
       },
@@ -190,15 +196,8 @@ function sendSheetMessage(
 }
 
 function NoteComposerContent({ controller, composer }: Props & { composer: ComposerState }) {
-  // Zero on a phone, where `KeyboardAvoidingView` above already moved this; the page's own
-  // keyboard measurement where it cannot, because that view is driven by events RN Web never
-  // sends. Padding rather than a second avoiding view: the drawer owns the position.
-  const keyboardPadding = useKeyboardAvoidingPadding()
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={keyboardPadding > 0 ? { paddingBottom: keyboardPadding } : undefined}
-    >
+    <KeyboardAvoidingView behavior={hostOs() === 'ios' ? 'padding' : undefined}>
       <View style={styles.composerHeader}>
         <View>
           <Text style={styles.drawerTitle}>

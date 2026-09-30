@@ -11,8 +11,8 @@ const getLocalizedFeatureWallSetupChecklistCopyById = createLocalizedCatalog(
   (): Record<FeatureWallSetupStepId, LocalizedFeatureWallSetupChecklistCopy> => ({
     'two-worktrees': {
       name: translate(
-        'auto.components.feature.wall.feature.wall.setup.checklist.localized.copy.ec0a363633',
-        'Multi-task'
+        'auto.components.feature.wall.feature.wall.setup.checklist.localized.copy.workOnTwoTasks',
+        'Work on two tasks at once'
       ),
       description: translate(
         'auto.components.feature.wall.feature.wall.setup.checklist.localized.copy.62bac8f43c',
@@ -51,12 +51,12 @@ const getLocalizedFeatureWallSetupChecklistCopyById = createLocalizedCatalog(
     },
     'agent-capabilities': {
       name: translate(
-        'auto.components.feature.wall.feature.wall.setup.checklist.localized.copy.fee5557b02',
-        'Enable Wakii CLI'
+        'auto.components.feature.wall.feature.wall.setup.checklist.localized.copy.agentSkillsName',
+        'Give agents Wakii skills'
       ),
       description: translate(
-        'auto.components.feature.wall.feature.wall.setup.checklist.localized.copy.7bcb4097fa',
-        'Register the Wakii shell command and install agent skills for browser, computer, and orchestration workflows.'
+        'auto.components.feature.wall.feature.wall.setup.checklist.localized.copy.agentSkillsDescription',
+        "Install the skills agents use to drive Wakii's browser, control your computer, and coordinate multi-step work."
       )
     },
     'task-sources': {
@@ -86,7 +86,7 @@ const getLocalizedFeatureWallSetupChecklistCopyById = createLocalizedCatalog(
       ),
       description: translate(
         'auto.components.feature.wall.feature.wall.setup.checklist.localized.copy.42525ba8a4',
-        'Bring your key repos into Wakii so you can start agent work without hunting for folders.'
+        'Bring your key repos into Orca so you can start agent work without hunting for folders.'
       )
     }
   })

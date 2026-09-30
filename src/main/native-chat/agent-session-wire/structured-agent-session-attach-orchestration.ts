@@ -1,5 +1,5 @@
+import { agentSessionFailureFact } from '../../../shared/agent-session-failure'
 import { recoverStructuredRewind } from './structured-rewind-recovery'
-import { recoverInterruptedCompaction } from './structured-compaction-recovery'
 // The host's attach, lifted out of the host class.
 //
 // Attach is the one operation that touches every collaborator the host owns — the lease
@@ -14,7 +14,7 @@ import type {
   AgentSessionTurnActivity
 } from '../../../shared/agent-session-wire'
 import type { AgentSessionAttachParams } from './structured-agent-session-attach'
-import { performAttach } from './structured-agent-session-attach-flow'
+import { performAttach, type AttachFlowInput } from './structured-agent-session-attach-flow'
 import { stampFailedCreateOwnerVerdict } from './structured-agent-session-failed-create-refusal'
 import {
   pinnedAgentSessionLaunchArgs,
@@ -22,6 +22,7 @@ import {
 } from './structured-agent-session-launch-env'
 import { refuseAgentSessionMutation } from './structured-agent-session-mutation-admission'
 import { settleStaleStructuredAgentSessionState } from './structured-agent-session-dead-generation-settlement'
+import { structuredAgentSessionFailureWordsContext } from './structured-agent-session-send-preparation'
 import type { StructuredAgentSessionAttachContext } from './structured-agent-session-attach-context'
 import type {
   StructuredAgentSessionProviderChild,
@@ -42,17 +43,18 @@ import {
 } from '../../observability/agent-session-instrumentation'
 
 export type StructuredAgentSessionAttachOptions = {
-  /** Provider-exit recovery: refuses once the ticket the restart was issued for is stale. */
-  admitRecoveryTicket?: () => boolean
   recordPhase?: AgentSessionCreatePhaseRecorder
+  onAcquisitionFailed?: AttachFlowInput['onAcquisitionFailed']
+  /** The queued message a start is for; see `StructuredAgentSessionProviderChild.startedFor`. */
+  startedFor?: string
 }
 
 /**
  * The attach itself, for a caller already inside the session's serialize.
  *
- * That is every caller that has to know what the session looks like RIGHT NOW: a hold, a send
- * making sure it has an owner, provider-exit recovery. They run their
- * check and this attach in one serialized step, so "the session has no child" is still true when
+ * That is every caller that has to know what the session looks like RIGHT NOW: the delivery loop,
+ * and an operation that needs the provider. They run their check and this attach in one serialized
+ * step, so "the session has no child" is still true when
  * the attach starts. `attachStructuredAgentSession` is this under `serialize`, for a client.
  */
 export function attachStructuredAgentSessionUnderSerialize(
@@ -105,12 +107,6 @@ async function runAttach(
   const fenceBefore = context.sessions.has(sessionId)
     ? structuredAgentSessionConversationFence(context.deps.store, sessionId)
     : null
-  if (options.admitRecoveryTicket && !options.admitRecoveryTicket()) {
-    return refuseAgentSessionMutation({
-      code: 'agent_session_checkpoint_stale',
-      message: 'The provider-exit recovery ticket is no longer current.'
-    })
-  }
   const unreconciled = await withAgentSessionCreatePhase('reconcile_leases', recordPhase, () =>
     context.reconcileLeases(sessionId)
   )
@@ -129,7 +125,8 @@ async function runAttach(
   const attemptSink = context.runtimeState.mintEventSink(sessionId)
   // Read before the reserve clears it: how the previous generation ended decides how whatever it
   // left running is settled.
-  const priorDeathEvidence = context.deps.store.getRecord(sessionId)?.lease.deathEvidence ?? null
+  const priorRecord = context.deps.store.getRecord(sessionId)
+  const priorDeathEvidence = priorRecord?.lease.deathEvidence ?? null
   const attempt: { candidate: AttachCandidate | null; committed: boolean } = {
     candidate: null,
     committed: false
@@ -138,7 +135,6 @@ async function runAttach(
     const attached = await performAttach({
       store: context.deps.store,
       adapter: context.deps.adapter,
-      journalRoot: context.deps.journalRoot,
       eventSink: attemptSink.sink,
       // The superseded child's writes settle into its own journal before a new child starts.
       onAcquiring: async () => {
@@ -159,6 +155,7 @@ async function runAttach(
       params,
       now: () => context.now(),
       recordPhase,
+      ...(options.onAcquisitionFailed ? { onAcquisitionFailed: options.onAcquisitionFailed } : {}),
       openConversation: async (record) => {
         const conversation = await context.openConversation(record.sessionId, {
           acquisition: true
@@ -174,6 +171,7 @@ async function runAttach(
       onAttached: async (attached, acquisitionGeneration, acquiredOwner, providerChildPhase) => {
         const fence = structuredAgentSessionConversationFence(context.deps.store, sessionId)
         const current = context.sessions.get(sessionId)?.child ?? null
+        const startedFor = acquiredOwner ? options.startedFor : current?.startedFor
         // A re-attach to a live child keeps the sink that child already writes through.
         const eventSink = acquiredOwner
           ? attemptSink
@@ -185,7 +183,8 @@ async function runAttach(
             sessionId,
             fence,
             acquisitionGeneration,
-            deathEvidence: priorDeathEvidence
+            deathEvidence: priorDeathEvidence,
+            failureTextContext: structuredAgentSessionFailureWordsContext(priorRecord)
           })
         }
         await bindAndDrain(eventSink, attached.journal, fence, (activity) =>
@@ -196,8 +195,9 @@ async function runAttach(
           child: {
             generation: acquisitionGeneration ?? current?.generation ?? null,
             fence,
-            // A re-attach to a live child keeps what that child already proved.
-            phase: acquiredOwner ? providerChildPhase : (current?.phase ?? 'ready')
+            // A re-attach to a live child keeps what that child already proved, and its cause.
+            phase: acquiredOwner ? providerChildPhase : (current?.phase ?? 'ready'),
+            ...(startedFor === undefined ? {} : { startedFor })
           }
         }
         await recoverStructuredRewind(
@@ -208,7 +208,6 @@ async function runAttach(
           context.deps.adapter,
           context.now
         )
-        await recoverInterruptedCompaction(context.deps.store, sessionId, attached.journal, fence)
         if (fenceBefore !== null && fence !== fenceBefore) {
           context.subscribers.snapshot(sessionId, attached.journal, fence)
         } else {
@@ -253,6 +252,8 @@ function endReleasedChild(
       fence: child.fence,
       cause: 'attach-failed',
       reason: cause instanceof Error ? cause.message : String(cause),
+      // Orca failed to attach; the provider said nothing.
+      failure: agentSessionFailureFact('hostFault'),
       duringStartup: child.phase === 'starting',
       ...verdict
     })

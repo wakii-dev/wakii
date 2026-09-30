@@ -9,7 +9,8 @@ import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vite
 import { computeAgentSessionPayloadFingerprint } from '../../../shared/agent-session-mutation-envelope'
 import type { AgentSessionMutationEnvelope } from '../../../shared/agent-session-wire'
 import type * as DurableFileWrite from '../../durable-file-write'
-import { AgentSessionRecordStore } from '../../runtime/agent-session-record-store'
+import type { AgentSessionRecordStore } from '../../runtime/agent-session-record-store'
+import { openTestAgentSessionRecordStore } from '../../runtime/agent-session-record-store-test-harness'
 import type {
   AgentSessionDispatchOutcome,
   StructuredAgentSessionAdapter
@@ -24,6 +25,7 @@ import {
   hostTestOperationId,
   resetHostTestOperationIds
 } from './structured-agent-session-host-test-data'
+import { openTestJournalHostDatabase } from '../agent-session-journal/journal-host-database-test-support'
 
 const CALLER = { callerKey: 'client-1' }
 
@@ -108,11 +110,11 @@ beforeEach(async () => {
   }))
   releaseAcquisition = vi.fn(async () => true)
   dispatch = vi.fn(async () => accepted())
-  store = await AgentSessionRecordStore.open({ directory: join(root, 'store'), hostId: 'local' })
+  store = await openTestAgentSessionRecordStore(root)
   host = new StructuredAgentSessionHost({
     store,
     adapter: adapter(),
-    journalRoot: root,
+    journalDatabase: openTestJournalHostDatabase(root),
     claimKeyId: 'key-1',
     mintSpawnToken: () => 'spawn-a',
     now: () => NOW
@@ -125,6 +127,11 @@ afterEach(async () => {
   await rm(root, { recursive: true, force: true })
 })
 
+/** The host starting the agent with no message to deliver, as an operation that needs it does. */
+function startAgent(): Promise<unknown> {
+  return host['serialize'](SESSION, () => host['mutationContext']().ensureAgent(SESSION))
+}
+
 describe('settled attach retry', () => {
   it('settles a post-acquisition journal failure and retries without a restart', async () => {
     const historyFilePath = vi
@@ -134,7 +141,7 @@ describe('settled attach retry', () => {
     host = new StructuredAgentSessionHost({
       store,
       adapter: { ...adapter(), historyFilePath },
-      journalRoot: root,
+      journalDatabase: openTestJournalHostDatabase(root),
       claimKeyId: 'key-1',
       mintSpawnToken: () => 'spawn-a',
       now: () => NOW
@@ -191,7 +198,7 @@ describe('settled attach retry', () => {
     host = new StructuredAgentSessionHost({
       store,
       adapter: adapter(),
-      journalRoot: root,
+      journalDatabase: openTestJournalHostDatabase(root),
       claimKeyId: 'key-1',
       mintSpawnToken,
       now: () => NOW
@@ -235,7 +242,7 @@ describe('settled attach retry', () => {
     host = new StructuredAgentSessionHost({
       store,
       adapter: adapter(),
-      journalRoot: root,
+      journalDatabase: openTestJournalHostDatabase(root),
       claimKeyId: 'key-1',
       mintSpawnToken,
       // A host that cannot read another process's environment, so no scan can prove anything.
@@ -261,11 +268,11 @@ describe('settled attach retry', () => {
     })
 
     await host.flushAllStreamedEvents()
-    store = await AgentSessionRecordStore.open({ directory: join(root, 'store'), hostId: 'local' })
+    store = await openTestAgentSessionRecordStore(root)
     host = new StructuredAgentSessionHost({
       store,
       adapter: adapter(),
-      journalRoot: root,
+      journalDatabase: openTestJournalHostDatabase(root),
       claimKeyId: 'key-1',
       mintSpawnToken,
       // A host that cannot read another process's environment, so no scan can prove anything.
@@ -318,18 +325,18 @@ describe('settled attach retry', () => {
     await vi.waitFor(() => expect(dispatch).toHaveBeenCalledTimes(1))
 
     await host.flushAllStreamedEvents()
-    store = await AgentSessionRecordStore.open({ directory: join(root, 'store'), hostId: 'local' })
+    store = await openTestAgentSessionRecordStore(root)
     host = new StructuredAgentSessionHost({
       store,
       adapter: adapter(),
-      journalRoot: root,
+      journalDatabase: openTestJournalHostDatabase(root),
       claimKeyId: 'key-1',
       mintSpawnToken: () => 'spawn-restarted',
       probeOwner: async () => ({ outcome: 'pid-absent' }),
       now: () => NOW
     })
     await host.restoreReadableSessions()
-    await host.hold(SESSION, 'desktop-chat:restart')
+    await startAgent()
     expect(store.getRecord(SESSION)?.lease).toMatchObject({
       claimStatus: 'live',
       handoffStage: null,
@@ -346,7 +353,7 @@ describe('settled attach retry', () => {
       throw new Error(`unexpected restored send refusal: ${sent.refusal.message}`)
     }
     await vi.waitFor(() => expect(dispatch).toHaveBeenCalledTimes(2))
-    const restoredHistory = host.history({ sessionId: SESSION, direction: 'tail' })
+    const restoredHistory = await host.history({ sessionId: SESSION, direction: 'tail' })
     if (!restoredHistory.ok) {
       throw new Error(`unexpected restored history reset: ${restoredHistory.reset}`)
     }
@@ -378,7 +385,10 @@ describe('settled attach retry', () => {
 
     await expect(host.attach(CALLER, hostTestAttachParams(null))).resolves.toMatchObject({
       ok: false,
-      refusal: { message: 'resume rejected', ownerVerdict: 'exited' }
+      refusal: {
+        message: "Codex couldn't restart. Send your message to try again.",
+        ownerVerdict: 'exited'
+      }
     })
 
     expect(releaseAcquisition).toHaveBeenCalledTimes(1)

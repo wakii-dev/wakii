@@ -4,6 +4,8 @@ import type {
   AgentSessionHistoryResult
 } from '../../../shared/agent-session-wire'
 import { readStructuredAgentSessionHistoryResult } from './structured-agent-session-history-result'
+import { tryReadQueuePublication } from './structured-agent-session-queued-publication'
+import type { AgentSessionHistoryScope } from './agent-session-history-page'
 import type {
   AgentSessionSubscribers,
   AgentSessionSubscribeInput
@@ -19,32 +21,48 @@ export class StructuredAgentSessionBackgroundTaskChannel {
     private readonly deps: StructuredAgentSessionHostDeps,
     private readonly sessions: Map<string, StructuredAgentSessionHostSession>,
     private readonly subscribers: AgentSessionSubscribers,
-    private readonly requireSession: (sessionId: string) => StructuredAgentSessionHostSession,
+    /** The host's accessor: opens a conversation at rest, and never starts an agent. */
+    private readonly conversation: (
+      sessionId: string
+    ) => Promise<StructuredAgentSessionHostSession>,
     /** Task edges change the status summary too; the feed's equality check
      *  keeps a no-op re-projection from reaching subscribers. */
     private readonly onPublished: (sessionId: string) => void
   ) {}
 
-  history(request: AgentSessionHistoryRequest): AgentSessionHistoryResult {
+  /** `scope` is for in-process readers; a wire request reads every agent's rows. */
+  async history(
+    request: AgentSessionHistoryRequest,
+    scope?: AgentSessionHistoryScope
+  ): Promise<AgentSessionHistoryResult> {
+    const journal = (await this.conversation(request.sessionId)).journal
     const result = readStructuredAgentSessionHistoryResult({
-      journal: this.requireSession(request.sessionId).journal,
+      journal,
       record: this.deps.store.getRecord(request.sessionId),
-      request
+      request,
+      scope
     })
     const backgroundTasks = this.state(request.sessionId)
+    const queue = tryReadQueuePublication(journal)
     const hostNow = this.deps.now?.() ?? Date.now()
     return {
       ...result,
       page: {
         ...result.page,
         hostNow,
+        // A stale history answer never replaces newer live subscription state;
+        // the client's reducer keeps live-over-history precedence.
+        ...(queue !== undefined
+          ? { queuedMessages: queue.queuedMessages, queuePause: queue.queuePause }
+          : {}),
         ...(backgroundTasks !== undefined ? { backgroundTasks } : {})
       }
     }
   }
 
-  subscribe(input: AgentSessionSubscribeInput): () => void {
-    const session = this.requireSession(input.sessionId)
+  /** Resolves once the conversation is open and the subscriber holds its opening frame. */
+  async subscribe(input: AgentSessionSubscribeInput): Promise<() => void> {
+    const session = await this.conversation(input.sessionId)
     const backgroundTasks = this.state(input.sessionId)
     return this.subscribers.open({
       ...input,

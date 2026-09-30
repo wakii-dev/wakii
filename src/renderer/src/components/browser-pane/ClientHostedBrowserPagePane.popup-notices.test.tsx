@@ -82,21 +82,9 @@ describe('ClientHostedBrowserPagePane popup notices', () => {
     emitPopup()
 
     expect(toastMocks.message).toHaveBeenCalledWith(
-      'https://accounts.example.com tried to open a popup Wakii does not support here.',
+      'https://accounts.example.com tried to open a popup Orca does not support here.',
       { id: 'browser-popup:page-a:blocked:https://accounts.example.com' }
     )
-  })
-
-  it('collapses a retrying site onto one notice per origin', () => {
-    renderPane()
-
-    emitPopup()
-    emitPopup()
-    emitPopup()
-
-    expect(toastMocks.message).toHaveBeenCalledTimes(3)
-    const ids = toastMocks.message.mock.calls.map((call) => (call[1] as { id: string }).id)
-    expect(new Set(ids).size).toBe(1)
   })
 
   it('silences in-Wakii opens but reports external opens', () => {

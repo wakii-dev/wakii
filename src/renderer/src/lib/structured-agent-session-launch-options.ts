@@ -23,9 +23,9 @@ import {
 } from './structured-agent-session-launch-registry'
 import {
   agentSessionRefusalFailure,
-  agentSessionRpcErrorFailure,
+  agentSessionThrownFailure,
   type AgentSessionWriteFailure
-} from '../../../shared/agent-session-refusal-notice'
+} from '../../../shared/agent-session-write-failure'
 
 /** The options a launch starts with, replaced whole so readers can compare by identity. */
 export type StructuredLaunchSelection = {
@@ -110,7 +110,8 @@ async function setLaunchOption(
   } catch (error) {
     return {
       kind: 'refused',
-      failure: agentSessionRpcErrorFailure(
+      failure: agentSessionThrownFailure(
+        error,
         error instanceof RuntimeRpcCallError ? error.code : undefined
       )
     }

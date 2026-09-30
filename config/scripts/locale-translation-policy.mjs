@@ -40,6 +40,7 @@ export const NEVER_TRANSLATE_VALUES = new Set([
   'Claude Agent Teams',
   'Cline',
   'Codebuff',
+  'Freebuff',
   'Codex',
   'Command Code',
   'Cursor',

@@ -40,7 +40,6 @@ vi.mock('expo-haptics', () => ({
   NotificationFeedbackType: {}
 }))
 vi.mock('expo-clipboard', () => ({ setStringAsync: vi.fn() }))
-vi.mock('../platform/keyboard-occlusion', () => ({ useKeyboardAvoidingPadding: () => 0 }))
 vi.mock('./mobile-diff-review-screen-styles', () => ({
   mobileDiffReviewStyles: new Proxy({}, { get: () => ({}) })
 }))
@@ -109,6 +108,9 @@ function Screen({ client }: { client: RpcClient }) {
   controller = useMobileDiffReviewController({
     client,
     connState: 'connected',
+    hostCapabilities: [],
+    hostStatusPending: false,
+    hostStatusReadable: true,
     hostId: 'host-1',
     worktreeId: 'wt-1',
     name: 'review',

@@ -68,7 +68,7 @@ export const LINEAR_ISSUE_ATTRIBUTE_FILTER_RUNTIME_CAPABILITY =
   'linear.issue-attribute-filter.v1' as const
 export const JIRA_USER_FIELDS_RUNTIME_CAPABILITY = 'jira.user-fields.v1' as const
 export const JIRA_USER_FIELDS_UPDATE_REQUIRED_MESSAGE =
-  'Creating Jira issues with user fields requires a newer Orca server. Update the server and try again.'
+  'Creating Jira issues with user fields requires a newer Wakii server. Update the server and try again.'
 // Why: signals the host exposes the Agent Session History scanner over RPC
 // (aiVault.listSessions). Registered unconditionally for every build, so it is a
 // STATIC capability advertised by getStatus() automatically — NOT a runtime
@@ -167,9 +167,26 @@ export const AGENT_SESSION_PENDING_SEND_RESULT_RUNTIME_CAPABILITY =
   'agent-session.pending-send-result.v1' as const
 // Why: a send is now answered once the host accepts it, before any agent has it. A client without
 // this cannot show a message rejected after that answer, so the host holds its reply until the
-// message is handed over or rejected.
+// message is handed over or rejected. Transitional: drop the hold once no supported desktop or
+// mobile client lacks the capability; mobile must first show a rejected message in place.
 export const AGENT_SESSION_ACCEPTED_SEND_RUNTIME_CAPABILITY =
   'agent-session.accepted-send.v1' as const
+// Why: `agentSession.cancel` params are strict and older hosts require `turnId`. A host advertising
+// this takes a cancel naming no turn as "stop what the conversation has in flight", which is the
+// only Stop a client can send before the provider has opened a turn.
+export const AGENT_SESSION_CONVERSATION_STOP_RUNTIME_CAPABILITY =
+  'agent-session.conversation-stop.v1' as const
+// Why: `agentSession.send`'s params are strict, so an older host rejects `delivery`; and only a
+// capable client can render the `queued` result arm, the draft list, and returned cards. DARK ON
+// PURPOSE — not in RUNTIME_CAPABILITIES: advertising still requires the integrated Codex steer
+// matrix (#21062) in the shipped host, and the desktop and phone clients that render the queue.
+// v1 includes `submission.queuedMessageId` on every draft hand-off: a client reads that link and
+// never compares a draft id with a submission id. It also publishes the queue's pause once, as
+// `queuePause` beside the list, lifted by `agentSession.queuedMessagesResume` or the user's next
+// turn; cards carry a hold of their own only when their conversion failed. The host mechanism lands first; the constant
+// gates the rollout.
+export const AGENT_SESSION_QUEUED_MESSAGES_RUNTIME_CAPABILITY =
+  'agent-session.queued-messages.v1' as const
 // Why: paired clients advertise Claude-structured support so the host can gate its agent-specific
 // journal and lifecycle surfaces independently from Codex support.
 export const CLAUDE_STRUCTURED_AGENT_SESSION_RUNTIME_CAPABILITY =
@@ -235,19 +252,23 @@ export const AGENT_SESSION_OPENCODE2_RESUME_RUNTIME_CAPABILITY =
   'agent-session.opencode2-resume.v1' as const
 export const AGENT_SESSION_MUSE_RESUME_RUNTIME_CAPABILITY = 'agent-session.muse-resume.v1' as const
 export const AGENT_SESSION_DSH_RESUME_RUNTIME_CAPABILITY = 'agent-session.dsh-resume.v1' as const
+export const AGENT_SESSION_CODEBUDDY_RESUME_RUNTIME_CAPABILITY =
+  'agent-session.codebuddy-resume.v1' as const
+export const AGENT_SESSION_QODER_RESUME_RUNTIME_CAPABILITY =
+  'agent-session.qoder-resume.v1' as const
 export const AGENT_SESSION_ZCODE_RESUME_RUNTIME_CAPABILITY =
   'agent-session.zcode-resume.v1' as const
 // Why: older runtimes strip mutation owner fields, so clients must fence writes before RPC.
 export const FILE_MUTATION_OWNERSHIP_RUNTIME_CAPABILITY = 'files.mutation-ownership.v1' as const
 export const FILE_MUTATION_OWNERSHIP_UPDATE_REQUIRED_MESSAGE =
-  'Remote file changes require a newer Orca server. Update the HUB and try again.'
+  'Remote file changes require a newer Wakii server. Update the HUB and try again.'
 export const GITHUB_MARK_PR_READY_RUNTIME_CAPABILITY = 'github.markPRReadyForReview' as const
 export const GITHUB_MARK_PR_READY_UPDATE_REQUIRED_MESSAGE =
-  'Marking a pull request ready requires a newer Orca server. Update the server and try again.'
+  'Marking a pull request ready requires a newer Wakii server. Update the server and try again.'
 export const GITLAB_READY_FOR_REVIEW_RUNTIME_CAPABILITY =
   'gitlab.updateMR.readyForReview.v1' as const
 export const GITLAB_READY_FOR_REVIEW_UPDATE_REQUIRED_MESSAGE =
-  'Marking a merge request ready requires a newer Orca server. Update the server and try again.'
+  'Marking a merge request ready requires a newer Wakii server. Update the server and try again.'
 export const WORKTREE_VISIBILITY_DEFAULTS_RUNTIME_CAPABILITY =
   'worktree.visibility-defaults.v1' as const
 export const WORKTREE_VISIBILITY_SOURCE_DEFAULTS_RUNTIME_CAPABILITY =
@@ -256,11 +277,11 @@ export const WORKTREE_VISIBILITY_SOURCE_DEFAULTS_RUNTIME_CAPABILITY =
 export const AUTOMATION_LIST_HOST_SCOPE_RUNTIME_CAPABILITY =
   'automation.list-host-scope.v1' as const
 export const AUTOMATION_LIST_HOST_SCOPE_UPDATE_REQUIRED_MESSAGE =
-  'Filtering automations by host requires a newer Orca server. Update the HUB and try again.'
+  'Filtering automations by host requires a newer Wakii server. Update the HUB and try again.'
 // Why: without server-side owner preconditions a mutation could run against a host the user never saw, so unfenced rows stay view-only.
 export const AUTOMATION_OWNER_FENCING_RUNTIME_CAPABILITY = 'automation.owner-fencing.v1' as const
 export const AUTOMATION_OWNER_FENCING_UPDATE_REQUIRED_MESSAGE =
-  'Editing automations on this host requires a newer Orca server. Update the HUB and try again.'
+  'Editing automations on this host requires a newer Wakii server. Update the HUB and try again.'
 export const AUTOMATION_CREATE_IDEMPOTENCY_RUNTIME_CAPABILITY =
   'automation.create-idempotency.v1' as const
 // Hosts without this capability have no notifications.registerPush RPC.
@@ -382,6 +403,7 @@ export const RUNTIME_CAPABILITIES = [
   // The host side: it accepts a send before any agent has it, and a Stop with no writer before a
   // turn starts, so a client may gate on either.
   AGENT_SESSION_ACCEPTED_SEND_RUNTIME_CAPABILITY,
+  AGENT_SESSION_CONVERSATION_STOP_RUNTIME_CAPABILITY,
   STRUCTURED_AGENT_SESSION_HOLD_RUNTIME_CAPABILITY,
   STRUCTURED_AGENT_SESSION_REVEAL_RUNTIME_CAPABILITY,
   STRUCTURED_AGENT_SESSION_RESUME_HISTORY_RUNTIME_CAPABILITY,
@@ -398,6 +420,8 @@ export const RUNTIME_CAPABILITIES = [
   AGENT_SESSION_OPENCODE2_RESUME_RUNTIME_CAPABILITY,
   AGENT_SESSION_MUSE_RESUME_RUNTIME_CAPABILITY,
   AGENT_SESSION_DSH_RESUME_RUNTIME_CAPABILITY,
+  AGENT_SESSION_QODER_RESUME_RUNTIME_CAPABILITY,
+  AGENT_SESSION_CODEBUDDY_RESUME_RUNTIME_CAPABILITY,
   AGENT_SESSION_ZCODE_RESUME_RUNTIME_CAPABILITY,
   FILE_MUTATION_OWNERSHIP_RUNTIME_CAPABILITY,
   GITHUB_MARK_PR_READY_RUNTIME_CAPABILITY,

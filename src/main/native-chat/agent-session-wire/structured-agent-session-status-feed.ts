@@ -25,7 +25,7 @@ import type { AgentChildWorkEvidence } from '../../../shared/agent-status-child-
 import { projectStructuredAgentSessionStatusState } from '../../../shared/structured-agent-session-projection'
 import { structuredAgentSessionAgentStatus } from '../../../shared/structured-agent-session-agent-status'
 import type { AgentSessionJournal } from '../agent-session-journal/journal-store'
-import type { StructuredAgentSessionProviderChildPhase } from './structured-agent-session-adapter'
+import type { StructuredAgentSessionProviderChild } from './structured-agent-session-host-types'
 import { structuredAgentSessionProviderSessionMetadata } from './structured-agent-session-history-result'
 import {
   StructuredAgentSessionStatusOwnership,
@@ -46,7 +46,7 @@ export type StructuredAgentSessionStatusSubscriber = {
 type StatusFeedSession = {
   journal: AgentSessionJournal
   params: { location: AgentSessionRecord['location']; provider: AgentSessionRecord['provider'] }
-  child?: { phase: StructuredAgentSessionProviderChildPhase } | null
+  child?: Pick<StructuredAgentSessionProviderChild, 'phase' | 'generation' | 'fence'> | null
 }
 
 export type StructuredAgentSessionStatusFeedDeps = {
@@ -62,6 +62,8 @@ export type StructuredAgentSessionStatusFeedDeps = {
   /** Live provider-owned background tasks for the summary, so session lists can
    *  render subagent children. Optional: a provider without the hook projects none. */
   readBackgroundTasks?: (sessionId: string) => AgentSessionBackgroundTaskState | null | undefined
+  /** The session's agent proved a start: its row's phase became `ready`. */
+  onAgentStarted?: (sessionId: string) => void
 }
 
 function summariesEqual(a: AgentSessionStatusSummary, b: AgentSessionStatusSummary): boolean {
@@ -71,6 +73,8 @@ function summariesEqual(a: AgentSessionStatusSummary, b: AgentSessionStatusSumma
     a.status === b.status &&
     a.hostExecutionOwned === b.hostExecutionOwned &&
     a.hostExecutionPhase === b.hostExecutionPhase &&
+    a.hostExecutionChild?.generation === b.hostExecutionChild?.generation &&
+    a.hostExecutionChild?.fence === b.hostExecutionChild?.fence &&
     a.rewindBlockedReason === b.rewindBlockedReason &&
     // A moved state clock changes ranking; row activity alone, including a subagent's, does not.
     // An idle state the journal cannot date still republishes, since readers date it by `updatedAt`,
@@ -119,6 +123,7 @@ export function createStructuredAgentSessionHostStatusFeed(args: {
     onSessionStatusChanged?: StructuredAgentSessionStatusFeedDeps['onStatusChanged']
     statusSink?: StructuredAgentSessionStatusSink
   }
+  onAgentStarted?: (sessionId: string) => void
 }): StructuredAgentSessionStatusFeed {
   return new StructuredAgentSessionStatusFeed({
     sessions: args.sessions,
@@ -128,7 +133,8 @@ export function createStructuredAgentSessionHostStatusFeed(args: {
     readBackgroundTasks: (sessionId) => args.deps().adapter.backgroundTaskState?.(sessionId),
     // Resolved per call for the same reason the other deps are: the host builds this feed in a
     // field initializer, before its constructor parameters are assigned.
-    statusSink: () => args.deps().statusSink
+    statusSink: () => args.deps().statusSink,
+    ...(args.onAgentStarted ? { onAgentStarted: args.onAgentStarted } : {})
   })
 }
 
@@ -199,7 +205,12 @@ export class StructuredAgentSessionStatusFeed {
     if (!previous) {
       return
     }
-    const { hostExecutionOwned: _hostExecutionOwned, ...retained } = previous
+    const {
+      hostExecutionOwned: _hostExecutionOwned,
+      hostExecutionPhase: _hostExecutionPhase,
+      hostExecutionChild: _hostExecutionChild,
+      ...retained
+    } = previous
     this.published.set(sessionId, retained)
     this.sink(retained)
     this.broadcast({
@@ -236,6 +247,9 @@ export class StructuredAgentSessionStatusFeed {
     this.published.set(sessionId, summary)
     this.sink(summary, session.params.location)
     this.broadcast({ type: 'status', session: summary })
+    if (summary.hostExecutionPhase === 'ready' && previous?.hostExecutionPhase !== 'ready') {
+      this.deps.onAgentStarted?.(sessionId)
+    }
     try {
       this.deps.onStatusChanged?.(summary, { replay: options?.replay === true })
     } catch (error) {
@@ -266,7 +280,11 @@ export class StructuredAgentSessionStatusFeed {
       workspaceId: session.params.location.workspaceId,
       agent: session.params.provider,
       ...(session.child
-        ? { hostExecutionOwned: true as const, hostExecutionPhase: session.child.phase }
+        ? {
+            hostExecutionOwned: true as const,
+            hostExecutionPhase: session.child.phase,
+            hostExecutionChild: { generation: session.child.generation, fence: session.child.fence }
+          }
         : {}),
       ...projected,
       ...(record?.rewind?.phase === 'prepared' || record?.rewind?.phase === 'provider-succeeded'

@@ -1,7 +1,10 @@
+import { AGENT_JOURNAL_THREAD_SCOPE } from '../../shared/agent-session-journal-types'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { agentSessionFailureFact } from '../../shared/agent-session-failure'
+import { agentSessionFailureWords } from '../../shared/agent-session-failure-words'
 import { makeStructuredAgentStatusSubject } from '../../shared/agent-status-subject'
 import { agentSessionRecordFixture } from '../../shared/agent-session-record.test-fixture'
 import type {
@@ -10,7 +13,7 @@ import type {
 } from '../../shared/agent-session-wire'
 import type { RuntimeWorktreePsSummary } from '../../shared/runtime-types'
 import { AgentHookServer, _internals } from '../agent-hooks/server'
-import { createTrackedJournalOpener } from '../native-chat/agent-session-journal/journal-store-test-open'
+import { createTrackedJournalOpener } from '../native-chat/agent-session-journal/journal-host-database-test-support'
 import type { AgentSessionJournal } from '../native-chat/agent-session-journal/journal-store'
 import { StructuredAgentSessionStatusFeed } from '../native-chat/agent-session-wire/structured-agent-session-status-feed'
 import { indexedStatusFeedSession } from '../native-chat/agent-session-wire/structured-agent-session-status-feed-test-session'
@@ -64,7 +67,7 @@ async function openJournal(): Promise<AgentSessionJournal> {
       agent: 'codex',
       providerHandle: { kind: 'codex', threadId: 'thread-1' }
     },
-    journalDir: join(root, SESSION)
+    stateDirectory: join(root, SESSION)
   })
 }
 
@@ -128,7 +131,13 @@ describe('a request that failed reads as failed through the feed, the ingest and
       fence: 1,
       handoverRecorded: true
     })
-    await journal.rejectQueuedSubmissions(1, 'Claude is not signed in.')
+    await journal.rejectQueuedSubmissions(
+      1,
+      agentSessionFailureWords(agentSessionFailureFact('notSignedIn'), {
+        surface: 'rejection',
+        agentName: 'Claude'
+      })
+    )
 
     const summary = publishedSummary(journal)
     expect(summary).toMatchObject({ status: 'idle', turnOutcome: 'failure', latestPrompt: 'hello' })
@@ -156,7 +165,7 @@ describe('a request that failed reads as failed through the feed, the ingest and
         outcome: 'cancellation',
         completedAt: 5
       },
-      { fence: 1 }
+      { fence: 1, turnScope: AGENT_JOURNAL_THREAD_SCOPE }
     )
 
     const { status, ps } = ingest(publishedSummary(journal))
@@ -172,7 +181,7 @@ describe('a request that failed reads as failed through the feed, the ingest and
     await journal.appendItem(
       TURN_IDENTITY,
       { kind: 'turn', turnId: 'turn-1', state: 'completed', outcome: 'failure', completedAt: 5 },
-      { fence: 1 }
+      { fence: 1, turnScope: AGENT_JOURNAL_THREAD_SCOPE }
     )
     const summary: AgentSessionStatusSummary = {
       ...publishedSummary(journal),
@@ -205,7 +214,10 @@ describe('a request that failed reads as failed through the feed, the ingest and
       fence: 1,
       handoverRecorded: true
     })
-    await journal.rejectQueuedSubmissions(1, 'provider_cancelled_before_start')
+    await journal.rejectQueuedSubmissions(
+      1,
+      agentSessionFailureWords(agentSessionFailureFact('cancelled'), { surface: 'rejection' })
+    )
 
     expect(publishedSummary(journal)).toMatchObject({ status: null })
     expect(ingest(publishedSummary(journal)).ps).toBeUndefined()

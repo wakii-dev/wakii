@@ -23,6 +23,7 @@ import { useMonacoEditorDecorations } from './use-monaco-editor-decorations'
 import { useMonacoEditorMount } from './use-monaco-editor-mount'
 import { EditorBreadcrumbs } from './EditorBreadcrumbs'
 import { QUICK_OUTLINE_EDITOR_ATTRIBUTE, hasQuickOutlineSymbols } from '@/lib/quick-outline-editor-target'
+import { useDocumentDarkTheme } from '@/hooks/use-document-dark-theme'
 import { snapshotMonacoViewState } from './monaco-view-state-persistence'
 import { MonacoMarkdownAnnotationOverlay } from './MonacoMarkdownAnnotationOverlay'
 import { getWorktreeMapFromState } from '@/store/selectors'
@@ -130,9 +131,7 @@ export default function MonacoEditor({
   const [gutterMenuOpen, setGutterMenuOpen] = useState(false)
   const [gutterMenuPoint, setGutterMenuPoint] = useState({ x: 0, y: 0 })
   const [gutterMenuLine, setGutterMenuLine] = useState(1)
-  const isDark =
-    settings?.theme === 'dark' ||
-    (settings?.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+  const isDark = useDocumentDarkTheme()
 
   const { queueReveal, cancelScheduledReveal, clearTransientRevealHighlight } =
     useMonacoRevealScheduler()

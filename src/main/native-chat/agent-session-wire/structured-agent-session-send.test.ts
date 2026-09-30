@@ -23,6 +23,8 @@ import {
   HOST_TEST_THREAD as THREAD,
   hostTestMessage
 } from './structured-agent-session-host-test-data'
+import { agentSessionFailureFact } from '../../../shared/agent-session-failure'
+import { agentSessionFailureWords } from '../../../shared/agent-session-failure-words'
 
 let store: AgentSessionRecordStore
 let host: StructuredAgentSessionHost
@@ -65,6 +67,9 @@ describe('send', () => {
     if (!result.ok) {
       throw new Error(`expected a send, got ${result.refusal.code}`)
     }
+    if (!('submission' in result.value)) {
+      throw new Error('expected the submission arm')
+    }
     // Answered once accepted; the delivery loop hands it over after.
     expect(result.value.submission).toMatchObject({
       dispatchState: 'pending',
@@ -75,7 +80,7 @@ describe('send', () => {
       dispatchState: 'accepted'
     })
     expect(dispatch).toHaveBeenCalledTimes(1)
-    const page = host.history({ sessionId: SESSION, direction: 'tail' })
+    const page = await host.history({ sessionId: SESSION, direction: 'tail' })
     expect(page.ok && page.page.items).toHaveLength(1)
     expect(page.ok && page.page.fence).toBe(1)
     expect(page.page.hostNow).toBe(NOW)
@@ -140,7 +145,7 @@ describe('send', () => {
       value: { submission: { dispatchState: 'unknown' } }
     })
     expect(dispatch).toHaveBeenCalledTimes(1)
-    const state = host.history({ sessionId: SESSION, direction: 'tail' })
+    const state = await host.history({ sessionId: SESSION, direction: 'tail' })
     expect(state.ok && state.page.submissions).toHaveLength(1)
   })
 
@@ -167,7 +172,7 @@ describe('send', () => {
       }
     })
     expect(dispatch).toHaveBeenCalledTimes(1)
-    const state = host.history({ sessionId: SESSION, direction: 'tail' })
+    const state = await host.history({ sessionId: SESSION, direction: 'tail' })
     expect(state.ok && state.page.submissions).toHaveLength(1)
   })
 
@@ -176,7 +181,9 @@ describe('send', () => {
     dispatch
       .mockImplementationOnce(async () => ({
         state: 'rejected' as const,
-        reason: 'provider_write_failed: broken pipe'
+        ...agentSessionFailureWords(agentSessionFailureFact('writeFailed'), {
+          surface: 'rejection'
+        })
       }))
       .mockImplementationOnce(async () => accepted())
     const body = hostTestMessage('never written')
@@ -185,7 +192,7 @@ describe('send', () => {
     await host.send(CALLER, params)
     await expect(delivered(params.envelope.clientOperationId)).resolves.toMatchObject({
       dispatchState: 'rejected',
-      reason: 'provider_write_failed: broken pipe'
+      reason: 'provider_write_failed'
     })
     // What the user's Retry does with a rejection: a fresh client message id,
     // which is a first delivery by construction and cannot duplicate the frame
@@ -196,7 +203,7 @@ describe('send', () => {
       dispatchState: 'accepted'
     })
     expect(dispatch).toHaveBeenCalledTimes(2)
-    const state = host.history({ sessionId: SESSION, direction: 'tail' })
+    const state = await host.history({ sessionId: SESSION, direction: 'tail' })
     expect(state.ok && state.page.submissions).toHaveLength(2)
   })
 
