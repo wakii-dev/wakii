@@ -118,6 +118,49 @@ case "$CMD" in
     fi
     exit 1
     ;;
+  claim-pane)
+    # in handle của terminal automation MỚI NHẤT (pane hiện tại của agent —
+    # vừa được Orca spawn cho pass này, title = prompt chứa "vscode-sync pass").
+    # Agent lưu handle này để cuối pass tự close.
+    ORCA="${ORCA_BIN:-orca}"
+    env -u ORCA_USER_DATA_PATH "$ORCA" terminal list --json 2>/dev/null | \
+      python -c "import json,sys
+d = json.load(sys.stdin)
+terms = d.get('terminals') or d.get('result', {}).get('terminals') or []
+mine = [t for t in terms if 'vscode-sync pass' in (t.get('title') or '')]
+if mine:
+    print(mine[-1]['handle'])
+else:
+    print('')" 2>/dev/null
+    ;;
+  cleanup-pane)
+    # cleanup-pane <handle> — đóng terminal automation (cuối pass, mọi nhánh).
+    # Close gọi từ chính pane đó: CLI báo app đóng; PTY bị kill sau khi lệnh
+    # đã tới daemon nên exit code có thể mất — caller dùng `|| true`.
+    handle="${2:-}"
+    [ -n "$handle" ] || { echo "usage: cleanup-pane <handle>" >&2; exit 2; }
+    ORCA="${ORCA_BIN:-orca}"
+    env -u ORCA_USER_DATA_PATH "$ORCA" terminal close --terminal "$handle" >/dev/null 2>&1
+    echo "pane $handle closed"
+    ;;
+  cleanup-stale)
+    # đóng các terminal automation CŨ (title-match nhưng KHÔNG phải newest —
+    # newest là pane hiện tại). Gọi ở ĐẦU pass để dọn pane chết sót từ lần
+    # trước (run bị kill, agent quên close…).
+    ORCA="${ORCA_BIN:-orca}"
+    env -u ORCA_USER_DATA_PATH "$ORCA" terminal list --json 2>/dev/null | \
+      python -c "import json,sys
+d = json.load(sys.stdin)
+terms = d.get('terminals') or d.get('result', {}).get('terminals') or []
+mine = [t['handle'] for t in terms if 'vscode-sync pass' in (t.get('title') or '')]
+for h in mine[:-1]:
+    print(h)" 2>/dev/null | while IFS= read -r h; do
+      [ -n "$h" ] || continue
+      env -u ORCA_USER_DATA_PATH "${ORCA_BIN:-orca}" terminal close --terminal "$h" >/dev/null 2>&1
+      echo "stale pane closed: $h"
+    done
+    ;;
+
   now)
     # fire automation NGAY theo tên (không chờ cron): tìm id trong store rồi run
     ORCA="${ORCA_BIN:-orca}"
@@ -189,7 +232,7 @@ for a in autos:
     exit 0
     ;;
   *)
-    echo "usage: vscode-sync-dispatch [next|now|should-run|annotate <VSC-XXX> <text>|mark-done <VSC-XXX>|status]" >&2
+    echo "usage: vscode-sync-dispatch [next|now|should-run|claim-pane|cleanup-pane <handle>|cleanup-stale|annotate <VSC-XXX> <text>|mark-done <VSC-XXX>|status]" >&2
     exit 2
     ;;
 esac
