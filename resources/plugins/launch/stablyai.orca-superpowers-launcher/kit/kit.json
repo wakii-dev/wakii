@@ -532,5 +532,5 @@
       "description": "điều phối sync feature VS Code — 1 pass 1 feature, mỗi feature qua story-workflow đầy đủ; state machine trong docs/superpowers/vscode-sync/backlog.md ([ ] chờ / [~] đang chạy / [x] đã merged)"
     }
   ],
-  "kitHash": "7471bcd65d28bae0"
+  "kitHash": "b3682b7abdbcc2ef"
 }

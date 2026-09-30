@@ -120,14 +120,16 @@ case "$CMD" in
     ;;
   claim-pane)
     # in handle của terminal automation MỚI NHẤT (pane hiện tại của agent —
-    # vừa được Orca spawn cho pass này, title = prompt chứa "vscode-sync pass").
-    # Agent lưu handle này để cuối pass tự close.
+    # vừa được Orca spawn cho pass này). Match theo TẤT CẢ tên automation
+    # vscode-sync family — hardcode 1 tên khiến pane protocol trượt khi đổi
+    # tên automation (bug thật 30/9: pane rác tích tụ vì claim trượt).
     ORCA="${ORCA_BIN:-orca}"
     env -u ORCA_USER_DATA_PATH "$ORCA" terminal list --json 2>/dev/null | \
       python -c "import json,sys
 d = json.load(sys.stdin)
 terms = d.get('terminals') or d.get('result', {}).get('terminals') or []
-mine = [t for t in terms if 'vscode-sync pass' in (t.get('title') or '')]
+pats = ('vscode-sync pass', 'story-auto-launch', 'vscode-feature-scout', 'vscode-sync supervisor')
+mine = [t for t in terms if any(p in (t.get('title') or '') for p in pats)]
 if mine:
     print(mine[-1]['handle'])
 else:
@@ -147,16 +149,21 @@ else:
     # đóng các terminal automation CŨ (title-match nhưng KHÔNG phải newest —
     # newest là pane hiện tại). Gọi ở ĐẦU pass để dọn pane chết sót từ lần
     # trước (run bị kill, agent quên close…).
+    # Gom handles vào biến TRƯỚC khi loop: orca.cmd (batch) đọc stdin của
+    # pipe → nuốt input của while nếu close chạy trong pipe loop (bug thật
+    # 30/9: báo closed nhưng không pane nào bị đóng).
     ORCA="${ORCA_BIN:-orca}"
-    env -u ORCA_USER_DATA_PATH "$ORCA" terminal list --json 2>/dev/null | \
+    stale_handles="$(env -u ORCA_USER_DATA_PATH "$ORCA" terminal list --json 2>/dev/null | \
       python -c "import json,sys
 d = json.load(sys.stdin)
 terms = d.get('terminals') or d.get('result', {}).get('terminals') or []
-mine = [t['handle'] for t in terms if 'vscode-sync pass' in (t.get('title') or '')]
+pats = ('vscode-sync pass', 'story-auto-launch', 'vscode-feature-scout', 'vscode-sync supervisor')
+mine = [t['handle'] for t in terms if any(p in (t.get('title') or '') for p in pats)]
 for h in mine[:-1]:
-    print(h)" 2>/dev/null | while IFS= read -r h; do
+    print(h)" 2>/dev/null)"
+    for h in $stale_handles; do
       [ -n "$h" ] || continue
-      env -u ORCA_USER_DATA_PATH "${ORCA_BIN:-orca}" terminal close --terminal "$h" >/dev/null 2>&1
+      env -u ORCA_USER_DATA_PATH "$ORCA" terminal close --terminal "$h" >/dev/null 2>&1
       echo "stale pane closed: $h"
     done
     ;;
