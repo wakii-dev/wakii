@@ -45,3 +45,15 @@ ví dụ format trong ``` không bao giờ bị claim). Người chỉ thêm dò
 
 `--precheck <cmd>` trước scheduled run: exit ≠ 0 → run bị skip, không tốn agent.
 Precheck phải nhanh (<60s) và chỉ đọc state (bin `should-run`).
+
+## 7. Pane protocol phải match ĐỦ tên + không close trong pipe loop
+
+Sự thật 30/9: 12 terminal mở, 4 là pane automation không tự đóng. Hai bug chồng nhau:
+- `claim-pane`/`cleanup-stale` hardcode `'vscode-sync pass'` — đổi tên automation
+  (`story-auto-launch pass toàn cục`) → match trượt → HANDLE rỗng → không gì được đóng.
+  **Match theo list pattern mọi tên automation family.**
+- `close` chạy trong `python | while read` loop: **orca.cmd (batch) đọc stdin của
+  pipe** → nuốt input, close không ăn dù echo báo closed. **Gom handles vào biến
+  trước, loop sau** (hoặc gọi close trực tiếp như test tay — ptyKilled:true).
+- Verify sau dọn: `orca terminal list --json` đếm lại — "báo closed" không phải
+  "đã closed" (bài 10 windows-orca-lessons: FAIL/OK của wrapper đều có thể ảo).
