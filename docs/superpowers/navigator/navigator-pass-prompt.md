@@ -118,7 +118,7 @@ Toast fail → ghi 1 dòng `⚠ toast không gửi được` vào cuối brief, 
 
 Kiểm ngay khi có kết quả Bước 1: nếu story-status KHÔNG còn story active nào (mọi epic đều DONE verdict hoặc danh sách rỗng):
 story-status CHẾT (lỗi/rỗng do lỗi) → KHÔNG cleanup — ghi ⚠ + kết thúc pass như thường; chỉ cleanup khi story-status ĐỌC ĐƯỢC và trả rỗng/hết-DONE.
-1. `orca automations remove --name story-navigator` (fallback: remove theo id nếu name không nhận)
+1. Lấy full id: `orca automations list` → `orca automations remove <FULL-ID>` (name không resolve; id hiện tại `19006934-d46d-4713-a6ae-ef49dc4586db` — nếu list trả id khác, DÙNG ID TỪ LIST).
 2. Ghi 1 dòng vào report pass (và cuối brief nếu brief đã tồn tại): "automation đã tự xoá — hết story active. Tạo lại khi story mới: orca automations create ... (xem G1-runbook)."
 3. KẾT THÚC pass (bỏ Bước 2–8 nếu chưa chạy).
 

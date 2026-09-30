@@ -1,14 +1,15 @@
 # G1 Runbook — story-navigator (tuần quan sát)
 
 ## Trạng thái
-Automation `story-navigator` · full id `19006934-d46d-4713-a6ae-ef49dc4586db` · cron `17 */3 * * *` UTC (tick 00:17/03:17/06:17/09:17/12:17/15:17/18:17/21:17) · provider claude · repo orca (wakii-main/wakii-dev).
+Automation `story-navigator` · full id `19006934-d46d-4713-a6ae-ef49dc4586db` · cron `17 */3 * * *` UTC cấu hình; thực tế scheduler đang chạy kiểu interval ~3h từ run gần nhất (nextRunAt = last+3h) — PROBE 01-02/10: qua ≥2 nhịp, so `orca automations runs` + brief mtime; xác nhận xong cập nhật dòng này · provider claude · repo orca (wakii-main/wakii-dev).
 Bật ngày: 2026-09-30. Tuần quan sát kết thúc: 2026-10-07.
 ⚠ `orca automations show/run/remove` CHỈ nhận FULL ID — name không resolve.
 
 ## Kiểm hàng ngày (≤2 phút)
-1. `orca automations runs` — kỳ vọng ~8 run/ngày; KHÔNG tin cột status (nó báo `completed` ngay khi dispatch — đã biết) — kiểm chứng = timestamps trong `docs/superpowers/navigator/<story>/brief.md` mới mỗi tick.
+1. `orca automations runs` — kỳ vọng ~8 run/ngày; KHÔNG tin cột status (nó báo `completed` ngay khi dispatch — đã biết) — kiểm chứng = timestamps trong `docs/superpowers/navigator/<story>/brief.md` mới mỗi tick. Tick có thể lệch so với phút :17 — xét brief mtime, đừng xét giờ đúng.
 2. Brief mới có Nguồn ⚠ với lý do cụ thể (khuôn `⚠ <nguồn> không đọc được (<lý do>)`).
 3. Inbox — coordinator ack entry mới trong ngày làm việc (`[ack]` + 1 dòng quyết định).
+4. Commit outputs tick: `git add -f docs/superpowers/navigator && git commit -m "docs(navigator): outputs <YYYY-MM-DD>"` — outputs là TRACKED files, để bẩn sẽ chặn switch/merge branch sau này. Làm TRƯỚC MỌI lần switch/merge.
 
 ## Hành vi đã cấu hình (hiểu trước khi hoảng)
 - **Self-cleanup (Bước 9)**: hết story active → automation TỰ XOÁ (mutation được phép #1). Story mới → tạo lại bằng lệnh dưới.
