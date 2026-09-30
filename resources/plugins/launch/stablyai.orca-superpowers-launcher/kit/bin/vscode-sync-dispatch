@@ -162,11 +162,16 @@ for h in mine[:-1]:
     ;;
 
   add-feature)
-    # add-feature "<tên> | <mô tả + nguồn>" — scout tự đề xuất feature: đánh số
-    # VSC kế tiếp (max hiện có + 1), dedupe theo title (case-insensitive).
+    # add-feature "<tên> | <mô tả>" hoặc "<tên> :: <mô tả>" (form :: dành cho
+    # caller qua PowerShell/cmd — ký tự | vỡ native argv). Đánh số VSC kế tiếp,
+    # dedupe theo title (case-insensitive).
     payload="${2:-}"
     [ -n "$payload" ] || { echo "usage: add-feature \"<tên> | <mô tả>\"" >&2; exit 2; }
-    title="$(printf '%s' "$payload" | cut -d'|' -f1 | sed 's/^ *//;s/ *$//')"
+    case "$payload" in
+      *' :: '*) title="${payload%% :: *}";;
+      *) title="${payload%% | *}";;
+    esac
+    title="$(printf '%s' "$title" | sed 's/^ *//;s/ *$//')"
     [ -n "$title" ] || { echo "title rỗng" >&2; exit 2; }
     if grep -qiF -- "$title" "$BACKLOG"; then
       echo "DUPLICATE: '$title' đã có trong backlog — bỏ qua"
@@ -231,7 +236,7 @@ for a in autos:
         case "$line" in
           '- [~]'*)
             if printf '%s' "$line" | grep -qi "$fid"; then
-              base="$(printf '%s' "$line" | sed 's/ *<!-- .*//')"
+              base="$(printf '%s' "$line" | sed 's/ *<!-- .*//' | sed 's/^- \[~\]/- [S]/')"
               rewrite_line "$n" "$base <!-- epic: $epic | staged: $(date -u +%Y-%m-%dT%H:%M:%SZ) -->"
               echo "mark-staged: $fid → [S] (epic $epic)"
               exit 0
