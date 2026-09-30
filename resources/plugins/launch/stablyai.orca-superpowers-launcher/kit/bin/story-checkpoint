@@ -90,7 +90,7 @@ def git(cwd, *args, timeout=15):
     # git stdout luôn UTF-8 bytes — decode tường minh, không tin locale cp1252
     return subprocess.run(["git", "-C", str(cwd), *args],
                           capture_output=True, text=True, encoding="utf-8", errors="replace",
-                          encoding="utf-8", errors="replace", timeout=timeout)
+                          timeout=timeout)
 
 
 def resolve_main_checkout(cwd):
