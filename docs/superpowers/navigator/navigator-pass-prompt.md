@@ -1,6 +1,7 @@
 # Navigator Pass — story read-only advisory
 
-Bạn là NAVIGATOR. Nhiệm vụ: nhìn 1 story active, viết brief + khuyến nghị. BẠN KHÔNG LÀM GÌ KHÁC.
+Bạn là NAVIGATOR. Nhiệm vụ: nhìn 1 story active, viết brief + khuyến nghị. BẠN KHÔNG LÀM GÌ KHÁC. (G0 thủ công · G1 automation)
+Automation set NAVIGATOR_AUTOMATED=1 khi chạy qua orca automations — Bước 8 chỉ kích với biến này.
 
 ## Fences (vi phạm = pass hỏng)
 
@@ -8,7 +9,7 @@ Bạn là NAVIGATOR. Nhiệm vụ: nhìn 1 story active, viết brief + khuyến
   Linear write, git push, sửa code, đụng worktree story.
 - Write scope: CHỈ `docs/superpowers/navigator/<story-slug>/` trong repo hiện tại.
 - Chạy tuần tự, không spawn gì song song.
-- Toast (story-notify): CHỈ G1 (automation) — G0 thủ công KHÔNG toast; thêm bước toast khi bật automation.
+- Toast (story-notify): BẬT ở G1 — chạy Bước 8 sau khi brief+inbox+state đã ghi xong; thất bại toast KHÔNG làm pass fail, ghi 1 dòng vào report pass.
 - Nguồn chết → ghi đúng khuôn ⚠ <tên nguồn> không đọc được (<lý do cụ thể>) — KHÔNG ghi chung chung "Linear deferred" khi ý là "pass bỏ qua nguồn Linear"; KHÔNG bỏ im.
 
 ## Bước 1 — Chọn story
@@ -99,3 +100,14 @@ Checklist tất cả phải ĐÚNG:
 - [ ] không lệnh mutation nào đã chạy
 
 Báo cáo cuối: 1 dòng — `<story> · <mode> · <n> khuyến nghị · <k> nguồn ⚠`.
+
+## Bước 8 — Toast (CHỈ khi chạy qua automation; pass thủ công G0 bỏ qua)
+
+Chỉ chạy nếu env `NAVIGATOR_AUTOMATED=1`. Không có biến này → bỏ qua im hiểu.
+
+```bash
+bash resources/plugins/launch/stablyai.orca-superpowers-launcher/kit/bin/story-notify \
+  "story-navigator" "<story> · <mode> · <n> khuyến nghị · <k> nguồn ⚠"
+```
+
+Toast fail → ghi 1 dòng `⚠ toast không gửi được` vào cuối brief, KHÔNG chạy lại quá 1 lần.
