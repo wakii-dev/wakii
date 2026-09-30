@@ -1,0 +1,14 @@
+{
+  "story": "vi-1-vietnamese-i18n",
+  "last_pass": "2026-09-30T16:11:15Z",
+  "mode": "strategy-brief",
+  "sf_statuses": { "SF-1": "merged", "SF-2": "merged", "SF-3": "merged" },
+  "stall_seen": false,
+  "acks_total": 0,
+  "⚠": [
+    "bracket .md retired (Not found) — mindmap .wakii đọc được thay thế",
+    "story_task_list không đọc được (guide-gate, exit 1)",
+    "story_gate_list không đọc được (cùng guide-gate)",
+    "story-stats không đọc được (cần bracket + linear IDs; Linear deferred)"
+  ]
+}
