@@ -530,7 +530,13 @@
       "type": "bin",
       "category": "infra",
       "description": "điều phối sync feature VS Code — 1 pass 1 feature, mỗi feature qua story-workflow đầy đủ; state machine trong docs/superpowers/vscode-sync/backlog.md ([ ] chờ / [~] đang chạy / [x] đã merged)"
+    },
+    {
+      "name": "story-pr-checks",
+      "type": "bin",
+      "category": "verification",
+      "description": "CI gate cho PR truoc khi merge — doc gh pr checks (cung nguon Checks panel): exit 0 pass/no-checks, 1 fail, 2 pending, 3 loi"
     }
   ],
-  "kitHash": "b3682b7abdbcc2ef"
+  "kitHash": "16bda948cd8a7405"
 }

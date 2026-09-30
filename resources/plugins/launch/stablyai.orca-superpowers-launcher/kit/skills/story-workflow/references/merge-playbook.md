@@ -35,6 +35,28 @@ resolve thủ công, KHÔNG tự động theirs/ours.
 Merge cuối xong → sub-issue comment hash merge (audit) → orchestration task
 của SF `task-update --status completed` → DAG mở khóa tier sau.
 
+## CI gate trước khi báo ready-to-merge (PR có checks)
+
+PR của story (nhánh đích → primary) có CI checks thì **chỉ merge/báo
+ready-to-merge khi checks pass** — cùng dữ liệu Checks panel, đọc bằng gh:
+
+```bash
+~/.claude/bin/story-pr-checks <pr-number>          # exit 0 pass (kể cả
+                                                   # no-checks pass-through)
+~/.claude/bin/story-pr-checks --branch story/<epic>-<slug> --wait 15
+```
+
+- exit 0 (`pass`) → merge/báo ready-to-merge bình thường.
+- exit 1 (`fail`) → KHÔNG merge; comment check đỏ + annotations lên epic,
+  rollback-fixer hoặc executor sửa rồi push lại (CI tự chạy lại).
+- exit 2 (`pending`) → chờ (`--wait`) hoặc hẹn pass sau; KHÔNG merge treo.
+- `no-checks` (project/fork không chạy CI — vd wakii fork chỉ release chain)
+  → ĐƯỢC phép merge nhưng **ghi chú vào evidence**: không có lưới CI ≠ không
+  cần nhìn diff.
+
+Agent KHÔNG dùng panel Checks của app để quyết — panel là cho người xem;
+agent đọc `story-pr-checks` (cùng nguồn, machine-readable, exit-code hợp đồng).
+
 ## Snapshot merge (giữ nguyên ý cũ, protocol mới)
 
 Nhóm task lớn xong (vd T1-T4 của 5) → coordinator merge sf-branch sớm với
