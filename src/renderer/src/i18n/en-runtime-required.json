@@ -1014,6 +1014,16 @@
               }
             }
           },
+          "file": {
+            "explorer": {
+              "wakii": {
+                "open": {
+                  "1661f00e0e": "Could not read the mindmap file — opening it as text.",
+                  "5f05f7de28": "This file is not a valid mindmap — opening it as text."
+                }
+              }
+            }
+          },
           "index": {
             "06219e4cb1": "Search",
             "34af8aadf5": "top",
