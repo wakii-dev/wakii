@@ -6,7 +6,7 @@ import { spawn, spawnSync } from 'node:child_process'
 import http from 'node:http'
 import { mkdtempSync, mkdirSync, writeFileSync, chmodSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join, dirname, resolve } from 'node:path'
+import { join, dirname, resolve, delimiter } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const testsDir = dirname(fileURLToPath(import.meta.url))
@@ -113,8 +113,15 @@ function writeFakeOrca(home) {
   return p
 }
 
-// python3 shim — kit bins gọi python3; một số máy Windows chỉ có python
-function writePy3Shim(home) {
+// python3 shim — kit bins gọi python3; một số máy Windows chỉ có python.
+// Chỉ inject khi máy THIẾU python3 thật (shim đè python3 có sẵn = nguy cơ
+// tự-gọi đệ quy qua PATH); POSIX không có alias `python` → shim trỏ python3→python.
+let py3ShimNeeded = null
+function py3ShimDir(home) {
+  if (py3ShimNeeded === null) {
+    py3ShimNeeded = spawnSync('bash', ['-c', 'command -v python3 >/dev/null 2>&1'], { encoding: 'utf8' }).status !== 0
+  }
+  if (!py3ShimNeeded) return null
   const binDir = join(home, 'shim-bin')
   mkdirSync(binDir, { recursive: true })
   const p = join(binDir, 'python3')
@@ -147,10 +154,11 @@ function writeConfig(dir, distributed) {
 }
 
 function envFor(stubUrl, home, extra = {}) {
+  const shim = py3ShimDir(home)
   return {
     ...process.env,
     HOME: home,
-    PATH: `${writePy3Shim(home)};${process.env.PATH}`,
+    PATH: shim ? `${shim}${delimiter}${process.env.PATH}` : process.env.PATH,
     STORY_KIT_CONFIG: join(home, 'story-kit.json'),
     LINEAR_GRAPHQL_ENDPOINT: stubUrl,
     LINEAR_API_KEY: 'test-key',
@@ -170,7 +178,7 @@ function runLib(env, script, timeout = 60000) {
 
 // async spawn — BẮT BUỘC cho run chạm stub: spawnSync block node event loop
 // → stub (cùng process) không trả lời → curl treo tới -m 10 (rc 28)
-function runLaunchA(env, args, timeout = 120000) {
+function runLaunchA(env, args, timeout = LAUNCH_TIMEOUT_MS) {
   return new Promise((res) => {
     const p = spawn('bash', [LAUNCH, ...args], { env })
     let out = ''
@@ -221,7 +229,7 @@ function gitFixture(dir, { pushSfFresh = false, pushSfStale = false } = {}) {
     writeFileSync(join(repo, pushSfFresh ? 'wip.txt' : 'old.txt'), 'x\n')
     g(['-C', repo, 'add', pushSfFresh ? 'wip.txt' : 'old.txt'])
     if (pushSfStale) {
-      g(['-C', repo, 'commit', '-m', 'old wip', { date: '2020-01-01T00:00:00Z' }])
+      g(['-C', repo, 'commit', '-m', 'old wip'], { date: '2020-01-01T00:00:00Z' })
     } else {
       g(['-C', repo, 'commit', '-m', 'fresh wip'])
     }
@@ -374,6 +382,23 @@ console.log('== [dce2] AC2 — stale ≥2×TTL + không commit mới → TAKEOVE
   check('dce2: takeover tới fork attempt', (r.stdout || '').includes('LAUNCH FAIL'), r.stdout)
 }
 
+console.log('== [dce2b] AC2-variant — branch có commit CŨ (không fresh) → takeover vẫn được ==')
+{
+  const dir = tempDir('e2b')
+  const home = tempDir('e2bhome')
+  const bracket = writeBracket(dir)
+  const { repo } = gitFixture(dir, { pushSfStale: true }) // sf branch tồn tại, commit 2020
+  const stub = new LinearStub()
+  const url = await stub.start()
+  const staleTs = new Date(Date.now() - 30 * 60 * 1000).toISOString()
+  stub.addComment(stub.claimBody('machine-old'), staleTs)
+  const env = envFor(url, home, { STORY_KIT_CONFIG: writeConfig(tempDir('e2bc'), { enabled: true, machineId: 'machine-a', claimTtlMinutes: 5 }) })
+  const r = await runLaunchA(env, [...ARGS(bracket, repo), '--claim', '--machine-id', 'machine-a'])
+  await stub.stop()
+  check('dce2b: commits cũ vượt --since → TAKEOVER', (r.stdout || '').includes('TAKEOVER SF-1: machine-old → machine-a'), `${r.status}|${r.stdout}|${r.stderr}`)
+  check('dce2b: guard force-with-lease nhận tip branch cũ', (r.stdout || '').includes('LAUNCH FAIL'), r.stdout)
+}
+
 console.log('== [dce3] AC3 — stale NHƯNG commits-fresh → KHÔNG takeover ==')
 {
   const dir = tempDir('e3')
@@ -425,7 +450,8 @@ console.log('== [dce5] AC5 — Linear offline + enabled → fail-closed ==')
   // thiếu key (rc3) — HOME sạch, không env key
   const homeNoKey = tempDir('e5nokey')
   writeConfig(homeNoKey, { enabled: true, machineId: 'machine-a', claimTtlMinutes: 10 })
-  const envNoKey = { ...process.env, HOME: homeNoKey, PATH: `${writePy3Shim(homeNoKey)};${process.env.PATH}`, STORY_KIT_CONFIG: join(homeNoKey, 'story-kit.json'), LINEAR_GRAPHQL_ENDPOINT: 'http://127.0.0.1:9/graphql', ORCA_BIN: writeFakeOrca(homeNoKey) }
+  const shimNoKey = py3ShimDir(homeNoKey)
+  const envNoKey = { ...process.env, HOME: homeNoKey, PATH: shimNoKey ? `${shimNoKey}${delimiter}${process.env.PATH}` : process.env.PATH, STORY_KIT_CONFIG: join(homeNoKey, 'story-kit.json'), LINEAR_GRAPHQL_ENDPOINT: 'http://127.0.0.1:9/graphql', ORCA_BIN: writeFakeOrca(homeNoKey) }
   delete envNoKey.LINEAR_API_KEY
   const r2 = runLaunch(envNoKey, [...ARGS(bracket, repo), '--claim', '--machine-id', 'machine-a'], 90000)
   check('dce5: thiếu key → fail-closed phân loại rc3', /LINEAR_API_KEY thiếu — fail-closed/.test(r2.stdout || ''), `${r2.status}|${r2.stdout}`)
@@ -439,7 +465,8 @@ console.log('== [dce6] --list-claims — read-only JSON (không cần enabled) =
   const stub = new LinearStub()
   const url = await stub.start()
   stub.addComment(stub.claimBody('machine-a'))
-  const env = { ...process.env, HOME: home, PATH: `${writePy3Shim(home)};${process.env.PATH}`, LINEAR_GRAPHQL_ENDPOINT: url, LINEAR_API_KEY: 'test-key' }
+  const shim6 = py3ShimDir(home)
+  const env = { ...process.env, HOME: home, PATH: shim6 ? `${shim6}${delimiter}${process.env.PATH}` : process.env.PATH, LINEAR_GRAPHQL_ENDPOINT: url, LINEAR_API_KEY: 'test-key' }
   const r = await runLaunchA(env, ['--list-claims', '--bracket', T(bracket)])
   await stub.stop()
   let arr = null
