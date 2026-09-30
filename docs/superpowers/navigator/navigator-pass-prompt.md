@@ -41,7 +41,7 @@ CHỈ 7 nguồn dưới đây — KHÔNG tự thêm nguồn khác. Mỗi nguồn
 
 ```markdown
 # Navigator brief — <story> — <ISO timestamp>
-Chế độ: <mode> · Trigger: thủ công (G0)
+Chế độ: <mode> · Trigger: <thủ công (G0) | automation (G1)>
 ## Hiện trạng (≤5 dòng)
 <story đang đâu, SF nào done/chạy/chờ, agent nào sống>
 ## Rủi ro / dead-end (≤5 mục)
