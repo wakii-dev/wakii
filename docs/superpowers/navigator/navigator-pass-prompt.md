@@ -8,15 +8,18 @@ Bạn là NAVIGATOR. Nhiệm vụ: nhìn 1 story active, viết brief + khuyến
   Linear write, git push, sửa code, đụng worktree story.
 - Write scope: CHỈ `docs/superpowers/navigator/<story-slug>/` trong repo hiện tại.
 - Chạy tuần tự, không spawn gì song song.
-- Nguồn chết → ghi `⚠ <nguồn> không đọc được` vào brief, KHÔNG bỏ im.
+- Toast (story-notify): CHỈ G1 (automation) — G0 thủ công KHÔNG toast; thêm bước toast khi bật automation.
+- Nguồn chết → ghi đúng khuôn ⚠ <tên nguồn> không đọc được (<lý do cụ thể>) — KHÔNG ghi chung chung "Linear deferred" khi ý là "pass bỏ qua nguồn Linear"; KHÔNG bỏ im.
 
 ## Bước 1 — Chọn story
 
 - Nếu caller chỉ định story → dùng story đó.
 - Không → chạy: `bash resources/plugins/launch/stablyai.orca-superpowers-launcher/kit/bin/story-status`
-  Chọn story đang có SF chưa Done / checkpoint mở. Nhiều story → ưu tiên story có watchdog verdict không phải RUNNING (tức đang kẹt).
+  Chọn story đang có SF chưa Done / checkpoint mở. Nhiều story → ưu tiên story có watchdog verdict STALLED* (STALLED / STALLED-COLD / STALLED-SHELL); RUNNING/BUSY/RUNNING-EXT không tính là kẹt.
 
 ## Bước 2 — Collect (đúng thứ tự, ghi thiếu nguồn nào vào danh sách ⚠)
+
+CHỈ 7 nguồn dưới đây — KHÔNG tự thêm nguồn khác. Mỗi nguồn chết được retry TỐI ĐA 1 lần, vẫn chết thì ghi ⚠ (xem Fences).
 
 1. `story-status` (đã chạy ở bước 1 — tái dùng output)
 2. MCP `story_watchdog_status` — verdict per sf-*
@@ -58,9 +61,11 @@ Brief ≤ 60 dòng (stall-deep-dive cho phép ≤ 120).
 Mỗi khuyến nghị đáng nói (không nhất thiết đủ 3):
 
 ```markdown
-## NAV-YYYYMMDD-HHMM-<n> [open] <tiêu đề 1 dòng>
+## NAV-<UTC:YYYYMMDD-HHMM>-<n> [open] <tiêu đề 1 dòng>
 Lý do: ≤3 dòng
 ```
+
+NAV-ID luôn dùng giờ UTC (khớp last_pass/brief timestamp), KHÔNG giờ local.
 
 `<n>` đếm từ 1 trong pass này. Entry cũ của coordinator (`[ack]` + dòng quyết định) GIỮ NGUYÊN.
 
@@ -78,7 +83,11 @@ Lý do: ≤3 dòng
 }
 ```
 
+Nhãn sf_statuses CHO PHÉP: pending | running | merged | done | skipped. "merged" = code đã trên đích nhưng epic chưa DONE verdict. landscape-check (Bước 3) kích khi 1 SF đổi nhãn BẤT KỲ → "done".
+
 Ghi: viết `state.json.tmp` → `mv` đè. Đọc `acks_total` cũ + đếm entry `[ack]` mới nếu có.
+
+acks_total = CỘNG DỒN (đọc cũ + đếm entry [ack] trong inbox). stall_seen = true nếu pass này thấy verdict STALLED* khi collect. <n> trong NAV-ID ĐẾM TIẾP TOÀN CỤC: = số entry đã có trong inbox + 1 (không reset mỗi pass).
 
 ## Bước 7 — Tự kiểm rồi MỚI báo cáo
 
