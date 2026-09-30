@@ -88,7 +88,7 @@ Entry cũ của coordinator (`[ack]` + dòng quyết định) GIỮ NGUYÊN.
 Nhãn sf_statuses CHO PHÉP: pending | running | merged | done | skipped. "merged" = code đã trên đích nhưng epic chưa DONE verdict. landscape-check (Bước 3) kích khi 1 SF đổi nhãn BẤT KỲ → "done".
 
 Ghi: viết `state.json.tmp` → `mv` đè. Đọc `acks_total` cũ + đếm entry `[ack]` mới nếu có.
-Field `coordinator_asked` (Bước 10 ghi) nằm chung LẦN ghi state duy nhất ở Bước 6 — không ghi riêng lẻ.
+Field `coordinator_asked`: Bước 6 khởi tạo `null`; Bước 10 cập nhật giá trị bằng cùng khuôn atomic `state.json.tmp` → `mv` (ghi thêm 1 lần duy nhất, không file khác).
 
 acks_total = CỘNG DỒN (đọc cũ + đếm entry [ack] trong inbox). stall_seen = true nếu pass này thấy verdict STALLED* khi collect. <n> trong NAV-ID ĐẾM TIẾP TOÀN CỤC: = số entry đã có trong inbox + 1 (không reset mỗi pass).
 
