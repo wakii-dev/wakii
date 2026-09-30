@@ -27,7 +27,7 @@ CHỈ 7 nguồn dưới đây — KHÔNG tự thêm nguồn khác. Mỗi nguồn
 4. MCP `story_gate_list` — gate mở/đóng
 5. MCP `story_bracket_read` — bracket/mindmap story (không có file → ⚠)
 6. `git -C <worktree-story> log --oneline -10` per branch chính của story
-7. `bash resources/plugins/launch/stablyai.orca-superpowers-launcher/kit/bin/story-stats <story>` (Linear chết → ⚠, không retry)
+7. `bash resources/plugins/launch/stablyai.orca-superpowers-launcher/kit/bin/story-stats <story>` (Linear chết → ⚠)
 
 ## Bước 3 — Chọn chế độ (ưu tiên từ trên xuống, ĐÚNG 1 chế độ)
 
@@ -67,7 +67,7 @@ Lý do: ≤3 dòng
 
 NAV-ID luôn dùng giờ UTC (khớp last_pass/brief timestamp), KHÔNG giờ local.
 
-`<n>` đếm từ 1 trong pass này. Entry cũ của coordinator (`[ack]` + dòng quyết định) GIỮ NGUYÊN.
+Entry cũ của coordinator (`[ack]` + dòng quyết định) GIỮ NGUYÊN.
 
 ## Bước 6 — Ghi state (`.../<story>/state.json`, SAU CÙNG, atomic)
 
