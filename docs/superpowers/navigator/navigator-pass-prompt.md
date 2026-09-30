@@ -20,7 +20,7 @@ Caller prompt chứa literal token `NAVIGATOR_AUTOMATED=1` khi chạy qua orca a
 
 ## Bước 2 — Collect (đúng thứ tự, ghi thiếu nguồn nào vào danh sách ⚠)
 
-CHỈ 7 nguồn dưới đây — KHÔNG tự thêm nguồn khác. Mỗi nguồn chết được retry TỐI ĐA 1 lần, vẫn chết thì ghi ⚠ (xem Fences).
+CHỈ 7 nguồn dưới đây — KHÔNG tự thêm nguồn khác (+ Ngoại lệ: đọc reply coordinator-pass nếu state pass trước có `coordinator_asked` — xem Bước 10). Mỗi nguồn chết được retry TỐI ĐA 1 lần, vẫn chết thì ghi ⚠ (xem Fences).
 
 1. `story-status` (đã chạy ở bước 1 — tái dùng output)
 2. MCP `story_watchdog_status` — verdict per sf-*
@@ -80,6 +80,7 @@ Entry cũ của coordinator (`[ack]` + dòng quyết định) GIỮ NGUYÊN.
   "sf_statuses": {"SF-1": "done", "SF-2": "running"},
   "stall_seen": false,
   "acks_total": 0,
+  "coordinator_asked": null,
   "⚠": []
 }
 ```
@@ -87,6 +88,7 @@ Entry cũ của coordinator (`[ack]` + dòng quyết định) GIỮ NGUYÊN.
 Nhãn sf_statuses CHO PHÉP: pending | running | merged | done | skipped. "merged" = code đã trên đích nhưng epic chưa DONE verdict. landscape-check (Bước 3) kích khi 1 SF đổi nhãn BẤT KỲ → "done".
 
 Ghi: viết `state.json.tmp` → `mv` đè. Đọc `acks_total` cũ + đếm entry `[ack]` mới nếu có.
+Field `coordinator_asked` (Bước 10 ghi) nằm chung LẦN ghi state duy nhất ở Bước 6 — không ghi riêng lẻ.
 
 acks_total = CỘNG DỒN (đọc cũ + đếm entry [ack] trong inbox). stall_seen = true nếu pass này thấy verdict STALLED* khi collect. <n> trong NAV-ID ĐẾM TIẾP TOÀN CỤC: = số entry đã có trong inbox + 1 (không reset mỗi pass).
 
@@ -115,8 +117,9 @@ Toast fail → ghi 1 dòng `⚠ toast không gửi được` vào cuối brief, 
 ## Bước 9 — Self-cleanup (mutation được phép DUY NHẤT #1)
 
 Kiểm ngay khi có kết quả Bước 1: nếu story-status KHÔNG còn story active nào (mọi epic đều DONE verdict hoặc danh sách rỗng):
+story-status CHẾT (lỗi/rỗng do lỗi) → KHÔNG cleanup — ghi ⚠ + kết thúc pass như thường; chỉ cleanup khi story-status ĐỌC ĐƯỢC và trả rỗng/hết-DONE.
 1. `orca automations remove --name story-navigator` (fallback: remove theo id nếu name không nhận)
-2. Ghi 1 dòng cuối brief: "automation đã tự xoá — hết story active. Tạo lại khi story mới: orca automations create ... (xem G1-runbook)."
+2. Ghi 1 dòng vào report pass (và cuối brief nếu brief đã tồn tại): "automation đã tự xoá — hết story active. Tạo lại khi story mới: orca automations create ... (xem G1-runbook)."
 3. KẾT THÚC pass (bỏ Bước 2–8 nếu chưa chạy).
 
 Còn ít nhất 1 story active → bỏ qua bước này. Đây là mutation DUY NHẤT loại 1 navigator được phép — mọi mutation khác vẫn thuộc Fences cấm.
@@ -124,7 +127,8 @@ Còn ít nhất 1 story active → bỏ qua bước này. Đây là mutation DUY
 ## Bước 10 — Coordinator-pass (mutation được phép DUY NHẤT #2 — urgent-only)
 
 CHỈ khi chế độ pass là stall-deep-dive VÀ story kẹt có run orchestration ACTIVE:
-1. Đọc header `resources/plugins/launch/stallyai…/kit/bin/story-coordinator-pass` (path đúng: `resources/plugins/launch/stablyai.orca-superpowers-launcher/kit/bin/story-coordinator-pass`) để nắm protocol thật.
+"Run ACTIVE" = watchdog verdict RUNNING/BUSY/RUNNING-EXT cho story đó, HOẶC story-status hiển thị agent sống cho story.
+1. Đọc header `resources/plugins/launch/stablyai.orca-superpowers-launcher/kit/bin/story-coordinator-pass` để nắm protocol thật.
 2. Gửi TỐI ĐA 1 câu hỏi ≤3 dòng, dòng đầu sign `NAVIGATOR:` — semantics là QUEUE: coordinator đọc ở prompt boundary kế, không ai bị interrupt.
 3. Ghi vào state.json: `coordinator_asked: <UTC HH:MM>` — reply (nếu có) được đọc ở pass KẾ như nguồn collect bổ sung; chưa có reply thì ghi "chờ reply" vào brief, KHÔNG gửi lại.
 Không đúng điều kiện (không stall / không run active) → bỏ qua bước này hoàn toàn, inbox đã đủ.
