@@ -1,9 +1,9 @@
 {
   "wakiiMindmap": 1,
   "meta": {
-    "story": "FI-458 — Bracket phân tán đa máy trong mạng local (distributed bracket execution)",
-    "epic": "FI-458",
-    "dest": "story/fi458-distributed-bracket",
+    "story": "FI-50 — Bracket phân tán đa máy trong mạng local (distributed bracket execution)",
+    "epic": "FI-50",
+    "dest": "story-fi50-distributed-bracket",
     "generatedAt": "2026-09-28T07:54:32.167Z",
     "generator": "story-mindmap 1.0.0"
   },
@@ -11,7 +11,7 @@
     {
       "id": "epic",
       "kind": "epic",
-      "title": "FI-458 — Bracket phân tán đa máy trong mạng local (distributed bracket execution)",
+      "title": "FI-50 — Bracket phân tán đa máy trong mạng local (distributed bracket execution)",
       "state": "in-progress"
     },
     {
@@ -20,7 +20,7 @@
       "title": "Claim core + distributed config (Phase 1/2 — shippable: launch an toàn 1 máy, sẵn sàng đa máy)",
       "state": "pending",
       "tier": 0,
-      "linear": "FI-459"
+      "linear": "FI-51"
     },
     {
       "id": "sf-2",
@@ -28,7 +28,7 @@
       "title": "Remote-safe verify (Phase 1/2)",
       "state": "pending",
       "tier": 1,
-      "linear": "FI-460"
+      "linear": "FI-52"
     },
     {
       "id": "sf-3",
@@ -36,7 +36,7 @@
       "title": "Panel ⚙ Machines read-only + worker ops (Phase 1/2)",
       "state": "pending",
       "tier": 1,
-      "linear": "FI-461"
+      "linear": "FI-53"
     },
     {
       "id": "sf-4",
@@ -44,7 +44,7 @@
       "title": "Claim-protocol infra — 2-machine simulation (Phase 2/2 — release checkpoint)",
       "state": "pending",
       "tier": 2,
-      "linear": "FI-462"
+      "linear": "FI-54"
     },
     {
       "id": "t-1.1",
