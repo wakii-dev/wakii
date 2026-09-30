@@ -47,12 +47,13 @@ function makeOrcaStub(dir) {
   const stub = join(dir, 'orca-stub.sh')
   const py = join(dir, 'orca-stub.py')
   writeFileSync(py, `import json, os, sys
+sys.stdout.reconfigure(encoding="utf-8")
 argv = sys.argv[1:]
 state_p = os.environ["AUTO_STATE"]
 def load():
-    with open(state_p) as f: return json.load(f)
+    with open(state_p, encoding="utf-8") as f: return json.load(f)
 def save(s):
-    with open(state_p, "w") as f: json.dump(s, f)
+    with open(state_p, "w", encoding="utf-8") as f: json.dump(s, f)
 def opt(name, rest):
     flag = "--" + name
     return rest[rest.index(flag) + 1] if flag in rest else None
@@ -93,9 +94,9 @@ if argv[0] == "automations":
 elif argv[0] == "orchestration":
     cmd = argv[1] if len(argv) > 1 else ""
     if cmd == "run-list":
-        with open(os.environ["RL_FIXTURE"]) as f: print(f.read())
+        with open(os.environ["RL_FIXTURE"], encoding="utf-8") as f: print(f.read())
     elif cmd == "check":
-        with open(os.environ["CHECK_FIXTURE"]) as f: print(f.read())
+        with open(os.environ["CHECK_FIXTURE"], encoding="utf-8") as f: print(f.read())
     else:
         print(json.dumps({"ok": True, "result": {}}))
 else:

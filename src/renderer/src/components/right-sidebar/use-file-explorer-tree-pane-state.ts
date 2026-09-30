@@ -5,6 +5,8 @@ import { getRuntimeEnvironmentIdForWorktree } from '@/lib/worktree-runtime-owner
 import { useWorkspaceFileBrowserActionPredicate } from '@/lib/file-preview'
 import type { RuntimeFileOperationArgs } from '@/runtime/runtime-file-client'
 import type { OpenFile } from '@/store/slices/editor'
+import { openWakiiFileRevealingFloatingWorkspace } from '@/hooks/ipc-events/os-wakii-file-open-bridge'
+import type { WakiiFileOpenPayload } from '../../../../shared/wakii-file-open-payload'
 import type { Repo } from '../../../../shared/repo-types'
 import type { FileExplorerRowProjection } from './file-explorer-row-projection'
 import type { TreeNode } from './file-explorer-types'
@@ -245,6 +247,21 @@ export function useFileExplorerTreePaneState({
     openFiles
   })
 
+  // Why: the desktop preload carries the wakii reader IPC; web clients omit it and
+  // .wakii rows degrade to the plain text editor.
+  const wakiiViewerRoute = useMemo(() => {
+    const readWakiiDocument = window.api.fs.readWakiiDocument
+    if (!readWakiiDocument) {
+      return null
+    }
+    return {
+      readDocument: (filePath: string) => readWakiiDocument({ filePath }),
+      openViewer: (payload: WakiiFileOpenPayload) => {
+        void openWakiiFileRevealingFloatingWorkspace(payload)
+      }
+    }
+  }, [])
+
   const handlers = useFileExplorerHandlers({
     activeWorktreeId,
     runtimeEnvironmentId: activeRuntimeEnvironmentId,
@@ -256,6 +273,7 @@ export function useFileExplorerTreePaneState({
     authorizeExternalPath: window.api.fs.authorizeExternalPath,
     markPathAsDirectory,
     setSelectedPath: setSingleSelectedPath,
+    wakiiViewer: wakiiViewerRoute,
     scrollRef
   })
 

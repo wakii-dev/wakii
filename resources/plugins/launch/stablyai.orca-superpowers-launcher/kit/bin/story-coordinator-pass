@@ -230,7 +230,7 @@ def first_of(d, *keys):
 
 def git(*args):
     try:
-        p = subprocess.run(["git"] + list(args), capture_output=True, text=True, timeout=30)
+        p = subprocess.run(["git"] + list(args), capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30)
     except (subprocess.TimeoutExpired, OSError):
         return ""
     return p.stdout if p.returncode == 0 else ""
@@ -421,7 +421,7 @@ def load_ownership(runs, self_handle):
         env = dict(os.environ)
         env["OP_RUNS_FILE"] = tmp
         p = subprocess.run(sh_seam_argv(probe, ["--json", "--self", self_handle or ""]),
-                           capture_output=True, text=True, timeout=300, env=env)
+                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=300, env=env)
     except (subprocess.TimeoutExpired, OSError):
         return None
     finally:
@@ -468,7 +468,7 @@ def stall_sweep():
             continue
         try:
             s = subprocess.run(sh_seam_argv(RESUME_BIN, [sf, "--send"]),
-                               capture_output=True, text=True, timeout=300)
+                               capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=300)
         except (subprocess.TimeoutExpired, OSError):
             s = None
         if s is not None and "SENT" in (s.stdout or ""):

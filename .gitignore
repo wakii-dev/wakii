@@ -109,6 +109,10 @@ docs/**
 # trail trên nhánh đích (single-writer: chỉ checkout đích ghi).
 !docs/superpowers/mindmaps/
 !docs/superpowers/mindmaps/**
+# VS Code sync backlog — state machine của automation vscode-sync-dispatch-pass
+# (bin đọc/ghi mỗi pass; track để backlog bền qua máy + audit được).
+!docs/superpowers/vscode-sync/
+!docs/superpowers/vscode-sync/**
 # ADE knowledge ADR phải track được — story-kb + agents đọc decision record
 # (GH-45/#38): ADR là source-of-truth, chỉ adr/** negate; data KB thực
 # (repos/, glossary.md, MOC.md) thuộc wakii-site — vẫn ignored.
@@ -185,6 +189,7 @@ validation-screenshots/
 /notes/
 /pr-evidence/
 /.evidence-gitlens-lite/
+/.evidence-wakii-open/
 
 # Playwright
 test-results/

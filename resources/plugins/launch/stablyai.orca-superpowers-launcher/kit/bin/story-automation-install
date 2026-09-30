@@ -64,7 +64,12 @@ while [ $# -gt 0 ]; do
   esac
   shift
 done
-export ACTION COORD_CRON BRIEF_CRON WORKSPACE PROVIDER TIMEZONE KIT_DIR="$DIR"
+# Windows (MSYS/Git Bash): python native không mở path /c/... — convert sang native
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*) DIR_NATIVE="$(cygpath -m "$DIR" 2>/dev/null || echo "$DIR")" ;;
+  *) DIR_NATIVE="$DIR" ;;
+esac
+export ACTION COORD_CRON BRIEF_CRON WORKSPACE PROVIDER TIMEZONE KIT_DIR="$DIR_NATIVE"
 
 PY="$(command -v python3 || command -v python || true)"
 [ -n "$PY" ] || { echo "python không tìm thấy"; exit 2; }
@@ -74,6 +79,7 @@ PY="$(command -v python3 || command -v python || true)"
 exec "$PY" - <<'PYEOF'
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -112,13 +118,47 @@ def resolve_seam(env_key, name):
     return ""
 
 
+def sh_seam_argv(bin_path, args):
+    # Windows: python không exec được script #!/bin|env sh/bash — giống
+    # sh_seam_argv của story-coordinator-pass (kit test seam). Binary thật
+    # (MZ/ELF) spawn thẳng; script không đuôi → bọc bash; path MSYS (/c/...)
+    # python không open được → which(basename) resolve lại Windows-native.
+    if bin_path.endswith(".sh"):
+        return ["bash", bin_path] + list(args)
+    if os.name == "nt" and not os.path.splitext(bin_path)[1]:
+        try:
+            with open(bin_path, "rb") as f:
+                magic = f.read(2)
+        except OSError:
+            resolved = shutil.which(os.path.basename(bin_path))
+            if resolved:
+                bin_path = resolved
+            return [bin_path] + list(args)
+        if magic not in (b"MZ", b"\x7fE"):  # không phải PE/ELF → coi là script
+            bash = shutil.which("bash")
+            if bash:
+                return ["bash", bin_path] + list(args)
+    return [bin_path] + list(args)
+
+
+if sys.platform == "win32":
+    _APPDATA = os.environ.get("APPDATA") or os.path.join(
+        os.path.expanduser("~"), "AppData", "Roaming")
+    USER_DATA_CANDIDATES = [os.path.join(_APPDATA, "orca-dev"),
+                            os.path.join(_APPDATA, "orca"), None]
+else:
+    USER_DATA_CANDIDATES = [
+        os.path.expanduser("~/Library/Application Support/orca-dev"),
+        os.path.expanduser("~/Library/Application Support/orca"), None]
+
+
 def orca_plain(args, timeout_s=30):
     """automations store nằm ở default runtime — gọi orca THẲNG, không override."""
     env = dict(os.environ)
     env.pop("ORCA_USER_DATA_PATH", None)
     try:
-        p = subprocess.run([ORCA_BIN] + args, capture_output=True, text=True,
-                           timeout=timeout_s, env=env)
+        p = subprocess.run(sh_seam_argv(ORCA_BIN, args), capture_output=True, text=True,
+                           encoding="utf-8", errors="replace", timeout=timeout_s, env=env)
     except (subprocess.TimeoutExpired, OSError):
         return None
     if p.returncode != 0:
@@ -131,16 +171,15 @@ def orca_plain(args, timeout_s=30):
 
 def orca_read(args, timeout_s=30):
     """orchestration read — dev runtime trước (story worktrees), rồi prod, plain."""
-    for ud in (os.path.expanduser("~/Library/Application Support/orca-dev"),
-               os.path.expanduser("~/Library/Application Support/orca"), None):
+    for ud in USER_DATA_CANDIDATES:
         env = dict(os.environ)
         if ud:
             env["ORCA_USER_DATA_PATH"] = ud
         else:
             env.pop("ORCA_USER_DATA_PATH", None)
         try:
-            p = subprocess.run([ORCA_BIN] + args, capture_output=True, text=True,
-                               timeout=timeout_s, env=env)
+            p = subprocess.run(sh_seam_argv(ORCA_BIN, args), capture_output=True, text=True,
+                               encoding="utf-8", errors="replace", timeout=timeout_s, env=env)
         except (subprocess.TimeoutExpired, OSError):
             continue
         if p.returncode == 0:
@@ -189,7 +228,7 @@ def do_install():
     autos = list_automations()
     if autos is None:
         print("story-automation-install: automations list đọc không được — "
-              "KHÔNG create mù (tránh nhân bản)", file=sys.stderr)
+              "KHÔNG create mù (tránh nhân bản)", file=sys.stdout)
         return 1
     created = updated = failed = 0
     for coord in (True, False):
@@ -199,9 +238,9 @@ def do_install():
         owned = [a for a in autos if owns(a.get("name"), a.get("prompt"), coord=coord)]
         if owned:
             aid = owned[0].get("id")
-            d = orca_plain(["automations", "edit", aid] + target_args(cron, prompt))
+            d = orca_plain(["automations", "edit", aid, "--json"] + target_args(cron, prompt))
             if d is None:
-                print(f"  FAIL edit {name} ({aid})", file=sys.stderr)
+                print(f"  FAIL edit {name} ({aid})", file=sys.stdout)
                 failed += 1
                 continue
             note = ""
@@ -210,10 +249,10 @@ def do_install():
             print(f"installed: {name} — updated {aid}{note}")
             updated += 1
         else:
-            d = orca_plain(["automations", "create", "--name", name,
+            d = orca_plain(["automations", "create", "--name", name, "--json",
                             *target_args(cron, prompt)])
             if d is None:
-                print(f"  FAIL create {name}", file=sys.stderr)
+                print(f"  FAIL create {name}", file=sys.stdout)
                 failed += 1
                 continue
             a = (d.get("result") or {}).get("automation") or {}
@@ -232,7 +271,7 @@ def do_retire():
     autos = list_automations()
     if autos is None:
         print("story-automation-install: automations list đọc không được",
-              file=sys.stderr)
+              file=sys.stdout)
         return 1
     removed = failed = 0
     for coord in (True, False):
@@ -240,7 +279,7 @@ def do_retire():
                   if owns(x.get("name"), x.get("prompt"), coord=coord)]:
             aid = a.get("id")
             if orca_plain(["automations", "remove", aid]) is None:
-                print(f"  FAIL remove {a.get('name')} ({aid})", file=sys.stderr)
+                print(f"  FAIL remove {a.get('name')} ({aid})", file=sys.stdout)
                 failed += 1
                 continue
             print(f"retired: {a.get('name')} ({aid})")
@@ -256,8 +295,8 @@ def do_briefing():
     orca_ok = True
     if status_bin:
         try:
-            p = subprocess.run([status_bin], capture_output=True, text=True,
-                               timeout=120)
+            p = subprocess.run(sh_seam_argv(status_bin, []), capture_output=True, text=True,
+                               encoding="utf-8", errors="replace", timeout=120)
         except (subprocess.TimeoutExpired, OSError):
             p = None
         text = (p.stdout or "") if p is not None and p.returncode == 0 else ""
@@ -275,8 +314,8 @@ def do_briefing():
     resume_bin = resolve_seam("STORY_RESUME_BIN", "story-resume")
     if resume_bin:
         try:
-            p = subprocess.run([resume_bin, "--check"], capture_output=True,
-                               text=True, timeout=180)
+            p = subprocess.run(sh_seam_argv(resume_bin, ["--check"]), capture_output=True,
+                               text=True, encoding="utf-8", errors="replace", timeout=180)
         except (subprocess.TimeoutExpired, OSError):
             p = None
         for line in (p.stdout or "").splitlines() if p is not None else []:
@@ -353,14 +392,18 @@ def do_briefing():
         print("BRIEFING: notify-missing (story-notify không tìm thấy — body ở trên)")
         return 0
     try:
-        p = subprocess.run([notify_bin, "briefing", f"Morning briefing {date_str}",
-                            body], capture_output=True, timeout=20)
-    except (subprocess.TimeoutExpired, OSError):
+        p = subprocess.run(sh_seam_argv(notify_bin, ["briefing", f"Morning briefing {date_str}",
+                                                     body]), capture_output=True, timeout=20)
+    except subprocess.TimeoutExpired:
         p = None
+        rc = "timeout"
+    except OSError:
+        p = None
+        rc = "spawn-fail"
     if p is not None and p.returncode == 0:
         print("BRIEFING: notified")
     else:
-        rc = p.returncode if p is not None else "timeout"
+        rc = p.returncode if p is not None else rc
         print(f"BRIEFING: notify-fail (rc={rc} — body ở trên)")
     return 0
 
@@ -373,6 +416,6 @@ if ACTION == "retire":
     sys.exit(do_retire())
 if ACTION == "briefing":
     sys.exit(do_briefing())
-print(f"story-automation-install: Unknown action: {ACTION}", file=sys.stderr)
+print(f"story-automation-install: Unknown action: {ACTION}", file=sys.stdout)
 sys.exit(2)
 PYEOF

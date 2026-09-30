@@ -1,0 +1,32 @@
+{
+  "wakiiMindmap": 1,
+  "meta": {
+    "story": "VSC-901",
+    "generator": "story-workflow CREATE",
+    "generatedAt": "2026-09-30T02:45:00Z",
+    "dest": "story-vsc901-pipeline-smoke",
+    "worktreeModel": "story-hub"
+  },
+  "nodes": [
+    {
+      "id": "epic",
+      "kind": "epic",
+      "title": "TEST pipeline smoke — smoke test story-workflow cho automation vscode-sync"
+    },
+    {
+      "id": "sf-1",
+      "kind": "sf",
+      "title": "Pipeline smoke verify",
+      "tier": 0,
+      "summary": "Bằng chứng end-to-end pipeline story chạy được: epic Linear + SF sub-issue đúng parent/state, .wakii validate + backfill linear ID, story worktree + SF worktree đúng lineage story-hub, SF agent report evidence lên Linear — không commit code production nào",
+      "linear": "FI-45"
+    }
+  ],
+  "edges": [
+    {
+      "from": "epic",
+      "to": "sf-1",
+      "rel": "contains"
+    }
+  ]
+}

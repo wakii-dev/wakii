@@ -6,12 +6,15 @@ import { translate } from '@/i18n/i18n'
 import { useAppStore } from '../../store'
 
 /**
- * Receipt + routing surface for `.wakii` files the OS shell handed to Wakii (double-click /
- * "Open With"). Main has already read, capped, and validated each file: payloads arrive
- * decoded or carrying a per-file error. Each payload routes into the editor slice — the
- * viewer tab renders the mindmap or the error card — and the floating workspace reveals.
+ * Opens a decoded `.wakii` payload as a mindmap viewer tab in the floating workspace,
+ * enabling + revealing that panel when it is hidden. Shared by the OS-open bridge and
+ * the file explorer's .wakii route — both are explicit asks for the file. Main has
+ * already read, capped, and validated each file: payloads arrive decoded or carrying
+ * a per-file error — the routed payload still renders the viewer's error card.
  */
-async function openOsRequestedWakiiFile(payload: WakiiFileOpenPayload): Promise<void> {
+export async function openWakiiFileRevealingFloatingWorkspace(
+  payload: WakiiFileOpenPayload
+): Promise<void> {
   // Why the runtime shape check: the payload crosses the preload boundary, so a stale or
   // mismatched preload can hand back a malformed object. The toast acknowledges the failure
   // up front; the routed payload still renders the viewer's error card.
@@ -54,7 +57,7 @@ function reportOsRequestedWakiiFailure(error: unknown): void {
 export function registerOsWakiiFileOpenBridge(unsubs: (() => void)[]): void {
   // The push channel delivers one decoded payload per event; the pull drains the whole queue.
   const unsubscribe = window.api.ui.onOpenWakiiFile?.((payload) => {
-    void openOsRequestedWakiiFile(payload).catch(reportOsRequestedWakiiFailure)
+    void openWakiiFileRevealingFloatingWorkspace(payload).catch(reportOsRequestedWakiiFailure)
   })
   if (unsubscribe) {
     unsubs.push(unsubscribe)
@@ -72,7 +75,7 @@ export function registerOsWakiiFileOpenBridge(unsubs: (() => void)[]): void {
           return
         }
         for (const payload of payloads) {
-          void openOsRequestedWakiiFile(payload).catch(reportOsRequestedWakiiFailure)
+          void openWakiiFileRevealingFloatingWorkspace(payload).catch(reportOsRequestedWakiiFailure)
         }
       })
       .catch(reportOsRequestedWakiiFailure)

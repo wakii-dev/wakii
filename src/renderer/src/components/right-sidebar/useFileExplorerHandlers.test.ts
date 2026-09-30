@@ -207,6 +207,166 @@ describe('activateFileExplorerNode', () => {
     expect(authorizeExternalPath).not.toHaveBeenCalled()
   })
 
+  const wakiiNode: TreeNode = {
+    name: 'roadmap.wakii',
+    path: '/repo/docs/roadmap.wakii',
+    relativePath: 'docs/roadmap.wakii',
+    isDirectory: false,
+    depth: 0,
+    operationOwner: { kind: 'local' }
+  }
+
+  it('routes a .wakii row to the mindmap viewer instead of the text editor', async () => {
+    const openFile = vi.fn()
+    const openViewer = vi.fn()
+    const readDocument = vi.fn().mockResolvedValue({
+      path: '/repo/docs/roadmap.wakii',
+      mindmap: {
+        wakiiMindmap: 1,
+        meta: { story: 's', generatedAt: 't', generator: 'g' },
+        nodes: [{ id: 'epic', kind: 'epic', title: 'E' }],
+        edges: []
+      }
+    })
+    useAppStore.setState({
+      worktreesByRepo: {
+        'repo-1': [{ id: 'wt-1', repoId: 'repo-1', path: '/repo', hostId: 'local' } as never]
+      }
+    })
+
+    await activateFileExplorerNode({
+      node: wakiiNode,
+      activeWorktreeId: 'wt-1',
+      runtimeEnvironmentId: null,
+      openFile,
+      toggleDir: vi.fn(),
+      loadDir: vi.fn(),
+      statPath: vi.fn(),
+      authorizeExternalPath: vi.fn(),
+      markPathAsDirectory: vi.fn(),
+      setSelectedPath: vi.fn(),
+      wakiiViewer: { readDocument, openViewer }
+    })
+
+    expect(readDocument).toHaveBeenCalledWith('/repo/docs/roadmap.wakii')
+    expect(openViewer).toHaveBeenCalledTimes(1)
+    expect(openFile).not.toHaveBeenCalled()
+  })
+
+  it('falls back to the text editor when the .wakii document is invalid', async () => {
+    const openFile = vi.fn()
+    const openViewer = vi.fn()
+    const readDocument = vi
+      .fn()
+      .mockResolvedValue({ path: '/repo/docs/roadmap.wakii', error: { code: 'schema', message: 'x' } })
+    useAppStore.setState({
+      worktreesByRepo: {
+        'repo-1': [{ id: 'wt-1', repoId: 'repo-1', path: '/repo', hostId: 'local' } as never]
+      }
+    })
+
+    await activateFileExplorerNode({
+      node: wakiiNode,
+      activeWorktreeId: 'wt-1',
+      runtimeEnvironmentId: null,
+      openFile,
+      toggleDir: vi.fn(),
+      loadDir: vi.fn(),
+      statPath: vi.fn(),
+      authorizeExternalPath: vi.fn(),
+      markPathAsDirectory: vi.fn(),
+      setSelectedPath: vi.fn(),
+      wakiiViewer: { readDocument, openViewer }
+    })
+
+    expect(openViewer).not.toHaveBeenCalled()
+    expect(openFile).toHaveBeenCalledWith(
+      expect.objectContaining({ filePath: '/repo/docs/roadmap.wakii', mode: 'edit' }),
+      { preview: true, focusEditor: true, suppressActiveRuntimeFallback: true }
+    )
+  })
+
+  it('falls back to the text editor when the .wakii read fails', async () => {
+    const openFile = vi.fn()
+    const openViewer = vi.fn()
+    const readDocument = vi.fn().mockRejectedValue(new Error('ipc unavailable'))
+    useAppStore.setState({
+      worktreesByRepo: {
+        'repo-1': [{ id: 'wt-1', repoId: 'repo-1', path: '/repo', hostId: 'local' } as never]
+      }
+    })
+
+    await activateFileExplorerNode({
+      node: wakiiNode,
+      activeWorktreeId: 'wt-1',
+      runtimeEnvironmentId: null,
+      openFile,
+      toggleDir: vi.fn(),
+      loadDir: vi.fn(),
+      statPath: vi.fn(),
+      authorizeExternalPath: vi.fn(),
+      markPathAsDirectory: vi.fn(),
+      setSelectedPath: vi.fn(),
+      wakiiViewer: { readDocument, openViewer }
+    })
+
+    expect(openViewer).not.toHaveBeenCalled()
+    expect(openFile).toHaveBeenCalledTimes(1)
+  })
+
+  it('opens non-wakii rows in the text editor even when the viewer route is wired', async () => {
+    const openFile = vi.fn()
+    const openViewer = vi.fn()
+    const readDocument = vi.fn()
+    useAppStore.setState({
+      worktreesByRepo: {
+        'repo-1': [{ id: 'wt-1', repoId: 'repo-1', path: '/repo', hostId: 'local' } as never]
+      }
+    })
+
+    await activateFileExplorerNode({
+      node: { ...wakiiNode, name: 'README.md', path: '/repo/README.md', relativePath: 'README.md' },
+      activeWorktreeId: 'wt-1',
+      runtimeEnvironmentId: null,
+      openFile,
+      toggleDir: vi.fn(),
+      loadDir: vi.fn(),
+      statPath: vi.fn(),
+      authorizeExternalPath: vi.fn(),
+      markPathAsDirectory: vi.fn(),
+      setSelectedPath: vi.fn(),
+      wakiiViewer: { readDocument, openViewer }
+    })
+
+    expect(readDocument).not.toHaveBeenCalled()
+    expect(openViewer).not.toHaveBeenCalled()
+    expect(openFile).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps the plain text editor for .wakii rows when no viewer route is wired', async () => {
+    const openFile = vi.fn()
+    useAppStore.setState({
+      worktreesByRepo: {
+        'repo-1': [{ id: 'wt-1', repoId: 'repo-1', path: '/repo', hostId: 'local' } as never]
+      }
+    })
+
+    await activateFileExplorerNode({
+      node: wakiiNode,
+      activeWorktreeId: 'wt-1',
+      runtimeEnvironmentId: null,
+      openFile,
+      toggleDir: vi.fn(),
+      loadDir: vi.fn(),
+      statPath: vi.fn(),
+      authorizeExternalPath: vi.fn(),
+      markPathAsDirectory: vi.fn(),
+      setSelectedPath: vi.fn()
+    })
+
+    expect(openFile).toHaveBeenCalledTimes(1)
+  })
+
   it('opens local files without runtime fallback when no runtime owner is set', async () => {
     const fileNode: TreeNode = {
       name: 'README.md',

@@ -4,6 +4,7 @@ import type { SshMutationExpectation } from '../../shared/ssh-types'
 import type { RuntimeUploadFileStreamRequest } from '../../shared/runtime-upload-staging-contract'
 import type { SearchResult } from '../../shared/code-search-types'
 import type { FsChangedPayload } from '../../shared/filesystem-entry-types'
+import type { WakiiFileOpenPayload } from '../../shared/wakii-file-open-payload'
 import type {
   ImportItemResult,
   ResolveDroppedPathsResult,
@@ -86,6 +87,8 @@ export const fsApi = {
     connectionId?: string
   }): Promise<{ filePath: string; relativePath: string; basename: string; name: string }[]> =>
     ipcRenderer.invoke('fs:listMarkdownDocuments', args),
+  readWakiiDocument: (args: { filePath: string }): Promise<WakiiFileOpenPayload> =>
+    ipcRenderer.invoke('fs:readWakiiDocument', args),
   writeFile: (
     args: {
       filePath: string

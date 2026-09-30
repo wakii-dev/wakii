@@ -13841,6 +13841,16 @@
           "useFileSearchReplaceUndo": {
             "transportStopped": "Undo stopped — lost contact with the workspace. Restorable files were kept.",
             "summary": "Restored {{restored}} — skipped unsaved {{dirty}}, changed-on-disk/undone {{stale}}, errors {{errors}}, not attempted {{unprocessed}}."
+          },
+          "file": {
+            "explorer": {
+              "wakii": {
+                "open": {
+                  "5f05f7de28": "This file is not a valid mindmap — opening it as text.",
+                  "1661f00e0e": "Could not read the mindmap file — opening it as text."
+                }
+              }
+            }
           }
         }
       },

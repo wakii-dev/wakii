@@ -249,6 +249,12 @@
       "description": "thông báo có context, screenshot, đề xuất — story-notify <type> <sf> [detail]"
     },
     {
+      "name": "story-notify-toast.ps1",
+      "type": "bin",
+      "category": "ops",
+      "description": "toast WinRT cho story-notify trên Windows — WinPS 5.1 -File (không bypass/encode, windows-edr-posture), script gọi cạnh nó"
+    },
+    {
       "name": "story-post-merge",
       "type": "bin",
       "category": "ops",
@@ -518,7 +524,19 @@
       "type": "bin",
       "category": "infra",
       "description": "PreToolUse Edit|Write|MultiEdit guard chặn ghi .env/.env.*/pem/id_rsa*/key — exit 2, fail-open, GUARD_OFF escape (GH-87)"
+    },
+    {
+      "name": "vscode-sync-dispatch",
+      "type": "bin",
+      "category": "infra",
+      "description": "điều phối sync feature VS Code — 1 pass 1 feature, mỗi feature qua story-workflow đầy đủ; state machine trong docs/superpowers/vscode-sync/backlog.md ([ ] chờ / [~] đang chạy / [x] đã merged)"
+    },
+    {
+      "name": "story-pr-checks",
+      "type": "bin",
+      "category": "review",
+      "description": "CI gate cho PR truoc khi merge — doc gh pr checks (cung nguon Checks panel): exit 0 pass/no-checks, 1 fail, 2 pending, 3 loi"
     }
   ],
-  "kitHash": "125b4ead1ce8090b"
+  "kitHash": "16bda948cd8a7405"
 }

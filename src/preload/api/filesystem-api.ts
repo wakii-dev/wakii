@@ -5,6 +5,7 @@ import type {
   FsChangedPayload,
   MarkdownDocument
 } from '../../shared/filesystem-entry-types'
+import type { WakiiFileOpenPayload } from '../../shared/wakii-file-open-payload'
 import type {
   ImportItemResult,
   ResolveDroppedPathsResult,
@@ -83,6 +84,11 @@ export type FilesystemApi = {
       rootPath: string
       connectionId?: string
     }) => Promise<MarkdownDocument[]>
+    /**
+     * Reads + validates one .wakii document (size-capped, schema-checked in main).
+     * Why optional: paired web clients have no local wakii reader and degrade to text.
+     */
+    readWakiiDocument?: (args: { filePath: string }) => Promise<WakiiFileOpenPayload>
     writeFile: (
       args: {
         filePath: string

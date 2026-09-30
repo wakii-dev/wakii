@@ -151,9 +151,10 @@ Mô tả story (feature lớn) — markdown
       <div style="display:flex; align-items:center; gap:6px; margin-top:8px;">
         <span style="font-size:10px; font-weight:700; letter-spacing:.8px; color:var(--muted-foreground,#888); text-transform:uppercase;">Bracket</span>
         <span style="flex:1;"></span>
-        <div id="bracket-mode" style="display:flex; gap:2px; border:1px solid var(--border,#444); border-radius:7px; padding:2px;" title="Kiểu hiển thị bracket — Tier ladder (mặc định) hoặc Canvas tương tác">
-          <button id="bracket-mode-tier" class="tab-btn active" type="button" style="padding:3px 10px; font-size:11px;">Tier</button>
-          <button id="bracket-mode-canvas" class="tab-btn" type="button" style="padding:3px 10px; font-size:11px;">Canvas</button>
+        <!-- canvas-only: toggle Tier/Canvas đã bỏ — mindmap là view duy nhất -->
+        <div id="bracket-mode" style="display:none;">
+          <button id="bracket-mode-tier" class="tab-btn" type="button">Tier</button>
+          <button id="bracket-mode-canvas" class="tab-btn active" type="button">Canvas</button>
         </div>
         <button id="story-add-node" class="btn" style="padding: 4px 8px;" title="Thêm SF node mới vào bracket (ghi .md qua worker)">＋</button>
         <button id="story-share" class="btn" style="padding: 4px 8px;" title="Share bracket: publish HTML diagram (tier ladder) lên Orca artifacts — link public tự copy">⤓</button>
@@ -5216,6 +5217,56 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
         return branches
       }
 
+      // ---- .wakii doc → branches (mirror parseWakiiStory —
+      // src/main/superpowers/wakii-story-parse.ts; id node lowercase 'sf-1',
+      // branch id uppercase 'SF-1') ----
+      function toBranchId(nid) { return String(nid || '').toUpperCase() }
+      function toNodeId(bid) { return String(bid || '').toLowerCase() }
+      function parseWakiiDoc(doc, children) {
+        var branches = []
+        var sfIds = {}
+        ;(doc.nodes || []).forEach(n => { if (n && n.kind === 'sf' && n.id) sfIds[n.id] = true })
+        ;(doc.nodes || []).forEach(n => {
+          if (!n || n.kind !== 'sf' || !n.id) return
+          var bid = toBranchId(n.id)
+          branches.push({
+            id: bid,
+            title: n.title || bid,
+            tier: typeof n.tier === 'number' ? n.tier : 0,
+            deps: (doc.edges || [])
+              .filter(e => e && e.rel === 'depends-on' && e.from === n.id && sfIds[e.to])
+              .map(e => toBranchId(e.to)),
+            tasks: (doc.nodes || [])
+              .filter(t => t && t.kind === 'task' && t.id && (
+                t.parent === n.id ||
+                (doc.edges || []).some(e => e && e.rel === 'contains' && e.from === n.id && e.to === t.id)))
+              .map(t => t.title || t.id),
+            state: null, linear: n.linear || null, linearId: n.linear || null
+          })
+        })
+        // Attach Linear state — exact-ID-first như parsePlan tail
+        function mkState(c) { return c.state ? c.state : { name: c.stateName, type: c.stateType, color: c.stateColor } }
+        ;(children || []).forEach(c => {
+          var byLinear = branches.find(b => b.linear === c.identifier)
+          if (byLinear) { byLinear.state = mkState(c); byLinear.linearId = c.identifier; return }
+          var re = new RegExp(c.identifier + '|' + c.title.slice(0, 24).replace(/[.*+?^\${}()|[\]\\]/g, '\\$&'), 'i')
+          var cands = branches.filter(b => !b.state && (re.test(b.title) || re.test(b.id)))
+          if (cands.length === 1) { cands[0].state = mkState(c); cands[0].linearId = c.identifier }
+        })
+        return branches
+      }
+      // Light required-field check trước khi render — mirror bảng validator
+      // (src/main/ipc/wakii-documents.ts); full validation phía worker.
+      function validWakiiDoc(doc) {
+        return !!(doc && doc.wakiiMindmap === 1 && doc.meta
+          && typeof doc.meta.story === 'string' && doc.meta.story
+          && typeof doc.meta.epic === 'string' && /^[A-Za-z]+-\d+$/.test(doc.meta.epic)
+          && typeof doc.meta.generator === 'string'
+          && typeof doc.meta.generatedAt === 'string'
+          && Array.isArray(doc.nodes) && Array.isArray(doc.edges)
+          && (doc.nodes || []).some(n => n && n.kind === 'epic'))
+      }
+
       // ---- State → color ----
       function stateColor(b) {
         if (!b.state) return 'var(--muted-foreground, #999)'
@@ -5251,7 +5302,7 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
       // 'tier' = SVG ladder (mặc định, renderBracket) | 'canvas' = cytoscape
       // pan/zoom/drag + edge editing. Canvas positions là VIEW-ONLY (không ghi
       // bracket .md) — cấu trúc (deps/tier/title) vẫn qua bracketApply.
-      var bracketMode = 'tier'
+      var bracketMode = 'canvas' // canvas-only — toggle Tier đã bỏ khỏi UI
       var cyCanvas = null
       var TIER_COLORS = ['#6ba1f8', '#eab308', '#34d399', '#d946ef', '#f97316', '#22d3ee']
       // Canvas elements từ graph.branches: node = SF (id + title, màu theo tier),
@@ -5275,6 +5326,96 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
           })
         })
         return els
+      }
+      // ---- Wakii mindmap (graph.doc → cytoscape radial) ----
+      // Mindmap thay bracket ladder cho story .wakii: epic tâm, SF vòng 1,
+      // task fan quanh SF cha; màu theo state; contains liền, depends-on nét đứt.
+      var WAKII_STATE_COLORS = { done: '#22c55e', 'in-progress': '#eab308', blocked: '#ef4444' }
+      function wakiiNodeColor(n) {
+        return WAKII_STATE_COLORS[(n.state || '').toLowerCase()] || '#9ca3af'
+      }
+      function wakiiMindmapElements(doc) {
+        var nodes = doc.nodes || []
+        var edges = doc.edges || []
+        var els = []
+        nodes.forEach(n => {
+          var kind = n.kind || 'task'
+          var isTask = kind === 'task'
+          els.push({ data: {
+            id: n.id,
+            label: (isTask ? '' : n.id + '\n') + (n.title || '').slice(0, isTask ? 30 : 26),
+            color: wakiiNodeColor(n),
+            shape: isTask ? 'ellipse' : 'round-rectangle',
+            width: kind === 'epic' ? 170 : (isTask ? 110 : 150),
+            height: isTask ? 34 : 46,
+            'font-size': isTask ? 8 : 10
+          } })
+        })
+        edges.forEach(e => {
+          var rel = (e.rel || 'contains').toLowerCase()
+          if (rel === 'depends-on') {
+            els.push({ data: { id: e.from + '->' + e.to, source: e.to, target: e.from,
+              color: '#6ba1f8', lineStyle: 'dashed' } })
+          } else {
+            els.push({ data: { id: e.from + '->' + e.to, source: e.from, target: e.to,
+              color: '#6b7280', lineStyle: 'solid' } })
+          }
+        })
+        return els
+      }
+      // Vòng tròn đồng tâm theo BFS depth từ epic (contains trước, rồi depends-on);
+      // góc chia theo số lá mỗi subtree → task fan quanh SF cha đều tay.
+      function wakiiMindmapPositions(doc) {
+        var nodes = doc.nodes || []
+        var edges = doc.edges || []
+        var adj = {}, incoming = {}
+        nodes.forEach(n => { adj[n.id] = []; incoming[n.id] = 0 })
+        edges.forEach(e => {
+          if (adj[e.from] && incoming[e.to] !== undefined) { adj[e.from].push(e.to); incoming[e.to]++ }
+        })
+        var roots = nodes.filter(n => incoming[n.id] === 0 || n.kind === 'epic').map(n => n.id)
+        if (!roots.length) return null // cytoscape tự rơi về layout dự phòng
+        // depth BFS
+        var depth = {}
+        var queue = roots.slice()
+        roots.forEach(id => { depth[id] = 0 })
+        while (queue.length) {
+          var cur = queue.shift()
+          ;(adj[cur] || []).forEach(next => {
+            if (depth[next] === undefined) { depth[next] = depth[cur] + 1; queue.push(next) }
+          })
+        }
+        var maxDepth = Math.max(0, Math.max.apply(null, nodes.map(n => depth[n.id] === undefined ? 0 : depth[n.id])))
+        // leaf count mỗi subtree
+        var leafCount = {}
+        var childrenOf = id => (adj[id] || []).filter(c => depth[c] === depth[id] + 1)
+        function countLeaves(id) {
+          var kids = childrenOf(id)
+          if (!kids.length) { leafCount[id] = 1; return 1 }
+          var sum = 0
+          kids.forEach(k => { sum += countLeaves(k) })
+          leafCount[id] = sum
+          return sum
+        }
+        roots.forEach(countLeaves)
+        var totalLeaves = roots.reduce((s, r) => s + leafCount[r], 0) || 1
+        var positions = {}
+        var radius = d => d === 0 ? 0 : 150 + (d - 1) * 130
+        function place(id, angleFrom, angleTo, d) {
+          var mid = (angleFrom + angleTo) / 2
+          positions[id] = { x: Math.cos(mid) * radius(d), y: Math.sin(mid) * radius(d) }
+          var kids = childrenOf(id)
+          if (!kids.length) return
+          var span = (angleTo - angleFrom) / kids.length
+          kids.forEach((k, i) => place(k, angleFrom + span * i, angleFrom + span * (i + 1), d + 1))
+        }
+        var cursor = -Math.PI / 2
+        roots.forEach(r => {
+          var span = 2 * Math.PI * (leafCount[r] / totalLeaves)
+          place(r, cursor, cursor + span, 0)
+          cursor += span
+        })
+        return positions
       }
       // Cycle guard: DFS trên depsMap {id: [deps]} — true nếu `to` reachable từ
       // `from` đi theo deps (chiều prerequisite). Trước khi thêm dep from→to:
@@ -5370,9 +5511,9 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
           var now = Date.now()
           if (now - lastTap.t < 400 && Math.abs(rp.x - lastTap.x) < 12 && Math.abs(rp.y - lastTap.y) < 12) {
             lastTap = { t: 0, x: 0, y: 0 }
-            if (!graph || !graph.planMarkdown) {
+            if (!graph || (!graph.planMarkdown && !graph.doc)) {
               var st = document.getElementById('story-status')
-              if (st) st.textContent = 'load một bracket trước khi thêm node'
+              if (st) st.textContent = 'load một story trước khi thêm node'
               return
             }
             openNodeEditor(null)
@@ -5396,21 +5537,30 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
         el.style.display = ''
         if (cyCanvas) { cyCanvas.destroy(); cyCanvas = null }
         try { window.cytoscapeDagre(window.cytoscape) } catch (e) {}
+        // .wakii → mindmap radial từ doc; bracket .md → dagre ladder như cũ
+        var isWakii = !!(graph.doc && graph.doc.nodes && graph.doc.nodes.length)
+        var mmPositions = isWakii ? wakiiMindmapPositions(graph.doc) : null
+        var elements = isWakii ? wakiiMindmapElements(graph.doc) : canvasElements(graph.branches)
         var mkOpts = function (layout) {
           return {
             container: el,
-            elements: canvasElements(graph.branches),
-            layout: layout === 'dagre'
-              ? { name: 'dagre', rankDir: 'TB', nodeSep: 40, rankSep: 70, padding: 24, animate: false }
-              : { name: 'grid', padding: 24, animate: false },
+            elements: elements,
+            layout: isWakii && mmPositions
+              ? { name: 'preset', positions: mmPositions, padding: 30, animate: false, fit: true }
+              : isWakii
+                ? { name: 'cose', padding: 30, animate: false }
+                : layout === 'dagre'
+                  ? { name: 'dagre', rankDir: 'TB', nodeSep: 40, rankSep: 70, padding: 24, animate: false }
+                  : { name: 'grid', padding: 24, animate: false },
             style: [
               { selector: 'node', style: {
                 'background-color': '#1f1f1f', 'border-width': 2, 'border-color': 'data(color)',
-                label: 'data(label)', 'font-size': 10, color: '#ddd', 'text-valign': 'center', 'text-halign': 'center',
-                width: 150, height: 46, shape: 'round-rectangle', 'text-wrap': 'wrap', 'text-max-width': 138
+                label: 'data(label)', 'font-size': 'data(font-size)', color: '#ddd', 'text-valign': 'center', 'text-halign': 'center',
+                width: 'data(width)', height: 'data(height)', shape: 'data(shape)', 'text-wrap': 'wrap', 'text-max-width': 138
               } },
               { selector: 'edge', style: {
                 width: 1.5, 'line-color': 'data(color)', 'target-arrow-color': 'data(color)',
+                'line-style': 'data(lineStyle)',
                 'target-arrow-shape': 'triangle', 'curve-style': 'bezier'
               } },
               { selector: 'node:selected', style: { 'border-width': 3 } },
@@ -5447,7 +5597,7 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
           if (curBracket) renderBracket(curBracket.branches, curBracket.story)
         }
       }
-      // Single render entry — mọi đường parse xong (loadBracketFromFile,
+      // Single render entry — mọi đường parse xong (loadStoryFromFile,
       // saveBracketMd, loadStory) đi qua đây để mode-aware: canvas → re-mount,
       // tier → renderBracket như cũ. graph.branches luôn cập nhật (edge editing
       // đọc từ đây). curBracket cũng sync TRƯỚC khi rẽ nhánh mode — canvas path
@@ -5455,7 +5605,7 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
       function renderGraph(branches, storyMeta) {
         if (graph) graph.branches = branches
         if (curBracket) curBracket.branches = branches
-        else curBracket = { branches: branches, story: storyMeta, file: graph && graph.bracketFile }
+        else curBracket = { branches: branches, story: storyMeta, file: graph && (graph.docFile || graph.bracketFile) }
         if (bracketMode === 'canvas' && window.cytoscape) mountCanvas()
         else renderBracket(branches, storyMeta)
       }
@@ -5612,7 +5762,7 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
             badge + dot +
             '</g>'
         })
-        curBracket = { branches: branches, story: story, file: graph && graph.bracketFile }
+        curBracket = { branches: branches, story: story, file: graph && (graph.docFile || graph.bracketFile) }
         gEl.innerHTML = edges + origin + nodes
         // content bbox across ALL nodes (SF + origin)
         var bb = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity }
@@ -5793,11 +5943,16 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
         seg.push(text)
       }
       function nextSfId(lines) {
+        if (graph && graph.sourceKind === 'wakii' && graph.doc) return nextSfIdDoc(graph.doc)
         var max = 0
         sfBlocks(lines).forEach(b => { var n = parseInt(b.id.replace('SF-', ''), 10); if (n > max) max = n })
         return 'SF-' + (max + 1)
       }
-      function bracketApply(fields) { // fields: {id, title, tier, deps, tasks} — có sẵn = edit, mới = add
+      function bracketApply(fields) { // fields: {id, title, tier, deps, tasks} — route theo sourceKind
+        if (graph && graph.sourceKind === 'wakii') return wakiiApply(fields)
+        return bracketApplyMd(fields)
+      }
+      function bracketApplyMd(fields) { // legacy bracket .md splice — có sẵn = edit, mới = add
         if (!graph || !graph.planMarkdown) return
         var lines = graph.planMarkdown.split('\n')
         var blocks = sfBlocks(lines)
@@ -5818,7 +5973,11 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
         lines = lines.concat(seg)
         saveBracketMd(lines.join('\n'))
       }
-      function bracketDeleteNode(id) {
+      function bracketDeleteNode(id) { // route theo sourceKind
+        if (graph && graph.sourceKind === 'wakii') return wakiiDeleteNode(id)
+        return bracketDeleteNodeMd(id)
+      }
+      function bracketDeleteNodeMd(id) { // legacy bracket .md splice
         if (!graph || !graph.planMarkdown) return
         var lines = graph.planMarkdown.split('\n')
         var blocks = sfBlocks(lines)
@@ -5830,13 +5989,167 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
           .map(L => L.replace(new RegExp('(,?\\s*)' + id + '\\b', 'g'), ''))
         saveBracketMd(lines.join('\n'))
       }
+      // ---- Ops request serializer — story.ops.request là SINGLE SLOT: request
+      // sau ghi trong <3s (trước khi worker poll) sẽ ĐÈ mất request trước.
+      // opsSend xếp hàng trong panel: send N+1 chỉ ghi khi send N đã thấy result
+      // (match action + at) hoặc timeout. Mọi writer phải đi qua đây.
+      var opsChain = Promise.resolve()
+      function pollOpsResult(action, sentIso, sentAt, timeoutMs, intervalMs, firstDelayMs) {
+        return new Promise(function (resolve) {
+          var poll = function () {
+            call('storage.get', { key: 'story.ops.result' }).then(function (r) {
+              var v = r && r.ok && r.value
+              var res = v && v.value !== undefined ? v.value : v
+              if (res && res.action === action && res.at >= sentIso) { resolve(res); return }
+              if (Date.now() - sentAt < timeoutMs) setTimeout(poll, intervalMs || 1500)
+              else resolve(null)
+            }, function () {
+              if (Date.now() - sentAt < timeoutMs) setTimeout(poll, intervalMs || 1500)
+              else resolve(null)
+            })
+          }
+          setTimeout(poll, firstDelayMs == null ? 2500 : firstDelayMs)
+        })
+      }
+      function opsSend(value, timeoutMs, pollOpts) {
+        var sentAt = Date.now()
+        var payload = Object.assign({}, value, { at: sentAt })
+        var sentIso = new Date(sentAt).toISOString()
+        var po = pollOpts || {}
+        var run = opsChain.then(function () {
+          return call('storage.set', { key: 'story.ops.request', value: payload })
+        }).then(function () {
+          return pollOpsResult(value.action, sentIso, sentAt, timeoutMs || 30000, po.intervalMs, po.firstDelayMs)
+        })
+        opsChain = run.then(function () {}, function () {}) // lỗi không chết chuỗi
+        return run
+      }
       function saveBracketMd(newMd) {
         graph.planMarkdown = newMd
         var st = document.getElementById('story-status')
-        call('storage.set', { key: 'story.ops.request', value: { action: 'bracket-save', file: graph.bracketFile, content: newMd, at: Date.now() } })
+        opsSend({ action: 'bracket-save', file: graph.bracketFile, content: newMd }).then(function (res) {
+          if (st && res && !res.ok) st.textContent = 'bracket-save FAIL: ' + (res.output || '')
+        })
         if (st) st.textContent = 'bracket ' + graph.bracketFile + ' đang ghi đĩa… (worker ≤3s)'
         if (curBracket) {
           var branches = parsePlan(newMd, graph.children || [])
+          renderGraph(branches, curBracket.story)
+        }
+      }
+
+      // ---- Wakii doc editing (canonical .wakii) — sửa graph.doc rồi save qua
+      // story.ops.request action 'wakii-save'; worker validate fail-closed +
+      // merge state máy. Human fields (state/linear/summary…) giữ nguyên.
+      function docSfNode(doc, bid) {
+        var nid = toNodeId(bid)
+        return (doc.nodes || []).find(n => n && n.kind === 'sf' && n.id === nid) || null
+      }
+      function nextSfIdDoc(doc) {
+        var max = 0
+        ;(doc.nodes || []).forEach(n => {
+          if (n && n.kind === 'sf') { var m = String(n.id || '').match(/^sf-(\d+)$/); if (m) max = Math.max(max, parseInt(m[1], 10)) }
+        })
+        return 'SF-' + (max + 1)
+      }
+      function wakiiApply(fields) { // fields: {id, title, tier, deps, tasks} — cùng shape bracketApply
+        var doc = graph && graph.doc
+        if (!doc) return
+        var nid = toNodeId(fields.id)
+        var node = docSfNode(doc, fields.id)
+        if (node) {
+          node.title = fields.title || node.title
+          node.tier = fields.tier || 0
+        } else {
+          // contains edge trỏ epic node THẬT của doc (id không phải lúc nào cũng 'epic')
+          var epicId = ((doc.nodes || []).find(n => n && n.kind === 'epic') || {}).id
+          if (!epicId) { var stE = document.getElementById('story-status'); if (stE) stE.textContent = 'doc thiếu epic node — không thêm được ' + fields.id; return }
+          node = { id: nid, kind: 'sf', title: fields.title || fields.id, state: 'pending', tier: fields.tier || 0 }
+          doc.nodes = doc.nodes || []
+          doc.nodes.push(node)
+          doc.edges = doc.edges || []
+          doc.edges.push({ from: epicId, to: nid, rel: 'contains' })
+        }
+        // deps: thay toàn bộ depends-on edges đi ra từ sf này
+        var depsList = (String(fields.deps || '').match(/SF-\d+/gi) || []).map(toNodeId).filter(d => d !== nid)
+        // cycle guard như bracket path — chặn trong form thay vì để validator
+        // từ chối CẢ save (mất edit). Thêm nid→d tạo vòng ⇔ nid reachable từ d
+        // theo deps CŨ (đi từ d; không expand deps cũ của nid — nó bị thay).
+        if (depsList.length) {
+          var depsMap = {}
+          ;(doc.edges || []).forEach(e => {
+            if (e && e.rel === 'depends-on') depsMap[e.from] = (depsMap[e.from] || []).concat([e.to])
+          })
+          for (var ci = 0; ci < depsList.length; ci++) {
+            if (dfsCheck(depsMap, depsList[ci], nid)) {
+              var stC = document.getElementById('story-status')
+              if (stC) stC.textContent = '⛔ chặn cycle: ' + fields.id + ' → ' + toBranchId(depsList[ci]) + ' tạo vòng — bỏ dep này'
+              return
+            }
+          }
+        }
+        doc.edges = (doc.edges || []).filter(e => !(e && e.rel === 'depends-on' && e.from === nid))
+        depsList.forEach(d => doc.edges.push({ from: nid, to: d, rel: 'depends-on' }))
+        // tasks: reconcile task nodes vị trí (t-<n>-<k>) + contains edges
+        var tasksList = String(fields.tasks || '').split('/').map(x => x.trim()).filter(x => x && x !== '—')
+        var oldTasks = (doc.nodes || []).filter(t => t && t.kind === 'task' && t.id && (
+          t.parent === nid || (doc.edges || []).some(e => e && e.rel === 'contains' && e.from === nid && e.to === t.id)))
+        var num = nid.replace(/^sf-/, '')
+        for (var k = tasksList.length; k < oldTasks.length; k++) {
+          var rm = oldTasks[k]
+          doc.nodes = doc.nodes.filter(x => x !== rm)
+          doc.edges = (doc.edges || []).filter(e => e && e.from !== rm.id && e.to !== rm.id)
+        }
+        for (var j = 0; j < tasksList.length; j++) {
+          if (oldTasks[j]) { oldTasks[j].title = tasksList[j]; continue }
+          var tid = 't-' + num + '-' + (j + 1)
+          doc.nodes.push({ id: tid, kind: 'task', title: tasksList[j], parent: nid, state: 'pending' })
+          doc.edges.push({ from: nid, to: tid, rel: 'contains' })
+        }
+        wakiiSave()
+      }
+      function wakiiDeleteNode(bid) {
+        var doc = graph && graph.doc
+        if (!doc) return
+        var nid = toNodeId(bid)
+        if (!docSfNode(doc, bid)) return
+        var rmIds = [nid]
+        ;(doc.nodes || []).forEach(t => {
+          if (t && t.kind === 'task' && t.id && (
+            t.parent === nid || (doc.edges || []).some(e => e && e.rel === 'contains' && e.from === nid && e.to === t.id))) rmIds.push(t.id)
+        })
+        var rmSet = {}
+        rmIds.forEach(x => { rmSet[x] = true })
+        doc.nodes = (doc.nodes || []).filter(n => !rmSet[n.id])
+        doc.edges = (doc.edges || []).filter(e => e && !rmSet[e.from] && !rmSet[e.to])
+        wakiiSave(rmIds)
+      }
+      function wakiiSave(deletedIds) {
+        var doc = graph && graph.doc
+        if (!doc) return
+        var st = document.getElementById('story-status')
+        if (!doc.meta) doc.meta = {}
+        var base = doc.meta.generatedAt || graph.baseGeneratedAt || null
+        doc.meta.generatedAt = new Date().toISOString()
+        doc.meta.generator = 'orca-panel'
+        opsSend({
+          action: 'wakii-save', file: graph.docFile,
+          content: JSON.stringify(doc, null, 2) + '\n',
+          baseGeneratedAt: base, deletedIds: deletedIds || []
+        }).then(function (res) {
+          if (!st) return
+          if (!res) { st.textContent = 'wakii-save không thấy kết quả (worker?) — kiểm tra Story Ops'; return }
+          if (res.ok) {
+            if ((res.output || '').indexOf('unchanged') === 0) st.textContent = 'wakii không đổi — không ghi'
+            else st.textContent = 'Đã ghi ' + graph.docFile + ' ✓'
+          } else if ((res.output || '') === 'stale-doc') {
+            st.textContent = 'file .wakii đã đổi dưới panel — tự reload, edit lại'
+            loadStoryFromFile(graph.docFile)
+          } else st.textContent = 'wakii-save FAIL — file không đổi: ' + (res.output || '')
+        })
+        if (st) st.textContent = 'wakii ' + graph.docFile + ' đang ghi đĩa… (worker validate + ghi)'
+        graph.baseGeneratedAt = doc.meta.generatedAt // baseline lần save sau
+        if (curBracket) {
+          var branches = parseWakiiDoc(doc, graph.children || [])
           renderGraph(branches, curBracket.story)
         }
       }
@@ -5935,8 +6248,10 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
           + '<rect x="0" y="0" width="' + W + '" height="' + H + '" rx="12" fill="#191919"/>'
           + headersSvg + edgesSvg + nodesSvg
           + '</svg>'
+        var embedLabel = (graph && graph.doc) ? 'Story mindmap (.wakii JSON)' : 'Bracket markdown'
+        var embedBody = (graph && graph.doc) ? JSON.stringify(graph.doc, null, 2) : (graph && graph.planMarkdown || '')
         return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
-          + '<title>Wakii bracket — ' + esc(story.identifier || '') + '</title><style>'
+          + '<title>Wakii mindmap — ' + esc(story.identifier || '') + '</title><style>'
           + 'body{margin:0 auto;background:#111113;color:#ddd;font:14px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace;padding:36px 44px;max-width:1100px}'
           + 'h1{font-size:17px;color:#6ba1f8;margin:0 0 4px}'
           + '.sub{color:#8a8a8a;font-size:12px;margin-bottom:22px}'
@@ -5945,45 +6260,30 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
           + '.foot{margin-top:28px;color:#666;font-size:11px}'
           + '</style></head><body>'
           + '<h1>' + esc(story.identifier || 'Bracket') + (story.title ? ' — ' + esc(story.title) : '') + '</h1>'
-          + '<div class="sub">Wakii story bracket · ' + branches.length + ' SF</div>'
+          + '<div class="sub">Wakii story mindmap · ' + branches.length + ' SF</div>'
           + svg
-          + '<details><summary>Bracket markdown</summary><pre>' + esc(graph && graph.planMarkdown || '') + '</pre></details>'
-          + '<div class="foot">Wakii — story bracket</div></body></html>'
+          + '<details><summary>' + embedLabel + '</summary><pre>' + esc(embedBody) + '</pre></details>'
+          + '<div class="foot">Wakii — story mindmap</div></body></html>'
       }
 
       function shareBracket() {
         var st = document.getElementById('story-status')
-        if (!graph || !graph.planMarkdown) {
+        if (!graph || !(graph.doc || graph.planMarkdown)) {
           if (st) st.textContent = 'load story trước khi share'
           return
         }
         var pick = document.getElementById('story-pick')
         var name = (pick && pick.dataset && pick.dataset.file) || 'bracket'
-        var sentAt = Date.now()
-        call('storage.set', {
-          key: 'story.ops.request',
-          value: { action: 'share-artifact', name: name, html: buildBracketHtml(), at: sentAt }
+        opsSend({ action: 'share-artifact', name: name, html: buildBracketHtml() }).then(function (res) {
+          // worker publish xong → URL ngay tại status + tự copy
+          if (!res) { if (st) st.textContent = 'share chưa xong — xem kết quả ở Story Ops'; return }
+          if (res.ok) {
+            var url = (res.output || '').replace(/^artifact:\s*/, '').trim()
+            if (st) st.textContent = 'Đã share: ' + url
+            call('clipboard.write', { text: url }).then(function () {}, function () {})
+          } else if (st) st.textContent = 'share failed: ' + (res.output || res.error || '')
         })
         if (st) st.textContent = 'đang publish artifact…'
-        // Chờ worker publish xong rồi hiện URL ngay tại status + tự copy
-        var sentIso = new Date(sentAt).toISOString()
-        var poll = function () {
-          call('storage.get', { key: 'story.ops.result' }).then(function (r) {
-            var v = r && r.ok && r.value
-            var res = v && v.value !== undefined ? v.value : v
-            if (res && res.action === 'share-artifact' && res.at >= sentIso) {
-              if (res.ok) {
-                var url = (res.output || '').replace(/^artifact:\s*/, '').trim()
-                if (st) st.textContent = 'Đã share: ' + url
-                call('clipboard.write', { text: url }).then(function () {}, function () {})
-              } else if (st) st.textContent = 'share failed: ' + (res.output || res.error || '')
-              return
-            }
-            if (Date.now() - sentAt < 30000) setTimeout(poll, 1500)
-            else if (st) st.textContent = 'share chưa xong — xem kết quả ở Story Ops'
-          })
-        }
-        setTimeout(poll, 2500)
       }
 
       // ---- Story picker: custom dropdown từ worker data (storage story.list)
@@ -6037,7 +6337,7 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
             pick.dataset.touched = '1'
             try { localStorage.setItem('story.lastPick', pick.value) } catch (e) {}
             dd.style.display = 'none'
-            loadBracketFromFile(el.getAttribute('data-file'))
+            loadStoryFromFile(el.getAttribute('data-file'))
           })
           el.addEventListener('mouseenter', () => { el.style.background = 'var(--secondary,#2a2a2a)' })
           el.addEventListener('mouseleave', () => { el.style.background = '' })
@@ -6062,7 +6362,7 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
               pick.value = hit.linear || hit.name
               pick.dataset.file = hit.name
               dd.style.display = 'none'
-              loadBracketFromFile(hit.name)
+              loadStoryFromFile(hit.name)
             }
           }
           if (e.key === 'Escape') dd.style.display = 'none'
@@ -6079,11 +6379,13 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
         var hit = storyFiles.find(st => st.linear === norm)
           || storyFiles.find(st => (st.linear || '').endsWith('-' + val))
           || storyFiles.find(st => st.name === val || st.name === val + '.md')
-        if (hit) { this.dataset.file = hit.name; loadBracketFromFile(hit.name) }
+        if (hit) { this.dataset.file = hit.name; loadStoryFromFile(hit.name) }
       })
-      // Đọc bracket file trực tiếp → parse + render NGAY trong panel (không worker round-trip)
+      // Đọc story file (.wakii canonical mindmaps/, .md legacy brackets) →
+      // parse + render NGAY trong panel (không worker round-trip). Tên .md:
+      // thử mindmaps/<stem>.wakii trước (canonical VU-14), lỗi mới fallback.
       var loadSeq = 0
-      function loadBracketFromFile(name, childrenOverride) {
+      function loadStoryFromFile(name, childrenOverride) {
         var seq = ++loadSeq // race guard: chỉ request MỚI NHẤT được render
         var status = document.getElementById('story-status')
         status.textContent = 'đọc ' + name + '…'
@@ -6097,24 +6399,11 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
             '<div style="width:22px;height:22px;border:2px solid var(--primary,#2563eb);border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></div>' +
             '<div style="font-size:12px;color:var(--muted-foreground,#999);">Loading… ' + esc(name) + '</div></div>'
         }
-        call('workspace.fileRead', { path: 'docs/superpowers/brackets/' + name }).then((r) => {
-          if (seq !== loadSeq) return // stale response — request mới hơn đã thắng
-          if (!r.ok) { status.textContent = 'fileRead: ' + (r.error || r.errorCode); return }
-          var md = (r.value && r.value.content) || ''
-          var epic = (md.match(/^#\s+Story:\s*([A-Za-z]+-\d+)/m) || [])[1]
-          var render = (children) => {
-            if (seq !== loadSeq) return
-            graph = { story: { identifier: epic, title: ((md.match(/^#\s+Story:\s*[A-Za-z]+-\d+\s*[—–-]\s*(.+)$/m) || [])[1] || '').trim() }, children: children || [], planMarkdown: md, bracketFile: name }
-            var branches = parsePlan(md, children || [])
-            graph.branches = branches
-            var done = (children || []).filter(c => (c.stateType || (c.state && c.state.type)) === 'completed').length
-            renderGraph(branches, { identifier: epic, title: graph.story.title, done, total: (children || []).length })
-            status.textContent = (epic || name) + ' · ' + (children || []).length + ' sub-issues · ' + new Date().toLocaleTimeString()
-            lastTasksStamp = null // ép re-render khi tasks data tới
-          }
+        var readPath = function (p) { return call('workspace.fileRead', { path: p }) }
+        // states flow chung: override → dùng luôn; else báo viewed + đọc cache
+        var finishStates = function (epic, file, render) {
           if (childrenOverride) { render(childrenOverride); return }
-          // báo worker story đang xem + lấy states theo epic:
-          call('storage.set', { key: 'story.viewed', value: { epic, file: name, at: Date.now() } })
+          call('storage.set', { key: 'story.viewed', value: { epic, file: file, at: Date.now() } })
           var key = 'story.states.' + epic
           call('storage.get', { key }).then((r2) => {
             var cached = r2.ok ? (r2.value && r2.value.value !== undefined ? r2.value.value : r2.value) : null
@@ -6124,21 +6413,86 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
             render([]) // vẽ khung trước — worker poll storyStates sẽ đổ states,
                        // panel poll 8s thấy storage mới tự re-render
           })
+        }
+        // .wakii: parse JSON + light check → graph có doc (sourceKind wakii)
+        var handleWakii = function (r, fileName) {
+          if (seq !== loadSeq) return false
+          if (!r.ok) return false
+          var content = (r.value && r.value.content) || ''
+          var doc = null
+          try { doc = JSON.parse(content) } catch (e) { doc = null }
+          if (!validWakiiDoc(doc)) return false
+          var epic = String((doc.meta.epic || '')).toUpperCase()
+          var render = (children) => {
+            if (seq !== loadSeq) return
+            graph = { story: { identifier: epic, title: doc.meta.story }, children: children || [],
+                      doc: doc, docFile: fileName, sourceKind: 'wakii',
+                      baseGeneratedAt: doc.meta.generatedAt,
+                      branches: parseWakiiDoc(doc, children || []) }
+            // .wakii → mặc định mindmap (canvas radial), Tier vẫn bấm được
+            if (bracketMode === 'tier') {
+              bracketMode = 'canvas'
+              var tb = document.getElementById('bracket-mode-tier')
+              var cb = document.getElementById('bracket-mode-canvas')
+              if (tb) tb.classList.remove('active')
+              if (cb) cb.classList.add('active')
+            }
+            var done = (children || []).filter(c => (c.stateType || (c.state && c.state.type)) === 'completed').length
+            renderGraph(graph.branches, { identifier: epic, title: doc.meta.story, done, total: (children || []).length })
+            status.textContent = (epic || fileName) + ' · ' + (children || []).length + ' sub-issues · ' + new Date().toLocaleTimeString()
+            lastTasksStamp = null // ép re-render khi tasks data tới
+          }
+          finishStates(epic, fileName, render)
+          return true
+        }
+        // legacy .md bracket
+        var handleBracket = function (r, fileName) {
+          if (seq !== loadSeq) return false
+          if (!r.ok) return false
+          var md = (r.value && r.value.content) || ''
+          var epic = (md.match(/^#\s+Story:\s*([A-Za-z]+-\d+)/m) || [])[1]
+          var render = (children) => {
+            if (seq !== loadSeq) return
+            graph = { story: { identifier: epic, title: ((md.match(/^#\s+Story:\s*[A-Za-z]+-\d+\s*[—–-]\s*(.+)$/m) || [])[1] || '').trim() }, children: children || [], planMarkdown: md, bracketFile: fileName, sourceKind: 'bracket' }
+            var branches = parsePlan(md, children || [])
+            graph.branches = branches
+            var done = (children || []).filter(c => (c.stateType || (c.state && c.state.type)) === 'completed').length
+            renderGraph(branches, { identifier: epic, title: graph.story.title, done, total: (children || []).length })
+            status.textContent = (epic || fileName) + ' · ' + (children || []).length + ' sub-issues · ' + new Date().toLocaleTimeString()
+            lastTasksStamp = null
+          }
+          finishStates(epic, fileName, render)
+          return true
+        }
+        if (name.slice(-6) === '.wakii') {
+          readPath('docs/superpowers/mindmaps/' + name).then((r) => {
+            if (seq !== loadSeq) return
+            if (!handleWakii(r, name)) status.textContent = 'wakii fileRead/parse: ' + ((r && (r.error || r.errorCode)) || 'malformed .wakii')
+          })
+          return
+        }
+        readPath('docs/superpowers/mindmaps/' + name.replace(/\.md$/, '') + '.wakii').then((rw) => {
+          if (seq !== loadSeq) return
+          if (handleWakii(rw, name.replace(/\.md$/, '') + '.wakii')) return
+          readPath('docs/superpowers/brackets/' + name).then((rm) => {
+            if (seq !== loadSeq) return
+            if (!handleBracket(rm, name)) status.textContent = 'fileRead: ' + ((rm && (rm.error || rm.errorCode)) || '')
+          })
         })
       }
 
       // ---- Load: worker writes snapshot → panel reads storage ----
       document.getElementById('story-add-node').addEventListener('click', () => {
-        if (!graph || !graph.planMarkdown) {
-          document.getElementById('story-status').textContent = 'load một bracket trước khi thêm node'
+        if (!graph || (!graph.planMarkdown && !graph.doc)) {
+          document.getElementById('story-status').textContent = 'load một story trước khi thêm node'
           return
         }
         openNodeEditor(null)
       })
       document.getElementById('story-share').addEventListener('click', () => shareBracket())
       document.getElementById('story-load').addEventListener('click', () => {
-        // Yêu cầu worker quét lại brackets (storage story.list) trước khi đọc
-        call('storage.set', { key: 'story.ops.request', value: { action: 'refresh', at: Date.now() } })
+        // Yêu cầu worker quét lại story files (storage story.list) trước khi đọc
+        opsSend({ action: 'refresh' }, 20000)
         var waitAndRead = function (attempt) {
           refreshStoryList().then((list) => {
             if ((!list || !list.files || !list.files.length) && attempt < 3) {
@@ -6146,10 +6500,10 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
               return
             }
             var pick = document.getElementById('story-pick')
-            if (pick.dataset.file) { loadBracketFromFile(pick.dataset.file); return }
+            if (pick.dataset.file) { loadStoryFromFile(pick.dataset.file); return }
             var v = pick.value.trim()
             var hit = storyFiles.find(st => st.linear === v.toUpperCase() || st.name === v)
-            if (hit) loadBracketFromFile(hit.name); else loadStory()
+            if (hit) loadStoryFromFile(hit.name); else loadStory()
           })
         }
         setTimeout(function () { waitAndRead(0) }, 1200)
@@ -6161,6 +6515,8 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
           if (!r.ok) { status.textContent = 'storage read failed: ' + (r.error || r.errorCode); return }
           var snap = r.value && r.value.value !== undefined ? r.value.value : r.value
           if (!snap || !snap.story) { status.textContent = 'no story data — run "Superpowers: Story List/Load" command (⌘J) once, or check worktree issue link'; return }
+          // snapshot wakii (canonical) → đọc file .wakii cho edit được doc
+          if (snap.wakiiFile) { loadStoryFromFile(snap.wakiiFile, snap.children); return }
           // if user asked for another story than snapshot holds → note it
           if (wantLinear && snap.story.identifier !== wantLinear) {
             status.textContent = 'đang chờ worker nạp ' + wantLinear + ' (snapshot hiện: ' + snap.story.identifier + ')…'
@@ -6216,12 +6572,12 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
         var linear = document.getElementById('story-pick').value.trim()
         if (!linear) { status.textContent = 'chọn story (autocomplete) trước khi Approve'; return }
         var prompt = 'Use the story-workflow skill APPROVE phase for story ' + linear + ':\n' +
-          '- bracket file: docs/superpowers/brackets/ (tìm đúng story ' + linear + ')\n' +
-          '- IDEMPOTENT: SF nào đã có linear: <ID> trong bracket → SKIP (chỉ tạo SF còn trống)\n' +
-          '- tạo sub-issue: orca linear create --title "[SF-N] ..." --team <team> --parent ' + linear + ' --label Feature --priority <theo complexity> --estimate <theo task count> --body "<Tier/Depends on/Bracket/What/Tasks>" (LƯU Ý: flag là --body, KHÔNG phải --description; KHÔNG dùng relation add --parent)\n' +
-          '- ghi linear: <ID> ngược vào bracket file\n' +
+          '- story file: docs/superpowers/mindmaps/ (file .wakii JSON schema v1 của story ' + linear + '); nếu CHƯA có .wakii mới dùng legacy docs/superpowers/brackets/<tên>.md\n' +
+          '- IDEMPOTENT: node sf-* đã có linear "<ID>" → SKIP (chỉ tạo SF còn trống)\n' +
+          '- tạo sub-issue: orca linear create --title "[SF-N] ..." --team <team> --parent ' + linear + ' --label Feature --priority <theo complexity> --estimate <theo task count> --body "<Tier/Depends on/What/Tasks>" (LƯU Ý: flag là --body, KHÔNG phải --description; KHÔNG dùng relation add --parent)\n' +
+          '- ghi linear "<ID>" vào ĐÚNG node sf-* trong file .wakii (không đụng field khác; bracket legacy thì ghi dòng linear: <ID>), sau đó CHẠY wakii-validate <file.wakii> — phải OK\n' +
           '- tạo NHÁNH ĐÍCH story/' + linear.toLowerCase().replace(/[^a-z0-9]+/g,'-') + '-<slug-từ-title>' + ' từ main (nếu chưa có) — mọi SF fork từ đây và merge về đây, KHÔNG đụng main\n' +
-          '- orchestration run-create + task-create per SF, --deps theo bracket Depends on (SF nhiều deps: deps list JSON)\n' +
+          '- orchestration run-create + task-create per SF, --deps theo depends-on edges (bracket: Depends on; SF nhiều deps: deps list JSON)\n' +
           '- mọi lệnh phải check .ok trong output JSON; FAIL → in error.message, dừng\n' +
           '- audit comment lên epic. Xong in: STORY-APPROVED + danh sách SF→issue.'
         call('terminal.sendText', { terminalId, text: prompt, enter: true }).then((r) => {
@@ -6246,7 +6602,7 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
             ? 'CREATIVITY: CREATIVE — SF prompts ghi: spec là khởi điểm, được đề xuất hướng tốt hơn (giữ acceptance), ghi rationale audit.'
             : 'CREATIVITY: BALANCED — SF prompts ghi: khung cứng + chi tiết tự quyết hợp lý + flag quyết lớn.'
         var autoLine = autoComplete
-          ? '\nAUTO-HOÀN-THÀNH: ON — watchdog chạy KHÔNG GIỚI HẠN vòng tới STORY-COMPLETE (mọi SF Done + merged đích + Epic Done + dọn worktrees + mở PR story: push đích + `gh pr create --base main` theo pr-playbook, 1 PR/story; thiếu remote/gh auth → ghi READY-FOR-MANUAL-MERGE + lý do vào Epic audit comment, KHÔNG chặn) hoặc BLOCKED. Người dùng KHÔNG cần nhắn tiếp tục. 3 vòng không tiến triển → 1 resume thử → BLOCKED exit.'
+          ? '\nAUTO-HOÀN-THÀNH: ON — watchdog chạy KHÔNG GIỚI HẠN vòng tới STORY-COMPLETE (mọi SF Done + merged đích + Epic Done + dọn worktrees + mở PR story: push đích + `gh pr create --base wakii-dev` theo pr-playbook — story PR CHỈ target wakii-dev, KHÔNG dùng main, 1 PR/story; thiếu remote/gh auth → ghi READY-FOR-MANUAL-MERGE + lý do vào Epic audit comment, KHÔNG chặn) hoặc BLOCKED. Người dùng KHÔNG cần nhắn tiếp tục. 3 vòng không tiến triển → 1 resume thử → BLOCKED exit.'
           : '\nAUTO-HOÀN-THÀNH: OFF — watchdog max 10 vòng (kiểu cũ), người chủ động đôn tiếp.'
         var costLine = autoLine + '\nSF-COST SETTINGS: ' +
           (thinPlan ? 'SF-script ON — SF ≤4 tasks: bracket What/Tasks là plan mỏng, KHÔNG plan file riêng, bỏ plan-critic SF đó. ' : 'SF-script OFF. ') +
@@ -6342,7 +6698,7 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
       }
       function rerenderIfViewing(childrenOverride) {
         var pick = document.getElementById('story-pick')
-        if (pick && pick.dataset.file) loadBracketFromFile(pick.dataset.file, childrenOverride)
+        if (pick && pick.dataset.file) loadStoryFromFile(pick.dataset.file, childrenOverride)
       }
       refreshStoryTasks()
       refreshStoryStates()

@@ -229,7 +229,7 @@ async function sendToTerminal(orca, text, { terminalId } = {}) {
 // Fallback source: issues-with-children from Linear (no bracket file yet).
 
 import { readFile, readdir, writeFile, unlink } from 'node:fs/promises'
-import { join, basename } from 'node:path'
+import { join, basename, extname } from 'node:path'
 import { tmpdir } from 'node:os'
 
 async function worktreeRoot(orca) {
@@ -247,6 +247,33 @@ function parseBracketFile(text, file) {
   const hm = text.match(/^#\s+Story:\s*([A-Za-z]+-\d+)\s*[—–-]\s*(.+)$/m)
   if (hm) { linear = hm[1]; title = hm[2].trim() }
   return { linear, title: title.slice(0, 60), file }
+}
+
+// Worker-side catalog mirror của src/shared/wakii-mindmap-types.ts (bảng
+// required-field) — full validation nằm ở wakii-validate / app parser,
+// không mở rộng ở đây (tránh drift).
+export function parseWakiiMeta(text, file) {
+  let doc = null
+  try { doc = JSON.parse(text) } catch { return null }
+  if (!doc || doc.wakiiMindmap !== 1 || !doc.meta || !Array.isArray(doc.nodes)) return null
+  const { story, epic } = doc.meta
+  if (typeof story !== 'string' || !story.trim()) return null
+  if (typeof epic !== 'string' || !/^[A-Za-z]+-\d+$/.test(epic)) return null
+  const sfNodes = doc.nodes.filter(n => n?.kind === 'sf')
+  const linear = sfNodes.filter(n => typeof n.linear === 'string').map(n => n.linear)
+  return { linear: epic, title: story.slice(0, 60), file, source: 'wakii', sfCount: sfNodes.length, sfs: linear }
+}
+
+// Quét mindmaps/*.wakii của 1 root → meta entries (mindmaps-first: canonical
+// VU-14; caller tự dedupe với brackets). dir có thể không tồn tại → [].
+async function scanWakiiDir(root) {
+  const dir = join(root, 'docs', 'superpowers', 'mindmaps')
+  let entries = []
+  try { entries = await readdir(dir) } catch { return [] }
+  return (await Promise.all(entries.filter(f => f.endsWith('.wakii')).map(async f => {
+    const text = await readFile(join(dir, f), 'utf8').catch(() => '')
+    return parseWakiiMeta(text, f)
+  }))).filter(Boolean)
 }
 
 // Resolve the FOCUSED worktree's filesystem path.
@@ -300,52 +327,64 @@ async function storyScanRoots() {
   return [...roots]
 }
 
-// story.list — every bracket file in the FOCUSED WORKTREE + which is "current"
-// (current = the focused worktree's linked Linear issue matches a bracket).
+// story.list — story files in the ACTIVE WORKTREE + which is "current"
+// (current = the active worktree's linked Linear issue matches a story file).
+// Canonical mindmaps/*.wakii first; a bracket with the same linear is shadowed.
+// Đọc qua HOST workspace fs (workspace.listFiles/fileRead) chứ không node fs +
+// CLI: đó là cùng root mà panel dùng khi mở story — list theo nguồn khác sẽ
+// gợi ý story panel không bao giờ mở được (lỗi "file not found").
 async function listStories(orca) {
   try {
-    const root = await focusedWorktreePath() // may be null — roots fallback below
-    let stories = []
-    if (root) {
-      const dir = join(root, 'docs', 'superpowers', 'brackets')
-      let entries = []
-      try { entries = await readdir(dir) } catch { /* no brackets dir here */ }
-      stories = (await Promise.all(entries.filter(f => f.endsWith('.md')).map(async f => {
-        const text = await readFile(join(dir, f), 'utf8').catch(() => '')
-        return parseBracketFile(text, f)
-      }))).filter(st => st.linear)
+    const listDir = async (rel) => {
+      try {
+        const r = await orca.host.call('workspace.listFiles', { dir: rel })
+        return ((r && r.files) || []).map((f) => f.name)
+      } catch {
+        return [] // dir chưa tồn tại trong active worktree
+      }
     }
-    // Scan ALL roots (registered repos + workspace trees) for brackets
-    for (const r of await storyScanRoots()) {
-      if (r === root) continue
-      const d2 = join(r, 'docs', 'superpowers', 'brackets')
-      let ents2 = []
-      try { ents2 = await readdir(d2) } catch { continue }
-      const more = (await Promise.all(ents2.filter(f => f.endsWith('.md')).map(async f => {
-        const text = await readFile(join(d2, f), 'utf8').catch(() => '')
-        return parseBracketFile(text, f)
-      }))).filter(st => st.linear && !stories.some(x => x.linear === st.linear))
-      stories = stories.concat(more)
+    const readFile = async (rel) => {
+      try {
+        const r = await orca.host.call('workspace.fileRead', { path: rel })
+        return (r && r.content) || ''
+      } catch {
+        return ''
+      }
+    }
+    let stories = []
+    const skipped = [] // observability — file bị drop phải để lại dấu vết
+    for (const f of await listDir('docs/superpowers/mindmaps')) {
+      if (!f.endsWith('.wakii')) continue
+      const meta = parseWakiiMeta(await readFile('docs/superpowers/mindmaps/' + f), f)
+      if (meta && meta.linear) stories.push(meta)
+      else skipped.push({ file: 'mindmaps/' + f, reason: 'malformed hoặc bị fileRead clamp 256KB (schema cho tới 5MB)' })
+    }
+    // legacy brackets — shadowed bởi wakii cùng linear
+    for (const f of await listDir('docs/superpowers/brackets')) {
+      if (!f.endsWith('.md')) continue
+      const meta = parseBracketFile(await readFile('docs/superpowers/brackets/' + f), f)
+      if (meta && meta.linear && !stories.some((x) => x.linear === meta.linear)) {
+        stories.push(meta)
+      }
     }
     stories.sort((a, b) => a.file.localeCompare(b.file))
     if (!stories.length) {
-      // Observability: scan-roots diagnostics in the storage payload —
+      // Observability: diagnostics in the storage payload —
       // silent-empty made the Windows autocomplete bug invisible for weeks.
-      const roots = await storyScanRoots()
       await orca.host.call('storage.set', {
         key: 'story.list',
         value: { stories: [], currentLinear: null, currentFile: null,
-                 error: 'no bracket files found in any workspace',
-                 rootsProbed: roots, orcaBin: orcaBin(),
-                 root, fetchedAt: new Date().toISOString() }
+                 error: 'no story files (.wakii/.md) in the active worktree',
+                 skipped, fetchedAt: new Date().toISOString() }
       })
-      return { ok: true, count: 0, root }
+      return { ok: true, count: 0, skipped: skipped.length }
     }
-    // current story: linked issue of focused worktree (run inside the worktree root)
+    // current story: linked issue of the active worktree — cwd PHẢI là focused
+    // root (CLI resolve --current theo cwd; worker cwd = Orca app, sai worktree)
     let currentLinear = null
     try {
       const { stdout } = await execFileAsync(orcaBin(), ['linear', 'issue', '--current', '--json'],
-        { timeout: 15000, maxBuffer: 4 * 1024 * 1024, cwd: root })
+        { timeout: 15000, maxBuffer: 4 * 1024 * 1024, cwd: root || undefined })
       const parsed = JSON.parse(stdout)
       if (parsed?.ok) currentLinear = parsed.result?.issue?.identifier ?? null
     } catch { /* no linked issue */ }
@@ -353,11 +392,11 @@ async function listStories(orca) {
       stories,
       currentLinear,
       currentFile: (stories.find(st => st.linear === currentLinear) || {}).file ?? null,
-      root,
+      skipped,
       fetchedAt: new Date().toISOString()
     }
     await orca.host.call('storage.set', { key: 'story.list', value: list })
-    return { ok: true, count: stories.length, currentLinear, root }
+    return { ok: true, count: stories.length, currentLinear }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     orca.log('story list failed: ' + message)
@@ -407,12 +446,58 @@ async function loadFromBracketFile(orca, fileName) {
   }
 }
 
+// Load a story from a canonical .wakii file (mindmaps/). Structure IS the
+// file; Linear only enriches states. planMarkdown: null — panel renders the doc.
+async function loadFromWakiiFile(orca, fileName) {
+  try {
+    // guard như write path — read không được escape workspace qua fileName
+    if (typeof fileName !== 'string' || !fileName.endsWith('.wakii')
+        || fileName.includes('..') || fileName.includes('/') || fileName.includes('\\')) {
+      return { ok: false, error: 'tên file .wakii không hợp lệ: ' + String(fileName) }
+    }
+    let full = null
+    for (const r of await storyScanRoots()) {
+      const cand = join(r, 'docs', 'superpowers', 'mindmaps', fileName)
+      try { await readFile(cand, 'utf8'); full = cand; break } catch { continue }
+    }
+    if (!full) return { ok: false, error: 'wakii file not found: ' + fileName }
+    const text = await readFile(full, 'utf8')
+    const meta = parseWakiiMeta(text, fileName)
+    if (!meta) return { ok: false, error: 'wakii file malformed: ' + fileName }
+    // Fetch epic + children states from Linear (fail-open như bracket path)
+    let children = []
+    let storyUrl = null
+    try {
+      const lf = await linearChildrenFull(meta.linear)
+      children = lf.children || []
+      storyUrl = lf.url
+    } catch (linErr) {
+      orca.log('linear fetch in load-by-wakii failed: ' + (linErr instanceof Error ? linErr.message : String(linErr)))
+    }
+    const snapshot = {
+      story: { id: null, identifier: meta.linear, title: meta.title, url: storyUrl },
+      children,
+      planMarkdown: null,
+      wakiiFile: fileName,
+      fetchedAt: new Date().toISOString()
+    }
+    await orca.host.call('storage.set', { key: 'story.snapshot', value: snapshot })
+    orca.log('story snapshot (wakii): ' + meta.linear + ' · ' + children.length + ' children')
+    return { ok: true, identifier: meta.linear, children: children.length }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    orca.log('story load-by-wakii failed: ' + message)
+    return { ok: false, error: message }
+  }
+}
+
 // Story Load: read the active worktree's linked Linear issue (+children full),
 // persist a snapshot for the panel's bracket view. Vertical-bracket data source.
 async function loadStorySnapshot(orca, args) {
   try {
-    // Arg precedence: explicit bracket FILE > issue ID > focused worktree
-    const wantFile = typeof args?.file === 'string' && args.file.endsWith('.md') ? args.file : null
+    // Arg precedence: explicit story FILE (.wakii canonical, .md legacy) > issue ID > focused worktree
+    const wantFile = typeof args?.file === 'string' && (args.file.endsWith('.md') || args.file.endsWith('.wakii')) ? args.file : null
+    if (wantFile?.endsWith('.wakii')) return loadFromWakiiFile(orca, wantFile)
     if (wantFile) return loadFromBracketFile(orca, wantFile)
     const wantIssue = typeof args?.issue === 'string' && /^[A-Za-z]+-\d+$/.test(args.issue) ? args.issue : null
     const baseArgs = wantIssue
@@ -564,6 +649,29 @@ export function assertCapability(name, catalog = kitBinCatalog()) {
     error: `capability '${name}' không có trong kit.json provides[] (bin) — không dispatch. Kit cũ/thiếu entry: sửa manifest + cài lại kit.` }
 }
 
+// Windows không exec được shebang script (extensionless → ENOENT). `bash <file>`
+// cũng KHÔNG được: bash interpret file, shebang thành comment → JS/python vỡ
+// (thật: "line 2: syntax error near '('"). Sniff shebang, ghép đúng interpreter:
+// node/python → thẳng interpreter; bash/sh → Git bash (fallback Program Files).
+let winBashCache = null
+function winBashBin() {
+  if (winBashCache) return winBashCache
+  const pf = process.env['ProgramFiles'] || 'C:\\Program Files'
+  const cand = join(pf, 'Git', 'bin', 'bash.exe')
+  winBashCache = existsSync(cand) ? cand : 'bash'
+  return winBashCache
+}
+function kitSpawnArgv(binPath, args) {
+  if (process.platform !== 'win32') return [binPath, args]
+  if (extname(binPath)) return [binPath, args]
+  let first = ''
+  try { first = readFileSync(binPath, 'utf8').split('\n', 1)[0] || '' } catch { return [binPath, args] }
+  const m = first.match(/^#!\s*\S*?(?:env\s+)?(node|python3?|bash|sh)\b/)
+  if (!m) return [binPath, args]
+  if (m[1] === 'bash' || m[1] === 'sh') return [winBashBin(), [binPath, ...args]]
+  return [m[1], [binPath, ...args]] // node/python3 — resolve qua PATH
+}
+
 export async function runKit(bin, args, { kitRoot } = {}) {
   const advisory = recordKitRepeat(bin, args)
   const cap = assertCapability(bin, kitBinCatalog(kitRoot))
@@ -573,13 +681,124 @@ export async function runKit(bin, args, { kitRoot } = {}) {
     return advisory ? { ...cap, advisory } : cap
   }
   try {
-    const { stdout } = await execFileAsync(join(KIT_BIN, bin), args,
+    const [spawnBin, spawnArgs] = kitSpawnArgv(join(KIT_BIN, bin), args)
+    const { stdout } = await execFileAsync(spawnBin, spawnArgs,
       { timeout: 90000, maxBuffer: 2 * 1024 * 1024 })
     return advisory ? { ok: true, stdout, advisory } : { ok: true, stdout }
   } catch (err) {
-    const error = err instanceof Error ? err.message : String(err)
+    const base = err instanceof Error ? err.message : String(err)
+    // stdout của bin exit != 0 (vd wakii-validate FAIL JSON) phải lộ vào error —
+    // không thì panel chỉ thấy "Command failed" mất fails[]
+    const so = typeof err?.stdout === 'string' && err.stdout.trim() ? '\n' + err.stdout.slice(0, 1000) : ''
+    const error = base + so
     return advisory ? { ok: false, error, advisory } : { ok: false, error }
   }
+}
+
+// ---- Wakii save (panel → canonical mindmaps/*.wakii) -----------------------
+// Ghi doc .wakii từ panel qua ops 'wakii-save'. Fail-closed: nội dung phải pass
+// wakii-validate trước khi đụng file đích. Merge machine-owned state khi disk
+// tiến trước panel (absorb story-mindmap --update-state); disk có sf id lạ
+// (file bị regenerate dưới chân panel) → 'stale-doc' để panel reload.
+const WAKII_SAVE_MAX_BYTES = 200 * 1024 // storage cap 256KB trừ JSON-escape
+// overhead của pretty-print doc (mỗi newline/quote escape phình 10-25%)
+const WAKII_STATE_ENUM = new Set(['pending', 'in-progress', 'blocked', 'done', 'complete'])
+
+export async function saveWakiiStory(orca, fileName, content, baseGeneratedAt, deletedIds, deps = {}) {
+  try {
+    if (typeof fileName !== 'string' || !fileName.endsWith('.wakii')
+        || fileName.includes('..') || fileName.includes('/') || fileName.includes('\\')) {
+      return { ok: false, error: 'tên file .wakii không hợp lệ: ' + String(fileName) }
+    }
+    if (typeof content !== 'string' || !content.trim()) return { ok: false, error: 'content rỗng' }
+    if (Buffer.byteLength(content, 'utf8') > WAKII_SAVE_MAX_BYTES) {
+      return { ok: false, error: 'wakii doc vượt transport cap 200KB (storage 256KB trừ JSON-escape overhead) — không round-trip qua panel được' }
+    }
+    const delSet = new Set(Array.isArray(deletedIds) ? deletedIds.filter(x => typeof x === 'string') : [])
+    let incoming = null
+    try { incoming = JSON.parse(content) } catch { return { ok: false, error: 'content không phải JSON' } }
+    if (!incoming || incoming.wakiiMindmap !== 1 || !Array.isArray(incoming.nodes) || !Array.isArray(incoming.edges)) {
+      return { ok: false, error: 'content không phải wakii doc schema v1' }
+    }
+    // deps injection cho test hermetic (roots: scan roots; runKit: validator)
+    const scanRoots = Array.isArray(deps.roots) ? async () => deps.roots : storyScanRoots
+    const runValidator = deps.runKit || runKit
+
+    // Locate target: file sẵn có theo storyScanRoots; chưa có → focused/first root
+    let target = null
+    for (const r of await scanRoots()) {
+      const p = join(r, 'docs', 'superpowers', 'mindmaps', fileName)
+      try { accessSync(p); target = p; break } catch { continue }
+    }
+    if (!target) {
+      const base = deps.roots ? deps.roots[0] : ((await focusedWorktreePath()) || (await storyScanRoots())[0])
+      if (!base) return { ok: false, error: 'không có workspace root để ghi: ' + fileName }
+      target = join(base, 'docs', 'superpowers', 'mindmaps', fileName)
+      mkdirSync(dirname(target), { recursive: true })
+    }
+
+    // Validate fail-closed: tmp cùng dir → wakii-validate --json (exit 1 FAIL / 2 usage)
+    const tmp = join(dirname(target), '.' + basename(target) + '.tmp-' + process.pid)
+    await writeFile(tmp, content, 'utf8')
+    try {
+      const val = await runValidator('wakii-validate', [tmp, '--json'])
+      if (!val.ok) {
+        return { ok: false, error: 'wakii-validate FAIL — không ghi: ' + truncateReason(val.error || 'exit != 0', 800) }
+      }
+    } finally {
+      await unlink(tmp).catch(() => {})
+    }
+
+    // State-race merge: disk tiến trước panel (baseGeneratedAt lệch) → copy
+    // state machine-owned của sf/epic cùng id từ disk (panel không edit state)
+    let disk = null
+    try { disk = JSON.parse(await readFile(target, 'utf8')) } catch { /* missing/corrupt → new file */ }
+    let merged = incoming
+    let stateMerged = false
+    if (disk?.wakiiMindmap === 1 && baseGeneratedAt && disk.meta?.generatedAt !== baseGeneratedAt) {
+      merged = structuredClone(incoming)
+      const diskStates = new Map((disk.nodes || [])
+        .filter(n => n && (n.kind === 'sf' || n.kind === 'epic')
+                     && typeof n.state === 'string' && WAKII_STATE_ENUM.has(n.state))
+        .map(n => [n.id, n.state]))
+      for (const n of merged.nodes || []) {
+        if (n && (n.kind === 'sf' || n.kind === 'epic') && diskStates.has(n.id) && n.state !== diskStates.get(n.id)) {
+          n.state = diskStates.get(n.id); stateMerged = true
+        }
+      }
+    }
+    // Stale guard: disk có sf id không có trong incoming lẫn deletedIds → file
+    // bị regenerate dưới chân panel — không đoán merge, bảo panel reload
+    if (disk && Array.isArray(disk.nodes)) {
+      const inIds = new Set((merged.nodes || []).map(n => n?.id))
+      const stale = disk.nodes.filter(n => n?.kind === 'sf' && !inIds.has(n.id) && !delSet.has(n.id))
+      if (stale.length) return { ok: false, error: 'stale-doc', staleSfs: stale.map(n => n.id).slice(0, 10) }
+    }
+
+    // Idempotent: payload giống disk (bỏ generatedAt) → không write, không bump
+    const stripGen = (d) => { const c = structuredClone(d); if (c?.meta) delete c.meta.generatedAt; return stableJson(c) }
+    if (disk && stripGen(disk) === stripGen(merged)) {
+      return { ok: true, stdout: 'unchanged: ' + fileName }
+    }
+    // Atomic write: tmp cùng dir + rename (mirror story-mindmap writeAtomic)
+    const tmpW = join(dirname(target), '.' + basename(target) + '.w-' + process.pid)
+    writeFileSync(tmpW, JSON.stringify(merged, null, 2) + '\n', 'utf8')
+    renameSync(tmpW, target)
+    return { ok: true, stdout: 'saved wakii: ' + target + (stateMerged ? ' (merge state từ disk)' : '') }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    orca.log('wakii save failed: ' + message)
+    return { ok: false, error: message }
+  }
+}
+
+// Chuỗi hoá ổn định thứ tự key — so sánh payload không phụ thuộc key order
+function stableJson(v) {
+  if (Array.isArray(v)) return '[' + v.map(stableJson).join(',') + ']'
+  if (v && typeof v === 'object') {
+    return '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + stableJson(v[k])).join(',') + '}'
+  }
+  return JSON.stringify(v) ?? 'null'
 }
 
 async function collectStoryOps(orca) {
@@ -618,41 +837,47 @@ async function collectStoryOps(orca) {
     }
     // ── GAP queue: REQUIREMENT-GAP chưa có GAP-ANSWER trên mọi epic đang chạy
     out.gaps = []
+    out.complete = []
     try {
       const keyFile = join(homeDir(), '.claude', '.linear-key')
       let key = process.env.LINEAR_API_KEY || ''
       if (!key) { try { key = (await readFile(keyFile, 'utf8')).split('\n')[0].trim() } catch {} }
       if (key) {
+        // candidates {epic, file} — mindmaps canonical first, brackets shadowed
+        const cands = new Map()
         for (const r of await storyScanRoots()) {
+          for (const w of await scanWakiiDir(r)) {
+            if (w.linear && !cands.has(w.linear)) cands.set(w.linear, w.file)
+          }
           let ents = []
           try { ents = await readdir(join(r, 'docs', 'superpowers', 'brackets')) } catch { continue }
           for (const f of ents.filter(x => x.endsWith('.md'))) {
             let text = ''
             try { text = await readFile(join(r, 'docs', 'superpowers', 'brackets', f), 'utf8') } catch { continue }
             const hm = text.match(/^# Story:\s*([A-Za-z]+-\d+)/m)
-            if (!hm) continue
-            const epic = hm[1]
-            const gq = `query{issue(id:"${epic}"){state{name} title comments(first:50){nodes{body createdAt}} children(first:20){nodes{state{name}}}}}`
-            const rr = await fetch('https://api.linear.app/graphql', { method: 'POST', headers: { Authorization: key, 'Content-Type': 'application/json' }, body: JSON.stringify({ query: gq }) })
-            const jj = await rr.json()
-            const iss = jj?.data?.issue
-            if (!iss || iss.state?.name === 'Done') continue
-            const ch = iss.children?.nodes || []
-            if (ch.length && ch.every(c => c.state?.name === 'Done')) {
-              out.complete.push({ epic, title: (iss.title || f).slice(0, 40) })
-            }
-            const cs = iss.comments?.nodes || []
-            const answered = cs.some(c => /^\s*GAP-ANSWER/m.test(c.body || ''))
-            for (const c of cs) {
-              const b = c.body || ''
-              const gm = b.match(/REQUIREMENT-GAP[:：][^\n]{0,160}/)
-              if (gm && !answered) out.gaps.push({ epic, file: f.replace('.md',''), snippet: gm[0].slice(0, 140), at: c.createdAt })
-            }
+            if (hm && !cands.has(hm[1])) cands.set(hm[1], f)
+          }
+        }
+        for (const [epic, file] of cands) {
+          const gq = `query{issue(id:"${epic}"){state{name} title comments(first:50){nodes{body createdAt}} children(first:20){nodes{state{name}}}}}`
+          const rr = await fetch('https://api.linear.app/graphql', { method: 'POST', headers: { Authorization: key, 'Content-Type': 'application/json' }, body: JSON.stringify({ query: gq }) })
+          const jj = await rr.json()
+          const iss = jj?.data?.issue
+          if (!iss || iss.state?.name === 'Done') continue
+          const ch = iss.children?.nodes || []
+          if (ch.length && ch.every(c => c.state?.name === 'Done')) {
+            out.complete.push({ epic, title: (iss.title || file).slice(0, 40) })
+          }
+          const cs = iss.comments?.nodes || []
+          const answered = cs.some(c => /^\s*GAP-ANSWER/m.test(c.body || ''))
+          for (const c of cs) {
+            const b = c.body || ''
+            const gm = b.match(/REQUIREMENT-GAP[:：][^\n]{0,160}/)
+            if (gm && !answered) out.gaps.push({ epic, file: file.replace(/\.(wakii|md)$/, ''), snippet: gm[0].slice(0, 140), at: c.createdAt })
           }
         }
       }
     } catch { /* gap queue optional */ }
-    out.complete = []  // phát hiện trong bracket loop bên dưới (children all Done)
 
     // heartbeat: commit cuối + dirty per SF (worktree git — kiểu story-top)
     for (const row of out.sfs) {
@@ -1110,9 +1335,22 @@ export default function activate(orca) {
       const req = stored?.value
       if (req && typeof req.linear === 'string' && req.at && req.at !== lastReqAt) {
         lastReqAt = req.at
+        if (typeof req.file === 'string' && req.file.endsWith('.wakii')) {
+          await loadFromWakiiFile(orca, req.file)
+          return true
+        }
         if (typeof req.file === 'string' && req.file.endsWith('.md')) {
           await loadFromBracketFile(orca, req.file)
           return true
+        }
+        // linear-scan fallback — mindmaps canonical first, brackets legacy
+        for (const r of await storyScanRoots()) {
+          for (const w of await scanWakiiDir(r)) {
+            if (w.linear === req.linear) {
+              await loadFromWakiiFile(orca, w.file)
+              return true
+            }
+          }
         }
         for (const r of await storyScanRoots()) {
           const d = join(r, 'docs', 'superpowers', 'brackets')
@@ -1349,9 +1587,10 @@ export default function activate(orca) {
                    && typeof req.current === 'string' && req.current.trim()) {
           result = await runKit('story-visual-regress', ['--baseline', req.baseline.trim(), '--current', req.current.trim()])
         } else if (req.action === 'bracket-save' && typeof req.file === 'string' && req.file
-                   && !req.file.includes('..') && !req.file.includes('/') && typeof req.content === 'string') {
-          // Bracket node CRUD (panel drag/edit) — ghi lại file .md gốc qua
-          // storyScanRoots (cùng nguồn với fileRead, không đoán đường dẫn)
+                   && !req.file.includes('..') && !req.file.includes('/') && !req.file.includes('\\')
+                   && typeof req.content === 'string') {
+          // Bracket node CRUD (panel drag/edit, legacy fallback) — ghi lại file
+          // .md gốc qua storyScanRoots (cùng nguồn với fileRead)
           let written = null
           for (const r of await storyScanRoots()) {
             const p = join(r, 'docs', 'superpowers', 'brackets', req.file)
@@ -1360,6 +1599,10 @@ export default function activate(orca) {
           result = written
             ? { ok: true, stdout: 'saved bracket: ' + written }
             : { ok: false, error: 'bracket file not writable in any workspace: ' + req.file }
+        } else if (req.action === 'wakii-save' && typeof req.file === 'string' && typeof req.content === 'string') {
+          // Wakii node CRUD (panel) — canonical mindmaps/*.wakii, validate
+          // fail-closed + state-race merge trong saveWakiiStory
+          result = await saveWakiiStory(orca, req.file, req.content, req.baseGeneratedAt, req.deletedIds)
         } else if (req.action === 'gap-answer' && typeof req.epic === 'string' && typeof req.text === 'string' && req.text.trim()) {
           result = await postGapAnswer(req.epic, req.text.trim())
         } else if (req.action === 'close' && typeof req.epic === 'string') {

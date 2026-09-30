@@ -1,0 +1,120 @@
+#!/bin/bash
+# story-pr-checks — CI gate cho PR trước khi merge: cùng dữ liệu Checks panel
+# của Orca (GitHub check-runs + legacy statuses), đọc bằng gh để agent dùng
+# được mà không cần mở app.
+#
+# Usage:
+#   story-pr-checks <pr-number> [--repo <path>] [--wait <minutes>] [--json]
+#   story-pr-checks --branch <head-branch> [...]   # tìm PR theo head branch
+#
+# Exit: 0  tất cả checks pass (HOẶC PR không có checks nào — fork/project
+#          không chạy CI: pass-through có warning, không chặn vĩnh viễn)
+#       1  có check fail/cancel
+#       2  còn pending sau --wait (hoặc không --wait)
+#       3  usage / gh lỗi / PR không tìm thấy
+#
+# JSON out (--json): {"pr":N,"verdict":"pass|fail|pending|no-checks",
+#                     "checks":[{name,bucket,state}]}
+#
+# Merge playbook: CHỈ merge khi exit 0 — verdict "no-checks" được phép merge
+# nhưng PHẢI ghi chú vào evidence (không có lưới CI ≠ không cần nhìn diff).
+set -u
+
+PR=""; BRANCH=""; REPO=""; WAIT_MIN=0; JSON_OUT=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --repo) REPO="$2"; shift 2 ;;
+    --wait) WAIT_MIN="${2:-0}"; shift 2 ;;
+    --branch) BRANCH="$2"; shift 2 ;;
+    --json) JSON_OUT=1; shift ;;
+    -h|--help) grep '^#' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -*) echo "flag lạ: $1" >&2; exit 3 ;;
+    *) [ -z "$PR" ] && PR="$1"; shift ;;
+  esac
+done
+
+command -v gh >/dev/null 2>&1 || { echo "gh CLI không có trên PATH" >&2; exit 3; }
+[ -n "$PR" ] || [ -n "$BRANCH" ] || { echo "usage: story-pr-checks <pr-number|--branch <head>> [--repo <path>] [--wait <minutes>] [--json]" >&2; exit 3; }
+
+[ -z "$REPO" ] && REPO="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+cd "$REPO" || exit 3
+
+# Không có --branch: dùng trực tiếp số PR
+# Có --branch: tìm PR mở của head branch (tránh phụ thuộc người ta nhớ số)
+if [ -z "$PR" ]; then
+  PR="$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number' 2>/dev/null)"
+  [ -n "$PR" ] || { echo "không tìm thấy PR mở cho branch $BRANCH" >&2; exit 3; }
+fi
+
+GH_JSON_FIELDS="name,bucket,state"
+
+emit() {
+  # emit <verdict> <checks-json-string>
+  if [ "$JSON_OUT" -eq 1 ]; then
+    PYTHONIOENCODING=utf-8 python - "$1" "$2" "$PR" << 'EOF'
+import json, sys
+verdict, checks, pr = sys.argv[1], sys.argv[2], sys.argv[3]
+arr = []
+try:
+    arr = json.loads(checks) if checks else []
+except Exception:
+    pass
+print(json.dumps({"pr": int(pr) if pr.isdigit() else pr,
+                  "verdict": verdict, "checks": arr}, ensure_ascii=False))
+EOF
+  fi
+}
+
+poll_checks() {
+  # in stdout JSON của gh ra biến toàn cục CHECKS_RAW; return 0 ok
+  CHECKS_RAW="$(gh pr checks "$PR" --json "$GH_JSON_FIELDS" 2>&1)"
+  [ $? -eq 0 ]
+}
+
+judge() {
+  # judge <checks-raw-json> → verdict: pass|fail|pending|no-checks (global CHECKS_JSON)
+  CHECKS_JSON="$(PYTHONIOENCODING=utf-8 python - "$1" << 'EOF'
+import json, sys
+raw = sys.argv[1]
+try:
+    arr = json.loads(raw)
+except Exception:
+    arr = None
+if not isinstance(arr, list):
+    arr = []
+print(json.dumps(arr, ensure_ascii=False))
+EOF
+)"
+  PYTHONIOENCODING=utf-8 python - "$CHECKS_JSON" << 'EOF'
+import json, sys
+arr = json.loads(sys.argv[1]) if sys.argv[1] else []
+if not arr:
+    print("no-checks"); sys.exit(0)
+buckets = [c.get("bucket", "") for c in arr]
+if any(b in ("fail", "cancel") for b in buckets):
+    print("fail"); sys.exit(0)
+if any(b == "pending" for b in buckets):
+    print("pending"); sys.exit(0)
+print("pass")
+EOF
+}
+
+# vòng chính: poll → judge; pending + --wait → sleep 30s rồi poll lại
+deadline=$(( $(date +%s) + WAIT_MIN * 60 ))
+while :; do
+  poll_checks || { echo "gh pr checks thất bại: $CHECKS_RAW" >&2; exit 3; }
+  VERDICT="$(judge "$CHECKS_RAW")"
+  case "$VERDICT" in
+    pass)      emit pass "$CHECKS_RAW"; [ "$JSON_OUT" -eq 1 ] || echo "✓ tất cả checks PASS cho PR $PR"; exit 0 ;;
+    fail)      emit fail "$CHECKS_RAW"; [ "$JSON_OUT" -eq 1 ] || echo "✗ có check FAIL/CANCEL cho PR $PR"; exit 1 ;;
+    no-checks) emit no-checks "[]"
+               [ "$JSON_OUT" -eq 1 ] || echo "⚠ PR $PR không có checks nào — pass-through (ghi chú evidence)"; exit 0 ;;
+    pending)   if [ "$(date +%s)" -ge "$deadline" ]; then
+                 emit pending "$CHECKS_RAW"
+                 [ "$JSON_OUT" -eq 1 ] || echo "… checks còn PENDING sau $WAIT_MIN phút (PR $PR)"
+                 exit 2
+               fi
+               [ "$JSON_OUT" -eq 1 ] || echo "… checks đang chạy, chờ 30s…"
+               sleep 30 ;;
+  esac
+done
