@@ -4,8 +4,10 @@
 # Types: stall | complete | gate-fail | gap | story-complete
 #
 # Transport chain (2.16.5 — banner phải hiển thị nguồn ĐÚNG app, không "Script Editor"):
-#   1. terminal-notifier -sender <bundle-id Wakii> — banner nguồn Wakii, click mở app
-#   2. osascript display notification — fallback mọi máy (banner ghi "Script Editor")
+#   1. Windows: story-notify-toast.ps1 (toast WinRT qua WinPS 5.1 -File, không
+#      bypass/encode — windows-edr-posture) · macOS: terminal-notifier -sender
+#      <bundle-id Wakii> — banner nguồn Wakii, click mở app
+#   2. osascript display notification — fallback macOS còn lại (banner "Script Editor")
 #      (khi app expose `orca notifications show` CLI thì thêm làm tầng 1)
 set -u
 TYPE="${1:?}"; SF="${2:-}"; DETAIL="${3:-}"
@@ -14,6 +16,18 @@ WAKII_APP="${WAKII_APP:-/Applications/Wakii.app}"
 
 notify() { # $1=title $2=body $3=sound
   local title="$1" body="$2" sound="${3:-}"
+  # Windows — toast qua ps1 cạnh script; -NoProfile -File script thật, không bypass/encode
+  if [ "${OS:-}" = "Windows_NT" ]; then
+    local ps1_dir
+    ps1_dir="$(cd "$(dirname "$0")" && pwd)"
+    local ps1_native="$ps1_dir/story-notify-toast.ps1"
+    command -v cygpath >/dev/null 2>&1 && ps1_native="$(cygpath -m "$ps1_dir")/story-notify-toast.ps1"
+    if command -v powershell.exe >/dev/null 2>&1 && [ -f "$ps1_dir/story-notify-toast.ps1" ]; then
+      powershell.exe -NoProfile -File "$ps1_native" -Title "$title" -Body "$body" >/dev/null 2>&1 && return 0
+      return 1  # toast fail → báo notify-fail, không nuốt rc
+    fi
+    return 0  # không có powershell/ps1 — best-effort, notify không fail hard
+  fi
   local sender=""
   if [ -d "$WAKII_APP" ]; then
     sender=$(defaults read "$WAKII_APP/Contents/Info" CFBundleIdentifier 2>/dev/null)

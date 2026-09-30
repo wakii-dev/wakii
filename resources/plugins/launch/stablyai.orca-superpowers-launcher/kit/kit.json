@@ -249,6 +249,12 @@
       "description": "thông báo có context, screenshot, đề xuất — story-notify <type> <sf> [detail]"
     },
     {
+      "name": "story-notify-toast.ps1",
+      "type": "bin",
+      "category": "ops",
+      "description": "toast WinRT cho story-notify trên Windows — WinPS 5.1 -File (không bypass/encode, windows-edr-posture), script gọi cạnh nó"
+    },
+    {
       "name": "story-post-merge",
       "type": "bin",
       "category": "ops",
@@ -526,5 +532,5 @@
       "description": "điều phối sync feature VS Code — 1 pass 1 feature, mỗi feature qua story-workflow đầy đủ; state machine trong docs/superpowers/vscode-sync/backlog.md ([ ] chờ / [~] đang chạy / [x] đã merged)"
     }
   ],
-  "kitHash": "0143ddb36deb7cfe"
+  "kitHash": "cec7776d18276972"
 }
