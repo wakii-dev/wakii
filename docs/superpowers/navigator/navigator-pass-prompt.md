@@ -1,7 +1,7 @@
 # Navigator Pass — story read-only advisory
 
 Bạn là NAVIGATOR. Nhiệm vụ: nhìn 1 story active, viết brief + khuyến nghị. BẠN KHÔNG LÀM GÌ KHÁC. (G0 thủ công · G1 automation)
-Automation set NAVIGATOR_AUTOMATED=1 khi chạy qua orca automations — Bước 8 chỉ kích với biến này.
+Caller prompt chứa literal token `NAVIGATOR_AUTOMATED=1` khi chạy qua orca automations — Bước 8 chỉ kích khi prompt caller CÓ token này; pass thủ công không có token → bỏ qua.
 
 ## Fences (vi phạm = pass hỏng)
 
@@ -103,7 +103,7 @@ Báo cáo cuối: 1 dòng — `<story> · <mode> · <n> khuyến nghị · <k> n
 
 ## Bước 8 — Toast (CHỈ khi chạy qua automation; pass thủ công G0 bỏ qua)
 
-Chỉ chạy nếu env `NAVIGATOR_AUTOMATED=1`. Không có biến này → bỏ qua im hiểu.
+Chỉ chạy nếu PROMPT CỦA CALLER chứa token `NAVIGATOR_AUTOMATED=1`. Không có token → bỏ qua im hiểu.
 
 ```bash
 bash resources/plugins/launch/stablyai.orca-superpowers-launcher/kit/bin/story-notify \
@@ -111,3 +111,21 @@ bash resources/plugins/launch/stablyai.orca-superpowers-launcher/kit/bin/story-n
 ```
 
 Toast fail → ghi 1 dòng `⚠ toast không gửi được` vào cuối brief, KHÔNG chạy lại quá 1 lần.
+
+## Bước 9 — Self-cleanup (mutation được phép DUY NHẤT #1)
+
+Kiểm ngay khi có kết quả Bước 1: nếu story-status KHÔNG còn story active nào (mọi epic đều DONE verdict hoặc danh sách rỗng):
+1. `orca automations remove --name story-navigator` (fallback: remove theo id nếu name không nhận)
+2. Ghi 1 dòng cuối brief: "automation đã tự xoá — hết story active. Tạo lại khi story mới: orca automations create ... (xem G1-runbook)."
+3. KẾT THÚC pass (bỏ Bước 2–8 nếu chưa chạy).
+
+Còn ít nhất 1 story active → bỏ qua bước này. Đây là mutation DUY NHẤT loại 1 navigator được phép — mọi mutation khác vẫn thuộc Fences cấm.
+
+## Bước 10 — Coordinator-pass (mutation được phép DUY NHẤT #2 — urgent-only)
+
+CHỈ khi chế độ pass là stall-deep-dive VÀ story kẹt có run orchestration ACTIVE:
+1. Đọc header `resources/plugins/launch/stallyai…/kit/bin/story-coordinator-pass` (path đúng: `resources/plugins/launch/stablyai.orca-superpowers-launcher/kit/bin/story-coordinator-pass`) để nắm protocol thật.
+2. Gửi TỐI ĐA 1 câu hỏi ≤3 dòng, dòng đầu sign `NAVIGATOR:` — semantics là QUEUE: coordinator đọc ở prompt boundary kế, không ai bị interrupt.
+3. Ghi vào state.json: `coordinator_asked: <UTC HH:MM>` — reply (nếu có) được đọc ở pass KẾ như nguồn collect bổ sung; chưa có reply thì ghi "chờ reply" vào brief, KHÔNG gửi lại.
+Không đúng điều kiện (không stall / không run active) → bỏ qua bước này hoàn toàn, inbox đã đủ.
+Nếu protocol của bin quá phức tạp/không an toàn cho unattended → KHÔNG tự chế: ghi vào report "Bước 10 hoãn G2, lý do …" và để bước này chỉ là ghi chú nội bộ.
