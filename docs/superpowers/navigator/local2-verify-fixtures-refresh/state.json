@@ -1,0 +1,14 @@
+{
+  "story": "local2-verify-fixtures-refresh",
+  "last_pass": "2026-09-30T17:34:47Z",
+  "mode": "strategy-brief",
+  "sf_statuses": { "SF-1": "pending", "SF-2": "pending" },
+  "stall_seen": false,
+  "acks_total": 0,
+  "⚠": [
+    "story_task_list không đọc được (guide-gate exit 1, retry vẫn chết)",
+    "story_gate_list không đọc được (guide-gate exit 1, retry vẫn chết)",
+    "story-stats không đọc được (cần bracket approve + linear IDs; 2 lần)",
+    "git log branch đích story-local2-verify-fixtures không đọc được (branch chưa tồn tại — SF chưa có commit)"
+  ]
+}

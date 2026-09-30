@@ -7,3 +7,12 @@ Nếu không sync, watchdog/landscape-check lần sau có thể cảnh báo gi�
 ## NAV-20260930-2311-3 [open] Dọn entry worktree rác `sf-5-seo-i18n-qa` + chốt nguồn stats thay bracket
 Lý do: `story-status` hiện ACTIVE SF WORKTREES chứa `sf-5-seo-i18n-qa` với path rỗng — registry rác gây nhiễu watchdog.
 Bracket .md đã retire nên `story-stats` chết vĩnh viễn cho story này — cần quyết định nguồn stats thay thế (mindmap canonical) trước pass kế.
+## NAV-20260930-1726-4 [open] Thi hành 3 entry mở pass trước — bắt đầu từ battery hậu-merge
+Lý do: pass này không thấy commit mới trên story branch; 3 entry vẫn open không ack —
+story đứng im nếu không ai thi hành; battery hậu-merge (NAV-2311-1) là tiền đề DONE epic.
+## NAV-20260930-1726-5 [open] Epic DONE verdict VI-1 sau battery
+Lý do: code + review + evidence đủ, vi.json đã shipped trên integration —
+chỉ còn verdict + sync mindmap/epic state.
+## NAV-20260930-1726-6 [open] Dọn registry worktree rác + 2 branch phụ sau DONE
+Lý do: sf-5-seo-i18n-qa (path rỗng) + story/vi-1 local + coordinator branch treo
+gây nhiễu watchdog/status; dọn sau khi epic DONE để còn tra cứu.

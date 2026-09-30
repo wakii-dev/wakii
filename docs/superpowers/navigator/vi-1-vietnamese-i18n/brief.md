@@ -1,23 +1,23 @@
-# Navigator brief — vi-1-vietnamese-i18n — 2026-09-30T16:11:15Z
-Chế độ: strategy-brief · Trigger: thủ công (G0)
+# Navigator brief — vi-1-vietnamese-i18n — 2026-09-30T17:26:52Z
+Chế độ: strategy-brief · Trigger: automation (G1)
 ## Hiện trạng (≤5 dòng)
-- Code 3/3 SF đã merge trên đích `story/vi-1-vietnamese-i18n`: SF-3 guard tests + review APPROVED + evidence addendum, commit cuối là merge upstream `sync/upstream-main-0925` (0a2434f888).
-- Không SF worktree nào sống, watchdog trống ("no sf-* worktrees"), agents trống — story đang nghỉ giữa 2 pass, chưa thấy DONE verdict chính thức cho epic.
-- Mindmap `.wakii` (canonical) decode mọi SF = `pending`: không tìm thấy orchestration run cho story + story-impact ENOENT → metadata mindmap lệch thực tế merged.
-- Linear deferred (rate-limit) → states qua Linear không đọc được; `story-stats` chết vì thiếu bracket + linear IDs.
-- `story-status` còn 1 entry rác trong ACTIVE SF WORKTREES: `sf-5-seo-i18n-qa` với path rỗng.
+3 SF merged trên integration (tip 0a2434f888 = merge upstream sync 0925 — không commit mới
+từ pass trước); vi.json shipped trên integration; SF-3 review APPROVED (CHECKLIST-4Q 4/4) +
+evidence B1. Epic còn "in-progress" — chỉ verdict là xong. 3 entry inbox pass trước
+(NAV-20260930-2311-1..3) chưa ack: battery hậu-merge, mindmap sync, worktree rác.
+Landscape-check không kích: không SF nào đổi nhãn so với state 30/09 (vẫn 3×merged).
 ## Rủi ro / dead-end (≤5 mục)
-1. Drift nguồn sự thật: mindmap nói pending trong khi git đã merge — dashboard/watchdog lần sau đọc nhầm "chưa làm gì" → cảnh báo giả hoặc dispatch trùng.
-2. Epic có thể đã xong mà không ai chốt: SF-3 review APPROVED + evidence B1 có sẵn, nhưng chưa có bước converge (merge về wakii-dev + DONE epic) — story treo "xong-mà-không-done".
-3. Battery chưa xác minh SAU merge upstream 0925 (commit cuối trên đích là merge): guard tests + translatedness ratchet có thể vỡ do upstream đụng i18n/catalog — chưa có bằng chứng chạy sau điểm này.
-4. Nguồn stats chết cấu trúc: bracket .md đã retire, `story-stats` đòi bracket + linear IDs → mọi navigator pass sau mất nguồn #7 trừ khi quy trình nhận mindmap làm nguồn thay thế.
-5. Đích chưa xác minh đồng bộ remote `wakii-dev/story/vi-1-vietnamese-i18n` (ngoài phạm vi 7 nguồn) — rủi ro local-ahead khi converge.
+- Battery verify SAU merge upstream 0925 chưa có bằng chứng — review/evidence trước merge, code đã đổi sau đó.
+- Mindmap 3 SF "pending" stale — nguồn #5 của pass sau đọc sai tiếp.
+- Worktree rác `sf-5-seo-i18n-qa` vẫn trong registry ACTIVE (path rỗng) — nhiễu watchdog.
+- story-stats chết vĩnh viễn cho story này (bracket .md retired) — nguồn #7 hỏng cấu trúc, không phải rate-limit.
+- Branch phụ story/vi-1 (local) + wakii-dev/vi-1-vietnamese-i18n-coordinator còn treo — dọn sau DONE.
 ## Khuyến nghị top-3
-1. Chạy battery verify (guard tests + translatedness ratchet + story-verify B1) trên đích SAU merge 0925, rồi mới chốt DONE epic → inbox NAV-20260930-2311-1
-2. Sync states mindmap `.wakii` về thực tế merged (SF-1/2/3) — hoặc regen từ nguồn có run — để dashboard/nguồn #5 hết nói dối → inbox NAV-20260930-2311-2
-3. Dọn entry worktree rác `sf-5-seo-i18n-qa` (path rỗng) và ra quyết định nguồn stats thay bracket cho các pass sau → inbox NAV-20260930-2311-3
+1. Thi hành 3 entry mở NAV-20260930-2311-1..3 (battery hậu-merge trước, rồi DONE epic) → inbox NAV-20260930-1726-4
+2. Epic DONE verdict sau battery — converge wakii-dev rồi đóng mindmap + epic state → inbox NAV-20260930-1726-5
+3. Dọn registry worktree rác + 2 branch phụ sau khi epic DONE → inbox NAV-20260930-1726-6
 ## Nguồn ⚠
-- ⚠ story_bracket_read: `docs/superpowers/brackets/vi-1-vietnamese-i18n.md` không tồn tại (retired theo ruling .wakii canonical 27/09) — mindmap .wakii đọc được thay thế
-- ⚠ story_task_list không đọc được (orca orchestration task-list exit 1 — guide-gate redirect; thử lại 1 lần sau unlock vẫn chết)
-- ⚠ story_gate_list không đọc được (cùng guide-gate, không retry thêm)
-- ⚠ story-stats không đọc được ("Không tìm thấy SF nào — cần bracket đã approve + linear IDs"; Linear deferred — không retry)
+- story_task_list không đọc được (guide-gate exit 1)
+- story_gate_list không đọc được (guide-gate exit 1)
+- story-stats không đọc được (bracket .md retired — mindmap .wakii canonical thay thế)
+- story-status states VI-1: không hiển thị (không rate-limited) nhưng không có states line — đọc từ mindmap/git thay thế

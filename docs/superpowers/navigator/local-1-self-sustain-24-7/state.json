@@ -1,6 +1,6 @@
 {
-  "story": "vi-1-vietnamese-i18n",
-  "last_pass": "2026-09-30T17:26:52Z",
+  "story": "local-1-self-sustain-24-7",
+  "last_pass": "2026-09-30T17:33:28Z",
   "mode": "strategy-brief",
   "sf_statuses": { "SF-1": "merged", "SF-2": "merged", "SF-3": "merged" },
   "stall_seen": false,
@@ -8,7 +8,7 @@
   "⚠": [
     "story_task_list không đọc được (guide-gate exit 1)",
     "story_gate_list không đọc được (guide-gate exit 1)",
-    "story-stats không đọc được (bracket .md retired — mindmap .wakii canonical)",
-    "story-status states VI-1: không hiển thị dòng states (không rate-limited)"
+    "story-stats không đọc được (cần bracket approve + linear IDs; Linear rate-limited)",
+    "story-status states: Linear rate-limited — tạm bỏ qua"
   ]
 }

@@ -1,0 +1,14 @@
+{
+  "story": "fi305-superpowers-android",
+  "last_pass": "2026-09-30T17:21:00Z",
+  "mode": "strategy-brief",
+  "sf_statuses": { "SF-1": "merged", "SF-2": "merged", "SF-3": "merged", "SF-4": "merged" },
+  "stall_seen": false,
+  "acks_total": 0,
+  "⚠": [
+    "story_task_list không đọc được (guide-gate exit 1)",
+    "story_gate_list không đọc được (guide-gate exit 1)",
+    "story-stats không đọc được (cần bracket approve + linear IDs; Linear rate-limited)",
+    "story-status states: Linear rate-limited — tạm bỏ qua"
+  ]
+}
