@@ -161,15 +161,32 @@ for h in mine[:-1]:
     done
     ;;
 
+  add-feature)
+    # add-feature "<tên> | <mô tả + nguồn>" — scout tự đề xuất feature: đánh số
+    # VSC kế tiếp (max hiện có + 1), dedupe theo title (case-insensitive).
+    payload="${2:-}"
+    [ -n "$payload" ] || { echo "usage: add-feature \"<tên> | <mô tả>\"" >&2; exit 2; }
+    title="$(printf '%s' "$payload" | cut -d'|' -f1 | sed 's/^ *//;s/ *$//')"
+    [ -n "$title" ] || { echo "title rỗng" >&2; exit 2; }
+    if grep -qiF -- "$title" "$BACKLOG"; then
+      echo "DUPLICATE: '$title' đã có trong backlog — bỏ qua"
+      exit 3
+    fi
+    maxn="$(grep -oE 'VSC-[0-9]+' "$BACKLOG" | grep -oE '[0-9]+' | sort -n | tail -1)"
+    maxn="${maxn:-0}"
+    id="$(printf 'VSC-%03d' $((maxn + 1)))"
+    echo "- [ ] $id: $payload" >> "$BACKLOG"
+    echo "ADDED $id: $title"
+    ;;
   now)
-    # fire automation NGAY theo tên (không chờ cron): tìm id trong store rồi run
+    # fire vscode-feature-scout NGAY theo tên (không chờ cron)
     ORCA="${ORCA_BIN:-orca}"
     AUTO_ID="$(env -u ORCA_USER_DATA_PATH "$ORCA" automations list --json 2>/dev/null | \
       python -c "import json,sys
 d = json.load(sys.stdin)
 autos = d.get('automations') or d.get('result', {}).get('automations') or []
 for a in autos:
-    if a.get('name') == 'vscode-sync-pass':
+    if a.get('name') == 'vscode-feature-scout':
         print(a['id']); break" 2>/dev/null)"
     [ -n "$AUTO_ID" ] || { echo "automation vscode-sync-pass chưa được cài" >&2; exit 2; }
     echo "firing vscode-sync-pass ($AUTO_ID)…"
@@ -191,6 +208,32 @@ for a in autos:
               base="$(printf '%s' "$line" | sed 's/ *<!-- .*//')"
               rewrite_line "$n" "$base <!-- $text -->"
               echo "annotated: $fid ← $text"
+              exit 0
+            fi
+            ;;
+        esac
+      fi
+      n=$((n + 1))
+    done < "$BACKLOG"
+    echo "không thấy dòng [~] chứa $fid" >&2
+    exit 2
+    ;;
+  mark-staged)
+    # mark-staged <VSC-XXX> <epic-id> — scout tạo story xong: [~] → [S]
+    # (story ĐÃ TẠO trên Linear, chờ story-auto-launch approve + launch).
+    fid="${2:-}"; epic="${3:-}"
+    [ -n "$fid" ] && [ -n "$epic" ] || { echo "usage: mark-staged VSC-001 FI-44" >&2; exit 2; }
+    n=1
+    local_in_fence=0
+    while IFS= read -r line; do
+      case "$line" in '```'*) local_in_fence=$((1 - local_in_fence)); n=$((n + 1)); continue ;; esac
+      if [ "$local_in_fence" -eq 0 ]; then
+        case "$line" in
+          '- [~]'*)
+            if printf '%s' "$line" | grep -qi "$fid"; then
+              base="$(printf '%s' "$line" | sed 's/ *<!-- .*//')"
+              rewrite_line "$n" "$base <!-- epic: $epic | staged: $(date -u +%Y-%m-%dT%H:%M:%SZ) -->"
+              echo "mark-staged: $fid → [S] (epic $epic)"
               exit 0
             fi
             ;;
@@ -226,13 +269,14 @@ for a in autos:
     ;;
   status)
     echo "=== vscode-sync backlog ($BACKLOG, base=$BASE_BRANCH) ==="
-    echo "chờ dispatch:    $(count_state '- [ ]')"
-    echo "đang chạy story: $(count_state '- [~]')"
+    echo "chờ scout:       $(count_state '- [ ]')"
+    echo "scout đang tạo:  $(count_state '- [~]')"
+    echo "story chờ launch: $(count_state '- [S]')"
     echo "đã merged:       $(count_state '- [x]')"
     exit 0
     ;;
   *)
-    echo "usage: vscode-sync-dispatch [next|now|should-run|claim-pane|cleanup-pane <handle>|cleanup-stale|annotate <VSC-XXX> <text>|mark-done <VSC-XXX>|status]" >&2
+    echo "usage: vscode-sync-dispatch [next|now|should-run|claim-pane|cleanup-pane <handle>|cleanup-stale|annotate <VSC-XXX> <text>|mark-staged <VSC-XXX> <epic>|mark-done <VSC-XXX>|add-feature \"<tên> | <mô tả>\"|status]" >&2
     exit 2
     ;;
 esac

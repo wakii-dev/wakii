@@ -4,13 +4,17 @@ Mỗi dòng dưới đây là 1 feature VS Code cần sync vào Wakii. Automatio
 `vscode-sync-dispatch-pass` (cron 30') lấy **đúng 1 feature chưa dispatch** mỗi
 pass và chạy **story-workflow đầy đủ** cho nó (epic + SF + coordinator).
 
-## State machine (bin quản lý — không sửa tay phần `[~]`)
+## State machine (bin quản lý — không sửa tay phần `[~]`/`[S]`)
 
 | Checkbox | Nghĩa |
 |---|---|
-| `- [ ]` | Chưa dispatch — automation sẽ lấy theo thứ tự trên xuống |
-| `- [~]` | Đang chạy story (tối đa 1 cái — pass sau sẽ noop) |
+| `- [ ]` | Chờ scout phân tích + tạo story |
+| `- [~]` | Scout đang tạo story (tối đa 1) |
+| `- [S]` | Story đã tạo trên Linear — **story-auto-launch** (automation generic mọi dự án) sẽ approve + launch |
 | `- [x]` | Story đã merged vào `wakii-dev` |
+
+2 automation: `vscode-feature-scout` (wakii-dev — phân tích vscode, tạo story)
++ `story-auto-launch` (mọi dự án — quét story chưa implement, approve + launch).
 
 ## Format dòng feature
 
@@ -48,3 +52,4 @@ pass và chạy **story-workflow đầy đủ** cho nó (epic + SF + coordinator
 <!-- Thêm feature mới vào đây, trên xuống theo thứ tự ưu tiên.
      Format: - [ ] VSC-XXX: <tên feature> — <mô tả ngắn>
      Backlog trống → automation sẽ noop đến khi có feature. -->
+- [~] VSC-901: TEST pipeline smoke — story-workflow smoke test cho automation vscode-sync — SF nhỏ, chỉ xác nhận pipeline epic/SF/Linear hoạt động, không đụng code production <!-- epic: FI-44 | staged: 2026-09-30T03:19:55Z -->
