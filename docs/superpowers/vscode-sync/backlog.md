@@ -1,15 +1,15 @@
 # VS Code sync backlog
 
 Mỗi dòng dưới đây là 1 feature VS Code cần sync vào Wakii. Automation
-`vscode-sync-dispatch-pass` (cron 30') lấy **đúng 1 feature chưa dispatch** mỗi
-pass và chạy **story-workflow đầy đủ** cho nó (epic + SF + coordinator).
+`vscode-feature-scout` (hourly + precheck) phân tích và **tạo story song song** —
+mỗi story một worktree riêng, không xếp hàng chờ story khác.
 
 ## State machine (bin quản lý — không sửa tay phần `[~]`/`[S]`)
 
 | Checkbox | Nghĩa |
 |---|---|
 | `- [ ]` | Chờ scout phân tích + tạo story |
-| `- [~]` | Scout đang tạo story (tối đa 1) |
+| `- [~]` | Scout đang tạo story (có thể nhiều story đồng thời) |
 | `- [S]` | Story đã tạo trên Linear — **story-auto-launch** (automation generic mọi dự án) sẽ approve + launch |
 | `- [x]` | Story đã merged vào `wakii-dev` |
 
