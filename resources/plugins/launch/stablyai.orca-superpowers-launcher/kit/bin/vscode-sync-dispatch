@@ -338,10 +338,26 @@ for a in autos:
       case "$line" in '```'*) local_in_fence=$((1 - local_in_fence)); n=$((n + 1)); continue ;; esac
       if [ "$local_in_fence" -eq 0 ]; then
         case "$line" in
-          '- [~]'*)
+          '- [~]'*|'- [S]'*)
             if printf '%s' "$line" | grep -qi "$epic_id"; then
-              rewrite_line "$n" "$(printf '%s' "$line" | sed 's/^- \[~\]/- [x]/')"
+              rewrite_line "$n" "$(printf '%s' "$line" | sed 's/^- \[\(~\|S\)\]/- [x]/')"
               echo "mark-done: $epic_id → [x]"
+              # CHUYỀN DÂY: story xong → fire scout tạo story kế tiếp NGAY
+              # (không chờ cron hourly) — chỉ khi còn [ ] chờ trong backlog.
+              if [ "$(count_state '- [ ]')" -gt 0 ]; then
+                ORCA="${ORCA_BIN:-orca}"
+                AUTO_ID="$(env -u ORCA_USER_DATA_PATH "$ORCA" automations list --json 2>/dev/null | \
+                  python -c "import json,sys
+d = json.load(sys.stdin)
+autos = d.get('automations') or d.get('result', {}).get('automations') or []
+for a in autos:
+    if a.get('name') == 'vscode-feature-scout':
+        print(a['id']); break" 2>/dev/null)"
+                if [ -n "$AUTO_ID" ]; then
+                  echo "firing scout ($AUTO_ID) tạo story kế tiếp…"
+                  env -u ORCA_USER_DATA_PATH "$ORCA" automations run "$AUTO_ID" >/dev/null 2>&1 &
+                fi
+              fi
               exit 0
             fi
             ;;

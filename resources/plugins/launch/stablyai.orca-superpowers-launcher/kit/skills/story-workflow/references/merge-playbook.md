@@ -57,6 +57,19 @@ ready-to-merge khi checks pass** — cùng dữ liệu Checks panel, đọc bằ
 Agent KHÔNG dùng panel Checks của app để quyết — panel là cho người xem;
 agent đọc `story-pr-checks` (cùng nguồn, machine-readable, exit-code hợp đồng).
 
+## Sau khi merge story vscode-sync — đóng vòng serial
+
+Merge xong story từ backlog vscode-sync → chạy:
+
+```bash
+~/.claude/bin/vscode-sync-dispatch mark-done VSC-XXX
+```
+
+Bin flip dòng thành `[x]` VÀ **tự fire `vscode-feature-scout`** để tạo story
+kế tiếp NGAY (nếu backlog còn dòng `[ ]`) — không chờ cron hourly. Vòng đời
+serial khép kín: claim → CREATE → staged → launched → merge → mark-done →
+story kế.
+
 ## Snapshot merge (giữ nguyên ý cũ, protocol mới)
 
 Nhóm task lớn xong (vd T1-T4 của 5) → coordinator merge sf-branch sớm với

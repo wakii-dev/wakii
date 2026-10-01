@@ -538,5 +538,5 @@
       "description": "CI gate cho PR truoc khi merge — doc gh pr checks (cung nguon Checks panel): exit 0 pass/no-checks, 1 fail, 2 pending, 3 loi"
     }
   ],
-  "kitHash": "0a0e038079e170ba"
+  "kitHash": "fc325505937a6284"
 }
