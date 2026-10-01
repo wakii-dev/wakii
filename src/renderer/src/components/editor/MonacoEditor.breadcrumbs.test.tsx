@@ -13,23 +13,34 @@ vi.mock('@monaco-editor/react', () => ({
   default: () => null,
   loader: { config: vi.fn() }
 }))
-vi.mock('@/store', () => ({
-  useAppStore: (selector: (state: Record<string, unknown>) => unknown) =>
-    selector({
-      settings: settingsRef.current,
-      editorFontZoomLevel: 0,
-      setPendingEditorReveal: vi.fn(),
-      setEditorCursorLine: vi.fn(),
-      revealInExplorer: revealRef.current,
-      addDiffComment: vi.fn(),
-      deleteDiffComment: vi.fn(),
-      updateDiffComment: vi.fn(),
-      scrollToDiffCommentId: null,
-      setScrollToDiffCommentId: vi.fn(),
-      worktreeDiffComments: {},
-      worktreesByRepo: {}
-    })
-}))
+vi.mock('@/store', () => {
+  // Mirror the state fields the component reads via useAppStore selectors, plus
+  // the slices getConnectionId() reads through useAppStore.getState() (FI-35).
+  const storeState = () => ({
+    settings: settingsRef.current,
+    editorFontZoomLevel: 0,
+    setPendingEditorReveal: vi.fn(),
+    setEditorCursorLine: vi.fn(),
+    revealInExplorer: revealRef.current,
+    addDiffComment: vi.fn(),
+    deleteDiffComment: vi.fn(),
+    updateDiffComment: vi.fn(),
+    scrollToDiffCommentId: null,
+    setScrollToDiffCommentId: vi.fn(),
+    worktreeDiffComments: {},
+    worktreesByRepo: {},
+    gitStatusHeadByWorktree: {},
+    repos: [],
+    folderWorkspaces: [],
+    projectGroups: []
+  })
+  return {
+    useAppStore: Object.assign(
+      (selector: (state: Record<string, unknown>) => unknown) => selector(storeState()),
+      { getState: storeState }
+    )
+  }
+})
 vi.mock('../diff-comments/useDiffCommentDecorator', () => ({
   useDiffCommentDecorator: vi.fn()
 }))

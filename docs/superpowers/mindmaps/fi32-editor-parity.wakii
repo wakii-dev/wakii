@@ -5,20 +5,22 @@
     "epic": "FI-32",
     "dest": "feature/clone-vs-vscode",
     "generatedAt": "2026-09-28T07:55:21.827Z",
-    "generator": "story-mindmap 1.0.0"
+    "generator": "story-mindmap 1.0.0",
+    "updatedAt": "2026-10-01T15:06:35Z",
+    "doneVerdict": "2026-10-01 — CDP walkthrough 7/7 PASS + gates B1/B2b/B3(cục bộ)/B4 PASS + 57/58→58/58 tests (mock getState fix); Linear ⏳ defer; user precedent DONE-theo-bằng-chứng (FI-28)"
   },
   "nodes": [
     {
       "id": "epic",
       "kind": "epic",
       "title": "FI-32 — clone-vs-vscode phase 3: editor parity",
-      "state": "in-progress"
+      "state": "done"
     },
     {
       "id": "sf-1",
       "kind": "sf",
       "title": "Editor parity: suggest/options + minimap stamp + breadcrumbs + quick outline",
-      "state": "pending",
+      "state": "done",
       "tier": 0,
       "linear": "FI-33"
     },
@@ -26,63 +28,63 @@
       "id": "t-1.1",
       "kind": "task",
       "title": "probe-cluster-symbols-suggest-format",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-1"
     },
     {
       "id": "t-1.2",
       "kind": "task",
       "title": "suggest-options-explicit-enum",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-1"
     },
     {
       "id": "t-1.3",
       "kind": "task",
       "title": "bracket-smoothcaret-whitespace-settings",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-1"
     },
     {
       "id": "t-1.4",
       "kind": "task",
       "title": "minimap-default-on-stamp-migration-two-stores",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-1"
     },
     {
       "id": "t-1.5",
       "kind": "task",
       "title": "format-reuse-bridge-verification",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-1"
     },
     {
       "id": "t-1.6",
       "kind": "task",
       "title": "breadcrumb-bar-matrix-reveal",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-1"
     },
     {
       "id": "t-1.7",
       "kind": "task",
       "title": "i18n-six-locales",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-1"
     },
     {
       "id": "t-1.8",
       "kind": "task",
       "title": "quick-outline-chord-policy-gated",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-1"
     },
     {
       "id": "t-1.9",
       "kind": "task",
       "title": "verify-gates-electron-walkthrough",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-1"
     }
   ],

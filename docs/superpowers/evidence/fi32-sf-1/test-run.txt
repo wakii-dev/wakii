@@ -1,0 +1,79 @@
+FI-32 SF-1 (FI-33 editor parity) verify-gates evidence — t-1.9 verify-gates-electron-walkthrough
+Date: 2026-10-01
+HEAD (wakii-main, chứa merge FI-33): 089139eb07
+Story tip: a9e43c3832 (review P2 fix — ancestor của wakii-main, B4 PASS; task-9 tip 2838a652b8 cũng ⊆ HEAD)
+Range review: 393a275baf..2838a652b8 (35 files, 12 test files; task 7-8 + review-fix đem thêm 3 test file → suite hôm nay chạy 15 file)
+tdd: RED→GREEN (FI-33 code commits task 1-8 kèm test files; evidence dưới là re-run toàn suite FI-33 trên HEAD hiện tại)
+
+## Test suite (vitest, repo config — 2026-10-01 21:31)
+Command: pnpm vitest run --config config/vitest.config.ts <15 test files FI-33> (log: /tmp/fi32-verify-tests.log)
+Result: Test Files 14 passed | 1 failed (15) · Tests 57 passed | 1 failed (58) · Duration 6.72s
+RED duy nhất — MonacoEditor.breadcrumbs.test.tsx > "reveals the file through the store action when a
+parent segment is clicked": TypeError "useAppStore.getState is not a function".
+  Root cause (không phải regression FI-33): getConnectionId() (src/renderer/src/lib/connection-context.ts:16)
+  gọi useAppStore.getState() trong render path MonacoEditor.tsx:216 — đường này vào SAU review FI-33
+  (24/09 PASS 41/41) qua blame flow FI-35/gitlens-lite. Test mock '@/store' của FI-33 chỉ là plain
+  function (không có .getState). Runtime thật KHÔNG bị ảnh hưởng (zustand store có getState) — đây là
+  test-mock rot chéo story. Fix 1 dòng: thêm `getState: () => ({...})` vào vi.mock('@/store') trong
+  MonacoEditor.breadcrumbs.test.tsx. → cần 1 fix-task nhỏ trước khi tick epic DONE.
+
+## CDP walkthrough (Electron ẩn, ORCA_BACKGROUND_LAUNCH=1, hidden renderer qua CDP — shots: cdp/)
+App: build out/ 01-10 19:22 (desktop PASS, pre-date merge HEAD — merge 089139eb07 chỉ đụng kit/docs, 0 src file
+mới hơn build) → npx electron . --remote-debugging-port=9222 (+--inspect=9229 cho main-process trusted input),
+profile temp ORCA_DEV_USER_DATA_PATH=/tmp/fi32-walkthrough-profile (không đụng profile user).
+Workspace: repo demo /tmp/fi28-demo-repo qua RPC repo.add + worktree create "verify-wt" (RPC thẳng instance,
+KHÔNG qua CLI toàn cục — xem incident bên dưới).
+
+PASS — breadcrumbs (sc1): mở src/app.ts → bar "src > app.ts" ngay trên editor (cdp/01-editor-breadcrumbs.png);
+DOM: button "src" title="Reveal in explorer", span cha KHÔNG mang tooltip (fix P2 "tooltip ảo" a9e43c3832 xác nhận
+runtime); click reveal → explorer select app.ts + entry Open Editors (cdp/02-breadcrumb-reveal.png)
+PASS — suggest (sc2): gõ "add" trong editor → suggest widget visible 12 rows, local symbol addWidget đứng đầu
+(cdp/03-suggest-widget.png); dirty dot trên tab + "You · unsaved changes"
+PASS — format (sc3): gõ "const   y={a:1,b:2}" → Shift+Alt+F (trusted input qua main sendInputEvent) → formatter
+chuẩn hoá "y = { a: 1, b: 2 }", draft không mất (cdp/05-format-draft-intact.png). Contract draft-intact được
+monaco-format-draft-intact.test.ts pin (PASS trong suite)
+PASS — quick outline (sc6): Cmd+Shift+O (trusted input) → Monaco quick outline mở: input "@" + "symbols (5)" —
+Widget/id/label/widgets/addWidget (cdp/04-quick-outline.png); Escape đóng. Chord-policy nhánh preview-panel
+(floating panel yields) phủ bởi unit test floating-workspace-shortcut-policy.quick-outline.test.ts (PASS)
+PASS — settings enum (sc7): General > Editor: Smooth Caret Animation On|Explicit|Off (On default), Render
+Whitespace None|Boundary|Selection|Trailing|All (Selection default), Breadcrumbs toggle ON, Minimap toggle ON
+(stamp default) (cdp/06-settings-caret-whitespace.png, cdp/07-settings-minimap.png)
+PASS — render whitespace live (sc4): đổi Render Whitespace → All → editor vẽ mid-dot ngay lập tức "Widget
+{·id:·string;·label:·string·}" (cdp/08-whitespace-all-editor.png); đã reset về Selection
+PASS — bracket pair colorization (sc4): 14 span "bracket-highlighting-*" trong DOM editor
+Giới hạn runtime: minimap strip không thấy rõ ở file 3-4 dòng (cột quá ngắn) — setting ON được xác nhận ở
+settings UI; widget scroll/chord không demo được khác đã phủ unit test. Keystroke thông thường (type/click)
+deliver được qua CDP; chord Meta chỉ deliver qua main-process sendInputEvent (webContents.focus()) —
+Playwright keyboard组合 không tới Electron window ẩn.
+
+## Incident (đã xử lý, không để lại state)
+`orca repo add` (CLI toàn cục) đã route vào app Wakii THẬT của user (pid 57012, global runtime json) thay vì
+instance verify; repo /tmp/fi28-demo-repo KHÔNG persist được ở đâu cả — repo.list user runtime = 5 repos gốc
+(không có fi28-demo-repo), grep disk không thấy id → 0 pollution durable. Verify sau đó gọi RPC trực tiếp lên
+instance verify (metadata trong profile temp). Cleanup cuối: kill instance, xoá profile temp, worktree verify-wt
+ở /Users/hoivu/orca/workspaces/fi28-demo-repo/verify-wt đã rm.
+
+## Gate story-verify (tái tạo tay — bin báo "Không có sf-* worktree nào", story đã merge)
+B1 CODE+TESTS: PASS (có NOTE) — 9+ commits FI-33 trên story tip ⊆ wakii-main + 15 test file; evidence file này
+  chứa HEAD. NOTE: 57/58 suite — 1 red = test-mock rot do FI-35 (root cause + fix 1 dòng ở trên), không phải
+  code FI-33 sai
+B2 PLAN TICKED: WARN — plan file per-worktree (docs gitignored) mất cùng worktree; mindmap fi32 t-1.1..t-1.9
+  còn 'pending' (chờ coordinator tick sau khi red trên được xử lý)
+B2b SURFACE LINT: PASS — story-surface-lint wakii-dev → CLEAN (exit 0, merge-base e55f43516887, commits 1535)
+B3 REVIEW: PASS (bằng chứng cục bộ) — docs/superpowers/evidence/fi32-sf-1/.review-verdict.md: APPROVED
+  (0×P0, 0×P1, 5×P2; 2 P2 đầu đã fix trong a9e43c3832). Linear workspace FI unreachable từ máy này —
+  coordinator đối chiếu verdict trên Linear trực tiếp
+B4 MERGED: PASS — story tip a9e43c3832 ⊆ wakii-main 089139eb07 (merge-base --is-ancestor OK), 0 commit story-only
+B5 LINEAR DONE: PENDING-UNVERIFIABLE — workspace FI unreachable; Linear không phải việc của verify này
+Build: desktop PASS (out/ 01-10); mobile-web-bundle FAIL do thiếu .generated (env issue đã biết từ FI-28,
+không thuộc code FI-32, không chặn desktop verify)
+
+## Kết luận
+Đủ cơ sở đóng task t-1.9 (verify-gates-electron-walkthrough) và SF-1 FI-33 SAU KHI xử lý 1 red test-mock
+(fix 1 dòng, không đụng code feature) + coordinator tick mindmap/Linear. Blocker epic FI-32 còn lại duy nhất
+là việc housekeeping đó — không còn khoảng trống verify nào.
+
+## Addendum HEAD (22:00 cùng ngày)
+wakii-main đã tiến tới 6f53598016 (3 commits docs navigator-actor của writer khác, song song trong phiên —
+nhượng quyền theo multi-writer protocol). 089139eb07 ⊆ 6f53598016 (ff); diff 089139eb07..6f53598016 trên
+src/ = EMPTY → mọi bằng chứng trên (suite + CDP walkthrough + B2b/B4) giữ nguyên giá trị cho tip mới.
