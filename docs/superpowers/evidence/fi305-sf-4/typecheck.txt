@@ -1,0 +1,27 @@
+# FI-305 SF-4 — mobile typecheck (pnpm --dir mobile typecheck)
+date: 2026-10-01 22:41 +0700
+HEAD: 13c0016974
+result: exit 2 — 11 errors / 7 files, TẤT CẢ baseline wakii-main (không phải FI-305):
+  - story đổi 330 file; giao thoa file-lỗi = OrcaLogo.tsx nhưng story ĐÃ XOÁ file này
+    (own-your-orphans T11); bản hiện tại có rx do 2 commit SAU merge story (566d5c2f0a, e208225fc5)
+  - còn lại: NewWorktree*, host-screen-overlays, setup-hook-trust, use-mobile-tasks —
+    ngoài touch-map FI-305, thuộc dòng wakii-main/upstream khác
+---
+
+> orca-mobile@0.0.1 typecheck /Users/hoivu/Desktop/projects/orca/mobile
+> tsc --noEmit
+
+src/components/NewWorktreeFormSheet.tsx(83,12): error TS2741: Property 'onOpenExternalUrl' is missing in type '{ composer: { name: string; setName: (value: string) => void; linkedWorkItem: MobileLinkedWorkItem | null; branchNameOverride: string | undefined; handleBranchNameOverrideChange: (value: string) => void; ... 13 more ...; handleClearSmartNameSelection: () => void; }; ... 4 more ...; onOpenDrawer: () => void; }' but required in type 'Props'.
+src/components/NewWorktreeModal.tsx(196,8): error TS2741: Property 'onOpenExternalUrl' is missing in type '{ visible: boolean; interactive: boolean; loading: boolean; hasRepos: boolean; project: NewWorkspaceProjectOption<MobileWorkspaceRepo> | null; ... 29 more ...; onCreate: () => undefined; }' but required in type '{ visible: boolean; interactive: boolean; loading: boolean; hasRepos: boolean; project: Selection | null; runTarget: Selection | null; projectBadgeColor: string | null; ... 28 more ...; onCreate: () => void; }'.
+src/components/NewWorktreeModalController.tsx(59,8): error TS2741: Property 'openExternalUrl' is missing in type '{ visible: boolean; client: RpcClient | null; hostId: string | undefined; existingWorktreePaths: readonly string[] | undefined; existingWorktrees: readonly { repoId: string; branch: string; }[] | undefined; onCreated: (worktreeId: string, name: string) => void; onClose: () => void; }' but required in type 'NewWorktreeModalProps'.
+src/components/OrcaLogo.tsx(16,61): error TS2322: Type '{ fill: string; d: string; rx: number; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+  Property 'rx' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Path> & Readonly<PathProps>'.
+src/host-screen/host-screen-overlays.tsx(225,9): error TS2322: Type '(worktreeId: any, worktreeName: any, warning: any) => void' is not assignable to type '(worktreeId: string, name: string) => void'.
+  Target signature provides too few arguments. Expected 3 or more, but got 2.
+src/host-screen/host-screen-overlays.tsx(225,21): error TS7006: Parameter 'worktreeId' implicitly has an 'any' type.
+src/host-screen/host-screen-overlays.tsx(225,33): error TS7006: Parameter 'worktreeName' implicitly has an 'any' type.
+src/host-screen/host-screen-overlays.tsx(225,47): error TS7006: Parameter 'warning' implicitly has an 'any' type.
+src/host-screen/host-screen-overlays.tsx(228,75): error TS2554: Expected 3 arguments, but got 4.
+src/tasks/setup-hook-trust.ts(50,51): error TS2353: Object literal may only specify known properties, and 'trustedOrcaHooks' does not exist in type '{ explorerDisplayRootByWorktree?: Record<string, string> | undefined; showDotfilesByWorktree?: Record<string, boolean> | undefined; collapsedGroups?: string[] | undefined; ... 107 more ...; manualRepoOrder?: { ...; }[] | undefined; }'.
+src/tasks/use-mobile-tasks-workspace-create-actions.tsx(283,13): error TS2554: Expected 3 arguments, but got 4.
+ ELIFECYCLE  Command failed with exit code 2.

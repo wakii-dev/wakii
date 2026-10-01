@@ -5,20 +5,22 @@
     "epic": "FI-305",
     "dest": "story/fi305-superpowers-android",
     "generatedAt": "2026-09-28T07:54:31.323Z",
-    "generator": "story-mindmap 1.0.0"
+    "generator": "story-mindmap 1.0.0",
+    "updatedAt": "2026-10-01T15:45:16Z",
+    "doneVerdict": "2026-10-01 — convergence QA: B1/B2(SF-3)/B2b/B4 PASS + mobile vitest 397/397; GAP T2 device-e2e (evidence gốc /tmp xoá) — user RULING DONE unit-only, T2 = G2 backlog; Linear ⏳ defer"
   },
   "nodes": [
     {
       "id": "epic",
       "kind": "epic",
       "title": "FI-305 — Superpowers on Android — story workflow từ điện thoại (view + gates + notifications)",
-      "state": "in-progress"
+      "state": "done"
     },
     {
       "id": "sf-1",
       "kind": "sf",
       "title": "Desktop RPC foundation + gate notifications",
-      "state": "pending",
+      "state": "done",
       "tier": 0,
       "linear": "FI-306"
     },
@@ -26,7 +28,7 @@
       "id": "sf-2",
       "kind": "sf",
       "title": "Mobile story screens + Linear status",
-      "state": "pending",
+      "state": "done",
       "tier": 1,
       "linear": "FI-307"
     },
@@ -34,7 +36,7 @@
       "id": "sf-3",
       "kind": "sf",
       "title": "Gate resolve UX + notification handling",
-      "state": "pending",
+      "state": "done",
       "tier": 1,
       "linear": "FI-308"
     },
@@ -42,7 +44,7 @@
       "id": "sf-4",
       "kind": "sf",
       "title": "Convergence QA + deep-link wiring",
-      "state": "pending",
+      "state": "done",
       "tier": 2,
       "linear": "FI-309"
     },
@@ -50,245 +52,245 @@
       "id": "t-1.1",
       "kind": "task",
       "title": "bracket-parse-shared-module",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-1"
     },
     {
       "id": "t-1.2",
       "kind": "task",
       "title": "story-list-method",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-1"
     },
     {
       "id": "t-1.3",
       "kind": "task",
       "title": "story-detail-method",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-1"
     },
     {
       "id": "t-1.4",
       "kind": "task",
       "title": "gate-resolve-method-pending-guard",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-1"
     },
     {
       "id": "t-1.5",
       "kind": "task",
       "title": "mobile-allowlist-entries-enforcement-test",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-1"
     },
     {
       "id": "t-1.6",
       "kind": "task",
       "title": "notification-source-union-routing-payload",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-1"
     },
     {
       "id": "t-1.7",
       "kind": "task",
       "title": "gate-transition-store-hooks",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-1"
     },
     {
       "id": "t-1.8",
       "kind": "task",
       "title": "gate-story-derivation-db-probe",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-1"
     },
     {
       "id": "t-1.9",
       "kind": "task",
       "title": "wire-compat-doc-update",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-1"
     },
     {
       "id": "t-1.10",
       "kind": "task",
       "title": "fixture-parity-test-vs-plugin",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-1"
     },
     {
       "id": "t-1.11",
       "kind": "task",
       "title": "contract-types-shared-location",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-1"
     },
     {
       "id": "t-2.1",
       "kind": "task",
       "title": "contract-conformance-smoke-test",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-2"
     },
     {
       "id": "t-2.2",
       "kind": "task",
       "title": "host-scoped-story-routes-boundary-test",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-2"
     },
     {
       "id": "t-2.3",
       "kind": "task",
       "title": "story-list-data-module-cache-reconnect",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-2"
     },
     {
       "id": "t-2.4",
       "kind": "task",
       "title": "story-detail-data-module",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-2"
     },
     {
       "id": "t-2.5",
       "kind": "task",
       "title": "story-list-ui-group-worktree",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-2"
     },
     {
       "id": "t-2.6",
       "kind": "task",
       "title": "story-detail-ui-tiers-progress",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-2"
     },
     {
       "id": "t-2.7",
       "kind": "task",
       "title": "linear-subissue-status-read-desktop",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-2"
     },
     {
       "id": "t-2.8",
       "kind": "task",
       "title": "strings-inline-convention-probe",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-2"
     },
     {
       "id": "t-2.9",
       "kind": "task",
       "title": "stale-malformed-handling",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-2"
     },
     {
       "id": "t-2.10",
       "kind": "task",
       "title": "responsive-dark-pass",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-2"
     },
     {
       "id": "t-3.1",
       "kind": "task",
       "title": "contract-conformance-smoke-test",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-3"
     },
     {
       "id": "t-3.2",
       "kind": "task",
       "title": "pending-gates-surface-other-group",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-3"
     },
     {
       "id": "t-3.3",
       "kind": "task",
       "title": "resolve-flow-options-freetext-confirm",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-3"
     },
     {
       "id": "t-3.4",
       "kind": "task",
       "title": "resolve-error-states-safe-retry",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-3"
     },
     {
       "id": "t-3.5",
       "kind": "task",
       "title": "gate-events-pending-list-handling",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-3"
     },
     {
       "id": "t-3.6",
       "kind": "task",
       "title": "reconnect-catchup-verification",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-3"
     },
     {
       "id": "t-3.7",
       "kind": "task",
       "title": "resolve-unit-tests",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-3"
     },
     {
       "id": "t-4.1",
       "kind": "task",
       "title": "deep-link-route-wiring",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-4"
     },
     {
       "id": "t-4.2",
       "kind": "task",
       "title": "device-session-e2e-serialized",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-4"
     },
     {
       "id": "t-4.3",
       "kind": "task",
       "title": "security-review-allowlist-guard",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-4"
     },
     {
       "id": "t-4.4",
       "kind": "task",
       "title": "wire-compat-regression-unit-test",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-4"
     },
     {
       "id": "t-4.5",
       "kind": "task",
       "title": "multi-root-multi-host-assertion",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-4"
     },
     {
       "id": "t-4.6",
       "kind": "task",
       "title": "strings-audit",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-4"
     },
     {
       "id": "t-4.7",
       "kind": "task",
       "title": "docs-update-mobile-notifications",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-4"
     }
   ],

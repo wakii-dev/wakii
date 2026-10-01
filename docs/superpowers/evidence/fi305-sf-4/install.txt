@@ -1,0 +1,45 @@
+Progress: resolved 1, reused 0, downloaded 0, added 0
+ WARN  deprecated @types/react-native@0.73.0: This is a stub types definition. react-native provides its own type definitions, so you do not need this installed.
+Progress: resolved 62, reused 58, downloaded 4, added 0
+ WARN  deprecated eslint@9.39.4: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+Progress: resolved 1364, reused 1234, downloaded 12, added 0
+ WARN  6 deprecated subdependencies found: abab@2.0.6, domexception@4.0.0, glob@7.2.3, inflight@1.0.6, rimraf@3.0.2, whatwg-encoding@2.0.0
+Progress: resolved 1484, reused 1353, downloaded 16, added 0
+Packages: +33 -33
++++++++++++++++++++++++++++++++++---------------------------------
+Progress: resolved 1484, reused 1353, downloaded 16, added 32
+Progress: resolved 1484, reused 1353, downloaded 16, added 33, done
+. postinstall$ node scripts/build-terminal-webview-engine.mjs && node scripts/build-mermaid-webview-engine.mjs && node scripts/build-mermaid-page-engine.mjs && node scripts/build-terminal-document-script.mjs && node scripts/build-rich-markdown-editor-script.mjs
+. postinstall: Done
+ WARN  Issues with peer dependencies found
+.
+├─┬ vite 8.1.0
+│ └── ✕ unmet peer esbuild@"^0.27.0 || ^0.28.0": found 0.25.4
+├─┬ expo 55.0.30
+│ └─┬ @expo/config 55.0.21
+│   └─┬ @expo/require-utils 55.0.8
+│     └── ✕ unmet peer typescript@"^5.0.0 || ^5.0.0-0": found 6.0.3
+└─┬ expo-module-scripts 55.0.2
+  └─┬ eslint-config-universe 15.0.4
+    ├── ✕ unmet peer prettier@>=3: found 2.8.8
+    └─┬ eslint-plugin-prettier 5.5.5
+      └── ✕ unmet peer prettier@>=3.0.0: found 2.8.8
+
+dependencies:
++ fflate 0.8.3
+- react-native-svg 15.15.4
++ react-native-svg 15.15.5
+- zod 4.4.3
++ zod 4.6.5
+- zustand 5.0.13
++ zustand 5.0.15
+
+devDependencies:
+- acorn 8.15.0
++ acorn 8.18.0
+- oxfmt 0.65.0
++ oxfmt 0.70.0
+- oxlint 1.80.0
++ oxlint 1.85.0
+
+Done in 5.6s using pnpm v10.19.0

@@ -1,0 +1,16 @@
+# FI-305 SF-4 convergence QA — android-touch test battery
+date: 2026-10-01 22:41 +0700
+HEAD: 13c0016974 (13c00169741a7c71c9938801807d2a9ac8eb10a7, branch wakii-main)
+story-ref: wakii-dev/story/fi305-superpowers-android @ a4dce044ec (ancestor of HEAD: yes)
+command: pnpm vitest run src/notifications src/superpowers (cwd=mobile/) — re-run on fresh deps
+tdd: skipped-tdd: convergence-QA verify-only — không đổi code, chỉ chạy lại suite có sẵn
+---
+
+ RUN  v4.1.11 /Users/hoivu/Desktop/projects/orca/mobile
+
+
+ Test Files  56 passed (56)
+      Tests  397 passed (397)
+   Start at  22:39:50
+   Duration  3.35s (transform 1.91s, setup 417ms, import 4.41s, tests 4.53s, environment 4ms)
+
