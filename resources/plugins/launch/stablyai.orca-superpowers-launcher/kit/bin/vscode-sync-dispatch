@@ -4,7 +4,8 @@
 # bin này chỉ làm bookkeeping state machine trong backlog file:
 #   docs/superpowers/vscode-sync/backlog.md
 #
-# State:  `- [ ]` chờ · `- [~]` đang chạy story (tối đa 1) · `- [x]` đã merged.
+# State:  `- [ ]` chờ · `- [~]` scout đang tạo story (song song được) ·
+#         `- [S]` staged chờ auto-launch · `- [x]` đã merged.
 #
 # next:
 #   1. Reconcile: dòng [~] có epic id mà branch chứa epic-id ĐÃ merged vào
@@ -80,9 +81,11 @@ reconcile() {
 case "$CMD" in
   next)
     reconcile
-    # đang có story in-flight → noop (bỏ qua fence — template ví dụ không tính)
-    if [ "$(count_state '- [~]')" -gt 0 ]; then
-      echo "IN-FLIGHT: story trước chưa merged — không dispatch thêm" >&2
+    # SERIAL (đúng ý owner): 1 story tại 1 thời điểm — tính từ claim đến khi
+    # MERGED. [~] (scout đang tạo) lẫn [S] (staged chờ launch/merge) đều là
+    # in-flight — chỉ claim feature mới khi hàng đã [x].
+    if [ "$(count_state '- [~]')" -gt 0 ] || [ "$(count_state '- [S]')" -gt 0 ]; then
+      echo "IN-FLIGHT: story trước chưa merged ([~]/[S]) — không dispatch thêm" >&2
       exit 3
     fi
     # claim dòng [ ] đầu tiên (ngoài code fence)
@@ -109,9 +112,79 @@ case "$CMD" in
     echo "EMPTY: không còn feature chờ trong backlog" >&2
     exit 3
     ;;
+  board)
+    # board — bảng quản lý tổng hợp cho chế độ SERIAL: 1 story đang chạy
+    # (state, epic, worktree, PR, tuổi), hàng chờ, đã xong. Người + agent
+    # cùng đọc từ backlog file — không phải mở app.
+    reconcile
+    echo "=== vscode-sync board (base=$BASE_BRANCH) ==="
+    n=1
+    local_in_fence=0
+    creating="" ; waiting=0 ; done_count=0
+    while IFS= read -r line; do
+      case "$line" in '```'*) local_in_fence=$((1 - local_in_fence)); n=$((n + 1)); continue ;; esac
+      [ "$local_in_fence" -eq 1 ] && { n=$((n + 1)); continue; }
+      case "$line" in
+        '- [~]'*)
+          creating="$line"
+          ;;
+        '- [ ]'*'VSC-'*)
+          waiting=$((waiting + 1))
+          ;;
+        '- [x]'*'VSC-'*)
+          done_count=$((done_count + 1))
+          ;;
+      esac
+      n=$((n + 1))
+    done < "$BACKLOG"
+
+    if [ -n "$creating" ]; then
+      epic="$(printf '%s' "$creating" | grep -oE 'epic: *[A-Za-z]+-[0-9]+' | head -1 | sed 's/epic: *//')"
+      pr="$(printf '%s' "$creating" | grep -oE 'pr: *#[0-9]+' | head -1 | sed 's/pr: *//')"
+      ts="$(printf '%s' "$creating" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]+' | head -1)"
+      vsc="$(printf '%s' "$creating" | grep -oE 'VSC-[0-9]+' | head -1)"
+      echo "▶ ĐANG CHẾ BIẾN: $creating"
+      echo "    epic: ${epic:-chưa tạo} | PR: ${pr:-chưa có} | dispatch: ${ts:-?} UTC"
+      if [ -n "$epic" ]; then
+        match="$(git worktree list | grep -i "$(printf '%s' "$epic" | tr 'A-Z' 'a-z')" | head -1 | cut -d' ' -f1)"
+        if [ -n "$match" ]; then echo "    worktree: $match"; else echo "    worktree: (không thấy worktree chứa $epic)"; fi
+      fi
+    fi
+    # [S] staged — story đã tạo, đang trong vòng auto-launch/merge
+    n=1
+    local_in_fence=0
+    while IFS= read -r line; do
+      case "$line" in '```'*) local_in_fence=$((1 - local_in_fence)); n=$((n + 1)); continue ;; esac
+      if [ "$local_in_fence" -eq 0 ]; then
+        case "$line" in
+          '- [S]'*'VSC-'*)
+            epic_s="$(printf '%s' "$line" | grep -oE 'epic: *[A-Za-z]+-[0-9]+' | head -1 | sed 's/epic: *//')"
+            echo "⏳ STAGED chờ launch/merge: $line"
+            ;;
+        esac
+      fi
+      n=$((n + 1))
+    done < "$BACKLOG"
+    if [ -z "$creating" ]; then
+      echo "▶ Không story mới đang tạo — scout có thể claim feature kế tiếp khi hàng [S] Clear"
+    fi
+    echo "⏳ Hàng chờ: $waiting feature"
+    echo "✔ Đã merged: $done_count story"
+    exit 0
+    ;;
   should-run)
-    # precheck cho automation: exit 0 CHỈ khi có việc — feature chờ [ ] hoặc
-    # story in-flight [~] cần supervise. Không việc → exit 1 (agent không bắn).
+    # precheck cho story-auto-launch: exit 0 CHỈ khi có việc — feature chờ
+    # [ ] hoặc story in-flight [~] cần supervise. Không việc → exit 1.
+    reconcile
+    if [ "$(count_state '- [~]')" -gt 0 ] || [ "$(count_state '- [ ]')" -gt 0 ]; then
+      exit 0
+    fi
+    exit 1
+    ;;
+  scout-should-run)
+    # precheck cho vscode-feature-scout: exit 0 khi có feature chờ [ ] HOẶC
+    # story [~] dang dở cần RESUME (agent thoát sớm giữa CREATE là thường —
+    # skip [~] vĩnh viễn sẽ kẹt story). Không việc → exit 1.
     reconcile
     if [ "$(count_state '- [~]')" -gt 0 ] || [ "$(count_state '- [ ]')" -gt 0 ]; then
       exit 0

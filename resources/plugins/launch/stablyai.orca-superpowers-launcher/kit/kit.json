@@ -1,16 +1,16 @@
 {
   "name": "story-team-kit",
   "version": "2.20.0",
-  "description": "9-agent story team + graph memory cho orca-superpowers-workflow \u2014 portable install. T\u1ef1 ch\u1ee9a \u0111\u1ee7 \u0111\u1ec3 ch\u1ea1y local.superpowers-launcher tr\u00ean m\u00e1y m\u1edbi.",
+  "description": "9-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới.",
   "requires": {
     "claude-code": ">=2.0",
     "external": {
-      "orca-app": "Orca app (worktrees, gates, Linear, orchestration) \u2014 cung c\u1ea5p s\u1eb5n skills: orca-cli, orchestration, orca-linear trong orca/skills/",
+      "orca-app": "Orca app (worktrees, gates, Linear, orchestration) — cung cấp sẵn skills: orca-cli, orchestration, orca-linear trong orca/skills/",
       "superpowers-plugin": "claude plugin install superpowers@superpowers-marketplace",
-      "local-superpowers-launcher": "git clone https://github.com/VuHoi/local.superpowers-launcher (private) \u2014 panel \u0111i\u1ec1u khi\u1ec3n, c\u1ea7n kit n\u00e0y + 2 m\u1ee5c tr\u00ean"
+      "local-superpowers-launcher": "git clone https://github.com/VuHoi/local.superpowers-launcher (private) — panel điều khiển, cần kit này + 2 mục trên"
     },
     "optional": {
-      "huashu-design": "designer skill (32MB, c\u00e0i qua --with-designer)"
+      "huashu-design": "designer skill (32MB, cài qua --with-designer)"
     },
     "python": ">=3.10"
   },
@@ -22,7 +22,7 @@
       "inputs": [
         "feature work trong orca-managed project"
       ],
-      "outputs": "6-phase pipeline spec\u2192plan\u2192execute\u2192review\u2192verify v\u1edbi orca infra (worktree/DAG/gates/Linear sync) t\u1ef1 \u0111\u1ed9ng",
+      "outputs": "6-phase pipeline spec→plan→execute→review→verify với orca infra (worktree/DAG/gates/Linear sync) tự động",
       "owner": "wakii"
     },
     {
@@ -42,7 +42,7 @@
       "type": "skill",
       "category": "infra",
       "inputs": [
-        "superpowers skill \u0111ang ch\u1ea1y",
+        "superpowers skill đang chạy",
         "orca CLI"
       ],
       "outputs": "bridge action: worktree+Linear link, decision gate, task DAG, review coordination, status sync",
@@ -66,7 +66,7 @@
       "inputs": [
         "design request"
       ],
-      "outputs": "3 h\u01b0\u1edbng HTML prototype \u2192 unlisted artifact links \u2192 user ch\u1ecdn \u2192 final hand-off",
+      "outputs": "3 hướng HTML prototype → unlisted artifact links → user chọn → final hand-off",
       "owner": "wakii"
     },
     {
@@ -96,10 +96,10 @@
       "type": "agent",
       "category": "review",
       "inputs": [
-        "SF slice c\u00f3 UI/visual",
+        "SF slice có UI/visual",
         "style refs"
       ],
-      "outputs": "3 h\u01b0\u1edbng HTML draft \u2192 user ch\u1ecdn \u2192 hand-off spec (DESIGN-BLOCKED khi thi\u1ebfu)",
+      "outputs": "3 hướng HTML draft → user chọn → hand-off spec (DESIGN-BLOCKED khi thiếu)",
       "owner": "wakii"
     },
     {
@@ -122,7 +122,7 @@
         "implementation",
         "evidence"
       ],
-      "outputs": "VERDICT: PASS \u2014 <b\u1eb1ng ch\u1ee9ng> | PARTIAL | FAIL + Gate Status",
+      "outputs": "VERDICT: PASS — <bằng chứng> | PARTIAL | FAIL + Gate Status",
       "owner": "wakii"
     },
     {
@@ -155,7 +155,7 @@
         "feature idea",
         "files in scope"
       ],
-      "outputs": "5-section impact analysis (framing, touch map, second-order, alternatives, risks) \u2014 IMPACT-BLOCKED khi thi\u1ebfu",
+      "outputs": "5-section impact analysis (framing, touch map, second-order, alternatives, risks) — IMPACT-BLOCKED khi thiếu",
       "owner": "wakii"
     },
     {
@@ -166,7 +166,7 @@
         "code surface",
         "threat context"
       ],
-      "outputs": "VERDICT: CLEAN | FINDINGS \u2014 P0/P1/P2 counts + top finding",
+      "outputs": "VERDICT: CLEAN | FINDINGS — P0/P1/P2 counts + top finding",
       "owner": "wakii"
     },
     {
@@ -177,94 +177,94 @@
         "diverged/abandoned state",
         "last known-good ref"
       ],
-      "outputs": "ROLLBACK-DONE: reverted <commits> | ROLLBACK-BLOCKED: <l\u00fd do> + audit trail",
+      "outputs": "ROLLBACK-DONE: reverted <commits> | ROLLBACK-BLOCKED: <lý do> + audit trail",
       "owner": "wakii"
     },
     {
       "name": "story-attempt",
       "type": "bin",
       "category": "execution",
-      "description": "track debugging attempts \u2014 ch\u1eb7n l\u1eb7p c\u00f9ng c\u00e1ch fail (3 l\u1ea7n c\u00f9ng approach \u2192 bu\u1ed9c \u0111\u1ed5i h\u01b0\u1edbng)"
+      "description": "track debugging attempts — chặn lặp cùng cách fail (3 lần cùng approach → buộc đổi hướng)"
     },
     {
       "name": "story-compact-recovery",
       "type": "bin",
       "category": "infra",
-      "description": "SessionStart hook (matcher: compact) \u2014 inject l\u1eddi nh\u1eafc kh\u00f4i ph\u1ee5c story state sau m\u1ed7i l\u1ea7n compaction"
+      "description": "SessionStart hook (matcher: compact) — inject lời nhắc khôi phục story state sau mỗi lần compaction"
     },
     {
       "name": "story-diff-review",
       "type": "bin",
       "category": "review",
-      "description": "t\u1ef1 review diff tr\u01b0\u1edbc commit \u2014 ch\u1eb7n debug code, commented-out code, secrets, files ngo\u00e0i plan"
+      "description": "tự review diff trước commit — chặn debug code, commented-out code, secrets, files ngoài plan"
     },
     {
       "name": "story-impact",
       "type": "bin",
       "category": "review",
-      "description": "B\u1ea3n \u0111\u1ed3 t\u00e1c \u0111\u1ed9ng: file \u0111\u1ed5i/targets \u2192 importer ng\u01b0\u1ee3c theo feature area \u2192 l\u01b0\u1edbi test vitest --related; P0 d\u00f9ng --targets k\u00fd h\u1ee3p \u0111\u1ed3ng blast radius, review \u0111o actual so expected",
+      "description": "Bản đồ tác động: file đổi/targets → importer ngược theo feature area → lưới test vitest --related; P0 dùng --targets ký hợp đồng blast radius, review đo actual so expected",
       "inputs": [
-        "git base ref (t\u1ef1 detect n\u1ebfu b\u1ecf)",
-        "--targets \"p1,p2\" (P0: blast radius touch targets, kh\u00f4ng c\u1ea7n git)",
+        "git base ref (tự detect nếu bỏ)",
+        "--targets \"p1,p2\" (P0: blast radius touch targets, không cần git)",
         "--run-tests",
         "--json"
       ],
-      "outputs": "b\u1ea3n \u0111\u1ed3 reverse-import + areas b\u1ecb ch\u1ea1m + l\u1ec7nh l\u01b0\u1edbi test; exit != 0 khi base sai",
+      "outputs": "bản đồ reverse-import + areas bị chạm + lệnh lưới test; exit != 0 khi base sai",
       "owner": "wakii"
     },
     {
       "name": "story-launch",
       "type": "bin",
       "category": "execution",
-      "description": "ngu\u1ed3n duy nh\u1ea5t d\u1ef1ng SF launch prompt + t\u1ea1o worktree \u2014 PM/watchdog/panel \u0111\u1ec1u g\u1ecdi"
+      "description": "nguồn duy nhất dựng SF launch prompt + tạo worktree — PM/watchdog/panel đều gọi"
     },
     {
       "name": "story-memory",
       "type": "bin",
       "category": "knowledge",
-      "description": "consumer layer graph memory \u2014 \u0111\u1ecdc docs/superpowers/memory/{entities,triples,provenance}.md (CLI ch\u1ec9 \u0111\u1ecdc)"
+      "description": "consumer layer graph memory — đọc docs/superpowers/memory/{entities,triples,provenance}.md (CLI chỉ đọc)"
     },
     {
       "name": "story-memory-fuse",
       "type": "bin",
       "category": "knowledge",
-      "description": "fusion rules cho memory files \u2014 dedupe triple/provenance, refuse entity xung \u0111\u1ed9t (exit 2), rewrite idempotent"
+      "description": "fusion rules cho memory files — dedupe triple/provenance, refuse entity xung đột (exit 2), rewrite idempotent"
     },
     {
       "name": "story-memory-index-hook",
       "type": "bin",
       "category": "knowledge",
-      "description": "post-pass incremental index graph memory \u2014 \u0111\u1ecdc watermark git, index commit m\u1edbi"
+      "description": "post-pass incremental index graph memory — đọc watermark git, index commit mới"
     },
     {
       "name": "story-memory-parse",
       "type": "bin",
       "category": "knowledge",
-      "description": "validate/roundtrip memory files \u2014 entities/triples/provenance, 1 d\u00f2ng = 1 record"
+      "description": "validate/roundtrip memory files — entities/triples/provenance, 1 dòng = 1 record"
     },
     {
       "name": "story-notify",
       "type": "bin",
       "category": "ops",
-      "description": "th\u00f4ng b\u00e1o c\u00f3 context, screenshot, \u0111\u1ec1 xu\u1ea5t \u2014 story-notify <type> <sf> [detail]"
+      "description": "thông báo có context, screenshot, đề xuất — story-notify <type> <sf> [detail]"
     },
     {
       "name": "story-notify-toast.ps1",
       "type": "bin",
       "category": "ops",
-      "description": "toast WinRT cho story-notify tr\u00ean Windows \u2014 WinPS 5.1 -File (kh\u00f4ng bypass/encode, windows-edr-posture), script g\u1ecdi c\u1ea1nh n\u00f3"
+      "description": "toast WinRT cho story-notify trên Windows — WinPS 5.1 -File (không bypass/encode, windows-edr-posture), script gọi cạnh nó"
     },
     {
       "name": "story-post-merge",
       "type": "bin",
       "category": "ops",
-      "description": "verify sau merge \u2014 tests + browser flow + agents"
+      "description": "verify sau merge — tests + browser flow + agents"
     },
     {
       "name": "story-preflight",
       "type": "bin",
       "category": "ops",
-      "description": "ch\u1ea1y tr\u01b0\u1edbc khi code \u2014 ch\u1eb7n sai branch, tree dirty, deps thi\u1ebfu; c\u1ea3nh b\u00e1o server ch\u1ebft, DB tr\u1ed1ng, .env thi\u1ebfu"
+      "description": "chạy trước khi code — chặn sai branch, tree dirty, deps thiếu; cảnh báo server chết, DB trống, .env thiếu"
     },
     {
       "name": "story-resume",
@@ -276,175 +276,175 @@
       "name": "story-skill-lint",
       "type": "bin",
       "category": "review",
-      "description": "structural integrity check cho story-workflow SKILL.md \u2014 b\u1eaft m\u1ea5t b\u01b0\u1edbc spec-critic/plan-critic"
+      "description": "structural integrity check cho story-workflow SKILL.md — bắt mất bước spec-critic/plan-critic"
     },
     {
       "name": "story-snapshot-env",
       "type": "bin",
       "category": "ops",
-      "description": "ch\u1ee5p tr\u1ea1ng th\u00e1i m\u00f4i tr\u01b0\u1eddng tr\u01b0\u1edbc/sau thay \u0111\u1ed5i l\u1edbn \u2014 story-snapshot-env [tag]"
+      "description": "chụp trạng thái môi trường trước/sau thay đổi lớn — story-snapshot-env [tag]"
     },
     {
       "name": "story-stats",
       "type": "bin",
       "category": "ops",
-      "description": "s\u1ed1 li\u1ec7u v\u1eadn h\u00e0nh per SF \u2014 cycle-time, kh\u1ed1i l\u01b0\u1ee3ng, events s\u1ed1ng s\u00f3t (Linear GraphQL + worktree git)"
+      "description": "số liệu vận hành per SF — cycle-time, khối lượng, events sống sót (Linear GraphQL + worktree git)"
     },
     {
       "name": "story-status",
       "type": "bin",
       "category": "ops",
-      "description": "30 gi\u00e2y n\u1eafm t\u00ecnh h\u00ecnh m\u1ecdi story active \u2014 story n\u00e0o ch\u1ea1y, SF Done/ch\u1ea1y/ch\u1edd"
+      "description": "30 giây nắm tình hình mọi story active — story nào chạy, SF Done/chạy/chờ"
     },
     {
       "name": "story-sync-dest",
       "type": "bin",
       "category": "ops",
-      "description": "\u0111\u01b0a meta commits t\u1eeb main v\u00e0o nh\u00e1nh \u0111\u00edch an to\u00e0n \u2014 wrapper sync c\u1ee7a story-workflow"
+      "description": "đưa meta commits từ main vào nhánh đích an toàn — wrapper sync của story-workflow"
     },
     {
       "name": "story-test",
       "type": "bin",
       "category": "ops",
-      "description": "RULE 0 enforcer \u2014 t\u1ef1 m\u1edf browser \u0111i flow, ph\u1ea3i PASS tr\u01b0\u1edbc khi tick Done"
+      "description": "RULE 0 enforcer — tự mở browser đi flow, phải PASS trước khi tick Done"
     },
     {
       "name": "story-top",
       "type": "bin",
       "category": "ops",
-      "description": "m\u1ed9t m\u00e0n h\u00ecnh theo d\u00f5i m\u1ecdi agent \u0111ang ch\u1ea1y (Orca + ngo\u00e0i Orca) \u2014 watch-style t\u1ef1 refresh"
+      "description": "một màn hình theo dõi mọi agent đang chạy (Orca + ngoài Orca) — watch-style tự refresh"
     },
     {
       "name": "story-verify",
       "type": "bin",
       "category": "ops",
-      "description": "enforce COMPLETE-RUN CHECKLIST 5 b\u01b0\u1edbc tr\u01b0\u1edbc Linear Done \u2014 exit 0 s\u1ea1ch / 1 INCOMPLETE / 2 VIOLATION"
+      "description": "enforce COMPLETE-RUN CHECKLIST 5 bước trước Linear Done — exit 0 sạch / 1 INCOMPLETE / 2 VIOLATION"
     },
     {
       "name": "story-visual-regress",
       "type": "bin",
       "category": "ops",
-      "description": "so screenshot hi\u1ec7n t\u1ea1i vs baseline \u2014 --baseline <dir> --current <dir> [--threshold 5]"
+      "description": "so screenshot hiện tại vs baseline — --baseline <dir> --current <dir> [--threshold 5]"
     },
     {
       "name": "story-watchdog",
       "type": "bin",
       "category": "ops",
-      "description": "self-sustainment loop \u2014 diagnose m\u1ecdi SF, notify khi stall m\u1edbi, optionally launch next"
+      "description": "self-sustainment loop — diagnose mọi SF, notify khi stall mới, optionally launch next"
     },
     {
       "name": "hook-post-tool-use",
       "type": "bin",
       "category": "infra",
-      "description": "wrapper PostToolUse cho settings.json \u2014 resolve story-checkpoint record, nu\u1ed1t missing-bin (exit 0 im l\u1eb7ng)"
+      "description": "wrapper PostToolUse cho settings.json — resolve story-checkpoint record, nuốt missing-bin (exit 0 im lặng)"
     },
     {
       "name": "hook-session-start",
       "type": "bin",
       "category": "infra",
-      "description": "wrapper SessionStart cho settings.json \u2014 resolve story-fact-pack, stdout inject v\u00e0o context, nu\u1ed1t missing-bin"
+      "description": "wrapper SessionStart cho settings.json — resolve story-fact-pack, stdout inject vào context, nuốt missing-bin"
     },
     {
       "name": "hook-stop",
       "type": "bin",
       "category": "infra",
-      "description": "wrapper Stop cho settings.json \u2014 no-op SF-2 (logic audit lessons SF-3 thay b\u00ean trong), nu\u1ed1t m\u1ecdi input"
+      "description": "wrapper Stop cho settings.json — no-op SF-2 (logic audit lessons SF-3 thay bên trong), nuốt mọi input"
     },
     {
       "name": "story-checkpoint",
       "type": "bin",
       "category": "knowledge",
-      "description": "session memory + checkpoint CLI \u2014 record git commit th\u00e0nh JSONL v-stamped, query/restore/prune-refs/stats (SF-1 GH-26)"
+      "description": "session memory + checkpoint CLI — record git commit thành JSONL v-stamped, query/restore/prune-refs/stats (SF-1 GH-26)"
     },
     {
       "name": "story-fact-pack",
       "type": "bin",
       "category": "knowledge",
-      "description": "SessionStart hook \u2014 inject fact-pack (story \u0111ang ch\u1ea1y + gates pending + tail checkpoint) \u22642KB v\u00e0o context (SF-2 GH-26)"
+      "description": "SessionStart hook — inject fact-pack (story đang chạy + gates pending + tail checkpoint) ≤2KB vào context (SF-2 GH-26)"
     },
     {
       "name": "story-hooks-install",
       "type": "bin",
       "category": "infra",
-      "description": "merge 3 hook entries v\u00e0o ~/.claude/settings.json \u2014 atomic RMW, idempotent, gi\u1eef entry user/Orca (SF-2 GH-26; runtime ch\u00ednh trong installKit Node)"
+      "description": "merge 3 hook entries vào ~/.claude/settings.json — atomic RMW, idempotent, giữ entry user/Orca (SF-2 GH-26; runtime chính trong installKit Node)"
     },
     {
       "name": "story-lesson",
       "type": "bin",
       "category": "knowledge",
-      "description": "lessons provenance CLI + Stop audit \u2014 add/list schema-validated ghi lessons.jsonl qua atomic+stamp, stop-audit \u0111\u1ebfm theo session (SF-3 GH-26)"
+      "description": "lessons provenance CLI + Stop audit — add/list schema-validated ghi lessons.jsonl qua atomic+stamp, stop-audit đếm theo session (SF-3 GH-26)"
     },
     {
       "name": "story-report-validate",
       "type": "bin",
       "category": "review",
-      "description": "schema-validate REPORT fence c\u1ee7a task-executor (GH-40) \u2014 strict-reject: MISSING-FIELD <name> (got: <v>) / BAD-STATUS / NONE-ON-DONE / UNCLOSED-REPORT, legacy no-fence WARN LEGACY-REPORT (FAIL t\u1eeb kit 2.8.0); stdin primary + --file, exit 0/1/2"
+      "description": "schema-validate REPORT fence của task-executor (GH-40) — strict-reject: MISSING-FIELD <name> (got: <v>) / BAD-STATUS / NONE-ON-DONE / UNCLOSED-REPORT, legacy no-fence WARN LEGACY-REPORT (FAIL từ kit 2.8.0); stdin primary + --file, exit 0/1/2"
     },
     {
       "name": "story-review-fuse",
       "type": "bin",
       "category": "review",
-      "description": "g\u1ed9p findings nhi\u1ec1u OUTBOX reviews/<agent>-<sf>*.md (GH-32) \u2014 parse tolerant bullet+b\u1ea3ng, cluster (file, line\u00b110, severity), sort confidence, conf-th\u1ea5p \u2192 NEEDS VERIFICATION; heading ### Deterministic = k\u00eanh facts tool (2.14.3), NEEDS VERIFICATION bullets \u2192 needs bucket, Surgical-scope/[coverage] \u2192 k\u00eanh attest (2.14.4); KH\u00d4NG bao gi\u1edd drop finding (invariant in_ra == parsed+unparsed+facts+attest)"
+      "description": "gộp findings nhiều OUTBOX reviews/<agent>-<sf>*.md (GH-32) — parse tolerant bullet+bảng, cluster (file, line±10, severity), sort confidence, conf-thấp → NEEDS VERIFICATION; heading ### Deterministic = kênh facts tool (2.14.3), NEEDS VERIFICATION bullets → needs bucket, Surgical-scope/[coverage] → kênh attest (2.14.4); KHÔNG bao giờ drop finding (invariant in_ra == parsed+unparsed+facts+attest)"
     },
     {
       "name": "story-surface-lint",
       "type": "bin",
       "category": "review",
-      "description": "bounded rewrite enforcer (constitution VI) \u2014 diff t\u1eeb base-ref: rename surface c\u00f4ng khai \u0111\u00f2i alias_of + migration guide + expiry YYYY-MM-DD; h\u1ebft h\u1ea1n FAIL"
+      "description": "bounded rewrite enforcer (constitution VI) — diff từ base-ref: rename surface công khai đòi alias_of + migration guide + expiry YYYY-MM-DD; hết hạn FAIL"
     },
     {
       "name": "wakii-mcp-server",
       "type": "bin",
       "category": "infra",
-      "description": "read-only MCP server (stdio) \u2014 bracket/gate/watchdog/tasklist tools cho agent b\u00ean ngo\u00e0i kit; task/gate-list nh\u1eadn run param (--run, 2.14.4); version fallback marker khi installed layout"
+      "description": "read-only MCP server (stdio) — bracket/gate/watchdog/tasklist tools cho agent bên ngoài kit; task/gate-list nhận run param (--run, 2.14.4); version fallback marker khi installed layout"
     },
     {
       "name": "wakii-skill-export",
       "type": "bin",
       "category": "infra",
-      "description": "export skills ra pack (dirs + INDEX.md + package.json) \u0111\u1ec3 community c\u00e0i v\u00e0o harness kh\u00e1c"
+      "description": "export skills ra pack (dirs + INDEX.md + package.json) để community cài vào harness khác"
     },
     {
       "name": "wakii-skill-import",
       "type": "bin",
       "category": "infra",
-      "description": "import 1 skill chu\u1ea9n Claude (th\u01b0 m\u1ee5c SKILL.md) v\u00e0o kit \u2014 validate + collide provides[], owner community/<ngu\u1ed3n>, bump version"
+      "description": "import 1 skill chuẩn Claude (thư mục SKILL.md) vào kit — validate + collide provides[], owner community/<nguồn>, bump version"
     },
     {
       "name": "story-smoke",
       "type": "bin",
       "category": "ops",
-      "description": "Runtime smoke gate \u2014 ch\u1ea1y smoke command SF + scan ERROR + ghi evidence cho B3.5"
+      "description": "Runtime smoke gate — chạy smoke command SF + scan ERROR + ghi evidence cho B3.5"
     },
     {
       "name": "story-sequence",
       "type": "bin",
       "category": "knowledge",
-      "description": "Mermaid sequenceDiagram qu\u00e1 tr\u00ecnh ch\u1ea1y th\u1eadt c\u1ee7a story \u2014 git + Linear verdicts + evidence, kh\u00f4ng c\u1ea7n LLM"
+      "description": "Mermaid sequenceDiagram quá trình chạy thật của story — git + Linear verdicts + evidence, không cần LLM"
     },
     {
       "name": "story-mindmap",
       "type": "bin",
       "category": "knowledge",
-      "description": "sinh file mindmap .wakii schema v1 c\u1ee7a story t\u1eeb bracket + context pack + story-impact \u2014 3 l\u1edbp ti\u1ebfn \u0111\u1ed9/logic/impact, idempotent (generatedAt ch\u1ec9 bump khi payload \u0111\u1ed5i), atomic; --decode verdict cho consumer"
+      "description": "sinh file mindmap .wakii schema v1 của story từ bracket + context pack + story-impact — 3 lớp tiến độ/logic/impact, idempotent (generatedAt chỉ bump khi payload đổi), atomic; --decode verdict cho consumer"
     },
     {
       "name": "wakii-validate",
       "type": "bin",
       "category": "review",
-      "description": "validate file .wakii schema v1 \u2014 exit 0/1/2, verdict OK/INVALID/WARN; lu\u1eadt \u00a73 + story-level (sf/linear/tier/deps) + --linear ki\u1ec3m ID t\u1ed3n t\u1ea1i (fail-open) + --resolve-primary"
+      "description": "validate file .wakii schema v1 — exit 0/1/2, verdict OK/INVALID/WARN; luật §3 + story-level (sf/linear/tier/deps) + --linear kiểm ID tồn tại (fail-open) + --resolve-primary"
     },
     {
       "name": "story-mindmap-trigger",
       "type": "bin",
       "category": "infra",
-      "description": "wrapper fail-open 3 lifecycle trigger story-mindmap (launch/sweep/close) \u2014 nu\u1ed1t missing-bin + timeout 30s, --commit force-add cho close"
+      "description": "wrapper fail-open 3 lifecycle trigger story-mindmap (launch/sweep/close) — nuốt missing-bin + timeout 30s, --commit force-add cho close"
     },
     {
       "name": "story-distributed-claim",
       "type": "bin",
       "category": "infra",
-      "description": "Claim CLI distributed \u2014 --claim/--machine-id/--host/--list-claims (FI-458)"
+      "description": "Claim CLI distributed — --claim/--machine-id/--host/--list-claims (FI-458)"
     },
     {
       "name": "story-kb",
@@ -456,87 +456,87 @@
       "name": "story-plan-validate",
       "type": "bin",
       "category": "review",
-      "description": "ki\u1ec3m task DAG c\u1ee7a orchestration run \u2014 b\u1eaft l\u1ed7i DAG ngay sau Bridge 3 (h\u1ecdc t\u1eeb story-validate)"
+      "description": "kiểm task DAG của orchestration run — bắt lỗi DAG ngay sau Bridge 3 (học từ story-validate)"
     },
     {
       "name": "story-coordinator-pass",
       "type": "bin",
       "category": "ops",
-      "description": "M\u1ed8T l\u01b0\u1ee3t coordination pass bounded \u2014 run discovery \u2192 ownership probe \u2192 inbox (question/escalation/worker_done verify evidence) \u2192 stall sweep \u2192 PASS SUMMARY; automation ch\u1ec9 c\u1ea7n g\u1ecdi 1 d\u00f2ng (LOCAL-1 SF-1)"
+      "description": "MỘT lượt coordination pass bounded — run discovery → ownership probe → inbox (question/escalation/worker_done verify evidence) → stall sweep → PASS SUMMARY; automation chỉ cần gọi 1 dòng (LOCAL-1 SF-1)"
     },
     {
       "name": "story-automation-install",
       "type": "bin",
       "category": "infra",
-      "description": "installer idempotent cho Orca automation coordinator-pass + morning briefing \u2014 cron tu\u1ef3 ch\u1ecdn, workspace existing, retire s\u1ea1ch (LOCAL-1 SF-2)"
+      "description": "installer idempotent cho Orca automation coordinator-pass + morning briefing — cron tuỳ chọn, workspace existing, retire sạch (LOCAL-1 SF-2)"
     },
     {
       "name": "story-ownership-probe",
       "type": "bin",
       "category": "infra",
-      "description": "th\u01b0 vi\u1ec7n ownership probe d\u00f9ng chung \u2014 run/worktree n\u00e0o \u0111ang c\u00f3 worker live c\u1ee7a coordinator n\u00e0o (LOCAL-1 SF-3)"
+      "description": "thư viện ownership probe dùng chung — run/worktree nào đang có worker live của coordinator nào (LOCAL-1 SF-3)"
     },
     {
       "name": "story-medic",
       "type": "agent",
       "category": "ops",
-      "description": "Story c\u1ea5p c\u1ee9u \u2014 ch\u1ea9n \u0111o\u00e1n + \u0111i\u1ec1u tr\u1ecb SF stall v\u00e0 xung \u0111\u1ed9t session (watchdog b\u00e1o STALLED, session ch\u1ebft gi\u1eefa turn, nghi double-dispatch, absorb provenance run c\u0169). KH\u00d4NG s\u1eeda code, KH\u00d4NG quy\u1ebft done-semantics, KH\u00d4NG xo\u00e1 state.",
+      "description": "Story cấp cứu — chẩn đoán + điều trị SF stall và xung đột session (watchdog báo STALLED, session chết giữa turn, nghi double-dispatch, absorb provenance run cũ). KHÔNG sửa code, KHÔNG quyết done-semantics, KHÔNG xoá state.",
       "inputs": [
         "sf-* worktree stall report",
         "session/terminal state",
         "Linear story bracket"
       ],
-      "outputs": "verdict per worktree (live/idle/resumed/escalate) + actions taken + c\u00f2n treo",
+      "outputs": "verdict per worktree (live/idle/resumed/escalate) + actions taken + còn treo",
       "owner": "wakii"
     },
     {
       "name": "story-close",
       "type": "bin",
       "category": "ops",
-      "description": "chu\u1ea9n ho\u00e1 CLOSE phase \u2014 audit sf-branches merged \u2192 ownership probe \u2192 cleanup worktree/branch (3 guards) \u2192 next-steps; BLOCK li\u1ec7t k\u00ea r\u00f5, fail-open khi probe ch\u1ebft (20/09)"
+      "description": "chuẩn hoá CLOSE phase — audit sf-branches merged → ownership probe → cleanup worktree/branch (3 guards) → next-steps; BLOCK liệt kê rõ, fail-open khi probe chết (20/09)"
     },
     {
       "name": "linear-rate-limit",
       "type": "bin",
       "category": "infra",
-      "description": "state machine Linear rate-limit \u2014 check/note/clear/pending/classify (policy skip+note+resume 2026-09-20)"
+      "description": "state machine Linear rate-limit — check/note/clear/pending/classify (policy skip+note+resume 2026-09-20)"
     },
     {
       "name": "story-doctor",
       "type": "bin",
       "category": "knowledge",
-      "description": "kit health check read-only \u2014 8 checks PASS/WARN/FAIL + fix hint tr\u00ean install dir: marker/kitHash/bins/deps/hooks/KB/orphans/agents-skills; --json machine-readable, exit 0 WARN-only / 1 khi FAIL (GH-85 #111)"
+      "description": "kit health check read-only — 8 checks PASS/WARN/FAIL + fix hint trên install dir: marker/kitHash/bins/deps/hooks/KB/orphans/agents-skills; --json machine-readable, exit 0 WARN-only / 1 khi FAIL (GH-85 #111)"
     },
     {
       "name": "story-guard-secrets",
       "type": "bin",
       "category": "infra",
-      "description": "PreToolUse Bash guard ch\u1eb7n secret trong command (AKIA/ghp_/xox/assignment quoted 20+) \u2014 exit 2 block, fail-open m\u1ecdi l\u1ed7i, WAKII_GUARD_OFF=1 t\u1eaft (GH-87)"
+      "description": "PreToolUse Bash guard chặn secret trong command (AKIA/ghp_/xox/assignment quoted 20+) — exit 2 block, fail-open mọi lỗi, WAKII_GUARD_OFF=1 tắt (GH-87)"
     },
     {
       "name": "story-guard-dangerous",
       "type": "bin",
       "category": "infra",
-      "description": "PreToolUse Bash guard ch\u1eb7n rm -rf /|~ \u00b7 git push --force/-f l\u00ean wakii-dev|main|master \u00b7 git reset --hard tr\u00ean repo ch\u00ednh wakii \u2014 exit 2, fail-open, GUARD_OFF escape (GH-87)"
+      "description": "PreToolUse Bash guard chặn rm -rf /|~ · git push --force/-f lên wakii-dev|main|master · git reset --hard trên repo chính wakii — exit 2, fail-open, GUARD_OFF escape (GH-87)"
     },
     {
       "name": "story-guard-envfiles",
       "type": "bin",
       "category": "infra",
-      "description": "PreToolUse Edit|Write|MultiEdit guard ch\u1eb7n ghi .env/.env.*/pem/id_rsa*/key \u2014 exit 2, fail-open, GUARD_OFF escape (GH-87)"
+      "description": "PreToolUse Edit|Write|MultiEdit guard chặn ghi .env/.env.*/pem/id_rsa*/key — exit 2, fail-open, GUARD_OFF escape (GH-87)"
     },
     {
       "name": "vscode-sync-dispatch",
       "type": "bin",
       "category": "infra",
-      "description": "\u0111i\u1ec1u ph\u1ed1i sync feature VS Code \u2014 1 pass 1 feature, m\u1ed7i feature qua story-workflow \u0111\u1ea7y \u0111\u1ee7; state machine trong docs/superpowers/vscode-sync/backlog.md ([ ] ch\u1edd / [~] \u0111ang ch\u1ea1y / [x] \u0111\u00e3 merged)"
+      "description": "điều phối sync feature VS Code — 1 pass 1 feature, mỗi feature qua story-workflow đầy đủ; state machine trong docs/superpowers/vscode-sync/backlog.md ([ ] chờ / [~] đang chạy / [x] đã merged)"
     },
     {
       "name": "story-pr-checks",
       "type": "bin",
       "category": "review",
-      "description": "CI gate cho PR truoc khi merge \u2014 doc gh pr checks (cung nguon Checks panel): exit 0 pass/no-checks, 1 fail, 2 pending, 3 loi"
+      "description": "CI gate cho PR truoc khi merge — doc gh pr checks (cung nguon Checks panel): exit 0 pass/no-checks, 1 fail, 2 pending, 3 loi"
     }
   ],
-  "kitHash": "8aac80eb4b8c7d4b"
+  "kitHash": "0a0e038079e170ba"
 }
