@@ -21,11 +21,11 @@ Một **automation định kỳ** spawn 1 claude session **read-only** per story
 ## 3. Nguyên tắc bất di bất dịch (fences)
 
 1. **Chỉ khuyến nghị.** Navigator KHÔNG mutation: không orchestration mutation CLI, không gate-resolve, không task-update, không `resume --send`, không Linear write, không push, không đụng code.
-   Ngoại lệ duy nhất (01/10 user): Bước 9 self-cleanup (xoá automation khi hết story)
-   và Bước 10 coordinator-pass urgent-only (≤1 câu/pass, sign NAVIGATOR).
+   Ngoại lệ duy nhất (01/10 user): Bước 10 self-cleanup (xoá automation khi hết story)
+   và Bước 11 coordinator-pass urgent-only (≤1 câu/pass, sign NAVIGATOR).
 2. **1 process** (ruling 429 27/09): MỘT automation duy nhất, cron thưa, không automation khác cùng họ; stall KHÔNG bật process mới.
 3. **Không chen giữa turn**: navigator không bao giờ push message vào session đang chạy; "thảo luận" là vòng 1-chiều qua inbox + ack (mục 6).
-4. **Write scope hẹp**: chỉ `docs/superpowers/navigator/<story-slug>/`. Story worktree sau pass phải sạch trừ thư mục này (assert kiểm tra được).
+4. **Write scope hẹp**: chỉ `docs/superpowers/navigator/<story-slug>/` + `DIGEST.md` cùng cấp. Story worktree sau pass phải sạch trừ thư mục này (assert kiểm tra được).
 5. **Im lặng là lỗi**: nguồn đọc chết → brief vẫn xuất, phần thiếu đánh dấu `⚠` kèm tên nguồn.
 
 ## 4. Thành phần
@@ -83,7 +83,7 @@ cron 3h → automation → claude session (prompt navigator)
 | Nguồn đọc (bin/MCP/git) chết | brief vẫn xuất, phần đó `⚠ <nguồn> không đọc được` |
 | Pass chồng nhau | vô hại về mutation (không mutate); state.json ghi atomic cuối pass |
 | Pass crash | state không ghi → pass kế làm lại từ đầu |
-| Story kết thúc/xoá | Không còn story active → pass tự xoá automation (Bước 9) và kết thúc; story mới → tạo lại theo G1-runbook. |
+| Story kết thúc/xoá | Không còn story active → pass tự xoá automation (Bước 10) và kết thúc; story mới → tạo lại theo G1-runbook. |
 
 ## 9. Rollout 3 giai đoạn
 

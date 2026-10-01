@@ -12,10 +12,10 @@ Bật ngày: 2026-09-30. Tuần quan sát kết thúc: 2026-10-07.
 4. Commit outputs tick: `git add -f docs/superpowers/navigator && git commit -m "docs(navigator): outputs <YYYY-MM-DD>"` — outputs là TRACKED files, để bẩn sẽ chặn switch/merge branch sau này. Làm TRƯỚC MỌI lần switch/merge.
 
 ## Hành vi đã cấu hình (hiểu trước khi hoảng)
-- **Self-cleanup (Bước 9)**: hết story active → automation TỰ XOÁ (mutation được phép #1). Story mới → tạo lại bằng lệnh dưới.
-- **Coordinator-pass (Bước 10)**: chỉ stall-deep-dive + run ACTIVE — tối đa 1 câu/pass sign `NAVIGATOR:`; reply đọc ở pass kế (state field `coordinator_asked`).
+- **Self-cleanup (Bước 10)**: hết story active → automation TỰ XOÁ (mutation được phép #1). Story mới → tạo lại bằng lệnh dưới.
+- **Coordinator-pass (Bước 11)**: chỉ stall-deep-dive + run ACTIVE — tối đa 1 câu/pass sign `NAVIGATOR:`; reply đọc ở pass kế (state field `coordinator_asked`).
 - **Precheck overlap**: run bị skip nếu còn brief mới hơn 10 phút (`! find docs/superpowers/navigator -name 'brief.md' -mmin -10 | grep -q .`).
-- **Toast (Bước 8)**: kích bởi token trong caller prompt, KHÔNG phải env var.
+- **Toast (Bước 9)**: kích bởi token trong caller prompt, KHÔNG phải env var.
 
 ## Tạo lại automation (sau self-cleanup hoặc xoá nhầm)
     orca automations create \
@@ -25,7 +25,7 @@ Bật ngày: 2026-09-30. Tuần quan sát kết thúc: 2026-10-07.
       --workspace path:/Users/hoivu/Desktop/projects/orca \
       --workspace-mode existing \
       --precheck "! find docs/superpowers/navigator -name 'brief.md' -mmin -10 | grep -q ." \
-      --prompt "Đọc docs/superpowers/navigator/navigator-pass-prompt.md và thực thi NGUYÊN VĂN từ Bước 1 đến Bước 10 cho toàn bộ story active mà story-status liệt kê (tuần tự, một story một lúc). Caller token: NAVIGATOR_AUTOMATED=1. Fences trong prompt là bất di bất dịch." \
+      --prompt "Đọc docs/superpowers/navigator/navigator-pass-prompt.md và thực thi NGUYÊN VĂN từ Bước 1 đến Bước 11 cho toàn bộ story active mà story-status liệt kê (tuần tự, một story một lúc). Caller token: NAVIGATOR_AUTOMATED=1. Fences trong prompt là bất di bất dịch." \
       --enabled
 Ghi lại FULL ID mới vào mục Trạng thái.
 
