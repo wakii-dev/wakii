@@ -5,20 +5,22 @@
     "epic": "FI-28",
     "dest": "story/fi28-vscode-workbench-polish",
     "generatedAt": "2026-09-28T07:54:25.728Z",
-    "generator": "story-mindmap 1.0.0"
+    "generator": "story-mindmap 1.0.0",
+    "updatedAt": "2026-10-01T14:22:54Z",
+    "doneVerdict": "2026-10-01 — B1/B2b/B4 PASS + CDP walkthrough 6 PASS/1 ⚠ (sticky headful optional); B3/B5 Linear unverifiable (workspace FI unreachable) — defer ⏳; user APPROVE"
   },
   "nodes": [
     {
       "id": "epic",
       "kind": "epic",
       "title": "FI-28 — VS Code-grade workbench polish",
-      "state": "in-progress"
+      "state": "done"
     },
     {
       "id": "sf-1",
       "kind": "sf",
       "title": "Workbench polish: icon colors + sticky scroll + F2 rename",
-      "state": "pending",
+      "state": "done",
       "tier": 0,
       "linear": "FI-29"
     },
@@ -26,63 +28,63 @@
       "id": "t-1.1",
       "kind": "task",
       "title": "color-tokens-light-dark-contrast",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-1"
     },
     {
       "id": "t-1.2",
       "kind": "task",
       "title": "icon-color-classifier-literal-map",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-1"
     },
     {
       "id": "t-1.3",
       "kind": "task",
       "title": "apply-colors-six-primary-surfaces",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-1"
     },
     {
       "id": "t-1.4",
       "kind": "task",
       "title": "apply-colors-six-secondary-surfaces-simulator-guard",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-1"
     },
     {
       "id": "t-1.5",
       "kind": "task",
       "title": "color-mapping-precedence-tests",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-1"
     },
     {
       "id": "t-1.6",
       "kind": "task",
       "title": "sticky-scroll-probe-ternary-four-builders",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-1"
     },
     {
       "id": "t-1.7",
       "kind": "task",
       "title": "sticky-scroll-setting-and-wire",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-1"
     },
     {
       "id": "t-1.8",
       "kind": "task",
       "title": "f2-rename-keybinding-end-to-end",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-1"
     },
     {
       "id": "t-1.9",
       "kind": "task",
       "title": "verify-gates-cdp-walkthrough",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-1"
     }
   ],

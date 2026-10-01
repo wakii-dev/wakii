@@ -1,0 +1,58 @@
+FI-28 SF-1 (FI-29) verify-gates evidence — t-1.9 verify-gates-cdp-walkthrough
+Date: 2026-10-01
+HEAD (wakii-main, chứa merge FI-28): eb2218ab15
+Story tip (wakii-dev/story/fi28-vscode-workbench-polish): 2a73662b5b (ancestor của wakii-main — merge landed)
+tdd: RED→GREEN (FI-29 code commits task 1-8 kèm test files; task 5 = commit test riêng C4 precedence + simulator guard; evidence dưới là re-run toàn suite trên HEAD)
+
+## Test suite (vitest, repo config — 2026-10-01)
+Command: pnpm vitest run --config config/vitest.config.ts <7 test files FI-29>
+Files:
+  src/renderer/src/lib/file-type-icons.test.ts
+  src/renderer/src/components/tab-bar/EditorFileTab.test.tsx
+  src/renderer/src/components/editor/MonacoEditor.sticky-scroll.test.tsx
+  src/renderer/src/components/editor/combined-diff/browse-files/combined-diff-file-tree-row-icon-color.test.tsx
+  src/renderer/src/components/right-sidebar/useFileExplorerKeys.f2-rename.test.tsx
+  src/renderer/src/components/settings/general-editor-search.test.ts
+  src/shared/keybindings-keyboard-layout.test.ts
+Result: Test Files 7 passed (7) · Tests 53 passed (53) · Duration 5.04s · exit 0
+
+## CDP walkthrough (Electron ẩn, ORCA_BACKGROUND_LAUNCH=1, hidden renderer qua CDP)
+App: pnpm build (desktop PASS: typecheck/relay/cli/electron-vite main+renderer; mobile-web-bundle step FAIL do thiếu
+file .generated — env/generated-files issue, không thuộc code FI-28, không chặn desktop verify) →
+npx electron . --remote-debugging-port=9222, profile temp ORCA_DEV_USER_DATA_PATH (không đụng profile user),
+workspace demo git repo /tmp/fi28-demo-repo (10 loại file).
+
+PASS — icon colors, 9/9 nhóm màu phân biệt trên explorer (screenshot cdp/16-explorer-9-groups.png):
+  code-ts-js rgb(37,99,235) | code rgb(15,118,110) | name-based rgb(220,38,38) (.env/package.json/readme — override
+  theo name-table thiết kế) | binary-build rgb(77,124,15) | data-config rgb(180,83,9) | markup-doc rgb(124,58,237)
+  | asset rgb(162,28,175) | shell rgb(21,128,61) | web-style rgb(219,39,119); unknown (notes.xyz) = text-muted-foreground
+PASS — tab bar (EditorFileTab): tab active = text-foreground (thiết kế), status precedence runtime: renamed file
+  untracked "U", modified "M" hiển thị kèm tab (C4) — cdp/07-tabs-longfile.png, cdp/15-after-rename.png
+PASS — QuickOpen: result "long-file.ts" mang text-file-icon-code-ts-js — cdp/09-quickopen.png
+PASS — Search results: 12 icon elements, ánh xạ nhóm giữ nguyên across surfaces — cdp/08-search-results.png
+PASS — SCM rows (uncommitted-entry-row): package.json M, README.md M icon màu nhóm — cdp/10-scm-changes.png
+PASS — F2 rename end-to-end: chọn row → focus row button → F2 (qua keybindings system fileExplorer.rename,
+  defaultBindings F2, title "Rename file (F2)" theo C3) → inline rename input mở (cdp/14-f2-input.png) →
+  gõ tên mới + Enter → commit: disk /tmp/fi28-demo-repo/renamed-notes.xyz tồn tại, notes.xyz biến mất
+  (cdp/15-after-rename.png). Guard "F2 khi rename input đang mở không lồng" = inlineInputRef (code) + unit test.
+PASS (giới hạn runtime) — sticky scroll: default OFF xác nhận (default-global-settings.ts:61 editorStickyScroll:false;
+  UI switch checked = settings.editorStickyScroll ?? false). Wire MonacoEditor stickyScroll.enabled = settings
+  ?? false + pin false cho diff/peek/automation (code + MonacoEditor.sticky-scroll.test.tsx trong suite PASS).
+  ⚠ Widget-on-scroll KHÔNG demo được runtime: windowless Electron (chính sách AGENTS không steal focus) —
+  CDP trusted input (mouse wheel/click) treo/không deliver vào renderer ẩn, Monaco filter synthetic events,
+  scrollTop set trực tiếp bị Monaco ghi đè. Widget render là Monaco-native khi option enabled — option wire
+  được unit test phủ. Cần 1 pass headful/isolated-display nếu muốn bằng chứng pixel (không chạy trên desktop user).
+Surfaces không demo runtime (unit test phủ, cùng classifier dùng chung): ConflictReviewFileTree,
+  RemoteFileBrowserEntryList, WorktreeSymlinksSection, TabDragPreview, git-history-commit-files,
+  branch-entry-row, combined-diff rows, simulator tab guard (EditorFileTab.test).
+
+## Gate story-verify (tái tạo tay — SF worktree đã dọn, không còn sf-* worktree sống)
+B1 CODE+TESTS: PASS — 7 code commits FI-29 trên story tip + test files; evidence file này chứa HEAD
+B2 PLAN TICKED: WARN — plan file per-worktree (docs gitignored) mất cùng worktree; mindmap fi28 t-1.1..t-1.9 còn 'pending'
+B2b SURFACE LINT: PASS — story-surface-lint wakii-dev → CLEAN (base wakii-main==wakii-dev)
+B3 REVIEW: UNKNOWN — Linear workspace FI unreachable từ máy này (orca CLI chỉ thấy team VU, không key fallback);
+   FI-29 "Entity not found" — coordinator đọc verdict từ Linear trực tiếp
+B4 MERGED: PASS — story tip 2a73662b5b ⊆ wakii-main (eb2218ab15), 0 commit story-only
+B5 LINEAR DONE: PENDING-UNVERIFIABLE — cùng lý do B3
+Build: desktop PASS; mobile-web-bundle FAIL (thiếu mermaid-page-engine.generated + terminal-webview-engine-css.generated
+ — generated files, báo coordinator cho regen step của sync battery, không sửa trong verify)
