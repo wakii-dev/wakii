@@ -45,6 +45,45 @@ epic_merged() {
   git branch --merged "$BASE_BRANCH" 2>/dev/null | tr -d ' +*' | grep -qi "$epic"
 }
 
+# ---- single-writer lock: mọi thao tác GHI backlog đi qua acquire_lock ----
+# mkdir là atomic trên mọi filesystem (Windows gồm NTFS) — 2 session đồng thời
+# chỉ 1 thắng; người thua thoát exit 4. Lock tự gỡ sau lệnh; lock lệ quá 10
+# phút coi như crash để lại — tự dọn.
+LOCK_DIR="${BACKLOG}.lockdir"
+
+acquire_lock() {
+  local waited=0
+  until mkdir "$LOCK_DIR" 2>/dev/null; do
+    if [ -d "$LOCK_DIR" ] && [ -z "$(find "$LOCK_DIR" -mmin -10 2>/dev/null)" ]; then
+      rmdir "$LOCK_DIR" 2>/dev/null   # lock crash để lại — dọn và thử lại
+      continue
+    fi
+    waited=$((waited + 2))
+    [ "$waited" -ge 30 ] && { echo "lock bận quá 30s — thử lại sau" >&2; exit 4; }
+    sleep 2
+  done
+}
+
+release_lock() {
+  rmdir "$LOCK_DIR" 2>/dev/null
+}
+
+fire_scout() {
+  # fire_scout — bắn automation vscode-feature-scout (dùng chung cho now
+  # và mark-done — trước đây code lặp 2 nơi, sửa một nơi quên nơi kia).
+  ORCA="${ORCA_BIN:-orca}"
+  AUTO_ID="$(env -u ORCA_USER_DATA_PATH "$ORCA" automations list --json 2>/dev/null | \
+    python -c "import json,sys
+d = json.load(sys.stdin)
+autos = d.get('automations') or d.get('result', {}).get('automations') or []
+for a in autos:
+    if a.get('name') == 'vscode-feature-scout':
+        print(a['id']); break" 2>/dev/null)"
+  [ -n "$AUTO_ID" ] || { echo "automation vscode-feature-scout chưa được cài" >&2; return 1; }
+  echo "firing vscode-feature-scout ($AUTO_ID)…"
+  env -u ORCA_USER_DATA_PATH "$ORCA" automations run "$AUTO_ID" >/dev/null 2>&1 &
+}
+
 # Đếm số dòng state (^[ ] ngoài code fence ``` — ví dụ format trong fence không
 # được tính là feature). in_fence toggle ở mỗi dòng bắt đầu bằng ```
 count_state() {
@@ -80,6 +119,8 @@ reconcile() {
 
 case "$CMD" in
   next)
+    acquire_lock
+    trap release_lock EXIT
     reconcile
     # SERIAL (đúng ý owner): 1 story tại 1 thời điểm — tính từ claim đến khi
     # MERGED. [~] (scout đang tạo) lẫn [S] (staged chờ launch/merge) đều là
@@ -235,31 +276,18 @@ print(runs[0].get('status', '') if runs else '')" 2>/dev/null)"
       n=$((n + 1))
     done < "$BACKLOG"
     if [ -z "$creating" ]; then
-      echo "▶ Không story mới đang tạo — scout có thể claim feature kế tiếp khi hàng [S] Clear"
+      if [ "$(count_state '- [S]')" -gt 0 ]; then
+        echo "▶ Không story mới đang tạo — chờ [S] staged hoàn tất (launch → merge) trước khi claim feature kế"
+      else
+        echo "▶ Không story nào đang chạy — scout có thể claim feature kế tiếp"
+      fi
     fi
     echo "⏳ Hàng chờ: $waiting feature"
     echo "✔ Đã merged: $done_count story"
     exit 0
     ;;
-  should-run)
-    # precheck cho story-auto-launch: exit 0 CHỈ khi có việc — feature chờ
-    # [ ] hoặc story in-flight [~] cần supervise. Không việc → exit 1.
-    reconcile
-    if [ "$(count_state '- [~]')" -gt 0 ] || [ "$(count_state '- [ ]')" -gt 0 ]; then
-      exit 0
-    fi
-    exit 1
-    ;;
-  scout-should-run)
-    # precheck cho vscode-feature-scout: exit 0 khi có feature chờ [ ] HOẶC
-    # story [~] dang dở cần RESUME (agent thoát sớm giữa CREATE là thường —
-    # skip [~] vĩnh viễn sẽ kẹt story). Không việc → exit 1.
-    reconcile
-    if [ "$(count_state '- [~]')" -gt 0 ] || [ "$(count_state '- [ ]')" -gt 0 ]; then
-      exit 0
-    fi
-    exit 1
-    ;;
+  # precheck cũ should-run/scout-should-run ĐÃ BỎ — thay bằng scout-precheck
+  # và launch-precheck (có pass-lock). Liên hệ tránh 2 automation trùng precheck.
   claim-pane)
     # in handle của terminal automation MỚI NHẤT (pane hiện tại của agent —
     # vừa được Orca spawn cho pass này). Match theo TẤT CẢ tên automation
@@ -334,21 +362,15 @@ for h in mine[:-1]:
     ;;
   now)
     # fire vscode-feature-scout NGAY theo tên (không chờ cron)
-    ORCA="${ORCA_BIN:-orca}"
-    AUTO_ID="$(env -u ORCA_USER_DATA_PATH "$ORCA" automations list --json 2>/dev/null | \
-      python -c "import json,sys
-d = json.load(sys.stdin)
-autos = d.get('automations') or d.get('result', {}).get('automations') or []
-for a in autos:
-    if a.get('name') == 'vscode-feature-scout':
-        print(a['id']); break" 2>/dev/null)"
-    [ -n "$AUTO_ID" ] || { echo "automation vscode-sync-pass chưa được cài" >&2; exit 2; }
-    echo "firing vscode-sync-pass ($AUTO_ID)…"
-    exec env -u ORCA_USER_DATA_PATH "$ORCA" automations run "$AUTO_ID"
+    fire_scout
+    wait
+    exit 0
     ;;
   annotate)
     # annotate <VSC-XXX> <text> — nối thông tin (epic/worktree) vào comment của
     # dòng [~] đang chạy, để backlog tự mô tả story sống ở đâu
+    acquire_lock
+    trap release_lock EXIT
     fid="${2:-}"; text="${3:-}"
     [ -n "$fid" ] && [ -n "$text" ] || { echo "usage: vscode-sync-dispatch annotate VSC-001 'epic: VSC-1 | wt: vsc-1-coord'" >&2; exit 2; }
     n=1
@@ -375,6 +397,8 @@ for a in autos:
   mark-staged)
     # mark-staged <VSC-XXX> <epic-id> — scout tạo story xong: [~] → [S]
     # (story ĐÃ TẠO trên Linear, chờ story-auto-launch approve + launch).
+    acquire_lock
+    trap release_lock EXIT
     fid="${2:-}"; epic="${3:-}"
     [ -n "$fid" ] && [ -n "$epic" ] || { echo "usage: mark-staged VSC-001 FI-44" >&2; exit 2; }
     n=1
@@ -399,6 +423,8 @@ for a in autos:
     exit 2
     ;;
   mark-done)
+    acquire_lock
+    trap release_lock EXIT
     epic_id="${2:-}"
     [ -n "$epic_id" ] || { echo "usage: vscode-sync-dispatch mark-done VSC-001" >&2; exit 2; }
     n=1
@@ -414,18 +440,7 @@ for a in autos:
               # CHUYỀN DÂY: story xong → fire scout tạo story kế tiếp NGAY
               # (không chờ cron hourly) — chỉ khi còn [ ] chờ trong backlog.
               if [ "$(count_state '- [ ]')" -gt 0 ]; then
-                ORCA="${ORCA_BIN:-orca}"
-                AUTO_ID="$(env -u ORCA_USER_DATA_PATH "$ORCA" automations list --json 2>/dev/null | \
-                  python -c "import json,sys
-d = json.load(sys.stdin)
-autos = d.get('automations') or d.get('result', {}).get('automations') or []
-for a in autos:
-    if a.get('name') == 'vscode-feature-scout':
-        print(a['id']); break" 2>/dev/null)"
-                if [ -n "$AUTO_ID" ]; then
-                  echo "firing scout ($AUTO_ID) tạo story kế tiếp…"
-                  env -u ORCA_USER_DATA_PATH "$ORCA" automations run "$AUTO_ID" >/dev/null 2>&1 &
-                fi
+                fire_scout
               fi
               exit 0
             fi
@@ -438,15 +453,12 @@ for a in autos:
     exit 2
     ;;
   status)
-    echo "=== vscode-sync backlog ($BACKLOG, base=$BASE_BRANCH) ==="
-    echo "chờ scout:       $(count_state '- [ ]')"
-    echo "scout đang tạo:  $(count_state '- [~]')"
-    echo "story chờ launch: $(count_state '- [S]')"
-    echo "đã merged:       $(count_state '- [x]')"
+    # status = board (gộp — một giao diện quản lý duy nhất)
+    "$0" board
     exit 0
     ;;
   *)
-    echo "usage: vscode-sync-dispatch [next|now|should-run|claim-pane|cleanup-pane <handle>|cleanup-stale|annotate <VSC-XXX> <text>|mark-staged <VSC-XXX> <epic>|mark-done <VSC-XXX>|add-feature \"<tên> | <mô tả>\"|status]" >&2
+    echo "usage: vscode-sync-dispatch [next|now|scout-precheck|launch-precheck|pass-running|claim-pane|cleanup-pane <handle>|cleanup-stale|annotate <VSC-XXX> <text>|mark-staged <VSC-XXX> <epic>|mark-done <VSC-XXX>|add-feature \"TÊN :: MÔ TẢ\"|ideas-pending|mark-idea-decomposed <slug>|board|status]" >&2
     exit 2
     ;;
 esac
