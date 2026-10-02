@@ -136,6 +136,9 @@ Mô tả story (feature lớn) — markdown
       </details>
       <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 6px;">
         <button id="story-create" style="padding: 7px 6px; border: 1px solid var(--primary, #2563eb); border-radius: 7px; background: var(--primary, #2563eb); color: var(--primary-foreground, #fff); font-size: 11px; font-weight: 600; cursor: pointer;">🚀 Create story</button>
+        <label id="story-decompose-flag" title="Ý tưởng lớn — rã thành chuỗi story tuần tự vào backlog (flag --decompose của story-workflow); pipeline vscode-sync sẽ tạo story từng cái" style="display:flex; align-items:center; gap:4px; font-size:11px; cursor:pointer;">
+          <input type="checkbox" id="sf-decompose" style="cursor:pointer;"> 🧩 Decompose
+        </label>
         <button id="story-approve" style="padding: 7px 6px; border: 1px solid #22c55e; border-radius: 7px; background: transparent; color: #22c55e; font-size: 11px; font-weight: 600; cursor: pointer;">✓ Approve story</button>
         <button id="story-launch" style="padding: 7px 6px; border: 1px solid #eab308; border-radius: 7px; background: transparent; color: #eab308; font-size: 11px; font-weight: 600; cursor: pointer;">▶ Launch SFs</button>
       </div>
@@ -6550,8 +6553,15 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__4__;
         } else {
           creativeLine = '\n\nCREATIVITY: BALANCED — spec là khung cứng (acceptance + boundary không đổi); chi tiết chưa ghi agent tự quyết hợp lý theo conventions, flag quyết định lớn trong notes.'
         }
-        var prompt = 'Use the story-workflow skill to CREATE A STORY:\n' + idea +
-          '\n(run the full CREATE pipeline: prompt-master, P0 analyst 10 chiều, Figma Principle 8, đọc source code thật, rubric C1-C5/V1-V3, brainstorm, spec-critic, plan-critic; ghi story .wakii file docs/superpowers/mindmaps/<slug>.wakii — JSON schema v1, meta.dest = \"story-<epic-id>-<slug>\"; CHẠY `wakii-validate <file.wakii>` — phải OK trước khi in STORY-READY, INVALID → sửa theo fails[] rồi chạy lại; tạo epic issue; in STORY-READY rồi STOP chờ approve; TEAM: dùng đúng 9 agents — SF visual-heavy note design-first qua designer)' + packLine + creativeLine + scopeLine
+        var decompose = document.getElementById('sf-decompose')?.checked
+        var prompt
+        if (decompose) {
+          prompt = 'Use the story-workflow skill with FLAG --decompose:\n' + idea +
+            '\n(Ý TƯỞNG LỚN — KHÔNG tạo 1 story. Phân rã theo quy trình DECOMPOSE trong SKILL.md: research nguồn tham chiếu thật, nhóm theo lĩnh vực, cắt feature vừa sức, sắp thứ tự ưu tiên/phụ thuộc; ghi TẤT CẢ vào docs/superpowers/vscode-sync/backlog.md dạng "- [ ] VSC-XXX: <tên> — <mô tả>" — đánh số VSC kế tiếp từ max hiện có, tránh trùng feature đã có; ưu tiên nền tảng trước UI sau; sau khi ghi xong in tổng kết số feature rồi STOP — KHÔNG tạo epic/story, KHÔNG claim; pipeline vscode-sync sẽ tạo story tuần tự)'
+        } else {
+          prompt = 'Use the story-workflow skill to CREATE A STORY:\n' + idea +
+            '\n(run the full CREATE pipeline: prompt-master, P0 analyst 10 chiều, Figma Principle 8, đọc source code thật, rubric C1-C5/V1-V3, brainstorm, spec-critic, plan-critic; ghi story .wakii file docs/superpowers/mindmaps/<slug>.wakii — JSON schema v1, meta.dest = \"story-<epic-id>-<slug>\"; CHẠY `wakii-validate <file.wakii>` — phải OK trước khi in STORY-READY, INVALID → sửa theo fails[] rồi chạy lại; tạo epic issue; in STORY-READY rồi STOP chờ approve; TEAM: dùng đúng 9 agents — SF visual-heavy note design-first qua designer)' + packLine + creativeLine + scopeLine
+        }
         call('terminal.sendText', { terminalId, text: prompt, enter: true }).then((r) => {
           if (r.ok) {
             status.textContent = 'prompt epic đã gửi — agent đang phân tích. Sau STORY-READY: ⌘J chạy "Superpowers: Story Load" rồi ↻'
