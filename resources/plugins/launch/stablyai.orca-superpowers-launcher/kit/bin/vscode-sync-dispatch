@@ -98,8 +98,17 @@ case "$CMD" in
           '- [ ]'*'VSC-'*)
             id="$(printf '%s' "$line" | grep -oE 'VSC-[0-9]+' | head -1)"
             rest="$(printf '%s' "$line" | sed 's/^- \[ \] //' | sed 's/<!-- .*//')"
-            title="$(printf '%s' "$rest" | cut -d'|' -f1 | sed 's/^[^:]*: *//;s/ — .*//')"
-            desc="$(printf '%s' "$rest" | sed 's/^[^|]*| *//')"
+            # separator: ' | ' (user) hoặc ' :: ' (decomposer ghi qua PowerShell)
+            case "$rest" in
+              *' :: '*)
+                title="$(printf '%s' "$rest" | cut -d':' -f1-2 | sed 's/^ *//;s/ *$//')"
+                desc="$(printf '%s' "$rest" | sed 's/^[^:]*: *//')"
+                ;;
+              *)
+                title="$(printf '%s' "$rest" | cut -d'|' -f1 | sed 's/^[^:]*: *//;s/ — .*//')"
+                desc="$(printf '%s' "$rest" | sed 's/^[^|]*| *//')"
+                ;;
+            esac
             new_line="- [~] $(printf '%s' "$rest" | sed 's/ *$//') <!-- dispatch: $(date -u +%Y-%m-%dT%H:%M:%SZ) -->"
             rewrite_line "$n" "$new_line"
             echo "FEATURE ${id}|${title}|${desc}"
@@ -112,6 +121,25 @@ case "$CMD" in
     echo "EMPTY: không còn feature chờ trong backlog" >&2
     exit 3
     ;;
+  ideas-pending)
+    # ideas-pending — exit 0 nếu ideas dir còn file ý tưởng chưa decomposed
+    # (file .md có "Status: PENDING"). Precheck cho vscode-idea-decomposer.
+    IDEAS_DIR="${VSC_IDEAS_DIR:-docs/superpowers/vscode-sync/ideas}"
+    [ -d "$IDEAS_DIR" ] || exit 1
+    if grep -rli "Status: *PENDING" "$IDEAS_DIR" --include="*.md" >/dev/null 2>&1; then
+      exit 0
+    fi
+    exit 1
+    ;;
+  mark-idea-decomposed)
+    # mark-idea-decomposed <file-slug> — flip Status: PENDING → decomposed
+    slug="${2:-}"
+    [ -n "$slug" ] || { echo "usage: mark-idea-decomposed <slug>" >&2; exit 2; }
+    f="$(ls docs/superpowers/vscode-sync/ideas/$slug*.md 2>/dev/null | head -1)"
+    [ -n "$f" ] || { echo "không thấy idea file $slug*" >&2; exit 2; }
+    sed -i 's/Status: *PENDING/Status: decomposed/' "$f"
+    echo "idea decomposed: $f"
+    ;;
   pass-running)
     # pass-running — exit 0 NẾU pass trước (scout HOẶC auto-launch) VẪN đang
     # chạy: chặn pass mới bắn vào pane cũ và giết agent đang làm (bug thật
@@ -119,7 +147,7 @@ case "$CMD" in
     # dispatch_failed chuỗi 6 lần + mất công việc dở). Chỉ coi đã xong khi
     # last run status ∈ tập kết thúc đã biết.
     ORCA="${ORCA_BIN:-orca}"
-    for aname in vscode-feature-scout story-auto-launch; do
+    for aname in vscode-feature-scout story-auto-launch vscode-idea-decomposer; do
       aid="$(env -u ORCA_USER_DATA_PATH "$ORCA" automations list --json 2>/dev/null | \
         python -c "import json,sys
 d = json.load(sys.stdin)
