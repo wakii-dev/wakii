@@ -526,10 +526,10 @@
       "description": "PreToolUse Edit|Write|MultiEdit guard chặn ghi .env/.env.*/pem/id_rsa*/key — exit 2, fail-open, GUARD_OFF escape (GH-87)"
     },
     {
-      "name": "vscode-sync-dispatch",
+      "name": "source-sync-dispatch",
       "type": "bin",
       "category": "infra",
-      "description": "điều phối sync feature VS Code — 1 pass 1 feature, mỗi feature qua story-workflow đầy đủ; state machine trong docs/superpowers/vscode-sync/backlog.md ([ ] chờ / [~] đang chạy / [x] đã merged)"
+      "description": "dispatch generic cho source-sync pipeline (vscode-sync là instance) — phân rã ý tưởng, state machine backlog, pane protocol, prechecks"
     },
     {
       "name": "story-pr-checks",
