@@ -1,6 +1,6 @@
 # IDEA: Clone VS Code vào Wakii
 
-> Status: PENDING (automation vscode-idea-decomposer sẽ phân rã file này
+> Status: decomposed (automation vscode-idea-decomposer sẽ phân rã file này
 > thành chuỗi feature trong backlog — xong sẽ đổi thành `Status: decomposed`)
 
 ## Mục tiêu
