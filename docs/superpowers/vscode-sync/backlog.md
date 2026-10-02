@@ -56,3 +56,9 @@ mỗi story một worktree riêng, không xếp hàng chờ story khác.
 - [S] VSC-902: Rich GitHub links trong markdown preview <!-- epic: FI-46 | staged: 2026-09-30T09:01:39Z -->
 - [ ] VSC-903: Session attention badge
 - [ ] VSC-904: Auto-mark session done khi PR merge
+- [ ] VSC-905: VSC-905: Deep link tạo agent session qua URL — mở rộng open-url handler (hiện chỉ handle skill-share) hỗ trợ orca:// dạng orca://agents/new?repo=...&prompt=... để tạo worktree/agent session mới kèm prompt từ ngoài app (nguồn: VS Code 1.140 — vscode://agents/new?prompt=...)
+- [ ] VSC-906: VSC-906: Automations export/import — export automations ra file JSON và import lại trên máy/instance khác để chia sẻ giữa máy và team (nguồn: VS Code 1.138 — automations export/import sharing across teams)
+- [ ] VSC-907: VSC-907: Terminal output reflow control — setting cho phép giữ output terminal ở chiều rộng cố định, không reflow khi pane resize (nguồn: VS Code 1.140 — chat.tools.terminal.outputReflow)
+- [ ] VSC-908: Word wrap indicator trong file editor — mũi tên/dấu hiệu hiển thị tại cột wrap cho biết dòng nào đang bị wrap khi bật word wrap (nguồn: VS Code 1.139 — word wrap indicators)
+- [ ] VSC-909: Selection match mode cho find trong editor — setting kiểm soát mode match case khi tìm với text đang chọn: findOptions (mặc định) / caseSensitive / caseInsensitive (nguồn: VS Code 1.140 — editor.selectedTextMatchMode)
+- [ ] VSC-910: Filter ẩn nhóm rỗng trong sidebar — tùy chọn ẩn project group/session group không còn thành viên nào thay vì hiển thị hàng placeholder rỗng (nguồn: VS Code 1.139 — filter empty session groups)
