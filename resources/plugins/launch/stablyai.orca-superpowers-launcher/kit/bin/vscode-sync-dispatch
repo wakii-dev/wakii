@@ -112,6 +112,47 @@ case "$CMD" in
     echo "EMPTY: không còn feature chờ trong backlog" >&2
     exit 3
     ;;
+  pass-running)
+    # pass-running — exit 0 NẾU pass trước (scout HOẶC auto-launch) VẪN đang
+    # chạy: chặn pass mới bắn vào pane cũ và giết agent đang làm (bug thật
+    # 01/10: cleanup-stale của pass mới close pane pass cũ giữa CREATE →
+    # dispatch_failed chuỗi 6 lần + mất công việc dở). Chỉ coi đã xong khi
+    # last run status ∈ tập kết thúc đã biết.
+    ORCA="${ORCA_BIN:-orca}"
+    for aname in vscode-feature-scout story-auto-launch; do
+      aid="$(env -u ORCA_USER_DATA_PATH "$ORCA" automations list --json 2>/dev/null | \
+        python -c "import json,sys
+d = json.load(sys.stdin)
+for a in d.get('automations') or d.get('result', {}).get('automations') or []:
+    if a.get('name') == '$aname':
+        print(a['id']); break" 2>/dev/null)"
+      [ -n "$aid" ] || continue
+      last="$(env -u ORCA_USER_DATA_PATH "$ORCA" automations runs --id "$aid" --json 2>/dev/null | \
+        python -c "import json,sys
+d = json.load(sys.stdin)
+runs = d.get('runs') or d.get('result', {}).get('runs') or []
+print(runs[0].get('status', '') if runs else '')" 2>/dev/null)"
+      case "$last" in
+        completed|dispatch_failed|skipped_precheck|skipped|"") ;;  # đã xong
+        *) echo "BUSY: $aname last run status=$last" >&2; exit 0 ;;
+      esac
+    done
+    exit 1
+    ;;
+  scout-precheck)
+    # precheck scout: có việc ([ ] hoặc [~]) VÀ không pass nào đang chạy
+    reconcile
+    { [ "$(count_state '- [~]')" -gt 0 ] || [ "$(count_state '- [ ]')" -gt 0 ]; } || exit 1
+    if "$0" pass-running >/dev/null 2>&1; then exit 1; fi
+    exit 0
+    ;;
+  launch-precheck)
+    # precheck story-auto-launch: có [S] staged VÀ không pass nào đang chạy
+    reconcile
+    [ "$(count_state '- [S]')" -gt 0 ] || exit 1
+    if "$0" pass-running >/dev/null 2>&1; then exit 1; fi
+    exit 0
+    ;;
   board)
     # board — bảng quản lý tổng hợp cho chế độ SERIAL: 1 story đang chạy
     # (state, epic, worktree, PR, tuổi), hàng chờ, đã xong. Người + agent
