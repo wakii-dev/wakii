@@ -20,7 +20,7 @@ import en from './locales/en.json'
 import vi from './locales/vi.json'
 import { computeTranslatedness } from '../../../../config/scripts/locale-translatedness-metric.mjs'
 
-const SF2_SHIP_TRANSLATED_COUNT = 14_764
+const SF2_SHIP_TRANSLATED_COUNT = 15_012
 
 describe('vi translatedness ratchet', () => {
   it('never drops below the SF-2 ship baseline', () => {

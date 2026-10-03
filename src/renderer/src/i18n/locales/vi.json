@@ -151,7 +151,9 @@
         "resourceUsageToggleDescription": "Hiển thị Trình quản lý tài nguyên. Nhấp vào nó để xem CPU, bộ nhớ, phiên, điều khiển daemon và quét đĩa không gian làm việc.",
         "portsToggleDescription": "Hiển thị các cổng không gian làm việc trực tiếp. Nhấp vào nó để biết các cổng trong phạm vi không gian làm việc và các trình nghe bên ngoài.",
         "antigravityToggleDescription": "Hiển thị mức sử dụng đăng ký AntiGravity cho không gian làm việc đang hoạt động.",
-        "grokToggleDescription": "Hiển thị mức sử dụng tín dụng đăng ký Grok khi đăng nhập qua Grok CLI."
+        "grokToggleDescription": "Hiển thị mức sử dụng tín dụng đăng ký Grok khi đăng nhập qua Grok CLI.",
+        "cursorToggleDescription": "Hiện mức dùng gói Cursor khi đã đăng nhập qua cursor-agent hoặc Cursor IDE.",
+        "zcodeToggleDescription": "Hiện hạn mức ZCode Coding Plan."
       },
       "menuBarIcon": {
         "title": "Hiển thị biểu tượng thanh menu",
@@ -206,6 +208,12 @@
         "optionNativeTooltip": "Giữ danh tính tích hợp của Electron cho các trang web từ chối danh tính đã được làm sạch. Đăng nhập bằng Google không khả dụng ở chế độ Gốc.",
         "restartRequired": "Yêu cầu khởi động lại",
         "unavailable": "Nhận dạng trình duyệt không có sẵn."
+      }
+    },
+    "agents": {
+      "codexTerminalServerIsolation": {
+        "title": "Chạy mỗi terminal Codex trên server riêng",
+        "description": "Giữ trạng thái Orca và việc đóng tab hoạt động đúng. Tắt để dùng server chung của Codex và tổng quan agents của nó. Áp dụng cho terminal mới."
       }
     }
   },
@@ -615,7 +623,11 @@
           "mimo_code_label": "MiMo Code",
           "opencode2_label": "OpenCode 2",
           "muse_label": "Muse",
-          "zcode_label": "ZCode"
+          "zcode_label": "ZCode",
+          "dsh_label": "DeepSeek Harness",
+          "freebuff_label": "Freebuff",
+          "qoder_label": "Qoder CLI",
+          "codebuddy_label": "CodeBuddy"
         },
         "skill": {
           "cli": {
@@ -1012,6 +1024,12 @@
       },
       "clipboardWriteFailure": {
         "tooLarge": "Văn bản quá lớn để sao chép."
+      },
+      "dropSkipReason": {
+        "missing": "Không còn ở đường dẫn ban đầu.",
+        "symlink": "Không thể đính kèm liên kết tượng trưng.",
+        "permissionDenied": "Bị từ chối quyền.",
+        "unsupported": "Loại tệp không được hỗ trợ."
       }
     },
     "hooks": {
@@ -1034,11 +1052,7 @@
         "5f3d2c8a1b": "Không giải quyết được cơ sở MR.",
         "dropPartiallyAttached": "Không thể đính kèm {{failureCount}} trong tổng số {{count}} mục.",
         "dropPartiallyAttached_one": "Không thể đính kèm {{failureCount}} trong tổng số {{count}} mục.",
-        "dropPartiallyAttached_other": "Không thể đính kèm {{failureCount}} trong tổng số {{count}} mục.",
-        "attachSkipMissing": "Không còn ở con đường ban đầu của nó.",
-        "attachSkipSymlink": "Liên kết tượng trưng không thể được đính kèm.",
-        "attachSkipPermissionDenied": "Quyền bị từ chối.",
-        "attachSkipUnsupported": "Loại tệp không được hỗ trợ."
+        "dropPartiallyAttached_other": "Không thể đính kèm {{failureCount}} trong tổng số {{count}} mục."
       },
       "useGlobalFileDrop": {
         "38c9f034ff": "Không thể tải lên các tập tin bị rơi.",
@@ -1193,6 +1207,16 @@
                 "open": {
                   "bridge": {
                     "1e9a1a63c4": "Không thể mở tệp Markdown."
+                  }
+                }
+              }
+            },
+            "wakii": {
+              "file": {
+                "open": {
+                  "bridge": {
+                    "failed": "Không mở được tệp mindmap Wakii: {{message}}",
+                    "8b2c41de70": "Không mở được tệp mindmap."
                   }
                 }
               }
@@ -1726,7 +1750,6 @@
         "notConnected": "Không được kết nối",
         "notePasteTooLarge": "Dán quá lớn đối với trường ghi chú.",
         "waitForSetupBeforeAgent": "Đợi quá trình thiết lập hoàn tất trước khi bắt đầu agent",
-        "waitForSetupBeforeAgentHelp": "Bật tính năng này khi thiết lập cài đặt các phần phụ thuộc, máy chủ MCP hoặc tệp cấu hình mà agent cần trong quá trình khởi động.",
         "destroyDisabled": "tiêu diệt tàn tật",
         "destroyConfigured": "phá hủy cấu hình",
         "noDestroyConfigured": "không phá hủy",
@@ -3218,7 +3241,8 @@
             "925f49f210": "Mở rộng ngăn",
             "df766809e0": "Thu gọn ngăn",
             "cff67afad1": "Sao chép bối cảnh",
-            "15dd899676": "Thêm vào {{value0}}…"
+            "15dd899676": "Thêm vào {{value0}}…",
+            "resetTerminal": "Đặt lại terminal"
           },
           "TerminalErrorToast": {
             "e4aa243f8c": "Khởi động lại trình nền",
@@ -3233,7 +3257,9 @@
             "e16012e31e": "Trình nền terminal sở hữu phiên này đã thoát nên không thể khôi phục phiên và cuộn ngược của nó. Mở một terminal mới để tiếp tục.",
             "sessionUnavailable": "Wakii không thể gắn lại vào phiên terminal của khung này trên máy chủ. Mở một terminal mới để tiếp tục.",
             "sourceRestoring": "Đang kết nối lại terminal này - đầu ra của nó đang được thiết lập lại. Phiên vẫn đang chạy.",
-            "remoteTerminalClosed": "Thiết bị terminal từ xa đã bị đóng."
+            "remoteTerminalClosed": "Thiết bị terminal từ xa đã bị đóng.",
+            "terminalProcessLimit": "Hệ thống không khởi động được thêm tiến trình terminal nào. Đóng các terminal đang không dùng hoặc thoát tiến trình thừa rồi thử lại.",
+            "ptyAllocationLimit": "Hệ thống không cấp thêm thiết bị pty nào nữa. Đóng bớt terminal đang không dùng, trong Orca hoặc chương trình khác, rồi thử lại."
           },
           "TerminalProcessExitOverlay": {
             "capacityTitle": "Đã đạt đến giới hạn bảng điều khiển Git Bash",
@@ -3406,6 +3432,9 @@
                 "description": "Các hook của Wakii được cài đặt chính xác — zcode trên PATH của bạn không thể mở phiên. Ứng dụng máy tính để bàn ZCode gói thời gian chạy agent mà không có giao diện người dùng terminal. Cài đặt zcode gửi TUI, sau đó chạy zcode bên ngoài Wakii để xác nhận."
               }
             }
+          },
+          "TerminalRestoringPlaceholder": {
+            "restoring": "Đang khôi phục terminal…"
           }
         }
       },
@@ -3825,7 +3854,10 @@
             "grokUsageMenu": "Cách sử dụng Grok",
             "floatingTerminalNewActivity": "{{label}}, hoạt động mới",
             "codexSignInSuccess": "Đã đăng nhập vào Codex",
-            "codexSignInError": "Đăng nhập Codex không thành công. Vui lòng thử lại."
+            "codexSignInError": "Đăng nhập Codex không thành công. Vui lòng thử lại.",
+            "cursorUsageMenu": "Mức dùng Cursor",
+            "hiddenUsageProviders": "Ngoài ra: {{value0}}",
+            "zcodeUsageMenu": "Mức dùng ZCode"
           },
           "StatusBarUsageEmptyCta": {
             "828c764a79": "Kết nối một tài khoản",
@@ -4016,6 +4048,16 @@
               "noSubscription": {
                 "label": "Không đăng ký"
               }
+            },
+            "cursor": {
+              "expired": {
+                "label": "Đăng nhập hết hạn",
+                "message": "Chạy cursor-agent login trong terminal trên máy đang chạy Orca rồi thử lại mức dùng."
+              },
+              "plan": "Gói"
+            },
+            "zcode": {
+              "mcp": "MCP (Model Context Protocol)"
             }
           },
           "SshTargetStatusRow": {
@@ -4116,7 +4158,12 @@
             "checkLabel": "{{value0}} trò chuyện để kiểm tra",
             "checkAriaOne": "1 cuộc trò chuyện để kiểm tra sau khi tiếp tục. Bấm vào để biết chi tiết.",
             "checkAria": "{{value0}} trò chuyện cần kiểm tra sau khi tiếp tục. Bấm vào để biết chi tiết.",
-            "checkTooltip": "Trò chuyện Wakii không thể tiếp tục hoặc không thể xác nhận nó đã tiếp tục sau khi khởi động lại. Bấm vào để biết chi tiết."
+            "checkTooltip": "Trò chuyện Wakii không thể tiếp tục hoặc không thể xác nhận nó đã tiếp tục sau khi khởi động lại. Bấm vào để biết chi tiết.",
+            "resumingLabelOne": "Đang tiếp tục 1 chat",
+            "resumingLabel": "Đang tiếp tục {{value0}} chat",
+            "resumingAriaOne": "Đang tiếp tục 1 chat. Bấm để mở chi tiết.",
+            "resumingAria": "Đang tiếp tục {{value0}} chat. Bấm để mở chi tiết.",
+            "resumingTooltip": "Đang khôi phục các chat bị gián đoạn và yêu cầu chúng tiếp tục…"
           }
         }
       },
@@ -6113,13 +6160,11 @@
           "6e7f8a9b0c": "Xóa máy chủ…"
         },
         "LinearAgentSkillSetupPrompt": {
-          "missingCliAndSkill": "Thiếu Wakii CLI và kỹ năng đặc vụ Linear.",
           "modalTitle": "Cho phép truy cập vé Linear",
           "modalDescription": "Cài đặt kỹ năng Linear từ terminal.",
           "modalPrompt": "Cho phép agents đọc và chỉnh sửa vé Linear đính kèm.",
           "dontShowAgain": "Không hiển thị lại",
           "missingBoth": "Thiếu Wakii CLI và kỹ năng đặc vụ Linear.",
-          "missingCli": "Wakii CLI bị thiếu.",
           "missingSkill": "Kỹ năng đặc vụ Linear bị thiếu.",
           "title": "Thiết lập kỹ năng agent Linear",
           "remoteCopy": "Điều này cài đặt thiết lập máy chủ; môi trường agent từ xa có thể cần thiết lập riêng.",
@@ -6131,7 +6176,6 @@
           "panelDescription": "Cài đặt kỹ năng agent máy chủ để chuyển giao nhiệm vụ Linear được liên kết.",
           "terminalTitle": "Cài đặt kỹ năng agent Linear",
           "terminalAria": "Thiết bị terminal cài đặt kỹ năng agent Linear",
-          "install": "Cài đặt CLI & Skill",
           "successTitle": "Truy cập vé Linear đã sẵn sàng",
           "successDescription": "Giờ đây, tổng đài viên có thể đọc và cập nhật các vé Linear được liên kết từ không gian làm việc này.",
           "successDescriptionWsl": "Các agents WSL hiện có thể sử dụng vé Linear được liên kết từ không gian làm việc này.",
@@ -6140,11 +6184,7 @@
           "done": "Xong",
           "wslCopy": "Cài đặt nó để chuyển giao agent WSL từ công việc Linear được liên kết.",
           "wslLabel": "WSL mặc định",
-          "toastMissingCliAndSkill": "Thiếu Wakii CLI và kỹ năng Linear",
-          "toastMissingCli": "Wakii CLI bị thiếu",
           "toastMissingSkill": "Thiếu kỹ năng Linear",
-          "toastInstallCliAndSkillDescription": "Cài đặt Wakii CLI và kỹ năng Linear để cho phép tổng đài viên của bạn đọc và chỉnh sửa các tác vụ Linear.",
-          "toastInstallCliDescription": "Cài đặt Wakii CLI để cho phép tổng đài viên của bạn đọc và chỉnh sửa các tác vụ Linear.",
           "toastInstallSkillDescription": "Cài đặt kỹ năng Linear để cho phép nhân viên của bạn đọc và chỉnh sửa các tác vụ Linear thông qua Wakii CLI.",
           "toastRemoteDescription": "{{value0}} Môi trường agent từ xa có thể cần thiết lập riêng.",
           "toastWslDescription": "{{value0}} Thiết lập này chạy trong thời gian chạy agent WSL đã chọn."
@@ -6508,7 +6548,6 @@
           "SetupGuideModal": {
             "3598a3ca0c": "Hoàn thiện các quy trình công việc cốt lõi giúp Wakii trở nên hữu ích cho công việc của agent song song.",
             "48a9e5ef2d": "Bắt đầu",
-            "28cf59fcb4": "Điều này sẽ ẩn danh sách kiểm tra khỏi sidebar",
             "f3b5ffb2a6": "Ẩn danh sách kiểm tra khỏi sidebar"
           },
           "SetupGuideProgressRing": {
@@ -6997,24 +7036,15 @@
           "af8c83ed61": "Nhập cookie từ Chrome, Edge hoặc các trình duyệt khác để nhân viên có thể sử dụng lại thông tin đăng nhập của bạn.",
           "68ea76eb71": "Cài đặt kỹ năng Sử dụng trình duyệt để agents có thể vận hành trình duyệt của Wakii.",
           "2d6ead9ab2": "Cài đặt kỹ năng sử dụng trình duyệt",
-          "e9f3f3b488": "Được cài đặt tại",
-          "9fca1f7f5d": "Đăng ký lệnh Wakii CLI để các agents có thể điều phối trình duyệt từ trình bao của họ.",
-          "c6065d205d": "Kích hoạt Wakii CLI",
-          "c79eff0213": "Đăng ký Wakii CLI để agents có thể điều khiển trình duyệt.",
-          "702488a5f7": "Hãy để các agents mã hóa điều khiển trình duyệt này bằng thông tin đăng nhập của bạn. Hoàn thành ba bước dưới đây.",
           "b8a1f2d84d": "Sử dụng trình duyệt Agent",
           "96b91c6349": "Hãy để các agents mã hóa điều khiển trình duyệt này bằng thông tin đăng nhập của bạn.",
           "2ea4617e3a": "Đã nhập {{value0}} cookie từ {{value1}}_{{value2}}.",
-          "721aee31b4": "Đã đăng ký Wakii CLI trong PATH.",
-          "180a9abf3a": "Không tải được trạng thái CLI.",
           "2ccfc9cff8": "Nhập khẩu",
           "0462565413": "Nhập lại",
           "de9b2f32f3": "Cho phép",
-          "ad8cb0ee22": "Sửa đường dẫn",
-          "0289434ed6": "Đã bật",
-          "8b3054dac7": "Đang đăng ký...",
           "8f2675c2f3": "Đã nhập {{value0}} cookie từ tệp.",
-          "5301857d88": "Từ {{value0}}"
+          "5301857d88": "Từ {{value0}}",
+          "finishSteps": "Cho coding agents điều khiển trình duyệt này bằng thông tin đăng nhập của bạn. Hoàn tất các bước dưới đây."
         },
         "BrowserUseSkillStep": {
           "0871b6998d": "Cho phép các tổng đài viên điều hướng và xác minh các trang trong trình duyệt của Wakii.",
@@ -7033,7 +7063,6 @@
           "5dae812f50": "Làm cho khỏe lại",
           "52e640f3a0": "Làm mới trạng thái CLI",
           "38edbb5721": "Lệnh vỏ",
-          "6930feda9e": "Sử dụng Wakii từ terminals của bạn để mở ứng dụng, quản lý worktrees và tương tác với terminals Wakii.",
           "c5c0f2641d": "Wakii CLI",
           "d77352f2df": "Không xóa được `{{value0}}` khỏi PATH.",
           "af5540930c": "Đã xóa `{{value0}}` khỏi PATH.",
@@ -7059,7 +7088,8 @@
           "installFailureConflictRemedy": "Xóa {{value0}} và đăng ký lại nếu không còn cần thiết.",
           "6f894ef9c2": "Hiển thị trong Trình tìm kiếm",
           "cbe55e4d48": "Hiển thị trong Explorer",
-          "9fd4023db0": "Hiển thị trong Trình quản lý tệp"
+          "9fd4023db0": "Hiển thị trong Trình quản lý tệp",
+          "outsideOrcaDescription": "Terminal của Orca đã có sẵn `orca`. Bật để dùng `orca` từ terminal khác bên ngoài Orca."
         },
         "CliSkillRuntimeSetup": {
           "04325573f8": "WSL",
@@ -7684,15 +7714,9 @@
           "c7f3fe0a6e": "Các lệnh mô phỏng phổ biến",
           "d94ca6a623": "Cho phép các agents sử dụng lệnh Wakii CLI, bao gồm cả điều khiển trình mô phỏng di động.",
           "67e19ee03c": "Kỹ năng Wakii CLI",
-          "aaf62a3dd2": "Được cài đặt tại",
-          "2fef055608": "Đăng ký lệnh Wakii CLI để các agents có thể điều khiển trình mô phỏng hoạt động từ trình bao của chúng.",
-          "4f2205f3b6": "Kích hoạt Wakii CLI",
           "ff4b7e65d6": "Cho phép các agents mã hóa điều khiển trình mô phỏng di động đang hoạt động bằng các lệnh Wakii CLI.",
           "2a674aa810": "Kiểm soát trình mô phỏng di động Agent",
-          "cdeaed9e37": "Đã đăng ký Wakii CLI trong PATH.",
-          "3d34423e88": "Đăng ký Wakii CLI",
-          "3be27641c9": "vì vậy các lệnh của trình mô phỏng có thể chạy từ shell agent.",
-          "3941719a56": "Kiểm tra Wakii CLI trước khi mở thiết lập kỹ năng."
+          "cdeaed9e37": "Đã đăng ký Wakii CLI trong PATH."
         },
         "MobileEmulatorExamples": {
           "edf13dd03b": "Sao chép",
@@ -8049,8 +8073,7 @@
           "81057d5f71": "Đang lưu...",
           "da37d6f10e": "Sao chép",
           "3149964b66": "Đã sao chép",
-          "waitForSetupBeforeAgent": "Đợi quá trình thiết lập hoàn tất trước khi bắt đầu agent",
-          "waitForSetupBeforeAgentHelp": "Bật tính năng này khi thiết lập cài đặt các phần phụ thuộc, máy chủ MCP hoặc tệp cấu hình mà agent cần trong quá trình khởi động."
+          "waitForSetupBeforeAgent": "Đợi quá trình thiết lập hoàn tất trước khi bắt đầu agent"
         },
         "RepositoryIconPicker": {
           "2b7d27b93c": "Sử dụng biểu tượng kho lưu trữ {{value0}}",
@@ -8998,7 +9021,8 @@
           "ad5d036ecc": "Không thể yêu cầu quyền sử dụng micrô. Đọc chính tả bằng giọng nói chưa được bật.",
           "f9a9cf6928": "Cần có sự cho phép của micrô trước khi bật tính năng đọc chính tả bằng giọng nói.",
           "1eac933202": "Đã mở quyền riêng tư và bảo mật macOS. Bật lại chính tả sau khi cấp quyền truy cập.",
-          "cd9fe37556": "Đã cấp quyền sử dụng micrô"
+          "cd9fe37556": "Đã cấp quyền sử dụng micrô",
+          "openAiKeyName": "Kênh chuyển giọng nói thành văn bản OpenAI của bạn"
         },
         "WorktreeSymlinksSection": {
           "1c1e35b219": "Xóa {{value0}}",
@@ -9102,7 +9126,18 @@
             "b2c4e7f1a8": "điểm cuối",
             "3a9b6d2c4e": "khóa api",
             "5d8f1a3b7c": "trung quốc",
-            "7e2a4b8c1d": "ở nước ngoài"
+            "7e2a4b8c1d": "ở nước ngoài",
+            "cursor": {
+              "description": "Mức dùng gói hằng tháng đọc từ phiên đăng nhập Cursor sẵn trên máy này (cursor-agent login).",
+              "title": "Mức dùng Cursor",
+              "kw": {
+                "spend": "chi tiêu",
+                "statusBar": "thanh trạng thái",
+                "rateLimit": "giới hạn tỉ lệ",
+                "usage": "mức dùng",
+                "cursor": "con trỏ cursor"
+              }
+            }
           }
         },
         "advanced": {
@@ -9190,7 +9225,15 @@
             "yolo": "olo",
             "manual": "thủ công",
             "skip": "nhảy",
-            "checks": "séc"
+            "checks": "séc",
+            "agent-trust-trust": "tin cậy",
+            "agent-trust-folder": "thư mục",
+            "7e15b89f6e": "máy chủ",
+            "ff457e1e7b": "trình nền",
+            "9f3becc4e8": "dùng chung",
+            "34337ed5c7": "cách ly",
+            "9a84e65118": "tổng quan agents",
+            "agent-trust-worktree": "worktree"
           }
         },
         "appearance": {
@@ -9358,7 +9401,19 @@
               "close": "đóng",
               "notification": "khu vực thông báo",
               "background": "lý lịch"
-            }
+            },
+            "cursor": {
+              "description": "Hiện mức dùng gói Cursor hằng tháng từ phiên đăng nhập Cursor sẵn trên máy này.",
+              "title": "Mức dùng Cursor",
+              "kw": {
+                "cursor": "con trỏ cursor"
+              }
+            },
+            "zcodeUsageTitle": "Mức dùng ZCode",
+            "zcodeUsageDescription": "Hiện hạn mức ZCode Coding Plan trên thanh trạng thái.",
+            "zcode": "zcode gói mã nguồn",
+            "zai": "zai mô hình",
+            "glm": "glm mô hình"
           }
         },
         "auto": {
@@ -9509,16 +9564,7 @@
               "9d97446873": "agent",
               "a2d489263e": "kỹ năng",
               "a7e82445fa": "Cài đặt kỹ năng Sử dụng trình duyệt để agents có thể vận hành trình duyệt của Wakii.",
-              "a1414dcefb": "Cài đặt kỹ năng sử dụng trình duyệt",
-              "e56c7b55c9": "cài đặt",
-              "034c5e8d7f": "cho phép",
-              "7e0dcb257a": "vỏ bọc",
-              "3ffafc9b95": "yêu cầu",
-              "30c74aaa1f": "con đường",
-              "ff05cbc344": "cá kình",
-              "85fab5e12c": "cli",
-              "890ddf943d": "Đăng ký Wakii CLI để agents có thể điều khiển trình duyệt.",
-              "50f0860e18": "Kích hoạt Wakii CLI"
+              "a1414dcefb": "Cài đặt kỹ năng sử dụng trình duyệt"
             }
           }
         },
@@ -9694,7 +9740,8 @@
               "openclaude": "cởi mở",
               "omp": "ồ",
               "terminal": "terminal",
-              "agent": "agent"
+              "agent": "agent",
+              "queue": "hàng đợi"
             },
             "agentDashboard": {
               "title": "Bảng điều khiển Agent",
@@ -10074,7 +10121,8 @@
               "9a9f8d4910": "Kết nối Jira Cloud để duyệt, tạo và liên kết các vấn đề.",
               "74f3063026": "{{value0}} trang web{{value1}} đã kết nối",
               "statusConnected": "Đã kết nối",
-              "statusNotConnected": "Không được kết nối"
+              "statusNotConnected": "Không được kết nối",
+              "jiraTokenName": "Token API Jira của bạn"
             }
           }
         },
@@ -10964,7 +11012,8 @@
                 "2d60ec7921": "Kết nối trang web Jira Cloud với mã thông báo API hoặc Jira tự lưu trữ với mã thông báo truy cập cá nhân hoặc tên người dùng và mật khẩu. Thông tin xác thực được gửi đến thời gian chạy từ xa đã chọn và được lưu trữ ở đó bằng mã hóa được hỗ trợ thời gian chạy.",
                 "977e360b71": "Kết nối trang web Jira Cloud với mã thông báo API hoặc Jira tự lưu trữ với mã thông báo truy cập cá nhân hoặc tên người dùng và mật khẩu. Thông tin xác thực được lưu trữ cục bộ và được mã hóa khi bộ lưu trữ thời gian chạy cục bộ hỗ trợ nó.",
                 "statusConnected": "Đã kết nối",
-                "statusNotConnected": "Không được kết nối"
+                "statusNotConnected": "Không được kết nối",
+                "linearTokenName": "Token API Linear của bạn"
               }
             }
           }
@@ -12128,7 +12177,8 @@
               "notConfigured": "Kết nối tài khoản Bitbucket Cloud với mã thông báo API Atlassian hoặc mã thông báo truy cập. Các biến môi trường ORCA_BITBUCKET_* cũng hoạt động và được ưu tiên.",
               "disconnectFailed": "Không thể xóa thông tin xác thực Bitbucket đã lưu.",
               "statusLoadFailed": "Không thể kiểm tra thông tin xác thực Bitbucket đã lưu.",
-              "replaceCredentials": "Thêm hoặc thay thế thông tin xác thực"
+              "replaceCredentials": "Thêm hoặc thay thế thông tin xác thực",
+              "credentialName": "Thông tin xác thực Bitbucket của bạn"
             }
           }
         },
@@ -12211,6 +12261,38 @@
           "description": "Các thiết bị và máy chủ khác xem “{{name}}”. Để trống phần này để sử dụng tên riêng của máy tính.",
           "pending": "Các thiết bị và máy chủ khác nhìn thấy tên này. Để trống để sử dụng tên máy tính được phát hiện.",
           "placeholder": "Được phát hiện tự động"
+        },
+        "CursorAccountsSection": {
+          "source": {
+            "desktop": "IDE Cursor",
+            "keychain": "Keychain macOS (cursor-agent)",
+            "cli": "Tệp xác thực Cursor CLI"
+          },
+          "signedInGeneric": "Đã đăng nhập. Orca đọc phiên Cursor được lưu trên máy này.",
+          "signedOutHelp": "Đăng nhập bằng Cursor IDE, hoặc chạy cursor-agent login trong terminal, rồi bấm Làm mới mức dùng ở đây.",
+          "refreshUsage": "Làm mới mức dùng",
+          "loading": "Đang tải…",
+          "expired": "Đăng nhập hết hạn — chạy cursor-agent login trên máy đang chạy Orca rồi bấm Làm mới mức dùng.",
+          "planTotal": "Gói",
+          "signedIn": "Đã đăng nhập",
+          "usageDescription": "Cursor tính hai hạn mức đặt lại theo chu kỳ thanh toán, cộng chi tiêu vượt khi hết.",
+          "dashboardLink": "Bảng điều khiển Cursor",
+          "usageTitle": "Mức dùng gói hằng tháng",
+          "signedOut": "Không tìm thấy phiên đăng nhập Cursor nào trên máy này",
+          "subtitle": "Hiện mức dùng gói hằng tháng của Cursor từ phiên đăng nhập sẵn trên máy này. Orca chỉ đọc — không bao giờ thay đổi đăng nhập Cursor của bạn.",
+          "staleUsage": "Mức dùng lần biết cuối — lần làm mới gần nhất thất bại: {{reason}}",
+          "resets": "Đặt lại {{when}}",
+          "signedInFrom": "Đã đăng nhập. Orca đọc phiên được lưu trong {{source}}.",
+          "noAllowance": "Cursor báo không còn hạn mức dùng nào cho tài khoản này.",
+          "usageLabel": "Mức dùng",
+          "title": "Cursor"
+        },
+        "agent-workspace-trust-copy": {
+          "title": "Tin cậy thư mục khi Orca khởi động agent",
+          "description": "Agents do Orca khởi động sẽ bỏ qua câu \"Bạn có tin cậy thư mục này?\", để hooks và cài đặt agent của dự án chạy ngay. Không bật, mỗi agent sẽ hỏi lần đầu chạy trong một thư mục. Agents chạy khi bạn không trôngchừng, như orchestration workers, automations và agents khởi từ điện thoại, sẽ đứng chờ câu hỏi đó đến khi bạn trả lời trong terminal của chúng. Thư mục đã tin cậy thì vẫn giữ tin cậy."
+        },
+        "UnsealedCredentialNotice": {
+          "body": "{{credential}} được lưu không mã hoá — hệ thống này không có keyring hệ điều hành mà Orca dùng được. Ai đọc được đĩa của bạn hoặc bản sao lưu đều đọc được thông tin xác thực. Cài và mở khoá gnome-keyring hoặc kwallet rồi lưu lại để niêm phong."
         }
       },
       "right": {
@@ -13759,6 +13841,16 @@
           "useFileSearchReplaceUndo": {
             "transportStopped": "Hoàn tác đã dừng — mất liên lạc với không gian làm việc. Các tập tin có thể phục hồi đã được giữ lại.",
             "summary": "Đã khôi phục {{restored}} — đã bỏ qua chưa lưu {{dirty}}, đã thay đổi trên đĩa/hoàn tác {{stale}}, lỗi {{errors}}, chưa thử {{unprocessed}}."
+          },
+          "file": {
+            "explorer": {
+              "wakii": {
+                "open": {
+                  "5f05f7de28": "Tệp này không phải mindmap hợp lệ — mở dưới dạng văn bản.",
+                  "1661f00e0e": "Không đọc được tệp mindmap — mở dưới dạng văn bản."
+                }
+              }
+            }
           }
         }
       },
@@ -13825,9 +13917,8 @@
           "1eee1c7bd8": "Không có agents nào được phát hiện trên PATH của bạn. Chọn một cái để cài đặt sau hoặc tiếp tục với một terminal trống.",
           "hideAgents": "Ẩn agents",
           "showMoreAgents": "Hiển thị thêm {{value0}} agents→",
-          "yoloPermissionsLabel": "Yolo / Bỏ qua quyền một cách nguy hiểm",
-          "yoloPermissionsInfo": "Thông tin cho phép Agent",
-          "yoloPermissionsTooltip": "Bỏ qua việc kiểm tra quyền cho các tổng đài viên để ít bị gián đoạn hơn"
+          "yoloModeLabel": "Chế độ Yolo",
+          "yoloPermissionsDescription": "Agents chạy lệnh và sửa tệp không hỏi trước, một số còn vượt sandbox của chúng. Chỉ dùng trong dự án bạn tin cậy."
         },
         "FeatureSetupInlineTerminal": {
           "789b59936e": "Nhấn Enter để chạy lệnh và xác nhận npx nếu được hỏi. Bạn cũng có thể thiết lập tính năng này sau trong Cài đặt.",
@@ -13862,7 +13953,6 @@
         "NotificationStep": {
           "3bede04483": "Gửi thông báo kiểm tra",
           "dc897423e1": "Chọn âm thanh thông báo",
-          "53aaffe49a": "Âm thanh thông báo",
           "0fe570690c": "Chọn cảnh báo mà Wakii phát sau khi thông báo trên màn hình được gửi.",
           "0af746e41f": "Chọn một âm thanh",
           "8124d085a6": "Mở cài đặt Mac",
@@ -14386,7 +14476,8 @@
             "3a59452a67": "Lệnh kỹ năng được sao chép và chèn bên dưới để xem xét.",
             "c605f51f2b": "Thiết lập khả năng đã sẵn sàng",
             "1aa657d8f4": "Một số khả năng thiết lập cần chú ý",
-            "c89534cbe9": "Cài đặt CLI & Kỹ năng"
+            "allInstalled": "Đã cài đủ skills",
+            "installSkills": "Cài skills"
           },
           "AiCommitPrSettingsCard": {
             "8d4152701a": "ví dụ. ollama chạy llama3.1 {{value0}}",
@@ -14479,7 +14570,6 @@
             "1a6a7d6c80": "Cài đặt",
             "713cc529a5": "Các cột mốc quan trọng",
             "b1f1981c5e": "Xem nhiệm vụ",
-            "0235b268b2": "Chưa xong",
             "13294d3405": "Xong"
           },
           "FeatureWallSetupWorkflowActions": {
@@ -14590,13 +14680,13 @@
               "setup": {
                 "status": {
                   "8eccfcb314": "Đã cài đặt",
-                  "21d4f79c93": "nhấp vào Cài đặt CLI & Kỹ năng để mở cài đặt truy cập macOS",
                   "5c9293e51a": "kiểm tra quyền truy cập ứng dụng",
-                  "aae94eeb52": "Nhấp vào Cài đặt CLI & Kỹ năng",
                   "aa8e143a2f": "Không thể kiểm tra cài đặt",
                   "9b33e7fb13": "Kiểm tra cài đặt",
-                  "4c8e1f92a7": "mở Wakii Desktop trên máy Mac này",
-                  "6d2b0a84e1": "Không có sẵn trong bản dựng này"
+                  "6d2b0a84e1": "Không có sẵn trong bản dựng này",
+                  "notInstalled": "Chưa cài",
+                  "needsMacAccess": "Cần quyền truy cập macOS",
+                  "requiresOrcaDesktop": "Cần Orca Desktop"
                 }
               }
             }
@@ -14607,7 +14697,6 @@
                 "checklist": {
                   "localized": {
                     "copy": {
-                      "ec0a363633": "Đa tác vụ",
                       "62bac8f43c": "Làm việc trên 2 worktrees khác nhau cùng một lúc. Mỗi người đều bị cô lập (ngay cả trong cùng một dự án). Hoàn hảo để làm việc trên 2 tính năng cùng một lúc.",
                       "908898c3ee": "Sử dụng trình duyệt của Wakii",
                       "43781563c3": "Duyệt ứng dụng web của bạn mà không cần rời khỏi Wakii. Lấy bất kỳ phần tử nào và gửi nguồn và kiểu chính xác của nó cho agent chỉ bằng một cú nhấp chuột.",
@@ -14615,14 +14704,15 @@
                       "71bd9a8c95": "Biết thời điểm một nhân viên kết thúc, cần chú ý hoặc bị chặn.",
                       "46db810da8": "Chọn agent mặc định của bạn",
                       "b8e5bae17f": "Bắt đầu công việc mới nhanh hơn với agent ưa thích của bạn đã được chọn.",
-                      "fee5557b02": "Kích hoạt Wakii CLI",
-                      "7bcb4097fa": "Đăng ký lệnh shell Wakii và cài đặt các kỹ năng agent cho quy trình làm việc của trình duyệt, máy tính và điều phối.",
                       "ad342dd4c6": "Kết nối tích hợp",
                       "06fe30fdb0": "Bắt đầu một agent từ một nhiệm vụ chỉ bằng một cú nhấp chuột và theo dõi trạng thái PR.",
                       "eddc532e58": "Tự động thiết lập không gian làm việc",
                       "56049b74c2": "Tự động chạy các lệnh cài đặt và thiết lập để mọi worktree mới đều sẵn sàng cho các tổng đài viên.",
                       "2cf795433b": "Bắt đầu công việc trong nhiều repos",
-                      "42525ba8a4": "Mang các kho lưu trữ chính của bạn vào Wakii để bạn có thể bắt đầu công việc của agent mà không cần tìm kiếm các thư mục."
+                      "42525ba8a4": "Mang các kho lưu trữ chính của bạn vào Wakii để bạn có thể bắt đầu công việc của agent mà không cần tìm kiếm các thư mục.",
+                      "workOnTwoTasks": "Làm hai việc cùng lúc",
+                      "agentSkillsName": "Trao cho agents các Orca skills",
+                      "agentSkillsDescription": "Cài các skills giúp agents điều khiển trình duyệt của Orca, điều khiển máy bạn, và phối hợp công việc nhiều bước."
                     }
                   }
                 }
@@ -14742,8 +14832,7 @@
             "d6d15077df": "Lệnh kỹ năng được sao chép và chèn bên dưới để xem xét.",
             "78e65f19d9": "Thiết lập trình duyệt không thành công",
             "b7345c18db": "Đã xảy ra lỗi không mong muốn.",
-            "5f97caf76b": "Đang cài đặt…",
-            "c2df599513": "Cài đặt CLI & Skill"
+            "5f97caf76b": "Đang cài đặt…"
           },
           "ConnectIntegrationsList": {
             "3dddb2d565": "kết nối cho nhiệm vụ",
@@ -14885,17 +14974,9 @@
                 "agent": {
                   "setup": {
                     "state": {
-                      "fdcca1ec75": "Đang đăng ký...",
-                      "69fb2c2289": "Đã bật",
-                      "c6705092ba": "Sửa đường dẫn",
-                      "7c1b6bdb1e": "Cho phép",
-                      "51074ccb05": "Không tải được trạng thái CLI.",
                       "35dea1ae12": "Kiểm soát Agent đã sẵn sàng.",
-                      "9dff3a6338": "Kỹ năng được cài đặt. Kích hoạt Wakii CLI để hoàn tất thiết lập.",
-                      "15986a1080": "Wakii CLI đã sẵn sàng. Cài đặt kỹ năng để hoàn tất thiết lập.",
-                      "4c26913def": "Vẫn chưa được thiết lập. Hoàn thành cả hai bước để kích hoạt tính năng kiểm soát agent.",
                       "c94ff11e91": "Không thể kiểm tra lại trạng thái thiết lập.",
-                      "2b519eed94": "Đã đăng ký Wakii CLI trong PATH."
+                      "skillNotInstalled": "Skill Orca CLI chưa được cài."
                     }
                   }
                 },
@@ -14913,23 +14994,18 @@
             "2fda9ff015": "Thiết lập kiểm soát agent",
             "0ac0fef514": "Kiểm soát Agent đã sẵn sàng.",
             "2bdfff8763": "Kiểm soát Agent (tùy chọn).",
-            "72736b051f": "Thiết lập kỹ năng Wakii CLI + khi bạn muốn các đặc vụ lái trình mô phỏng này.",
             "d10ae98046": "Xong",
             "3756cbeca7": "Không phải bây giờ",
             "6d950431d2": "Trốn",
             "ebceac65a4": "Cài đặt",
-            "3f003507f4": "Mở thiết lập đầy đủ trong Cài đặt"
+            "3f003507f4": "Mở thiết lập đầy đủ trong Cài đặt",
+            "installSkillPrompt": "Cài skill Orca CLI khi bạn muốn agents điều khiển trình mô phỏng này."
           },
           "MobileEmulatorAgentSetupGuideSteps": {
-            "9b49d892e3": "Kích hoạt Wakii CLI",
-            "3d8dc52c93": "Đăng ký lệnh orca để kiểm soát trình mô phỏng trong hệ vỏ agent.",
             "21f5687c07": "Kỹ năng Wakii CLI",
             "64fb057667": "Hướng dẫn các agents các lệnh mô phỏng orca cho worktree này.",
             "5c59ea96ca": "Trình mô phỏng di động Thiết lập kỹ năng Wakii CLI",
-            "bff5341ac3": "Trình mô phỏng di động Thiết bị terminal cài đặt kỹ năng Wakii CLI",
-            "3d34423e88": "Đăng ký Wakii CLI",
-            "3be27641c9": "vì vậy các lệnh của trình mô phỏng có thể chạy từ shell agent.",
-            "3941719a56": "Kiểm tra Wakii CLI trước khi mở thiết lập kỹ năng."
+            "bff5341ac3": "Trình mô phỏng di động Thiết bị terminal cài đặt kỹ năng Wakii CLI"
           },
           "MobileEmulatorTabIntroCallout": {
             "1924982130": "Miễn nhiệm",
@@ -15080,7 +15156,8 @@
           "3c6e71df22": "Văn bản khác biệt không có sẵn cho tệp này trong so sánh branch.",
           "d07e4b8553": "branch",
           "d16e037f40": "giàu có",
-          "6c4f1a8d2e": "Kiểm tra chi tiết không có sẵn."
+          "6c4f1a8d2e": "Kiểm tra chi tiết không có sẵn.",
+          "3f8a1c2d4e": "Mindmap này không còn trong bộ nhớ — mở lại tệp mindmap gốc để xem."
         },
         "EditorPanelHeader": {
           "fb8331694e": "Mở bản xem trước sang một bên",
@@ -15205,7 +15282,8 @@
           "noPython": "Python không được tìm thấy trên máy tính này. Cài đặt nó từ [python.org](https://www.python.org/downloads/), sau đó chạy lại ô.",
           "kernelDied": "Hạt nhân đã chết.",
           "localOnly": "Các ô của sổ ghi chép chỉ có thể chạy các tệp trên máy tính này.",
-          "pythonOnly": "Chỉ sổ ghi chép Python mới có thể chạy trong Wakii."
+          "pythonOnly": "Chỉ sổ ghi chép Python mới có thể chạy trong Wakii.",
+          "trustFirst": "Chạy một cell để tin cậy notebook này trước"
         },
         "MarkdownPreview": {
           "e4683f70c4": "Hủy",
@@ -15696,7 +15774,8 @@
               "2f33a41d63": "Ngày"
             }
           }
-        }
+        },
+        "diffCommentSaveFailed": "Lưu bình luận thất bại"
       },
       "diff": {
         "comments": {
@@ -15713,7 +15792,10 @@
             "2b3ce6d394": "Hủy",
             "e05063cfc1": "Dòng {{value0}}",
             "c845170b3b": "Dòng {{value0}}-{{value1}}",
-            "commentTooLarge": "Nhận xét quá lớn để gửi một cách an toàn."
+            "commentTooLarge": "Nhận xét quá lớn để gửi một cách an toàn.",
+            "f6c449191e": "Thêm ghi chú cho AI",
+            "5fa4bfebaa": "Thêm ghi chú",
+            "5e9b3d0c2e": "Đang thêm…"
           },
           "useDiffCommentDecorator": {
             "995fa28b50": "Ghi chú này"
@@ -17405,6 +17487,13 @@
         "dispatchRejected": "Người đại diện từ chối tin nhắn “tiếp tục”. Mở cuộc trò chuyện và gửi cho chính mình.",
         "unsupported": "Wakii không thể tiếp tục cuộc trò chuyện này. Mở nó ra để xem nó dừng ở đâu.",
         "fallback": "Wakii không thể tiếp tục cuộc trò chuyện này. Mở nó để tiếp tục bằng tay."
+      },
+      "web": {
+        "preloadApi": {
+          "cursorAccounts": {
+            "hostOnly": "Chi tiết đăng nhập Cursor chỉ đọc được trên máy đang chạy Orca."
+          }
+        }
       }
     },
     "i18n": {
@@ -17467,6 +17556,175 @@
           "insertColumnRight": "Chèn cột bên phải",
           "deleteColumn": "Xóa cột",
           "deleteTable": "Xóa bảng"
+        }
+      }
+    },
+    "viewer": {
+      "wakii-graph-nodes": {
+        "1a2b3c4d5e": "tác vụ"
+      },
+      "wakii-legend-overlay": {
+        "stateDone": {
+          "1a2b3c4d5e": "Xong"
+        },
+        "stateInProgress": {
+          "2b3c4d5e6f": "Đang làm"
+        },
+        "statePending": {
+          "3c4d5e6f7a": "Chờ"
+        },
+        "stateBlocked": {
+          "4d5e6f7a8b": "Bị chặn"
+        },
+        "computedFile": {
+          "5e6f7a8b9c": "tệp tính tự động"
+        },
+        "curatedFile": {
+          "6f7a8b9c0d": "tệp soạn tay"
+        }
+      },
+      "viewer-warnings-popover": {
+        "empty": {
+          "5e6f7a8b9c": "Không có cảnh báo decode."
+        }
+      },
+      "wakii-error-overlay": {
+        "title": {
+          "6f7a8b9c0d": "Không mở được tệp"
+        },
+        "hint": {
+          "7a8b9c0d1e": "Tệp bị từ chối khi decode (main process) — không render dở dang gì. Kiểm tra nội dung tệp hoặc mở lại từ app."
+        },
+        "close": {
+          "8b9c0d1e2f": "Đóng"
+        }
+      },
+      "wakii-side-panel": {
+        "kindEpic": {
+          "9c0d1e2f3a": "Cấp Epic"
+        },
+        "kindSf": {
+          "0d1e2f3a4b": "SF con"
+        },
+        "kindTask": {
+          "1e2f3a4b5c": "Tác vụ"
+        },
+        "kindStep": {
+          "2f3a4b5c6d": "Bước"
+        },
+        "kindArea": {
+          "3a4b5c6d7e": "Khu vực"
+        },
+        "kindFile": {
+          "4b5c6d7e8f": "Tệp"
+        },
+        "stateDone": {
+          "5c6d7e8f9a": "Xong"
+        },
+        "stateInProgress": {
+          "6d7e8f9a0b": "Đang làm"
+        },
+        "statePending": {
+          "7e8f9a0b1c": "Chờ"
+        },
+        "stateBlocked": {
+          "8f9a0b1c2d": "Bị chặn"
+        },
+        "stateComplete": {
+          "9a0b1c2d3e": "Hoàn tất"
+        },
+        "rowDest": {
+          "e4f5a6b7c8": "Branch đích"
+        },
+        "rowPath": {
+          "f5a6b7c8d9": "Đường dẫn"
+        },
+        "rowSource": {
+          "a6b7c8d9e0": "Nguồn"
+        },
+        "sourceComputed": {
+          "b7c8d9e0f1": "story-impact (tính tự động)"
+        },
+        "sourceCurated": {
+          "c8d9e0f1a2": "Touch map (soạn tay)"
+        },
+        "rowSfs": {
+          "d9e0f1a2b3": "SF đụng tới"
+        },
+        "rowMechanism": {
+          "e0f1a2b3c4": "Cơ chế"
+        },
+        "evidenceHeading": {
+          "f1a2b3c4d5": "BẰNG CHỨNG"
+        },
+        "sectionAcceptance": {
+          "a0b1c2d3e4": "NGHIỆM THU"
+        },
+        "sectionTests": {
+          "b1c2d3e4f5": "KIỂM THỬ"
+        },
+        "sectionNotes": {
+          "c2d3e4f5a6": "GHI CHÚ"
+        },
+        "rowLinear": {
+          "d3e4f5a6b7": "Linear"
+        }
+      },
+      "viewer-toolbar": {
+        "kindEpic": {
+          "a1b2c3d4e5": "Cấp Epic"
+        },
+        "kindSf": {
+          "b2c3d4e5f6": "SF con"
+        },
+        "kindTask": {
+          "c3d4e5f6a7": "Tác vụ"
+        },
+        "kindStep": {
+          "d4e5f6a7b8": "Bước"
+        },
+        "kindArea": {
+          "e5f6a7b8c9": "Khu vực"
+        },
+        "kindFile": {
+          "f6a7b8c9d0": "Tệp"
+        },
+        "modeProgress": {
+          "a7b8c9d0e1": "Tiến độ"
+        },
+        "modeLogic": {
+          "b8c9d0e1f2": "Logic & Tác động"
+        },
+        "impactLayer": {
+          "c9d0e1f2a3": "Lớp impact"
+        },
+        "warnings": {
+          "d0e1f2a3b4": "cảnh báo decode"
+        },
+        "fit": {
+          "e1f2a3b4c5": "Vừa khung hình"
+        }
+      },
+      "viewer-canvas": {
+        "hint": {
+          "a2b3c4d5e6": "Cuộn: thu phóng · Kéo nền: di chuyển · Bấm node: chi tiết · Di chuột: láng giềng + quạt tier"
+        }
+      },
+      "wakii-viewer": {
+        "nodes": {
+          "b3c4d5e6f7": "node"
+        },
+        "edges": {
+          "c4d5e6f7a8": "cạnh"
+        },
+        "generatedAt": {
+          "d5e6f7a8b9": "sinh lúc"
+        },
+        "simulatedError": {
+          "e6f7a8b9c0": "Lỗi decode giả lập (chỉ dev)."
+        },
+        "simulate": {
+          "f7a8b9c0d1": "Giả lập lỗi"
         }
       }
     }
@@ -17611,7 +17869,8 @@
         "imagePreviewUnavailable": "Xem trước không có sẵn",
         "workspaceAttachmentMismatch": "Các tập tin chỉ có thể được đính kèm vào không gian làm việc nguồn của chúng.",
         "attachmentOwnerChanged": "Không gian làm việc này đã thay đổi máy chủ trong khi đính kèm - hãy thả lại tệp.",
-        "attachmentUnreadable": "Không thể đọc các tập tin bị rơi."
+        "attachmentUnreadable": "Không thể đọc các tập tin bị rơi.",
+        "pasteUnavailable": "Không dán được — chat này đang không nhận input."
       },
       "tool": {
         "exitCode": "thoát {{value0}}",
@@ -17746,7 +18005,8 @@
         },
         "error": {
           "title": "Không thể tải cuộc trò chuyện",
-          "subtitle": "Bản ghi không thể đọc được. Chuyển trở lại terminal để tiếp tục làm việc."
+          "subtitle": "Bản ghi không thể đọc được. Chuyển trở lại terminal để tiếp tục làm việc.",
+          "retryingSubtitle": "Không đọc được bản ghi hội thoại. Orca vẫn tiếp tục thử tải nó."
         },
         "pairHost": "Ghép nối máy chủ để xem lịch sử trò chuyện của agent.",
         "notAgent": {
@@ -17756,7 +18016,8 @@
         "empty": {
           "title": "Bắt đầu trò chuyện với {{value0}}",
           "subtitle": "Yêu cầu {{value0}} kiểm tra mã, giải thích đầu ra hoặc thực hiện thay đổi."
-        }
+        },
+        "reconnecting": "Đang kết nối lại tới chat này…"
       },
       "stop": "Dừng agent",
       "copyMessage": {
@@ -17782,7 +18043,8 @@
       "ask": {
         "awaiting": "Đang chờ người dùng nhập:",
         "asked": "Yêu cầu:",
-        "questionCount": "{{value0}} câu hỏi"
+        "questionCount": "{{value0}} câu hỏi",
+        "awaitingUnnamed": "Đang chờ người dùng nhập"
       },
       "approval": {
         "title": "Cho phép {{value0}}?",
@@ -17851,7 +18113,8 @@
         "startedN": "Đã khởi động các subagents {{value0}}",
         "ranOne": "Chạy 1 tiểu chất",
         "ranN": "Chạy các subagents {{value0}}",
-        "tokens": "{{value0}} mã thông báo"
+        "tokens": "{{value0}} mã thông báo",
+        "unnamed": "Agent phụ"
       },
       "conversationCommand": {
         "pendingWork": "Đợi công việc và tin nhắn đang chờ xử lý kết thúc trước khi sử dụng lệnh này.",
@@ -17888,6 +18151,84 @@
         "label": "Ngữ cảnh {{used}} trong số {{window}} mã thông báo, {{percent}}% được sử dụng",
         "title": "Bối cảnh",
         "estimated": "Ước tính từ phản hồi cuối cùng."
+      },
+      "writeNotice": {
+        "notDoneReadHistory": "Không tải được lịch sử chat này.",
+        "notDoneSend": "Tin nhắn của bạn chưa được gửi.",
+        "tryAgainComposerSend": "Gửi lại nhé.",
+        "notDoneStop": "Chưa dừng được agent.",
+        "notDoneStopTask": "Chưa dừng được tác vụ nền.",
+        "notDoneStopTasks": "Chưa dừng được các tác vụ nền.",
+        "notDoneAnswer": "Câu trả lời của bạn chưa được gửi.",
+        "notDoneOption": "Chưa đổi được cài đặt.",
+        "notDoneCommand": "Lệnh chưa chạy được.",
+        "notDoneGoal": "Chưa đổi được mục tiêu.",
+        "restartFailed": "Không khởi động lại được agent.",
+        "capacity": "Orca đã nhận quá nhiều yêu cầu trong ngày qua.",
+        "outcomeUnknown": "Orca không xác nhận được điều gì đã xảy ra. Kiểm tra lại chat.",
+        "questionChanged": "Câu hỏi này đã được trả lời hoặc đã thay đổi.",
+        "historyUnreadable": "Orca không đọc được lịch sử đã lưu của chat này.",
+        "historyUnusable": "Không tải được chat này.",
+        "historyUnavailable": "Orca tạm không mở được lịch sử chat này.",
+        "savedByNewerOrca": "Các chat được lưu bởi Orca bản mới hơn.",
+        "updateOrcaToKeepUsing": "Cập nhật Orca để tiếp tục dùng chúng.",
+        "unsupported": "Bản Orca đang chạy chat này không hỗ trợ. Cập nhật Orca rồi thử lại.",
+        "unreachable": "Orca không kết nối được tới agent.",
+        "recordFailed": "Orca không ghi được vào lịch sử chat này.",
+        "conversationCleared": "Hội thoại này đã được xoá.",
+        "openCurrentConversation": "Mở hội thoại hiện tại để tiếp tục.",
+        "clearUnfinished": "Lần /clear trước chưa hoàn tất.",
+        "commandRunning": "Một lệnh /compact hoặc /clear vẫn đang chạy.",
+        "waitForCommand": "Chờ /compact hoặc /clear chạy xong.",
+        "agentStarting": "Agent vẫn đang khởi động.",
+        "waitForStart": "Chờ agent khởi động xong.",
+        "turnActive": "Agent vẫn đang trả lời.",
+        "waitForTurn": "Chờ agent trả lời xong, hoặc dừng nó.",
+        "promptPending": "Agent đang chờ trả lời một câu hỏi hoặc phê duyệt.",
+        "answerFirst": "Trả lời câu hỏi hoặc phê duyệt trước đã.",
+        "backgroundTasksRunning": "Các tác vụ nền vẫn đang chạy.",
+        "waitForBackgroundTasks": "Chờ các tác vụ nền chạy xong.",
+        "messagesUnsettled": "Một tin nhắn bạn gửi trước đó chưa được xác nhận.",
+        "settleEarlierMessage": "Chờ tin nhắn trước đi hẳn, hoặc gửi lại.",
+        "optionRejected": "Agent không nhận cài đặt này.",
+        "goalsUnsupported": "Agent này không hỗ trợ mục tiêu.",
+        "agentRefused": "Agent đã từ chối việc này.",
+        "ownerUnproven": "Orca chưa xác nhận được agent trước đó của chat này đã dừng.",
+        "reopenChat": "Mở lại chat để kiểm tra lần nữa.",
+        "terminalAgentHoldsChat": "Chat này vẫn đang mở trong một agent terminal.",
+        "quitTerminalAgent": "Thoát agent đó để tiếp tục chat ở đây.",
+        "hostReconciling": "Orca vẫn đang kiểm tra lại chat này sau khi khởi động lại.",
+        "waitMoment": "Chờ một chút.",
+        "recordUnreadable": "Orca không đọc được trạng thái đã lưu của chat này.",
+        "chatNotFound": "Bản Orca đang chạy chat này không có hồ sơ về nó.",
+        "startNewChat": "Tạo chat mới để tiếp tục.",
+        "tryAgain": "Thử lại."
+      },
+      "dismissDeliveryNotice": "Bỏ qua",
+      "messageNotSent": "Tin nhắn chưa gửi được",
+      "deliveryUnconfirmed": "Chưa xác nhận gửi — kiểm tra chat trước khi thử lại",
+      "queuedMessages": {
+        "behindReturnedHold": "Đang chờ — một tin phía trước cần bạn lưu ý",
+        "awaitingAnswerHold": "Chờ câu trả lời của bạn",
+        "steer": "Định hướng",
+        "send": "Gửi",
+        "steerHint": "Gửi đi mà không ngắt model",
+        "sendHint": "Gửi tin nhắn này ngay",
+        "delete": "Xoá",
+        "moreActions": "Thao tác khác",
+        "editMessage": "Sửa tin nhắn",
+        "turnOffQueueing": "Tắt xếp hàng",
+        "listLabel": "Tin nhắn đang xếp hàng",
+        "alreadySent": "Tin nhắn này đã được gửi.",
+        "editAlreadySent": "Đã gửi — văn bản của bạn vẫn còn trong ô soạn.",
+        "withdrawnHold": "Đã dừng trước khi gửi",
+        "pausedSendFailed": "Chưa gửi được — bấm Gửi để thử lại.",
+        "paused": "Tạm dừng",
+        "queuePausedStopped": "Hàng đợi tạm dừng vì bạn đã ngắt",
+        "queuePausedRestarted": "Hàng đợi tạm dừng vì Orca khởi động lại",
+        "queuePausedCleared": "Hàng đợi tạm dừng sau khi bạn xoá hội thoại",
+        "queuePaused": "Hàng đợi tạm dừng",
+        "resume": "Tiếp tục"
       }
     },
     "tab": {
@@ -18210,7 +18551,15 @@
             "spaces": "khoảng trống"
           }
         }
+      },
+      "nativeChat": {
+        "queueFollowUpsTitle": "Xếp hàng tin nhắn tiếp nối",
+        "queueFollowUpsCopy": "Tin nhắn bạn gửi khi agent đang bận sẽ đứng thành thẻ để bạn định hướng, sửa hoặc xoá. Tin có ảnh gửi ngay.",
+        "queueFollowUpsToggleLabel": "Bật/tắt xếp hàng tin tiếp nối"
       }
+    },
+    "agentChildRow": {
+      "ended": "Đã kết thúc"
     }
   },
   "dashboardPopout": {
@@ -18330,6 +18679,52 @@
       "unassignedInstruction": "Gán một phím tắt đọc chính tả trước khi bắt đầu đọc chính tả trong ngăn có tiêu điểm.",
       "settingsInstruction": "Thay đổi kiểu máy, chế độ đọc chính tả hoặc phím tắt bất kỳ lúc nào trong",
       "settingsLink": "Cài đặt → Giọng nói"
+    },
+    "sessionSearch": {
+      "continueInBackground": "Tiếp tục trong nền",
+      "recent1Text": "Đã chuyển các mục tìm kiếm xuống Workflows và cập nhật tests.",
+      "demoHit2Title": "Session refresh sau khi sleep",
+      "startSearching": "Bắt đầu tìm kiếm",
+      "demoHit5Snippet": "Viết giúp kế hoạch [[migration]] [[rollback]] trước khi chúng ta thử lại nhé?",
+      "ageHours": "2g",
+      "ageMinutes": "12p",
+      "demoQuery": "hết hạn đăng nhập",
+      "demoHit2Snippet": "Sao trang [[login]] lại treo sau [[timeout]] khi thức dậy?",
+      "demoHit3Age": "2t",
+      "recent2Title": "Nâng lockfile",
+      "demoHit1Age": "3n",
+      "demoHit4Title": "Migration bảng orders",
+      "readyToast": "Tìm kiếm session đã sẵn sàng",
+      "progressStarting": "Đang đọc các session của bạn…",
+      "demoHit6Title": "Ghi chú review schema",
+      "ageYesterday": "1n",
+      "demoHit6Age": "1th",
+      "demoHit4Age": "5n",
+      "demoHit1Snippet": "Đã nâng [[login timeout]] lên 30s và thêm retry cho token refresh.",
+      "demoHit1Title": "Sửa auth redirect hay lỗi",
+      "indexingDescription": "Orca đang đọc các bản ghi agent trước đây của bạn để bạn tìm kiếm được. Việc này có thể mất vài phút.",
+      "recent3Text": "Bản đầu tiên của ghi chú đây, chia theo khu vực.",
+      "demoHit5Title": "Deploy staging thất bại",
+      "demoHit3Title": "Cứng hoá auth e2e",
+      "agentsInstruction": "Agents của bạn cũng tìm được. Hãy bảo một agent: \"tìm session mà chúng ta sửa login timeout\".",
+      "demoHit3Snippet": "Đã thêm test phủ trọn đường [[login timeout]] từ đầu đến cuối.",
+      "demoHit5Age": "3t",
+      "readyDescription": "Mọi agent session trên máy này giờ tìm được theo nội dung đã nói trong đó.",
+      "indexingTitle": "Đang đánh chỉ mục các agent session",
+      "recent1Title": "Dọn sidebar cài đặt",
+      "recent3Title": "Bản nháp release notes",
+      "demoHit6Snippet": "Mọi [[migration]] ở đây đều đảo ngược được trừ việc đổi tên enum.",
+      "demoQuery2": "rollback migration",
+      "readyTitle": "Tìm kiếm session đã sẵn sàng",
+      "recent2Text": "Cập nhật dependencies và bảo đảm build vẫn xanh.",
+      "demoRoleUser": "Người dùng",
+      "enableFailed": "Không bật được tìm kiếm session. Thử lại nhé.",
+      "demoHit4Snippet": "[[rollback]] xoá index mới trước, rồi khôi phục cột cũ.",
+      "demoRoleAssistant": "Trợ lý",
+      "consentInstruction": "Đổi hoặc tắt bất cứ lúc nào trong",
+      "readyToastOpen": "Mở",
+      "demoHit2Age": "1t",
+      "settingsLink": "Cài đặt → Tìm kiếm Agent Session"
     }
   },
   "quickOpen": {
@@ -18379,7 +18774,8 @@
       "needsInput": "cần đầu vào",
       "working": "đang làm việc",
       "stopped": "dừng lại",
-      "finished": "hoàn thành"
+      "finished": "hoàn thành",
+      "failed": "thất bại"
     }
   },
   "sessionSearch": {
@@ -18466,5 +18862,75 @@
   },
   "common": {
     "retry": "Thử lại"
+  },
+  "terminal": {
+    "sessionSaveFailure": {
+      "title": "Không lưu được phiên terminal",
+      "capacity": "Thiết bị lưu terminal này báo đầy bộ nhớ hoặc vượt hạn mức. Giải phóng bớt dung lượng trên thiết bị đó rồi thử lại.",
+      "unknown": "Orca không lưu được trạng thái terminal. Thử lại. Nếu tiếp tục xảy ra, gửi log Orca cho hỗ trợ để tìm nguyên nhân."
+    },
+    "codexTerminalServerIsolationNotice": {
+      "title": "Orca nay chạy Codex không qua server dùng chung",
+      "description": "Điều này giúp trạng thái agent tin cậy hơn. Bạn có thể bật lại trong Cài đặt.",
+      "openSettings": "Mở Cài đặt"
+    }
+  },
+  "fileExplorer": {
+    "root": {
+      "label": "Gốc trình khám phá",
+      "full": "Gốc repository",
+      "viewing": "Đang xem: {{path}}",
+      "back": "Về {{path}}",
+      "searchScope": "Phạm vi tìm: tệp workspace",
+      "retry": "Thử lại",
+      "omittedFiles": "Tệp bị sparse checkout bỏ qua sẽ không được tìm.",
+      "viewOnly": "Sparse checkout · Xem thay đổi không đổi tệp đã checkout.",
+      "sparseStatus": "Sparse checkout (checkout một phần)",
+      "scopeDetails": "Về phạm vi sparse checkout",
+      "scopeExplanation": "Bộ chọn thư mục đổi những gì bạn thấy, không đổi tệp được checkout. Gốc repository bao gồm gốc đã checkout và các tệp tổ tiên.",
+      "searchExplanation": "Tên lọc trong thư mục đang xem. Nội dung tìm khắp workspace. Tệp bị sparse checkout bỏ qua sẽ không được tìm.",
+      "findInFolder": "Tìm trong {{path}}",
+      "folderLoadError": "Không tải được thư mục này:",
+      "emptyFolder": "Không có tệp nào trong thư mục này"
+    }
+  },
+  "sparsePreset": {
+    "name": "Tên",
+    "namePlaceholder": "Web app và UI dùng chung",
+    "directories": "Thư mục",
+    "pathHelp": "Mỗi dòng một thư mục theo đường dẫn tương đối của repository. Dấu cách trong đường dẫn được giữ nguyên.",
+    "coneHelp": "Git cũng giữ các tệp ở gốc repository và dọc theo thư mục cha của các thư mục này.",
+    "cancel": "Huỷ",
+    "save": "Lưu preset",
+    "new": "Sparse preset mới",
+    "edit": "Sửa sparse preset",
+    "description": "Chọn thư mục mà workspace mới sẽ checkout.",
+    "saveFailed": "Không lưu được preset. Thử lại.",
+    "nameRequired": "Cần nhập tên.",
+    "nameTooLong": "Tên tối đa 80 ký tự.",
+    "nameExists": "Đã có preset tên \"{{name}}\".",
+    "loading": "Đang tải preset…",
+    "details": "Những gì được checkout?",
+    "finishEditing": "Lưu hoặc huỷ preset để tiếp tục tạo workspace.",
+    "pathInstructions": "Chọn thư mục từ repository, hoặc gõ đường dẫn tương đối bất kỳ.",
+    "retryLoad": "Tải lại preset",
+    "fullCheckout": "Checkout đầy đủ",
+    "checkoutPreset": "Preset checkout",
+    "search": "Tìm preset…",
+    "noMatches": "Không có preset khớp.",
+    "allFiles": "Mọi tệp của repository",
+    "editNamed": "Sửa {{name}}",
+    "addPath": "Thêm thư mục",
+    "findPath": "Tìm thư mục…",
+    "noPathMatches": "Không thấy thư mục nào.",
+    "repositoryRoot": "Gốc repository",
+    "loadingPaths": "Đang đọc thư mục…",
+    "pathsUnavailable": "Không đọc được thư mục này. Hãy gõ đường dẫn thay thế.",
+    "pathAdded": "Đã thêm",
+    "openFolder": "Mở {{name}}",
+    "findOrTypePath": "Tìm thư mục, hoặc gõ đường dẫn…",
+    "addTypedPath": "Thêm",
+    "noDirectories": "Chưa thêm thư mục nào.",
+    "removePath": "Xoá {{name}}"
   }
 }
