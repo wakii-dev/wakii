@@ -7,6 +7,8 @@
 //
 // Expose đúng 4 tool ĐỌC: bracket read · gate-list · watchdog status · task-list.
 // Server KHÔNG BAO GIỜ chạy mutation CLI (gate-resolve, task-update, worktree, resume --send…).
+// task-list/gate-list không --run mà CLI trả run_required (pane MCP không bind run): server
+// tự dò `orchestration run-list` (read-only, không cần binding) lấy run mới nhất → retry 1 lần --run.
 //
 // MCP client config: { "mcpServers": { "wakii-story": { "command": "<kit>/bin/wakii-mcp-server" } } }
 'use strict';
@@ -243,22 +245,64 @@ async function watchdogStatus() {
   return ok(lines.length ? lines.join('\n') : '(no sf-* worktrees found — nothing to watchdog)');
 }
 
-async function runOrcaTool(orcaArgs, args) {
+// run_required từ task-list/gate-list: pane kế thừa env của MCP server không bind run nào.
+// Fallback trong kit (phương án A): run-list read-only (không cần binding, đã xác nhận chạy
+// được từ pane nào cũng ra) → run mới nhất (updated_at desc, bỏ legacy) → retry ĐÚNG 1 lần.
+const RUN_ID_RE = /^[\w:-]{1,64}$/;
+
+function isRunRequiredFailure(r) {
+  return `${r.stdout}\n${r.stderr}`.includes('run_required');
+}
+
+// run-list --json shape (kiểm chứng máy thật 30/09): { ok, result: { runs: [{ id, updated_at, created_at, legacy }] } }
+async function latestWorkspaceRunId(cwd) {
+  const r = await runOrca(['orchestration', 'run-list', '--json'], cwd);
+  if (!r.ok) return null;
+  let runs;
+  try {
+    runs = JSON.parse(r.stdout)?.result?.runs;
+  } catch {
+    return null;
+  }
+  if (!Array.isArray(runs)) return null;
+  const usable = runs.filter((x) => x && typeof x.id === 'string' && RUN_ID_RE.test(x.id) && !x.legacy);
+  if (!usable.length) return null;
+  usable.sort((a, b) => String(b.updated_at || b.created_at || '').localeCompare(String(a.updated_at || a.created_at || '')));
+  return usable[0].id;
+}
+
+async function runOrcaTool(orcaArgs, args, allowRunFallback = false) {
   let cwd = process.cwd();
   if (typeof args.cwd === 'string' && args.cwd.trim()) {
     cwd = path.resolve(process.cwd(), args.cwd.trim());
     if (!fs.existsSync(cwd)) return err(`cwd not found: ${cwd}`);
   }
   const orcaArgsFull = [...orcaArgs];
+  let callerRun = false;
   if (typeof args.run === 'string' && args.run.trim()) {
     const rid = args.run.trim();
     // charset chặt — args của CLI không được Inject từ ngoài
-    if (!/^[\w:-]{1,64}$/.test(rid)) return err(`run id không hợp lệ: ${rid}`);
+    if (!RUN_ID_RE.test(rid)) return err(`run id không hợp lệ: ${rid}`);
     orcaArgsFull.push('--run', rid);
+    callerRun = true;
   }
   const r = await runOrca(orcaArgsFull, cwd);
   if (r.timedOut) return err(`timed out after 30s: orca ${orcaArgs.join(' ')}`);
   if (!r.ok) {
+    // caller truyền run rõ ràng → không fallback thay caller quyết
+    if (allowRunFallback && !callerRun && isRunRequiredFailure(r)) {
+      const rid = await latestWorkspaceRunId(cwd);
+      if (rid) {
+        const retry = await runOrca([...orcaArgs, '--run', rid], cwd);
+        if (retry.ok && !retry.timedOut) return ok(retry.stdout.trim() || '{}');
+        return err(
+          `orca ${orcaArgs.join(' ')} vẫn fail sau khi retry với --run ${rid} (exit ${retry.code}): ${(retry.stderr || retry.stdout || '(no output)').trim().slice(-500)}`
+        );
+      }
+      return err(
+        `orca ${orcaArgs.join(' ')}: không có orchestration run nào trong workspace — run-create/run-use từ pane của bạn trước, hoặc truyền run:<id> vào tool này.`
+      );
+    }
     return err(`orca ${orcaArgs.join(' ')} failed (exit ${r.code}): ${(r.stderr || r.stdout || '(no output)').trim().slice(-500)}`);
   }
   return ok(r.stdout.trim() || '{}');
@@ -289,10 +333,14 @@ const TOOLS = [
       type: 'object',
       properties: {
         cwd: { type: 'string', description: 'Working directory passed to the orca CLI (default: server cwd).' },
-        run: { type: 'string', description: 'Run ID (run_xxx) — query this run explicitly instead of the one bound to the cwd terminal (2.14.4).' },
+        run: {
+          type: 'string',
+          description:
+            'Run ID (run_xxx) — query this run explicitly instead of the one bound to the cwd terminal (2.14.4). If omitted and the CLI answers run_required (no Run bound to the server pane), the server picks the workspace\'s most recently updated run via run-list and retries once.',
+        },
       },
     },
-    run: (args) => runOrcaTool(['orchestration', 'gate-list', '--json'], args),
+    run: (args) => runOrcaTool(['orchestration', 'gate-list', '--json'], args, true),
   },
   {
     name: 'story_watchdog_status',
@@ -309,10 +357,14 @@ const TOOLS = [
       type: 'object',
       properties: {
         cwd: { type: 'string', description: 'Working directory passed to the orca CLI (default: server cwd).' },
-        run: { type: 'string', description: 'Run ID (run_xxx) — query this run explicitly instead of the one bound to the cwd terminal (2.14.4).' },
+        run: {
+          type: 'string',
+          description:
+            'Run ID (run_xxx) — query this run explicitly instead of the one bound to the cwd terminal (2.14.4). If omitted and the CLI answers run_required (no Run bound to the server pane), the server picks the workspace\'s most recently updated run via run-list and retries once.',
+        },
       },
     },
-    run: (args) => runOrcaTool(['orchestration', 'task-list', '--json'], args),
+    run: (args) => runOrcaTool(['orchestration', 'task-list', '--json'], args, true),
   },
 ];
 

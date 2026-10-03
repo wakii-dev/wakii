@@ -254,6 +254,122 @@ try {
     assert.match(textOf(res), /run id không hợp lệ/);
     assert.equal(argvLines().length, before, 'stub không được bị spawn với run id lạ');
   });
+
+  // 10b) run_required fallback (phương án A): pane MCP không bind run → CLI trả run_required
+  // exit 1 + payload "skills get" vô dụng. Server tự dò run-list (read-only) lấy run mới nhất
+  // (updated_at desc, bỏ legacy) → retry ĐÚNG 1 lần với --run. runOrca thử dev-trước-prod-sau
+  // nên 1 lần gọi thất bại = 2 dòng argv; retry thành công dừng ngay attempt đầu = 1 dòng.
+  const writeStub = (name, body) => {
+    const p = path.join(fixture, name);
+    fs.writeFileSync(p, body, 'utf8');
+    fs.chmodSync(p, 0o755);
+    return p;
+  };
+  await checkAsync('run_required fallback: task-list dò run-list → retry --run run mới nhất (bỏ legacy)', async () => {
+    const log = path.join(fixture, 'argv-fallback.log');
+    const stub = writeStub(
+      'orca-stub-fallback.sh',
+      [
+        '#!/bin/sh',
+        'printf \'%s\\n\' "$*" >> "$ARGV_LOG"',
+        'case "$*" in',
+        '  *"run-list"*)',
+        // legacy có updated_at mới nhất → nếu lọt filter thì retry sẽ nhầm nó
+        '    printf \'%s\' \'{"ok":true,"result":{"runs":[{"id":"run_legacyzz","updated_at":"2026-10-01T00:00:00Z","legacy":1},{"id":"run_old_one","updated_at":"2026-09-28T00:00:00Z","legacy":0},{"id":"run_new_one","updated_at":"2026-09-30T00:00:00Z","legacy":0}]}}\'',
+        '    ;;',
+        '  *--run*)',
+        '    printf \'%s\' \'{"result":{"items":["ok-with-run"]}}\'',
+        '    ;;',
+        '  *)',
+        '    printf \'%s\' \'{"ok":false,"error":{"code":"run_required","message":"No Run is bound."}}\'',
+        '    exit 1',
+        '    ;;',
+        'esac',
+        ''
+      ].join('\n')
+    );
+    const c = new McpClient(fixture, { ...process.env, ORCA_BIN: stub, ARGV_LOG: log });
+    try {
+      const res = await c.callTool('story_task_list', {}, 40);
+      if (res.error) throw new Error(`JSON-RPC error: ${res.error.message}`);
+      if (res.result.isError) throw new Error(`isError từ server: ${textOf(res).slice(0, 300)}`);
+      const parsed = JSON.parse(textOf(res));
+      assert.deepEqual(parsed.result.items, ['ok-with-run']);
+      const lines = () => fs.readFileSync(log, 'utf8').split('\n').filter(Boolean);
+      assert.equal(lines().filter((l) => l.includes('task-list') && !l.includes('--run')).length, 2, '2 attempt (dev+prod) task-list không --run');
+      assert.equal(lines().filter((l) => l.includes('run-list')).length, 1, 'ĐÚNG 1 lần run-list');
+      const retried = lines().filter((l) => l.includes('task-list') && l.includes('--run'));
+      assert.equal(retried.length, 1, 'ĐÚNG 1 lần retry');
+      assert.match(retried[0], /--run run_new_one$/, 'retry dùng run mới nhất theo updated_at, bỏ legacy');
+      // gate-list cùng cơ chế
+      const before = lines().length;
+      const g = await c.callTool('story_gate_list', {}, 41);
+      if (g.result.isError) throw new Error(`isError từ server: ${textOf(g).slice(0, 300)}`);
+      assert.match(textOf(g), /ok-with-run/);
+      const after = lines().slice(before);
+      assert.equal(after.filter((l) => l.includes('gate-list') && !l.includes('--run')).length, 2, 'gate-list: 2 attempt không --run');
+      assert.equal(after.filter((l) => l.includes('run-list')).length, 1, 'gate-list: ĐÚNG 1 lần run-list');
+      assert.match(after.find((l) => l.includes('gate-list') && l.includes('--run')) || '', /--run run_new_one$/);
+    } finally {
+      c.kill();
+      await c.exit;
+    }
+  });
+  await checkAsync('run_required + run-list rỗng → lỗi giải thích rõ, KHÔNG retry mù', async () => {
+    const log = path.join(fixture, 'argv-empty.log');
+    const stub = writeStub(
+      'orca-stub-empty.sh',
+      [
+        '#!/bin/sh',
+        'printf \'%s\\n\' "$*" >> "$ARGV_LOG"',
+        'case "$*" in',
+        '  *"run-list"*) printf \'%s\' \'{"ok":true,"result":{"runs":[]}}\' ;;',
+        '  *)',
+        '    printf \'%s\' \'{"ok":false,"error":{"code":"run_required"}}\'',
+        '    exit 1',
+        '    ;;',
+        'esac',
+        ''
+      ].join('\n')
+    );
+    const c = new McpClient(fixture, { ...process.env, ORCA_BIN: stub, ARGV_LOG: log });
+    try {
+      const res = await c.callTool('story_task_list', {}, 42);
+      assert.equal(res.result.isError, true);
+      const out = textOf(res);
+      assert.match(out, /không có orchestration run nào trong workspace/);
+      assert.match(out, /run-create\/run-use/);
+      assert.match(out, /run:/);
+      assert.match(out, /orca orchestration task-list/); // context lệnh gốc
+      const lines = fs.readFileSync(log, 'utf8').split('\n').filter(Boolean);
+      assert.equal(lines.filter((l) => l.includes('task-list')).length, 2, 'chỉ 2 attempt dev+prod, không retry không id');
+      assert.equal(lines.filter((l) => l.includes('run-list')).length, 1);
+    } finally {
+      c.kill();
+      await c.exit;
+    }
+  });
+  await checkAsync('caller truyền run rõ ràng + vẫn fail → KHÔNG fallback', async () => {
+    const log = path.join(fixture, 'argv-explicit.log');
+    const stub = writeStub(
+      'orca-stub-explicit.sh',
+      '#!/bin/sh\nprintf \'%s\\n\' "$*" >> "$ARGV_LOG"\nprintf \'%s\' \'{"ok":false,"error":{"code":"run_required"}}\'\nexit 1\n'
+    );
+    const c = new McpClient(fixture, { ...process.env, ORCA_BIN: stub, ARGV_LOG: log });
+    try {
+      const res = await c.callTool('story_task_list', { run: 'run_explicit9' }, 43);
+      assert.equal(res.result.isError, true);
+      const out = textOf(res);
+      assert.match(out, /exit 1/); // lỗi orca gốc lộ ra nguyên vẹn, không thay bằng fallback
+      assert.match(out, /run_required/);
+      const lines = fs.readFileSync(log, 'utf8').split('\n').filter(Boolean);
+      assert.ok(!lines.some((l) => l.includes('run-list')), 'không được gọi run-list khi caller đã truyền run');
+      assert.equal(lines.filter((l) => l.includes('--run run_explicit9')).length, 2, '2 attempt dev+prod, không retry thêm');
+    } finally {
+      c.kill();
+      await c.exit;
+    }
+  });
 } finally {
   client.kill();
   const code = await client.exit;
