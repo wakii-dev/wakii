@@ -1,4 +1,4 @@
-# Kit INDEX — bản đồ 57 bins theo vòng đời story
+# Kit INDEX — bản đồ 58 bins theo vòng đời story
 
 > Đọc file này trước khi lần đầu dùng kit. Mỗi bin 1 dòng: *làm gì*. Nhóm theo giai đoạn lifecycle — không phải alphabet.
 > Đây là root file (không cài vào `~/.claude`) — nguồn tra cứu, không phải công cụ.
@@ -27,7 +27,7 @@
 | `story-automation-install` | 1 LỆNH trên máy mới là có ca trực 24/7 |
 | `story-hooks-install` | Merge story-team-kit hook entries vào settings.json |
 
-## 3 · Trong lúc làm — worker/executor (13)
+## 3 · Trong lúc làm — worker/executor (16)
 
 | Bin | Làm gì |
 |---|---|
@@ -75,12 +75,13 @@
 |---|---|
 | `story-close` | Chuẩn hoá CLOSE phase: audit merge + ownership probe + dọn an toàn (BLOCK nếu nghi) |
 
-## 7 · Hooks & nền tảng (7)
+## 7 · Hooks & nền tảng (9)
 
 | Bin | Làm gì |
 |---|---|
 | `hook-session-start` | Wrapper settings.json hooks.SessionStart |
 | `story-fact-pack` | SessionStart: inject ≤2KB fact-pack context story liên quan |
+| `story-compact-recovery` | SessionStart (matcher: compact): nhắc khôi phục story state sau mỗi lần compaction |
 | `hook-post-tool-use` | Wrapper settings.json hooks.PostToolUse |
 | `hook-stop` | Wrapper settings.json hooks.Stop |
 | `story-guard-dangerous` | PreToolUse: chặn lệnh phá hoại (force-push pattern, rm đệ quy…) |
@@ -93,13 +94,15 @@
 | Bin | Làm gì |
 |---|---|
 | `wakii-mcp-server` | MCP server read-only: bracket/task-list/gate-list/watchdog cho agent ngoài |
-| `wakii-validate` | Validate kit/manifest (provides, schema) |
+| `wakii-validate` | Validate file `.wakii` mindmap schema v1 — exit 0/1/2, `--linear`, `--resolve-primary` |
 | `wakii-skill-export` | Export skills ra định dạng chia sẻ |
 | `wakii-skill-import` | Import skills từ định dạng chia sẻ |
 | `source-sync-dispatch` | Điều phối sync feature từ NGUỒN THAM CHIẾU BẤT KỲ |
 | `vscode-sync-dispatch` | ⚠️ DEPRECATED — giữ cho automation prompts cũ; dùng `source-sync-dispatch` |
 
-## Lưu ý v0 driver
+## Lưu ý driver
 
-`workfront-driver.sh` (GA, ngoài kit — `docs/superpowers/navigator/`) lái các bins nhóm
-2→4→6 tự động theo decision table;per-story instance, tự kill khi story DONE.
+`workfront-driver` đã vào kit (nhóm 3 — runbook `NAVIGATOR.md`): lái các bins nhóm
+2→4→6 tự động theo decision table, per-story instance, tự kill khi story DONE.
+Bản chạy cục-máy tại `docs/superpowers/navigator/` (gitignored) là driver state,
+không phải nguồn.
