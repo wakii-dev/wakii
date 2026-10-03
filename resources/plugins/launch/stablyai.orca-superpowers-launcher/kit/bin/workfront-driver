@@ -120,6 +120,17 @@ Dòng cuối PHẢI là: VERDICT: DONE-VERIFIED|NOT-DONE|FAIL-VERIFIED — <1 d�
     --disallowedTools "Bash(git push:*)" "Bash(git merge:*)" "Bash(git commit:*)" "Bash(git checkout:*)" "Bash(git reset:*)" "Bash(git rebase:*)" "Bash(git clean:*)" "WebFetch" "WebSearch" 2>&1 | tail -5
 }
 
+run_worker(){ # GD2-minimal: worker executor làm SF trong per-story worktree (portable only)
+  local sf="$1"
+  "$TIMEOUT" 45m claude -p "Story $SLUG — SF $sf CHƯA LÀM. Làm theo task DAG trong mindmap docs/superpowers/mindmaps/$SLUG.wakii (node $sf + các tasks con, đúng thứ tự):
+- TDD: đọc pattern dự án trước (schema/routes/tests hiện có), viết test trước, code tối thiểu đạt.
+- Commit từng task xong: git commit -m \"feat($SLUG): t-x.x <mô tả>\" trên branch hiện tại (KHÔNG push).
+- Dòng cuối PHẢI là: VERDICT: DONE|PARTIAL — <tasks xong / còn lại>" \
+    --permission-mode acceptEdits \
+    --allowedTools "Read" "Glob" "Grep" "Write" "Edit" "Bash(git log:*)" "Bash(git diff:*)" "Bash(git status *)" "Bash(git add:*)" "Bash(git commit:*)" "Bash(pnpm vitest:*)" "Bash(pnpm tc:*)" "Bash(pnpm typecheck)" "Bash(pnpm lint)" "Bash(node *)" \
+    --disallowedTools "Bash(git push:*)" "Bash(git merge:*)" "Bash(git checkout:*)" "Bash(git reset:*)" "Bash(git rebase:*)" "Bash(git clean:*)" "WebFetch" "WebSearch" 2>&1 | tail -5
+}
+
 prep_convergence(){ # VIẾT PACK TRƯỚC — caller chỉ set done_gate khi thành công (retry pass kế nếu lỗi)
   local evroot="docs/superpowers/evidence/$SLUG"
   local ev="$evroot/convergence"
@@ -204,6 +215,18 @@ one_pass(){
   # Đã verify: phân xử
   case "$v" in
     NOT-DONE|NO-VERDICT)
+      if [[ "$PORTABLE" == "1" ]]; then
+        # GD2-minimal: worker LAM SF trong per-story worktree (dang cd san) — an toan vi worktree = noi cach ly
+        if orca_run_active; then log "SKIP: run $SLUG dang hoat - khong dispatch worker"; return; fi
+        log "WORKER $SF (trong worktree, commit tren branch story)"
+        local wout
+        wout=$(run_worker "$SF")
+        local wv
+        wv=$(echo "$wout" | grep -o 'VERDICT: \(DONE\|PARTIAL\)' | head -1 | awk '{print $2}')
+        log "WORKER $SF → ${wv:-NO-VERDICT} - pass ke verify lai"
+        return
+      fi
+      # orca mode (giu v1): story-launch that, fail → BLOCKED
       # Nhánh 5 (scope v1): KHÔNG worker vào primary — story-launch THẬT (bin tự dựng worktree + dispatch)
       if orca_run_active; then log "SKIP: run $SLUG đang hoạt — không launch $SF"; return; fi
       log "LAUNCH $SF — story-launch thật"
