@@ -5,34 +5,36 @@
     "epic": "VI-1",
     "dest": "story/vi-1-vietnamese-i18n",
     "generatedAt": "2026-09-29T03:26:26.870Z",
-    "generator": "story-mindmap 1.0.0"
+    "generator": "story-mindmap 1.0.0",
+    "updatedAt": "2026-10-03T08:30:41Z",
+    "doneVerdict": "2026-10-03 — workfront-driver lái trọn vòng: sf-1/2/3 DONE-VERIFIED (verify executor: git + 51/40/27 tests) · sf-2/3 FAIL phát hiện regression ratchet thật (upstream 30/09) → coordinator fix 31b1c140a4 → driver re-verify PASS · convergence pack evidence/vi-1.../convergence · story-close BLOCK bởi 5 branch sf-* cũ của story khác (janitor triage) · Linear ⏳ · user APPROVE done"
   },
   "nodes": [
     {
       "id": "epic",
       "kind": "epic",
       "title": "VI-1 — Hỗ trợ tiếng Việt (UI language built-in thứ 7)",
-      "state": "in-progress"
+      "state": "done"
     },
     {
       "id": "sf-1",
       "kind": "sf",
       "title": "Registry + wiring + pipeline enablement",
-      "state": "pending",
+      "state": "done",
       "tier": 0
     },
     {
       "id": "sf-2",
       "kind": "sf",
       "title": "Catalog vi.json full production",
-      "state": "pending",
+      "state": "done",
       "tier": 1
     },
     {
       "id": "sf-3",
       "kind": "sf",
       "title": "Guardrails + convergence QA",
-      "state": "pending",
+      "state": "done",
       "tier": 2
     },
     {
