@@ -13,11 +13,14 @@ Navigator cũ chạy nhưng "không có hành động để execute, không th�
 
 User trỏ 1 story vào `navigator/FOCUS` → navigator tự động launch SF, dispatch worker, verify, advance DAG cho đến khi hết SF — rồi DỪNG, soạn convergence, **chờ duyệt DONE**.
 
-## 3. Focus
+## 3. Vòng đời — MỘT STORY = MỘT NAVIGATOR (user ruling 03/10)
 
-- `docs/superpowers/navigator/FOCUS` — 1 dòng: slug story đang được lái (VD `vi-1-vietnamese-i18n`).
-- Trống/không tồn tại → pass no-op (2 phút, log 1 dòng, không DIGEST).
-- Đổi story = đổi 1 dòng. Tại một thời điểm ĐÚNG 1 story được lái, ĐÚNG 1 worker chạy.
+- **Tạo**: `navigator-runner.sh --loop <story-slug>` = sinh ĐÚNG 1 navigator cho ĐÚNG story đó (pane title `story-nav-<slug>`). Không có navigator toàn cục, không file FOCUS.
+- **Sống**: navigator lái đúng story của nó qua decision table (§4) — 3h/pass.
+- **Chết**: story DONE (user duyệt) → runner chạy `story-close` → **tự kill**: exit loop, đóng pane của mình. Không còn gì treo.
+- **Bỏ story giữa chừng** (user không muốn lái nữa): xoá dòng FOCUS-of-instance (file state per-instance) hoặc đóng pane → navigator thoát sạch.
+- Tại một thời điểm ĐÚNG 1 worker cho 1 navigator; N story chạy đồng thời = N navigator (mỗi cái 1 claude call/3h — tổng API không đổi so với 1 navigator quét N story).
+- Không slug / slug không tồn tại → thoát ngay với 1 dòng log (không no-op vô hạn).
 
 ## 4. State machine mỗi pass (decision table — thứ tự từ trên xuống, đúng 1 nhánh)
 
