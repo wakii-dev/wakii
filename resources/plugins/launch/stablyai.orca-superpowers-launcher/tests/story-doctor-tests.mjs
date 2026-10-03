@@ -3,7 +3,12 @@
 // (KHÔNG đụng ~/.claude thật): khoẻ PASS, marker sai → FAIL c1, hash sai → FAIL
 // c2, thiếu bin → FAIL c3, python/node không chạy → FAIL c4 (mock PATH), settings
 // malformed/thiếu hook → FAIL c5, KB vắng → WARN, orphan → WARN, agents/skills
-// thiếu → FAIL c8, --json parse được. Chạy: node tests/story-doctor-tests.mjs
+// thiếu → FAIL c8, --json parse được. ECC-6: --repair chữa marker drift +
+// exec-bit + orphan (không clobber settings.json), --uninstall PLAN/--yes xoá
+// đúng provides + marker (giữ file user), root trống không crash.
+// Chạy: node tests/story-doctor-tests.mjs
+// LƯU Ý: suite assert kit.json kitHash khớp kit/ tree (DR1 parity) — sau khi sửa
+// kit/ phải rehash kit.json trước thì DR1/DR16 mới xanh (rehash do coordinator).
 import { spawnSync } from 'node:child_process'
 import { mkdirSync, mkdtempSync, writeFileSync, readFileSync, existsSync, cpSync, readdirSync, statSync, rmSync, chmodSync } from 'node:fs'
 import { join, dirname, resolve } from 'node:path'
@@ -58,21 +63,22 @@ function copyTree(src, dst) {
 
 function hookSettings(root) {
   const binDir = join(root, 'bin')
-  const hook = f => ({ type: 'command', command: join(binDir, f), timeout: 10 })
   return JSON.stringify({
     hooks: {
-      SessionStart: [{ hooks: [hook('hook-session-start')] }],
-      PostToolUse: [{ matcher: 'Bash', hooks: [hook('hook-post-tool-use')] }],
-      Stop: [{ hooks: [hook('hook-stop')] }],
+      SessionStart: [{ hooks: [mkHook(binDir, 'hook-session-start')] }],
+      PostToolUse: [{ matcher: 'Bash', hooks: [mkHook(binDir, 'hook-post-tool-use')] }],
+      Stop: [{ hooks: [mkHook(binDir, 'hook-stop')] }],
       // c9 (GH-87): guards wired — command chứa /story-guard-* mà doctor quét
       PreToolUse: [
-        { matcher: 'Bash', hooks: [hook('story-guard-secrets')] },
-        { matcher: 'Bash', hooks: [hook('story-guard-dangerous')] },
-        { matcher: 'Edit|Write|MultiEdit', hooks: [hook('story-guard-envfiles')] },
+        { matcher: 'Bash', hooks: [mkHook(binDir, 'story-guard-secrets')] },
+        { matcher: 'Bash', hooks: [mkHook(binDir, 'story-guard-dangerous')] },
+        { matcher: 'Edit|Write|MultiEdit', hooks: [mkHook(binDir, 'story-guard-envfiles')] },
       ],
     },
   }, null, 2)
 }
+
+const mkHook = (binDir, f) => ({ type: 'command', command: join(binDir, f), timeout: 10 })
 
 function makeFixture({ marker = `${VER}:${HASH}`, settings = hookSettings, extraBins = [] } = {}) {
   const fx = mkdtempSync(join(tmpdir(), 'doctor-tests-'))
@@ -371,6 +377,131 @@ console.log('== [DR15] c9 hooks-manifests ==')
   rmSync(fx3, { recursive: true, force: true })
 }
 
+// ---- DR16: --repair chữa marker drift + exec-bit + orphan → re-check PASS -----
+console.log('== [DR16] --repair — marker drift + exec-bit + orphan ==')
+{
+  const fx = makeFixture({ marker: '9.9.9:' + HASH, extraBins: ['zzz-legacy-orphan'] })
+  // retired skill dir (RETIRED_SKILL_DIRS trong main.mjs) — installKit phải dọn
+  mkdirSync(join(fx, 'skills', 'gpt-taste'), { recursive: true })
+  writeFileSync(join(fx, 'skills', 'gpt-taste', 'SKILL.md'), 'retired orphan')
+  if (process.platform !== 'win32') chmodSync(join(fx, 'bin', 'story-kb'), 0o644)
+  const r = run(['--root', fx, '--repair'], { cwd: emptyCwd, env: noKbEnv, timeout: 120000 })
+  check('DR16', 'exit 0 (hết FAIL)', r.status === 0, `code=${r.status} stderr=${r.stderr}`)
+  check('DR16', 'log action installKit', r.stdout.includes('installKit OK'), r.stdout)
+  check('DR16', 'bảng before/after có marker FAIL → PASS', /marker\s+FAIL\s+→\s+PASS/.test(r.stdout), r.stdout)
+  const markerAfter = existsSync(join(fx, '.story-team-kit-version'))
+    ? readFileSync(join(fx, '.story-team-kit-version'), 'utf8').trim() : null
+  check('DR16', 'marker ghi lại VER:HASH', markerAfter === `${VER}:${HASH}`, String(markerAfter))
+  check('DR16', 'orphan bin bị xoá', !existsSync(join(fx, 'bin', 'zzz-legacy-orphan')))
+  check('DR16', 'retired skill dir bị dọn (installKit)', !existsSync(join(fx, 'skills', 'gpt-taste')))
+  if (process.platform !== 'win32') {
+    const mode = statSync(join(fx, 'bin', 'story-kb')).mode & 0o777
+    check('DR16', 'exec-bit khôi phục 755', (mode & 0o111) === 0o111, mode.toString(8))
+  }
+  // re-check độc lập bằng chế độ check thường
+  const r2 = run(['--root', fx, '--json'], { cwd: emptyCwd, env: noKbEnv })
+  check('DR16', 're-check exit 0', r2.status === 0, `code=${r2.status}`)
+  const out2 = JSON.parse(r2.stdout)
+  for (const name of ['marker', 'bins', 'orphans', 'agents-skills']) {
+    const c = (out2.checks || []).find(x => x.name === name)
+    check('DR16', `re-check ${name} PASS`, c && c.status === 'pass', c && JSON.stringify(c))
+  }
+  rmSync(fx, { recursive: true, force: true })
+}
+
+// ---- DR17: --repair KHÔNG clobber settings.json (foreign hooks sống sót) ------
+console.log('== [DR17] --repair giữ settings.json của user ==')
+{
+  const foreignCmd = '/usr/local/bin/user-own-hook --x 1'
+  const fx = makeFixture({
+    marker: '9.9.9:' + HASH, // drift → repair chạy installKit (có merge hooks)
+    settings: root => JSON.stringify({
+      hooks: {
+        SessionStart: [
+          { hooks: [mkHook(join(root, 'bin'), 'hook-session-start')] },
+          { hooks: [{ type: 'command', command: foreignCmd, timeout: 10 }] },
+        ],
+        PostToolUse: [{ matcher: 'Bash', hooks: [mkHook(join(root, 'bin'), 'hook-post-tool-use')] }],
+        Stop: [{ hooks: [mkHook(join(root, 'bin'), 'hook-stop')] }],
+      },
+    }),
+  })
+  const r = run(['--root', fx, '--repair'], { cwd: emptyCwd, env: noKbEnv, timeout: 120000 })
+  check('DR17', 'exit 0', r.status === 0, `code=${r.status} stderr=${r.stderr}`)
+  const afterText = readFileSync(join(fx, 'settings.json'), 'utf8')
+  let after = null
+  try { after = JSON.parse(afterText) } catch { /* để assert dưới bắt */ }
+  check('DR17', 'settings.json vẫn parse được JSON', !!after)
+  check('DR17', 'foreign hook command còn nguyên', afterText.includes(foreignCmd))
+  check('DR17', 'kit hook vẫn wired', after?.hooks?.SessionStart?.some(g =>
+    (g.hooks || []).some(h => String(h.command).includes('hook-session-start'))), afterText)
+  rmSync(fx, { recursive: true, force: true })
+}
+
+// ---- DR18: --uninstall KHÔNG --yes → PLAN, exit 2, không xoá gì ----------------
+console.log('== [DR18] --uninstall không --yes → PLAN exit 2 ==')
+{
+  const fx = makeFixture()
+  const r = run(['--root', fx, '--uninstall'], { cwd: emptyCwd, env: noKbEnv })
+  check('DR18', 'exit 2 (PLAN chờ --yes)', r.status === 2, `code=${r.status}`)
+  check('DR18', 'stdout nêu PLAN', r.stdout.includes('PLAN'), r.stdout)
+  check('DR18', 'marker còn', existsSync(join(fx, '.story-team-kit-version')))
+  check('DR18', 'bin còn', existsSync(join(fx, 'bin', 'story-doctor')))
+  check('DR18', 'skill còn', existsSync(join(fx, 'skills', 'story-workflow', 'SKILL.md')))
+  check('DR18', 'agent còn', existsSync(join(fx, 'agents', 'verifier.md')))
+  rmSync(fx, { recursive: true, force: true })
+}
+
+// ---- DR19: --uninstall --yes → xoá đúng provides + marker, giữ file user -------
+console.log('== [DR19] --uninstall --yes — xoá provides, giữ user file, hướng dẫn hooks ==')
+{
+  const fx = makeFixture({ extraBins: ['user-own-tool'] })
+  mkdirSync(join(fx, 'skills', 'user-own-skill'), { recursive: true })
+  writeFileSync(join(fx, 'skills', 'user-own-skill', 'SKILL.md'), 'skill của user')
+  const r = run(['--root', fx, '--uninstall', '--yes'], { cwd: emptyCwd, env: noKbEnv })
+  check('DR19', 'exit 0', r.status === 0, `code=${r.status} stderr=${r.stderr}`)
+  for (const s of kitJson.provides.filter(e => e.type === 'skill').map(e => e.name))
+    check('DR19', `skill ${s} biến mất`, !existsSync(join(fx, 'skills', s)))
+  for (const a of kitJson.provides.filter(e => e.type === 'agent').map(e => e.name))
+    check('DR19', `agent ${a}.md biến mất`, !existsSync(join(fx, 'agents', `${a}.md`)))
+  for (const b of ['story-doctor', 'story-kb', 'hook-session-start'])
+    check('DR19', `bin ${b} biến mất`, !existsSync(join(fx, 'bin', b)))
+  check('DR19', 'marker biến mất', !existsSync(join(fx, '.story-team-kit-version')))
+  check('DR19', 'foreign bin user giữ nguyên', existsSync(join(fx, 'bin', 'user-own-tool')))
+  check('DR19', 'foreign skill user giữ nguyên', existsSync(join(fx, 'skills', 'user-own-skill', 'SKILL.md')))
+  check('DR19', 'settings.json KHÔNG bị xoá', existsSync(join(fx, 'settings.json')))
+  check('DR19', 'in hướng dẫn xoá hooks thủ công', r.stdout.includes('settings.json')
+    && r.stdout.includes('hook-session-start'), r.stdout)
+  check('DR19', 'in đường dẫn KB để user tự quyết', r.stdout.includes('KHÔNG đụng KB'), r.stdout)
+  rmSync(fx, { recursive: true, force: true })
+}
+
+// ---- DR20: --uninstall trên root trống → không crash, exit 0 -------------------
+console.log('== [DR20] --uninstall root trống ==')
+{
+  const fx = mkdtempSync(join(tmpdir(), 'doctor-tests-empty-'))
+  const r = run(['--root', fx, '--uninstall', '--yes'], { cwd: emptyCwd, env: noKbEnv })
+  check('DR20', 'exit 0 không crash', r.status === 0, `code=${r.status} stderr=${r.stderr}`)
+  check('DR20', 'báo không còn gì', r.stdout.includes('không còn gì'), r.stdout)
+  rmSync(fx, { recursive: true, force: true })
+}
+
+// ---- DR21: usage tổ hợp mode + uninstall thiếu kit.json ------------------------
+console.log('== [DR21] usage mode + uninstall thiếu kit.json ==')
+{
+  const r = run(['--root', emptyCwd, '--repair', '--uninstall'])
+  check('DR21', '--repair + --uninstall → exit 2', r.status === 2, `code=${r.status}`)
+  const r2 = run(['--root', emptyCwd, '--yes'])
+  check('DR21', '--yes không --uninstall → exit 2', r2.status === 2, `code=${r2.status}`)
+  // kitRoot không có kit.json (spawn bin trong fixture) → exit 1, KHÔNG xoá mù
+  const fx = makeFixture()
+  const r3 = spawnSync(PY, [join(fx, 'bin', 'story-doctor'), '--root', fx, '--uninstall', '--yes'],
+    { encoding: 'utf8', timeout: 60000, cwd: emptyCwd, env: noKbEnv })
+  check('DR21', 'uninstall thiếu kit.json → exit 1', r3.status === 1, `code=${r3.status}`)
+  check('DR21', 'marker vẫn còn (không xoá mù)', existsSync(join(fx, '.story-team-kit-version')))
+  rmSync(fx, { recursive: true, force: true })
+}
+
 rmSync(emptyCwd, { recursive: true, force: true })
 
 console.log(`\n== TOTAL: ${pass} PASS / ${fail} FAIL ==`)
@@ -378,4 +509,4 @@ if (failures.length) {
   console.log('FAILURES:\n- ' + failures.join('\n- '))
   process.exit(1)
 }
-console.log('HARNESS GREEN (story-doctor 14 DR)')
+console.log('HARNESS GREEN (story-doctor 21 DR)')
