@@ -21,6 +21,28 @@ at epic level with ALL principles at maximum strictness; each SF (sub-feature) t
 runs only Phase 3-5 (plan-detail, execute, verify), reading the epic spec — never
 re-analyzing, never re-asking.
 
+## FLAG `--decompose` — rã ý tưởng lớn thành chuỗi story tuần tự
+
+Khi input là **ý tưởng lớn** (vd "clone vscode vào wakii") — quá lớn cho 1 story —
+chạy story-workflow ở chế độ DECOMPOSE thay vì CREATE:
+
+- **Input:** mô tả ý tưởng (file trong `docs/superpowers/vscode-sync/ideas/<slug>.md`
+  hoặc mô tả trực tiếp).
+- **Output:** danh sách feature có THỨ TỰ (ưu tiên + phụ thuộc thể hiện bằng vị
+  trí) ghi vào `docs/superpowers/vscode-sync/backlog.md` dạng `- [ ] VSC-XXX:
+  <tên> — <mô tả>`. KHÔNG tạo epic/story/.wakii ở bước này — mỗi feature sẽ được
+  tạo story đầy đủ (CREATE) tuần tự bởi scout/auto-launch pipeline khi đến lượt.
+- **Quy trình phân rã:** research nguồn tham chiếu thật (release notes, docs, code
+  hiện có) → nhóm theo lĩnh vực → cắt feature theo rubric: 1 feature = 1 story
+  vừa sức (như rubric SF: >3 SF hoặc >10 tasks thì tách tiếp) → sắp thứ tự:
+  nền tảng trước, UI sau; độc lập song song được thì đặt cạnh nhau.
+- **Tránh trùng:** đọc backlog hiện có — feature trùng/similar thì bỏ hoặc gộp.
+- Sau khi ghi: in ra tổng kết (số feature, thứ tự) rồi STOP — KHÔNG claim, KHÔNG
+  tạo story. Pipeline vscode-sync (scout/auto-launch) sẽ tuần tự hóa.
+
+Serial contract: pipeline xử lý ĐÚNG 1 story tại một thời điểm — story xong
+(merged, mark-done) mới claim feature kế trong backlog.
+
 ## Quick Reference — phase → thao tác → chi tiết ở đâu
 
 | Khi cần... | Đọc section | Chi tiết lệnh/template |

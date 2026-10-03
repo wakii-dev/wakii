@@ -57,3 +57,27 @@ Sự thật 30/9: 12 terminal mở, 4 là pane automation không tự đóng. Ha
   trước, loop sau** (hoặc gọi close trực tiếp như test tay — ptyKilled:true).
 - Verify sau dọn: `orca terminal list --json` đếm lại — "báo closed" không phải
   "đã closed" (bài 10 windows-orca-lessons: FAIL/OK của wrapper đều có thể ảo).
+
+## 8. Run status `dispatch_failed` có thể là cosmetic
+
+Agent tự gọi `cleanup-pane` đóng terminal chính nó lúc cuối pass → Orca ghi
+run thành `dispatch_failed` DÙ việc hoàn thành đúng (pane chết = dispatch bị
+cắt kết nối). Đọc `outputSnapshot.content` mới biết thật. KHÔNG retry mù
+khiến khi thấy dispatch_failed — kiểm backlog/board trước.
+
+## 9. Không sửa backlog tay ngoài bin — và single-writer lock
+
+2 session (claude của user + automation pass) sửa backlog đồng thời → mất
+đồng bộ, claim nhầm. Giải pháp: mọi thao tác GHI đi qua bin với mkdir-lock
+(acquire_lock/release_lock, stale-lock tự dọn 10 phút); session khác chỉ
+đọc (`board`) hoặc gọi bin subcommand.
+
+## 10. Rename bin/file trong kit = 3 nơi phải đổi CÙNG commit
+
+Rename `vscode-sync-dispatch` → `source-sync-dispatch`: đổi provides entry
+kit.json QUÊN → installKit block ("trên đĩa nhưng không có entry provides"),
+manifest FAIL 5 checks, plugin không nhận bin mới. Checklist rename trong kit:
+(1) file, (2) provides entry, (3) kitHash, (4) fingerprint, (5) references
+(prompts automations gọi `~/.claude/bin/<tên>`, shim compat giữ tên cũ).
+Verify chạy ngay trong cùng commit — không để FAIL trôi qua (đã từng vừa
+commit vừa FAIL mà vẫn push).
