@@ -9,6 +9,7 @@
 # hoàn thành = DONE gate → coordinator: push story branch + `gh pr create --base <base>`
 # (merge PR = cửa user trên GitHub — driver KHÔNG BAO GIỜ merge).
 set -u
+ORIG_ARGS=("$@")
 MODE=""; SLUG=""; REPO_DIR="${WAKII_DRIVER_REPO:-}"; BASE_BRANCH="master"
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -51,10 +52,16 @@ if [[ "$PORTABLE" == "1" ]]; then
   BR="$SLUG"
   if [[ ! -d "$WT" ]]; then
     git -C "$REPO_DIR" fetch origin "$BASE_BRANCH" 2>/dev/null || true
-    git -C "$REPO_DIR" worktree add "$WT" -b "$BR" "origin/$BASE_BRANCH" 2>/dev/null \
-      || git -C "$REPO_DIR" worktree add "$WT" -b "$BR" "$BASE_BRANCH" \
-      || { echo "EXIT: không tạo được worktree $WT (branch $BR đã tồn tại? dùng lại worktree cũ hoặc xoá branch)"; exit 1; }
-    log "PORTABLE: worktree created $WT (branch $BR từ $BASE_BRANCH)"
+    if git -C "$REPO_DIR" show-ref --verify --quiet "refs/heads/$BR"; then
+      # branch story đã tồn tại (mindmap pre-commit) — ATTACH worktree vào branch đó
+      git -C "$REPO_DIR" worktree add "$WT" "$BR" || { echo "EXIT: attach worktree $WT thất bại"; exit 1; }
+      log "PORTABLE: worktree ATTACH $WT → branch có sẵn $BR"
+    else
+      git -C "$REPO_DIR" worktree add "$WT" -b "$BR" "origin/$BASE_BRANCH" 2>/dev/null \
+        || git -C "$REPO_DIR" worktree add "$WT" -b "$BR" "$BASE_BRANCH" \
+        || { echo "EXIT: không tạo được worktree $WT"; exit 1; }
+      log "PORTABLE: worktree created $WT (branch $BR từ $BASE_BRANCH)"
+    fi
   fi
   cd "$WT" || exit 1
 fi
@@ -62,7 +69,7 @@ fi
 log(){ echo "$(date -u +%FT%TZ) $*" >> "$LOG"; }
 # caffeinate re-exec đúng 1 lần cho --loop
 if [[ "$MODE" == "--loop" && "${DRIVER_INNER:-}" != "1" ]]; then
-  export DRIVER_INNER=1; exec /usr/bin/caffeinate -is bash "$SCRIPT" "$@"
+  export DRIVER_INNER=1; exec /usr/bin/caffeinate -is bash "$SCRIPT" "${ORIG_ARGS[@]}"
 fi
 # single-instance per slug (PID-file; PID reuse: pid sống nhưng lệnh khác → ghi đè)
 PIDF=$DRV/driver.pid
