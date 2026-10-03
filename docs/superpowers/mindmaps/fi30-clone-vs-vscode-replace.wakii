@@ -5,7 +5,8 @@
     "epic": "FI-30",
     "dest": "feature/clone-vs-vscode",
     "generatedAt": "2026-09-28T07:55:20.397Z",
-    "generator": "story-mindmap 1.0.0"
+    "generator": "story-mindmap 1.0.0",
+    "updatedAt": "2026-10-03T12:54:10Z"
   },
   "nodes": [
     {
@@ -18,7 +19,7 @@
       "id": "sf-1",
       "kind": "sf",
       "title": "Search Replace/Replace All + toolbar New buttons",
-      "state": "pending",
+      "state": "done",
       "tier": 0,
       "linear": "FI-31"
     },
