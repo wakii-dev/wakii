@@ -1,0 +1,313 @@
+#!/bin/bash
+# workfront-driver — [story-team-kit] 1 story = 1 navigator; dây chuyền scope v1: verify → tick → convergence → DONE gate.
+# NOT-DONE KHÔNG dispatch worker vào primary checkout (hazard kiến trúc) — gọi story-launch THẬT
+# (bin tự dựng worktree + dispatch); worker-trong-worktree đầy đủ = GD3.
+# Chạy:
+#   workfront-driver.sh --loop|--once|--dry <slug>                 # orca repo (mặc định)
+#   workfront-driver.sh --repo <path> [--base <branch>] --loop <slug>   # PORTABLE: project ngoài
+# Portable mode (03/10): toàn bộ việc làm trong WORKTREE per-story (primary tree không bị đụng);
+# hoàn thành = DONE gate → coordinator: push story branch + `gh pr create --base <base>`
+# (merge PR = cửa user trên GitHub — driver KHÔNG BAO GIỜ merge).
+set -u
+MODE=""; SLUG=""; REPO_DIR="${WAKII_DRIVER_REPO:-}"; BASE_BRANCH="master"
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --repo) REPO_DIR="$2"; REPO_EXPLICIT=1; shift 2 ;;
+    --base) BASE_BRANCH="$2"; shift 2 ;;
+    --loop|--once|--dry) MODE="$1"; shift ;;
+    *) if [[ -z "$SLUG" ]]; then SLUG="$1"; else echo "thừa đối số: $1"; exit 1; fi; shift ;;
+  esac
+done
+[[ -n "$MODE" ]] || MODE="--once"
+# resolve REPO/PORTABLE/BASE TRƯỚC usage check
+if [[ -z "$REPO_DIR" ]]; then
+  # Máy gốc (repo wakii) chạy được không --repo; máy khác PHẢI set WAKII_DRIVER_REPO hoặc --repo
+  REPO_DIR="/Users/hoivu/Desktop/projects/orca"
+  [[ -d "$REPO_DIR/.git" ]] || { echo "EXIT: set WAKII_DRIVER_REPO=<path> hoặc --repo <path> (không phát hiện repo wakii gốc)"; exit 1; }
+fi
+PORTABLE=0; [[ "${REPO_EXPLICIT:-0}" == "1" || -n "${WAKII_DRIVER_REPO:-}" ]] && PORTABLE=1
+[[ "$PORTABLE" == "1" && -z "$BASE_BRANCH" ]] && BASE_BRANCH="master"
+[[ -z "$BASE_BRANCH" ]] && BASE_BRANCH="wakii-dev/wakii-dev"
+[[ -n "$SLUG" && -d "$REPO_DIR/.git" ]] || { echo "usage: $0 [--repo <path>] [--base <branch>] --loop|--once|--dry <slug>"; exit 1; }
+DRY_RUN=0; [[ "$MODE" == "--dry" ]] && DRY_RUN=1
+# resolve script + kit bins TRƯỚC cd — caffeinate re-exec + self-loc cần đường tuyệt đối
+SCRIPT=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")
+KIT_DIR=$(dirname "$SCRIPT")   # script nằm trong kit/bin đã cài — bins anh em cùng chỗ
+[[ -x "$KIT_DIR/story-doctor" ]] || { echo "EXIT: kit bins không đầy đủ ở $KIT_DIR — chạy story-doctor --repair"; exit 1; }
+cd "$REPO_DIR" || exit 1
+NAV=docs/superpowers/navigator
+DRV="$REPO_DIR/$NAV/driver/$SLUG"          # state TUYỆT ĐỐI dưới primary — sống qua worktree cleanup
+MM=docs/superpowers/mindmaps/$SLUG.wakii   # mindmap đọc từ WORKTREE (state theo branch)
+LOG=$DRV/driver.log
+ST=$DRV/state.json
+TICK_SECONDS=$((3*3600))
+TIMEOUT=$(command -v timeout || echo /opt/homebrew/bin/timeout)
+ORCA_BIN=$(command -v orca || echo /opt/homebrew/bin/orca)
+mkdir -p "$DRV"
+# PORTABLE: toàn bộ việc làm trong WORKTREE per-story — primary tree không bị đụng
+WT=""
+if [[ "$PORTABLE" == "1" ]]; then
+  WT="$REPO_DIR/../$(basename "$REPO_DIR")-$SLUG"
+  BR="$SLUG"
+  if [[ ! -d "$WT" ]]; then
+    git -C "$REPO_DIR" fetch origin "$BASE_BRANCH" 2>/dev/null || true
+    git -C "$REPO_DIR" worktree add "$WT" -b "$BR" "origin/$BASE_BRANCH" 2>/dev/null \
+      || git -C "$REPO_DIR" worktree add "$WT" -b "$BR" "$BASE_BRANCH" \
+      || { echo "EXIT: không tạo được worktree $WT (branch $BR đã tồn tại? dùng lại worktree cũ hoặc xoá branch)"; exit 1; }
+    log "PORTABLE: worktree created $WT (branch $BR từ $BASE_BRANCH)"
+  fi
+  cd "$WT" || exit 1
+fi
+
+log(){ echo "$(date -u +%FT%TZ) $*" >> "$LOG"; }
+# caffeinate re-exec đúng 1 lần cho --loop
+if [[ "$MODE" == "--loop" && "${DRIVER_INNER:-}" != "1" ]]; then
+  export DRIVER_INNER=1; exec /usr/bin/caffeinate -is bash "$SCRIPT" "$@"
+fi
+# single-instance per slug (PID-file; PID reuse: pid sống nhưng lệnh khác → ghi đè)
+PIDF=$DRV/driver.pid
+if [[ -f "$PIDF" ]]; then
+  _old=$(cat "$PIDF" 2>/dev/null)
+  if [[ -n "$_old" ]] && kill -0 "$_old" 2>/dev/null \
+     && ps -p "$_old" -o command= 2>/dev/null | grep -q "workfront-driver"; then
+    echo "exit: driver $SLUG khác đang chạy (pid $_old)"; exit 0
+  fi
+fi
+echo $$ > "$PIDF"
+trap 'rm -f "$PIDF"' EXIT
+
+# ── đọc state mindmap: xuất "sf-id state" mỗi dòng; exit≠0 khi mindmap hỏng
+sf_states(){ node -e '
+const j=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));
+for(const n of j.nodes) if(n.kind==="sf") console.log(n.id, n.state||"pending");
+' "$MM"; }
+sf_count(){ # đếm node sf riêng — phân biệt "mindmap hỏng" với "0 pending"
+  node -e '
+const j=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));
+console.log(j.nodes.filter(n=>n.kind==="sf").length);' "$MM"; }
+tick_sf(){ # node phải tồn tại + re-read sau ghi — vẫn pending → exit 1
+  node -e '
+const fs=require("fs"),[mm,sf]=process.argv.slice(1);
+const j=JSON.parse(fs.readFileSync(mm,"utf8"));
+const n=j.nodes.find(x=>x.id===sf);
+if(!n){ console.error("tick_sf: node "+sf+" không tồn tại"); process.exit(1); }
+n.state="done";
+if(!j.meta) j.meta={};
+j.meta.updatedAt=new Date().toISOString().slice(0,19)+"Z";
+fs.writeFileSync(mm,JSON.stringify(j,null,2)+"\n");
+const r=JSON.parse(fs.readFileSync(mm,"utf8")).nodes.find(x=>x.id===sf);
+if(!r||r.state!=="done"){ console.error("tick_sf: "+sf+" vẫn pending sau ghi"); process.exit(1); }' "$MM" "$1"; }
+st_get(){ node -e '
+const fs=require("fs"),[f,k,d]=process.argv.slice(1);
+try{const s=JSON.parse(fs.readFileSync(f,"utf8"));console.log(s[k]??d)}catch{console.log(d)}' "$ST" "$1" "${2:-}"; }
+st_set(){ node -e '
+const fs=require("fs"),[f,k,v]=process.argv.slice(1);
+let s={}; try{s=JSON.parse(fs.readFileSync(f,"utf8"))}catch{}
+s[k]=v; fs.writeFileSync(f,JSON.stringify(s,null,2));' "$ST" "$1" "$2"; }
+orca_run_active(){ # chống double-dispatch khi user có run tay
+  "$ORCA_BIN" orchestration run-list --json 2>/dev/null | grep -q "\"$SLUG\""; }
+
+# ── verify executor: battery thuần — chỉ đọc (default permission-mode, không acceptEdits)
+run_verify(){ # $1=sf-id; in VERDICT: DONE-VERIFIED|NOT-DONE|FAIL-VERIFIED
+  local sf="$1"
+  "$TIMEOUT" 45m claude -p "Story $SLUG — SF $sf. Xác định SF này ĐÃ LÀM XONG CHƯA trên integration:
+1. git log/diff/show $BASE_BRANCH — đọc mindmap docs/superpowers/mindmaps/$SLUG.wakii node $sf + tasks con để biết phạm vi.
+2. Chạy bằng chứng: tests/verify liên quan phạm vi đó (vitest module cụ thể, pnpm tc nếu cần — bounded 15').
+3. Kết luận ĐÚNG 1: DONE-VERIFIED (code có + tests PASS) | NOT-DONE (chưa làm/partial) | FAIL-VERIFIED (code có nhưng tests đỏ — kèm test đỏ).
+Scope: chỉ đọc + chạy test; KHÔNG sửa code, KHÔNG commit, KHÔNG đụng docs/superpowers/navigator/.
+Dòng cuối PHẢI là: VERDICT: DONE-VERIFIED|NOT-DONE|FAIL-VERIFIED — <1 dòng>" \
+    --allowedTools "Read" "Glob" "Grep" "Bash(git log:*)" "Bash(git diff:*)" "Bash(git show:*)" "Bash(git status)" "Bash(pnpm vitest:*)" "Bash(pnpm tc:*)" \
+    --disallowedTools "Bash(git push:*)" "Bash(git merge:*)" "Bash(git commit:*)" "Bash(git checkout:*)" "Bash(git reset:*)" "Bash(git rebase:*)" "Bash(git clean:*)" "WebFetch" "WebSearch" 2>&1 | tail -5
+}
+
+prep_convergence(){ # VIẾT PACK TRƯỚC — caller chỉ set done_gate khi thành công (retry pass kế nếu lỗi)
+  local evroot="docs/superpowers/evidence/$SLUG"
+  local ev="$evroot/convergence"
+  mkdir -p "$ev" || { log "prep_convergence: mkdir $ev fail"; return 1; }
+  node -e '
+const fs=require("fs"),mm=process.argv[1],ev=process.argv[2],evroot=process.argv[3];
+const j=JSON.parse(fs.readFileSync(mm,"utf8"));
+const sfs=j.nodes.filter(n=>n.kind==="sf");
+const lines=["# Convergence pack — "+j.meta.story,"","Sinh: "+new Date().toISOString(),""];
+for(const s of sfs) lines.push("- "+s.id+" ["+(s.state||"pending")+"] "+(s.title||""));
+lines.push("","Tasks: "+j.nodes.filter(n=>n.kind==="task").map(n=>n.id+":"+(n.state||"?")).join(" "));
+let evs=[];
+try{ evs=fs.readdirSync(evroot).filter(f=>f!=="convergence"); }catch{}
+if(evs.length){ lines.push("","Evidence ("+evroot+"):"); for(const f of evs) lines.push("- "+f); }
+fs.writeFileSync(ev+"/convergence-pack.md",lines.join("\n")+"\n");' "$MM" "$ev" "$evroot" \
+    || { log "prep_convergence: node fail (mindmap hỏng?) — gate CHƯA set, retry pass kế"; return 1; }
+  if [[ "$PORTABLE" == "1" ]]; then
+    log "DONE GATE: pack tại $ev — HOÀN THÀNH: push $BR + gh pr create --base $BASE_BRANCH --head $BR (user review + merge = deploy)"
+  else
+    log "DONE GATE: convergence pack tại $ev — CHỜ USER DUYỆT"
+  fi
+}
+
+one_pass(){
+  [[ -f "$MM" ]] || { log "EXIT: không có mindmap cho $SLUG"; exit 1; }
+  # sf_states chết ≠ 0-pending: đọc lỗi/rỗng → log + skip (KHÔNG rơi vào convergence)
+  local states
+  states=$(sf_states) || { log "EXIT: đọc mindmap $MM lỗi — skip pass, KHÔNG convergence"; return; }
+  if [[ -z "$states" ]]; then
+    local n; n=$(sf_count 2>/dev/null); [[ "$n" =~ ^[0-9]+$ ]] || n=0
+    if [[ "$n" -gt 0 ]]; then log "EXIT: sf_states rỗng dù có $n node sf — skip pass"; else log "EXIT: mindmap không có node sf"; fi
+    return
+  fi
+  # Nhánh 6: tất cả SF done → convergence + DỪNG
+  local pend
+  pend=$(echo "$states" | grep -cv ' done$' || true)
+  if [[ "$pend" == "0" ]]; then
+    [[ "$(st_get done_gate 0)" == "1" ]] && { log "DONE GATE đã treo từ trước — chờ user"; return; }
+    prep_convergence && st_set done_gate 1
+    return
+  fi
+  # SF pending đầu tiên (bỏ qua SF đã BLOCKED — chờ user gỡ)
+  local SF="" _sf
+  for _sf in $(echo "$states" | grep -v ' done$' | awk '{print $1}'); do
+    [[ "$(st_get "blocked_$_sf" 0)" != "1" ]] && { SF=$_sf; break; }
+  done
+  [[ -z "$SF" ]] && { log "SKIP: mọi SF pending đều BLOCKED — chờ user"; return; }
+  local vkey="verify_$SF"; local v; v=$(st_get "$vkey" "")
+  local att; att=$(st_get "attempts_$SF" 0); [[ "$att" =~ ^[0-9]+$ ]] || att=0
+  # caps vòng lặp: mọi outcome không phải DONE-VERIFIED đều +1 — ≥3 → BLOCKED (không phân biệt loại)
+  if [[ "$att" -ge 3 ]]; then
+    log "BLOCKED: $SF attempts=$att ≥3 — leo user"; st_set "blocked_$SF" 1; return
+  fi
+  # Nhánh 3: đã verify PASS → tick + sang SF kế
+  if [[ "$v" == "DONE-VERIFIED" ]]; then
+    if tick_sf "$SF"; then
+      st_set "$vkey" TICKED; log "ADVANCE: $SF ticked done — sang SF kế"
+    else
+      log "tick_sf $SF THẤT BẠI — pass kế thử lại"
+    fi
+    return
+  fi
+  # Chưa verify lần nào → dispatch verify
+  if [[ -z "$v" ]]; then
+    if orca_run_active; then log "SKIP: run $SLUG đang hoạt (run-list) — không dispatch verify"; return; fi
+    log "VERIFY $SF (attempt $((att+1)))"
+    local out; out=$(run_verify "$SF")
+    local verdict
+    verdict=$(echo "$out" | grep -o 'VERDICT: \(DONE-VERIFIED\|NOT-DONE\|FAIL-VERIFIED\)' | head -1 | awk '{print $2}')
+    log "VERIFY $SF → ${verdict:-NO-VERDICT}: $(echo "$out" | tail -1)"
+    if [[ "$verdict" == "DONE-VERIFIED" ]]; then
+      st_set "$vkey" "DONE-VERIFIED"
+    else
+      st_set "$vkey" "${verdict:-NO-VERDICT}"
+      att=$((att+1)); st_set "attempts_$SF" "$att"
+      if [[ "$att" -ge 3 ]]; then
+        log "BLOCKED: $SF verify không DONE-VERIFIED ×$att — leo user"; st_set "blocked_$SF" 1
+      fi
+    fi
+    return
+  fi
+  # Đã verify: phân xử
+  case "$v" in
+    NOT-DONE|NO-VERDICT)
+      # Nhánh 5 (scope v1): KHÔNG worker vào primary — story-launch THẬT (bin tự dựng worktree + dispatch)
+      if orca_run_active; then log "SKIP: run $SLUG đang hoạt — không launch $SF"; return; fi
+      log "LAUNCH $SF — story-launch thật"
+      local lout rc
+      lout=$(bash "$KIT/story-launch" --sf "$SF" --wakii "$MM" 2>&1); rc=$?
+      log "LAUNCH $SF story-launch (rc=$rc): $(echo "$lout" | tail -2)"
+      if [[ $rc -eq 0 ]]; then
+        st_set "$vkey" ""; log "LAUNCH $SF OK — pass kế verify lại"
+      else
+        log "BLOCKED: story-launch $SF exit≠0/bị chặn — leo user"; st_set "blocked_$SF" 1
+      fi
+      ;;
+    FAIL-VERIFIED)
+      # v1 ruling: code đỏ → KHÔNG dispatch vào primary — BLOCKED + leo user (fix-worker trong worktree = GD3)
+      log "BLOCKED: $SF FAIL-VERIFIED — code đỏ cần fix trong worktree SF (GD3). Leo user."; st_set "blocked_$SF" 1
+      ;;
+    TICKED)
+      # tick không ăn: đếm, ≥2 → BLOCKED (mindmap bị writer khác kéo ngược?)
+      att=$((att+1)); st_set "attempts_$SF" "$att"
+      if [[ "$att" -ge 2 ]]; then
+        log "BLOCKED: $SF tick không ăn ×$att — leo user"; st_set "blocked_$SF" 1; return
+      fi
+      log "Đồng bộ lạ: $SF TICKED nhưng vẫn pending — tick lại (lần $att/2)"
+      tick_sf "$SF" || log "tick_sf $SF exit≠0 — pass kế xử lý"
+      ;;
+    *) log "state không rõ cho $SF ($v) — dừng an toàn"; return ;;
+  esac
+}
+
+dry_plan(){ # DRY: chỉ sf_states + log nhánh sẽ chọn — KHÔNG dispatch, KHÔNG ghi state
+  [[ -f "$MM" ]] || { log "DRY: không có mindmap cho $SLUG — sẽ EXIT"; return; }
+  local states _sf
+  if ! states=$(sf_states); then log "DRY: mindmap $MM đọc lỗi — sẽ skip pass (KHÔNG convergence)"; return; fi
+  if [[ -z "$states" ]]; then
+    local n; n=$(sf_count 2>/dev/null); [[ "$n" =~ ^[0-9]+$ ]] || n=0
+    log "DRY: states rỗng ($n node sf) — sẽ skip pass"
+    return
+  fi
+  log "DRY: states: $(echo "$states" | tr '\n' ' ')"
+  local pend
+  pend=$(echo "$states" | grep -cv ' done$' || true)
+  if [[ "$pend" == "0" ]]; then
+    if [[ "$(st_get done_gate 0)" == "1" ]]; then
+      log "DRY: nhánh sẽ chọn — DONE GATE (đã treo, chờ user)"
+    else
+      log "DRY: nhánh sẽ chọn — CONVERGENCE (viết pack → set done_gate)"
+    fi
+    return
+  fi
+  local SF=""
+  for _sf in $(echo "$states" | grep -v ' done$' | awk '{print $1}'); do
+    [[ "$(st_get "blocked_$_sf" 0)" != "1" ]] && { SF=$_sf; break; }
+  done
+  [[ -z "$SF" ]] && { log "DRY: mọi SF pending đều BLOCKED — sẽ skip"; return; }
+  local v; v=$(st_get "verify_$SF" "")
+  local att; att=$(st_get "attempts_$SF" 0); [[ "$att" =~ ^[0-9]+$ ]] || att=0
+  [[ "$att" -ge 3 ]] && { log "DRY: $SF attempts=$att ≥3 — sẽ BLOCKED"; return; }
+  case "$v" in
+    "")                  log "DRY: nhánh sẽ chọn — VERIFY $SF (attempt $((att+1)))" ;;
+    DONE-VERIFIED)       log "DRY: nhánh sẽ chọn — TICK $SF + ADVANCE" ;;
+    TICKED)              log "DRY: nhánh sẽ chọn — TICKED retry $SF (lần $((att+1))/2)" ;;
+    NOT-DONE|NO-VERDICT) log "DRY: nhánh sẽ chọn — LAUNCH $SF qua story-launch thật (scope v1)" ;;
+    FAIL-VERIFIED)       log "DRY: nhánh sẽ chọn — BLOCKED $SF (code đỏ, leo user — GD3 fix-worker)" ;;
+    *)                   log "DRY: state không rõ cho $SF ($v) — sẽ dừng an toàn" ;;
+  esac
+}
+
+render_digest(){
+  node -e '
+const fs=require("fs"),p="docs/superpowers/navigator/DIGEST.md";
+const drv="docs/superpowers/navigator/driver";
+let blocks="";
+for(const d of fs.readdirSync(drv)){
+  const log=drv+"/"+d+"/driver.log"; if(!fs.existsSync(log))continue;
+  const lines=fs.readFileSync(log,"utf8").trim().split("\n").slice(-4);
+  blocks+="### "+d+"\n"+lines.map(l=>"- "+l).join("\n")+"\n\n";
+}
+let old=""; try{ old=fs.readFileSync(p,"utf8"); }catch{}
+const m=old.match(/<!-- TOP3-START -->[\s\S]*<!-- TOP3-END -->/);
+const top=m?m[0]+"\n":"";
+fs.writeFileSync(p, "# DIGEST — "+new Date().toISOString().slice(0,10)+"\n\n"+top+"## Driver actions\n\n"+blocks);' 2>>"$LOG"
+}
+
+main(){
+  local t0; t0=$(date +%s)
+  log "=== driver start ($MODE slug=$SLUG dry=$DRY_RUN) ==="
+  if [[ "$DRY_RUN" == "1" ]]; then
+    dry_plan  # DRY: KHÔNG gọi one_pass
+  else
+    one_pass
+    render_digest
+  fi
+  # instinct-v0: outcome mỗi pass → outcomes.jsonl (data rank ngưỡng sau ~20 pass)
+  local t1; t1=$(date +%s)
+  local last; last=$(grep -v "driver \(start\|done\)" "$LOG" 2>/dev/null | tail -1)
+  node -e '
+const fs=require("fs"),[out,ts,slug,mode,dur,action]=process.argv.slice(1);
+fs.appendFileSync(out,JSON.stringify({ts,slug,mode,duration_s:Number(dur),action})+"\n");' \
+    "$DRV/outcomes.jsonl" "$(date -u +%FT%TZ)" "$SLUG" "$MODE" "$((t1-t0))" "$last" 2>>"$LOG"
+  log "=== driver done ==="
+}
+if [[ "$MODE" == "--loop" ]]; then
+  while true; do main; sleep $TICK_SECONDS; done
+else
+  main
+fi
+

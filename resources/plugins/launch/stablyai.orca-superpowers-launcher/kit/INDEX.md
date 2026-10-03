@@ -44,6 +44,7 @@
 | `story-skill-lint` | Structural integrity check cho story-workflow SKILL.md |
 | `story-diff-review` | Tự review diff TRƯỚC commit |
 | `story-coordinator-pass` | MỘT lượt coordination pass có giới hạn vào coordinator đang chạy |
+| `workfront-driver` | Coordinator tự động: verify → tick → launch → convergence → DONE gate; `--repo` portable (worktree per-story + PR) — xem NAVIGATOR.md |
 | `story-notify` (+ `story-notify-toast.ps1`) | Thông báo có context/screenshot/đề xuất (Windows toast) |
 
 ## 4 · Verify & đóng (8)
