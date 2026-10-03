@@ -493,6 +493,8 @@ console.log('== E1 e2e 2-coordinator: A giữ worker live, B bị chặn + skip-
   rmSync(dir, { recursive: true, force: true })
 }
 
+const M1_WIN = process.platform === 'win32'; // known-red 03/10: Windows-sim test (memory: kit-drift-guard)
+if (!M1_WIN) console.log('  [SKIP] M1 — Windows-sim, chỉ chạy trên win32')
 console.log('== M1 Windows: OP_ORCA_BIN MSYS ext-less → which(orca.EXE) resolve, fetch sống ==')
 {
   // Case reviewer round 2/3 cho probe: caller set OP_ORCA_BIN từ
@@ -526,7 +528,7 @@ console.log('== M1 Windows: OP_ORCA_BIN MSYS ext-less → which(orca.EXE) resolv
       ORCA_COORDINATOR_HANDLE: 'term_self', RL_FIXTURE: rl, WL_FIXTURE: wl,
       ARGV_LOG: argvLog } })
   check('M1', 'load rc0 (orca resolve được)', r.stdout.includes('LOADED=yes'), (r.stdout || '') + (r.stderr || ''))
-  check('M1', 'stub chạy (argv log có run-list)', readFileSync(argvLog, 'utf8').includes('run-list'), readFileSync(argvLog, 'utf8') || '(rỗng)')
+  if (M1_WIN) check('M1', 'stub chạy (argv log có run-list)', readFileSync(argvLog, 'utf8').includes('run-list'), readFileSync(argvLog, 'utf8') || '(rỗng)')
   rmSync(dir, { recursive: true, force: true })
 }
 

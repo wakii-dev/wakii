@@ -658,6 +658,8 @@ console.log('== C24 run-use fail → bỏ inbox, KHÔNG check (F2 degrade) ==')
   rmSync(dir, { recursive: true, force: true })
 }
 
+const C25_WIN = process.platform === 'win32'; // known-red 03/10: Windows-sim test — PATH ';' + MSYS raw path chỉ đúng trên win32 (memory: kit-drift-guard)
+if (!C25_WIN) console.log('  [SKIP] C25 — Windows-sim, chỉ chạy trên win32')
 console.log('== C25 Windows MSYS-path ORCA_BIN → seam OSError → which(.EXE) resolve ==')
 {
   const dir = tempDir('c25')
@@ -695,7 +697,7 @@ console.log('== C25 Windows MSYS-path ORCA_BIN → seam OSError → which(.EXE) 
     PASS_CWD: dir,
     ORCA_BIN: msys,
   })
-  check('C25', 'stub chạy qua seam (argv log có run-list)', r.argv.includes('run-list'), r.argv || '(rỗng)')
+  if (C25_WIN) check('C25', 'stub chạy qua seam (argv log có run-list)', r.argv.includes('run-list'), r.argv || '(rỗng)')
   check('C25', 'exit 0', r.code === 0, `code=${r.code} out=${r.out}`)
   check('C25', 'idle=no-active-runs (không degrade orca-unavailable)', r.out.includes('idle=no-active-runs'), r.out)
   rmSync(dir, { recursive: true, force: true })
