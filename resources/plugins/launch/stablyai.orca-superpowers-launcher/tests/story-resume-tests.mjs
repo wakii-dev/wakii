@@ -260,6 +260,43 @@ console.log('== R15 .wakii-era không bracket: sf_meta đọc dest+linear từ m
   rmSync(dir, { recursive: true, force: true })
 }
 
+console.log('== R16 worktree đa .wakii: file story KHÁC (không có node sf-77) KHÔNG được cung cấp dest ==')
+{
+  const dir = tempDir('r16')
+  const home = join(dir, 'fakehome')
+  const wt = join(home, 'orca', 'workspaces', 'ws1', SF)
+  const mmDir = join(wt, 'docs', 'superpowers', 'mindmaps')
+  mkdirSync(mmDir, { recursive: true })
+  // file KHÁC story sort TRƯỚC (glob alphabet) — không có node sf-77, dest sai
+  writeFileSync(join(mmDir, 'aaa-other-story.wakii'), JSON.stringify({
+    wakiiMindmap: 1,
+    meta: { story: 'ZZZ — other', epic: 'ZZZ', dest: 'story/wrong-dest', generatedAt: '2026-10-04T00:00:00Z', generator: 'story-mindmap 1.0.0' },
+    nodes: [
+      { id: 'epic', kind: 'epic', title: 'ZZZ', state: 'in-progress' },
+      { id: 'sf-99', kind: 'sf', title: 'other sf', state: 'pending', tier: 0, linear: 'ZZZ-999' }
+    ],
+    edges: [{ from: 'epic', to: 'sf-99', rel: 'contains' }]
+  }))
+  writeFileSync(join(mmDir, 'local4-kit-launch-safety.wakii'), JSON.stringify({
+    wakiiMindmap: 1,
+    meta: { story: 'FI-778 — wakii fixture', epic: 'FI-778', dest: 'story/fi777-wakii', generatedAt: '2026-10-04T00:00:00Z', generator: 'story-mindmap 1.0.0' },
+    nodes: [
+      { id: 'epic', kind: 'epic', title: 'FI-778', state: 'in-progress' },
+      { id: 'sf-77', kind: 'sf', title: 'fixture sf', state: 'in-progress', tier: 0, linear: 'FI-778' }
+    ],
+    edges: [{ from: 'epic', to: 'sf-77', rel: 'contains' }]
+  }))
+  GIT(['-C', wt, '-c', 'init.defaultBranch=main', 'init', '-q'])
+  GIT(['-C', wt, '-c', 'user.email=t@t', '-c', 'user.name=t', 'add', '-A'])
+  GIT(['-C', wt, '-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qm', 'init'])
+  const stub = makeOrcaStub(dir)
+  const r = runResume(home, stub, [SF, '--stall-hours', '0'])
+  check('R16', 'dest từ file ĐÚNG story', r.out.includes('story/fi777-wakii'), r.out)
+  check('R16', 'KHÔNG dính dest story khác', !r.out.includes('story/wrong-dest'), r.out)
+  check('R16', 'linear từ node sf-77', r.out.includes('FI-778'), r.out)
+  rmSync(dir, { recursive: true, force: true })
+}
+
 console.log(`\n== TOTAL: ${pass} PASS / ${fail} FAIL ==`)
 if (failures.length) {
   console.log('FAILURES:\n- ' + failures.join('\n- '))

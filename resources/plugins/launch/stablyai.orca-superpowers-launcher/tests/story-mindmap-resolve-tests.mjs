@@ -170,6 +170,21 @@ const json = r => { try { return JSON.parse(r.stdout) } catch { return null } }
   check('WTONLY', 'state đọc đúng', j?.states?.['sf-1'] === 'in-progress', JSON.stringify(j?.states))
 }
 
+// ── combo VU-32 × vocabulary-learn (review-2 NEEDS-VERIFICATION): local KHÔNG
+// có, worktree copy pending, đích CÓ snapshot done → worktree base vẫn nâng done
+{
+  const repo = makeRepo('wtdest', { localStates: null, destStates: { 'sf-1': 'done', 'sf-2': 'pending' } })
+  const wt = join(tempDir('wtdest-wt'), 'wt')
+  git(repo, ['worktree', 'add', wt, '-b', 'sf-9-combo'])
+  mkdirSync(join(wt, dirname(MM_REL)), { recursive: true })
+  writeFileSync(join(wt, MM_REL), JSON.stringify(wakiiDoc({ 'sf-1': 'in-progress', 'sf-2': 'pending' })))
+  const j = json(run(repo, [join(repo, MM_REL), '--repo', repo, '--json']))
+  check('WTDEST', 'sf-1 nâng done qua worktree base', j?.states?.['sf-1'] === 'done', JSON.stringify(j?.states))
+  check('WTDEST', 'source = worktree', j?.source === 'worktree', j?.source)
+  check('WTDEST', 'dest.ref khớp meta.dest của bản worktree', j?.dest?.ref === 'story/fi900-fix', JSON.stringify(j?.dest))
+  check('WTDEST', 'upgraded ghi sf-1', j?.upgraded?.includes('sf-1'), JSON.stringify(j?.upgraded))
+}
+
 // ── local KHÔNG có + đích CÓ snapshot → đọc thẳng từ nhánh đích ─────────────
 {
   const repo = makeRepo('destonly', { localStates: null, destStates: { 'sf-1': 'done' } })

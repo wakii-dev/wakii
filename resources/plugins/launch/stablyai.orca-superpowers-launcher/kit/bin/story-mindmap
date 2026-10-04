@@ -529,13 +529,11 @@ function cmdResolve(fileArg, rest) {
     if (!rel) rel = fileArg.split(path.sep).join('/');
   }
 
-  const destRequested = destArg || (base && base.meta && typeof base.meta.dest === 'string' ? base.meta.dest : '');
   const gitOk = gitRun(['--version'], repo) !== null;
   if (!gitOk) warnings.push('git không chạy được — bỏ qua nhánh đích + worktree scan (fail-open về copy local)');
-  const destRef = gitOk ? resolveDestRef(destRequested, repoRoot || repo) : null;
-  const showDest = () => {
-    if (!destRef || !rel) return null;
-    const out = gitRun(['show', `${destRef}:${rel}`], repoRoot || repo);
+  const showDest = ref => {
+    if (!ref || !rel) return null;
+    const out = gitRun(['show', `${ref}:${rel}`], repoRoot || repo);
     if (out === null) return null;
     const d = decodeWakii(Buffer.from(out));
     return d.valid ? d.mindmap : null;
@@ -543,10 +541,12 @@ function cmdResolve(fileArg, rest) {
 
   let source = 'local', sourceRef = '';
   if (!base) {
-    // 2) local không có → đọc thẳng nhánh đích → worktree anh em (vocabulary-learn)
-    const destDoc = showDest();
-    if (destDoc) { base = destDoc; source = 'dest-branch'; sourceRef = destRef; baseFile = `${destRef}:${rel}`; }
-    else {
+    // 2) local không có → đọc thẳng nhánh đích (cần --dest: không có local meta
+    // để biết dest) → worktree anh em (vocabulary-learn)
+    const ref0 = gitOk ? resolveDestRef(destArg, repoRoot || repo) : null;
+    const destDoc0 = showDest(ref0);
+    if (destDoc0) { base = destDoc0; source = 'dest-branch'; sourceRef = ref0; baseFile = `${ref0}:${rel}`; }
+    if (!base) {
       const wl = gitOk ? gitRun(['worktree', 'list', '--porcelain'], repoRoot || repo) : null;
       if (wl !== null) {
         for (const line of wl.split('\n')) {
@@ -560,15 +560,21 @@ function cmdResolve(fileArg, rest) {
       }
       if (!base) {
         if (invalidErr) die(2, `story-mindmap --resolve: INVALID — ${invalidErr}`);
-        die(3, `story-mindmap --resolve: MISSING — không thấy ${rel} ở copy nào (local: ${cands.join(', ') || '—'}; đích: ${destRef || (destRequested ? `"${destRequested}" không khớp ref nào` : 'không xác định được')}; worktree scan: ${wl === null ? 'không đọc được' : 'sạch'})`);
+        die(3, `story-mindmap --resolve: MISSING — không thấy ${rel} ở copy nào (local: ${cands.join(', ') || '—'}; đích: ${destArg ? `"${destArg}" không khớp ref nào hoặc không có snapshot` : 'không xác định được (không --dest, không local meta)'}; worktree scan: ${wl === null ? 'không đọc được' : 'sạch'})`);
       }
     }
   }
 
+  // destRequested SAU khi có base — bản worktree-only cũng phải được nâng state
+  // từ đích (VU-32 × vocabulary-learn: merge xong, consumer trên primary không
+  // có copy nào vẫn phải thấy done)
+  const destRequested = destArg || (base && base.meta && typeof base.meta.dest === 'string' ? base.meta.dest : '');
+  const destRef = source === 'dest-branch' ? sourceRef : (gitOk ? resolveDestRef(destRequested, repoRoot || repo) : null);
+
   // 3) nâng state từ nhánh đích (no-downgrade: đích done nâng local; local done giữ)
   const upgraded = [];
   if (source !== 'dest-branch') {
-    const destDoc = showDest();
+    const destDoc = showDest(destRef);
     if (!destDoc) {
       if (destRef) warnings.push(`dest ${destRef} không có snapshot ${rel} — bỏ qua nâng state (snapshot chỉ có sau mindmap-trigger/close)`);
       else if (destRequested && gitOk) warnings.push(`dest "${destRequested}" không khớp ref nào — bỏ qua nâng state`);
