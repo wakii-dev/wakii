@@ -38,7 +38,7 @@ KIT_DIR=$(dirname "$SCRIPT")   # script nằm trong kit/bin đã cài — bins a
 cd "$REPO_DIR" || exit 1
 NAV=docs/superpowers/navigator
 DRV="$REPO_DIR/$NAV/driver/$SLUG"          # state TUYỆT ĐỐI dưới primary — sống qua worktree cleanup
-MM=docs/superpowers/mindmaps/$SLUG.wakii   # mindmap đọc từ WORKTREE (state theo branch)
+MM=docs/superpowers/mindmaps/$SLUG.wakii   # tick ghi copy này; state ĐỌC qua resolve_mm (local → đích → worktree)
 LOG=$DRV/driver.log
 ST=$DRV/state.json
 TICK_SECONDS=$((3*3600))
@@ -92,12 +92,46 @@ fi
 echo $$ > "$PIDF"
 trap 'rm -f "$PIDF"' EXIT
 
+# ── resolve mindmap canonical (LOCAL-4 sf-2 — bệnh FI-30/VU-32): local → nhánh
+# đích (no-downgrade: đích done nâng local pending; tick local KHÔNG bao giờ bị
+# hạ) → worktree anh em (vocabulary-learn) → MISSING. Read-only; tick vẫn ghi $MM.
+# Resolver thiếu/hỏng → fallback legacy đọc $MM (hành vi cũ, version kit lệch giữa máy).
+RESOLVER="${STORY_MINDMAP_BIN:-$KIT_DIR/story-mindmap}"
+[ -f "$RESOLVER" ] || RESOLVER="$HOME/.claude/bin/story-mindmap"
+[ -f "$RESOLVER" ] || RESOLVER=""
+RESOLVED_JSON=""
+resolve_mm(){ # ok → RESOLVED_JSON (states đã merge) + repoint $MM khi local thiếu
+  [ -n "$RESOLVER" ] || return 1
+  RESOLVED_JSON=$("$RESOLVER" --resolve "$MM" --repo "$REPO_DIR" --json 2>>"$LOG") || RESOLVED_JSON=""
+  printf '%s' "$RESOLVED_JSON" | grep -q '"ok":true' || { RESOLVED_JSON=""; return 1; }
+  local _info _file _src _up
+  _info=$(printf '%s' "$RESOLVED_JSON" | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{try{const j=JSON.parse(d);console.log([j.file||"",j.source||"",Array.isArray(j.upgraded)?j.upgraded.join(","):""].join("\t"))}catch{console.log("\t\t")}})')
+  _file=$(printf '%s' "$_info" | cut -f1); _src=$(printf '%s' "$_info" | cut -f2); _up=$(printf '%s' "$_info" | cut -f3)
+  if [ -n "$_file" ] && [ "$_file" != "$MM" ] && [ ! -f "$MM" ]; then
+    log "MM repoint: $MM không có → dùng $_file (source=$_src)"
+    MM="$_file"
+  fi
+  log "MM resolve: source=$_src${_up:+ dest-upgrade=$_up}"
+  return 0
+}
+
 # ── đọc state mindmap: xuất "sf-id state" mỗi dòng; exit≠0 khi mindmap hỏng
-sf_states(){ node -e '
+sf_states(){ # qua resolver khi có (state chuẩn mọi worktree), không thì legacy $MM
+  if [ -n "$RESOLVED_JSON" ]; then
+    printf '%s' "$RESOLVED_JSON" | node -e '
+let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{try{const j=JSON.parse(d);if(!j.ok)process.exit(1);for(const k of Object.keys(j.states||{}))console.log(k,j.states[k])}catch{process.exit(1)}})'
+    return
+  fi
+  node -e '
 const j=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));
 for(const n of j.nodes) if(n.kind==="sf") console.log(n.id, n.state||"pending");
 ' "$MM"; }
 sf_count(){ # đếm node sf riêng — phân biệt "mindmap hỏng" với "0 pending"
+  if [ -n "$RESOLVED_JSON" ]; then
+    printf '%s' "$RESOLVED_JSON" | node -e '
+let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{try{const j=JSON.parse(d);if(!j.ok)process.exit(1);console.log(Object.keys(j.states||{}).length)}catch{process.exit(1)}})'
+    return
+  fi
   node -e '
 const j=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));
 console.log(j.nodes.filter(n=>n.kind==="sf").length);' "$MM"; }
@@ -127,7 +161,7 @@ orca_run_active(){ # chống double-dispatch khi user có run tay
 run_verify(){ # $1=sf-id; in VERDICT: DONE-VERIFIED|NOT-DONE|FAIL-VERIFIED
   local sf="$1"
   "$TIMEOUT" 45m claude -p "Story $SLUG — SF $sf. Xác định SF này ĐÃ LÀM XONG CHƯA trên integration:
-1. git log/diff/show $BASE_BRANCH — đọc mindmap docs/superpowers/mindmaps/$SLUG.wakii node $sf + tasks con để biết phạm vi.
+1. git log/diff/show $BASE_BRANCH — đọc mindmap $MM node $sf + tasks con để biết phạm vi.
 2. Chạy bằng chứng: tests/verify liên quan phạm vi đó (vitest module cụ thể, pnpm tc nếu cần — bounded 15').
 3. Kết luận ĐÚNG 1: DONE-VERIFIED (code có + tests PASS) | NOT-DONE (chưa làm/partial) | FAIL-VERIFIED (code có nhưng tests đỏ — kèm test đỏ).
 Scope: chỉ đọc + chạy test; KHÔNG sửa code, KHÔNG commit, KHÔNG đụng docs/superpowers/navigator/.
@@ -149,7 +183,7 @@ run_worker(){ # GD2: worker VISIBLE — pane Orca trên worktree, user nhìn th�
   fi
   # Fence 1: gửi PHẢI xác nhận — "cannot report delivery" = DISPATCH-FAILED
   local send_out
-  send_out=$(orca terminal send --terminal "$handle" --text "Bạn là worker story $SLUG. Đọc mindmap docs/superpowers/mindmaps/$SLUG.wakii node $sf + tasks con. Làm các task CHƯA xong (đối chiếu git log), TDD, commit từng task trên branch này. KHÔNG push, KHÔNG đụng main/master. Khi xong báo: VERDICT: DONE|PARTIAL — <chi tiết>" --enter 2>&1 | tail -1)
+  send_out=$(orca terminal send --terminal "$handle" --text "Bạn là worker story $SLUG. Đọc mindmap $MM node $sf + tasks con. Làm các task CHƯA xong (đối chiếu git log), TDD, commit từng task trên branch này. KHÔNG push, KHÔNG đụng main/master. Khi xong báo: VERDICT: DONE|PARTIAL — <chi tiết>" --enter 2>&1 | tail -1)
   if echo "$send_out" | grep -qi "cannot report delivery"; then
     log "DISPATCH-UNCONFIRMED $sf: $send_out — coi như FAILED, pass kế thử lại"; return 1
   fi
@@ -181,7 +215,8 @@ fs.writeFileSync(ev+"/convergence-pack.md",lines.join("\n")+"\n");' "$MM" "$ev" 
 }
 
 one_pass(){
-  [[ -f "$MM" ]] || { log "EXIT: không có mindmap cho $SLUG"; exit 1; }
+  resolve_mm || true
+  [[ -f "$MM" ]] || { log "EXIT: không có mindmap cho $SLUG (resolve MISS local + đích + worktree)"; exit 1; }
   # sf_states chết ≠ 0-pending: đọc lỗi/rỗng → log + skip (KHÔNG rơi vào convergence)
   local states
   states=$(sf_states) || { log "EXIT: đọc mindmap $MM lỗi — skip pass, KHÔNG convergence"; return; }
@@ -283,7 +318,8 @@ one_pass(){
 }
 
 dry_plan(){ # DRY: chỉ sf_states + log nhánh sẽ chọn — KHÔNG dispatch, KHÔNG ghi state
-  [[ -f "$MM" ]] || { log "DRY: không có mindmap cho $SLUG — sẽ EXIT"; return; }
+  resolve_mm || true
+  [[ -f "$MM" ]] || { log "DRY: không có mindmap cho $SLUG (resolve MISS local + đích + worktree) — sẽ EXIT"; return; }
   local states _sf
   if ! states=$(sf_states); then log "DRY: mindmap $MM đọc lỗi — sẽ skip pass (KHÔNG convergence)"; return; fi
   if [[ -z "$states" ]]; then
