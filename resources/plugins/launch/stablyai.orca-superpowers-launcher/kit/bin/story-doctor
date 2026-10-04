@@ -26,6 +26,8 @@ CLI: story-doctor [--root <install-dir>] [--kb-dir <path>] [--json]
 Checks: marker · kit-hash · bins · deps · hooks · kb · orphans · agents-skills
 · hooks-manifests (c9 — mỗi kit/hooks/*.json phải có entry command chứa tên bin
 tương ứng trong settings.json; kit/hooks vắng → skip im lặng).
+--live: thêm check môi trường sống — sf-lineage (SF worktree mồ côi, không lineage
+cha qua `orca worktree list`; fail-open khi orca chết).
 Chạy từ kit/bin (dev): kit.json sibling có → full check. Chạy từ ~/.claude/bin:
 installKit không copy kit.json → checks phụ thuộc manifest fail-open WARN
 (marker vẫn là nguồn truth). Exit: 0 (chỉ PASS/WARN) · 1 (≥1 FAIL) · 2 (usage /
@@ -553,7 +555,7 @@ def apply_repairs(checks, root, kit_root):
     return done, skipped
 
 
-def collect_checks(root, kit_root, kit_json, kb_dir):
+def collect_checks(root, kit_root, kit_json, kb_dir, live=False):
     """marker đọc tươi mỗi lần (repair ghi lại marker giữa 2 lần chạy)."""
     marker_text = ""
     marker_path = os.path.join(root, MARKER_NAME)
@@ -577,7 +579,30 @@ def collect_checks(root, kit_root, kit_json, kb_dir):
     c9 = check_hooks_manifests(kit_root, root)
     if c9 is not None:
         checks.append(c9)
+    if live:
+        checks.append(check_sf_lineage())
     return checks
+
+
+def check_sf_lineage():
+    """--live: SF worktree (sf-N-*) phải có lineage cha — mồ côi = không hiện là con
+    của story-hub trong Orca (04/10: sf-2/sf-3 VU-32 tạo tay thiếu --parent-worktree).
+    Chỉ warn + hint, không auto-repair (cha đúng là hub nào chỉ context mới biết)."""
+    try:
+        out = subprocess.run(["orca", "worktree", "list", "--json"], capture_output=True,
+                             text=True, timeout=25).stdout
+        rows = json.loads(out).get("result", {}).get("worktrees", [])
+    except Exception:
+        return Check("sf-lineage", "pass",
+                     "không đọc được orca worktree list — bỏ qua (fail-open)")
+    orphans = [os.path.basename(w.get("path") or "") for w in rows
+               if re.match(r"^sf-\d+", os.path.basename(w.get("path") or ""))
+               and not ((w.get("lineage") or {}).get("parentWorktreeId"))]
+    if orphans:
+        return Check("sf-lineage", "warn",
+                     f"SF worktree mồ côi (không lineage cha): {', '.join(sorted(orphans))}",
+                     "orca worktree set --worktree path:<sf-worktree> --parent-worktree path:<story-hub>")
+    return Check("sf-lineage", "pass", "mọi SF worktree đều có lineage cha")
 
 
 def print_checks(checks, as_json):
@@ -686,7 +711,7 @@ def cmd_uninstall(root, kit_root, kit_json, kb_dir, yes):
 
 def parse_args(argv):
     root = kb_dir = None
-    as_json = repair = uninstall = yes = False
+    as_json = repair = uninstall = yes = live = False
     i = 0
     while i < len(argv):
         a = argv[i]
@@ -718,6 +743,9 @@ def parse_args(argv):
         elif a == "--yes":
             yes = True
             i += 1
+        elif a == "--live":
+            live = True
+            i += 1
         elif a in ("-h", "--help"):
             print(__doc__.strip())
             sys.exit(0)
@@ -727,11 +755,11 @@ def parse_args(argv):
         usage("--repair và --uninstall loại nhau")
     if yes and not uninstall:
         usage("--yes chỉ dùng cùng --uninstall")
-    return root, kb_dir, as_json, repair, uninstall, yes
+    return root, kb_dir, as_json, repair, uninstall, yes, live
 
 
 def main(argv):
-    root_arg, kb_dir, as_json, repair, uninstall, yes = parse_args(argv)
+    root_arg, kb_dir, as_json, repair, uninstall, yes, live = parse_args(argv)
     root = os.path.abspath(root_arg) if root_arg else os.path.join(
         os.path.expanduser("~"), ".claude")
     # kit root = bin/../ — story-doctor luôn nằm trong kit/bin (repo lẫn install).
@@ -743,7 +771,7 @@ def main(argv):
     if repair:
         cmd_repair(root, kit_root, kit_json, kb_dir)
 
-    checks = collect_checks(root, kit_root, kit_json, kb_dir)
+    checks = collect_checks(root, kit_root, kit_json, kb_dir, live=live)
     if not as_json:
         print("story-doctor — kit health check")
         print(f"root: {root}")
