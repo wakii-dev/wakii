@@ -1,0 +1,38 @@
+{
+  "wakiiMindmap": 1,
+  "meta": {
+    "story": "LOCAL-4",
+    "generator": "story-workflow CREATE",
+    "generatedAt": "2026-10-04T00:00:00Z",
+    "dest": "story-local4-kit-launch-safety",
+    "worktreeModel": "story-hub"
+  },
+  "nodes": [
+    { "id": "epic", "kind": "epic", "title": "LOCAL-4 — kit worker-launch safety (học từ 13 sai phạm ILEC 03/10)" },
+    { "id": "sf-1", "kind": "sf", "tier": 0,
+      "title": "story-launch: mở rộng ownership-probe — thấy worker trên primary + worker ngoài orchestration",
+      "summary": "Launch SF thứ 2 trong khi còn agent sống cùng story (trên primary checkout hoặc ngoài run-list) bị TỪ CHẶN kèm handle bằng chứng — như đêm 03/10 ILEC 2 worker cùng SF-1 không ai chặn. Probe hiện có (SF-3 LOCAL-1) chỉ thấy owner của SF worktree; fail-open giữ nguyên.",
+      "linear": "" },
+    { "id": "sf-2", "kind": "sf", "tier": 0,
+      "title": "Mindmap state nhất quán giữa worktrees — hết bệnh đọc stale như FI-30/VU-32",
+      "summary": "Sau khi SF merge vào nhánh đích, consumer trên primary (driver/verify/worker mới) đọc state sf node ĐÚNG hiện trạng — không còn 'pending' mãi khiến worker làm lại việc đã merge. Thiết kế canonical-source (đọc từ dest branch hoặc tick-back sync) chọn 1, idempotent.",
+      "linear": "" },
+    { "id": "sf-3", "kind": "sf", "tier": 0,
+      "title": "story-preflight: check agent-alive-trên-primary + cảnh báo permission bypass",
+      "summary": "Chạy story-preflight trên primary checkout của story-managed repo khi còn agent sống → WARN/FAIL rõ ràng; phát hiện process claude --dangerously-skip-permissions → cảnh báo vi phạm LUẬT human-in-the-loop. Không tự kill — chỉ chặn ở cửa.",
+      "linear": "" },
+    { "id": "sf-4", "kind": "sf", "tier": 1,
+      "title": "Convergence: driver --loop supervise story portable thật + chứng minh 3 fence",
+      "summary": "Bật workfront-driver --loop cho story portable đang mở (ILEC VU-32); chứng minh sf-1/2/3 chặn đúng 3 kịch bản đêm 03/10 (nhân bản launch, mindmap stale, preflight cảnh báo) bằng dry/mock — KHÔNG đụng session sống đang chạy. NAVIGATOR.md có runbook supervision portable.",
+      "linear": "" }
+  ],
+  "edges": [
+    { "from": "epic", "to": "sf-1", "rel": "contains" },
+    { "from": "epic", "to": "sf-2", "rel": "contains" },
+    { "from": "epic", "to": "sf-3", "rel": "contains" },
+    { "from": "epic", "to": "sf-4", "rel": "contains" },
+    { "from": "sf-4", "to": "sf-1", "rel": "depends-on" },
+    { "from": "sf-4", "to": "sf-2", "rel": "depends-on" },
+    { "from": "sf-4", "to": "sf-3", "rel": "depends-on" }
+  ]
+}
