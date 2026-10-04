@@ -166,6 +166,20 @@ console.log('== L4 SF chưa approve (không linear) → refuse exit 1 ==')
   rmSync(dir, { recursive: true, force: true })
 }
 
+console.log('== L9 --local: SF không linear → gate tắt, launch qua 2 bước acceptEdits ==')
+{
+  const dir = tempDir('l9')
+  const stub = makeOrcaLaunchStub(dir)
+  const bf = writeBracket(dir)
+  const orcaLog = join(dir, 'orca.log')
+  const r = runLaunch(dir, stub, ['SF-9', '--bracket', bf, '--local'], { STUB_ORCA_LOG: orcaLog })
+  check('L9', 'exit 0 + LAUNCHED', r.code === 0 && r.out.includes('LAUNCHED ✓'), `code=${r.code} out=${r.out}`)
+  const log = existsSync(orcaLog) ? readFileSync(orcaLog, 'utf8') : ''
+  check('L9', 'prompt LOCAL label (không Linear)', log.includes('LOCAL (không Linear'), log.slice(0, 200))
+  check('L9', 'không --linear-issue khi local', !log.includes('--linear-issue'), log.slice(0, 200))
+  rmSync(dir, { recursive: true, force: true })
+}
+
 console.log('== L5 usage: không SF arg → exit 2 ==')
 {
   const dir = tempDir('l5')
