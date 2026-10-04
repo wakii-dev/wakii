@@ -91,6 +91,12 @@
         "restartRequired": "再起動が必要です",
         "unavailable": "ブラウザ ID が利用できません。"
       }
+    },
+    "terminal": {
+      "optionLayoutAlt": "ABCまたはU.S. — OptionはAlt/Escシーケンスを送信します",
+      "optionLayoutCompose": "この配列ではOptionで@、€、[、]などの文字を入力します",
+      "optionLayoutUnknown": "不明な配列 — Optionで文字を入力します（安全な既定値）",
+      "optionShortcutHint": "Optionショートカットには「両方」、アクセント付き文字や記号には「オフ」、用途を左右のOptionキーに分けるには「左」または「右」を選んでください。"
     }
   },
   "menu": {
@@ -498,7 +504,8 @@
           "muse_label": "Muse",
           "opencode2_label": "OpenCode 2",
           "zcode_label": "ZCode",
-          "codebuddy_label": "CodeBuddy"
+          "codebuddy_label": "CodeBuddy",
+          "jcode_label": "Jcode"
         },
         "skill": {
           "cli": {
@@ -901,6 +908,17 @@
         "symlink": "シンボリックリンクは接続できません。",
         "permissionDenied": "アクセスが拒否されました。",
         "unsupported": "サポートされていないファイル形式です。"
+      },
+      "dropTempCopyFailure": {
+        "changed": "コピー中にファイルが変更されました。もう一度ドロップしてください。",
+        "outOfSpace": "ドロップされたファイルをコピーするためのディスク容量が足りません。",
+        "storageUnavailable": "ドロップされたファイル用の保存先を Wakii で作成できませんでした。",
+        "storageNotPrivate": "ドロップされたファイル用の Wakii の保存先が他のユーザーから読み取れる状態のため、何もコピーしませんでした。",
+        "timedOut": "コピーに時間がかかりすぎました。もう一度ドロップしてください。",
+        "busy": "コピー中のドロップが多すぎます。しばらく待ってから、もう一度お試しください。",
+        "tooLarge": "サイズが大きすぎてコピーできないため、Wakii は Agent に渡せませんでした。",
+        "storageFull": "ドロップされたファイル用の Wakii の保存先がいっぱいのため、Wakii は Agent に渡せませんでした。",
+        "generic": "もう一度ドロップしてください。"
       }
     },
     "hooks": {
@@ -935,7 +953,10 @@
         "nativeDropPathsTooLarge": "ドロップされたパス一覧が大きすぎます。",
         "ownerChanged": "このワークスペースを所有するホストを確認できませんでした。再接続してから、もう一度お試しください。",
         "nativeDropUnresolvedPathsDescription": "まずそれらをディスクに保存してから、保存したファイルをドロップします。",
-        "nativeDropUnresolvedPaths": "Wakii はドロップされたファイルのパスを読み取ることができませんでした。"
+        "nativeDropUnresolvedPaths": "Wakii はドロップされたファイルのパスを読み取ることができませんでした。",
+        "nativeDropTempCopyFailed": "ドロップされた {{count}} 個のファイルを Wakii でコピーできませんでした。",
+        "nativeDropTempCopyFailed_one": "ドロップされた {{count}} 個のファイルを Wakii でコピーできませんでした。",
+        "nativeDropTempCopyFailed_other": "ドロップされた {{count}} 個のファイルを Wakii でコピーできませんでした。"
       },
       "useIpcEvents": {
         "0e3cf53060": "ブラウザタブ {{value0}} が見つかりません",
@@ -1983,7 +2004,7 @@
         "c679af7ad9": "Todo を更新する",
         "dfd72673e7": "プロジェクトの選択を保存できませんでした。",
         "b797bdd7c3": "検索をクリア",
-        "99c2755218": "Jira JQL、例:プロジェクト = ABC AND statusCategory != 完了",
+        "99c2755218": "Issue を検索するか JQL を入力、例: project = ABC",
         "2ff9fd71fd": "Jira Issue を更新する",
         "0b65d3fb2c": "Linear プロジェクトを検索…",
         "eec0c5c079": "Linear Issue を検索…",
@@ -2102,7 +2123,7 @@
         "6edf402e11": "概要",
         "9ae151b26b": "Linear",
         "94d900518d": "選択したプリセットに一致する Issue はありません。",
-        "f51e254d35": "別の JQL クエリを試す。",
+        "f51e254d35": "別の検索語句または JQL をお試しください。",
         "4645a7814f": "Jira",
         "e224d76876": "MR",
         "bbec4717ee": "MR",
@@ -2183,7 +2204,8 @@
         "jiraLinkSourceUnavailable": "この Jira Issue をリンクできませんでした。Jira に再接続するか該当するサイトを選択してから、もう一度お試しください。",
         "loadPageUnreachable": "ページ {{value0}} は GitHub 検索が返せる範囲を超えています。",
         "loadPageFailed": "GitHub からページ {{value0}} を読み込めませんでした。",
-        "loadPageNoMoreResults": "ページ {{value0}} にはこれ以上結果がありません。"
+        "loadPageNoMoreResults": "ページ {{value0}} にはこれ以上結果がありません。",
+        "jiraTextMatchesNotice": "テキスト一致を表示しています。Jira はこの検索を JQL として実行できませんでした。"
       },
       "Terminal": {
         "73768427cf": "閉じる",
@@ -3075,7 +3097,7 @@
             "sessionUnavailable": "Wakii はホスト上のこのペインのターミナルセッションに再接続できませんでした。続行するには、新規ターミナルを開いてください。",
             "sourceRestoring": "このターミナルを再接続しています — その出力が再確立されています。セッションはまだ実行中です。",
             "terminalProcessLimit": "システムはこれ以上ターミナルプロセスを起動できません。使っていないターミナルを閉じるか、不要なプロセスを終了してから、もう一度お試しください。",
-            "ptyAllocationLimit": "システムはこれ以上 pty デバイスを割り当てられません。Orca または他のプログラムで使っていないターミナルをいくつか閉じてから、もう一度お試しください。"
+            "ptyAllocationLimit": "システムはこれ以上 pty デバイスを割り当てられません。Wakii または他のプログラムで使っていないターミナルをいくつか閉じてから、もう一度お試しください。"
           },
           "TerminalProcessExitOverlay": {
             "capacityTitle": "Git Bash のコンソール上限に達しました",
@@ -3859,7 +3881,7 @@
             "cursor": {
               "expired": {
                 "label": "サインインの有効期限切れ",
-                "message": "Orca を実行しているコンピュータのターミナルで cursor-agent login を実行し、使用状況を再試行してください。"
+                "message": "Wakii を実行しているコンピュータのターミナルで cursor-agent login を実行し、使用状況を再試行してください。"
               },
               "plan": "プラン"
             }
@@ -3891,7 +3913,7 @@
             "compact": "コンパクト",
             "footerDetailAria": "使用量フッターの詳細",
             "detailedTooltip": "バー・ラベル・パーセントを含む完全な使用状況",
-            "compactTooltip": "凝縮された使用状況: 最も狭いウィンドウのみ"
+            "compactTooltip": "簡潔な使用状況：プロバイダーごとに1つの概要"
           },
           "RemoteServerUpdateStatusSegment": {
             "updating": "{{value0}}/{{value1}}を更新中",
@@ -3965,12 +3987,12 @@
             "failedLabel": "{{value0}} 件のチャットを再開できませんでした",
             "failedAriaOne": "1 件のチャットを再開できませんでした。詳細はクリックしてください。",
             "failedAria": "{{value0}} 件のチャットを再開できませんでした。詳細はクリックしてください。",
-            "failedTooltip": "再起動後に Orca が再開できなかったチャット。詳細はクリックしてください。",
+            "failedTooltip": "再起動後に Wakii が再開できなかったチャット。詳細はクリックしてください。",
             "checkLabelOne": "確認が必要なチャット 1 件",
             "checkLabel": "確認が必要なチャット {{value0}} 件",
             "checkAriaOne": "再開後に確認が必要なチャット 1 件。詳細はクリックしてください。",
             "checkAria": "再開後に確認が必要なチャット {{value0}} 件。詳細はクリックしてください。",
-            "checkTooltip": "再起動後に Orca が再開できなかった、または再開を確認できなかったチャット。詳細はクリックしてください。",
+            "checkTooltip": "再起動後に Wakii が再開できなかった、または再開を確認できなかったチャット。詳細はクリックしてください。",
             "resumingLabelOne": "1 件のチャットを再開中",
             "resumingLabel": "{{value0}} 件のチャットを再開中",
             "resumingAriaOne": "1 件のチャットを再開中。詳細はクリックしてください。",
@@ -5083,7 +5105,12 @@
           "86f0ae1257": "ワークスペースの削除"
         },
         "DeleteWorktreeDirtyChangeHint": {
-          "8e2994ce28": "このワークスペースを削除すると、これらの変更がディスクから完全に削除されます。"
+          "8e2994ce28": "このワークスペースを削除すると、これらの変更がディスクから完全に削除されます。",
+          "showLoadedPaths": "読み込まれたパスを表示",
+          "loadedPathsNotice": "読み込まれたパスは不完全な場合や古い場合があります。",
+          "loadedChangedPaths": "読み込まれた変更済みパス",
+          "unresolvedConflict": "未解決の競合",
+          "moreLoadedPaths": "ほかに読み込まれたパスが{{value0}}件"
         },
         "DeleteWorktreeLineageNotice": {
           "ad407c2d55": "件以上",
@@ -5389,7 +5416,8 @@
           "automation": "オートメーション",
           "folderPathIdentity": "ブランチ / フォルダーパス",
           "cli": "Wakii CLI",
-          "workspaceOptions": "ワークスペースのオプション"
+          "workspaceOptions": "ワークスペースのオプション",
+          "host": "ホスト"
         },
         "SshTargetRow": {
           "4677394048": "接続中…",
@@ -5458,7 +5486,8 @@
           "automationCreated": "オートメーションによって作成",
           "branchIdentity": "ブランチ",
           "branchFolderPathIdentity": "ブランチまたはフォルダーパス",
-          "ef18787206": "削除待ち"
+          "ef18787206": "削除待ち",
+          "deleteFailed": "削除に失敗しました"
         },
         "WorktreeCardAgents": {
           "1b0a156717": "Agent"
@@ -6284,9 +6313,9 @@
         },
         "LocalGitToolchainScanBanner": {
           "xcodeLicenseTitle": "Git を使うには Xcode ライセンスに同意してください",
-          "xcodeLicenseBody": "承諾するまで macOS が Git をブロックします。ターミナルでこれを実行し、Orca に戻ってください。自動的に再確認します。",
+          "xcodeLicenseBody": "承諾するまで macOS が Git をブロックします。ターミナルでこれを実行し、Wakii に戻ってください。自動的に再確認します。",
           "developerToolsTitle": "Apple のコマンドラインツールをインストール",
-          "developerToolsBody": "Git には Apple の開発者ツールが必要です。ターミナルでこれを実行し、Orca に戻ってください。自動的に再確認します。",
+          "developerToolsBody": "Git には Apple の開発者ツールが必要です。ターミナルでこれを実行し、Wakii に戻ってください。自動的に再確認します。",
           "affectedOne": "{{value0}} のワークツリースキャンを一時停止中",
           "affectedMany": "{{value0}} 件のプロジェクトのワークツリースキャンを一時停止中",
           "copyCommand": "コマンドをコピー",
@@ -6527,7 +6556,7 @@
           "opencodeGo": {
             "apiKey": {
               "title": "OpenCode Go API キー",
-              "description": "任意のオーバーライド。指定しない場合、Orca は /connect 実行時に OpenCode が保存したキー（次に OPENCODE_API_KEY）を使用します。",
+              "description": "任意のオーバーライド。指定しない場合、Wakii は /connect 実行時に OpenCode が保存したキー（次に OPENCODE_API_KEY）を使用します。",
               "label": "OpenCode Go API キー",
               "placeholder": "/connect または OPENCODE_API_KEY で保存されたキーを使う場合は空欄のままにします",
               "help": "ステータスバーの OpenCode Go 使用状況表示に使います。下のセッション Cookie はレガシーコンソール (OpenCode Black) アカウントでのみ必要です。"
@@ -6883,7 +6912,7 @@
           "9fd4023db0": "ファイルマネージャーで表示",
           "installFailureUnknownReason": "Wakii は CLI 登録を完了できず、理由を報告しませんでした。",
           "installFailureConflictRemedy": "{{value0}} を削除して、不要になった場合は再度登録してください。",
-          "outsideOrcaDescription": "Orca のターミナルでは `orca` がすでに使えます。Orca 以外のターミナルから `orca` を使うにはオンにしてください。"
+          "outsideOrcaDescription": "Wakii のターミナルでは `orca` がすでに使えます。Wakii 以外のターミナルから `orca` を使うにはオンにしてください。"
         },
         "CliSkillRuntimeSetup": {
           "04325573f8": "WSL",
@@ -7075,8 +7104,8 @@
             "shellEnvCopy": "Codex と Claude のチャットは、ターミナルと同じく、ログインシェルがエクスポートするすべての変数を引き継いで開始します。オフにすると、渡す変数を選択できます。",
             "shellEnvToggleLabel": "シェル環境の使用の切り替え",
             "structuredTitle": "更新された構造化ネイティブチャットを使用する",
-            "structuredCopy": "Codex と Claude 用のホスト所有の構造化チャットランタイムにオプトインします。 Off では、既存のターミナルを使用したチャットパスが維持されます。",
-            "structuredScope": "今のところローカルセッションのみ。 WSL およびリモート実行ホスト (SSH を含む) は引き続きターミナルチャットを使用し、Wakii がプロセスの開始時間を読み取ることができない限り、Windows はターミナルチャットにフォールバックします。",
+            "structuredCopy": "新規の Codex および Claude の Agent を構造化チャットとして開きます。オフにすると、ターミナルを使用したチャットで開きます。既存のチャットはそのまま残ります。",
+            "structuredScope": "Runs on this machine and on paired Wakii servers running a version that supports it; older servers keep terminal chat. WSL and SSH hosts continue to use terminal chat, and Windows falls back to it unless Wakii can read process start times.",
             "structuredToggleLabel": "更新された構造化ネイティブチャットの切り替え",
             "resumeTitle": "再起動後に作業中のチャットを自動的に再開する",
             "resumeCopy": "Wakii が終了するかアップデートをインストールすると、Wakii が再度開かれたときに作業中だったチャットが自動的に再開されます。",
@@ -7120,9 +7149,9 @@
           "80c454e8a6": "これをプロバイダーのキャッシュ TTL と一致させます。"
         },
         "GeneralEditorSettingsSection": {
-          "f80603d293": "リッチエディターモードと Agent のハンドオフ 操作でローカルの markdown ノートコントロールを表示します。",
+          "f80603d293": "すべての markdown ビューで markdown ノートコントロールを表示し、Agent のハンドオフ 操作にそれらのノートを含めます。",
           "4edc104f0f": "Markdown レビューノート",
-          "5f02e6fb21": "リッチエディターモードでローカル markdown レビューノートコントロールを表示します。",
+          "5f02e6fb21": "markdown ファイルでローカル markdown レビューノートコントロールを表示します。",
           "51161d1647": "ファイルの編集時にミニマップの概要を表示します。",
           "6690b1ffb9": "ミニマップ",
           "5a1ea6eaa2": "隠れた",
@@ -7854,7 +7883,7 @@
           "c5a55a2d2e": "詳細設定",
           "b5e3e77e89": "操作",
           "0ce113fd7b": "ローカルスクリプトは保存されますが、スクリプトソースは orca.yaml のみに設定されます。",
-          "7f78e5eea6": "ローカルスクリプトが保存されます。 Orca は、使用するスクリプトソースを推奨する前に orca.yaml を引き続きチェックします。",
+          "7f78e5eea6": "ローカルスクリプトが保存されます。 Wakii は、使用するスクリプトソースを推奨する前に orca.yaml を引き続きチェックします。",
           "2b6356e744": "保存済み",
           "81057d5f71": "保存中…",
           "da37d6f10e": "コピー",
@@ -7964,7 +7993,9 @@
           "externalWorktreesGlobal": "グローバルデフォルト: {{value0}}",
           "useGlobal": "グローバル設定を使用",
           "hostStateWorkspaceWindowClosed": "ワークスペースウィンドウを閉じた",
-          "hostWorkspaceWindowClosedHelp": "サーバーにはアクセスできますが、Wakii ウィンドウが閉じています。このセットアップを使用するには、{{value0}} で Wakii を開いてください。"
+          "hostWorkspaceWindowClosedHelp": "サーバーにはアクセスできますが、Wakii ウィンドウが閉じています。このセットアップを使用するには、{{value0}} で Wakii を開いてください。",
+          "removeProjectCheckout": "このチェックアウトを Wakii から削除します。このプロジェクトの他のチェックアウトは残ります。",
+          "removeProjectKeepCheckouts": "このプロジェクトを Wakii から削除します。独自の設定を持つチェックアウトは残ります。"
         },
         "RepositorySourceControlAiActionRows": {
           "548a6e1281": "コマンドテンプレート",
@@ -10043,7 +10074,13 @@
             "72539aede4": "システム",
             "51ae2183e1": "デスクトップ",
             "0534c76311": "Wakii デスクトップ通知のマスタースイッチ。",
-            "4a210b2f72": "通知を有効にする"
+            "4a210b2f72": "通知を有効にする",
+            "machines": "マシン",
+            "machinesDescription": "このコンピューターに通知を表示できるマシン（SSH マシンやペアリングしたサーバーなど）を選択します。",
+            "host": "ホスト",
+            "remote": "リモート",
+            "ssh": "ssh",
+            "mute": "ミュート"
           }
         },
         "orchestration": {
@@ -11077,7 +11114,7 @@
           "orcaCloudSignOut": "サインアウト",
           "orcaCloudConnect": "プロファイルを接続",
           "orcaCloudRefresh": "ステータスを更新",
-          "orcaCloudNotConfigured": "ORCA_CLOUD_API_URLとORCA_CLOUD_CLIENT_IDを設定して、この開発ビルドで Orca Cloudのサインインをプレビューします。",
+          "orcaCloudNotConfigured": "ORCA_CLOUD_API_URLとORCA_CLOUD_CLIENT_IDを設定して、この開発ビルドで Wakii Cloudのサインインをプレビューします。",
           "deleteAnywayClicked": "とにかく削除をクリックしました"
         },
         "EphemeralVmRecipeRow": {
@@ -11282,7 +11319,7 @@
         },
         "LinearAgentSkillPane": {
           "title": "Linear",
-          "description": "Orca で Linear の Issue を参照し、リンク済みワークスペースを開始して、/orca-linear で Agent から更新できます。",
+          "description": "Wakii で Linear の Issue を参照し、リンク済みワークスペースを開始して、/orca-linear で Agent から更新できます。",
           "skillTitle": "Linear スキル",
           "howToUse": "プロンプト例",
           "howToUseDescription": "カードをクリックするとプロンプトをコピーできます。スキルのインストール後、Linear にリンクしたワークツリーで使用してください。",
@@ -12053,28 +12090,33 @@
             "keychain": "macOS キーチェーン（cursor-agent）",
             "cli": "Cursor CLI 認証ファイル"
           },
-          "signedInGeneric": "サインイン済み。Orca はこのコンピュータに保存された Cursor セッションを読み取ります。",
+          "signedInGeneric": "サインイン済み。Wakii はこのコンピュータに保存された Cursor セッションを読み取ります。",
           "signedOutHelp": "Cursor IDE でサインインするか、ターミナルで cursor-agent login を実行してから、ここで「使用状況を更新」をクリックしてください。",
           "refreshUsage": "使用状況を更新",
           "loading": "読み込み中…",
           "planTotal": "プラン",
-          "expired": "サインインの有効期限が切れています — Orca を実行しているコンピュータで cursor-agent login を実行し、「使用状況を更新」をクリックしてください。",
+          "expired": "サインインの有効期限が切れています — Wakii を実行しているコンピュータで cursor-agent login を実行し、「使用状況を更新」をクリックしてください。",
           "signedIn": "サインイン済み",
           "usageDescription": "Cursor は請求サイクルとともにリセットされる 2 つのプールの利用に課金し、使い切るとオンデマンドの追加料金が発生します。",
           "dashboardLink": "Cursor ダッシュボード",
           "usageTitle": "月間プラン使用状況",
           "signedOut": "このコンピュータに Cursor のサインインが見つかりません",
-          "subtitle": "このコンピュータに既にある Cursor のサインインから、月間の Cursor プラン使用状況を表示します。Orca は読み取るだけで、Cursor のログインを変更することはありません。",
+          "subtitle": "このコンピュータに既にある Cursor のサインインから、月間の Cursor プラン使用状況を表示します。Wakii は読み取るだけで、Cursor のログインを変更することはありません。",
           "title": "Cursor",
           "staleUsage": "最後に確認できた使用状況 — 最新の更新に失敗しました: {{reason}}",
           "resets": "{{when}} にリセット",
-          "signedInFrom": "サインイン済み。Orca は {{source}} に保存されたセッションを読み取ります。",
+          "signedInFrom": "サインイン済み。Wakii は {{source}} に保存されたセッションを読み取ります。",
           "noAllowance": "Cursor によると、このアカウントには使用量の割り当てがありません。",
           "usageLabel": "使用量"
         },
         "agent-workspace-trust-copy": {
-          "title": "Orca が Agent を起動するときにフォルダーを信頼する",
-          "description": "Orca が起動した Agent は「Do you trust this folder?」の確認を省略するため、プロジェクトの Agent のフックと設定がすぐに実行されます。この設定がオフの場合、各 Agent はフォルダーで初めて実行されるときに確認します。オーケストレーションのワーカー、オートメーション、スマートフォンから起動した Agent など、あなたが見ていない間に動く Agent は、そのターミナルで応答するまでこの確認で待機します。すでに信頼済みのフォルダーは信頼されたままです。"
+          "title": "Wakii が Agent を起動するときにフォルダーを信頼する",
+          "description": "Wakii が起動した Agent は「Do you trust this folder?」の確認を省略するため、プロジェクトの Agent のフックと設定がすぐに実行されます。この設定がオフの場合、各 Agent はフォルダーで初めて実行されるときに確認します。オーケストレーションのワーカー、オートメーション、スマートフォンから起動した Agent など、あなたが見ていない間に動く Agent は、そのターミナルで応答するまでこの確認で待機します。すでに信頼済みのフォルダーは信頼されたままです。"
+        },
+        "NotificationHostToggles": {
+          "offCount": "{{count}} 台オフ",
+          "machines": "マシン",
+          "machinesDescription": "このコンピューターに通知を表示できるマシンを選択します。ペアリングしたサーバーのスイッチは、そのサーバー経由の作業にも適用されます。"
         }
       },
       "right": {
@@ -14423,7 +14465,7 @@
                   "6d2b0a84e1": "このビルドでは利用できません",
                   "needsMacAccess": "macOS のアクセス許可が必要",
                   "notInstalled": "未インストール",
-                  "requiresOrcaDesktop": "Orca Desktop が必要"
+                  "requiresOrcaDesktop": "Wakii Desktop が必要"
                 }
               }
             }
@@ -14455,8 +14497,8 @@
                       "2cf795433b": "複数のリポジトリで作業を開始する",
                       "42525ba8a4": "キーリポジトリを Wakii に取り込むと、フォルダーを探さずに Agent の作業を開始できます。",
                       "workOnTwoTasks": "2つのタスクを同時に進める",
-                      "agentSkillsName": "Agent に Orca スキルを追加",
-                      "agentSkillsDescription": "Agent が Orca のブラウザを操作し、コンピューターを制御し、複数ステップの作業を調整するためのスキルをインストールします。"
+                      "agentSkillsName": "Agent に Wakii スキルを追加",
+                      "agentSkillsDescription": "Agent が Wakii のブラウザを操作し、コンピューターを制御し、複数ステップの作業を調整するためのスキルをインストールします。"
                     }
                   }
                 }
@@ -14713,7 +14755,7 @@
                     "state": {
                       "35dea1ae12": "Agent 制御の準備ができました。",
                       "c94ff11e91": "セットアップ状況を再確認できませんでした。",
-                      "skillNotInstalled": "Orca CLI スキルはまだインストールされていません。"
+                      "skillNotInstalled": "Wakii CLI スキルはまだインストールされていません。"
                     }
                   }
                 },
@@ -14736,7 +14778,7 @@
             "6d950431d2": "非表示",
             "ebceac65a4": "セットアップ",
             "3f003507f4": "設定で完全なセットアップを開く",
-            "installSkillPrompt": "Agent にこのシミュレーターを操作させたいときは、Orca CLI スキルをインストールしてください。"
+            "installSkillPrompt": "Agent にこのシミュレーターを操作させたいときは、Wakii CLI スキルをインストールしてください。"
           },
           "MobileEmulatorAgentSetupGuideSteps": {
             "21f5687c07": "Wakii CLI スキル",
@@ -15003,12 +15045,12 @@
           "noPython": "このコンピュータに Python が見つかりません。[python.org](https://www.python.org/downloads/) からインストールして、セルを再実行してください。",
           "kernelDied": "カーネルが停止しました。",
           "localOnly": "ノートブックセルはこのコンピュータ上のファイルでのみ実行できます。",
-          "pythonOnly": "Orca では Python ノートブックのみ実行できます。",
+          "pythonOnly": "Wakii では Python ノートブックのみ実行できます。",
           "creatingVenvDescription": "{{folder}} に .venv を作成し、ipykernel をインストールしています。数分かかることがあります。",
           "createVenvItem": "仮想環境を作成…",
           "trustFirst": "先にセルを実行して、このノートブックを信頼してください",
           "installingTitle": "ipykernel をインストール中…",
-          "venvDescription": "Orca は '{{env}}' から {{folder}} に .venv を作成し、ipykernel をインストールして、このノートブックをそこで実行します。",
+          "venvDescription": "Wakii は '{{env}}' から {{folder}} に .venv を作成し、ipykernel をインストールして、このノートブックをそこで実行します。",
           "createVenv": ".venv を作成",
           "creatingButton": "作成中…",
           "tryAgain": "再試行",
@@ -15844,7 +15886,8 @@
             "09a9489aa5": "表示",
             "2a4c4b8e1f": "コピー",
             "b71dc3d930": "再接続",
-            "fileUrlUnsupported": "このブラウザタブではローカルファイルを開くことができません。代わりに、ファイルで「プレビューを横に開く」を使用してください。"
+            "fileUrlUnsupported": "このブラウザタブではローカルファイルを開くことができません。代わりに、ファイルで「プレビューを横に開く」を使用してください。",
+            "cc4a071d3a": "ページ要素に注釈を付ける ({{value0}})"
           },
           "BrowserToolbarMenu": {
             "429ef481f9": "キャンセル",
@@ -16559,6 +16602,7 @@
             "done": "完了",
             "idle": "アイドル",
             "unverifiable": "最近の更新なし",
+            "unconfirmed": "確認できませんでした",
             "permission": "要対応"
           },
           "filtersSection": "フィルター",
@@ -17213,9 +17257,6 @@
             "failed": "チャットを開始できませんでした。",
             "unknown": "チャット接続が確認できませんでした。",
             "retry": "再試行"
-          },
-          "NativeChatStructuredSessionStatus": {
-            "starting": "{{value0}} はまだ起動中です。準備ができるまでメッセージは待機します。中止するには、このチャットを閉じてください。"
           }
         }
       },
@@ -17255,19 +17296,19 @@
         "toResume": "再開するチャット:"
       },
       "NativeChatResumeFailureGuidance": {
-        "unconfirmed": "Orca は “continue” メッセージが配信されたことを確認できませんでした。別のメッセージを送る前にチャットを開いて確認してください。",
-        "superseded": "チャットを開いて返信してください。再起動の直後に新規作業が届いたため、Orca は “continue” メッセージを送信しませんでした。",
-        "conflict": "別の Orca ウィンドウまたはターミナルがこのセッションをまだ保持しています。閉じてから再試行してください。",
-        "ownershipUnknown": "Orca はこのセッションを所有するプロセスを確認中です。少し待ってから再試行してください。",
+        "unconfirmed": "Wakii は “continue” メッセージが配信されたことを確認できませんでした。別のメッセージを送る前にチャットを開いて確認してください。",
+        "superseded": "チャットを開いて返信してください。再起動の直後に新規作業が届いたため、Wakii は “continue” メッセージを送信しませんでした。",
+        "conflict": "別の Wakii ウィンドウまたはターミナルがこのセッションをまだ保持しています。閉じてから再試行してください。",
+        "ownershipUnknown": "Wakii はこのセッションを所有するプロセスを確認中です。少し待ってから再試行してください。",
         "notAttached": "チャットが再接続されませんでした。再試行するか、開いて新しいターンを開始してください。",
         "dispatchRejected": "Agent が “continue” メッセージを拒否しました。チャットを開いて自分で送信してください。",
-        "unsupported": "このチャットは Orca で再開できません。開いて停止位置を確認してください。",
-        "fallback": "Orca はこのチャットを再開できませんでした。開いて手動で続けてください。"
+        "unsupported": "このチャットは Wakii で再開できません。開いて停止位置を確認してください。",
+        "fallback": "Wakii はこのチャットを再開できませんでした。開いて手動で続けてください。"
       },
       "web": {
         "preloadApi": {
           "cursorAccounts": {
-            "hostOnly": "Cursor のサインイン詳細は、Orca を実行しているコンピュータでのみ読み取れます。"
+            "hostOnly": "Cursor のサインイン詳細は、Wakii を実行しているコンピュータでのみ読み取れます。"
           }
         }
       }
@@ -17400,8 +17441,6 @@
         "chooseInAgentPicker": "Agent の選択画面で選ぶ…",
         "toggleOption": "{{value0}}を切り替える",
         "pillAccessibleName": "{{value0}} {{value1}}",
-        "valueIsDefault": "既定",
-        "valueNotReported": "未報告",
         "sentNotConfirmed": "Agent に送信済み — 未確認",
         "setWhenSessionStarts": "セッション開始時に設定してください。",
         "availableAfterSessionStarts": "セッション開始後に利用できます。",
@@ -17420,8 +17459,8 @@
         "commands": "コマンド",
         "skills": "スキル",
         "loadingSkills": "スキルを読み込み中…",
-        "skillsUnavailableHost": "このホストではスキルが利用できません",
-        "skillsLoadFailed": "このホストからスキルを読み込めませんでした",
+        "skillsUnavailableHost": "SSH チャットではスキルを利用できません",
+        "skillsLoadFailed": "スキルを読み込めませんでした",
         "retrySkills": "再試行",
         "skillCommandCollision": "スキル名でもあります - Agent が判断します",
         "skillMultipleSources": "{{sourceCount}} 個のソース - Agent が解決します",
@@ -17516,6 +17555,8 @@
         "thinking": "考え",
         "workingFor": "{{value0}} 処理中",
         "workedFor": "{{value0}} で完了",
+        "interruptedAfter": "{{value0}} 後に中断",
+        "failedAfter": "{{value0}} 後に失敗",
         "toggleDetails": "ターンの詳細を切り替えます"
       },
       "jumpToLatest": "最新にジャンプ",
@@ -17525,13 +17566,13 @@
       },
       "state": {
         "loading": {
+          "label": "チャットを読み込んでいます",
           "title": "会話を読み込んでいます…",
           "subtitle": "Agent の記録を読んでいます。"
         },
         "error": {
           "title": "会話を読み込めませんでした",
-          "subtitle": "トランスクリプトを読み取ることができませんでした。作業を続けるには、ターミナルに切り替えてください。",
-          "retryingSubtitle": "トランスクリプトを読み取ることができませんでした。Orca は読み込みを再試行し続けます。"
+          "subtitle": "トランスクリプトを読み取ることができませんでした。作業を続けるには、ターミナルに切り替えてください。"
         },
         "reconnecting": "このチャットに再接続しています…",
         "pairHost": "ホストをペアリングして、Agent のチャット履歴を表示します。",
@@ -17608,7 +17649,9 @@
       "notices": {
         "compaction": "圧縮されたコンテキスト",
         "details": "詳細",
-        "plan": "プラン"
+        "plan": "プラン",
+        "historyRepaired": "このチャットの履歴の一部を読み込めませんでした。",
+        "historyItemTooLarge": "チャットのこの部分は大きすぎるため表示できません。"
       },
       "providerFrame": {
         "byteLength": "{{value0}}バイト"
@@ -17643,9 +17686,9 @@
         "stateBlocked": "ブロックされました",
         "stateDone": "終わり",
         "stateIdle": "止まった",
-        "stateUnverifiable": "検証不能",
+        "stateUnverifiable": "最近の更新なし",
+        "stateUnverifiableCount": "{{value0}} は最近の更新なし",
         "reasonWaiting": "承認が必要です",
-        "reasonUnverifiable": "連絡がありません",
         "reasonBlocked": "失敗した",
         "groupAgents": "Agent",
         "groupShell": "シェル",
@@ -17703,12 +17746,12 @@
           "idle": "idle",
           "failed": "失敗した",
           "stopped": "止まった",
-          "unverifiable": "検証不能",
+          "unverifiable": "最近の更新なし",
           "workingCount": "{{value0}} は動作しています",
           "idleCount": "{{value0}} アイドル状態",
           "failedCount": "{{value0}} 件失敗",
           "stoppedCount": "{{value0}} が停止しました",
-          "unverifiableCount": "{{value0}} 検証不能"
+          "unverifiableCount": "{{value0}} は最近の更新なし"
         },
         "startedOne": "1 人のサブ Agent を解雇しました",
         "startedN": "{{value0}} サブ Agent をキックオフしました",
@@ -17718,8 +17761,7 @@
         "unnamed": "サブ Agent"
       },
       "conversationCommand": {
-        "pendingWork": "このコマンドを使用する前に、保留中の作業とメッセージが完了するまで待ってください。",
-        "unconfirmed": "会話動作は確認できておりません。"
+        "pendingWork": "このコマンドを使用する前に、保留中の作業とメッセージが完了するまで待ってください。"
       },
       "drop": {
         "title": "ドロップしてこのチャットに添付します",
@@ -17756,6 +17798,7 @@
         "notDoneReadHistory": "このチャットの履歴を読み込めませんでした。",
         "notDoneSend": "メッセージは送信されませんでした。",
         "tryAgainComposerSend": "もう一度送信してください。",
+        "messageNotSaved": "メッセージを保存できませんでした。",
         "notDoneStop": "Agent は停止されませんでした。",
         "notDoneStopTask": "バックグラウンドタスクは停止されませんでした。",
         "notDoneStopTasks": "バックグラウンドタスクは停止されませんでした。",
@@ -17764,17 +17807,19 @@
         "notDoneCommand": "コマンドは実行されませんでした。",
         "notDoneGoal": "目標は変更されませんでした。",
         "restartFailed": "Agent を再起動できませんでした。",
-        "capacity": "Orca が過去 1 日に受け取ったリクエストが多すぎます。",
-        "outcomeUnknown": "Orca は何が起きたかを確認できませんでした。チャットを確認してください。",
+        "capacity": "Wakii が過去 1 日に受け取ったリクエストが多すぎます。",
+        "outcomeUnknown": "Wakii は何が起きたかを確認できませんでした。チャットを確認してください。",
+        "sendOutcomeLost": "Wakii はメッセージが Agent に届いたことを確認できませんでした。チャットを確認し、必要であればもう一度送信してください。",
         "questionChanged": "この質問はすでに回答済みか、変更されています。",
-        "historyUnreadable": "Orca はこのチャットの保存済み履歴を読み取れませんでした。",
+        "historyUnreadable": "Wakii はこのチャットの保存済み履歴を読み取れませんでした。",
         "historyUnusable": "このチャットを読み込めません。",
-        "historyUnavailable": "Orca は現在このチャットの履歴を開けませんでした。",
-        "savedByNewerOrca": "チャットは新しいバージョンの Orca で保存されました。",
-        "updateOrcaToKeepUsing": "引き続き使用するには、Orca を更新してください。",
-        "unsupported": "このチャットを実行している Orca はこの操作に対応していません。Orca を更新してから、もう一度お試しください。",
-        "unreachable": "Orca は Agent に接続できませんでした。",
-        "recordFailed": "Orca はこのチャットの履歴に記録できませんでした。",
+        "historyUnavailable": "Wakii は現在このチャットの履歴を開けませんでした。",
+        "savedByNewerOrca": "チャットは新しいバージョンの Wakii で保存されました。",
+        "updateOrcaToKeepUsing": "引き続き使用するには、Wakii を更新してください。",
+        "unsupported": "このチャットを実行しているコンピューターに新しいバージョンの Wakii が必要です。そのコンピューターで Wakii を更新してから、もう一度お試しください。",
+        "notAvailable": "このチャットでは利用できません。",
+        "unreachable": "Wakii は Agent に接続できませんでした。",
+        "recordFailed": "Wakii はこれをチャットの履歴に保存できませんでした。",
         "conversationCleared": "この会話はクリアされました。",
         "openCurrentConversation": "続けるには、現在の会話を開いてください。",
         "clearUnfinished": "前回の /clear は完了しませんでした。",
@@ -17788,19 +17833,19 @@
         "answerFirst": "先に質問または承認に回答してください。",
         "backgroundTasksRunning": "バックグラウンドタスクがまだ実行中です。",
         "waitForBackgroundTasks": "バックグラウンドタスクが終わるまでお待ちください。",
-        "messagesUnsettled": "以前に送信したメッセージがまだ確認されていません。",
+        "messagesUnsettled": "以前に送信したメッセージはまだ確認されていません。",
         "settleEarlierMessage": "以前のメッセージが届くまで待つか、再試行してください。",
         "optionRejected": "Agent はこの設定を受け入れませんでした。",
         "goalsUnsupported": "この Agent は目標に対応していません。",
         "agentRefused": "Agent がこれを拒否しました。",
-        "ownerUnproven": "Orca は、このチャットの以前の Agent が停止したことをまだ確認できていません。",
+        "ownerUnproven": "このチャットの以前の Agent がまだ実行中の可能性があります。",
         "reopenChat": "もう一度確認するには、チャットを開き直してください。",
         "terminalAgentHoldsChat": "このチャットはまだターミナルの Agent で開かれています。",
         "quitTerminalAgent": "ここでチャットを続けるには、その Agent を終了してください。",
-        "hostReconciling": "Orca は再起動後、このチャットをまだ確認しています。",
+        "hostReconciling": "Wakii は再起動後、このチャットをまだ確認しています。",
         "waitMoment": "しばらくお待ちください。",
-        "recordUnreadable": "Orca はこのチャットの保存済みの状態を読み取れませんでした。",
-        "chatNotFound": "このチャットを実行している Orca には、このチャットの記録がありません。",
+        "recordUnreadable": "Wakii はこのチャットの保存済みの状態を読み取れませんでした。",
+        "chatNotFound": "Wakii はこのチャットを見つけられません。",
         "startNewChat": "続けるには、新しいチャットを開始してください。",
         "tryAgain": "もう一度お試しください。"
       },
@@ -17825,11 +17870,81 @@
         "pausedSendFailed": "送信できませんでした。「送信」を押して再試行してください。",
         "paused": "一時停止中",
         "queuePausedStopped": "中断したため、キューを一時停止しました",
-        "queuePausedRestarted": "Orca が再起動したため、キューを一時停止しました",
+        "queuePausedRestarted": "Wakii が再起動したため、キューを一時停止しました",
         "queuePausedCleared": "会話を消去したため、キューを一時停止しました",
         "queuePaused": "キューは一時停止中です",
         "resume": "再開"
-      }
+      },
+      "contextMenu": {
+        "copyOrcaSessionId": "Wakii セッション ID をコピー",
+        "orcaSessionIdCopied": "Wakii セッション ID をコピーしました",
+        "orcaSessionIdCopyFailed": "Wakii セッション ID をコピーできませんでした",
+        "orcaSessionIdTooltip": "このチャットに対する Wakii の ID です。Agent CLI 独自のセッション ID とは別のものです。Agent は Wakii を通じて互いを指すときにこれを使います。"
+      },
+      "failureWords": {
+        "theAgent": "Agent",
+        "providerStartFailed": "{{agent}} は起動が完了する前に停止しました。",
+        "runCommandAgain": "/{{command}} をもう一度実行してください。",
+        "sendToTryAgain": "もう一度試すには、メッセージを送信してください。",
+        "couldNotStart": "{{agent}} を起動できませんでした。",
+        "couldNotRestart": "{{agent}} を再起動できませんでした。",
+        "notSignedIn": "{{agent}} は選択したアカウントでサインインしていません。",
+        "signInFirst": "先にサインインしてください。",
+        "signInThenRunCommand": "サインインしてから、/{{command}} をもう一度実行してください。",
+        "signInThenSend": "サインインしてから、メッセージをもう一度送信してください。",
+        "historyTooLarge": "この会話の履歴は大きすぎるため、ここでは復元できません。",
+        "managedAccountEnvOverride": "この Claude の起動では独自の Anthropic サインイン変数が設定されています。管理対象の Claude アカウントを使用するには、それらを削除してください。",
+        "accountSwitchInProgress": "Claude アカウントの切り替え中です。完了してからもう一度お試しください。",
+        "managedAccountUnsupported": "WSL に Claude アカウントが追加されている間、Claude チャットには Windows の Claude アカウントが必要です。",
+        "chooseClaudeAccount": "Claude アカウントの設定で選択または追加してください。",
+        "chooseClaudeAccountThenRunCommand": "Claude アカウントの設定で選択または追加してから、/{{command}} をもう一度実行してください。",
+        "chooseClaudeAccountThenSend": "Claude アカウントの設定で選択または追加してから、メッセージをもう一度送信してください。",
+        "providerExitedRow": "この応答の途中で {{agent}} が停止しました。この会話で続けることができます。",
+        "providerExitedRejection": "このメッセージが送信される前に {{agent}} が停止しました。",
+        "providerRejected": "プロバイダーはこのメッセージを受け付けませんでした。",
+        "providerRejectedQuoted": "プロバイダーはこのメッセージを受け付けませんでした: {{detail}}。",
+        "attachmentEmpty": "このメッセージの画像が空のため、メッセージは送信されませんでした。",
+        "attachmentTooLarge": "このメッセージの画像が大きすぎるため、メッセージは送信されませんでした。",
+        "attachmentLargerThan": "このメッセージの画像が {{size}} MB を超えているため、メッセージは送信されませんでした。",
+        "attachmentTooMany": "このメッセージには画像が多すぎるため、送信されませんでした。",
+        "attachmentAtMost": "{{agent}} が 1 つのメッセージで受け付ける画像は最大 {{limit}} 枚のため、このメッセージは送信されませんでした。",
+        "attachmentTotalTooLarge": "このメッセージの画像の合計サイズが大きすぎるため、メッセージは送信されませんでした。",
+        "attachmentTotalMoreThan": "このメッセージの画像の合計が {{size}} MB を超えているため、メッセージは送信されませんでした。",
+        "attachmentUnsupportedType": "{{agent}} が受け付けるのは PNG、JPEG、GIF、WebP 画像のみのため、このメッセージは送信されませんでした。",
+        "attachmentNotAFile": "このメッセージの画像がファイルではないため、メッセージは送信されませんでした。",
+        "attachmentNoSource": "このメッセージの画像に送信するファイルがないため、メッセージは送信されませんでした。",
+        "attachmentInvalid": "このメッセージの添付ファイルは Agent に送信できません。",
+        "attachmentUnreadable": "このメッセージの添付ファイルを読み取れなかったため、メッセージは送信されませんでした。",
+        "emptyMessage": "このメッセージは空のため、送信されませんでした。",
+        "queueFull": "Agent を待っているメッセージが多すぎたため、このメッセージは送信されませんでした。",
+        "writeFailed": "Wakii はこのメッセージを Agent に渡せなかったため、送信されませんでした。",
+        "cancelled": "このメッセージは Agent が処理を始める前に取り消されました。",
+        "chatClosed": "このメッセージが送信される前にチャットが閉じられました。",
+        "hostRestarted": "このメッセージが送信される前に Wakii が再起動しました。",
+        "notDelivered": "このメッセージは配信されませんでした。",
+        "notDeliveredSendAgain": "このメッセージは配信されませんでした。続けるには、もう一度送信してください。",
+        "commandRefused": "このコマンドは実行されませんでした。",
+        "commandRefusedTryAgain": "このコマンドは実行されませんでした。もう一度お試しください。",
+        "compactionFailed": "圧縮に失敗しました。",
+        "compactionFailedQuoted": "圧縮に失敗しました: {{detail}}。",
+        "compactionUnconfirmed": "圧縮の完了は確認されていません。",
+        "cancelUnconfirmed": "キャンセルは確認されませんでした。",
+        "stopRefused": "{{agent}} は停止しませんでした。",
+        "stopRefusedQuoted": "{{agent}} は停止しませんでした: {{detail}}。",
+        "noTurnToStop": "{{agent}} には停止できる実行中のターンがありませんでした。",
+        "answerUnconfirmed": "回答は記録されましたが、Agent は確認しませんでした。",
+        "hostFault": "Wakii で問題が発生したため、この操作は完了しませんでした。",
+        "hostFaultTryAgain": "Wakii で問題が発生したため、この操作は完了しませんでした。もう一度お試しください。",
+        "hostStopped": "{{agent}} の起動が完了しなかったため、Wakii が停止しました。",
+        "providerRateLimited": "{{agent}} はレート制限を受けているため、再試行しています。",
+        "providerRetrying": "{{agent}} で一時的な問題が発生したため、再試行しています。",
+        "providerRetryingQuoted": "{{agent}} は再試行しています: {{detail}}。",
+        "previousExitUnverifiable": "以前の {{agent}} がまだ実行中の可能性があります。停止するとメッセージが送信されます。"
+      },
+      "structuredSessionHostDeclined": "{{value0}} をターミナルで開きました",
+      "structuredSessionHostDeclinedDescription": "このサーバーはこのワークスペースで {{value0}} チャットを実行できません。",
+      "structuredSessionHostUnreachable": "{{value0}} に接続できませんでした",
+      "structuredSessionHostUnreachableDescription": "Wakii は {{value0}} チャットを開きませんでした。サーバーへの接続を確認して、もう一度お試しください。"
     },
     "tab": {
       "bar": {
@@ -18083,6 +18198,12 @@
           "unknown": "不明なホスト",
           "candidateName": "{{value0}}、{{value1}}"
         }
+      },
+      "creation": {
+        "worktreeReadyToast": "ワークツリー {{name}} の準備ができました",
+        "workspaceReadyToast": "ワークスペース {{name}} の準備ができました",
+        "goToWorktree": "ワークツリーに移動",
+        "goToWorkspace": "ワークスペースに移動"
       }
     },
     "agentSessionContinuation": {
@@ -18110,7 +18231,7 @@
       "sent": "セッションコンテキストを新規 {{agent}} セッションに送信しました。",
       "deliveryFailed": "新規 {{agent}} セッションは開始しましたが、コンテキストを送信できませんでした。",
       "launchFailed": "新規 {{agent}} セッションを開始できませんでした。",
-      "deliveryUnconfirmed": "Orca は {{agent}} がセッションコンテキストを受け取ったことを確認できませんでした。新規セッションを確認し、入力が空の場合は自分で貼り付けてください。",
+      "deliveryUnconfirmed": "Wakii は {{agent}} がセッションコンテキストを受け取ったことを確認できませんでした。新規セッションを確認し、入力が空の場合は自分で貼り付けてください。",
       "copyPrompt": "プロンプトをコピー"
     },
     "terminalPane": {
@@ -18410,6 +18531,17 @@
     },
     "fileLoad": {
       "hostUnresolved": "ホストはこのファイルのワークスペースを見つけることができませんでした。削除されたか、ホストがまだそれを認識していない可能性があります。再試行するか、タブストリップからこのタブを閉じてください。"
+    },
+    "markdownPreview": {
+      "tooLarge": "ファイルがプレビュー上限の {{limit}} を超えています。ソースを表示するにはファイルを開いてください。",
+      "tooLargeInDiff": "ファイルがプレビュー上限の {{limit}} を超えています。差分を表示するにはソースモードに切り替えてください。",
+      "blockTooLarge": "このブロックは大きすぎるため表示できません。ソース表示で確認してください。",
+      "largeNotice": "大きなプレビューです。文書全体をコピーするにはソース表示を使用してください。PDF エクスポートは利用できません。",
+      "processingFailed": "この文書はプレビューの制限を超えています。ファイル全体を読むにはソース表示を開いてください。",
+      "preparing": "プレビューを準備中…",
+      "searching": "検索中…",
+      "searchFailed": "検索を完了できませんでした。もう一度お試しください。",
+      "refreshFailed": "プレビューの更新に失敗しました。以前のバージョンを表示しています。現在の内容はソース表示で確認してください。"
     }
   },
   "featureTips": {
@@ -18497,7 +18629,12 @@
     "genericDetail": "これは多くの場合、グラフィックスドライバーまたはインストールの問題です。リロードして再試行するか、Wakii を終了して再起動してください。",
     "title": "Wakii がロードに失敗し続ける",
     "stalledMessage": "クラッシュ後のリロード中にアプリウィンドウが応答を停止しました。",
-    "crashLoopMessage": "アプリウィンドウが繰り返しクラッシュし、自動的にリロードされなくなりました。"
+    "crashLoopMessage": "アプリウィンドウが繰り返しクラッシュし、自動的にリロードされなくなりました。",
+    "tryAgain": "再試行",
+    "launchFailedMessage": "Wakii はウィンドウを描画するプロセスを起動できませんでした。",
+    "launchFailedDetail": "Wakii は {{recoveryCount}} 回再試行しましたが、成功しませんでした。",
+    "processLimitDetail": "ユーザーアカウントのプロセス数が上限に達したため、システムが新しいプロセスの作成を拒否しました。暴走したターミナル、開発サーバー、Agent が原因であることがよくあります。いくつか終了してから「再試行」をクリックしてください。",
+    "launchFailedGenericDetail": "システムが起動を拒否しました。メモリを空けるか他のアプリを終了してから「再試行」をクリックしてください。繰り返し発生する場合は Wakii を再インストールしてください。"
   },
   "sessionSearch": {
     "panel": {
@@ -18641,5 +18778,21 @@
     "addTypedPath": "Add",
     "noDirectories": "No folders added yet.",
     "removePath": "Remove {{name}}"
+  },
+  "accounts": {
+    "managedData": {
+      "description": "Wakii ホストのターミナルでこのコマンドを実行してアカウントを追加します。選択はそのホストでの新規 Agent 起動に適用されます。直接 SSH 接続とWindows上の WSL は独自の認証情報を使用します。",
+      "copied": "コピーしました",
+      "add": "アカウント追加コマンドをコピー",
+      "refresh": "アカウントを更新",
+      "upgrade": "アカウントが表示されない場合はWakiiホストを更新または再起動してください。",
+      "system": "システムの既定",
+      "active": "使用中",
+      "select": "選択",
+      "remove": "削除",
+      "removeTitle": "管理アカウントを削除しますか？",
+      "removeDescription": "まずこのプロファイルを使う Agent を停止してください。削除すると保存済みの認証情報と会話データが消去されます。システムのログインには影響しません。",
+      "cancel": "キャンセル"
+    }
   }
 }

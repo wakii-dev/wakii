@@ -11,6 +11,7 @@ import type { SearchReplacePreviewModalProps } from './search-replace-preview-mo
 
 export type FileSearchResultsProps = {
   results: SearchResult | null
+  error?: string | null
   hasCommittedResults: boolean
   query: string
   loading: boolean

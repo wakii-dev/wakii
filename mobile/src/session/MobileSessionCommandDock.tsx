@@ -19,6 +19,7 @@ import { MobileKeyboardDismissKey } from './MobileKeyboardDismissKey'
 import { MobileStoryModeChip } from './MobileStoryModeChip'
 import { MobileTerminalLiveInputStatus } from './MobileTerminalLiveInputStatus'
 import { MobileTerminalInputActions } from './MobileTerminalInputActions'
+import { keepHeldPressThroughLongPress } from './held-press-long-press'
 import { isTerminalPhoneDisplayMode } from './mobile-session-route-helpers'
 import { formatStoryPrompt } from './story-prompt-format'
 import { colors } from '../theme/mobile-theme'
@@ -194,6 +195,7 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
                   }
                   void handleAccessoryKey(createTerminalLiveAccessoryInput(key))
                 }}
+                onLongPress={key.repeatable ? keepHeldPressThroughLongPress : undefined}
                 accessibilityLabel={key.accessibilityLabel ?? `Send ${key.label}`}
               >
                 <Text

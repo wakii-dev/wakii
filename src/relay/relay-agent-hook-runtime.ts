@@ -1,8 +1,10 @@
+import { homedir } from 'node:os'
 import type { RelayDispatcher } from './dispatcher'
 import type { PtyEnvAugmenter, PtyHandler } from './pty-handler'
 import { RelayAgentHookServer } from './agent-hook-server'
 import { endpointDirForRelaySocket } from './agent-hook-endpoint-coordinates'
 import { PluginOverlayManager } from './plugin-overlay'
+import { installOpenCodePluginInCanonicalConfig } from './opencode-canonical-config'
 import {
   AGENT_HOOK_INSTALL_PLUGINS_METHOD,
   AGENT_HOOK_REQUEST_REPLAY_METHOD
@@ -37,9 +39,12 @@ export class RelayAgentHookRuntime {
     this.hookServer = new RelayAgentHookServer({
       endpointDir: endpointDir ?? endpointDirForRelaySocket(sockPath),
       forward: (envelope) => publishAgentHookEnvelope(dispatcher, envelope),
+      forwardUnavailable: (envelope) => publishAgentHookEnvelope(dispatcher, envelope),
       // Why: the PTY handler is the only component that knows which panes still have a client
       // surface, so it — not the client — decides whether a hook post describes a live pane.
-      isPaneSurfaceRetired: (paneKey) => ptyHandler.isPaneSurfaceRetired(paneKey)
+      isPaneSurfaceRetired: (paneKey) => ptyHandler.isPaneSurfaceRetired(paneKey),
+      getAgentLaunchToken: (paneKey) => ptyHandler.getAgentLaunchToken(paneKey),
+      getTmuxManagedPty: async (paneKey) => ptyHandler.getTmuxManagedPty(paneKey)
     })
   }
 
@@ -64,6 +69,9 @@ export class RelayAgentHookRuntime {
   }
 
   private registerPtyEnvironment(): void {
+    this.ptyHandler.setAgentPresenceTrigger((paneKey) => {
+      void this.hookServer.checkAgentPresence(paneKey)
+    })
     this.ptyHandler.addEnvAugmenter(() => this.hookServer.buildPtyEnv())
     this.ptyHandler.addEnvAugmenter((context) => this.buildPluginEnvironment(context))
     this.ptyHandler.setExitListener(({ paneKey, id }) => {
@@ -178,25 +186,42 @@ export class RelayAgentHookRuntime {
     }))
     registerManagedHookInstaller(this.dispatcher)
     this.dispatcher.onRequest(AGENT_HOOK_INSTALL_PLUGINS_METHOD, async (params) => {
+      const startupPrompt = params.opencodeStartupPromptSource
       const opencode = params.opencodePluginSource
       const opencode2 = params.opencode2PluginSource
       const pi = params.piExtensionSource
       const omp = params.ompExtensionSource
       const primeAgent = params.primeAgentExtensionSource
+      assertPluginSourceUnderByteCap('opencodeStartupPromptSource', startupPrompt)
       assertPluginSourceUnderByteCap('opencodePluginSource', opencode)
       assertPluginSourceUnderByteCap('opencode2PluginSource', opencode2)
       assertPluginSourceUnderByteCap('piExtensionSource', pi)
       assertPluginSourceUnderByteCap('ompExtensionSource', omp)
       assertPluginSourceUnderByteCap('primeAgentExtensionSource', primeAgent)
       this.pluginOverlay.setSources({
+        opencodeStartupPromptSource: typeof startupPrompt === 'string' ? startupPrompt : undefined,
         opencodePluginSource: typeof opencode === 'string' ? opencode : undefined,
         opencode2PluginSource: typeof opencode2 === 'string' ? opencode2 : undefined,
         piExtensionSource: typeof pi === 'string' ? pi : undefined,
         ompExtensionSource: typeof omp === 'string' ? omp : undefined,
         primeAgentExtensionSource: typeof primeAgent === 'string' ? primeAgent : undefined
       })
+      // Why: a running OpenCode 2 service reloads a changed plugin file, so an Orca upgrade
+      // reaches it on connect instead of at the next pane spawn. Never creates an install.
+      for (const [agent, source] of [
+        ['opencode', opencode],
+        ['opencode2', opencode2]
+      ] as const) {
+        if (typeof source === 'string' && source) {
+          installOpenCodePluginInCanonicalConfig(source, agent, process.env, homedir(), true)
+        }
+      }
+      const startupPromptInstalled = this.pluginOverlay.installOpenCodeStartupPromptPlugin(
+        process.env
+      )
       return {
         installed: {
+          opencodeStartupPrompt: startupPromptInstalled,
           opencode: this.pluginOverlay.hasOpenCodeSource(),
           opencode2: this.pluginOverlay.hasOpenCode2Source(),
           pi: this.pluginOverlay.hasPiSource('pi'),

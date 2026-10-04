@@ -319,7 +319,8 @@ describe('WakiiRuntimeService', () => {
       12,
       issueUpdates,
       null,
-      localGitOptions
+      localGitOptions,
+      undefined
     )
     expect(addGitHubIssueCommentMock).toHaveBeenCalledWith(
       TEST_REPO_PATH,
@@ -327,7 +328,8 @@ describe('WakiiRuntimeService', () => {
       'Comment',
       null,
       null,
-      localGitOptions
+      localGitOptions,
+      undefined
     )
     expect(listGitHubLabelsMock).toHaveBeenCalledWith(
       TEST_REPO_PATH,

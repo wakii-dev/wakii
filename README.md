@@ -38,6 +38,20 @@ installs itself on first run — no setup, enabled by default.
 <tr>
 <td width="50%" valign="middle">
 
+### Mobile Companion
+
+Monitor and steer your agents from your phone — get notified when an agent finishes and send follow-ups from anywhere.
+
+[iOS App Store](https://apps.apple.com/us/app/orca-ide/id6766130217) · [Android APK 0.0.52](https://github.com/stablyai/orca/releases/download/mobile-android-v0.0.52/app-release.apk) · [Docs →](https://www.onorca.dev/docs/mobile)
+
+</td>
+<td width="50%">
+  <a href="https://www.onorca.dev/docs/mobile"><picture><source srcset="docs/assets/feature-wall/mobile-companion-app-showcase.gif" type="image/gif"><img src="docs/assets/feature-wall/mobile-companion-app-showcase.jpg" alt="Wakii desktop with the mobile companion app" width="100%" /></picture></a>
+</td>
+</tr>
+<tr>
+<td width="50%" valign="middle">
+
 ### Parallel Worktrees
 
 Fan one prompt across five agents, each in its own isolated git worktree — compare the results and merge the winner.

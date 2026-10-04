@@ -1,9 +1,9 @@
 // @vitest-environment happy-dom
 
-import { act, renderHook, waitFor } from '@testing-library/react'
+import { act, cleanup, renderHook, waitFor } from '@testing-library/react'
 import { useLayoutEffect } from 'react'
 import { createRoot } from 'react-dom/client'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AgentJournalSubmission } from '../../../../shared/agent-session-journal-types'
 import type { AgentSessionWireRefusalCode } from '../../../../shared/agent-session-wire'
 import { enqueueStructuredAgentSessionLaunchPrompt } from './structured-agent-session-outbox-storage'
@@ -18,6 +18,9 @@ vi.mock('@/runtime/structured-agent-session-client', () => ({
 
 import { useStructuredAgentSessionOutbox } from './use-structured-agent-session-outbox'
 import { settleStructuredAgentLaunchPrompt } from '@/lib/structured-agent-session-launch-prompt'
+
+// Why: every hook here shares the session outbox store; one left mounted would drain the next test's.
+afterEach(cleanup)
 
 const LOCAL_TARGET = { kind: 'local' } as const
 
@@ -158,6 +161,7 @@ describe('useStructuredAgentSessionOutbox', () => {
     await expect(
       settleStructuredAgentLaunchPrompt({
         launchResult: Promise.resolve({ sessionId: 'session-1', fence: 1 }),
+        target: { kind: 'local' },
         options: { prompt: 'review this' },
         stagedEntry
       })
@@ -178,6 +182,7 @@ describe('useStructuredAgentSessionOutbox', () => {
     mocks.call.mockReturnValueOnce(admission.promise)
     const delivery = settleStructuredAgentLaunchPrompt({
       launchResult: Promise.resolve({ sessionId: 'session-1', fence: 1 }),
+      target: { kind: 'local' },
       options: { prompt: 'review this' },
       stagedEntry
     })
@@ -411,10 +416,10 @@ describe('useStructuredAgentSessionOutbox', () => {
       throw new Error('storage full')
     })
     act(() => expect(result.current.send('tail that cannot be saved')).toBe(false))
-    expect(result.current.error).toBe('Message could not be saved to the outbox')
+    expect(result.current.error).toBe("Couldn't save your message. Try again.")
 
     rerender({ submissions: [{ ...pendingResultFor(id, 10).value.submission }] })
-    expect(result.current.error).toBe('Message could not be saved to the outbox')
+    expect(result.current.error).toBe("Couldn't save your message. Try again.")
     setItem.mockRestore()
   })
 
@@ -454,7 +459,7 @@ describe('useStructuredAgentSessionOutbox', () => {
   it('drains a head the host refuses to redeliver so the queue behind it advances', async () => {
     // The guard refuses a retry it cannot prove is a first delivery. That must
     // not leave a Retry that does nothing in front of a wedged queue: the entry
-    // leaves the outbox, the user is told Orca will not send it again, and the
+    // leaves the outbox, the user is told to check the chat before sending it again, and the
     // message queued behind it goes out.
     // The second send never settles, so the refusal's error is still on screen
     // when the queue behind it advances.
@@ -500,7 +505,7 @@ describe('useStructuredAgentSessionOutbox', () => {
     )
     expect(sent).toContain('second')
     expect(result.current.error).toBe(
-      'Message delivery is unconfirmed and Wakii will not send it again'
+      "Wakii couldn't confirm your message reached the agent. Check the chat, then send it again if needed."
     )
   })
 
@@ -560,7 +565,6 @@ describe('useStructuredAgentSessionOutbox', () => {
     expect(result.current.outbox).toHaveLength(1)
     // Never sent, and never re-sent on its own: it waits for Retry and holds nothing up.
     expect(result.current.outbox[0]?.state).toBe('rejected')
-    expect(result.current.blockedClientMessageId).toBeNull()
     // Settled, not pending: the refused id never ran, so a Retry is a new operation.
     const sentId: unknown = mocks.call.mock.calls[0]![2].envelope.clientOperationId
     const retryId = result.current.outbox[0]!.clientMessageId
@@ -778,7 +782,6 @@ describe('useStructuredAgentSessionOutbox', () => {
     // under the "delivery is unconfirmed" banner. The disposition tests pin its words.
     await waitFor(() => expect(result.current.outbox[0]?.lastFailure?.kind).toBe('rejected'))
     expect(result.current.outbox[0]?.state).toBe('rejected')
-    expect(result.current.blockedClientMessageId).toBeNull()
 
     // Retry immediately, before the journal subscription can publish the rejected row.
     act(() => result.current.retry(firstId))
