@@ -61,9 +61,13 @@ Serial contract: pipeline xử lý ĐÚNG 1 story tại một thời điểm —
 | Watchdog / self-check loop | STORY-WATCHDOG | `references/story-watchdog.md` |
 | **Contract kết thúc story (PR + dọn sf worktree)** | **END-STATE CONTRACT** | section ngay dưới |
 
-Naming: nhánh đích DUY NHẤT của story = `story-<epic-id>-<slug>` dash-form
-(story-hub — form thật trên git, orca fold `/`→`-`); story legacy ghi
-slash-form `story/<epic-id>-<slug>`. (KHÔNG dùng legacy `story-base`.)
+Naming (04/10 — user convention): **story dest = `story/{feature}` slash-form** (vd
+`story/local4-kit-launch-safety`); **feature lẻ = `features/{slug}`**; default branch giữ
+nguyên. **SF branch = `story/{feature}-sf-N` (dash, KHÔNG nest `story/{feature}/sf-N`** —
+ref directory conflict: branch `story/x` chặn `story/x/sf-1` cùng kiểu `wakii-dev` chặn
+`wakii-dev/*` trên remote 04/10); sf branch có thể local-only (không push). Worktree name
+vẫn dash-form (`story-{feature}`) — orca fold `/`→`-`, tên worktree ≠ tên branch. Cấm
+prefix `wakii-dev/` trên remote wakii-dev/wakii. (KHÔNG dùng legacy `story-base`.)
 
 ## END-STATE CONTRACT + rào vận hành (04/10 — học từ VU-32/LOCAL-4 chạy thật)
 
