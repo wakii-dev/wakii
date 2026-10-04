@@ -27,7 +27,8 @@
 #                                        worktree OP_WT_PATHS nhưng không có worker
 #                                        live trong worker-list). Scan lsof cwd,
 #                                        fixture OP_PROC_JSON/OP_PROC_FILE, pattern
-#                                        OP_AGENT_PAT, seam lsof OP_LSOF_BIN.
+#                                        OP_AGENT_PAT, seam lsof OP_LSOF_BIN /
+#                                        ps OP_PS_BIN (seam chết → fail-open).
 #                                        KHÔNG kill — chỉ báo cáo.
 #   exec bin/story-ownership-probe --json [--self H] [runs-json-qua-stdin]
 #                                      → JSON cho consumer python:
@@ -399,22 +400,25 @@ def read_rows():
 
 def ancestor_pids():
     # chain của launcher (python→bash→caller) — process tham gia quyết định
-    # launch không tự chặn chính mình
+    # launch không tự chặn chính mình. Trả (seen, ok) — ps hỏng thì ok=False:
+    # exclusion không đáng tin → caller phải fail-open (review P2, không phán
+    # trên scan thiếu lớp chống tự-chặn)
     seen = set()
+    ps_bin = os.environ.get("OP_PS_BIN") or "ps"
     pid, hops = os.getpid(), 0
     while pid > 1 and hops < 64:
         try:
-            out = subprocess.run(["ps", "-o", "ppid=", "-p", str(pid)],
+            out = subprocess.run([ps_bin, "-o", "ppid=", "-p", str(pid)],
                                  capture_output=True, text=True, timeout=10)
             ppid = int((out.stdout or "").strip() or 0)
         except Exception:
-            break
+            return seen, False
         if ppid <= 1:
             break
         seen.add(ppid)
         pid = ppid
         hops += 1
-    return seen
+    return seen, True
 
 
 def within(child, parent):
@@ -440,7 +444,10 @@ try:
 except re.error:
     emit("PROCERR", f"pattern hỏng: {pat_s}")
     sys.exit(0)
-anc = ancestor_pids()
+anc, anc_ok = ancestor_pids()
+if not anc_ok:
+    emit("PROCERR", "ps hỏng — không xác định được ancestor chain, fail-open")
+    sys.exit(0)
 for r in rows:
     pid, comm, cwd = r["pid"], r["comm"], r["cwd"]
     if not pid or not cwd or pid in anc:

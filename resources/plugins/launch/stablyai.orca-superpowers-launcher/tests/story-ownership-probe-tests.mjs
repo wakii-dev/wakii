@@ -392,6 +392,26 @@ console.log('== P6 process-scan: lsof hỏng → PROCERR, fail-open (rỗng, rc0
   rmSync(dir, { recursive: true, force: true })
 }
 
+console.log('== P8 process-scan: ps hỏng (không chắc ancestor chain) → PROCERR fail-open toàn phần ==')
+{
+  // review P2: ps chết giữa chừng → exclusion không đáng tin → không được phán
+  // (chặn nhầm launcher chính mình = fail-closed cục bộ) — seam OP_PS_BIN
+  const dir = tempDir('p8')
+  const stub = makeOrcaStub(dir)
+  const primary = join(dir, 'primary-repo')
+  mkdirSync(primary, { recursive: true })
+  const procs = JSON.stringify([{ pid: 424601, comm: 'claude', cwd: primary }])
+  const r = spawnSync('bash', ['-c', `
+    . "${LIB}"
+    hits="$(OP_PRIMARY="$OP" OP_PS_BIN=/nonexistent-ps-xyz OP_PROC_JSON="$PJ" ownership_probe_process_hits)" || exit 9
+    printf 'HITS=[%s]' "$hits"
+  `], { encoding: 'utf8', timeout: 60000,
+    env: { ...process.env, ORCA_BIN: stub, OP: primary, PJ: procs } })
+  check('P8', 'exit 0 + HITS rỗng (fail-open)', r.status === 0 && r.stdout.includes('HITS=[]'), `code=${r.status} ${r.stdout}${r.stderr}`)
+  check('P8', 'stderr nêu fail-open', (r.stderr || '').includes('fail-open'), r.stderr)
+  rmSync(dir, { recursive: true, force: true })
+}
+
 console.log('== P7 process-scan: fixture qua OP_PROC_FILE + primary chứa .claude/worktrees không tính primary ==')
 {
   const dir = tempDir('p7')
