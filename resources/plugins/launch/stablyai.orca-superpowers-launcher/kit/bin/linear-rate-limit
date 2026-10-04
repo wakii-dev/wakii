@@ -69,7 +69,7 @@ try:
         st = {}
 except Exception:
     st = {}
-st.setdefault("since", now)
+st["since"] = now  # refresh — header doc ghi rõ note refresh since (defect 04/10: setdefault giữ since cũ → check luôn sạch)
 st.setdefault("cooldownMinutes", int(os.environ.get("LINEAR_RATE_LIMIT_COOLDOWN_MIN", "15")))
 st.setdefault("ops", [])
 st["ops"].append({"bin": binname, "op": op, "ts": now})
