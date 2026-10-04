@@ -149,8 +149,10 @@ except Exception:
 meta = doc.get('meta') or {}
 node = next((x for x in (doc.get('nodes') or [])
              if isinstance(x, dict) and x.get('kind') == 'sf' and x.get('id') == os.environ.get('SF_MM_NUM')), None)
-print(str((node or {}).get('linear') or ''))
-print(str(meta.get('dest') or ''))
+# node không khớp = file của story khác (worktree đa .wakii) — KHÔNG lấy dest
+# dù meta có, tránh dest bị kẹt vào nhánh đích sai
+print(str(node.get('linear') or '') if node else '')
+print(str(meta.get('dest') or '') if node else '')
 PYMM
       ) || mm_out=""
       [ -n "$mm_out" ] || continue

@@ -107,7 +107,9 @@ resolve_mm(){ # ok → RESOLVED_JSON (states đã merge) + repoint $MM khi local
   local _info _file _src _up
   _info=$(printf '%s' "$RESOLVED_JSON" | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{try{const j=JSON.parse(d);console.log([j.file||"",j.source||"",Array.isArray(j.upgraded)?j.upgraded.join(","):""].join("\t"))}catch{console.log("\t\t")}})')
   _file=$(printf '%s' "$_info" | cut -f1); _src=$(printf '%s' "$_info" | cut -f2); _up=$(printf '%s' "$_info" | cut -f3)
-  if [ -n "$_file" ] && [ "$_file" != "$MM" ] && [ ! -f "$MM" ]; then
+  # [ -f "$_file" ]: source=dest-branch → _file pseudo-path "ref:rel" — không bao
+  # giờ repoint sang đường không tồn tại trên đĩa (tick/convergence sẽ đọc rác)
+  if [ -n "$_file" ] && [ -f "$_file" ] && [ "$_file" != "$MM" ] && [ ! -f "$MM" ]; then
     log "MM repoint: $MM không có → dùng $_file (source=$_src)"
     MM="$_file"
   fi

@@ -25,9 +25,11 @@ function check(caseId, name, cond, detail = '') {
   console.log(`  [${ok ? 'PASS' : 'FAIL'}] ${caseId} ${name}${ok ? '' : ' — ' + (detail || 'assert sai')}`)
 }
 
+const TMP_ROOTS = []
 function tempDir(tag) {
   const dir = mkdtempSync(join(tmpdir(), `mindmap-resolve-${tag}-`))
   if (!dir.startsWith(tmpdir())) throw new Error('temp ngoài tmpdir — dừng')
+  TMP_ROOTS.push(dir)
   return dir
 }
 
@@ -250,6 +252,9 @@ const json = r => { try { return JSON.parse(r.stdout) } catch { return null } }
   const r = spawnSync(BIN, ['--resolve'], { encoding: 'utf8', timeout: 15000 })
   check('USAGE', 'exit 2 khi thiếu <file>', r.status === 2, `status=${r.status}`)
 }
+
+// dọn fixture tmp (git repo + worktree thật — không dọn là tích müll mỗi lần chạy)
+for (const r of TMP_ROOTS) rmSync(r, { recursive: true, force: true })
 
 console.log(`\nstory-mindmap-resolve: ${pass} pass, ${fail} fail`)
 if (fail > 0) {

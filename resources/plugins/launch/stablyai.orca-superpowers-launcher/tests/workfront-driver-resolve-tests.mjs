@@ -25,9 +25,11 @@ function check(caseId, name, cond, detail = '') {
   console.log(`  [${ok ? 'PASS' : 'FAIL'}] ${caseId} ${name}${ok ? '' : ' — ' + (detail || 'assert sai')}`)
 }
 
+const TMP_ROOTS = []
 function tempDir(tag) {
   const dir = mkdtempSync(join(tmpdir(), `driver-resolve-${tag}-`))
   if (!dir.startsWith(tmpdir())) throw new Error('temp ngoài tmpdir — dừng')
+  TMP_ROOTS.push(dir)
   return dir
 }
 
@@ -128,6 +130,9 @@ function runDriver(repo, slug, env = {}) {
   const { log } = runDriver(repo, 'fi900-fix')
   check('MISSING', 'EXIT nhắc resolve MISS (không im lặng)', /không có mindmap.*resolve MISS/.test(log), log.slice(-600))
 }
+
+// dọn fixture tmp (repo + worktree + fake HOME thật — không dọn là tích müll)
+for (const r of TMP_ROOTS) rmSync(r, { recursive: true, force: true })
 
 console.log(`\nworkfront-driver-resolve: ${pass} pass, ${fail} fail`)
 if (fail > 0) {
