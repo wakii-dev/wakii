@@ -60,6 +60,21 @@ Fill in [`.github/pull_request_template.md`](./.github/pull_request_template.md)
 
 Cover all four concisely. Don't pad or walk the diff.
 
+# Git Commit Message & Format (default wakii)
+
+Format: Conventional Commits — `<type>(<scope>): <subject>`
+
+- **type**: `feat|fix|docs|refactor|test|chore|story|evidence|merge`
+- **scope**: miền thật của thay đổi — `kit`, `ui`, `<epic-id>` (`vu32`, `vi-1`, `local4`…)
+- **subject**: tiếng Việt, ngắn, mệnh lệnh, không kết thúc bằng dấu chấm
+- **body** (khi đáng nhớ): bullet `what/why` — fence, bài học, phân xử; không kể trình tự thao tác
+- **merge commit**: `merge: <nguồn> vào <đích> — <tóm tắt phân xử nếu có conflict>`
+- **story lifecycle**: `story(<epic>): …` meta commits · `evidence(<ticket>): …` evidence
+- **trailer**: `Co-Authored-By:` khi có đồng tác giả AI
+- **Branch naming**: story dest = `story/{feature}` · feature lẻ = `features/{slug}` · SF = `story/{feature}-sf-N` (dash, không nest) · cấm prefix `wakii-dev/` trên remote wakii-dev/wakii
+- **CẤM**: message generic (`update`, `fix bug`, `wip` trên branch dùng chung); commit file local-only (navigator state, checkpoints, `__pycache__`); commit kit file mà chưa rehash (kitHash + fingerprint cùng commit với content); `--no-verify` trừ khi có lý do ghi rõ (lint-staged OOM trên resources là lý do hợp lệ)
+- Template CLI: `.gitmessage` (repo đã set `commit.template`)
+
 # Considerations
 
 ## Worktree Safety

@@ -1,0 +1,14 @@
+# Conventional Commits — <type>(<scope>): <subject>
+# type:    feat|fix|docs|refactor|test|chore|story|evidence|merge
+# scope:   kit | ui | <epic-id> (vu32, vi-1, local4, ...)
+# subject: tiếng Việt, ngắn, mệnh lệnh, không chấm cuối
+#
+# body: bullet what/why đáng nhớ — fence, bài học, phân xử (không kể thao tác)
+# merge: "merge: <nguồn> vào <đích> — <phân xử nếu conflict>"
+#
+# CẤM: message generic (update/fix bug/wip trên branch dùng chung) · file local-only
+# (navigator state, checkpoints, __pycache__) · commit kit chưa rehash
+# (kitHash + fingerprint phải cùng commit) · --no-verify không lý do
+#
+# Branch: story dest = story/{feature} · feature = features/{slug} ·
+#         SF = story/{feature}-sf-N · cấm prefix wakii-dev/ (remote conflict)
