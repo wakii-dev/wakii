@@ -1,0 +1,61 @@
+fixture repo: /tmp/sf2-rule0-FXsg/ilec-demo
+
+════ KỊCH BẢN 1 — VU-32: primary pending, nhánh đích done → đọc chuẩn phải DONE ════
+
+--- 1a. story-mindmap --resolve (hàm đọc chuẩn) trên primary stale copy
+{"ok":true,"source":"local","file":"/tmp/sf2-rule0-FXsg/ilec-demo/docs/superpowers/mindmaps/ilec-demo.wakii","rel":"docs/superpowers/mindmaps/ilec-demo.wakii","dest":{"requested":"story/ilec-demo","ref":"story/ilec-demo"},"states":{"sf-1":"done","sf-2":"pending"},"upgraded":["sf-1"],"epicState":"in-progress","warnings":[]}
+rc=0
+
+--- 1b. driver --dry nhìn thấy gì (trước đây: pending → re-dispatch việc đã merge)
+Preparing worktree (new branch 'ilec-demo')
+HEAD is now at 60b89bd init
+rc=0
+driver.log (đoạn MM resolve):
+2026-10-04T06:10:53Z MM repoint: docs/superpowers/mindmaps/ilec-demo.wakii không có → dùng /tmp/sf2-rule0-FXsg/ilec-demo/docs/superpowers/mindmaps/ilec-demo.wakii (source=local)
+2026-10-04T06:10:53Z MM resolve: source=local dest-upgrade=sf-1
+2026-10-04T06:10:53Z DRY: states: sf-1 done sf-2 pending 
+
+--- 1c. proof READ-ONLY: shasum primary copy trước=sau
+READ-ONLY OK (eecb479a89370fffd3ac743651d2351c84164028f22a332142015c0407e7758e)
+
+════ KỊCH BẢN 2 — FI-30 chiều ngược: driver đã tick local done, đích stale pending → KHÔNG bị hạ ════
+
+--- 2a. resolve: local done giữ nguyên (không re-verify vô hạn)
+{"ok":true,"source":"local","file":"/tmp/sf2-rule0-FXsg/ilec-demo/docs/superpowers/mindmaps/ilec-demo.wakii","rel":"docs/superpowers/mindmaps/ilec-demo.wakii","dest":{"requested":"story/ilec-demo","ref":"story/ilec-demo"},"states":{"sf-1":"done","sf-2":"pending"},"upgraded":[],"epicState":"in-progress","warnings":[]}
+rc=0
+READ-ONLY OK
+
+════ KỊCH BẢN 3 — vocabulary-learn: mindmap CHỈ tồn tại ở worktree riêng ════
+
+--- 3a. primary KHÔNG có file, KHÔNG có nhánh đích — resolver tìm qua worktree scan
+{"ok":true,"source":"worktree","file":"/private/tmp/sf2-rule0-FXsg/vocab-demo-vocab/docs/superpowers/mindmaps/vocab-demo.wakii","rel":"docs/superpowers/mindmaps/vocab-demo.wakii","dest":{"requested":"story/ilec-demo","ref":null},"states":{"sf-1":"in-progress","sf-2":"pending"},"upgraded":[],"epicState":"in-progress","warnings":["dest \"story/ilec-demo\" không khớp ref nào — bỏ qua nâng state"]}
+rc=0
+
+--- 3b. driver --dry --repo primary: đọc được đúng file story (MM repoint), không EXIT im lặng
+Preparing worktree (new branch 'vocab-demo')
+HEAD is now at 3695c81 init
+rc=0
+2026-10-04T06:10:53Z MM repoint: docs/superpowers/mindmaps/vocab-demo.wakii không có → dùng /private/tmp/sf2-rule0-FXsg/vocab-demo-vocab/docs/superpowers/mindmaps/vocab-demo.wakii (source=worktree)
+2026-10-04T06:10:53Z MM resolve: source=worktree
+2026-10-04T06:10:53Z DRY: states: sf-1 in-progress sf-2 pending 
+
+════ KỊCH BẢN 4 — không đâu có file → MISSING RÕ RÀNG (không đọc nhầm) ════
+
+--- 4a. resolver: exit 3 + message liệt kê mọi chỗ đã tìm
+story-mindmap --resolve: MISSING — không thấy docs/superpowers/mindmaps/vocab-demo.wakii ở copy nào (local: /tmp/sf2-rule0-FXsg/empty-demo/docs/superpowers/mindmaps/vocab-demo.wakii; đích: không xác định được (không --dest, không local meta); worktree scan: sạch)
+rc=3 (kỳ vọng 3)
+
+--- 4b. driver --dry: log resolve MISS rõ ràng (dry chỉ PLAN — không exit; proof exit ở 4c)
+Preparing worktree (new branch 'vocab-demo')
+HEAD is now at 3695c81 init
+rc=0
+2026-10-04T06:10:53Z DRY: không có mindmap cho vocab-demo (resolve MISS local + đích + worktree) — sẽ EXIT
+
+--- 4c. driver --once (non-dry): exit 1 với EXIT log resolve MISS (exit path thật)
+rc=1 (kỳ vọng 1)
+2026-10-04T06:10:54Z EXIT: không có mindmap cho vocab-demo (resolve MISS local + đích + worktree)
+
+════ DỌN DẸP ════
+fixture đã xoá: /tmp/sf2-rule0-FXsg
+
+RULE0-DEMO DONE — consumer đọc đúng state đích trong cả 3 kịch bản bệnh (đọc từng rc/output phía trên)
