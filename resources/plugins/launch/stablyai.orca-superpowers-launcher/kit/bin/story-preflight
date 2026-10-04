@@ -126,7 +126,7 @@ if [ "${WAKII_GUARD_OFF:-}" = "1" ]; then
   echo "· agent-check tắt (WAKII_GUARD_OFF=1)"
 elif command -v ps >/dev/null 2>&1 && command -v lsof >/dev/null 2>&1 && [ -n "$ROOT" ]; then
   ROOT_P=$(cd "$ROOT" 2>/dev/null && pwd -P) || ROOT_P="$ROOT"
-  WS_P="${PREFLIGHT_WORKSPACES_DIR:-$HOME/orca/workspaces}"
+  WS_P="${PREFLIGHT_WORKSPACES_DIR:-${HOME:-}/orca/workspaces}"
   WS_P=$(cd "$WS_P" 2>/dev/null && pwd -P) || WS_P="$WS_P"
   PS_OUT=$(ps -Ao pid=,command= 2>/dev/null)
   CLAUDE_PIDS=$(printf '%s\n' "$PS_OUT" | awk '/claude/ && !/awk|grep|lsof|story-preflight/ { print $1 }')

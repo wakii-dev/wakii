@@ -124,7 +124,9 @@ console.log('== F5 config file: .env path tùy chỉnh + hint pkg manager ==')
 // cwd lsof ra = fixture. Detached + kill process-group; lỡ sót thì sleep tự chết.
 
 const SCRATCH = tempDir('scratch')
-symlinkSync('/bin/bash', join(SCRATCH, 'claude-sim'))
+// resolve bash từ PATH — /bin/bash hardcode chết ENOENT trên Alpine/NixOS (review P2-3)
+const BASH_REAL = (spawnSync('bash', ['-c', 'command -v bash'], { encoding: 'utf8' }).stdout || '').trim() || '/bin/bash'
+symlinkSync(BASH_REAL, join(SCRATCH, 'claude-sim'))
 
 function spawnSimAgent(cwd, { bypass = false } = {}) {
   const flag = bypass ? ' --dangerously-skip-permissions' : ''
@@ -171,7 +173,7 @@ console.log('== F6 primary có story mở + agent sống → WARN đúng pid, kh
   withAgents([agent], () => {
     const r = runPreflight(repo, { flags: ['--branch', 'story/test-main'] })
     check('F6', 'WARN agent sống', r.out.includes('⚠ Agent sống trên primary'), r.out)
-    check('F6', 'nêu đúng pid', r.out.includes(`pid ${agent.pid}`), r.out)
+    check('F6', 'nêu đúng pid', r.out.includes(`pid ${agent.pid} `), r.out)
     check('F6', 'WARN không chặn (exit 0)', r.code === 0 && r.out.includes('PRE-FLIGHT PASS'), `code=${r.code}`)
   })
   rmSync(repo, { recursive: true, force: true })
