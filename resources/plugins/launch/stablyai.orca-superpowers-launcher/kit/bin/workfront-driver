@@ -48,8 +48,17 @@ mkdir -p "$DRV"
 # PORTABLE: toàn bộ việc làm trong WORKTREE per-story — primary tree không bị đụng
 WT=""
 if [[ "$PORTABLE" == "1" ]]; then
+  # WAKII_DRIVER_WT: dùng worktree CÓ SẮN (orca-managed, lineage con hub) thay vì
+  # raw-create sibling projects/<repo>-<slug> — driver từng đẻ worktree sai vị trí
+  # ngoài tầm Orca (VU-32 04/10). Path sai/missing → exit, không tự tạo chui.
+  if [[ -n "${WAKII_DRIVER_WT:-}" ]]; then
+    [[ -e "$WAKII_DRIVER_WT/.git" ]] || { echo "EXIT: WAKII_DRIVER_WT=$WAKII_DRIVER_WT không phải git worktree"; exit 1; }
+    WT="$WAKII_DRIVER_WT"
+    BR="$(git -C "$WT" branch --show-current)"
+  else
   WT="$REPO_DIR/../$(basename "$REPO_DIR")-$SLUG"
   BR="$SLUG"
+  fi
   if [[ ! -d "$WT" ]]; then
     git -C "$REPO_DIR" fetch origin "$BASE_BRANCH" 2>/dev/null || true
     if git -C "$REPO_DIR" show-ref --verify --quiet "refs/heads/$BR"; then
