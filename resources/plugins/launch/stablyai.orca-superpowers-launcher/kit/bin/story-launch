@@ -438,10 +438,15 @@ else
   COORD_WT="$(basename "$DEST")-coordinator"
 fi
 PARENT_FLAG="--no-parent"
-if orca worktree show --worktree "$COORD_WT" --json >/dev/null 2>&1; then
-  PARENT_FLAG="--parent-worktree $COORD_WT"
+# selector đúng: orca đòi path:/branch:/name: — bare path/bare name bị nuốt (sf-2 VU-32
+# mồ côi 04/10: probe bare name chết → degrade --no-parent âm thầm). Cha = worktree đang
+# checkout nhánh đích (story-hub lẫn legacy coordinator đều đứng trên DEST) → branch:
+_hub_json="$(orca worktree show --worktree "branch:$DEST" --json 2>/dev/null || true)"
+_hub_path="$(printf '%s' "$_hub_json" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const r=JSON.parse(s);const w=(r.result&&r.result.worktree)||r.result;console.log(w.path||"")}catch{console.log("")}})' 2>/dev/null || true)"
+if [ -n "$_hub_path" ]; then
+  PARENT_FLAG="--parent-worktree path:$_hub_path"
 else
-  echo "  (worktree cha $COORD_WT chưa có — tạo ở APPROVE; launch tiếp không lineage)"
+  echo "  (worktree cha trên branch $DEST chưa có — tạo ở APPROVE; launch tiếp không lineage)"
 fi
 orca worktree create --name "sf-$N-$SLUG" --linear-issue "$LINEAR" \
   --base-branch "$DEST" --agent claude $PARENT_FLAG --prompt "$PROMPT" --json >/dev/null 2>&1 \
