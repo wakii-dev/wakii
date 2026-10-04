@@ -75,8 +75,13 @@ slash-form `story/<epic-id>-<slug>`. (KHÔNG dùng legacy `story-base`.)
    guards). SF worktree không sống qua SF của nó.
 2. **Story end** = convergence: final verify trên dest → push dest → `gh pr create --base
    "$(~/.claude/bin/wakii-validate --resolve-primary --repo .)"` → comment PR URL (Linear
-   epic hoặc audit file) + worktree comment. **STORY-COMPLETE = PR mở + sf worktrees SẠCH
-   SẼN + chỉ còn story worktree.** KHÔNG merge PR (cửa người).
+   epic hoặc audit file) + worktree comment. **TẠO PR XONG CHƯA PHẢI XONG** — xác thực
+   `gh pr view --json mergeable`: `CONFLICTING` → merge primary vào dest trong story
+   worktree, phân xử theo doctrine (tool-layer rules ở section này), rehash kitHash +
+   fingerprint, suite xanh, push → re-check `MERGEABLE` mới được STORY-COMPLETE. Vòng
+   này lặp cho tới MERGEABLE — PR treo conflict = bàn giao dở (04/10: PR #127 treo
+   conflict, user phải hối mới thấy). **STORY-COMPLETE = PR mở + MERGEABLE + sf
+   worktrees SẠCH SẼN + chỉ còn story worktree.** KHÔNG merge PR (cửa người).
 3. **Coordinator discipline**: vấp wall (kit defect, Linear) → workaround theo memory/recipe
    + TIẾN TIẾP; dừng chỉ khi thiếu quyền thật → report `BLOCKED: <đã thử gì> <cần gì>` — CẤM
    im lặng ở prompt chờ input.
