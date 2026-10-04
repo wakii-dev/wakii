@@ -59,10 +59,43 @@ Serial contract: pipeline xử lý ĐÚNG 1 story tại một thời điểm —
 | QA sweep / test toàn bộ sau nhiều fix | `references/qa-sweep.md` (5 lớp lỗi + hybrid fresh-boot) |
 | Trước approve/launch/watchdog/merge | DEFENSIVE PATTERNS | `references/defensive-patterns.md` (REQUIRED) |
 | Watchdog / self-check loop | STORY-WATCHDOG | `references/story-watchdog.md` |
+| **Contract kết thúc story (PR + dọn sf worktree)** | **END-STATE CONTRACT** | section ngay dưới |
 
 Naming: nhánh đích DUY NHẤT của story = `story-<epic-id>-<slug>` dash-form
 (story-hub — form thật trên git, orca fold `/`→`-`); story legacy ghi
 slash-form `story/<epic-id>-<slug>`. (KHÔNG dùng legacy `story-base`.)
+
+## END-STATE CONTRACT + rào vận hành (04/10 — học từ VU-32/LOCAL-4 chạy thật)
+
+**Mọi coordinator brief PHẢI ghi rõ đích kết thúc. Không đích = coordinator dừng im ở prompt
+(vụ LOCAL-4 04/10: nhận brief thiếu end-state → đứng yên cả giờ, không ai đôn thì không chạy).**
+
+1. **Per-SF DONE** = code + tests xanh → story-verify sạch → coordinator merge sf-branch vào
+   dest trong story worktree → **CLEANUP-ON-MERGE NGAY**: xoá sf worktree + sf branch (3
+   guards). SF worktree không sống qua SF của nó.
+2. **Story end** = convergence: final verify trên dest → push dest → `gh pr create --base
+   "$(~/.claude/bin/wakii-validate --resolve-primary --repo .)"` → comment PR URL (Linear
+   epic hoặc audit file) + worktree comment. **STORY-COMPLETE = PR mở + sf worktrees SẠCH
+   SẼN + chỉ còn story worktree.** KHÔNG merge PR (cửa người).
+3. **Coordinator discipline**: vấp wall (kit defect, Linear) → workaround theo memory/recipe
+   + TIẾN TIẾP; dừng chỉ khi thiếu quyền thật → report `BLOCKED: <đã thử gì> <cần gì>` — CẤM
+   im lặng ở prompt chờ input.
+4. **Worktree placement (sự cố 04/10 ×3)**: `--parent-worktree` đòi selector `path:<abs>` /
+   `branch:<ref>` — bare name/path bị nuốt → SF worktree mồ côi (story-launch đã fix probe
+   `branch:$DEST`); `orca worktree create` chạy từ cwd khác repo PHẢI `--repo id:<repoId>`;
+   base ref có slash-prefix (`wakii-dev/...`) làm orca refresh fail → tạo branch local
+   không-slash làm start point; driver portable: `--repo` chỉ nhận repo root (`.git` là FILE
+   ở worktree → bị từ chối) — worktree có sẵn truyền qua `WAKII_DRIVER_WT=<path>`.
+5. **Linear mutation bọc wrapper**: `~/.claude/bin/linear-rate-limit run --bin <tên> [--op
+   <json>] -- orca linear status set ...` — fail khớp signature → tự note vào queue máy-level
+   + exit 3 → bỏ qua, làm việc kế; retry chỉ sau khi `check` hết cooldown. CẤM gọi `orca
+   linear` ghi trực tiếp (429 rơi qua sàng im lặng — policy skip+note+resume 20/09 giờ
+   enforce ở tool).
+6. **Local story (Linear unreachable)**: `story-launch` binary đòi Linear ID cứng → không
+   dùng được; recipe: `orca worktree create --repo id:<repoId> --name sf-N-<slug>
+   --base-branch <dest> --parent-worktree path:<hub> --agent claude --prompt <template>` +
+   copy context pack vào sf worktree NGAY sau create (race với worker đọc) + prompt worker
+   có BƯỚC-0 gate kiểm header pack (chống đè chéo story).
 
 ## Team Model — PM + Developers + Tester (vai trò trong story)
 
