@@ -2,10 +2,11 @@
 // story-preflight tests — bin chạy trên git repo fixture trong temp (hermetic,
 // KHÔNG đụng repo thật; server/DB chỉ là WARN nên không cần mock). Phủ: PASS
 // sạch, sai branch, tree dirty (tracked) vs untracked-only, node_modules thiếu/
-// tắt qua config, .env path tùy chỉnh, config file sourced.
+// tắt qua config, .env path tùy chỉnh, config file sourced, agent sống trên
+// primary + permission bypass (LOCAL-4 sf-3 — synthetic process claude-sim).
 // Chạy: node tests/story-preflight-tests.mjs
-import { spawnSync } from 'node:child_process'
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
+import { spawnSync, spawn } from 'node:child_process'
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, symlinkSync } from 'node:fs'
 import { join, dirname, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
@@ -116,6 +117,134 @@ console.log('== F5 config file: .env path tùy chỉnh + hint pkg manager ==')
   check('F5', 'WARN không chặn (exit 0)', r.code === 0, `code=${r.code}`)
   rmSync(repo, { recursive: true, force: true })
 }
+
+// ── LOCAL-4 sf-3: agent-alive-trên-primary + permission bypass ──
+// Synthetic agent KHÔNG cần claude binary: symlink `claude-sim → bash` ở thư mục
+// scratch NGOÀI repo, spawn với cwd = fixture → ps thấy argv[0] chứa "claude",
+// cwd lsof ra = fixture. Detached + kill process-group; lỡ sót thì sleep tự chết.
+
+const SCRATCH = tempDir('scratch')
+// resolve bash từ PATH — /bin/bash hardcode chết ENOENT trên Alpine/NixOS (review P2-3)
+const BASH_REAL = (spawnSync('bash', ['-c', 'command -v bash'], { encoding: 'utf8' }).stdout || '').trim() || '/bin/bash'
+symlinkSync(BASH_REAL, join(SCRATCH, 'claude-sim'))
+
+function spawnSimAgent(cwd, { bypass = false } = {}) {
+  const flag = bypass ? ' --dangerously-skip-permissions' : ''
+  // '|| true' buộc bash ở lại chờ — 'sleep' đơn thuần bị exec-optimize thành
+  // process `sleep` (mất argv[0] claude-sim khỏi ps)
+  const child = spawn('bash', ['-c', `exec "${join(SCRATCH, 'claude-sim')}" -c 'sleep 30 || true'${flag}`], {
+    cwd, detached: true, stdio: 'ignore',
+  })
+  child.unref()
+  for (let i = 0; i < 40; i++) {
+    const p = spawnSync('ps', ['-p', String(child.pid)], { encoding: 'utf8' })
+    if (p.status === 0 && String(p.stdout).includes(String(child.pid))) return child
+    spawnSync('sleep', ['0.2'])
+  }
+  killSimAgent(child)
+  throw new Error(`synthetic agent ${child.pid} không lên ps`)
+}
+
+function killSimAgent(child) {
+  try { process.kill(-child.pid, 'SIGKILL') } catch { try { child.kill('SIGKILL') } catch {} }
+}
+
+// repo story: mindmap committed + dest branch tồn tại → "story đang mở"
+function makeStoryRepo(tag) {
+  const dir = makeRepo(tag)
+  mkdirSync(join(dir, 'docs', 'superpowers', 'mindmaps'), { recursive: true })
+  writeFileSync(join(dir, 'docs', 'superpowers', 'mindmaps', 'local4-kit-launch-safety.wakii'),
+    JSON.stringify({ wakiiMindmap: 1, meta: { story: 'LOCAL-4', dest: 'story-local4-kit-launch-safety' }, nodes: [], edges: [] }))
+  const git = (args) => spawnSync('git', args, { cwd: dir, encoding: 'utf8' })
+  git(['add', '.'])
+  git(['commit', '-qm', 'mindmap'])
+  git(['branch', 'story-local4-kit-launch-safety'])
+  return dir
+}
+
+function withAgents(children, fn) {
+  try { return fn() } finally { for (const c of children) killSimAgent(c) }
+}
+
+console.log('== F6 primary có story mở + agent sống → WARN đúng pid, không chặn ==')
+{
+  const repo = makeStoryRepo('f6')
+  const agent = spawnSimAgent(repo)
+  withAgents([agent], () => {
+    const r = runPreflight(repo, { flags: ['--branch', 'story/test-main'] })
+    check('F6', 'WARN agent sống', r.out.includes('⚠ Agent sống trên primary'), r.out)
+    check('F6', 'nêu đúng pid', r.out.includes(`pid ${agent.pid} `), r.out)
+    check('F6', 'WARN không chặn (exit 0)', r.code === 0 && r.out.includes('PRE-FLIGHT PASS'), `code=${r.code}`)
+  })
+  rmSync(repo, { recursive: true, force: true })
+}
+
+console.log('== F7 claude bypass trong repo → WARN vi phạm LUẬT; strict → FAIL ==')
+{
+  const repo = makeStoryRepo('f7')
+  const agent = spawnSimAgent(repo, { bypass: true })
+  withAgents([agent], () => {
+    const r = runPreflight(repo, { flags: ['--branch', 'story/test-main'] })
+    check('F7', 'WARN bypass', r.out.includes('⚠ BYPASS permissions'), r.out)
+    check('F7', 'ghi LUẬT human-in-the-loop 24/09', r.out.includes('human-in-the-loop') && r.out.includes('24/09'), r.out)
+    check('F7', 'WARN không chặn (exit 0)', r.code === 0, `code=${r.code}`)
+    const rs = runPreflight(repo, { flags: ['--branch', 'story/test-main'], env: { PREFLIGHT_STRICT_AGENT: '1' } })
+    check('F7', 'strict → FAIL exit 1', rs.code === 1 && rs.out.includes('PRE-FLIGHT FAIL'), `code=${rs.code}`)
+  })
+  rmSync(repo, { recursive: true, force: true })
+}
+
+console.log('== F8 primary story repo sạch (không agent) → không cảnh báo ảo ==')
+{
+  const repo = makeStoryRepo('f8')
+  const r = runPreflight(repo, { flags: ['--branch', 'story/test-main'] })
+  check('F8', '✓ primary không agent', r.out.includes('✓ primary'), r.out)
+  check('F8', 'không WARN ảo', !r.out.includes('⚠ Agent sống') && !r.out.includes('BYPASS'), r.out)
+  check('F8', 'exit 0', r.code === 0, `code=${r.code}`)
+  rmSync(repo, { recursive: true, force: true })
+}
+
+console.log('== F9 cwd là story worktree (dưới workspaces) → check im lặng ==')
+{
+  const repo = makeStoryRepo('f9')
+  const agent = spawnSimAgent(repo)
+  withAgents([agent], () => {
+    const r = runPreflight(repo, {
+      flags: ['--branch', 'story/test-main'],
+      env: { PREFLIGHT_WORKSPACES_DIR: dirname(repo) },
+    })
+    check('F9', 'worktree không WARN agent', !r.out.includes('⚠ Agent sống'), r.out)
+    check('F9', 'exit 0', r.code === 0 && r.out.includes('PRE-FLIGHT PASS'), `code=${r.code}`)
+  })
+  rmSync(repo, { recursive: true, force: true })
+}
+
+console.log('== F10 WAKII_GUARD_OFF=1 → agent-check tắt có ghi nhận ==')
+{
+  const repo = makeStoryRepo('f10')
+  const agent = spawnSimAgent(repo)
+  withAgents([agent], () => {
+    const r = runPreflight(repo, { flags: ['--branch', 'story/test-main'], env: { WAKII_GUARD_OFF: '1' } })
+    check('F10', 'ghi nhận tắt', r.out.includes('agent-check tắt'), r.out)
+    check('F10', 'không WARN', !r.out.includes('⚠ Agent sống') && !r.out.includes('BYPASS'), r.out)
+    rmSync(repo, { recursive: true, force: true })
+  })
+}
+
+console.log('== F11 bypass ngoài repo đang xét → không cảnh báo ==')
+{
+  const repo = makeStoryRepo('f11')
+  const elsewhere = tempDir('elsewhere')
+  const agent = spawnSimAgent(elsewhere, { bypass: true })
+  withAgents([agent], () => {
+    const r = runPreflight(repo, { flags: ['--branch', 'story/test-main'] })
+    check('F11', 'bypass ngoài scope im lặng', !r.out.includes('BYPASS'), r.out)
+    check('F11', 'exit 0', r.code === 0, `code=${r.code}`)
+    rmSync(repo, { recursive: true, force: true })
+    rmSync(elsewhere, { recursive: true, force: true })
+  })
+}
+rmSync(SCRATCH, { recursive: true, force: true })
 
 console.log(`\n== TOTAL: ${pass} PASS / ${fail} FAIL ==`)
 if (failures.length) {

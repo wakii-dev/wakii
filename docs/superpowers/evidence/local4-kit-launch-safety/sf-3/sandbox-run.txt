@@ -1,0 +1,77 @@
+════ CHECK 4 — sandbox demo story-preflight (bin THẬT vừa sửa, PASSIVE ps/lsof) ════
+Ngày: 2026-10-04 · worktree sf-3-story-preflight-check · không kill process nào ngoài synthetic claude-sim tự spawn
+
+── (a) primary fixture có agent sống (synthetic claude-sim) → WARN đúng pid ──
+Lần 1 (12:22): KHÔNG warn — root cause DEMO SCRIPT: spawn bằng shell '&' không có
+process-group riêng → 'kill -group' miss + snapshot trước khi poll ps. KHÔNG phải
+defect bin: suite F6 (poll đúng cách) PASS 31/31; chạy lại (a2) với poll:
+═══ PRE-FLIGHT CHECK ═══
+✓ Branch: story/test-main
+✓ Working tree sạch
+⚠ Server :3001 không respond (có thể chưa start — không chặn)
+⚠ DB file không tồn tại: /private/tmp/pf-sandbox-aTaE/repo/server/prisma/prisma/dev.db
+✓ node_modules
+✓ server/.env
+⚠ Agent sống trên primary (story đang mở): · pid 9008 cwd=/private/tmp/pf-sandbox-aTaE/repo · pid 9121 cwd=/private/tmp/pf-sandbox-aTaE/repo · pid 9217 cwd=/private/tmp/pf-sandbox-aTaE/repo — story làm trên worktree, KHÔNG trên primary
+
+✓ PRE-FLIGHT PASS — bắt đầu code
+
+── (b) fixture sạch (không agent) → không cảnh báo ảo ──
+═══ PRE-FLIGHT CHECK ═══
+✓ Branch: story/test-main
+✓ Working tree sạch
+⚠ Server :3001 không respond (có thể chưa start — không chặn)
+⚠ DB file không tồn tại: /private/tmp/pf-sandbox-aTaE/repo/server/prisma/prisma/dev.db
+✓ node_modules
+✓ server/.env
+✓ primary: không có agent sống trong checkout chính
+
+✓ PRE-FLIGHT PASS — bắt đầu code
+
+── (c) fixture classified là worktree (PREFLIGHT_WORKSPACES_DIR) → check im lặng ──
+═══ PRE-FLIGHT CHECK ═══
+✓ Branch: story/test-main
+✓ Working tree sạch
+⚠ Server :3001 không respond (có thể chưa start — không chặn)
+⚠ DB file không tồn tại: /private/tmp/pf-sandbox-aTaE/repo/server/prisma/prisma/dev.db
+✓ node_modules
+✓ server/.env
+
+✓ PRE-FLIGHT PASS — bắt đầu code
+
+── (d) PREFLIGHT_STRICT_AGENT=1 + agent sống → ❌ FAIL exit 1 ──
+═══ PRE-FLIGHT CHECK ═══
+✓ Branch: story/test-main
+✓ Working tree sạch
+⚠ Server :3001 không respond (có thể chưa start — không chặn)
+⚠ DB file không tồn tại: /private/tmp/pf-sandbox-aTaE/repo/server/prisma/prisma/dev.db
+✓ node_modules
+✓ server/.env
+❌ Agent sống trên primary (story đang mở): · pid 9008 cwd=/private/tmp/pf-sandbox-aTaE/repo · pid 9121 cwd=/private/tmp/pf-sandbox-aTaE/repo — dọn session trên primary trước khi code
+
+🚫 PRE-FLIGHT FAIL — fix trước khi code
+
+── (e) WAKII_GUARD_OFF=1 → agent-check tắt có ghi nhận ──
+· agent-check tắt (WAKII_GUARD_OFF=1)
+✓ PRE-FLIGHT PASS — bắt đầu code
+
+── (f) ACCEPTANCE dòng 1 — primary THẬT ~/Desktop/projects/orca (wakii-main), CHỈ ĐỌC ──
+    4 claude sống thật (cwd=primary) + 2 trong số đó chạy --dangerously-skip-permissions:
+═══ PRE-FLIGHT CHECK ═══
+✓ Branch: wakii-main
+✓ Working tree sạch
+⚠ Server :3001 không respond (có thể chưa start — không chặn)
+⚠ DB file không tồn tại: /Users/hoivu/Desktop/projects/orca/server/prisma/prisma/dev.db
+✓ node_modules
+⚠ server/.env thiếu — copy từ .env.example
+⚠ Agent sống trên primary (story đang mở): · pid 32418 cwd=/Users/hoivu/Desktop/projects/orca · pid 32444 cwd=/Users/hoivu/Desktop/projects/orca · pid 66931 cwd=/Users/hoivu/Desktop/projects/orca · pid 66959 cwd=/Users/hoivu/Desktop/projects/orca — story làm trên worktree, KHÔNG trên primary
+⚠ BYPASS permissions: claude chạy --dangerously-skip-permissions trong repo này (pid 32418 · pid 66931) — vi phạm LUẬT human-in-the-loop 24/09 (KHÔNG bypass; bị chặn → đổi cách/hỏi)
+
+✓ PRE-FLIGHT PASS — bắt đầu code
+
+── Đối chiếu ACCEPTANCE ──
+1. Primary có agent sống → cảnh báo đúng pid: (f) 4 pid thật + BYPASS 2 pid thật; (a2)/(d) synthetic ✓
+2. Checkout sạch → không ảo: (b) ✓ primary không agent, exit 0 ✓
+3. Output mới không phá consumer: suite F1-F5 nguyên vẹn (31/31 PASS) ✓
+4. Suite kit xanh: 41/42 file rc=0; story-coordinator-pass C25 known-red 03/10
+   (Windows-sim — comment trong chính test; xref story-preflight = 0; pre-existing) ✓
