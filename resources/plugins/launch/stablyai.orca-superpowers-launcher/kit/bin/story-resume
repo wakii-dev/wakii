@@ -133,6 +133,36 @@ sf_meta() { # $1 = worktree path → in "<linear-id>|<destination>|<context-file
       in_sf && /linear:/ { gsub(/.*linear: /,""); print; exit }' "$bf" 2>/dev/null)
     [ -n "$linear" ] && break
   done
+  # mindmap fallback (LOCAL-4 sf-2): story .wakii-era KHÔNG có bracket — dest từ
+  # meta + linear từ node sf cùng số; chỉ nhận file chứa đúng node sf-<n> đó
+  if [ -z "$linear" ] || [ -z "$dest" ]; then
+    mmnum=$(echo "$sf" | cut -d- -f1-2 | tr 'A-Z' 'a-z')
+    for wf in "$wt"/docs/superpowers/mindmaps/*.wakii; do
+      [ -f "$wf" ] || continue
+      grep -q "\"$mmnum\"" "$wf" 2>/dev/null || continue
+      mm_out=$(SF_WF="$wf" SF_MM_NUM="$mmnum" python3 - <<'PYMM'
+import json, os, sys
+try:
+    doc = json.load(open(os.environ["SF_WF"], encoding='utf-8'))
+except Exception:
+    sys.exit(1)
+meta = doc.get('meta') or {}
+node = next((x for x in (doc.get('nodes') or [])
+             if isinstance(x, dict) and x.get('kind') == 'sf' and x.get('id') == os.environ.get('SF_MM_NUM')), None)
+# node không khớp = file của story khác (worktree đa .wakii) — KHÔNG lấy dest
+# dù meta có, tránh dest bị kẹt vào nhánh đích sai
+print(str(node.get('linear') or '') if node else '')
+print(str(meta.get('dest') or '') if node else '')
+PYMM
+      ) || mm_out=""
+      [ -n "$mm_out" ] || continue
+      mmlinear=$(printf '%s\n' "$mm_out" | sed -n 1p)
+      mmdest=$(printf '%s\n' "$mm_out" | sed -n 2p)
+      [ -z "$linear" ] && [ -n "$mmlinear" ] && linear="$mmlinear"
+      [ -z "$dest" ] && [ -n "$mmdest" ] && dest="$mmdest"
+      [ -n "$linear" ] && [ -n "$dest" ] && break
+    done
+  fi
   # context pack: sf-1-foundation → khớp contexts/sf-1*.md
   prefix=$(echo "$sf" | cut -d- -f1-2)
   ctx=$(ls "$wt"/docs/superpowers/contexts/${prefix}*.md 2>/dev/null | head -1)

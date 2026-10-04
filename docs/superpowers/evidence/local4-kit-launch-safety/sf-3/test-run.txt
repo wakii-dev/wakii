@@ -1,0 +1,27 @@
+# test-run — LOCAL-4 sf-3 story-preflight (agent-alive-trên-primary + bypass warning)
+
+HEAD khi chạy: 1fb52f7389 (feat db04ecba52 → rehash f1e0ecdd5d → exec-bit 8e4d064878 →
+review P2 fixes 1fb52f7389; kitHash 264f995a79c85d1a, fingerprint 891e6e44…)
+Base: 539e80788c (story CREATE)
+
+Suite: node tests/*.mjs trong resources/plugins/launch/stablyai.orca-superpowers-launcher/
+- 42 file test: 41 file rc=0 (toàn bộ kit xanh trong phạm vi change này)
+- story-coordinator-pass-tests.mjs rc=1 — assert C25 line 702 KNOWN-RED 03/10
+  (Windows-sim: comment trong chính file test "chỉ đúng trên win32"; assert thiếu
+  guard if(C25_WIN); xref story-preflight = 0; fail mechanism = gọi orca thật thấy
+  run của coordinator khác — pre-existing, không phải regression của SF-3)
+
+story-preflight-tests.mjs: 31/31 PASS (tdd: RED→GREEN)
+- RED: 24 PASS / 7 FAIL (7 assert mới fail đúng thiết kế, F1-F5 nguyên vẹn)
+- GREEN: 31/31 sau khi implement check 7+8
+
+Fence kit: chmod 755 story-preflight → kitHash b5659c8ae1350492 (kit.json) →
+fingerprint f5b3ccb0… (bundled-plugins.json) → verify-packaged-plugin-resources OK
+(2 plugins) → kit-verify-manifest 30/30 PASS (sau exec-bit fix workfront-driver,
+pre-existing 644 từ commit driver trước CREATE — core.filemode=false phải
+update-index --chmod=+x).
+
+Sandbox demo (Rule 0 CLI-equivalent): sandbox-run.txt — (f) primary THẬT
+~/Desktop/projects/orca: WARN 4 pid claude sống thật + BYPASS 2 pid chạy
+--dangerously-skip-permissions (pid 32418, 66931) — đúng vi phạm LUẬT
+human-in-the-loop 24/09 mà đêm 03/10 không công cụ nào cảnh báo.
