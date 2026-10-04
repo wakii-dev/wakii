@@ -264,7 +264,7 @@
       "name": "story-preflight",
       "type": "bin",
       "category": "ops",
-      "description": "chạy trước khi code — chặn sai branch, tree dirty, deps thiếu; cảnh báo server chết, DB trống, .env thiếu"
+      "description": "chạy trước khi code — chặn sai branch, tree dirty, deps thiếu; cảnh báo server chết, DB trống, .env thiếu, agent sống trên primary + claude bypass permissions (passive)"
     },
     {
       "name": "story-resume",

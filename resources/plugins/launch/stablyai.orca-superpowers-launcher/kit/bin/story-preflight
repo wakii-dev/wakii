@@ -10,6 +10,12 @@
 #   PREFLIGHT_NODE_MODULES=0                   # tắt check node_modules (mặc định 1)
 #   PREFLIGHT_ENV_FILE=apps/server/.env        # path .env (mặc định server/.env)
 #   PREFLIGHT_PKG_MGR=npm                      # hint cài deps (mặc định pnpm)
+#   PREFLIGHT_STRICT_AGENT=1                   # check 7/8 agent → FAIL thay vì WARN (mặc định 0)
+#   PREFLIGHT_WORKSPACES_DIR=/path             # root workspaces orca (mặc định ~/orca/workspaces)
+# Check 7/8 (LOCAL-4 sf-3): agent sống trên primary khi story đang mở + claude
+# --dangerously-skip-permissions trong repo → WARN tại cửa. PASSIVE (ps/lsof,
+# không kill); fail-open khi thiếu tool/quyền; Windows → skip ghi chú;
+# WAKII_GUARD_OFF=1 tắt cả 2 (escape có ghi nhận).
 # Usage: story-preflight [--branch <name>] [--port <n>] [--db <path>]
 set -u
 ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
@@ -98,6 +104,92 @@ if [ -f "$ROOT/$ENV_FILE" ]; then
   echo "✓ $ENV_FILE"
 else
   echo "⚠ $ENV_FILE thiếu — copy từ .env.example"
+fi
+
+# pid|cwd từng process (lsof 1 lần cho cả list) — cwd lỗi/thiếu quyền → dòng đó
+# biến mất (fail-open từng pid). Helper words loại chính scan nó khỏi ps snapshot
+# (awk/grep argv chứa pattern — không loại sẽ tự khớp ảo).
+_pid_cwd() { # $1 = pids (newline) — in "pid|cwd"
+  [ -n "${1:-}" ] || return 0
+  lsof -a -d cwd -p "$(printf '%s\n' "$1" | paste -sd, -)" -Fn 2>/dev/null | awk '
+    /^p[0-9]+$/ { pid = substr($0, 2); next }
+    /^n/ && pid != "" { print pid "|" substr($0, 2) }'
+}
+
+# 7+8. Agent trên primary + permission bypass (LOCAL-4 sf-3 — học đêm 03/10:
+# pid 72180 bypass + 5-6 session trên primary không công cụ nào cảnh báo).
+# PASSIVE (ps/lsof, không kill) · WARN mặc định, FAIL chỉ khi
+# PREFLIGHT_STRICT_AGENT=1 · fail-open khi thiếu tool/quyền · Windows không
+# lsof → skip ghi chú · WAKII_GUARD_OFF=1 → tắt có ghi nhận.
+AG_STRICT="${PREFLIGHT_STRICT_AGENT:-0}"
+if [ "${WAKII_GUARD_OFF:-}" = "1" ]; then
+  echo "· agent-check tắt (WAKII_GUARD_OFF=1)"
+elif command -v ps >/dev/null 2>&1 && command -v lsof >/dev/null 2>&1 && [ -n "$ROOT" ]; then
+  ROOT_P=$(cd "$ROOT" 2>/dev/null && pwd -P) || ROOT_P="$ROOT"
+  WS_P="${PREFLIGHT_WORKSPACES_DIR:-$HOME/orca/workspaces}"
+  WS_P=$(cd "$WS_P" 2>/dev/null && pwd -P) || WS_P="$WS_P"
+  PS_OUT=$(ps -Ao pid=,command= 2>/dev/null)
+  CLAUDE_PIDS=$(printf '%s\n' "$PS_OUT" | awk '/claude/ && !/awk|grep|lsof|story-preflight/ { print $1 }')
+
+  # 7. Agent sống trên primary khi story đang mở (mindmap có dest branch tồn tại)?
+  IS_PRIMARY=1
+  case "$ROOT_P/" in "$WS_P"/*) IS_PRIMARY=0 ;; esac
+  if [ "$IS_PRIMARY" = "1" ] && [ -n "$CLAUDE_PIDS" ]; then
+    STORY_OPEN=0
+    for wf in "$ROOT"/docs/superpowers/mindmaps/*.wakii; do
+      [ -f "$wf" ] || continue
+      while IFS= read -r dest; do
+        [ -n "$dest" ] || continue
+        if git -C "$ROOT" rev-parse --verify -q "refs/heads/$dest" >/dev/null 2>&1; then
+          STORY_OPEN=1; break
+        fi
+      done < <(grep -o '"dest" *: *"[^"]*"' "$wf" 2>/dev/null | sed 's/.*: *"//;s/"$//')
+      [ "$STORY_OPEN" = "1" ] && break
+    done
+    if [ "$STORY_OPEN" = "1" ]; then
+      AG_HIT=""
+      while IFS='|' read -r pid cwd; do
+        [ -n "$pid" ] || continue
+        case "$cwd/" in "$ROOT_P"/*) AG_HIT="$AG_HIT · pid $pid cwd=$cwd" ;; esac
+      done < <(_pid_cwd "$CLAUDE_PIDS")
+      if [ -n "$AG_HIT" ]; then
+        if [ "$AG_STRICT" = "1" ]; then
+          echo "❌ Agent sống trên primary (story đang mở):$AG_HIT — dọn session trên primary trước khi code"; FAIL=1
+        else
+          echo "⚠ Agent sống trên primary (story đang mở):$AG_HIT — story làm trên worktree, KHÔNG trên primary"
+        fi
+      else
+        echo "✓ primary: không có agent sống trong checkout chính"
+      fi
+    fi
+  elif [ "$IS_PRIMARY" = "1" ]; then
+    # chỉ in ✓ khi repo đang có story (mindmap tồn tại) — không thì im lặng
+    for wf in "$ROOT"/docs/superpowers/mindmaps/*.wakii; do
+      [ -f "$wf" ] || continue
+      echo "✓ primary: không có agent sống trong checkout chính"
+      break
+    done
+  fi
+
+  # 8. claude --dangerously-skip-permissions trong repo đang xét → vi phạm LUẬT
+  # human-in-the-loop 24/09. [s] chống self-match argv của chính awk.
+  BYP_PIDS=$(printf '%s\n' "$PS_OUT" | awk '/--dangerously-skip-permission[s]/ && !/awk|grep|lsof|story-preflight/ { print $1 }')
+  if [ -n "$BYP_PIDS" ]; then
+    BYP_HIT=""
+    while IFS='|' read -r pid cwd; do
+      [ -n "$pid" ] || continue
+      case "$cwd/" in "$ROOT_P"/*) BYP_HIT="$BYP_HIT · pid $pid" ;; esac
+    done < <(_pid_cwd "$BYP_PIDS")
+    if [ -n "$BYP_HIT" ]; then
+      if [ "$AG_STRICT" = "1" ]; then
+        echo "❌ BYPASS permissions: claude chạy --dangerously-skip-permissions trong repo này (${BYP_HIT#" · "}) — vi phạm LUẬT human-in-the-loop 24/09 — dừng, đổi cách/hỏi"; FAIL=1
+      else
+        echo "⚠ BYPASS permissions: claude chạy --dangerously-skip-permissions trong repo này (${BYP_HIT#" · "}) — vi phạm LUẬT human-in-the-loop 24/09 (KHÔNG bypass; bị chặn → đổi cách/hỏi)"
+      fi
+    fi
+  fi
+else
+  echo "⚠ agent-check skip: cần ps + lsof + git repo (Windows không có lsof) — không quét được"
 fi
 
 echo ""
