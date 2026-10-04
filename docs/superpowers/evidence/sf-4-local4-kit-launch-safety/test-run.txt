@@ -1,6 +1,7 @@
 # test-run — LOCAL-4 sf-4 (convergence: driver supervise portable + 3 fence)
 # (anchor theo convention B1: path = evidence/<worktree-full-name>/test-run.txt)
-HEAD: 856e537c1d (code commit — NAVIGATOR runbook + fingerprint rehash; evidence commit ngay sau)
+HEAD: 9a80f2fdaf (anchor theo convention HEAD~1 — commit improvements-log sf-4, docs-only sau evidence nên suite không re-run)
+code commit gốc: 856e537c1d (NAVIGATOR runbook + fingerprint rehash) · evidence commit: 651d10ce36
 tdd: skipped-tdd: SF không thêm code runtime (boundary pack: driver KHÔNG đổi code) — thay đổi duy nhất = NAVIGATOR.md (docs) + fingerprint rehash; 'chức năng' = bằng chứng chạy bin thật (3 fence + 2 driver pass) trong evidence kèm review độc lập
 
 Evidence chi tiết (driver pass + 3 fence + snapshot ILEC):
