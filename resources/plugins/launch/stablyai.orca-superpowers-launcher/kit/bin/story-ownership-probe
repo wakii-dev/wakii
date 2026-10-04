@@ -20,6 +20,16 @@
 #   ownership_probe_worktree_owner <wt-basename-hoặc-full-path>
 #                                      → in "runId<TAB>owner" khi worktree có
 #                                        worker live; rỗng khi không
+#   ownership_probe_process_hits      → in "pid|zone|cwd|comm" agent live NGOÀI
+#                                        tầm run/worker-list (LOCAL-4 SF-1):
+#                                        zone=primary (cwd trên primary checkout,
+#                                        env OP_PRIMARY) hoặc zone=oob (cwd trong
+#                                        worktree OP_WT_PATHS nhưng không có worker
+#                                        live trong worker-list). Scan lsof cwd,
+#                                        fixture OP_PROC_JSON/OP_PROC_FILE, pattern
+#                                        OP_AGENT_PAT, seam lsof OP_LSOF_BIN /
+#                                        ps OP_PS_BIN (seam chết → fail-open).
+#                                        KHÔNG kill — chỉ báo cáo.
 #   exec bin/story-ownership-probe --json [--self H] [runs-json-qua-stdin]
 #                                      → JSON cho consumer python:
 #     {"self","orcaOk","workersOk","liveRuns":[],"runOwner":{},
@@ -307,6 +317,180 @@ ownership_probe_worktree_owner() { # $1 wt basename hoặc full path; $2 (option
     return 0
   done < <(printf '%s\n' "$OP_WT_LIVE")
   return 0
+}
+
+# ── process-scan (LOCAL-4 SF-1): 2 vùng mù đêm 03/10 — worker agent cwd-trên-
+# primary + worker ngoài orchestration (spawn tay — run-list không thấy). Scan
+# lsof cwd (fixture OP_PROC_JSON/OP_PROC_FILE cho test), lọc comm theo
+# OP_AGENT_PAT, loại ancestor chain của launcher (không tự chặn), classify:
+# primary (cwd trong primary checkout, trừ <primary>/.claude/worktrees) / wt
+# (cwd trong SF worktree). KHÔNG kill — chỉ báo cáo. Fail-open: scan hỏng →
+# PROCERR → warn, không chặn mù. cwd chứa "|" sẽ misparse (như các map trên).
+_op_proc_core() { # stdout TSV: PROC\tpid\tzone\tcwd\tcomm\twt · PROCERR\tlý-do
+  local py
+  py="$(command -v python3 || command -v python)" || { printf 'PROCERR\tpython không có\n'; return 0; }
+  OP_PRIMARY="${OP_PRIMARY:-}" OP_WT_PATHS="${OP_WT_PATHS:-}" \
+    OP_PROC_JSON="${OP_PROC_JSON:-}" OP_PROC_FILE="${OP_PROC_FILE:-}" \
+    OP_AGENT_PAT="${OP_AGENT_PAT:-}" OP_LSOF_BIN="${OP_LSOF_BIN:-lsof}" \
+    "$py" - <<'OPPROC'
+import json
+import os
+import re
+import subprocess
+import sys
+
+
+def emit(tag, *fields):
+    print("\t".join((tag,) + fields))
+
+
+def read_rows():
+    raw = os.environ.get("OP_PROC_JSON", "")
+    pfile = os.environ.get("OP_PROC_FILE", "")
+    if raw.strip() or (pfile and os.path.isfile(pfile)):
+        try:
+            if raw.strip():
+                data = json.loads(raw)
+            else:
+                with open(pfile, encoding="utf-8") as f:
+                    data = json.load(f)
+            items = data if isinstance(data, list) else (data.get("processes") or [])
+            rows = []
+            for x in items:
+                if not isinstance(x, dict):
+                    continue
+                try:
+                    pid = int(x.get("pid") or 0)
+                except (TypeError, ValueError):
+                    pid = 0
+                rows.append({"pid": pid, "comm": str(x.get("comm") or ""),
+                             "cwd": str(x.get("cwd") or "")})
+            return rows, ""
+        except Exception as e:
+            return [], f"fixture hỏng: {e}"
+    lsof = os.environ.get("OP_LSOF_BIN") or "lsof"
+    try:
+        p = subprocess.run([lsof, "-wn", "-d", "cwd", "-F", "pcn"],
+                           capture_output=True, text=True, timeout=30)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        return [], f"lsof hỏng: {e}"
+    if p.returncode not in (0, 1):  # rc1 = không thấy process nào — không phải lỗi
+        return [], f"lsof rc={p.returncode}"
+    rows, cur = [], None
+
+    def push():
+        if cur and cur.get("pid") and cur.get("cwd"):
+            rows.append(dict(cur))
+
+    for ln in (p.stdout or "").splitlines():
+        if not ln:
+            continue
+        tag, val = ln[0], ln[1:]
+        if tag == "p":
+            push()
+            cur = {"pid": int(val), "comm": "", "cwd": ""} if val.isdigit() else None
+        elif cur is not None:
+            if tag == "c":
+                cur["comm"] = val
+            elif tag == "n" and not cur["cwd"]:
+                cur["cwd"] = val
+    push()
+    return rows, ""
+
+
+def ancestor_pids():
+    # chain của launcher (python→bash→caller) — process tham gia quyết định
+    # launch không tự chặn chính mình. Trả (seen, ok) — ps hỏng thì ok=False:
+    # exclusion không đáng tin → caller phải fail-open (review P2, không phán
+    # trên scan thiếu lớp chống tự-chặn)
+    seen = set()
+    ps_bin = os.environ.get("OP_PS_BIN") or "ps"
+    pid, hops = os.getpid(), 0
+    while pid > 1 and hops < 64:
+        try:
+            out = subprocess.run([ps_bin, "-o", "ppid=", "-p", str(pid)],
+                                 capture_output=True, text=True, timeout=10)
+            ppid = int((out.stdout or "").strip() or 0)
+        except Exception:
+            return seen, False
+        if ppid <= 1:
+            break
+        seen.add(ppid)
+        pid = ppid
+        hops += 1
+    return seen, True
+
+
+def within(child, parent):
+    try:
+        c, p = os.path.realpath(child), os.path.realpath(parent)
+    except Exception:
+        return False
+    return c == p or c.startswith(p + os.sep)
+
+
+rows, err = read_rows()
+if err:
+    emit("PROCERR", err)
+    sys.exit(0)
+primary = os.environ.get("OP_PRIMARY", "")
+wt_paths = [w for w in (os.environ.get("OP_WT_PATHS", "") or "").splitlines() if w.strip()]
+# worktree native (EnterWorktree) dưới primary không tính là primary
+primary_wts = os.path.join(primary, ".claude", "worktrees") if primary else ""
+pat_s = os.environ.get("OP_AGENT_PAT") or (
+    r"^(claude|codex|gemini|cursor-agent|aider|opencode|droid|copilot)([ -.]|$)")
+try:
+    pat = re.compile(pat_s)
+except re.error:
+    emit("PROCERR", f"pattern hỏng: {pat_s}")
+    sys.exit(0)
+anc, anc_ok = ancestor_pids()
+if not anc_ok:
+    emit("PROCERR", "ps hỏng — không xác định được ancestor chain, fail-open")
+    sys.exit(0)
+for r in rows:
+    pid, comm, cwd = r["pid"], r["comm"], r["cwd"]
+    if not pid or not cwd or pid in anc:
+        continue
+    if not pat.search(comm):
+        continue
+    if primary and within(cwd, primary):
+        if primary_wts and within(cwd, primary_wts):
+            continue
+        emit("PROC", str(pid), "primary", cwd, comm, "")
+        continue
+    wt = next((w for w in wt_paths if within(cwd, w)), "")
+    if wt:
+        emit("PROC", str(pid), "wt", cwd, comm, wt)
+OPPROC
+  return 0
+}
+
+ownership_probe_process_hits() { # in "pid|zone|cwd|comm" của agent live ngoài tầm
+                                  # orchestration — zone=primary (cwd trên primary
+                                  # checkout) hoặc zone=oob (trong SF worktree nhưng
+                                  # worker-list không thấy live; in-band drop —
+                                  # block logic cũ qua worktree_owner quyết).
+                                  # rỗng = sạch hoặc fail-open. Cần ownership_probe_load
+                                  # chạy trước cho filter in-band.
+  local out pid zone cwd comm wt wtrun
+  OP_PROC_HITS=""
+  out="$(_op_proc_core 2>/dev/null)" || out=""
+  while IFS=$'\t' read -r tag pid zone cwd comm wt; do
+    case "$tag" in
+      # PROCERR: field đầu sau tag = lý-do (fail-open — không chặn mù)
+      PROCERR) op_warn "process scan không đọc được ($pid) — fail-open, vùng mù không kiểm tra" ;;
+      PROC)
+        [ -n "$pid" ] || continue
+        if [ "$zone" = "wt" ]; then
+          wtrun="$(ownership_probe_worktree_owner "$wt" "$(dirname "$wt" 2>/dev/null)")"
+          [ -n "$wtrun" ] && continue  # in-band — orchestration thấy, logic cũ quyết
+          zone="oob"
+        fi
+        OP_PROC_HITS="$OP_PROC_HITS$pid|$zone|$cwd|$comm"$'\n' ;;
+    esac
+  done < <(printf '%s\n' "$out")
+  printf '%s' "$OP_PROC_HITS"
 }
 
 # exec face: --json cho consumer python (coordinator-pass) — stdin = runs JSON tùy chọn
