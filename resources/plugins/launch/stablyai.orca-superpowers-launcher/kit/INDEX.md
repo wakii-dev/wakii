@@ -87,7 +87,7 @@
 | `story-guard-dangerous` | PreToolUse: chặn lệnh phá hoại (force-push pattern, rm đệ quy…) |
 | `story-guard-secrets` | PreToolUse: chặn rò rỉ secrets |
 | `story-guard-envfiles` | PreToolUse: chặn đụng .env files |
-| `linear-rate-limit` | State machine máy-level cho Linear rate limit (policy 20/09) |
+| `linear-rate-limit` | State machine máy-level cho Linear rate limit (policy 20/09) — `run` bọc mutation, 429 tự note |
 
 ## 8 · Đồng bộ & tích hợp ngoài (6)
 

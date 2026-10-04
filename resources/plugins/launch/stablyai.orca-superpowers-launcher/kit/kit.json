@@ -1,7 +1,7 @@
 {
   "name": "story-team-kit",
   "version": "2.20.0",
-  "description": "9-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới.",
+  "description": "10-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới.",
   "requires": {
     "claude-code": ">=2.0",
     "external": {
@@ -264,7 +264,7 @@
       "name": "story-preflight",
       "type": "bin",
       "category": "ops",
-      "description": "chạy trước khi code — chặn sai branch, tree dirty, deps thiếu; cảnh báo server chết, DB trống, .env thiếu, agent sống trên primary + claude bypass permissions (passive)"
+      "description": "chạy trước khi code — chặn sai branch, tree dirty, deps thiếu; cảnh báo server chết, DB trống, .env thiếu"
     },
     {
       "name": "story-resume",
@@ -499,7 +499,7 @@
       "name": "linear-rate-limit",
       "type": "bin",
       "category": "infra",
-      "description": "state machine Linear rate-limit — check/note/clear/pending/classify (policy skip+note+resume 2026-09-20)"
+      "description": "state machine Linear rate-limit — check/note/clear/pending/classify (policy skip+note+resume 2026-09-20) + run: bọc Linear mutation, fail khớp signature → tự note op exit 3 — 429 hết rơi qua sàng"
     },
     {
       "name": "story-doctor",
@@ -550,5 +550,5 @@
       "description": "workfront driver — 1 story = 1 navigator: verify executor → tick mindmap → convergence → DONE gate (cửa người); --repo <path> portable (worktree per-story, PR completion); attempts ≥3 blocked, breaker, single-instance, outcome logging instincts-v0 (03/10)"
     }
   ],
-  "kitHash": "2cd1b412d074ffbc"
+  "kitHash": "11c152d906b4f5bd"
 }

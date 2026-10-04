@@ -19,6 +19,13 @@ workfront-driver --repo /path/to/project [--base master] --loop <slug>
 - `--repo` tường minh (hoặc env `WAKII_DRIVER_REPO`) → **PORTABLE mode**: tự tạo
   **worktree per-story** `<repo>-<slug>` (branch = slug, từ `origin/<base>`) — primary
   tree không bao giờ bị đụng; bins dùng chính kit đã cài (tự-loc từ vị trí script).
+- `--repo` CHỈ nhận **repo root** (worktree có `.git` dạng FILE → bị từ chối).
+- **Story đã có topology Orca** (hub + sf worktrees): đặt `WAKII_DRIVER_WT=<path>`
+  worktree có sẵn (orca-managed, lineage con hub) — driver cd vào đó thay vì raw-create
+  sibling ngoài tầm Orca (sự cố 04/10: worktree driver mồ côi ở `projects/`).
+- **Gates `blocked_sf-N` trong `state.json`** = driver KHÔNG dispatch SF đó (chỉ
+  verify/tick) — division of labour với coordinator: **mở gate chỉ sau khi SF ĐÃ
+  MERGE về dest**, không mở sớm (driver sẽ đẻ worker trùng).
 - Hoàn thành (PORTABLE): DONE gate → **push branch + `gh pr create --base <base>`** —
   user review + merge trên GitHub = deploy. Driver **không bao giờ** merge.
 - Không có story (FOCUS trống / hết story) → tự thoát, không treo.

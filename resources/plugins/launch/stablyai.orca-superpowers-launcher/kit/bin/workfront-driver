@@ -38,19 +38,27 @@ KIT_DIR=$(dirname "$SCRIPT")   # script nằm trong kit/bin đã cài — bins a
 cd "$REPO_DIR" || exit 1
 NAV=docs/superpowers/navigator
 DRV="$REPO_DIR/$NAV/driver/$SLUG"          # state TUYỆT ĐỐI dưới primary — sống qua worktree cleanup
-MM=docs/superpowers/mindmaps/$SLUG.wakii   # tick ghi copy này; state ĐỌC qua resolve_mm (local → đích → worktree)
+MM=docs/superpowers/mindmaps/$SLUG.wakii   # mindmap đọc từ WORKTREE (state theo branch)
 LOG=$DRV/driver.log
 ST=$DRV/state.json
 TICK_SECONDS=$((3*3600))
 TIMEOUT=$(command -v timeout || echo /opt/homebrew/bin/timeout)
 ORCA_BIN=$(command -v orca || echo /opt/homebrew/bin/orca)
 mkdir -p "$DRV"
-log(){ echo "$(date -u +%FT%TZ) $*" >> "$LOG"; }   # định nghĩa TRƯỚC khối PORTABLE — dưới đây log() lần đầu mà def nằm sau từng rơi vào /usr/bin/log hệ thống
 # PORTABLE: toàn bộ việc làm trong WORKTREE per-story — primary tree không bị đụng
 WT=""
 if [[ "$PORTABLE" == "1" ]]; then
+  # WAKII_DRIVER_WT: dùng worktree CÓ SẮN (orca-managed, lineage con hub) thay vì
+  # raw-create sibling projects/<repo>-<slug> — driver từng đẻ worktree sai vị trí
+  # ngoài tầm Orca (VU-32 04/10). Path sai/missing → exit, không tự tạo chui.
+  if [[ -n "${WAKII_DRIVER_WT:-}" ]]; then
+    [[ -e "$WAKII_DRIVER_WT/.git" ]] || { echo "EXIT: WAKII_DRIVER_WT=$WAKII_DRIVER_WT không phải git worktree"; exit 1; }
+    WT="$WAKII_DRIVER_WT"
+    BR="$(git -C "$WT" branch --show-current)"
+  else
   WT="$REPO_DIR/../$(basename "$REPO_DIR")-$SLUG"
   BR="$SLUG"
+  fi
   if [[ ! -d "$WT" ]]; then
     git -C "$REPO_DIR" fetch origin "$BASE_BRANCH" 2>/dev/null || true
     if git -C "$REPO_DIR" show-ref --verify --quiet "refs/heads/$BR"; then
@@ -76,6 +84,7 @@ fs.writeFileSync(jp,JSON.stringify(j,null,2));console.log("trust: injected cho "
 else console.log("trust: đã có");}catch(e){console.log("trust: skip ("+e.message+")")}' "$WT" >> "$LOG" 2>&1 || true
 fi
 
+log(){ echo "$(date -u +%FT%TZ) $*" >> "$LOG"; }
 # caffeinate re-exec đúng 1 lần cho --loop
 if [[ "$MODE" == "--loop" && "${DRIVER_INNER:-}" != "1" ]]; then
   export DRIVER_INNER=1; exec /usr/bin/caffeinate -is bash "$SCRIPT" "${ORIG_ARGS[@]}"
@@ -92,48 +101,12 @@ fi
 echo $$ > "$PIDF"
 trap 'rm -f "$PIDF"' EXIT
 
-# ── resolve mindmap canonical (LOCAL-4 sf-2 — bệnh FI-30/VU-32): local → nhánh
-# đích (no-downgrade: đích done nâng local pending; tick local KHÔNG bao giờ bị
-# hạ) → worktree anh em (vocabulary-learn) → MISSING. Read-only; tick vẫn ghi $MM.
-# Resolver thiếu/hỏng → fallback legacy đọc $MM (hành vi cũ, version kit lệch giữa máy).
-RESOLVER="${STORY_MINDMAP_BIN:-$KIT_DIR/story-mindmap}"
-[ -f "$RESOLVER" ] || RESOLVER="$HOME/.claude/bin/story-mindmap"
-[ -f "$RESOLVER" ] || RESOLVER=""
-RESOLVED_JSON=""
-resolve_mm(){ # ok → RESOLVED_JSON (states đã merge) + repoint $MM khi local thiếu
-  [ -n "$RESOLVER" ] || return 1
-  RESOLVED_JSON=$("$RESOLVER" --resolve "$MM" --repo "$REPO_DIR" --json 2>>"$LOG") || RESOLVED_JSON=""
-  printf '%s' "$RESOLVED_JSON" | grep -q '"ok":true' || { RESOLVED_JSON=""; return 1; }
-  local _info _file _src _up
-  _info=$(printf '%s' "$RESOLVED_JSON" | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{try{const j=JSON.parse(d);console.log([j.file||"",j.source||"",Array.isArray(j.upgraded)?j.upgraded.join(","):""].join("\t"))}catch{console.log("\t\t")}})')
-  _file=$(printf '%s' "$_info" | cut -f1); _src=$(printf '%s' "$_info" | cut -f2); _up=$(printf '%s' "$_info" | cut -f3)
-  # [ -f "$_file" ]: source=dest-branch → _file pseudo-path "ref:rel" — không bao
-  # giờ repoint sang đường không tồn tại trên đĩa (tick/convergence sẽ đọc rác)
-  if [ -n "$_file" ] && [ -f "$_file" ] && [ "$_file" != "$MM" ] && [ ! -f "$MM" ]; then
-    log "MM repoint: $MM không có → dùng $_file (source=$_src)"
-    MM="$_file"
-  fi
-  log "MM resolve: source=$_src${_up:+ dest-upgrade=$_up}"
-  return 0
-}
-
 # ── đọc state mindmap: xuất "sf-id state" mỗi dòng; exit≠0 khi mindmap hỏng
-sf_states(){ # qua resolver khi có (state chuẩn mọi worktree), không thì legacy $MM
-  if [ -n "$RESOLVED_JSON" ]; then
-    printf '%s' "$RESOLVED_JSON" | node -e '
-let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{try{const j=JSON.parse(d);if(!j.ok)process.exit(1);for(const k of Object.keys(j.states||{}))console.log(k,j.states[k])}catch{process.exit(1)}})'
-    return
-  fi
-  node -e '
+sf_states(){ node -e '
 const j=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));
 for(const n of j.nodes) if(n.kind==="sf") console.log(n.id, n.state||"pending");
 ' "$MM"; }
 sf_count(){ # đếm node sf riêng — phân biệt "mindmap hỏng" với "0 pending"
-  if [ -n "$RESOLVED_JSON" ]; then
-    printf '%s' "$RESOLVED_JSON" | node -e '
-let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{try{const j=JSON.parse(d);if(!j.ok)process.exit(1);console.log(Object.keys(j.states||{}).length)}catch{process.exit(1)}})'
-    return
-  fi
   node -e '
 const j=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));
 console.log(j.nodes.filter(n=>n.kind==="sf").length);' "$MM"; }
@@ -163,7 +136,7 @@ orca_run_active(){ # chống double-dispatch khi user có run tay
 run_verify(){ # $1=sf-id; in VERDICT: DONE-VERIFIED|NOT-DONE|FAIL-VERIFIED
   local sf="$1"
   "$TIMEOUT" 45m claude -p "Story $SLUG — SF $sf. Xác định SF này ĐÃ LÀM XONG CHƯA trên integration:
-1. git log/diff/show $BASE_BRANCH — đọc mindmap $MM node $sf + tasks con để biết phạm vi.
+1. git log/diff/show $BASE_BRANCH — đọc mindmap docs/superpowers/mindmaps/$SLUG.wakii node $sf + tasks con để biết phạm vi.
 2. Chạy bằng chứng: tests/verify liên quan phạm vi đó (vitest module cụ thể, pnpm tc nếu cần — bounded 15').
 3. Kết luận ĐÚNG 1: DONE-VERIFIED (code có + tests PASS) | NOT-DONE (chưa làm/partial) | FAIL-VERIFIED (code có nhưng tests đỏ — kèm test đỏ).
 Scope: chỉ đọc + chạy test; KHÔNG sửa code, KHÔNG commit, KHÔNG đụng docs/superpowers/navigator/.
@@ -172,25 +145,16 @@ Dòng cuối PHẢI là: VERDICT: DONE-VERIFIED|NOT-DONE|FAIL-VERIFIED — <1 d�
     --disallowedTools "Bash(git push:*)" "Bash(git merge:*)" "Bash(git commit:*)" "Bash(git checkout:*)" "Bash(git reset:*)" "Bash(git rebase:*)" "Bash(git clean:*)" "WebFetch" "WebSearch" 2>&1 | tail -5
 }
 
-run_worker(){ # GD2: worker VISIBLE — pane Orca trên worktree, user nhìn thấy trực tiếp (async)
+run_worker(){ # GD2: worker headless trong per-story worktree — pattern proven 6/6 vocabulary-module
   local sf="$1"
-  local title="story-worker-$SLUG"
-  local handle
-  handle=$(orca terminal list --json 2>/dev/null | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{try{const j=JSON.parse(d);const x=(j.result.terminals||[]).find(x=>(x.title||"")==="'"$title"'");console.log(x?x.handle:"")}catch{console.log("")}});')
-  # Fence 2: pane phải TỒN TẠI khi gửi — handle chết → tạo lại, không bắn mù
-  if [[ -z "$handle" ]]; then
-    handle=$(orca terminal create --worktree "path:$REPO_DIR" --title "$title" --command "cd '$WT' && claude --permission-mode acceptEdits" --json 2>/dev/null | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{try{const j=JSON.parse(d);console.log((j.result&&j.result.terminal&&j.result.terminal.handle)||"")}catch{console.log("")}});')
-    [[ -z "$handle" ]] && { log "DISPATCH-FAILED $sf: không tạo được pane"; return 1; }
-    sleep 12
-  fi
-  # Fence 1: gửi PHẢI xác nhận — "cannot report delivery" = DISPATCH-FAILED
-  local send_out
-  send_out=$(orca terminal send --terminal "$handle" --text "Bạn là worker story $SLUG. Đọc mindmap $MM node $sf + tasks con. Làm các task CHƯA xong (đối chiếu git log), TDD, commit từng task trên branch này. KHÔNG push, KHÔNG đụng main/master. Khi xong báo: VERDICT: DONE|PARTIAL — <chi tiết>" --enter 2>&1 | tail -1)
-  if echo "$send_out" | grep -qi "cannot report delivery"; then
-    log "DISPATCH-UNCONFIRMED $sf: $send_out — coi như FAILED, pass kế thử lại"; return 1
-  fi
-  log "WORKER $sf: prompt ĐÃ GỬI (confirmed) vào pane $title ($handle) — pass kế kiểm tra git + verify"
-  return 0
+  "$TIMEOUT" 45m claude -p "Story $SLUG — SF $sf CHƯA LÀM/XONG MỘT PHẦN. Tiếp tục theo task DAG trong mindmap docs/superpowers/mindmaps/$SLUG.wakii (node $sf + tasks con):
+- Đối chiếu git log + git status: task đã xong bỏ qua, làm task KẾ TIẾP.
+- TDD: đọc pattern dự án trước (schema/routes/tests hiện có), viết test trước, code tối thiểu đạt.
+- Commit từng task xong: git commit -m \"feat($SLUG): t-x.x <mô tả>\" trên branch hiện tại (KHÔNG push).
+- Dòng cuối PHẢI là: VERDICT: DONE|PARTIAL — <tasks xong / còn lại>" \
+    --permission-mode acceptEdits \
+    --allowedTools "Read" "Glob" "Grep" "Write" "Edit" "Bash(git log:*)" "Bash(git diff:*)" "Bash(git status *)" "Bash(git add:*)" "Bash(git commit:*)" "Bash(pnpm vitest:*)" "Bash(pnpm tc:*)" "Bash(pnpm typecheck)" "Bash(pnpm lint)" "Bash(node *)" \
+    --disallowedTools "Bash(git push:*)" "Bash(git merge:*)" "Bash(git checkout:*)" "Bash(git reset:*)" "Bash(git rebase:*)" "Bash(git clean:*)" "WebFetch" "WebSearch" 2>&1 | tail -5
 }
 
 prep_convergence(){ # VIẾT PACK TRƯỚC — caller chỉ set done_gate khi thành công (retry pass kế nếu lỗi)
@@ -217,8 +181,7 @@ fs.writeFileSync(ev+"/convergence-pack.md",lines.join("\n")+"\n");' "$MM" "$ev" 
 }
 
 one_pass(){
-  resolve_mm || true
-  [[ -f "$MM" ]] || { log "EXIT: không có mindmap cho $SLUG (resolve MISS local + đích + worktree)"; exit 1; }
+  [[ -f "$MM" ]] || { log "EXIT: không có mindmap cho $SLUG"; exit 1; }
   # sf_states chết ≠ 0-pending: đọc lỗi/rỗng → log + skip (KHÔNG rơi vào convergence)
   local states
   states=$(sf_states) || { log "EXIT: đọc mindmap $MM lỗi — skip pass, KHÔNG convergence"; return; }
@@ -285,8 +248,10 @@ one_pass(){
           st_set "attempts_$SF" "$((att+1))"
           log "DISPATCH-FAILED $SF — attempts=$((att+1)) (≥3 sẽ BLOCKED)"; return
         fi
-        st_set "attempts_$SF" "$((att+1))"
-        log "WORKER $SF dispatched — attempts=$((att+1)) — pass kế verify lại"
+        # worker đã nhận việc (confirmed) — reset vòng verify: pass kế VERIFY lại từ đầu
+        st_set "$vkey" ""
+        st_set "attempts_$SF" 0
+        log "WORKER $SF dispatched (confirmed) — pass kế verify lại"
         return
       fi
       # orca mode (giu v1): story-launch that, fail → BLOCKED
@@ -320,8 +285,7 @@ one_pass(){
 }
 
 dry_plan(){ # DRY: chỉ sf_states + log nhánh sẽ chọn — KHÔNG dispatch, KHÔNG ghi state
-  resolve_mm || true
-  [[ -f "$MM" ]] || { log "DRY: không có mindmap cho $SLUG (resolve MISS local + đích + worktree) — sẽ EXIT"; return; }
+  [[ -f "$MM" ]] || { log "DRY: không có mindmap cho $SLUG — sẽ EXIT"; return; }
   local states _sf
   if ! states=$(sf_states); then log "DRY: mindmap $MM đọc lỗi — sẽ skip pass (KHÔNG convergence)"; return; fi
   if [[ -z "$states" ]]; then

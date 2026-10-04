@@ -72,6 +72,8 @@ export const NEVER_TRANSLATE_VALUES = new Set([
   'Rovo Dev',
   'Markdown',
   'VS Code',
+  'WAKII',
+  'Wakii',
   'Warp',
   'Zed',
   'android',
