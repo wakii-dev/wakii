@@ -2,6 +2,7 @@
 
 > Đọc file này trước khi lần đầu dùng kit. Mỗi bin 1 dòng: *làm gì*. Nhóm theo giai đoạn lifecycle — không phải alphabet.
 > Đây là root file (không cài vào `~/.claude`) — nguồn tra cứu, không phải công cụ.
+> **Cách hệ thống vận hành end-to-end** (actors, vòng đời 7 bước, fences, giám sát): `OPERATING-MODEL.md`.
 
 ## 1 · Quan sát — nắm tình hình (5)
 
