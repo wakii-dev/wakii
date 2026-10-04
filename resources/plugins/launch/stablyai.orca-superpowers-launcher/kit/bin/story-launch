@@ -73,6 +73,7 @@ while [ $# -gt 0 ]; do
     --repo) REPO_ARG="$2"; shift ;;
     --dry-run) DRY_RUN=1 ;;
     --claim) CLAIM=1 ;;
+    --local) LOCAL_STORY=1 ;;
     --machine-id) CLAIM_MACHINE_ID="$2"; shift ;;
     --host) HOST_ID="$2"; shift ;;
     --list-claims) LIST_CLAIMS=1 ;;
@@ -190,7 +191,16 @@ EOF
   WTMODEL=$(grep -m1 '^Worktree model:' "$BRACKET" | sed 's/Worktree model: *//;s/ *$//')
   EPIC=$(grep -m1 '^# Story:' "$BRACKET" | sed 's/# Story: *//;s/ *—.*//;s/ *- .*//')
 fi
-[ -n "$LINEAR" ] || { echo "$SF_NUM chưa approve (không có linear ID) — không thuộc quyền launch"; exit 1; }
+# --local (04/10): story KHÔNG Linear — gate Linear tắt, distributed claim tắt
+# (claim lưu trên Linear), Done-check bỏ (idempotency qua worktree-exists),
+# worker báo Done qua evidence + worktree comment. Flow còn lại nguyên vẹn.
+if [ "${LOCAL_STORY:-0}" = "1" ]; then
+  CLAIM=0
+  LIN_LABEL="LOCAL (không Linear — Done = evidence + story-verify sạch, báo qua worktree comment)"
+else
+  LIN_LABEL="$LINEAR"
+fi
+[ -n "$LINEAR" ] || [ "${LOCAL_STORY:-0}" = "1" ] || { echo "$SF_NUM chưa approve (không có linear ID) — không thuộc quyền launch; story không Linear dùng --local"; exit 1; }
 
 # ── resolve machineId claim: flag --machine-id thắng config; --host chỉ lưu
 # phiên (persist qua panel SF-3 — không tự ghi config)
@@ -204,8 +214,10 @@ if [ "$CLAIM" = 1 ] && [ "$(distributed_enabled)" = "1" ]; then
 fi
 
 # ── validate
-ST=$(linear_state "$LINEAR")
-[ "$ST" = "Done" ] && { echo "$SF_NUM ($LINEAR) đã Done — không launch lại"; exit 0; }
+if [ "${LOCAL_STORY:-0}" != "1" ]; then
+  ST=$(linear_state "$LINEAR")
+  [ "$ST" = "Done" ] && { echo "$SF_NUM ($LINEAR) đã Done — không launch lại"; exit 0; }
+fi
 WT=$(ls -d "$HOME"/orca/workspaces/"$REPOB"/sf-"$N"-* 2>/dev/null | head -1)
 if [ -n "$WT" ]; then
   # SF-3 pre-dispatch: worktree có worker live của coordinator khác → CHẶN
@@ -279,12 +291,12 @@ else
   CHECK6="CHECK 6 DONE — CHỈ sau CHECK 5. Cleanup: chỉ xoá worktree + NHÁNH SF mình — TUYỆT ĐỐI KHÔNG xoá $DEST (nhánh đích giữ làm audit)."
   DONE_RULE="Done TRƯỚC merge = INCOMPLETE."
 fi
-PROMPT="Use orca-superpowers-workflow skill for ONE sub-feature: $TITLE ($LINEAR). Story: $EPIC — READ FIRST: context pack $PACK (spec slice + touch map + ACCEPTANCE + boundary) + story doc $SRC_REL. Epic đã trả lời mọi câu — KHÔNG re-ask; câu hỏi mới → REQUIREMENT-GAP comment lên epic. Run full Phase 0-5 cho SF này. Linear issue: $LINEAR (set In Progress at start). Worktree base: $DEST. $HARDLIMIT
+PROMPT="Use orca-superpowers-workflow skill for ONE sub-feature: $TITLE ($LIN_LABEL). Story: $EPIC — READ FIRST: context pack $PACK (spec slice + touch map + ACCEPTANCE + boundary) + story doc $SRC_REL. Epic đã trả lời mọi câu — KHÔNG re-ask; câu hỏi mới → REQUIREMENT-GAP comment lên epic. Run full Phase 0-5 cho SF này. Linear: $LIN_LABEL. Worktree base: $DEST. $HARDLIMIT
 
 CHECKLIST — chạy TUẦN TỰ, mỗi mục xong phải CÓ BẰNG CHỨNG (lệnh + output), cấm tick trước bằng chứng:
 CHECK 1 CODE+TESTS — TDD RED→GREEN khi khả thi (test thất bại trước → code tối thiểu); commit atomic; tick plan file sau mỗi task.
 CHECK 2 PLAN TICKED — mọi '- [ ]' trong plan → '- [x]' (meta-steps dùng numbered list, không dùng '- [ ]').
-CHECK 3 ROLLING REVIEW — mỗi 4-5 tasks dispatch code-reviewer ĐỘC LẬP trên diff nhóm đó (KHÔNG dồn 1 review lớn cuối SF — FI-187: đứng chờ 30+ phút). Verdict post lên $LINEAR, KHÔNG để kẹt outbox.
+CHECK 3 ROLLING REVIEW — mỗi 4-5 tasks dispatch code-reviewer ĐỘC LẬP trên diff nhóm đó (KHÔNG dồn 1 review lớn cuối SF — FI-187: đứng chờ 30+ phút). Verdict post lên $LIN_LABEL, KHÔNG để kẹt outbox.
 CHECK 4 BROWSER VERIFY (Rule 0) — mở app (orca tab create --url http://localhost:<port> hoặc curl nếu chỉ API) → TỰ ĐI TRỌN FLOW (login/navigate/thao tác) + CHỤP SCREENSHOT; UI sai/flow đứt → FIX TRƯỚC KHI TIẾP. KHÔNG ĐƯỢC nói xong khi chưa thấy nó chạy.
 $CHECK5
 $CHECK6
@@ -452,7 +464,7 @@ fi
 # cài sẵn --dangerously-skip-permissions (bằng chứng: pid 20066 LOCAL-4 sf-4 worker).
 # Hai bước theo guide orca-cli custom-argv: create trần → terminal create argv tường
 # minh acceptEdits → wait tui-idle → send prompt qua --text (khỏi nhét prompt vào argv).
-CREATE_OUT="$(orca worktree create --name "sf-$N-$SLUG" --linear-issue "$LINEAR" \
+CREATE_OUT="$(orca worktree create --name "sf-$N-$SLUG" ${LINEAR:+"--linear-issue" "$LINEAR"} \
   --base-branch "$DEST" $PARENT_FLAG --json 2>&1)"
 WID="$(printf '%s' "$CREATE_OUT" | python3 -c 'import json,sys
 try:

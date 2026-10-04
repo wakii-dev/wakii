@@ -100,13 +100,10 @@ prefix `wakii-dev/` trên remote wakii-dev/wakii. (KHÔNG dùng legacy `story-ba
    + exit 3 → bỏ qua, làm việc kế; retry chỉ sau khi `check` hết cooldown. CẤM gọi `orca
    linear` ghi trực tiếp (429 rơi qua sàng im lặng — policy skip+note+resume 20/09 giờ
    enforce ở tool).
-6. **Local story (Linear unreachable)**: `story-launch` binary đòi Linear ID cứng → không
-   dùng được; recipe: `orca worktree create --repo id:<repoId> --name sf-N-<slug>
-   --base-branch <dest> --parent-worktree path:<hub> --json` → spawn worker HAI BƯỚC
-   `terminal create --command "claude --permission-mode acceptEdits"` + wait + `send
-   --text` (CẤM `--agent claude` — template Orca cài bypass, LUẬT 24/09) +
-   copy context pack vào sf worktree NGAY sau create (race với worker đọc) + prompt worker
-   có BƯỚC-0 gate kiểm header pack (chống đè chéo story).
+6. **Local story (Linear unreachable)**: `story-launch --local` — gate Linear tắt
+   (không cần linear ID), distributed claim tắt, worker báo Done qua evidence +
+   worktree comment; còn lại flow nguyên vẹn (two-step acceptEdits spawn + lineage
+   probe). Pack vẫn copy tay + BƯỚC-0 gate. (04/10 — trước đây phải create tay.)
 
 ## Team Model — PM + Developers + Tester (vai trò trong story)
 
