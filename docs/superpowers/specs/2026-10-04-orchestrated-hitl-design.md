@@ -51,14 +51,15 @@ baseline + `story-doctor --live` canh vi phạm. Session cá nhân user ngoài p
   ("Do you want to proceed?", "❯ 1. Yes", "allow?") · `blocked` ("BLOCKED",
   "APPROVAL-NEEDED", "REQUIREMENT-GAP") · `idle-done` ("❯" trống + 0 commit +
   plan hết)
-- Output JSON: `{pane, handle, cwd, state, question?, age}` — mọi caller đọc được
+- Output JSON: `{worktree, handle, state, question}` — mọi caller đọc được
+  (cwd tính bởi consumer; age deferred phase-2 pager)
 - Fail-open: orca chết → trả rỗng + exit 0
 
 ### 4.2 BA Layer (protocol trên coordinator session — không phải hệ thống mới)
 - **Nguồn nghiệp vụ**: epic spec + story `.wakii` (why/acceptance) + context packs +
   `story-kb` + glossary — coordinator nắm từ CREATE
 - **Nhiệm vụ 1 — brief the-WHY**: context pack bổ sung tại sao tính năng tồn tại,
-  ai dùng, acceptance nghĩa là gì (worker định hướng, không làm theo清单 mù)
+  ai dùng, acceptance nghĩa là gì (worker định hướng, không làm theo checklist mù)
 - **Nhiệm vụ 2 — phân xử câu hỏi**: câu HOW có trong spec/KB/touch map → BA tự trả
   vào pane + **ghi audit (bắt buộc trích dẫn mục spec)**; scope/rủi ro/priority →
   RELAY user kèm diễn giải tiếng-người + khuyến nghị

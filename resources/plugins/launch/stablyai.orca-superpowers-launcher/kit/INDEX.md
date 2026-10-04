@@ -1,4 +1,4 @@
-# Kit INDEX — bản đồ 58 bins theo vòng đời story
+# Kit INDEX — bản đồ 59 bins theo vòng đời story
 
 > Đọc file này trước khi lần đầu dùng kit. Mỗi bin 1 dòng: *làm gì*. Nhóm theo giai đoạn lifecycle — không phải alphabet.
 > Đây là root file (không cài vào `~/.claude`) — nguồn tra cứu, không phải công cụ.
@@ -61,7 +61,7 @@
 | `story-sync-dest` | Đưa meta commits từ main vào nhánh đích, AN TOÀN |
 | `story-pr-checks` | CI gate cho PR trước merge — cùng dữ liệu Checks panel |
 
-## 5 · Giữ sống & chữa (4)
+## 5 · Giữ sống & chữa (5)
 
 | Bin | Làm gì |
 |---|---|
@@ -69,6 +69,7 @@
 | `story-resume` | Chẩn đoán 3 tầng + resume SF stalled (LAUNCH/RESUME tool hoá) |
 | `story-ownership-probe` | Ownership probe — ai đang sở hữu story/worktree (chống double-writer) |
 | `story-doctor` | Kit health 9 checks (marker/kitHash/bins/deps/hooks/kb/orphans) + `--repair` + `--uninstall` |
+| `story-pane-watch` | Detector 4-state worker panes (working/waiting/blocked/idle) — mắt của HITL relay |
 
 ## 6 · Đóng story & hội đủ điều kiện DONE (1)
 

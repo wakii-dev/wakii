@@ -183,6 +183,7 @@ ok('entry story-kb trong provides', kitJson.provides.some(e => e.name === 'story
 }
 ok('migration-guide-template cạnh bracket-template', existsSync(join(kitRoot, 'migration-guide-template.md')))
 ok('entry story-lesson trong provides', kitJson.provides.some(e => e.name === 'story-lesson' && e.type === 'bin'))
+ok('entry story-pane-watch trong provides', kitJson.provides.some(e => e.name === 'story-pane-watch' && e.type === 'bin'))
 ok('KHÔNG notify (không block)', calls.notifications.length === 0, JSON.stringify(calls.notifications))
 ok('bin mới copy đủ (5 files)', ['story-fact-pack', 'story-hooks-install', 'hook-post-tool-use', 'hook-session-start', 'hook-stop'].every(f => existsSync(join(root, 'bin', f))))
 ok('retired orphan skill được dọn (gpt-taste seed trước install)', !existsSync(join(root, 'skills', 'gpt-taste')))

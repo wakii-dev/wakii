@@ -1,0 +1,68 @@
+#!/bin/bash
+# story-pane-watch — detector 4-state cho worker panes của 1 story (Orchestrated HITL spec 04/10).
+# Usage: story-pane-watch --story <hub-abs-path> [--json]
+# Đọc tail các terminal pane của worktree con (lineage hoặc cùng folder sf-N-),
+# phân loại: blocked > waiting-approval > idle-done > working > unknown.
+# Fail-open: orca chết/thiếu data → stdout "[]" + exit 0. Bám handle+cwd, KHÔNG bám title.
+# fallback same-folder sf-N- có thể nhầm SF story khác khi 2 story song song cùng repo — lineage parent là nguồn chính.
+set -u
+STORY=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --story) STORY="$2"; shift 2 ;;
+    *) shift ;;
+  esac
+done
+[ -n "$STORY" ] && [ -d "$STORY" ] || { echo "usage: story-pane-watch --story <hub-abs-path> [--json]" >&2; exit 2; }
+
+# ORCA_BIN env là override tường minh — kể cả path chết cũng dùng (fail-open bên dưới)
+ORCA_BIN="${ORCA_BIN:-}"
+if [ -z "$ORCA_BIN" ]; then
+  ORCA_BIN="$(command -v orca 2>/dev/null || echo /opt/homebrew/bin/orca)"
+fi
+
+HUB_DIR="$(cd "$STORY" && pwd)"
+WTS="$("$ORCA_BIN" worktree list --json 2>/dev/null || true)"
+[ -n "$WTS" ] || { echo "[]"; exit 0; }
+
+printf '%s' "$WTS" | node -e '
+const fs = require("fs"), cp = require("child_process"), path = require("path");
+const hubDir = path.resolve(process.argv[1]), orca = process.argv[2];
+let rows = [];
+try {
+  const j = JSON.parse(fs.readFileSync(0, "utf8"));
+  rows = (j.result && j.result.worktrees) || j.worktrees || [];
+} catch {}
+const hub = rows.find(w => { try { return path.resolve(w.path || "") === hubDir; } catch { return false; } });
+const hubId = hub ? hub.id : "";
+const children = rows.filter(w => {
+  if (w === hub) return false;
+  const lin = hubId !== "" && ((w.lineage || {}).parentWorktreeId === hubId);
+  const sib = path.dirname(path.resolve(w.path || "")) === path.dirname(hubDir) && /^sf-\d+-/.test(path.basename(w.path || ""));
+  return lin || sib;
+});
+const sh = (args) => { try { return cp.execFileSync(orca, args, { encoding: "utf8", timeout: 20000 }); } catch { return ""; } };
+const un = (s) => { try { const j = JSON.parse(s); return j && j.result ? j.result : j; } catch { return null; } };
+const classify = (tail) => {
+  const lines = (tail || []).filter(l => l && l.trim());
+  const joined = lines.join("\n");
+  if (/\bBLOCKED\b|APPROVAL-NEEDED|REQUIREMENT-GAP/i.test(joined)) return { state: "blocked", question: (joined.match(/.*(\bBLOCKED\b|APPROVAL-NEEDED|REQUIREMENT-GAP).*/i) || [""])[0].slice(0, 200) };
+  if (/Do you want to proceed\?|❯\s*1\.\s*Yes|allow\?|permit\?/i.test(joined)) return { state: "waiting-approval", question: (lines[lines.length - 1] || "").slice(0, 200) };
+  const last = lines.length ? lines[lines.length - 1].trim() : "";
+  if (last && (/^❯\s*$/.test(last) || /(^➜|\bgit:\(|\$\s*$)/.test(last))) return { state: "idle-done", question: "" };
+  if (lines.length) return { state: "working", question: "" };
+  return { state: "unknown", question: "" };
+};
+const out = [];
+for (const w of children) {
+  const tml = un(sh(["terminal", "list", "--worktree", "id:" + w.id, "--json"]));
+  const handle = (((tml || {}).terminals || [])[0] || {}).handle || "";
+  if (!handle) continue;
+  const rd = un(sh(["terminal", "read", "--terminal", handle, "--json"]));
+  const tail = ((rd || {}).terminal || {}).tail || [];
+  const { state, question } = classify(tail);
+  out.push({ worktree: path.basename(w.path), handle, state, question });
+}
+process.stdout.write(JSON.stringify(out, null, 1));
+' "$HUB_DIR" "$ORCA_BIN"
+exit 0

@@ -105,6 +105,24 @@ prefix `wakii-dev/` trên remote wakii-dev/wakii. (KHÔNG dùng legacy `story-ba
    worktree comment; còn lại flow nguyên vẹn (two-step acceptEdits spawn + lineage
    probe). Pack vẫn copy tay + BƯỚC-0 gate. (04/10 — trước đây phải create tay.)
 
+## BA LAYER — orchestration nắm nghiệp vụ như BA (04/10, ruling B)
+
+Coordinator KHÔNG chỉ điều phối — là **BA của story**: nắm epic-why, spec, acceptance,
+touch map, story-kb. Ba nhiệm vụ:
+
+1. **Brief the-WHY** — context pack gửi worker phải có: tại sao tính năng tồn tại,
+   ai dùng, acceptance nghĩa là gì. Worker định hướng được, không làm theo checklist mù.
+2. **Phân xử câu hỏi worker** — câu HOW có trong spec/KB/touch map → TỰ TRẢ lời pane
+   + **audit bắt buộc trích dẫn mục spec** (vd "BA auto-approve: migrate thuộc
+   acceptance SF-4"); scope/rủi ro/priority/tiền → RELAY user kèm diễn giải
+   tiếng-người + khuyến nghị. KHÔNG trích được nguồn → RELAY (cấm đoán).
+3. **Nghiệm thu nghiệp vụ** — trước khi nói SF done: đối chiếu output với business
+   acceptance (không chỉ tests xanh).
+
+Relay hybrid C: user bấm pane trực tiếp khi nhìn thấy; pane-watch sweep là
+safety-net — waiting/blocked không ai xử 1 sweep → relay notification + worktree
+comment (câu hỏi đã diễn giải + handle + khuyến nghị).
+
 ## Team Model — PM + Developers + Tester (vai trò trong story)
 
 Story vận hành như một team thật. Mỗi vai có trách nhiệm riêng, KHÔNG giao chéo:
@@ -614,6 +632,8 @@ INCOMPLETE; (2) Rule 0 browser verify 3 tầng (DOM/VISUAL/FLOW — không tự 
 luận khi chưa thấy); (3) tester review độc lập (code-reviewer) trước merge;
 (4) gate `~/.claude/bin/story-verify <sf>` sạch TRƯỚC khi set Done.
 (Optional: đính memory patterns qua `story-memory inject` — xem reference.)
+Brief còn phải có phần WHY theo **BA LAYER** (section "BA LAYER" ở trên): tại sao
+tính năng tồn tại, ai dùng, acceptance nghĩa là gì.
 
 In-session fast path (small SFs, interactive): dispatch the `task-executor`
 agent (green) with the same prompt content — it runs the workflow loop for
