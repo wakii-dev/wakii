@@ -8,7 +8,8 @@
 #
 # CẤM: message generic (update/fix bug/wip trên branch dùng chung) · file local-only
 # (navigator state, checkpoints, __pycache__) · commit kit chưa rehash
-# (kitHash + fingerprint phải cùng commit) · --no-verify không lý do
+# (kitHash + fingerprint phải cùng commit) · --no-verify không lý do ·
+# trailer Co-Authored-By AI (không bao giờ đính — user ruling 04/10)
 #
 # Branch: story dest = story/{feature} · feature = features/{slug} ·
 #         SF = story/{feature}-sf-N · cấm prefix wakii-dev/ (remote conflict)
