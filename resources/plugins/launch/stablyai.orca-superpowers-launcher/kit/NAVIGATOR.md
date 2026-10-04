@@ -50,3 +50,34 @@ Parity nền tảng: `docs/superpowers/support-matrix.md`.
 động), `state.json` (verify/attempts/blocked per SF), `outcomes.jsonl` (instincts v0 —
 1 dòng JSON/pass; ≥20 pass → rank script đề xuất chỉnh ngưỡng), `driver.pid`.
 Toàn bộ **local-only** — thêm `docs/superpowers/navigator/` vào `.gitignore` của project.
+
+## Portable supervision (runbook — học từ ILEC 03-04/10)
+
+**Khi bật `--loop`:** story portable đang mở mà KHÔNG có người theo dõi liên tục (qua
+đêm, máy để bàn). KHÔNG bật khi: story đang có session người làm trực tiếp trên cùng
+slug (driver chỉ thêm dispatch nhiễu), hoặc repo chưa đủ fences sf-1/sf-2/sf-3 (launch
+trùng, mindmap stale, preflight primary) — driver tin mindmap state, state sai thì nó
+lái sai.
+
+**Đọc `outcomes.jsonl`:** 1 dòng JSON/pass — `ts`, `slug`, `mode`, `duration_s`,
+`action` (dòng action cuối của pass). `action` dài bất thường hoặc là stack trace =
+pass có crash phụ (driver vẫn sống); `duration_s` lớn bất thường = pass vừa chờ
+verify/worker. Đọc `driver.log` cùng dir khi cần chi tiết từng nhánh chọn.
+
+**Qui tắc vận hành:**
+
+- **1 driver/slug** — PID-file tự chặn driver trùng ở MỌI mode (kể cả `--dry`: muốn
+  soi nhánh, dừng driver sống rồi `--dry`, hoặc đọc `driver.log`). Đừng xoá
+  `driver.pid` để "cưỡng bức" chạy 2 driver cùng slug.
+- **KHÔNG reset `state.json` sau BLOCKED** — block là hành động của người: đọc
+  `driver.log` tìm lý do (verify đỏ ×3, dispatch hụt ×3…), xử lý root-cause, rồi
+  xoá key `blocked_<sf>`/`attempts_<sf>` CỤ THỂ. Xoá cả file = tắt breaker, driver
+  dispatch lại vòng lỗi ngay (ILEC 04/10: BLOCKED ×2 rồi vẫn dispatch tiếp sau khi
+  state bị viết lại ngoài driver).
+- **Pane worker không bám title** — Orca đổi title pane theo process (vd
+  `✳ <slug> story worker (ILEC)`), lookup `story-worker-<slug>` có thể trượt và tạo
+  pane mới mỗi pass. Đếm worker bằng số claude/pane sống trong worktree story, không
+  bằng tiêu đề.
+- **Mindmap schema phải khớp kit** — resolver đọc `wakiiMindmap` marker; marker lệch
+  giữa máy → driver fallback legacy đọc file local (state có thể stale). Sau merge
+  story, để driver thấy state mới: mindmap trên dest branch + marker đúng schema.
