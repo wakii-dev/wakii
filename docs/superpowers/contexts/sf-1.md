@@ -1,47 +1,43 @@
-# SF-1 Context Pack — ⌘⇧P Command palette + unified registry
-> Đọc file này THAY VÌ tự tổng hợp từ bracket + epic + comments. Epic spec: `docs/superpowers/specs/2026-09-21-editor-vscode-parity-design.md`. Bracket: `docs/superpowers/brackets/fi478-editor-vscode-parity.md`. Design: mock-prototype (designer phase TRƯỚC dev — 3 hướng HTML → user chọn).
+# Context pack — LOCAL-4 sf-1 — story-launch ownership-probe mở rộng
 
-## Spec slice (chỉ phần SF-1 chịu trách nhiệm)
-1. Palette lệnh mới mở bằng ⌘⇧P; tái dùng shadcn `CommandDialog` primitives (pattern QuickOpen).
-2. Registry gộp 3 nguồn: core keybindings (`definitions-core-1..4`, flag palette-visible), plugin palette source, cmd-j quick-actions — tất cả qua `app-command-dispatch` hiện có.
-3. **Contract `PaletteCommandEntry` (QĐ-12) — SF-1 SỞ HỮU, các SF khác code against**: `{ id: string (dot-namespaced, vd 'explorer.revealActive'), titleKey: string (i18n key, KHÔNG literal), category: 'file'|'edit'|'view'|'git'|'terminal'|'plugin', when?: PreconditionId, run: KeybindingActionId | (() => void), source: 'core'|'plugin'|'cmd-j' }`.
-4. Fuzzy + recent-commands (persist); **5 truy vấn pinned** cho verify — tạo fixture khi implement, ghi danh sách query → expected top-command vào chính pack này (append section "Pinned verify queries" ở cuối).
-5. ⌘⇧P binding: scope policy theo `TerminalShortcutPolicy` ('orca-first' | 'terminal-first' — đã có) — terminal focus thì KHÔNG capture.
-6. i18n: SF-1 sở hữu catalog infra; platform labels (⌘/Ctrl) qua `shortcut-platform` — GỘP 1 task.
-7. Startup budget: assert palette module KHÔNG nằm trong startup import graph (lazy mount như QuickOpen/lazyWithRetry pattern).
-8. Tier-gate: acceptance CHỈ test lệnh 3 nguồn HIỆN CÓ. Lệnh mới SF-2/3/4 hiện trong palette là hệ quả contract — verify ở SF-6 convergence, KHÔNG gate SF-1.
+> ⚠️ Bản 11:44 hôm nay bị ĐÈ bởi copy chéo story khác (nội dung FI-478). Bản này là
+> bản CHÍNH THỨC của LOCAL-4 — các file fi458-*, sf-1-clone-vs-vscode, sf-1-editor-parity,
+> vsc901-*, vu-14/ trong thư mục này là vật liệu story KHÁC, KHÔNG thuộc LOCAL-4, bỏ qua.
 
-## Touch map (files SF-N tạo/sở hữu)
-- Sở hữu: component mới `src/renderer/src/components/command-palette/` (modal + registry glue); extension của `src/renderer/src/lib/app-command-dispatch.ts`; `activeModal` union trong `src/renderer/src/store/slices/ui/ui-slice-modal-actions.ts` (+ ripple `useModalReturnFocus`, `FeatureTipsModal` — task riêng); i18n catalog keys namespace `commandPalette.*`.
-- Append-only (các SF khác cùng đụng): `src/shared/keybindings/definitions-core-*.ts` (thêm palette-visible flag — KHÔNG đổi union hiện có).
-- READ-ONLY: `src/renderer/src/components/cmd-j/` (chỉ đọc catalog để surface qua dispatcher); `src/renderer/src/components/QuickOpen.tsx` (pattern tham khảo, KHÔNG sửa); `src/renderer/src/components/ui/command.tsx` (primitive, KHÔNG restyle — STYLEGUIDE gate).
+Nguồn: phân tích 13 sai phạm ILEC 03/10 (session coordinator 04/10) + prior-art probe kit bins.
 
-## ACCEPTANCE (user-visible — verifier Phase 5 kiểm)
-- Nhấn ⌘⇧P (Ctrl+Shift+P trên Win/Linux): palette mở giữa màn hình, gõ được ngay.
-- 100% core actions palette-visible có trong danh sách (verify đếm trực tiếp từ definitions-core-*.ts); 5 truy vấn pinned trả đúng command đứng đầu; Enter chạy đúng lệnh.
-- Lệnh từ plugin (navigation-shortcuts) và cmd-j hiện đúng category; chạy được từ palette.
-- Terminal đang focus → ⌘⇧P đi vào terminal (theo policy hiện có), không mở palette.
-- Mở palette không làm chậm khởi động app (startup assert pass).
+## Spec slice
+`story-launch` ĐÃ có pre-dispatch ownership probe (dòng ~211-221, lib `story-ownership-probe`,
+fail-open): chỉ phát hiện worker live **trong SF worktree đích** qua run/worktree ownership.
+Đêm 03/10 ILEC lọt 2 case vì probe mù 2 vùng:
+1. Worker Claude sống với cwd = **primary checkout** của repo story (không thuộc SF worktree nào).
+2. Worker ngoài orchestration (terminal spawn tay/kịch bản — run-list không thấy).
 
-## Boundary (KHÔNG làm)
-- KHÔNG sửa UI cmd-j (⌘J) hay QuickOpen (⌘P) — chúng giữ nguyên, chỉ bị surface qua registry.
-- KHÔNG thêm lệnh của explorer/search/chrome — đó của SF-2/3/4 (chỉ bảo đảm contract nhận được).
-- KHÔNG đụng Monaco keybindings hay tiptap shortcuts.
-- KHÔNG hardcode Meta key (AGENTS.md cross-platform).
+Nhiệm vụ: mở rộng probe (lib + caller) phủ đủ 2 vùng trên; khi phát hiện → TỪ CHẶN launch,
+in bằng chứng (pid/handle/cwd); **giữ nguyên fail-open** (không có data → không phán → cho qua).
+KHÔNG tự kill tiến trình nào.
 
-## Pinned verify queries (SF-1 implement xong — appended 2026-09-22)
-Fixture: `src/renderer/src/components/command-palette/palette-fuzzy-rank.test.ts` (describe
-"pinned SF-1 verify queries") — titles khớp production sources (core definitions + cmd-j
-catalog + plugin navigation-shortcuts). 5 cặp query → expected top command:
+## Touch map
+- `resources/plugins/launch/stablyai.orca-superpowers-launcher/kit/bin/story-launch` — khối pre-dispatch
+- `resources/plugins/launch/stablyai.orca-superpowers-launcher/kit/bin/story-ownership-probe` — thêm probe primary/out-of-band
+- tests kit (`tests/*.mjs` — file test pattern theo suite hiện có)
+- kit.json — nếu đổi description entry → rehash kitHash (`computeKitHash` main.mjs) + fingerprint (`verify-packaged-plugin-resources.cjs`); thứ tự rehash: bin → kitHash → kit.json → fingerprint cuối (fence 30/09)
+- CHỈ sửa trong wakii repo; source repo story-team-kit = legacy frozen (ruling 22/09)
 
-| # | Query | Expected top command | Id | Nguồn |
-|---|-------|---------------------|----|-------|
-| 1 | `palette` | Command Palette | `app.commandPalette` | core |
-| 2 | `reopen` | Reopen closed tab | `tab.reopenClosed` | core |
-| 3 | `add quick` | Add Quick Command | `cmd-j.add-quick-command` | cmd-j |
-| 4 | `settings` | Open Settings | `app.settings` | core |
-| 5 | `toggle source` | Toggle Source Control | `plugin:stablyai.orca-navigation-shortcuts/toggle-source-control` | plugin |
+## ACCEPTANCE (user-visible)
+- Tái lập kịch bản đêm 03/10 ở mức test: khi tồn tại process agent cwd-trong-primary của story
+  đang mở → `story-launch` thoát ≠0 với thông báo chứa pid + cwd (không đẻ worktree trùng).
+- Khi môi trường sạch → launch đi qua như cũ (không hồi quy launch hiện có).
+- Suite kit xanh (trừ known-red platform-guard đã có SKIP).
 
-Cả 5 chạy được từ palette qua dispatcher (pin 2/4/5 có handler trong
-`createAppCommandHandlers`; pin 1 toggle chính palette; pin 3 chạy qua
-`CmdJQuickActionContext`). Tie-break khi bằng điểm: title ngắn hơn → id `localeCompare`.
+## Boundary
+- KHÔNG đụng session ILEC đang sống; KHÔNG kill tiến trình.
+- KHÔNG đổi story-workflow SKILL.md, KHÔNG thêm bin mới (provides count giữ nguyên).
+- Exec-bit: giữ 755 cho bin sửa — chmod TRƯỚC khi hash (fence rehash).
+
+## Cập nhật 04/10 trưa — gốc rễ một phần ĐÃ fix ngoài story (commit 617a18a354)
+story-launch probe cha bare-name → `--no-parent` âm thầm (sf-2 VU-32 mồ côi) đã đổi: probe
+`branch:$DEST` → `--parent-worktree path:<path>`. sf-1 CẦN: (a) test hồi quy cho path này
+(fixture bare-name vs branch: selector), (b) phần mở rộng probe primary/out-of-band như
+spec chính trên vẫn còn nguyên. KitHash hiện 2eabae90, fingerprint 633ac342 — rehash lại
+nếu đổi thêm.

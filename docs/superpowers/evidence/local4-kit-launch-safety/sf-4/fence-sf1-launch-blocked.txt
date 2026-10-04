@@ -1,0 +1,33 @@
+# Fence sf-1 — launch trùng khi có worker cùng story → BLOCKED kèm pid/cwd (04/10)
+# Kịch bản đêm 03/10: 2 worker cùng SF không ai chặn (worker trên primary + worker spawn tay
+# ngoài orchestration). story-launch THẬT (kit đã merge sf-1) + story-ownership-probe process-scan.
+# Fixture: /tmp/sf4-fixture · fake HOME (workspaces cô lập) · ORCA_BIN stub (Linear Todo,
+# run-list/worker-list RỖNG — mô phỏng worker vô hình với orchestration) · process thật comm=claude
+# (binary C tự compile — binary copy system bị macOS AMFI kill 137).
+# Lệnh: HOME=$H ORCA_BIN=$STUB bash <kit>/kit/bin/story-launch --sf SF-1 --wakii <fixture mindmap>
+
+## Kịch bản (a) — agent cwd trên PRIMARY checkout (vùng mù 1)
+```
+fake pid=14567 comm=claude
+⛔ BLOCKED: SF-1 — còn agent live ngoài tầm ownership-probe (process-scan):
+  pid=14567 zone=primary cwd=/private/tmp/sf4-fixture/repo comm=claude
+probe KHÔNG kill — xác nhận process rồi xử lý tay, launch lại sau
+rc=1
+```
+
+## Kịch bản (b) — agent cwd trong SF worktree, worker-list không thấy (vùng mù 2 = oob)
+```
+fake pid=15555 comm=claude  (lsof cwd: /private/tmp/sf4-fixture/l1home/orca/workspaces/repo/sf-1-fake)
+⛔ BLOCKED: SF-1 — còn agent live ngoài tầm ownership-probe (process-scan):
+  pid=15555 zone=oob cwd=/private/tmp/sf4-fixture/l1home/orca/workspaces/repo/sf-1-fake comm=claude
+probe KHÔNG kill — xác nhận process rồi xử lý tay, launch lại sau
+rc=1
+```
+
+## Đối chứng ÂM — KHÔNG agent → không block nhầm (fail-open đúng chỗ, không overblock)
+```
+SF-1 đã có worktree: sf-1-fake
+rc=0
+```
+
+VERDICT: PASS — 2/2 vùng mù 03/10 bị chặn kèm bằng chứng pid/zone/cwd/comm; sạch thì đi qua.

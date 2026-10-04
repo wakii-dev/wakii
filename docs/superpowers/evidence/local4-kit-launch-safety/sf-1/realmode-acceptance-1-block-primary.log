@@ -1,0 +1,8 @@
+# LOCAL-4 sf-1 Rule-0 demo — bin THẬT kit/bin/story-launch vừa sửa
+# sandbox: HOME+REPO+orca-stub hermetic — KHÔNG đụng session sống
+# rc=1 (expect ≠0)
+# process demo pid=59374 spawn thật cwd=/tmp/local4-sf1-demo.EyTFa4/primary-repo/docs (subdir primary); lsof quét THẬT (không fixture OP_PROC_JSON); KHÔNG được có 'worktree create' trong flow
+
+⛔ BLOCKED: SF-2 — còn agent live ngoài tầm ownership-probe (process-scan):
+  pid=59374 zone=primary cwd=/private/tmp/local4-sf1-demo.EyTFa4/primary-repo/docs comm=sleep
+probe KHÔNG kill — xác nhận process rồi xử lý tay, launch lại sau

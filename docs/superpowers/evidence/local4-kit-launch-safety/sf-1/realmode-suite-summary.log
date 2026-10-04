@@ -1,0 +1,76 @@
+# Kit suite summary — 2026-10-04 12:30:28
+
+## Per-file exit codes (node tests/*.mjs trong plugin dir)
+0 tests/agent-def-protocol-tests.mjs
+0 tests/file-lock-tests.mjs
+0 tests/hooks-factpack-tests.mjs
+0 tests/kb-tests.mjs
+0 tests/kit-manifest-negative-tests.mjs
+1 tests/kit-verify-manifest.mjs
+0 tests/linear-rate-limit-tests.mjs
+0 tests/mcp-server-tests.mjs
+0 tests/panel-canvas-guard-tests.mjs
+0 tests/panel-wakii-edit-tests.mjs
+0 tests/qa-bins-negative-tests.mjs
+0 tests/qa-failure-paths.mjs
+0 tests/qa-happy-path-chain.mjs
+0 tests/report-validate-tests.mjs
+0 tests/review-fuse-tests.mjs
+1 tests/sc-evidence-map.mjs
+0 tests/story-attempt-tests.mjs
+0 tests/story-automation-install-tests.mjs
+0 tests/story-checkpoint-tests.mjs
+0 tests/story-close-tests.mjs
+1 tests/story-coordinator-pass-tests.mjs
+1 tests/story-doctor-tests.mjs
+0 tests/story-guards-tests.mjs
+0 tests/story-impact-tests.mjs
+0 tests/story-launch-tests.mjs
+0 tests/story-lesson-tests.mjs
+0 tests/story-memory-parse-tests.mjs
+0 tests/story-mindmap-bootstrap-tests.mjs
+0 tests/story-mindmap-tests.mjs
+0 tests/story-mindmap-update-state-tests.mjs
+0 tests/story-ownership-probe-real-lsof-tests.mjs
+0 tests/story-ownership-probe-tests.mjs
+0 tests/story-plan-validate-tests.mjs
+0 tests/story-preflight-tests.mjs
+0 tests/story-resume-tests.mjs
+0 tests/story-skill-lint-tests.mjs
+0 tests/story-test-tests.mjs
+0 tests/story-verify-tests.mjs
+0 tests/story-wakii-save-tests.mjs
+0 tests/story-watchdog-wakii-tests.mjs
+0 tests/surface-lint-tests.mjs
+0 tests/verify-wiring-tests.mjs
+0 tests/wakii-validate-tests.mjs
+
+## story-ownership-probe-tests.mjs
+== TOTAL: 89 PASS / 0 FAIL ==
+HARNESS GREEN
+
+## story-ownership-probe-real-lsof-tests.mjs (real lsof + BIN THẬT)
+  [PASS] R1 scan thấy process thật
+  [PASS] R1 pid là pid thật (không phải fixture)
+  [PASS] R2 exit 0 + HITS rỗng
+  [PASS] R3 precond: lsof thấy process trước launch
+  [PASS] R3 exit 1 (block)
+  [PASS] R3 BLOCKED + pid + cwd
+  [PASS] R3 KHÔNG dispatch
+  [PASS] R4 exit 0 (dry-run đi qua)
+  [PASS] R4 không BLOCKED
+  [PASS] R5 precond: scan thấy oob trước launch
+  [PASS] R5 exit 1 (block — cũ chỉ "đã có worktree")
+  [PASS] R5 BLOCKED + pid + cwd
+  [PASS] R5 KHÔNG dispatch
+  [PASS] R6 exit 1
+  [PASS] R6 block theo owner (logic cũ), không pid-scan đè
+  [PASS] R7 exit 0 + thông điệp cũ (không block nhầm relaunch của mình)
+  [PASS] R7 không BLOCKED
+== TOTAL: 17 PASS / 0 FAIL ==
+HARNESS GREEN
+
+## Known-red (không thuộc hồi quy SF này)
+- kit-verify-manifest: kitHash/fingerprint CHỜ fence SF này (fix ở Task 5) + workfront-driver exec-bit 644 thừa kế từ CREATE commit (fix kèm fence)
+- story-doctor-tests + sc-evidence-map: cascade kitHash trên
+- story-coordinator-pass-tests C25: known-red platform-guard Windows-sim (nhãn trong code, đúng carve-out ACCEPTANCE)

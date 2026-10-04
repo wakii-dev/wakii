@@ -261,13 +261,188 @@ console.log('== L7 parent-dir scope: basename trùng 2 repo không nhầm lẫn 
   rmSync(dir, { recursive: true, force: true })
 }
 
+// ── process-scan face (LOCAL-4 SF-1): 2 vùng mù đêm 03/10 — worker cwd-trên-primary
+// + worker ngoài orchestration. Fixture qua OP_PROC_JSON/OP_PROC_FILE (hermetic),
+// real-lsof ở story-ownership-probe-real-lsof-tests.mjs.
+console.log('== P1 process-scan: agent cwd-trên-primary → zone=primary ==')
+{
+  const dir = tempDir('p1')
+  const stub = makeOrcaStub(dir)
+  const primary = join(dir, 'primary-repo')
+  mkdirSync(primary, { recursive: true })
+  const procs = JSON.stringify([
+    { pid: 424001, comm: 'claude', cwd: primary },
+    { pid: 424002, comm: 'claude', cwd: join(primary, 'docs') }, // subdir vẫn tính primary
+  ])
+  const r = spawnSync('bash', ['-c', `
+    . "${LIB}"
+    hits="$(OP_PRIMARY="$OP" OP_PROC_JSON="$PJ" ownership_probe_process_hits)" || exit 9
+    printf '%s' "$hits"
+  `], { encoding: 'utf8', timeout: 60000,
+    env: { ...process.env, ORCA_BIN: stub, OP: primary, PJ: procs } })
+  check('P1', 'exit 0', r.status === 0, `code=${r.status} ${r.stdout}${r.stderr}`)
+  check('P1', 'pid 424001 zone=primary + cwd', r.stdout.includes('424001|primary|') && r.stdout.includes(primary), r.stdout)
+  check('P1', 'subdir của primary cũng bắt', r.stdout.includes('424002|primary|'), r.stdout)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== P2 process-scan: agent trong SF worktree, worker-list không thấy → zone=oob ==')
+{
+  const dir = tempDir('p2')
+  const stub = makeOrcaStub(dir)
+  const wt = run(dir, { repo: 'reponb' })
+  const procs = JSON.stringify([
+    { pid: 424101, comm: 'codex', cwd: wt }, // spawn tay trong worktree — không qua orchestration
+    { pid: 424102, comm: 'claude', cwd: join(wt, 'docs') },
+  ])
+  const r = spawnSync('bash', ['-c', `
+    . "${LIB}"
+    ownership_probe_load >/dev/null || exit 9
+    hits="$(OP_PRIMARY="$OP" OP_WT_PATHS="$WT" OP_PROC_JSON="$PJ" ownership_probe_process_hits)" || exit 9
+    printf '%s' "$hits"
+  `], { encoding: 'utf8', timeout: 60000,
+    env: { ...process.env, ORCA_BIN: stub, ORCA_COORDINATOR_HANDLE: 'term_self',
+      OP: join(dir, 'not-the-primary'), WT: wt, PJ: procs,
+      RL_FIXTURE: fixture(dir, 'rl.json', { ok: true, result: { runs: [] } }),
+      WL_FIXTURE: fixture(dir, 'wl.json', { ok: true, result: { workers: [] } }) } })
+  check('P2', 'exit 0', r.status === 0, `code=${r.status} ${r.stdout}${r.stderr}`)
+  check('P2', 'cwd = worktree → oob', r.stdout.includes('424101|oob|') && r.stdout.includes(wt), r.stdout)
+  check('P2', 'subdir của worktree → oob', r.stdout.includes('424102|oob|'), r.stdout)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== P3 process-scan: worktree đang có worker live (in-band) → drop, block logic cũ quyết ==')
+{
+  const dir = tempDir('p3')
+  const stub = makeOrcaStub(dir)
+  const wt = run(dir, { repo: 'reponb' })
+  const procs = JSON.stringify([{ pid: 424201, comm: 'claude', cwd: wt }])
+  const r = spawnSync('bash', ['-c', `
+    . "${LIB}"
+    ownership_probe_load >/dev/null || exit 9
+    hits="$(OP_PRIMARY="$OP" OP_WT_PATHS="$WT" OP_PROC_JSON="$PJ" ownership_probe_process_hits)" || exit 9
+    printf 'HITS=[%s]' "$hits"
+  `], { encoding: 'utf8', timeout: 60000,
+    env: { ...process.env, ORCA_BIN: stub, ORCA_COORDINATOR_HANDLE: 'term_self',
+      OP: join(dir, 'not-the-primary'), WT: wt, PJ: procs,
+      RL_FIXTURE: fixture(dir, 'rl.json', { ok: true, result: { runs: [
+        { id: 'run_other', coordinator_handle: 'term_other' } ] } }),
+      WL_FIXTURE: fixture(dir, 'wl.json', { ok: true, result: { workers: [
+        worker({ dispatchId: 'ctx_i', runId: 'run_other', worktree: wt }) ] } }) } })
+  check('P3', 'exit 0', r.status === 0, `code=${r.status} ${r.stdout}${r.stderr}`)
+  check('P3', 'in-band bị drop (HITS rỗng)', r.stdout.includes('HITS=[]'), r.stdout)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== P4 process-scan: non-agent + cwd ngoài scope → bỏ qua ==')
+{
+  const dir = tempDir('p4')
+  const stub = makeOrcaStub(dir)
+  const procs = JSON.stringify([
+    { pid: 424301, comm: 'vim', cwd: join(dir, 'primary-repo') },        // không phải agent CLI
+    { pid: 424302, comm: 'claude', cwd: join(dir, 'somewhere-else') },   // cwd ngoài primary/wt
+    { pid: 424303, comm: 'claude', cwd: '' },                            // cwd không biết — không phán
+  ])
+  const r = spawnSync('bash', ['-c', `
+    . "${LIB}"
+    hits="$(OP_PRIMARY="$OP" OP_PROC_JSON="$PJ" ownership_probe_process_hits)" || exit 9
+    printf 'HITS=[%s]' "$hits"
+  `], { encoding: 'utf8', timeout: 60000,
+    env: { ...process.env, ORCA_BIN: stub, OP: join(dir, 'primary-repo'), PJ: procs } })
+  check('P4', 'exit 0 + HITS rỗng', r.status === 0 && r.stdout.includes('HITS=[]'), `code=${r.status} ${r.stdout}${r.stderr}`)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== P5 process-scan: process ở chain ancestor của launcher → loại (không tự chặn) ==')
+{
+  const dir = tempDir('p5')
+  const stub = makeOrcaStub(dir)
+  const primary = join(dir, 'primary-repo')
+  mkdirSync(primary, { recursive: true })
+  // process.pid (node test) = cha của bash spawnSync → nằm trong ancestor chain
+  // của python scan — đúng lớp process "tự launcher" phải loại.
+  const procs = JSON.stringify([
+    { pid: process.pid, comm: 'claude', cwd: primary },
+    { pid: 424401, comm: 'claude', cwd: primary },
+  ])
+  const r = spawnSync('bash', ['-c', `
+    . "${LIB}"
+    hits="$(OP_PRIMARY="$OP" OP_PROC_JSON="$PJ" ownership_probe_process_hits)" || exit 9
+    printf 'HITS=[%s]' "$hits"
+  `], { encoding: 'utf8', timeout: 60000,
+    env: { ...process.env, ORCA_BIN: stub, OP: primary, PJ: procs } })
+  check('P5', 'exit 0', r.status === 0, `code=${r.status} ${r.stdout}${r.stderr}`)
+  check('P5', 'ancestor (node test) bị loại', !r.stdout.includes(`${process.pid}|primary|`), r.stdout)
+  check('P5', 'pid lạ vẫn bắt', r.stdout.includes('424401|primary|'), r.stdout)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== P6 process-scan: lsof hỏng → PROCERR, fail-open (rỗng, rc0, warn) ==')
+{
+  const dir = tempDir('p6')
+  const stub = makeOrcaStub(dir)
+  const r = spawnSync('bash', ['-c', `
+    . "${LIB}"
+    hits="$(OP_PRIMARY="$OP" OP_LSOF_BIN=/nonexistent-lsof-xyz ownership_probe_process_hits)" || exit 9
+    printf 'HITS=[%s]' "$hits"
+  `], { encoding: 'utf8', timeout: 60000,
+    env: { ...process.env, ORCA_BIN: stub, OP: join(dir, 'primary-repo') } })
+  check('P6', 'exit 0 + HITS rỗng (fail-open)', r.status === 0 && r.stdout.includes('HITS=[]'), `code=${r.status} ${r.stdout}${r.stderr}`)
+  check('P6', 'stderr nêu fail-open', (r.stderr || '').includes('fail-open'), r.stderr)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== P8 process-scan: ps hỏng (không chắc ancestor chain) → PROCERR fail-open toàn phần ==')
+{
+  // review P2: ps chết giữa chừng → exclusion không đáng tin → không được phán
+  // (chặn nhầm launcher chính mình = fail-closed cục bộ) — seam OP_PS_BIN
+  const dir = tempDir('p8')
+  const stub = makeOrcaStub(dir)
+  const primary = join(dir, 'primary-repo')
+  mkdirSync(primary, { recursive: true })
+  const procs = JSON.stringify([{ pid: 424601, comm: 'claude', cwd: primary }])
+  const r = spawnSync('bash', ['-c', `
+    . "${LIB}"
+    hits="$(OP_PRIMARY="$OP" OP_PS_BIN=/nonexistent-ps-xyz OP_PROC_JSON="$PJ" ownership_probe_process_hits)" || exit 9
+    printf 'HITS=[%s]' "$hits"
+  `], { encoding: 'utf8', timeout: 60000,
+    env: { ...process.env, ORCA_BIN: stub, OP: primary, PJ: procs } })
+  check('P8', 'exit 0 + HITS rỗng (fail-open)', r.status === 0 && r.stdout.includes('HITS=[]'), `code=${r.status} ${r.stdout}${r.stderr}`)
+  check('P8', 'stderr nêu fail-open', (r.stderr || '').includes('fail-open'), r.stderr)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== P7 process-scan: fixture qua OP_PROC_FILE + primary chứa .claude/worktrees không tính primary ==')
+{
+  const dir = tempDir('p7')
+  const stub = makeOrcaStub(dir)
+  const primary = join(dir, 'primary-repo')
+  mkdirSync(join(primary, '.claude', 'worktrees', 'wt-x'), { recursive: true })
+  const pf = fixture(dir, 'procs.json', [
+    { pid: 424501, comm: 'claude', cwd: join(primary, '.claude', 'worktrees', 'wt-x') }, // native worktree — không phải primary
+    { pid: 424502, comm: 'gemini', cwd: primary },
+  ])
+  const r = spawnSync('bash', ['-c', `
+    . "${LIB}"
+    hits="$(OP_PRIMARY="$OP" OP_PROC_FILE="$PF" ownership_probe_process_hits)" || exit 9
+    printf 'HITS=[%s]' "$hits"
+  `], { encoding: 'utf8', timeout: 60000,
+    env: { ...process.env, ORCA_BIN: stub, OP: primary, PF: pf } })
+  check('P7', 'exit 0', r.status === 0, `code=${r.status} ${r.stdout}${r.stderr}`)
+  check('P7', '.claude/worktrees không tính primary', !r.stdout.includes('424501'), r.stdout)
+  check('P7', 'OP_PROC_FILE đọc được + comm giữ', r.stdout.includes('424502|primary|') && r.stdout.includes('gemini'), r.stdout)
+  rmSync(dir, { recursive: true, force: true })
+}
+
 // ── story-launch pre-dispatch ──
+// OP_PROC_JSON='[]' mặc định: process-scan hermetic (fixture rỗng, không lsof thật)
+// — case process thật override trong story-ownership-probe-real-lsof-tests.mjs.
 function runLaunch(dir, stub, args, env = {}) {
   const argvLog = join(dir, 'argv.log')
   writeFileSync(argvLog, '')
   const r = spawnSync('bash', [LAUNCH, ...args], {
     encoding: 'utf8', timeout: 60000,
-    env: { ...process.env, HOME: dir, ORCA_BIN: stub, ARGV_LOG: argvLog, ...env },
+    env: { ...process.env, HOME: dir, ORCA_BIN: stub, ARGV_LOG: argvLog, OP_PROC_JSON: '[]', ...env },
   })
   const argv = existsSync(argvLog) ? readFileSync(argvLog, 'utf8') : ''
   return { code: r.status, out: (r.stdout || '') + (r.stderr || ''), argv }
@@ -380,6 +555,93 @@ console.log('== B6 story-launch: basename trùng — repo khác mồ côi KHÔNG
   check('B6', 'repoB không bị block', !rB.out.includes('BLOCKED'), rB.out)
   const rA = runLaunch(dir, stub, ['SF-2', '--repo', a.repo, '--bracket', a.bf], envB)
   check('B6', 'repoA foreign → vẫn BLOCKED', rA.code === 1 && rA.out.includes('BLOCKED') && rA.out.includes('term_other'), `code=${rA.code} out=${rA.out}`)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== B7 story-launch: agent cwd-trên-primary (vùng mù 03/10 #1) → BLOCKED pid+cwd, không dispatch ==')
+{
+  const dir = tempDir('b7')
+  const stub = makeOrcaStub(dir)
+  const { repo, bf } = writeBracket(dir)
+  // KHÔNG tạo worktree sf-2 — launch sẽ đẻ worktree trùng nếu probe không chặn
+  const procs = JSON.stringify([{ pid: 424601, comm: 'claude', cwd: repo }])
+  const r = runLaunch(dir, stub, ['SF-2', '--repo', repo, '--bracket', bf],
+    { ORCA_COORDINATOR_HANDLE: 'term_self',
+      RL_FIXTURE: fixture(dir, 'rl.json', { ok: true, result: { runs: [] } }),
+      WL_FIXTURE: fixture(dir, 'wl.json', { ok: true, result: { workers: [] } }),
+      OP_PROC_JSON: procs })
+  check('B7', 'exit 1 (block)', r.code === 1, `code=${r.code} out=${r.out}`)
+  check('B7', 'BLOCKED + pid + cwd', r.out.includes('BLOCKED') && r.out.includes('pid=424601') && r.out.includes(`cwd=${repo}`), r.out)
+  check('B7', 'KHÔNG dispatch (không worktree create)', !r.argv.includes('worktree create'), r.argv)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== B8 story-launch: agent trong SF worktree ngoài orchestration (vùng mù 03/10 #2) → BLOCKED ==')
+{
+  const dir = tempDir('b8')
+  const stub = makeOrcaStub(dir)
+  const { repo, bf } = writeBracket(dir)
+  const wt = run(dir, { repo: 'repo' })
+  // worktree tồn tại nhưng worker-list RẼNG — worker spawn tay, run-list không thấy
+  const procs = JSON.stringify([{ pid: 424701, comm: 'claude', cwd: wt }])
+  const r = runLaunch(dir, stub, ['SF-2', '--repo', repo, '--bracket', bf],
+    { ORCA_COORDINATOR_HANDLE: 'term_self',
+      RL_FIXTURE: fixture(dir, 'rl.json', { ok: true, result: { runs: [] } }),
+      WL_FIXTURE: fixture(dir, 'wl.json', { ok: true, result: { workers: [] } }),
+      OP_PROC_JSON: procs })
+  check('B8', 'exit 1 (block — cũ chỉ "đã có worktree")', r.code === 1, `code=${r.code} out=${r.out}`)
+  check('B8', 'BLOCKED + pid + cwd', r.out.includes('BLOCKED') && r.out.includes('pid=424701') && r.out.includes(`cwd=${wt}`), r.out)
+  check('B8', 'KHÔNG dispatch', !r.argv.includes('worktree create'), r.argv)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== B9 story-launch: sạch (không agent lạ) → đi qua như cũ, không block ==')
+{
+  const dir = tempDir('b9')
+  const stub = makeOrcaStub(dir)
+  const { repo, bf } = writeBracket(dir)
+  const r = runLaunch(dir, stub, ['SF-2', '--repo', repo, '--bracket', bf, '--dry-run'],
+    { ORCA_COORDINATOR_HANDLE: 'term_self',
+      RL_FIXTURE: fixture(dir, 'rl.json', { ok: true, result: { runs: [] } }),
+      WL_FIXTURE: fixture(dir, 'wl.json', { ok: true, result: { workers: [] } }) })
+  check('B9', 'exit 0 (dry-run đi qua)', r.code === 0, `code=${r.code} out=${r.out}`)
+  check('B9', 'không BLOCKED', !r.out.includes('BLOCKED'), r.out)
+  check('B9', 'dry-run không dispatch', !r.argv.includes('worktree create'), r.argv)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== B10 story-launch: agent cwd nơi khác (không primary/WT của SF) → không block nhầm ==')
+{
+  const dir = tempDir('b10')
+  const stub = makeOrcaStub(dir)
+  const { repo, bf } = writeBracket(dir)
+  const elsewhere = join(dir, 'unrelated-place')
+  mkdirSync(elsewhere, { recursive: true })
+  const procs = JSON.stringify([{ pid: 424801, comm: 'claude', cwd: elsewhere }])
+  const r = runLaunch(dir, stub, ['SF-2', '--repo', repo, '--bracket', bf, '--dry-run'],
+    { ORCA_COORDINATOR_HANDLE: 'term_self',
+      RL_FIXTURE: fixture(dir, 'rl.json', { ok: true, result: { runs: [] } }),
+      WL_FIXTURE: fixture(dir, 'wl.json', { ok: true, result: { workers: [] } }),
+      OP_PROC_JSON: procs })
+  check('B10', 'exit 0', r.code === 0, `code=${r.code} out=${r.out}`)
+  check('B10', 'không BLOCKED', !r.out.includes('BLOCKED'), r.out)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== B11 story-launch: process scan hỏng → fail-open, launch đi qua ==')
+{
+  const dir = tempDir('b11')
+  const stub = makeOrcaStub(dir)
+  const { repo, bf } = writeBracket(dir)
+  // OP_PROC_JSON rỗng + lsoa bogus → scan chết → không được chặn mù
+  const r = runLaunch(dir, stub, ['SF-2', '--repo', repo, '--bracket', bf, '--dry-run'],
+    { ORCA_COORDINATOR_HANDLE: 'term_self',
+      RL_FIXTURE: fixture(dir, 'rl.json', { ok: true, result: { runs: [] } }),
+      WL_FIXTURE: fixture(dir, 'wl.json', { ok: true, result: { workers: [] } }),
+      OP_PROC_JSON: '', OP_LSOF_BIN: '/nonexistent-lsof-xyz' })
+  check('B11', 'exit 0 (dry-run đi qua)', r.code === 0, `code=${r.code} out=${r.out}`)
+  check('B11', 'không BLOCKED', !r.out.includes('BLOCKED'), r.out)
+  check('B11', 'stderr nêu fail-open', r.out.includes('fail-open'), r.out)
   rmSync(dir, { recursive: true, force: true })
 }
 
