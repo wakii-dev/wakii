@@ -1,0 +1,23 @@
+# sf-4 test-run — 2026-10-04T07:03:54Z — HEAD 38b36aff99
+HEAD: 856e537c1d (code commit — NAVIGATOR runbook + fingerprint rehash)
+tdd: skipped-tdd — SF này không thêm code runtime (boundary pack: driver KHÔNG đổi code);
+thay đổi duy nhất trong tree = NAVIGATOR.md (docs) + bundled-plugins.json (fingerprint rehash);
+phần 'chức năng' là bằng chứng chạy bin thật (3 fence + 2 driver pass) — đã chạy RED-giả?
+không áp dụng: không có code mới để test-first. Test tự guarded: reviewer cross-check runbook vs bin.
+
+## Suite kit (node tests/*.mjs — 45 suites, chạy trong resources/plugins/launch/stablyai.orca-superpowers-launcher/)
+- kit-verify-manifest.mjs: 30 PASS / 0 FAIL
+- 44 suite khác: GREEN (log /tmp/sf4-suite-*.log)
+- story-coordinator-pass-tests.mjs: 65 PASS / 1 FAIL (C25) — PRE-EXISTING environment leak:
+  test đọc run-list orchestration THẬT, thấy run_5ca468c45821 (run story LOCAL-4 đang sống)
+  → expect idle=no-active-runs không đạt. Xác nhận baseline: git worktree từ HEAD (chưa có thay
+  đổi sf-4) fail C25 CÙNG cause, cùng run id. Không phải regression của sf-4. (Test thiếu stub
+  run-list cho sub-case idle — flag cho coordinator, fix thuộc story khác.)
+
+## Fingerprint/manifest hygiene (fence kit sf-4)
+- rehash fingerprint launcher: 5ac499fa… → b73d92b5… (bundled-plugins.json) — do NAVIGATOR.md đổi
+- verify-packaged-plugin-resources('resources'): OK — verified 2 bundled plugin(s)
+- plugin-tree-hash-lockstep.test.mjs: 7/7 PASS (pnpm test)
+- computeKitHash: 2cd1b412d074ffbc — GIỮ NGUYÊN (NAVIGATOR.md docs ngoài skills/agents/bin —
+  đúng touch map: CHỈ fingerprint, không kitHash; không đổi bin nào)
+- chmod 755 bin: không bin nào sửa — không cần

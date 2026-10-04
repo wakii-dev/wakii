@@ -1,0 +1,37 @@
+# Fence sf-2 — driver sf_states đọc thấy state đích đúng (không stale) — 04/10
+# Kịch bản 03/10: consumer đọc copy worktree CŨ thấy 'pending' mãi → làm lại việc đã merge (FI-30/VU-32).
+# Fixture: local pending ×2 · dest story-fixture có sf-2 done.
+
+## 1) Resolver kit thật — story-mindmap --resolve <local> --repo <fixture> --json
+```
+{
+    "ok": true,
+    "source": "local",
+    "file": "/tmp/sf4-fixture/repo/docs/superpowers/mindmaps/local4-fixture.wakii",
+    "rel": "docs/superpowers/mindmaps/local4-fixture.wakii",
+    "dest": {
+        "requested": "story-fixture",
+        "ref": "story-fixture"
+    },
+    "states": {
+        "sf-1": "pending",
+        "sf-2": "done"
+    },
+    "upgraded": [
+        "sf-2"
+    ],
+    "epicState": "in-progress",
+    "warnings": []
+}
+```
+ok:true · source=local · dest ref=story-fixture · states.sf-2=**done** (working tree đang pending) ·
+upgraded=["sf-2"] — no-downgrade nâng từ đích, local không bị hạ.
+
+## 2) Driver sf_states (cùng đường RESOLVED_JSON — thấy trong pass fixture)
+driver.log: 'MM resolve: source=local dest-upgrade=sf-2' + 'DRY: states: sf-1 pending sf-2 done'
+-> sf_states đọc RESOLVED_JSON (không đọc $MM thô): sf-2=done — KHÔNG stale.
+
+## 3) Đối chứng âm (bằng chứng local thô đúng là stale)
+working tree: [('sf-1','pending'),('sf-2','pending')] — resolver vẫn trả sf-2 done nhờ đích.
+
+VERDICT: PASS — sf-2 fence hoạt động (state đích đúng, không stale).

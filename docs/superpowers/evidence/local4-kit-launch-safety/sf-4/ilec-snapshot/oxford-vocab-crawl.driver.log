@@ -1,0 +1,60 @@
+trust: injected cho /Users/hoivu/orca/projects/iloveenglishclup/../iloveenglishclup-oxford-vocab-crawl
+2026-10-04T05:13:45Z === driver start (--dry slug=oxford-vocab-crawl dry=1) ===
+2026-10-04T05:13:45Z DRY: states: sf-1 pending sf-2 pending sf-3 pending sf-4 pending 
+2026-10-04T05:13:45Z DRY: nhánh sẽ chọn — VERIFY sf-1 (attempt 1)
+2026-10-04T05:13:45Z === driver done ===
+2026-10-04T05:14:02Z GATE: blocked_sf-2/3/4 set bởi coordinator session này — worker sf-2 THẬT đang sống ở worktree sf-2-oxford-enrich; gỡ blocked khi sf-2 merge về nhánh đích (sf-3 mở sau sf-2, sf-4 cuối)
+trust: đã có
+trust: đã có
+2026-10-04T05:14:10Z === driver start (--loop slug=oxford-vocab-crawl dry=0) ===
+2026-10-04T05:14:10Z VERIFY sf-1 (attempt 1)
+2026-10-04T05:17:24Z VERIFY sf-1 → DONE-VERIFIED: VERDICT: DONE-VERIFIED — SF-1 Crawl-core (VU-33) đã merge trọn vẹn ở integration tip fb62c58 với evidence test 557+8 PASS và demo 5/5 acceptance đã commit; lưu ý tests không được tôi re-run trực tiếp vì session bị chặn quyền thực thi (chỉ đọc).
+node:fs:1569
+  const result = binding.readdir(
+                         ^
+
+Error: ENOENT: no such file or directory, scandir 'docs/superpowers/navigator/driver'
+    at Object.readdirSync (node:fs:1569:26)
+    at [eval]:5:19
+    at runScriptInThisContext (node:internal/vm:219:10)
+    at node:internal/process/execution:451:12
+    at [eval]-wrapper:6:24
+    at runScriptInContext (node:internal/process/execution:449:60)
+    at evalFunction (node:internal/process/execution:283:30)
+    at evalTypeScript (node:internal/process/execution:295:3)
+    at node:internal/main/eval_string:71:3 {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'scandir',
+  path: 'docs/superpowers/navigator/driver'
+}
+
+Node.js v24.10.0
+2026-10-04T05:17:25Z === driver done ===
+trust: injected cho /Users/hoivu/orca/workspaces/iloveenglishclup/oxford-vocab-crawl
+trust: đã có
+2026-10-04T05:26:34Z === driver start (--loop slug=oxford-vocab-crawl dry=0) ===
+2026-10-04T05:26:34Z ADVANCE: sf-1 ticked done — sang SF kế
+node:fs:1569
+  const result = binding.readdir(
+                         ^
+
+Error: ENOENT: no such file or directory, scandir 'docs/superpowers/navigator/driver'
+    at Object.readdirSync (node:fs:1569:26)
+    at [eval]:5:19
+    at runScriptInThisContext (node:internal/vm:219:10)
+    at node:internal/process/execution:451:12
+    at [eval]-wrapper:6:24
+    at runScriptInContext (node:internal/process/execution:449:60)
+    at evalFunction (node:internal/process/execution:283:30)
+    at evalTypeScript (node:internal/process/execution:295:3)
+    at node:internal/main/eval_string:71:3 {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'scandir',
+  path: 'docs/superpowers/navigator/driver'
+}
+
+Node.js v24.10.0
+2026-10-04T05:26:34Z === driver done ===
+2026-10-04T06:42:57Z GATE-REVISION: blocked_sf3 ĐÓNG LẠI — rule đúng = mở sau khi sf-3 MERGE (không phải sau merge sf-2); driver chỉ verify/tick, launch SF là việc coordinator — chống dispatch trùng

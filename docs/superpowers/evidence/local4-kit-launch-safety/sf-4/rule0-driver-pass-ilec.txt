@@ -1,0 +1,57 @@
+# Rule 0 — CLI-equivalent: driver pass THẬT trên ILEC VU-32 (04/10 ~06:51Z / 13:51 VN)
+# Lệnh: bash <kit>/kit/bin/workfront-driver --repo /Users/hoivu/orca/projects/iloveenglishclup --once vocabulary-learn
+# Vì sao slug này: worktree per-story có SẴN (không tạo mới) + trust đã có (không write) + done_gate=1
+# → pass đi nhánh KHÔNG-ACTION (không dispatch/tick/reset). Slug oxford bị loại: worktree driver chưa
+# tồn tại → portable block sẽ tạo worktree + inject trust trên repo session khác = can thiệp (boundary).
+# Driver instance oxford (pid 43453) sống nguyên vẹn trong suốt pass.
+
+rc=0 (exit 0)
+
+## stdout của pass (driver in hầu hết vào driver.log — stdout trống là bình thường)
+(trống)
+
+## driver.log — đoạn pass này append (đọc từ dòng 399)
+```
+trust: đã có
+2026-10-04T06:51:28Z === driver start (--once slug=vocabulary-learn dry=0) ===
+story-mindmap --resolve: INVALID — /Users/hoivu/orca/projects/iloveenglishclup-vocabulary-learn/docs/superpowers/mindmaps/vocabulary-learn.wakii: INVALID: version — wakiiMindmap="wakii-mindmap-schema-v1" (decoder hỗ trợ 1)
+2026-10-04T06:51:28Z DONE GATE đã treo từ trước — chờ user
+node:fs:1569
+  const result = binding.readdir(
+                         ^
+
+Error: ENOENT: no such file or directory, scandir 'docs/superpowers/navigator/driver'
+    at Object.readdirSync (node:fs:1569:26)
+    at [eval]:5:19
+    at runScriptInThisContext (node:internal/vm:219:10)
+    at node:internal/process/execution:451:12
+    at [eval]-wrapper:6:24
+    at runScriptInContext (node:internal/process/execution:449:60)
+    at evalFunction (node:internal/process/execution:283:30)
+    at evalTypeScript (node:internal/process/execution:295:3)
+    at node:internal/main/eval_string:71:3 {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'scandir',
+  path: 'docs/superpowers/navigator/driver'
+}
+
+Node.js v24.10.0
+2026-10-04T06:51:28Z === driver done ===
+```
+
+## state.json KHÔNG ĐỔI (không reset, không tick):
+- before: c1ada5b3a46e37fe08cc00f81b3c9bb2108c172b45581802bb55786fc52f37cc
+- after : c1ada5b3a46e37fe08cc00f81b3c9bb2108c172b45581802bb55786fc52f37cc
+
+## outcomes.jsonl — dòng pass này append:
+```
+{"ts":"2026-10-04T06:51:28Z","slug":"vocabulary-learn","mode":"--once","duration_s":0,"action":"Node.js v24.10.0"}
+```
+
+## Verdict đúng: DONE GATE đã treo từ trước — chờ user (mindmap sf-1 done + done_gate=1; resolve
+INVALID schema-marker → fallback legacy đọc $MM trong worktree — đúng thiết kế fail-open).
+Render_digest ENOENT tái hiện trong log = defect 3 trong observations-ilec.md (KHÔNG sửa — ngoài scope).
+
+Ghi chú: outcome dòng pass này action="Node.js v24.10.0" — defect 4 (outcomes nhiễm stack
+trace từ crash render_digest) tái hiện ngay trên pass của sf-4 — bằng chứng sống trong ilec-snapshot.
