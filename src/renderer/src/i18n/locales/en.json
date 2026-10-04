@@ -119,6 +119,17 @@
       "tooLarge": "File is larger than the {{limit}} rich editing limit. Showing source mode instead.",
       "openAnyway": "Open anyway"
     },
+    "markdownPreview": {
+      "tooLarge": "File is larger than the {{limit}} preview limit. Open the file to view its source.",
+      "tooLargeInDiff": "File is larger than the {{limit}} preview limit. Switch to source mode to view the diff.",
+      "blockTooLarge": "This block is too large to render. Open source view to read it.",
+      "largeNotice": "Large preview. Use source view to copy the complete document. PDF export is unavailable.",
+      "processingFailed": "This document cannot be rendered within the preview limits. Open source view to read the complete file.",
+      "preparing": "Preparing preview…",
+      "searching": "Searching…",
+      "searchFailed": "Search could not finish. Try again.",
+      "refreshFailed": "Preview update failed. Showing the previous version; open source view for current content."
+    },
     "fileLoad": {
       "hostUnresolved": "The host couldn't find this file's workspace. It may have been removed, or the host may not know about it yet. Retry, or close this tab from the tab strip."
     }
@@ -213,8 +224,18 @@
     "agents": {
       "codexTerminalServerIsolation": {
         "title": "Run each Codex terminal on its own server",
-        "description": "Keeps Orca's status and closing tabs working correctly. Turn off to use Codex's shared server and its agents overview. Applies to new terminals."
+        "description": "Keeps Wakii's status and closing tabs working correctly. Turn off to use Codex's shared server and its agents overview. Applies to new terminals."
+      },
+      "codexSharedServerWarning": {
+        "title": "Warn when a Codex tab shares a server",
+        "description": "Shows a notice on a Codex you started yourself when it shares a server with other tabs, because its agent status may be wrong."
       }
+    },
+    "terminal": {
+      "optionLayoutAlt": "ABC or U.S. — Option sends Alt/Esc sequences",
+      "optionLayoutCompose": "layout uses Option to compose characters like @, €, [, ]",
+      "optionLayoutUnknown": "unknown layout — Option composes characters (safe default)",
+      "optionShortcutHint": "Choose Both for Option shortcuts, Off for accents and symbols, or Left/Right to use one Option key for each."
     }
   },
   "menu": {
@@ -627,7 +648,9 @@
           "dsh_label": "DeepSeek Harness",
           "freebuff_label": "Freebuff",
           "qoder_label": "Qoder CLI",
-          "codebuddy_label": "CodeBuddy"
+          "codebuddy_label": "CodeBuddy",
+          "qoder_cn_label": "Qoder CLI China",
+          "jcode_label": "Jcode"
         },
         "skill": {
           "cli": {
@@ -1030,6 +1053,17 @@
         "symlink": "Symbolic links cannot be attached.",
         "permissionDenied": "Permission denied.",
         "unsupported": "Unsupported file type."
+      },
+      "dropTempCopyFailure": {
+        "changed": "The file changed while Wakii was copying it. Try the drop again.",
+        "outOfSpace": "Not enough disk space to copy the dropped files.",
+        "storageUnavailable": "Wakii couldn't create storage for dropped files.",
+        "storageNotPrivate": "Wakii's storage for dropped files can be read by other users, so nothing was copied.",
+        "timedOut": "Copying took too long. Try the drop again.",
+        "busy": "Too many drops are still being copied. Wait a moment, then try again.",
+        "tooLarge": "Too large to copy, so Wakii couldn't hand it to the agent.",
+        "storageFull": "Wakii's storage for dropped files is full, so Wakii couldn't hand it to the agent.",
+        "generic": "Try the drop again."
       }
     },
     "hooks": {
@@ -1064,7 +1098,10 @@
         "nativeDropPathsTooLarge": "Drop path list is too large.",
         "ownerChanged": "Couldn't verify which host owns this workspace. Try again after it reconnects.",
         "nativeDropUnresolvedPathsDescription": "Save them to disk first, then drop the saved files.",
-        "nativeDropUnresolvedPaths": "Wakii couldn't read a path for the dropped files."
+        "nativeDropUnresolvedPaths": "Wakii couldn't read a path for the dropped files.",
+        "nativeDropTempCopyFailed": "Wakii couldn't copy {{count}} dropped files.",
+        "nativeDropTempCopyFailed_one": "Wakii couldn't copy {{count}} dropped file.",
+        "nativeDropTempCopyFailed_other": "Wakii couldn't copy {{count}} dropped files."
       },
       "useIpcEvents": {
         "0e3cf53060": "Browser tab {{value0}} not found",
@@ -2167,7 +2204,7 @@
         "c679af7ad9": "Refresh My Todos",
         "dfd72673e7": "Failed to save project selection.",
         "b797bdd7c3": "Clear search",
-        "99c2755218": "Jira JQL, e.g. project = ABC AND statusCategory != Done",
+        "99c2755218": "Search issues or enter JQL, e.g. project = ABC",
         "2ff9fd71fd": "Refresh Jira issues",
         "0b65d3fb2c": "Search Linear projects...",
         "eec0c5c079": "Search Linear issues...",
@@ -2286,7 +2323,7 @@
         "6edf402e11": "overview",
         "9ae151b26b": "linear",
         "94d900518d": "No issues match the selected preset.",
-        "f51e254d35": "Try a different JQL query.",
+        "f51e254d35": "Try different search terms or JQL.",
         "4645a7814f": "jira",
         "e224d76876": "MR",
         "bbec4717ee": "mr",
@@ -2367,7 +2404,8 @@
         "linearModeHasWorktreeTooltip": "Linear tickets linked to an Wakii workspace",
         "linearEmptyHasWorktree": "No Linear tickets are linked to an Wakii workspace yet. Start work from a Linear issue to see it here.",
         "linearOpenAttachedWorkspace": "Open workspace attached to {{value0}}",
-        "linearWorktreesColumn": "Workspaces"
+        "linearWorktreesColumn": "Workspaces",
+        "jiraTextMatchesNotice": "Showing text matches. Jira couldn't run this search as JQL."
       },
       "Terminal": {
         "73768427cf": "Close",
@@ -3259,7 +3297,7 @@
             "sourceRestoring": "Reconnecting this terminal — its output is being re-established. The session is still running.",
             "remoteTerminalClosed": "Remote terminal was closed.",
             "terminalProcessLimit": "Your system cannot start another terminal process. Close unused terminals or quit unused processes, then try again.",
-            "ptyAllocationLimit": "Your system cannot allocate any more pty devices. Close some terminals you are not using, in Orca or another program, then try again."
+            "ptyAllocationLimit": "Your system cannot allocate any more pty devices. Close some terminals you are not using, in Wakii or another program, then try again."
           },
           "TerminalProcessExitOverlay": {
             "capacityTitle": "Git Bash console limit reached",
@@ -4052,7 +4090,7 @@
             "cursor": {
               "expired": {
                 "label": "Sign-in expired",
-                "message": "Run cursor-agent login in a terminal on the computer running Orca, then retry usage."
+                "message": "Run cursor-agent login in a terminal on the computer running Wakii, then retry usage."
               },
               "plan": "Plan"
             },
@@ -4086,7 +4124,7 @@
             "detailed": "Detailed",
             "compact": "Compact",
             "detailedTooltip": "Full usage with bars, labels, and percentages",
-            "compactTooltip": "Condensed usage: only the tightest window",
+            "compactTooltip": "Condensed usage: one summary per provider",
             "footerDetailAria": "Usage footer detail"
           },
           "RemoteServerUpdateStatusSegment": {
@@ -5305,7 +5343,12 @@
           "86f0ae1257": "Delete Workspaces"
         },
         "DeleteWorktreeDirtyChangeHint": {
-          "8e2994ce28": "Deleting this workspace permanently removes these changes from disk."
+          "8e2994ce28": "Deleting this workspace permanently removes these changes from disk.",
+          "showLoadedPaths": "Show loaded paths",
+          "loadedPathsNotice": "Loaded paths may be incomplete or out of date.",
+          "loadedChangedPaths": "Loaded changed paths",
+          "unresolvedConflict": "Unresolved conflict",
+          "moreLoadedPaths": "and {{value0}} more loaded paths"
         },
         "DeleteWorktreeLineageNotice": {
           "ad407c2d55": "more",
@@ -5619,7 +5662,8 @@
           "219ebf1961": "Branch name",
           "folderPathIdentity": "Branch / folder path",
           "cli": "Wakii CLI",
-          "workspaceOptions": "Workspace options"
+          "workspaceOptions": "Workspace options",
+          "host": "Host"
         },
         "SshTargetRow": {
           "4677394048": "Connecting…",
@@ -5688,7 +5732,8 @@
           "automationCreated": "Created by automation",
           "branchIdentity": "Branch",
           "branchFolderPathIdentity": "Branch or folder path",
-          "ef18787206": "Queued for deletion"
+          "ef18787206": "Queued for deletion",
+          "deleteFailed": "Delete failed"
         },
         "WorktreeCardAgents": {
           "1b0a156717": "Agents"
@@ -6605,8 +6650,8 @@
           "96f3649526": "Use Gemini CLI credentials (experimental)",
           "d676c41fc6": "Extracts OAuth credentials from your local Gemini CLI installation to authenticate with Google. This uses credentials issued to the Gemini CLI app, not Wakii. May break if Google updates the CLI. Use at your own risk.",
           "0c7f915b01": "Use Gemini CLI credentials",
-          "973741a871": "Configure Gemini provider settings.",
-          "0c64dc2a64": "Gemini",
+          "973741a871": "Keep existing Gemini CLI sessions available. Gemini credentials do not sign you into Antigravity.",
+          "0c64dc2a64": "Gemini CLI (legacy)",
           "db209ee572": "Remove",
           "8a0f870153": "Re-authenticate",
           "3d245ef7d9": "Codex reported this sign-in is out of date",
@@ -7089,7 +7134,7 @@
           "6f894ef9c2": "Show in Finder",
           "cbe55e4d48": "Show in Explorer",
           "9fd4023db0": "Show in File Manager",
-          "outsideOrcaDescription": "Orca terminals already have `orca`. Turn this on to use `orca` from other terminals outside Orca."
+          "outsideOrcaDescription": "Wakii terminals already have `orca`. Turn this on to use `orca` from other terminals outside Wakii."
         },
         "CliSkillRuntimeSetup": {
           "04325573f8": "WSL",
@@ -7272,8 +7317,8 @@
             "defaultViewTerminal": "Terminal chat",
             "defaultViewNative": "Chat UI",
             "structuredTitle": "Use updated structured native chat",
-            "structuredCopy": "Opt in to the host-owned structured chat runtime for Codex and Claude. Off keeps the existing terminal-backed chat path.",
-            "structuredScope": "Local sessions only for now. WSL and remote execution hosts (including SSH) continue to use terminal chat, and Windows falls back to it unless Wakii can read process start times.",
+            "structuredCopy": "Open new Codex and Claude agents as structured chats. Off opens them in the terminal-backed chat. Chats that already exist stay as they are.",
+            "structuredScope": "Runs on this machine and on paired Wakii servers running a version that supports it; older servers keep terminal chat. WSL and SSH hosts continue to use terminal chat, and Windows falls back to it unless Wakii can read process start times.",
             "structuredToggleLabel": "Toggle updated structured native chat",
             "resumeTitle": "Resume working chats automatically after a restart",
             "resumeCopy": "When Wakii quits or installs an update, chats that were mid-turn are automatically resumed when Wakii is reopened.",
@@ -7326,9 +7371,9 @@
           "80c454e8a6": "Match this to your provider's cache TTL."
         },
         "GeneralEditorSettingsSection": {
-          "f80603d293": "Show local markdown note controls in rich editor mode and agent handoff actions.",
+          "f80603d293": "Show markdown note controls in every markdown view and include markdown notes in agent handoff actions.",
           "4edc104f0f": "Markdown Review Notes",
-          "5f02e6fb21": "Show local markdown review note controls in rich editor mode.",
+          "5f02e6fb21": "Show local markdown review note controls in markdown files.",
           "51161d1647": "Show the minimap overview when editing a file.",
           "6690b1ffb9": "Minimap",
           "5a1ea6eaa2": "Hidden",
@@ -8068,7 +8113,7 @@
           "c5a55a2d2e": "advanced",
           "b5e3e77e89": "action",
           "0ce113fd7b": "Local scripts are saved, but Script Source is set to orca.yaml only.",
-          "7f78e5eea6": "Local scripts are saved. Orca is still checking orca.yaml before it can recommend which script source to use.",
+          "7f78e5eea6": "Local scripts are saved. Wakii is still checking orca.yaml before it can recommend which script source to use.",
           "2b6356e744": "Saved",
           "81057d5f71": "Saving...",
           "da37d6f10e": "Copy",
@@ -8178,7 +8223,9 @@
           "show": "Show",
           "hide": "Hide",
           "externalWorktreesGlobal": "Global default: {{value0}}",
-          "useGlobal": "Use global"
+          "useGlobal": "Use global",
+          "removeProjectCheckout": "Remove this checkout from Wakii. Other checkouts of this project stay.",
+          "removeProjectKeepCheckouts": "Remove this project from Wakii. Checkouts that have their own settings stay."
         },
         "RepositorySourceControlAiActionRows": {
           "548a6e1281": "Command template",
@@ -8703,7 +8750,12 @@
           "addTitle": "Add SSH host",
           "editDescription": "Update connection details for this machine. Changes apply on next connect.",
           "addDescription": "Add a persistent machine you can log into over SSH.",
-          "editingPrefix": "Editing"
+          "editingPrefix": "Editing",
+          "remoteRuntime": "Runtime",
+          "remoteRuntimeHelp": "Which Node.js runs Wakii on this host. Orca-managed Node uploads its own and needs no npm; Host Node uses the Node.js already installed there.",
+          "remoteRuntimeAuto": "Auto",
+          "remoteRuntimePinnedNode": "Orca-managed Node",
+          "remoteRuntimeHostNode": "Host Node"
         },
         "TasksPane": {
           "f71d8a9dd3": "Task Providers",
@@ -9128,14 +9180,26 @@
             "5d8f1a3b7c": "china",
             "7e2a4b8c1d": "overseas",
             "cursor": {
-              "description": "Monthly plan usage read from the Cursor sign-in already on this computer (cursor-agent login).",
               "title": "Cursor Usage",
+              "description": "Monthly plan usage read from the Cursor sign-in already on this computer (cursor-agent login).",
               "kw": {
-                "spend": "spend",
-                "statusBar": "status bar",
-                "rateLimit": "rate limit",
+                "cursor": "cursor",
                 "usage": "usage",
-                "cursor": "cursor"
+                "spend": "spend",
+                "rateLimit": "rate limit",
+                "statusBar": "status bar"
+              }
+            },
+            "zcodePlan": {
+              "title": "GLM Coding Plan",
+              "description": "Track Z.AI or Zhipu (BigModel) GLM Coding Plan usage. Pick the site and save the plan API key.",
+              "kw": {
+                "glm": "glm",
+                "zai": "zai",
+                "zhipu": "zhipu",
+                "bigmodel": "bigmodel",
+                "codingPlan": "coding plan",
+                "rateLimit": "rate limit"
               }
             }
           }
@@ -10279,7 +10343,13 @@
             "72539aede4": "system",
             "51ae2183e1": "desktop",
             "0534c76311": "Master switch for Wakii desktop notifications.",
-            "4a210b2f72": "Enable Notifications"
+            "4a210b2f72": "Enable Notifications",
+            "machines": "Machines",
+            "machinesDescription": "Choose which machines can show notifications on this computer, such as SSH machines or paired servers.",
+            "host": "host",
+            "remote": "remote",
+            "ssh": "ssh",
+            "mute": "mute"
           }
         },
         "orchestration": {
@@ -11272,7 +11342,7 @@
           "orcaCloudSignOut": "Sign out",
           "orcaCloudConnect": "Connect profile",
           "orcaCloudRefresh": "Refresh status",
-          "orcaCloudNotConfigured": "Set ORCA_CLOUD_API_URL and ORCA_CLOUD_CLIENT_ID to preview Orca Cloud sign-in in this dev build.",
+          "orcaCloudNotConfigured": "Set ORCA_CLOUD_API_URL and ORCA_CLOUD_CLIENT_ID to preview Wakii Cloud sign-in in this dev build.",
           "deleteAnywayClicked": "Delete Anyway clicked"
         },
         "EphemeralVmRecipeRow": {
@@ -11477,7 +11547,7 @@
         },
         "LinearAgentSkillPane": {
           "title": "Linear",
-          "description": "How Linear works in Orca: browse issues, start linked workspaces, and let agents update tickets with /orca-linear.",
+          "description": "How Linear works in Wakii: browse issues, start linked workspaces, and let agents update tickets with /orca-linear.",
           "skillTitle": "Linear skill",
           "howToUse": "Example prompts",
           "howToUseDescription": "Click a card to copy a prompt. Use these in a Linear-linked worktree after the skill is installed.",
@@ -12141,7 +12211,7 @@
               "title": "Connect Bitbucket",
               "description": "Use a Bitbucket Cloud credential to browse pull requests and build statuses. Wakii verifies it before saving.",
               "remoteRuntime": "Stored on this machine, not on the active remote runtime — set ORCA_BITBUCKET_* there instead. Environment variables always take precedence over what you save here.",
-              "environmentManaged": "Bitbucket is already configured through ORCA_BITBUCKET_* environment variables, which take precedence. Unset them to save a credential in Orca.",
+              "environmentManaged": "Bitbucket is already configured through ORCA_BITBUCKET_* environment variables, which take precedence. Unset them to save a credential in Wakii.",
               "authModeLabel": "Bitbucket authentication method",
               "modeBasic": "Email & API token",
               "modeToken": "Access token",
@@ -12171,9 +12241,9 @@
               "authModeToken": "Access token",
               "authModeBasic": "Email & API token",
               "disconnect": "Disconnect Bitbucket",
-              "envManaged": "Configured via environment variables. Unset the ORCA_BITBUCKET_* variables to manage this credential in Orca.",
+              "envManaged": "Configured via environment variables. Unset the ORCA_BITBUCKET_* variables to manage this credential in Wakii.",
               "storedAuthFailed": "The saved Bitbucket credential could not authenticate. Edit it, or check that the token still has pull request access.",
-              "storedCredential": "Saved in Orca on this machine. ORCA_BITBUCKET_* environment variables take precedence when set.",
+              "storedCredential": "Saved in Wakii on this machine. ORCA_BITBUCKET_* environment variables take precedence when set.",
               "notConfigured": "Connect a Bitbucket Cloud account with an Atlassian API token or an access token. ORCA_BITBUCKET_* environment variables work too and take precedence.",
               "disconnectFailed": "Could not remove the saved Bitbucket credential.",
               "statusLoadFailed": "Could not check for a saved Bitbucket credential.",
@@ -12268,11 +12338,11 @@
             "keychain": "macOS Keychain (cursor-agent)",
             "cli": "Cursor CLI auth file"
           },
-          "signedInGeneric": "Signed in. Orca reads the Cursor session stored on this computer.",
+          "signedInGeneric": "Signed in. Wakii reads the Cursor session stored on this computer.",
           "signedOutHelp": "Sign in with Cursor IDE, or run cursor-agent login in a terminal, then click Refresh usage here.",
           "refreshUsage": "Refresh usage",
           "loading": "Loading…",
-          "expired": "Sign-in expired — run cursor-agent login on the computer running Orca, then click Refresh usage.",
+          "expired": "Sign-in expired — run cursor-agent login on the computer running Wakii, then click Refresh usage.",
           "planTotal": "Plan",
           "signedIn": "Signed in",
           "usageDescription": "Cursor bills two pools that reset with your billing cycle, plus on-demand spend once they run out.",
@@ -12280,19 +12350,66 @@
           "usageTitle": "Monthly plan usage",
           "signedOut": "No Cursor sign-in found on this computer",
           "title": "Cursor",
-          "subtitle": "Shows your monthly Cursor plan usage from the sign-in already on this computer. Orca only reads it — it never changes your Cursor login.",
+          "subtitle": "Shows your monthly Cursor plan usage from the sign-in already on this computer. Wakii only reads it — it never changes your Cursor login.",
           "staleUsage": "Last known usage — the latest refresh failed: {{reason}}",
           "resets": "Resets {{when}}",
-          "signedInFrom": "Signed in. Orca reads the session stored in {{source}}.",
+          "signedInFrom": "Signed in. Wakii reads the session stored in {{source}}.",
           "noAllowance": "Cursor reported no usage allowance for this account.",
           "usageLabel": "Usage"
         },
         "agent-workspace-trust-copy": {
-          "title": "Trust the folder when Orca starts an agent",
-          "description": "Agents Orca starts skip their \"Do you trust this folder?\" prompt, so the project's agent hooks and settings run right away. Without this, each agent asks the first time it runs in a folder. Agents running without you watching, such as orchestration workers, automations and agents started from your phone, will wait at that question until you answer it in their terminal. Folders already trusted stay trusted."
+          "title": "Trust the folder when Wakii starts an agent",
+          "description": "Agents Wakii starts skip their \"Do you trust this folder?\" prompt, so the project's agent hooks and settings run right away. Without this, each agent asks the first time it runs in a folder. Agents running without you watching, such as orchestration workers, automations and agents started from your phone, will wait at that question until you answer it in their terminal. Folders already trusted stay trusted."
         },
         "UnsealedCredentialNotice": {
-          "body": "{{credential}} is stored unencrypted — this system has no OS keyring Orca can use. Anyone who can read your disk or a backup of it can read the credential. Install and unlock gnome-keyring or kwallet, then save it again to seal it."
+          "body": "{{credential}} is stored unencrypted — this system has no OS keyring Wakii can use. Anyone who can read your disk or a backup of it can read the credential. Install and unlock gnome-keyring or kwallet, then save it again to seal it."
+        },
+        "ZcodePlanAccountsSection": {
+          "site": {
+            "bigmodel": "Zhipu · BigModel (open.bigmodel.cn)",
+            "zai": "Z.AI (z.ai)"
+          },
+          "window": {
+            "session": "5 hours",
+            "weekly": "Weekly",
+            "mcp": "MCP monthly"
+          },
+          "resetIn": " — resets in {{value0}}",
+          "keyRequired": "GLM Coding Plan API key is required.",
+          "keySaved": "GLM Coding Plan API key saved.",
+          "keySaveFailed": "GLM Coding Plan credential update failed.",
+          "title": "GLM Coding Plan",
+          "subtitle": "Track Z.AI or Zhipu (BigModel) GLM Coding Plan usage in the status bar. Save the plan API key here — no ZCode CLI setup needed.",
+          "consoleLink": "Get API key",
+          "keyStored": "API key saved · {{value0}}",
+          "keyStoredHelp": "Stored locally and sent only to the selected site for usage refreshes. It takes priority over the ZCode CLI sign-in.",
+          "usingCli": "Using the ZCode CLI sign-in",
+          "usingCliHelp": "Wakii reads the Coding Plan key from ~/.zcode/cli/config.json. Save an API key below to link the plan here instead.",
+          "notConfigured": "No GLM Coding Plan linked",
+          "notConfiguredHelp": "Save the plan API key below, or sign in with the ZCode CLI on this computer.",
+          "refreshUsage": "Refresh usage",
+          "siteTitle": "Plan site",
+          "siteDescription": "Pick the console your Coding Plan belongs to: Z.AI for the international site, Zhipu BigModel for the mainland site.",
+          "keyTitle": "API key",
+          "keyDescription": "Paste the API key from the selected console’s API Keys page. Stored locally, encrypted when the OS supports it, and sent only to that site for usage refreshes.",
+          "saved": "Saved",
+          "notSaved": "Not saved",
+          "keyPlaceholder": "Paste your GLM Coding Plan API key",
+          "replace": "Replace",
+          "save": "Save",
+          "forgetKey": "Forget key",
+          "keyHelp": "The same key your coding tools use for the plan (for example Claude Code with ANTHROPIC_BASE_URL pointed at the site). Switching the site above changes which host receives it.",
+          "usageTitle": "Plan usage",
+          "usageDescription": "Live quota windows for the linked Coding Plan, refreshed with the status bar usage cycle.",
+          "planLevel": "Plan: {{value0}}",
+          "hostOnly": "Change the plan site and API key in the desktop app on the computer running Wakii.",
+          "detailsUnavailable": "Plan credential details are only readable on the computer running Wakii.",
+          "siteUnavailable": "Host plan site unavailable"
+        },
+        "NotificationHostToggles": {
+          "offCount": "{{count}} off",
+          "machines": "Machines",
+          "machinesDescription": "Choose which machines can show notifications on this computer. A paired server’s switch also covers work reached through it."
         }
       },
       "right": {
@@ -14686,7 +14803,7 @@
                   "6d2b0a84e1": "Unavailable in this build",
                   "notInstalled": "Not installed",
                   "needsMacAccess": "Needs macOS access",
-                  "requiresOrcaDesktop": "Requires Orca Desktop"
+                  "requiresOrcaDesktop": "Requires Wakii Desktop"
                 }
               }
             }
@@ -14711,8 +14828,8 @@
                       "2cf795433b": "Start work in multiple repos",
                       "42525ba8a4": "Bring your key repos into Wakii so you can start agent work without hunting for folders.",
                       "workOnTwoTasks": "Work on two tasks at once",
-                      "agentSkillsName": "Give agents Orca skills",
-                      "agentSkillsDescription": "Install the skills agents use to drive Orca's browser, control your computer, and coordinate multi-step work."
+                      "agentSkillsName": "Give agents Wakii skills",
+                      "agentSkillsDescription": "Install the skills agents use to drive Wakii's browser, control your computer, and coordinate multi-step work."
                     }
                   }
                 }
@@ -14976,7 +15093,7 @@
                     "state": {
                       "35dea1ae12": "Agent control is ready.",
                       "c94ff11e91": "Could not re-check setup status.",
-                      "skillNotInstalled": "The Orca CLI skill is not installed yet."
+                      "skillNotInstalled": "The Wakii CLI skill is not installed yet."
                     }
                   }
                 },
@@ -14999,7 +15116,7 @@
             "6d950431d2": "Hide",
             "ebceac65a4": "Set up",
             "3f003507f4": "Open full setup in Settings",
-            "installSkillPrompt": "Install the Orca CLI skill when you want agents to drive this simulator."
+            "installSkillPrompt": "Install the Wakii CLI skill when you want agents to drive this simulator."
           },
           "MobileEmulatorAgentSetupGuideSteps": {
             "21f5687c07": "Wakii CLI skill",
@@ -15120,7 +15237,12 @@
         "CsvViewer": {
           "eedd0d37a7": "columns",
           "ac31d2cd60": "rows",
-          "a233d55b77": "Empty file"
+          "a233d55b77": "Empty file",
+          "delimiterComma": "Comma",
+          "delimiterSemicolon": "Semicolon",
+          "delimiterTab": "Tab",
+          "delimiterAuto": "Auto ({{delimiter}})",
+          "delimiter": "Delimiter"
         },
         "DiffNotesSendMenu": {
           "f1aa04b5cf": "This file",
@@ -16108,7 +16230,8 @@
             "756bfc25c9": "Open",
             "09a9489aa5": "Show",
             "2a4c4b8e1f": "Copy",
-            "fileUrlUnsupported": "This browser tab cannot open local files. Use \"Open Preview to the Side\" on the file instead."
+            "fileUrlUnsupported": "This browser tab cannot open local files. Use \"Open Preview to the Side\" on the file instead.",
+            "cc4a071d3a": "Annotate page element ({{value0}})"
           },
           "BrowserToolbarMenu": {
             "429ef481f9": "Cancel",
@@ -16823,6 +16946,7 @@
             "done": "Done",
             "idle": "Idle",
             "unverifiable": "No recent update",
+            "unconfirmed": "Couldn’t confirm",
             "permission": "Needs attention"
           },
           "filtersSection": "Filters",
@@ -17430,9 +17554,6 @@
             "failed": "Chat could not be started.",
             "unknown": "Chat connection could not be confirmed.",
             "retry": "Retry"
-          },
-          "NativeChatStructuredSessionStatus": {
-            "starting": "{{value0}} is still starting. Messages wait until it is ready; close this chat to give up on it."
           }
         }
       },
@@ -17491,7 +17612,7 @@
       "web": {
         "preloadApi": {
           "cursorAccounts": {
-            "hostOnly": "Cursor sign-in details are only readable on the computer running Orca."
+            "hostOnly": "Cursor sign-in details are only readable on the computer running Wakii."
           }
         }
       }
@@ -17803,7 +17924,9 @@
       "notices": {
         "compaction": "Context compacted",
         "details": "Details",
-        "plan": "Plan"
+        "plan": "Plan",
+        "historyRepaired": "Part of this chat's history couldn't be loaded.",
+        "historyItemTooLarge": "This part of the chat was too large to show."
       },
       "composer": {
         "imageUnsupported": "Image paste is not supported for this agent.",
@@ -17822,8 +17945,8 @@
         "skills": "Skills",
         "loadingSkills": "Loading skills...",
         "skillsLoaded": "Skills loaded",
-        "skillsUnavailableHost": "Skills are unavailable for this host",
-        "skillsLoadFailed": "Could not load skills from this host",
+        "skillsUnavailableHost": "Skills aren't available in SSH chats",
+        "skillsLoadFailed": "Couldn't load skills",
         "retrySkills": "Retry",
         "skillCommandCollision": "Also a skill name - agent decides",
         "skillMultipleSources": "{{sourceCount}} sources - agent resolves",
@@ -17848,8 +17971,6 @@
         "chooseInAgentPicker": "Choose in agent picker…",
         "toggleOption": "Toggle {{value0}}",
         "pillAccessibleName": "{{value0}} {{value1}}",
-        "valueIsDefault": "Default",
-        "valueNotReported": "Not reported",
         "sentNotConfirmed": "Sent to the agent — not confirmed",
         "setWhenSessionStarts": "Set when the session starts.",
         "availableAfterSessionStarts": "Available after the session starts.",
@@ -17951,6 +18072,8 @@
         "thinking": "Thinking",
         "workingFor": "Working for {{value0}}",
         "workedFor": "Worked for {{value0}}",
+        "interruptedAfter": "Interrupted after {{value0}}",
+        "failedAfter": "Failed after {{value0}}",
         "toggleDetails": "Toggle turn details"
       },
       "backgroundTasks": {
@@ -17983,9 +18106,9 @@
         "stateBlocked": "blocked",
         "stateDone": "done",
         "stateIdle": "stopped",
-        "stateUnverifiable": "unverifiable",
+        "stateUnverifiable": "no recent update",
+        "stateUnverifiableCount": "{{value0}} with no recent update",
         "reasonWaiting": "needs approval",
-        "reasonUnverifiable": "no contact",
         "reasonBlocked": "failed",
         "groupAgents": "Agents",
         "groupShell": "Shell",
@@ -18000,13 +18123,13 @@
       },
       "state": {
         "loading": {
+          "label": "Loading chat",
           "title": "Loading conversation…",
           "subtitle": "Reading the agent transcript."
         },
         "error": {
           "title": "Could not load conversation",
-          "subtitle": "The transcript could not be read. Toggle back to the terminal to keep working.",
-          "retryingSubtitle": "The transcript could not be read. Orca keeps trying to load it."
+          "subtitle": "The transcript could not be read. Toggle back to the terminal to keep working."
         },
         "reconnecting": "Reconnecting to this chat…",
         "pairHost": "Pair a host to view agent chat history.",
@@ -18102,12 +18225,12 @@
           "idle": "idle",
           "failed": "failed",
           "stopped": "stopped",
-          "unverifiable": "unverifiable",
+          "unverifiable": "no recent update",
           "workingCount": "{{value0}} working",
           "idleCount": "{{value0}} idle",
           "failedCount": "{{value0}} failed",
           "stoppedCount": "{{value0}} stopped",
-          "unverifiableCount": "{{value0}} unverifiable"
+          "unverifiableCount": "{{value0}} with no recent update"
         },
         "startedOne": "Kicked off 1 subagent",
         "startedN": "Kicked off {{value0}} subagents",
@@ -18117,8 +18240,7 @@
         "unnamed": "Subagent"
       },
       "conversationCommand": {
-        "pendingWork": "Wait for pending work and messages to finish before using this command.",
-        "unconfirmed": "Conversation operation was not confirmed."
+        "pendingWork": "Wait for pending work and messages to finish before using this command."
       },
       "drop": {
         "title": "Drop to attach to this chat",
@@ -18156,6 +18278,7 @@
         "notDoneReadHistory": "This chat's history couldn't be loaded.",
         "notDoneSend": "Your message was not sent.",
         "tryAgainComposerSend": "Send it again.",
+        "messageNotSaved": "Couldn't save your message.",
         "notDoneStop": "The agent wasn't stopped.",
         "notDoneStopTask": "The background task wasn't stopped.",
         "notDoneStopTasks": "The background tasks weren't stopped.",
@@ -18164,17 +18287,19 @@
         "notDoneCommand": "The command didn't run.",
         "notDoneGoal": "The goal wasn't changed.",
         "restartFailed": "The agent couldn't restart.",
-        "capacity": "Orca has received too many requests in the last day.",
-        "outcomeUnknown": "Orca couldn't confirm what happened. Check the chat.",
+        "capacity": "Wakii has received too many requests in the last day.",
+        "outcomeUnknown": "Wakii couldn't confirm what happened. Check the chat.",
+        "sendOutcomeLost": "Wakii couldn't confirm your message reached the agent. Check the chat, then send it again if needed.",
         "questionChanged": "This question was already answered or has changed.",
-        "historyUnreadable": "Orca couldn't read this chat's saved history.",
+        "historyUnreadable": "Wakii couldn't read this chat's saved history.",
         "historyUnusable": "Unable to load this chat.",
-        "historyUnavailable": "Orca couldn't open this chat's history right now.",
-        "savedByNewerOrca": "Chats were saved by a newer Orca.",
-        "updateOrcaToKeepUsing": "Update Orca to keep using them.",
-        "unsupported": "The Orca running this chat doesn't support this. Update Orca, then try again.",
-        "unreachable": "Orca couldn't reach the agent.",
-        "recordFailed": "Orca couldn't record it in this chat's history.",
+        "historyUnavailable": "Wakii couldn't open this chat's history right now.",
+        "savedByNewerOrca": "Chats were saved by a newer Wakii.",
+        "updateOrcaToKeepUsing": "Update Wakii to keep using them.",
+        "unsupported": "This needs a newer Wakii on the computer running this chat. Update Wakii there, then try again.",
+        "notAvailable": "This isn't available in this chat.",
+        "unreachable": "Wakii couldn't reach the agent.",
+        "recordFailed": "Wakii couldn't save this to the chat's history.",
         "conversationCleared": "This conversation has been cleared.",
         "openCurrentConversation": "Open the current conversation to continue.",
         "clearUnfinished": "The last /clear didn't finish.",
@@ -18188,19 +18313,19 @@
         "answerFirst": "Answer the question or approval first.",
         "backgroundTasksRunning": "Background tasks are still running.",
         "waitForBackgroundTasks": "Wait for the background tasks to finish.",
-        "messagesUnsettled": "A message you sent earlier hasn't been confirmed yet.",
+        "messagesUnsettled": "A message you sent earlier isn't confirmed yet.",
         "settleEarlierMessage": "Wait for your earlier message to go through, or retry it.",
         "optionRejected": "The agent didn't accept this setting.",
         "goalsUnsupported": "This agent doesn't support goals.",
         "agentRefused": "The agent turned this down.",
-        "ownerUnproven": "Orca hasn't confirmed that this chat's previous agent stopped.",
+        "ownerUnproven": "The previous agent in this chat may still be running.",
         "reopenChat": "Reopen the chat to check again.",
         "terminalAgentHoldsChat": "This chat is still open in a terminal agent.",
         "quitTerminalAgent": "Quit that agent to continue the chat here.",
-        "hostReconciling": "Orca is still checking on this chat after restarting.",
+        "hostReconciling": "Wakii is still checking on this chat after restarting.",
         "waitMoment": "Wait a moment.",
-        "recordUnreadable": "Orca couldn't read this chat's saved state.",
-        "chatNotFound": "The Orca running this chat has no record of it.",
+        "recordUnreadable": "Wakii couldn't read this chat's saved state.",
+        "chatNotFound": "Wakii can't find this chat.",
         "startNewChat": "Start a new chat to continue.",
         "tryAgain": "Try again."
       },
@@ -18225,11 +18350,81 @@
         "pausedSendFailed": "Couldn't send — press Send to retry.",
         "paused": "Paused",
         "queuePausedStopped": "Queue paused because you interrupted",
-        "queuePausedRestarted": "Queue paused because Orca restarted",
+        "queuePausedRestarted": "Queue paused because Wakii restarted",
         "queuePausedCleared": "Queue paused after you cleared the conversation",
         "queuePaused": "Queue paused",
         "resume": "Resume"
-      }
+      },
+      "failureWords": {
+        "theAgent": "The agent",
+        "providerStartFailed": "{{agent}} stopped before it finished starting.",
+        "runCommandAgain": "Run /{{command}} again.",
+        "sendToTryAgain": "Send your message to try again.",
+        "couldNotStart": "{{agent}} couldn't start.",
+        "couldNotRestart": "{{agent}} couldn't restart.",
+        "notSignedIn": "{{agent}} is not signed in for the selected account.",
+        "signInFirst": "Sign in first.",
+        "signInThenRunCommand": "Sign in, then run /{{command}} again.",
+        "signInThenSend": "Sign in, then send your message again.",
+        "historyTooLarge": "This conversation's history is too large to restore here.",
+        "managedAccountEnvOverride": "This Claude launch sets its own Anthropic sign-in variables. Remove them to use a managed Claude account.",
+        "accountSwitchInProgress": "A Claude account switch is in progress. Try again after it finishes.",
+        "managedAccountUnsupported": "While a Claude account is added in WSL, Claude chats need a Windows Claude account.",
+        "chooseClaudeAccount": "Choose or add one in Claude Accounts settings.",
+        "chooseClaudeAccountThenRunCommand": "Choose or add one in Claude Accounts settings, then run /{{command}} again.",
+        "chooseClaudeAccountThenSend": "Choose or add one in Claude Accounts settings, then send your message again.",
+        "providerExitedRow": "{{agent}} stopped while this response was in progress. You can continue in this conversation.",
+        "providerExitedRejection": "{{agent}} stopped before this message was sent.",
+        "providerRejected": "The provider did not accept this message.",
+        "providerRejectedQuoted": "The provider did not accept this message: {{detail}}.",
+        "attachmentEmpty": "An image on this message is empty, so the message was not sent.",
+        "attachmentTooLarge": "An image on this message is too large, so the message was not sent.",
+        "attachmentLargerThan": "An image on this message is larger than {{size}} MB, so the message was not sent.",
+        "attachmentTooMany": "This message has too many images, so it was not sent.",
+        "attachmentAtMost": "{{agent}} accepts at most {{limit}} images in one message, so this message was not sent.",
+        "attachmentTotalTooLarge": "The images on this message are too large together, so the message was not sent.",
+        "attachmentTotalMoreThan": "The images on this message add up to more than {{size}} MB, so the message was not sent.",
+        "attachmentUnsupportedType": "{{agent}} accepts only PNG, JPEG, GIF, and WebP images, so this message was not sent.",
+        "attachmentNotAFile": "An image on this message isn't a file, so the message was not sent.",
+        "attachmentNoSource": "An image on this message has no file to send, so the message was not sent.",
+        "attachmentInvalid": "An attachment on this message can't be sent to the agent.",
+        "attachmentUnreadable": "An attachment on this message couldn't be read, so the message was not sent.",
+        "emptyMessage": "This message is empty, so it was not sent.",
+        "queueFull": "Too many messages were waiting for the agent, so this one was not sent.",
+        "writeFailed": "Wakii couldn't hand this message to the agent, so it was not sent.",
+        "cancelled": "This message was withdrawn before the agent started it.",
+        "chatClosed": "The chat closed before this message was sent.",
+        "hostRestarted": "Wakii restarted before this message was sent.",
+        "notDelivered": "This message was not delivered.",
+        "notDeliveredSendAgain": "This message was not delivered. Send it again to continue.",
+        "commandRefused": "This command didn't run.",
+        "commandRefusedTryAgain": "This command didn't run. Try it again.",
+        "compactionFailed": "Compaction failed.",
+        "compactionFailedQuoted": "Compaction failed: {{detail}}.",
+        "compactionUnconfirmed": "Compaction completion is unconfirmed.",
+        "cancelUnconfirmed": "Cancellation was not confirmed.",
+        "stopRefused": "{{agent}} didn't stop.",
+        "stopRefusedQuoted": "{{agent}} didn't stop: {{detail}}.",
+        "noTurnToStop": "{{agent}} had no turn running to stop.",
+        "answerUnconfirmed": "Your answer was recorded but the agent did not confirm it.",
+        "hostFault": "Wakii ran into a problem, so this didn't go through.",
+        "hostFaultTryAgain": "Wakii ran into a problem, so this didn't go through. Try again.",
+        "hostStopped": "{{agent}} never finished starting, so Wakii stopped it.",
+        "providerRateLimited": "{{agent}} is rate-limited and retrying.",
+        "providerRetrying": "{{agent}} hit a temporary problem and is retrying.",
+        "providerRetryingQuoted": "{{agent}} is retrying: {{detail}}.",
+        "previousExitUnverifiable": "{{agent}} from before may still be running. Your messages will send once it stops."
+      },
+      "contextMenu": {
+        "copyOrcaSessionId": "Copy Wakii Session ID",
+        "orcaSessionIdCopied": "Wakii session ID copied",
+        "orcaSessionIdCopyFailed": "Unable to copy Wakii session ID",
+        "orcaSessionIdTooltip": "Wakii's ID for this chat, separate from the agent CLI's own session ID. Agents use it to refer to each other through Wakii."
+      },
+      "structuredSessionHostDeclined": "Opened {{value0}} in a terminal",
+      "structuredSessionHostDeclinedDescription": "This server can't run a {{value0}} chat in this workspace.",
+      "structuredSessionHostUnreachable": "Could not reach {{value0}}",
+      "structuredSessionHostUnreachableDescription": "Wakii did not open a {{value0}} chat. Check the connection to the server and try again."
     },
     "tab": {
       "bar": {
@@ -18483,6 +18678,12 @@
           "unknown": "Unknown host",
           "candidateName": "{{value0}} on {{value1}}"
         }
+      },
+      "creation": {
+        "worktreeReadyToast": "Worktree {{name}} is ready",
+        "workspaceReadyToast": "Workspace {{name}} is ready",
+        "goToWorktree": "Go to worktree",
+        "goToWorkspace": "Go to workspace"
       }
     },
     "agentSessionContinuation": {
@@ -18702,7 +18903,7 @@
       "demoHit4Age": "5d",
       "demoHit1Snippet": "Raised the [[login timeout]] to 30s and added a retry on the token refresh.",
       "demoHit1Title": "Fix flaky auth redirect",
-      "indexingDescription": "Orca is reading your past agent transcripts so you can search them. This can take a few minutes.",
+      "indexingDescription": "Wakii is reading your past agent transcripts so you can search them. This can take a few minutes.",
       "recent3Text": "Here is a first pass at the notes, grouped by area.",
       "demoHit5Title": "Staging deploy failed",
       "demoHit3Title": "Auth e2e hardening",
@@ -18738,6 +18939,10 @@
     }
   },
   "sourceControl": {
+    "discard": {
+      "restoreStagedVersionDescription": "This will restore the last staged version and discard the deletion. This cannot be undone.",
+      "unstagedChangesDescription": "This will revert the unstaged changes to this file. This cannot be undone."
+    },
     "unlinkedPr": {
       "status": "PR #{{number}} unlinked"
     }
@@ -18767,7 +18972,15 @@
     "genericDetail": "This is often a graphics-driver or installation problem. Reload to try again, or quit and relaunch Wakii.",
     "title": "Wakii keeps failing to load",
     "stalledMessage": "The app window stopped responding while reloading after a crash.",
-    "crashLoopMessage": "The app window crashed repeatedly and stopped reloading automatically."
+    "crashLoopMessage": "The app window crashed repeatedly and stopped reloading automatically.",
+    "lowCommitMessage": "Windows is out of memory.",
+    "lowCommitDetail": "Windows has only {{availableMB}} MB of memory left for apps, so the window ran out of memory again after reloading.",
+    "lowCommitAdvice": "Free memory by closing unused apps or Wakii workspaces, or increase the Windows page file size, then click Reload.",
+    "tryAgain": "Try Again",
+    "launchFailedMessage": "Wakii couldn't start the process that draws its window.",
+    "launchFailedDetail": "Wakii retried {{recoveryCount}} times without success.",
+    "processLimitDetail": "The system refused to create a new process because your user account reached its process limit. This is often caused by runaway terminals, dev servers, or agents. Close some of them, then click Try Again.",
+    "launchFailedGenericDetail": "The system refused to start it. Free up memory or close other apps, then click Try Again. If this keeps happening, reinstall Wakii."
   },
   "notifications": {
     "agentStatus": {
@@ -18805,7 +19018,8 @@
       "sessionsOther": "{{count}} sessions",
       "sessionsOfLoaded": "{{value0}} of {{value1}} sessions",
       "showMoreSessions": "Show more sessions",
-      "loadingMoreSessions": "Loading more sessions…"
+      "loadingMoreSessions": "Loading more sessions…",
+      "unsupportedAgent": "This computer does not support history search for the selected agent. Update Wakii on that computer or select another agent."
     }
   },
   "sessionHistory": {
@@ -18854,6 +19068,11 @@
     }
   },
   "aiVault": {
+    "antigravityReferenceDescription": "Continues in a new Antigravity CLI conversation using this transcript as a reference.",
+    "antigravityIdeToCli": "IDE → CLI",
+    "antigravity2ToCli": "2.0 → CLI",
+    "continueInCli": "Continue in CLI",
+    "continueInCliNewTab": "Continue in CLI in New Tab",
     "subagents": {
       "loading": "Loading subagents…",
       "loadError": "Could not load all subagents.",
@@ -18867,12 +19086,47 @@
     "sessionSaveFailure": {
       "title": "Could not save terminal session",
       "capacity": "The device saving this terminal reported full storage or an exceeded storage quota. Free space on that device, then try again.",
-      "unknown": "Orca could not save the terminal state. Try again. If this continues, share the Orca logs with support so we can identify the cause."
+      "unknown": "Wakii could not save the terminal state. Try again. If this continues, share the Wakii logs with support so we can identify the cause."
     },
     "codexTerminalServerIsolationNotice": {
-      "title": "Orca now runs Codex without its shared server",
+      "title": "Wakii now runs Codex without its shared server",
       "description": "This makes agent status more reliable. You can turn it back on in Settings.",
       "openSettings": "Open Settings"
+    },
+    "codexSharedServerBanner": {
+      "title": "This Codex is sharing a server with your other Codex tabs",
+      "body": "Sessions may end unexpectedly, and agent status may be wrong.",
+      "openedBeforeUpdateBody": "This terminal was opened before Wakii started giving each Codex its own server.",
+      "oldTerminalDialogTitle": "Why this Codex shares a server",
+      "oldTerminalDialogRisk": "Codex sessions that share a server can end together, and agent status can be wrong.",
+      "oldTerminalDialogCause": "Older terminals still share a Codex server. Open a new terminal to run Codex on a separate server.",
+      "fix": "Fix",
+      "openNewTerminal": "Open new terminal",
+      "dontShowAgain": "Don't show again",
+      "dismiss": "Dismiss",
+      "dialogTitle": "Give each Codex tab its own server",
+      "dialogDescription": "Codex sessions started directly in a terminal share one background server. Wakii keeps the Codex sessions it starts separate. When sessions share a server, closing one can end the others, and agent status can be wrong.",
+      "copy": "Copy",
+      "copied": "Copied",
+      "done": "Done",
+      "step1Title": "Turn off Codex server sharing",
+      "step1Note": "This changes your Codex settings, so it also applies outside Wakii.",
+      "step2Title": "Stop the running shared server",
+      "undo": "To undo, run codex features enable daemon_auto_start.",
+      "step2Warning": "Closes any open Codex sessions that share the server",
+      "learnMore": "Learn more",
+      "turnOff": "Turn off",
+      "turningOff": "Turning off…",
+      "turnedOff": "Turned off",
+      "turnOffFailed": "Wakii couldn't turn this off.",
+      "stopServer": "Stop server",
+      "stopping": "Stopping…",
+      "stopped": "Stopped",
+      "stopFailed": "Wakii couldn't stop the server.",
+      "confirmStopTitle": "Stop the shared server?",
+      "confirmStopDescription": "This closes any open Codex sessions that share it, including ones outside Wakii.",
+      "cancel": "Cancel",
+      "runs": "Runs"
     }
   },
   "fileExplorer": {
@@ -18932,5 +19186,56 @@
     "addTypedPath": "Add",
     "noDirectories": "No folders added yet.",
     "removePath": "Remove {{name}}"
+  },
+  "osDocumentOpen": {
+    "failed": "Failed to open the file."
+  },
+  "accounts": {
+    "antigravity": {
+      "scope": "Manage the native agy account on {{host}}.",
+      "signIn": "Start agy on this host and complete its browser sign-in, then save the current account. To add a different account, use /logout in agy and sign in again.",
+      "docs": "Sign-in instructions",
+      "retry": "Retry",
+      "identityUnknown": "Signed-in identity unavailable",
+      "signedOut": "No native agy account is signed in.",
+      "changed": "The native account changed. Select a saved account again before launching agy.",
+      "save": "Save current account",
+      "refresh": "Refresh accounts",
+      "usage": "Refresh usage",
+      "working": "Updating account",
+      "usageReading": "Session: {{session}} · Weekly: {{weekly}}",
+      "saved": "Saved Google account",
+      "nativeActive": "Native account",
+      "selected": "Selected",
+      "select": "Select",
+      "remove": "Remove",
+      "sessions": "Selection applies to new agy sessions on this host. Existing sessions may keep their previous account.",
+      "searchTitle": "Antigravity Accounts",
+      "searchDescription": "Save and select native agy Google accounts on the execution host.",
+      "title": "Antigravity",
+      "keyword": {
+        "antigravity": "antigravity",
+        "agy": "agy",
+        "google": "google",
+        "accounts": "accounts"
+      }
+    },
+    "managedData": {
+      "description": "Add accounts by running this command in a terminal on the Wakii host. Selection applies to new explicit agent launches on that host; direct SSH relay and Windows-hosted WSL launches use their own credentials.",
+      "copied": "Copied",
+      "add": "Copy add account command",
+      "refresh": "Refresh accounts",
+      "upgrade": "If accounts do not appear, update or restart the Wakii host.",
+      "system": "System default",
+      "active": "Active",
+      "select": "Select",
+      "remove": "Remove",
+      "removeTitle": "Remove managed account?",
+      "removeDescription": "Stop agents using this profile first. Removal deletes its saved credentials and conversation data. Your system login stays unchanged.",
+      "cancel": "Cancel"
+    }
+  },
+  "fileSearch": {
+    "failed": "Search failed. Try again."
   }
 }

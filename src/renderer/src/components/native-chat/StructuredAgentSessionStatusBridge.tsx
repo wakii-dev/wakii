@@ -11,16 +11,29 @@ import {
   isAgentStatusHeldOpenByChildWork,
   mainAgentTurnInterrupted
 } from '../../../../shared/agent-lead-status-fold'
-import { mainAgentStatusEqual, agentSubagentsEqual } from '../../../../shared/agent-status-types'
+import type { AgentChildWorkView } from '../../../../shared/agent-status-child-work-view'
+import {
+  agentChildWorkViewsEqual,
+  decodeAgentChildWorkViews
+} from '../../../../shared/agent-status-child-work-view-wire'
+import {
+  agentSubagentsEqual,
+  mainAgentStatusEqual,
+  type AgentSubagentSnapshot
+} from '../../../../shared/agent-status-types'
+import { structuredChildWorkLegacySubagents } from '../../../../shared/structured-agent-session-child-work-legacy'
 import { structuredAgentSessionPaneKey } from '../../../../shared/structured-agent-session-projection'
 import { structuredAgentSessionAgentStatus } from '../../../../shared/structured-agent-session-agent-status'
 import {
   structuredAgentSessionDatedMainAgent,
   structuredAgentSessionRowStateStartedAt
 } from '../../../../shared/structured-agent-session-status-started-at'
-import { getRuntimeEnvironmentIdForWorktree } from '@/lib/worktree-runtime-owner'
 import { useAppStore } from '@/store'
-import { getActiveRuntimeTarget, type RuntimeClientTarget } from '@/runtime/runtime-rpc-client'
+import type { RuntimeClientTarget } from '@/runtime/runtime-rpc-client'
+import {
+  structuredAgentSessionOwnerForTab,
+  structuredAgentSessionTargetForHost
+} from '@/runtime/structured-agent-session-owner'
 import { getStructuredAgentSessionStatusFeed } from '@/runtime/structured-agent-session-status-feed'
 import { getStructuredAgentSessionTabs, type StructuredTab } from './structured-agent-session-tabs'
 
@@ -47,30 +60,37 @@ export function useStructuredAgentSessionStatusSummary(
   return { summary, observation }
 }
 
-/** The host's child state, projected to stable primitives so journal updates do not re-render chat. */
-export function useStructuredAgentSessionHostExecution(
+/** Only the host's startup phase, so a chat re-renders when that changes, not on every status. */
+export function useStructuredAgentSessionHostExecutionPhase(
   sessionId: string,
   target: RuntimeClientTarget
-): {
-  phase: NonNullable<AgentSessionStatusSummary['hostExecutionPhase']> | null
-  childKey: string | number | null
-} {
+): NonNullable<AgentSessionStatusSummary['hostExecutionPhase']> | null {
   const feed = useMemo(() => getStructuredAgentSessionStatusFeed(target), [target])
   useEffect(() => feed.activate(), [feed])
-  const phase = useSyncExternalStore(
+  return useSyncExternalStore(
     feed.subscribe,
     () => feed.getSnapshot().get(sessionId)?.hostExecutionPhase ?? null,
     () => null
   )
-  const childKey = useSyncExternalStore(
-    feed.subscribe,
-    () => {
-      const child = feed.getSnapshot().get(sessionId)?.hostExecutionChild
-      return child?.generation ?? child?.fence ?? null
-    },
-    () => null
-  )
-  return { phase, childKey }
+}
+
+/** The host's child records for the row, and the legacy roster readers of `subagents` keep. A host
+ *  that publishes views is copied verbatim; only an older host's task list is converted here. */
+function childWorkFor(summary: AgentSessionStatusSummary): {
+  children?: AgentChildWorkView[]
+  subagents?: AgentSubagentSnapshot[]
+} {
+  const children = decodeAgentChildWorkViews(summary.children)
+  if (children) {
+    const subagents = structuredChildWorkLegacySubagents(children, summary.agent)
+    return { children, ...(subagents ? { subagents } : {}) }
+  }
+  const subagents = summary.backgroundTasks
+    ? projectAgentChildWorkLegacySubagents(
+        summary.backgroundTasks.map(agentChildWorkProjectionCandidateFromBackgroundTask)
+      )
+    : undefined
+  return subagents ? { subagents } : {}
 }
 
 function projectStatus(
@@ -87,17 +107,11 @@ function projectStatus(
     }
     return
   }
-  // Sidebar children are the agent-kind tasks, projected by the same code every
-  // child-work reader uses; a backgrounded shell never counts as a subagent.
-  const subagents = summary.backgroundTasks
-    ? projectAgentChildWorkLegacySubagents(
-        summary.backgroundTasks.map(agentChildWorkProjectionCandidateFromBackgroundTask)
-      )
-    : undefined
+  const { children, subagents } = childWorkFor(summary)
   // Shared with `worktree ps`, so the CLI and this row cannot disagree about one session.
   const agentStatus = structuredAgentSessionAgentStatus({
     status: summary.status,
-    backgroundTasks: summary.backgroundTasks,
+    childWork: children ?? summary.backgroundTasks,
     turnOutcome: summary.turnOutcome
   })
   const current = store.agentStatusByPaneKey?.[paneKey]
@@ -121,7 +135,9 @@ function projectStatus(
     ...(summary.toolName ? { toolName: summary.toolName } : {}),
     ...(summary.toolInput ? { toolInput: summary.toolInput } : {}),
     ...(summary.lastAssistantMessage ? { lastAssistantMessage: summary.lastAssistantMessage } : {}),
-    ...(subagents ? { subagents, subagentObservation: observation } : {}),
+    ...(subagents ? { subagents } : {}),
+    ...(children ? { children } : {}),
+    ...(subagents || children ? { subagentObservation: observation } : {}),
     sessionBoundary: false
   } as const
   if (
@@ -136,6 +152,7 @@ function projectStatus(
     current.toolInput === summary.toolInput &&
     current.lastAssistantMessage === summary.lastAssistantMessage &&
     agentSubagentsEqual(current.subagents, subagents) &&
+    agentChildWorkViewsEqual(current.children, children) &&
     current.subagentObservation === desired.subagentObservation &&
     current.sessionBoundary === desired.sessionBoundary &&
     current.updatedAt === summary.updatedAt &&
@@ -182,14 +199,25 @@ function projectStatus(
   )
 }
 
-function StructuredAgentSessionStatusProjection({ tab }: { tab: StructuredTab }): null {
-  const environmentId = useAppStore((state) =>
-    getRuntimeEnvironmentIdForWorktree(state, tab.worktreeId)
-  )
-  const target = useMemo(
-    () => getActiveRuntimeTarget({ activeRuntimeEnvironmentId: environmentId }),
-    [environmentId]
-  )
+/** Reads the chat's status from the host recorded on its tab; a chat no host can be named for has
+ *  none to read. */
+function StructuredAgentSessionStatusProjection({
+  tab
+}: {
+  tab: StructuredTab
+}): React.JSX.Element | null {
+  const owner = useAppStore((state) => structuredAgentSessionOwnerForTab(state, tab))
+  const target = useMemo(() => structuredAgentSessionTargetForHost(owner), [owner])
+  return target ? <StructuredAgentSessionOwnedStatusProjection tab={tab} target={target} /> : null
+}
+
+function StructuredAgentSessionOwnedStatusProjection({
+  tab,
+  target
+}: {
+  tab: StructuredTab
+  target: RuntimeClientTarget
+}): null {
   const { summary, observation } = useStructuredAgentSessionStatusSummary(tab.entityId, target)
   useEffect(() => {
     projectStatus(tab, summary, observation)

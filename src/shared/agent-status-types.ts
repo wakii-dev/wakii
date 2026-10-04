@@ -5,11 +5,11 @@
 import type { AgentProviderSessionMetadata } from './agent-session-resume'
 import type { AgentMainAgentStatus } from './main-agent-status'
 import type { AgentStateHistoryEntry } from './agent-state-history'
-import { isAgentJournalTurnOutcome } from './agent-turn-outcome'
+import { isAgentTurnOutcome } from './agent-turn-outcome'
 import type { OrchestrationFleetAttention } from './orchestration-fleet-attention'
 import type { AgentStatusRowFacets } from './agent-status-observation'
 import type { AgentChildWorkView } from './agent-status-child-work-view'
-import type { TuiAgent } from './tui-agent'
+import type { TerminalAgent } from './terminal-agent'
 import {
   AGENT_MODEL_MAX_LENGTH,
   AGENT_STATUS_TOOL_INPUT_MAX_LENGTH,
@@ -53,9 +53,9 @@ export type AgentStatusState = (typeof AGENT_STATUS_STATES)[number]
 export type AgentWorkingMode = 'monitoring'
 
 // Why: agent types aren't a fixed set (custom agents exist); any non-empty string is
-// accepted — the well-known names are the launchable TuiAgent ids plus the 'unknown'
+// accepted — the well-known names are the recognized TerminalAgent ids plus the 'unknown'
 // sentinel (no agent identified yet), a convenience union for pattern-matching.
-export type WellKnownAgentType = TuiAgent | 'unknown'
+export type WellKnownAgentType = TerminalAgent | 'unknown'
 export type AgentType = WellKnownAgentType | (string & {})
 
 export type AgentStatusOrchestrationContext = {
@@ -291,7 +291,7 @@ export function normalizeMainAgentStatusField(value: unknown): AgentMainAgentSta
   return {
     state,
     // Why: a verdict belongs to a finished turn; anything riding on a live state is stale.
-    ...(state === 'done' && isAgentJournalTurnOutcome(obj.outcome) ? { outcome: obj.outcome } : {}),
+    ...(state === 'done' && isAgentTurnOutcome(obj.outcome) ? { outcome: obj.outcome } : {}),
     stateStartedAt: obj.stateStartedAt
   }
 }

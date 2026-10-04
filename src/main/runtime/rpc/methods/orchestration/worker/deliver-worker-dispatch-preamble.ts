@@ -1,9 +1,14 @@
 import type { RuntimeTerminalSend } from '../../../../../../shared/runtime-terminal-contracts'
 import type { OrcaRuntimeService } from '../../../../orca-runtime'
+import type { OrchestrationDb } from '../../../../orchestration/db'
 import {
-  buildDispatchPreamble,
-  dispatchPreambleSendOptions
-} from '../../../../orchestration/preamble'
+  formatOrcaSessionAddress,
+  isOrcaSessionId
+} from '../../../../../../shared/orca-session-address'
+import { canonicalOrcaSessionId } from '../../../../orchestration/canonical-orca-session-id'
+import { orcaSessionIdOrHandle } from '../../../../orchestration/orchestration-party'
+import { buildDispatchPreamble } from '../../../../orchestration/preamble'
+import { sendAgentTurn } from '../../../../orchestration/send-agent-turn'
 import { sendStructuredWorkerPreamble } from '../../orchestration-structured-worker-session'
 import type { WorkerTurnStartObservation } from './worker-start-turn-observation'
 import type { createStructuredWorkerSessionForWorktree } from './worker-topology'
@@ -13,13 +18,15 @@ type StructuredSession = Awaited<ReturnType<typeof createStructuredWorkerSession
 /**
  * Hands a started worker the dispatch preamble, over whichever transport it has.
  *
- * The preamble itself is identical for both: a worker is taught the same verbs whichever mode it
- * runs in, and only the delivery differs — a PTY write returns a queued/accepted receipt, while a
- * structured turn is acknowledged, still held for an agent that has not started, or throws. Held is
- * a turn start nobody observed yet: the start is left unknown, not torn down.
+ * The preamble is identical for both but for how it names the worker: a worker is taught the same
+ * verbs whichever mode it runs in, and only the delivery differs — a PTY write returns a
+ * queued/accepted receipt, while a structured turn is acknowledged, still held for an agent that has
+ * not started, or throws. Held is a turn start nobody observed yet: the start is left unknown, not
+ * torn down.
  */
 export async function deliverWorkerDispatchPreamble(args: {
   runtime: OrcaRuntimeService
+  db: OrchestrationDb
   structuredSession: StructuredSession
   terminalHandle: string
   dispatchId: string
@@ -27,7 +34,6 @@ export async function deliverWorkerDispatchPreamble(args: {
   taskId: string
   taskSpec: string
   coordinatorHandle: string
-  dispatchCapability: string
   devMode: boolean | undefined
   requestId: string
 }): Promise<{
@@ -43,9 +49,12 @@ export async function deliverWorkerDispatchPreamble(args: {
     taskId: args.taskId,
     dispatchId: args.dispatchId,
     taskSpec: args.taskSpec,
-    coordinatorHandle: args.coordinatorHandle,
-    workerHandle: terminalHandle,
-    dispatchCapability: args.dispatchCapability,
+    coordinatorHandle: orcaSessionIdOrHandle(args.coordinatorHandle, args.db),
+    // Its mailbox stays keyed by the handle; its commands name its Orca session ID, which binds to it.
+    workerHandle:
+      structuredSession && isOrcaSessionId(structuredSession.identity.sessionId)
+        ? formatOrcaSessionAddress(canonicalOrcaSessionId(structuredSession.identity.sessionId))
+        : terminalHandle,
     devMode: args.devMode,
     cliCommand: runtime.getTerminalOrchestrationCliCommand(terminalHandle)
   })
@@ -71,11 +80,12 @@ export async function deliverWorkerDispatchPreamble(args: {
   }
   return {
     prompt: (
-      await runtime.sendTerminalAgentPrompt(
-        terminalHandle,
-        preamble,
-        dispatchPreambleSendOptions(args.requestId)
-      )
+      await sendAgentTurn({
+        kind: 'terminal',
+        runtime,
+        handle: terminalHandle,
+        turn: { purpose: 'dispatch-preamble', body: preamble, operationId: args.requestId }
+      })
     ).prompt
   }
 }

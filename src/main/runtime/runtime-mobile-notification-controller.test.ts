@@ -155,6 +155,7 @@ describe('RuntimeMobileNotificationController dispatchPlugin focus gate', () => 
     agentTaskComplete: true,
     terminalBell: true,
     suppressWhenFocused: true,
+    mutedNotificationSourceIds: [],
     customSoundId: 'system',
     customSoundPath: null,
     customSoundVolume: 0.5

@@ -285,6 +285,7 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
     },
     resultsProps: {
       results: resultsPanel.results,
+      error: searchState?.error,
       hasCommittedResults: fileSearchResults !== null,
       query: fileSearchQuery,
       loading: fileSearchLoading,

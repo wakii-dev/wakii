@@ -453,7 +453,7 @@
       "emulator": {
         "pane": {
           "MobileEmulatorAgentSetupGuide": {
-            "installSkillPrompt": "Install the Orca CLI skill when you want agents to drive this simulator."
+            "installSkillPrompt": "Install the Wakii CLI skill when you want agents to drive this simulator."
           },
           "MobileEmulatorAgentSetupGuideSteps": {
             "21f5687c07": "Wakii CLI skill",
@@ -513,7 +513,7 @@
             "capability": {
               "setup": {
                 "status": {
-                  "requiresOrcaDesktop": "Requires Orca Desktop"
+                  "requiresOrcaDesktop": "Requires Wakii Desktop"
                 }
               }
             }
@@ -548,8 +548,8 @@
                   "localized": {
                     "copy": {
                       "42525ba8a4": "Bring your key repos into Wakii so you can start agent work without hunting for folders.",
-                      "agentSkillsDescription": "Install the skills agents use to drive Orca's browser, control your computer, and coordinate multi-step work.",
-                      "agentSkillsName": "Give agents Orca skills"
+                      "agentSkillsDescription": "Install the skills agents use to drive Wakii's browser, control your computer, and coordinate multi-step work.",
+                      "agentSkillsName": "Give agents Wakii skills"
                     }
                   }
                 }
@@ -1077,6 +1077,10 @@
                 }
               },
               "discard": {
+                "confirmation": {
+                  "1426c2efff": "This will revert all changes to this file. This cannot be undone.",
+                  "40e9357b2a": "This will restore the file from HEAD and discard the deletion. This cannot be undone."
+                },
                 "dialog": {
                   "48c5ef95d9": "area",
                   "6de99d162b": "entry"
@@ -1218,7 +1222,7 @@
           "8d96213669": "remove",
           "cliSkillTerminalAria": "CLI skill install terminal",
           "cliSkillTerminalTitle": "CLI skill setup",
-          "outsideOrcaDescription": "Orca terminals already have `orca`. Turn this on to use `orca` from other terminals outside Orca."
+          "outsideOrcaDescription": "Wakii terminals already have `orca`. Turn this on to use `orca` from other terminals outside Wakii."
         },
         "CliSkillRuntimeSetup": {
           "04325573f8": "WSL",
@@ -1849,6 +1853,53 @@
           "imported_other": "Imported {{value0}} themes",
           "over_limit_one": "Importing these themes would exceed the {{value0}} custom terminal theme limit. Deselect 1 new theme and try again.",
           "over_limit_other": "Importing these themes would exceed the {{value0}} custom terminal theme limit. Deselect {{value1}} new themes and try again."
+        },
+        "AutoRenameBranchFromWorkSetting": {
+          "ef787db0e3": "Auto-Rename Branch"
+        },
+        "SshPane": {
+          "94c5284560": "Targets",
+          "a7d28dff81": "Add a remote host to connect to it in Wakii."
+        },
+        "ZcodePlanAccountsSection": {
+          "keyRequired": "GLM Coding Plan API key is required."
+        },
+        "auto": {
+          "rename": {
+            "branch": {
+              "search": {
+                "427f2cd1eb": "Auto-Rename Branch"
+              }
+            }
+          }
+        },
+        "bitbucket": {
+          "credentials": {
+            "dialog": {
+              "remoteRuntime": "Bitbucket credentials saved here are stored on this local machine only. Set ORCA_BITBUCKET_* environment variables on the remote runtime instead."
+            }
+          }
+        },
+        "mobile": {
+          "settings": {
+            "search": {
+              "b730ff7049": "experimental"
+            }
+          }
+        },
+        "runtime": {
+          "environments": {
+            "search": {
+              "3517fb2ec0": "Active Server",
+              "4575341c77": "Choose local desktop, add a saved remote Wakii server, or generate a pairing URL."
+            }
+          }
+        },
+        "ssh": {
+          "search": {
+            "62826efbe9": "Add a new remote SSH target.",
+            "74c6d90d78": "Manage remote SSH targets."
+          }
         }
       },
       "shared": {
@@ -2540,7 +2591,7 @@
             "3eed73394f": "Your keyboard is paused"
           },
           "TerminalErrorToast": {
-            "ptyAllocationLimit": "Your system cannot allocate any more pty devices. Close some terminals you are not using, in Orca or another program, then try again.",
+            "ptyAllocationLimit": "Your system cannot allocate any more pty devices. Close some terminals you are not using, in Wakii or another program, then try again.",
             "terminalProcessLimit": "Your system cannot start another terminal process. Close unused terminals or quit unused processes, then try again."
           },
           "TerminalSessionStateSaveFailureDialog": {
@@ -2665,6 +2716,25 @@
       "useSettingsNavigationMetadata": {
         "5235c215ca": "Choose which task providers appear in the Tasks page and sidebar.",
         "b351014180": "Wakii stats plus Claude, Codex, OpenCode token analytics and Grok subscription usage."
+      },
+      "ipc": {
+        "events": {
+          "os": {
+            "markdown": {
+              "file": {
+                "open": {
+                  "bridge": {
+                    "1e9a1a63c4": "Failed to open the Markdown file."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "useGlobalFileDrop": {
+        "nativeDropTempCopyFailed_one": "Wakii couldn't copy {{count}} dropped file.",
+        "nativeDropTempCopyFailed_other": "Wakii couldn't copy {{count}} dropped files."
       }
     },
     "lib": {
@@ -2839,7 +2909,6 @@
           "title": "Start a chat with {{value0}}"
         },
         "error": {
-          "retryingSubtitle": "The transcript could not be read. Orca keeps trying to load it.",
           "subtitle": "The transcript could not be read. Toggle back to the terminal to keep working.",
           "title": "Could not load conversation"
         },
@@ -2853,6 +2922,8 @@
         }
       },
       "status": {
+        "failedAfter": "Failed after {{value0}}",
+        "interruptedAfter": "Interrupted after {{value0}}",
         "responding": "Agent is responding",
         "toggleDetails": "Toggle turn details",
         "workedFor": "Worked for {{value0}}",
@@ -2883,17 +2954,19 @@
         "agentStarting": "The agent is still starting.",
         "answerFirst": "Answer the question or approval first.",
         "backgroundTasksRunning": "Background tasks are still running.",
-        "capacity": "Orca has received too many requests in the last day.",
-        "chatNotFound": "The Orca running this chat has no record of it.",
+        "capacity": "Wakii has received too many requests in the last day.",
+        "chatNotFound": "Wakii can't find this chat.",
         "clearUnfinished": "The last /clear didn't finish.",
         "commandRunning": "A /compact or /clear is still running.",
         "conversationCleared": "This conversation has been cleared.",
         "goalsUnsupported": "This agent doesn't support goals.",
-        "historyUnavailable": "Orca couldn't open this chat's history right now.",
-        "historyUnreadable": "Orca couldn't read this chat's saved history.",
+        "historyUnavailable": "Wakii couldn't open this chat's history right now.",
+        "historyUnreadable": "Wakii couldn't read this chat's saved history.",
         "historyUnusable": "Unable to load this chat.",
-        "hostReconciling": "Orca is still checking on this chat after restarting.",
-        "messagesUnsettled": "A message you sent earlier hasn't been confirmed yet.",
+        "hostReconciling": "Wakii is still checking on this chat after restarting.",
+        "messageNotSaved": "Couldn't save your message.",
+        "messagesUnsettled": "A message you sent earlier isn't confirmed yet.",
+        "notAvailable": "This isn't available in this chat.",
         "notDoneAnswer": "Your answer was not sent.",
         "notDoneCommand": "The command didn't run.",
         "notDoneGoal": "The goal wasn't changed.",
@@ -2905,30 +2978,95 @@
         "notDoneStopTasks": "The background tasks weren't stopped.",
         "openCurrentConversation": "Open the current conversation to continue.",
         "optionRejected": "The agent didn't accept this setting.",
-        "outcomeUnknown": "Orca couldn't confirm what happened. Check the chat.",
-        "ownerUnproven": "Orca hasn't confirmed that this chat's previous agent stopped.",
+        "outcomeUnknown": "Wakii couldn't confirm what happened. Check the chat.",
+        "sendOutcomeLost": "Wakii couldn't confirm your message reached the agent. Check the chat, then send it again if needed.",
+        "ownerUnproven": "The previous agent in this chat may still be running.",
         "promptPending": "The agent is waiting for an answer to a question or approval.",
         "questionChanged": "This question was already answered or has changed.",
         "quitTerminalAgent": "Quit that agent to continue the chat here.",
-        "recordFailed": "Orca couldn't record it in this chat's history.",
-        "recordUnreadable": "Orca couldn't read this chat's saved state.",
+        "recordFailed": "Wakii couldn't save this to the chat's history.",
+        "recordUnreadable": "Wakii couldn't read this chat's saved state.",
         "reopenChat": "Reopen the chat to check again.",
         "restartFailed": "The agent couldn't restart.",
-        "savedByNewerOrca": "Chats were saved by a newer Orca.",
+        "savedByNewerOrca": "Chats were saved by a newer Wakii.",
         "settleEarlierMessage": "Wait for your earlier message to go through, or retry it.",
         "startNewChat": "Start a new chat to continue.",
         "terminalAgentHoldsChat": "This chat is still open in a terminal agent.",
         "tryAgain": "Try again.",
         "tryAgainComposerSend": "Send it again.",
         "turnActive": "The agent is still responding.",
-        "unreachable": "Orca couldn't reach the agent.",
-        "unsupported": "The Orca running this chat doesn't support this. Update Orca, then try again.",
-        "updateOrcaToKeepUsing": "Update Orca to keep using them.",
+        "unreachable": "Wakii couldn't reach the agent.",
+        "unsupported": "This needs a newer Wakii on the computer running this chat. Update Wakii there, then try again.",
+        "updateOrcaToKeepUsing": "Update Wakii to keep using them.",
         "waitForBackgroundTasks": "Wait for the background tasks to finish.",
         "waitForCommand": "Wait for the /compact or /clear to finish.",
         "waitForStart": "Wait for the agent to finish starting.",
         "waitForTurn": "Wait for the agent to finish responding, or stop it.",
         "waitMoment": "Wait a moment."
+      },
+      "failureWords": {
+        "accountSwitchInProgress": "A Claude account switch is in progress. Try again after it finishes.",
+        "answerUnconfirmed": "Your answer was recorded but the agent did not confirm it.",
+        "attachmentAtMost": "{{agent}} accepts at most {{limit}} images in one message, so this message was not sent.",
+        "attachmentEmpty": "An image on this message is empty, so the message was not sent.",
+        "attachmentInvalid": "An attachment on this message can't be sent to the agent.",
+        "attachmentLargerThan": "An image on this message is larger than {{size}} MB, so the message was not sent.",
+        "attachmentNoSource": "An image on this message has no file to send, so the message was not sent.",
+        "attachmentNotAFile": "An image on this message isn't a file, so the message was not sent.",
+        "attachmentTooLarge": "An image on this message is too large, so the message was not sent.",
+        "attachmentTooMany": "This message has too many images, so it was not sent.",
+        "attachmentTotalMoreThan": "The images on this message add up to more than {{size}} MB, so the message was not sent.",
+        "attachmentTotalTooLarge": "The images on this message are too large together, so the message was not sent.",
+        "attachmentUnreadable": "An attachment on this message couldn't be read, so the message was not sent.",
+        "attachmentUnsupportedType": "{{agent}} accepts only PNG, JPEG, GIF, and WebP images, so this message was not sent.",
+        "cancelUnconfirmed": "Cancellation was not confirmed.",
+        "cancelled": "This message was withdrawn before the agent started it.",
+        "chatClosed": "The chat closed before this message was sent.",
+        "chooseClaudeAccount": "Choose or add one in Claude Accounts settings.",
+        "chooseClaudeAccountThenRunCommand": "Choose or add one in Claude Accounts settings, then run /{{command}} again.",
+        "chooseClaudeAccountThenSend": "Choose or add one in Claude Accounts settings, then send your message again.",
+        "commandRefused": "This command didn't run.",
+        "commandRefusedTryAgain": "This command didn't run. Try it again.",
+        "compactionFailed": "Compaction failed.",
+        "compactionFailedQuoted": "Compaction failed: {{detail}}.",
+        "compactionUnconfirmed": "Compaction completion is unconfirmed.",
+        "couldNotRestart": "{{agent}} couldn't restart.",
+        "couldNotStart": "{{agent}} couldn't start.",
+        "emptyMessage": "This message is empty, so it was not sent.",
+        "historyTooLarge": "This conversation's history is too large to restore here.",
+        "hostFault": "Wakii ran into a problem, so this didn't go through.",
+        "hostFaultTryAgain": "Wakii ran into a problem, so this didn't go through. Try again.",
+        "hostRestarted": "Wakii restarted before this message was sent.",
+        "hostStopped": "{{agent}} never finished starting, so Wakii stopped it.",
+        "managedAccountEnvOverride": "This Claude launch sets its own Anthropic sign-in variables. Remove them to use a managed Claude account.",
+        "managedAccountUnsupported": "While a Claude account is added in WSL, Claude chats need a Windows Claude account.",
+        "noTurnToStop": "{{agent}} had no turn running to stop.",
+        "notDelivered": "This message was not delivered.",
+        "notDeliveredSendAgain": "This message was not delivered. Send it again to continue.",
+        "notSignedIn": "{{agent}} is not signed in for the selected account.",
+        "previousExitUnverifiable": "{{agent}} from before may still be running. Your messages will send once it stops.",
+        "providerExitedRejection": "{{agent}} stopped before this message was sent.",
+        "providerExitedRow": "{{agent}} stopped while this response was in progress. You can continue in this conversation.",
+        "providerRateLimited": "{{agent}} is rate-limited and retrying.",
+        "providerRejected": "The provider did not accept this message.",
+        "providerRejectedQuoted": "The provider did not accept this message: {{detail}}.",
+        "providerRetrying": "{{agent}} hit a temporary problem and is retrying.",
+        "providerRetryingQuoted": "{{agent}} is retrying: {{detail}}.",
+        "providerStartFailed": "{{agent}} stopped before it finished starting.",
+        "queueFull": "Too many messages were waiting for the agent, so this one was not sent.",
+        "runCommandAgain": "Run /{{command}} again.",
+        "sendToTryAgain": "Send your message to try again.",
+        "signInFirst": "Sign in first.",
+        "signInThenRunCommand": "Sign in, then run /{{command}} again.",
+        "signInThenSend": "Sign in, then send your message again.",
+        "stopRefused": "{{agent}} didn't stop.",
+        "stopRefusedQuoted": "{{agent}} didn't stop: {{detail}}.",
+        "theAgent": "The agent",
+        "writeFailed": "Wakii couldn't hand this message to the agent, so it was not sent."
+      },
+      "notices": {
+        "historyItemTooLarge": "This part of the chat was too large to show.",
+        "historyRepaired": "Part of this chat's history couldn't be loaded."
       }
     },
     "onboarding": {
@@ -3032,7 +3170,7 @@
   },
   "terminal": {
     "sessionSaveFailure": {
-      "unknown": "Orca could not save the terminal state. Try again. If this continues, share the Orca logs with support so we can identify the cause."
+      "unknown": "Wakii could not save the terminal state. Try again. If this continues, share the Wakii logs with support so we can identify the cause."
     }
   },
   "tray": {

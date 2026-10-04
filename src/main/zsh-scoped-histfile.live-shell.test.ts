@@ -1,9 +1,9 @@
 /**
  * Real-zsh proof that a worktree-scoped HISTFILE survives shell startup, and
- * that the rest of Orca's startup features arrive with it.
+ * that the rest of Wakii's startup features arrive with it.
  *
  * macOS `/etc/zshrc` assigns `HISTFILE=${ZDOTDIR:-$HOME}/.zsh_history` with no
- * check-before-set. Orca used to fight that by keeping its own ZDOTDIR in place
+ * check-before-set. Wakii used to fight that by keeping its own ZDOTDIR in place
  * across `/etc/zshrc` and repairing the damage afterwards (#11044). It now hands
  * ZDOTDIR back before that file runs, so the value `/etc/zshrc` derives is the
  * user's own path and the scoped one is re-applied from the deferred hook.
@@ -15,10 +15,10 @@
  *
  * These tests drive the REAL launch decision (`selectShellStartupFeatures` +
  * `getShellLaunchConfig`) rather than an inline copy of the gate, so a pane that
- * Orca would not wrap cannot pass here by construction.
+ * Wakii would not wrap cannot pass here by construction.
  */
 import { execFileSync } from 'node:child_process'
-import { mkdtempSync, rmSync } from 'node:fs'
+import { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
@@ -58,7 +58,7 @@ const systemZshrcClobbersHistfile = (() => {
 
 const itWithClobber = systemZshrcClobbersHistfile ? itWithZsh : it.skip
 
-/** The launch config Orca produces for a pane with exactly these features. */
+/** The launch config Wakii produces for a pane with exactly these features. */
 function launchPane(
   home: string,
   scopedHistfile: string | null,
@@ -193,7 +193,7 @@ describe.skipIf(process.platform === 'win32')(
         // Why compared against an unwrapped run rather than asserted non-empty:
         // what zsh defaults to is platform-specific. macOS /etc/zshrc assigns
         // HISTFILE, so it is always set there; a stock Ubuntu zsh leaves it EMPTY.
-        // The contract is that Orca's wrapper does not change it either way.
+        // The contract is that Wakii's wrapper does not change it either way.
         const overlayEnv = { ORCA_CODEX_HOME: join(home, 'codex') }
         const features = selectShellStartupFeatures({
           shellPath: ZSH_PATH,
@@ -285,7 +285,7 @@ describe.skipIf(process.platform === 'win32')('the deferred hook delivers every 
         })
 
         // The point of running last: the user's .zshrc set both of these after
-        // the spawn env did, and Orca's values still win.
+        // the spawn env did, and Wakii's values still win.
         expect(values.CODEX_HOME).toBe('/orca/codex')
         expect(values.PATH.startsWith('/orca/shim:')).toBe(true)
       }
@@ -300,7 +300,7 @@ describe.skipIf(process.platform === 'win32')(
      * Why these three cases and not the old degrade matrix: zsh's `sourcehome()`
      * ignores ZDOTDIR once the shell is in sh/ksh emulation, which used to hide
      * every wrapper file after the one that entered it — so emulation from
-     * `.zshenv` or `.zprofile` cost the pane all of Orca's features. Only one
+     * `.zshenv` or `.zprofile` cost the pane all of Wakii's features. Only one
      * wrapper file is read now, and it is read before any user file can change
      * modes, so these are wins rather than degradations.
      */
@@ -333,25 +333,14 @@ describe.skipIf(process.platform === 'win32')(
     })
 
     itWithZsh(
-      'degrades to an unwrapped pane, leaking nothing, when a config drops precmd_functions',
+      'still scopes history without leaking it when a config drops precmd_functions',
       withHome({ ...USER_FILES, '.zshrc': 'precmd_functions=()\n' }, async (home) => {
         const scoped = join(home, 'orca-history', 'zsh_history')
         const { env, launch } = launchPane(home, scoped)
 
         const report = ['HISTFILE', 'ORCA_HISTFILE', 'ZDOTDIR']
         const { values } = await runZshPty({ env, report })
-        // Why compared against an unwrapped run rather than asserted to differ
-        // from the scoped path: whether the scoped value survives at all is the
-        // host's call, not Wakii's. macOS /etc/zshrc overwrites HISTFILE, so it
-        // does not; a host with no such assignment keeps whatever the spawn env
-        // set. The contract on both is the same — this pane is the pane the user
-        // would have had unwrapped.
-        const unwrapped = await runZshPty({
-          env: { PATH: '/usr/bin:/bin', HOME: home, HISTFILE: scoped },
-          report
-        })
-
-        expect(values.HISTFILE).toBe(unwrapped.values.HISTFILE)
+        expect(values.HISTFILE).toBe(scoped)
         expect(values.HISTFILE).not.toContain(launch.env.ZDOTDIR)
         // ORCA_HISTFILE was consumed in .zshenv precisely so a dropped hook
         // leaks nothing to the pane's children.
@@ -425,5 +414,44 @@ describe.skipIf(process.platform === 'win32')('the relay variant of the hook', (
         rmSync(relayRoot, { recursive: true, force: true })
       }
     })
+  )
+})
+
+describe.skipIf(process.platform === 'win32')('the real-zsh harness', () => {
+  itWithZsh(
+    'waits for delayed first output before answering compinit and scoping history',
+    withHome(
+      {
+        '.zshenv': 'sleep 0.6\nfpath=("$HOME/insecure-completions" $fpath)\n',
+        '.zshrc':
+          'if (( ! $+_comps )); then\n' +
+          '  autoload -Uz compinit\n' +
+          '  compinit -D\n' +
+          'fi\n' +
+          'export ORCA_TEST_COMPINIT_READY=$+_comps\n'
+      },
+      async (home) => {
+        const completions = join(home, 'insecure-completions')
+        mkdirSync(completions)
+        chmodSync(completions, 0o777)
+        writeFileSync(
+          join(completions, '_orca_compinit_fixture'),
+          '#compdef orca_compinit_fixture\n'
+        )
+        const scoped = join(home, 'scoped_history')
+        const { env } = launchPane(home, scoped)
+
+        const { output, values } = await runZshPty({
+          env,
+          report: ['HISTFILE', 'ORCA_TEST_COMPINIT_READY']
+        })
+
+        expect(output).toContain('Ignore insecure directories')
+        expect(output).not.toContain('initialization aborted')
+        expect(output).not.toContain('command not found: y')
+        expect(values.ORCA_TEST_COMPINIT_READY).toBe('1')
+        expect(values.HISTFILE).toBe(scoped)
+      }
+    )
   )
 })

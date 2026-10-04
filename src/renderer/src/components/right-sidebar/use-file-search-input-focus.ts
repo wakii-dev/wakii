@@ -13,7 +13,7 @@ export function useFileSearchInputFocus(args: {
   explorerView: 'files' | 'search'
   executeSearch: (query: string) => void
   cancelPendingSearch: () => void
-  updateActiveSearchState: (updates: { results: null; resultOwner: null }) => void
+  updateActiveSearchState: (updates: { results: null; resultOwner: null; error: null }) => void
   consumeFileSearchSeedRequest: (worktreeId: string, requestId: number) => void
 }): void {
   const {
@@ -57,7 +57,7 @@ export function useFileSearchInputFocus(args: {
   useEffect(() => {
     if (!worktreePath) {
       cancelPendingSearch()
-      updateActiveSearchState({ results: null, resultOwner: null })
+      updateActiveSearchState({ results: null, resultOwner: null, error: null })
     }
   }, [worktreePath, cancelPendingSearch, updateActiveSearchState])
 

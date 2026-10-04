@@ -25,6 +25,7 @@ const defaultSettings: NotificationSettings = {
   agentTaskComplete: true,
   terminalBell: true,
   suppressWhenFocused: false,
+  mutedNotificationSourceIds: [],
   customSoundId: 'system',
   customSoundPath: null,
   customSoundVolume: 0.5

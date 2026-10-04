@@ -190,6 +190,12 @@
         "restartRequired": "Redémarrage requis",
         "unavailable": "L'identité du navigateur n'est pas disponible."
       }
+    },
+    "terminal": {
+      "optionLayoutAlt": "ABC ou U.S. — Option envoie des séquences Alt/Esc",
+      "optionLayoutCompose": "la disposition utilise Option pour composer des caractères comme @, €, [, ]",
+      "optionLayoutUnknown": "disposition inconnue — Option compose des caractères (choix sûr par défaut)",
+      "optionShortcutHint": "Choisissez Les deux pour les raccourcis Option, Désactivé pour les accents et les symboles, ou Gauche/Droite pour attribuer un usage à chaque touche Option."
     }
   },
   "menu": {
@@ -1000,6 +1006,17 @@
         "symlink": "Les liens symboliques ne peuvent pas être attachés.",
         "permissionDenied": "Autorisation refusée.",
         "unsupported": "Type de fichier non pris en charge."
+      },
+      "dropTempCopyFailure": {
+        "changed": "Le fichier a changé pendant qu'Wakii le copiait. Réessayez de le déposer.",
+        "outOfSpace": "Espace disque insuffisant pour copier les fichiers déposés.",
+        "storageUnavailable": "Wakii n'a pas pu créer l'espace de stockage des fichiers déposés.",
+        "storageNotPrivate": "L'espace de stockage d'Wakii pour les fichiers déposés est lisible par d'autres utilisateurs ; rien n'a été copié.",
+        "timedOut": "La copie a pris trop de temps. Réessayez de déposer les fichiers.",
+        "busy": "Trop de dépôts sont encore en cours de copie. Patientez un instant, puis réessayez.",
+        "tooLarge": "Trop volumineux pour être copié : Wakii n'a pas pu le transmettre à l'agent.",
+        "storageFull": "L'espace de stockage d'Wakii pour les fichiers déposés est plein : Wakii n'a pas pu le transmettre à l'agent.",
+        "generic": "Réessayez de déposer les fichiers."
       }
     },
     "hooks": {
@@ -1034,7 +1051,10 @@
         "nativeDropPathsTooLarge": "La liste de chemins du dépôt est trop grande.",
         "ownerChanged": "Impossible de vérifier quel hôte possède cet espace de travail. Réessayez après sa reconnexion.",
         "nativeDropUnresolvedPathsDescription": "Enregistrez-les d'abord sur le disque, puis déposez les fichiers enregistrés.",
-        "nativeDropUnresolvedPaths": "Wakii n'a pas pu lire le chemin des fichiers supprimés."
+        "nativeDropUnresolvedPaths": "Wakii n'a pas pu lire le chemin des fichiers supprimés.",
+        "nativeDropTempCopyFailed": "Wakii n'a pas pu copier {{count}} fichiers déposés.",
+        "nativeDropTempCopyFailed_one": "Wakii n'a pas pu copier {{count}} fichier déposé.",
+        "nativeDropTempCopyFailed_other": "Wakii n'a pas pu copier {{count}} fichiers déposés."
       },
       "useIpcEvents": {
         "0e3cf53060": "Onglet de navigateur {{value0}} introuvable",
@@ -2086,7 +2106,7 @@
         "c679af7ad9": "Actualiser mes todos",
         "dfd72673e7": "Échec de l'enregistrement de la sélection de projets.",
         "b797bdd7c3": "Effacer la recherche",
-        "99c2755218": "JQL Jira, ex. project = ABC AND statusCategory != Done",
+        "99c2755218": "Recherchez des issues ou saisissez du JQL, ex. project = ABC",
         "2ff9fd71fd": "Actualiser les tickets Jira",
         "0b65d3fb2c": "Rechercher des projets Linear...",
         "eec0c5c079": "Rechercher des tickets Linear...",
@@ -2205,7 +2225,7 @@
         "6edf402e11": "vue d'ensemble",
         "9ae151b26b": "linear",
         "94d900518d": "Aucune issue ne correspond au préréglage sélectionné.",
-        "f51e254d35": "Essayez une requête JQL différente.",
+        "f51e254d35": "Essayez d'autres termes de recherche ou du JQL.",
         "4645a7814f": "jira",
         "e224d76876": "MR",
         "bbec4717ee": "mr",
@@ -2286,7 +2306,8 @@
         "linearModeHasWorktreeTooltip": "Tickets Linear liés à un espace de travail Wakii",
         "linearEmptyHasWorktree": "Aucun ticket Linear n'est encore lié à un espace de travail Wakii. Démarrez le travail depuis une issue Linear pour le voir ici.",
         "linearOpenAttachedWorkspace": "Ouvrir l'espace de travail attaché à {{value0}}",
-        "linearWorktreesColumn": "Espaces de travail"
+        "linearWorktreesColumn": "Espaces de travail",
+        "jiraTextMatchesNotice": "Résultats textuels affichés. Jira n'a pas pu exécuter cette recherche en JQL."
       },
       "Terminal": {
         "73768427cf": "Fermer",
@@ -3178,7 +3199,7 @@
             "sourceRestoring": "Reconnexion de ce terminal - sa sortie est en cours de rétablissement. La session est toujours en cours.",
             "remoteTerminalClosed": "Le terminal distant était fermé.",
             "terminalProcessLimit": "Votre système ne peut pas démarrer un autre processus de terminal. Fermez les terminaux inutilisés ou quittez les processus inutiles, puis réessayez.",
-            "ptyAllocationLimit": "Votre système ne peut plus allouer de périphériques pty. Fermez quelques terminaux inutilisés, dans Orca ou dans un autre programme, puis réessayez."
+            "ptyAllocationLimit": "Votre système ne peut plus allouer de périphériques pty. Fermez quelques terminaux inutilisés, dans Wakii ou dans un autre programme, puis réessayez."
           },
           "TerminalProcessExitOverlay": {
             "capacityTitle": "Limite de consoles Git Bash atteinte",
@@ -3970,7 +3991,7 @@
             "cursor": {
               "expired": {
                 "label": "Connexion expirée",
-                "message": "Exécutez cursor-agent login dans un terminal sur l'ordinateur qui exécute Orca, puis réessayez."
+                "message": "Exécutez cursor-agent login dans un terminal sur l'ordinateur qui exécute Wakii, puis réessayez."
               },
               "plan": "Forfait"
             }
@@ -4001,7 +4022,7 @@
             "detailed": "Détaillé",
             "compact": "Compact",
             "detailedTooltip": "Utilisation complète avec barres, libellés et pourcentages",
-            "compactTooltip": "Utilisation condensée : uniquement la fenêtre la plus contrainte",
+            "compactTooltip": "Utilisation condensée : un résumé par fournisseur",
             "footerDetailAria": "Détail du pied de page d'utilisation"
           },
           "RemoteServerUpdateStatusSegment": {
@@ -4068,12 +4089,12 @@
             "failedLabel": "{{value0}} chats n'ont pas pu reprendre",
             "failedAriaOne": "1 chat n'a pas pu reprendre. Cliquez pour plus de détails.",
             "failedAria": "{{value0}} chats n'ont pas pu reprendre. Cliquez pour plus de détails.",
-            "failedTooltip": "Chats qu'Orca n'a pas pu reprendre après le redémarrage. Cliquez pour plus de détails.",
+            "failedTooltip": "Chats qu'Wakii n'a pas pu reprendre après le redémarrage. Cliquez pour plus de détails.",
             "checkLabelOne": "1 chat à vérifier",
             "checkLabel": "{{value0}} chats à vérifier",
             "checkAriaOne": "1 chat à vérifier après la reprise. Cliquez pour plus de détails.",
             "checkAria": "{{value0}} chats à vérifier après la reprise. Cliquez pour plus de détails.",
-            "checkTooltip": "Chats qu'Orca n'a pas pu reprendre, ou dont il n'a pas pu confirmer la reprise, après le redémarrage. Cliquez pour plus de détails.",
+            "checkTooltip": "Chats qu'Wakii n'a pas pu reprendre, ou dont il n'a pas pu confirmer la reprise, après le redémarrage. Cliquez pour plus de détails.",
             "resumingLabelOne": "Reprise d’1 conversation",
             "resumingLabel": "Reprise de {{value0}} conversations",
             "resumingAriaOne": "Reprise d’1 conversation. Cliquez pour voir les détails.",
@@ -5220,7 +5241,12 @@
           "86f0ae1257": "Supprimer les espaces de travail"
         },
         "DeleteWorktreeDirtyChangeHint": {
-          "8e2994ce28": "Supprimer cet espace de travail efface définitivement ces modifications du disque."
+          "8e2994ce28": "Supprimer cet espace de travail efface définitivement ces modifications du disque.",
+          "showLoadedPaths": "Afficher les chemins chargés",
+          "loadedPathsNotice": "Les chemins chargés peuvent être incomplets ou obsolètes.",
+          "loadedChangedPaths": "Chemins modifiés chargés",
+          "unresolvedConflict": "Conflit non résolu",
+          "moreLoadedPaths": "et {{value0}} autres chemins chargés"
         },
         "DeleteWorktreeLineageNotice": {
           "ad407c2d55": "de plus",
@@ -5534,7 +5560,8 @@
           "219ebf1961": "Nom de branche",
           "folderPathIdentity": "Branche / chemin de dossier",
           "cli": "Wakii CLI",
-          "workspaceOptions": "Options de l'espace de travail"
+          "workspaceOptions": "Options de l'espace de travail",
+          "host": "Hôte"
         },
         "SshTargetRow": {
           "4677394048": "Connexion…",
@@ -5603,7 +5630,8 @@
           "automationCreated": "Créé par automatisation",
           "branchIdentity": "Branche",
           "branchFolderPathIdentity": "Branche ou chemin de dossier",
-          "ef18787206": "En attente de suppression"
+          "ef18787206": "En attente de suppression",
+          "deleteFailed": "Échec de la suppression"
         },
         "WorktreeCardAgents": {
           "1b0a156717": "Agents"
@@ -6387,9 +6415,9 @@
         },
         "LocalGitToolchainScanBanner": {
           "xcodeLicenseTitle": "Acceptez la licence Xcode pour utiliser Git",
-          "xcodeLicenseBody": "macOS bloque Git jusqu'à ce que vous l'acceptiez. Exécutez ceci dans le terminal, puis revenez à Orca. Il vérifiera à nouveau automatiquement.",
+          "xcodeLicenseBody": "macOS bloque Git jusqu'à ce que vous l'acceptiez. Exécutez ceci dans le terminal, puis revenez à Wakii. Il vérifiera à nouveau automatiquement.",
           "developerToolsTitle": "Installez les outils en ligne de commande d'Apple",
-          "developerToolsBody": "Git a besoin des outils de développement d'Apple. Exécutez ceci dans le terminal, puis revenez à Orca. Il vérifiera à nouveau automatiquement.",
+          "developerToolsBody": "Git a besoin des outils de développement d'Apple. Exécutez ceci dans le terminal, puis revenez à Wakii. Il vérifiera à nouveau automatiquement.",
           "affectedOne": "Analyse des worktrees en pause pour {{value0}}",
           "affectedMany": "Analyse des worktrees en pause pour {{value0}} projets",
           "copyCommand": "Copier la commande",
@@ -6645,7 +6673,7 @@
           "opencodeGo": {
             "apiKey": {
               "title": "Clé API OpenCode Go",
-              "description": "Optionnel. Sinon, Orca utilise la clé qu'OpenCode a enregistrée quand vous avez exécuté /connect, puis OPENCODE_API_KEY.",
+              "description": "Optionnel. Sinon, Wakii utilise la clé qu'OpenCode a enregistrée quand vous avez exécuté /connect, puis OPENCODE_API_KEY.",
               "label": "Clé API OpenCode Go",
               "placeholder": "Laissez vide pour utiliser la clé enregistrée par /connect ou OPENCODE_API_KEY",
               "help": "Utilisé pour l'utilisation d'OpenCode Go dans la barre d'état. Le cookie de session ci-dessous n'est nécessaire que pour les anciens comptes console (OpenCode Black)."
@@ -7001,7 +7029,7 @@
           "9fd4023db0": "Afficher dans le Gestionnaire de fichiers",
           "installFailureUnknownReason": "Wakii n'a pas pu terminer l'enregistrement de l'interface CLI et n'a signalé aucune raison.",
           "installFailureConflictRemedy": "Supprimez {{value0}} s'il n'est plus nécessaire, puis réenregistrez la CLI.",
-          "outsideOrcaDescription": "Les terminaux Orca disposent déjà de `orca`. Activez cette option pour utiliser `orca` depuis d'autres terminaux en dehors d'Orca."
+          "outsideOrcaDescription": "Les terminaux Wakii disposent déjà de `orca`. Activez cette option pour utiliser `orca` depuis d'autres terminaux en dehors d'Wakii."
         },
         "CliSkillRuntimeSetup": {
           "04325573f8": "WSL",
@@ -7193,8 +7221,8 @@
             "shellEnvCopy": "Les chats Codex et Claude démarrent avec toutes les variables exportées par votre shell de connexion, comme un terminal. Désactivez pour choisir celles qu'ils reçoivent.",
             "shellEnvToggleLabel": "Activer l'utilisation de l'environnement de votre shell",
             "structuredTitle": "Utiliser le chat natif structuré mis à jour",
-            "structuredCopy": "Inscrivez-vous au runtime de chat structuré appartenant à l'hôte pour Codex et Claude. Désactivé conserve le chemin de discussion existant sauvegardé sur le terminal.",
-            "structuredScope": "Séances locales uniquement pour l'instant. WSL et les hôtes d'exécution à distance (y compris SSH) continuent d'utiliser le chat du terminal, et Windows y revient à moins qu'Wakii ne puisse lire les heures de début des processus.",
+            "structuredCopy": "Ouvre les nouveaux agents Codex et Claude sous forme de discussions structurées. Désactivé, ils s'ouvrent dans le chat basé sur le terminal. Les discussions existantes restent telles quelles.",
+            "structuredScope": "Runs on this machine and on paired Wakii servers running a version that supports it; older servers keep terminal chat. WSL and SSH hosts continue to use terminal chat, and Windows falls back to it unless Wakii can read process start times.",
             "structuredToggleLabel": "Basculer le chat natif structuré mis à jour",
             "resumeTitle": "Reprendre automatiquement les discussions de travail après un redémarrage",
             "resumeCopy": "Lorsqu'Wakii quitte ou installe une mise à jour, les discussions en cours reprennent automatiquement à la réouverture d'Wakii.",
@@ -7238,9 +7266,9 @@
           "80c454e8a6": "Alignez cette durée sur le TTL de cache de votre fournisseur."
         },
         "GeneralEditorSettingsSection": {
-          "f80603d293": "Afficher les contrôles des notes markdown locales en mode éditeur enrichi et dans les actions de passation aux agents.",
+          "f80603d293": "Afficher les contrôles des notes markdown dans toutes les vues markdown et inclure ces notes dans les actions de passation aux agents.",
           "4edc104f0f": "Notes de revue Markdown",
-          "5f02e6fb21": "Afficher les contrôles des notes de revue markdown locales en mode éditeur enrichi.",
+          "5f02e6fb21": "Afficher les contrôles des notes de revue markdown locales dans les fichiers markdown.",
           "51161d1647": "Afficher la minimap lors de l'édition d'un fichier.",
           "6690b1ffb9": "Minimap",
           "5a1ea6eaa2": "Masquée",
@@ -7973,7 +8001,7 @@
           "c5a55a2d2e": "avancé",
           "b5e3e77e89": "action",
           "0ce113fd7b": "Les scripts locaux sont enregistrés, mais la source des scripts est réglée sur orca.yaml uniquement.",
-          "7f78e5eea6": "Les scripts locaux sont enregistrés. Orca analyse encore orca.yaml avant de pouvoir recommander la source de scripts à utiliser.",
+          "7f78e5eea6": "Les scripts locaux sont enregistrés. Wakii analyse encore orca.yaml avant de pouvoir recommander la source de scripts à utiliser.",
           "2b6356e744": "Enregistré",
           "81057d5f71": "Enregistrement...",
           "da37d6f10e": "Copier",
@@ -8083,7 +8111,9 @@
           "show": "Afficher",
           "hide": "Masquer",
           "externalWorktreesGlobal": "Réglage global par défaut : {{value0}}",
-          "useGlobal": "Utiliser la valeur globale"
+          "useGlobal": "Utiliser la valeur globale",
+          "removeProjectCheckout": "Retirer ce checkout d'Wakii. Les autres checkouts de ce projet sont conservés.",
+          "removeProjectKeepCheckouts": "Retirer ce projet d'Wakii. Les checkouts qui ont leurs propres paramètres sont conservés."
         },
         "RepositorySourceControlAiActionRows": {
           "548a6e1281": "Modèle de commande",
@@ -10166,7 +10196,13 @@
             "72539aede4": "système",
             "51ae2183e1": "bureau",
             "0534c76311": "Interrupteur principal des notifications de bureau d'Wakii.",
-            "4a210b2f72": "Activer les notifications"
+            "4a210b2f72": "Activer les notifications",
+            "machines": "Machines",
+            "machinesDescription": "Choisissez les machines autorisées à afficher des notifications sur cet ordinateur, comme les machines SSH ou les serveurs associés.",
+            "host": "hôte",
+            "remote": "distant",
+            "ssh": "ssh",
+            "mute": "muet"
           }
         },
         "orchestration": {
@@ -11158,7 +11194,7 @@
           "orcaCloudSignOut": "Se déconnecter",
           "orcaCloudConnect": "Connecter le profil",
           "orcaCloudRefresh": "Actualiser le statut",
-          "orcaCloudNotConfigured": "Définissez ORCA_CLOUD_API_URL et ORCA_CLOUD_CLIENT_ID pour prévisualiser la connexion à Orca Cloud dans ce build de développement.",
+          "orcaCloudNotConfigured": "Définissez ORCA_CLOUD_API_URL et ORCA_CLOUD_CLIENT_ID pour prévisualiser la connexion à Wakii Cloud dans ce build de développement.",
           "deleteAnywayClicked": "Supprimer quand même cliqué"
         },
         "EphemeralVmRecipeRow": {
@@ -11363,7 +11399,7 @@
         },
         "LinearAgentSkillPane": {
           "title": "Linear",
-          "description": "Fonctionnement de Linear dans Orca : parcourez les tickets, démarrez des espaces de travail liés et laissez les agents mettre à jour les tickets avec /orca-linear.",
+          "description": "Fonctionnement de Linear dans Wakii : parcourez les tickets, démarrez des espaces de travail liés et laissez les agents mettre à jour les tickets avec /orca-linear.",
           "skillTitle": "Skill Linear",
           "howToUse": "Prompts d'exemple",
           "howToUseDescription": "Cliquez sur une carte pour copier un prompt. Utilisez-les dans un worktree lié à Linear après l'installation de la skill.",
@@ -12006,7 +12042,7 @@
               "title": "Connecter Bitbucket",
               "description": "Utilisez un identifiant Bitbucket Cloud pour parcourir les pull requests et les statuts de build. Wakii le vérifie avant de l'enregistrer.",
               "remoteRuntime": "Les identifiants Bitbucket enregistrés ici ne sont stockés que sur cette machine locale. Définissez plutôt les variables d'environnement ORCA_BITBUCKET_* sur le runtime distant.",
-              "environmentManaged": "Bitbucket est déjà configuré via les variables d'environnement ORCA_BITBUCKET_*, qui ont priorité. Désactivez-les pour enregistrer un identifiant dans Orca.",
+              "environmentManaged": "Bitbucket est déjà configuré via les variables d'environnement ORCA_BITBUCKET_*, qui ont priorité. Désactivez-les pour enregistrer un identifiant dans Wakii.",
               "authModeLabel": "Méthode d'authentification Bitbucket",
               "modeBasic": "E-mail & token API",
               "modeToken": "Token d'accès",
@@ -12036,9 +12072,9 @@
               "authModeToken": "Token d'accès",
               "authModeBasic": "E-mail & token API",
               "disconnect": "Déconnecter Bitbucket",
-              "envManaged": "Configuré via des variables d'environnement. Désactivez les variables ORCA_BITBUCKET_* pour gérer cet identifiant dans Orca.",
+              "envManaged": "Configuré via des variables d'environnement. Désactivez les variables ORCA_BITBUCKET_* pour gérer cet identifiant dans Wakii.",
               "storedAuthFailed": "L'identifiant Bitbucket enregistré n'a pas réussi à s'authentifier. Modifiez-le ou vérifiez que le token garde l'accès aux pull requests.",
-              "storedCredential": "Enregistré dans Orca sur cette machine. Les variables d'environnement ORCA_BITBUCKET_* ont priorité quand elles sont définies.",
+              "storedCredential": "Enregistré dans Wakii sur cette machine. Les variables d'environnement ORCA_BITBUCKET_* ont priorité quand elles sont définies.",
               "notConfigured": "Connectez un compte Bitbucket Cloud avec un token API Atlassian ou un token d'accès. Les variables d'environnement ORCA_BITBUCKET_* marchent aussi et ont priorité.",
               "disconnectFailed": "Impossible de supprimer l'identifiant Bitbucket enregistré.",
               "statusLoadFailed": "Impossible de rechercher un identifiant Bitbucket enregistré.",
@@ -12156,28 +12192,33 @@
             "keychain": "Trousseau macOS (cursor-agent)",
             "cli": "Fichier d'authentification du CLI Cursor"
           },
-          "signedInGeneric": "Connecté. Orca lit la session Cursor stockée sur cet ordinateur.",
+          "signedInGeneric": "Connecté. Wakii lit la session Cursor stockée sur cet ordinateur.",
           "signedOutHelp": "Connectez-vous avec Cursor IDE, ou exécutez cursor-agent login dans un terminal, puis cliquez ici sur Actualiser l'utilisation.",
           "refreshUsage": "Actualiser l'utilisation",
           "loading": "Chargement…",
           "planTotal": "Forfait",
-          "expired": "Connexion expirée — exécutez cursor-agent login sur l'ordinateur qui exécute Orca, puis cliquez sur Actualiser l'utilisation.",
+          "expired": "Connexion expirée — exécutez cursor-agent login sur l'ordinateur qui exécute Wakii, puis cliquez sur Actualiser l'utilisation.",
           "signedIn": "Connecté",
           "usageDescription": "Cursor facture deux enveloppes qui se réinitialisent avec votre cycle de facturation, plus des dépenses à la demande une fois épuisées.",
           "dashboardLink": "Tableau de bord Cursor",
           "usageTitle": "Utilisation mensuelle du forfait",
           "signedOut": "Aucune connexion Cursor trouvée sur cet ordinateur",
-          "subtitle": "Affiche l'utilisation mensuelle de votre forfait Cursor à partir de la connexion déjà présente sur cet ordinateur. Orca se contente de la lire — il ne modifie jamais votre connexion Cursor.",
+          "subtitle": "Affiche l'utilisation mensuelle de votre forfait Cursor à partir de la connexion déjà présente sur cet ordinateur. Wakii se contente de la lire — il ne modifie jamais votre connexion Cursor.",
           "title": "Cursor",
           "staleUsage": "Dernière utilisation connue — la dernière actualisation a échoué : {{reason}}",
           "resets": "Réinitialisation {{when}}",
-          "signedInFrom": "Connecté. Orca lit la session stockée dans {{source}}.",
+          "signedInFrom": "Connecté. Wakii lit la session stockée dans {{source}}.",
           "noAllowance": "Cursor n'a signalé aucun quota d'utilisation pour ce compte.",
           "usageLabel": "Utilisation"
         },
         "agent-workspace-trust-copy": {
-          "title": "Faire confiance au dossier quand Orca lance un agent",
-          "description": "Les agents lancés par Orca ignorent leur question « Do you trust this folder? » : les hooks et paramètres d'agent du projet s'exécutent donc tout de suite. Sans cette option, chaque agent pose la question la première fois qu'il s'exécute dans un dossier. Les agents qui tournent sans que vous les surveilliez, comme les workers d'orchestration, les automatisations et les agents lancés depuis votre téléphone, attendront à cette question jusqu'à ce que vous y répondiez dans leur terminal. Les dossiers déjà approuvés le restent."
+          "title": "Faire confiance au dossier quand Wakii lance un agent",
+          "description": "Les agents lancés par Wakii ignorent leur question « Do you trust this folder? » : les hooks et paramètres d'agent du projet s'exécutent donc tout de suite. Sans cette option, chaque agent pose la question la première fois qu'il s'exécute dans un dossier. Les agents qui tournent sans que vous les surveilliez, comme les workers d'orchestration, les automatisations et les agents lancés depuis votre téléphone, attendront à cette question jusqu'à ce que vous y répondiez dans leur terminal. Les dossiers déjà approuvés le restent."
+        },
+        "NotificationHostToggles": {
+          "offCount": "{{count}} désactivées",
+          "machines": "Machines",
+          "machinesDescription": "Choisissez les machines autorisées à afficher des notifications sur cet ordinateur. Le réglage d’un serveur associé couvre aussi le travail effectué par son intermédiaire."
         }
       },
       "right": {
@@ -14526,7 +14567,7 @@
                   "6d2b0a84e1": "Indisponible dans ce build",
                   "needsMacAccess": "Nécessite l'accès macOS",
                   "notInstalled": "Non installée",
-                  "requiresOrcaDesktop": "Nécessite Orca Desktop"
+                  "requiresOrcaDesktop": "Nécessite Wakii Desktop"
                 }
               }
             }
@@ -14558,8 +14599,8 @@
                       "2cf795433b": "Commencez à travailler dans plusieurs dépôts",
                       "42525ba8a4": "Importez vos dépôts de clés dans Wakii afin de pouvoir démarrer le travail d'agent sans rechercher de dossiers.",
                       "workOnTwoTasks": "Travaillez sur deux tâches à la fois",
-                      "agentSkillsName": "Donnez aux agents les skills Orca",
-                      "agentSkillsDescription": "Installez les skills que les agents utilisent pour piloter le navigateur d'Orca, contrôler votre ordinateur et coordonner des tâches en plusieurs étapes."
+                      "agentSkillsName": "Donnez aux agents les skills Wakii",
+                      "agentSkillsDescription": "Installez les skills que les agents utilisent pour piloter le navigateur d'Wakii, contrôler votre ordinateur et coordonner des tâches en plusieurs étapes."
                     }
                   }
                 }
@@ -14816,7 +14857,7 @@
                     "state": {
                       "35dea1ae12": "Le contrôle des agents est prêt.",
                       "c94ff11e91": "Impossible de revérifier l'état de la configuration.",
-                      "skillNotInstalled": "La skill Orca CLI n'est pas encore installée."
+                      "skillNotInstalled": "La skill Wakii CLI n'est pas encore installée."
                     }
                   }
                 },
@@ -14839,7 +14880,7 @@
             "6d950431d2": "Masquer",
             "ebceac65a4": "Configurer",
             "3f003507f4": "Ouvrir la configuration complète dans les paramètres",
-            "installSkillPrompt": "Installez la skill Orca CLI lorsque vous voulez que les agents pilotent ce simulateur."
+            "installSkillPrompt": "Installez la skill Wakii CLI lorsque vous voulez que les agents pilotent ce simulateur."
           },
           "MobileEmulatorAgentSetupGuideSteps": {
             "21f5687c07": "Compétence CLI Wakii",
@@ -15111,7 +15152,7 @@
           "createVenvItem": "Créer un environnement virtuel…",
           "trustFirst": "Exécutez une cellule pour d'abord faire confiance à ce notebook",
           "installingTitle": "Installation d'ipykernel…",
-          "venvDescription": "Orca va créer un .venv dans {{folder}} à partir de « {{env}} », y installer ipykernel, puis y exécuter ce notebook.",
+          "venvDescription": "Wakii va créer un .venv dans {{folder}} à partir de « {{env}} », y installer ipykernel, puis y exécuter ce notebook.",
           "createVenv": "Créer .venv",
           "creatingButton": "Création…",
           "tryAgain": "Réessayer",
@@ -15947,7 +15988,8 @@
             "756bfc25c9": "Ouvert",
             "09a9489aa5": "Afficher",
             "2a4c4b8e1f": "Copier",
-            "fileUrlUnsupported": "Cet onglet du navigateur ne peut pas ouvrir les fichiers locaux. Utilisez plutôt \"Ouvrir l'aperçu sur le côté\" sur le fichier."
+            "fileUrlUnsupported": "Cet onglet du navigateur ne peut pas ouvrir les fichiers locaux. Utilisez plutôt \"Ouvrir l'aperçu sur le côté\" sur le fichier.",
+            "cc4a071d3a": "Annoter un élément de la page ({{value0}})"
           },
           "BrowserToolbarMenu": {
             "429ef481f9": "Annuler",
@@ -16664,6 +16706,7 @@
             "done": "Fait",
             "idle": "Inactif",
             "unverifiable": "Aucune mise à jour récente",
+            "unconfirmed": "Impossible de confirmer",
             "permission": "A besoin d'attention"
           }
         },
@@ -17305,9 +17348,6 @@
             "failed": "Le chat n'a pas pu démarrer.",
             "unknown": "La connexion au chat n'a pas pu être confirmée.",
             "retry": "Réessayer"
-          },
-          "NativeChatStructuredSessionStatus": {
-            "starting": "{{value0}} est encore en cours de démarrage. Les messages attendent qu'il soit prêt ; fermez ce chat pour y renoncer."
           }
         }
       },
@@ -17354,19 +17394,19 @@
         "toResume": "À reprendre :"
       },
       "NativeChatResumeFailureGuidance": {
-        "unconfirmed": "Orca n'a pas pu confirmer que le message “continue” a été livré. Ouvrez le chat et vérifiez avant d'en envoyer un autre.",
-        "superseded": "Ouvrez le chat et répondez. Du nouveau travail est arrivé juste après le redémarrage, donc Orca n'a pas envoyé son message “continue”.",
-        "conflict": "Une autre fenêtre Orca ou un autre terminal détient toujours cette session. Fermez l’autre fenêtre Orca ou le terminal concerné, puis réessayez.",
-        "ownershipUnknown": "Orca détermine encore quel processus détient cette session. Patientez un instant, puis réessayez.",
+        "unconfirmed": "Wakii n'a pas pu confirmer que le message “continue” a été livré. Ouvrez le chat et vérifiez avant d'en envoyer un autre.",
+        "superseded": "Ouvrez le chat et répondez. Du nouveau travail est arrivé juste après le redémarrage, donc Wakii n'a pas envoyé son message “continue”.",
+        "conflict": "Une autre fenêtre Wakii ou un autre terminal détient toujours cette session. Fermez l’autre fenêtre Wakii ou le terminal concerné, puis réessayez.",
+        "ownershipUnknown": "Wakii détermine encore quel processus détient cette session. Patientez un instant, puis réessayez.",
         "notAttached": "Le chat ne s'est pas reconnecté. Réessayez ou ouvrez-le pour démarrer un nouveau tour.",
         "dispatchRejected": "L'agent a refusé le message “continue”. Ouvrez le chat et envoyez-en un vous-même.",
-        "unsupported": "Orca ne peut pas reprendre ce chat. Ouvrez-le pour voir où il s'est arrêté.",
-        "fallback": "Orca n'a pas pu reprendre ce chat. Ouvrez-le pour continuer manuellement."
+        "unsupported": "Wakii ne peut pas reprendre ce chat. Ouvrez-le pour voir où il s'est arrêté.",
+        "fallback": "Wakii n'a pas pu reprendre ce chat. Ouvrez-le pour continuer manuellement."
       },
       "web": {
         "preloadApi": {
           "cursorAccounts": {
-            "hostOnly": "Les détails de connexion Cursor ne sont lisibles que sur l'ordinateur qui exécute Orca."
+            "hostOnly": "Les détails de connexion Cursor ne sont lisibles que sur l'ordinateur qui exécute Wakii."
           }
         }
       }
@@ -17454,8 +17494,8 @@
         "skills": "Skills",
         "loadingSkills": "Chargement des skills...",
         "skillsLoaded": "Skills chargées",
-        "skillsUnavailableHost": "Les skills sont indisponibles pour cet hôte",
-        "skillsLoadFailed": "Impossible de charger les skills depuis cet hôte",
+        "skillsUnavailableHost": "Les skills ne sont pas disponibles dans les chats SSH",
+        "skillsLoadFailed": "Impossible de charger les skills",
         "retrySkills": "Réessayer",
         "skillCommandCollision": "Aussi un nom de skill - l'agent décide",
         "skillMultipleSources": "{{sourceCount}} sources - l'agent décide",
@@ -17479,8 +17519,6 @@
         "chooseInAgentPicker": "Choisir dans le sélecteur d'agents…",
         "toggleOption": "Basculer {{value0}}",
         "pillAccessibleName": "{{value0}} {{value1}}",
-        "valueIsDefault": "Par défaut",
-        "valueNotReported": "Non signalé",
         "sentNotConfirmed": "Envoyé à l'agent — non confirmé",
         "setWhenSessionStarts": "Défini au démarrage de la session.",
         "availableAfterSessionStarts": "Disponible après le démarrage de la session.",
@@ -17580,6 +17618,8 @@
         "thinking": "Réflexion",
         "workingFor": "En cours depuis {{value0}}",
         "workedFor": "A travaillé pendant {{value0}}",
+        "interruptedAfter": "Interrompu après {{value0}}",
+        "failedAfter": "Échoué après {{value0}}",
         "toggleDetails": "Basculer les détails du tour"
       },
       "jumpToLatest": "Aller au dernier message",
@@ -17589,13 +17629,13 @@
       },
       "state": {
         "loading": {
+          "label": "Chargement du chat",
           "title": "Chargement de la conversation…",
           "subtitle": "Lecture de la transcription de l'agent."
         },
         "error": {
           "title": "Impossible de charger la conversation",
-          "subtitle": "La transcription n'a pas pu être lue. Rebasculez sur le terminal pour continuer à travailler.",
-          "retryingSubtitle": "La transcription n'a pas pu être lue. Orca continue d'essayer de la charger."
+          "subtitle": "La transcription n'a pas pu être lue. Rebasculez sur le terminal pour continuer à travailler."
         },
         "reconnecting": "Reconnexion à ce chat…",
         "pairHost": "Associez un hôte pour consulter l'historique de chat des agents.",
@@ -17672,7 +17712,9 @@
       "notices": {
         "compaction": "Contexte compacté",
         "details": "Détails",
-        "plan": "Plan"
+        "plan": "Plan",
+        "historyRepaired": "Une partie de l'historique de ce chat n'a pas pu être chargée.",
+        "historyItemTooLarge": "Cette partie du chat était trop volumineuse pour être affichée."
       },
       "providerFrame": {
         "byteLength": "{{value0}} octets"
@@ -17707,9 +17749,9 @@
         "stateBlocked": "bloqué",
         "stateDone": "fait",
         "stateIdle": "arrêté",
-        "stateUnverifiable": "invérifiable",
+        "stateUnverifiable": "aucune mise à jour récente",
+        "stateUnverifiableCount": "{{value0}} sans mise à jour récente",
         "reasonWaiting": "a besoin d'approbation",
-        "reasonUnverifiable": "aucun contact",
         "reasonBlocked": "échoué",
         "groupAgents": "Agents",
         "groupShell": "Coquille",
@@ -17767,12 +17809,12 @@
           "idle": "idle",
           "failed": "échoué",
           "stopped": "arrêté",
-          "unverifiable": "invérifiable",
+          "unverifiable": "aucune mise à jour récente",
           "workingCount": "{{value0}} fonctionne",
           "idleCount": "{{value0}} inactif",
           "failedCount": "{{value0}} a échoué",
           "stoppedCount": "{{value0}} arrêté",
-          "unverifiableCount": "{{value0}} invérifiable"
+          "unverifiableCount": "{{value0}} sans mise à jour récente"
         },
         "startedOne": "A lancé 1 sous-agent",
         "startedN": "Lancement des sous-agents {{value0}}",
@@ -17782,8 +17824,7 @@
         "unnamed": "Sous-agent"
       },
       "conversationCommand": {
-        "pendingWork": "Attendez la fin du travail et des messages en attente avant d'utiliser cette commande.",
-        "unconfirmed": "L'opération de conversation n'a pas été confirmée."
+        "pendingWork": "Attendez la fin du travail et des messages en attente avant d'utiliser cette commande."
       },
       "drop": {
         "title": "Déposer pour joindre à ce chat",
@@ -17820,6 +17861,7 @@
         "notDoneReadHistory": "L'historique de ce chat n'a pas pu être chargé.",
         "notDoneSend": "Votre message n'a pas été envoyé.",
         "tryAgainComposerSend": "Renvoyez-le.",
+        "messageNotSaved": "Impossible d'enregistrer votre message.",
         "notDoneStop": "L'agent n'a pas été arrêté.",
         "notDoneStopTask": "La tâche en arrière-plan n'a pas été arrêtée.",
         "notDoneStopTasks": "Les tâches en arrière-plan n'ont pas été arrêtées.",
@@ -17828,17 +17870,19 @@
         "notDoneCommand": "La commande n'a pas été exécutée.",
         "notDoneGoal": "L'objectif n'a pas été modifié.",
         "restartFailed": "L'agent n'a pas pu redémarrer.",
-        "capacity": "Orca a reçu trop de requêtes au cours de la dernière journée.",
-        "outcomeUnknown": "Orca n'a pas pu confirmer ce qui s'est passé. Vérifiez le chat.",
+        "capacity": "Wakii a reçu trop de requêtes au cours de la dernière journée.",
+        "outcomeUnknown": "Wakii n'a pas pu confirmer ce qui s'est passé. Vérifiez le chat.",
+        "sendOutcomeLost": "Wakii n'a pas pu confirmer que votre message est parvenu à l'agent. Vérifiez le chat, puis renvoyez-le si nécessaire.",
         "questionChanged": "Cette question a déjà reçu une réponse ou a changé.",
-        "historyUnreadable": "Orca n'a pas pu lire l'historique enregistré de ce chat.",
+        "historyUnreadable": "Wakii n'a pas pu lire l'historique enregistré de ce chat.",
         "historyUnusable": "Impossible de charger ce chat.",
-        "historyUnavailable": "Orca n'a pas pu ouvrir l'historique de ce chat pour le moment.",
-        "savedByNewerOrca": "Les chats ont été enregistrés par une version plus récente d'Orca.",
-        "updateOrcaToKeepUsing": "Mettez à jour Orca pour continuer à les utiliser.",
-        "unsupported": "L'instance d'Orca qui exécute ce chat ne le prend pas en charge. Mettez Orca à jour, puis réessayez.",
-        "unreachable": "Orca n'a pas pu joindre l'agent.",
-        "recordFailed": "Orca n'a pas pu l'enregistrer dans l'historique de ce chat.",
+        "historyUnavailable": "Wakii n'a pas pu ouvrir l'historique de ce chat pour le moment.",
+        "savedByNewerOrca": "Les chats ont été enregistrés par une version plus récente d'Wakii.",
+        "updateOrcaToKeepUsing": "Mettez à jour Wakii pour continuer à les utiliser.",
+        "unsupported": "Cela nécessite une version plus récente d'Wakii sur l'ordinateur qui exécute ce chat. Mettez Wakii à jour sur cet ordinateur, puis réessayez.",
+        "notAvailable": "Ceci n'est pas disponible dans ce chat.",
+        "unreachable": "Wakii n'a pas pu joindre l'agent.",
+        "recordFailed": "Wakii n'a pas pu enregistrer ceci dans l'historique du chat.",
         "conversationCleared": "Cette conversation a été effacée.",
         "openCurrentConversation": "Ouvrez la conversation actuelle pour continuer.",
         "clearUnfinished": "Le dernier /clear ne s'est pas terminé.",
@@ -17852,19 +17896,19 @@
         "answerFirst": "Répondez d'abord à la question ou à la demande d'approbation.",
         "backgroundTasksRunning": "Des tâches en arrière-plan sont encore en cours.",
         "waitForBackgroundTasks": "Attendez la fin des tâches en arrière-plan.",
-        "messagesUnsettled": "Un message que vous avez envoyé plus tôt n'a pas encore été confirmé.",
+        "messagesUnsettled": "Un message que vous avez envoyé plus tôt n'est pas encore confirmé.",
         "settleEarlierMessage": "Attendez que votre message précédent soit transmis, ou renvoyez-le.",
         "optionRejected": "L'agent n'a pas accepté ce réglage.",
         "goalsUnsupported": "Cet agent ne prend pas en charge les objectifs.",
         "agentRefused": "L'agent l'a refusé.",
-        "ownerUnproven": "Orca n'a pas confirmé l'arrêt de l'agent précédent de ce chat.",
+        "ownerUnproven": "L'agent précédent de ce chat est peut-être encore en cours d'exécution.",
         "reopenChat": "Rouvrez le chat pour vérifier à nouveau.",
         "terminalAgentHoldsChat": "Ce chat est encore ouvert dans un agent de terminal.",
         "quitTerminalAgent": "Quittez cet agent pour continuer le chat ici.",
-        "hostReconciling": "Orca vérifie encore ce chat après son redémarrage.",
+        "hostReconciling": "Wakii vérifie encore ce chat après son redémarrage.",
         "waitMoment": "Patientez un instant.",
-        "recordUnreadable": "Orca n'a pas pu lire l'état enregistré de ce chat.",
-        "chatNotFound": "L'instance d'Orca qui exécute ce chat n'en a aucune trace.",
+        "recordUnreadable": "Wakii n'a pas pu lire l'état enregistré de ce chat.",
+        "chatNotFound": "Wakii ne trouve pas ce chat.",
         "startNewChat": "Démarrez un nouveau chat pour continuer.",
         "tryAgain": "Réessayez."
       },
@@ -17889,11 +17933,81 @@
         "pausedSendFailed": "Envoi impossible. Appuyez sur Envoyer pour réessayer.",
         "paused": "En pause",
         "queuePausedStopped": "File d'attente en pause, car vous avez interrompu",
-        "queuePausedRestarted": "File d'attente en pause, car Orca a redémarré",
+        "queuePausedRestarted": "File d'attente en pause, car Wakii a redémarré",
         "queuePausedCleared": "File d'attente en pause après l'effacement de la conversation",
         "queuePaused": "File d'attente en pause",
         "resume": "Reprendre"
-      }
+      },
+      "contextMenu": {
+        "copyOrcaSessionId": "Copier l'ID de session Wakii",
+        "orcaSessionIdCopied": "ID de session Wakii copié",
+        "orcaSessionIdCopyFailed": "Impossible de copier l'ID de session Wakii",
+        "orcaSessionIdTooltip": "L'ID qu'Wakii attribue à ce chat, distinct de l'ID de session propre à la CLI de l'agent. Les agents l'utilisent pour se désigner entre eux via Wakii."
+      },
+      "failureWords": {
+        "theAgent": "L'agent",
+        "providerStartFailed": "{{agent}} s'est arrêté avant d'avoir fini de démarrer.",
+        "runCommandAgain": "Relancez /{{command}}.",
+        "sendToTryAgain": "Envoyez votre message pour réessayer.",
+        "couldNotStart": "{{agent}} n'a pas pu démarrer.",
+        "couldNotRestart": "{{agent}} n'a pas pu redémarrer.",
+        "notSignedIn": "{{agent}} n'est pas connecté avec le compte sélectionné.",
+        "signInFirst": "Connectez-vous d'abord.",
+        "signInThenRunCommand": "Connectez-vous, puis relancez /{{command}}.",
+        "signInThenSend": "Connectez-vous, puis renvoyez votre message.",
+        "historyTooLarge": "L'historique de cette conversation est trop volumineux pour être restauré ici.",
+        "managedAccountEnvOverride": "Ce lancement de Claude définit ses propres variables de connexion Anthropic. Supprimez-les pour utiliser un compte Claude géré.",
+        "accountSwitchInProgress": "Un changement de compte Claude est en cours. Réessayez une fois qu'il sera terminé.",
+        "managedAccountUnsupported": "Tant qu'un compte Claude est ajouté dans WSL, les chats Claude nécessitent un compte Claude Windows.",
+        "chooseClaudeAccount": "Choisissez-en un ou ajoutez-en un dans les paramètres Comptes Claude.",
+        "chooseClaudeAccountThenRunCommand": "Choisissez-en un ou ajoutez-en un dans les paramètres Comptes Claude, puis relancez /{{command}}.",
+        "chooseClaudeAccountThenSend": "Choisissez-en un ou ajoutez-en un dans les paramètres Comptes Claude, puis renvoyez votre message.",
+        "providerExitedRow": "{{agent}} s'est arrêté pendant que cette réponse était en cours. Vous pouvez continuer dans cette conversation.",
+        "providerExitedRejection": "{{agent}} s'est arrêté avant l'envoi de ce message.",
+        "providerRejected": "Le fournisseur n'a pas accepté ce message.",
+        "providerRejectedQuoted": "Le fournisseur n'a pas accepté ce message : {{detail}}.",
+        "attachmentEmpty": "Une image de ce message est vide, le message n'a donc pas été envoyé.",
+        "attachmentTooLarge": "Une image de ce message est trop volumineuse, le message n'a donc pas été envoyé.",
+        "attachmentLargerThan": "Une image de ce message dépasse {{size}} Mo, le message n'a donc pas été envoyé.",
+        "attachmentTooMany": "Ce message contient trop d'images, il n'a donc pas été envoyé.",
+        "attachmentAtMost": "{{agent}} accepte au maximum {{limit}} images par message, ce message n'a donc pas été envoyé.",
+        "attachmentTotalTooLarge": "Les images de ce message sont trop volumineuses au total, le message n'a donc pas été envoyé.",
+        "attachmentTotalMoreThan": "Les images de ce message dépassent {{size}} Mo au total, le message n'a donc pas été envoyé.",
+        "attachmentUnsupportedType": "{{agent}} n'accepte que les images PNG, JPEG, GIF et WebP, ce message n'a donc pas été envoyé.",
+        "attachmentNotAFile": "Une image de ce message n'est pas un fichier, le message n'a donc pas été envoyé.",
+        "attachmentNoSource": "Une image de ce message n'a aucun fichier à envoyer, le message n'a donc pas été envoyé.",
+        "attachmentInvalid": "Une pièce jointe de ce message ne peut pas être envoyée à l'agent.",
+        "attachmentUnreadable": "Une pièce jointe de ce message n'a pas pu être lue, le message n'a donc pas été envoyé.",
+        "emptyMessage": "Ce message est vide, il n'a donc pas été envoyé.",
+        "queueFull": "Trop de messages attendaient l'agent, celui-ci n'a donc pas été envoyé.",
+        "writeFailed": "Wakii n'a pas pu transmettre ce message à l'agent, il n'a donc pas été envoyé.",
+        "cancelled": "Ce message a été retiré avant que l'agent ne commence à le traiter.",
+        "chatClosed": "Le chat s'est fermé avant l'envoi de ce message.",
+        "hostRestarted": "Wakii a redémarré avant l'envoi de ce message.",
+        "notDelivered": "Ce message n'a pas été remis.",
+        "notDeliveredSendAgain": "Ce message n'a pas été remis. Renvoyez-le pour continuer.",
+        "commandRefused": "Cette commande n'a pas été exécutée.",
+        "commandRefusedTryAgain": "Cette commande n'a pas été exécutée. Réessayez.",
+        "compactionFailed": "La compaction a échoué.",
+        "compactionFailedQuoted": "La compaction a échoué : {{detail}}.",
+        "compactionUnconfirmed": "La fin de la compaction n'est pas confirmée.",
+        "cancelUnconfirmed": "L'annulation n'a pas été confirmée.",
+        "stopRefused": "{{agent}} ne s'est pas arrêté.",
+        "stopRefusedQuoted": "{{agent}} ne s'est pas arrêté : {{detail}}.",
+        "noTurnToStop": "{{agent}} n'avait aucun tour en cours à arrêter.",
+        "answerUnconfirmed": "Votre réponse a été enregistrée, mais l'agent ne l'a pas confirmée.",
+        "hostFault": "Wakii a rencontré un problème, l'opération n'a donc pas abouti.",
+        "hostFaultTryAgain": "Wakii a rencontré un problème, l'opération n'a donc pas abouti. Réessayez.",
+        "hostStopped": "{{agent}} n'a jamais fini de démarrer, Wakii l'a donc arrêté.",
+        "providerRateLimited": "{{agent}} est limité en débit et réessaie.",
+        "providerRetrying": "{{agent}} a rencontré un problème temporaire et réessaie.",
+        "providerRetryingQuoted": "{{agent}} réessaie : {{detail}}.",
+        "previousExitUnverifiable": "L'exécution précédente de {{agent}} est peut-être toujours en cours. Vos messages seront envoyés dès qu'elle s'arrêtera."
+      },
+      "structuredSessionHostDeclined": "{{value0}} ouvert dans un terminal",
+      "structuredSessionHostDeclinedDescription": "Ce serveur ne peut pas exécuter de discussion {{value0}} dans cet espace de travail.",
+      "structuredSessionHostUnreachable": "Impossible de joindre {{value0}}",
+      "structuredSessionHostUnreachableDescription": "Wakii n'a pas ouvert de discussion {{value0}}. Vérifiez la connexion au serveur et réessayez."
     },
     "tab": {
       "bar": {
@@ -18147,6 +18261,12 @@
           "unknown": "Hôte inconnu",
           "candidateName": "{{value0}} sur {{value1}}"
         }
+      },
+      "creation": {
+        "worktreeReadyToast": "Le worktree {{name}} est prêt",
+        "workspaceReadyToast": "L'espace de travail {{name}} est prêt",
+        "goToWorktree": "Aller au worktree",
+        "goToWorkspace": "Aller à l'espace de travail"
       }
     },
     "agentSessionContinuation": {
@@ -18174,7 +18294,7 @@
       "sent": "Contexte de session envoyé à {{agent}} dans une nouvelle session.",
       "deliveryFailed": "La nouvelle session {{agent}} a démarré, mais son contexte n'a pas pu être envoyé.",
       "launchFailed": "Impossible de démarrer une nouvelle session {{agent}}.",
-      "deliveryUnconfirmed": "Orca n'a pas pu confirmer que {{agent}} a reçu le contexte de la session. Vérifiez la nouvelle session et collez-le vous-même si sa saisie est vide.",
+      "deliveryUnconfirmed": "Wakii n'a pas pu confirmer que {{agent}} a reçu le contexte de la session. Vérifiez la nouvelle session et collez-le vous-même si sa saisie est vide.",
       "copyPrompt": "Copier le prompt"
     },
     "status": {
@@ -18405,7 +18525,7 @@
       "demoHit4Age": "5 j",
       "demoHit1Snippet": "Le [[délai de connexion]] est passé à 30 s avec un nouvel essai sur l'actualisation du jeton.",
       "demoHit1Title": "Corriger la redirection d'authentification instable",
-      "indexingDescription": "Orca lit vos transcriptions d'agent passées pour vous permettre de les rechercher. Cela peut prendre quelques minutes.",
+      "indexingDescription": "Wakii lit vos transcriptions d'agent passées pour vous permettre de les rechercher. Cela peut prendre quelques minutes.",
       "recent3Text": "Voici une première version des notes, regroupées par domaine.",
       "demoHit5Title": "Échec du déploiement en préproduction",
       "demoHit3Title": "Renforcement des tests e2e d'authentification",
@@ -18458,6 +18578,17 @@
     },
     "fileLoad": {
       "hostUnresolved": "L'hôte n'a pas pu trouver l'espace de travail de ce fichier. Il a peut-être été supprimé ou l'hôte n'en est peut-être pas encore au courant. Réessayez ou fermez cet onglet à partir de la bande d'onglets."
+    },
+    "markdownPreview": {
+      "tooLarge": "Le fichier dépasse la limite d'aperçu de {{limit}}. Ouvrez le fichier pour afficher sa source.",
+      "tooLargeInDiff": "Le fichier dépasse la limite d'aperçu de {{limit}}. Passez en mode source pour afficher les différences.",
+      "blockTooLarge": "Ce bloc est trop volumineux pour être affiché. Ouvrez la vue source pour le lire.",
+      "largeNotice": "Aperçu volumineux. Utilisez la vue source pour copier le document complet. L’exportation PDF est indisponible.",
+      "processingFailed": "Ce document dépasse les limites de l’aperçu. Ouvrez la vue source pour lire le fichier complet.",
+      "preparing": "Préparation de l’aperçu…",
+      "searching": "Recherche…",
+      "searchFailed": "La recherche n’a pas pu aboutir. Réessayez.",
+      "refreshFailed": "La mise à jour de l’aperçu a échoué. La version précédente est affichée ; ouvrez la source pour voir le contenu actuel."
     }
   },
   "checksPanel": {
@@ -18497,7 +18628,12 @@
     "genericDetail": "Il s'agit souvent d'un problème de pilote graphique ou d'installation. Rechargez pour réessayer, ou quittez et relancez Wakii.",
     "title": "Wakii ne parvient toujours pas à charger",
     "stalledMessage": "La fenêtre de l'application a cessé de répondre lors du rechargement après un crash.",
-    "crashLoopMessage": "La fenêtre de l'application s'est écrasée à plusieurs reprises et a cessé de se recharger automatiquement."
+    "crashLoopMessage": "La fenêtre de l'application s'est écrasée à plusieurs reprises et a cessé de se recharger automatiquement.",
+    "tryAgain": "Réessayer",
+    "launchFailedMessage": "Wakii n'a pas pu démarrer le processus qui affiche sa fenêtre.",
+    "launchFailedDetail": "Wakii a réessayé {{recoveryCount}} fois sans succès.",
+    "processLimitDetail": "Le système a refusé de créer un nouveau processus, car votre compte utilisateur a atteint sa limite de processus. Cela vient souvent de terminaux, de serveurs de développement ou d'agents emballés. Fermez-en quelques-uns, puis cliquez sur Réessayer.",
+    "launchFailedGenericDetail": "Le système a refusé de le démarrer. Libérez de la mémoire ou fermez d'autres applications, puis cliquez sur Réessayer. Si le problème persiste, réinstallez Wakii."
   },
   "sessionSearch": {
     "panel": {
@@ -18641,5 +18777,21 @@
     "addTypedPath": "Add",
     "noDirectories": "No folders added yet.",
     "removePath": "Remove {{name}}"
+  },
+  "accounts": {
+    "managedData": {
+      "description": "Ajoutez des comptes en exécutant cette commande dans un terminal sur l’hôte Wakii. La sélection s’applique aux nouveaux lancements sur cet hôte ; les connexions SSH directes et WSL sous Windows utilisent leurs propres identifiants.",
+      "copied": "Copié",
+      "add": "Copier la commande d’ajout de compte",
+      "refresh": "Actualiser les comptes",
+      "upgrade": "Si les comptes n’apparaissent pas, mettez à jour ou redémarrez l’hôte Wakii.",
+      "system": "Compte système par défaut",
+      "active": "Actif",
+      "select": "Sélectionner",
+      "remove": "Supprimer",
+      "removeTitle": "Supprimer le compte géré ?",
+      "removeDescription": "Arrêtez d’abord les agents utilisant ce profil. Sa suppression efface les identifiants et conversations enregistrés. Votre connexion système reste inchangée.",
+      "cancel": "Annuler"
+    }
   }
 }
