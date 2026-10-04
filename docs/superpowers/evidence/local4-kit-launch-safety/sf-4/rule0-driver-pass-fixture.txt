@@ -1,0 +1,27 @@
+# Rule 0 — Driver pass THẬT trên fixture portable (04/10)
+# Fixture: /tmp/sf4-fixture/repo — mindmap local STALE (sf-1 pending, sf-2 pending) trên master,
+# dest branch story-fixture (meta.dest) có sf-2 DONE — mô phỏng đúng kịch bản FI-30/VU-32 (copy
+# worktree cũ, dest đã merge). HOME fake -> trust-inject không đụng ~/.claude.json thật.
+#
+# Lệnh: HOME=$FX/home bash <kit>/kit/bin/workfront-driver --repo $FX/repo --dry local4-fixture
+# exit code: 0
+
+## driver.log (toàn bộ — SẠCH: không crash, không stack trace)
+```
+2026-10-04T06:53:55Z PORTABLE: worktree created /tmp/sf4-fixture/repo/../repo-local4-fixture (branch local4-fixture từ master)
+trust: skip (ENOENT: no such file or directory, open '/tmp/sf4-fixture/home/.claude.json')
+2026-10-04T06:53:55Z === driver start (--dry slug=local4-fixture dry=1) ===
+2026-10-04T06:53:55Z MM resolve: source=local dest-upgrade=sf-2
+2026-10-04T06:53:55Z DRY: states: sf-1 pending sf-2 done 
+2026-10-04T06:53:55Z DRY: nhánh sẽ chọn — VERIFY sf-1 (attempt 1)
+2026-10-04T06:53:55Z === driver done ===
+```
+
+## outcomes.jsonl (1 dòng, action đúng action-string — đối chứng defect 4 ở ILEC)
+```
+{"ts":"2026-10-04T06:53:55Z","slug":"local4-fixture","mode":"--dry","duration_s":0,"action":"2026-10-04T06:53:55Z DRY: nhánh sẽ chọn — VERIFY sf-1 (attempt 1)"}
+```
+
+## Verdict: đúng — SF pending đầu (sf-1) được chọn VERIFY; sf-2 đã done KHÔNG được chọn lại
+(dest-upgrade no-downgrade — không làm lại việc đã merge = đúng điểm G4/FI-30/VU-32).
+Worktree per-story tự dựng: repo-local4-fixture (branch local4-fixture từ master).

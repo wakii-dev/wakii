@@ -1,0 +1,34 @@
+# Fence sf-3 — story-preflight cảnh báo primary-agent + skip-permissions (04/10)
+# Kịch bản đêm 03/10: pid 72180 chạy bypass + 5-6 session trên primary, không công cụ nào cảnh báo.
+# story-preflight THẬT (kit đã merge sf-3) chạy TRONG fixture primary với process thật
+# comm=claude argv --dangerously-skip-permissions (binary C tự compile, cwd=fixture) + mindmap
+# fixture meta.dest=story-fixture (branch tồn tại local → STORY_OPEN=1).
+# PREFLIGHT_NODE_MODULES=0 (.story-preflight.conf fixture) — chỉ cô lập check không liên quan.
+
+## Mặc định (WARN tại cửa — không kill, rc vẫn 0)
+```
+═══ PRE-FLIGHT CHECK ═══
+  config: /private/tmp/sf4-fixture/repo/.story-preflight.conf
+✓ Branch: master
+✓ Working tree sạch
+⚠ Server :3001 không respond (có thể chưa start — không chặn)
+⚠ DB file không tồn tại: /private/tmp/sf4-fixture/repo/server/prisma/prisma/dev.db
+⚠ server/.env thiếu — copy từ .env.example
+⚠ Agent sống trên primary (story đang mở): · pid 19110 cwd=/private/tmp/sf4-fixture/repo — story làm trên worktree, KHÔNG trên primary
+⚠ BYPASS permissions: claude chạy --dangerously-skip-permissions trong repo này (pid 19110) — vi phạm LUẬT human-in-the-loop 24/09 (KHÔNG bypass; bị chặn → đổi cách/hỏi)
+
+✓ PRE-FLIGHT PASS — bắt đầu code
+```
+
+## STRICT (PREFLIGHT_STRICT_AGENT=1 — FAIL tại cửa, rc=1)
+```
+═══ PRE-FLIGHT CHECK ═══
+❌ Agent sống trên primary (story đang mở): · pid 20746 cwd=/private/tmp/sf4-fixture/repo — dọn session trên primary trước khi code
+❌ BYPASS permissions: claude chạy --dangerously-skip-permissions trong repo này (pid 20746) — vi phạm LUẬT human-in-the-loop 24/09 — dừng, đổi cách/hỏi
+🚫 PRE-FLIGHT FAIL — fix trước khi code
+```
+
+## Không overblock: claude.exe sessions THẬT khác trên máy (cwd ngoài fixture) không bị hit —
+chỉ process có cwd trong checkout đang xét được cảnh báo (đúng boundary ROOT_P).
+
+VERDICT: PASS — 2/2 cảnh báo (primary-agent + permission bypass) kèm pid/cwd; strict mode FAIL đúng.

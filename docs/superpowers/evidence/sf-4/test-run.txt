@@ -1,0 +1,19 @@
+# test-run — LOCAL-4 sf-4 (convergence: driver supervise portable + 3 fence)
+HEAD: 856e537c1d (code commit — NAVIGATOR runbook + fingerprint rehash; evidence commit ngay sau)
+tdd: skipped-tdd: SF không thêm code runtime (boundary pack: driver KHÔNG đổi code) — thay đổi duy nhất = NAVIGATOR.md (docs) + fingerprint rehash; 'chức năng' = bằng chứng chạy bin thật (3 fence + 2 driver pass) trong evidence kèm review độc lập
+
+Evidence chi tiết (driver pass + 3 fence + snapshot ILEC):
+docs/superpowers/evidence/local4-kit-launch-safety/sf-4/
+- observations-ilec.md (4 quan sát defect — report, không fix: boundary)
+- rule0-driver-pass-ilec.txt (pass THẬT trên ILEC VU-32 — done-gate, state hash bất biến)
+- rule0-driver-pass-fixture.txt (pass fixture portable — log sạch, verdict đúng)
+- fence-sf1-launch-blocked.txt (sf-1: 2 vùng mù BLOCKED + đối chứng âm)
+- fence-sf2-states-dest.txt (sf-2: dest-upgrade no-downgrade — không stale)
+- fence-sf3-preflight-warn.txt (sf-3: WARN ×2 + STRICT FAIL + không overblock)
+- ilec-snapshot/ (cp read-only driver.log/state/outcomes của ILEC)
+- review-1.md (verdict code-reviewer độc lập)
+
+Suite + hygiene: xem test-run.txt đầy đủ trong dir chi tiết ở trên (45 suites kit,
+manifest 30/30, lockstep 7/7, fingerprint rehash b73d92b5…, kitHash giữ nguyên).
+1 suite fail PRE-EXISTING (story-coordinator-pass-tests C25 — environment leak run
+LOCAL-4 sống; baseline HEAD fail cùng cause — không phải regression sf-4).
