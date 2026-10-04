@@ -111,7 +111,7 @@ Coordinator KHÔNG chỉ điều phối — là **BA của story**: nắm epic-w
 touch map, story-kb. Ba nhiệm vụ:
 
 1. **Brief the-WHY** — context pack gửi worker phải có: tại sao tính năng tồn tại,
-   ai dùng, acceptance nghĩa là gì. Worker định hướng được, không làm theo清单 mù.
+   ai dùng, acceptance nghĩa là gì. Worker định hướng được, không làm theo checklist mù.
 2. **Phân xử câu hỏi worker** — câu HOW có trong spec/KB/touch map → TỰ TRẢ lời pane
    + **audit bắt buộc trích dẫn mục spec** (vd "BA auto-approve: migrate thuộc
    acceptance SF-4"); scope/rủi ro/priority/tiền → RELAY user kèm diễn giải

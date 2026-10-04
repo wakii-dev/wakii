@@ -58,7 +58,7 @@ baseline + `story-doctor --live` canh vi phạm. Session cá nhân user ngoài p
 - **Nguồn nghiệp vụ**: epic spec + story `.wakii` (why/acceptance) + context packs +
   `story-kb` + glossary — coordinator nắm từ CREATE
 - **Nhiệm vụ 1 — brief the-WHY**: context pack bổ sung tại sao tính năng tồn tại,
-  ai dùng, acceptance nghĩa là gì (worker định hướng, không làm theo清单 mù)
+  ai dùng, acceptance nghĩa là gì (worker định hướng, không làm theo checklist mù)
 - **Nhiệm vụ 2 — phân xử câu hỏi**: câu HOW có trong spec/KB/touch map → BA tự trả
   vào pane + **ghi audit (bắt buộc trích dẫn mục spec)**; scope/rủi ro/priority →
   RELAY user kèm diễn giải tiếng-người + khuyến nghị
