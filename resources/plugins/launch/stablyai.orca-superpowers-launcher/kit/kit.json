@@ -508,6 +508,12 @@
       "description": "kit health check read-only — 8 checks PASS/WARN/FAIL + fix hint trên install dir: marker/kitHash/bins/deps/hooks/KB/orphans/agents-skills; --json machine-readable, exit 0 WARN-only / 1 khi FAIL (GH-85 #111)"
     },
     {
+      "name": "story-pane-watch",
+      "type": "bin",
+      "category": "infra",
+      "description": "detector 4-state worker panes của 1 story (working/waiting-approval/blocked/idle-done) qua tail — Orchestrated HITL spec 04/10; fail-open; --story <hub>"
+    },
+    {
       "name": "story-guard-secrets",
       "type": "bin",
       "category": "infra",
