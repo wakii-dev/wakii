@@ -83,7 +83,13 @@ function makeOrcaLaunchStub(dir) {
 if [ "$1" = "worktree" ] && [ "$2" = "show" ]; then exit 1; fi
 if [ "$1" = "worktree" ] && [ "$2" = "create" ]; then
   printf '%s\\n' "$@" >> "$STUB_ORCA_LOG"
-  printf '%s\\n' '{"ok":true}'
+  printf '%s\\n' '{"ok":true,"result":{"worktree":{"id":"repo-1::/tmp/fake-sf-wt"}}}'
+  exit 0
+fi
+if [ "$1" = "terminal" ]; then
+  printf '%s\\n' "$@" >> "$STUB_ORCA_LOG"
+  if [ "$2" = "create" ]; then printf '%s\\n' '{"ok":true,"result":{"handle":"term_fake"}}'
+  else printf '%s\\n' '{"ok":true,"result":{"satisfied":true}}'; fi
   exit 0
 fi
 case "$3" in
@@ -191,9 +197,11 @@ Tasks: task-a / task-b
   const orcaLog = join(dir, 'orca.log')
   const r = runLaunch(dir, stub, ['SF-1', '--bracket', bf], { STUB_ORCA_LOG: orcaLog })
   check('L6', 'exit 0 + LAUNCHED', r.code === 0 && r.out.includes('LAUNCHED ✓'), `code=${r.code} out=${r.out}`)
-  check('L6', 'cha = story worktree (không hậu tố -coordinator)', r.out.includes('worktree cha story-test-1-hub chưa có'), r.out)
+  check('L6', 'cha = story worktree (không hậu tố -coordinator)', r.out.includes('worktree cha trên branch story-test-1-hub chưa có'), r.out)
   const log = existsSync(orcaLog) ? readFileSync(orcaLog, 'utf8') : ''
   check('L6', 'create --base-branch story-test-1-hub', log.includes('--base-branch') && log.includes('story-test-1-hub'), log)
+  check('L6', 'worker acceptEdits (LUẬT 24/09 — không bypass)', log.includes('--permission-mode acceptEdits'), log)
+  check('L6', 'không --agent / không skip-permissions trong spawn', !log.includes('--agent') && !log.includes('dangerously-skip-permissions'), log)
   rmSync(dir, { recursive: true, force: true })
 }
 
@@ -205,7 +213,7 @@ console.log('== L7 launch legacy: lineage cha giữ <dest>-coordinator ==')
   const orcaLog = join(dir, 'orca.log')
   const r = runLaunch(dir, stub, ['SF-1', '--bracket', bf], { STUB_ORCA_LOG: orcaLog })
   check('L7', 'exit 0 + LAUNCHED', r.code === 0 && r.out.includes('LAUNCHED ✓'), `code=${r.code} out=${r.out}`)
-  check('L7', 'cha = <dest-slug>-coordinator (legacy giữ nguyên)', r.out.includes('worktree cha test-1-coordinator chưa có'), r.out)
+  check('L7', 'cha = <dest-slug>-coordinator (legacy giữ nguyên)', r.out.includes('worktree cha trên branch story/test-1 chưa có'), r.out)
   const log = existsSync(orcaLog) ? readFileSync(orcaLog, 'utf8') : ''
   check('L7', 'create --base-branch story/test-1', log.includes('--base-branch') && log.includes('story/test-1'), log)
   rmSync(dir, { recursive: true, force: true })

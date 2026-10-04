@@ -93,7 +93,9 @@ slash-form `story/<epic-id>-<slug>`. (KHÔNG dùng legacy `story-base`.)
    enforce ở tool).
 6. **Local story (Linear unreachable)**: `story-launch` binary đòi Linear ID cứng → không
    dùng được; recipe: `orca worktree create --repo id:<repoId> --name sf-N-<slug>
-   --base-branch <dest> --parent-worktree path:<hub> --agent claude --prompt <template>` +
+   --base-branch <dest> --parent-worktree path:<hub> --json` → spawn worker HAI BƯỚC
+   `terminal create --command "claude --permission-mode acceptEdits"` + wait + `send
+   --text` (CẤM `--agent claude` — template Orca cài bypass, LUẬT 24/09) +
    copy context pack vào sf worktree NGAY sau create (race với worker đọc) + prompt worker
    có BƯỚC-0 gate kiểm header pack (chống đè chéo story).
 

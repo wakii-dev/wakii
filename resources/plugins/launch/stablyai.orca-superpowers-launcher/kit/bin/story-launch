@@ -448,15 +448,39 @@ if [ -n "$_hub_path" ]; then
 else
   echo "  (worktree cha trên branch $DEST chưa có — tạo ở APPROVE; launch tiếp không lineage)"
 fi
-orca worktree create --name "sf-$N-$SLUG" --linear-issue "$LINEAR" \
-  --base-branch "$DEST" --agent claude $PARENT_FLAG --prompt "$PROMPT" --json >/dev/null 2>&1 \
-  && echo "LAUNCHED ✓ sf-$N-$SLUG" || {
-    echo "LAUNCH FAIL — read-back: worktree list"
-    # guard branch giữ lại trên remote = dấu vết vô hại — máy khác thấy sẽ skip
-    [ "$CLAIM" = 1 ] && [ "$(distributed_enabled)" = "1" ] \
-      && echo "distributed: guard branch sf-$N-$SLUG còn trên remote — vô hại (máy khác sẽ skip)"
-    exit 1
-  }
+# LUẬT 24/09 (enforce 04/10): cấm spawn bypass — template agent 'claude' của Orca
+# cài sẵn --dangerously-skip-permissions (bằng chứng: pid 20066 LOCAL-4 sf-4 worker).
+# Hai bước theo guide orca-cli custom-argv: create trần → terminal create argv tường
+# minh acceptEdits → wait tui-idle → send prompt qua --text (khỏi nhét prompt vào argv).
+CREATE_OUT="$(orca worktree create --name "sf-$N-$SLUG" --linear-issue "$LINEAR" \
+  --base-branch "$DEST" $PARENT_FLAG --json 2>&1)"
+WID="$(printf '%s' "$CREATE_OUT" | python3 -c 'import json,sys
+try:
+  print(json.load(sys.stdin)["result"]["worktree"]["id"])
+except Exception:
+  print("")')"
+if [ -z "$WID" ]; then
+  echo "LAUNCH FAIL — worktree không tạo được; read-back: worktree list"
+  # guard branch giữ lại trên remote = dấu vết vô hại — máy khác thấy sẽ skip
+  [ "$CLAIM" = 1 ] && [ "$(distributed_enabled)" = "1" ] \
+    && echo "distributed: guard branch sf-$N-$SLUG còn trên remote — vô hại (máy khác sẽ skip)"
+  exit 1
+fi
+AGENT_CH="$(orca terminal create --worktree "id:$WID" --title "sf-$N-$SLUG" \
+  --command "claude --permission-mode acceptEdits" --json 2>/dev/null \
+  | python3 -c 'import json,sys
+try:
+  r=json.load(sys.stdin)["result"]
+  print(r.get("terminal",{}).get("handle") or r.get("handle") or "")
+except Exception:
+  print("")')"
+orca terminal wait --terminal "$AGENT_CH" --for tui-idle --timeout-ms 90000 --json >/dev/null 2>&1 || true
+if orca terminal send --terminal "$AGENT_CH" --text "$PROMPT" --enter --json >/dev/null 2>&1; then
+  echo "LAUNCHED ✓ sf-$N-$SLUG (acceptEdits, human-in-the-loop)"
+else
+  echo "LAUNCH FAIL ở bước send prompt — worktree ĐÃ tạo ($WID), gửi tay prompt theo references/sf-launch-prompt.md"
+  exit 1
+fi
 # mindmap snapshot (VU-14 SF-1 — fail-open; dry-run đã exit trước nên preview không ghi).
 # Nguồn .wakii canonical → mindmap đã có, không regenerate từ bracket.
 if [ -z "$WAKII" ]; then
