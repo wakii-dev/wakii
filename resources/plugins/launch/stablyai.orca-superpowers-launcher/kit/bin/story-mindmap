@@ -12,6 +12,17 @@
 //   story-mindmap --bootstrap <file> [...]  # alias --bracket — migrate story cũ
 //   story-mindmap --decode <file>     # verdict decoder — JSON ra stdout, exit 0/2
 //   story-mindmap --update-state <file.wakii>
+//   story-mindmap --resolve <file> [--repo <dir>] [--dest <branch>] [--node <sf-N>] [--json]
+//
+// Resolve (LOCAL-4 sf-2 — bệnh FI-30/VU-32): đọc chuẩn state sf node giữa các copy
+// worktree, READ-ONLY tuyệt đối (không ghi file nào):
+//   base = copy local → nâng state từ nhánh đích (git show <dest>:<relpath>, luật
+//   no-downgrade: đích `done` nâng local pending; local `done` KHÔNG bị hạ) → base
+//   thiếu thì đọc thẳng nhánh đích → worktree anh em (git worktree list) → MISSING
+//   exit 3. Snapshot đích thường chỉ có sau trigger/close → git show hỏng = warning
+//   fail-open, không lỗi. Exit: 0 OK · 2 usage/INVALID · 3 MISSING.
+//   Ref đích khớp meta.dest (hoặc --dest) theo thứ tự: head đúng tên → remote đúng
+//   tên → head đuôi "/<dest>" → remote đuôi "/<dest>" (deterministic).
 //
 // Field ownership (spec 2026-09-27 §11) — --update-state chỉ sửa phần MÁY:
 //   người (KHÔNG đụng): node title/tier/linear/summary/acceptance/tests/notes/
@@ -339,7 +350,7 @@ function cmdGenerate(argv) {
   // --bootstrap: alias của --bracket (VU-14 SF-5 T7 — migrate story cũ 1 lần;
   // semantics giống hệt, tên mới cho mục đích migration)
   const bracketArg = flagValue('--bracket') || flagValue('--bootstrap');
-  if (!bracketArg) die(2, 'usage: story-mindmap --bracket <file> | --bootstrap <file> [--out <path>] [--mermaid-md <path>] | --decode <file> | --update-state <file.wakii>');
+  if (!bracketArg) die(2, 'usage: story-mindmap --bracket <file> | --bootstrap <file> [--out <path>] [--mermaid-md <path>] | --decode <file> | --update-state <file.wakii> | --resolve <file> [--repo <dir>] [--dest <branch>] [--node <sf-N>] [--json]');
   const bracketPath = path.resolve(bracketArg);
   if (!fs.existsSync(bracketPath)) die(2, `bracket không tồn tại: ${bracketArg}`);
   const repo = path.resolve(path.dirname(bracketPath), '..', '..', '..'); // docs/superpowers/brackets → repo (3 cấp)
@@ -460,12 +471,161 @@ function cmdDecode(decodeArg) {
   process.exit(r.valid ? 0 : 2);
 }
 
+// ── resolve (LOCAL-4 sf-2) — đọc chuẩn state sf node giữa các copy worktree ──
+function gitRun(args, cwd, timeoutMs = 10000) {
+  try {
+    return execFileSync('git', args, { cwd, encoding: 'utf8', timeout: timeoutMs, stdio: ['ignore', 'pipe', 'ignore'] });
+  } catch { return null; }
+}
+
+// ref đích khớp tên: chặn ref rác (trỏ đâu không rõ = đọc nhầm chính là bệnh)
+const SAFE_DEST_RE = /^[A-Za-z0-9][A-Za-z0-9._/-]*$/;
+function resolveDestRef(dest, repo) {
+  if (!dest || !SAFE_DEST_RE.test(dest) || dest.includes('..')) return null;
+  const grab = prefix => {
+    const out = gitRun(['for-each-ref', '--format=%(refname:short)', prefix], repo);
+    return out === null ? null : out.split('\n').map(s => s.trim()).filter(Boolean);
+  };
+  const heads = grab('refs/heads');
+  if (heads === null) return null;
+  const remotes = grab('refs/remotes');
+  if (remotes === null) return null;
+  const pick = list => list.find(r => r === dest) || list.find(r => r.endsWith('/' + dest));
+  return pick(heads) || pick(remotes) || null;
+}
+
+function cmdResolve(fileArg, rest) {
+  const flagValue = name => { const i = rest.indexOf(name); return i === -1 ? '' : (rest[i + 1] || '').trim(); };
+  const repoArg = flagValue('--repo');
+  const destArg = flagValue('--dest');
+  const nodeFilter = flagValue('--node');
+  const jsonOut = rest.includes('--json');
+  if (!fileArg) die(2, 'usage: story-mindmap --resolve <file.wakii> [--repo <dir>] [--dest <branch>] [--node <sf-N>] [--json]');
+
+  const warnings = [];
+  const fileAbs = path.resolve(fileArg);
+  const repo = repoArg ? path.resolve(repoArg)
+    : (gitRun(['rev-parse', '--show-toplevel'], path.dirname(fileAbs)) || '').trim() || path.dirname(fileAbs);
+  const repoRoot = (gitRun(['rev-parse', '--show-toplevel'], repo) || '').trim() || repo;
+
+  // 1) base: copy local — theo cwd (cách consumer nhìn) rồi theo --repo
+  const cands = [...new Set([fileAbs, path.resolve(repo, fileArg)])];
+  let base = null, baseFile = '', invalidErr = '';
+  for (const c of cands) {
+    let raw;
+    try { raw = fs.readFileSync(c); } catch { continue; }
+    const d = decodeWakii(raw);
+    if (d.valid) { base = d.mindmap; baseFile = c; break; }
+    if (!invalidErr) invalidErr = `${c}: ${d.error}`;
+  }
+  // relpath repo-root (dùng cho git show + worktree scan). git trả root đã
+  // resolve symlink (/tmp → /private/tmp trên macOS) — thử cả các gốc, gốc nào
+  // chứa được file thì dùng; không thì fallback path như-given (fail-open).
+  let rel = '';
+  {
+    const anchor = baseFile || cands.find(c => { const r = path.relative(repoRoot, c); return r && !r.startsWith('..'); }) || fileAbs;
+    const tryRel = rt => { if (!rt) return ''; const r = path.relative(rt, anchor); return r && !r.startsWith('..') ? r.split(path.sep).join('/') : ''; };
+    rel = tryRel(repoRoot) || tryRel(repo) || (repoArg ? tryRel(path.resolve(repoArg)) : '');
+    if (!rel) rel = fileArg.split(path.sep).join('/');
+  }
+
+  const gitOk = gitRun(['--version'], repo) !== null;
+  if (!gitOk) warnings.push('git không chạy được — bỏ qua nhánh đích + worktree scan (fail-open về copy local)');
+  const showDest = ref => {
+    if (!ref || !rel) return null;
+    const out = gitRun(['show', `${ref}:${rel}`], repoRoot || repo);
+    if (out === null) return null;
+    const d = decodeWakii(Buffer.from(out));
+    return d.valid ? d.mindmap : null;
+  };
+
+  let source = 'local', sourceRef = '';
+  if (!base) {
+    // 2) local không có → đọc thẳng nhánh đích (cần --dest: không có local meta
+    // để biết dest) → worktree anh em (vocabulary-learn)
+    const ref0 = gitOk ? resolveDestRef(destArg, repoRoot || repo) : null;
+    const destDoc0 = showDest(ref0);
+    if (destDoc0) { base = destDoc0; source = 'dest-branch'; sourceRef = ref0; baseFile = `${ref0}:${rel}`; }
+    if (!base) {
+      const wl = gitOk ? gitRun(['worktree', 'list', '--porcelain'], repoRoot || repo) : null;
+      if (wl !== null) {
+        for (const line of wl.split('\n')) {
+          if (!line.startsWith('worktree ')) continue;
+          const wt = line.slice('worktree '.length).trim();
+          let raw;
+          try { raw = fs.readFileSync(path.join(wt, ...rel.split('/'))); } catch { continue; }
+          const d = decodeWakii(raw);
+          if (d.valid) { base = d.mindmap; baseFile = path.join(wt, ...rel.split('/')); source = 'worktree'; break; }
+        }
+      }
+      if (!base) {
+        if (invalidErr) die(2, `story-mindmap --resolve: INVALID — ${invalidErr}`);
+        die(3, `story-mindmap --resolve: MISSING — không thấy ${rel} ở copy nào (local: ${cands.join(', ') || '—'}; đích: ${destArg ? `"${destArg}" không khớp ref nào hoặc không có snapshot` : 'không xác định được (không --dest, không local meta)'}; worktree scan: ${wl === null ? 'không đọc được' : 'sạch'})`);
+      }
+    }
+  }
+
+  // destRequested SAU khi có base — bản worktree-only cũng phải được nâng state
+  // từ đích (VU-32 × vocabulary-learn: merge xong, consumer trên primary không
+  // có copy nào vẫn phải thấy done)
+  const destRequested = destArg || (base && base.meta && typeof base.meta.dest === 'string' ? base.meta.dest : '');
+  const destRef = source === 'dest-branch' ? sourceRef : (gitOk ? resolveDestRef(destRequested, repoRoot || repo) : null);
+
+  // 3) nâng state từ nhánh đích (no-downgrade: đích done nâng local; local done giữ)
+  const upgraded = [];
+  if (source !== 'dest-branch') {
+    const destDoc = showDest(destRef);
+    if (!destDoc) {
+      if (destRef) warnings.push(`dest ${destRef} không có snapshot ${rel} — bỏ qua nâng state (snapshot chỉ có sau mindmap-trigger/close)`);
+      else if (destRequested && gitOk) warnings.push(`dest "${destRequested}" không khớp ref nào — bỏ qua nâng state`);
+    } else {
+      const byId = new Map(destDoc.nodes.map(n => [n.id, n]));
+      for (const n of base.nodes) {
+        if (n.kind !== 'sf' || n.state === 'done') continue;
+        const dn = byId.get(n.id);
+        if (dn && dn.state === 'done') { n.state = 'done'; upgraded.push(n.id); }
+      }
+      if (upgraded.length) {
+        const epic = base.nodes.find(n => n.kind === 'epic');
+        const sfs = base.nodes.filter(n => n.kind === 'sf');
+        if (epic) epic.state = sfs.length > 0 && sfs.every(s => s.state === 'done') ? 'complete' : 'in-progress';
+      }
+    }
+  }
+
+  const states = {};
+  for (const n of base.nodes) if (n.kind === 'sf') states[n.id] = n.state || 'pending';
+  const epicNode = base.nodes.find(n => n.kind === 'epic');
+  if (jsonOut) {
+    console.log(JSON.stringify({
+      ok: true, source, file: baseFile, rel,
+      dest: { requested: destRequested || null, ref: source === 'dest-branch' ? sourceRef : (destRef || null) },
+      states, upgraded, epicState: epicNode ? (epicNode.state || null) : null, warnings
+    }));
+    return;
+  }
+  if (nodeFilter) {
+    if (!(nodeFilter in states)) {
+      die(3, `story-mindmap --resolve: MISSING — node ${nodeFilter} không có trong ${baseFile} (có: ${Object.keys(states).join(', ') || '—'})`);
+    }
+    console.log(states[nodeFilter]);
+    return;
+  }
+  for (const [id, st] of Object.entries(states)) console.log(`${id} ${st}`);
+  const up = upgraded.length ? ` (dest upgrade: ${upgraded.join(', ')})` : '';
+  const srcLine = source === 'dest-branch' ? `dest-branch ${sourceRef}` : source === 'worktree' ? `worktree ${baseFile}` : 'local';
+  console.log(`source: ${srcLine}${up}`);
+  for (const w of warnings) console.error(`WARN: ${w}`);
+}
+
 function main() {
   const argv = process.argv.slice(2);
   const decodeArg = argv.includes('--decode') ? (argv[argv.indexOf('--decode') + 1] || '') : '';
   if (decodeArg) return cmdDecode(decodeArg);
   const updateArg = argv.includes('--update-state') ? (argv[argv.indexOf('--update-state') + 1] || '') : '';
   if (updateArg) return cmdUpdateState(updateArg);
+  const resolveIdx = argv.indexOf('--resolve');
+  if (resolveIdx !== -1) return cmdResolve(argv[resolveIdx + 1] || '', argv.slice(resolveIdx + 2));
   return cmdGenerate(argv);
 }
 

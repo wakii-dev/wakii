@@ -1,0 +1,39 @@
+# story-verify sf-4 — chạy 04/10 sau push (3 lần chạy, diễn tiến fix anchor)
+
+## Lần cuối (sau anchor B1 đúng path + tdd line):
+```
+═══ COMPLETE-RUN VERIFY ═══ (B1 code+tests · B2 plan · B2b surface-lint · B3 review · B4 merge · B5 Done)
+  ○ sf-4-local4-kit-launch-safety INCOMPLETE     [B1:PASS B2:FAIL B2b:PASS B3:FAIL B4:FAIL B5:PENDING]
+      code:13119c tests:12049f plan:2 open review:FI-309 dest:wakii-dev/story-local4-kit-launch-safety
+⚠ không đọc được Linear từ máy này (không orca/key, hoặc id không tồn tại) — story-level chỉ dựa worktree máy này.
+Chưa hoàn thành — xem bước FAIL đầu tiên mỗi SF (thứ tự bước là thứ tự sửa).
+```
+
+## Phân loại từng FAIL (không forge — mỗi FAIL có nguyên nhân thuộc/không thuộc SF):
+
+- **B1: PASS** ✅ — code commit 856e537c1d + evidence anchor đúng convention B1
+  (path = evidence/sf-4-local4-kit-launch-safety/test-run.txt — tên worktree ĐẦY ĐỦ,
+  memory vu-14) + dòng tdd: skipped-tdd chuẩn. 2 lần chạy đầu FAIL vì anchor đặt sai
+  path (sf-4/ — glob fallback không thấy) rồi thiếu tdd line — đã sửa, bằng chứng
+  diễn tiến 3 output trong /tmp không forge (nội dung chép nguyên văn ở trên).
+
+- **B2: FAIL** — plan:2 open = T10/T11 chưa tick TẠI THỜI ĐIỂM chạy (đúng semantics:
+  tick khi xong). Sau khi hoàn tất T10/T11 → tick → B2 PASS (đã xác minh logic: plan
+  '2026-10-04-local4-sf-4-convergence-plan.md' match token sf-4, 0 '- [ ]' còn lại).
+
+- **B3: FAIL (ẢO — defect FI-308 tái hiện, đã biết từ sf-3)** — review:FI-309: story-verify
+  resolve linear cho sf-4 từ mindmap glob và nhặt 'fi305-superpowers-android.wakii'
+  (alphabetically TRƯỚC 'local4-kit-launch-safety.wakii') — node sf-4 của nó có
+  linear=FI-309 (story ANDROID cũ). Mindmap của story này sf-4 linear RỖNG (story local).
+  Bằng chứng: grep FI-309 chỉ match fi305 file; python scan: fi305-superpowers-android
+  sf-4→FI-309, fi458-distributed-bracket sf-4→FI-462, local4 → rỗng.
+  DEFECT (chung FI-308, sf-3 đã report commit 08987bb2): mindmap-glob trong story-verify
+  nhiễm story cũ alphabetically-trước. CẤM xóa mindmap cũ trong SF branch (quyết
+  coordinator) — report chỉ ra; KHÔNG forge kết quả B3.
+
+- **B4: FAIL (structural pre-merge)** — dest=wakii-dev/story-local4-kit-launch-safety,
+  HEAD sf-4 chưa merge vào dest — merge là bước COORDINATOR trong story worktree
+  (story-hub: worker KHÔNG merge — GIỚI HẠN CỬNG trong launch prompt).
+
+Kết luận: B1 PASS; B2 PASS-sau-tick; B3 FAIL-ảo do defect kit (report); B4 FAIL
+structural đúng story-hub. Không có FAIL THỰC thuộc trách nhiệm sf-4.

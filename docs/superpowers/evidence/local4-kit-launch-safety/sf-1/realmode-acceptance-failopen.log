@@ -1,0 +1,14 @@
+# LOCAL-4 sf-1 Rule-0 demo — bin THẬT kit/bin/story-launch vừa sửa
+# sandbox: HOME+REPO+orca-stub hermetic — KHÔNG đụng session sống
+# rc=0 (expect 0)
+# OP_LSOF_BIN bogus → PROCERR → warn fail-open, launch vẫn đi qua
+
+ownership-probe: process scan không đọc được (lsof hỏng: [Errno 2] No such file or directory: '/nonexistent-lsof-xyz') — fail-open, vùng mù không kiểm tra
+── DRY-RUN launch sf-3-clean-path-feature (DEMO-3) từ story/demo-dest
+Use orca-superpowers-workflow skill for ONE sub-feature: Clean path feature (Phase 1/1) (DEMO-3). Story: DEMO — READ FIRST: context pack docs/superpowers/contexts/sf-3.md (spec slice + touch map + ACCEPTANCE + boundary) + story doc docs/superpowers/brackets/bracket.md. Epic đã trả lời mọi câu — KHÔNG re-ask; câu hỏi mới → REQUIREMENT-GAP comment lên epic. Run full Phase 0-5 cho SF này. Linear issue: DEMO-3 (set In Progress at start). Worktree base: story/demo-dest. GIỚI HẠN CỨNG: merge/ff CHỈ trong story/demo-dest — TUYỆT ĐỐI KHÔNG đụng main (main là gate của USER).
+
+CHECKLIST — chạy TUẦN TỰ, mỗi mục xong phải CÓ BẰNG CHỨNG (lệnh + output), cấm tick trước bằng chứng:
+CHECK 1 CODE+TESTS — TDD RED→GREEN khi khả thi (test thất bại trước → code tối thiểu); commit atomic; tick plan file sau mỗi task.
+CHECK 2 PLAN TICKED — mọi '- [ ]' trong plan → '- [x]' (meta-steps dùng numbered list, không dùng '- [ ]').
+CHECK 3 ROLLING REVIEW — mỗi 4-5 tasks dispatch code-reviewer ĐỘC LẬP trên diff nhóm đó (KHÔNG dồn 1 review lớn cuối SF — FI-187: đứng chờ 30+ phút). Verdict post lên DEMO-3, KHÔNG để kẹt outbox.
+...

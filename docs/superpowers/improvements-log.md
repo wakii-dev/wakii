@@ -33,3 +33,20 @@
 - **Suggested change**: fallback glob nên loại các dir thuộc worktree/story khác
   (check hash tồn tại thay vì head -1), hoặc tài liệu hóa "evidence dir = tên
   worktree đầy đủ".
+
+## 2026-10-04 — LOCAL-4 sf-4 (task_4119415a582b)
+
+- **Defect story-verify (FI-308 tái hiện trên sf-4)**: mindmap-glob nhiễm story cũ alphabetically-trước
+  — sf-4 resolve linear = FI-309 từ `fi305-superpowers-android.wakii` (sf-3 đã report FI-308 ở
+  08987bb2). Suggested: story-verify cần ràng buộc mindmap theo story (match meta.dest/epic trước khi
+  lấy linear) thay vì glob alphabet-first. SỞ HỮU: kit story-verify (ngoài scope sf-4) — chờ coordinator.
+- **Defect story-verify B1 evidence anchor**: path convention = evidence/<tên-worktree-ĐẦY-ĐỦ>/
+  test-run.txt (không phải slug ngắn) + hash chỉ nhận HEAD/HEAD~1 → evidence phải GỘP 1 commit duy
+  nhất sau code commit (commit evidence tách 2 lần làm anchor vòng lặp lệch thế hệ). Suggested: in
+  convention vào AGENTS.md hoặc story-verify hint. SỞ HỮU: kit.
+- **workfront-driver (4 defect quan sát ILEC, report-only — evidence sf-4/observations-ilec.md)**:
+  pane-title lookup trượt → pane mới mỗi pass; state reset ngoài driver tắt breaker; render_digest
+  ENOENT crash mỗi pass portable; outcomes.jsonl nhiễm stack trace (15/16 pass). Driver thuộc session
+  khác — fix là quyết định coordinator/USER.
+- **NAVIGATOR.md pre-existing (P2 review-1)**: "breaker ≥3 blocked/ngày" + "FOCUS trống" không có logic
+  tương ứng trong bin hiện tại — hẹn micro-fix docs riêng.

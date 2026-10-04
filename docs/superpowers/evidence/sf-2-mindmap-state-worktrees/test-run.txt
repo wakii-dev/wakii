@@ -1,0 +1,32 @@
+# test-run — LOCAL-4 sf-2 (mindmap state nhất quán giữa worktrees)
+
+HEAD: 030a85aca5 (code commits: 8f6fe55058, 9db9916d3d, bd7da901f1, 030a85aca5)
+Chạy trong: resources/plugins/launch/stablyai.orca-superpowers-launcher/
+tdd: RED→GREEN (T1: tests/story-mindmap-resolve-tests.mjs đỏ trước khi implement
+--resolve — usage exit 2; T2: driver e2e đỏ "DRY: không có mindmap" trước khi
+wire resolver; T3: R15 đỏ trước khi thêm sf_meta mindmap-fallback; review-2
+NEEDS-VERIFICATION fix: DESTONLY/DSTFLAG đỏ ngay khi refactor đảo điều kiện —
+sửa trong cùng commit, WTDEST + R16 pin bổ sung)
+
+Suite (exit code + tổng kết cuối mỗi log):
+
+- tests/story-mindmap-resolve-tests.mjs (MỚI)   → exit 0 — 44 pass, 0 fail
+- tests/workfront-driver-resolve-tests.mjs (MỚI) → exit 0 — 7 pass, 0 fail
+- tests/story-resume-tests.mjs (thêm R15+R16)    → exit 0 — 31 PASS / 0 FAIL, HARNESS GREEN
+- tests/story-mindmap-tests.mjs (regression)     → exit 0 — 61 asserts 61 PASS
+- tests/story-mindmap-update-state-tests.mjs     → exit 0 — 24 PASS, 0 FAIL
+- tests/story-mindmap-bootstrap-tests.mjs        → exit 0 — 19 PASS / 0 FAIL
+- tests/kit-verify-manifest.mjs                  → exit 0 — 30 PASS / 0 FAIL (kitHash khớp)
+
+Full suite 43 file sau commit cuối: đỏ duy nhất tests/story-coordinator-pass-tests.mjs
+— C25 Windows-sim known-red 03/10 (comment ngay trong test), trên macOS đụng real
+orca run-list (run_5ca468c45821 owner=coordinator khác đang sống) — environmental,
+pre-existing trên base 539e80788c, ngoài touch map SF.
+
+Hash gates sau rehash lần 4: verify-packaged-plugin-resources exit 0
+(kitHash 41827fdaa2ea287c · fingerprint 2bcf4586…); wakii-validate trên
+mindmap thật local4-kit-launch-safety.wakii → {"verdict":"OK","sf_count":4}
+(schema v1 nguyên vẹn).
+
+Raw logs: /tmp/sf2-final-*.txt (mất khi reboot — tổng kết exit code là bằng
+chứng chính, đọc lại được bằng cách chạy lại đúng lệnh phía trên).

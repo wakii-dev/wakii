@@ -1,0 +1,28 @@
+# test-run LOCAL-4 sf-1 — story-launch ownership-probe mở rộng
+# code commits: 41b6b4d6e7 (feat) · cb19c46f74 (review P2 fix)
+# ngày: 04/10/2026 · chạy trong resources/plugins/launch/stablyai.orca-superpowers-launcher/
+
+tdd: RED→GREEN — P1-P7+B7/B8+B11 RED (68 PASS / 21 FAIL, exit=1) → lib+caller GREEN
+     (89 PASS / 0 FAIL); review-P2 P8 RED (2 FAIL: hit vẫn emit khi ps hỏng) → GREEN
+     (91 PASS / 0 FAIL). Commit RED baseline = pre-41b6b4d6e7 working tree.
+
+node tests/story-ownership-probe-tests.mjs
+→ exit=0 · TOTAL: 91 PASS / 0 FAIL · HARNESS GREEN
+
+node tests/story-ownership-probe-real-lsof-tests.mjs   (real lsof + BIN THẬT story-launch)
+→ exit=0 · TOTAL: 17 PASS / 0 FAIL · HARNESS GREEN
+  R1 lsof thấy process thật pid trùng · R3/R5 BIN THẬT BLOCKED rc1 pid+cwd (2 vùng mù 03/10)
+  R4 sạch rc0 · R6 in-band → block cũ theo owner · R7 self in-band → "đã có worktree" rc0
+
+Suite kit (43 file tests/*.mjs): GREEN trừ known-red platform-guard
+- story-coordinator-pass-tests C25 (Windows-sim, nhãn trong code) — carve-out ACCEPTANCE
+- kit-verify-manifest / story-doctor-tests / sc-evidence-map: GREEN sau fence
+  (kitHash bd97b778499a0655 · fingerprint 9c1aeae3… · verifyPackagedPluginResources OK)
+- lockstep TS: plugin-tree-hash-lockstep + plugin-launch-content + plugin-bundled-bootstrap
+  (pnpm vitest run --config config/vitest.config.ts) — 15/15 PASS
+
+Rule-0 demo BIN THẬT (evidence/local4-kit-launch-safety/sf-1/realmode-*.log):
+- ACCEPTANCE 1a: process thật cwd-trên-primary → rc=1, "⛔ BLOCKED … pid=… zone=primary cwd=…"
+- ACCEPTANCE 1b: agent trong SF worktree ngoài orchestration → rc=1 zone=oob pid+cwd
+- ACCEPTANCE 2:  môi trường sạch → rc=0 "── DRY-RUN launch …" đi qua
+- fail-open:     OP_LSOF_BIN hỏng → rc=0 + warn "fail-open, vùng mù không kiểm tra"
