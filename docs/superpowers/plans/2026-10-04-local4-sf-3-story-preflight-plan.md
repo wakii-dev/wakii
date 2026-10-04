@@ -55,8 +55,17 @@ Liên quan task_b4f5645b4cba. Story LOCAL — KHÔNG Linear; audit = evidence fi
       ✅ Điểm nhấn: primary THẬT ~/Desktop/projects/orca — WARN 4 pid claude sống thật +
       BYPASS 2 pid --dangerously-skip-permissions (32418, 66931) — đúng vi phạm LUẬT
       human-in-the-loop 24/09. Story worktree này → im lặng đúng. Evidence: sandbox-run.txt.
-- [ ] T6 — Commit cuối sạch + push `wakii-dev HEAD:refs/heads/sf-3-story-preflight-check` +
+- [x] T6 — Commit cuối sạch + push `wakii-dev HEAD:refs/heads/sf-3-story-preflight-check` +
       `~/.claude/bin/story-verify sf-3` resolve theo mindmap local4-kit-launch-safety.wakii.
+      ✅ Push OK (sf-3-story-preflight-check new branch). Verify: B1 PASS · B2 PASS (sau tick)
+      · B2b PASS · B4 FAIL (CHƯA merge — đúng story-hub, coordinator merge) · B5 PENDING
+      (LOCAL không Linear — đúng). **B3 FAIL = DEFECT story-verify, report KHÔNG forge**:
+      linear bị nhiễm `FI-308` từ `docs/superpowers/mindmaps/fi305-superpowers-android.wakii`
+      (node sf-3 của story CŨ, alphabetical trước local4) — fallback mindmap-glob của
+      verify_sf chọn nhầm khi dest đã resolve đúng từ registry (linkedLinearIssue=None) →
+      B3 query Linear FI-308 → FAIL thay vì UNKNOWN (linear rỗng → READY-TO-DONE). Class
+      bug FI-246 đã fix cho bracket nhưng mindmap-fallback chưa disambiguate theo dest.
+      Review THẬT: APPROVED — evidence/local4-kit-launch-safety/sf-3/review-1.md.
 
 ## ACCEPTANCE (từ pack)
 
