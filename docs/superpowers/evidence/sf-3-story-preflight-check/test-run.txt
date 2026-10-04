@@ -1,6 +1,6 @@
 tdd: RED→GREEN
 code commit: 1fb52f7389 (feat db04ecba52 → rehash f1e0ecdd5d → exec-bit 8e4d064878 → P2 fixes 1fb52f7389)
-evidence commit: e669a235fe
+evidence commits: 1654dbd8f1 (B1 convention) · 08987bb2f9 (plan tick chốt)
 Base: 539e80788c (story CREATE)
 
 Suite: node tests/*.mjs trong resources/plugins/launch/stablyai.orca-superpowers-launcher/
