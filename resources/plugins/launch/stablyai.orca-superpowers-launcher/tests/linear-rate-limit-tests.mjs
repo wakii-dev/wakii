@@ -123,5 +123,28 @@ console.log('== [lrl7] pending — in JSON mảng ops ==')
   check('lrl7: state hỏng → không crash', r2.status === 0)
 }
 
+console.log('== [lrl8] run — bọc mutation: pass / rate-limit tự note / fail khác passthrough ==')
+{
+  const dir = tempDir('lrl8')
+  const st = stateOf(dir)
+  const env = { LINEAR_RATE_LIMIT_STATE: st }
+  // thành công → exit 0, không note
+  let r = spawnSync('bash', [LRL, 'run', '--bin', 't-ok', '--', 'bash', '-c', 'echo ALL-OK'], { encoding: 'utf8', env: { ...process.env, ...env } })
+  check('lrl8.1: lệnh ok → exit 0', r.status === 0, `status=${r.status}`)
+  check('lrl8.1: không tạo state', !existsSync(st))
+  // rate-limit → exit 3 + tự note op (auto = argv json)
+  r = spawnSync('bash', [LRL, 'run', '--bin', 't-limited', '--', 'bash', '-c', 'echo "Rate limit exceeded. Only 2500 requests are allowed per 1 hour." >&2; exit 1'], { encoding: 'utf8', env: { ...process.env, ...env } })
+  check('lrl8.2: rate-limit → exit 3', r.status === 3, `status=${r.status}`)
+  check('lrl8.2: stdout có marker ⇩ note', (r.stdout || '').includes('op đã note'))
+  const j = JSON.parse(readFileSync(st, 'utf8'))
+  check('lrl8.2: op auto-note vào queue', Array.isArray(j.ops) && j.ops.length === 1 && j.ops[0].bin === 't-limited', JSON.stringify(j.ops))
+  check('lrl8.2: op chứa lệnh gốc', (j.ops[0].op || '').includes('2500'), j.ops[0].op)
+  // fail thường → passthrough rc, không note
+  const st2 = join(dir, 'state2.json')
+  r = spawnSync('bash', [LRL, 'run', '--bin', 't-boom', '--', 'bash', '-c', 'echo boom; exit 7'], { encoding: 'utf8', env: { ...process.env, LINEAR_RATE_LIMIT_STATE: st2 } })
+  check('lrl8.3: fail thường → passthrough exit 7', r.status === 7, `status=${r.status}`)
+  check('lrl8.3: không note khi fail thường', !existsSync(st2))
+}
+
 console.log(`\n== TOTAL: ${pass} PASS / ${fail} FAIL ==`)
 process.exit(fail ? 1 : 0)

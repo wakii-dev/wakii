@@ -13,6 +13,9 @@
 #   clear      → xoá state (gọi khi Linear call thành công lại)
 #   pending    → in JSON mảng ops đang chờ
 #   classify --body <file|->   → grep signature rate-limit trên body; exit 3 nếu match
+#   run --bin <tên> [--op <json>] -- <lệnh...>
+#              → chạy mutation; fail khớp signature rate-limit → tự note op + exit 3;
+#                fail khác → passthrough rc; thành công → exit 0 (429 hết rơi qua sàng)
 #
 # Detection signature: 429 · rate limit · too many requests · complexity budget
 # (khớp classifyLinearError code 'linear_rate_limited' của app).
@@ -21,7 +24,7 @@ set -u
 STATE_FILE="${LINEAR_RATE_LIMIT_STATE:-$HOME/.claude/.linear-rate-limit.state}"
 COOLDOWN_MIN="${LINEAR_RATE_LIMIT_COOLDOWN_MIN:-15}"
 
-usage() { echo "usage: linear-rate-limit {check|note --op <json> --bin <tên>|clear|pending|classify --body <file->}" >&2; exit 2; }
+usage() { echo "usage: linear-rate-limit {check|note --op <json> --bin <tên>|clear|pending|classify --body <file->|run --bin <tên> [--op <json>] -- <lệnh...>}" >&2; exit 2; }
 
 CMD="${1:-}"; shift 2>/dev/null || true
 
@@ -108,6 +111,34 @@ except Exception:
       exit 3
     fi
     exit 0
+    ;;
+
+  run)
+    RBIN=""; ROP=""
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --bin) RBIN="$2"; shift 2 ;;
+        --op) ROP="$2"; shift 2 ;;
+        --) shift; break ;;
+        *) shift ;;
+      esac
+    done
+    [ $# -gt 0 ] || { echo "run: thiếu -- <lệnh...>" >&2; exit 2; }
+    OUT="$(mktemp "${TMPDIR:-/tmp}/lrl-run.XXXXXX")"
+    "$@" >"$OUT" 2>&1
+    rc=$?
+    cat "$OUT"
+    if [ $rc -ne 0 ] && grep -qiE 'rate limit|429|too many requests|complexity budget' "$OUT"; then
+      OPJ="$ROP"
+      [ -z "$OPJ" ] && OPJ=$(python3 -c 'import json,sys;print(json.dumps(sys.argv[1:]))' "$@")
+      RBIN="${RBIN:-linear-rate-limit-run}"
+      "$0" note --bin "$RBIN" --op "$OPJ" >/dev/null 2>&1 || true
+      echo "⇩ linear-rate-limit: mutation rate-limited — op đã note (${RBIN}) — resume khi hết limit"
+      rm -f "$OUT"
+      exit 3
+    fi
+    rm -f "$OUT"
+    exit $rc
     ;;
 
   *)
