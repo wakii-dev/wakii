@@ -45,6 +45,7 @@ TICK_SECONDS=$((3*3600))
 TIMEOUT=$(command -v timeout || echo /opt/homebrew/bin/timeout)
 ORCA_BIN=$(command -v orca || echo /opt/homebrew/bin/orca)
 mkdir -p "$DRV"
+log(){ echo "$(date -u +%FT%TZ) $*" >> "$LOG"; }   # định nghĩa TRƯỚC khối PORTABLE — dưới đây log() lần đầu mà def nằm sau từng rơi vào /usr/bin/log hệ thống
 # PORTABLE: toàn bộ việc làm trong WORKTREE per-story — primary tree không bị đụng
 WT=""
 if [[ "$PORTABLE" == "1" ]]; then
@@ -75,7 +76,6 @@ fs.writeFileSync(jp,JSON.stringify(j,null,2));console.log("trust: injected cho "
 else console.log("trust: đã có");}catch(e){console.log("trust: skip ("+e.message+")")}' "$WT" >> "$LOG" 2>&1 || true
 fi
 
-log(){ echo "$(date -u +%FT%TZ) $*" >> "$LOG"; }
 # caffeinate re-exec đúng 1 lần cho --loop
 if [[ "$MODE" == "--loop" && "${DRIVER_INNER:-}" != "1" ]]; then
   export DRIVER_INNER=1; exec /usr/bin/caffeinate -is bash "$SCRIPT" "${ORIG_ARGS[@]}"
