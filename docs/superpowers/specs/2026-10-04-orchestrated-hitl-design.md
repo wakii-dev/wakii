@@ -51,7 +51,8 @@ baseline + `story-doctor --live` canh vi phạm. Session cá nhân user ngoài p
   ("Do you want to proceed?", "❯ 1. Yes", "allow?") · `blocked` ("BLOCKED",
   "APPROVAL-NEEDED", "REQUIREMENT-GAP") · `idle-done` ("❯" trống + 0 commit +
   plan hết)
-- Output JSON: `{pane, handle, cwd, state, question?, age}` — mọi caller đọc được
+- Output JSON: `{worktree, handle, state, question}` — mọi caller đọc được
+  (cwd tính bởi consumer; age deferred phase-2 pager)
 - Fail-open: orca chết → trả rỗng + exit 0
 
 ### 4.2 BA Layer (protocol trên coordinator session — không phải hệ thống mới)

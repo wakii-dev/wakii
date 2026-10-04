@@ -185,5 +185,63 @@ console.log('== W4 lineage ưu tiên + fallback same-folder sf-N- ==')
   rmSync(dir, { recursive: true, force: true })
 }
 
+console.log('== W5 shell-prompt dòng cuối → idle-done (F1) ==')
+{
+  const dir = tempDir('w5')
+  const hubId = 'r::/x/hub'
+  const wtlist = { worktrees: [
+    { id: hubId, path: join(dir, 'hub') },
+    { id: 'r::/x/sf-11-a', path: join(dir, 'sf-11-a'), lineage: { parentWorktreeId: hubId } },
+    { id: 'r::/x/sf-12-b', path: join(dir, 'sf-12-b'), lineage: { parentWorktreeId: hubId } },
+  ] }
+  setupCase(dir, wtlist)
+  // worker đã exit về shell: oh-my-zsh prompt + bare $ prompt — done-or-stalled
+  const reads = {
+    term_w1: [{ terminal: { status: 'exited', tail: ['✻ Đang build acceptance…', '➜ orca git:(features-orchestrated-hitl) ✗'] } }],
+    term_w2: [{ terminal: { status: 'exited', tail: ['npm run test', 'bash-5.2$ '] } }],
+  }
+  const stub = makeStub(dir)
+  const r = runWatch(dir, {
+    ORCA_BIN: stub,
+    STUB_WTLIST: join(dir, 'wtlist.json'),
+    STUB_READS: JSON.stringify(reads),
+    STUB_CNT: join(dir, 'cnt'),
+  })
+  const rows = parseOut(r.out)
+  const byWt = Object.fromEntries((rows || []).map(x => [x.worktree, x.state]))
+  check('W5', 'zsh git-prompt → idle-done', byWt['sf-11-a'] === 'idle-done', JSON.stringify(byWt))
+  check('W5', 'bare $-prompt → idle-done', byWt['sf-12-b'] === 'idle-done', JSON.stringify(byWt))
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== W6 anchor regex: permission thường ≠ approval (F2) ==')
+{
+  const dir = tempDir('w6')
+  const hubId = 'r::/x/hub'
+  const wtlist = { worktrees: [
+    { id: hubId, path: join(dir, 'hub') },
+    { id: 'r::/x/sf-13-a', path: join(dir, 'sf-13-a'), lineage: { parentWorktreeId: hubId } },
+    { id: 'r::/x/sf-14-b', path: join(dir, 'sf-14-b'), lineage: { parentWorktreeId: hubId } },
+  ] }
+  setupCase(dir, wtlist)
+  const reads = {
+    // "permission"/"unblocked" chữ thường trong output working — KHÔNG được dương tính
+    term_w1: [{ terminal: { status: 'running', tail: ['Sửa permission handling — unblocked các file test', '✻ Editing… 10s'] } }],
+    term_w2: [{ terminal: { status: 'running', tail: ['Sửa permission handling', 'Do you want to permit?'] } }],
+  }
+  const stub = makeStub(dir)
+  const r = runWatch(dir, {
+    ORCA_BIN: stub,
+    STUB_WTLIST: join(dir, 'wtlist.json'),
+    STUB_READS: JSON.stringify(reads),
+    STUB_CNT: join(dir, 'cnt'),
+  })
+  const rows = parseOut(r.out)
+  const byWt = Object.fromEntries((rows || []).map(x => [x.worktree, x.state]))
+  check('W6', '"permission"/"unblocked" → working, không approval/blocked', byWt['sf-13-a'] === 'working', JSON.stringify(byWt))
+  check('W6', '"permit?" → waiting-approval', byWt['sf-14-b'] === 'waiting-approval', JSON.stringify(byWt))
+  rmSync(dir, { recursive: true, force: true })
+}
+
 console.log(`\n${pass} pass, ${fail} fail`)
 process.exit(fail === 0 ? 0 : 1)

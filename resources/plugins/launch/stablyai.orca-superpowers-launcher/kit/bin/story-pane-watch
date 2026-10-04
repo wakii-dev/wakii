@@ -4,6 +4,7 @@
 # Đọc tail các terminal pane của worktree con (lineage hoặc cùng folder sf-N-),
 # phân loại: blocked > waiting-approval > idle-done > working > unknown.
 # Fail-open: orca chết/thiếu data → stdout "[]" + exit 0. Bám handle+cwd, KHÔNG bám title.
+# fallback same-folder sf-N- có thể nhầm SF story khác khi 2 story song song cùng repo — lineage parent là nguồn chính.
 set -u
 STORY=""
 while [ $# -gt 0 ]; do
@@ -45,9 +46,10 @@ const un = (s) => { try { const j = JSON.parse(s); return j && j.result ? j.resu
 const classify = (tail) => {
   const lines = (tail || []).filter(l => l && l.trim());
   const joined = lines.join("\n");
-  if (/BLOCKED|APPROVAL-NEEDED|REQUIREMENT-GAP/i.test(joined)) return { state: "blocked", question: (joined.match(/.*(BLOCKED|APPROVAL-NEEDED|REQUIREMENT-GAP).*/i) || [""])[0].slice(0, 200) };
-  if (/Do you want to proceed\?|❯\s*1\.\s*Yes|allow\?|permit/i.test(joined)) return { state: "waiting-approval", question: (lines[lines.length - 1] || "").slice(0, 200) };
-  if (lines.length && /^❯\s*$/.test(lines[lines.length - 1].trim())) return { state: "idle-done", question: "" };
+  if (/\bBLOCKED\b|APPROVAL-NEEDED|REQUIREMENT-GAP/i.test(joined)) return { state: "blocked", question: (joined.match(/.*(\bBLOCKED\b|APPROVAL-NEEDED|REQUIREMENT-GAP).*/i) || [""])[0].slice(0, 200) };
+  if (/Do you want to proceed\?|❯\s*1\.\s*Yes|allow\?|permit\?/i.test(joined)) return { state: "waiting-approval", question: (lines[lines.length - 1] || "").slice(0, 200) };
+  const last = lines.length ? lines[lines.length - 1].trim() : "";
+  if (last && (/^❯\s*$/.test(last) || /(^➜|\bgit:\(|\$\s*$)/.test(last))) return { state: "idle-done", question: "" };
   if (lines.length) return { state: "working", question: "" };
   return { state: "unknown", question: "" };
 };
