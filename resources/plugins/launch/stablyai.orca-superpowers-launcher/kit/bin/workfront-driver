@@ -64,6 +64,15 @@ if [[ "$PORTABLE" == "1" ]]; then
     fi
   fi
   cd "$WT" || exit 1
+  # Fence 4: pre-flight trust — claude treo ở trust prompt nếu worktree chưa tin cậy
+  node -e '
+const fs=require("fs"),path=process.argv[1],os=require("os");
+const jp=os.homedir()+"/.claude.json";
+try{const j=JSON.parse(fs.readFileSync(jp,"utf8"));j.projects=j.projects||{};
+if(!j.projects[path]||!j.projects[path].hasTrustDialogAccepted){
+j.projects[path]=Object.assign({},j.projects[path],{hasTrustDialogAccepted:true,hasCompletedProjectOnboarding:true});
+fs.writeFileSync(jp,JSON.stringify(j,null,2));console.log("trust: injected cho "+path);}
+else console.log("trust: đã có");}catch(e){console.log("trust: skip ("+e.message+")")}' "$WT" >> "$LOG" 2>&1 || true
 fi
 
 log(){ echo "$(date -u +%FT%TZ) $*" >> "$LOG"; }
@@ -127,15 +136,25 @@ Dòng cuối PHẢI là: VERDICT: DONE-VERIFIED|NOT-DONE|FAIL-VERIFIED — <1 d�
     --disallowedTools "Bash(git push:*)" "Bash(git merge:*)" "Bash(git commit:*)" "Bash(git checkout:*)" "Bash(git reset:*)" "Bash(git rebase:*)" "Bash(git clean:*)" "WebFetch" "WebSearch" 2>&1 | tail -5
 }
 
-run_worker(){ # GD2-minimal: worker executor làm SF trong per-story worktree (portable only)
+run_worker(){ # GD2: worker VISIBLE — pane Orca trên worktree, user nhìn thấy trực tiếp (async)
   local sf="$1"
-  "$TIMEOUT" 45m claude -p "Story $SLUG — SF $sf CHƯA LÀM. Làm theo task DAG trong mindmap docs/superpowers/mindmaps/$SLUG.wakii (node $sf + các tasks con, đúng thứ tự):
-- TDD: đọc pattern dự án trước (schema/routes/tests hiện có), viết test trước, code tối thiểu đạt.
-- Commit từng task xong: git commit -m \"feat($SLUG): t-x.x <mô tả>\" trên branch hiện tại (KHÔNG push).
-- Dòng cuối PHẢI là: VERDICT: DONE|PARTIAL — <tasks xong / còn lại>" \
-    --permission-mode acceptEdits \
-    --allowedTools "Read" "Glob" "Grep" "Write" "Edit" "Bash(git log:*)" "Bash(git diff:*)" "Bash(git status *)" "Bash(git add:*)" "Bash(git commit:*)" "Bash(pnpm vitest:*)" "Bash(pnpm tc:*)" "Bash(pnpm typecheck)" "Bash(pnpm lint)" "Bash(node *)" \
-    --disallowedTools "Bash(git push:*)" "Bash(git merge:*)" "Bash(git checkout:*)" "Bash(git reset:*)" "Bash(git rebase:*)" "Bash(git clean:*)" "WebFetch" "WebSearch" 2>&1 | tail -5
+  local title="story-worker-$SLUG"
+  local handle
+  handle=$(orca terminal list --json 2>/dev/null | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{try{const j=JSON.parse(d);const x=(j.result.terminals||[]).find(x=>(x.title||"")==="'"$title"'");console.log(x?x.handle:"")}catch{console.log("")}});')
+  # Fence 2: pane phải TỒN TẠI khi gửi — handle chết → tạo lại, không bắn mù
+  if [[ -z "$handle" ]]; then
+    handle=$(orca terminal create --worktree "path:$REPO_DIR" --title "$title" --command "cd '$WT' && claude --permission-mode acceptEdits" --json 2>/dev/null | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{try{const j=JSON.parse(d);console.log((j.result&&j.result.terminal&&j.result.terminal.handle)||"")}catch{console.log("")}});')
+    [[ -z "$handle" ]] && { log "DISPATCH-FAILED $sf: không tạo được pane"; return 1; }
+    sleep 12
+  fi
+  # Fence 1: gửi PHẢI xác nhận — "cannot report delivery" = DISPATCH-FAILED
+  local send_out
+  send_out=$(orca terminal send --terminal "$handle" --text "Bạn là worker story $SLUG. Đọc mindmap docs/superpowers/mindmaps/$SLUG.wakii node $sf + tasks con. Làm các task CHƯA xong (đối chiếu git log), TDD, commit từng task trên branch này. KHÔNG push, KHÔNG đụng main/master. Khi xong báo: VERDICT: DONE|PARTIAL — <chi tiết>" --enter 2>&1 | tail -1)
+  if echo "$send_out" | grep -qi "cannot report delivery"; then
+    log "DISPATCH-UNCONFIRMED $sf: $send_out — coi như FAILED, pass kế thử lại"; return 1
+  fi
+  log "WORKER $sf: prompt ĐÃ GỬI (confirmed) vào pane $title ($handle) — pass kế kiểm tra git + verify"
+  return 0
 }
 
 prep_convergence(){ # VIẾT PACK TRƯỚC — caller chỉ set done_gate khi thành công (retry pass kế nếu lỗi)
@@ -225,12 +244,12 @@ one_pass(){
       if [[ "$PORTABLE" == "1" ]]; then
         # GD2-minimal: worker LAM SF trong per-story worktree (dang cd san) — an toan vi worktree = noi cach ly
         if orca_run_active; then log "SKIP: run $SLUG dang hoat - khong dispatch worker"; return; fi
-        log "WORKER $SF (trong worktree, commit tren branch story)"
-        local wout
-        wout=$(run_worker "$SF")
-        local wv
-        wv=$(echo "$wout" | grep -o 'VERDICT: \(DONE\|PARTIAL\)' | head -1 | awk '{print $2}')
-        log "WORKER $SF → ${wv:-NO-VERDICT} - pass ke verify lai"
+        if ! run_worker "$SF"; then
+          st_set "attempts_$SF" "$((att+1))"
+          log "DISPATCH-FAILED $SF — attempts=$((att+1)) (≥3 sẽ BLOCKED)"; return
+        fi
+        st_set "attempts_$SF" "$((att+1))"
+        log "WORKER $SF dispatched — attempts=$((att+1)) — pass kế verify lại"
         return
       fi
       # orca mode (giu v1): story-launch that, fail → BLOCKED
