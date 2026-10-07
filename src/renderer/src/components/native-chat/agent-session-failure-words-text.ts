@@ -27,6 +27,11 @@ const PIECES: Record<AgentSessionFailureCopyId, (values: AgentSessionFailureCopy
       ),
     sendToTryAgain: () =>
       translate('components.native-chat.failureWords.sendToTryAgain', COPY.sendToTryAgain),
+    sendAgainToTryOnceMore: () =>
+      translate(
+        'components.native-chat.failureWords.sendAgainToTryOnceMore',
+        COPY.sendAgainToTryOnceMore
+      ),
     couldNotStart: (values) =>
       translate('components.native-chat.failureWords.couldNotStart', COPY.couldNotStart, values),
     couldNotRestart: (values) =>
@@ -35,6 +40,31 @@ const PIECES: Record<AgentSessionFailureCopyId, (values: AgentSessionFailureCopy
         COPY.couldNotRestart,
         values
       ),
+    argumentsUnsupportedOption: (values) =>
+      translate(
+        'components.native-chat.failureWords.argumentsUnsupportedOption',
+        COPY.argumentsUnsupportedOption,
+        values
+      ),
+    argumentsMissingValue: (values) =>
+      translate(
+        'components.native-chat.failureWords.argumentsMissingValue',
+        COPY.argumentsMissingValue,
+        values
+      ),
+    argumentsMultipleValues: (values) =>
+      translate(
+        'components.native-chat.failureWords.argumentsMultipleValues',
+        COPY.argumentsMultipleValues,
+        values
+      ),
+    argumentsPositionalPrompt: () =>
+      translate(
+        'components.native-chat.failureWords.argumentsPositionalPrompt',
+        COPY.argumentsPositionalPrompt
+      ),
+    editSavedArguments: () =>
+      translate('components.native-chat.failureWords.editSavedArguments', COPY.editSavedArguments),
     terminalAgentHoldsChat: () =>
       translate(
         'components.native-chat.writeNotice.terminalAgentHoldsChat',
@@ -72,6 +102,22 @@ const PIECES: Record<AgentSessionFailureCopyId, (values: AgentSessionFailureCopy
       translate(
         'components.native-chat.failureWords.managedAccountUnsupported',
         COPY.managedAccountUnsupported
+      ),
+    launchFolderMissing: () =>
+      translate(
+        'components.native-chat.failureWords.launchFolderMissing',
+        COPY.launchFolderMissing
+      ),
+    historyInOtherAccount: () =>
+      translate(
+        'components.native-chat.failureWords.historyInOtherAccount',
+        COPY.historyInOtherAccount
+      ),
+    agentCommandNotRunnable: (values) =>
+      translate(
+        'components.native-chat.failureWords.agentCommandNotRunnable',
+        COPY.agentCommandNotRunnable,
+        values
       ),
     chooseClaudeAccount: () =>
       translate(
@@ -228,10 +274,34 @@ const PIECES: Record<AgentSessionFailureCopyId, (values: AgentSessionFailureCopy
         COPY.providerRetryingQuoted,
         values
       ),
+    providerRetryNumber: (values) =>
+      translate(
+        'components.native-chat.failureWords.providerRetryNumber',
+        COPY.providerRetryNumber,
+        values
+      ),
+    providerRetryNumberOf: (values) =>
+      translate(
+        'components.native-chat.failureWords.providerRetryNumberOf',
+        COPY.providerRetryNumberOf,
+        values
+      ),
+    providerRetryLastError: (values) =>
+      translate(
+        'components.native-chat.failureWords.providerRetryLastError',
+        COPY.providerRetryLastError,
+        values
+      ),
     previousExitUnverifiable: (values) =>
       translate(
         'components.native-chat.failureWords.previousExitUnverifiable',
         COPY.previousExitUnverifiable,
+        values
+      ),
+    sessionNotRestored: (values) =>
+      translate(
+        'components.native-chat.failureWords.sessionNotRestored',
+        COPY.sessionNotRestored,
         values
       )
   }

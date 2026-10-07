@@ -4,6 +4,7 @@ import { resolveSynchronizedOutputSafeSplit } from '../shared/terminal-synchroni
 import { restoreManagedDataAccountEnvironment } from '../shared/managed-data-account-environment'
 import { createTerminalTitleTracker } from '../shared/terminal-output-side-effects'
 import { getDecorativeTitleGateKey } from '../shared/agent-decorative-title-signature'
+import type { ClaudeTerminalEvidence } from '../shared/claude-terminal-interrupt'
 import { FreebuffStatusProjection } from './freebuff-status-projection'
 import { probeOpenCodeLaunchCapabilities } from '../main/opencode/opencode-launch-capabilities'
 import type { OpenCodeCliCapabilities } from '../shared/opencode-cli-version'
@@ -49,6 +50,12 @@ import { SHELL_STARTUP_FEATURE_ENV } from '../main/shell-startup-features'
 import { DEFAULT_SSH_RELAY_GRACE_PERIOD_SECONDS } from '../shared/ssh-types'
 import { shouldUseShellReadyStartupDelivery } from '../shared/codex-startup-delivery'
 import { buildStartupCommandSubmission } from '../shared/startup-command-submission'
+import {
+  discardStagedStartupCommand,
+  stageStartupCommand,
+  startupStagingFailureNotice,
+  type StartupCommandStaging
+} from '../shared/startup-command-staging'
 import { resolveSetupAgentSequenceLaunchCommand } from '../shared/setup-agent-sequencing'
 import {
   isPathInsideOrEqual,
@@ -270,6 +277,8 @@ type ManagedPty = {
   gitCredentialPromptGuarded: boolean
   historyIsolationEnabled?: boolean
   startupCommand?: ManagedStartupCommand
+  /** Kept past delivery: the typed line may never run if the shell dies first. */
+  stagedStartupCommand?: StartupCommandStaging
   /** Whether this host armed the shell-ready marker for a renderer-delivered startup command.
    *  Kept off `startupCommand`, which is dropped once delivered; the client reads it from the
    *  spawn reply to skip waiting for a marker that will never come (fish, sh, Windows). */
@@ -350,6 +359,7 @@ function disposeManagedPty(managed: ManagedPty): void {
     return
   }
   managed.disposed = true
+  discardStagedStartupCommand(managed.stagedStartupCommand)
   // Why: clear the SIGKILL fallback timer so it can't fire pty.kill on an already-disposed instance.
   if (managed.killTimer) {
     clearTimeout(managed.killTimer)
@@ -753,6 +763,16 @@ export class PtyHandler {
     this.agentPresenceTrigger = listener
   }
 
+  private claudeTerminalEvidenceListener:
+    | ((paneKey: string, evidence: ClaudeTerminalEvidence) => void)
+    | null = null
+
+  setClaudeTerminalEvidenceListener(
+    listener: ((paneKey: string, evidence: ClaudeTerminalEvidence) => void) | null
+  ): void {
+    this.claudeTerminalEvidenceListener = listener
+  }
+
   /** Subscribe to PTY-exit events (relay-hook server uses this to evict per-paneKey caches). */
   setExitListener(listener: PtyExitListener | null): void {
     this.exitListener = listener
@@ -1025,12 +1045,11 @@ export class PtyHandler {
     if (heldBytes) {
       managed.startupIngress?.accept(heldBytes)
     }
-    const submit = process.platform === 'win32' ? '\r' : '\n'
     // Why: only the shell-ready wrapper arms bracketed-paste; other shells use raw submit so ESC[200~ markers aren't echoed.
-    const payload = buildStartupCommandSubmission(startup.command, {
-      submit,
-      bracketedPasteSafe: startup.waitForShellReady
-    })
+    const payload = buildStartupCommandSubmission(
+      managed.stagedStartupCommand?.command ?? startup.command,
+      { bracketedPasteSafe: startup.waitForShellReady }
+    )
     managed.startupCommand = undefined
     managed.pty.write(payload)
   }
@@ -1111,6 +1130,9 @@ export class PtyHandler {
     let lastTitleGateKey: string | null = null
     const presenceTriggers = createTerminalTitleTracker({
       onTitle: (normalizedTitle, rawTitle, meta) => {
+        if (managed.paneKey && !meta?.staleWorkingTitleClear) {
+          this.claudeTerminalEvidenceListener?.(managed.paneKey, { kind: 'title', title: rawTitle })
+        }
         // Why: spinner frames arrive several times a second; only a real title change re-checks.
         const gateKey = getDecorativeTitleGateKey(rawTitle, normalizedTitle)
         if (gateKey !== lastTitleGateKey && !meta?.staleWorkingTitleClear) {
@@ -1144,6 +1166,9 @@ export class PtyHandler {
     })
     managed.pty.onExit(({ exitCode }: { exitCode: number }) => {
       presenceTriggers.dispose()
+      if (managed.paneKey) {
+        this.claudeTerminalEvidenceListener?.(managed.paneKey, { kind: 'reset' })
+      }
       managed.physicalExit?.markExited()
       if (managed.disposed) {
         return
@@ -2231,11 +2256,28 @@ export class PtyHandler {
           }
         : {})
     }
+    if (managed.startupCommand?.providerDelivery && managed.startupCommand.command) {
+      managed.stagedStartupCommand = stageStartupCommand({
+        command: managed.startupCommand.command,
+        shellPath: shell,
+        orcaBuiltLine: launchAgent !== undefined
+      })
+      if (managed.stagedStartupCommand.failure) {
+        process.stderr.write(
+          `[pty-handler] Could not stage startup command for ${id}; typing it in full: ${managed.stagedStartupCommand.failure}\n`
+        )
+      }
+    }
     this.retiredIncarnations.delete(id)
     this.sourcePublication?.activate(id, managed.incarnationId, context)
     const sourceActivation =
       context && this.sourcePublication?.receivingActivation?.(id, context.clientId)
     this.wireAndStore(managed)
+    const stagingNotice =
+      managed.stagedStartupCommand && startupStagingFailureNotice(managed.stagedStartupCommand)
+    if (stagingNotice) {
+      managed.startupIngress?.accept(stagingNotice)
+    }
     if (context?.isStale() && !params.agentSessionEnsure && !params.agentSessionCreateOperationId) {
       // Why: if the client reconnected while pty.spawn was in flight, the
       // response is discarded and no renderer can own this PTY. Shut it down
@@ -2398,6 +2440,9 @@ export class PtyHandler {
         return
       }
       managed.pty.write(data)
+      if (managed.paneKey) {
+        this.claudeTerminalEvidenceListener?.(managed.paneKey, { kind: 'input', data })
+      }
     }
   }
 

@@ -18,6 +18,7 @@ import {
   stopStructuredAgentSessionRuntime
 } from './structured-agent-session-runtime'
 import { recordingStructuredAgentSessionLogger } from '../native-chat/agent-session-wire/structured-agent-session-logger-test-support'
+import { storedTestAgentSessionRecord } from './agent-session-record-store-test-harness'
 
 const NOW = 1_800_000_000_000
 const IMPORTED = 'session-alpha-1'
@@ -45,7 +46,7 @@ const legacyFile = (): string =>
   JSON.stringify({
     schemaVersion: 2,
     hostId: 'local',
-    records: { [IMPORTED]: agentSessionRecordFixture() },
+    records: { [IMPORTED]: storedTestAgentSessionRecord(agentSessionRecordFixture()) },
     operations: {},
     retiredClaimKeys: [],
     unusableRecords: {}
@@ -79,6 +80,7 @@ function startupRuntime(log: ReturnType<typeof recordingStructuredAgentSessionLo
       claimKeyId: 'key-1',
       resolveWorkspacePath: async () => root,
       resolveEnvironment: async () => ({}),
+      resolveLaunchArgs: () => [],
       resolveClaudeAuthPolicy: () => ({ stripAuthEnv: true })
     })
   internal.refreshMobileSessionPtyRecords = async () => new Set<string>()

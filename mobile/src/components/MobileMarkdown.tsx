@@ -1,4 +1,6 @@
 import { openExternalLink } from '../platform/external-link'
+import { createMarkdownInlineMatcher, type MarkdownInlineMatch } from './markdown-inline-matcher'
+import { INLINE_TEXT_SELECTION } from './inline-text-selection'
 import { MobileSelectableText } from './MobileSelectableText'
 import {
   Fragment,
@@ -32,6 +34,8 @@ type Props = {
   fallback?: string
   /** Enables iOS range selection for native-chat transcript prose. */
   rangeSelectable?: boolean
+  /** Forward long presses from interactive Android transcript spans to the message. */
+  onLongPress?: () => void
   /** Multiplier for prose font size (paragraphs, lists, quotes). Defaults to 1;
    *  the chat view passes >1 so agent prose reads larger than the compact base. */
   textScale?: number
@@ -46,11 +50,28 @@ const MAX_TABLE_ROWS = 40
 const MAX_TABLE_COLUMNS = 8
 /** Prose base size — passed to MermaidDiagram fallback mono text. */
 const MERMAID_BASE = 13
-const MarkdownTextContext = createContext<ComponentType<TextProps>>(NativeText)
+type MarkdownTextSetup = {
+  TextComponent: ComponentType<TextProps>
+  /** Disable native selection only within the Android transcript. */
+  androidTranscript: boolean
+  onLongPress?: () => void
+}
+const MarkdownTextContext = createContext<MarkdownTextSetup>({
+  TextComponent: NativeText,
+  androidTranscript: false
+})
 
 function MarkdownText(props: TextProps): React.JSX.Element {
-  const TextComponent = useContext(MarkdownTextContext)
-  return createElement(TextComponent, props)
+  const { TextComponent, androidTranscript, onLongPress } = useContext(MarkdownTextContext)
+  if (!androidTranscript) {
+    return createElement(TextComponent, props)
+  }
+  // Override selection without changing the nested spans' inherited behavior.
+  return createElement(TextComponent, {
+    ...props,
+    ...(props.selectable === true ? { selectable: false } : {}),
+    ...(onLongPress && props.onPress ? { onLongPress } : {})
+  })
 }
 
 // Web/mail hrefs open the system handler; file-target hrefs (file: URIs and
@@ -211,6 +232,9 @@ function MobileMarkdownContent({
   textScale = 1,
   onOpenFile
 }: Props) {
+  // Interactive children own their touches and must forward the row action.
+  const setup = useContext(MarkdownTextContext)
+  const rowLongPress = setup.androidTranscript ? setup.onLongPress : undefined
   const text = content?.trim() ?? ''
   const previewText = useMemo(() => normalizeMobileMarkdownPreviewHtml(text), [text])
   const blocks = useMemo(() => parseMobileMarkdown(previewText), [previewText])
@@ -284,6 +308,7 @@ function MobileMarkdownContent({
               key={index}
               style={styles.imageFrame}
               onPress={() => openMarkdownHref(block.url, onOpenFile)}
+              onLongPress={rowLongPress}
             >
               <NativeText style={styles.link}>{block.alt || 'Open image'}</NativeText>
               <NativeText style={styles.imageCaption} numberOfLines={1}>
@@ -376,9 +401,19 @@ function MobileMarkdownContent({
 }
 
 function MobileMarkdownInner(props: Props): React.JSX.Element | null {
-  const TextComponent = props.rangeSelectable ? MobileSelectableText : NativeText
+  const { rangeSelectable = false, onLongPress } = props
+  // Other Markdown surfaces retain their existing selection behavior.
+  const androidTranscript = rangeSelectable && !INLINE_TEXT_SELECTION
+  const setup = useMemo<MarkdownTextSetup>(
+    () => ({
+      TextComponent: rangeSelectable && !androidTranscript ? MobileSelectableText : NativeText,
+      androidTranscript,
+      ...(onLongPress ? { onLongPress } : {})
+    }),
+    [rangeSelectable, androidTranscript, onLongPress]
+  )
   return (
-    <MarkdownTextContext.Provider value={TextComponent}>
+    <MarkdownTextContext.Provider value={setup}>
       <MobileMarkdownContent {...props} />
     </MarkdownTextContext.Provider>
   )

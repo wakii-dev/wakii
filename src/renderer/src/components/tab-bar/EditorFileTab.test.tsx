@@ -218,10 +218,6 @@ vi.mock('../right-sidebar/status-display', () => ({
   STATUS_LABELS: {}
 }))
 
-vi.mock('./SortableTab', () => ({
-  CLOSE_ALL_CONTEXT_MENUS_EVENT: 'orca-close-all-context-menus'
-}))
-
 vi.mock('./drop-indicator', () => ({
   ACTIVE_TAB_INDICATOR_CLASSES: 'active-tab-indicator',
   getDropIndicatorClasses: () => '',
@@ -231,11 +227,6 @@ vi.mock('./drop-indicator', () => ({
 
 vi.mock('@/components/editor/markdown-preview-controls', () => ({
   canOpenMarkdownPreview: () => false
-}))
-
-vi.mock('@/lib/local-path-open-guard', () => ({
-  shouldBlockEditorTabLocalOpen: () => false,
-  showLocalPathOpenBlockedToast: vi.fn()
 }))
 
 type ReactElementLike = {
@@ -477,7 +468,8 @@ describe('EditorFileTab rename menu', () => {
       oldPath: '/repo/untitled-5.md',
       newName: '日本語.md',
       worktreeId: 'wt-1',
-      worktreePath: '/repo'
+      worktreePath: '/repo',
+      documentScoped: false
     })
   })
 

@@ -9,7 +9,7 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { AGENT_LAUNCH_RUNTIME_CAPABILITY } from '../../../../shared/protocol-version'
+import { AGENT_LAUNCH_RUNTIME_CAPABILITY } from '../../../../shared/agent-launch-runtime-capability'
 import type { RpcContext } from '../core'
 import {
   CAPABLE_CLIENT,
@@ -480,6 +480,8 @@ describe('the terminal factory', () => {
 
     expect(runtime.createTerminal).toHaveBeenCalledWith('id:wt-new', {
       startupAgent: 'claude',
+      // The host derives the tab's first view by the window's rule; chat view is on by default here.
+      viewMode: 'chat',
       onPtySpawnDispatched: expect.any(Function)
     })
     expect(createStructuredSession).not.toHaveBeenCalled()
@@ -491,7 +493,7 @@ describe('the terminal factory', () => {
   it('takes an existing workspace without creating one', async () => {
     const runtime = runtimeStub()
     const result = await launch(
-      { agent: 'grok', target: { kind: 'existing', worktree: 'id:wt-7' } },
+      { agent: 'gemini', target: { kind: 'existing', worktree: 'id:wt-7' } },
       runtime
     )
 
@@ -502,7 +504,9 @@ describe('the terminal factory', () => {
     // Resolved to an id first: everything below re-prefixes it, so a raw selector reaches the
     // runtime as `id:id:wt-7`.
     expect(runtime.createTerminal).toHaveBeenCalledWith('id:wt-7', {
-      startupAgent: 'grok',
+      startupAgent: 'gemini',
+      // No native chat renderer for this agent, so its tab opens as the terminal.
+      viewMode: 'terminal',
       onPtySpawnDispatched: expect.any(Function)
     })
     expect(result.worktreeId).toBe('wt-7')

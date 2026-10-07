@@ -11,6 +11,12 @@
     "retrying": "再試行中…"
   },
   "settings": {
+    "terminal": {
+      "optionLayoutAlt": "ABCまたはU.S. — OptionはAlt/Escシーケンスを送信します",
+      "optionLayoutCompose": "この配列ではOptionで@、€、[、]などの文字を入力します",
+      "optionLayoutUnknown": "不明な配列 — Optionで文字を入力します（安全な既定値）",
+      "optionShortcutHint": "Optionショートカットには「両方」、アクセント付き文字や記号には「オフ」、用途を左右のOptionキーに分けるには「左」または「右」を選んでください。"
+    },
     "appearance": {
       "language": {
         "title": "言語",
@@ -35,7 +41,8 @@
         "portsToggleDescription": "ライブワークスペースポートを表示します。ワークスペーススコープのポートと外部リスナーの場合はこれをクリックします。",
         "antigravityToggleDescription": "アクティブなワークスペースの Antigravity サブスクリプション使用量を表示します。",
         "grokToggleDescription": "Grok CLI でサインインしている場合に Grok サブスクリプションのクレジット使用量を表示します。",
-        "cursorToggleDescription": "cursor-agent または Cursor IDE でサインインしている場合に Cursor プランの使用状況を表示します。"
+        "cursorToggleDescription": "cursor-agent または Cursor IDE でサインインしている場合に Cursor プランの使用状況を表示します。",
+        "zcodeToggleDescription": "ZCode コーディングプランのクォータ使用量を表示します。"
       },
       "menuBarIcon": {
         "title": "メニューバーアイコンを表示",
@@ -45,6 +52,30 @@
           "statusItem": "ステータスアイテム",
           "activity": "活動"
         }
+      },
+      "chat": {
+        "title": "チャット",
+        "textSize": "テキストサイズ",
+        "textSizeDescription": "メッセージ、ツールの動作、メッセージ入力欄。チャット内の {{increase}} / {{decrease}} でも変更できます。",
+        "codeTextSize": "コードのテキストサイズ",
+        "codeTextSizeDescription": "コードブロック、インラインコード、コマンド、ツールの出力。",
+        "width": "幅",
+        "widthDescription": "広いペインでメッセージと入力欄をどこまで広げるかを設定します。",
+        "resetAppearance": "チャットの外観をリセット",
+        "resetDescription": "上記の既定値に戻します。",
+        "comfortable": "標準",
+        "wide": "広い",
+        "full": "全幅",
+        "pixels": "px",
+        "reset": "リセット",
+        "matchTerminalInterface": "ターミナルの外観に合わせる",
+        "matchTerminalInterfaceDescription": "チャット全体にターミナルと同じフォントと配色を使用します。ターミナルのテーマを変更すると、チャットにも反映されます。",
+        "contrast": "コントラスト",
+        "contrastDescription": "背景に対するチャットの文字の明るさを調整します。右端にすると、以前の明るい表示になります。",
+        "softer": "柔らかく",
+        "sharper": "くっきり",
+        "terminalControlledHint": "ターミナルの外観設定に従います。",
+        "terminalControlledTooltip": "ターミナルの外観に合わせています。変更するには「ターミナルの外観に合わせる」をオフにしてください。"
       }
     },
     "browser": {
@@ -92,11 +123,29 @@
         "unavailable": "ブラウザ ID が利用できません。"
       }
     },
-    "terminal": {
-      "optionLayoutAlt": "ABCまたはU.S. — OptionはAlt/Escシーケンスを送信します",
-      "optionLayoutCompose": "この配列ではOptionで@、€、[、]などの文字を入力します",
-      "optionLayoutUnknown": "不明な配列 — Optionで文字を入力します（安全な既定値）",
-      "optionShortcutHint": "Optionショートカットには「両方」、アクセント付き文字や記号には「オフ」、用途を左右のOptionキーに分けるには「左」または「右」を選んでください。"
+    "chat": {
+      "description": "チャットの外観と名前の付け方を選びます。",
+      "names": {
+        "title": "チャット名",
+        "description": "選択したツールが最初のメッセージから新規チャットの名前を生成します。名前が生成されない場合は、Claude Chat または Codex Chat のままです。",
+        "enable": "チャットに自動で名前を付ける",
+        "recipe": "チャット名",
+        "recipeDescription": "新規チャットの最初のメッセージから短い名前を生成します。",
+        "customCommandDescription": "「カスタムコマンド」を選ぶレシピで共有するコマンドです。{prompt} を使うと入力を引数として渡し、使わない場合は標準入力で渡します。",
+        "saveFailed": "チャット名の設定を保存できませんでした。",
+        "searchAgent": "Agent",
+        "searchTemplate": "コマンドテンプレート"
+      }
+    },
+    "agents": {
+      "codexTerminalServerIsolation": {
+        "title": "各 Codex ターミナルを独自のサーバー上で実行する",
+        "description": "Orca のステータスとタブを閉じる動作が正しく動作するようにします。 Codex の共有サーバーとその Agent の概要を使用するには、オフにします。新規ターミナルに適用されます。"
+      },
+      "codexSharedServerWarning": {
+        "title": "Codex タブがサーバーを共有する場合に警告する",
+        "description": "自分で開始した Codex が他のタブとサーバーを共有している場合、Agent のステータスが間違っている可能性があるため、その Codex に関する通知が表示されます。"
+      }
     }
   },
   "menu": {
@@ -475,7 +524,6 @@
           "9e2a9bb87b": "Continue",
           "6f8056a565": "Command Code",
           "4238b771b5": "Codebuff",
-          "b0b350de65": "Freebuff",
           "cbaf0c2e0b": "Cline",
           "1f8a19e9ad": "Autohand Code",
           "5e8eff11b3": "Auggie",
@@ -503,9 +551,14 @@
           "mimo_code_label": "MiMo Code",
           "muse_label": "Muse",
           "opencode2_label": "OpenCode 2",
-          "zcode_label": "ZCode",
           "codebuddy_label": "CodeBuddy",
-          "jcode_label": "Jcode"
+          "zcode_label": "ZCode",
+          "jcode_label": "Jcode",
+          "b0b350de65": "Freebuff",
+          "freebuff_label": "Freebuff",
+          "dsh_label": "DeepSeek Harness",
+          "qoder_label": "Qoder CLI",
+          "qoder_cn_label": "Qoder CLI China"
         },
         "skill": {
           "cli": {
@@ -880,7 +933,8 @@
             "dimensionsTooLarge": "{{fileName}} は画像サイズが大きすぎるため、安全にプレビューできません。",
             "invalidImage": "{{fileName}} は有効な画像として読み取れません。",
             "additionalErrors": "ほかに {{count}} 件の画像を添付できませんでした。",
-            "totalTooLarge": "{{fileName}} を追加すると添付ファイルの合計が {{maxSize}} を超えます。"
+            "totalTooLarge": "{{fileName}} を追加すると添付ファイルの合計が {{maxSize}} を超えます。",
+            "compressed": "{{fileName}} を添付ファイルの上限に収めるため、{{originalSize}} から {{size}} に圧縮しました。"
           }
         }
       },
@@ -919,6 +973,16 @@
         "tooLarge": "サイズが大きすぎてコピーできないため、Wakii は Agent に渡せませんでした。",
         "storageFull": "ドロップされたファイル用の Wakii の保存先がいっぱいのため、Wakii は Agent に渡せませんでした。",
         "generic": "もう一度ドロップしてください。"
+      },
+      "reveal": {
+        "in": {
+          "file": {
+            "manager": {
+              "notFound": "ファイルが見つかりません。移動または削除された可能性があります。",
+              "launchFailed": "ファイルを表示できませんでした。"
+            }
+          }
+        }
       }
     },
     "hooks": {
@@ -1115,10 +1179,10 @@
         "d3e8a1f4b2": "アカウントを切り替えました",
         "9375620cc3": "このセッションを再起動して {{value0}} を使用してください。それまでは前のアカウントのままです。",
         "6133594b12": "以前のアカウントを保持",
-        "8f0d5c92a1": "Codex の設定が変更されました",
-        "3ea91b5c07": "この Codex セッションは古い構成を使用しています",
-        "e6b7139d2a": "このセッションを再起動して、現在の Codex 構成をロードします。",
-        "7b1d20f4c8": "現在のセッションを維持する"
+        "8f0d5c92a1": null,
+        "3ea91b5c07": null,
+        "e6b7139d2a": null,
+        "7b1d20f4c8": null
       },
       "FirstLaunchBanner": {
         "b9e1b966c7": "通知を閉じる",
@@ -2004,6 +2068,7 @@
         "c679af7ad9": "Todo を更新する",
         "dfd72673e7": "プロジェクトの選択を保存できませんでした。",
         "b797bdd7c3": "検索をクリア",
+        "jiraTextMatchesNotice": "テキスト一致を表示しています。Jira はこの検索を JQL として実行できませんでした。",
         "99c2755218": "Issue を検索するか JQL を入力、例: project = ABC",
         "2ff9fd71fd": "Jira Issue を更新する",
         "0b65d3fb2c": "Linear プロジェクトを検索…",
@@ -2204,8 +2269,7 @@
         "jiraLinkSourceUnavailable": "この Jira Issue をリンクできませんでした。Jira に再接続するか該当するサイトを選択してから、もう一度お試しください。",
         "loadPageUnreachable": "ページ {{value0}} は GitHub 検索が返せる範囲を超えています。",
         "loadPageFailed": "GitHub からページ {{value0}} を読み込めませんでした。",
-        "loadPageNoMoreResults": "ページ {{value0}} にはこれ以上結果がありません。",
-        "jiraTextMatchesNotice": "テキスト一致を表示しています。Jira はこの検索を JQL として実行できませんでした。"
+        "loadPageNoMoreResults": "ページ {{value0}} にはこれ以上結果がありません。"
       },
       "Terminal": {
         "73768427cf": "閉じる",
@@ -3035,18 +3099,25 @@
           },
           "MobileDriverOverlay": {
             "c6460cf584": "操作を取り戻す",
-            "c8f2e1a4b9": "このターミナルを取り戻す",
+            "c8f2e1a4b9": null,
             "c44659e09f": "スマホ操作中",
-            "7cffad954c": "折りたたむ",
+            "7cffad954c": null,
             "3eed73394f": "キーボードが一時停止しています",
-            "faa367dc74": "スマホが携帯サイズのまま残しています",
-            "54f7d6f69d": "すべてのターミナルを取り戻す",
-            "b3d8e1f42a": "このターミナルを復元",
-            "e8c4f2a91b": "すべてのターミナルを復元",
-            "f2a8b9c1d3": "スマホから",
+            "faa367dc74": null,
+            "54f7d6f69d": null,
+            "b3d8e1f42a": null,
+            "e8c4f2a91b": null,
+            "f2a8b9c1d3": null,
             "c7e4a2b8f1": "スマホが操作中です",
-            "d9f3c6e2a4": "デスクトップのキーボードは一時停止中です。このターミナルを取り戻してここで入力するか、スマホが操作しているすべてのターミナルを取り戻すか、折りたたんで見続けてください。",
-            "a6b1d8f3e2": "スマホのセッションは終了しました。このターミナル、またはスマホが携帯サイズのまま残したすべてのターミナルをデスクトップサイズに復元してください。"
+            "d9f3c6e2a4": null,
+            "a6b1d8f3e2": null,
+            "4b7e1c9a20": "スマートフォンにぴったりのサイズ",
+            "9d2f6a3e58": "電話セッションが終了しました。このウィンドウに合わせて復元します。",
+            "1e5c8b7d43": "復元する",
+            "6a3d9f2c71": "すべて復元する",
+            "8c1a5e9f36": "デスクトップの入力が一時停止されます。出力はストリーミングを続けます。",
+            "2f7b4d1e95": "全部取り戻せ",
+            "3a9c5f7e12": "最小化する"
           },
           "TerminalAgentSessionForkDialog": {
             "17fc841e59": "コンテキストをコピーする",
@@ -3096,8 +3167,8 @@
             "e16012e31e": "このセッションを所有していたターミナルデーモンが終了したため、セッションとそのスクロールバックを回復できませんでした。続行するには、新規ターミナルを開いてください。",
             "sessionUnavailable": "Wakii はホスト上のこのペインのターミナルセッションに再接続できませんでした。続行するには、新規ターミナルを開いてください。",
             "sourceRestoring": "このターミナルを再接続しています — その出力が再確立されています。セッションはまだ実行中です。",
-            "terminalProcessLimit": "システムはこれ以上ターミナルプロセスを起動できません。使っていないターミナルを閉じるか、不要なプロセスを終了してから、もう一度お試しください。",
-            "ptyAllocationLimit": "システムはこれ以上 pty デバイスを割り当てられません。Wakii または他のプログラムで使っていないターミナルをいくつか閉じてから、もう一度お試しください。"
+            "ptyAllocationLimit": "システムはこれ以上 pty デバイスを割り当てられません。Wakii または他のプログラムで使っていないターミナルをいくつか閉じてから、もう一度お試しください。",
+            "terminalProcessLimit": "システムはこれ以上ターミナルプロセスを起動できません。使っていないターミナルを閉じるか、不要なプロセスを終了してから、もう一度お試しください。"
           },
           "TerminalProcessExitOverlay": {
             "capacityTitle": "Git Bash のコンソール上限に達しました",
@@ -3119,6 +3190,14 @@
             "38c282a2c4": "アナライザーはここから直接開きます。後で左下のツールボックスメニューから [Space Analyzer] を選択して開くこともできます。",
             "e2fcf07c0d": "ローカルストレージがいっぱいか書き込みできないため、Wakii はこのターミナルセッションを保存できませんでした。ディスク容量アナライザーを開いて、クリーンアップできるワークスペースストレージを見つけます。",
             "678c780a2c": "ディスク容量が利用できません"
+          },
+          "zcode": {
+            "missing": {
+              "tui": {
+                "title": "This ZCode build has no terminal UI",
+                "description": "Wakii's hooks installed correctly — the zcode on your PATH just cannot open a session. The ZCode desktop app bundles the agent runtime without its terminal UI. Install a zcode that ships the TUI, then run zcode outside Wakii to confirm."
+              }
+            }
           },
           "osc52": {
             "clipboard": {
@@ -3240,14 +3319,6 @@
             "disconnectedBody": "自動再試行が停止しました。このターミナルセッションを再開するには再接続してください。",
             "reconnectButton": "再接続"
           },
-          "zcode": {
-            "missing": {
-              "tui": {
-                "title": "This ZCode build has no terminal UI",
-                "description": "Wakii's hooks installed correctly — the zcode on your PATH just cannot open a session. The ZCode desktop app bundles the agent runtime without its terminal UI. Install a zcode that ships the TUI, then run zcode outside Wakii to confirm."
-              }
-            }
-          },
           "TerminalLinkActionPopover": {
             "openLink": "リンクを開く",
             "openFile": "ファイルを開く",
@@ -3273,6 +3344,14 @@
           },
           "TerminalRestoringPlaceholder": {
             "restoring": "ターミナルを復元中…"
+          },
+          "AgentLaunchPaneNotice": {
+            "commandNotFound": "このマシンでコマンドが見つかりませんでした。",
+            "copyPrompt": "プロンプトをコピー",
+            "exitedDuringStart": "起動中に終了しました。",
+            "notStarted": "Agent を起動できませんでした。",
+            "unconfirmed": "Agent が起動したか確認できませんでした。",
+            "workspaceGone": "ワークスペースは利用できなくなりました。"
           }
         }
       },
@@ -3336,9 +3415,9 @@
             "6b3efb106e": "上に分割",
             "fdd29eb669": "ピンタブ",
             "8e9d603a09": "タブの固定を解除する",
-            "revealInFinder": "ファインダーで表示",
-            "openContainingFolder": "含まれているフォルダーを開く",
-            "revealInFileExplorer": "ファイルエクスプローラーで表示"
+            "revealInFinder": null,
+            "openContainingFolder": null,
+            "revealInFileExplorer": null
           },
           "QuickLaunchButton": {
             "348a04c1ad": "Agent 設定…",
@@ -3702,7 +3781,9 @@
             "codexSignInSuccess": "Codex にサインインしました",
             "codexSignInError": "Codex のサインインに失敗しました。もう一度お試しください。",
             "cursorUsageMenu": "Cursor の使用状況",
-            "hiddenUsageProviders": "ほかに: {{value0}}"
+            "hiddenUsageProviders": "ほかに: {{value0}}",
+            "4fba7dc1e7": "残高 {{value0}}",
+            "zcodeUsageMenu": "Zコードの使用法"
           },
           "StatusBarUsageEmptyCta": {
             "828c764a79": "アカウントを接続する",
@@ -3884,6 +3965,9 @@
                 "message": "Wakii を実行しているコンピュータのターミナルで cursor-agent login を実行し、使用状況を再試行してください。"
               },
               "plan": "プラン"
+            },
+            "zcode": {
+              "mcp": "MCP"
             }
           },
           "SshTargetStatusRow": {
@@ -3998,6 +4082,15 @@
             "resumingAriaOne": "1 件のチャットを再開中。詳細はクリックしてください。",
             "resumingAria": "{{value0}} 件のチャットを再開中。詳細はクリックしてください。",
             "resumingTooltip": "中断されたチャットを復元し、続行を依頼しています…"
+          },
+          "provider": {
+            "extra": {
+              "usage": {
+                "section": {
+                  "135d51c19f": "上限 {{value0}}"
+                }
+              }
+            }
           }
         }
       },
@@ -4193,7 +4286,6 @@
           "444585cb41": "データ付き",
           "ecb0cd8a4c": "有効 -",
           "33f7b043d2": "プロバイダー",
-          "60002bb22f": "ローカルの Claude、Codex、OpenCode の使用状況はまだ見つかりません。次の Agent セッションがトークンログを書き込むと、概要に反映されます。",
           "70f36452d4": "キャッシュシェア",
           "327603fe8b": "アクティブ日数",
           "0eaf937335": "推定コスト",
@@ -4208,7 +4300,8 @@
           "c760c481c5": "使用方法の概要",
           "55c910f4f1": "- 一部のモデルの価格は利用できません",
           "enableMuse": "Muse を有効にする",
-          "noLocalUsageYet": "ローカルの Claude、Codex、OpenCode、Muse の使用状況はまだ見つかりません。次の Agent セッションがトークンログを書き込むと、概要に反映されます。"
+          "noLocalUsageYet": "ローカルの Claude、Codex、OpenCode、Muse の使用状況はまだ見つかりません。次の Agent セッションがトークンログを書き込むと、概要に反映されます。",
+          "60002bb22f": "ローカルの Claude、Codex、OpenCode の使用状況はまだ見つかりません。次の Agent セッションがトークンログを書き込むと、概要に反映されます。"
         },
         "share": {
           "card": {
@@ -4264,7 +4357,6 @@
               "1dd166c920": "少ない",
               "52d9221dc0": "最近のトークンアクティビティのヒートマップ",
               "c424eb3f8e": "最高：",
-              "f28ff1f852": "最近の Claude、Codex、および OpenCode トークンアクティビティの組み合わせ。",
               "69e2b50427": "毎日の強度",
               "3a795542fa": "組み合わせたトークンミックス",
               "e65084cb4b": "推論",
@@ -4281,7 +4373,8 @@
               "recentCombinedActivity": "最近の Claude、Codex、OpenCode、Muse のトークンアクティビティの組み合わせ。",
               "statusScanning": "走査",
               "statusEnabled": "有効",
-              "statusOff": "オフ"
+              "statusOff": "オフ",
+              "f28ff1f852": "最近の Claude、Codex、および OpenCode トークンアクティビティの組み合わせ。"
             }
           }
         },
@@ -5392,6 +5485,7 @@
           "bdd23b4e07": "GitHub Issue",
           "44713a5d04": "Linear Issue",
           "jiraIssues": "Jira Issue",
+          "host": "ホスト",
           "cc17bd443b": "詳細",
           "0f9b959b31": "PR",
           "e029a2d775": "状態",
@@ -5416,8 +5510,7 @@
           "automation": "オートメーション",
           "folderPathIdentity": "ブランチ / フォルダーパス",
           "cli": "Wakii CLI",
-          "workspaceOptions": "ワークスペースのオプション",
-          "host": "ホスト"
+          "workspaceOptions": "ワークスペースのオプション"
         },
         "SshTargetRow": {
           "4677394048": "接続中…",
@@ -5470,6 +5563,7 @@
           "74522ee457": "名前の変更に失敗しました",
           "02e19349f4": "名前の自動変更に失敗しました: 表示エラー",
           "691ccfd622": "削除中…",
+          "deleteFailed": "削除に失敗しました",
           "35ccfe2475": "プロジェクト{{value0}}",
           "1d66d84f0b": "文字列",
           "57eaa61b55": "子ワークスペースを非表示にする",
@@ -5486,8 +5580,7 @@
           "automationCreated": "オートメーションによって作成",
           "branchIdentity": "ブランチ",
           "branchFolderPathIdentity": "ブランチまたはフォルダーパス",
-          "ef18787206": "削除待ち",
-          "deleteFailed": "削除に失敗しました"
+          "ef18787206": "削除待ち"
         },
         "WorktreeCardAgents": {
           "1b0a156717": "Agent"
@@ -5570,6 +5663,7 @@
           "76865d827f": "グループに移動",
           "503ec0f8e6": "プロジェクトからの新規グループ",
           "3350101edb": "パスのコピー",
+          "copyWorktreeName": "ワークツリー名をコピー",
           "f4475537d8": "削除",
           "f5ac91531d": "Wakii からプロジェクトを削除",
           "b42391d8bf": "削除中…",
@@ -5587,7 +5681,6 @@
           "workspaceSection": "ワークスペース",
           "primaryDeleteDisabled": "プライマリワークツリーは削除できません。代わりにプロジェクトを削除してください。",
           "deleteWorktree": "ワークツリーを削除",
-          "copyWorktreeName": "ワークツリー名をコピー",
           "sleepWithDescendants": "子孫と一緒に寝る ({{value0}})",
           "sleepWithDescendantsDescription": "このワークスペースとすべてのネストされた子孫のアクティブなパネルを閉じて、メモリと CPU を解放します。",
           "deleteWithDescendants": "子孫と一緒に削除…"
@@ -6215,9 +6308,10 @@
           "parkTerminal": "ターミナルを退避"
         },
         "SidebarFeedbackImageAttachments": {
-          "screenshotsHint": "スクリーンショットを最大 {{count}} 件、合計 {{maxSize}} まで添付できます",
           "attachImages": "Attach",
-          "removeImage": "{{fileName}} を削除"
+          "removeImage": "{{fileName}} を削除",
+          "screenshotsHint": "スクリーンショットを最大 {{count}} 件、合計 {{maxSize}} まで添付できます",
+          "preparing": "添付ファイルを準備しています…"
         },
         "WorkspaceKanbanSearchField": {
           "bdb753c78d": "一致するワークスペースはありません",
@@ -6322,6 +6416,11 @@
           "copied": "コマンドをコピーしました",
           "retry": "今すぐ再試行",
           "restored": "Git が再び動作しています。ワークツリーを更新しました。"
+        },
+        "manualSortSwitch": {
+          "title": "並べ替えが手動に変更されました",
+          "description": "手動では、ドロップした場所にワークスペースが保持されます。",
+          "restore": "{{label}} に戻る"
         }
       },
       "shared": {
@@ -6329,8 +6428,6 @@
           "01af244097": "キャンセル",
           "28c8e53176": "これにより、すべてのワークスペースで実行中のすべてのターミナルペインが強制終了されます。これらのセッションで保存されていない作業内容は失われます。デーモン自体は実行を継続し、新規ターミナルをすぐに開くことができます。これを元に戻すことはできません。",
           "1bbea41a77": "すべてのターミナルセッションを強制終了しますか?",
-          "01d6b7c64e": "実行中のすべてのターミナルペインを強制終了し、デーモンプロセスを再起動します。ペインには「プロセスが終了しました」と表示され、すぐに再度開くことができます。以前のアプリバージョンのレガシープロトコルセッションは保持されます。これを元に戻すことはできません。",
-          "922548bc66": "ターミナルデーモンを再起動しますか?",
           "2b4efdc162": "セッションを強制終了できませんでした。",
           "d18f3005c2": "{{value0}} セッション{{value1}} は終了を拒否しました。",
           "baad8cd651": "実行中のセッションはありません。",
@@ -6352,7 +6449,9 @@
           "c34fb1098d": "ターミナルタブが閉じられ、シャットダウンリクエストが送信されました。",
           "d9657ac204": "ターミナルセッションのシャットダウンリクエストが送信されました。",
           "e8f25bd903": "ターミナルクリーンアップを完了できませんでした。",
-          "a702d4196e": "これにより、すべてのワークスペースのターミナルタブが閉じられ、現在のターミナルセッションのシャットダウンがリクエストされます。保存されていないターミナル作業は失われます。デーモン自体は実行を続け、新規ターミナルはすぐに開けます。この操作は取り消せません。"
+          "a702d4196e": "これにより、すべてのワークスペースのターミナルタブが閉じられ、現在のターミナルセッションのシャットダウンがリクエストされます。保存されていないターミナル作業は失われます。デーモン自体は実行を続け、新規ターミナルはすぐに開けます。この操作は取り消せません。",
+          "01d6b7c64e": "実行中のすべてのターミナルペインを強制終了し、デーモンプロセスを再起動します。ペインには「プロセスが終了しました」と表示され、すぐに再度開くことができます。以前のアプリバージョンのレガシープロトコルセッションは保持されます。これを元に戻すことはできません。",
+          "922548bc66": "ターミナルデーモンを再起動しますか?"
         },
         "MacFolderAccessFixDialog": {
           "stepAllow": "ファイルとフォルダーで Wakii を許可する",
@@ -6424,8 +6523,8 @@
           "96f3649526": "Gemini CLI 認証情報を使用する (実験的機能)",
           "d676c41fc6": "ローカルの Gemini CLI インストールから OAuth 認証情報を抽出して、Google で認証します。これは、Wakii ではなく、Gemini CLI アプリに発行された認証情報を使用します。 Google が CLI を更新すると壊れる可能性があります。ご自身の責任でご使用ください。",
           "0c7f915b01": "Gemini CLI 認証情報を使用する",
-          "973741a871": "Gemini プロバイダー設定を構成します。",
-          "0c64dc2a64": "Gemini",
+          "973741a871": "既存の Gemini CLI セッションを利用可能な状態に保ちます。Gemini の認証情報では Antigravity にサインインできません。",
+          "0c64dc2a64": "Gemini CLI (レガシー)",
           "db209ee572": "削除",
           "8a0f870153": "再認証",
           "3d245ef7d9": "Codex はこのサインインが古いと報告しました",
@@ -6843,7 +6942,7 @@
           "1199258ace": "コピー",
           "1188e56af4": "プロンプトの例をコピーする",
           "b84807f228": "」",
-          "59722f31b4": "」",
+          "59722f31b4": "「",
           "c5325e91f6": "これらのいずれかを、スキルがインストールされているプロジェクトの Claude Code、Codex、または別の Agent に貼り付けます。",
           "2a180694f7": "試してみてください — プロンプトの例",
           "5ec620ccc4": "コピーに失敗しました。",
@@ -7104,7 +7203,7 @@
             "shellEnvCopy": "Codex と Claude のチャットは、ターミナルと同じく、ログインシェルがエクスポートするすべての変数を引き継いで開始します。オフにすると、渡す変数を選択できます。",
             "shellEnvToggleLabel": "シェル環境の使用の切り替え",
             "structuredTitle": "更新された構造化ネイティブチャットを使用する",
-            "structuredCopy": "新規の Codex および Claude の Agent を構造化チャットとして開きます。オフにすると、ターミナルを使用したチャットで開きます。既存のチャットはそのまま残ります。",
+            "structuredCopy": "対応している場合、新規の Agent を構造化チャットとして開きます。オフにすると、ターミナルを使用したチャットで開きます。既存のチャットはそのまま残ります。",
             "structuredScope": "Runs on this machine and on paired Wakii servers running a version that supports it; older servers keep terminal chat. WSL and SSH hosts continue to use terminal chat, and Windows falls back to it unless Wakii can read process start times.",
             "structuredToggleLabel": "更新された構造化ネイティブチャットの切り替え",
             "resumeTitle": "再起動後に作業中のチャットを自動的に再開する",
@@ -7149,7 +7248,7 @@
           "80c454e8a6": "これをプロバイダーのキャッシュ TTL と一致させます。"
         },
         "GeneralEditorSettingsSection": {
-          "f80603d293": "すべての markdown ビューで markdown ノートコントロールを表示し、Agent のハンドオフ 操作にそれらのノートを含めます。",
+          "f80603d293": "すべての markdown ビューで markdown ノートコントロールを表示し、Agent のハンドオフ操作にそれらのノートを含めます。",
           "4edc104f0f": "Markdown レビューノート",
           "5f02e6fb21": "markdown ファイルでローカル markdown レビューノートコントロールを表示します。",
           "51161d1647": "ファイルの編集時にミニマップの概要を表示します。",
@@ -7543,7 +7642,7 @@
           "edf13dd03b": "コピー",
           "c12b253997": "プロンプトの例をコピーする",
           "d151e25078": "」",
-          "b525ff2b12": "」",
+          "b525ff2b12": "「",
           "4daa95f25a": "これらのいずれかを、Wakii CLI スキルがインストールされているプロジェクトの Claude Code、Codex、または別の Agent に貼り付けます。",
           "0820b3f84f": "試してみてください — プロンプトの例",
           "1f608e7d60": "プロンプトのコピーに失敗しました。",
@@ -7612,7 +7711,8 @@
           "pairingCodeReady": "ペアリングコードの準備完了",
           "copyPairingCode": "ペアリングコードをコピーする",
           "diagnosticsCopied": "診断がコピーされました",
-          "diagnosticsCopyFailed": "診断情報のコピーに失敗しました"
+          "diagnosticsCopyFailed": "診断情報のコピーに失敗しました",
+          "5e2c7a1f84": "スマートフォンでターミナルを使用している間、Orca はスマートフォンの画面に合わせてターミナルを縮小します。アプリを閉じるか別のアプリに切り替えるときに、アプリをスマートフォンサイズのままにするか (インタラクティブ CLI ツールがリフローしないように)、サイズを変更してデスクトップに戻るかを制御します。バナーの [復元] または [すべて復元] を使用すると、いつでも手動でサイズを変更できます。"
         },
         "MobileSettingsPane": {
           "9a3c280e49": "GitHub リリース",
@@ -7927,6 +8027,8 @@
           "c7ef4415de": "表示名",
           "b0a0c14a1c": "サイドバーとタブのプロジェクト固有の表示詳細。",
           "removeProjectAllHosts": "このプロジェクトを、設定済みのすべてのホストの Wakii から削除します。",
+          "removeProjectCheckout": "このチェックアウトを Wakii から削除します。このプロジェクトの他のチェックアウトは残ります。",
+          "removeProjectKeepCheckouts": "このプロジェクトを Wakii から削除します。独自の設定を持つチェックアウトは残ります。",
           "0909e5d650": "プロジェクトの削除",
           "ee5a290616": "フォルダーとして開きます。このワークスペースでは Git 機能を使用できません。",
           "323debba71": "タイプ：",
@@ -7993,9 +8095,7 @@
           "externalWorktreesGlobal": "グローバルデフォルト: {{value0}}",
           "useGlobal": "グローバル設定を使用",
           "hostStateWorkspaceWindowClosed": "ワークスペースウィンドウを閉じた",
-          "hostWorkspaceWindowClosedHelp": "サーバーにはアクセスできますが、Wakii ウィンドウが閉じています。このセットアップを使用するには、{{value0}} で Wakii を開いてください。",
-          "removeProjectCheckout": "このチェックアウトを Wakii から削除します。このプロジェクトの他のチェックアウトは残ります。",
-          "removeProjectKeepCheckouts": "このプロジェクトを Wakii から削除します。独自の設定を持つチェックアウトは残ります。"
+          "hostWorkspaceWindowClosedHelp": "サーバーにはアクセスできますが、Wakii ウィンドウが閉じています。このセットアップを使用するには、{{value0}} で Wakii を開いてください。"
         },
         "RepositorySourceControlAiActionRows": {
           "548a6e1281": "コマンドテンプレート",
@@ -8269,8 +8369,8 @@
           "3c88ec55d6": "検索条件に一致する設定が見つかりませんでした:「",
           "c7ad095d96": "設定を読み込んでいます…",
           "acc7bbdefd": "もう一度 ESC を押して設定を終了します",
-          "43b68e10f0": "Git AI Author の変更が保存されていません。離れるとそれらは破棄されます。",
-          "17bdee4ff1": "保存されていない Git AI Author の変更を破棄しますか?",
+          "43b68e10f0": "未保存の AI 設定があります。移動すると変更は破棄されます。",
+          "17bdee4ff1": "未保存の AI 設定を破棄しますか？",
           "084d8fac5b": "プライバシーとセキュリティ",
           "23931df7e8": "リモートホスト",
           "mobile_group": "モバイル",
@@ -8520,7 +8620,12 @@
           "addTitle": "SSH ホストを追加",
           "editDescription": "このマシンの接続詳細を更新します。変更は次回の接続時に適用されます。",
           "addDescription": "SSH でログインできる永続的なマシンを追加します。",
-          "editingPrefix": "編集中"
+          "editingPrefix": "編集中",
+          "remoteRuntime": "ランタイム",
+          "remoteRuntimeHelp": "このホスト上で Orca を実行する Node.js。 Orca 管理ノードは独自のノードをアップロードするため、npm は必要ありません。ホストノードは、そこにすでにインストールされている Node.js を使用します。",
+          "remoteRuntimeAuto": "自動",
+          "remoteRuntimePinnedNode": "Orca 管理ノード",
+          "remoteRuntimeHostNode": "ホストノード"
         },
         "TasksPane": {
           "f71d8a9dd3": "タスクプロバイダー",
@@ -8697,7 +8802,38 @@
             "fastDescription": "修飾キーを押しながらスクロールするときの追加倍率。",
             "tui": "TUI",
             "tuiDescription": "全画面ターミナルアプリ向けの離散的なホイール通知。"
-          }
+          },
+          "8dbe0bc942": "シェル引数、1 行に 1 つ",
+          "f58cb71f53": "--rcfile\n/path/to/rcfile",
+          "48b91a3ed2": "カスタム引数",
+          "7bd83fc1d0": "-l (デフォルト)",
+          "5ffc4777b6": "シェル引数モード",
+          "578ec79449": "1 行に 1 つの引数を入力します。空欄にすると引数を渡しません。",
+          "884a006065": "-l を指定してシェルをログインシェルとして起動します。",
+          "01c600daff": "シェル引数",
+          "e3ae5aed18": "。システムシェルに切り替えるか、このホスト上の実行ファイルを選択してください。",
+          "59573d0b33": "PATH 上のシェル名または実行ファイルのパスを入力してください。Orca はログインシェルとして起動します。",
+          "5e06e87730": "カスタムシェルの実行ファイル",
+          "c2bf02ce2f": "fish、nu、または /bin/zsh",
+          "f51cc79784": "カスタムシェル",
+          "dd3f4c35da": "システムシェル ({{value0}})",
+          "fd05fb109c": "ターミナルのシェル",
+          "69724e8f0c": "新規ローカルターミナルペインで Orca が開くシェルを選択します。",
+          "c2ddb189e7": "rcfile",
+          "73c211e979": "ラッパー",
+          "4faf688f78": "ログイン",
+          "44f8a56f66": "引数",
+          "af893aa433": "引数",
+          "ddc72a4860": "デフォルト",
+          "d469840b75": "nushell",
+          "17ad899ba4": "bash",
+          "c9bc93d343": "zsh",
+          "0cbe5ad727": "fish",
+          "81694f1584": "ターミナル",
+          "a909136b3f": "シェル",
+          "1c29734248": "新規ターミナルペインで使用するシェル",
+          "9589abc009": "デフォルトのシェル",
+          "5a5eac2f44": "シェルが見つかりません: {{value0}}"
         },
         "TerminalSettingsPreview": {
           "a63953a48a": "{{value0}} テーマのプレビュー",
@@ -8834,7 +8970,8 @@
           "f9a9cf6928": "音声ディクテーションを有効にする前に、マイクの許可が必要です。",
           "1eac933202": "macOS のプライバシーとセキュリティを開きました。アクセスを許可した後、ディクテーションを再度有効にします。",
           "cd9fe37556": "マイクの許可が与えられました",
-          "6fa734ed95": "{{value0}} を削除"
+          "6fa734ed95": "{{value0}} を削除",
+          "openAiKeyName": "OpenAI 転写キー"
         },
         "WorktreeSymlinksSection": {
           "1c1e35b219": "{{value0}} を削除",
@@ -8941,13 +9078,25 @@
             "7e2a4b8c1d": "海外",
             "cursor": {
               "description": "このコンピュータに既にある Cursor のサインイン（cursor-agent login）から読み取った月間プラン使用状況。",
-              "title": "Cursor の使用状況",
               "kw": {
+                "cursor": "cursor",
+                "rateLimit": "レート制限",
                 "spend": "追加料金",
                 "statusBar": "ステータスバー",
-                "rateLimit": "レート制限",
-                "usage": "使用量",
-                "cursor": "cursor"
+                "usage": "使用量"
+              },
+              "title": "Cursor の使用状況"
+            },
+            "zcodePlan": {
+              "title": "GLMコーディングプラン",
+              "description": "Z.AI または Zhipu (BigModel) GLM コーディングプランの使用状況を追跡します。サイトを選択し、プラン API キーを保存します。",
+              "kw": {
+                "glm": "グルム",
+                "zai": "ザイ",
+                "zhipu": "ジプ",
+                "bigmodel": "ビッグモデル",
+                "codingPlan": "コーディング計画",
+                "rateLimit": "レート制限"
               }
             }
           }
@@ -9040,7 +9189,12 @@
             "yolo": "ヨロ",
             "manual": "マニュアル",
             "skip": "スキップ",
-            "checks": "チェック"
+            "checks": "チェック",
+            "7e15b89f6e": "サーバー",
+            "ff457e1e7b": "デーモン",
+            "9f3becc4e8": "共有された",
+            "34337ed5c7": "隔離する",
+            "9a84e65118": "Agent の概要"
           }
         },
         "appearance": {
@@ -9211,11 +9365,16 @@
             },
             "cursor": {
               "description": "このコンピュータの Cursor サインインから月間 Cursor プラン使用状況を表示します。",
-              "title": "Cursor の使用状況",
               "kw": {
                 "cursor": "cursor"
-              }
-            }
+              },
+              "title": "Cursor の使用状況"
+            },
+            "zcodeUsageTitle": "Zコードの使用法",
+            "zcodeUsageDescription": "ZCode コーディングプランのクォータの使用状況をステータスバーに表示します。",
+            "zcode": "zコード",
+            "zai": "ザイ",
+            "glm": "グルム"
           }
         },
         "auto": {
@@ -9917,7 +10076,22 @@
               "9a9f8d4910": "Jira Cloud に接続して、Issue を参照、作成、リンクします。",
               "74f3063026": "{{value0}} サイト{{value1}} が接続されました",
               "statusConnected": "接続済み",
-              "statusNotConnected": "接続されていません"
+              "statusNotConnected": "接続されていません",
+              "jiraTokenName": "Jira API トークン"
+            }
+          }
+        },
+        "machine": {
+          "name": {
+            "search": {
+              "title": "マシン名",
+              "description": "他のデバイスやホストでこのコンピューターを表示する名前を選びます。",
+              "machineName": "マシン名",
+              "machine": "マシン",
+              "hostname": "ホスト名",
+              "computer": "コンピューター",
+              "rename": "名前変更",
+              "name": "名前"
             }
           }
         },
@@ -10637,7 +10811,19 @@
               "statusline": "ステータスライン",
               "dim": "薄暗い",
               "colors": "色"
-            }
+            },
+            "d31ed1ac1c": "rcfile",
+            "d9e29543a1": "ラッパー",
+            "50ba80b6dd": "ログイン",
+            "36ba1a1357": "引数",
+            "5304b12d5c": "引数",
+            "7c3ede6f12": "nushell",
+            "bf09070e31": "bash",
+            "d26257a80d": "zsh",
+            "454df22a5e": "fish",
+            "ddd5efe113": "シェル",
+            "3de504994c": "新規ローカル対話型ターミナルペインで使用するシェルと引数",
+            "1733ccd3e9": "ターミナルのシェル"
           },
           "windows": {
             "search": {
@@ -10738,7 +10924,11 @@
           "a42f6fbdd8": "Agent が作業している間、このコンピュータとディスプレイを起きたままにします。Wakii は電源ポリシーに従い、蓋が閉じているときもこのデバイスを起きたままにするよう要求します。",
           "modeTitle": "コンピュータをスリープさせない",
           "modeDescriptionWindows": "[オン]、[Agent]、または [オフ] を選択します。Agent モードは、Agent が動作している間は起動したままになります。蓋を閉じる動作は、このデバイスの電源設定に従います。",
-          "modeDescriptionDefault": "[オン]、[Agent]、または [オフ] を選択します。Agent が動作している間、Agent モードは起動したままになります。 Wakii はまた、電源ポリシーに従って、蓋が閉じられているときにこのデバイスが起動したままになるように要求します。"
+          "modeDescriptionDefault": "[オン]、[Agent]、または [オフ] を選択します。Agent が動作している間、Agent モードは起動したままになります。 Wakii はまた、電源ポリシーに従って、蓋が閉じられているときにこのデバイスが起動したままになるように要求します。",
+          "modeDescriptionMac": "[オン]、[Agent]、または [オフ] を選択します。Agent モードは Agent の作業中のアイドルスリープを防止するため、蓋を開けたまま長時間の実行を完了できます。蓋を閉じると、この Mac はスリープします。",
+          "lidNoteMac": "蓋を開けたままアイドルスリープを防止します。蓋を閉じると、この Mac はスリープします。",
+          "lidNoteWindows": "蓋を閉じる動作は、このデバイスの電源設定に従います。",
+          "lidNoteDefault": "Orca はまた、電源ポリシーに従って、蓋が閉じられているときにデバイスが起動したままになるようにこのデバイスに要求します。"
         },
         "AgentAwakeSetting": {
           "on": "オン",
@@ -10767,6 +10957,10 @@
         "agent-status-hooks-copy": {
           "7707c15abb": "Agent 状態フック",
           "a68a642835": "Wakii で作業中、待機中、完了の状態を表示します。オフにすると Wakii 管理のフックを削除し、再インストールを停止します。"
+        },
+        "agent-workspace-trust-copy": {
+          "title": "Wakii が Agent を起動するときにフォルダーを信頼する",
+          "description": "Wakii が起動した Agent は「Do you trust this folder?」の確認を省略するため、プロジェクトの Agent のフックと設定がすぐに実行されます。この設定がオフの場合、各 Agent はフォルダーで初めて実行されるときに確認します。オーケストレーションのワーカー、オートメーション、スマートフォンから起動した Agent など、あなたが見ていない間に動く Agent は、そのターミナルで応答するまでこの確認で待機します。すでに信頼済みのフォルダーは信頼されたままです。"
         },
         "agent-generated-tab-title-copy": {
           "19ad21615a": "タブタイトルを自動生成",
@@ -10847,7 +11041,8 @@
                 "2d60ec7921": "APIトークンを使用して Jira Cloudサイトに接続するか、パーソナルアクセストークンまたはユーザー名とパスワードを使用してセルフホスト Jira に接続します。認証情報は選択されたリモートランタイムに送信され、ランタイムがサポートする暗号化で保存されます。",
                 "977e360b71": "APIトークンを使用して Jira Cloudサイトに接続するか、パーソナルアクセストークンまたはユーザー名とパスワードを使用してセルフホスト Jira に接続します。認証情報はローカルに保存され、ローカルランタイムストレージがサポートする場合は暗号化されます。",
                 "statusConnected": "接続済み",
-                "statusNotConnected": "接続されていません"
+                "statusNotConnected": "接続されていません",
+                "linearTokenName": "リニア API トークン"
               }
             }
           }
@@ -11302,6 +11497,12 @@
           "step2LocalDescription": "スマートフォンが Tailscale または Wi‑Fi でこのアドレスに到達できる必要があります。",
           "step2RelayDescription": "任意。近く（同じ Wi‑Fi または Tailscale）にいるときにスマホが使うアドレスを選びます。通常は Relay より高速です。外出中は引き続き Relay が使われます。",
           "step2RelayDisclosure": "より速いローカル経路も使う"
+        },
+        "MachineNameField": {
+          "label": "マシン名",
+          "description": "他のデバイスやホストには「{{name}}」と表示されます。空欄にするとコンピューター自身の名前を使います。",
+          "pending": "他のデバイスやホストにはこの名前が表示されます。空欄にすると検出されたコンピューター名を使います。",
+          "placeholder": "自動検出"
         },
         "MobileRelayBetaAvailability": {
           "about": "Wakii Relay ベータについて",
@@ -11763,50 +11964,6 @@
           "updateServer": "ソースのデフォルトを設定するには、このサーバーを更新してください。",
           "updateServerDefaults": "表示のデフォルトを設定するには、このサーバーを更新してください。"
         },
-        "EditorCaretAnimationSetting": {
-          "8e0f5141a1": "オン",
-          "8dc4f98620": "明示的",
-          "84ecf4f030": "オフ",
-          "63ef2747f7": "スムーズキャーソルアニメーション",
-          "a181845e72": "ファイルエディターでテキストカーソルの移動をアニメーション化します。"
-        },
-        "EditorRenderWhitespaceSetting": {
-          "f08dbab703": "なし",
-          "6bce99b8b5": "境界",
-          "e1f52833fb": "選択範囲",
-          "09b41c31fb": "末尾",
-          "b0974f678a": "全て",
-          "085871d375": "空白の表示",
-          "628ef71b4c": "ファイルエディターで空白文字を表示します。"
-        },
-        "EditorBreadcrumbsSetting": {
-          "fe2cb0ef78": "パンくずリスト",
-          "9e7a1f613e": "ファイルエディターの上にファイルパスを表示します。"
-        },
-        "InlineBlameSetting": {
-          "683fd9af0f": "インライン Blame",
-          "9142b8bc2f": "ファイルエディターの現在行の末尾にコミットの作成者・日付・概要を表示します。"
-        },
-        "machine": {
-          "name": {
-            "search": {
-              "title": "マシン名",
-              "description": "他のデバイスやホストでこのコンピューターを表示する名前を選びます。",
-              "machineName": "マシン名",
-              "machine": "マシン",
-              "hostname": "ホスト名",
-              "computer": "コンピューター",
-              "rename": "名前変更",
-              "name": "名前"
-            }
-          }
-        },
-        "MachineNameField": {
-          "label": "マシン名",
-          "description": "他のデバイスやホストには「{{name}}」と表示されます。空欄にするとコンピューター自身の名前を使います。",
-          "pending": "他のデバイスやホストにはこの名前が表示されます。空欄にすると検出されたコンピューター名を使います。",
-          "placeholder": "自動検出"
-        },
         "QuickCommandsList": {
           "noSearchMatches": "この検索に一致するコマンドはありません。"
         },
@@ -12052,7 +12209,8 @@
               "notConfigured": "Bitbucket Cloud アカウントを Atlassian API トークンまたはアクセストークンに接続します。 ORCA_BITBUCKET_* 環境変数も機能し、優先されます。",
               "disconnectFailed": "保存された Bitbucket 認証情報を削除できませんでした。",
               "statusLoadFailed": "保存された Bitbucket 認証情報を確認できませんでした。",
-              "replaceCredentials": "認証情報を追加または置換する"
+              "replaceCredentials": "認証情報を追加または置換する",
+              "credentialName": "Bitbucket 認証情報"
             }
           }
         },
@@ -12085,38 +12243,103 @@
           "fffab5890b": "SIXEL、iTerm2 (IIP)、および Kitty グラフィックスプロトコルを使用して、ターミナルに画像を直接表示します。"
         },
         "CursorAccountsSection": {
-          "source": {
-            "desktop": "Cursor IDE",
-            "keychain": "macOS キーチェーン（cursor-agent）",
-            "cli": "Cursor CLI 認証ファイル"
-          },
-          "signedInGeneric": "サインイン済み。Wakii はこのコンピュータに保存された Cursor セッションを読み取ります。",
-          "signedOutHelp": "Cursor IDE でサインインするか、ターミナルで cursor-agent login を実行してから、ここで「使用状況を更新」をクリックしてください。",
-          "refreshUsage": "使用状況を更新",
-          "loading": "読み込み中…",
-          "planTotal": "プラン",
-          "expired": "サインインの有効期限が切れています — Wakii を実行しているコンピュータで cursor-agent login を実行し、「使用状況を更新」をクリックしてください。",
-          "signedIn": "サインイン済み",
-          "usageDescription": "Cursor は請求サイクルとともにリセットされる 2 つのプールの利用に課金し、使い切るとオンデマンドの追加料金が発生します。",
           "dashboardLink": "Cursor ダッシュボード",
-          "usageTitle": "月間プラン使用状況",
+          "expired": "サインインの有効期限が切れています — Wakii を実行しているコンピュータで cursor-agent login を実行し、「使用状況を更新」をクリックしてください。",
+          "loading": "読み込み中…",
+          "noAllowance": "Cursor によると、このアカウントには使用量の割り当てがありません。",
+          "planTotal": "プラン",
+          "refreshUsage": "使用状況を更新",
+          "resets": "{{when}} にリセット",
+          "signedIn": "サインイン済み",
+          "signedInFrom": "サインイン済み。Wakii は {{source}} に保存されたセッションを読み取ります。",
+          "signedInGeneric": "サインイン済み。Wakii はこのコンピュータに保存された Cursor セッションを読み取ります。",
           "signedOut": "このコンピュータに Cursor のサインインが見つかりません",
+          "signedOutHelp": "Cursor IDE でサインインするか、ターミナルで cursor-agent login を実行してから、ここで「使用状況を更新」をクリックしてください。",
+          "source": {
+            "cli": "Cursor CLI 認証ファイル",
+            "desktop": "Cursor IDE",
+            "keychain": "macOS キーチェーン（cursor-agent）"
+          },
+          "staleUsage": "最後に確認できた使用状況 — 最新の更新に失敗しました: {{reason}}",
           "subtitle": "このコンピュータに既にある Cursor のサインインから、月間の Cursor プラン使用状況を表示します。Wakii は読み取るだけで、Cursor のログインを変更することはありません。",
           "title": "Cursor",
-          "staleUsage": "最後に確認できた使用状況 — 最新の更新に失敗しました: {{reason}}",
-          "resets": "{{when}} にリセット",
-          "signedInFrom": "サインイン済み。Wakii は {{source}} に保存されたセッションを読み取ります。",
-          "noAllowance": "Cursor によると、このアカウントには使用量の割り当てがありません。",
-          "usageLabel": "使用量"
-        },
-        "agent-workspace-trust-copy": {
-          "title": "Wakii が Agent を起動するときにフォルダーを信頼する",
-          "description": "Wakii が起動した Agent は「Do you trust this folder?」の確認を省略するため、プロジェクトの Agent のフックと設定がすぐに実行されます。この設定がオフの場合、各 Agent はフォルダーで初めて実行されるときに確認します。オーケストレーションのワーカー、オートメーション、スマートフォンから起動した Agent など、あなたが見ていない間に動く Agent は、そのターミナルで応答するまでこの確認で待機します。すでに信頼済みのフォルダーは信頼されたままです。"
+          "usageDescription": "Cursor は請求サイクルとともにリセットされる 2 つのプールの利用に課金し、使い切るとオンデマンドの追加料金が発生します。",
+          "usageLabel": "使用量",
+          "usageTitle": "月間プラン使用状況"
         },
         "NotificationHostToggles": {
           "offCount": "{{count}} 台オフ",
           "machines": "マシン",
           "machinesDescription": "このコンピューターに通知を表示できるマシンを選択します。ペアリングしたサーバーのスイッチは、そのサーバー経由の作業にも適用されます。"
+        },
+        "EditorCaretAnimationSetting": {
+          "8e0f5141a1": "オン",
+          "8dc4f98620": "明示的",
+          "84ecf4f030": "オフ",
+          "63ef2747f7": "スムーズキャーソルアニメーション",
+          "a181845e72": "ファイルエディターでテキストカーソルの移動をアニメーション化します。"
+        },
+        "EditorRenderWhitespaceSetting": {
+          "f08dbab703": "なし",
+          "6bce99b8b5": "境界",
+          "e1f52833fb": "選択範囲",
+          "09b41c31fb": "末尾",
+          "b0974f678a": "全て",
+          "085871d375": "空白の表示",
+          "628ef71b4c": "ファイルエディターで空白文字を表示します。"
+        },
+        "EditorBreadcrumbsSetting": {
+          "fe2cb0ef78": "パンくずリスト",
+          "9e7a1f613e": "ファイルエディターの上にファイルパスを表示します。"
+        },
+        "InlineBlameSetting": {
+          "683fd9af0f": "インライン Blame",
+          "9142b8bc2f": "ファイルエディターの現在行の末尾にコミットの作成者・日付・概要を表示します。"
+        },
+        "UnsealedCredentialNotice": {
+          "body": "{{credential}} は暗号化されずに保存されます。このシステムには Orca が使用できる OS キーリングがありません。ディスクまたはそのバックアップを読み取ることができる人は誰でも、認証情報を読み取ることができます。 gnome-keyring または kwallet をインストールしてロックを解除し、再度保存して封印します。"
+        },
+        "ZcodePlanAccountsSection": {
+          "site": {
+            "bigmodel": "Zhipu・BigModel (open.bigmodel.cn)",
+            "zai": "Z.AI（ゼットアイ）"
+          },
+          "window": {
+            "session": "5時間",
+            "weekly": "毎週",
+            "mcp": "MCP毎月"
+          },
+          "resetIn": "— {{value0}} でリセット",
+          "keyRequired": "GLMコーディングプランAPIキーが必要です。",
+          "keySaved": "GLM コーディングプラン API キーが保存されました。",
+          "keySaveFailed": "GLM コーディングプランの認証情報の更新に失敗しました。",
+          "title": "GLMコーディングプラン",
+          "subtitle": "Z.AI または Zhipu (BigModel) GLM コーディングプランの使用状況をステータスバーで追跡します。ここにプラン API キーを保存します。ZCode CLI セットアップは必要ありません。",
+          "consoleLink": "APIキーを取得する",
+          "keyStored": "API キーが保存されました · {{value0}}",
+          "keyStoredHelp": "ローカルに保存され、使用状況を更新するために選択したサイトにのみ送信されます。これは、ZCode CLI サインインよりも優先されます。",
+          "usingCli": "ZCode CLI サインインの使用",
+          "usingCliHelp": "Orca は、~/.zcode/cli/config.json からコーディングプランキーを読み取ります。代わりにここでプランをリンクするには、以下の API キーを保存します。",
+          "notConfigured": "GLM コーディングプランがリンクされていません",
+          "notConfiguredHelp": "以下のプラン API キーを保存するか、このコンピュータ上の ZCode CLI を使用してサインインします。",
+          "refreshUsage": "リフレッシュの使用法",
+          "siteTitle": "企画サイト",
+          "siteDescription": "コーディングプランが属するコンソールを選択します。国際サイトの場合は Z.AI、本土サイトの場合は Zhipu BigModel です。",
+          "keyTitle": "APIキー",
+          "keyDescription": "選択したコンソールの API キーページから API キーを貼り付けます。ローカルに保存され、OS がサポートする場合は暗号化され、使用状況を更新するためにそのサイトにのみ送信されます。",
+          "saved": "保存済み",
+          "notSaved": "保存されていません",
+          "keyPlaceholder": "GLM コーディングプラン API キーを貼り付けます",
+          "replace": "置換",
+          "save": "保存",
+          "forgetKey": "キーを忘れた場合",
+          "keyHelp": "コーディングツールがプランに使用するのと同じキー (たとえば、サイトを指す ANTHROPIC_BASE_URL を持つ Claude Code)。上記のサイトを切り替えると、受信するホストが変わります。",
+          "usageTitle": "プランの使用状況",
+          "usageDescription": "リンクされたコーディングプランのライブクォータウィンドウ。ステータスバーの使用サイクルに応じて更新されます。",
+          "planLevel": "計画: {{value0}}",
+          "hostOnly": "Orca を実行しているコンピュータ上のデスクトップアプリでプランサイトと API キーを変更します。",
+          "detailsUnavailable": "プランの認証情報の詳細は、Orca を実行しているコンピュータでのみ読み取ることができます。",
+          "siteUnavailable": "ホストプランサイトが利用できない"
         }
       },
       "right": {
@@ -13263,7 +13486,8 @@
             "fca915a67a": "リモートの項目は完全に削除され、取り消せません。ローカルの項目は {{value0}} に移動します。"
           },
           "useFileExplorerHandlers": {
-            "32cd9fd991": "シンボリックリンクターゲットを開けません"
+            "32cd9fd991": "シンボリックリンクターゲットを開けません",
+            "folderLinksOutsideProject": "このフォルダーはプロジェクト外へのリンクのため、ここでは開けません。"
           },
           "useFileExplorerImport": {
             "25919b2050": "{{value0}} {{value1}} をスキップしました。",
@@ -13531,7 +13755,7 @@
           },
           "aiVaultSessionLogOpen": {
             "workspaceGone": "ログを開けませんでした。ワークスペースが利用できなくなっています。",
-            "notAuthorized": "ログを開けませんでした。このパスは許可されていません。",
+            "notAuthorized": null,
             "alreadyEditable": "ログはすでに編集用に開かれています。"
           },
           "github": {
@@ -13695,7 +13919,7 @@
           "69af7e9c1c": "はまだ PATH 上にありません。 Wakii はこれをデフォルトとして設定し、いつでもインストールできます。",
           "1eee1c7bd8": "PATH 上に Agent が検出されませんでした。後でインストールするものを選択するか、空のターミナルを使用して続行します。",
           "hideAgents": "Agent を非表示にする",
-          "showMoreAgents": "{{value0}} 件の Agent をさらに表示→",
+          "showMoreAgents": "{{value0}} 件の Agent をさらに表示 →",
           "yoloModeLabel": "Yolo モード",
           "yoloPermissionsDescription": "Agent は確認なしでコマンドを実行しファイルを編集します。一部はサンドボックスも回避します。信頼できるプロジェクトでのみ使用してください。"
         },
@@ -13856,10 +14080,10 @@
         "workspace": {
           "SmartWorkspaceNameField": {
             "2a0d535f69": "新規ブランチを作成する",
-            "a44229ce4d": "ワークスペース名として",
+            "a44229ce4d": "を使用",
             "766083a596": "」",
-            "34ca97bce3": "」",
-            "b1a7d679ba": "使用",
+            "34ca97bce3": "「",
+            "b1a7d679ba": "ワークスペース名として",
             "e57c53727c": "プロジェクトを追加…",
             "a76fcb4fa0": "切り替え先",
             "eadf877af5": "保持",
@@ -14208,18 +14432,18 @@
             "88ffb502e5": "Markdown ノートを開く",
             "629528690b": "新規 Markdown ノート",
             "3215fc73e9": "新規ターミナル",
-            "da508bd7f5": "保存",
-            "918c2139f3": "保存しないでください",
-            "e7bf09d4d4": "キャンセル",
-            "690b6fb98a": "未保存の変更",
+            "da508bd7f5": null,
+            "918c2139f3": null,
+            "e7bf09d4d4": null,
+            "690b6fb98a": null,
             "bbc177f98f": "有効化",
             "adc281394d": "閉じる",
             "8cf80db43b": "Agent が Wakii を通じて調整できるように、Wakii CLI と Agent スキルをセットアップします。",
             "2a3c5ddf5e": "オーケストレーションを有効にする",
-            "d6b563ae24": "エディターを読み込み中…",
+            "d6b563ae24": null,
             "8b14ba6c17": "新規ブラウザタブ",
-            "b085fb58b5": "このファイルには保存されていない変更が含まれています。",
-            "5ddc688c52": "「{{value0}}」には未保存の変更があります。閉じる前に保存しますか?",
+            "b085fb58b5": null,
+            "5ddc688c52": null,
             "25d7817f79": "ターミナル"
           },
           "FloatingTerminalToggleButton": {
@@ -14483,18 +14707,18 @@
                 "checklist": {
                   "localized": {
                     "copy": {
-                      "62bac8f43c": "2 つの異なるワークツリーで同時に作業します。それぞれは (同じプロジェクト内であっても) 分離されています。 2 つの機能を同時に作業するのに最適です。",
+                      "62bac8f43c": "2 つの異なるワークツリーで同時に作業できます。同じプロジェクト内でもそれぞれ分離されているので、2 つの機能を並列で進めるのに最適です。",
                       "908898c3ee": "Wakii のブラウザを使用する",
                       "43781563c3": "Wakii を離れることなく Web アプリを閲覧できます。任意の要素を取得し、ワンクリックでその正確なソースとスタイルを Agent に送信します。",
-                      "29aa2c2077": "通知をオンにする",
-                      "71bd9a8c95": "Agent が終了した瞬間、注意が必要な瞬間、またはブロックされた瞬間を把握します。",
-                      "46db810da8": "デフォルトの Agent を選択してください",
-                      "b8e5bae17f": "優先 Agent がすでに選択されているため、新規作業をより迅速に開始できます。",
-                      "ad342dd4c6": "接続連携",
-                      "06fe30fdb0": "ワンクリックでタスクから Agent を開始し、PR ステータスを表示したままにします。",
-                      "eddc532e58": "ワークスペースのセットアップを自動化する",
-                      "56049b74c2": "インストールおよびセットアップのコマンドを自動的に実行することで、すべての新規ワークツリーが Agent に対応できるようになります。",
-                      "2cf795433b": "複数のリポジトリで作業を開始する",
+                      "29aa2c2077": "通知を有効化",
+                      "71bd9a8c95": "Agent の作業が完了したとき、対応が必要なとき、ブロックされたときに、すぐに気づけます。",
+                      "46db810da8": "デフォルトの Agent を選択",
+                      "b8e5bae17f": "よく使う Agent をあらかじめ選んでおくと、作業をより速く始められます。",
+                      "ad342dd4c6": "連携を設定",
+                      "06fe30fdb0": "タスクからワンクリックで Agent を開始し、PR の状態を常に確認できます。",
+                      "eddc532e58": "ワークスペースのセットアップを自動化",
+                      "56049b74c2": "インストールとセットアップのコマンドを自動で実行し、新規ワークツリーをすぐに Agent が使える状態にします。",
+                      "2cf795433b": "複数のリポジトリで作業を開始",
                       "42525ba8a4": "キーリポジトリを Wakii に取り込むと、フォルダーを探さずに Agent の作業を開始できます。",
                       "workOnTwoTasks": "2つのタスクを同時に進める",
                       "agentSkillsName": "Agent に Wakii スキルを追加",
@@ -14899,12 +15123,18 @@
         "CsvViewer": {
           "eedd0d37a7": "列",
           "ac31d2cd60": "行",
-          "a233d55b77": "空のファイル"
+          "a233d55b77": "空のファイル",
+          "delimiterComma": "コンマ",
+          "delimiterSemicolon": "セミコロン",
+          "delimiterTab": "タブ",
+          "delimiterAuto": "自動 ({{delimiter}})",
+          "delimiter": "デリミタ"
         },
         "DiffNotesSendMenu": {
           "f1aa04b5cf": "このファイル",
           "8b87612461": "すべての未送信のメモ"
         },
+        "diffCommentSaveFailed": "コメントの保存に失敗しました",
         "DiffSectionBody": {
           "35d6afb5be": "バイナリファイルが変更されました",
           "cef4cf0ff5": "再試行",
@@ -14954,9 +15184,9 @@
           "a10d9b8337": "ファイルを開く",
           "2076ecfc9c": "前の変更",
           "631dab0df3": "次の変更",
-          "revealInFinder": "ファインダーで表示",
-          "openContainingFolder": "含まれているフォルダーを開く",
-          "revealInFileExplorer": "ファイルエクスプローラーで表示"
+          "revealInFinder": null,
+          "openContainingFolder": null,
+          "revealInFileExplorer": null
         },
         "EditorPanelMarkdownActionsMenu": {
           "3e0ce48c24": "PDFとしてエクスポート",
@@ -15003,8 +15233,6 @@
           "10ed04a685": "ノートブックセルは、ノートブックフォルダーからこのマシン上のローカル Python を実行します。信頼できるファイルのセルのみを実行してください。",
           "9e06ae5d36": "ノートブックのコードを実行しますか?",
           "d6f37a640b": "空のノート",
-          "8c3b21369a": "nbformat",
-          "329764e9fc": "ベータ",
           "15ec40a735": "ノートブックの保存",
           "07e7d96612": "細胞",
           "c1601b23b2": "ノートブックをレンダリングできません",
@@ -15019,8 +15247,6 @@
           "3e4cbf15ea": "生",
           "1833dbbc43": "Markdown",
           "7005960d73": "コード",
-          "59b6cd874b": "コード",
-          "ba149053d5": "markdown",
           "8dbe39a152": "その他のセル操作",
           "fa8fd99cf1": "セルの種類",
           "kernelStarting": "開始中…",
@@ -15030,6 +15256,7 @@
           "notPython": "そのファイルは Python インタープリターではありません。",
           "interrupt": "中断",
           "restart": "カーネルを再起動",
+          "trustFirst": "先にセルを実行して、このノートブックを信頼してください",
           "runAll": "すべて実行",
           "clearAll": "すべての出力をクリア",
           "notResponding": "応答がありません。カーネルを再起動してください",
@@ -15046,22 +15273,25 @@
           "kernelDied": "カーネルが停止しました。",
           "localOnly": "ノートブックセルはこのコンピュータ上のファイルでのみ実行できます。",
           "pythonOnly": "Wakii では Python ノートブックのみ実行できます。",
-          "creatingVenvDescription": "{{folder}} に .venv を作成し、ipykernel をインストールしています。数分かかることがあります。",
-          "createVenvItem": "仮想環境を作成…",
-          "trustFirst": "先にセルを実行して、このノートブックを信頼してください",
-          "installingTitle": "ipykernel をインストール中…",
-          "venvDescription": "Wakii は '{{env}}' から {{folder}} に .venv を作成し、ipykernel をインストールして、このノートブックをそこで実行します。",
+          "commandCopied": "コマンドをコピーしました",
           "createVenv": ".venv を作成",
-          "creatingButton": "作成中…",
-          "tryAgain": "再試行",
-          "installingDescription": "pip で '{{env}}' に ipykernel をインストールしています。数分かかることがあります。",
-          "kernelCreatingVenv": ".venv を作成中…",
+          "createVenvItem": "仮想環境を作成…",
           "createVenvTitle": "仮想環境を作成しますか？",
+          "creatingButton": "作成中…",
+          "creatingVenvDescription": "{{folder}} に .venv を作成し、ipykernel をインストールしています。数分かかることがあります。",
           "creatingVenvTitle": "仮想環境を作成中…",
           "installingButton": "インストール中…",
+          "installingDescription": "pip で '{{env}}' に ipykernel をインストールしています。数分かかることがあります。",
+          "installingTitle": "ipykernel をインストール中…",
+          "kernelCreatingVenv": ".venv を作成中…",
           "setupFailed": "処理に失敗しました。Python の出力:",
-          "commandCopied": "コマンドをコピーしました",
-          "useAnotherPython": "別の Python を使用…"
+          "tryAgain": "再試行",
+          "useAnotherPython": "別の Python を使用…",
+          "venvDescription": "Wakii は '{{env}}' から {{folder}} に .venv を作成し、ipykernel をインストールして、このノートブックをそこで実行します。",
+          "8c3b21369a": "nbformat",
+          "329764e9fc": "ベータ",
+          "59b6cd874b": "コード",
+          "ba149053d5": "markdown"
         },
         "MarkdownPreview": {
           "e4683f70c4": "キャンセル",
@@ -15440,7 +15670,9 @@
           }
         },
         "richMarkdownLargeTextPaste": {
-          "tooLarge": "貼り付け内容が大きすぎます。"
+          "tooLarge": "貼り付け内容が大きすぎます。",
+          "stopped": "大きなペーストは完成する前に止まりました。",
+          "cancelled": "大きなペーストは、元のターゲットが変更されたためキャンセルされました。"
         },
         "CheckRunJobs": {
           "1c0a4d7e02": "成功しました",
@@ -15495,23 +15727,6 @@
             }
           }
         },
-        "EditorBreadcrumbs": {
-          "7a0b97acc9": "ファイルのパンくずリスト",
-          "deb1973b7d": "エクスプローラーで表示"
-        },
-        "git": {
-          "blame": {
-            "strings": {
-              "f553e19e41": "あなた",
-              "e6fc8a66b3": "未保存の変更",
-              "5d58990105": "ファイルが大きすぎてインライン blame を表示できません。",
-              "1f32d46ce0": "行数が多すぎてインライン blame を表示できません。",
-              "1f078da5df": "コミット",
-              "6f3313de46": "作成者",
-              "2f33a41d63": "日付"
-            }
-          }
-        },
         "CheckRunAnnotations": {
           "copy": "注釈をコピーする"
         },
@@ -15553,7 +15768,27 @@
           "c3d9f4a712": "この diff のサイズはまだ不明なので、リクエストに応じてロードされます。",
           "f7fa7a40d0": "負荷差"
         },
-        "diffCommentSaveFailed": "コメントの保存に失敗しました"
+        "EditorBreadcrumbs": {
+          "7a0b97acc9": "ファイルのパンくずリスト",
+          "deb1973b7d": "エクスプローラーで表示"
+        },
+        "git": {
+          "blame": {
+            "strings": {
+              "f553e19e41": "あなた",
+              "e6fc8a66b3": "未保存の変更",
+              "5d58990105": "ファイルが大きすぎてインライン blame を表示できません。",
+              "1f32d46ce0": "行数が多すぎてインライン blame を表示できません。",
+              "1f078da5df": "コミット",
+              "6f3313de46": "作成者",
+              "2f33a41d63": "日付"
+            }
+          }
+        },
+        "richMarkdownImageInsertionFeedback": {
+          "importedFileKept": "宛先が変更されたため、画像の挿入はキャンセルされました。インポートされたファイルは保持されました。",
+          "destinationChanged": "宛先が変更されたため、画像の挿入はキャンセルされました。再試行。"
+        }
       },
       "diff": {
         "comments": {
@@ -15868,6 +16103,7 @@
             "4300f38145": "{{value0}}{{value1}} からダウンロードしています",
             "31375046b7": "{{value0}} からダウンロード",
             "acbe79fd01": "ページ要素の取得 ({{value0}})",
+            "cc4a071d3a": "ページ要素に注釈を付ける ({{value0}})",
             "572046436a": "リモートブラウザ",
             "b313a7275b": "リモートブラウザを開く",
             "5f66313863": "注釈",
@@ -15886,8 +16122,7 @@
             "09a9489aa5": "表示",
             "2a4c4b8e1f": "コピー",
             "b71dc3d930": "再接続",
-            "fileUrlUnsupported": "このブラウザタブではローカルファイルを開くことができません。代わりに、ファイルで「プレビューを横に開く」を使用してください。",
-            "cc4a071d3a": "ページ要素に注釈を付ける ({{value0}})"
+            "fileUrlUnsupported": "このブラウザタブではローカルファイルを開くことができません。代わりに、ファイルで「プレビューを横に開く」を使用してください。"
           },
           "BrowserToolbarMenu": {
             "429ef481f9": "キャンセル",
@@ -15928,7 +16163,8 @@
             "9c6ce0632a": "選択した要素のスクリーンショット",
             "50f7114f99": "添付する前に確認してください。取得したページのコンテキストには、表示中のサイトの内容が含まれる場合があります。",
             "f3575229df": "取得",
-            "405bb315da": "無題"
+            "405bb315da": "無題",
+            "accessibleNameOpenQuote": "「"
           },
           "browser": {
             "address": {
@@ -16578,7 +16814,7 @@
           "770d458144": "グループ化",
           "795cbf26e2": "フィルター…",
           "4616ea39fd": "ワークスペースにジャンプ",
-          "threadListOptionsFiltered": "スレッドリストのオプション、フィルターが有効",
+          "threadListOptionsFiltered": null,
           "showSearch": "検索を表示",
           "markThreadRead": "スレッドを既読としてマーク",
           "59b131fbd9": "スレッドを未読としてマークする",
@@ -16606,11 +16842,17 @@
             "permission": "要対応"
           },
           "filtersSection": "フィルター",
-          "viewSection": "表示"
+          "viewSection": "表示",
+          "threadListOptionsActive": "スレッドリストのオプション（{{value0}} 件アクティブ）",
+          "activityOptionsActive": "アクティビティのオプション（{{value0}}）"
         },
         "ActivityScopeFilterControls": {
           "resetScope": "すべてのホストとプロジェクトを表示",
-          "hiddenCount": "{{value0}} 非表示"
+          "hiddenCount": "{{value0}} 非表示",
+          "hideAutomationCreated": "自動化で作成されたワークスペースを非表示",
+          "hideCliCreated": "CLI が作成したものを非表示",
+          "hideOtherClientsAria": "共有リモートサーバー上の他の Orca クライアントで作成されたワークスペース内の Agent を非表示",
+          "hideOtherClients": "他のクライアントの Agent を非表示"
         },
         "ActivityThreadRow": {
           "clearNotification": "通知を消去"
@@ -16635,6 +16877,25 @@
           "workspace": "ワークスペース",
           "copyPath": "パスをコピーする",
           "jumpToWorkspace": "ワークスペースにジャンプ"
+        },
+        "ActivityThreadContextMenu": {
+          "copyTitle": "タイトルをコピー",
+          "copyPath": "パスのコピー",
+          "open": "オープン",
+          "markRead": "既読マークを付ける",
+          "markUnread": "未読としてマークする",
+          "goToWorkspace": "ワークスペースへ移動",
+          "clear": "リストから消去",
+          "agentSection": "Agent",
+          "markManyRead_one": "{{count}} 件の Agent に既読マークを付ける",
+          "markManyRead_other": "{{count}} 件の Agent に既読マークを付ける",
+          "markManyUnread_one": "{{count}} 件の Agent を未読としてマークする",
+          "markManyUnread_other": "{{count}} 件の Agent を未読としてマークする",
+          "clearMany_one": "{{count}} 件の Agent をリストから消去",
+          "clearMany_other": "{{count}} 件の Agent をリストから消去",
+          "markManyRead": "{{count}} 件の Agent に既読マークを付ける",
+          "markManyUnread": "{{count}} 件の Agent を未読としてマークする",
+          "clearMany": "{{count}} 件の Agent をリストから消去"
         }
       },
       "confirmation": {
@@ -17017,7 +17278,8 @@
             "highlight": "ハイライト",
             "pen": "ペン",
             "rect": "四角形",
-            "text": "テキスト"
+            "text": "テキスト",
+            "eraser": "消しゴム"
           },
           "undo": "元に戻す",
           "widthOption": "{{value0}} px"
@@ -17185,16 +17447,16 @@
         "listLabel": "再開されるチャット",
         "dontAskAgain": "二度と質問しないでください (自動的に再開します)",
         "dontAskAgainHint": "これは、「設定」→「実験的機能」→「チャット UI」でオフにできます。",
-        "continuedOne": "1 つのチャットを再開し、続行を依頼しました",
-        "continuedMany": "{{value0}} チャットを再開し、続行するよう依頼しました",
+        "continuedOne": "1 件のチャットを再開しました",
+        "continuedMany": "{{value0}} 件のチャットを再開しました",
         "selectAgent": "{{value0}} チャット「{{value1}}」を {{value2}} で再開します",
         "resumeSelected": "{{value0}} チャットを再開",
         "resumeSelectedOne": "1 チャットを再開",
-        "continueUnconfirmed": "{{value0}}チャットについては継続配信は未確認です。別のメッセージを送信する前に、それらを開いて確認してください。",
-        "continueUnconfirmed_one": "{{value0}}チャットは継続配信未確認です。別のメッセージを送信する前に、開いて確認してください。",
-        "continueUnconfirmed_other": "{{value0}}チャットについては継続配信は未確認です。別のメッセージを送信する前に、それらを開いて確認してください。",
+        "continueUnconfirmed": null,
+        "continueUnconfirmed_one": null,
+        "continueUnconfirmed_other": null,
         "dismissAll": "すべて閉じる",
-        "dismissUnconfirmed": "履歴書のオファーの拒否は確認されていません。ステータスバーにまだ表示されている可能性があります。",
+        "dismissUnconfirmed": null,
         "notContinuedOne": "1 件のチャットを再開できませんでした",
         "notContinuedMany": "{{value0}} 件のチャットを再開できませんでした",
         "notConfirmedOne": "1 件のチャットが再開されたことを確認できませんでした",
@@ -17202,7 +17464,7 @@
         "notConfirmedOtherOne": "他のチャット 1 件が再開されたことを確認できませんでした",
         "notConfirmedOtherMany": "他のチャット {{value0}} 件が再開されたことを確認できませんでした",
         "show": "表示",
-        "dismiss": "閉じる",
+        "dismiss": null,
         "activityUnnamed": "名前なし",
         "activityApproval": "承認待ち: {{value0}}",
         "activityQuestion": "回答待ち: {{value0}}",
@@ -17414,467 +17676,6 @@
       }
     },
     "native-chat": {
-      "composer": {
-        "imageUnsupported": "この Agent では画像の貼り付けはサポートされていません。",
-        "send": "送信",
-        "noPty": "ライブターミナルがありません - 再接続するには元に切り替えてください。",
-        "locked": "入力は別のデバイスによって保持されます。",
-        "placeholder": "メッセージを送信してください…",
-        "mentionHint": "参照ファイル:",
-        "attach": "ファイルを添付する",
-        "startDictation": "ディクテーションを開始する",
-        "stopDictation": "ディクテーションを停止する",
-        "noSkills": "一致するスキルがありません",
-        "localAttachmentUnsupported": "ローカル添付ファイルはリモートセッションでは使用できません。",
-        "removeAttachment": "添付ファイルを削除する",
-        "pastedImageLabel": "貼り付けた画像",
-        "imagePasteFailed": "画像の貼り付けに失敗しました。",
-        "worktreeNotReady": "ワークツリーが準備できていません — しばらくしてから再試行してください。",
-        "pasteUnavailable": "貼り付けできません — このチャットは現在入力を受け付けていません。",
-        "uploadingAttachments": "{{value0}}個のファイルをリモートにアップロード中…",
-        "model": "モデル",
-        "effort": "推論レベル",
-        "fastMode": "高速モード",
-        "thinking": "思考",
-        "options": "オプション",
-        "sessionOptions": "セッションオプション",
-        "chooseInAgentPicker": "Agent の選択画面で選ぶ…",
-        "toggleOption": "{{value0}}を切り替える",
-        "pillAccessibleName": "{{value0}} {{value1}}",
-        "sentNotConfirmed": "Agent に送信済み — 未確認",
-        "setWhenSessionStarts": "セッション開始時に設定してください。",
-        "availableAfterSessionStarts": "セッション開始後に利用できます。",
-        "optionUpdateFailed": "オプションを更新できませんでした",
-        "optionValue": {
-          "fast": "高速",
-          "minimal": "最小",
-          "low": "低",
-          "medium": "中",
-          "high": "高",
-          "xhigh": "最高",
-          "max": "最大",
-          "ultra": "ウルトラ"
-        },
-        "noCommandsOrSkills": "一致するコマンドやスキルがありません",
-        "commands": "コマンド",
-        "skills": "スキル",
-        "loadingSkills": "スキルを読み込み中…",
-        "skillsUnavailableHost": "SSH チャットではスキルを利用できません",
-        "skillsLoadFailed": "スキルを読み込めませんでした",
-        "retrySkills": "再試行",
-        "skillCommandCollision": "スキル名でもあります - Agent が判断します",
-        "skillMultipleSources": "{{sourceCount}} 個のソース - Agent が解決します",
-        "skillScopeProject": "プロジェクト",
-        "skillScopePersonal": "個人",
-        "skillScopeBuiltIn": "組み込み",
-        "skillScopePlugin": "プラグイン",
-        "skillsLoaded": "スキルを読み込みました",
-        "noCommands": "一致するコマンドがありません",
-        "imageSaving": "貼り付けた画像を保存中…",
-        "pendingAttachmentLimit": "待機中の添付ファイルが多すぎます。さらに添付する前に、作成を完了してください。",
-        "viewAttachment": "画像を見る",
-        "imagePreview": "フルサイズの画像プレビュー",
-        "imagePreviewUnavailable": "プレビューは利用できません",
-        "workspaceAttachmentMismatch": "ファイルはソースワークスペースにのみ添付できます。",
-        "attachmentOwnerChanged": "このワークスペースは接続中にホストを変更しました。ファイルを再度ドロップしてください。",
-        "attachmentUnreadable": "ドロップされたファイルを読み取れませんでした。"
-      },
-      "tool": {
-        "running": "実行中…",
-        "result": "結果",
-        "exitCode": "{{value0}} を出る",
-        "milliseconds": "{{value0}}ms",
-        "countOne": "1 ツール呼び出し",
-        "countN": "{{value0}} ツール呼び出し",
-        "moreCalls": "+{{value0}} 詳細",
-        "failedCount": "{{value0}} 件失敗",
-        "failedCallsLabel": "失敗したツール呼び出し: {{value0}}",
-        "runningPreview": "{{preview}} を実行中",
-        "runningCommand": "コマンドの実行",
-        "runningNamedPreview": "{{toolName}} {{preview}} を実行中",
-        "runningNamed": "{{toolName}} を実行中",
-        "ranCommandOneToolSummary": "{{commandCount}} コマンドを実行し、{{toolCount}} ツールを使用しました",
-        "ranCommandManyToolsSummary": "{{commandCount}} コマンドを実行し、{{toolCount}} ツールを使用しました",
-        "ranCommandsOneToolSummary": "{{commandCount}} コマンドを実行し、{{toolCount}} ツールを使用しました",
-        "ranCommandsManyToolsSummary": "{{commandCount}} コマンドを実行し、{{toolCount}} ツールを使用しました",
-        "usedOneSummary": "使用した工具 1 個",
-        "usedManySummary": "使用した{{toolCount}}ツール",
-        "editedFile": "編集したファイル",
-        "addedFile": "追加されたファイル",
-        "deletedFile": "削除されたファイル",
-        "renamedFile": "名前変更されたファイル",
-        "copyDiff": "差分をコピー",
-        "diffGap": "線は表示されません",
-        "diffTruncated": "差分切り捨て",
-        "runReadOne": "1ファイルを読み込む",
-        "runReadMany": "{{value0}} ファイルを読み取る",
-        "runSearchOne": "1 回検索されました",
-        "runSearchMany": "{{value0}} 回検索されました",
-        "runListFilesOne": "1 つのディレクトリがリストされています",
-        "runListFilesMany": "{{value0}} ディレクトリのリスト",
-        "runCommandOne": "1 コマンドを実行しました",
-        "runCommandMany": "{{value0}} コマンドを実行しました",
-        "runFileChangeOne": "1ファイルを編集しました",
-        "runFileChangeMany": "編集された{{value0}}ファイル",
-        "runWebSearchOne": "ウェブを 1 回検索しました",
-        "runWebSearchMany": "ウェブを{{value0}}回検索しました",
-        "runIntegrationOne": "使用済み 1 連携",
-        "runIntegrationMany": "{{value0}} 連携を使用しました",
-        "runAgentOne": "Agent を 1 人実行しました",
-        "runAgentMany": "{{value0}} Agent を実行しました",
-        "runPlanOne": "計画を更新しました",
-        "runPlanMany": "計画を{{value0}}回更新しました",
-        "runToolOne": "使用した工具 1 個",
-        "runToolMany": "使用した{{value0}}ツール",
-        "runPair": "{{value0}} および {{value1}}",
-        "runList": "{{value0}}、{{value1}}",
-        "runLiveReadOne": "1ファイルを読み込んでいます",
-        "runLiveReadMany": "{{value0}} ファイルの読み取り",
-        "runLiveSearchOne": "1回検索中",
-        "runLiveSearchMany": "{{value0}} 回検索しています",
-        "runLiveListFilesOne": "リスト 1 のディレクトリ",
-        "runLiveListFilesMany": "{{value0}} ディレクトリの一覧表示",
-        "runLiveCommandOne": "1つのコマンドを実行中",
-        "runLiveCommandMany": "{{value0}} コマンドの実行",
-        "runLiveFileChangeOne": "1ファイルを編集中",
-        "runLiveFileChangeMany": "{{value0}} ファイルの編集",
-        "runLiveWebSearchOne": "ウェブ検索 1 回",
-        "runLiveWebSearchMany": "ウェブを{{value0}}回検索しています",
-        "runLiveIntegrationOne": "1 つの連携を使用する",
-        "runLiveIntegrationMany": "{{value0}} 連携の使用",
-        "runLiveAgentOne": "1 つの Agent を実行中",
-        "runLiveAgentMany": "{{value0}} Agent を実行しています",
-        "runLivePlanOne": "計画を更新する",
-        "runLivePlanMany": "計画を{{value0}}回更新しています",
-        "runLiveToolOne": "1つのツールを使用する",
-        "runLiveToolMany": "{{value0}} ツールの使用"
-      },
-      "status": {
-        "responding": "Agent が応答中です",
-        "working": "処理中…",
-        "thinking": "考え",
-        "workingFor": "{{value0}} 処理中",
-        "workedFor": "{{value0}} で完了",
-        "interruptedAfter": "{{value0}} 後に中断",
-        "failedAfter": "{{value0}} 後に失敗",
-        "toggleDetails": "ターンの詳細を切り替えます"
-      },
-      "jumpToLatest": "最新にジャンプ",
-      "toggle": {
-        "showTerminal": "ターミナルを表示",
-        "showChat": "チャットビューを表示"
-      },
-      "state": {
-        "loading": {
-          "label": "チャットを読み込んでいます",
-          "title": "会話を読み込んでいます…",
-          "subtitle": "Agent の記録を読んでいます。"
-        },
-        "error": {
-          "title": "会話を読み込めませんでした",
-          "subtitle": "トランスクリプトを読み取ることができませんでした。作業を続けるには、ターミナルに切り替えてください。"
-        },
-        "reconnecting": "このチャットに再接続しています…",
-        "pairHost": "ホストをペアリングして、Agent のチャット履歴を表示します。",
-        "notAgent": {
-          "title": "ここでは会話はありません",
-          "subtitle": "このターミナルは認識されたコーディング Agent を実行していません。"
-        },
-        "empty": {
-          "title": "{{value0}} とチャットを開始する",
-          "subtitle": "{{value0}} にコードの検査、出力の説明、または変更を依頼してください。"
-        }
-      },
-      "stop": "Agent を停止",
-      "copyMessage": {
-        "copied": "コピーしました",
-        "copy": "メッセージをコピーする"
-      },
-      "scrollMessageToTop": "このメッセージを一番上までスクロールします",
-      "loadingEarlier": "読み込み中…",
-      "loadEarlier": "以前のメッセージをロードする",
-      "question": {
-        "step": "ステップ {{value0}}",
-        "other": "他の…",
-        "otherPlaceholder": "答えを入力してください",
-        "cancel": "キャンセル",
-        "send": "送信",
-        "next": "次へ",
-        "skip": "スキップ",
-        "sending": "送信中…"
-      },
-      "approval": {
-        "title": "{{value0}} を許可しますか?",
-        "allow": "許可する",
-        "deny": "拒否",
-        "cancel": "キャンセル",
-        "reason": "理由",
-        "blockedPath": "ブロックされたパス",
-        "askRule": "質問ルール",
-        "plan": {
-          "file": "計画ファイル"
-        }
-      },
-      "launchPromptNotDelivered": "配信されませんでした — ターミナルを確認してください",
-      "loadingEarlierMessages": "以前のメッセージを読み込み中…",
-      "taskList": {
-        "title": "タスク",
-        "completed": "完了",
-        "inProgress": "進行中",
-        "pending": "保留中",
-        "empty": "タスクがありません",
-        "progress": "{{total}} 件中 {{completed}} 件のタスクが完了しました",
-        "added": "{{task}} を追加しました",
-        "removed": "{{task}} を削除しました",
-        "started": "{{task}} を開始しました",
-        "finished": "{{task}} を完了しました",
-        "reset": "保留中としてマーク: {{task}}",
-        "updated": "{{task}} を更新しました",
-        "unchanged": "タスクは変更されていない",
-        "showAll": "完全なタスクリスト"
-      },
-      "turnDiff": {
-        "one": "1 つの変更されたファイル",
-        "many": "{{count}} がファイルを変更しました",
-        "partial": "部分的な差分",
-        "recorded": "このターンに記録された編集の合計。"
-      },
-      "receipt": {
-        "unavailable": "選択した回答は利用できません",
-        "cancelled": "キャンセル",
-        "resolved": "解決済み",
-        "resolver": "{{device}} に回答しました",
-        "cancelledBy": "{{device}}にキャンセルされました"
-      },
-      "notices": {
-        "compaction": "圧縮されたコンテキスト",
-        "details": "詳細",
-        "plan": "プラン",
-        "historyRepaired": "このチャットの履歴の一部を読み込めませんでした。",
-        "historyItemTooLarge": "チャットのこの部分は大きすぎるため表示できません。"
-      },
-      "providerFrame": {
-        "byteLength": "{{value0}}バイト"
-      },
-      "backgroundTasks": {
-        "monitoring": "バックグラウンドタスクの監視",
-        "stop": "停止",
-        "stopTask": "{{value0}} を停止してください",
-        "stopAll": "バックグラウンドタスクを停止する",
-        "agent": "バックグラウンド Agent",
-        "workflow": "バックグラウンドワークフロー",
-        "command": "バックグラウンドコマンド",
-        "monitor": "バックグラウンドモニター",
-        "task": "バックグラウンドタスク",
-        "outputFile": "出力: {{value0}}",
-        "detailsUnavailable": "このセッションではタスクの詳細は利用できません。",
-        "countAgentsOne": "Agent1名",
-        "countAgentsMany": "{{value0}} Agent",
-        "countShellOne": "1 シェル",
-        "countShellMany": "{{value0}} シェル",
-        "countShellCommandOne": "1 シェルコマンド",
-        "countMonitorsOne": "モニター1台",
-        "countMonitorsMany": "{{value0}} モニター",
-        "countWorkflowsOne": "1つのワークフロー",
-        "countWorkflowsMany": "{{value0}} ワークフロー",
-        "countTasksOne": "1タスク",
-        "countTasksMany": "{{value0}} タスク",
-        "headerTotal": "{{value0}} バックグラウンドタスク",
-        "stateWorking": "実行中",
-        "stateMonitoring": "監視",
-        "stateWaiting": "待機中",
-        "stateBlocked": "ブロックされました",
-        "stateDone": "終わり",
-        "stateIdle": "止まった",
-        "stateUnverifiable": "最近の更新なし",
-        "stateUnverifiableCount": "{{value0}} は最近の更新なし",
-        "reasonWaiting": "承認が必要です",
-        "reasonBlocked": "失敗した",
-        "groupAgents": "Agent",
-        "groupShell": "シェル",
-        "groupMonitors": "モニター",
-        "groupWorkflows": "ワークフロー",
-        "groupTasks": "タスク"
-      },
-      "railLabel": "あなたのメッセージ",
-      "railImageMessage": "画像添付",
-      "railEmptyMessage": "メッセージ",
-      "ask": {
-        "awaiting": "ユーザー入力を待っています:",
-        "awaitingUnnamed": "ユーザー入力を待っています",
-        "asked": "質問:",
-        "questionCount": "{{value0}} の質問"
-      },
-      "structuredSessionLaunchFailed": "{{value0}} チャットを開けませんでした",
-      "handoff": {
-        "stage": {
-          "finishingChat": null,
-          "finishingTerminal": null,
-          "openingTerminal": null,
-          "resumingChat": null,
-          "verifyingTerminal": null,
-          "verifyingChat": null,
-          "recovering": null,
-          "manualRecovery": null
-        },
-        "switchingOwner": null,
-        "mode": {
-          "switching": null,
-          "terminal": null,
-          "chat": null
-        },
-        "switchingAfterTurn": null,
-        "returningAfterTurn": null,
-        "cancel": null,
-        "switchAfterTurn": null,
-        "stopTurnAndSwitch": null,
-        "openAgentTui": null,
-        "returnAfterTurn": null,
-        "returnToChat": null,
-        "agentOpenOnHost": null,
-        "agentOpen": null,
-        "exitTerminal": null,
-        "retryProof": null,
-        "retry": null,
-        "details": null
-      },
-      "structuredSessionLaunchFailedDescription": "Wakii は構造化された {{value0}} チャットを開けませんでした。詳細についてはログを参照してください。",
-      "subagents": {
-        "state": {
-          "completed": "完成した",
-          "working": "実行中",
-          "idle": "idle",
-          "failed": "失敗した",
-          "stopped": "止まった",
-          "unverifiable": "最近の更新なし",
-          "workingCount": "{{value0}} は動作しています",
-          "idleCount": "{{value0}} アイドル状態",
-          "failedCount": "{{value0}} 件失敗",
-          "stoppedCount": "{{value0}} が停止しました",
-          "unverifiableCount": "{{value0}} は最近の更新なし"
-        },
-        "startedOne": "1 人のサブ Agent を解雇しました",
-        "startedN": "{{value0}} サブ Agent をキックオフしました",
-        "ranOne": "1 人のサブ Agent を実行しました",
-        "ranN": "{{value0}} サブ Agent を実行しました",
-        "tokens": "{{value0}} トークン",
-        "unnamed": "サブ Agent"
-      },
-      "conversationCommand": {
-        "pendingWork": "このコマンドを使用する前に、保留中の作業とメッセージが完了するまで待ってください。"
-      },
-      "drop": {
-        "title": "ドロップしてこのチャットに添付します",
-        "subtitle": "ファイルは、Agent が読み取ることができるパスとしてメッセージに追加されます。"
-      },
-      "copyCode": "コードをコピーする",
-      "goal": {
-        "placeholder": "目標を説明し、最良の結果を得るために測定可能な結果を​​定義する",
-        "clear": "明確な目標",
-        "chip": "ゴール",
-        "exitMode": "ゴールモードを終了する",
-        "sentAsGoal": "ゴールとして送信されました",
-        "collapse": "完全な目標を非表示にする",
-        "expand": "完全な目標を表示",
-        "pause": "ゴールを一時停止する",
-        "resume": "再開目標",
-        "pursuing": "目標を追求する",
-        "paused": "一時停止されたゴール",
-        "blocked": "ゴール阻止",
-        "limited": "目標が限定されている",
-        "attachmentsUnsupported": "目標を設定する前に添付ファイルを削除してください。"
-      },
-      "fileLinks": {
-        "notFound": "ファイルが見つかりません: {{value0}}",
-        "unverifiable": "{{value0}} を確認できませんでした: {{value1}}",
-        "unresolved": "このワークスペースで {{value0}} を解決できませんでした"
-      },
-      "contextUsage": {
-        "label": "コンテキスト {{used}} / {{window}} トークン、{{percent}}% 使用済み",
-        "title": "コンテキスト",
-        "estimated": "最後の応答から推定。"
-      },
-      "writeNotice": {
-        "notDoneReadHistory": "このチャットの履歴を読み込めませんでした。",
-        "notDoneSend": "メッセージは送信されませんでした。",
-        "tryAgainComposerSend": "もう一度送信してください。",
-        "messageNotSaved": "メッセージを保存できませんでした。",
-        "notDoneStop": "Agent は停止されませんでした。",
-        "notDoneStopTask": "バックグラウンドタスクは停止されませんでした。",
-        "notDoneStopTasks": "バックグラウンドタスクは停止されませんでした。",
-        "notDoneAnswer": "回答は送信されませんでした。",
-        "notDoneOption": "設定は変更されませんでした。",
-        "notDoneCommand": "コマンドは実行されませんでした。",
-        "notDoneGoal": "目標は変更されませんでした。",
-        "restartFailed": "Agent を再起動できませんでした。",
-        "capacity": "Wakii が過去 1 日に受け取ったリクエストが多すぎます。",
-        "outcomeUnknown": "Wakii は何が起きたかを確認できませんでした。チャットを確認してください。",
-        "sendOutcomeLost": "Wakii はメッセージが Agent に届いたことを確認できませんでした。チャットを確認し、必要であればもう一度送信してください。",
-        "questionChanged": "この質問はすでに回答済みか、変更されています。",
-        "historyUnreadable": "Wakii はこのチャットの保存済み履歴を読み取れませんでした。",
-        "historyUnusable": "このチャットを読み込めません。",
-        "historyUnavailable": "Wakii は現在このチャットの履歴を開けませんでした。",
-        "savedByNewerOrca": "チャットは新しいバージョンの Wakii で保存されました。",
-        "updateOrcaToKeepUsing": "引き続き使用するには、Wakii を更新してください。",
-        "unsupported": "このチャットを実行しているコンピューターに新しいバージョンの Wakii が必要です。そのコンピューターで Wakii を更新してから、もう一度お試しください。",
-        "notAvailable": "このチャットでは利用できません。",
-        "unreachable": "Wakii は Agent に接続できませんでした。",
-        "recordFailed": "Wakii はこれをチャットの履歴に保存できませんでした。",
-        "conversationCleared": "この会話はクリアされました。",
-        "openCurrentConversation": "続けるには、現在の会話を開いてください。",
-        "clearUnfinished": "前回の /clear は完了しませんでした。",
-        "commandRunning": "/compact または /clear がまだ実行中です。",
-        "waitForCommand": "/compact または /clear が終わるまでお待ちください。",
-        "agentStarting": "Agent はまだ起動中です。",
-        "waitForStart": "Agent の起動が終わるまでお待ちください。",
-        "turnActive": "Agent はまだ応答中です。",
-        "waitForTurn": "Agent の応答が終わるまで待つか、Agent を停止してください。",
-        "promptPending": "Agent は質問または承認への回答を待っています。",
-        "answerFirst": "先に質問または承認に回答してください。",
-        "backgroundTasksRunning": "バックグラウンドタスクがまだ実行中です。",
-        "waitForBackgroundTasks": "バックグラウンドタスクが終わるまでお待ちください。",
-        "messagesUnsettled": "以前に送信したメッセージはまだ確認されていません。",
-        "settleEarlierMessage": "以前のメッセージが届くまで待つか、再試行してください。",
-        "optionRejected": "Agent はこの設定を受け入れませんでした。",
-        "goalsUnsupported": "この Agent は目標に対応していません。",
-        "agentRefused": "Agent がこれを拒否しました。",
-        "ownerUnproven": "このチャットの以前の Agent がまだ実行中の可能性があります。",
-        "reopenChat": "もう一度確認するには、チャットを開き直してください。",
-        "terminalAgentHoldsChat": "このチャットはまだターミナルの Agent で開かれています。",
-        "quitTerminalAgent": "ここでチャットを続けるには、その Agent を終了してください。",
-        "hostReconciling": "Wakii は再起動後、このチャットをまだ確認しています。",
-        "waitMoment": "しばらくお待ちください。",
-        "recordUnreadable": "Wakii はこのチャットの保存済みの状態を読み取れませんでした。",
-        "chatNotFound": "Wakii はこのチャットを見つけられません。",
-        "startNewChat": "続けるには、新しいチャットを開始してください。",
-        "tryAgain": "もう一度お試しください。"
-      },
-      "dismissDeliveryNotice": "閉じる",
-      "messageNotSent": "メッセージは送信されませんでした",
-      "deliveryUnconfirmed": "配信を確認できません — 再試行する前にチャットを確認してください",
-      "queuedMessages": {
-        "alreadySent": "このメッセージはすでに送信されています。",
-        "editAlreadySent": "すでに送信されています — テキストは入力欄に残っています。",
-        "listLabel": "キュー内のメッセージ",
-        "behindReturnedHold": "待機中 — 前のメッセージの対応が必要です",
-        "awaitingAnswerHold": "回答を待っています",
-        "steer": "今すぐ送信",
-        "send": "送信",
-        "steerHint": "モデルを中断せずに送信します",
-        "sendHint": "このメッセージを今すぐ送信します",
-        "delete": "削除",
-        "moreActions": "その他の操作",
-        "editMessage": "メッセージを編集",
-        "turnOffQueueing": "キューへの追加をオフにする",
-        "withdrawnHold": "送信前に停止されました",
-        "pausedSendFailed": "送信できませんでした。「送信」を押して再試行してください。",
-        "paused": "一時停止中",
-        "queuePausedStopped": "中断したため、キューを一時停止しました",
-        "queuePausedRestarted": "Wakii が再起動したため、キューを一時停止しました",
-        "queuePausedCleared": "会話を消去したため、キューを一時停止しました",
-        "queuePaused": "キューは一時停止中です",
-        "resume": "再開"
-      },
       "contextMenu": {
         "copyOrcaSessionId": "Wakii セッション ID をコピー",
         "orcaSessionIdCopied": "Wakii セッション ID をコピーしました",
@@ -17939,12 +17740,573 @@
         "providerRateLimited": "{{agent}} はレート制限を受けているため、再試行しています。",
         "providerRetrying": "{{agent}} で一時的な問題が発生したため、再試行しています。",
         "providerRetryingQuoted": "{{agent}} は再試行しています: {{detail}}。",
-        "previousExitUnverifiable": "以前の {{agent}} がまだ実行中の可能性があります。停止するとメッセージが送信されます。"
+        "previousExitUnverifiable": "以前の {{agent}} を停止できませんでした。",
+        "sendAgainToTryOnceMore": "メッセージをもう一度送信して、再度お試しください。",
+        "editSavedArguments": "設定 > Agent > 引数で編集してください。",
+        "launchFolderMissing": "このチャットが実行されていたフォルダーは存在しなくなりました。このチャットを続けるには、フォルダーを復元してください。",
+        "historyInOtherAccount": "このチャットの履歴は別の Claude アカウントにあります。続けるには、そのアカウントに切り替えてください。",
+        "agentCommandNotRunnable": "[設定] → [Agent] にある {{agent}} の [コマンド] には、Orca が見つけられるプログラムのパスまたは名前を、引数や変数なしで指定する必要があります。変更するか、[リセット] してください。",
+        "argumentsMissingValue": "保存された引数の {{option}} に値が必要です。",
+        "argumentsMultipleValues": "保存された引数の {{option}} に複数の値が指定されています。",
+        "argumentsPositionalPrompt": "保存された引数にプロンプトが含まれています。",
+        "argumentsUnsupportedOption": "保存された引数に未対応のオプション（{{option}}）が含まれています。",
+        "providerRetryNumber": "{{attempt}} 回目の再試行です。",
+        "providerRetryNumberOf": "{{maxRetries}} 回中 {{attempt}} 回目の再試行です。",
+        "providerRetryLastError": "直近のエラー: {{detail}}。",
+        "sessionNotRestored": "{{agent}} は以前のセッションを再開できなかったため、このチャットは新しいセッションで続行します。{{agent}} は以前のメッセージを覚えていません。"
+      },
+      "writeNotice": {
+        "notDoneReadHistory": "このチャットの履歴を読み込めませんでした。",
+        "notDoneSend": "メッセージは送信されませんでした。",
+        "tryAgainComposerSend": "もう一度送信してください。",
+        "messageNotSaved": "メッセージを保存できませんでした。",
+        "notDoneStop": "Agent は停止されませんでした。",
+        "notDoneStopTask": "バックグラウンドタスクは停止されませんでした。",
+        "notDoneStopTasks": "バックグラウンドタスクは停止されませんでした。",
+        "notDoneAnswer": "回答は送信されませんでした。",
+        "notDoneOption": "設定は変更されませんでした。",
+        "notDoneCommand": "コマンドは実行されませんでした。",
+        "notDoneGoal": "目標は変更されませんでした。",
+        "restartFailed": "Agent を再起動できませんでした。",
+        "capacity": "Wakii が過去 1 日に受け取ったリクエストが多すぎます。",
+        "outcomeUnknown": "Wakii は何が起きたかを確認できませんでした。チャットを確認してください。",
+        "sendOutcomeLost": "Wakii はメッセージが Agent に届いたことを確認できませんでした。チャットを確認し、必要であればもう一度送信してください。",
+        "questionChanged": "この質問はすでに回答済みか、変更されています。",
+        "historyUnreadable": "Wakii はこのチャットの保存済み履歴を読み取れませんでした。",
+        "historyUnusable": "このチャットを読み込めません。",
+        "historyUnavailable": "Wakii は現在このチャットの履歴を開けませんでした。",
+        "savedByNewerOrca": "チャットは新しいバージョンの Wakii で保存されました。",
+        "updateOrcaToKeepUsing": "引き続き使用するには、Wakii を更新してください。",
+        "unsupported": "このチャットを実行しているコンピューターに新しいバージョンの Wakii が必要です。そのコンピューターで Wakii を更新してから、もう一度お試しください。",
+        "notAvailable": "このチャットでは利用できません。",
+        "unreachable": "Wakii は Agent に接続できませんでした。",
+        "recordFailed": "Wakii はこれをチャットの履歴に保存できませんでした。",
+        "conversationCleared": "この会話はクリアされました。",
+        "openCurrentConversation": "続けるには、現在の会話を開いてください。",
+        "clearUnfinished": "前回の /clear は完了しませんでした。",
+        "commandRunning": "/compact または /clear がまだ実行中です。",
+        "waitForCommand": "/compact または /clear が終わるまでお待ちください。",
+        "agentStarting": "Agent はまだ起動中です。",
+        "waitForStart": "Agent の起動が終わるまでお待ちください。",
+        "turnActive": "Agent はまだ応答中です。",
+        "waitForTurn": "Agent の応答が終わるまで待つか、Agent を停止してください。",
+        "promptPending": "Agent は質問または承認への回答を待っています。",
+        "answerFirst": "先に質問または承認に回答してください。",
+        "backgroundTasksRunning": "バックグラウンドタスクがまだ実行中です。",
+        "waitForBackgroundTasks": "バックグラウンドタスクが終わるまでお待ちください。",
+        "messagesUnsettled": "以前に送信したメッセージはまだ確認されていません。",
+        "settleEarlierMessage": "以前のメッセージが届くまで待つか、再試行してください。",
+        "optionRejected": "Agent はこの設定を受け入れませんでした。",
+        "goalsUnsupported": "この Agent は目標に対応していません。",
+        "agentRefused": "Agent がこれを拒否しました。",
+        "ownerUnproven": "このチャットの以前の Agent がまだ実行中の可能性があります。",
+        "reopenChat": "もう一度確認するには、チャットを開き直してください。",
+        "terminalAgentHoldsChat": "このチャットはまだターミナルの Agent で開かれています。",
+        "quitTerminalAgent": "ここでチャットを続けるには、その Agent を終了してください。",
+        "hostReconciling": "Wakii は再起動後、このチャットをまだ確認しています。",
+        "waitMoment": "しばらくお待ちください。",
+        "recordUnreadable": "Wakii はこのチャットの保存済みの状態を読み取れませんでした。",
+        "chatNotFound": "Wakii はこのチャットを見つけられません。",
+        "startNewChat": "続けるには、新しいチャットを開始してください。",
+        "tryAgain": "もう一度お試しください。",
+        "chatSavedByNewerOrca": "このチャットは新しいバージョンの Orca で保存されました。",
+        "updateOrcaToOpenChat": "開くには Orca を更新してください。",
+        "cannotRunHere": "Orca はここでこの Agent をチャットで実行できません。"
+      },
+      "composer": {
+        "imageUnsupported": "この Agent では画像の貼り付けはサポートされていません。",
+        "send": "送信",
+        "noPty": "ライブターミナルがありません - 再接続するには元に切り替えてください。",
+        "locked": "入力は別のデバイスによって保持されます。",
+        "placeholder": "メッセージを送信してください…",
+        "mentionHint": "参照ファイル:",
+        "attach": "ファイルを添付する",
+        "startDictation": "ディクテーションを開始する",
+        "stopDictation": "ディクテーションを停止する",
+        "noSkills": "一致するスキルがありません",
+        "localAttachmentUnsupported": "ローカル添付ファイルはリモートセッションでは使用できません。",
+        "removeAttachment": "添付ファイルを削除する",
+        "pastedImageLabel": "貼り付けた画像",
+        "imagePasteFailed": "画像の貼り付けに失敗しました。",
+        "worktreeNotReady": "ワークツリーが準備できていません — しばらくしてから再試行してください。",
+        "pasteUnavailable": "貼り付けできません — このチャットは現在入力を受け付けていません。",
+        "uploadingAttachments": "{{value0}}個のファイルをリモートにアップロード中…",
+        "model": "モデル",
+        "effort": "推論レベル",
+        "fastMode": "高速モード",
+        "thinking": "思考",
+        "options": "オプション",
+        "sessionOptions": "セッションオプション",
+        "chooseInAgentPicker": "Agent の選択画面で選ぶ…",
+        "toggleOption": "{{value0}}を切り替える",
+        "pillAccessibleName": "{{value0}} {{value1}}",
+        "sentNotConfirmed": "Agent に送信済み — 未確認",
+        "setWhenSessionStarts": "セッション開始時に設定してください。",
+        "availableAfterSessionStarts": "セッション開始後に利用できます。",
+        "optionUpdateFailed": "オプションを更新できませんでした",
+        "optionValue": {
+          "fast": "高速",
+          "minimal": "最小",
+          "low": "低",
+          "medium": "中",
+          "high": "高",
+          "xhigh": "最高",
+          "max": "最大",
+          "ultra": "ウルトラ"
+        },
+        "noCommandsOrSkills": "一致するコマンドやスキルがありません",
+        "commands": "コマンド",
+        "skills": "スキル",
+        "loadingSkills": "スキルを読み込み中…",
+        "skillsUnavailableHost": "SSH チャットではスキルを一覧表示できません",
+        "skillsLoadFailed": "スキルを読み込めませんでした",
+        "retrySkills": "再試行",
+        "skillCommandCollision": "スキル名でもあります - Agent が判断します",
+        "skillMultipleSources": "{{sourceCount}} 個のソース - Agent が解決します",
+        "skillScopeProject": "プロジェクト",
+        "skillScopePersonal": "個人",
+        "skillScopeBuiltIn": "組み込み",
+        "skillScopePlugin": "プラグイン",
+        "skillsLoaded": "スキルを読み込みました",
+        "noCommands": "一致するコマンドがありません",
+        "imageSaving": "貼り付けた画像を保存中…",
+        "pendingAttachmentLimit": "待機中の添付ファイルが多すぎます。さらに添付する前に、作成を完了してください。",
+        "viewAttachment": "画像を見る",
+        "imagePreview": "フルサイズの画像プレビュー",
+        "imagePreviewUnavailable": "プレビューは利用できません",
+        "workspaceAttachmentMismatch": "ファイルはソースワークスペースにのみ添付できます。",
+        "attachmentOwnerChanged": "このワークスペースは接続中にホストを変更しました。ファイルを再度ドロップしてください。",
+        "attachmentUnreadable": "ドロップされたファイルを読み取れませんでした。",
+        "draftNotSaved": "この下書きはまだ保存できていません。Orca は保存を再試行し続けます。",
+        "imageNotBroughtBack": "{{name}} をこの下書きと一緒に復元できませんでした。もう一度添付するか、削除してください。",
+        "pastedImageNotBroughtBack": "この貼り付けた画像をこの下書きと一緒に復元できませんでした。削除して、必要であればもう一度貼り付けてください。",
+        "removeImageToSend": "復元できなかった画像があります。送信するには削除してください。",
+        "removeImagesToSend": "復元できなかった画像があります。送信するには削除してください。",
+        "imageAttachAgainLabel": "もう一度添付",
+        "pastedImageNotKeptLabel": "保持されていません",
+        "copyImage": "画像をコピー",
+        "copyImageFailed": "画像をコピーできませんでした",
+        "copyImageTooLarge": "画像が大きすぎるためコピーできません。",
+        "imageCopied": "画像をコピーしました",
+        "tooManyAttachments": "一度に添付できるファイルは {{value0}} 個以下です。"
+      },
+      "tool": {
+        "running": "実行中…",
+        "result": "結果",
+        "exitCode": "{{value0}} を出る",
+        "milliseconds": "{{value0}}ms",
+        "countOne": "1 ツール呼び出し",
+        "countN": "{{value0}} ツール呼び出し",
+        "moreCalls": "+{{value0}} 詳細",
+        "failedCount": "{{value0}} 件失敗",
+        "failedCallsLabel": "失敗したツール呼び出し: {{value0}}",
+        "runningPreview": "{{preview}} を実行中",
+        "runningCommand": "コマンドの実行",
+        "runningNamedPreview": "{{toolName}} {{preview}} を実行中",
+        "runningNamed": "{{toolName}} を実行中",
+        "ranCommandOneToolSummary": "{{commandCount}} コマンドを実行し、{{toolCount}} ツールを使用しました",
+        "ranCommandManyToolsSummary": "{{commandCount}} コマンドを実行し、{{toolCount}} ツールを使用しました",
+        "ranCommandsOneToolSummary": "{{commandCount}} コマンドを実行し、{{toolCount}} ツールを使用しました",
+        "ranCommandsManyToolsSummary": "{{commandCount}} コマンドを実行し、{{toolCount}} ツールを使用しました",
+        "usedOneSummary": "使用した工具 1 個",
+        "usedManySummary": "使用した{{toolCount}}ツール",
+        "editedFile": null,
+        "addedFile": null,
+        "deletedFile": null,
+        "renamedFile": null,
+        "copyDiff": "差分をコピー",
+        "diffGap": "線は表示されません",
+        "diffTruncated": "差分切り捨て",
+        "runReadOne": "1ファイルを読み込む",
+        "runReadMany": "{{value0}} ファイルを読み取る",
+        "runSearchOne": "1 回検索されました",
+        "runSearchMany": "{{value0}} 回検索されました",
+        "runListFilesOne": "1 つのディレクトリがリストされています",
+        "runListFilesMany": "{{value0}} ディレクトリのリスト",
+        "runCommandOne": "1 コマンドを実行しました",
+        "runCommandMany": "{{value0}} コマンドを実行しました",
+        "runFileChangeOne": "1ファイルを編集しました",
+        "runFileChangeMany": "編集された{{value0}}ファイル",
+        "runWebSearchOne": "ウェブを 1 回検索しました",
+        "runWebSearchMany": "ウェブを{{value0}}回検索しました",
+        "runIntegrationOne": "使用済み 1 連携",
+        "runIntegrationMany": "{{value0}} 連携を使用しました",
+        "runAgentOne": "Agent を 1 人実行しました",
+        "runAgentMany": "{{value0}} Agent を実行しました",
+        "runPlanOne": "計画を更新しました",
+        "runPlanMany": "計画を{{value0}}回更新しました",
+        "runToolOne": "使用した工具 1 個",
+        "runToolMany": "使用した{{value0}}ツール",
+        "runPair": "{{value0}} および {{value1}}",
+        "runList": "{{value0}}、{{value1}}",
+        "runLiveReadOne": "1ファイルを読み込んでいます",
+        "runLiveReadMany": "{{value0}} ファイルの読み取り",
+        "runLiveSearchOne": "1回検索中",
+        "runLiveSearchMany": "{{value0}} 回検索しています",
+        "runLiveListFilesOne": "リスト 1 のディレクトリ",
+        "runLiveListFilesMany": "{{value0}} ディレクトリの一覧表示",
+        "runLiveCommandOne": "1つのコマンドを実行中",
+        "runLiveCommandMany": "{{value0}} コマンドの実行",
+        "runLiveFileChangeOne": "1ファイルを編集中",
+        "runLiveFileChangeMany": "{{value0}} ファイルの編集",
+        "runLiveWebSearchOne": "ウェブ検索 1 回",
+        "runLiveWebSearchMany": "ウェブを{{value0}}回検索しています",
+        "runLiveIntegrationOne": "1 つの連携を使用する",
+        "runLiveIntegrationMany": "{{value0}} 連携の使用",
+        "runLiveAgentOne": "1 つの Agent を実行中",
+        "runLiveAgentMany": "{{value0}} Agent を実行しています",
+        "runLivePlanOne": "計画を更新する",
+        "runLivePlanMany": "計画を{{value0}}回更新しています",
+        "runLiveToolOne": "1つのツールを使用する",
+        "runLiveToolMany": "{{value0}} ツールの使用",
+        "interruptedCount": "{{value0}} 件中断",
+        "interruptedCallsLabel": "中断されたツール呼び出し: {{value0}}",
+        "row": {
+          "running": "実行中",
+          "reading": "読み取り中",
+          "editing": "編集中",
+          "searching": "検索中",
+          "searchingWeb": "ウェブ検索中",
+          "fetching": "取得中",
+          "listed": "一覧表示",
+          "listing": "一覧表示中",
+          "ran": "実行",
+          "read": "読み取り",
+          "edited": "編集",
+          "searched": "検索",
+          "searchedWeb": "ウェブ検索",
+          "fetched": "取得",
+          "added": "追加",
+          "deleted": "削除",
+          "renamed": "名前変更",
+          "subagent": "サブエージェント",
+          "triedRead": "読み取りを試行",
+          "triedEdit": "編集を試行",
+          "triedSearch": "検索を試行",
+          "triedList": "一覧表示を試行",
+          "triedFetch": "取得を試行",
+          "triedSearchWeb": "ウェブ検索を試行"
+        }
+      },
+      "status": {
+        "responding": "Agent が応答中です",
+        "working": "処理中…",
+        "thinking": "考え",
+        "workingFor": "{{value0}} 処理中",
+        "workedFor": "{{value0}} で完了",
+        "interruptedAfter": "{{value0}} 後に中断",
+        "failedAfter": "{{value0}} 後に失敗",
+        "toggleDetails": "ターンの詳細を切り替えます",
+        "stopping": "停止中…",
+        "queueAfterStop": "停止後に実行するメッセージをキューに追加",
+        "sendAfterStop": "停止後に実行するメッセージを送信"
+      },
+      "jumpToLatest": "最新にジャンプ",
+      "toggle": {
+        "showTerminal": "ターミナルを表示",
+        "showChat": "チャットビューを表示"
+      },
+      "state": {
+        "loading": {
+          "label": "チャットを読み込んでいます",
+          "title": "会話を読み込んでいます…",
+          "subtitle": "Agent の記録を読んでいます。"
+        },
+        "error": {
+          "title": "会話を読み込めませんでした",
+          "subtitle": "トランスクリプトを読み取ることができませんでした。作業を続けるには、ターミナルに切り替えてください。"
+        },
+        "reconnecting": null,
+        "pairHost": "ホストをペアリングして、Agent のチャット履歴を表示します。",
+        "notAgent": {
+          "title": "ここでは会話はありません",
+          "subtitle": "このターミナルは認識されたコーディング Agent を実行していません。"
+        },
+        "empty": {
+          "title": "{{value0}} とチャットを開始する",
+          "subtitle": "{{value0}} にコードの検査、出力の説明、または変更を依頼してください。"
+        }
+      },
+      "stop": "Agent を停止",
+      "copyMessage": {
+        "copied": "コピーしました",
+        "copy": "メッセージをコピーする"
+      },
+      "scrollMessageToTop": "このメッセージを一番上までスクロールします",
+      "loadingEarlier": "読み込み中…",
+      "loadEarlier": "以前のメッセージをロードする",
+      "loadingEarlierMessages": "以前のメッセージを読み込み中…",
+      "question": {
+        "step": "ステップ {{value0}}",
+        "other": "他の…",
+        "otherPlaceholder": "答えを入力してください",
+        "cancel": "キャンセル",
+        "send": "送信",
+        "next": "次へ",
+        "skip": "スキップ",
+        "sending": "送信中…"
+      },
+      "approval": {
+        "title": "{{value0}} を許可しますか?",
+        "allow": "許可する",
+        "deny": "拒否",
+        "cancel": "キャンセル",
+        "reason": "理由",
+        "blockedPath": null,
+        "askRule": null,
+        "plan": {
+          "file": "計画ファイル"
+        },
+        "needsNewerOrca": "このリクエストには新しいバージョンの Orca が必要です。",
+        "needsAccess": "アクセスが必要なパス"
+      },
+      "launchPromptNotDelivered": "配信されませんでした — ターミナルを確認してください",
+      "taskList": {
+        "title": "タスク",
+        "completed": "完了",
+        "inProgress": "進行中",
+        "pending": "保留中",
+        "empty": "タスクがありません",
+        "progress": "{{total}} 件中 {{completed}} 件のタスクが完了しました",
+        "added": "{{task}} を追加しました",
+        "removed": "{{task}} を削除しました",
+        "started": "{{task}} を開始しました",
+        "finished": "{{task}} を完了しました",
+        "reset": "保留中としてマーク: {{task}}",
+        "updated": "{{task}} を更新しました",
+        "unchanged": "タスクは変更されていない",
+        "showAll": "完全なタスクリスト"
+      },
+      "turnDiff": {
+        "one": "1 つの変更されたファイル",
+        "many": "{{count}} がファイルを変更しました",
+        "partial": "部分的な差分",
+        "recorded": "このターンに記録された編集の合計。"
+      },
+      "receipt": {
+        "unavailable": "選択した回答は利用できません",
+        "cancelled": "キャンセル",
+        "resolved": "解決済み",
+        "resolver": "{{device}} に回答しました",
+        "cancelledBy": "{{device}}にキャンセルされました"
+      },
+      "notices": {
+        "compaction": "圧縮されたコンテキスト",
+        "details": "詳細",
+        "plan": "プラン",
+        "historyRepaired": "このチャットの履歴の一部を読み込めませんでした。",
+        "historyItemTooLarge": "チャットのこの部分は大きすぎるため表示できません。",
+        "stoppedBeforeStart": "Agent の開始前に停止しました"
+      },
+      "providerFrame": {
+        "byteLength": "{{value0}}バイト"
+      },
+      "backgroundTasks": {
+        "monitoring": "バックグラウンドタスクの監視",
+        "stop": "停止",
+        "stopTask": "{{value0}} を停止してください",
+        "stopAll": "バックグラウンドタスクを停止する",
+        "agent": "バックグラウンド Agent",
+        "workflow": "バックグラウンドワークフロー",
+        "command": "バックグラウンドコマンド",
+        "monitor": "バックグラウンドモニター",
+        "task": "バックグラウンドタスク",
+        "outputFile": "出力: {{value0}}",
+        "detailsUnavailable": "このセッションではタスクの詳細は利用できません。",
+        "countAgentsOne": "Agent1名",
+        "countAgentsMany": "{{value0}} Agent",
+        "countShellOne": "1 シェル",
+        "countShellMany": "{{value0}} シェル",
+        "countShellCommandOne": "1 シェルコマンド",
+        "countMonitorsOne": "モニター1台",
+        "countMonitorsMany": "{{value0}} モニター",
+        "countWorkflowsOne": "1つのワークフロー",
+        "countWorkflowsMany": "{{value0}} ワークフロー",
+        "countTasksOne": "1タスク",
+        "countTasksMany": "{{value0}} タスク",
+        "headerTotal": "{{value0}} バックグラウンドタスク",
+        "stateWorking": "実行中",
+        "stateMonitoring": "監視",
+        "stateWaiting": "待機中",
+        "stateBlocked": "ブロックされました",
+        "stateDone": "終わり",
+        "stateIdle": "止まった",
+        "stateUnverifiable": "状態を取得できません",
+        "stateUnverifiableCount": "{{value0}} は状態を取得できません",
+        "reasonWaiting": "承認が必要です",
+        "reasonBlocked": "失敗した",
+        "groupAgents": "Agent",
+        "groupShell": "シェル",
+        "groupMonitors": "モニター",
+        "groupWorkflows": "ワークフロー",
+        "groupTasks": "タスク",
+        "stateWorkingCount": "{{value0}} 実行中",
+        "stateMonitoringCount": "{{value0}} 監視",
+        "stateWaitingCount": "{{value0}} 待機中",
+        "stateBlockedCount": "{{value0}} ブロックされました",
+        "stateDoneCount": "{{value0}} 終わり",
+        "stateIdleCount": "{{value0}} 止まった"
+      },
+      "railLabel": "あなたのメッセージ",
+      "railImageMessage": "画像添付",
+      "railEmptyMessage": "メッセージ",
+      "ask": {
+        "awaiting": "ユーザー入力を待っています:",
+        "awaitingUnnamed": "ユーザー入力を待っています",
+        "asked": "質問:",
+        "questionCount": "{{value0}} の質問"
+      },
+      "subagents": {
+        "state": {
+          "completed": "完成した",
+          "working": "実行中",
+          "idle": "idle",
+          "failed": "失敗した",
+          "stopped": "止まった",
+          "unverifiable": "状態を取得できません",
+          "workingCount": "{{value0}} は動作しています",
+          "idleCount": "{{value0}} アイドル状態",
+          "failedCount": "{{value0}} 件失敗",
+          "stoppedCount": "{{value0}} が停止しました",
+          "unverifiableCount": "{{value0}} 件は状態を取得できません"
+        },
+        "startedOne": "1 人のサブ Agent を解雇しました",
+        "startedN": "{{value0}} サブ Agent をキックオフしました",
+        "ranOne": "1 人のサブ Agent を実行しました",
+        "ranN": "{{value0}} サブ Agent を実行しました",
+        "tokens": "{{value0}} トークン",
+        "unnamed": "サブ Agent"
+      },
+      "conversationCommand": {
+        "pendingWork": "このコマンドを使用する前に、保留中の作業とメッセージが完了するまで待ってください。"
+      },
+      "drop": {
+        "title": "ドロップしてこのチャットに添付します",
+        "subtitle": "ファイルは、Agent が読み取ることができるパスとしてメッセージに追加されます。"
+      },
+      "copyCode": "コードをコピーする",
+      "goal": {
+        "placeholder": "目標を説明し、最良の結果を得るために測定可能な結果を​​定義する",
+        "clear": "明確な目標",
+        "chip": "ゴール",
+        "exitMode": "ゴールモードを終了する",
+        "sentAsGoal": "ゴールとして送信されました",
+        "collapse": "完全な目標を非表示にする",
+        "expand": "完全な目標を表示",
+        "pause": "ゴールを一時停止する",
+        "resume": "再開目標",
+        "pursuing": "目標を追求する",
+        "paused": "一時停止されたゴール",
+        "blocked": "ゴール阻止",
+        "limited": "目標が限定されている",
+        "attachmentsUnsupported": "目標を設定する前に添付ファイルを削除してください。"
+      },
+      "fileLinks": {
+        "notFound": "ファイルが見つかりません: {{value0}}",
+        "unverifiable": "{{value0}} を確認できませんでした: {{value1}}",
+        "unresolved": "このワークスペースで {{value0}} を解決できませんでした"
+      },
+      "contextUsage": {
+        "label": "コンテキスト {{used}} / {{window}} トークン、{{percent}}% 使用済み",
+        "title": "コンテキスト",
+        "estimated": "最後の応答から推定。"
+      },
+      "dismissDeliveryNotice": "閉じる",
+      "messageNotSent": "メッセージは送信されませんでした",
+      "deliveryUnconfirmed": "配信を確認できません — 再試行する前にチャットを確認してください",
+      "queuedMessages": {
+        "alreadySent": "このメッセージはすでに送信されています。",
+        "editAlreadySent": "すでに送信されています — テキストは入力欄に残っています。",
+        "listLabel": "キュー内のメッセージ",
+        "behindReturnedHold": "待機中 — 前のメッセージの対応が必要です",
+        "awaitingAnswerHold": "回答を待っています",
+        "steer": "今すぐ送信",
+        "send": "送信",
+        "steerHint": "モデルを中断せずに送信します",
+        "sendHint": "このメッセージを今すぐ送信します",
+        "delete": "削除",
+        "moreActions": "その他の操作",
+        "editMessage": "メッセージを編集",
+        "turnOffQueueing": "キューへの追加をオフにする",
+        "withdrawnHold": "送信前に停止されました",
+        "pausedSendFailed": "送信できませんでした。「送信」を押して再試行してください。",
+        "paused": "一時停止中",
+        "queuePausedStopped": "中断したため、キューを一時停止しました",
+        "queuePausedRestarted": "Wakii が再起動したため、キューを一時停止しました",
+        "queuePausedCleared": "会話を消去したため、キューを一時停止しました",
+        "queuePaused": "キューは一時停止中です",
+        "resume": "再開",
+        "pausedKept": "まだ送信されていません。「送信」を押すと送信されます。",
+        "sendConfirmTitle": "メッセージを送信しますか？",
+        "sendConfirmBody": "メッセージを送信しようとしています。キューに入っている {{count}} 件のメッセージを消去しますか？",
+        "sendConfirmBody_one": "メッセージを送信しようとしています。キューに入っている {{count}} 件のメッセージを消去しますか？",
+        "sendConfirmBody_other": "メッセージを送信しようとしています。キューに入っている {{count}} 件のメッセージを消去しますか？",
+        "sendConfirmClear": "キューを消去",
+        "sendConfirmSend": "メッセージを送信",
+        "from": "送信元: {{names}}"
       },
       "structuredSessionHostDeclined": "{{value0}} をターミナルで開きました",
       "structuredSessionHostDeclinedDescription": "このサーバーはこのワークスペースで {{value0}} チャットを実行できません。",
       "structuredSessionHostUnreachable": "{{value0}} に接続できませんでした",
-      "structuredSessionHostUnreachableDescription": "Wakii は {{value0}} チャットを開きませんでした。サーバーへの接続を確認して、もう一度お試しください。"
+      "structuredSessionHostUnreachableDescription": "Wakii は {{value0}} チャットを開きませんでした。サーバーへの接続を確認して、もう一度お試しください。",
+      "structuredSessionLaunchFailed": "{{value0}} チャットを開けませんでした",
+      "handoff": {
+        "stage": {
+          "finishingChat": null,
+          "finishingTerminal": null,
+          "openingTerminal": null,
+          "resumingChat": null,
+          "verifyingTerminal": null,
+          "verifyingChat": null,
+          "recovering": null,
+          "manualRecovery": null
+        },
+        "switchingOwner": null,
+        "mode": {
+          "switching": null,
+          "terminal": null,
+          "chat": null
+        },
+        "switchingAfterTurn": null,
+        "returningAfterTurn": null,
+        "cancel": null,
+        "switchAfterTurn": null,
+        "stopTurnAndSwitch": null,
+        "openAgentTui": null,
+        "returnAfterTurn": null,
+        "returnToChat": null,
+        "agentOpenOnHost": null,
+        "agentOpen": null,
+        "exitTerminal": null,
+        "retryProof": null,
+        "retry": null,
+        "details": null
+      },
+      "structuredSessionLaunchFailedDescription": "Wakii は構造化された {{value0}} チャットを開けませんでした。詳細についてはログを参照してください。",
+      "reasoning": "推論",
+      "transcriptLabel": "会話",
+      "prompt": {
+        "collapse": "折りたたむ",
+        "expand": "展開"
+      },
+      "context": {
+        "unavailable": "コンテキストの使用量はまだ不明です。Agent が次に応答すると表示されます。",
+        "summary": "コンテキスト: {{used}} / {{window}} トークン ({{percent}}%)、最後の応答から推定。",
+        "used": "コンテキスト: {{used}} トークン使用済み、最後の応答から推定。",
+        "unreported": "このセッションではコンテキストの使用量を表示できません。"
+      },
+      "agentMessage": {
+        "messageFrom": "送信元:",
+        "unnamedSender": "Agent"
+      },
+      "messageSending": "送信中…",
+      "thought": "考えました",
+      "thoughtForDuration": "{{duration}} 考えました",
+      "hostOutage": {
+        "offline": "{{hostName}} はオフラインです",
+        "reconnecting": "{{hostName}} に再接続しています…",
+        "reconnect": "再接続"
+      }
     },
     "tab": {
       "bar": {
@@ -18204,6 +18566,16 @@
         "workspaceReadyToast": "ワークスペース {{name}} の準備ができました",
         "goToWorktree": "ワークツリーに移動",
         "goToWorkspace": "ワークスペースに移動"
+      },
+      "delete": {
+        "changes": {
+          "permanentLoss": "Git ワークスペース内のコミットされていない変更または未追跡の変更は完全に削除されます。",
+          "clean": "コミットされていない変更または未追跡の変更はありません",
+          "unavailable": "変更を確認できませんでした",
+          "checking": "変更を確認中…",
+          "checkingDetails": "確認中…",
+          "unavailableDetails": "詳細を利用できません"
+        }
       }
     },
     "agentSessionContinuation": {
@@ -18286,6 +18658,11 @@
     },
     "agentChildRow": {
       "ended": "終了"
+    },
+    "jiraIssueAssigneeField": {
+      "label": "担当者",
+      "automatic": "自動",
+      "assignToMe": "自分に割り当てる（{{name}}）"
     }
   },
   "dashboardPopout": {
@@ -18408,7 +18785,7 @@
     "clientHosted": {
       "preparationFailed": "このデスクトップ上でリモートブラウザを起動できませんでした。ペアリングされた接続を確認して、もう一度試してください。",
       "unavailableTitle": "クライアントホスト型ブラウザは利用不可",
-      "unavailableDescription": "このページは別のデスクトップに接続されているか、もう利用できません。",
+      "unavailableDescription": "このページは現在このデスクトップでは利用できません。",
       "download": {
         "started": "{{filename}}をダウンロード中…",
         "completed": "{{filename}}をダウンロードしました",
@@ -18426,7 +18803,9 @@
       "hostRowOfflineNamed": "オフライン — {{device}} にホストされました",
       "hostRowOffline": "オフライン — ホストしているデバイスが終了しました",
       "hostRowNamed": "{{device}} で開催",
-      "hostRow": "別のデバイスでホストされている"
+      "hostRow": "別のデバイスでホストされている",
+      "unavailableOtherDesktopDescription": "このページは別のデスクトップで開かれています。",
+      "unavailableHostOfflineDescription": "{{host}} はオフラインです。再接続されると、このページはここで再読み込みされます。"
     },
     "navigation": {
       "back": "戻る",
@@ -18512,8 +18891,8 @@
       "needsInput": "入力待ち",
       "working": "処理中",
       "stopped": "停止",
-      "finished": "完了",
-      "failed": "失敗"
+      "failed": "失敗",
+      "finished": "完了"
     }
   },
   "sidebar": {
@@ -18558,50 +18937,50 @@
       "settingsLink": "設定→音声"
     },
     "sessionSearch": {
-      "continueInBackground": "バックグラウンドで続行",
-      "recent1Text": "検索エントリをワークフロー配下に移動し、テストを更新しました。",
-      "demoHit2Title": "スリープ後のセッション更新",
-      "demoHit5Snippet": "再試行の前に[[移行]][[ロールバック]]計画を書いてもらえますか？",
-      "startSearching": "検索を開始",
       "ageHours": "2時間前",
       "ageMinutes": "12分前",
-      "demoQuery": "ログインタイムアウト",
-      "demoHit2Snippet": "スリープ復帰後に[[ログイン]]ページが[[タイムアウト]]で止まるのはなぜですか？",
-      "demoHit3Age": "2週間前",
-      "recent2Title": "ロックファイルの更新",
-      "demoHit1Age": "3日前",
-      "demoHit4Title": "注文テーブルの移行",
-      "readyToast": "セッション検索の準備ができました",
-      "progressStarting": "セッションを探しています…",
       "ageYesterday": "1日前",
-      "demoHit6Age": "1か月前",
-      "demoHit4Age": "5日前",
+      "agentsInstruction": "Agent も検索できます。「ログインタイムアウトを修正したセッションを探して」と頼んでみてください。",
+      "consentInstruction": "いつでも以下で変更またはオフにできます:",
+      "continueInBackground": "バックグラウンドで続行",
+      "demoHit1Age": "3日前",
       "demoHit1Snippet": "[[ログインタイムアウト]]を 30 秒に引き上げ、トークン更新時の再試行を追加しました。",
       "demoHit1Title": "不安定な認証リダイレクトの修正",
-      "indexingDescription": "過去の Agent の会話を読み取り、検索できるようにしています。数分かかることがあります。",
-      "recent3Text": "メモの初版です。分野別にまとめています。",
-      "demoHit5Title": "ステージングのデプロイに失敗",
-      "demoHit3Title": "認証 E2E の強化",
-      "settingsLink": "設定 → Agent セッションの検索",
-      "agentsInstruction": "Agent も検索できます。「ログインタイムアウトを修正したセッションを探して」と頼んでみてください。",
+      "demoHit2Age": "1週間前",
+      "demoHit2Snippet": "スリープ復帰後に[[ログイン]]ページが[[タイムアウト]]で止まるのはなぜですか？",
+      "demoHit2Title": "スリープ後のセッション更新",
+      "demoHit3Age": "2週間前",
       "demoHit3Snippet": "[[ログインタイムアウト]]の経路をエンドツーエンドでカバーするテストを追加しました。",
+      "demoHit3Title": "認証 E2E の強化",
+      "demoHit4Age": "5日前",
+      "demoHit4Snippet": "[[ロールバック]]では新規インデックスを先に削除し、古いカラムを復元します。",
+      "demoHit4Title": "注文テーブルの移行",
       "demoHit5Age": "3週間前",
-      "readyDescription": "このコンピュータ上のすべての Agent セッションを、会話内容から検索できるようになりました。",
-      "indexingTitle": "Agent セッションをインデックス作成中",
-      "recent1Title": "設定サイドバーの整理",
-      "recent3Title": "リリースノートの下書き",
+      "demoHit5Snippet": "再試行の前に[[移行]][[ロールバック]]計画を書いてもらえますか？",
+      "demoHit5Title": "ステージングのデプロイに失敗",
+      "demoHit6Age": "1か月前",
       "demoHit6Snippet": "ここの[[移行]]は enum の名前変更を除きすべて可逆です。",
+      "demoHit6Title": "スキーマレビューメモ",
+      "demoQuery": "ログインタイムアウト",
       "demoQuery2": "移行 ロールバック",
-      "readyTitle": "セッション検索の準備ができました",
-      "recent2Text": "依存関係を更新し、ビルドが通ることを確認します。",
+      "demoRoleAssistant": "アシスタント",
       "demoRoleUser": "ユーザー",
       "enableFailed": "セッション検索をオンにできませんでした。再試行してください。",
-      "demoHit4Snippet": "[[ロールバック]]では新規インデックスを先に削除し、古いカラムを復元します。",
-      "demoRoleAssistant": "アシスタント",
-      "consentInstruction": "いつでも以下で変更またはオフにできます:",
+      "indexingDescription": "過去の Agent の会話を読み取り、検索できるようにしています。数分かかることがあります。",
+      "indexingTitle": "Agent セッションをインデックス作成中",
+      "progressStarting": "セッションを探しています…",
+      "readyDescription": "このコンピュータ上のすべての Agent セッションを、会話内容から検索できるようになりました。",
+      "readyTitle": "セッション検索の準備ができました",
+      "readyToast": "セッション検索の準備ができました",
       "readyToastOpen": "オープン",
-      "demoHit2Age": "1週間前",
-      "demoHit6Title": "スキーマレビューメモ"
+      "recent1Text": "検索エントリをワークフロー配下に移動し、テストを更新しました。",
+      "recent1Title": "設定サイドバーの整理",
+      "recent2Text": "依存関係を更新し、ビルドが通ることを確認します。",
+      "recent2Title": "ロックファイルの更新",
+      "recent3Text": "メモの初版です。分野別にまとめています。",
+      "recent3Title": "リリースノートの下書き",
+      "settingsLink": "設定 → Agent セッションの検索",
+      "startSearching": "検索を開始"
     }
   },
   "quickOpen": {
@@ -18617,6 +18996,10 @@
   "sourceControl": {
     "unlinkedPr": {
       "status": "PR #{{number}} のリンクが解除されました"
+    },
+    "discard": {
+      "restoreStagedVersionDescription": "これにより、最後にステージングされたバージョンが復元され、削除が破棄されます。これを元に戻すことはできません。",
+      "unstagedChangesDescription": "これにより、このファイルに対するステージングされていない変更が元に戻ります。これを元に戻すことはできません。"
     }
   },
   "rendererRecovery": {
@@ -18634,7 +19017,10 @@
     "launchFailedMessage": "Wakii はウィンドウを描画するプロセスを起動できませんでした。",
     "launchFailedDetail": "Wakii は {{recoveryCount}} 回再試行しましたが、成功しませんでした。",
     "processLimitDetail": "ユーザーアカウントのプロセス数が上限に達したため、システムが新しいプロセスの作成を拒否しました。暴走したターミナル、開発サーバー、Agent が原因であることがよくあります。いくつか終了してから「再試行」をクリックしてください。",
-    "launchFailedGenericDetail": "システムが起動を拒否しました。メモリを空けるか他のアプリを終了してから「再試行」をクリックしてください。繰り返し発生する場合は Wakii を再インストールしてください。"
+    "launchFailedGenericDetail": "システムが起動を拒否しました。メモリを空けるか他のアプリを終了してから「再試行」をクリックしてください。繰り返し発生する場合は Wakii を再インストールしてください。",
+    "lowCommitMessage": "Windows のメモリが不足しています。",
+    "lowCommitDetail": "Windows にはアプリ用に {{availableMB}} MB のメモリしか残っていないため、再ロード後にウィンドウが再びメモリ不足になりました。",
+    "lowCommitAdvice": "未使用のアプリまたは Orca ワークスペースを閉じてメモリを解放するか、Windows ページファイルサイズを増やして、[再読み込み] をクリックします。"
   },
   "sessionSearch": {
     "panel": {
@@ -18663,7 +19049,8 @@
       "sessionsOther": "{{count}} セッション",
       "sessionsOfLoaded": "{{value0}}/{{value1}} セッション",
       "showMoreSessions": "さらにセッションを表示",
-      "loadingMoreSessions": "さらにセッションを読み込んでいます…"
+      "loadingMoreSessions": "さらにセッションを読み込んでいます…",
+      "unsupportedAgent": "このコンピュータは、選択した Agent の履歴検索をサポートしていません。そのコンピュータで Orca を更新するか、別の Agent を選択します。"
     }
   },
   "sessionHistory": {
@@ -18716,7 +19103,12 @@
       "loading": "サブ Agent を読み込み中…",
       "loadError": "すべてのサブ Agent をロードできませんでした。",
       "empty": "サブ Agent が見つかりませんでした。"
-    }
+    },
+    "antigravityReferenceDescription": "このトランスクリプトを参照として使用して、新規 Antigravity CLI 会話を続けます。",
+    "antigravityIdeToCli": "IDE → CLI",
+    "antigravity2ToCli": "2.0 → CLI",
+    "continueInCli": "CLIで続行",
+    "continueInCliNewTab": "新規タブで CLI を続行する"
   },
   "common": {
     "retry": "再試行"
@@ -18793,6 +19185,141 @@
       "removeTitle": "管理アカウントを削除しますか？",
       "removeDescription": "まずこのプロファイルを使う Agent を停止してください。削除すると保存済みの認証情報と会話データが消去されます。システムのログインには影響しません。",
       "cancel": "キャンセル"
+    },
+    "antigravity": {
+      "scope": "{{host}} でネイティブ agy アカウントを管理します。",
+      "signIn": "このホストで agy を起動し、ブラウザのサインインを完了して、現在のアカウントを保存します。別のアカウントを追加するには、agy で /logout を使用し、再度サインインします。",
+      "docs": "サインイン手順",
+      "retry": "再試行",
+      "identityUnknown": "サインインしているIDは利用できません",
+      "signedOut": "ネイティブのAGYアカウントはサインインしていません。",
+      "changed": "ネイティブアカウントが変更されました。AGYを起動する前に、保存したアカウントを再度選択してください。",
+      "save": "現在のアカウントを保存",
+      "refresh": "アカウントを更新する",
+      "usage": "リフレッシュの使用法",
+      "working": "アカウントの更新",
+      "usageReading": "セッション： {{session}} ·毎週： {{weekly}}",
+      "saved": "保存されたGoogleアカウント",
+      "nativeActive": "ネイティブアカウント",
+      "selected": "選択",
+      "select": "選択",
+      "remove": "削除",
+      "sessions": "選択は、このホストの新規AGYセッションに適用されます。既存のセッションでは、以前のアカウントが保持される場合があります。",
+      "searchTitle": "Antigravityアカウント",
+      "searchDescription": "実行ホストにネイティブのagy Googleアカウントを保存して選択します。",
+      "title": "Antigravity",
+      "keyword": {
+        "antigravity": "反重力",
+        "agy": "agy",
+        "google": "グーグル",
+        "accounts": "アカウント"
+      }
+    }
+  },
+  "osDocumentOpen": {
+    "failed": "ファイルを開けませんでした。"
+  },
+  "terminal": {
+    "sessionSaveFailure": {
+      "title": "ターミナルセッションを保存できませんでした",
+      "capacity": "このターミナルを保存しているデバイスから、ストレージがいっぱいであるか、ストレージクォータを超えていることが報告されました。そのデバイス上のスペースを解放してから、再試行してください。",
+      "unknown": "Orca はターミナル状態を保存できませんでした。再試行。これが続く場合は、原因を特定できるよう、Orca ログをサポートと共有してください。"
+    },
+    "codexTerminalServerIsolationNotice": {
+      "title": "Orca は共有サーバーなしで Codex を実行できるようになりました",
+      "description": "これにより、Agent のステータスの信頼性が高まります。 [設定] で再度オンにできます。",
+      "openSettings": "設定を開く"
+    },
+    "codexSharedSettingsNotice": {
+      "title": "Orca の Codex は ~/.codex を使用するようになりました",
+      "description": "Codex は、フォルダーを信頼するか、コマンドを承認するかを再度要求する場合があります。 Orca のみに追加した MCP サーバーを再度追加します。"
+    },
+    "codexSharedServerBanner": {
+      "title": "この Codex は他の Codex タブとサーバーを共有しています",
+      "body": "セッションが予期せず終了したり、Agent のステータスが間違ったりする可能性があります。",
+      "openedBeforeUpdateBody": "このターミナルは、Orca が各 Codex に独自のサーバーを提供し始める前にオープンされました。",
+      "oldTerminalDialogTitle": "この Codex がサーバーを共有する理由",
+      "oldTerminalDialogRisk": "サーバーを共有する Codex セッションが同時に終了する可能性があり、Agent のステータスが間違っている可能性があります。",
+      "oldTerminalDialogCause": "古いターミナルは依然として Codex サーバーを共有しています。新規ターミナルを開いて、別のサーバーで Codex を実行します。",
+      "fix": "修理",
+      "openNewTerminal": "新規ターミナルを開く",
+      "dontShowAgain": "二度と表示しないでください",
+      "dismiss": "閉じる",
+      "dialogTitle": "各 Codex タブに独自のサーバーを与える",
+      "dialogDescription": "ターミナルで直接開始された Codex セッションは、1 つのバックグラウンドサーバーを共有します。 Orca は、開始する Codex セッションを個別に保持します。セッションがサーバーを共有している場合、1 つを閉じると他のセッションも終了し、Agent のステータスが不正になる可能性があります。",
+      "copy": "コピー",
+      "copied": "コピーしました",
+      "done": "完了",
+      "step1Title": "Codex サーバー共有をオフにする",
+      "step1Note": "これにより Codex 設定が変更されるため、Orca の外部にも適用されます。",
+      "step2Title": "稼働中の共有サーバーを停止します",
+      "undo": "元に戻すには、codex features enable daemon_auto_start を実行します。",
+      "step2Warning": "サーバーを共有している開いている Codex セッションをすべて閉じます。",
+      "learnMore": "詳しく見る",
+      "turnOff": "消す",
+      "turningOff": "オフにしています…",
+      "turnedOff": "オフになっています",
+      "turnOffFailed": "Orca はこれをオフにすることができませんでした。",
+      "stopServer": "サーバーを停止する",
+      "stopping": "停止中…",
+      "stopped": "停止しました",
+      "stopFailed": "Orca はサーバーを停止できませんでした。",
+      "confirmStopTitle": "共有サーバーを停止しますか?",
+      "confirmStopDescription": "これにより、Orca 外部のものも含め、それを共有している開いている Codex セッションがすべて閉じられます。",
+      "cancel": "キャンセル",
+      "runs": "走る"
+    }
+  },
+  "fileSearch": {
+    "failed": "検索失敗。もう一度お試しください"
+  },
+  "csv": {
+    "detectingDelimiter": "デリミタを検出中…",
+    "indexProgress": "CSV をインデックス作成中… {{percent}}%",
+    "loadingCell": "読み込み中…",
+    "nextRows": "次の行",
+    "previousRows": "前の行",
+    "readOnlyPreview": "大きなファイルのプレビュー · 読み取り専用",
+    "resizeColumn": "列 {{column}} のサイズを変更",
+    "rowWindow": "行 {{first}}–{{last}}",
+    "editor": "CSV エディター",
+    "editCell": "行 {{row}}、列 {{column}} を編集",
+    "filterRows": "行を絞り込む",
+    "edit": "セルを編集",
+    "copy": "コピー",
+    "paste": "貼り付け",
+    "rows": "行",
+    "insertRowAbove": "上に行を挿入",
+    "insertRowBelow": "下に行を挿入",
+    "deleteRows": "選択した行を削除",
+    "columns": "列",
+    "newColumn": "列 {{column}}",
+    "insertColumnBefore": "前に列を挿入",
+    "insertColumnAfter": "後に列を挿入",
+    "moveColumnLeft": "列を左に移動",
+    "moveColumnRight": "列を右に移動",
+    "deleteColumns": "選択した列を削除",
+    "sort": "並べ替え",
+    "sortAscending": "選択した列を昇順に並べ替え",
+    "sortDescending": "選択した列を降順に並べ替え",
+    "originalOrder": "元の行順",
+    "save": "保存",
+    "inspectionOnly": "検査のみ · ファイルの行順は変更されません"
+  },
+  "worktree": {
+    "nestedRemoval": {
+      "refreshFailed": "ワークスペースリストを更新できませんでした",
+      "review": "ネストされたワークツリーと共に削除…",
+      "title": "ワークスペースとネストされたワークツリーを削除しますか？",
+      "description": "これにより「{{name}}」、以下に表示されるすべてのネストされたワークツリー、およびそれら内のすべてのファイル（コミットされていない変更を含む）が完全に削除されます。それらのターミナルと Agent は停止されます。",
+      "detached": "分離 HEAD",
+      "loading": "ネストされたワークツリーを確認中…",
+      "order": "ネストされたワークツリーが先に削除されます。1つでも失敗すると削除は停止し、親は保持されます。ブランチは既存の削除設定に従います。",
+      "cancel": "キャンセル",
+      "retry": "再確認",
+      "deleting": "削除中…",
+      "confirm": "一覧表示されたすべてのワークツリーを削除",
+      "preservedBranches": "一部のネストされたワークツリーブランチは保持されました"
     }
   }
 }

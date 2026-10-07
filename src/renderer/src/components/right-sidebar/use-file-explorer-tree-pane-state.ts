@@ -188,6 +188,7 @@ export function useFileExplorerTreePaneState({
       rootError ?? (displayRootPath ? tree.dirCache[displayRootPath]?.error : null) ?? null,
     isDirStale,
     loadDir,
+    refreshTree,
     resetAndLoad,
     resetSelection,
     setNameFilterQuery
@@ -270,7 +271,6 @@ export function useFileExplorerTreePaneState({
     toggleDir: hasNameFilter ? handleToggleNameFilterDir : toggleDir,
     loadDir,
     statPath,
-    authorizeExternalPath: window.api.fs.authorizeExternalPath,
     markPathAsDirectory,
     setSelectedPath: setSingleSelectedPath,
     wakiiViewer: wakiiViewerRoute,

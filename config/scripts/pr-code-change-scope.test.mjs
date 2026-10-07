@@ -159,17 +159,20 @@ describe('per-job path classification', () => {
     expectClassification(['src/main/codex/codex-index-heal-binary-contract.test.ts'], {
       codex_index_heal_contract: true
     })
-    for (const file of ['src/main/agent-trust-presets.ts', 'src/main/codex/config-toml-trust.ts']) {
-      expectClassification([file], {
-        codex_index_heal_contract: true,
-        package: true,
-        package_windows: true
-      })
-    }
-    // Keep the real-binary gate live when a transport or launch dependency changes.
+    // Keep the real-binary gate live when a trust, transport, launch or hook-approval dependency changes.
     for (const file of [
+      'src/main/agent-trust-presets.ts',
+      'src/main/codex/config-toml-trust.ts',
+      'src/main/codex/codex-hook-trust-derivation.ts',
+      'src/main/codex/codex-hook-local-install.ts',
+      'src/main/codex/codex-hook-orca-approvals.ts',
+      'src/main/codex/codex-hook-reconcile.ts',
+      'src/main/codex/config-toml-hook-trust-edit.ts',
+      'src/main/codex-cli/codex-read-only-app-server-args.ts',
       'src/main/codex/codex-app-server-capability-signal.ts',
-      'src/main/codex/codex-process-exit-deadline.ts',
+      'src/main/provider-process/provider-process-exit-deadline.ts',
+      'src/main/provider-process/provider-process-launch.ts',
+      'src/main/provider-process/provider-record-reader.ts',
       'src/main/codex/codex-session-backfill.ts',
       'src/main/codex/codex-session-index-heal-state.ts',
       'src/main/codex-cli/command.ts',
@@ -363,6 +366,7 @@ describe('per-job path classification', () => {
       'src/shared/protocol-version.ts',
       'src/shared/terminal-stream-protocol.ts',
       'src/shared/agent-session-wire.ts',
+      'src/shared/agent-session-provider-handle.ts',
       'src/shared/agent-session-mutation-envelope.ts',
       'src/shared/agent-session-journal-item-key.ts',
       'src/shared/agent-session-journal-types.ts',
@@ -626,12 +630,8 @@ describe('PR Checks skip wiring', () => {
     for (const jobName of expensiveJobs.filter(
       (jobName) => !['test', 'static_analysis', 'typecheck'].includes(jobName)
     )) {
-      expect(prWorkflow.jobs[jobName].needs, jobName).toEqual(
-        ['package', 'package_windows'].includes(jobName)
-          ? ['code_paths', 'preflight']
-          : ['code_paths']
-      )
-      expect(prWorkflow.jobs[jobName].if, jobName).toBe(
+      expect(prWorkflow.jobs[jobName].needs, jobName).toEqual(['code_paths', 'preflight'])
+      expect(prWorkflow.jobs[jobName].if, jobName).toContain(
         `needs.code_paths.outputs.${jobName} == 'true'`
       )
     }

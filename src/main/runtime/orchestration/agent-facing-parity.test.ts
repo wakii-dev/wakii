@@ -72,14 +72,16 @@ function runtime(prompts: string[]): OrcaRuntimeService {
   const fake: Pick<
     OrcaRuntimeService,
     'getNestedWorkerMaxDepth' | 'getTerminalOrchestrationCliCommand' | 'sendTerminalAgentPrompt'
-  > = {
-    getNestedWorkerMaxDepth: () => 2,
-    getTerminalOrchestrationCliCommand: () => 'orca',
-    sendTerminalAgentPrompt: async (handle, text) => {
-      prompts.push(text)
-      return { handle, accepted: true, bytesWritten: text.length }
+  > & { orchestrationSenderNames: Pick<OrcaRuntimeService['orchestrationSenderNames'], 'nameOf'> } =
+    {
+      orchestrationSenderNames: { nameOf: () => null },
+      getNestedWorkerMaxDepth: () => 2,
+      getTerminalOrchestrationCliCommand: () => 'orca',
+      sendTerminalAgentPrompt: async (handle, text) => {
+        prompts.push(text)
+        return { handle, accepted: true, bytesWritten: text.length }
+      }
     }
-  }
   // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: preamble delivery reads only the members the fake implements.
   return fake as OrcaRuntimeService
 }
@@ -101,6 +103,7 @@ async function renderPreamble(worker: 'chat' | 'terminal'): Promise<string> {
     terminalHandle: worker === 'chat' ? CHAT_WORKER_HANDLE : TERMINAL_HANDLE,
     dispatchId: 'ctx_1',
     dispatchDepth: 1,
+    runId: 'run_1',
     taskId: 'task_1',
     taskSpec: 'do it',
     coordinatorHandle: 'term_coord',
@@ -113,15 +116,16 @@ async function renderPreamble(worker: 'chat' | 'terminal'): Promise<string> {
 /** The turn text the structured lane sends a chat for one message on `mailbox`. */
 async function renderChatPointer(mailbox: string): Promise<string> {
   const texts: string[] = []
-  db.insertMessage({ from: 'term_peer', to: mailbox, subject: 'hi' })
+  const message = db.insertMessage({ from: 'term_peer', to: mailbox, subject: 'hi' })
   const delivery = new OrchestrationStructuredMailboxPointerDelivery({
     getDb: () => db,
     getMessageWaiters: () => undefined,
     resolveStructuredTarget: () => ({ sessionId: CHAT_SESSION, dispatchId: null }),
     // The runtime's wiring of the structured lane.
     getCliCommand: localOrchestrationCliCommand,
+    senderName: () => null,
     host: {
-      readGateFacts: async () => ({ turnRunning: false, awaitingHuman: false, submissions: [] }),
+      readSessionFacts: async () => ({ submissions: [] }),
       currentFence: () => 1,
       send: async (input) => {
         for (const block of input.body.blocks) {
@@ -133,6 +137,8 @@ async function renderChatPointer(mailbox: string): Promise<string> {
   })
   delivery.deliverForHandle(mailbox)
   await vi.waitFor(() => expect(texts).toHaveLength(1))
+  // Read, as the agent's `check` reads it, so this mailbox's next mail is pointed too.
+  db.markAsRead([message.id])
   return texts[0]!
 }
 
@@ -185,7 +191,6 @@ describe('the orchestration guide an agent loads', () => {
 })
 
 describe('agent-read text about an Orca session ID', () => {
-  // CLI help, specs and status text: src/cli/orca-session-id-wording.test.ts.
   const guideDir = join(process.cwd(), 'skill-guides')
   const guide = [
     join(guideDir, 'orchestration.md'),

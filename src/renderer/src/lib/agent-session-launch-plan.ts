@@ -1,4 +1,3 @@
-import { isAgentSessionHandleProvider } from '../../../shared/agent-session-provider-handle'
 import type { StructuredAgentSessionResumeSource } from '../../../shared/structured-agent-session-create'
 import type { TuiAgent } from '../../../shared/tui-agent'
 import { parseExecutionHostId, type ExecutionHostId } from '../../../shared/execution-host'
@@ -24,8 +23,11 @@ import {
   type StructuredAgentLaunchSettlement
 } from '@/lib/structured-agent-launch-settlement'
 import type { StructuredAgentLaunchOptions } from '@/lib/structured-agent-session-launch'
+import type { AgentLaunchRequestId } from '@/lib/agent-launch-request-id'
 
 export type AgentSessionLaunchRequest = AgentLaunchRouteArgs & {
+  /** The user action this launch serves, minted where that action is handled. */
+  requestId: AgentLaunchRequestId
   resumeFrom?: StructuredAgentSessionResumeSource
   onPromptDelivered?: () => void
 }
@@ -37,6 +39,8 @@ export type AgentSessionLaunchRequest = AgentLaunchRouteArgs & {
  */
 export type AgentSessionLaunchVerdict = {
   route: AgentLaunchRoute
+  /** The user action this launch serves; a re-entry with this verdict is that same action. */
+  requestId: AgentLaunchRequestId
   agent: TuiAgent
   worktreeId?: string
   /** The host the structured route was decided for; the chat is created there. */
@@ -60,6 +64,8 @@ export type AgentSessionLaunchTarget = {
   executionHostId?: ExecutionHostId
   /** The saved selection that host said create will seed. */
   seedOptions?: Readonly<Record<string, string>>
+  /** The tab group the chat opens in. */
+  groupId?: string
 }
 
 export type AgentSessionLaunchPlan = Readonly<AgentSessionLaunchVerdict> & {
@@ -77,6 +83,7 @@ export type AgentSessionLaunchPlan = Readonly<AgentSessionLaunchVerdict> & {
 
 function structuredLaunchOptions(verdict: AgentSessionLaunchVerdict): StructuredAgentLaunchOptions {
   return {
+    requestId: verdict.requestId,
     ...(verdict.prompt !== undefined ? { prompt: verdict.prompt } : {}),
     ...(verdict.promptDelivery ? { promptDelivery: verdict.promptDelivery } : {}),
     ...(verdict.resumeFrom ? { resumeFrom: verdict.resumeFrom } : {}),
@@ -90,7 +97,8 @@ function beginStructuredPlanLaunch(
   hooks: StructuredAgentLaunchHooks,
   target?: AgentSessionLaunchTarget
 ): StructuredAgentLaunchHandle | null {
-  if (verdict.route !== 'structured-native-chat' || !isAgentSessionHandleProvider(verdict.agent)) {
+  // The route already admitted the agent: its host registered it as structured.
+  if (verdict.route !== 'structured-native-chat') {
     return null
   }
   const worktreeId = target?.worktreeId ?? verdict.worktreeId
@@ -105,7 +113,8 @@ function beginStructuredPlanLaunch(
       {
         ...structuredLaunchOptions(verdict),
         ...(executionHostId ? { executionHostId } : {}),
-        ...(target?.seedOptions ? { hostSeedOptions: target.seedOptions } : {})
+        ...(target?.seedOptions ? { hostSeedOptions: target.seedOptions } : {}),
+        ...(target?.groupId ? { targetGroupId: target.groupId } : {})
       },
       hooks
     )
@@ -147,9 +156,15 @@ export function structuredAgentSessionLaunchFeasible(
   const { settings, ...args } = request
   // Why: the narrow settings ride on the built input, not the store, so a caller names the exact
   // settings this answer turns on without having to hold a whole store-shaped object.
-  // The builder still reads launch customization off `store.settings`: safe only because the caller
-  // names the object the store already holds — a different one would split this answer's sources.
   return structuredAgentLaunchSupported({ ...buildAgentLaunchRouteInput(store, args), settings })
+}
+
+/** The route a launch would take, for a caller that only branches on it and launches nothing. */
+export function resolveAgentSessionLaunchRoute(
+  store: AgentLaunchRouteStore,
+  request: AgentLaunchRouteArgs
+): AgentLaunchRoute {
+  return resolveAgentLaunchRoute(buildAgentLaunchRouteInput(store, request))
 }
 
 /** The one place a launch route is decided. Delivery mode is fixed here too, so the settle loop
@@ -164,6 +179,7 @@ export function planAgentSessionLaunch(
     route === 'structured-native-chat' ? parseExecutionHostId(input.executionHostId)?.id : undefined
   return adoptAgentSessionLaunchVerdict({
     route,
+    requestId: request.requestId,
     agent: request.agent,
     ...(executionHostId ? { executionHostId } : {}),
     ...(request.workspace.worktreeId ? { worktreeId: request.workspace.worktreeId } : {}),

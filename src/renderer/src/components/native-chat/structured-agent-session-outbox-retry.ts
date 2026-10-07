@@ -4,6 +4,7 @@
 import type { AgentJournalSubmission } from '../../../../shared/agent-session-journal-types'
 import {
   structuredAgentSessionEntryIdExpired,
+  structuredAgentSessionEntryRejectedByHost,
   type StructuredAgentSessionOutboxEntry
 } from '../../../../shared/structured-agent-session-outbox'
 import {
@@ -30,7 +31,7 @@ export function retryStructuredAgentSessionOutboxEntry(args: {
   // settled the message already rotated it. An expired id is refused for good; its row told the
   // user to check the chat first.
   const recordedRejection =
-    current?.state === 'rejected' && current.lastFailure?.kind === 'rejected'
+    current !== undefined && structuredAgentSessionEntryRejectedByHost(current)
   if (
     current &&
     (recordedRejection ||
@@ -73,10 +74,12 @@ export function retryStructuredAgentSessionOutboxEntry(args: {
   }
 }
 
-/** The user's own Retry is what a Stop, or a failure saved on the message, left it waiting for. */
+/** The user's own Retry is what a Stop, or a failure saved on the message, left it waiting for. It
+ *  is a new send, so it no longer waits behind the turn a Stop was ending when it was first sent. */
 function retriedByUser({
   outlivedStop: _retried,
   lastFailure: _sentAgain,
+  sentWhileStopping: _sentNow,
   ...entry
 }: StructuredAgentSessionOutboxEntry): StructuredAgentSessionOutboxEntry {
   return entry
