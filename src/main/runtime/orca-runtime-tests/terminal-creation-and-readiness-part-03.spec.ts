@@ -52,7 +52,6 @@ describe('WakiiRuntimeService', () => {
     }
   )
 
->>>>>>> upstream/main
   it('does not use the local Windows shell setting for remote Windows bare agent creates', async () => {
     const remoteRepo = {
       id: TEST_REPO_ID,

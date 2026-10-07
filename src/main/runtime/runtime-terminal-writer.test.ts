@@ -161,6 +161,14 @@ describe('requested terminal write settlement', () => {
     expect(settled).not.toHaveBeenCalled()
   })
 })
+function makeWriter(platform: NodeJS.Platform = 'linux'): {
+  writer: RuntimeTerminalWriter
+  write: ReturnType<typeof vi.fn>
+} {
+  const write = vi.fn(() => true)
+  return { writer: new RuntimeTerminalWriter(write, () => platform), write }
+}
+
 describe('runtime terminal writer pacing', () => {
   afterEach(() => {
     vi.useRealTimers()

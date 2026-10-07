@@ -1,7 +1,7 @@
 import { toast } from 'sonner'
 import type { WakiiFileOpenPayload } from '../../../../shared/wakii-file-open-payload'
 import { TOGGLE_FLOATING_TERMINAL_EVENT } from '@/lib/floating-terminal'
-import { isFloatingWorkspacePanelVisible } from '@/lib/floating-workspace-terminal-actions'
+import { selectFloatingWorkspacePanelVisible } from '@/store/floating-workspace-panel-selector'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '../../store'
 
@@ -38,7 +38,7 @@ export async function openWakiiFileRevealingFloatingWorkspace(
   }
   // Why deferred a frame: the panel only honors the toggle once the enabled flag has reached React.
   requestAnimationFrame(() => {
-    if (!isFloatingWorkspacePanelVisible()) {
+    if (!selectFloatingWorkspacePanelVisible(useAppStore.getState())) {
       window.dispatchEvent(new CustomEvent(TOGGLE_FLOATING_TERMINAL_EVENT))
     }
   })

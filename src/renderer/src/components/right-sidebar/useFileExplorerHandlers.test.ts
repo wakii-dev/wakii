@@ -240,7 +240,6 @@ describe('activateFileExplorerNode', () => {
       toggleDir: vi.fn(),
       loadDir: vi.fn(),
       statPath: vi.fn(),
-      authorizeExternalPath: vi.fn(),
       markPathAsDirectory: vi.fn(),
       setSelectedPath: vi.fn(),
       wakiiViewer: { readDocument, openViewer }
@@ -271,7 +270,6 @@ describe('activateFileExplorerNode', () => {
       toggleDir: vi.fn(),
       loadDir: vi.fn(),
       statPath: vi.fn(),
-      authorizeExternalPath: vi.fn(),
       markPathAsDirectory: vi.fn(),
       setSelectedPath: vi.fn(),
       wakiiViewer: { readDocument, openViewer }
@@ -302,7 +300,6 @@ describe('activateFileExplorerNode', () => {
       toggleDir: vi.fn(),
       loadDir: vi.fn(),
       statPath: vi.fn(),
-      authorizeExternalPath: vi.fn(),
       markPathAsDirectory: vi.fn(),
       setSelectedPath: vi.fn(),
       wakiiViewer: { readDocument, openViewer }
@@ -330,7 +327,6 @@ describe('activateFileExplorerNode', () => {
       toggleDir: vi.fn(),
       loadDir: vi.fn(),
       statPath: vi.fn(),
-      authorizeExternalPath: vi.fn(),
       markPathAsDirectory: vi.fn(),
       setSelectedPath: vi.fn(),
       wakiiViewer: { readDocument, openViewer }
@@ -357,7 +353,6 @@ describe('activateFileExplorerNode', () => {
       toggleDir: vi.fn(),
       loadDir: vi.fn(),
       statPath: vi.fn(),
-      authorizeExternalPath: vi.fn(),
       markPathAsDirectory: vi.fn(),
       setSelectedPath: vi.fn()
     })

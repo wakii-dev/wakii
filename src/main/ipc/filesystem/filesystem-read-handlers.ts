@@ -16,7 +16,8 @@ import { resolveRegisteredWorktreePath } from '../registered-worktree-roots-cach
 import type { LocalFileAccess } from '../../../shared/local-file-access'
 import {
   resolveDesktopAuthorizedPath,
-  resolveLocalFileRequestPath
+  resolveLocalFileRequestPath,
+  resolveUserNamedRegularFile
 } from '../local-file-access-resolution'
 import { isENOENT } from '../filesystem-path-containment'
 import { listMarkdownDocuments } from '../markdown-documents'
@@ -134,7 +135,8 @@ export function registerFilesystemReadHandlers(context: FilesystemHandlerContext
   ipcMain.handle(
     'fs:readWakiiDocument',
     async (_event, args: { filePath: string }): Promise<WakiiFileOpenPayload> => {
-      const filePath = await resolveAuthorizedPath(args.filePath, store)
+      // User-named: an explorer .wakii row may live outside every project root.
+      const filePath = await resolveUserNamedRegularFile(args.filePath, store)
       const [resolved] = await resolveOpenedWakiiFiles([filePath])
       return resolved.payload
     }

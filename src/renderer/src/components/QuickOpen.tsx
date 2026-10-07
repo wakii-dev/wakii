@@ -9,8 +9,6 @@ import React, {
 } from 'react'
 import { useAppStore } from '@/store'
 import { useActiveWorktree } from '@/store/selectors'
-import { detectLanguage } from '@/lib/language-detect'
-import { joinPath } from '@/lib/path'
 import { FILE_ICON_COLOR_CLASS, getFileTypeIcon, getFileTypeIconColor } from '@/lib/file-type-icons'
 import { cn } from '@/lib/utils'
 import {
