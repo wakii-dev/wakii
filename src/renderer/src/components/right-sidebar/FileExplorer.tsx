@@ -356,6 +356,8 @@ function FileExplorerFiles(): React.JSX.Element {
             ignoredByRelativePath={ignoredByRelativePath}
             rowExpandedPaths={rowExpandedPaths}
             visibleRowCount={visibleRowCount}
+            visibleFilesWorktreePath={visibleFilesWorktreePath}
+            isFilesViewActive={isFilesViewActive}
             openEditors={openEditors}
             handleExplorerBackgroundContextMenuCapture={handleExplorerBackgroundContextMenuCapture}
             handleExplorerBackgroundDoubleClick={handleExplorerBackgroundDoubleClick}

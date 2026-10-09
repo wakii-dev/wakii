@@ -61,6 +61,7 @@ export const NOTIFICATION_METHODS = [
     // CLI-originated desktop/mobile banner (kit story-notify and friends).
     // Source stays 'plugin' on the wire — no new union value for old clients.
     name: 'notifications.show',
+    permission: 'workspace',
     params: NotificationsShowParams,
     handler: async (params, { runtime }) => {
       return runtime.dispatchCliNotification({ title: params.title, body: params.body })

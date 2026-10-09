@@ -168,6 +168,15 @@ describe('activateFileExplorerNode', () => {
     )
   })
 
+  const wakiiNode: TreeNode = {
+    name: 'roadmap.wakii',
+    path: '/repo/docs/roadmap.wakii',
+    relativePath: 'docs/roadmap.wakii',
+    isDirectory: false,
+    depth: 0,
+    operationOwner: { kind: 'local' }
+  }
+
   it('routes a .wakii row to the mindmap viewer instead of the text editor', async () => {
     const openFile = vi.fn()
     const openViewer = vi.fn()

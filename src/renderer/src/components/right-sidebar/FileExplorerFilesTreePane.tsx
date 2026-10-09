@@ -44,6 +44,8 @@ type FileExplorerFilesTreePaneProps = {
   ignoredByRelativePath: Set<string>
   rowExpandedPaths: Set<string>
   visibleRowCount: number
+  visibleFilesWorktreePath: string | null
+  isFilesViewActive: boolean
   openEditors: FileExplorerOpenEditorsSlot
   handleExplorerBackgroundContextMenuCapture: (event: React.MouseEvent<HTMLDivElement>) => void
   handleExplorerBackgroundDoubleClick: (event: React.MouseEvent<HTMLDivElement>) => void
@@ -67,6 +69,8 @@ export function FileExplorerFilesTreePane({
   ignoredByRelativePath,
   rowExpandedPaths,
   visibleRowCount,
+  visibleFilesWorktreePath,
+  isFilesViewActive,
   openEditors,
   handleExplorerBackgroundContextMenuCapture,
   handleExplorerBackgroundDoubleClick
