@@ -32,6 +32,7 @@ it('shares one setup and runs the unchanged compiler after static checks finish'
     'node config/scripts/ci-unit-plan.mjs'
   ])
   expect(plan.env.ORCA_UNIT_SELECTION_MODE).toContain('vars.ORCA_UNIT_SELECTION_MODE')
+  expect(plan.env.ORCA_UNIT_FULL_SHARD_COUNT).toBe("${{ vars.ORCA_UNIT_FULL_SHARD_COUNT || '5' }}")
   expect(steps.indexOf(plan)).toBeLessThan(steps.indexOf(compiler))
   expect(steps.indexOf(compiler)).toBeGreaterThan(
     steps.findIndex((step) => step.wait?.includes('localization-extraction'))
@@ -69,6 +70,113 @@ it('requires physical preflight success before publishing shards and admitting c
   expect(workflow.jobs.verify.needs).not.toContain('typecheck')
 })
 
+it.each([
+  { name: 'both phases succeed', phases: ['true', 'true'], result: 'success', admitted: true },
+  { name: 'static-only succeeds', phases: ['true', 'false'], result: 'success', admitted: true },
+  { name: 'type-only succeeds', phases: ['false', 'true'], result: 'success', admitted: true },
+  { name: 'static-only fails', phases: ['true', 'false'], result: 'failure', admitted: false },
+  { name: 'type-only fails', phases: ['false', 'true'], result: 'failure', admitted: false },
+  { name: 'both phases fail', phases: ['true', 'true'], result: 'failure', admitted: false },
+  { name: 'preflight is cancelled', result: 'cancelled', admitted: false },
+  { name: 'preflight is unfinished', result: undefined, admitted: false },
+  { name: 'both phases unselected', phases: ['false', 'false'], result: 'skipped', admitted: true },
+  { name: 'required static skips', phases: ['true', 'false'], result: 'skipped', admitted: false },
+  {
+    name: 'required compiler skips',
+    phases: ['false', 'true'],
+    result: 'skipped',
+    admitted: false
+  },
+  { name: 'both required phases skip', result: 'skipped', admitted: false },
+  {
+    name: 'unselected preflight fails',
+    phases: ['false', 'false'],
+    result: 'failure',
+    admitted: false
+  },
+  {
+    name: 'static selection missing',
+    phases: [undefined, 'false'],
+    result: 'skipped',
+    admitted: false
+  },
+  {
+    name: 'compiler selection missing',
+    phases: ['false', undefined],
+    result: 'skipped',
+    admitted: false
+  },
+  { name: 'selection unknown', phases: ['', 'false'], result: 'skipped', admitted: false },
+  {
+    name: 'docs have no route',
+    phases: ['false', 'false'],
+    result: 'skipped',
+    route: 'false',
+    admitted: false
+  },
+  { name: 'source has no route', result: 'success', route: 'false', admitted: false },
+  { name: 'route missing', result: 'success', route: '', admitted: false },
+  { name: 'path detection fails', result: 'success', pathsResult: 'failure', admitted: false },
+  { name: 'path detection skips', result: 'skipped', pathsResult: 'skipped', admitted: false },
+  { name: 'workflow cancelled after success', result: 'success', cancelled: true, admitted: false },
+  {
+    name: 'workflow cancelled with unselected phases',
+    phases: ['false', 'false'],
+    result: 'skipped',
+    cancelled: true,
+    admitted: false
+  }
+])('admits advisory E2E only after eligible preflight: $name', (scenario) => {
+  const [static_analysis, typecheck] = scenario.phases ?? ['true', 'true']
+  expect(workflow.jobs.e2e.needs).toEqual(['code_paths', 'preflight'])
+  const admitted = runInNewContext(workflow.jobs.e2e.if, {
+    cancelled: () => scenario.cancelled ?? false,
+    needs: {
+      code_paths: {
+        result: scenario.pathsResult ?? 'success',
+        outputs: { static_analysis, typecheck, e2e_should_run: scenario.route ?? 'true' }
+      },
+      preflight: { result: scenario.result }
+    }
+  })
+  expect(admitted).toBe(scenario.admitted)
+})
+
+it.each(['true', 'false'])(
+  'preserves advisory E2E on ready-for-review only with proven required-check reuse: %s',
+  (reused) => {
+    const scope = classifyPrJobs(['src/main/runtime/orca-runtime.ts'])
+    const context = {
+      steps: {
+        readiness: { outputs: { reused } },
+        filter: {
+          outputs: Object.fromEntries(
+            Object.entries(scope).map(([key, value]) => [key, String(value)])
+          )
+        },
+        e2e_filter: { outputs: { should_run: 'true' } }
+      }
+    }
+    const outputs = Object.fromEntries(
+      ['static_analysis', 'typecheck', 'e2e_should_run'].map((name) => [
+        name,
+        String(runInNewContext(workflow.jobs.code_paths.outputs[name].slice(3, -2), context))
+      ])
+    )
+    expect(outputs).toEqual({
+      static_analysis: reused === 'true' ? 'false' : 'true',
+      typecheck: reused === 'true' ? 'false' : 'true',
+      e2e_should_run: 'true'
+    })
+    const needs = { code_paths: { result: 'success', outputs }, preflight: { result: 'skipped' } }
+    expect(runInNewContext(preflight.if, { needs })).toBe(reused !== 'true')
+    expect(runInNewContext(workflow.jobs.e2e.if, { needs, cancelled: () => false })).toBe(
+      reused === 'true'
+    )
+    expect(workflow.jobs.verify.needs).not.toContain('e2e')
+  }
+)
+
 it('pins every foreground and background step to its selected phase', () => {
   const staticPhase = "needs.code_paths.outputs.static_analysis == 'true'"
   const typePhase = "needs.code_paths.outputs.typecheck == 'true'"
@@ -76,6 +184,7 @@ it('pins every foreground and background step to its selected phase', () => {
     (step) => !step.background && /outputs\.(static_analysis|typecheck)/.test(step.if ?? '')
   )
   expect(foreground.map((step) => [step.name ?? step.run ?? step.uses, step.if])).toEqual([
+    ['Set up Bun for localization checks', staticPhase],
     ['Reject low-evidence patterns', staticPhase],
     ['Enforce type-aware code-quality baseline', staticPhase],
     [
@@ -93,6 +202,7 @@ it('pins every foreground and background step to its selected phase', () => {
     ['Check Node runtime pin', staticPhase],
     ['Boot orcad and round-trip a terminal', staticPhase],
     ['Verify the generated RPC params catalog', staticPhase],
+    ['Verify the generated ACP protocol schema', staticPhase],
     ['Verify bundled skill guides', staticPhase],
     ['Verify skill freshness manifest', staticPhase],
     ['Verify localization coverage', staticPhase],

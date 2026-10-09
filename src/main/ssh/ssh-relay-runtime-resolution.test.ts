@@ -12,6 +12,7 @@ import {
   type RelayRuntimeDecisionStore
 } from './ssh-relay-runtime-resolution'
 import { getRemoteHostPlatform } from './ssh-remote-platform'
+import { trackSshRemoteRuntimeResolved } from './ssh-remote-runtime-telemetry'
 
 const facts = { target: 'linux-x64-glibc' as const, glibc: { major: 2, minor: 31 } }
 
@@ -26,7 +27,7 @@ function memoryStore(): RelayRuntimeDecisionStore & { value?: SshRemoteRuntimeRe
 }
 
 function rememberedNoexecRun(store: RelayRuntimeDecisionStore): RelayRuntimeLadderRun {
-  const run = new RelayRuntimeLadderRun('ssh-1', store)
+  const run = new RelayRuntimeLadderRun('ssh-1', store, true)
   run.host = getRemoteHostPlatform('linux-x64')
   run.facts = facts
   run.refused('A', 'noexec')
@@ -38,11 +39,31 @@ describe('RelayRuntimeLadderRun', () => {
     vi.clearAllMocks()
   })
 
+  it('reports a rung whose self-test was unverifiable or failed, and nothing else', () => {
+    const run = new RelayRuntimeLadderRun('ssh-1', null, true)
+    run.host = getRemoteHostPlatform('linux-x64')
+    run.facts = facts
+    run.unresolved('A')
+    run.selfTest = 'unverifiable'
+    run.unresolved('A')
+    run.selfTest = 'failed'
+    run.unresolved('C')
+    run.unresolved('legacy')
+    expect(
+      vi
+        .mocked(trackSshRemoteRuntimeResolved)
+        .mock.calls.map(([, input]) => [input.rung, input.outcome])
+    ).toEqual([
+      ['A', 'unverifiable'],
+      ['C', 'failed']
+    ])
+  })
+
   it('persists a rung A refusal and replays it only under a matching key', () => {
     const store = memoryStore()
     rememberedNoexecRun(store).settle('D')
     expect(store.value).toMatchObject({ rung: 'D', pinnedRefusal: 'noexec', glibc: '2.31' })
-    const replay = new RelayRuntimeLadderRun('ssh-1', store)
+    const replay = new RelayRuntimeLadderRun('ssh-1', store, true)
     expect(replay.persistedPinnedRefusal(facts)).toBe('noexec')
     expect(replay.persistedPinnedRefusal({ ...facts, glibc: { major: 2, minor: 35 } })).toBeNull()
   })
@@ -64,7 +85,7 @@ describe('RelayRuntimeLadderRun', () => {
 
   it('drops a replayed noexec at rung D, so a remounted home is re-proved next connect', () => {
     const store = memoryStore()
-    const run = new RelayRuntimeLadderRun('ssh-1', store)
+    const run = new RelayRuntimeLadderRun('ssh-1', store, true)
     run.host = getRemoteHostPlatform('linux-x64')
     run.facts = facts
     run.refused('A', 'noexec', true)
@@ -76,7 +97,7 @@ describe('RelayRuntimeLadderRun', () => {
   })
 
   it('reports a remembered noexec at rung D without advising a host Node install', () => {
-    const run = new RelayRuntimeLadderRun('ssh-1', null)
+    const run = new RelayRuntimeLadderRun('ssh-1', null, true)
     run.host = getRemoteHostPlatform('linux-x64')
     run.facts = facts
     run.refused('A', 'noexec', true)
@@ -88,8 +109,16 @@ describe('RelayRuntimeLadderRun', () => {
     expect(error).toMatchObject({ data: { reason: 'home_noexec' } })
   })
 
+  it('keeps a replayed noexec remembered when a later rung proves noexec again', () => {
+    const run = new RelayRuntimeLadderRun('ssh-1', null, true)
+    run.refused('A', 'noexec', true)
+    run.refused('legacy', 'noexec')
+    expect(run.noexec).toBe('remembered')
+    expect(remoteRuntimeUnavailableError(run).message).toContain('earlier connect found')
+  })
+
   it('still advises a host Node when rung A refused for another reason', () => {
-    const run = new RelayRuntimeLadderRun('ssh-1', null)
+    const run = new RelayRuntimeLadderRun('ssh-1', null, true)
     run.refused('A', 'libc_floor')
     run.refused('C', 'host_node_missing')
     expect(remoteRuntimeUnavailableError(run).message).toContain('Install Node.js 18+')

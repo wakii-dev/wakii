@@ -1,3 +1,4 @@
+import '../unused-default-rpc-methods.test-fixture'
 // The create route's pre-commit boundary: a failure before `attach` must reach the client as a
 // refusal it can classify, and a failure at or after `attach` must not.
 
@@ -78,7 +79,7 @@ async function create(
     getRuntimeId: () => 'runtime-1',
     // The structured surface is settings-gated for every caller; these fixtures probe the
     // pre-commit boundary, which only runs once the gate admits the call.
-    getClientSettings: () => ({ experimentalStructuredNativeChat: true }),
+    getClientSettings: () => ({ experimentalNativeChat: true }),
     registerSubscriptionCleanup: vi.fn(),
     cleanupSubscription: vi.fn(),
     cleanupSubscriptionsByPrefix: vi.fn(),

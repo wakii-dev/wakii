@@ -1,3 +1,7 @@
+import { quickOpenListingPathFilter } from '../shared/quick-open-listing-path-filter'
+import { retainRelayFileListingPath } from './fs-file-listing-paths'
+import { FileInventoryBudget } from '../shared/file-inventory-budget'
+import { runRelayFileListingPasses, retryRelayFileListingPass } from './fs-list-files-passes'
 import { RipgrepFilenameDecoder } from '../shared/ripgrep-filename-decoder'
 /**
  * Ripgrep-based file listing for Quick Open.
@@ -16,12 +20,7 @@ import { RipgrepFilenameDecoder } from '../shared/ripgrep-filename-decoder'
  */
 import { spawn, type ChildProcess } from 'node:child_process'
 import { fileListingCancellationError } from '../shared/file-listing-cancellation'
-import {
-  buildRgArgsForQuickOpen,
-  normalizeQuickOpenRgLine,
-  shouldExcludeQuickOpenRelPath,
-  shouldIncludeQuickOpenPath
-} from '../shared/quick-open-filter'
+import { buildRgArgsForQuickOpen } from '../shared/quick-open-filter'
 import {
   absorbPendingRipgrepSpawnError,
   classifyRipgrepLaunchFailure,
@@ -45,14 +44,25 @@ export const LIST_FILES_TIMEOUT_MS = 25_000
 export function listFilesWithRg(
   rootPath: string,
   excludePathPrefixes: readonly string[] = [],
-  options: { signal?: AbortSignal; maxResults?: number; searchQuery?: string } = {}
+  options: {
+    signal?: AbortSignal
+    maxResults?: number
+    candidatePaths?: string[]
+    searchQuery?: string
+    includeIgnored?: boolean
+    followSymlinks?: boolean
+  } = {}
 ): Promise<string[]> {
   const { signal, maxResults, searchQuery } = options
+  const includePath = quickOpenListingPathFilter(excludePathPrefixes, options.candidatePaths)
   if (signal?.aborted) {
     return Promise.reject(fileListingCancellationError(signal))
   }
   return new Promise((resolve, reject) => {
+    const inventoryBudget =
+      maxResults === undefined && searchQuery === undefined ? new FileInventoryBudget() : null
     const files = new Set<string>()
+    const retention = { files, budget: inventoryBudget, includePath }
     let rankedPaths: string[] | null = null
     let done = false
     const children: {
@@ -66,36 +76,34 @@ export function listFilesWithRg(
       // when the search target is relative to cwd. Absolute targets still
       // emit root-relative-looking paths for filters, but they do not prune.
       searchRoot: '.',
+      followSymlinks: options.followSymlinks,
       excludePathPrefixes,
       forceSlashSeparator: true
     })
 
     const processLine = (rawLine: string, attemptRanker: QuickOpenPathRanker | null): boolean => {
-      const relPath = normalizeQuickOpenRgLine(rawLine, { kind: 'cwd-relative' })
-      if (relPath === null) {
-        return false
-      }
-      // Why: correctness backstop. The rg globs prune most blocklisted dirs,
-      // but a glob edge case could still surface e.g. a .git/ or .npm/ hit.
-      if (!shouldIncludeQuickOpenPath(relPath)) {
+      try {
+        const included = retainRelayFileListingPath(rawLine, attemptRanker, retention)
+        if (maxResults !== undefined && files.size >= maxResults) {
+          finishAtLimit()
+        }
+        return included
+      } catch (error) {
+        done = true
+        signal?.removeEventListener('abort', onAbort)
+        killSurvivors('File inventory capacity exceeded')
+        files.clear()
+        reject(error)
         return true
       }
-      if (shouldExcludeQuickOpenRelPath(relPath, excludePathPrefixes)) {
-        return true
-      }
-      if (attemptRanker) {
-        attemptRanker.consider(relPath)
-        return true
-      }
-      files.add(relPath)
-      if (maxResults !== undefined && files.size >= maxResults) {
-        finishAtLimit()
-      }
-      return true
     }
 
     const runPassOnce = (args: string[]): Promise<void> =>
       new Promise((passResolve, passReject) => {
+        // A completed pass may queue its continuation before cancellation settles the request.
+        if (done || signal?.aborted) {
+          return passResolve()
+        }
         const attemptRanker =
           searchQuery === undefined ? null : new QuickOpenPathRanker(searchQuery, maxResults ?? 16)
         const filenameDecoder = new RipgrepFilenameDecoder((error) => {
@@ -121,7 +129,7 @@ export function listFilesWithRg(
           child = spawn(command, ['--no-messages', ...args], {
             cwd: rootPath,
             env,
-            stdio: ['ignore', 'pipe', 'pipe'],
+            stdio: ['ignore', 'pipe', 'ignore'],
             windowsHide: true
           })
         } catch (error) {
@@ -132,11 +140,8 @@ export function listFilesWithRg(
             : error
         }
         const cleanup = (): void => {
-          if (timer) {
-            clearTimeout(timer)
-          }
+          clearTimeout(timer)
           child.stdout?.off('data', handleStdoutData)
-          child.stderr?.off('data', handleStderrData)
           child.off('error', handleError)
           child.off('close', handleClose)
           absorbPendingRipgrepSpawnError(child, {
@@ -144,14 +149,14 @@ export function listFilesWithRg(
             unavailableExitObserved
           })
         }
-        const rejectPass = (error: Error): void => {
+        const rejectPass = (error: unknown): void => {
           if (passDone) {
             return
           }
           passDone = true
           passBuf = ''
           cleanup()
-          passReject(error)
+          passReject(error instanceof Error ? error : new Error(String(error)))
         }
         const resolvePass = (): void => {
           if (passDone) {
@@ -168,8 +173,11 @@ export function listFilesWithRg(
           if (launchFailureCheck) {
             return
           }
-          launchFailureCheck = retryRipgrepOnPathAfterLaunchFailure(command, rootPath, error).then(
-            async (retryOnPath) => {
+          launchFailureCheck = retryRipgrepOnPathAfterLaunchFailure(command, rootPath, error)
+            .then(async (retryOnPath) => {
+              if (passDone || done) {
+                return
+              }
               if (retryOnPath) {
                 // Why: runPass retries a launch failure once, and the retry resolves to PATH rg.
                 rejectPass(new RipgrepLaunchFailureError('bundled rg failed to start'))
@@ -181,13 +189,14 @@ export function listFilesWithRg(
                 (await classifyRipgrepLaunchFailure(
                   rootPath,
                   [command, pathRipgrepCommand()],
-                  env
+                  env,
+                  signal
                 )) === 'cwd-unreachable'
                   ? ripgrepMissingCwdError(rootPath)
                   : new RipgrepUnavailableError()
               )
-            }
-          )
+            })
+            .catch(rejectPass)
         }
         children.push({ child, isDone: () => passDone, reject: rejectPass })
 
@@ -217,9 +226,6 @@ export function listFilesWithRg(
             idx = passBuf.indexOf('\0', start)
           }
           passBuf = start < passBuf.length ? passBuf.substring(start) : ''
-        }
-        function handleStderrData(): void {
-          /* drain to prevent backpressure stalls */
         }
         function handleError(err: NodeJS.ErrnoException): void {
           processErrorObserved = true
@@ -277,18 +283,15 @@ export function listFilesWithRg(
         }
 
         child.stdout?.on('data', handleStdoutData)
-        child.stderr?.on('data', handleStderrData)
         child.once('error', handleError)
         child.once('close', handleClose)
       })
 
     const runPass = (args: string[]): Promise<void> =>
-      runPassOnce(args).catch((error: unknown) => {
-        if (!(error instanceof RipgrepLaunchFailureError) || signal?.aborted || done) {
-          throw error
-        }
-        return runPassOnce(args)
-      })
+      retryRelayFileListingPass(
+        () => runPassOnce(args),
+        () => Boolean(signal?.aborted || done)
+      )
 
     const killSurvivors = (reason: string): void => {
       // Cancellation or a reached budget must stop any admitted scan or retry.
@@ -326,15 +329,7 @@ export function listFilesWithRg(
     }
     signal?.addEventListener('abort', onAbort, { once: true })
 
-    // Without a result budget, the broader pass already contains every primary path.
-    const passes =
-      searchQuery !== undefined || maxResults === undefined
-        ? runPass(ignoredPass)
-        : runPass(primary).then(() =>
-            files.size < maxResults ? runPass(ignoredPass) : Promise.resolve()
-          )
-
-    passes
+    runRelayFileListingPasses(options, primary, ignoredPass, runPass, () => files.size)
       .then(() => {
         if (done) {
           return

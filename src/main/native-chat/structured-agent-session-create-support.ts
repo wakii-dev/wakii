@@ -1,7 +1,6 @@
 import type { AgentSessionExecutionLocation } from '../../shared/agent-session-record'
+import type { StructuredAgentId } from '../../shared/agent-session-provider-handle'
 import { LOCAL_EXECUTION_HOST_ID } from '../../shared/execution-host'
-import type { GlobalSettings } from '../../shared/global-settings-types'
-import { hasExplicitTuiLaunchCommand } from '../../shared/tui-agent-launch-command-override'
 import {
   readClaudeManagedAccountGateSettings,
   structuredClaudeMatchesActiveManagedAccount,
@@ -19,11 +18,10 @@ export type StructuredAgentSessionCreateSupport = {
  * however wrong it was. The runtime hands over the two facts it owns and this decides.
  */
 export function resolveStructuredAgentSessionCreateSupport(input: {
-  agent: 'claude' | 'codex'
+  agent: StructuredAgentId
   location: AgentSessionExecutionLocation
   adapterSupportsCreate: boolean
-  getSettings: () => ClaudeManagedAccountGateSettings &
-    Partial<Pick<GlobalSettings, 'agentCmdOverrides'>>
+  getSettings: () => ClaudeManagedAccountGateSettings
 }): StructuredAgentSessionCreateSupport {
   if (!input.adapterSupportsCreate) {
     return {
@@ -35,11 +33,6 @@ export function resolveStructuredAgentSessionCreateSupport(input: {
             ? 'wsl'
             : 'agent'
     }
-  }
-  // This host's own launch command override names a process only a terminal runs, whichever
-  // client asked; a client routes on its own override for its own machine only.
-  if (hasExplicitTuiLaunchCommand(readSettingsOrNull(input.getSettings), input.agent)) {
-    return { supported: false, reason: 'agent' }
   }
   // Claude only: Codex resolves its account on a different path, so its answer is untouched here.
   // `wsl` is the closest existing reason — the cause is a WSL-bound account rather than a WSL
@@ -55,10 +48,23 @@ export function resolveStructuredAgentSessionCreateSupport(input: {
   return { supported: true }
 }
 
-function readSettingsOrNull<T>(getSettings: () => T): T | null {
-  try {
-    return getSettings()
-  } catch {
-    return null
+/** Which create-support check said no: where the chat would run, the installed agent (its binary
+ *  and version on this host), or Claude's managed-account binding. */
+export type StructuredAgentSessionCreateSupportCheck =
+  | 'location'
+  | 'installed-agent'
+  | 'managed-account'
+
+/** One main-log line per create-support verdict that sends a launch to the terminal; names the
+ *  check and never a path or environment value. */
+export function warnStructuredAgentSessionCreateUnsupported(
+  agent: StructuredAgentId,
+  support: StructuredAgentSessionCreateSupport,
+  check: StructuredAgentSessionCreateSupportCheck
+): void {
+  if (!support.supported) {
+    console.warn(
+      `[structured-create-support] ${agent} unsupported: ${check} check refused (reason ${support.reason ?? 'none'})`
+    )
   }
 }

@@ -35,6 +35,8 @@ export type RuntimeServiceCommandSurface = {
   reconcileDismissedPushes: RuntimeMobileNotificationController['reconcileDismissedPushes']
   getMobileNotificationEpoch: RuntimeMobileNotificationController['getEpoch']
   dismissMobileNotification: RuntimeMobileNotificationController['dismiss']
+  retireStructuredAttention: RuntimeMobileNotificationController['retireStructuredAttention']
+  reconcileStructuredPromptAttention: RuntimeMobileNotificationController['reconcileStructuredPromptAttention']
   dispatchPluginNotification: RuntimeMobileNotificationController['dispatchPlugin']
   dispatchCliNotification: RuntimeMobileNotificationController['dispatchCli']
   setMobilePushRegistrar: RuntimeMobileNotificationController['setPushRegistrar']
@@ -131,6 +133,9 @@ export function installRuntimeServiceCommandSurface(
     reconcileDismissedPushes: notifications.reconcileDismissedPushes.bind(notifications),
     getMobileNotificationEpoch: notifications.getEpoch.bind(notifications),
     dismissMobileNotification: notifications.dismiss.bind(notifications),
+    retireStructuredAttention: notifications.retireStructuredAttention.bind(notifications),
+    reconcileStructuredPromptAttention:
+      notifications.reconcileStructuredPromptAttention.bind(notifications),
     dispatchPluginNotification: notifications.dispatchPlugin.bind(notifications),
     dispatchCliNotification: notifications.dispatchCli.bind(notifications),
     setMobilePushRegistrar: notifications.setPushRegistrar.bind(notifications),

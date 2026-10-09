@@ -3,6 +3,7 @@ import type { LinearClientForWorkspace } from './client'
 import { credentialDecryptionMessage } from '../../shared/integration-credential-errors'
 
 const rawRequest = vi.fn()
+const signedRawRequest = vi.fn()
 const getClients = vi.fn()
 const clearToken = vi.fn()
 const isAuthError = vi.fn()
@@ -18,6 +19,7 @@ vi.mock('./linear-token-store', () => ({
 
 vi.mock('./client', () => ({
   getClients: (...args: unknown[]) => getClients(...args),
+  getPublicFileUrlClient: () => ({ client: { rawRequest: signedRawRequest } }),
   isAuthError: (...args: unknown[]) => isAuthError(...args)
 }))
 
@@ -122,7 +124,7 @@ describe('Linear issue queries', () => {
     })
 
     expect(rawRequest).toHaveBeenCalledTimes(1)
-    expect(rawRequest.mock.calls[0][0]).toContain('query WakiiLinearIssues')
+    expect(rawRequest.mock.calls[0][0]).toContain('query OrcaLinearIssues')
     expect(rawRequest.mock.calls[0][0]).toContain('pageInfo')
     expect(rawRequest.mock.calls[0][0]).toContain('estimate')
   })
@@ -139,14 +141,14 @@ describe('Linear issue queries', () => {
   })
 
   it('fetches issue comments with one request (no per-comment user N+1)', async () => {
-    rawRequest.mockResolvedValueOnce({
+    signedRawRequest.mockResolvedValueOnce({
       data: {
         issue: {
           comments: {
             nodes: [
               {
                 id: 'comment-1',
-                body: 'First',
+                body: '![First](https://uploads.linear.app/w/image?signature=fresh)',
                 createdAt: '2026-01-02T03:04:05.000Z',
                 user: { displayName: 'Ada', avatarUrl: 'https://example.com/a.png' }
               },
@@ -172,7 +174,7 @@ describe('Linear issue queries', () => {
     await expect(getIssueComments('issue-uuid', 'workspace-1')).resolves.toEqual([
       {
         id: 'comment-1',
-        body: 'First',
+        body: '![First](https://uploads.linear.app/w/image?signature=fresh)',
         createdAt: '2026-01-02T03:04:05.000Z',
         user: { displayName: 'Ada', avatarUrl: 'https://example.com/a.png' }
       },
@@ -186,10 +188,11 @@ describe('Linear issue queries', () => {
     ])
 
     // The point of the fix: one request regardless of comment count.
-    expect(rawRequest).toHaveBeenCalledTimes(1)
-    expect(rawRequest.mock.calls[0][0]).toContain('query WakiiLinearIssueComments')
-    expect(rawRequest.mock.calls[0][0]).toContain('user {')
-    expect(rawRequest.mock.calls[0][1]).toEqual({ id: 'issue-uuid' })
+    expect(signedRawRequest).toHaveBeenCalledTimes(1)
+    expect(signedRawRequest.mock.calls[0][0]).toContain('query OrcaLinearIssueComments')
+    expect(signedRawRequest.mock.calls[0][0]).toContain('user {')
+    expect(signedRawRequest.mock.calls[0][1]).toEqual({ id: 'issue-uuid' })
+    expect(rawRequest).not.toHaveBeenCalled()
   })
 
   it('returns an empty comment list when no Linear client is configured', async () => {
@@ -283,7 +286,7 @@ describe('Linear issue queries', () => {
     ])
 
     expect(rawRequest).toHaveBeenCalledTimes(1)
-    expect(rawRequest.mock.calls[0][0]).toContain('query WakiiLinearIssueSearch')
+    expect(rawRequest.mock.calls[0][0]).toContain('query OrcaLinearIssueSearch')
     expect(rawRequest.mock.calls[0][0]).toContain('searchIssues(term: $term')
     expect(rawRequest.mock.calls[0][1]).toEqual({ term: 'bug', first: 36 })
   })
@@ -572,7 +575,7 @@ describe('Linear issue queries', () => {
     ).resolves.toMatchObject({ state: { id: 'state-review' } })
 
     expect(updateIssue).toHaveBeenCalledWith('issue-1', { stateId: 'state-review' })
-    expect(rawRequest.mock.calls[0][0]).toContain('query WakiiLinearIssueByUuid')
+    expect(rawRequest.mock.calls[0][0]).toContain('query OrcaLinearIssueByUuid')
   })
 
   it('reads back agent task field updates before confirming success', async () => {
@@ -867,7 +870,7 @@ describe('Linear issue queries', () => {
       parentId: 'root-1'
     })
 
-    expect(rawRequest.mock.calls[0][0]).toContain('query WakiiLinearCommentByUuid')
+    expect(rawRequest.mock.calls[0][0]).toContain('query OrcaLinearCommentByUuid')
     expect(rawRequest.mock.calls[0][0]).toContain('body')
   })
 })
