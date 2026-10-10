@@ -1,0 +1,193 @@
+14:02 sf-3-session-ui-learn-review: RUNNING — commit 0h trước (trong stall-window) · owner=—
+14:02 sf-1-story-doctor-install: RUNNING — commit 0h trước (trong stall-window) · owner=—
+14:02 sf-2-story-watchdog-launch: RUNNING — commit 0h trước (trong stall-window) · owner=—
+14:02 sf-3-story-verify-story: RUNNING — commit 0h trước (trong stall-window) · owner=—
+── launch-next (DRY-RUN):
+  SẴN SÀNG LAUNCH: sf-1-platform-foundation (FI-418) ← bracket English · đích story/fi-417-wakii-english-mvp
+  chờ: SF-2 (FI-419) — deps: SF-1=
+  chờ: SF-3 (FI-420) — deps: SF-1=
+  chờ: SF-4 (FI-421) — deps: SF-1=
+  chờ: SF-5 (FI-422) — deps: SF-1=
+  chờ: SF-6 (FI-423) — deps: SF-2= SF-3=
+  chờ: SF-7 (FI-424) — deps: SF-4=
+  chờ: SF-8 (FI-425) — deps: SF-2= SF-4=
+  chờ: SF-9 (FI-426) — deps: SF-2= SF-3=
+  chờ: SF-10 (FI-427) — deps: SF-2= SF-4=
+  chờ: SF-11 (FI-428) — deps: SF-6= SF-3= SF-4=
+  chờ: SF-12 (FI-429) — deps: SF-11=
+  chờ: SF-13 (FI-430) — deps: SF-11= SF-8= SF-10= SF-4=
+  chờ: SF-14 (FI-431) — deps: SF-6= SF-3= SF-18=
+  chờ: SF-15 (FI-432) — deps: SF-13= SF-11= SF-8= SF-9=
+  chờ: SF-16 (FI-433) — deps: SF-13= SF-5= SF-3=
+  chờ: SF-17 (FI-434) — deps: SF-11= SF-6= SF-9= SF-8=
+  chờ: SF-18 (FI-435) — deps: SF-6= SF-8= SF-3=
+  chờ: SF-19 (FI-436) — deps: SF-12= SF-9= SF-6=
+  chờ: SF-20 (FI-437) — deps: SF-13= SF-6= SF-3=
+  chờ: SF-21 (FI-438) — deps: SF-10= SF-20= SF-9=
+  chờ: SF-22 (FI-439) — deps: SF-14= SF-15= SF-16= SF-17= SF-18= SF-19= SF-20= SF-21=
+  chờ: SF-23 (FI-440) — deps: SF-4= SF-9=
+  SẴN SÀNG LAUNCH: sf-24-ui-kit-wakii-ui (FI-442) ← bracket English · đích story/fi-441-wakii-english-completion
+  SẴN SÀNG LAUNCH: sf-36-ops-playbooks-metrics (FI-443) ← bracket English · đích story/fi-441-wakii-english-completion
+  chờ: SF-32 (FI-444) — deps: SF-24=
+  chờ: SF-30 (FI-445) — deps: SF-27= SF-24=
+  chờ: SF-27 (FI-446) — deps: SF-24=
+  chờ: SF-25 (FI-447) — deps: SF-24=
+  chờ: SF-28 (FI-448) — deps: SF-24=
+  chờ: SF-33 (FI-449) — deps: SF-30= SF-24=
+  chờ: SF-38 (FI-450) — deps: SF-25= SF-32=
+  chờ: SF-39 (FI-451) — deps: SF-24=
+  chờ: SF-35 (FI-452) — deps: SF-24=
+  chờ: SF-26 (FI-453) — deps: SF-38= SF-32=
+  chờ: SF-29 (FI-454) — deps: SF-25= SF-38=
+  chờ: SF-34 (FI-455) — deps: SF-25= SF-24=
+  chờ: SF-31 (FI-456) — deps: SF-29=
+  chờ: SF-37 (FI-457) — deps: SF-24= SF-25= SF-26= SF-27= SF-28= SF-29= SF-30= SF-31= SF-32= SF-33= SF-34= SF-35= SF-36= SF-38= SF-39=
+  SẴN SÀNG LAUNCH: sf-1-design-system-v2-visual-direct (FI-464) ← bracket English · đích story/fi-463-ui-ux-microservice-polish
+  SẴN SÀNG LAUNCH: sf-2-web-backbone-router-async-stat (FI-465) ← bracket English · đích story/fi-463-ui-ux-microservice-polish
+  SẴN SÀNG LAUNCH: sf-3-service-discovery-config-serve (FI-466) ← bracket English · đích story/fi-463-ui-ux-microservice-polish
+  chờ: SF-4 (FI-467) — deps: SF-3=
+  chờ: SF-5 (FI-468) — deps: SF-2=
+  chờ: SF-6 (FI-469) — deps: SF-3= SF-4=
+  chờ: SF-7 (FI-470) — deps: SF-1= SF-2= SF-5=
+  chờ: SF-8 (FI-471) — deps: SF-1= SF-2= SF-5=
+  chờ: SF-9 (FI-472) — deps: SF-1= SF-2= SF-5=
+  chờ: SF-10 (FI-473) — deps: SF-1= SF-2= SF-5= SF-7=
+  chờ: SF-11 (FI-474) — deps: SF-4= SF-5= SF-6= SF-7= SF-8= SF-9= SF-10=
+  SẴN SÀNG LAUNCH: sf-0-walkthrough-harness (FI-487) ← bracket English · đích story/fi-486-usable-sweep
+  chờ: SF-1 (FI-488) — deps: SF-0=
+  chờ: SF-2 (FI-489) — deps: SF-0=
+  chờ: SF-3 (FI-490) — deps: SF-0=
+  chờ: SF-4 (FI-491) — deps: SF-0=
+  chờ: SF-5 (FI-492) — deps: SF-0= SF-4=
+  chờ: SF-6 (FI-493) — deps: SF-0=
+  chờ: SF-7 (FI-494) — deps: SF-0=
+  chờ: SF-8 (FI-495) — deps: SF-0=
+  chờ: SF-9 (FI-496) — deps: SF-0=
+  chờ: SF-10 (FI-497) — deps: SF-1= SF-2= SF-3= SF-4= SF-5= SF-6= SF-7= SF-8= SF-9=
+  SẴN SÀNG LAUNCH: sf-0-harness-lite (FI-499) ← bracket English · đích story/fi-498-usable-completion
+  chờ: SF-1 (FI-500) — deps: SF-0=
+  chờ: SF-2 (FI-501) — deps: SF-0=
+  chờ: SF-3 (FI-503) — deps: SF-0= SF-1=
+  chờ: SF-4 (FI-504) — deps: SF-0= SF-2=
+  chờ: SF-5 (FI-505) — deps: SF-0= SF-2=
+  chờ: SF-7 (FI-502) — deps: SF-0=
+  chờ: SF-6 (FI-506) — deps: SF-1= SF-2= SF-3= SF-4= SF-5= SF-7=
+  SẴN SÀNG LAUNCH: sf-1-platform-foundation (FI-311) ← bracket ecommerce · đích story/fi310-ecommerce-platform
+  chờ: SF-2 (FI-312) — deps: SF-1=
+  chờ: SF-3 (FI-313) — deps: SF-2=
+  chờ: SF-4 (FI-314) — deps: SF-2=
+  chờ: SF-5 (FI-315) — deps: SF-2=
+  chờ: SF-6 (FI-316) — deps: SF-3= SF-4= SF-5=
+  chờ: SF-7 (FI-317) — deps: SF-3= SF-4= SF-5=
+  chờ: SF-8 (FI-318) — deps: SF-3= SF-4=
+  chờ: SF-9 (FI-319) — deps: SF-5=
+  chờ: SF-11 (FI-321) — deps: SF-4= SF-9=
+  chờ: SF-12 (FI-322) — deps: SF-3= SF-6= SF-9=
+  chờ: SF-13 (FI-323) — deps: SF-3= SF-4= SF-6= SF-7= SF-9= SF-10=
+  chờ: SF-14 (FI-324) — deps: SF-7= SF-9= SF-10=
+  chờ: SF-15 (FI-325) — deps: SF-3= SF-4= SF-5= SF-10=
+  chờ: SF-10 (FI-320) — deps: SF-6= SF-7= SF-8= SF-9= SF-11= SF-12=
+  SẴN SÀNG LAUNCH: sf-1-backend-e2e-stabilize (FI-367) ← bracket ecommerce · đích story/fi366-qa-polish-v11
+  SẴN SÀNG LAUNCH: sf-2-frontend-polish-theme (FI-368) ← bracket ecommerce · đích story/fi366-qa-polish-v11
+  SẴN SÀNG LAUNCH: sf-1-stripe-live-e2e (FI-370) ← bracket ecommerce · đích story/fi369-nofallback-complete
+  SẴN SÀNG LAUNCH: sf-2-coupon-crud-a3 (FI-371) ← bracket ecommerce · đích story/fi369-nofallback-complete
+  chờ: SF-3 (FI-372) — deps: SF-1= SF-2=
+  SẴN SÀNG LAUNCH: sf-1-design-foundation-motion (FI-391) ← bracket ecommerce · đích story/fi390-uiux-elevation
+  chờ: SF-2 (FI-392) — deps: SF-1=
+  chờ: SF-3 (FI-393) — deps: SF-1=
+  chờ: SF-4 (FI-394) — deps: SF-1=
+  chờ: SF-5 (FI-395) — deps: SF-1=
+  chờ: SF-6 (FI-396) — deps: SF-2= SF-3= SF-4= SF-5=
+  SẴN SÀNG LAUNCH: sf-1-chrome-package (FI-398) ← bracket ecommerce · đích story/fi397-unify-frontend
+  SẴN SÀNG LAUNCH: sf-2-session-sync (FI-399) ← bracket ecommerce · đích story/fi397-unify-frontend
+  SẴN SÀNG LAUNCH: sf-3-dev-one-origin-entry (FI-400) ← bracket ecommerce · đích story/fi397-unify-frontend
+  chờ: SF-4 (FI-401) — deps: SF-1= SF-3=
+  chờ: SF-5 (FI-402) — deps: SF-2= SF-3= SF-4=
+  SẴN SÀNG LAUNCH: sf-1-qa-static-audit (FI-405) ← bracket ecommerce · đích story/fi404-qa-sweep
+  SẴN SÀNG LAUNCH: sf-2-fresh-boot-harness (FI-406) ← bracket ecommerce · đích story/fi404-qa-sweep
+  chờ: SF-3 (FI-407) — deps: SF-2=
+  chờ: SF-4 (FI-408) — deps: SF-1= SF-2= SF-3=
+  SẴN SÀNG LAUNCH: sf-1-crawl-core-enumerate-fetch-par (VU-33) ← wakii iloveenglishclup · đích story-vu32-oxford-vocab-crawl
+  chờ: SF-2 (VU-34) — deps: SF-1=
+  chờ: SF-4 (VU-36) — deps: SF-2= SF-3=
+  SẴN SÀNG LAUNCH: sf-1-n-n-t-ng-xp-vocab-schema-libs- (VU-38) ← wakii iloveenglishclup · đích story-vu37-vocab-memrise
+  chờ: SF-2 (VU-39) — deps: SF-1=
+  chờ: SF-4 (VU-41) — deps: SF-1=
+  ⚠ skip vocabulary-hub.wakii — wakii-validate: INVALID (sửa file rồi cron pass kế sẽ launch)
+    {
+        "verdict": "INVALID",
+        "sf_count": 0,
+        "fails": [
+            "INVALID: version \u2014 wakiiMindmap=\"wakii-mindmap-schema-v1\" (decoder h\u1ed7 tr\u1ee3 1)"
+        ],
+        "warns": []
+    }
+  ⚠ skip vocabulary-learn.wakii — wakii-validate: INVALID (sửa file rồi cron pass kế sẽ launch)
+    {
+        "verdict": "INVALID",
+        "sf_count": 0,
+        "fails": [
+            "INVALID: version \u2014 wakiiMindmap=\"wakii-mindmap-schema-v1\" (decoder h\u1ed7 tr\u1ee3 1)"
+        ],
+        "warns": []
+    }
+  ⚠ skip vocabulary-module.wakii — wakii-validate: INVALID (sửa file rồi cron pass kế sẽ launch)
+    {
+        "verdict": "INVALID",
+        "sf_count": 0,
+        "fails": [
+            "INVALID: version \u2014 wakiiMindmap=\"wakii-mindmap-schema-v1\" (decoder h\u1ed7 tr\u1ee3 1)"
+        ],
+        "warns": []
+    }
+  SẴN SÀNG LAUNCH: sf-1-foundation (VU-16) ← bracket iloveenglishclup · đích story-vu15-iloveenglishclub
+  chờ: SF-2 (VU-17) — deps: SF-1=
+  chờ: SF-4 (VU-19) — deps: SF-2= SF-3=
+  chờ: SF-6 (VU-21) — deps: SF-4=
+  chờ: SF-7 (VU-22) — deps: SF-4=
+  chờ: SF-8 (VU-23) — deps: SF-5= SF-6= SF-7=
+  SẴN SÀNG LAUNCH: sf-1-qa-baseline-infra-hygiene (VU-25) ← bracket iloveenglishclup · đích story-vu24-qa-hardening
+  chờ: SF-2 (VU-26) — deps: SF-1=
+  chờ: SF-4 (VU-28) — deps: SF-1=
+  chờ: SF-6 (VU-31) — deps: SF-2= SF-3= SF-4= SF-5=
+  ⚠ skip vocabulary-hub.wakii — wakii-validate: INVALID (sửa file rồi cron pass kế sẽ launch)
+    {
+        "verdict": "INVALID",
+        "sf_count": 0,
+        "fails": [
+            "INVALID: version \u2014 wakiiMindmap=\"wakii-mindmap-schema-v1\" (decoder h\u1ed7 tr\u1ee3 1)"
+        ],
+        "warns": []
+    }
+  ⚠ skip vocabulary-learn.wakii — wakii-validate: INVALID (sửa file rồi cron pass kế sẽ launch)
+    {
+        "verdict": "INVALID",
+        "sf_count": 0,
+        "fails": [
+            "INVALID: version \u2014 wakiiMindmap=\"wakii-mindmap-schema-v1\" (decoder h\u1ed7 tr\u1ee3 1)"
+        ],
+        "warns": []
+    }
+  ⚠ skip vocabulary-module.wakii — wakii-validate: INVALID (sửa file rồi cron pass kế sẽ launch)
+    {
+        "verdict": "INVALID",
+        "sf_count": 0,
+        "fails": [
+            "INVALID: version \u2014 wakiiMindmap=\"wakii-mindmap-schema-v1\" (decoder h\u1ed7 tr\u1ee3 1)"
+        ],
+        "warns": []
+    }
+  SẴN SÀNG LAUNCH: sf-1-foundation (VU-16) ← bracket iloveenglishclup-vocabulary-learn · đích story-vu15-iloveenglishclub
+  chờ: SF-2 (VU-17) — deps: SF-1=
+  chờ: SF-3 (VU-18) — deps: SF-1=
+  chờ: SF-4 (VU-19) — deps: SF-2= SF-3=
+  chờ: SF-5 (VU-20) — deps: SF-2= SF-3=
+  chờ: SF-6 (VU-21) — deps: SF-4=
+  chờ: SF-7 (VU-22) — deps: SF-4=
+  chờ: SF-8 (VU-23) — deps: SF-5= SF-6= SF-7=
+  SẴN SÀNG LAUNCH: sf-1-qa-baseline-infra-hygiene (VU-25) ← bracket iloveenglishclup-vocabulary-learn · đích story-vu24-qa-hardening
+  chờ: SF-2 (VU-26) — deps: SF-1=
+  chờ: SF-3 (VU-27) — deps: SF-1=
+  chờ: SF-4 (VU-28) — deps: SF-1=
+  chờ: SF-5 (VU-29) — deps: SF-1=
+  chờ: SF-6 (VU-31) — deps: SF-2= SF-3= SF-4= SF-5=
