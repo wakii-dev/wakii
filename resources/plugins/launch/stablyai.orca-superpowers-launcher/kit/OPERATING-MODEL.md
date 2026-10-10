@@ -72,23 +72,29 @@ dispatch khi gate `blocked_sf-N` đóng trong `state.json`. Gate **mở chỉ sa
 `features/{slug}` (việc lẻ) · cấm prefix `wakii-dev/` trên remote wakii-dev/wakii ·
 worktree name vẫn dash-form (orca fold `/`→`-`).
 
-## Permission model (04/10 — ruling siết bypass)
+## Permission model (ruling (a) 04/10 — siết bypass; adversarial review 10/10)
 
-- **Mọi agent story spawn = hai bước acceptEdits** (`terminal create --command
-  "claude --permission-mode acceptEdits"` + wait + send) — CẤM `--agent claude`
-  (template Orca cài sẵn `--dangerously-skip-permissions`). Enforced trong
-  story-launch (test L-suite) + recipe SKILL.md.
-- **Coordinator ≠ bypass** — cùng acceptEdits; lệnh Bash chuẩn của coordinator
-  (git/gh/node/test) vào **repo allowlist** để không stall: merge
-  `kit/permission-allowlist.json` vào `.claude/settings.json` của repo story
-  (review trước khi merge — allowlist mở rộng là trade-off có chủ đích, ghi
-  trong file).
-- **Worker KHÔNG push** — enforce bằng prompt contract (instructions), không
-  bằng permission (allowlist project-level áp cả worker); ai cần push thật sự
-  = coordinator.
-- **Detection tại cửa**: story-preflight check 7/8 (LOCAL-4 sf-3) — agent sống
-  trên primary + `--dangerously-skip-permissions` → WARN; doctor `--live` +
-  watchdog bypass-pid baseline → escalate pid mới.
+- **Worker/coordinator do story-launch spawn = hai bước acceptEdits** — enforced
+  trong story-launch (test L-suite). **Carve-out**: `workfront-driver run_worker`
+  nhánh YOLO vẫn spawn `--dangerously-skip-permissions` theo toggle app (known
+  debt — driver out-of-scope LOCAL-5, gộp khi writer xong).
+- **Distribution allowlist**: merge `kit/permission-allowlist.json` vào
+  `.claude/settings.local.json` ở **MAIN-CHECKOUT ROOT** — worktree session
+  resolve settings.local.json về main root (docs ≥2.1.211) → tới được worker,
+  untracked, không thành conflict-surface cho upstream-sync battery. KHÔNG dùng
+  `.claude/settings.json` tracked (mới = mặt xung đột sync). Allowlist = chống
+  stall, KHÔNG phải containment — containment = deny section + story-guard +
+  2 cửa người.
+- **Deny section** trong allowlist (deny thắng allow mọi scope, role-agnostic):
+  force-push mọi pattern + push thẳng wakii-dev/main/master + `git add -f`
+  (đường `add -f` + commit né story-guard-envfiles). Deny match as-written —
+  `git -C . push` vượt pattern nhưng vẫn còn story-guard + review.
+- **Worker push CHỈ nhánh sf riêng** (`git push -u origin <sf-branch>` — một
+  phần của DONE theo template) — dest/protected cấm bằng deny list + review;
+  ai merge = người.
+- **Detection tại cửa**: story-preflight check 7/8 — agent sống trên primary +
+  bypass (cả `--permission-mode bypassPermissions`) → WARN; watchdog deck
+  bypass-pid baseline là quy trình session-level (không phải bin).
 
 ## Số vận hành
 

@@ -171,9 +171,10 @@ elif command -v ps >/dev/null 2>&1 && command -v lsof >/dev/null 2>&1 && [ -n "$
     done
   fi
 
-  # 8. claude --dangerously-skip-permissions trong repo đang xét → vi phạm LUẬT
-  # human-in-the-loop 24/09. [s] chống self-match argv của chính awk.
-  BYP_PIDS=$(printf '%s\n' "$PS_OUT" | awk '/--dangerously-skip-permission[s]/ && !/awk|grep|lsof|story-preflight/ { print $1 }')
+  # 8. claude --dangerously-skip-permissions hoặc --permission-mode bypassPermissions
+  # trong repo đang xét → vi phạm LUẬT human-in-the-loop 24/09 (M4: 2 variant cùng ý).
+  # [s] chống self-match argv của chính awk.
+  BYP_PIDS=$(printf '%s\n' "$PS_OUT" | awk '/--dangerously-skip-permission[s]/ || /--permission-mode[ ]bypassPermission[s]/ { if ($0 !~ /awk|grep|lsof|story-preflight/) print $1 }')
   if [ -n "$BYP_PIDS" ]; then
     BYP_HIT=""
     while IFS='|' read -r pid cwd; do
