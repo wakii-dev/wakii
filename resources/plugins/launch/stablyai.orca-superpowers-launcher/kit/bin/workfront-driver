@@ -101,33 +101,55 @@ fi
 echo $$ > "$PIDF"
 trap 'rm -f "$PIDF"' EXIT
 
+# ── resolve mindmap canonical (LOCAL-4 sf-2 — bệnh FI-30/VU-32): local → nhánh
+# đích (no-downgrade: đích done nâng local pending; tick local KHÔNG bao giờ bị
+# hạ) → worktree anh em (vocabulary-learn) → MISSING. Read-only; tick vẫn ghi $MM.
+# Resolver thiếu/hỏng → fallback legacy đọc $MM (hành vi cũ, version kit lệch giữa máy).
+RESOLVER="${STORY_MINDMAP_BIN:-$KIT_DIR/story-mindmap}"
+[ -f "$RESOLVER" ] || RESOLVER="$HOME/.claude/bin/story-mindmap"
+[ -f "$RESOLVER" ] || RESOLVER=""
+RESOLVED_JSON=""
+resolve_mm(){ # ok → RESOLVED_JSON (states đã merge) + repoint $MM khi local thiếu
+  [ -n "$RESOLVER" ] || return 1
+  # story branch chứa mindmap snapshot — discover theo slug (story/<slug>, <slug>, wakii-dev/*slug*)
+  local sbranch
+  sbranch=$(git -C "$REPO_DIR" branch --list "*$SLUG*" --format='%(refname:short)' 2>/dev/null | head -1)
+  local dest_args=()
+  [[ -n "$sbranch" ]] && dest_args=(--dest "$sbranch")
+  RESOLVED_JSON=$("$RESOLVER" --resolve "$MM" --repo "$REPO_DIR" "${dest_args[@]}" --json 2>>"$LOG") || RESOLVED_JSON=""
+  printf '%s' "$RESOLVED_JSON" | grep -q '"ok":true' || { RESOLVED_JSON=""; return 1; }
+  local _info _file _src _up
+  _info=$(printf '%s' "$RESOLVED_JSON" | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{try{const j=JSON.parse(d);console.log([j.file||"",j.source||"",Array.isArray(j.upgraded)?j.upgraded.join(","):""].join("\t"))}catch{console.log("\t\t")}})')
+  _file=$(printf '%s' "$_info" | cut -f1); _src=$(printf '%s' "$_info" | cut -f2); _up=$(printf '%s' "$_info" | cut -f3)
+  # [ -f "$_file" ]: source=dest-branch → _file pseudo-path "ref:rel" — không bao
+  # giờ repoint sang đường không tồn tại trên đĩa (tick/convergence sẽ đọc rác)
+  if [ -n "$_file" ] && [ -f "$_file" ] && [ "$_file" != "$MM" ] && [ ! -f "$MM" ]; then
+    log "MM repoint: $MM không có → dùng $_file (source=$_src)"
+    MM="$_file"
+  fi
+  log "MM resolve: source=$_src${_up:+ dest-upgrade=$_up}"
+  return 0
+}
 # ── đọc state mindmap: xuất "sf-id state" mỗi dòng; exit≠0 khi mindmap hỏng
-sf_states(){ node -e '
+sf_states(){ # qua resolver khi có (state chuẩn mọi worktree), không thì legacy $MM
+  if [ -n "$RESOLVED_JSON" ]; then
+    printf '%s' "$RESOLVED_JSON" | node -e '
+let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{try{const j=JSON.parse(d);if(!j.ok)process.exit(1);for(const k of Object.keys(j.states||{}))console.log(k,j.states[k])}catch{process.exit(1)}})'
+    return
+  fi
+  node -e '
 const j=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));
 for(const n of j.nodes) if(n.kind==="sf") console.log(n.id, n.state||"pending");
 ' "$MM"; }
 sf_count(){ # đếm node sf riêng — phân biệt "mindmap hỏng" với "0 pending"
+  if [ -n "$RESOLVED_JSON" ]; then
+    printf '%s' "$RESOLVED_JSON" | node -e '
+let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{try{const j=JSON.parse(d);if(!j.ok)process.exit(1);console.log(Object.keys(j.states||{}).length)}catch{process.exit(1)}})'
+    return
+  fi
   node -e '
 const j=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));
-console.log(j.nodes.filter(n=>n.kind==="sf").length);' "$MM"; }
-tick_sf(){ # node phải tồn tại + re-read sau ghi — vẫn pending → exit 1
-  node -e '
-const fs=require("fs"),[mm,sf]=process.argv.slice(1);
-const j=JSON.parse(fs.readFileSync(mm,"utf8"));
-const n=j.nodes.find(x=>x.id===sf);
-if(!n){ console.error("tick_sf: node "+sf+" không tồn tại"); process.exit(1); }
-n.state="done";
-if(!j.meta) j.meta={};
-j.meta.updatedAt=new Date().toISOString().slice(0,19)+"Z";
-fs.writeFileSync(mm,JSON.stringify(j,null,2)+"\n");
-const r=JSON.parse(fs.readFileSync(mm,"utf8")).nodes.find(x=>x.id===sf);
-if(!r||r.state!=="done"){ console.error("tick_sf: "+sf+" vẫn pending sau ghi"); process.exit(1); }' "$MM" "$1"; }
-st_get(){ node -e '
-const fs=require("fs"),[f,k,d]=process.argv.slice(1);
-try{const s=JSON.parse(fs.readFileSync(f,"utf8"));console.log(s[k]??d)}catch{console.log(d)}' "$ST" "$1" "${2:-}"; }
-st_set(){ node -e '
-const fs=require("fs"),[f,k,v]=process.argv.slice(1);
-let s={}; try{s=JSON.parse(fs.readFileSync(f,"utf8"))}catch{}
+
 s[k]=v; fs.writeFileSync(f,JSON.stringify(s,null,2));' "$ST" "$1" "$2"; }
 orca_run_active(){ # chống double-dispatch khi user có run tay
   "$ORCA_BIN" orchestration run-list --json 2>/dev/null | grep -q "\"$SLUG\""; }

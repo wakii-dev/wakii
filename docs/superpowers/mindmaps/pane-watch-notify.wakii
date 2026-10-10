@@ -1,0 +1,30 @@
+{
+  "wakiiMindmap": 1,
+  "meta": {
+    "story": "PWN-1",
+    "generator": "story-workflow CREATE",
+    "generatedAt": "2026-10-10T08:46:11.990Z",
+    "dest": "story-pane-watch-notify"
+  },
+  "nodes": [
+    {
+      "id": "epic",
+      "kind": "epic",
+      "title": "story-pane-watch --notify — Orchestrated HITL relay safety-net (pager user khi worker cần người)"
+    },
+    {
+      "id": "sf-1",
+      "kind": "sf",
+      "tier": 0,
+      "title": "Notify relay + transition state cache",
+      "summary": "What — detector chạy --notify: worker pane chuyển vào waiting-approval/blocked/idle-done → story-notify pager user đúng 1 lần mỗi transition (dedupe qua state cache atomic); tắt --notify → hành vi cũ 100%. User nhìn notification là biết pane nào cần mình, không phải quét panes thủ công."
+    }
+  ],
+  "edges": [
+    {
+      "from": "epic",
+      "to": "sf-1",
+      "rel": "contains"
+    }
+  ]
+}

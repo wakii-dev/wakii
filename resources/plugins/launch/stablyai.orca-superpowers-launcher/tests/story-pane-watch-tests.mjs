@@ -7,7 +7,7 @@
 // same-folder sf-N-.
 // Chạy: node tests/story-pane-watch-tests.mjs
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, mkdirSync, writeFileSync, chmodSync, copyFileSync, rmSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, chmodSync, copyFileSync, rmSync } from 'node:fs'
 import { join, dirname, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
@@ -65,8 +65,8 @@ exit 0
   return stub
 }
 
-function runWatch(dir, env = {}) {
-  const r = spawnSync('bash', [BIN, '--story', join(dir, 'hub'), '--json'], {
+function runWatch(dir, env = {}, extraArgs = []) {
+  const r = spawnSync('bash', [BIN, '--story', join(dir, 'hub'), ...extraArgs, '--json'], {
     encoding: 'utf8', timeout: 30000,
     env: { ...process.env, ...env },
   })
@@ -242,6 +242,166 @@ console.log('== W6 anchor regex: permission thường ≠ approval (F2) ==')
   check('W6', '"permit?" → waiting-approval', byWt['sf-14-b'] === 'waiting-approval', JSON.stringify(byWt))
   rmSync(dir, { recursive: true, force: true })
 }
+
+console.log('== N1 --notify: transition pending→waiting-approval → 1 notify (gate-fail) ==')
+{
+  const dir = tempDir('n1')
+  const hubId = 'r::/x/hub'
+  const wtlist = { worktrees: [
+    { id: hubId, path: join(dir, 'hub') },
+    { id: 'r::/x/sf-21-a', path: join(dir, 'sf-21-a'), lineage: { parentWorktreeId: hubId } },
+  ] }
+  setupCase(dir, wtlist)
+  const reads = {
+    term_w1: [{ terminal: { status: 'running', tail: ['CHECK? npx drizzle-kit push', 'Do you want to proceed?', '❯ 1. Yes'] } }],
+  }
+  const stub = makeStub(dir)
+  const cachePath = join(dir, 'state.json')
+  const notifyLog = join(dir, 'notify.log')
+  const notifyBin = join(dir, 'notify-stub.sh')
+  writeFileSync(notifyBin, `#!/bin/sh\necho "$@" >> "\${STORY_NOTIFY_LOG:?}"\n`, 'utf8')
+  chmodSync(notifyBin, 0o755)
+  const r = runWatch(dir, {
+    ORCA_BIN: stub,
+    STUB_WTLIST: join(dir, 'wtlist.json'),
+    STUB_READS: JSON.stringify(reads),
+    STUB_CNT: join(dir, 'cnt'),
+    STORY_PANE_WATCH_STATE: cachePath,
+    STORY_NOTIFY_BIN: notifyBin,
+    STORY_NOTIFY_LOG: notifyLog,
+  }, ['--notify'])
+  const notifyCalls = readFileSync(notifyLog, 'utf8').trim().split('\n').filter(Boolean)
+  check('N1', 'đúng 1 lời gọi notify', notifyCalls.length === 1, JSON.stringify(notifyCalls))
+  check('N1', 'type gate-fail + sf tên worktree', /gate-fail sf-21-a/.test(notifyCalls[0] || ''), notifyCalls[0] || '')
+  check('N1', 'detail chứa question + handle', /1\. Yes/.test(notifyCalls[0] || '') && /term_w1/.test(notifyCalls[0] || ''), notifyCalls[0] || '')
+  const cache = parseOut(readFileSync(cachePath, 'utf8'))
+  check('N1', 'cache ghi state + ts', cache['term_w1'] && cache['term_w1'].state === 'waiting-approval' && typeof cache['term_w1'].ts === 'number', JSON.stringify(cache))
+  check('N1', 'JSON output nguyên vẹn 1 pane', Array.isArray(parseOut(r.out)) && parseOut(r.out).length === 1, r.out.slice(0, 120))
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== N2 --notify: sweep 2 cùng state → không notify lại ==')
+{
+  const dir = tempDir('n2')
+  const hubId = 'r::/x/hub'
+  const wtlist = { worktrees: [
+    { id: hubId, path: join(dir, 'hub') },
+    { id: 'r::/x/sf-22-a', path: join(dir, 'sf-22-a'), lineage: { parentWorktreeId: hubId } },
+  ] }
+  setupCase(dir, wtlist)
+  const reads = {
+    term_w1: [{ terminal: { status: 'running', tail: ['CHECK? npx drizzle-kit push', 'Do you want to proceed?', '❯ 1. Yes'] } }],
+  }
+  const stub = makeStub(dir)
+  const cachePath = join(dir, 'state.json')
+  const notifyLog = join(dir, 'notify.log')
+  const notifyBin = join(dir, 'notify-stub.sh')
+  writeFileSync(notifyBin, `#!/bin/sh\necho "$@" >> "\${STORY_NOTIFY_LOG:?}"\n`, 'utf8')
+  chmodSync(notifyBin, 0o755)
+  const env = {
+    ORCA_BIN: stub,
+    STUB_WTLIST: join(dir, 'wtlist.json'),
+    STUB_READS: JSON.stringify(reads),
+    STUB_CNT: join(dir, 'cnt'),
+    STORY_PANE_WATCH_STATE: cachePath,
+    STORY_NOTIFY_BIN: notifyBin,
+    STORY_NOTIFY_LOG: notifyLog,
+  }
+  runWatch(dir, env, ['--notify'])
+  const before = readFileSync(notifyLog, 'utf8')
+  runWatch(dir, env, ['--notify'])
+  const after = readFileSync(notifyLog, 'utf8')
+  check('N2', 'sweep 2 cùng state → không notify thêm', after === before, `before=${before.length} after=${after.length}`)
+  const cache = parseOut(readFileSync(cachePath, 'utf8'))
+  check('N2', 'cache vẫn giữ state cho dedupe', cache['term_w1'] && cache['term_w1'].state === 'waiting-approval', JSON.stringify(cache))
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== N3 --notify: cache unwritable → fail-open, JSON vẫn đầy đủ ==')
+{
+  const dir = tempDir('n3')
+  const hubId = 'r::/x/hub'
+  const wtlist = { worktrees: [
+    { id: hubId, path: join(dir, 'hub') },
+    { id: 'r::/x/sf-23-a', path: join(dir, 'sf-23-a'), lineage: { parentWorktreeId: hubId } },
+  ] }
+  setupCase(dir, wtlist)
+  const reads = {
+    term_w1: [{ terminal: { status: 'running', tail: ['BLOCKED: acceptance sf-23-a thiếu evidence — leo user'] } }],
+  }
+  const stub = makeStub(dir)
+  const notifyLog = join(dir, 'notify.log')
+  const notifyBin = join(dir, 'notify-stub.sh')
+  writeFileSync(notifyBin, `#!/bin/sh\necho "$@" >> "\${STORY_NOTIFY_LOG:?}"\n`, 'utf8')
+  chmodSync(notifyBin, 0o755)
+  // cache path trỏ vào file (không thư mục) → write fail → fail-open
+  const badCache = join(dir, 'hub', 'README.md')
+  const r = runWatch(dir, {
+    ORCA_BIN: stub,
+    STUB_WTLIST: join(dir, 'wtlist.json'),
+    STUB_READS: JSON.stringify(reads),
+    STUB_CNT: join(dir, 'cnt'),
+    STORY_PANE_WATCH_STATE: badCache,
+    STORY_NOTIFY_BIN: notifyBin,
+    STORY_NOTIFY_LOG: notifyLog,
+  }, ['--notify'])
+  const rows = parseOut(r.out)
+  check('N3', 'fail-open: JSON vẫn đầy đủ + exit 0', r.code === 0 && Array.isArray(rows) && rows.length === 1 && rows[0].state === 'blocked', `code=${r.code} out=${r.out.slice(0, 120)}`)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== N4 --notify: transition out (working) xoá cache — quay lại notify lại ==')
+{
+  const dir = tempDir('n4')
+  const hubId = 'r::/x/hub'
+  const wtlist = { worktrees: [
+    { id: hubId, path: join(dir, 'hub') },
+    { id: 'r::/x/sf-24-a', path: join(dir, 'sf-24-a'), lineage: { parentWorktreeId: hubId } },
+  ] }
+  setupCase(dir, wtlist)
+  const stub = makeStub(dir)
+  const cachePath = join(dir, 'state.json')
+  const notifyLog = join(dir, 'notify.log')
+  const notifyBin = join(dir, 'notify-stub.sh')
+  writeFileSync(notifyBin, `#!/bin/sh\necho "$@" >> "\${STORY_NOTIFY_LOG:?}"\n`, 'utf8')
+  chmodSync(notifyBin, 0o755)
+  const env = {
+    ORCA_BIN: stub,
+    STUB_WTLIST: join(dir, 'wtlist.json'),
+    STUB_CNT: join(dir, 'cnt'),
+    STORY_PANE_WATCH_STATE: cachePath,
+    STORY_NOTIFY_BIN: notifyBin,
+    STORY_NOTIFY_LOG: notifyLog,
+  }
+  const resetCnt = () => writeFileSync(join(dir, 'cnt'), '0\n', 'utf8')   // handle ổn định giữa các sweep (pane thật = cùng handle)
+  resetCnt()
+  // sweep 1: working → không notify, không cache
+  const readsWorking = { term_w1: [{ terminal: { status: 'running', tail: ['✻ Forming… 30s'] } }] }
+  env.STUB_READS = JSON.stringify(readsWorking)
+  runWatch(dir, env, ['--notify'])
+  // sweep 2: blocked → notify
+  const readsBlocked = { term_w1: [{ terminal: { status: 'running', tail: ['BLOCKED: cần quyết định'] } }] }
+  env.STUB_READS = JSON.stringify(readsBlocked)
+  resetCnt()
+  runWatch(dir, env, ['--notify'])
+  const cache1 = parseOut(readFileSync(cachePath, 'utf8'))
+  check('N4', 'blocked → cache ghi', cache1['term_w1'] && cache1['term_w1'].state === 'blocked', JSON.stringify(cache1))
+  // sweep 3: working → xoá cache
+  env.STUB_READS = JSON.stringify(readsWorking)
+  resetCnt()
+  runWatch(dir, env, ['--notify'])
+  const cache2 = parseOut(readFileSync(cachePath, 'utf8'))
+  check('N4', 'về working → xoá khỏi cache', !cache2['term_w1'], JSON.stringify(cache2))
+  // sweep 4: blocked lại → notify lại (transition vào lần nữa)
+  env.STUB_READS = JSON.stringify(readsBlocked)
+  resetCnt()
+  runWatch(dir, env, ['--notify'])
+  const cache3 = parseOut(readFileSync(cachePath, 'utf8'))
+  check('N4', 'blocked lại → cache lại (sẵn sàng notify lần nữa)', cache3['term_w1'] && cache3['term_w1'].state === 'blocked', JSON.stringify(cache3))
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log(`\n${pass} pass, ${fail} fail`)
 
 console.log(`\n${pass} pass, ${fail} fail`)
 process.exit(fail === 0 ? 0 : 1)

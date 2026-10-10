@@ -1,6 +1,6 @@
 #!/bin/bash
 # story-pane-watch — detector 4-state cho worker panes của 1 story (Orchestrated HITL spec 04/10).
-# Usage: story-pane-watch --story <hub-abs-path> [--json]
+# Usage: story-pane-watch --story <hub-abs-path> [--json] [--notify]
 # Đọc tail các terminal pane của worktree con (lineage hoặc cùng folder sf-N-),
 # phân loại: blocked > waiting-approval > idle-done > working > unknown.
 # Fail-open: orca chết/thiếu data → stdout "[]" + exit 0. Bám handle+cwd, KHÔNG bám title.
@@ -10,10 +10,13 @@ STORY=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --story) STORY="$2"; shift 2 ;;
+    --notify) NOTIFY=1; shift ;;
     *) shift ;;
   esac
 done
-[ -n "$STORY" ] && [ -d "$STORY" ] || { echo "usage: story-pane-watch --story <hub-abs-path> [--json]" >&2; exit 2; }
+[ -n "$STORY" ] && [ -d "$STORY" ] || { echo "usage: story-pane-watch --story <hub-abs-path> [--json] [--notify]" >&2; exit 2; }
+NOTIFY="${NOTIFY:-0}"
+KIT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # ORCA_BIN env là override tường minh — kể cả path chết cũng dùng (fail-open bên dưới)
 ORCA_BIN="${ORCA_BIN:-}"
@@ -28,6 +31,8 @@ WTS="$("$ORCA_BIN" worktree list --json 2>/dev/null || true)"
 printf '%s' "$WTS" | node -e '
 const fs = require("fs"), cp = require("child_process"), path = require("path");
 const hubDir = path.resolve(process.argv[1]), orca = process.argv[2];
+const notifyOn = process.argv[3] === "1";
+const kitDir = process.argv[4] || "";
 let rows = [];
 try {
   const j = JSON.parse(fs.readFileSync(0, "utf8"));
@@ -63,6 +68,35 @@ for (const w of children) {
   const { state, question } = classify(tail);
   out.push({ worktree: path.basename(w.path), handle, state, question });
 }
+// --notify: relay safety-net — transition vào state cần người → story-notify pager user
+if (notifyOn) {
+  const NOTIFY_STATES = { "waiting-approval": "gate-fail", "blocked": "stall", "idle-done": "complete" };
+  const cachePath = process.env.STORY_PANE_WATCH_STATE || "/tmp/story-pane-watch-state.json";
+  const notifyBin = process.env.STORY_NOTIFY_BIN || path.join(kitDir, "story-notify");
+  let cache = {};
+  try { cache = JSON.parse(fs.readFileSync(cachePath, "utf8")); } catch {}
+  const now = Math.floor(Date.now() / 1000);
+  const next = Object.assign({}, cache);
+  for (const row of out) {
+    const type = NOTIFY_STATES[row.state];
+    if (!type) {
+      // về working/unknown → xoá khỏi cache (transition ra sẽ notify lại lần sau)
+      if (cache[row.handle]) delete next[row.handle];
+      continue;
+    }
+    next[row.handle] = { state: row.state, ts: now };
+    const prev = cache[row.handle] ? cache[row.handle].state : null;
+    if (prev === row.state) continue; // không transition → không notify lại
+    const detail = (row.question ? row.question + " — " : "") + "pane " + row.handle + " — worktree " + row.worktree + " — bấm trực tiếp pane hoặc trả lời qua watchdog";
+    try { cp.execFileSync(notifyBin, [type, row.worktree, detail], { timeout: 15000 }); } catch {}
+  }
+  // atomic write (tmp + mv); unwritable → fail-open (mất dedupe, không crash)
+  try {
+    const tmp = cachePath + ".tmp." + process.pid;
+    fs.writeFileSync(tmp, JSON.stringify(next, null, 1));
+    fs.renameSync(tmp, cachePath);
+  } catch {}
+}
 process.stdout.write(JSON.stringify(out, null, 1));
-' "$HUB_DIR" "$ORCA_BIN"
+' "$HUB_DIR" "$ORCA_BIN" "$NOTIFY" "$KIT_DIR"
 exit 0
