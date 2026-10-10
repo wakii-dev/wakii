@@ -284,6 +284,7 @@ const PARENT_ID = 'wt-parent-x1'
   })
   check('S10', '>1-match → không phán (review:?)', line.includes('review:?'), line.trim())
   check('S10', 'không chọn hộ mindmap đầu alphabet', !stdout.includes('FI-800') && !stdout.includes('FI-801'), stdout)
+  check('S10', 'detail có trace ambiguous (lỗi rõ, chỉ đếm không liệt kê tên)', /mindmap ambiguous: [0-9]+/.test(line), line.trim())
   rmSync(home, { recursive: true, force: true })
 }
 

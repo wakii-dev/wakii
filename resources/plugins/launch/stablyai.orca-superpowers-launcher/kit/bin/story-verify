@@ -167,7 +167,7 @@ for f in names:
         if '-'.join(parts[:i]).replace('-', '') == tok: bnd.append(f); break
 picks = exact or bnd
 if len(picks) == 1: print(os.path.join(os.environ['MM_DIR'], picks[0]))
-elif len(picks) > 1: print('AMBIGUOUS ' + ','.join(sorted(picks)))
+elif len(picks) > 1: print('AMBIGUOUS %d' % len(picks)) # chỉ đếm — tên file có | sẽ vỡ cột detail (review P2 nhóm A)
 else: print('NONE')
 PYMM
   ) || out=""
