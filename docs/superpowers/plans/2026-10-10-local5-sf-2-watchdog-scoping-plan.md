@@ -68,18 +68,34 @@ warn mơ hồ + exit 0 (fail-closed — KHÔNG pick hộ).
       Bài học: `printf '%s'` không newline trong helper → consumer line-oriented
       (`read`/`sort -u`/`grep -c`) thấy 1 blob — match NOMATCH, count=1 (silent
       fail-closed sai chiều). Helper trả dòng PHẢI printf '%s\n'.
-- [ ] T6 — Rolling review: code-reviewer ĐỘC LẬP trên diff T1-T5 → verdict vào
+- [x] T6 — Rolling review: code-reviewer ĐỘC LẬP trên diff T1-T5 → verdict vào
       evidence/sf-2-story-watchdog-launch/review-1.md; fix P0/P1 nếu có; verdict
       post lên worktree comment (LOCAL).
+      ✅ VERDICT: APPROVED — 0 P0/P1, 4 P2 (đã vá hết theo TDD: stderr ls-remote
+      detail · dest memo 1-entry · --story silent no-op warn · test non-git S12
+      — 49/2 → 51/0). CHECKLIST-4Q 4/4 PASS, post worktree comment. Verifier
+      độc lập Phase 5 chạy riêng — xem DONE report.
 - [x] T7 — Boundary doc (P1-4): docs/reference/story-watchdog-launch-next-scoping.md
       — semantics --story + known limitation worktree-ownership `sf-N-*` chéo
       story (glob `sf-$n-*` ~368), lineage check = fix đúng — phase sau.
       ✅ Doc viết + INDEX.md dòng story-watchdog thêm chú thích scoping.
-- [ ] T8 — Rehash ×2 (P0-2): computeKitHash → kit/kit.json → fingerprint →
+- [x] T8 — Rehash ×2 (P0-2): computeKitHash → kit/kit.json → fingerprint →
       bundled-plugins.json → kit-verify-manifest GREEN (tests/kit-verify-manifest.mjs
       + plugin-tree-hash-lockstep test).
-- [ ] T9 — Commit atomic + evidence B1 (evidence/sf-2-story-watchdog-launch/test-run.txt
+      ✅ kitHash 788c9a11→36512232aa936f50 · fingerprint 741004ce→40571aee ·
+      verifyPackagedPluginResources OK · kit-verify-manifest 31/0 GREEN ·
+      sc-evidence-map 7/7+8/8. Lockstep + plugin TS tests không chạy được
+      (worktree lẫn main đều thiếu node_modules) — lockstep theo contract chỉ
+      bắt buộc khi đụng hash IMPL (không đụng); manifest test = drift guard
+      2 hash → GREEN (ghi trong test-run.txt).
+- [x] T9 — Commit atomic + evidence B1 (evidence/sf-2-story-watchdog-launch/test-run.txt
       chứa hash HEAD + dòng tdd) + suite cuối GREEN.
+      ✅ code commit a228d553b0 (+510/−15, 7 files, hooks sạch không --no-verify)
+      + evidence commit bb9ff5e7c2 duy nhất (HEAD~1 = a228d553b0) · push
+      wakii-dev/wakii sf-2-story-watchdog-launch (không prefix) · story-verify:
+      B1/B2/B2b PASS · B3 FAIL ảo (defect glob fi305→FI-307 đã index, SF-3 sửa)
+      · B4 FAIL = chưa merge (đúng thiết kế — coordinator merge) · B5 PENDING
+      (coordinator set Done sau merge).
 
 ## Acceptance → test mapping
 
