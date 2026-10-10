@@ -111,26 +111,30 @@ function pinKitConfig(home) {
 
 // 1 chuỗi path script sẽ derive ra: HOME forward-slash → bash glob + cygpath -m
 // đều ổn; stub JSON dùng CÙNG chuỗi đó → match hoặc không là hành vi thật.
-function runScenario(tag, buildWorktrees, { withBracket = true, withWakii = false, jsonOut = false } = {}) {
+// mindmaps: null = không có; else { "<file>.wakii": {story, epic, dest, linear} } —
+// B3 scoping (SF-3) đòi fixture đa-mindmap theo tên (token `hv` từ sf-91-hv).
+function runScenario(tag, buildWorktrees, { withBracket = true, mindmaps = null, jsonOut = false } = {}) {
   const home = mkdtempSync(join(tmpdir(), `story-verify-${tag}-`))
   pinKitConfig(home)
   const wt = makeWorktree(home)
   if (!withBracket) {
     rmSync(join(wt, 'docs', 'superpowers', 'brackets'), { recursive: true, force: true })
   }
-  if (withWakii) {
+  if (mindmaps) {
     const md = join(wt, 'docs', 'superpowers', 'mindmaps')
     mkdirSync(md, { recursive: true })
-    writeFileSync(join(md, 'fi777-wakii.wakii'), JSON.stringify({
-      wakiiMindmap: 1,
-      meta: { story: 'FI-777 — wakii derive fixture', epic: 'FI-777', dest: 'story/wakii-dest',
-        generatedAt: '2026-09-28T00:00:00Z', generator: 'test' },
-      nodes: [
-        { id: 'epic', kind: 'epic', title: 'FI-777 — wakii derive fixture' },
-        { id: 'sf-91', kind: 'sf', title: 'Wakii SF', state: 'pending', linear: 'FI-777' }
-      ],
-      edges: [{ from: 'epic', to: 'sf-91', rel: 'contains' }]
-    }, null, 2))
+    for (const [fname, spec] of Object.entries(mindmaps)) {
+      writeFileSync(join(md, fname), JSON.stringify({
+        wakiiMindmap: 1,
+        meta: { story: spec.story, epic: spec.epic, dest: spec.dest,
+          generatedAt: '2026-09-28T00:00:00Z', generator: 'test' },
+        nodes: [
+          { id: 'epic', kind: 'epic', title: spec.story },
+          { id: 'sf-91', kind: 'sf', title: 'Wakii SF', state: 'pending', linear: spec.linear }
+        ],
+        edges: [{ from: 'epic', to: 'sf-91', rel: 'contains' }]
+      }, null, 2))
+    }
   }
   const wtPath = wt.replaceAll('\\', '/')
   const worktrees = buildWorktrees(wtPath)
@@ -187,21 +191,28 @@ const PARENT_ID = 'wt-parent-x1'
   rmSync(home, { recursive: true, force: true })
 }
 
-// 5. Không metadata + KHÔNG bracket + có .wakii → derive linear/dest từ nodes+meta
+// 5. Không metadata + KHÔNG bracket + có .wakii khớp story token `hv` → derive
+//    linear/dest từ node+meta (B3 scoping: mindmap phải khớp `hv-*` từ sf-91-hv)
 {
   const { line, home } = runScenario('s5', () => [
     wtEntry('wt-other', 'C:/elsewhere/unrelated', { linear: 'FI-1', baseRef: 'refs/heads/o' })
-  ], { withBracket: false, withWakii: true })
-  check('S5', 'linear từ node sf-91 (.wakii fallback)', line.includes('review:FI-777'), line.trim())
+  ], {
+    withBracket: false,
+    mindmaps: { 'hv-wakii.wakii': { story: 'FI-777 — wakii derive fixture', epic: 'FI-777', dest: 'story/wakii-dest', linear: 'FI-777' } }
+  })
+  check('S5', 'linear từ node sf-91 (.wakii fallback khớp token)', line.includes('review:FI-777'), line.trim())
   check('S5', 'dest từ meta.dest', line.includes('dest:story/wakii-dest'), line.trim())
   rmSync(home, { recursive: true, force: true })
 }
 
-// 6. Story-level derive đọc mindmaps/*.wakii (SF-91 Done theo stub → 1/1)
+// 6. Story-level derive đọc mindmap KHỚP story token (SF-91 Done theo stub → 1/1)
 {
   const { stdout, home } = runScenario('s6', () => [
     wtEntry('wt-other', 'C:/elsewhere/unrelated', { linear: 'FI-1', baseRef: 'refs/heads/o' })
-  ], { withBracket: false, withWakii: true })
+  ], {
+    withBracket: false,
+    mindmaps: { 'hv-wakii.wakii': { story: 'FI-777 — wakii derive fixture', epic: 'FI-777', dest: 'story/wakii-dest', linear: 'FI-777' } }
+  })
   check('S6', 'story-level derive 1/1 từ .wakii', stdout.includes('Linear derive: 1/1 SF Done'), stdout)
   rmSync(home, { recursive: true, force: true })
 }
@@ -210,7 +221,11 @@ const PARENT_ID = 'wt-parent-x1'
 {
   const { stdout, home } = runScenario('s7', () => [
     wtEntry('wt-other', 'C:/elsewhere/unrelated', { linear: 'FI-1', baseRef: 'refs/heads/o' })
-  ], { withBracket: false, withWakii: true, jsonOut: true })
+  ], {
+    withBracket: false,
+    mindmaps: { 'hv-wakii.wakii': { story: 'FI-777 — wakii derive fixture', epic: 'FI-777', dest: 'story/wakii-dest', linear: 'FI-777' } },
+    jsonOut: true
+  })
   let arr = null
   try { arr = JSON.parse(stdout || '') } catch { /* để check */ }
   check('S7', '--json parse được (mảng)', Array.isArray(arr), stdout.slice(0, 200))
@@ -219,6 +234,70 @@ const PARENT_ID = 'wt-parent-x1'
   const st = row && row.steps
   check('S7', 'steps đủ 7 khóa contract', !!st && ['code_tests', 'plan_ticked', 'surface_lint', 'review', 'merged', 'linear_done', 'runtime_smoke'].every(k => k in st), JSON.stringify(st))
   check('S7', 'detail derive từ .wakii', !!row && String(row.detail).includes('FI-777'), row && row.detail)
+  rmSync(home, { recursive: true, force: true })
+}
+
+// 8. B3 scoping — 2 mindmaps alphabetical-xung-đột: story cũ (fi305, tên trước)
+//    KHÔNG được chặn story local (hv-*, khớp token) — bệnh FI-305/local4-sf-3.
+{
+  const { line, stdout, home } = runScenario('s8', () => [
+    wtEntry('wt-other', 'C:/elsewhere/unrelated', { linear: 'FI-1', baseRef: 'refs/heads/o' })
+  ], {
+    withBracket: false,
+    mindmaps: {
+      'fi305-superpowers-android.wakii': { story: 'FI-305 — android story cũ', epic: 'FI-305', dest: 'story/fi305-wrong', linear: 'FI-305' },
+      'hv-improve-kit.wakii': { story: 'HV-1 — story local', epic: 'HV-1', dest: 'story/hv-dest', linear: 'FI-777' }
+    }
+  })
+  check('S8', 'resolve đúng story local (không glob-first alphabet)', line.includes('review:FI-777'), line.trim())
+  check('S8', 'dest từ mindmap story local', line.includes('dest:story/hv-dest'), line.trim())
+  check('S8', 'story cũ alphabetically-trước không nhiễm', !stdout.includes('FI-305'), stdout)
+  rmSync(home, { recursive: true, force: true })
+}
+
+// 9. B3 0-match → UNKNOWN fail-open (giống linear-rỗng), KHÔNG FAIL; story cũ
+//    trong mindmaps không được leak vào B3 lẫn story-level derive.
+{
+  const { line, stdout, home } = runScenario('s9', (wtPath) => [
+    wtEntry('wt-sf', wtPath, { baseRef: 'refs/heads/base-y' })
+  ], {
+    withBracket: false,
+    mindmaps: { 'fi305-superpowers-android.wakii': { story: 'FI-305 — android story cũ', epic: 'FI-305', dest: 'story/fi305-wrong', linear: 'FI-305' } }
+  })
+  check('S9', '0-match → linear rỗng (B3 UNKNOWN, không phán)', line.includes('review:?'), line.trim())
+  check('S9', 'dest vẫn từ metadata (không mượn mindmap lạ)', line.includes('dest:refs/heads/base-y'), line.trim())
+  check('S9', 'mindmap lạ không leak vào derive', !stdout.includes('FI-305'), stdout)
+  rmSync(home, { recursive: true, force: true })
+}
+
+// 10. B3 >1-match (2 mindmaps cùng khớp token) → AMBIGUOUS fail-open, không chọn hộ
+{
+  const { line, stdout, home } = runScenario('s10', () => [
+    wtEntry('wt-other', 'C:/elsewhere/unrelated', { linear: 'FI-1', baseRef: 'refs/heads/o' })
+  ], {
+    withBracket: false,
+    mindmaps: {
+      'hv-a.wakii': { story: 'FI-800 — bản A', epic: 'FI-800', dest: 'story/hv-a', linear: 'FI-800' },
+      'hv-b.wakii': { story: 'FI-801 — bản B', epic: 'FI-801', dest: 'story/hv-b', linear: 'FI-801' }
+    }
+  })
+  check('S10', '>1-match → không phán (review:?)', line.includes('review:?'), line.trim())
+  check('S10', 'không chọn hộ mindmap đầu alphabet', !stdout.includes('FI-800') && !stdout.includes('FI-801'), stdout)
+  rmSync(home, { recursive: true, force: true })
+}
+
+// 11. B3 exact-match thắng boundary-match (đúng token `hv` trước `hv-*`)
+{
+  const { line, home } = runScenario('s11', () => [
+    wtEntry('wt-other', 'C:/elsewhere/unrelated', { linear: 'FI-1', baseRef: 'refs/heads/o' })
+  ], {
+    withBracket: false,
+    mindmaps: {
+      'hv.wakii': { story: 'FI-100 — exact', epic: 'FI-100', dest: 'story/hv-exact', linear: 'FI-100' },
+      'hv-x.wakii': { story: 'FI-200 — boundary', epic: 'FI-200', dest: 'story/hv-x', linear: 'FI-200' }
+    }
+  })
+  check('S11', 'exact <stem>.wakii thắng boundary <token>-*', line.includes('review:FI-100') && line.includes('dest:story/hv-exact'), line.trim())
   rmSync(home, { recursive: true, force: true })
 }
 
