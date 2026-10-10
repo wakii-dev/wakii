@@ -5,11 +5,8 @@ import { OrchestrationError } from '../../../../orchestration/orchestration-erro
 import { parseWorkerTerminalHostScope } from '../../../../orchestration/worker-terminal-process-liveness'
 import type { OrchestrationFleetWorker } from '../../../../../../shared/orchestration-fleet-projection'
 import { projectWorkerFleet } from './worker-list-projection'
-import {
-  observeStructuredWorker,
-  resolveStructuredWorkerForDispatch
-} from '../../orchestration-structured-worker-lifecycle'
-import { structuredWorkerAddressable } from '../../../../structured-worker-custody'
+import { observeChatAssignee } from '../../../../orchestration/chat-assignee'
+import { inspectSessionWorker } from './session-worker-observation'
 import type {
   DispatchContextRow,
   FederatedDispatchRow,
@@ -42,34 +39,9 @@ export async function inspectWorkerTerminal(
   if (!terminalHandle) {
     return { terminal: null, exact: false, status: 'unattached', terminalHandle: null }
   }
-  const structured = resolveStructuredWorkerForDispatch(db, dispatchId)
-  if (structured) {
-    // Exactness is the recorded pane and lineage, which the runtime getters answer from the
-    // structured registry; there is no terminal to show.
-    //
-    // `agentWait` is deliberately ABSENT rather than null. Null is the contract's "Wakii looked and
-    // found no wait", and nothing here looks: a structured worker parks on a journal question item,
-    // which no terminal prompt scan can see. Reporting null would tell a coordinator the worker is
-    // not waiting, which is the one thing the field's own documentation forbids inferring.
-    const exact = db.isDispatchProcessCurrent({
-      dispatchId,
-      paneKey: structured.paneKey,
-      processIncarnation: structured.processIncarnation
-    })
-    const observation = observeStructuredWorker(structured)
-    const addressable = structuredWorkerAddressable(
-      db,
-      structured.sessionId,
-      db.getWorkerTerminalResourceByHandle?.(structured.handle)
-    )
-    return {
-      terminal: null,
-      exact,
-      status: exact ? observation.status : 'identity_changed',
-      ...(exact && observation.reason ? { reason: observation.reason } : {}),
-      ...(exact && addressable !== null ? { addressable } : {}),
-      terminalHandle: null
-    }
+  const session = await inspectSessionWorker(runtime, db, dispatchId, terminalHandle)
+  if (session) {
+    return session
   }
   let effectiveHandle = terminalHandle
   let terminal = await runtime.showTerminal(effectiveHandle).catch(() => null)
@@ -281,7 +253,8 @@ export function projectFleetWorkerPage(
     attentionFacts: db.getWorkerAttentionFactsForDispatches([dispatchId], now),
     statuses: runtime.getOrchestrationFleetAgentStatusSnapshot(),
     limit: 1,
-    now
+    now,
+    observeChat: (sessionId) => observeChatAssignee(sessionId, db)
   })
 }
 
@@ -315,7 +288,7 @@ export function resolvePinnedFederatedServer(
   if (server.peerFingerprint !== federated.peer_fingerprint) {
     throw new OrchestrationError(
       'peer_changed',
-      `Saved environment ${federated.environment_name} now identifies a different Wakii server.`
+      `Saved environment ${federated.environment_name} now identifies a different Orca server.`
     )
   }
   return server

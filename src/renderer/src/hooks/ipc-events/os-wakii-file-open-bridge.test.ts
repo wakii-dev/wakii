@@ -18,8 +18,8 @@ let storeState: {
 }
 
 vi.mock('../../store', () => ({ useAppStore: { getState: () => storeState } }))
-vi.mock('@/lib/floating-workspace-terminal-actions', () => ({
-  isFloatingWorkspacePanelVisible: mocks.isFloatingWorkspacePanelVisible
+vi.mock('@/store/floating-workspace-panel-selector', () => ({
+  selectFloatingWorkspacePanelVisible: () => mocks.isFloatingWorkspacePanelVisible()
 }))
 vi.mock('sonner', () => ({ toast: { error: mocks.toastError } }))
 // Mirrors i18next interpolation so toast copy assertions stay honest.

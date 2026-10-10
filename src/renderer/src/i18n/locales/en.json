@@ -1,4 +1,7 @@
 {
+  "osDocumentOpen": {
+    "failed": "Failed to open the file."
+  },
   "sidebar": {
     "revealFiltered": {
       "title": "Reveal hidden workspace?",
@@ -46,7 +49,7 @@
     "clientHosted": {
       "preparationFailed": "Couldn't start the remote browser on this desktop. Check the paired connection and try again.",
       "unavailableTitle": "Client-hosted browser unavailable",
-      "unavailableDescription": "This page is attached to a different desktop or is no longer available.",
+      "unavailableDescription": "This page isn't available on this desktop right now.",
       "download": {
         "started": "Downloading {{filename}}…",
         "completed": "Downloaded {{filename}}",
@@ -64,7 +67,9 @@
       "hostRowOfflineNamed": "Offline — was hosted on {{device}}",
       "hostRowOffline": "Offline — the device hosting it quit",
       "hostRowNamed": "Hosted on {{device}}",
-      "hostRow": "Hosted on another device"
+      "hostRow": "Hosted on another device",
+      "unavailableOtherDesktopDescription": "This page is open on another desktop.",
+      "unavailableHostOfflineDescription": "{{host}} is offline. This page will reload here once it reconnects."
     },
     "navigation": {
       "back": "Back",
@@ -138,6 +143,12 @@
     "retrying": "Retrying…"
   },
   "settings": {
+    "terminal": {
+      "optionLayoutAlt": "ABC or U.S. — Option sends Alt/Esc sequences",
+      "optionLayoutCompose": "layout uses Option to compose characters like @, €, [, ]",
+      "optionLayoutUnknown": "unknown layout — Option composes characters (safe default)",
+      "optionShortcutHint": "Choose Both for Option shortcuts, Off for accents and symbols, or Left/Right to use one Option key for each."
+    },
     "appearance": {
       "language": {
         "title": "Language",
@@ -174,6 +185,30 @@
           "statusItem": "status item",
           "activity": "activity"
         }
+      },
+      "chat": {
+        "title": "Chat",
+        "textSize": "Text size",
+        "textSizeDescription": "Messages, tool activity and the message box. {{increase}} / {{decrease}} in a chat change this too.",
+        "codeTextSize": "Code text size",
+        "codeTextSizeDescription": "Code blocks, inline code, commands and tool output.",
+        "width": "Width",
+        "widthDescription": "How wide messages and the message box can grow in a wide pane.",
+        "resetAppearance": "Reset chat appearance",
+        "resetDescription": "Restore the defaults above.",
+        "comfortable": "Comfortable",
+        "wide": "Wide",
+        "full": "Full",
+        "pixels": "px",
+        "reset": "Reset",
+        "matchTerminalInterface": "Match terminal interface",
+        "matchTerminalInterfaceDescription": "Use your terminal interface's font and colors for the whole chat. Stays in sync if you change your terminal theme later.",
+        "contrast": "Contrast",
+        "contrastDescription": "How bright chat text is against the background. The right end matches the older, brighter look.",
+        "softer": "Softer",
+        "sharper": "Sharper",
+        "terminalControlledHint": "Set by terminal interface.",
+        "terminalControlledTooltip": "Matching your terminal interface. Turn off Match terminal interface to change this."
       }
     },
     "browser": {
@@ -231,12 +266,28 @@
         "description": "Shows a notice on a Codex you started yourself when it shares a server with other tabs, because its agent status may be wrong."
       }
     },
-    "terminal": {
-      "optionLayoutAlt": "ABC or U.S. — Option sends Alt/Esc sequences",
-      "optionLayoutCompose": "layout uses Option to compose characters like @, €, [, ]",
-      "optionLayoutUnknown": "unknown layout — Option composes characters (safe default)",
-      "optionShortcutHint": "Choose Both for Option shortcuts, Off for accents and symbols, or Left/Right to use one Option key for each."
-    }
+    "chat": {
+      "description": "Choose how chats look and get their names.",
+      "names": {
+        "title": "Chat names",
+        "description": "Use an agent to name new chats from their first message. Without a generated name, chats stay Claude Chat or Codex Chat.",
+        "enable": "Name chats automatically",
+        "recipe": "Chat name",
+        "recipeDescription": "Generate a short name from the first message in a new chat.",
+        "customCommandDescription": "Command line shared by recipes that select Custom command. Use {prompt} to pass the input as an argument; otherwise it is piped to stdin.",
+        "saveFailed": "Could not save chat name settings.",
+        "searchAgent": "agent",
+        "searchTemplate": "command template"
+      }
+    },
+    "followSymlinkedDirectoriesKeywords": {
+      "symlink": "symlink",
+      "linkedFolder": "linked folder",
+      "quickOpen": "quick open",
+      "fileExplorer": "file explorer"
+    },
+    "followSymlinkedDirectories": "Follow symlinked directories",
+    "followSymlinkedDirectoriesDescription": "Search linked folders in Quick Open and expand local linked folders in File Explorer."
   },
   "menu": {
     "checkForUpdates": "Check for Updates...",
@@ -616,7 +667,7 @@
           "9e2a9bb87b": "Continue",
           "6f8056a565": "Command Code",
           "4238b771b5": "Codebuff",
-          "b0b350de65": "Freebuff",
+          "freebuff_label": "Freebuff",
           "cbaf0c2e0b": "Cline",
           "1f8a19e9ad": "Autohand Code",
           "5e8eff11b3": "Auggie",
@@ -640,17 +691,17 @@
           "fc80296033": "Devin",
           "da41abbdd4": "Ante",
           "060d152fb5": "Trae",
+          "muse_label": "Muse",
+          "dsh_label": "DeepSeek Harness",
+          "qoder_label": "Qoder CLI",
+          "zcode_label": "ZCode",
           "d443a47995": "Prime Agent",
           "mimo_code_label": "MiMo Code",
           "opencode2_label": "OpenCode 2",
-          "muse_label": "Muse",
-          "zcode_label": "ZCode",
-          "dsh_label": "DeepSeek Harness",
-          "freebuff_label": "Freebuff",
-          "qoder_label": "Qoder CLI",
           "codebuddy_label": "CodeBuddy",
           "qoder_cn_label": "Qoder CLI China",
-          "jcode_label": "Jcode"
+          "jcode_label": "Jcode",
+          "b0b350de65": "Freebuff"
         },
         "skill": {
           "cli": {
@@ -1022,10 +1073,11 @@
             "empty": "{{fileName}} is empty.",
             "tooLarge": "{{fileName}} is larger than {{maxSize}}.",
             "tooMany": "You can attach up to {{maxCount}} images.",
+            "totalTooLarge": "{{fileName}} would bring the attachments over {{maxSize}} in total.",
             "dimensionsTooLarge": "{{fileName}} has dimensions that are too large to preview safely.",
             "invalidImage": "{{fileName}} is not a valid supported image.",
             "additionalErrors": "{{count}} additional images could not be attached.",
-            "totalTooLarge": "{{fileName}} would bring the attachments over {{maxSize}} in total."
+            "compressed": "{{fileName}} was compressed from {{originalSize}} to {{size}} to fit the attachment limit."
           }
         }
       },
@@ -1064,6 +1116,16 @@
         "tooLarge": "Too large to copy, so Wakii couldn't hand it to the agent.",
         "storageFull": "Wakii's storage for dropped files is full, so Wakii couldn't hand it to the agent.",
         "generic": "Try the drop again."
+      },
+      "reveal": {
+        "in": {
+          "file": {
+            "manager": {
+              "notFound": "File not found. It may have been moved or deleted.",
+              "launchFailed": "Could not reveal the file."
+            }
+          }
+        }
       }
     },
     "hooks": {
@@ -1274,10 +1336,10 @@
         "d3e8a1f4b2": "Account switched",
         "9375620cc3": "Restart this session to use {{value0}}. It stays on the previous account until you do.",
         "6133594b12": "Keep old account",
-        "8f0d5c92a1": "Codex setup changed",
-        "3ea91b5c07": "This Codex session is using an outdated configuration",
-        "e6b7139d2a": "Restart this session to load your current Codex configuration.",
-        "7b1d20f4c8": "Keep current session"
+        "8f0d5c92a1": null,
+        "3ea91b5c07": null,
+        "e6b7139d2a": null,
+        "7b1d20f4c8": null
       },
       "FirstLaunchBanner": {
         "b9e1b966c7": "Dismiss notice",
@@ -2029,19 +2091,16 @@
         "listLabel": "Chats that would be resumed",
         "dontAskAgain": "Don't ask again (resume automatically)",
         "dontAskAgainHint": "You can turn this off in Settings → Experimental → Chat UI.",
-        "continuedOne": "Resumed 1 chat and asked it to continue",
-        "continuedMany": "Resumed {{value0}} chats and asked them to continue",
+        "continuedOne": "Resumed 1 chat",
+        "continuedMany": "Resumed {{value0}} chats",
         "selectAgent": "Resume {{value0}} chat \"{{value1}}\" in {{value2}}",
         "resumeSelected": "Resume {{value0}} chats",
         "resumeSelectedOne": "Resume 1 chat",
-        "continueUnconfirmed": "Continuation delivery is unconfirmed for {{value0}} chats. Open them to check before sending another message.",
-        "continueUnconfirmed_one": "Continuation delivery is unconfirmed for {{value0}} chat. Open it to check before sending another message.",
-        "continueUnconfirmed_other": "Continuation delivery is unconfirmed for {{value0}} chats. Open them to check before sending another message.",
-        "continueRefused": "{{value0}} chats could not be continued. Open them to continue manually.",
-        "continueRefused_one": "{{value0}} chat could not be continued. Open it to continue manually.",
-        "continueRefused_other": "{{value0}} chats could not be continued. Open them to continue manually.",
+        "continueUnconfirmed": null,
+        "continueUnconfirmed_one": null,
+        "continueUnconfirmed_other": null,
         "dismissAll": "Dismiss all",
-        "dismissUnconfirmed": "Dismissing the resume offer was not confirmed — it may still be in the status bar.",
+        "dismissUnconfirmed": null,
         "notContinuedOne": "1 chat couldn’t be resumed",
         "notContinuedMany": "{{value0}} chats couldn’t be resumed",
         "notConfirmedOne": "Couldn’t confirm 1 chat was resumed",
@@ -2049,7 +2108,7 @@
         "notConfirmedOtherOne": "Couldn’t confirm 1 other chat was resumed",
         "notConfirmedOtherMany": "Couldn’t confirm {{value0}} other chats were resumed",
         "show": "Show",
-        "dismiss": "Dismiss",
+        "dismiss": null,
         "activityUnnamed": "unnamed",
         "activityApproval": "Waiting for your approval: {{value0}}",
         "activityQuestion": "Waiting for your answer: {{value0}}",
@@ -2057,7 +2116,10 @@
         "activitySubagentOne": "Subagent running: {{value0}}",
         "activitySubagentMany": "{{value0}} subagents running",
         "activityMonitorOne": "Monitoring: {{value0}}",
-        "activityMonitorMany": "Monitoring {{value0}} background tasks"
+        "activityMonitorMany": "Monitoring {{value0}} background tasks",
+        "continueRefused": "{{value0}} chats could not be continued. Open them to continue manually.",
+        "continueRefused_one": "{{value0}} chat could not be continued. Open it to continue manually.",
+        "continueRefused_other": "{{value0}} chats could not be continued. Open them to continue manually."
       },
       "StarNagCard": {
         "92b0f9d921": "is authenticated and try again.",
@@ -2204,6 +2266,7 @@
         "c679af7ad9": "Refresh My Todos",
         "dfd72673e7": "Failed to save project selection.",
         "b797bdd7c3": "Clear search",
+        "jiraTextMatchesNotice": "Showing text matches. Jira couldn't run this search as JQL.",
         "99c2755218": "Search issues or enter JQL, e.g. project = ABC",
         "2ff9fd71fd": "Refresh Jira issues",
         "0b65d3fb2c": "Search Linear projects...",
@@ -2404,8 +2467,7 @@
         "linearModeHasWorktreeTooltip": "Linear tickets linked to an Wakii workspace",
         "linearEmptyHasWorktree": "No Linear tickets are linked to an Wakii workspace yet. Start work from a Linear issue to see it here.",
         "linearOpenAttachedWorkspace": "Open workspace attached to {{value0}}",
-        "linearWorktreesColumn": "Workspaces",
-        "jiraTextMatchesNotice": "Showing text matches. Jira couldn't run this search as JQL."
+        "linearWorktreesColumn": "Workspaces"
       },
       "Terminal": {
         "73768427cf": "Close",
@@ -3235,18 +3297,25 @@
           },
           "MobileDriverOverlay": {
             "c6460cf584": "Take back",
-            "c8f2e1a4b9": "Take back this terminal",
+            "c8f2e1a4b9": null,
             "c44659e09f": "Phone driving",
-            "7cffad954c": "Collapse",
+            "7cffad954c": null,
             "3eed73394f": "Your keyboard is paused",
-            "faa367dc74": "Your phone left this at phone size",
-            "54f7d6f69d": "Take back all terminals",
-            "b3d8e1f42a": "Restore this terminal",
-            "e8c4f2a91b": "Restore all terminals",
-            "f2a8b9c1d3": "From your phone",
+            "faa367dc74": null,
+            "54f7d6f69d": null,
+            "b3d8e1f42a": null,
+            "e8c4f2a91b": null,
+            "f2a8b9c1d3": null,
             "c7e4a2b8f1": "Your phone is in control",
-            "d9f3c6e2a4": "Desktop keyboard is paused. Take back this terminal to type here, take back all terminals your phone controls, or collapse to keep watching.",
-            "a6b1d8f3e2": "Your phone session ended. Restore to desktop size for this terminal, or for all terminals your phone left at phone size."
+            "d9f3c6e2a4": null,
+            "a6b1d8f3e2": null,
+            "4b7e1c9a20": "Still sized for your phone",
+            "9d2f6a3e58": "Your phone session ended. Restore to fit this window.",
+            "1e5c8b7d43": "Restore",
+            "6a3d9f2c71": "Restore all",
+            "8c1a5e9f36": "Desktop typing is paused. Output keeps streaming.",
+            "2f7b4d1e95": "Take back all",
+            "3a9c5f7e12": "Minimize"
           },
           "TerminalAgentSessionForkDialog": {
             "17fc841e59": "Copy context",
@@ -3296,8 +3365,8 @@
             "sessionUnavailable": "Wakii couldn't reattach to this pane's terminal session on the host. Open a new terminal to continue.",
             "sourceRestoring": "Reconnecting this terminal — its output is being re-established. The session is still running.",
             "remoteTerminalClosed": "Remote terminal was closed.",
-            "terminalProcessLimit": "Your system cannot start another terminal process. Close unused terminals or quit unused processes, then try again.",
-            "ptyAllocationLimit": "Your system cannot allocate any more pty devices. Close some terminals you are not using, in Wakii or another program, then try again."
+            "ptyAllocationLimit": "Your system cannot allocate any more pty devices. Close some terminals you are not using, in Wakii or another program, then try again.",
+            "terminalProcessLimit": "Your system cannot start another terminal process. Close unused terminals or quit unused processes, then try again."
           },
           "TerminalProcessExitOverlay": {
             "capacityTitle": "Git Bash console limit reached",
@@ -3338,6 +3407,14 @@
             "38c282a2c4": "The analyzer opens directly from here. You can also open it later from the lower-left toolbox menu by choosing Space Analyzer.",
             "e2fcf07c0d": "Wakii could not save this terminal session because local storage is full or not writable. Open the disk space analyzer to find workspace storage you can clean up.",
             "678c780a2c": "Disk space is unavailable"
+          },
+          "zcode": {
+            "missing": {
+              "tui": {
+                "title": "This ZCode build has no terminal UI",
+                "description": "Wakii's hooks installed correctly — the zcode on your PATH just cannot open a session. The ZCode desktop app bundles the agent runtime without its terminal UI. Install a zcode that ships the TUI, then run zcode outside Wakii to confirm."
+              }
+            }
           },
           "osc52": {
             "clipboard": {
@@ -3463,16 +3540,16 @@
             "3ccc7981bb": "Host unavailable",
             "54f29b7c0d": "Loading host…"
           },
-          "zcode": {
-            "missing": {
-              "tui": {
-                "title": "This ZCode build has no terminal UI",
-                "description": "Wakii's hooks installed correctly — the zcode on your PATH just cannot open a session. The ZCode desktop app bundles the agent runtime without its terminal UI. Install a zcode that ships the TUI, then run zcode outside Wakii to confirm."
-              }
-            }
-          },
           "TerminalRestoringPlaceholder": {
             "restoring": "Restoring terminal…"
+          },
+          "AgentLaunchPaneNotice": {
+            "commandNotFound": "Its command wasn't found on this machine.",
+            "copyPrompt": "Copy prompt",
+            "exitedDuringStart": "It exited while starting.",
+            "notStarted": "The agent couldn't start.",
+            "unconfirmed": "Couldn't confirm the agent started.",
+            "workspaceGone": "Its workspace is no longer available."
           }
         }
       },
@@ -3536,9 +3613,9 @@
             "6b3efb106e": "Split Up",
             "fdd29eb669": "Pin Tab",
             "8e9d603a09": "Unpin Tab",
-            "revealInFinder": "Reveal in Finder",
-            "openContainingFolder": "Open Containing Folder",
-            "revealInFileExplorer": "Reveal in File Explorer"
+            "revealInFinder": null,
+            "openContainingFolder": null,
+            "revealInFileExplorer": null
           },
           "QuickLaunchButton": {
             "348a04c1ad": "Agent settings…",
@@ -3895,7 +3972,10 @@
             "codexSignInError": "Codex sign-in failed. Please try again.",
             "cursorUsageMenu": "Cursor Usage",
             "hiddenUsageProviders": "Also: {{value0}}",
-            "zcodeUsageMenu": "ZCode Usage"
+            "zcodeUsageMenu": "ZCode Usage",
+            "4fba7dc1e7": "{{value0}} bal",
+            "4025a6f62f": "Unlimited",
+            "a95969101f": "{{value0}} credits"
           },
           "StatusBarUsageEmptyCta": {
             "828c764a79": "Connect an account",
@@ -4042,6 +4122,9 @@
             }
           },
           "tooltip": {
+            "zcode": {
+              "mcp": "MCP"
+            },
             "cedb7b99e3": "% used",
             "6d6df77f41": "No data available",
             "7f7f208060": "Monthly",
@@ -4094,9 +4177,14 @@
               },
               "plan": "Plan"
             },
-            "zcode": {
-              "mcp": "MCP"
-            }
+            "fbc80d8be2": "Zen balance",
+            "c03c61f53f": "Balance",
+            "f6a27a3c0a": "{{value0}} available",
+            "7404abbece": "Usage credits",
+            "473d45cd0f": "Balance {{value0}}",
+            "f21b2ba897": "Credits",
+            "56c0d70577": "Unlimited",
+            "87b5bda4d3": "{{value0}} credits available"
           },
           "SshTargetStatusRow": {
             "sshHost": "SSH Host"
@@ -4202,6 +4290,16 @@
             "resumingAriaOne": "Resuming 1 chat. Click to open details.",
             "resumingAria": "Resuming {{value0}} chats. Click to open details.",
             "resumingTooltip": "Restoring interrupted chats and asking them to carry on…"
+          },
+          "provider": {
+            "extra": {
+              "usage": {
+                "section": {
+                  "135d51c19f": "Limit {{value0}}",
+                  "apiKeyBalanceUnavailable": "Balance is not included in this usage response."
+                }
+              }
+            }
           }
         }
       },
@@ -4397,7 +4495,6 @@
           "444585cb41": "with data",
           "ecb0cd8a4c": "enabled -",
           "33f7b043d2": "Providers",
-          "60002bb22f": "No local Claude, Codex, or OpenCode usage found yet. The overview will populate after the next agent session writes token logs.",
           "70f36452d4": "Cache share",
           "327603fe8b": "Active days",
           "0eaf937335": "Est. cost",
@@ -4412,7 +4509,8 @@
           "c760c481c5": "Usage Overview",
           "55c910f4f1": "- some model prices are unavailable",
           "enableMuse": "Enable Muse",
-          "noLocalUsageYet": "No local Claude, Codex, OpenCode, or Muse usage found yet. The overview will populate after the next agent session writes token logs."
+          "noLocalUsageYet": "No local Claude, Codex, OpenCode, or Muse usage found yet. The overview will populate after the next agent session writes token logs.",
+          "60002bb22f": "No local Claude, Codex, or OpenCode usage found yet. The overview will populate after the next agent session writes token logs."
         },
         "share": {
           "card": {
@@ -4468,7 +4566,6 @@
               "1dd166c920": "Less",
               "52d9221dc0": "Recent token activity heatmap",
               "c424eb3f8e": "Best:",
-              "f28ff1f852": "Recent combined Claude, Codex, and OpenCode token activity.",
               "69e2b50427": "Daily intensity",
               "3a795542fa": "Combined token mix",
               "e65084cb4b": "reasoning",
@@ -4485,7 +4582,8 @@
               "statusScanning": "Scanning",
               "statusEnabled": "Enabled",
               "statusOff": "Off",
-              "recentCombinedActivity": "Recent combined Claude, Codex, OpenCode, and Muse token activity."
+              "recentCombinedActivity": "Recent combined Claude, Codex, OpenCode, and Muse token activity.",
+              "f28ff1f852": "Recent combined Claude, Codex, and OpenCode token activity."
             }
           }
         },
@@ -5647,6 +5745,7 @@
           "bdd23b4e07": "GitHub issues",
           "44713a5d04": "Linear issues",
           "jiraIssues": "Jira issues",
+          "host": "Host",
           "cc17bd443b": "Detailed",
           "0f9b959b31": "PR",
           "e029a2d775": "Status",
@@ -5662,8 +5761,7 @@
           "219ebf1961": "Branch name",
           "folderPathIdentity": "Branch / folder path",
           "cli": "Wakii CLI",
-          "workspaceOptions": "Workspace options",
-          "host": "Host"
+          "workspaceOptions": "Workspace options"
         },
         "SshTargetRow": {
           "4677394048": "Connecting…",
@@ -5716,6 +5814,7 @@
           "74522ee457": "rename failed",
           "02e19349f4": "Auto-rename failed: view error",
           "691ccfd622": "Deleting…",
+          "deleteFailed": "Delete failed",
           "35ccfe2475": "Project {{value0}}",
           "1d66d84f0b": "string",
           "57eaa61b55": "Hide child workspaces",
@@ -5732,8 +5831,7 @@
           "automationCreated": "Created by automation",
           "branchIdentity": "Branch",
           "branchFolderPathIdentity": "Branch or folder path",
-          "ef18787206": "Queued for deletion",
-          "deleteFailed": "Delete failed"
+          "ef18787206": "Queued for deletion"
         },
         "WorktreeCardAgents": {
           "1b0a156717": "Agents"
@@ -5817,6 +5915,7 @@
           "76865d827f": "Move to group",
           "503ec0f8e6": "New group from project",
           "3350101edb": "Copy Path",
+          "copyWorktreeName": "Copy Worktree Name",
           "f4475537d8": "Delete",
           "f5ac91531d": "Remove Project from Wakii",
           "b42391d8bf": "Deleting…",
@@ -5836,8 +5935,7 @@
           "deleteWorktree": "Delete Worktree",
           "sleepWithDescendants": "Sleep with Descendants ({{value0}})",
           "sleepWithDescendantsDescription": "Close active panels in this workspace and every nested descendant to free up memory and CPU.",
-          "deleteWithDescendants": "Delete with Descendants…",
-          "copyWorktreeName": "Copy Worktree Name"
+          "deleteWithDescendants": "Delete with Descendants…"
         },
         "WorktreeList": {
           "7a8b9c0d1e": "Update required",
@@ -6397,7 +6495,8 @@
         "SidebarFeedbackImageAttachments": {
           "screenshotsHint": "Attach up to {count} screenshots",
           "attachImages": "Attach",
-          "removeImage": "Remove {{fileName}}"
+          "removeImage": "Remove {{fileName}}",
+          "preparing": "Preparing attachments…"
         },
         "WorkspaceKanbanSearchField": {
           "bdb753c78d": "No workspaces match",
@@ -6515,8 +6614,8 @@
           "xcodeLicense": "Apple developer tools require license acceptance before Git can run.",
           "developerTools": "Apple command-line developer tools are missing or unavailable.",
           "architectureMismatch": "A Git-related executable could not run because its CPU architecture is incompatible with this execution host. Install Git and related tools for the host architecture.",
-          "copyCommand": "Copy command",
-          "copyDiagnostics": "Copy diagnostics"
+          "copyDiagnostics": "Copy diagnostics",
+          "copyCommand": "Copy command"
         },
         "LocalGitToolchainScanBanner": {
           "xcodeLicenseTitle": "Accept the Xcode license to use Git",
@@ -6529,6 +6628,11 @@
           "copied": "Command copied",
           "retry": "Retry now",
           "restored": "Git is working again. Worktrees refreshed."
+        },
+        "manualSortSwitch": {
+          "title": "Sort changed to Manual",
+          "description": "Manual keeps workspaces where you drop them.",
+          "restore": "Back to {{label}}"
         }
       },
       "shared": {
@@ -7108,6 +7212,7 @@
           "5dae812f50": "Refresh",
           "52e640f3a0": "Refresh CLI status",
           "38edbb5721": "Shell command",
+          "outsideOrcaDescription": "Wakii terminals already have `orca`. Turn this on to use `orca` from other terminals outside Wakii.",
           "c5c0f2641d": "Wakii CLI",
           "d77352f2df": "Failed to remove `{{value0}}` from PATH.",
           "af5540930c": "Removed `{{value0}}` from PATH.",
@@ -7133,8 +7238,7 @@
           "installFailureConflictRemedy": "Remove {{value0}} and register again if it is no longer needed.",
           "6f894ef9c2": "Show in Finder",
           "cbe55e4d48": "Show in Explorer",
-          "9fd4023db0": "Show in File Manager",
-          "outsideOrcaDescription": "Wakii terminals already have `orca`. Turn this on to use `orca` from other terminals outside Wakii."
+          "9fd4023db0": "Show in File Manager"
         },
         "CliSkillRuntimeSetup": {
           "04325573f8": "WSL",
@@ -7317,7 +7421,7 @@
             "defaultViewTerminal": "Terminal chat",
             "defaultViewNative": "Chat UI",
             "structuredTitle": "Use updated structured native chat",
-            "structuredCopy": "Open new Codex and Claude agents as structured chats. Off opens them in the terminal-backed chat. Chats that already exist stay as they are.",
+            "structuredCopy": "Open new agents as structured chats where supported. Off opens them in the terminal-backed chat. Chats that already exist stay as they are.",
             "structuredScope": "Runs on this machine and on paired Wakii servers running a version that supports it; older servers keep terminal chat. WSL and SSH hosts continue to use terminal chat, and Windows falls back to it unless Wakii can read process start times.",
             "structuredToggleLabel": "Toggle updated structured native chat",
             "resumeTitle": "Resume working chats automatically after a restart",
@@ -7423,15 +7527,15 @@
           "configureProxy": "Configure proxy"
         },
         "GeneralPane": {
+          "editor_preview_tabs": "Reuse a preview tab when browsing files",
+          "editor_preview_tabs_description": "Single-clicking a file in the Explorer, or following a link in Markdown source, reuses one italic preview tab per group instead of opening a new one. Editing, double-clicking, or pinning keeps that tab open. Turn this off to give every file its own tab.",
           "confirm_running_terminal_close": "Confirm before closing running terminals",
           "confirm_running_terminal_close_description": "Ask before stopping a running agent or command when closing a terminal.",
           "d58fccfd84": "Navigation",
           "5cb5475664": "Confirm before closing pinned tabs",
           "36b2a5dc6d": "Show a confirmation dialog before a pinned tab is closed.",
           "projectRuntime": "Project Runtime",
-          "projectRuntimeDescription": "Default runtime for local Windows projects that do not override it.",
-          "editor_preview_tabs": "Reuse a preview tab when browsing files",
-          "editor_preview_tabs_description": "Single-clicking a file in the Explorer, or following a link in Markdown source, reuses one italic preview tab per group instead of opening a new one. Editing, double-clicking, or pinning keeps that tab open. Turn this off to give every file its own tab."
+          "projectRuntimeDescription": "Default runtime for local Windows projects that do not override it."
         },
         "GeneralSupportSection": {
           "af7d9f4396": "Thanks for the support!",
@@ -7836,7 +7940,8 @@
           "pairingCodeReady": "Pairing code ready",
           "copyPairingCode": "Copy pairing code",
           "diagnosticsCopied": "Diagnostics copied",
-          "diagnosticsCopyFailed": "Failed to copy diagnostics"
+          "diagnosticsCopyFailed": "Failed to copy diagnostics",
+          "5e2c7a1f84": "While you're using a terminal on your phone, Orca shrinks it to fit your phone screen. When you close the app or switch away, this controls whether it stays at phone size (so interactive CLI tools don't reflow) or resizes back to your desktop. You can always use Restore or Restore all on the banner to resize manually."
         },
         "MobileSettingsPane": {
           "9a3c280e49": "GitHub Releases",
@@ -8157,6 +8262,8 @@
           "c7ef4415de": "Display Name",
           "b0a0c14a1c": "Project-specific display details for the sidebar and tabs.",
           "removeProjectAllHosts": "Remove this project from Wakii on all configured hosts.",
+          "removeProjectCheckout": "Remove this checkout from Wakii. Other checkouts of this project stay.",
+          "removeProjectKeepCheckouts": "Remove this project from Wakii. Checkouts that have their own settings stay.",
           "0909e5d650": "Remove Project",
           "ee5a290616": "Opened as folder. Git features are unavailable for this workspace.",
           "323debba71": "Type:",
@@ -8223,9 +8330,7 @@
           "show": "Show",
           "hide": "Hide",
           "externalWorktreesGlobal": "Global default: {{value0}}",
-          "useGlobal": "Use global",
-          "removeProjectCheckout": "Remove this checkout from Wakii. Other checkouts of this project stay.",
-          "removeProjectKeepCheckouts": "Remove this project from Wakii. Checkouts that have their own settings stay."
+          "useGlobal": "Use global"
         },
         "RepositorySourceControlAiActionRows": {
           "548a6e1281": "Command template",
@@ -8499,8 +8604,8 @@
           "3c88ec55d6": "No settings found for \"",
           "c7ad095d96": "Loading settings...",
           "acc7bbdefd": "Press ESC again to exit settings",
-          "43b68e10f0": "You have unsaved Git AI Author changes. Leaving will discard them.",
-          "17bdee4ff1": "Discard unsaved Git AI Author changes?",
+          "43b68e10f0": "You have unsaved AI settings. Leaving will discard them.",
+          "17bdee4ff1": "Discard unsaved AI settings?",
           "084d8fac5b": "Privacy & Security",
           "23931df7e8": "Remote Hosts",
           "mobile_group": "Mobile",
@@ -8746,16 +8851,16 @@
           "e9609ddca6": "Proxy, jump host, and connection reuse",
           "8c922dffba": "Reuse SSH connection for faster setup",
           "53e9aabfc0": "Uses OpenSSH multiplexing when available. Turn off for hosts with custom SSH restrictions.",
-          "editTitle": "Edit SSH host",
-          "addTitle": "Add SSH host",
-          "editDescription": "Update connection details for this machine. Changes apply on next connect.",
-          "addDescription": "Add a persistent machine you can log into over SSH.",
-          "editingPrefix": "Editing",
           "remoteRuntime": "Runtime",
           "remoteRuntimeHelp": "Which Node.js runs Wakii on this host. Orca-managed Node uploads its own and needs no npm; Host Node uses the Node.js already installed there.",
           "remoteRuntimeAuto": "Auto",
           "remoteRuntimePinnedNode": "Orca-managed Node",
-          "remoteRuntimeHostNode": "Host Node"
+          "remoteRuntimeHostNode": "Host Node",
+          "editTitle": "Edit SSH host",
+          "addTitle": "Add SSH host",
+          "editDescription": "Update connection details for this machine. Changes apply on next connect.",
+          "addDescription": "Add a persistent machine you can log into over SSH.",
+          "editingPrefix": "Editing"
         },
         "TasksPane": {
           "f71d8a9dd3": "Task Providers",
@@ -8936,7 +9041,38 @@
             "fastDescription": "Extra multiplier while scrolling with a modifier key.",
             "tui": "TUI",
             "tuiDescription": "Discrete wheel reports for full-screen terminal apps."
-          }
+          },
+          "8dbe0bc942": "Shell arguments, one per line",
+          "f58cb71f53": "--rcfile\n/path/to/rcfile",
+          "48b91a3ed2": "Custom args",
+          "7bd83fc1d0": "-l (default)",
+          "5ffc4777b6": "Shell argument mode",
+          "578ec79449": "Enter one argument per line. Leave it empty to pass no arguments.",
+          "884a006065": "Starts the shell as a login shell with -l.",
+          "01c600daff": "Shell arguments",
+          "e3ae5aed18": ". Switch to System shell or choose an executable on this host.",
+          "59573d0b33": "Enter a shell name on PATH or an executable path. Orca starts it as a login shell.",
+          "5e06e87730": "Custom shell executable",
+          "c2bf02ce2f": "fish, nu, or /bin/zsh",
+          "f51cc79784": "Custom shell",
+          "dd3f4c35da": "System shell ({{value0}})",
+          "fd05fb109c": "Terminal shell",
+          "69724e8f0c": "Choose what Orca opens for new local terminal panes.",
+          "c2ddb189e7": "rcfile",
+          "73c211e979": "wrapper",
+          "4faf688f78": "login",
+          "44f8a56f66": "args",
+          "af893aa433": "arguments",
+          "ddc72a4860": "default",
+          "d469840b75": "nushell",
+          "17ad899ba4": "bash",
+          "c9bc93d343": "zsh",
+          "0cbe5ad727": "fish",
+          "81694f1584": "terminal",
+          "a909136b3f": "shell",
+          "1c29734248": "Shell used for new terminal panes",
+          "9589abc009": "Default shell",
+          "5a5eac2f44": "Shell not found: {{value0}}"
         },
         "TerminalSettingsPreview": {
           "a63953a48a": "Preview {{value0}} theme",
@@ -9458,6 +9594,11 @@
             "c5b9f8d1e3": "xai",
             "usagePercentageDisplayTitle": "Usage percentages",
             "usagePercentageDisplayDescription": "Choose whether provider limits show the percentage used or remaining.",
+            "zcodeUsageTitle": "ZCode Usage",
+            "zcodeUsageDescription": "Show ZCode Coding Plan quota usage in the status bar.",
+            "zcode": "zcode",
+            "zai": "zai",
+            "glm": "glm",
             "tray": {
               "tray": "tray",
               "system": "system tray",
@@ -9467,17 +9608,12 @@
               "background": "background"
             },
             "cursor": {
-              "description": "Show monthly Cursor plan usage from the Cursor sign-in on this computer.",
               "title": "Cursor Usage",
+              "description": "Show monthly Cursor plan usage from the Cursor sign-in on this computer.",
               "kw": {
                 "cursor": "cursor"
               }
-            },
-            "zcodeUsageTitle": "ZCode Usage",
-            "zcodeUsageDescription": "Show ZCode Coding Plan quota usage in the status bar.",
-            "zcode": "zcode",
-            "zai": "zai",
-            "glm": "glm"
+            }
           }
         },
         "auto": {
@@ -9900,6 +10036,13 @@
             "2a254b725e": "tab",
             "ca812803ea": "recent tab order",
             "e53d585ed6": "Recent or tab strip.",
+            "editor_preview_tabs_short": "Browsing files reuses one preview tab instead of opening a new one.",
+            "preview": "preview",
+            "reuse": "reuse",
+            "replace": "replace",
+            "explorer": "explorer",
+            "italic": "italic",
+            "browsing": "browsing",
             "256d92554d": "Tab Order",
             "22572e99c1": "annotations",
             "1ff67ba40c": "notes",
@@ -10023,14 +10166,7 @@
             "8f4357c2dc": "sticky",
             "f82e3682fd": "scroll",
             "8c14dc21a4": "scope",
-            "8d7a8880d7": "header",
-            "editor_preview_tabs_short": "Browsing files reuses one preview tab instead of opening a new one.",
-            "preview": "preview",
-            "reuse": "reuse",
-            "replace": "replace",
-            "explorer": "explorer",
-            "italic": "italic",
-            "browsing": "browsing"
+            "8d7a8880d7": "header"
           },
           "editor": {
             "search": {
@@ -10187,6 +10323,20 @@
               "statusConnected": "Connected",
               "statusNotConnected": "Not connected",
               "jiraTokenName": "Your Jira API token"
+            }
+          }
+        },
+        "machine": {
+          "name": {
+            "search": {
+              "title": "Machine name",
+              "description": "Choose the name other devices and hosts list this computer under.",
+              "machineName": "machine name",
+              "machine": "machine",
+              "hostname": "hostname",
+              "computer": "computer",
+              "rename": "rename",
+              "name": "name"
             }
           }
         },
@@ -10903,7 +11053,19 @@
               "statusline": "statusline",
               "dim": "dim",
               "colors": "colors"
-            }
+            },
+            "d31ed1ac1c": "rcfile",
+            "d9e29543a1": "wrapper",
+            "50ba80b6dd": "login",
+            "36ba1a1357": "args",
+            "5304b12d5c": "arguments",
+            "7c3ede6f12": "nushell",
+            "bf09070e31": "bash",
+            "d26257a80d": "zsh",
+            "454df22a5e": "fish",
+            "ddd5efe113": "shell",
+            "3de504994c": "Shell and arguments used for new local interactive terminal panes",
+            "1733ccd3e9": "Terminal shell"
           },
           "windows": {
             "search": {
@@ -11012,11 +11174,19 @@
           "a42f6fbdd8": "Keeps this computer and display awake while agents are working. Wakii also asks this device to stay awake when the lid is closed, subject to its power policy.",
           "modeTitle": "Keep computer awake",
           "modeDescriptionWindows": "Choose On, Agent, or Off. Agent mode stays awake while agents are working; lid-close behavior follows this device's power settings.",
-          "modeDescriptionDefault": "Choose On, Agent, or Off. Agent mode stays awake while agents are working. Wakii also asks this device to stay awake when the lid is closed, subject to its power policy."
+          "modeDescriptionDefault": "Choose On, Agent, or Off. Agent mode stays awake while agents are working. Wakii also asks this device to stay awake when the lid is closed, subject to its power policy.",
+          "modeDescriptionMac": "Choose On, Agent, or Off. Agent mode prevents idle sleep while agents work, so long runs finish with the lid open. Closing the lid still puts this Mac to sleep.",
+          "lidNoteWindows": "Lid-close behavior follows this device's power settings.",
+          "lidNoteMac": "Prevents idle sleep with the lid open; closing the lid still puts this Mac to sleep.",
+          "lidNoteDefault": "Orca also asks this device to stay awake when the lid is closed, subject to its power policy."
         },
         "agent-status-hooks-copy": {
           "7707c15abb": "Agent status hooks",
           "a68a642835": "Shows working, waiting, and done states in Wakii. Turn off to remove Wakii-managed hooks and stop reinstalling them."
+        },
+        "agent-workspace-trust-copy": {
+          "title": "Trust the folder when Wakii starts an agent",
+          "description": "Agents Wakii starts skip their \"Do you trust this folder?\" prompt, so the project's agent hooks and settings run right away. Without this, each agent asks the first time it runs in a folder. Agents running without you watching, such as orchestration workers, automations and agents started from your phone, will wait at that question until you answer it in their terminal. Folders already trusted stay trusted."
         },
         "agent-generated-tab-title-copy": {
           "19ad21615a": "Auto-generate tab titles",
@@ -11530,6 +11700,12 @@
           "refresh": "Refresh network interfaces",
           "step2RelayDescription": "Optional. Pick the Wi‑Fi or Tailscale address your phone should use when nearby — usually faster than Relay. Relay still works when you’re away.",
           "step2RelayDisclosure": "Also use a faster local path"
+        },
+        "MachineNameField": {
+          "label": "Machine name",
+          "description": "Other devices and hosts see “{{name}}”. Leave this blank to use the computer’s own name.",
+          "pending": "Other devices and hosts see this name. Leave it blank to use the detected computer name.",
+          "placeholder": "Detected automatically"
         },
         "MobileRelayBetaAvailability": {
           "about": "About the Wakii Relay beta",
@@ -12288,78 +12464,30 @@
           "6d4c55bacc": "Inline Images",
           "fffab5890b": "Display images directly in the terminal using SIXEL, iTerm2 (IIP), and Kitty graphics protocols."
         },
-        "EditorCaretAnimationSetting": {
-          "8e0f5141a1": "On",
-          "8dc4f98620": "Explicit",
-          "84ecf4f030": "Off",
-          "63ef2747f7": "Smooth Caret Animation",
-          "a181845e72": "Animate the text cursor as it moves in file editors."
-        },
-        "EditorRenderWhitespaceSetting": {
-          "f08dbab703": "None",
-          "6bce99b8b5": "Boundary",
-          "e1f52833fb": "Selection",
-          "09b41c31fb": "Trailing",
-          "b0974f678a": "All",
-          "085871d375": "Render Whitespace",
-          "628ef71b4c": "Show whitespace characters in file editors."
-        },
-        "EditorBreadcrumbsSetting": {
-          "fe2cb0ef78": "Breadcrumbs",
-          "9e7a1f613e": "Show the file path above the file editor."
-        },
-        "InlineBlameSetting": {
-          "683fd9af0f": "Inline Blame",
-          "9142b8bc2f": "Show commit author, date and summary at the end of the current line in the file editor."
-        },
-        "machine": {
-          "name": {
-            "search": {
-              "title": "Machine name",
-              "description": "Choose the name other devices and hosts list this computer under.",
-              "machineName": "machine name",
-              "machine": "machine",
-              "hostname": "hostname",
-              "computer": "computer",
-              "rename": "rename",
-              "name": "name"
-            }
-          }
-        },
-        "MachineNameField": {
-          "label": "Machine name",
-          "description": "Other devices and hosts see “{{name}}”. Leave this blank to use the computer’s own name.",
-          "pending": "Other devices and hosts see this name. Leave it blank to use the detected computer name.",
-          "placeholder": "Detected automatically"
-        },
         "CursorAccountsSection": {
           "source": {
-            "desktop": "Cursor IDE",
             "keychain": "macOS Keychain (cursor-agent)",
-            "cli": "Cursor CLI auth file"
+            "cli": "Cursor CLI auth file",
+            "desktop": "Cursor IDE"
           },
-          "signedInGeneric": "Signed in. Wakii reads the Cursor session stored on this computer.",
-          "signedOutHelp": "Sign in with Cursor IDE, or run cursor-agent login in a terminal, then click Refresh usage here.",
-          "refreshUsage": "Refresh usage",
-          "loading": "Loading…",
-          "expired": "Sign-in expired — run cursor-agent login on the computer running Wakii, then click Refresh usage.",
-          "planTotal": "Plan",
-          "signedIn": "Signed in",
-          "usageDescription": "Cursor bills two pools that reset with your billing cycle, plus on-demand spend once they run out.",
-          "dashboardLink": "Cursor dashboard",
-          "usageTitle": "Monthly plan usage",
-          "signedOut": "No Cursor sign-in found on this computer",
           "title": "Cursor",
           "subtitle": "Shows your monthly Cursor plan usage from the sign-in already on this computer. Wakii only reads it — it never changes your Cursor login.",
-          "staleUsage": "Last known usage — the latest refresh failed: {{reason}}",
-          "resets": "Resets {{when}}",
+          "dashboardLink": "Cursor dashboard",
+          "loading": "Loading…",
+          "signedIn": "Signed in",
           "signedInFrom": "Signed in. Wakii reads the session stored in {{source}}.",
+          "signedInGeneric": "Signed in. Wakii reads the Cursor session stored on this computer.",
+          "expired": "Sign-in expired — run cursor-agent login on the computer running Wakii, then click Refresh usage.",
+          "signedOut": "No Cursor sign-in found on this computer",
+          "signedOutHelp": "Sign in with Cursor IDE, or run cursor-agent login in a terminal, then click Refresh usage here.",
+          "refreshUsage": "Refresh usage",
+          "usageTitle": "Monthly plan usage",
+          "usageDescription": "Cursor bills two pools that reset with your billing cycle, plus on-demand spend once they run out.",
+          "planTotal": "Plan",
+          "resets": "Resets {{when}}",
+          "usageLabel": "Usage",
           "noAllowance": "Cursor reported no usage allowance for this account.",
-          "usageLabel": "Usage"
-        },
-        "agent-workspace-trust-copy": {
-          "title": "Trust the folder when Wakii starts an agent",
-          "description": "Agents Wakii starts skip their \"Do you trust this folder?\" prompt, so the project's agent hooks and settings run right away. Without this, each agent asks the first time it runs in a folder. Agents running without you watching, such as orchestration workers, automations and agents started from your phone, will wait at that question until you answer it in their terminal. Folders already trusted stay trusted."
+          "staleUsage": "Last known usage — the latest refresh failed: {{reason}}"
         },
         "UnsealedCredentialNotice": {
           "body": "{{credential}} is stored unencrypted — this system has no OS keyring Wakii can use. Anyone who can read your disk or a backup of it can read the credential. Install and unlock gnome-keyring or kwallet, then save it again to seal it."
@@ -12410,6 +12538,30 @@
           "offCount": "{{count}} off",
           "machines": "Machines",
           "machinesDescription": "Choose which machines can show notifications on this computer. A paired server’s switch also covers work reached through it."
+        },
+        "EditorCaretAnimationSetting": {
+          "8e0f5141a1": "On",
+          "8dc4f98620": "Explicit",
+          "84ecf4f030": "Off",
+          "63ef2747f7": "Smooth Caret Animation",
+          "a181845e72": "Animate the text cursor as it moves in file editors."
+        },
+        "EditorRenderWhitespaceSetting": {
+          "f08dbab703": "None",
+          "6bce99b8b5": "Boundary",
+          "e1f52833fb": "Selection",
+          "09b41c31fb": "Trailing",
+          "b0974f678a": "All",
+          "085871d375": "Render Whitespace",
+          "628ef71b4c": "Show whitespace characters in file editors."
+        },
+        "EditorBreadcrumbsSetting": {
+          "fe2cb0ef78": "Breadcrumbs",
+          "9e7a1f613e": "Show the file path above the file editor."
+        },
+        "InlineBlameSetting": {
+          "683fd9af0f": "Inline Blame",
+          "9142b8bc2f": "Show commit author, date and summary at the end of the current line in the file editor."
         }
       },
       "right": {
@@ -13563,7 +13715,8 @@
             "fca915a67a": "Remote items are permanently deleted and cannot be undone. Local items move to the {{value0}}."
           },
           "useFileExplorerHandlers": {
-            "32cd9fd991": "Cannot open symlink target"
+            "32cd9fd991": "Cannot open symlink target",
+            "folderLinksOutsideProject": "This folder links outside the project, so it can't be opened here."
           },
           "useFileExplorerImport": {
             "25919b2050": "Skipped {{value0}} {{value1}}.",
@@ -13831,7 +13984,7 @@
           },
           "aiVaultSessionLogOpen": {
             "workspaceGone": "Couldn't open log — workspace is no longer available.",
-            "notAuthorized": "Couldn't open log — path not authorized.",
+            "notAuthorized": null,
             "alreadyEditable": "Log is already open for editing."
           },
           "github": {
@@ -14546,18 +14699,18 @@
             "88ffb502e5": "Open Markdown Note",
             "629528690b": "New Markdown Note",
             "3215fc73e9": "New Terminal",
-            "da508bd7f5": "Save",
-            "918c2139f3": "Don't Save",
-            "e7bf09d4d4": "Cancel",
-            "690b6fb98a": "Unsaved Changes",
+            "da508bd7f5": null,
+            "918c2139f3": null,
+            "e7bf09d4d4": null,
+            "690b6fb98a": null,
             "bbc177f98f": "Enable",
             "adc281394d": "Dismiss",
             "8cf80db43b": "Set up the Wakii CLI and agent skill so agents can coordinate through Wakii.",
             "2a3c5ddf5e": "Enable orchestration",
-            "d6b563ae24": "Loading editor...",
+            "d6b563ae24": null,
             "8b14ba6c17": "New Browser Tab",
-            "b085fb58b5": "This file has unsaved changes.",
-            "5ddc688c52": "\"{{value0}}\" has unsaved changes. Do you want to save before closing?",
+            "b085fb58b5": null,
+            "5ddc688c52": null,
             "25d7817f79": "terminal"
           },
           "FloatingTerminalToggleButton": {
@@ -14814,6 +14967,7 @@
                 "checklist": {
                   "localized": {
                     "copy": {
+                      "workOnTwoTasks": "Work on two tasks at once",
                       "62bac8f43c": "Work in 2 different worktrees at once. Each one is isolated (even in the same project). Perfect for working on 2 features at once.",
                       "908898c3ee": "Use Wakii's browser",
                       "43781563c3": "Browse your web app without leaving Wakii. Grab any element and send its exact source and styles to an agent with one click.",
@@ -14827,7 +14981,6 @@
                       "56049b74c2": "Run install and setup commands automatically so every new worktree is ready for agents.",
                       "2cf795433b": "Start work in multiple repos",
                       "42525ba8a4": "Bring your key repos into Wakii so you can start agent work without hunting for folders.",
-                      "workOnTwoTasks": "Work on two tasks at once",
                       "agentSkillsName": "Give agents Wakii skills",
                       "agentSkillsDescription": "Install the skills agents use to drive Wakii's browser, control your computer, and coordinate multi-step work."
                     }
@@ -15092,8 +15245,8 @@
                   "setup": {
                     "state": {
                       "35dea1ae12": "Agent control is ready.",
-                      "c94ff11e91": "Could not re-check setup status.",
-                      "skillNotInstalled": "The Wakii CLI skill is not installed yet."
+                      "skillNotInstalled": "The Wakii CLI skill is not installed yet.",
+                      "c94ff11e91": "Could not re-check setup status."
                     }
                   }
                 },
@@ -15115,8 +15268,8 @@
             "3756cbeca7": "Not now",
             "6d950431d2": "Hide",
             "ebceac65a4": "Set up",
-            "3f003507f4": "Open full setup in Settings",
-            "installSkillPrompt": "Install the Wakii CLI skill when you want agents to drive this simulator."
+            "installSkillPrompt": "Install the Wakii CLI skill when you want agents to drive this simulator.",
+            "3f003507f4": "Open full setup in Settings"
           },
           "MobileEmulatorAgentSetupGuideSteps": {
             "21f5687c07": "Wakii CLI skill",
@@ -15248,6 +15401,7 @@
           "f1aa04b5cf": "This file",
           "8b87612461": "All unsent notes"
         },
+        "diffCommentSaveFailed": "Failed to save comment",
         "DiffSectionBody": {
           "35d6afb5be": "Binary file changed",
           "cef4cf0ff5": "Retry",
@@ -15298,9 +15452,9 @@
           "a10d9b8337": "Open file",
           "2076ecfc9c": "Previous change",
           "631dab0df3": "Next change",
-          "revealInFinder": "Reveal in Finder",
-          "openContainingFolder": "Open Containing Folder",
-          "revealInFileExplorer": "Reveal in File Explorer"
+          "revealInFinder": null,
+          "openContainingFolder": null,
+          "revealInFileExplorer": null
         },
         "EditorPanelMarkdownActionsMenu": {
           "3e0ce48c24": "Export as PDF",
@@ -15347,8 +15501,6 @@
           "10ed04a685": "Notebook cells execute local Python on this machine from the notebook folder. Only run cells from files you trust.",
           "9e06ae5d36": "Run Notebook Code?",
           "d6f37a640b": "Empty notebook",
-          "8c3b21369a": "nbformat",
-          "329764e9fc": "BETA",
           "15ec40a735": "Save notebook",
           "07e7d96612": "cells",
           "c1601b23b2": "Unable to render notebook",
@@ -15363,8 +15515,6 @@
           "3e4cbf15ea": "Raw",
           "1833dbbc43": "Markdown",
           "7005960d73": "Code",
-          "59b6cd874b": "code",
-          "ba149053d5": "markdown",
           "8dbe39a152": "More cell actions",
           "fa8fd99cf1": "Cell type",
           "kernelStarting": "Starting…",
@@ -15400,12 +15550,16 @@
           "tryAgain": "Try again",
           "kernelCreatingVenv": "Creating .venv…",
           "createVenvItem": "Create virtual environment…",
+          "trustFirst": "Run a cell to trust this notebook first",
           "kernelStartFailed": "The kernel failed to start.",
           "noPython": "Python was not found on this computer. Install it from [python.org](https://www.python.org/downloads/), then run the cell again.",
           "kernelDied": "The kernel died.",
           "localOnly": "Notebook cells can only run for files on this computer.",
           "pythonOnly": "Only Python notebooks can run in Wakii.",
-          "trustFirst": "Run a cell to trust this notebook first"
+          "8c3b21369a": "nbformat",
+          "329764e9fc": "BETA",
+          "59b6cd874b": "code",
+          "ba149053d5": "markdown"
         },
         "MarkdownPreview": {
           "e4683f70c4": "Cancel",
@@ -15778,7 +15932,9 @@
           }
         },
         "richMarkdownLargeTextPaste": {
-          "tooLarge": "Paste is too large."
+          "tooLarge": "Paste is too large.",
+          "stopped": "Large paste stopped before it finished.",
+          "cancelled": "Large paste cancelled because its original target changed."
         },
         "ExternalFileChangeBanner": {
           "7c41e90d12": "This file changed on disk while you have unsaved edits. Saving will overwrite the newer disk content.",
@@ -15897,7 +16053,13 @@
             }
           }
         },
-        "diffCommentSaveFailed": "Failed to save comment"
+        "richMarkdownImageInsertionFeedback": {
+          "importedFileKept": "Image insertion canceled because the destination changed. The imported file was kept.",
+          "destinationChanged": "Image insertion canceled because the destination changed. Try again."
+        },
+        "useMarkdownDocuments": {
+          "listFailed": "Failed to list Markdown documents."
+        }
       },
       "diff": {
         "comments": {
@@ -16213,6 +16375,7 @@
             "4300f38145": "Downloading from {{value0}}{{value1}}",
             "31375046b7": "Download from {{value0}}",
             "acbe79fd01": "Grab page element ({{value0}})",
+            "cc4a071d3a": "Annotate page element ({{value0}})",
             "572046436a": "Remote browser",
             "b313a7275b": "Opening remote browser",
             "5f66313863": "annotation",
@@ -16230,8 +16393,7 @@
             "756bfc25c9": "Open",
             "09a9489aa5": "Show",
             "2a4c4b8e1f": "Copy",
-            "fileUrlUnsupported": "This browser tab cannot open local files. Use \"Open Preview to the Side\" on the file instead.",
-            "cc4a071d3a": "Annotate page element ({{value0}})"
+            "fileUrlUnsupported": "This browser tab cannot open local files. Use \"Open Preview to the Side\" on the file instead."
           },
           "BrowserToolbarMenu": {
             "429ef481f9": "Cancel",
@@ -16272,7 +16434,8 @@
             "9c6ce0632a": "Selected element screenshot",
             "50f7114f99": "Review before attaching. Captured page context may include visible site content.",
             "f3575229df": "Grab",
-            "405bb315da": "Untitled"
+            "405bb315da": "Untitled",
+            "accessibleNameOpenQuote": "\""
           },
           "browser": {
             "address": {
@@ -16934,7 +17097,7 @@
           "showUnreadOnly": "Show unread only",
           "showChildAgents": "Show child agents",
           "activityOptions": "Activity options",
-          "threadListOptionsFiltered": "Thread list options, filters active",
+          "threadListOptionsFiltered": null,
           "showSearch": "Show search",
           "interrupted": "Interrupted",
           "state": {
@@ -16950,7 +17113,9 @@
             "permission": "Needs attention"
           },
           "filtersSection": "Filters",
-          "viewSection": "View"
+          "viewSection": "View",
+          "threadListOptionsActive": "Thread list options ({{value0}} active)",
+          "activityOptionsActive": "Activity options ({{value0}})"
         },
         "clearCompleted": {
           "clearedOne": "Cleared 1 completed agent",
@@ -16968,7 +17133,11 @@
         },
         "ActivityScopeFilterControls": {
           "hiddenCount": "{{value0}} hidden",
-          "resetScope": "Show all hosts and projects"
+          "resetScope": "Show all hosts and projects",
+          "hideAutomationCreated": "Hide automation-created",
+          "hideCliCreated": "Hide CLI-created",
+          "hideOtherClientsAria": "Hide agents in workspaces created from other Orca clients on shared remote servers",
+          "hideOtherClients": "Hide other-client agents"
         },
         "ActivityThreadHoverCard": {
           "pathCopied": "Path copied to clipboard",
@@ -16979,6 +17148,25 @@
         },
         "ActivityThreadRow": {
           "clearNotification": "Clear notification"
+        },
+        "ActivityThreadContextMenu": {
+          "copyTitle": "Copy Title",
+          "copyPath": "Copy Path",
+          "open": "Open",
+          "markRead": "Mark Read",
+          "markUnread": "Mark Unread",
+          "goToWorkspace": "Go to Workspace",
+          "clear": "Clear from List",
+          "agentSection": "Agent",
+          "markManyRead_one": "Mark {{count}} Agent Read",
+          "markManyRead_other": "Mark {{count}} Agents Read",
+          "markManyUnread_one": "Mark {{count}} Agent Unread",
+          "markManyUnread_other": "Mark {{count}} Agents Unread",
+          "clearMany_one": "Clear {{count}} Agent from List",
+          "clearMany_other": "Clear {{count}} Agents from List",
+          "markManyRead": "Mark {{count}} Agents Read",
+          "markManyUnread": "Mark {{count}} Agents Unread",
+          "clearMany": "Clear {{count}} Agents from List"
         }
       },
       "confirmation": {
@@ -17367,7 +17555,8 @@
             "highlight": "Highlighter",
             "pen": "Pen",
             "rect": "Rectangle",
-            "text": "Text"
+            "text": "Text",
+            "eraser": "Eraser"
           },
           "undo": "Undo",
           "widthOption": "{{value0}} px"
@@ -17892,469 +18081,6 @@
       "empty": "No users found"
     },
     "native-chat": {
-      "taskList": {
-        "title": "Tasks",
-        "completed": "Completed",
-        "inProgress": "In progress",
-        "pending": "Pending",
-        "empty": "No tasks",
-        "progress": "{{completed}} of {{total}} tasks completed",
-        "added": "Added {{task}}",
-        "removed": "Removed {{task}}",
-        "started": "Started {{task}}",
-        "finished": "Completed {{task}}",
-        "reset": "Marked pending: {{task}}",
-        "updated": "Updated {{task}}",
-        "unchanged": "Tasks unchanged",
-        "showAll": "Full task list"
-      },
-      "turnDiff": {
-        "one": "1 changed file",
-        "many": "{{count}} changed files",
-        "partial": "Partial diff",
-        "recorded": "Totals from recorded edits in this turn."
-      },
-      "receipt": {
-        "unavailable": "Selected answer unavailable",
-        "cancelled": "Cancelled",
-        "resolved": "Resolved",
-        "resolver": "Answered on {{device}}",
-        "cancelledBy": "Cancelled on {{device}}"
-      },
-      "notices": {
-        "compaction": "Context compacted",
-        "details": "Details",
-        "plan": "Plan",
-        "historyRepaired": "Part of this chat's history couldn't be loaded.",
-        "historyItemTooLarge": "This part of the chat was too large to show."
-      },
-      "composer": {
-        "imageUnsupported": "Image paste is not supported for this agent.",
-        "send": "Send",
-        "noPty": "No live terminal — toggle back to reconnect.",
-        "locked": "Input is held by another device.",
-        "placeholder": "Send a message…",
-        "mentionHint": "Referencing file:",
-        "attach": "Attach file",
-        "startDictation": "Start dictation",
-        "stopDictation": "Stop dictation",
-        "noSkills": "No matching skills",
-        "noCommandsOrSkills": "No matching commands or skills",
-        "noCommands": "No matching commands",
-        "commands": "Commands",
-        "skills": "Skills",
-        "loadingSkills": "Loading skills...",
-        "skillsLoaded": "Skills loaded",
-        "skillsUnavailableHost": "Skills aren't available in SSH chats",
-        "skillsLoadFailed": "Couldn't load skills",
-        "retrySkills": "Retry",
-        "skillCommandCollision": "Also a skill name - agent decides",
-        "skillMultipleSources": "{{sourceCount}} sources - agent resolves",
-        "skillScopeProject": "Project",
-        "skillScopePersonal": "Personal",
-        "skillScopeBuiltIn": "Built-in",
-        "skillScopePlugin": "Plugin",
-        "localAttachmentUnsupported": "Local attachments are not available for remote sessions.",
-        "removeAttachment": "Remove attachment",
-        "pastedImageLabel": "Pasted image",
-        "imagePasteFailed": "Image paste failed.",
-        "imageSaving": "Saving pasted image…",
-        "worktreeNotReady": "Worktree not ready — try again in a moment.",
-        "pasteUnavailable": "Can't paste — this chat isn't accepting input right now.",
-        "uploadingAttachments": "Uploading {{value0}} file(s) to remote…",
-        "model": "Model",
-        "effort": "Effort",
-        "fastMode": "Fast mode",
-        "thinking": "Thinking",
-        "options": "Options",
-        "sessionOptions": "Session options",
-        "chooseInAgentPicker": "Choose in agent picker…",
-        "toggleOption": "Toggle {{value0}}",
-        "pillAccessibleName": "{{value0}} {{value1}}",
-        "sentNotConfirmed": "Sent to the agent — not confirmed",
-        "setWhenSessionStarts": "Set when the session starts.",
-        "availableAfterSessionStarts": "Available after the session starts.",
-        "optionUpdateFailed": "Could not update option",
-        "optionValue": {
-          "fast": "Fast",
-          "minimal": "Minimal",
-          "low": "Low",
-          "medium": "Medium",
-          "high": "High",
-          "xhigh": "Extra high",
-          "max": "Max",
-          "ultra": "Ultra"
-        },
-        "pendingAttachmentLimit": "Too many attachments are waiting. Finish composing before attaching more.",
-        "viewAttachment": "View image",
-        "imagePreview": "Full-size image preview",
-        "imagePreviewUnavailable": "Preview unavailable",
-        "workspaceAttachmentMismatch": "Files can only be attached to their source workspace.",
-        "attachmentOwnerChanged": "This workspace changed hosts while attaching — drop the files again.",
-        "attachmentUnreadable": "Couldn't read the dropped files."
-      },
-      "tool": {
-        "exitCode": "exit {{value0}}",
-        "milliseconds": "{{value0}}ms",
-        "running": "Running…",
-        "result": "Result",
-        "countOne": "1 tool call",
-        "countN": "{{value0}} tool calls",
-        "moreCalls": "+{{value0}} more",
-        "failedCount": "{{value0}} failed",
-        "failedCallsLabel": "Failed tool calls: {{value0}}",
-        "runningPreview": "Running {{preview}}",
-        "runningCommand": "Running command",
-        "runningNamedPreview": "Running {{toolName}} {{preview}}",
-        "runningNamed": "Running {{toolName}}",
-        "ranCommandOneToolSummary": "Ran {{commandCount}} command and used {{toolCount}} tool",
-        "ranCommandManyToolsSummary": "Ran {{commandCount}} command and used {{toolCount}} tools",
-        "ranCommandsOneToolSummary": "Ran {{commandCount}} commands and used {{toolCount}} tool",
-        "ranCommandsManyToolsSummary": "Ran {{commandCount}} commands and used {{toolCount}} tools",
-        "usedOneSummary": "Used 1 tool",
-        "usedManySummary": "Used {{toolCount}} tools",
-        "editedFile": "Edited file",
-        "addedFile": "Added file",
-        "deletedFile": "Deleted file",
-        "renamedFile": "Renamed file",
-        "copyDiff": "Copy diff",
-        "diffGap": "Lines not shown",
-        "diffTruncated": "Diff truncated",
-        "runReadOne": "Read 1 file",
-        "runReadMany": "Read {{value0}} files",
-        "runSearchOne": "Searched 1 time",
-        "runSearchMany": "Searched {{value0}} times",
-        "runListFilesOne": "Listed 1 directory",
-        "runListFilesMany": "Listed {{value0}} directories",
-        "runCommandOne": "Ran 1 command",
-        "runCommandMany": "Ran {{value0}} commands",
-        "runFileChangeOne": "Edited 1 file",
-        "runFileChangeMany": "Edited {{value0}} files",
-        "runWebSearchOne": "Searched the web 1 time",
-        "runWebSearchMany": "Searched the web {{value0}} times",
-        "runIntegrationOne": "Used 1 integration",
-        "runIntegrationMany": "Used {{value0}} integrations",
-        "runAgentOne": "Ran 1 agent",
-        "runAgentMany": "Ran {{value0}} agents",
-        "runPlanOne": "Updated the plan",
-        "runPlanMany": "Updated the plan {{value0}} times",
-        "runToolOne": "Used 1 tool",
-        "runToolMany": "Used {{value0}} tools",
-        "runPair": "{{value0}} and {{value1}}",
-        "runList": "{{value0}}, and {{value1}}",
-        "runLiveReadOne": "Reading 1 file",
-        "runLiveReadMany": "Reading {{value0}} files",
-        "runLiveSearchOne": "Searching 1 time",
-        "runLiveSearchMany": "Searching {{value0}} times",
-        "runLiveListFilesOne": "Listing 1 directory",
-        "runLiveListFilesMany": "Listing {{value0}} directories",
-        "runLiveCommandOne": "Running 1 command",
-        "runLiveCommandMany": "Running {{value0}} commands",
-        "runLiveFileChangeOne": "Editing 1 file",
-        "runLiveFileChangeMany": "Editing {{value0}} files",
-        "runLiveWebSearchOne": "Searching the web 1 time",
-        "runLiveWebSearchMany": "Searching the web {{value0}} times",
-        "runLiveIntegrationOne": "Using 1 integration",
-        "runLiveIntegrationMany": "Using {{value0}} integrations",
-        "runLiveAgentOne": "Running 1 agent",
-        "runLiveAgentMany": "Running {{value0}} agents",
-        "runLivePlanOne": "Updating the plan",
-        "runLivePlanMany": "Updating the plan {{value0}} times",
-        "runLiveToolOne": "Using 1 tool",
-        "runLiveToolMany": "Using {{value0}} tools"
-      },
-      "providerFrame": {
-        "byteLength": "{{value0}} bytes"
-      },
-      "status": {
-        "responding": "Agent is responding",
-        "working": "Working…",
-        "thinking": "Thinking",
-        "workingFor": "Working for {{value0}}",
-        "workedFor": "Worked for {{value0}}",
-        "interruptedAfter": "Interrupted after {{value0}}",
-        "failedAfter": "Failed after {{value0}}",
-        "toggleDetails": "Toggle turn details"
-      },
-      "backgroundTasks": {
-        "monitoring": "Monitoring background tasks",
-        "stop": "Stop",
-        "stopTask": "Stop {{value0}}",
-        "stopAll": "Stop background tasks",
-        "agent": "Background agent",
-        "workflow": "Background workflow",
-        "command": "Background command",
-        "monitor": "Background monitor",
-        "task": "Background task",
-        "outputFile": "Output: {{value0}}",
-        "detailsUnavailable": "Task details are unavailable for this session.",
-        "countAgentsOne": "1 agent",
-        "countAgentsMany": "{{value0}} agents",
-        "countShellOne": "1 shell",
-        "countShellMany": "{{value0}} shells",
-        "countShellCommandOne": "1 shell command",
-        "countMonitorsOne": "1 monitor",
-        "countMonitorsMany": "{{value0}} monitors",
-        "countWorkflowsOne": "1 workflow",
-        "countWorkflowsMany": "{{value0}} workflows",
-        "countTasksOne": "1 task",
-        "countTasksMany": "{{value0}} tasks",
-        "headerTotal": "{{value0}} background tasks",
-        "stateWorking": "working",
-        "stateMonitoring": "monitoring",
-        "stateWaiting": "waiting",
-        "stateBlocked": "blocked",
-        "stateDone": "done",
-        "stateIdle": "stopped",
-        "stateUnverifiable": "no recent update",
-        "stateUnverifiableCount": "{{value0}} with no recent update",
-        "reasonWaiting": "needs approval",
-        "reasonBlocked": "failed",
-        "groupAgents": "Agents",
-        "groupShell": "Shell",
-        "groupMonitors": "Monitors",
-        "groupWorkflows": "Workflows",
-        "groupTasks": "Tasks"
-      },
-      "jumpToLatest": "Jump to latest",
-      "toggle": {
-        "showTerminal": "Show terminal",
-        "showChat": "Show chat view"
-      },
-      "state": {
-        "loading": {
-          "label": "Loading chat",
-          "title": "Loading conversation…",
-          "subtitle": "Reading the agent transcript."
-        },
-        "error": {
-          "title": "Could not load conversation",
-          "subtitle": "The transcript could not be read. Toggle back to the terminal to keep working."
-        },
-        "reconnecting": "Reconnecting to this chat…",
-        "pairHost": "Pair a host to view agent chat history.",
-        "notAgent": {
-          "title": "No conversation here",
-          "subtitle": "This terminal is not running a recognized coding agent."
-        },
-        "empty": {
-          "title": "Start a chat with {{value0}}",
-          "subtitle": "Ask {{value0}} to inspect code, explain output, or make a change."
-        }
-      },
-      "stop": "Stop the agent",
-      "copyMessage": {
-        "copied": "Copied",
-        "copy": "Copy message"
-      },
-      "scrollMessageToTop": "Scroll this message to top",
-      "loadingEarlier": "Loading…",
-      "loadEarlier": "Load earlier messages",
-      "railLabel": "Your messages",
-      "railImageMessage": "Image attachment",
-      "railEmptyMessage": "Message",
-      "question": {
-        "step": "Step {{value0}}",
-        "other": "Other…",
-        "otherPlaceholder": "Type your answer",
-        "cancel": "Cancel",
-        "send": "Submit",
-        "next": "Next",
-        "skip": "Skip",
-        "sending": "Sending…"
-      },
-      "ask": {
-        "awaiting": "Awaiting user input:",
-        "awaitingUnnamed": "Awaiting user input",
-        "asked": "Asked:",
-        "questionCount": "{{value0}} questions"
-      },
-      "approval": {
-        "title": "Allow {{value0}}?",
-        "allow": "Allow",
-        "deny": "Deny",
-        "cancel": "Cancel",
-        "reason": "Reason",
-        "blockedPath": "Blocked path",
-        "askRule": "Ask rule",
-        "plan": {
-          "file": "Plan file"
-        }
-      },
-      "launchPromptNotDelivered": "Not delivered — check the terminal",
-      "structuredSessionCloseFailed": "Could not close this chat session",
-      "structuredSessionLaunchFailed": "Could not open {{value0}} chat",
-      "structuredSessionCloseFailedDescription": "The terminal stayed open so the provider remains recoverable.",
-      "handoff": {
-        "stage": {
-          "finishingChat": null,
-          "finishingTerminal": null,
-          "openingTerminal": null,
-          "resumingChat": null,
-          "verifyingTerminal": null,
-          "verifyingChat": null,
-          "recovering": null,
-          "manualRecovery": null
-        },
-        "switchingOwner": null,
-        "mode": {
-          "switching": null,
-          "terminal": null,
-          "chat": null
-        },
-        "switchingAfterTurn": null,
-        "returningAfterTurn": null,
-        "cancel": null,
-        "switchAfterTurn": null,
-        "stopTurnAndSwitch": null,
-        "openAgentTui": null,
-        "returnAfterTurn": null,
-        "returnToChat": null,
-        "agentOpenOnHost": null,
-        "agentOpen": null,
-        "exitTerminal": null,
-        "retryProof": null,
-        "retry": null,
-        "details": null
-      },
-      "structuredSessionLaunchFailedDescription": "Wakii could not open a structured {{value0}} chat. See the logs for details.",
-      "subagents": {
-        "state": {
-          "completed": "completed",
-          "working": "working",
-          "idle": "idle",
-          "failed": "failed",
-          "stopped": "stopped",
-          "unverifiable": "no recent update",
-          "workingCount": "{{value0}} working",
-          "idleCount": "{{value0}} idle",
-          "failedCount": "{{value0}} failed",
-          "stoppedCount": "{{value0}} stopped",
-          "unverifiableCount": "{{value0}} with no recent update"
-        },
-        "startedOne": "Kicked off 1 subagent",
-        "startedN": "Kicked off {{value0}} subagents",
-        "ranOne": "Ran 1 subagent",
-        "ranN": "Ran {{value0}} subagents",
-        "tokens": "{{value0}} tokens",
-        "unnamed": "Subagent"
-      },
-      "conversationCommand": {
-        "pendingWork": "Wait for pending work and messages to finish before using this command."
-      },
-      "drop": {
-        "title": "Drop to attach to this chat",
-        "subtitle": "Files are added to your message as paths the agent can read."
-      },
-      "copyCode": "Copy code",
-      "loadingEarlierMessages": "Loading earlier messages…",
-      "goal": {
-        "placeholder": "Describe your goal, define measurable outcomes for best results",
-        "clear": "Clear goal",
-        "chip": "Goal",
-        "exitMode": "Exit goal mode",
-        "sentAsGoal": "Sent as goal",
-        "collapse": "Hide full goal",
-        "expand": "Show full goal",
-        "pause": "Pause goal",
-        "resume": "Resume goal",
-        "pursuing": "Pursuing goal",
-        "paused": "Paused goal",
-        "blocked": "Goal blocked",
-        "limited": "Goal limited",
-        "attachmentsUnsupported": "Remove attachments before setting a goal."
-      },
-      "fileLinks": {
-        "notFound": "File not found: {{value0}}",
-        "unverifiable": "Couldn't check {{value0}}: {{value1}}",
-        "unresolved": "Couldn't resolve {{value0}} in this workspace"
-      },
-      "contextUsage": {
-        "label": "Context {{used}} of {{window}} tokens, {{percent}}% used",
-        "title": "Context",
-        "estimated": "Estimated from the last response."
-      },
-      "writeNotice": {
-        "notDoneReadHistory": "This chat's history couldn't be loaded.",
-        "notDoneSend": "Your message was not sent.",
-        "tryAgainComposerSend": "Send it again.",
-        "messageNotSaved": "Couldn't save your message.",
-        "notDoneStop": "The agent wasn't stopped.",
-        "notDoneStopTask": "The background task wasn't stopped.",
-        "notDoneStopTasks": "The background tasks weren't stopped.",
-        "notDoneAnswer": "Your answer was not sent.",
-        "notDoneOption": "The setting wasn't changed.",
-        "notDoneCommand": "The command didn't run.",
-        "notDoneGoal": "The goal wasn't changed.",
-        "restartFailed": "The agent couldn't restart.",
-        "capacity": "Wakii has received too many requests in the last day.",
-        "outcomeUnknown": "Wakii couldn't confirm what happened. Check the chat.",
-        "sendOutcomeLost": "Wakii couldn't confirm your message reached the agent. Check the chat, then send it again if needed.",
-        "questionChanged": "This question was already answered or has changed.",
-        "historyUnreadable": "Wakii couldn't read this chat's saved history.",
-        "historyUnusable": "Unable to load this chat.",
-        "historyUnavailable": "Wakii couldn't open this chat's history right now.",
-        "savedByNewerOrca": "Chats were saved by a newer Wakii.",
-        "updateOrcaToKeepUsing": "Update Wakii to keep using them.",
-        "unsupported": "This needs a newer Wakii on the computer running this chat. Update Wakii there, then try again.",
-        "notAvailable": "This isn't available in this chat.",
-        "unreachable": "Wakii couldn't reach the agent.",
-        "recordFailed": "Wakii couldn't save this to the chat's history.",
-        "conversationCleared": "This conversation has been cleared.",
-        "openCurrentConversation": "Open the current conversation to continue.",
-        "clearUnfinished": "The last /clear didn't finish.",
-        "commandRunning": "A /compact or /clear is still running.",
-        "waitForCommand": "Wait for the /compact or /clear to finish.",
-        "agentStarting": "The agent is still starting.",
-        "waitForStart": "Wait for the agent to finish starting.",
-        "turnActive": "The agent is still responding.",
-        "waitForTurn": "Wait for the agent to finish responding, or stop it.",
-        "promptPending": "The agent is waiting for an answer to a question or approval.",
-        "answerFirst": "Answer the question or approval first.",
-        "backgroundTasksRunning": "Background tasks are still running.",
-        "waitForBackgroundTasks": "Wait for the background tasks to finish.",
-        "messagesUnsettled": "A message you sent earlier isn't confirmed yet.",
-        "settleEarlierMessage": "Wait for your earlier message to go through, or retry it.",
-        "optionRejected": "The agent didn't accept this setting.",
-        "goalsUnsupported": "This agent doesn't support goals.",
-        "agentRefused": "The agent turned this down.",
-        "ownerUnproven": "The previous agent in this chat may still be running.",
-        "reopenChat": "Reopen the chat to check again.",
-        "terminalAgentHoldsChat": "This chat is still open in a terminal agent.",
-        "quitTerminalAgent": "Quit that agent to continue the chat here.",
-        "hostReconciling": "Wakii is still checking on this chat after restarting.",
-        "waitMoment": "Wait a moment.",
-        "recordUnreadable": "Wakii couldn't read this chat's saved state.",
-        "chatNotFound": "Wakii can't find this chat.",
-        "startNewChat": "Start a new chat to continue.",
-        "tryAgain": "Try again."
-      },
-      "dismissDeliveryNotice": "Dismiss",
-      "messageNotSent": "Message not sent",
-      "deliveryUnconfirmed": "Delivery unconfirmed — check chat before retrying",
-      "queuedMessages": {
-        "behindReturnedHold": "Waiting — a message ahead needs attention",
-        "awaitingAnswerHold": "Waiting for your answer",
-        "steer": "Steer",
-        "send": "Send",
-        "steerHint": "Submit without interrupting the model",
-        "sendHint": "Send this message now",
-        "delete": "Delete",
-        "moreActions": "More actions",
-        "editMessage": "Edit message",
-        "turnOffQueueing": "Turn off queueing",
-        "listLabel": "Queued messages",
-        "alreadySent": "This message was already sent.",
-        "editAlreadySent": "Already sent — your text is still in the composer.",
-        "withdrawnHold": "Stopped before it was sent",
-        "pausedSendFailed": "Couldn't send — press Send to retry.",
-        "paused": "Paused",
-        "queuePausedStopped": "Queue paused because you interrupted",
-        "queuePausedRestarted": "Queue paused because Wakii restarted",
-        "queuePausedCleared": "Queue paused after you cleared the conversation",
-        "queuePaused": "Queue paused",
-        "resume": "Resume"
-      },
       "failureWords": {
         "theAgent": "The agent",
         "providerStartFailed": "{{agent}} stopped before it finished starting.",
@@ -18413,7 +18139,476 @@
         "providerRateLimited": "{{agent}} is rate-limited and retrying.",
         "providerRetrying": "{{agent}} hit a temporary problem and is retrying.",
         "providerRetryingQuoted": "{{agent}} is retrying: {{detail}}.",
-        "previousExitUnverifiable": "{{agent}} from before may still be running. Your messages will send once it stops."
+        "previousExitUnverifiable": "Couldn't stop {{agent}} from before.",
+        "sendAgainToTryOnceMore": "Send your message again to try once more.",
+        "launchFolderMissing": "The folder this chat ran in no longer exists. Restore it to continue this chat.",
+        "historyInOtherAccount": "This chat's history is in another Claude account. Switch back to that account to continue it.",
+        "agentCommandNotRunnable": "{{agent}}'s Command in Settings → Agents must be a program path or name Orca can find, with no arguments or variables. Change it or reset it.",
+        "providerRetryNumber": "Retry {{attempt}}.",
+        "providerRetryNumberOf": "Retry {{attempt}} of {{maxRetries}}.",
+        "providerRetryLastError": "Last error: {{detail}}.",
+        "sessionNotRestored": "{{agent}} couldn't reopen its earlier session, so this chat continues in a new one. {{agent}} doesn't remember the earlier messages.",
+        "argumentsUnsupportedOption": "Saved Arguments contain an unsupported option ({{option}}).",
+        "argumentsMissingValue": "Saved Arguments need a value for {{option}}.",
+        "argumentsMultipleValues": "Saved Arguments give {{option}} more than one value.",
+        "argumentsPositionalPrompt": "Saved Arguments include a prompt.",
+        "editSavedArguments": "Edit them in Settings > Agents > Arguments."
+      },
+      "writeNotice": {
+        "notDoneReadHistory": "This chat's history couldn't be loaded.",
+        "notDoneSend": "Your message was not sent.",
+        "tryAgainComposerSend": "Send it again.",
+        "messageNotSaved": "Couldn't save your message.",
+        "notDoneStop": "The agent wasn't stopped.",
+        "notDoneStopTask": "The background task wasn't stopped.",
+        "notDoneStopTasks": "The background tasks weren't stopped.",
+        "notDoneAnswer": "Your answer was not sent.",
+        "notDoneOption": "The setting wasn't changed.",
+        "notDoneCommand": "The command didn't run.",
+        "notDoneGoal": "The goal wasn't changed.",
+        "restartFailed": "The agent couldn't restart.",
+        "capacity": "Wakii has received too many requests in the last day.",
+        "outcomeUnknown": "Wakii couldn't confirm what happened. Check the chat.",
+        "sendOutcomeLost": "Wakii couldn't confirm your message reached the agent. Check the chat, then send it again if needed.",
+        "questionChanged": "This question was already answered or has changed.",
+        "historyUnreadable": "Wakii couldn't read this chat's saved history.",
+        "historyUnusable": "Unable to load this chat.",
+        "historyUnavailable": "Wakii couldn't open this chat's history right now.",
+        "savedByNewerOrca": "Chats were saved by a newer Wakii.",
+        "updateOrcaToKeepUsing": "Update Wakii to keep using them.",
+        "unsupported": "This needs a newer Wakii on the computer running this chat. Update Wakii there, then try again.",
+        "notAvailable": "This isn't available in this chat.",
+        "unreachable": "Wakii couldn't reach the agent.",
+        "recordFailed": "Wakii couldn't save this to the chat's history.",
+        "conversationCleared": "This conversation has been cleared.",
+        "openCurrentConversation": "Open the current conversation to continue.",
+        "clearUnfinished": "The last /clear didn't finish.",
+        "commandRunning": "A /compact or /clear is still running.",
+        "waitForCommand": "Wait for the /compact or /clear to finish.",
+        "agentStarting": "The agent is still starting.",
+        "waitForStart": "Wait for the agent to finish starting.",
+        "turnActive": "The agent is still responding.",
+        "waitForTurn": "Wait for the agent to finish responding, or stop it.",
+        "promptPending": "The agent is waiting for an answer to a question or approval.",
+        "answerFirst": "Answer the question or approval first.",
+        "backgroundTasksRunning": "Background tasks are still running.",
+        "waitForBackgroundTasks": "Wait for the background tasks to finish.",
+        "messagesUnsettled": "A message you sent earlier isn't confirmed yet.",
+        "settleEarlierMessage": "Wait for your earlier message to go through, or retry it.",
+        "optionRejected": "The agent didn't accept this setting.",
+        "goalsUnsupported": "This agent doesn't support goals.",
+        "agentRefused": "The agent turned this down.",
+        "ownerUnproven": "The previous agent in this chat may still be running.",
+        "reopenChat": "Reopen the chat to check again.",
+        "terminalAgentHoldsChat": "This chat is still open in a terminal agent.",
+        "quitTerminalAgent": "Quit that agent to continue the chat here.",
+        "hostReconciling": "Wakii is still checking on this chat after restarting.",
+        "waitMoment": "Wait a moment.",
+        "recordUnreadable": "Wakii couldn't read this chat's saved state.",
+        "chatNotFound": "Wakii can't find this chat.",
+        "startNewChat": "Start a new chat to continue.",
+        "tryAgain": "Try again.",
+        "chatSavedByNewerOrca": "This chat was saved by a newer Orca.",
+        "updateOrcaToOpenChat": "Update Orca to open it.",
+        "cannotRunHere": "Orca can't run this agent in a chat here."
+      },
+      "taskList": {
+        "title": "Tasks",
+        "completed": "Completed",
+        "inProgress": "In progress",
+        "pending": "Pending",
+        "empty": "No tasks",
+        "progress": "{{completed}} of {{total}} tasks completed",
+        "added": "Added {{task}}",
+        "removed": "Removed {{task}}",
+        "started": "Started {{task}}",
+        "finished": "Completed {{task}}",
+        "reset": "Marked pending: {{task}}",
+        "updated": "Updated {{task}}",
+        "unchanged": "Tasks unchanged",
+        "showAll": "Full task list"
+      },
+      "turnDiff": {
+        "one": "1 changed file",
+        "many": "{{count}} changed files",
+        "partial": "Partial diff",
+        "recorded": "Totals from recorded edits in this turn."
+      },
+      "receipt": {
+        "unavailable": "Selected answer unavailable",
+        "cancelled": "Cancelled",
+        "resolved": "Resolved",
+        "resolver": "Answered on {{device}}",
+        "cancelledBy": "Cancelled on {{device}}"
+      },
+      "notices": {
+        "compaction": "Context compacted",
+        "details": "Details",
+        "plan": "Plan",
+        "historyRepaired": "Part of this chat's history couldn't be loaded.",
+        "historyItemTooLarge": "This part of the chat was too large to show.",
+        "stoppedBeforeStart": "Stopped before the agent started"
+      },
+      "composer": {
+        "imageUnsupported": "Image paste is not supported for this agent.",
+        "send": "Send",
+        "noPty": "No live terminal — toggle back to reconnect.",
+        "locked": "Input is held by another device.",
+        "placeholder": "Send a message…",
+        "mentionHint": "Referencing file:",
+        "attach": "Attach file",
+        "startDictation": "Start dictation",
+        "stopDictation": "Stop dictation",
+        "noSkills": "No matching skills",
+        "noCommandsOrSkills": "No matching commands or skills",
+        "noCommands": "No matching commands",
+        "commands": "Commands",
+        "skills": "Skills",
+        "loadingSkills": "Loading skills...",
+        "skillsLoaded": "Skills loaded",
+        "skillsUnavailableHost": "Skills can't be listed in SSH chats",
+        "skillsLoadFailed": "Couldn't load skills",
+        "retrySkills": "Retry",
+        "skillCommandCollision": "Also a skill name - agent decides",
+        "skillMultipleSources": "{{sourceCount}} sources - agent resolves",
+        "skillScopeProject": "Project",
+        "skillScopePersonal": "Personal",
+        "skillScopeBuiltIn": "Built-in",
+        "skillScopePlugin": "Plugin",
+        "localAttachmentUnsupported": "Local attachments are not available for remote sessions.",
+        "removeAttachment": "Remove attachment",
+        "pastedImageLabel": "Pasted image",
+        "imagePasteFailed": "Image paste failed.",
+        "imageSaving": "Saving pasted image…",
+        "worktreeNotReady": "Worktree not ready — try again in a moment.",
+        "pasteUnavailable": "Can't paste — this chat isn't accepting input right now.",
+        "uploadingAttachments": "Uploading {{value0}} file(s) to remote…",
+        "model": "Model",
+        "effort": "Effort",
+        "fastMode": "Fast mode",
+        "thinking": "Thinking",
+        "options": "Options",
+        "sessionOptions": "Session options",
+        "chooseInAgentPicker": "Choose in agent picker…",
+        "toggleOption": "Toggle {{value0}}",
+        "pillAccessibleName": "{{value0}} {{value1}}",
+        "sentNotConfirmed": "Sent to the agent — not confirmed",
+        "setWhenSessionStarts": "Set when the session starts.",
+        "availableAfterSessionStarts": "Available after the session starts.",
+        "optionUpdateFailed": "Could not update option",
+        "optionValue": {
+          "fast": "Fast",
+          "minimal": "Minimal",
+          "low": "Low",
+          "medium": "Medium",
+          "high": "High",
+          "xhigh": "Extra high",
+          "max": "Max",
+          "ultra": "Ultra"
+        },
+        "pendingAttachmentLimit": "Too many attachments are waiting. Finish composing before attaching more.",
+        "viewAttachment": "View image",
+        "imagePreview": "Full-size image preview",
+        "imagePreviewUnavailable": "Preview unavailable",
+        "workspaceAttachmentMismatch": "Files can only be attached to their source workspace.",
+        "attachmentOwnerChanged": "This workspace changed hosts while attaching — drop the files again.",
+        "attachmentUnreadable": "Couldn't read the dropped files.",
+        "draftNotSaved": "This draft couldn't be saved yet. Orca keeps trying.",
+        "imageNotBroughtBack": "{{name}} couldn't be brought back with this draft. Attach it again or remove it.",
+        "pastedImageNotBroughtBack": "This pasted image couldn't be brought back with this draft. Remove it, and paste it again if you still need it.",
+        "removeImageToSend": "An image couldn't be brought back. Remove it to send.",
+        "removeImagesToSend": "Some images couldn't be brought back. Remove them to send.",
+        "imageAttachAgainLabel": "Attach again",
+        "pastedImageNotKeptLabel": "Not kept",
+        "copyImage": "Copy image",
+        "copyImageFailed": "Couldn't copy image",
+        "copyImageTooLarge": "The image is too large to copy.",
+        "imageCopied": "Image copied",
+        "tooManyAttachments": "Attach {{value0}} or fewer files at a time."
+      },
+      "tool": {
+        "exitCode": "exit {{value0}}",
+        "milliseconds": "{{value0}}ms",
+        "running": "Running…",
+        "result": "Result",
+        "countOne": "1 tool call",
+        "countN": "{{value0}} tool calls",
+        "moreCalls": "+{{value0}} more",
+        "failedCount": "{{value0}} failed",
+        "failedCallsLabel": "Failed tool calls: {{value0}}",
+        "runningPreview": "Running {{preview}}",
+        "runningCommand": "Running command",
+        "runningNamedPreview": "Running {{toolName}} {{preview}}",
+        "runningNamed": "Running {{toolName}}",
+        "ranCommandOneToolSummary": "Ran {{commandCount}} command and used {{toolCount}} tool",
+        "ranCommandManyToolsSummary": "Ran {{commandCount}} command and used {{toolCount}} tools",
+        "ranCommandsOneToolSummary": "Ran {{commandCount}} commands and used {{toolCount}} tool",
+        "ranCommandsManyToolsSummary": "Ran {{commandCount}} commands and used {{toolCount}} tools",
+        "usedOneSummary": "Used 1 tool",
+        "usedManySummary": "Used {{toolCount}} tools",
+        "editedFile": null,
+        "addedFile": null,
+        "deletedFile": null,
+        "renamedFile": null,
+        "copyDiff": "Copy diff",
+        "diffGap": "Lines not shown",
+        "diffTruncated": "Diff truncated",
+        "runReadOne": "Read 1 file",
+        "runReadMany": "Read {{value0}} files",
+        "runSearchOne": "Searched 1 time",
+        "runSearchMany": "Searched {{value0}} times",
+        "runListFilesOne": "Listed 1 directory",
+        "runListFilesMany": "Listed {{value0}} directories",
+        "runCommandOne": "Ran 1 command",
+        "runCommandMany": "Ran {{value0}} commands",
+        "runFileChangeOne": "Edited 1 file",
+        "runFileChangeMany": "Edited {{value0}} files",
+        "runWebSearchOne": "Searched the web 1 time",
+        "runWebSearchMany": "Searched the web {{value0}} times",
+        "runIntegrationOne": "Used 1 integration",
+        "runIntegrationMany": "Used {{value0}} integrations",
+        "runAgentOne": "Ran 1 agent",
+        "runAgentMany": "Ran {{value0}} agents",
+        "runPlanOne": "Updated the plan",
+        "runPlanMany": "Updated the plan {{value0}} times",
+        "runToolOne": "Used 1 tool",
+        "runToolMany": "Used {{value0}} tools",
+        "runPair": "{{value0}} and {{value1}}",
+        "runList": "{{value0}}, and {{value1}}",
+        "runLiveReadOne": "Reading 1 file",
+        "runLiveReadMany": "Reading {{value0}} files",
+        "runLiveSearchOne": "Searching 1 time",
+        "runLiveSearchMany": "Searching {{value0}} times",
+        "runLiveListFilesOne": "Listing 1 directory",
+        "runLiveListFilesMany": "Listing {{value0}} directories",
+        "runLiveCommandOne": "Running 1 command",
+        "runLiveCommandMany": "Running {{value0}} commands",
+        "runLiveFileChangeOne": "Editing 1 file",
+        "runLiveFileChangeMany": "Editing {{value0}} files",
+        "runLiveWebSearchOne": "Searching the web 1 time",
+        "runLiveWebSearchMany": "Searching the web {{value0}} times",
+        "runLiveIntegrationOne": "Using 1 integration",
+        "runLiveIntegrationMany": "Using {{value0}} integrations",
+        "runLiveAgentOne": "Running 1 agent",
+        "runLiveAgentMany": "Running {{value0}} agents",
+        "runLivePlanOne": "Updating the plan",
+        "runLivePlanMany": "Updating the plan {{value0}} times",
+        "runLiveToolOne": "Using 1 tool",
+        "runLiveToolMany": "Using {{value0}} tools",
+        "interruptedCount": "{{value0}} interrupted",
+        "interruptedCallsLabel": "Interrupted tool calls: {{value0}}",
+        "row": {
+          "running": "Running",
+          "reading": "Reading",
+          "editing": "Editing",
+          "searching": "Searching",
+          "searchingWeb": "Searching the web",
+          "fetching": "Fetching",
+          "listed": "Listed",
+          "listing": "Listing",
+          "ran": "Ran",
+          "read": "Read",
+          "edited": "Edited",
+          "searched": "Searched",
+          "searchedWeb": "Searched the web",
+          "fetched": "Fetched",
+          "added": "Added",
+          "deleted": "Deleted",
+          "renamed": "Renamed",
+          "subagent": "Subagent",
+          "triedRead": "Tried to read",
+          "triedEdit": "Tried to edit",
+          "triedSearch": "Tried to search",
+          "triedList": "Tried to list",
+          "triedFetch": "Tried to fetch",
+          "triedSearchWeb": "Tried to search the web"
+        }
+      },
+      "providerFrame": {
+        "byteLength": "{{value0}} bytes"
+      },
+      "status": {
+        "responding": "Agent is responding",
+        "working": "Working…",
+        "thinking": "Thinking",
+        "workingFor": "Working for {{value0}}",
+        "workedFor": "Worked for {{value0}}",
+        "interruptedAfter": "Interrupted after {{value0}}",
+        "failedAfter": "Failed after {{value0}}",
+        "toggleDetails": "Toggle turn details",
+        "stopping": "Stopping…",
+        "queueAfterStop": "Queue a message to run after the stop",
+        "sendAfterStop": "Send a message to run after the stop"
+      },
+      "backgroundTasks": {
+        "monitoring": "Monitoring background tasks",
+        "stop": "Stop",
+        "stopTask": "Stop {{value0}}",
+        "stopAll": "Stop background tasks",
+        "agent": "Background agent",
+        "workflow": "Background workflow",
+        "command": "Background command",
+        "monitor": "Background monitor",
+        "task": "Background task",
+        "outputFile": "Output: {{value0}}",
+        "detailsUnavailable": "Task details are unavailable for this session.",
+        "countAgentsOne": "1 agent",
+        "countAgentsMany": "{{value0}} agents",
+        "countShellOne": "1 shell",
+        "countShellMany": "{{value0}} shells",
+        "countShellCommandOne": "1 shell command",
+        "countMonitorsOne": "1 monitor",
+        "countMonitorsMany": "{{value0}} monitors",
+        "countWorkflowsOne": "1 workflow",
+        "countWorkflowsMany": "{{value0}} workflows",
+        "countTasksOne": "1 task",
+        "countTasksMany": "{{value0}} tasks",
+        "headerTotal": "{{value0}} background tasks",
+        "stateWorking": "working",
+        "stateMonitoring": "monitoring",
+        "stateWaiting": "waiting",
+        "stateBlocked": "blocked",
+        "stateDone": "done",
+        "stateIdle": "stopped",
+        "stateUnverifiable": "status unavailable",
+        "stateUnverifiableCount": "{{value0}} with status unavailable",
+        "reasonWaiting": "needs approval",
+        "reasonBlocked": "failed",
+        "groupAgents": "Agents",
+        "groupShell": "Shell",
+        "groupMonitors": "Monitors",
+        "groupWorkflows": "Workflows",
+        "groupTasks": "Tasks",
+        "stateWorkingCount": "{{value0}} working",
+        "stateMonitoringCount": "{{value0}} monitoring",
+        "stateWaitingCount": "{{value0}} waiting",
+        "stateBlockedCount": "{{value0}} blocked",
+        "stateDoneCount": "{{value0}} done",
+        "stateIdleCount": "{{value0}} stopped"
+      },
+      "jumpToLatest": "Jump to latest",
+      "toggle": {
+        "showTerminal": "Show terminal",
+        "showChat": "Show chat view"
+      },
+      "state": {
+        "loading": {
+          "label": "Loading chat",
+          "title": "Loading conversation…",
+          "subtitle": "Reading the agent transcript."
+        },
+        "error": {
+          "title": "Could not load conversation",
+          "subtitle": "The transcript could not be read. Toggle back to the terminal to keep working."
+        },
+        "reconnecting": null,
+        "pairHost": "Pair a host to view agent chat history.",
+        "notAgent": {
+          "title": "No conversation here",
+          "subtitle": "This terminal is not running a recognized coding agent."
+        },
+        "empty": {
+          "title": "Start a chat with {{value0}}",
+          "subtitle": "Ask {{value0}} to inspect code, explain output, or make a change."
+        }
+      },
+      "stop": "Stop the agent",
+      "copyMessage": {
+        "copied": "Copied",
+        "copy": "Copy message"
+      },
+      "scrollMessageToTop": "Scroll this message to top",
+      "loadingEarlier": "Loading…",
+      "loadEarlier": "Load earlier messages",
+      "loadingEarlierMessages": "Loading earlier messages…",
+      "railLabel": "Your messages",
+      "railImageMessage": "Image attachment",
+      "railEmptyMessage": "Message",
+      "question": {
+        "step": "Step {{value0}}",
+        "other": "Other…",
+        "otherPlaceholder": "Type your answer",
+        "cancel": "Cancel",
+        "send": "Submit",
+        "next": "Next",
+        "skip": "Skip",
+        "sending": "Sending…"
+      },
+      "ask": {
+        "awaiting": "Awaiting user input:",
+        "awaitingUnnamed": "Awaiting user input",
+        "asked": "Asked:",
+        "questionCount": "{{value0}} questions"
+      },
+      "approval": {
+        "title": "Allow {{value0}}?",
+        "allow": "Allow",
+        "deny": "Deny",
+        "cancel": "Cancel",
+        "reason": "Reason",
+        "blockedPath": null,
+        "askRule": null,
+        "plan": {
+          "file": "Plan file"
+        },
+        "needsAccess": "Needs access to",
+        "needsNewerOrca": "This request needs a newer version of Orca."
+      },
+      "launchPromptNotDelivered": "Not delivered — check the terminal",
+      "subagents": {
+        "state": {
+          "completed": "completed",
+          "working": "working",
+          "idle": "idle",
+          "failed": "failed",
+          "stopped": "stopped",
+          "unverifiable": "status unavailable",
+          "workingCount": "{{value0}} working",
+          "idleCount": "{{value0}} idle",
+          "failedCount": "{{value0}} failed",
+          "stoppedCount": "{{value0}} stopped",
+          "unverifiableCount": "{{value0}} with status unavailable"
+        },
+        "startedOne": "Kicked off 1 subagent",
+        "startedN": "Kicked off {{value0}} subagents",
+        "ranOne": "Ran 1 subagent",
+        "ranN": "Ran {{value0}} subagents",
+        "tokens": "{{value0}} tokens",
+        "unnamed": "Subagent"
+      },
+      "conversationCommand": {
+        "pendingWork": "Wait for pending work and messages to finish before using this command."
+      },
+      "drop": {
+        "title": "Drop to attach to this chat",
+        "subtitle": "Files are added to your message as paths the agent can read."
+      },
+      "copyCode": "Copy code",
+      "goal": {
+        "placeholder": "Describe your goal, define measurable outcomes for best results",
+        "clear": "Clear goal",
+        "chip": "Goal",
+        "exitMode": "Exit goal mode",
+        "sentAsGoal": "Sent as goal",
+        "collapse": "Hide full goal",
+        "expand": "Show full goal",
+        "pause": "Pause goal",
+        "resume": "Resume goal",
+        "pursuing": "Pursuing goal",
+        "paused": "Paused goal",
+        "blocked": "Goal blocked",
+        "limited": "Goal limited",
+        "attachmentsUnsupported": "Remove attachments before setting a goal."
+      },
+      "fileLinks": {
+        "notFound": "File not found: {{value0}}",
+        "unverifiable": "Couldn't check {{value0}}: {{value1}}",
+        "unresolved": "Couldn't resolve {{value0}} in this workspace"
+      },
+      "contextUsage": {
+        "label": "Context {{used}} of {{window}} tokens, {{percent}}% used",
+        "title": "Context",
+        "estimated": "Estimated from the last response."
       },
       "contextMenu": {
         "copyOrcaSessionId": "Copy Wakii Session ID",
@@ -18421,10 +18616,125 @@
         "orcaSessionIdCopyFailed": "Unable to copy Wakii session ID",
         "orcaSessionIdTooltip": "Wakii's ID for this chat, separate from the agent CLI's own session ID. Agents use it to refer to each other through Wakii."
       },
+      "dismissDeliveryNotice": "Dismiss",
+      "messageNotSent": "Message not sent",
+      "deliveryUnconfirmed": "Delivery unconfirmed — check chat before retrying",
+      "queuedMessages": {
+        "behindReturnedHold": "Waiting — a message ahead needs attention",
+        "awaitingAnswerHold": "Waiting for your answer",
+        "steer": "Steer",
+        "send": "Send",
+        "steerHint": "Submit without interrupting the model",
+        "sendHint": "Send this message now",
+        "delete": "Delete",
+        "moreActions": "More actions",
+        "editMessage": "Edit message",
+        "turnOffQueueing": "Turn off queueing",
+        "listLabel": "Queued messages",
+        "alreadySent": "This message was already sent.",
+        "editAlreadySent": "Already sent — your text is still in the composer.",
+        "withdrawnHold": "Stopped before it was sent",
+        "pausedSendFailed": "Couldn't send — press Send to retry.",
+        "paused": "Paused",
+        "queuePausedStopped": "Queue paused because you interrupted",
+        "queuePausedRestarted": "Queue paused because Wakii restarted",
+        "queuePausedCleared": "Queue paused after you cleared the conversation",
+        "queuePaused": "Queue paused",
+        "resume": "Resume",
+        "pausedKept": "Not sent yet — press Send to send it.",
+        "sendConfirmTitle": "Send message?",
+        "sendConfirmBody": "You are about to send a message. Do you want to clear the {{count}} messages previously queued?",
+        "sendConfirmBody_one": "You are about to send a message. Do you want to clear the {{count}} message previously queued?",
+        "sendConfirmBody_other": "You are about to send a message. Do you want to clear the {{count}} messages previously queued?",
+        "sendConfirmClear": "Clear queue",
+        "sendConfirmSend": "Send message",
+        "from": "From {{names}}"
+      },
       "structuredSessionHostDeclined": "Opened {{value0}} in a terminal",
       "structuredSessionHostDeclinedDescription": "This server can't run a {{value0}} chat in this workspace.",
       "structuredSessionHostUnreachable": "Could not reach {{value0}}",
-      "structuredSessionHostUnreachableDescription": "Wakii did not open a {{value0}} chat. Check the connection to the server and try again."
+      "structuredSessionHostUnreachableDescription": "Wakii did not open a {{value0}} chat. Check the connection to the server and try again.",
+      "structuredSessionCloseFailed": "Could not close this chat session",
+      "structuredSessionLaunchFailed": "Could not open {{value0}} chat",
+      "structuredSessionCloseFailedDescription": "The terminal stayed open so the provider remains recoverable.",
+      "handoff": {
+        "stage": {
+          "finishingChat": null,
+          "finishingTerminal": null,
+          "openingTerminal": null,
+          "resumingChat": null,
+          "verifyingTerminal": null,
+          "verifyingChat": null,
+          "recovering": null,
+          "manualRecovery": null
+        },
+        "switchingOwner": null,
+        "mode": {
+          "switching": null,
+          "terminal": null,
+          "chat": null
+        },
+        "switchingAfterTurn": null,
+        "returningAfterTurn": null,
+        "cancel": null,
+        "switchAfterTurn": null,
+        "stopTurnAndSwitch": null,
+        "openAgentTui": null,
+        "returnAfterTurn": null,
+        "returnToChat": null,
+        "agentOpenOnHost": null,
+        "agentOpen": null,
+        "exitTerminal": null,
+        "retryProof": null,
+        "retry": null,
+        "details": null
+      },
+      "structuredSessionLaunchFailedDescription": "Wakii could not open a structured {{value0}} chat. See the logs for details.",
+      "reasoning": "Reasoning",
+      "transcriptLabel": "Conversation",
+      "prompt": {
+        "collapse": "Collapse",
+        "expand": "Expand"
+      },
+      "rewind": {
+        "unsupported": "This chat can't go back to an earlier message.",
+        "historyNotPaginated": "This older Codex chat can't go back to an earlier message. Start a new chat to use Rewind to here.",
+        "busy": "Available once the agent is idle and nothing in this chat is waiting on you.",
+        "staleEpoch": "The conversation changed. Review the latest messages and try again.",
+        "invalidTarget": "The conversation can't go back to this message. Nothing was changed.",
+        "historyLimit": "This conversation is too long to go back in. Nothing was changed.",
+        "providerRefused": "The agent couldn't go back to this message.",
+        "proofMismatch": "The agent's history didn't match this chat. Check the conversation before continuing.",
+        "outcomeUnknown": "Orca couldn't confirm whether the conversation went back to an earlier message. It checks before your next message is sent.",
+        "outcomeUnknownReturned": "Orca couldn't confirm whether the conversation went back to this message. Your message is back in the composer, and Orca checks the conversation before your next message is sent.",
+        "timeout": "The chat didn't update after going back to this message. Reopen it to see the latest.",
+        "refused": "Orca couldn't go back to this message. Check the conversation before continuing.",
+        "unavailable": "Wait for the chat to finish connecting.",
+        "pending": "Wait for the conversation to go back to the earlier message.",
+        "title": "Rewind to here?",
+        "confirmation": "Discard this message and everything after it? The message returns to the composer so you can edit and resend it. File changes on disk are kept.",
+        "confirm": "Rewind",
+        "cancel": "Cancel",
+        "action": "Rewind to here"
+      },
+      "context": {
+        "unavailable": "Context usage is not known yet. It becomes available after the agent next responds.",
+        "summary": "Context: {{used}} / {{window}} tokens ({{percent}}%), estimated from the last response.",
+        "used": "Context: {{used}} tokens used, estimated from the last response.",
+        "unreported": "Context usage is not available for this session."
+      },
+      "agentMessage": {
+        "messageFrom": "Message from",
+        "unnamedSender": "an agent"
+      },
+      "messageSending": "Sending…",
+      "thought": "Thought",
+      "thoughtForDuration": "Thought for {{duration}}",
+      "hostOutage": {
+        "offline": "{{hostName}} is offline",
+        "reconnecting": "{{hostName}} is reconnecting…",
+        "reconnect": "Reconnect"
+      }
     },
     "tab": {
       "bar": {
@@ -18684,6 +18994,16 @@
         "workspaceReadyToast": "Workspace {{name}} is ready",
         "goToWorktree": "Go to worktree",
         "goToWorkspace": "Go to workspace"
+      },
+      "delete": {
+        "changes": {
+          "permanentLoss": "Any uncommitted or untracked changes in Git workspaces will be permanently deleted.",
+          "clean": "No uncommitted or untracked changes",
+          "unavailable": "Changes could not be checked",
+          "checking": "Checking for changes…",
+          "checkingDetails": "Checking…",
+          "unavailableDetails": "Details unavailable"
+        }
       }
     },
     "agentSessionContinuation": {
@@ -18710,9 +19030,9 @@
       "agentUnavailable": "{{agent}} was not detected on this workspace host.",
       "sent": "Session context sent to {{agent}} in a new session.",
       "deliveryFailed": "The new {{agent}} session started, but its context could not be sent.",
-      "launchFailed": "Could not start a new {{agent}} session.",
       "deliveryUnconfirmed": "Wakii could not confirm {{agent}} received the session context. Check the new session, and paste it yourself if its input is empty.",
-      "copyPrompt": "Copy prompt"
+      "copyPrompt": "Copy prompt",
+      "launchFailed": "Could not start a new {{agent}} session."
     },
     "status": {
       "bar": {
@@ -18761,6 +19081,11 @@
     },
     "agentChildRow": {
       "ended": "Ended"
+    },
+    "jiraIssueAssigneeField": {
+      "label": "Assignee",
+      "automatic": "Automatic",
+      "assignToMe": "Assign to me ({{name}})"
     }
   },
   "dashboardPopout": {
@@ -18882,54 +19207,55 @@
       "settingsLink": "Settings → Voice"
     },
     "sessionSearch": {
-      "continueInBackground": "Continue in background",
-      "recent1Text": "Moved the search entries under Workflows and updated the tests.",
-      "demoHit2Title": "Session refresh after sleep",
-      "startSearching": "Start searching",
-      "demoHit5Snippet": "Can you write a [[migration]] [[rollback]] plan before we retry?",
-      "ageHours": "2h",
-      "ageMinutes": "12m",
-      "demoQuery": "login timeout",
-      "demoHit2Snippet": "Why does the [[login]] page hang after a [[timeout]] on wake?",
-      "demoHit3Age": "2w",
-      "recent2Title": "Bump the lockfile",
-      "demoHit1Age": "3d",
-      "demoHit4Title": "Orders table migration",
-      "readyToast": "Session search is ready",
-      "progressStarting": "Finding your sessions…",
-      "demoHit6Title": "Schema review notes",
-      "ageYesterday": "1d",
-      "demoHit6Age": "1mo",
-      "demoHit4Age": "5d",
-      "demoHit1Snippet": "Raised the [[login timeout]] to 30s and added a retry on the token refresh.",
-      "demoHit1Title": "Fix flaky auth redirect",
-      "indexingDescription": "Wakii is reading your past agent transcripts so you can search them. This can take a few minutes.",
-      "recent3Text": "Here is a first pass at the notes, grouped by area.",
-      "demoHit5Title": "Staging deploy failed",
-      "demoHit3Title": "Auth e2e hardening",
-      "agentsInstruction": "Your agents can search it too. Ask one to “find the session where we fixed the login timeout.”",
-      "demoHit3Snippet": "Added a test that covers the [[login timeout]] path end to end.",
-      "demoHit5Age": "3w",
-      "readyDescription": "Every agent session on this computer can now be found by what was said in it.",
-      "indexingTitle": "Indexing your agent sessions",
-      "recent1Title": "Tidy the settings sidebar",
-      "recent3Title": "Release notes draft",
-      "demoHit6Snippet": "Every [[migration]] here is reversible except the enum rename.",
-      "demoQuery2": "migration rollback",
-      "readyTitle": "Session search is ready",
-      "recent2Text": "Update the dependencies and make sure the build still passes.",
-      "demoRoleUser": "User",
       "enableFailed": "Could not turn on session search. Try again.",
-      "demoHit4Snippet": "The [[rollback]] drops the new index first, then restores the old column.",
-      "demoRoleAssistant": "Assistant",
+      "progressStarting": "Finding your sessions…",
+      "settingsLink": "Settings → Agent Session Search",
+      "agentsInstruction": "Your agents can search it too. Ask one to “find the session where we fixed the login timeout.”",
       "consentInstruction": "Change or turn it off anytime in",
-      "readyToastOpen": "Open",
+      "readyDescription": "Every agent session on this computer can now be found by what was said in it.",
+      "indexingDescription": "Wakii is reading your past agent transcripts so you can search them. This can take a few minutes.",
+      "indexingTitle": "Indexing your agent sessions",
+      "readyTitle": "Session search is ready",
+      "continueInBackground": "Continue in background",
+      "startSearching": "Start searching",
+      "demoRoleAssistant": "Assistant",
+      "demoRoleUser": "User",
+      "recent1Title": "Tidy the settings sidebar",
+      "recent1Text": "Moved the search entries under Workflows and updated the tests.",
+      "ageMinutes": "12m",
+      "recent2Title": "Bump the lockfile",
+      "recent2Text": "Update the dependencies and make sure the build still passes.",
+      "ageHours": "2h",
+      "recent3Title": "Release notes draft",
+      "recent3Text": "Here is a first pass at the notes, grouped by area.",
+      "ageYesterday": "1d",
+      "demoQuery": "login timeout",
+      "demoHit1Title": "Fix flaky auth redirect",
+      "demoHit1Snippet": "Raised the [[login timeout]] to 30s and added a retry on the token refresh.",
+      "demoHit1Age": "3d",
+      "demoHit2Title": "Session refresh after sleep",
+      "demoHit2Snippet": "Why does the [[login]] page hang after a [[timeout]] on wake?",
       "demoHit2Age": "1w",
-      "settingsLink": "Settings → Agent Session Search"
+      "demoHit3Title": "Auth e2e hardening",
+      "demoHit3Snippet": "Added a test that covers the [[login timeout]] path end to end.",
+      "demoHit3Age": "2w",
+      "demoQuery2": "migration rollback",
+      "demoHit4Title": "Orders table migration",
+      "demoHit4Snippet": "The [[rollback]] drops the new index first, then restores the old column.",
+      "demoHit4Age": "5d",
+      "demoHit5Title": "Staging deploy failed",
+      "demoHit5Snippet": "Can you write a [[migration]] [[rollback]] plan before we retry?",
+      "demoHit5Age": "3w",
+      "demoHit6Title": "Schema review notes",
+      "demoHit6Snippet": "Every [[migration]] here is reversible except the enum rename.",
+      "demoHit6Age": "1mo",
+      "readyToast": "Session search is ready",
+      "readyToastOpen": "Open"
     }
   },
   "quickOpen": {
-    "moreMatchesAvailable": "More matches may be available. Refine your search to narrow the results."
+    "moreMatchesAvailable": "More matches may be available. Refine your search to narrow the results.",
+    "recentValidationFailed": "Recent files could not be checked: {{error}}"
   },
   "checksPanel": {
     "unlinked": {
@@ -18987,8 +19313,8 @@
       "needsInput": "needs input",
       "working": "working",
       "stopped": "stopped",
-      "finished": "finished",
-      "failed": "failed"
+      "failed": "failed",
+      "finished": "finished"
     }
   },
   "sessionSearch": {
@@ -19006,6 +19332,7 @@
       "remoteDisabled": "Search is disabled on this computer. Enable transcript indexing on that computer to search its sessions.",
       "notReady": "The search index is not ready yet. Try again shortly.",
       "noService": "Search is unavailable on this computer. It may need an Wakii update or a runtime with search support.",
+      "unsupportedAgent": "This computer does not support history search for the selected agent. Update Wakii on that computer or select another agent.",
       "failed": "Could not search this computer. Check its connection and try again.",
       "changed": "The index changed while searching. Search again for current results.",
       "truncated": "Some results or matching text were limited. Narrow your search for more precise results.",
@@ -19018,8 +19345,7 @@
       "sessionsOther": "{{count}} sessions",
       "sessionsOfLoaded": "{{value0}} of {{value1}} sessions",
       "showMoreSessions": "Show more sessions",
-      "loadingMoreSessions": "Loading more sessions…",
-      "unsupportedAgent": "This computer does not support history search for the selected agent. Update Wakii on that computer or select another agent."
+      "loadingMoreSessions": "Loading more sessions…"
     }
   },
   "sessionHistory": {
@@ -19127,6 +19453,13 @@
       "confirmStopDescription": "This closes any open Codex sessions that share it, including ones outside Wakii.",
       "cancel": "Cancel",
       "runs": "Runs"
+    },
+    "codexSharedSettingsNotice": {
+      "title": "Codex in Orca now uses ~/.codex",
+      "description": "Codex may ask again to trust folders or approve commands. Re-add any MCP servers you added only in Orca."
+    },
+    "paneMove": {
+      "failed": "Couldn't move the pane to a new tab."
     }
   },
   "fileExplorer": {
@@ -19187,9 +19520,6 @@
     "noDirectories": "No folders added yet.",
     "removePath": "Remove {{name}}"
   },
-  "osDocumentOpen": {
-    "failed": "Failed to open the file."
-  },
   "accounts": {
     "antigravity": {
       "scope": "Manage the native agy account on {{host}}.",
@@ -19237,5 +19567,75 @@
   },
   "fileSearch": {
     "failed": "Search failed. Try again."
-  }
+  },
+  "csv": {
+    "detectingDelimiter": "Detecting delimiter…",
+    "indexProgress": "Indexing CSV… {{percent}}%",
+    "loadingCell": "Loading…",
+    "nextRows": "Next rows",
+    "previousRows": "Previous rows",
+    "readOnlyPreview": "Large file preview · Read-only",
+    "resizeColumn": "Resize column {{column}}",
+    "rowWindow": "Rows {{first}}–{{last}}",
+    "editor": "CSV editor",
+    "editCell": "Edit row {{row}}, column {{column}}",
+    "filterRows": "Filter rows",
+    "edit": "Edit cell",
+    "copy": "Copy",
+    "paste": "Paste",
+    "rows": "Rows",
+    "insertRowAbove": "Insert row above",
+    "insertRowBelow": "Insert row below",
+    "deleteRows": "Delete selected rows",
+    "columns": "Columns",
+    "newColumn": "Column {{column}}",
+    "insertColumnBefore": "Insert column before",
+    "insertColumnAfter": "Insert column after",
+    "moveColumnLeft": "Move column left",
+    "moveColumnRight": "Move column right",
+    "deleteColumns": "Delete selected columns",
+    "sort": "Sort",
+    "sortAscending": "Sort selected column ascending",
+    "sortDescending": "Sort selected column descending",
+    "originalOrder": "Original row order",
+    "save": "Save",
+    "inspectionOnly": "Inspection only · File row order unchanged"
+  },
+  "worktree": {
+    "nestedRemoval": {
+      "refreshFailed": "Could not refresh the workspace list",
+      "review": "Delete with nested worktrees…",
+      "title": "Delete workspace and nested worktrees?",
+      "description": "This permanently deletes \"{{name}}\", every nested worktree listed below, and all files inside them, including uncommitted changes. Their terminals and agents will be stopped.",
+      "detached": "Detached HEAD",
+      "loading": "Checking nested worktrees…",
+      "order": "Nested worktrees are deleted first. If one fails, deletion stops and the parent is kept. Branches follow your existing deletion settings.",
+      "cancel": "Cancel",
+      "retry": "Review again",
+      "deleting": "Deleting…",
+      "confirm": "Delete all listed worktrees",
+      "preservedBranches": "Some nested worktree branches were kept"
+    }
+  },
+  "projectBoard": {
+    "noColumnField": "This board view has no single-select or iteration field to group by, so Orca is listing items instead.",
+    "noField": "No {{field}}"
+  },
+  "projectBoardCard": {
+    "restrictedItem": "Restricted item",
+    "itemLabel": "{{number}} — {{title}}"
+  },
+  "projectViews": {
+    "layout": {
+      "board": "Board"
+    },
+    "unsupported": {
+      "switchLayout": "Switch to a Table, Board, or Roadmap view to work with this project in Orca.",
+      "description": "Orca renders table, board, and roadmap project views. This view uses a layout it cannot render yet."
+    }
+  },
+  "projectField": {
+    "updateFailed": "Failed to update project field"
+  },
+  "settings.appearance.chat.title": "Chat"
 }

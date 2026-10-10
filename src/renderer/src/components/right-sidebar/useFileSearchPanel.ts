@@ -2,6 +2,7 @@ import type React from 'react'
 import { useCallback, useEffect, useRef } from 'react'
 import { useAppStore } from '@/store'
 import { useActiveWorktree } from '@/store/selectors'
+import { useFileSearchScope } from './useFileSearchScope'
 import { cancelRevealFrame } from './search-match-open'
 import type { FileSearchPanelModel } from './file-search-panel-model'
 import { useFileSearchRunner } from './useFileSearchRunner'
@@ -89,6 +90,15 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
     updateActiveSearchState
   })
 
+  const isCurrentOwner = useFileSearchScope({
+    activeWorktreeId,
+    worktreePath,
+    explorerView,
+    executeSearch,
+    cancelPendingSearch,
+    updateActiveSearchState
+  })
+
   const focusQueryInput = useCallback(() => {
     inputRef.current?.focus()
   }, [])
@@ -148,6 +158,7 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
   const resultsPanel = useFileSearchResultsPanel({
     results: fileSearchResults,
     resultOwner: fileSearchResultOwner,
+    isCurrentOwner,
     collapsedFiles: fileSearchCollapsedFiles,
     query: fileSearchQuery,
     worktreePath,
@@ -213,6 +224,9 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
         return
       }
       if (e.key === 'Escape') {
+        e.preventDefault()
+        e.stopPropagation()
+        inputRef.current?.blur()
         closeHistory()
         if (fileSearchQuery) {
           handleClearSearch()
@@ -285,8 +299,8 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
     },
     resultsProps: {
       results: resultsPanel.results,
-      error: searchState?.error,
-      hasCommittedResults: fileSearchResults !== null,
+      error: resultsPanel.resultsAreCurrent ? searchState?.error : null,
+      hasCommittedResults: resultsPanel.resultsAreCurrent && fileSearchResults !== null,
       query: fileSearchQuery,
       loading: fileSearchLoading,
       rows: resultsPanel.rows,

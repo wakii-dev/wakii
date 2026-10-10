@@ -4886,12 +4886,8 @@
   "auto.components.terminal.pane.CloseTerminalDialog.stop_command_title": {
     "ko": "실행 중인 명령을 중지할까요?"
   },
-  "auto.components.terminal.pane.MobileDriverOverlay.54f7d6f69d": {
-    "ko": "모든 terminals 제어권 가져오기"
-  },
-  "auto.components.terminal.pane.MobileDriverOverlay.faa367dc74": {
-    "ko": "휴대폰이 이 화면을 휴대폰 크기로 남겨 두었습니다"
-  },
+  "auto.components.terminal.pane.MobileDriverOverlay.54f7d6f69d": null,
+  "auto.components.terminal.pane.MobileDriverOverlay.faa367dc74": null,
   "auto.components.terminal.pane.TerminalContextMenu.c2f0b72b8d": {
     "ko": "삽입"
   },

@@ -25,6 +25,7 @@ import { openJournalOwingImport } from '../agent-session-journal/journal-owed-im
 import { createCodexJournalTranslator } from '../../codex/codex-structured-journal-translation'
 import { createStructuredAgentSessionLogger } from './structured-agent-session-logger'
 import { testEventSinkLogging } from './structured-agent-session-logger-test-support'
+import { codexProviderHandle } from '../../../shared/agent-session-provider-handle-encoding'
 
 const BODY: AgentJournalItemBody = {
   kind: 'message',
@@ -37,7 +38,7 @@ const JOURNAL_IDENTITY = {
   workspaceId: 'workspace-1',
   hostId: 'host-1',
   agent: 'codex',
-  providerHandle: { kind: 'codex', threadId: 'thread-1' }
+  providerHandle: codexProviderHandle('thread-1')
 } as const
 
 function identity(ordinal: number): AgentJournalItemIdentity {
@@ -317,10 +318,11 @@ describe('deferred structured agent-session event sink', () => {
 
   it('replaces a failed cached sink before recovery drain', async () => {
     // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the cached-sink path reads only the logger, on the failed drain.
-    const runtime = new StructuredAgentSessionHostRuntimeState({
+    const deps = {
       store: {},
       logger: createStructuredAgentSessionLogger()
-    } as never)
+    } as never
+    const runtime = new StructuredAgentSessionHostRuntimeState(deps, new Map())
     const failed = runtime.eventSinkFor('session-1')
     failed.bind(target(1, [], 0))
     failed.sink.appendItem(identity(0), BODY, { turnScope: AGENT_JOURNAL_THREAD_SCOPE })

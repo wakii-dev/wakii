@@ -49,6 +49,7 @@ import { STRUCTURED_AGENT_SESSION_METHODS } from './structured-agent-session'
 import { SUPERPOWERS_STORY_LIST_METHODS } from './superpowers-story-list'
 import { SUPERPOWERS_STORY_DETAIL_METHODS } from './superpowers-story-detail'
 import { SUPERPOWERS_GATE_RESOLVE_METHODS } from './superpowers-gate-resolve'
+import { STRUCTURED_AGENT_SESSION_AGENTS_METHODS } from './structured-agent-session-agents'
 import { ARTIFACT_METHODS } from './artifacts'
 import { AGENT_HOOK_METHODS } from './agent-hooks'
 import { AGENT_LAUNCH_METHODS } from './agent-launch'
@@ -66,6 +67,7 @@ export const ALL_RPC_METHODS = [
   ...WORKTREE_METHODS,
   ...AGENT_SESSION_METHODS,
   ...STRUCTURED_AGENT_SESSION_METHODS,
+  ...STRUCTURED_AGENT_SESSION_AGENTS_METHODS,
   ...AGENT_LAUNCH_METHODS,
   ...TERMINAL_METHODS,
   ...TERMINAL_ORPHAN_METHODS,

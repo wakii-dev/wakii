@@ -13,7 +13,8 @@ import {
 import packageJson from './package.json' with { type: 'json' }
 
 const BUNDLED_MAIN_DEPENDENCIES = new Set([
-  '@streamparser/json',
+  'stream-json',
+  'stream-chain',
   '@xterm/headless',
   '@xterm/addon-serialize',
   'tldts',
@@ -255,6 +256,10 @@ export const electronViteConfig: UserConfig = {
           // corpora and read SQLite synchronously; a worker thread keeps that
           // off the main-process event loop.
           'usage-scan-worker-entry': resolve('src/main/usage/usage-scan-worker-entry.ts'),
+          // Why: a first account setup can merge a large history tree with sync fs calls.
+          'claude-profile-setup-worker-entry': resolve(
+            'src/main/claude-accounts/claude-profile-setup-worker-entry.ts'
+          ),
           'profile-state-backup-worker-entry': resolve(
             'src/main/persistence/profile-state/profile-state-backup-worker-entry.ts'
           ),
