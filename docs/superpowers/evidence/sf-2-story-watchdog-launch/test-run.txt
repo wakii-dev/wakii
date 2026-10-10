@@ -1,0 +1,21 @@
+LOCAL-5 sf-2 — story-watchdog --launch-next scoping
+code commit: a228d553b0 (HEAD~1 của evidence commit này)
+suite: node resources/plugins/launch/stablyai.orca-superpowers-launcher/tests/story-watchdog-wakii-tests.mjs
+  TDD: RED→GREEN — RED 26 PASS / 19 FAIL (19 assert scoping fail đúng thiết kế, tdd-red.log)
+       GREEN 45 PASS / 0 FAIL sau impl (tdd-green.log)
+       P2 review round: RED 49 PASS / 2 FAIL (S6-detail, S13 — tdd-red2-p2.log)
+                        GREEN 51 PASS / 0 FAIL (tdd-green.log — bản cuối)
+  Exit code suite: 0
+rehash ×2 (P0-2): kitHash 788c9a111c49a0f1 → 36512232aa936f50 (kit/kit.json)
+                  fingerprint 741004ce… → 40571aee… (bundled-plugins.json)
+  gates: verifyPackagedPluginResources('resources') OK · kit-verify-manifest 31 PASS / 0 FAIL
+         · sc-evidence-map harness 7/7 GREEN · SC 8/8 COVERED
+  không chạy được: plugin-launch-content/bundled-bootstrap/lockstep (vitest) — worktree +
+  main checkout đều thiếu node_modules; lockstep theo contract chỉ bắt buộc khi đụng hash IMPL
+  (không đụng); manifest test chính là drift guard 2 hash → GREEN
+real-world (Rule 0 adapted — bin CLI, không UI): dry-run --launch-next trên repo list thật
+  BEFORE (bin cũ): 25 stale launch plans / 4 repo (before-launch-next.log)
+  AFTER (bin mới): 0 launch plans, 7 repo đa-story SKIP incl. orca 15 stories, exit 0 từ
+  launch-next (exit 1 của run = section diagnose báo STALLED-COLD — pre-existing)
+  (after-launch-next-real-repos.log)
+tdd: RED→GREEN
