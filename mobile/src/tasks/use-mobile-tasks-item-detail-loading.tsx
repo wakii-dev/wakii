@@ -1,3 +1,5 @@
+import type { ProviderCheckSummary } from '../../../src/shared/github/pull-request-types'
+import type { GitLabWorkItem } from './mobile-tasks-provider-detail-types'
 import type { ItemDetailMetadataEffectsModel } from './use-mobile-tasks-item-detail-metadata-effects'
 import {
   type HostedReviewDecision,
@@ -16,7 +18,43 @@ import {
   isSuccess
 } from './mobile-tasks-legacy-foundation'
 
-export function useMobileTasksItemDetailLoading(model: ItemDetailMetadataEffectsModel) {
+type GitLabHydratedStatus = Pick<GitLabWorkItem, 'mergeable' | 'reviewDecision' | 'reviewerCount'>
+
+function gitLabHydrationUnchanged(
+  source: GitLabWorkItem,
+  summary: ProviderCheckSummary,
+  status: GitLabHydratedStatus
+): boolean {
+  const current = source.checksSummary
+  return (
+    current?.state === summary.state &&
+    current.total === summary.total &&
+    current.passed === summary.passed &&
+    current.failed === summary.failed &&
+    current.pending === summary.pending &&
+    current.neutral === summary.neutral &&
+    (status.mergeable === undefined || source.mergeable === status.mergeable) &&
+    (status.reviewDecision === undefined || source.reviewDecision === status.reviewDecision) &&
+    (status.reviewerCount === undefined || source.reviewerCount === status.reviewerCount)
+  )
+}
+
+export type ItemDetailLoadingInput = Pick<
+  ItemDetailMetadataEffectsModel,
+  | 'actionItem'
+  | 'client'
+  | 'detailRefreshSeq'
+  | 'setActionItem'
+  | 'setDetailError'
+  | 'setDetailLoading'
+  | 'setDetailPayload'
+  | 'setItems'
+  | 'tasksSupported'
+>
+
+export function useMobileTasksItemDetailLoading<Model extends ItemDetailLoadingInput>(
+  model: Model
+) {
   const {
     actionItem,
     client,
@@ -157,7 +195,9 @@ export function useMobileTasksItemDetailLoading(model: ItemDetailMetadataEffects
             ...(details.reviewers !== undefined ? { reviewerCount: details.reviewers.length } : {})
           }
           setActionItem((current) =>
-            current?.provider === 'gitlab' && current.source.id === actionItem.source.id
+            current?.provider === 'gitlab' &&
+            current.source.id === actionItem.source.id &&
+            !gitLabHydrationUnchanged(current.source, checksSummary, hydratedStatus)
               ? {
                   ...current,
                   source: {
@@ -168,20 +208,24 @@ export function useMobileTasksItemDetailLoading(model: ItemDetailMetadataEffects
                 }
               : current
           )
-          setItems((current) =>
-            current.map((candidate) =>
-              candidate.provider === 'gitlab' && candidate.source.id === actionItem.source.id
-                ? {
-                    ...candidate,
-                    source: {
-                      ...candidate.source,
-                      checksSummary,
-                      ...hydratedStatus
-                    }
-                  }
-                : candidate
-            )
-          )
+          setItems((current) => {
+            let changed = false
+            const next = current.map((candidate) => {
+              if (
+                candidate.provider !== 'gitlab' ||
+                candidate.source.id !== actionItem.source.id ||
+                gitLabHydrationUnchanged(candidate.source, checksSummary, hydratedStatus)
+              ) {
+                return candidate
+              }
+              changed = true
+              return {
+                ...candidate,
+                source: { ...candidate.source, checksSummary, ...hydratedStatus }
+              }
+            })
+            return changed ? next : current
+          })
         }
         return
       }
@@ -260,4 +304,4 @@ export function useMobileTasksItemDetailLoading(model: ItemDetailMetadataEffects
   return model
 }
 
-export type ItemDetailLoadingModel = ReturnType<typeof useMobileTasksItemDetailLoading>
+export type ItemDetailLoadingModel = ItemDetailMetadataEffectsModel

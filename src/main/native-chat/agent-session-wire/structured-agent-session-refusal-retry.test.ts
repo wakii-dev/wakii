@@ -3,7 +3,6 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi, type Mock } from 'vitest'
 import { AGENT_SESSION_MAX_NEW_OPERATION_AGE_MS } from '../../../shared/agent-session-host-authority'
-import { AGENT_SESSION_DURABLE_OPERATION_PER_CLIENT_LIMIT } from '../../../shared/agent-session-operation-ledger'
 import { computeAgentSessionPayloadFingerprint } from '../../../shared/agent-session-mutation-envelope'
 import type { AgentSessionRecord } from '../../../shared/agent-session-record'
 import {
@@ -32,6 +31,7 @@ import { openTestJournalHostDatabase } from '../agent-session-journal/journal-ho
 import { createStructuredAgentSessionLogger } from './structured-agent-session-logger'
 import { codexProviderHandle } from '../../../shared/agent-session-provider-handle-encoding'
 import { NO_STRUCTURED_AGENTS } from './structured-agent-session-adapter-router-test-support'
+import { AgentSessionJournal } from '../agent-session-journal/journal-store'
 
 const CALLER = { callerKey: 'client-1' }
 const METHODS = ['agentSession.setOption', 'agentSession.send'] as const
@@ -197,20 +197,6 @@ async function setLease(
   await harness.store.transitionHandoff(SESSION, update)
 }
 
-async function fillOperationLedger(harness: Harness): Promise<void> {
-  while (
-    harness.store.listOperationRows().filter((row) => row.callerKey === CALLER.callerKey).length <
-    AGENT_SESSION_DURABLE_OPERATION_PER_CLIENT_LIMIT
-  ) {
-    await harness.store.admitOperation({
-      callerKey: CALLER.callerKey,
-      operationId: operationId(),
-      fingerprint: 'capacity-fixture',
-      now: NOW
-    })
-  }
-}
-
 // sendPlan and setOptionPlan have no unsupported branch.
 const UNREACHABLE = new Set<Pair>([
   'agentSession.send:structured_agent_session_unsupported',
@@ -236,7 +222,10 @@ const UNREACHABLE = new Set<Pair>([
   // fails rejects the accepted message rather than refusing the call.
   'agentSession.send:agent_session_conflict',
   'agentSession.send:execution_owner_reconciling',
-  'agentSession.send:agent_session_owner_restart_failed'
+  'agentSession.send:agent_session_owner_restart_failed',
+  // The ledger has no count limit; only an older host still refuses with it.
+  'agentSession.setOption:agent_session_operation_capacity',
+  'agentSession.send:agent_session_operation_capacity'
 ])
 
 describe('agentSessionRefusalOperationState host oracle', () => {
@@ -314,18 +303,6 @@ describe('agentSessionRefusalOperationState host oracle', () => {
       }
     }
 
-    const capacity = await createHarness()
-    await fillOperationLedger(capacity)
-    for (const method of METHODS) {
-      const spec = { method, operationId: operationId() }
-      record(
-        await assertHostAgreement(capacity, spec, 'agent_session_operation_capacity', async () => ({
-          harness: await createHarness(),
-          spec
-        }))
-      )
-    }
-
     const unknown = await createHarness()
     unknown.setOption.mockRejectedValueOnce(new Error('reply lost'))
     const optionUnknown = { method: 'agentSession.setOption' as const, operationId: operationId() }
@@ -352,12 +329,9 @@ describe('agentSessionRefusalOperationState host oracle', () => {
 
     const unreadable = await createHarness()
     await unreadable.host.close(SESSION, 'evict')
-    // The journal's open asks where the chat's per-chat file lives before it reads anything.
     const unreadableOpen = vi
-      .spyOn(unreadable.host.deps.journalDatabase, 'legacyDirectoryFor')
-      .mockImplementation(() => {
-        throw new Error('journal path unreadable')
-      })
+      .spyOn(AgentSessionJournal.prototype, 'open')
+      .mockRejectedValue(new Error('journal path unreadable'))
     const unreadableSend = { method: 'agentSession.send' as const, operationId: operationId() }
     record(
       await assertHostAgreement(

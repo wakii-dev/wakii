@@ -1,0 +1,55 @@
+LOCAL-5 SF-1 — story-doctor install-coverage (sidecar manifest + srcKitRoot repair)
+worktree: sf-1-story-doctor-install · branch: wakii-dev/sf-1-story-doctor-install
+code commit: 1c0ffb31ed  (feat(kit): sf-1 doctor install-coverage — sidecar .kit-provides.json + repair 2 nhánh)
+date: 2026-10-10
+
+tdd: RED→GREEN
+  RED  : tests/story-doctor-tests.mjs + DR22-DR30 trên code cũ → 149 PASS / 21 FAIL
+         (cả 21 FAIL thuộc DR22-30; DR1-21 giữ GREEN — /tmp/dr-red.log)
+  GREEN: sau fix story-doctor + main.mjs → 173 PASS / 0 FAIL (/tmp/dr-green4.log)
+
+battery (cmd > log; echo $?):
+  node tests/story-doctor-tests.mjs        → rc=0  173 PASS / 0 FAIL  (21 DR cũ + DR22-30 mới)
+  node tests/kit-verify-manifest.mjs       → rc=0  31 PASS / 0 FAIL
+  full kit suite (46 files *.mjs)          → 45 rc=0; workfront-driver-resolve-tests rc=1
+                                             PRE-EXISTING: tái hiện 5 FAIL giống hệt trên HEAD
+                                             sạch (temp worktree /tmp/wf-precheck, đã xoá) —
+                                             nhiễm môi trường đa-story (VOCAB state sf-1 +
+                                             mindmap glob), ngoài boundary SF-1
+  fingerprint verify (CJS)                 → OK — verified 2 bundled plugin(s)
+  lockstep hash impl                       → KHÔNG trigger (không đụng verify-packaged-*
+                                             .cjs lẫn plugin-content-hash.ts); cả 2 hash chạy
+                                             GREEN trên cây sau rehash
+
+rehash (đúng thứ tự plan: bin → computeKitHash → kit.json → fingerprint CUỐI):
+  kit.json kitHash : 788c9a111c49a0f1 → b80460920ed215da (diff 1 dòng)
+  bundled-plugins  : 741004ce… → 3cdbf0c2… (diff 1 dòng)
+  baseline tree sạch trước edit: tree hash == kit.json 788c9a11 (T2, P0-1 probe writer sạch)
+
+real-flow (Rule 0 adapt CLI — sandbox /tmp/sf1-realflow-vtDc, KHÔNG đụng ~/.claude ghi):
+  1. installKit thật → 60 bins + sidecar .kit-provides.json (provides/srcKitRoot/kitHash) + marker
+  2. doctor TỪ vị trí cài (kit_root==root) → bins PASS THẬT "59 bins đủ theo sidecar" (hết tautology)
+  3. xoá story-pane-watch (đúng bin incident 04/10) → FAIL nêu đúng tên + lệnh cp hướng dẫn
+     (code cũ: PASS tautology giả — /tmp/sf1-flow3-missing.log)
+  4. --repair → copy lại từ srcKitRoot + chmod 755, KHÔNG cần main.mjs (đúng điều kiện
+     máy install-only — run_install_kit cũ chết tại đây) → bins FAIL → PASS, exit 0
+  5. uninstall (từ kit source) → xoá 77/77 mục KỂM sidecar (uninstall từ install-dir bị
+     từ chối exit 1 = behavior an toàn DR21)
+  6. live check-mode --root ~/.claude (read-only) → drift thật máy-cài 5b9d4f82 ≠ tree
+     b8046092 → marker FAIL exit 1 đúng thực tế; bins PASS kit-source mode
+
+CHECK 4 caveat: SF CLI-only — không có UI/browser; verify = real-flow 6 bước tự chạy
+(output gốc /tmp/sf1-flow*.log) + live check read-only. Không delegate, tự nhìn từng bước.
+
+plan: docs/superpowers/plans/2026-10-10-local5-sf-1-doctor-install-coverage-plan.md (12/12 tick)
+
+── fix round (review CHANGES-REQUESTED → APPROVED) ──────────────────────────────
+code commit: a47e33f3ea  (fix(kit): sf-1 review round — DR31 + fail-closed kitHash rỗng + cp_hint win32 + whitelist .tmp)
+review verdict: CHANGES-REQUESTED (1 P1 + 3 P2) → fix trọn → APPROVED; đã post worktree comment kèm CHECKLIST-4Q
+tdd: RED→GREEN (DR31 meta-test: tắt nhánh nonexec sidecar-mode → DR31 đỏ PASS-giả tái hiện → khôi phục → xanh)
+
+battery sau fix:
+  node tests/story-doctor-tests.mjs   → rc=0  179 PASS / 0 FAIL  (22 DR — thêm DR31)
+  node tests/kit-verify-manifest.mjs  → rc=0  31 PASS / 0 FAIL
+  node tests/kit-manifest-negative-tests.mjs → rc=0  GREEN
+  rehash: kitHash b80460920ed215da → 72d0fc1f4301e5e2 · fingerprint → df49507d… · verify OK

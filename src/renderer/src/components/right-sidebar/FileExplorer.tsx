@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo } from 'react'
 import { useAppStore } from '@/store'
+import { getRuntimeEnvironmentIdForWorktree } from '@/lib/worktree-runtime-owner'
 import { useActiveWorktree, useRepoById } from '@/store/selectors'
 import {
   getExplorerDisplayRootOptions,
@@ -48,6 +49,9 @@ function FileExplorerFiles(): React.JSX.Element {
   const showRightSidebarSearch = useAppStore((s) => s.showRightSidebarSearch)
   const searchPanel = useFileSearchPanel(explorerView)
   const activeWorktreeId = useAppStore((s) => s.activeWorktreeId)
+  const runtimeEnvironmentId = useAppStore((s) =>
+    getRuntimeEnvironmentIdForWorktree(s, activeWorktreeId)
+  )
   const activeWorktree = useActiveWorktree()
   const activeRepo = useRepoById(activeWorktree?.repoId ?? null)
   const expandedDirs = useAppStore((s) => s.expandedDirs)
@@ -259,6 +263,7 @@ function FileExplorerFiles(): React.JSX.Element {
           repoName={repoName}
           worktreePath={worktreePath}
           connectionId={activeRepo?.connectionId ?? null}
+          runtimeEnvironmentId={runtimeEnvironmentId}
           refresh={manualRefresh}
           canRefresh={isFilesViewActive}
           canCollapseAll={canCollapseAll}
@@ -338,9 +343,7 @@ function FileExplorerFiles(): React.JSX.Element {
             displayRootPath={displayRootPath}
             activeRepo={activeRepo}
             worktreePath={worktreePath}
-            visibleFilesWorktreePath={visibleFilesWorktreePath}
             explorerView={explorerView}
-            isFilesViewActive={isFilesViewActive}
             activeFileId={activeFileId}
             hasNameFilter={hasNameFilter}
             nameFilterSource={nameFilterSource}
@@ -353,6 +356,8 @@ function FileExplorerFiles(): React.JSX.Element {
             ignoredByRelativePath={ignoredByRelativePath}
             rowExpandedPaths={rowExpandedPaths}
             visibleRowCount={visibleRowCount}
+            visibleFilesWorktreePath={visibleFilesWorktreePath}
+            isFilesViewActive={isFilesViewActive}
             openEditors={openEditors}
             handleExplorerBackgroundContextMenuCapture={handleExplorerBackgroundContextMenuCapture}
             handleExplorerBackgroundDoubleClick={handleExplorerBackgroundDoubleClick}

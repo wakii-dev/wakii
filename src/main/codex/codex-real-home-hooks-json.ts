@@ -19,7 +19,7 @@ export function getRealHomeHooksJsonPath(): string {
 /**
  * Every key Codex may give an entry in ~/.codex/hooks.json: as spelled when it
  * runs on its default home, resolved when a pane's CODEX_HOME names it. They
- * differ when ~/.codex or HOME is a symlink, and Orca approves under both.
+ * differ when ~/.codex or HOME is a symlink, and Wakii approves under both.
  */
 export function getRealHomeHookKeySourcePaths(): [string, ...string[]] {
   const hooksJsonPath = getRealHomeHooksJsonPath()
@@ -28,20 +28,20 @@ export function getRealHomeHookKeySourcePaths(): [string, ...string[]] {
   return resolved === spelled ? [spelled] : [spelled, resolved]
 }
 
-/** Orca-side home of the pristine copy; the rolling hooks.json.bak beside the file is writeHooksJson's. */
+/** Wakii-side home of the pristine copy; the rolling hooks.json.bak beside the file is writeHooksJson's. */
 function getRealHomeHookStateDir(userDataPath: string): string {
   return join(userDataPath, 'codex-real-home-hooks')
 }
 
-/** Another process saved hooks.json between Orca's read and its write. */
+/** Another process saved hooks.json between Wakii's read and its write. */
 export class HooksJsonChangedError extends Error {
   constructor() {
-    super('Codex hooks.json changed since Orca read it')
+    super('Codex hooks.json changed since Wakii read it')
     this.name = 'HooksJsonChangedError'
   }
 }
 
-/** Why ~/.codex/hooks.json cannot take Orca's entry, read from the file now; null when it can. */
+/** Why ~/.codex/hooks.json cannot take Wakii's entry, read from the file now; null when it can. */
 export function readRealHomeHooksFileProblem(): string | null {
   const hooksJsonPath = getRealHomeHooksJsonPath()
   const { raw, config } = readHooksJsonWithRaw(hooksJsonPath)
@@ -50,11 +50,11 @@ export function readRealHomeHooksFileProblem(): string | null {
   }
   return isAddableHooksFile(config)
     ? null
-    : `Orca cannot add its hook to ${hooksJsonPath}, so Orca shows no status for ~/.codex`
+    : `Wakii cannot add its hook to ${hooksJsonPath}, so Wakii shows no status for ~/.codex`
 }
 
 // Why: an unparseable user file is never clobbered, and Codex skips a file with other root keys
-// or an event that is not a list, whose value Orca would otherwise replace.
+// or an event that is not a list, whose value Wakii would otherwise replace.
 export function isAddableHooksFile(config: HooksConfig | null): config is HooksConfig {
   return (
     config !== null &&
@@ -77,7 +77,7 @@ export function assertHooksJsonGeneration(
   }
 }
 
-/** One-time pristine copy of the user's file, kept under Orca's userData. */
+/** One-time pristine copy of the user's file, kept under Wakii's userData. */
 export function backupRealHomeHooksJsonOnce(
   userDataPath: string,
   previousRaw: string | null

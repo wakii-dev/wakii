@@ -40,7 +40,6 @@
         "b0b7344684": "Request up to 15 reviewers",
         "b1157c78ff": "sheet",
         "ce8a85d209": "default",
-        "checkActionRequiredHint": null,
         "d0a05e73f5": "compact",
         "e517b4d641": "closed",
         "e9b7cb7d17": "Failed to {{value0}} PR"
@@ -71,13 +70,6 @@
         "9e3c49beb8": "Copy issue identifier",
         "af6e02c44a": "page",
         "f5a6b38a14": "sheet"
-      },
-      "NativeChatResumeOnRestartModal": {
-        "continueRefused": "{{value0}} chats could not be continued. Open them to continue manually.",
-        "continueRefused_one": "{{value0}} chat could not be continued. Open it to continue manually.",
-        "continueRefused_other": "{{value0}} chats could not be continued. Open them to continue manually.",
-        "continueUnconfirmed_one": "Continuation delivery is unconfirmed for {{value0}} chat. Open it to check before sending another message.",
-        "continueUnconfirmed_other": "Continuation delivery is unconfirmed for {{value0}} chats. Open them to check before sending another message."
       },
       "NewWorkspaceComposerCard": {
         "0e587e31fb": "yaml",
@@ -126,7 +118,6 @@
         "b0e80f083d": "wants to merge into",
         "b6bda618cf": "compact",
         "c9de94b07a": "Show more lines above",
-        "checkActionRequiredHint": null,
         "d65f70786e": "closed",
         "e1f3641bfd": "from",
         "e295a78c11": "Show {{value0}} more lines above",
@@ -197,7 +188,6 @@
         "d5253b54af": "error"
       },
       "WorktreeJumpPalette": {
-        "c4afa68159": null,
         "dabd819ca1": "Type to see all {{value0}} worktrees"
       },
       "activity": {
@@ -220,9 +210,7 @@
       },
       "artifacts": {
         "ArtifactsPage": {
-          "openArtifact": "Open artifact",
-          "signInCopy": null,
-          "signInHeading": null
+          "openArtifact": "Open artifact"
         },
         "artifact-publish-flow": {
           "5cb4f5ec36": "Copy link"
@@ -367,7 +355,6 @@
         "report": {
           "CrashReportDialog": {
             "56a3dfa283": "Failed to send crash report.",
-            "835037edc9": null,
             "b175e90213": "No crash report is available.",
             "b2e36f53a1": "Failed to send crash report. Diagnostic ticket {{value0}} was uploaded but not linked."
           }
@@ -396,8 +383,6 @@
           "d16e037f40": "rich"
         },
         "ReviewNotesSendMenuContent": {
-          "50f7e753ea": null,
-          "bb9c69a0c9": null,
           "e84705f223": "Active agent session",
           "f5096c6e4e": "Could not send notes to the active agent."
         },
@@ -537,7 +522,6 @@
               }
             }
           },
-          "review": null,
           "agent": {
             "capability": {
               "setup": {
@@ -647,12 +631,12 @@
           "ProjectRow": {
             "c3b81ddea2": "DRAFT_ISSUE"
           },
+          "ProjectViewStates": {
+            "ac83c45672": "Switch to a Table or Roadmap view to work with this project in Wakii.",
+            "e4cc8b14f2": "Wakii renders table and roadmap project views. This view uses a layout it cannot render yet."
+          },
           "ProjectViewWrapper": {
             "1bf8c01c8b": "Switch to a Table view to work with this project in Wakii."
-          },
-          "ProjectViewStates": {
-            "ac83c45672": "Switch to a Table or Roadmap view to work with this project in Orca.",
-            "e4cc8b14f2": "Orca renders table and roadmap project views. This view uses a layout it cannot render yet."
           }
         }
       },
@@ -732,10 +716,8 @@
           "35bbaf5ae0": "notifications",
           "984338477a": "theme",
           "a5e5da02f7": "integrations",
-          "c47e1bd149": "agent",
-          "ff92d15436": null
+          "c47e1bd149": "agent"
         },
-        "ThemeStep": null,
         "mac": {
           "notification": {
             "permission": {
@@ -805,7 +787,6 @@
           "ChecksPanel": {
             "3c3ad3a1d2": "Started the agent. No selected comments can be marked resolved on the host.",
             "7202f4a40a": "unlink PR",
-            "abf59262fb": null,
             "e56c42122e": "destructive",
             "gitlabUnlink": "Unlink MR"
           },
@@ -879,7 +860,6 @@
             "03d238218c": "Details",
             "04832d8047": "rebase",
             "0fad573938": "Uncommitted",
-            "15b7f210d7": null,
             "1f7119f604": "Base",
             "2830dd64a2": "deleted",
             "3636d0f686": "ready",
@@ -892,7 +872,6 @@
             "77afaa8152": "All",
             "783a808870": "Close",
             "7a09d7f9d2": "base",
-            "901140f47d": null,
             "9bb062a886": "uncommitted",
             "9febd8ab5f": "create_pr",
             "a0cc0e6b4e": "loading",
@@ -905,8 +884,7 @@
             "d62bc0c7d8": "untracked",
             "e59bca888a": "markdown",
             "f3a1b8c204": "upstream",
-            "f62ce91ade": "origin",
-            "tooManyChanges": null
+            "f62ce91ade": "origin"
           },
           "SourceControlAgentActionDialogForm": {
             "1bb611240f": "Use {basePrompt} for Wakii's default prompt.",
@@ -932,7 +910,6 @@
                 "95ad090b01": "thread",
                 "9fecebb29d": "Add",
                 "a916648574": "Open details",
-                "actionRequiredHint": null,
                 "d098e5529a": "Output"
               },
               "empty": {
@@ -1274,8 +1251,7 @@
           "9762364929": "Uses APFS clone-copy on macOS when possible, otherwise symlinks configured folders or files into created worktrees.",
           "a05bcdaf57": "Agents View",
           "f63ea281e3": "Threaded left-sidebar feed for agent completions and blocking states.",
-          "fb82ea1d7a": "Automatically materialize configured files or folders into newly created worktrees.",
-          "newWorktreeCardStyle": null
+          "fb82ea1d7a": "Automatically materialize configured files or folders into newly created worktrees."
         },
         "GeneralRemoteServerUpdates": {
           "reviewUpdateOne": "1 update available",
@@ -1283,7 +1259,6 @@
         },
         "GeneralSupportSection": {
           "1e29570462": "starring",
-          "511782265b": null,
           "5c49f02662": "hidden",
           "73b327e793": "Try Again",
           "9d181300e3": "starred",
@@ -1300,7 +1275,6 @@
           "a0832ccdb1": "downloaded"
         },
         "GeneralWorkspaceSettingsSection": {
-          "externalWorktreesDescription": null,
           "hide": "Hide",
           "show": "Show"
         },
@@ -1477,7 +1451,6 @@
         },
         "RemoteServerUpdateDialog": {
           "checkAgain": "Check for Server Updates",
-          "restartWarning": null,
           "updateOne": "Update server",
           "updating": "Updating servers…"
         },
@@ -1497,11 +1470,9 @@
         },
         "RepositoryPane": {
           "createPendingSetup": "Track setup",
-          "creatingPendingSetup": null,
           "settingUpHost": "Adding...",
           "setupExistingFolder": "Import existing folder",
           "setupExistingFolderHelp": "Make this project available on another host by linking a checkout that already exists there.",
-          "setupHost": null,
           "setupProjectOnHost": "Set up on another host",
           "setupProjectOnHostHelp": "Choose a host, then import an existing checkout, clone the repository there, or track a setup that will be provisioned later."
         },
@@ -1524,7 +1495,6 @@
           "1826bd0608": "Saved Servers",
           "54ebacc600": "Server name",
           "55fcc964cd": "on the server and paste the printed pairing URL.",
-          "7b5986c8df": null,
           "8cf8790697": "Saved servers route this browser through a paired Wakii runtime.",
           "960e901ae4": "orca serve --pairing-address <host>",
           "9bc9b83474": "Pairing code",
@@ -1539,7 +1509,6 @@
         },
         "RuntimePairingUrlGenerator": {
           "279e0dcb57": "127.0.0.1 only works on this computer. Use a LAN, Tailscale, or custom address for another device.",
-          "add-custom": null,
           "b91e36a986": "web",
           "de6d5cff95": "This computer ("
         },
@@ -1657,9 +1626,9 @@
           "a42f6fbdd8": "Keeps this computer and display awake while agents are working. Wakii also asks this device to stay awake when the lid is closed, subject to its power policy.",
           "e5995ce268": "Keep computer awake while agents are working",
           "modeDescriptionDefault": "Choose On, Agent, or Off. Agent mode stays awake while agents are working. Wakii also asks this device to stay awake when the lid is closed, subject to its power policy.",
+          "modeDescriptionMac": "Choose On, Agent, or Off. Agent mode prevents idle sleep while agents work, so long runs finish with the lid open. Closing the lid still puts this Mac to sleep.",
           "modeDescriptionWindows": "Choose On, Agent, or Off. Agent mode stays awake while agents are working; lid-close behavior follows this device's power settings.",
-          "modeTitle": "Keep computer awake",
-          "modeDescriptionMac": "Choose On, Agent, or Off. Agent mode prevents idle sleep while agents work, so long runs finish with the lid open. Closing the lid still puts this Mac to sleep."
+          "modeTitle": "Keep computer awake"
         },
         "agent-generated-tab-title-copy": {
           "19ad21615a": "Auto-generate tab titles",
@@ -1772,7 +1741,10 @@
             "d23ae13990": "worktree",
             "f082788cfe": "links",
             "fa72e71f05": "agents",
-            "fe5688b761": "sidebar"
+            "fe5688b761": "sidebar",
+            "nativeChat": {
+              "description": "Open supported new agents in Chat UI."
+            }
           }
         },
         "general": {
@@ -1867,14 +1839,19 @@
           "terminalQuickCommands": "Commands are saved on this client, then scoped globally or to a project setup so they run from the selected terminal context."
         },
         "shareSkills": {
-          "refreshLinks": "Refresh",
-          "showButton": null
+          "refreshLinks": "Refresh"
         },
         "ssh": {
           "search": {
             "62826efbe9": "Add a new remote SSH target.",
             "74c6d90d78": "Manage remote SSH targets."
           }
+        },
+        "sshHostServer": {
+          "terminalsElsewhere_one": "Runs the relay while {{count}} terminal another Wakii desktop or session opened on this host is running.",
+          "terminalsElsewhere_other": "Runs the relay while {{count}} terminals another Wakii desktop or session opened on this host are running.",
+          "terminalsLive_one": "Runs the relay until its {{count}} open terminal is closed, then moves to a managed server.",
+          "terminalsLive_other": "Runs the relay until its {{count}} open terminals are closed, then moves to a managed server."
         },
         "terminal": {
           "windows": {
@@ -1955,13 +1932,9 @@
       },
       "sidebar": {
         "AddRemoteHostDialog": {
-          "pairingCode": null,
           "pairingCommand": "orca serve --pairing-address <host>",
           "pairingHelpPrefix": "Run",
-          "pairingHelpSuffix": null,
-          "serverName": null,
           "sshConfigPickerBulkHint": "Bulk sync stays in Settings → SSH",
-          "sshConfigPickerDescription": null,
           "sshPersistenceDefault": "Remote terminals on this host stay alive until you end them or reset the relay.",
           "sshConfigPickerInOrca": "In Wakii"
         },
@@ -1983,6 +1956,9 @@
         },
         "CacheTimer": {
           "07729cc155": "expired"
+        },
+        "DeleteWorktreeDirtyChangeHint": {
+          "8e2994ce28": "Deleting this workspace permanently removes these changes from disk."
         },
         "FolderWorkspaceComposerDialog": {
           "chooseSourceProject": "Choose task source",
@@ -2078,6 +2054,22 @@
           "34f733dda2": "Go to Worktree",
           "3e5f66564e": "Workspace unavailable"
         },
+        "WorktreeIssueLinkField": {
+          "0a7a2c6efd": "Not a GitHub issue number or issue URL.",
+          "161b2d053a": "Open linked issue",
+          "25852bfc59": "Linear",
+          "269198eeda": "Couldn't open that issue. Check the number and your GitHub connection.",
+          "2c245ac134": "Saving unlinks {{link}} — a workspace tracks one issue.",
+          "5b440069e6": "GitHub",
+          "662ae142f8": "Issue #, or a GitHub or Linear URL",
+          "72486800ff": "Saving unlinks {{first}} and {{second}} — a workspace tracks one issue.",
+          "929c98d05a": "Issue provider",
+          "964d9bc00a": "Not a Linear issue key or linear.app issue URL.",
+          "ad78f9bee2": "Issue",
+          "d4785f9954": "Issue links are set when a folder workspace is created and can't be changed here yet.",
+          "d8c8a30d1f": "Couldn't open that issue. Check the identifier and your Linear connection.",
+          "f047887705": "Paste a GitHub or Linear URL, or enter a number. Leave blank to remove the link."
+        },
         "WorktreeList": {
           "2ca6e29a3c": "repo",
           "45fbfe0335": "rename",
@@ -2088,10 +2080,23 @@
         },
         "WorktreeMetaDialog": {
           "029ea5ec57": "Open GitHub issue",
+          "077a4f7b5c": "PR # or GitHub URL",
+          "1b91db7e14": "GH PR",
+          "382fd11a3e": "Edit Worktree Details",
+          "459ad7f650": "Only changes the name shown in the sidebar — the folder on disk stays the same. Leave blank to use the branch or folder name.",
+          "5ae06f40fd": "Paste a pull request URL, or enter a number. Leave blank to remove the link.",
           "645fa4a0fd": "GH Issue",
           "65770ad0f0": "Edit GitHub links and notes for this workspace.",
           "741279e7b7": "Issue # or GitHub URL",
-          "7c454be4c5": "Paste an issue URL, or enter a number. Leave blank to remove the link."
+          "7c454be4c5": "Paste an issue URL, or enter a number. Leave blank to remove the link.",
+          "7f0be5e9a6": "Supports **markdown** — bold, lists, `code`, links. Press Enter or",
+          "9c1d1e9b71": "Comment",
+          "a0d191b7a7": "Edit issue links, pull request links, and notes for this workspace.",
+          "b48c271d39": "to save, Shift+Enter for a new line.",
+          "gitlabDescription": "Edit issue links, merge request links, and notes for this workspace.",
+          "gitlabHelp": "Paste a merge request URL, or enter a number. Leave blank to remove the link.",
+          "gitlabMR": "GitLab MR",
+          "gitlabPlaceholder": "MR ! or GitLab URL"
         },
         "WorktreeOpenInMenu": {
           "3ec372b664": "file-manager"
@@ -2104,7 +2109,6 @@
           "8372e4bbd9": "{{value0}} currently shown",
           "f1f71b9f02": "Always show"
         },
-        "add": null,
         "index": {
           "b826a98b6f": "busy"
         },
@@ -2135,6 +2139,10 @@
             }
           }
         },
+        "worktreeIssueDisplacement": {
+          "3f61c0a8d2": "Linear {{value}}",
+          "9c4b7e1f60": "GitHub #{{value}}"
+        },
         "LocalGitToolchainScanBanner": {
           "developerToolsBody": "Git needs Apple's developer tools. Run this in Terminal, then switch back to Wakii. It will check again automatically.",
           "xcodeLicenseBody": "macOS blocks Git until you accept it. Run this in Terminal, then switch back to Wakii. It will check again automatically."
@@ -2145,9 +2153,6 @@
         },
         "SidebarFeedbackImageAttachments": {
           "screenshotsHint": "Attach up to {count} screenshots"
-        },
-        "DeleteWorktreeDirtyChangeHint": {
-          "8e2994ce28": "Deleting this workspace permanently removes these changes from disk."
         }
       },
       "skills": {
@@ -2205,11 +2210,8 @@
           "1c9e7f420a": "Installed bundle skills",
           "2ae587d39c": "Retry incomplete coverage",
           "34c2ef9e71": "Install {{count}} skills",
-          "3677ae58e7": null,
-          "44d118a8f7": null,
           "470d8d2476": "Confirm remove",
           "561e49ccd1": "Install selected version",
-          "64c71cf7b9": null,
           "74b70892ea": "Local files were modified",
           "86ed219b55": "Choose a version",
           "9c04bd0120": "Installed version",
@@ -2278,7 +2280,6 @@
           "01c5a15e05": "Share {{value0}} skills"
         },
         "SkillsPage": {
-          "08a321a984": null,
           "0bc1379f4c": "All sources",
           "0c74e7ff34": "Installed",
           "38e0951c3a": "Agent Skills",
@@ -2306,8 +2307,6 @@
           "agentsNoneChosen": "No extra agents",
           "agentsSummary": "Also: {{value0}}",
           "bundleDestinationSummary": "{{value0}} new · {{value1}} already installed · {{value2}} need a decision",
-          "deselectAll": null,
-          "reviewSupportingFiles": null,
           "trustNote": "Skills are instructions and code from their author. Install what you trust."
         },
         "managedInstall": {
@@ -2636,7 +2635,6 @@
             "ptyAllocationLimit": "Your system cannot allocate any more pty devices. Close some terminals you are not using, in Wakii or another program, then try again.",
             "terminalProcessLimit": "Your system cannot start another terminal process. Close unused terminals or quit unused processes, then try again."
           },
-          "TerminalRemoteRuntimeReconnectBanner": null,
           "TerminalSessionStateSaveFailureDialog": {
             "678c780a2c": "Disk space is unavailable",
             "e2fcf07c0d": "Wakii could not save this terminal session because local storage is full or not writable. Open the disk space analyzer to find workspace storage you can clean up."
@@ -2749,6 +2747,13 @@
         "unconfirmed": "Wakii couldn’t confirm the “continue” message was delivered. Open the chat and check before sending another.",
         "unsupported": "This chat can’t be resumed by Wakii. Open it to see where it stopped."
       },
+      "NativeChatResumeOnRestartModal": {
+        "continueRefused": "{{value0}} chats could not be continued. Open them to continue manually.",
+        "continueRefused_one": "{{value0}} chat could not be continued. Open it to continue manually.",
+        "continueRefused_other": "{{value0}} chats could not be continued. Open them to continue manually.",
+        "continueUnconfirmed_one": "Continuation delivery is unconfirmed for {{value0}} chat. Open it to check before sending another message.",
+        "continueUnconfirmed_other": "Continuation delivery is unconfirmed for {{value0}} chats. Open them to check before sending another message."
+      },
       "QuickOpen": {
         "344f8a48dd": "on the host running the Quick Open scan to enable fast, gitignore-aware listing:"
       }
@@ -2846,16 +2851,28 @@
         "timedOut": "Timed out loading check details."
       }
     },
+    "ssh": {
+      "managedServerMove": {
+        "offer_one": "Move {{host}} to a managed Wakii server for more reliable connections. Its {{count}} open terminal will restart.",
+        "offer_other": "Move {{host}} to a managed Wakii server for more reliable connections. Its {{count}} open terminals will restart.",
+        "refusedLive_one": "Not moved: {{count}} terminal on {{host}} is still running.",
+        "refusedLive_other": "Not moved: {{count}} terminals on {{host}} are still running.",
+        "refusedUnverifiable_one": "Not moved: Wakii couldn’t confirm that {{count}} terminal on {{host}} stopped.",
+        "refusedUnverifiable_other": "Not moved: Wakii couldn’t confirm that {{count}} terminals on {{host}} stopped."
+      }
+    },
     "store": {
       "slices": {
         "settings": {
           "faa8fb83dd": "Save or close unsaved editor tabs before switching servers."
         },
         "worktrees": {
+          "19db0085fb": "Local branch deleted",
           "2b0afc7f14": "Could not keep local {{value0}} up to date",
           "34a03a6565": "Keep {{value0}} up to date",
           "4a18052018": "Local {{value0}} is behind {{value1}}",
           "4e6496f3d2": "{{value0}} deleted, branch kept",
+          "5a58e03a26": "Deleted \"{{value0}}\".",
           "670864ab52": "Keeping local {{value0}} up to date",
           "889487d8bb": "Dismiss",
           "d1d78a7baa": "Git could not safely delete branch \"{{value0}}\"{{value1}}, so Wakii kept it to avoid losing local commits.",
@@ -2937,8 +2954,7 @@
     },
     "sshEgress": {
       "localChip": "This device"
-    },
-    "sshRoute": null
+    }
   },
   "components": {
     "native-chat": {
@@ -2948,13 +2964,65 @@
         "awaitingUnnamed": "Awaiting user input",
         "questionCount": "{{value0}} questions"
       },
+      "backgroundTasks": {
+        "agent": "Background agent",
+        "command": "Background command",
+        "countAgentsMany": "{{value0}} agents",
+        "countAgentsOne": "1 agent",
+        "countMonitorsMany": "{{value0}} monitors",
+        "countMonitorsOne": "1 monitor",
+        "countShellCommandOne": "1 shell command",
+        "countShellMany": "{{value0}} shells",
+        "countShellOne": "1 shell",
+        "countTasksMany": "{{value0}} tasks",
+        "countTasksOne": "1 task",
+        "countWorkflowsMany": "{{value0}} workflows",
+        "countWorkflowsOne": "1 workflow",
+        "detailsUnavailable": "Task details are unavailable for this session.",
+        "groupAgents": "Agents",
+        "groupMonitors": "Monitors",
+        "groupShell": "Shell",
+        "groupTasks": "Tasks",
+        "groupWorkflows": "Workflows",
+        "headerTotal": "{{value0}} background tasks",
+        "monitor": "Background monitor",
+        "monitoring": "Monitoring background tasks",
+        "reasonBlocked": "failed",
+        "reasonWaiting": "needs approval",
+        "stateBlocked": "blocked",
+        "stateBlockedCount": "{{value0}} blocked",
+        "stateDone": "done",
+        "stateDoneCount": "{{value0}} done",
+        "stateIdle": "stopped",
+        "stateIdleCount": "{{value0}} stopped",
+        "stateMonitoring": "monitoring",
+        "stateMonitoringCount": "{{value0}} monitoring",
+        "stateUnverifiable": "status unavailable",
+        "stateUnverifiableCount": "{{value0}} with status unavailable",
+        "stateWaiting": "waiting",
+        "stateWaitingCount": "{{value0}} waiting",
+        "stateWorking": "working",
+        "stateWorkingCount": "{{value0}} working",
+        "stop": "Stop",
+        "stopAll": "Stop background tasks",
+        "stopTask": "Stop {{value0}}",
+        "task": "Background task",
+        "workflow": "Background workflow"
+      },
       "composer": {
         "effort": "Effort",
         "imageUnsupported": "Image paste is not supported for this agent."
       },
       "failureWords": {
         "accountSwitchInProgress": "A Claude account switch is in progress. Try again after it finishes.",
+        "agentCommandNotRunnable": "{{agent}}'s Command in Settings → Agents must be a program path or name Wakii can find, with no arguments or variables. Change it or reset it.",
+        "agentCommandNotSignedIn": "Sign in to {{agent}} with `{{loginCommand}}` on the computer running this chat.",
+        "agentNotSignedIn": "Sign in to {{agent}}.",
         "answerUnconfirmed": "Your answer was recorded but the agent did not confirm it.",
+        "argumentsMissingValue": "Saved Arguments need a value for {{option}}.",
+        "argumentsMultipleValues": "Saved Arguments give {{option}} more than one value.",
+        "argumentsPositionalPrompt": "Saved Arguments include a prompt.",
+        "argumentsUnsupportedOption": "Saved Arguments contain an unsupported option ({{option}}).",
         "attachmentAtMost": "{{agent}} accepts at most {{limit}} images in one message, so this message was not sent.",
         "attachmentEmpty": "An image on this message is empty, so the message was not sent.",
         "attachmentInvalid": "An attachment on this message can't be sent to the agent.",
@@ -2973,6 +3041,12 @@
         "chooseClaudeAccount": "Choose or add one in Claude Accounts settings.",
         "chooseClaudeAccountThenRunCommand": "Choose or add one in Claude Accounts settings, then run /{{command}} again.",
         "chooseClaudeAccountThenSend": "Choose or add one in Claude Accounts settings, then send your message again.",
+        "commandAfterAnswer": "Answer the agent's question or approval, then run /{{command}}.",
+        "claudeManagedNotSignedIn": "This Claude account isn't signed in. Sign in again in Claude Accounts settings.",
+        "claudeSystemNotSignedIn": "Claude isn't signed in. Run `{{loginCommand}}`, or choose an account in Claude Accounts settings.",
+        "cliMissing": "{{agent}} wasn't found on the computer running this chat. Install it, or check its Command in Settings → Agents.",
+        "codexManagedNotSignedIn": "This Codex account isn't signed in. Sign in again in Codex Accounts settings.",
+        "codexSystemNotSignedIn": "Codex isn't signed in. Run `{{loginCommand}}`.",
         "commandRefused": "This command didn't run.",
         "commandRefusedTryAgain": "This command didn't run. Try it again.",
         "compactionFailed": "Compaction failed.",
@@ -2980,50 +3054,48 @@
         "compactionUnconfirmed": "Compaction completion is unconfirmed.",
         "couldNotRestart": "{{agent}} couldn't restart.",
         "couldNotStart": "{{agent}} couldn't start.",
+        "editSavedArguments": "Edit them in Settings > Agents > Arguments.",
         "emptyMessage": "This message is empty, so it was not sent.",
+        "historyInOtherAccount": "This chat's history is in another Claude account. Switch back to that account to continue it.",
         "historyTooLarge": "This conversation's history is too large to restore here.",
         "hostFault": "Wakii ran into a problem, so this didn't go through.",
         "hostFaultTryAgain": "Wakii ran into a problem, so this didn't go through. Try again.",
         "hostRestarted": "Wakii restarted before this message was sent.",
         "hostStopped": "{{agent}} never finished starting, so Wakii stopped it.",
+        "interactiveAgentNotSignedIn": "Sign in to {{agent}} by running `{{loginCommand}}` and using `{{slashCommand}}` on the computer running this chat.",
+        "launchFolderMissing": "The folder this chat ran in no longer exists. Restore it to continue this chat.",
         "managedAccountEnvOverride": "This Claude launch sets its own Anthropic sign-in variables. Remove them to use a managed Claude account.",
         "managedAccountUnsupported": "While a Claude account is added in WSL, Claude chats need a Windows Claude account.",
         "noTurnToStop": "{{agent}} had no turn running to stop.",
         "notDelivered": "This message was not delivered.",
         "notDeliveredSendAgain": "This message was not delivered. Send it again to continue.",
-        "notSignedIn": "{{agent}} is not signed in for the selected account.",
+        "notSignedIn": "{{agent}} is not signed in.",
         "previousExitUnverifiable": "Couldn't stop {{agent}} from before.",
         "providerExitedRejection": "{{agent}} stopped before this message was sent.",
         "providerExitedRow": "{{agent}} stopped while this response was in progress. You can continue in this conversation.",
         "providerRateLimited": "{{agent}} is rate-limited and retrying.",
         "providerRejected": "The provider did not accept this message.",
         "providerRejectedQuoted": "The provider did not accept this message: {{detail}}.",
+        "providerRetryLastError": "Last error: {{detail}}.",
+        "providerRetryNumber": "Retry {{attempt}}.",
+        "providerRetryNumberOf": "Retry {{attempt}} of {{maxRetries}}.",
         "providerRetrying": "{{agent}} hit a temporary problem and is retrying.",
         "providerRetryingQuoted": "{{agent}} is retrying: {{detail}}.",
         "providerStartFailed": "{{agent}} stopped before it finished starting.",
         "queueFull": "Too many messages were waiting for the agent, so this one was not sent.",
         "runCommandAgain": "Run /{{command}} again.",
+        "runCommandWhenDone": "Run /{{command}} when it's done.",
+        "sendAgainToTryOnceMore": "Send your message again to try once more.",
         "sendToTryAgain": "Send your message to try again.",
+        "sessionNotRestored": "{{agent}} couldn't reopen its earlier session, so this chat continues in a new one. {{agent}} doesn't remember the earlier messages.",
         "signInFirst": "Sign in first.",
         "signInThenRunCommand": "Sign in, then run /{{command}} again.",
         "signInThenSend": "Sign in, then send your message again.",
         "stopRefused": "{{agent}} didn't stop.",
         "stopRefusedQuoted": "{{agent}} didn't stop: {{detail}}.",
         "theAgent": "The agent",
-        "writeFailed": "Wakii couldn't hand this message to the agent, so it was not sent.",
-        "argumentsMissingValue": "Saved Arguments need a value for {{option}}.",
-        "argumentsMultipleValues": "Saved Arguments give {{option}} more than one value.",
-        "argumentsPositionalPrompt": "Saved Arguments include a prompt.",
-        "argumentsUnsupportedOption": "Saved Arguments contain an unsupported option ({{option}}).",
-        "editSavedArguments": "Edit them in Settings > Agents > Arguments.",
-        "launchFolderMissing": "The folder this chat ran in no longer exists. Restore it to continue this chat.",
-        "historyInOtherAccount": "This chat's history is in another Claude account. Switch back to that account to continue it.",
-        "agentCommandNotRunnable": "{{agent}}'s Command in Settings → Agents must be a program path or name Orca can find, with no arguments or variables. Change it or reset it.",
-        "sessionNotRestored": "{{agent}} couldn't reopen its earlier session, so this chat continues in a new one. {{agent}} doesn't remember the earlier messages.",
-        "providerRetryNumber": "Retry {{attempt}}.",
-        "providerRetryNumberOf": "Retry {{attempt}} of {{maxRetries}}.",
-        "providerRetryLastError": "Last error: {{detail}}.",
-        "sendAgainToTryOnceMore": "Send your message again to try once more."
+        "thenSendAgain": "Then send your message again.",
+        "writeFailed": "Wakii couldn't hand this message to the agent, so it was not sent."
       },
       "notices": {
         "historyItemTooLarge": "This part of the chat was too large to show.",
@@ -3031,6 +3103,10 @@
       },
       "question": {
         "other": "Other…"
+      },
+      "queuedMessages": {
+        "sendConfirmBody_one": "You are about to send a message. Do you want to clear the {{count}} message previously queued?",
+        "sendConfirmBody_other": "You are about to send a message. Do you want to clear the {{count}} messages previously queued?"
       },
       "state": {
         "empty": {
@@ -3053,18 +3129,40 @@
       "status": {
         "failedAfter": "Failed after {{value0}}",
         "interruptedAfter": "Interrupted after {{value0}}",
+        "queueAfterStop": "Queue a message to run after the stop",
         "responding": "Agent is responding",
+        "sendAfterStop": "Send a message to run after the stop",
         "toggleDetails": "Toggle turn details",
         "workedFor": "Worked for {{value0}}",
-        "workingFor": "Working for {{value0}}",
-        "queueAfterStop": "Queue a message to run after the stop",
-        "sendAfterStop": "Send a message to run after the stop"
+        "workingFor": "Working for {{value0}}"
+      },
+      "subagents": {
+        "ranN": "Ran {{value0}} subagents",
+        "ranOne": "Ran 1 subagent",
+        "startedN": "Kicked off {{value0}} subagents",
+        "startedOne": "Kicked off 1 subagent",
+        "state": {
+          "completed": "completed",
+          "failed": "failed",
+          "failedCount": "{{value0}} failed",
+          "idle": "idle",
+          "idleCount": "{{value0}} idle",
+          "stopped": "stopped",
+          "stoppedCount": "{{value0}} stopped",
+          "unverifiable": "status unavailable",
+          "unverifiableCount": "{{value0}} with status unavailable",
+          "working": "working",
+          "workingCount": "{{value0}} working"
+        },
+        "tokens": "{{value0}} tokens"
       },
       "tool": {
         "countN": "{{value0}} tool calls",
         "countOne": "1 tool call",
         "failedCallsLabel": "Failed tool calls: {{value0}}",
         "failedCount": "{{value0}} failed",
+        "interruptedCallsLabel": "Interrupted tool calls: {{value0}}",
+        "interruptedCount": "{{value0}} interrupted",
         "moreCalls": "+{{value0}} more",
         "ranCommandManyToolsSummary": "Ran {{commandCount}} command and used {{toolCount}} tools",
         "ranCommandOneToolSummary": "Ran {{commandCount}} command and used {{toolCount}} tool",
@@ -3076,19 +3174,27 @@
         "runningNamedPreview": "Running {{toolName}} {{preview}}",
         "runningPreview": "Running {{preview}}",
         "usedManySummary": "Used {{toolCount}} tools",
-        "usedOneSummary": "Used 1 tool",
-        "interruptedCallsLabel": "Interrupted tool calls: {{value0}}",
-        "interruptedCount": "{{value0}} interrupted"
+        "usedOneSummary": "Used 1 tool"
       },
       "writeNotice": {
         "agentRefused": "The agent turned this down.",
         "agentStarting": "The agent is still starting.",
+        "agentStillWorking": "The agent is still working.",
         "answerFirst": "Answer the question or approval first.",
+        "attachmentExpired": "This attachment expired.",
         "backgroundTasksRunning": "Background tasks are still running.",
+        "cannotRunHere": "Wakii can't run this agent in a chat here.",
         "capacity": "Wakii has received too many requests in the last day.",
         "chatNotFound": "Wakii can't find this chat.",
+        "chatSavedByNewerOrca": "This chat was saved by a newer Wakii.",
+        "clearAfterAnswer": "Answer the agent's question or approval, then run /clear.",
+        "clearAfterRetry": "Retry your earlier message, then run /clear.",
+        "clearAfterSending": "Your earlier message is still being sent. Run /clear once it has gone.",
         "clearUnfinished": "The last /clear didn't finish.",
         "commandRunning": "A /compact or /clear is still running.",
+        "compactAfterAnswer": "Answer the agent's question or approval, then run /compact.",
+        "compactAfterRetry": "Retry your earlier message, then run /compact.",
+        "compactAfterSending": "Your earlier message is still being sent. Run /compact once it has gone.",
         "conversationCleared": "This conversation has been cleared.",
         "goalsUnsupported": "This agent doesn't support goals.",
         "historyUnavailable": "Wakii couldn't open this chat's history right now.",
@@ -3110,17 +3216,22 @@
         "openCurrentConversation": "Open the current conversation to continue.",
         "optionRejected": "The agent didn't accept this setting.",
         "outcomeUnknown": "Wakii couldn't confirm what happened. Check the chat.",
-        "sendOutcomeLost": "Wakii couldn't confirm your message reached the agent. Check the chat, then send it again if needed.",
         "ownerUnproven": "The previous agent in this chat may still be running.",
         "promptPending": "The agent is waiting for an answer to a question or approval.",
         "questionChanged": "This question was already answered or has changed.",
+        "queueTooLarge": "Too much text is waiting in the queue.",
         "quitTerminalAgent": "Quit that agent to continue the chat here.",
+        "reattachFile": "Remove it and attach it again.",
         "recordFailed": "Wakii couldn't save this to the chat's history.",
         "recordUnreadable": "Wakii couldn't read this chat's saved state.",
         "reopenChat": "Reopen the chat to check again.",
         "restartFailed": "The agent couldn't restart.",
+        "runClearWhenDone": "Run /clear when it's done.",
+        "runCompactWhenDone": "Run /compact when it's done.",
         "savedByNewerOrca": "Chats were saved by a newer Wakii.",
+        "sendOutcomeLost": "Wakii couldn't confirm your message reached the agent. Check the chat, then send it again if needed.",
         "settleEarlierMessage": "Wait for your earlier message to go through, or retry it.",
+        "shrinkQueue": "Delete a queued message, or wait for one to go through, then try again.",
         "startNewChat": "Start a new chat to continue.",
         "terminalAgentHoldsChat": "This chat is still open in a terminal agent.",
         "tryAgain": "Try again.",
@@ -3129,21 +3240,15 @@
         "unreachable": "Wakii couldn't reach the agent.",
         "unsupported": "This needs a newer Wakii on the computer running this chat. Update Wakii there, then try again.",
         "updateOrcaToKeepUsing": "Update Wakii to keep using them.",
+        "updateOrcaToOpenChat": "Update Wakii to open it.",
         "waitForBackgroundTasks": "Wait for the background tasks to finish.",
         "waitForCommand": "Wait for the /compact or /clear to finish.",
         "waitForStart": "Wait for the agent to finish starting.",
         "waitForTurn": "Wait for the agent to finish responding, or stop it.",
-        "waitMoment": "Wait a moment.",
-        "chatSavedByNewerOrca": "This chat was saved by a newer Orca.",
-        "cannotRunHere": "Orca can't run this agent in a chat here.",
-        "updateOrcaToOpenChat": "Update Orca to open it."
+        "waitMoment": "Wait a moment."
       },
       "structuredSessionCloseFailed": "Could not close this chat session",
-      "structuredSessionCloseFailedDescription": "The terminal stayed open so the provider remains recoverable.",
-      "queuedMessages": {
-        "sendConfirmBody_one": "You are about to send a message. Do you want to clear the {{count}} message previously queued?",
-        "sendConfirmBody_other": "You are about to send a message. Do you want to clear the {{count}} messages previously queued?"
-      }
+      "structuredSessionCloseFailedDescription": "The terminal stayed open so the provider remains recoverable."
     },
     "onboarding": {
       "integrations": {
@@ -3212,6 +3317,9 @@
       "viewing": "Viewing: {{path}}"
     }
   },
+  "menu": {
+    "exploreOrca": "Explore Wakii"
+  },
   "runtimeRpc": {
     "startupFailure": {
       "guidance": {
@@ -3250,11 +3358,7 @@
       "moreOptions": "{{value0}} more - keep typing to narrow",
       "noOptions": "No matching hosts or projects",
       "search": "Filter by host or project..."
-    },
-    "matchLabel": null
-  },
-  "menu": {
-    "exploreOrca": "Explore Wakii"
+    }
   },
   "terminal": {
     "sessionSaveFailure": {

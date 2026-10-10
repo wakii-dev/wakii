@@ -1,9 +1,13 @@
 import type { NativeChatQueueResume } from './native-chat-composer-primary-action'
+import type { NativeChatComposerNotice } from './native-chat-composer-notice'
 import type { AgentSessionConversationCommand } from '../../../../shared/agent-session-conversation-command'
 import type { StructuredAgentContextUsage } from '../../../../shared/structured-agent-session-context-usage'
 import type { AgentSessionSlashCommand } from '../../../../shared/agent-session-wire'
 import type { AgentType } from '../../../../shared/agent-status-types'
-import type { StructuredAgentSessionCommandOutcome } from '../../../../shared/structured-agent-session-composer'
+import type {
+  StructuredAgentSessionCommandOutcome,
+  StructuredAgentSessionCommandRefusalCause
+} from '../../../../shared/structured-agent-session-composer'
 import type {
   SessionOptionDescriptor,
   SessionOptionsSurface
@@ -12,6 +16,14 @@ import type { NativeChatLaunchDraft } from '@/lib/native-chat-launch-prompt'
 import type { NativeChatComposerImageAttachment } from './NativeChatComposerField'
 import type { NativeChatAfterStopSend } from './native-chat-composer-target'
 import type { NativeChatLocalCommandAnswer } from './use-native-chat-local-command-answer'
+import type { NativeChatRecallSource } from './native-chat-sent-prompt-history'
+
+export type NativeChatComposerErrorDetail = {
+  /** Error text Orca did not write, shown apart and copyable. */
+  errorText?: string
+  /** A refused command's cause: its line is said only while that still holds. */
+  refusedWhile?: StructuredAgentSessionCommandRefusalCause
+}
 
 export type NativeChatOptionPickerRequest = {
   id: string
@@ -32,6 +44,8 @@ export type NativeChatStructuredComposerTransport = {
     text: string,
     attachments: readonly NativeChatComposerImageAttachment[]
   ) => boolean | 'queued'
+  /** A send is out: Send stays disabled, and a send returns false, until it settles. */
+  sendOut?: boolean
   dispatchCommand: (text: string) => Promise<StructuredAgentSessionCommandOutcome>
   optionsSurface: SessionOptionsSurface
   optionSnapshot: SessionOptionDescriptor[]
@@ -46,7 +60,7 @@ export type NativeChatStructuredComposerTransport = {
   worktreeId?: string
   /** Present only where the host can set this session's goal. */
   threadGoal?: { setObjective: (objective: string) => Promise<boolean> }
-  onError: (message: string | null) => void
+  onError: (message: string | null, detail?: NativeChatComposerErrorDetail) => void
   /** A local send: brings the latest into view at the press, not when the host answers. */
   onSubmitted?: () => void
   runtime: 'local' | 'remote'
@@ -116,6 +130,10 @@ export type NativeChatComposerProps = {
   /** Cmd/Ctrl+Enter from an empty composer: send the newest queued draft now.
    *  False = nothing queued, and the chord falls through to a plain send. */
   steerQueued?: () => boolean
+  /** The chat's own notices, shown in the composer's notice card above its input. */
+  notices?: readonly NativeChatComposerNotice[]
+  /** The conversation Up/Down recalls prompts from. */
+  recallSource?: NativeChatRecallSource
 }
 
 /** Launch context prefilled into the TUI input as an unsent draft, plus the two
@@ -131,6 +149,11 @@ export type NativeChatLaunchSeed = {
 export type NativeChatComposerHandle = {
   focus: () => boolean
   insertTypedText: (text: string) => boolean
+  /** Whether the input is there and enabled, so text given to it lands. */
+  acceptsText: () => boolean
+  /** Adds text after the draft, a blank line apart, and leaves the caret at its end. Text the
+   *  draft already ends with is not added again. */
+  appendText: (text: string) => void
   /** Routes pane-level paste events back to the composer field. */
   handlePasteEvent: (event: {
     clipboardData: DataTransfer | null

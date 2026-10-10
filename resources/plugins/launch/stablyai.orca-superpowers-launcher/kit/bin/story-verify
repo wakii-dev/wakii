@@ -138,6 +138,46 @@ try: print(int(bool(json.load(open(sys.argv[1])).get('distributed', {}).get('ena
 except Exception: print(0)" "$VERIFY_CFG_FILE" 2>/dev/null
 }
 
+# resolve-mindmap (B3 scoping — spec LOCAL-5 sf-3): story ID từ basename worktree —
+# cắt đuôi -sf-<n> (<story>-sf-<n>) HOẶC cắt đầu sf-<n>- (sf-<n>-<slug>); match
+# exact <hint>.wakii → boundary-anchored <hint>-* (dash-normalized: fi-458 ≡ fi458).
+# 0/>1 match → MM_PICK rỗng (fail-open như linear-rỗng, KHÔNG chọn hộ theo
+# alphabet — bệnh FI-305/local4-sf-3); MM_ERR chỉ khác rỗng khi AMBIGUOUS.
+resolve_mindmap() { # $1 wt $2 sf-basename → MM_PICK path|rỗng · MM_ERR ""|ambiguous:<số-mindmap>
+  MM_PICK=""; MM_ERR=""
+  local dir="$1/docs/superpowers/mindmaps" out
+  [ -d "$dir" ] || return 0
+  out=$(MM_DIR="$dir" MM_BASE="$2" python3 - <<'PYMM' 2>/dev/null
+import os, re
+base = os.environ.get('MM_BASE', '').lower()
+m = re.search(r'-sf-?\d+$', base)
+if m: hint = base[:m.start()]
+elif re.match(r'^sf-?\d+-', base): hint = re.sub(r'^sf-?\d+-', '', base)
+else: hint = base
+tok = hint.replace('-', '')
+exact, bnd = [], []
+try: names = sorted(os.listdir(os.environ.get('MM_DIR', '')))
+except Exception: names = []
+for f in names:
+    if not f.endswith('.wakii'): continue
+    stem = f[:-6]
+    if stem.replace('-', '') == tok: exact.append(f); continue
+    parts = stem.split('-')
+    for i in range(1, len(parts)):
+        if '-'.join(parts[:i]).replace('-', '') == tok: bnd.append(f); break
+picks = exact or bnd
+if len(picks) == 1: print(os.path.join(os.environ['MM_DIR'], picks[0]))
+elif len(picks) > 1: print('AMBIGUOUS %d' % len(picks)) # chỉ đếm — tên file có | sẽ vỡ cột detail (review P2 nhóm A)
+else: print('NONE')
+PYMM
+  ) || out=""
+  case "$out" in
+    NONE|"") ;;
+    AMBIGUOUS\ *) MM_ERR="ambiguous: ${out#AMBIGUOUS }" ;;
+    *) MM_PICK="$out" ;;
+  esac
+}
+
 b4_check() { # $1 wt $2 dest $3 enabled(0/1) → stdout 2 dòng: "<PASS|FAIL>\n<stale-note>"
   local wt="$1" dest="$2" rt note=""
   if [ "$3" = "1" ]; then
@@ -179,12 +219,13 @@ verify_sf() { # $1 worktree → in "<sf>|<verdict>|<detail>|<b1>|<b2>|<b3>|<b4>|
     [ -n "$pline" ] && dest=$(printf '%s' "$pline" | cut -d'|' -f4)
   fi
   if [ -z "$linear" ] || [ -z "$dest" ]; then
-  # lớp fallback 1: mindmaps/*.wakii (canonical VU-14) — dest từ meta.dest,
-  # linear từ node sf-<n>; lớp fallback 2: bracket legacy
-  for wf in "$wt"/docs/superpowers/mindmaps/*.wakii; do
-    [ -f "$wf" ] || continue
-    sfnum=$(echo "$sf" | grep -oE 'sf-?[0-9]+' | head -1 | tr 'a-z' 'A-Z')
-    wline=$(SFNUM="$sfnum" python3 - "$wf" <<'PYVW'
+  # lớp fallback 1: mindmap KHỚP story ID (scoping resolve_mindmap — glob-first
+  # theo alphabet từng chọn nhầm story cũ: fi305 chặn story local → B3 FAIL ảo);
+  # 0/>1 match → không phán (dest/linear để trống cho lớp kế). Lớp 2: bracket legacy
+  sfnum=$(echo "$sf" | grep -oE 'sf-?[0-9]+' | head -1 | tr 'a-z' 'A-Z')
+  resolve_mindmap "$wt" "$sf"
+  if [ -n "$MM_PICK" ]; then
+    wline=$(SFNUM="$sfnum" python3 - "$MM_PICK" <<'PYVW'
 import json, os, sys
 try:
     doc = json.load(open(sys.argv[1], encoding='utf-8'))
@@ -204,8 +245,7 @@ PYVW
       linear=${wline#*|}
       [ "$linear" = "|" ] && linear=""
     fi
-    [ -n "$linear" ] && [ -n "$dest" ] && break
-  done
+  fi
   for bf in "$wt"/docs/superpowers/brackets/*.md; do
     [ -f "$bf" ] || continue
     [ -z "$dest" ] && dest=$(grep -m1 '^Destination:' "$bf" | sed 's/Destination: //')
@@ -249,12 +289,18 @@ PYVW
   if [ "$EVIDENCE_GATE" = 1 ] && [ "$b1" != "FAIL" ]; then
     ev="$wt/docs/superpowers/evidence/$sf/test-run.txt"
     # Established convention on this repo is slug evidence dirs (sf-1-<slug>)
-    # while worktrees are named <story>-sf-<n> — fall back to the token glob.
-    [ -f "$ev" ] || ev=$(ls "$wt"/docs/superpowers/evidence/"$sftok"*/test-run.txt 2>/dev/null | head -1)
+    # while worktrees are named <story>-sf-<n> — fall back to the token glob,
+    # NEO BIÊN `sf-<n>-*`/`sf-<n>.*` (glob `sf-1*` cũ bắt cả `sf-10-*`, chỉ sai
+    # error message — spec LOCAL-5 sf-3 #2). Hash rỗng KHÔNG được auto-match
+    # (grep '' match mọi file — từng làm stale-check thành no-op).
+    [ -f "$ev" ] || ev=$(ls "$wt"/docs/superpowers/evidence/"$sftok"-*/test-run.txt "$wt"/docs/superpowers/evidence/"$sftok".*/test-run.txt 2>/dev/null | head -1)
     # chấp nhận HEAD hoặc HEAD~1: evidence commit ngay sau code commit —
     # hash trong evidence = code commit (HEAD~1), không thể tự chứa chính nó
     parent_hash=$(git -C "$wt" rev-parse --short HEAD~1 2>/dev/null)
-    if [ ! -f "$ev" ] || { ! grep -q "$head_hash" "$ev" 2>/dev/null && ! grep -q "$parent_hash" "$ev" 2>/dev/null; }; then
+    hash_hit=0
+    { [ -f "$ev" ] && [ -n "$head_hash" ] && grep -q "$head_hash" "$ev" 2>/dev/null; } && hash_hit=1
+    { [ "$hash_hit" = 0 ] && [ -n "$parent_hash" ] && grep -q "$parent_hash" "$ev" 2>/dev/null; } && hash_hit=1
+    if [ ! -f "$ev" ] || [ "$hash_hit" = 0 ]; then
       b1="FAIL"; b1_note="evidence thiếu/cũ: docs/superpowers/evidence/$sf/test-run.txt (phải chứa HEAD ${head_hash:-?} hoặc code commit trước đó) — chạy test + ghi output"
     elif [ "$TDD_GATE" = 1 ] && ! grep -q "^tdd:" "$ev" 2>/dev/null; then
       b1="FAIL"; b1_note="thiếu dòng 'tdd: RED→GREEN' hoặc 'tdd: skipped-tdd: <lý do>' trong test-run.txt (verify.tddMode — chống tautology assert, học gh27 b6)"
@@ -349,9 +395,13 @@ PYVW
   b_smoke="OFF"; smoke_note=""
   if [ "$SMOKE_GATE" = 1 ]; then
     sev="$wt/docs/superpowers/evidence/$sf/smoke.txt"
-    [ -f "$sev" ] || sev=$(ls "$wt"/docs/superpowers/evidence/"$sftok"*/smoke.txt 2>/dev/null | head -1)
+    # cùng neo biên `sf-<n>-*`/`sf-<n>.*` như evidence gate (P2 SF-3)
+    [ -f "$sev" ] || sev=$(ls "$wt"/docs/superpowers/evidence/"$sftok"-*/smoke.txt "$wt"/docs/superpowers/evidence/"$sftok".*/smoke.txt 2>/dev/null | head -1)
     parent_hash=$(git -C "$wt" rev-parse --short HEAD~1 2>/dev/null)
-    if [ -f "$sev" ] && { grep -q "$head_hash" "$sev" 2>/dev/null || grep -q "$parent_hash" "$sev" 2>/dev/null; }; then b_smoke="PASS"
+    smoke_hit=0
+    { [ -f "$sev" ] && [ -n "$head_hash" ] && grep -q "$head_hash" "$sev" 2>/dev/null; } && smoke_hit=1
+    { [ "$smoke_hit" = 0 ] && [ -n "$parent_hash" ] && grep -q "$parent_hash" "$sev" 2>/dev/null; } && smoke_hit=1
+    if [ "$smoke_hit" = 1 ]; then b_smoke="PASS"
     else b_smoke="FAIL"; smoke_note="smoke evidence thiếu: docs/superpowers/evidence/$sf/smoke.txt (HEAD ${head_hash:-?})"; fi
   fi
 
@@ -365,7 +415,7 @@ PYVW
   elif [ "$core_fail" -gt 0 ] || [ "$b3" = "FAIL" ] || [ "$b3" = "OUTBOX" ]; then verdict="INCOMPLETE"
   elif [ "$b5" = "PASS" ]; then verdict="COMPLETE"
   else verdict="READY-TO-DONE"; fi
-  detail="code:${code_commits}c tests:${test_files}f plan:${open_tasks} open review:${linear:-?} dest:${dest:-?}${lint_note:+ $lint_note}${b1_note:+ ⚠ $b1_note}${real_note:+ $real_note}${smoke_note:+ ⚠ $smoke_note}${b4_note:+ ⚠ $b4_note}"
+  detail="code:${code_commits}c tests:${test_files}f plan:${open_tasks} open review:${linear:-?} dest:${dest:-?}${lint_note:+ $lint_note}${b1_note:+ ⚠ $b1_note}${real_note:+ $real_note}${smoke_note:+ ⚠ $smoke_note}${b4_note:+ ⚠ $b4_note}${MM_ERR:+ ⚠ mindmap ${MM_ERR}}"
 
   echo "$sf|$verdict|$detail|$b1|$b2|$b2b|$b3|$b4|$b5|$b_smoke"
 }
@@ -418,14 +468,14 @@ for wt in "${WTS[@]}"; do ROWS+=("$(verify_sf "$wt")"); done
 BR_SEEN=""; BR_LIST=""
 LIN_TOTAL=0; LIN_DONE=0; LIN_OPEN=0; LIN_UNKNOWN=0; LIN_OPEN_IDS=""; DERIVE_ROWS=""
 for wt in ${WTS[@]+"${WTS[@]}"}; do
-  # mindmaps/*.wakii trước (canonical) — dedupe basename như bracket
-  for wf in "$wt"/docs/superpowers/mindmaps/*.wakii; do
-    [ -f "$wf" ] || continue
-    wbase=$(basename "$wf")
-    case "$BR_SEEN" in *"|$wbase|"*) continue ;; esac
-    BR_SEEN="$BR_SEEN|$wbase|"
-    BR_LIST="$BR_LIST$wf"$'\n'
-  done
+  # mindmap khớp story ID của wt (canonical — cùng scoping resolve_mindmap như
+  # verify_sf: mindmap story lạ trong worktree không thành derive rows chéo story);
+  # 0/>1 match → wt không đóng góp mindmap (fail-open, worktree rows vẫn thay mặt)
+  resolve_mindmap "$wt" "$(basename "$wt")"
+  if [ -n "$MM_PICK" ]; then
+    wbase=$(basename "$MM_PICK")
+    case "$BR_SEEN" in *"|$wbase|"*) ;; *) BR_SEEN="$BR_SEEN|$wbase|"; BR_LIST="$BR_LIST$MM_PICK"$'\n' ;; esac
+  fi
   for bf in "$wt"/docs/superpowers/brackets/*.md; do
     [ -f "$bf" ] || continue
     bbase=$(basename "$bf")   # dedupe basename — full-path chứa wt → 2 wt cùng story đếm nhân (review B P1)

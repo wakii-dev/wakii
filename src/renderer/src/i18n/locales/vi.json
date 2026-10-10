@@ -1,4 +1,40 @@
 {
+  "csv": {
+    "detectingDelimiter": "Đang phát hiện dấu phân tách…",
+    "indexProgress": "Đang lập chỉ mục CSV… {{percent}}%",
+    "loadingCell": "Đang tải…",
+    "nextRows": "Hàng tiếp theo",
+    "previousRows": "Hàng trước đó",
+    "readOnlyPreview": "Xem trước tệp lớn · Chỉ đọc",
+    "resizeColumn": "Đổi kích thước cột {{column}}",
+    "rowWindow": "Hàng {{first}}–{{last}}",
+    "editor": "Trình soạn thảo CSV",
+    "editCell": "Sửa hàng {{row}}, cột {{column}}",
+    "filterRows": "Lọc hàng",
+    "edit": "Sửa ô",
+    "copy": "Sao chép",
+    "paste": "Dán",
+    "rows": "Hàng",
+    "insertRowAbove": "Chèn hàng phía trên",
+    "insertRowBelow": "Chèn hàng phía dưới",
+    "deleteRows": "Xóa các hàng đã chọn",
+    "columns": "Cột",
+    "newColumn": "Cột {{column}}",
+    "insertColumnBefore": "Chèn cột bên trái",
+    "insertColumnAfter": "Chèn cột bên phải",
+    "moveColumnLeft": "Di chuyển cột sang trái",
+    "moveColumnRight": "Di chuyển cột sang phải",
+    "deleteColumns": "Xóa các cột đã chọn",
+    "sort": "Sắp xếp",
+    "sortAscending": "Sắp xếp cột đã chọn tăng dần",
+    "sortDescending": "Sắp xếp cột đã chọn giảm dần",
+    "originalOrder": "Thứ tự hàng gốc trong tệp",
+    "save": "Lưu",
+    "inspectionOnly": "Chỉ để xem · Thứ tự hàng trong tệp không đổi"
+  },
+  "osDocumentOpen": {
+    "failed": "Không thể mở tệp."
+  },
   "sidebar": {
     "revealFiltered": {
       "title": "Tiết lộ không gian làm việc ẩn?",

@@ -65,7 +65,7 @@
 
 | Bin | Làm gì |
 |---|---|
-| `story-watchdog` | Self-sustainment loop: phát hiện stall, auto-resume (--install-cron 30') |
+| `story-watchdog` | Self-sustainment loop: phát hiện stall, auto-resume (--install-cron 30'); --launch-next [--story <slug>] scoped (đa-story không --story → SKIP fail-closed) |
 | `story-resume` | Chẩn đoán 3 tầng + resume SF stalled (LAUNCH/RESUME tool hoá) |
 | `story-ownership-probe` | Ownership probe — ai đang sở hữu story/worktree (chống double-writer) |
 | `story-doctor` | Kit health 9 checks (marker/kitHash/bins/deps/hooks/kb/orphans) + `--repair` + `--uninstall` |

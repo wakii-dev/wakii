@@ -1,0 +1,77 @@
+== W1 launch-next .wakii-only: SF rows từ nodes, dest từ meta, dry-run ==
+  [PASS] W1 SF-1 sẵn sàng launch (linear từ node)
+  [PASS] W1 dest từ meta.dest
+  [PASS] W1 SF-2 dep Todo → chờ (deps từ edges depends-on)
+== W2 gate fail-closed: wakii-validate thiếu → SKIP mọi story ==
+  [PASS] W2 in cảnh báo SKIP fail-closed
+  [PASS] W2 không launch gì
+== W3 .wakii INVALID → skip file, không đoán ==
+  [PASS] W3 skip với lý do validator
+  [PASS] W3 không launch gì
+== W4 STORY-COMPLETE: mọi SF Done theo stub → derive ==
+  [PASS] W4 STORY-COMPLETE từ .wakii
+== W5 story-status: story .wakii hiện registry ==
+  [PASS] W5 header mới mindmaps + brackets
+  [PASS] W5 epic từ meta (WI-9)
+  [PASS] W5 label mindmap + đích
+  [PASS] W5 states từ node linear (FI-901:Todo)
+== S1 đa-story không --story → SKIP toàn cục + warning, exit 0, 0 launch ==
+  [PASS] S1 SKIP + lý do repo đa-story
+  [PASS] S1 liệt kê repo bị skip
+  [PASS] S1 0 launch
+  [PASS] S1 exit 0
+== S2 --story <slug> (sau --launch-next) → launch đúng story ==
+  [PASS] S2 launch SF kế của bb-two
+  [PASS] S2 không launch story kia (aa)
+  [PASS] S2 exit 0
+== S3 --story dash-normalization (trước --launch-next): full-stem khớp duy nhất ==
+  [PASS] S3 launch fi-458-alpha (slug gạch khớp file gạch)
+  [PASS] S3 không launch fi458-beta
+  [PASS] S3 exit 0
+== S4 --story không khớp mindmap nào → warn + exit 0, 0 launch ==
+  [PASS] S4 warn không khớp
+  [PASS] S4 0 launch
+  [PASS] S4 exit 0 (không phải lỗi)
+== S5 --story fi-458 khớp 2 stem tương đương → mơ hồ, fail-closed, exit 0 ==
+  [PASS] S5 warn mơ hồ
+  [PASS] S5 không pick hộ — 0 launch
+  [PASS] S5 exit 0
+== S6 dest missing (local show-ref + ls-remote miss), không --story → SKIP (launch path chung) ==
+  [PASS] S6 SKIP + dest không tồn tại
+  [FAIL] S6 chi tiết ls-remote trong log (phân biệt mạng hỏng vs missing) — ── launch-next (DRY-RUN):
+  SKIP proj-wi/wi-9.wakii — dest không tồn tại (story/wi-9)
+
+  [PASS] S6 0 launch
+  [PASS] S6 exit 0
+== S7 dest missing + --story → vẫn SKIP (check chung, không phải chỉ unscoped) ==
+  [PASS] S7 SKIP + dest không tồn tại
+  [PASS] S7 0 launch
+  [PASS] S7 exit 0
+== S8 single-story + dest tồn tại, không --story → hành vi cũ nguyên vẹn (regression) ==
+  [PASS] S8 launch như cũ
+  [PASS] S8 đích đúng
+  [PASS] S8 không SKIP đa-story
+== S9 --story CHỈ scope launch_next — auto-resume vẫn toàn cục ==
+  [PASS] S9 auto-resume vẫn chạy (stub nhận --send)
+  [PASS] S9 launch-next vẫn warn 0-match
+  [PASS] S9 exit 0
+== S10 bracket legacy .md tính vào union story count (P2) ==
+  [PASS] S10 1 mindmap + 1 bracket = đa-story → SKIP
+  [PASS] S10 0 launch
+== S11 mindmap + bracket CÙNG stem → dedupe per-repo = 1 story → không SKIP ==
+  [PASS] S11 dedupe → không SKIP đa-story
+  [PASS] S11 launch từ mindmap (trước bracket)
+  [PASS] S11 đúng 1 launch plan (bracket cùng story không nhân đôi)
+== S12 repo không-git → dest_exists fail-closed SKIP (P2 review-1) ==
+  [PASS] S12 SKIP + dest không tồn tại
+  [PASS] S12 0 launch
+  [PASS] S12 exit 0
+== S13 --story không kèm --launch-next/--dry-run → warn, không silent no-op (P2 review-1) ==
+  [FAIL] S13 warn --story bị bỏ qua — assert sai
+  [PASS] S13 exit 0
+
+== TOTAL: 49 PASS / 2 FAIL ==
+  FAIL: S6 chi tiết ls-remote trong log (phân biệt mạng hỏng vs missing) — ── launch-next (DRY-RUN):
+  SKIP proj-wi/wi-9.wakii — dest không tồn tại (story/wi-9)
+
+  FAIL: S13 warn --story bị bỏ qua

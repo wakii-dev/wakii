@@ -51,7 +51,7 @@ import {
 } from './config-toml-trust'
 
 type ReconcileArgs = {
-  /** Codex's hashes; null while Codex has not answered, when Orca keeps or computes its own. */
+  /** Codex's hashes; null while Codex has not answered, when Wakii keeps or computes its own. */
   hashes: CodexHookHashes | null
   isEnabled: () => boolean
   /** App start and the setting turning on; a launch never fights a running older build. */
@@ -60,11 +60,11 @@ type ReconcileArgs = {
 
 type SettlePlan = Extract<RealHomeCodexHookEntryPlan, { kind: 'settle' }>
 
-// Why a bound: each pass either prunes Orca's extra copies or settles; a concurrent save costs one more.
+// Why a bound: each pass either prunes Wakii's extra copies or settles; a concurrent save costs one more.
 const MAX_PASSES = 4
 
 /**
- * Makes ~/.codex hold Orca's entry alone, last unless already in place, in each
+ * Makes ~/.codex hold Wakii's entry alone, last unless already in place, in each
  * event Codex lists, with Codex's hash for it approved and enabled. Writes only
  * what differs; an approval goes in before its entry and is taken back if the
  * entry write fails. Never throws.
@@ -81,16 +81,16 @@ export async function reconcileRealHomeCodexHookEntries(args: ReconcileArgs): Pr
             return
           }
         } catch (error) {
-          // Why: a user's save landed between Orca's read and write; the next pass reads it.
+          // Why: a user's save landed between Wakii's read and write; the next pass reads it.
           if (!(error instanceof HooksJsonChangedError)) {
             throw error
           }
         }
       }
-      throw new Error('Orca entries in ~/.codex did not settle')
+      throw new Error('Wakii entries in ~/.codex did not settle')
     })
   } catch (error) {
-    console.warn('[codex-real-home-hooks] could not reconcile Orca entries in ~/.codex:', error)
+    console.warn('[codex-real-home-hooks] could not reconcile Wakii entries in ~/.codex:', error)
   }
 }
 
@@ -127,7 +127,7 @@ function reconcilePass(args: ReconcileArgs): 'settled' | 'pruned' {
   }
   if (plan.kind === 'prune') {
     // Why its own write: dropping a copy shifts user hooks, whose approvals must move
-    // before Orca writes an approval at a slot one of them still holds.
+    // before Wakii writes an approval at a slot one of them still holds.
     mutateRealHomeHooksPreservingUserTrust({
       sourcePaths,
       tomlPath,
@@ -182,19 +182,19 @@ function reconcilePass(args: ReconcileArgs): 'settled' | 'pruned' {
     hooksJsonPath
   )
   try {
-    // Why read again: approvals Orca just wrote, or a user's moved one, may sit at a key read stale before.
+    // Why read again: approvals Wakii just wrote, or a user's moved one, may sit at a key read stale before.
     removeHookTrustEntries(tomlPath, findStale(readHookTrustEntries(tomlPath)))
   } catch (error) {
     // Why still written: the entry and its approval are in place; a leftover approval matches no hook.
-    console.warn('[codex-real-home-hooks] could not drop stale Orca approvals:', error)
+    console.warn('[codex-real-home-hooks] could not drop stale Wakii approvals:', error)
   }
   return 'settled'
 }
 
 /**
- * Approvals Orca left at a slot its entry no longer holds, such as a copy it
- * removed from a user's group. Owned only while they hold a hash Orca writes.
- * Never at a slot Orca's entry holds, whatever its hash, nor in an event this
+ * Approvals Wakii left at a slot its entry no longer holds, such as a copy it
+ * removed from a user's group. Owned only while they hold a hash Wakii writes.
+ * Never at a slot Wakii's entry holds, whatever its hash, nor in an event this
  * run did not plan or left alone: its entries keep theirs.
  */
 function findStaleOrcaApprovals(
@@ -226,7 +226,7 @@ function findStaleOrcaApprovals(
 }
 
 /**
- * The user's explicit opt-out: strips Orca's entry and its approvals from the
+ * The user's explicit opt-out: strips Wakii's entry and its approvals from the
  * real ~/.codex, moving the approvals of user hooks whose positions shift.
  * Never throws.
  */
@@ -239,7 +239,7 @@ export async function removeRealHomeCodexHookForOptOut(
       // Why 'removed' only: an unread or malformed file may still hold the entry,
       // so its approvals and the ledger that proves ownership wait for a later pass.
       if (lane === 'removed') {
-        // Why: Codex's own hashes prove Orca's approvals, including ones a sweep with no entry left to remove skips.
+        // Why: Codex's own hashes prove Wakii's approvals, including ones a sweep with no entry left to remove skips.
         removeSystemManagedHookTrustEntries(
           getSystemCodexHomePath(),
           getRealHomeHookKeySourcePaths(),

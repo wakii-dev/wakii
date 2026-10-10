@@ -1,8 +1,8 @@
 import { BrowserWindow, ipcMain, Notification, powerMonitor } from 'electron'
 import { readDesktopAwayState } from '../notifications/desktop-away-state'
 import type { RuntimeDesktopSurface } from '../runtime/runtime-desktop-surface'
-import { isMainWindowVisible } from '../window/main-window-visibility'
 import { translateMain } from '../i18n/main-i18n'
+import { isMainWindowVisible } from '../window/main-window-visibility'
 
 /** The desktop implementation of the runtime's optional desktop facilities. */
 export const electronRuntimeDesktopSurface: RuntimeDesktopSurface = {

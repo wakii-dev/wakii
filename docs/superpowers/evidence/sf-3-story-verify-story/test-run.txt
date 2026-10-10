@@ -1,0 +1,35 @@
+LOCAL-5 SF-3 — story-verify + story-mindmap defects (B3 glob / B1 anchor / update-state map)
+HEAD: 4bb901841f (fix(kit): story-mindmap WARN khi no-downgrade chặn — hết silent-absorb)
+tdd: RED→GREEN (RED logs: story-verify 8 FAIL B3 → /tmp giữ summary dưới; B1 2 FAIL S13/S15b; update-state 7 FAIL; generate 3 FAIL)
+
+== Suite GREEN cuối (working tree = HEAD) ==
+story-verify-tests: TOTAL 28 PASS / 0 FAIL (exit 0)
+story-mindmap-tests: TOTAL 68 asserts — 68 PASS / 0 FAIL (exit 0)
+story-mindmap-update-state-tests: 30 PASS, 0 FAIL (exit 0)
+story-mindmap-resolve-tests: exit 0 (--resolve GIỮ NGUYÊN)
+story-mindmap-bootstrap-tests: exit 0
+kit-verify-manifest: 31 PASS / 0 FAIL · verify-packaged-plugin-resources: exit 0
+consumer suites (launch/close/review-fuse/resume/verify-wiring/panel-wakii-edit): exit 0
+
+== RED đã chứng minh (không tautology) ==
+B3: S8 conflict review:FI-305 (đúng bệnh FI-305 thật) + S9 leak + S10 alphabet-pick + S11 exact-thua — 8 FAIL trên bin cũ
+B1: S13 decoy sf-91+stale/sf-910-stale trúng glob cũ + S15b smoke ngoài biên pass ảo (grep hash-rỗng no-op) — 2 FAIL trên bin cũ
+update-state: T2.8 completed→pending (đảo), T2.26 done bị hạ, T2.28/29 thiếu export (usage exit-2), c9 completed→pending — 7+3 FAIL trên bin cũ
+T2.30 meta-test: RED trên bin không-WARN (hoán đổi bin verify tay), GREEN trên mới
+
+== Rehash (plan P0-2 — task cuối) ==
+kitHash 788c9a11 → 2fd0327b · fingerprint 741004ce → 8faeffdf (đúng thứ tự bin→computeKitHash→kit.json→fingerprint)
+lockstep vitest không chạy được ở worktree này (không node_modules; pnpm tool cache hỏng máy) → probe tương đương: hashPluginTree(TS) === hashPackagedPluginTree(cjs) === shipped — PASS
+
+== Rolling review (CHECK 3) — 3 nhóm, đều APPROVED, P2 đã ứng ==
+A (20d9fe84d0 B3): APPROVED — P2 count-only AMBIGUOUS + S10 assert → 476f748d10
+B (54b37027da+476f748d10 B1): APPROVED — meta-test 4 ô RED/GREEN tự chạy — P2 2 comment → 8dd8144649
+C (5022af32e7 map): APPROVED — chạy 4 suite tại commit + RED probe bin cha — P2 silent-absorb → 4bb901841f
+
+== CHECK 4 — bin THẬT trên input THẬT (kit CLI, không UI surface → screenshot N/A) ==
+story-verify thật trên worktree này: B3 UNKNOWN fail-open (review:? — 0 leak FI-305, bệnh FI-305 hết), dest story-local5-improve-kit từ orca metadata, B1:FAIL=evidence chưa ghi (lúc đó), B4:FAIL=chưa merge (đúng pre-merge)
+story-mindmap --decode local5-improve-kit.wakii: valid, 0 warnings
+story-mindmap --resolve (không đổi): exit 0
+
+== Pre-existing (report-only, không thuộc SF-3) ==
+workfront-driver-resolve-tests: 5 FAIL — đỏ Y HỆT tại base 593729bcb1 (worktree tạm đo baseline), ngoài touch map

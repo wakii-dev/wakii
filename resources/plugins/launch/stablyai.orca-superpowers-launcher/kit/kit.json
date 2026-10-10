@@ -556,5 +556,4 @@
       "description": "workfront driver — 1 story = 1 navigator: verify executor → tick mindmap → convergence → DONE gate (cửa người); --repo <path> portable (worktree per-story, PR completion); attempts ≥3 blocked, breaker, single-instance, outcome logging instincts-v0 (03/10)"
     }
   ],
-  "kitHash": "b944012788eb4acb"
-}
+"kitHash": "034ae7d02a49fbfe",}

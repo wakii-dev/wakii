@@ -19,6 +19,7 @@ import type {
 export const SUPERPOWERS_GATE_RESOLVE_METHODS = [
   defineMethod({
     name: 'superpowers.gateResolve',
+    permission: 'workspace',
     // Why requiredStringAllowingEmpty: rỗng phải map taxonomy (invalid_resolution /
     // gate_not_found) chứ không rơi vào zod validation error chung chung.
     params: SuperpowersGateResolveParams,

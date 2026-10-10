@@ -43,29 +43,36 @@ import {
   decideAgentLaunchMode,
   readAgentLaunchModeSettings
 } from '../../../agent-launch/agent-launch-mode'
-import { deriveAgentLaunchTerminalViewMode } from '../../../agent-launch/agent-launch-view-mode'
 import type { RpcContext } from '../core'
 import type { AgentLaunchParams } from './agent-launch-schemas'
 import { agentLaunchOperationCallerKey } from './agent-launch-replay'
 
+/** Whether a launch may move the host window at all: a paired device's launch moves only its own
+ *  view, as its browser tabs do. The tab shown first and the spawn's own reveal both ask this. */
+export function agentLaunchMovesHostWindow(
+  context: Pick<RpcContext, 'caller' | 'clientKind'>
+): boolean {
+  return (
+    context.caller?.kind === 'desktop' ||
+    navigationTargetsHost(resolveRuntimeNavigationTarget({ clientKind: context.clientKind }))
+  )
+}
+
 /**
  * Whose screen moves. `presentation` is `terminal.create`'s field with its meaning (focused: the
  * host selects the tab; background: nothing moves). The desktop's own view is the host window,
- * which follows only while it still shows that workspace. A caller whose navigation is elsewhere (a
- * paired device) gets the window's reveal it always got, as well as its own selection.
+ * which follows only while it still shows that workspace. A paired device's launch leaves the host
+ * window where it is; the device selects the tab for itself.
  */
 export function agentLaunchTabViewerRule(
   context: Pick<RpcContext, 'caller' | 'clientKind'>,
   presentation: AgentLaunchParams['presentation']
 ): AgentLaunchTabViewerRule {
-  if (presentation === 'background') {
+  if (presentation === 'background' || !agentLaunchMovesHostWindow(context)) {
     return 'none'
   }
   if (context.caller?.kind === 'desktop') {
     return 'focus-in-workspace'
-  }
-  if (!navigationTargetsHost(resolveRuntimeNavigationTarget({ clientKind: context.clientKind }))) {
-    return 'reveal-owner'
   }
   return presentation === 'focused' ? 'focus-window' : 'reveal-owner'
 }
@@ -191,12 +198,7 @@ export async function publishAgentLaunchTabEarly(
       tabId: pane.tabId,
       leafId: pane.leafId,
       launchAgent: params.agent,
-      viewMode: deriveAgentLaunchTerminalViewMode({
-        settings,
-        agent: params.agent,
-        ...(params.prompt ? { prompt: params.prompt } : {}),
-        connectionId: workspace.connectionId
-      }),
+      viewMode: 'terminal',
       ...(params.placement ? { placement: params.placement } : {}),
       viewer: agentLaunchTabViewerRule(context, params.presentation),
       ...(params.prompt?.text ? { prompt: params.prompt.text } : {}),

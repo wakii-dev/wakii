@@ -218,6 +218,7 @@ export async function listStoriesForRuntime(
 export const SUPERPOWERS_STORY_LIST_METHODS = [
   defineMethod({
     name: 'superpowers.storyList',
+    permission: 'workspace',
     params: null,
     handler: async (_params, { runtime }): Promise<SuperpowersStoryListResult> => ({
       stories: await listStoriesForRuntime(runtime)

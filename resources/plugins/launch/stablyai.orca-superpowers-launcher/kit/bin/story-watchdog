@@ -11,6 +11,9 @@
 #   story-watchdog --auto-resume        1 pass + GỬI resume prompt cho SF stalled
 #   story-watchdog --enforce-done       Done mà verify ≠ COMPLETE → tự hạ In Progress
 #   story-watchdog --with-index         1 pass + memory index hook (fail-safe — lỗi index không đổi exit code)
+#   story-watchdog --launch-next [--story <slug>]
+#                                       SF kế deps-Done → launch. Repo đa-story
+#                                       không --story → SKIP (fail-closed, LOCAL-5 sf-2)
 #   story-watchdog --loop 30            tự lặp mỗi 30 phút (nohup pattern)
 #   story-watchdog --install-cron       đăng ký crontab entry (mỗi 30', idempotent)
 #   Options: --stall-hours N (default 2, pass xuống story-resume)
@@ -52,6 +55,88 @@ for x in doc.get('nodes') or []:
 PYWKL
 }
 
+# ── dash-normalization (SF-2 LOCAL-5): `fi-458` ≡ `fi458` — norm = lowercase +
+# bỏ mọi '-'. Keys(stem) = norm(stem) + norm(prefix cắt tại mỗi '-') → match
+# EXACT một key, không substring (`--story fi-45` KHÔNG khớp `fi458-*`).
+norm_story() { printf '%s\n' "$1" | tr '[:upper:]' '[:lower:]' | tr -d '-'; }
+
+story_keys() { # $1 stem → keys normalized, mỗi cái 1 dòng (full-stem + prefix-at-dash)
+  norm_story "$1"
+  local s="$1-" pre="" seg
+  while [ "$s" != "${s#*-}" ]; do   # còn '-'
+    seg="${s%%-*}"; s="${s#*-}"
+    pre="$pre$seg-"
+    [ -n "$seg" ] && norm_story "${pre%-}"
+  done
+}
+
+story_match() { # $1 slug, $2 stem → rc0 nếu slug khớp một key của stem
+  local want k
+  want=$(norm_story "$1")
+  [ -n "$want" ] || return 1
+  while IFS= read -r k; do
+    [ -n "$k" ] || continue
+    [ "$k" = "$want" ] && return 0
+  done < <(story_keys "$2")
+  return 1
+}
+
+repo_story_count() { # $@ story files → số story = union stems (norm) dedupe per-repo
+  local f s
+  [ $# -gt 0 ] || { echo 0; return 0; }
+  for f in "$@"; do basename "$f"; done \
+    | sed -E 's/\.(wakii|md)$//' \
+    | while IFS= read -r s; do norm_story "$s"; done \
+    | sort -u | grep -c .
+}
+
+# ls-remote cap 30s (macOS không có timeout(1)) — background + watchdog kill;
+# stdout watcher → /dev/null để orphan sleep không giữ pipe của caller.
+# LSR_ERR_FILE được set → stderr ghi vào đó (caller đọc — $( ) subshell không
+# mang biến ngược về parent); không set → dòng đầu stderr vào LSR_ERR_NOTE.
+LSR_ERR_NOTE=""
+ls_remote_capped() { # $1 repo, $2.. git args
+  local repo="$1"; shift
+  local outf rc gpid wpid errf
+  outf=$(mktemp "${TMPDIR:-/tmp}/wd-lsremote-XXXXXX") 2>/dev/null || return 1
+  if [ -n "${LSR_ERR_FILE:-}" ]; then errf="$LSR_ERR_FILE"; else errf="$outf.err"; fi
+  git -C "$repo" ls-remote "$@" >"$outf" 2>"$errf" &
+  gpid=$!
+  { sleep 30; kill "$gpid" 2>/dev/null; } >/dev/null 2>&1 &
+  wpid=$!
+  wait "$gpid"; rc=$?
+  kill "$wpid" 2>/dev/null
+  wait "$wpid" 2>/dev/null
+  if [ "$errf" = "$outf.err" ]; then
+    LSR_ERR_NOTE=$(grep -m1 . "$errf" 2>/dev/null | cut -c1-120)
+  fi
+  cat "$outf"
+  rm -f "$outf"
+  [ "$errf" = "$outf.err" ] && rm -f "$errf"
+  return "$rc"
+}
+
+# dest branch tồn tại chưa (SF-2)? local show-ref trước (rẻ, exact); miss → 1
+# lần ls-remote origin (cap 30s — dest chỉ-trên-remote không bị false-skip);
+# miss cả hai → rc1 (caller SKIP + warning). Repo không-git → rc1 (không có dest
+# để launch — fail-closed đúng). stderr dòng đầu → LSR_ERR_NOTE (log SKIP phân
+# biệt mạng hỏng vs missing thật).
+dest_exists() { # $1 repo, $2 dest
+  git -C "$1" show-ref --verify --quiet "refs/heads/$2" 2>/dev/null && return 0
+  local out errf rc
+  errf=$(mktemp "${TMPDIR:-/tmp}/wd-lsremote-err-XXXXXX") 2>/dev/null || return 1
+  out=$(LSR_ERR_FILE="$errf" ls_remote_capped "$1" --heads origin "$2")
+  rc=$?
+  LSR_ERR_NOTE=$(grep -m1 . "$errf" 2>/dev/null | cut -c1-120)
+  rm -f "$errf"
+  [ "$rc" -eq 0 ] || return 1
+  [ -n "$out" ] || return 1
+  printf '%s\n' "$out" | awk -v want="refs/heads/$2" '
+    { n = length($0); w = length(want)
+      if (n >= w && substr($0, n - w + 1) == want) { found = 1; exit } }
+    END { exit found ? 0 : 1 }'
+}
+
 # cron PATH tối giản — resolve production binary + runtime dev-trước-prod-sau
 ORCA_BIN="${ORCA_BIN:-/opt/homebrew/bin/orca}"
 [ -x "$ORCA_BIN" ] || ORCA_BIN="/usr/local/bin/orca"
@@ -71,6 +156,7 @@ ENFORCE_DONE=${ENFORCE_DONE:-0}
 WITH_INDEX=0
 LOOP_MIN=0
 LAUNCH_NEXT=0
+STORY_SCOPE=""   # --story <slug> — CHỈ scope launch_next (resume/enforce-done giữ toàn cục)
 DRY_RUN=0
 
 notify() { # $1 title, $2 body — macOS notification (không chết khi thiếu osascript)
@@ -263,13 +349,46 @@ except: pass" 2>/dev/null)
     SEEN="$SEEN|$r2|"; FILTERED+=("$r2")
   done
   roots=(${FILTERED[@]+"${FILTERED[@]}"})
+  local skip_list="" scope_found=0 dest_memo="" dest_memo_ok=0
   for repo in ${roots[@]+"${roots[@]}"}; do
     local repob=$(basename "$repo")
     local srcf
     # mindmaps/*.wakii TRƯỚC (canonical VU-14), brackets/*.md fallback legacy —
     # cùng bộ xử lý, khác: validator (wakii-validate / story-validate), parser
     # (python3 JSON / awk), deps map (edges depends-on / "Depends on:" lines)
+    local files=() nfiles=0
     for srcf in "$repo"/docs/superpowers/mindmaps/*.wakii "$repo"/docs/superpowers/brackets/*.md; do
+      [ -f "$srcf" ] || continue
+      files+=("$srcf"); nfiles=$((nfiles+1))
+    done
+    [ "$nfiles" -gt 0 ] || continue
+    # ── scoping (SF-2 LOCAL-5, fail-closed): repo đa-story (>1 union stems sau
+    # dedupe per-repo) mà không --story → SKIP toàn cục + warning, exit 0, 0 launch
+    local nstories
+    nstories=$(repo_story_count ${files[@]+"${files[@]}"})
+    if [ -z "$STORY_SCOPE" ] && [ "$nstories" -gt 1 ]; then
+      echo "  SKIP $repob — repo đa-story ($nstories stories) — chỉ định --story"
+      skip_list="$skip_list $repob"
+      continue
+    fi
+    # --story: lọc đúng story (dash-normalization); 0-match bỏ qua repo (warn tổng
+    # cuối), >1-match mơ hồ → SKIP fail-closed (không pick hộ)
+    if [ -n "$STORY_SCOPE" ]; then
+      local matched=() nmatched=0 mstem
+      for srcf in ${files[@]+"${files[@]}"}; do
+        mstem=$(basename "$srcf")
+        story_match "$STORY_SCOPE" "${mstem%.*}" || continue
+        matched+=("$srcf"); nmatched=$((nmatched+1))
+      done
+      [ "$nmatched" -eq 0 ] && continue
+      scope_found=1
+      if [ "$nmatched" -gt 1 ]; then
+        echo "  SKIP $repob — --story $STORY_SCOPE khớp $nmatched story (mơ hồ sau dash-normalization) — đặt tên dài hơn"
+        continue
+      fi
+      files=(${matched[@]+"${matched[@]}"})
+    fi
+    for srcf in ${files[@]+"${files[@]}"}; do
       [ -f "$srcf" ] || continue
       local fkind fvalidator vlabel
       case "$srcf" in
@@ -348,6 +467,21 @@ PYWL
           END { emit() }' "$srcf")
       fi
       [ -n "$dest" ] || continue
+      # ── dest-absent (SF-2): launch path CHUNG (cả khi không --story) — local
+      # show-ref → 1 ls-remote (cap 30s) → miss cả hai = SKIP + warning, đừng nổ
+      # launch không đích (incident 04/10: attempt chết giữa chừng). Memo
+      # 1-entry: mindmap+bracket cùng dest missing không gọi ls-remote 2 lần/pass.
+      if [ "$dest_memo" != "$repo|$dest" ]; then
+        dest_memo="$repo|$dest"
+        LSR_ERR_NOTE=""
+        if dest_exists "$repo" "$dest"; then dest_memo_ok=0; else dest_memo_ok=1; fi
+      fi
+      if [ "$dest_memo_ok" != 0 ]; then
+        local dnote=""
+        [ -n "$LSR_ERR_NOTE" ] && dnote=" — ls-remote: $LSR_ERR_NOTE"
+        echo "  SKIP $repob/$(basename "$srcf") — dest không tồn tại ($dest)$dnote"
+        continue
+      fi
       # 1 request duy nhất cho mọi issue của story (per-issue → rate-limit khi nhiều SF)
       local state_map="" bid
       bid=$(printf '%s\n' "$sfrows" | awk -F'|' '$3 != "" {print $3}' | sort -u)
@@ -423,6 +557,12 @@ PYWL
       fi
     done
   done
+  if [ -n "$skip_list" ]; then
+    echo "  ⚠ launch-next SKIP toàn cục:$skip_list — repo đa-story, chỉ định --story <slug> (exit 0, 0 launch)"
+  fi
+  if [ -n "$STORY_SCOPE" ] && [ "$scope_found" = 0 ]; then
+    echo "  ⚠ SKIP --story $STORY_SCOPE — không khớp mindmap/bracket nào — không launch gì (exit 0)"
+  fi
   return $launched
 }
 
@@ -622,6 +762,8 @@ one_pass() {
   if [ "$LAUNCH_NEXT" = 1 ] || [ "$DRY_RUN" = 1 ]; then
     echo "── launch-next$( [ "$DRY_RUN" = 1 ] && echo ' (DRY-RUN)' ):"
     launch_next
+  elif [ -n "$STORY_SCOPE" ]; then
+    echo "  ⚠ --story $STORY_SCOPE bị bỏ qua — cần --launch-next (hoặc --dry-run)"
   fi
   # memory index (post-pass): subshell + || true — lỗi index KHÔNG đổi exit code pass
   if [ "$WITH_INDEX" = 1 ]; then
@@ -667,6 +809,9 @@ while [ $# -gt 0 ]; do
     --enforce-done) ENFORCE_DONE=1 ;;
     --with-index) WITH_INDEX=1 ;;
     --launch-next) LAUNCH_NEXT=1 ;;
+    --story)
+      [ $# -ge 2 ] && [ -n "${2:-}" ] || { echo "--story cần <slug> (VD: --story fi-458)"; exit 2; }
+      STORY_SCOPE="$2"; shift ;;
     --dry-run) DRY_RUN=1 ;;
     --loop) LOOP_MIN="${2:-30}"; shift ;;
     --stall-hours) STALL_HOURS="$2"; shift ;;
