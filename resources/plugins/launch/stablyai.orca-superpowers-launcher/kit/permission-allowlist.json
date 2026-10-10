@@ -1,0 +1,30 @@
+{
+  "comment": "Recommended permissions.allow cho STORY REPO — merge vào .claude/settings.json (permissions.allow) để coordinator/worker acceptEdits không stall ở lệnh chuẩn. REVIEW TRƯỚC KHI MERGE — allowlist mở rộng là trade-off có chủ đích (worker cũng được các quyền này; lệnh nguy hiểm để ra ngoài danh sách). Mẫu lệnh merge: gh api không cần — merge tay các phần tử vào permissions.allow.",
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git merge --no-ff:*)",
+      "Bash(git merge:*)",
+      "Bash(git push:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Bash(git status)",
+      "Bash(git status --porcelain)",
+      "Bash(git rev-parse:*)",
+      "Bash(git show-ref:*)",
+      "Bash(git worktree list)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr create:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh release view:*)",
+      "Bash(node:*)",
+      "Bash(npx vitest run:*)",
+      "Bash(npm test)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm tc:*)"
+    ]
+  }
+}
