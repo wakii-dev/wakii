@@ -13,7 +13,7 @@ import { spawnSync } from 'node:child_process'
 import { mkdirSync, mkdtempSync, writeFileSync, readFileSync, existsSync, cpSync, readdirSync, statSync, rmSync, chmodSync } from 'node:fs'
 import { join, dirname, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const testsDir = dirname(fileURLToPath(import.meta.url))
 const pluginRoot = resolve(testsDir, '..')
@@ -502,6 +502,239 @@ console.log('== [DR21] usage mode + uninstall thiếu kit.json ==')
   rmSync(fx, { recursive: true, force: true })
 }
 
+// ---- LOCAL-5 SF-1: sidecar manifest (.kit-provides.json) — install-coverage ---
+// Chế độ install (doctor chạy TỪ BÊN TRONG install root: kit_root==root,
+// kit.json vắng) — hết PASS tautology: provides đọc từ sidecar do installKit ghi.
+const SIDECAR = '.kit-provides.json'
+const binNames = kitJson.provides.filter(e => e.type === 'bin').map(e => e.name).sort()
+const sidecarJson = (srcRoot, hash) => JSON.stringify(
+  { provides: binNames, srcKitRoot: srcRoot, kitHash: hash }, null, 2)
+
+// ---- DR22: tautology + sidecar + thiếu 1 provides-bin → FAIL nêu đúng tên ------
+console.log('== [DR22] install-mode sidecar — thiếu bin → FAIL (hết tautology) ==')
+{
+  const fx = makeFixture()
+  writeFileSync(join(fx, 'bin', SIDECAR), sidecarJson(KIT_ROOT, HASH))
+  rmSync(join(fx, 'bin', 'story-kb'))
+  // doctor BÊN TRONG fixture → kit_root = fx (kit.json vắng) → sidecar mode
+  const r = spawnSync(PY, [join(fx, 'bin', 'story-doctor'), '--root', fx, '--json'],
+    { encoding: 'utf8', timeout: 60000, cwd: emptyCwd, env: noKbEnv })
+  check('DR22', 'exit 1', r.status === 1, `code=${r.status}`)
+  const out = JSON.parse(r.stdout)
+  const c = out.checks.find(x => x.name === 'bins')
+  check('DR22', 'bins FAIL', c && c.status === 'fail', c && JSON.stringify(c))
+  check('DR22', 'detail nêu đúng tên thiếu', c && c.detail.includes('story-kb'), c && c.detail)
+  check('DR22', 'fix nêu cài lại + copy tay từ srcKitRoot', c && c.fix && c.fix.includes('cp'), c && c.fix)
+  rmSync(fx, { recursive: true, force: true })
+}
+
+// ---- DR23: install-mode KHÔNG sidecar → WARN fail-open (không PASS) ------------
+console.log('== [DR23] install-mode không sidecar → bins WARN fail-open ==')
+{
+  const fx = makeFixture()
+  const r = spawnSync(PY, [join(fx, 'bin', 'story-doctor'), '--root', fx, '--json'],
+    { encoding: 'utf8', timeout: 60000, cwd: emptyCwd, env: noKbEnv })
+  check('DR23', 'exit 0 (WARN không FAIL)', r.status === 0, `code=${r.status}`)
+  const out = JSON.parse(r.stdout)
+  const c = out.checks.find(x => x.name === 'bins')
+  check('DR23', 'bins WARN (không PASS)', c && c.status === 'warn', c && JSON.stringify(c))
+  check('DR23', 'detail nhắc sidecar', c && c.detail.includes(SIDECAR), c && c.detail)
+  rmSync(fx, { recursive: true, force: true })
+}
+
+// ---- DR24: sidecar-mode 2 chiều — orphan WARN-only · missing+orphan → FAIL -----
+console.log('== [DR24] sidecar-mode orphan (installed ∉ provides) ==')
+{
+  // 24a: chỉ orphan → WARN-only, exit 0
+  const fx = makeFixture()
+  writeFileSync(join(fx, 'bin', SIDECAR), sidecarJson(KIT_ROOT, HASH))
+  writeFileSync(join(fx, 'bin', 'zzz-legacy-orphan'), '#!/bin/sh\nlegacy\n')
+  const r = spawnSync(PY, [join(fx, 'bin', 'story-doctor'), '--root', fx, '--json'],
+    { encoding: 'utf8', timeout: 60000, cwd: emptyCwd, env: noKbEnv })
+  check('DR24', '24a exit 0 (orphan WARN-only)', r.status === 0, `code=${r.status}`)
+  const out = JSON.parse(r.stdout)
+  const c = out.checks.find(x => x.name === 'bins')
+  check('DR24', '24a bins WARN nêu orphan', c && c.status === 'warn' && c.detail.includes('zzz-legacy-orphan'), c && JSON.stringify(c))
+  rmSync(fx, { recursive: true, force: true })
+
+  // 24b: missing + orphan cùng lúc → FAIL (missing ưu tiên), cả 2 nêu tên
+  const fx2 = makeFixture()
+  writeFileSync(join(fx2, 'bin', SIDECAR), sidecarJson(KIT_ROOT, HASH))
+  rmSync(join(fx2, 'bin', 'story-kb'))
+  writeFileSync(join(fx2, 'bin', 'zzz-legacy-orphan'), '#!/bin/sh\nlegacy\n')
+  const r2 = spawnSync(PY, [join(fx2, 'bin', 'story-doctor'), '--root', fx2, '--json'],
+    { encoding: 'utf8', timeout: 60000, cwd: emptyCwd, env: noKbEnv })
+  check('DR24', '24b exit 1 (missing FAIL)', r2.status === 1, `code=${r2.status}`)
+  const out2 = JSON.parse(r2.stdout)
+  const c2 = out2.checks.find(x => x.name === 'bins')
+  check('DR24', '24b FAIL nêu cả missing + orphan', c2 && c2.status === 'fail'
+    && c2.detail.includes('story-kb') && c2.detail.includes('zzz-legacy-orphan'), c2 && JSON.stringify(c2))
+  rmSync(fx2, { recursive: true, force: true })
+}
+
+// ---- DR25: installKit ghi sidecar VÔ ĐIỀU KIỆN — cả early-return marker-khớp ---
+console.log('== [DR25] installKit ghi sidecar + refresh qua early-return ==')
+{
+  const fx = mkdtempSync(join(tmpdir(), 'doctor-tests-install-'))
+  const code = [
+    `import { installKit } from ${JSON.stringify(pathToFileURL(resolve(pluginRoot, 'main.mjs')).href)};`,
+    'const orca = { host: { call: async () => ({ ok: true }) }, log: () => {} };',
+    `console.log('r1:' + installKit(orca, { root: ${JSON.stringify(fx)} }));`,
+    `console.log('r2:' + installKit(orca, { root: ${JSON.stringify(fx)} }));`,
+  ].join('\n')
+  const r = spawnSync(process.execPath, ['--input-type=module', '-e', code],
+    { encoding: 'utf8', timeout: 120000 })
+  check('DR25', 'install 2 lần ok', r.stdout.includes('r1:true') && r.stdout.includes('r2:true'), r.stdout + r.stderr)
+  const scPath = join(fx, 'bin', SIDECAR)
+  check('DR25', 'sidecar tồn tại sau install 1', existsSync(scPath))
+  if (existsSync(scPath)) {
+    const sc = JSON.parse(readFileSync(scPath, 'utf8'))
+    check('DR25', 'provides = đúng bin names (sorted)', JSON.stringify(sc.provides) === JSON.stringify(binNames), JSON.stringify(sc.provides?.slice(0, 5)))
+    check('DR25', 'srcKitRoot = kit source', sc.srcKitRoot === KIT_ROOT, String(sc.srcKitRoot))
+    check('DR25', 'kitHash khớp kit.json', sc.kitHash === HASH, String(sc.kitHash))
+  }
+  // Lần 2 chạy lại với marker đã khớp + sidecar bôi nhọ — chỉ ghi TRƯỚC
+  // early-return mới khôi phục được (nếu ghi sau early-return thì kẹt garbage).
+  writeFileSync(scPath, 'garbage-khong-phai-json')
+  const r2 = spawnSync(process.execPath, ['--input-type=module', '-e', code],
+    { encoding: 'utf8', timeout: 120000 })
+  check('DR25', 'install lại ok (early-return path)', r2.stdout.includes('r1:true'), r2.stdout + r2.stderr)
+  check('DR25', 'sidecar được refresh lại đúng (vô điều kiện)', existsSync(scPath)
+    && (() => { try { return JSON.parse(readFileSync(scPath, 'utf8')).kitHash === HASH } catch { return false } })(),
+    existsSync(scPath) ? readFileSync(scPath, 'utf8').slice(0, 80) : 'mất')
+  rmSync(fx, { recursive: true, force: true })
+}
+
+// ---- DR26: check_orphans whitelist sidecar (không coi là orphan) ---------------
+console.log('== [DR26] orphans whitelist .kit-provides.json ==')
+{
+  const fx = makeFixture()
+  writeFileSync(join(fx, 'bin', SIDECAR), sidecarJson(KIT_ROOT, HASH))
+  const r = run(['--root', fx, '--json'], { cwd: emptyCwd, env: noKbEnv })
+  const out = JSON.parse(r.stdout)
+  const c = out.checks.find(x => x.name === 'orphans')
+  check('DR26', 'orphans PASS (sidecar không bị liệt kê)', c && c.status === 'pass', c && JSON.stringify(c))
+  check('DR26', 'không nêu sidecar trong detail', c && !c.detail.includes(SIDECAR), c && c.detail)
+  rmSync(fx, { recursive: true, force: true })
+}
+
+// ---- DR27: --repair srcKitRoot hợp lệ + hash khớp → copy bin thiếu, chmod 755 --
+console.log('== [DR27] --repair copy-bins từ srcKitRoot hợp lệ ==')
+{
+  const fx = makeFixture()
+  writeFileSync(join(fx, 'bin', SIDECAR), sidecarJson(KIT_ROOT, HASH))
+  rmSync(join(fx, 'bin', 'story-kb'))
+  const r = spawnSync(PY, [join(fx, 'bin', 'story-doctor'), '--root', fx, '--repair'],
+    { encoding: 'utf8', timeout: 120000, cwd: emptyCwd, env: noKbEnv })
+  check('DR27', 'exit 0 (hết FAIL)', r.status === 0, `code=${r.status} stderr=${r.stderr}`)
+  check('DR27', 'log copy bin thiếu', r.stdout.includes('story-kb') && r.stdout.includes('copy'), r.stdout)
+  check('DR27', 'bin được copy lại', existsSync(join(fx, 'bin', 'story-kb')))
+  if (process.platform !== 'win32' && existsSync(join(fx, 'bin', 'story-kb'))) {
+    const mode = statSync(join(fx, 'bin', 'story-kb')).mode & 0o777
+    check('DR27', 'chmod 755 SAU copy', (mode & 0o111) === 0o111, mode.toString(8))
+  }
+  const r2 = spawnSync(PY, [join(fx, 'bin', 'story-doctor'), '--root', fx, '--json'],
+    { encoding: 'utf8', timeout: 60000, cwd: emptyCwd, env: noKbEnv })
+  check('DR27', 're-check exit 0', r2.status === 0, `code=${r2.status}`)
+  const out2 = JSON.parse(r2.stdout)
+  const c2 = out2.checks.find(x => x.name === 'bins')
+  check('DR27', 're-check bins PASS theo sidecar', c2 && c2.status === 'pass', c2 && JSON.stringify(c2))
+  rmSync(fx, { recursive: true, force: true })
+}
+
+// ---- DR28: --repair source mất/hash lệch → FAIL + in lệnh cp hướng dẫn tay -----
+console.log('== [DR28] --repair không-source/hash-lệch → FAIL có hướng dẫn ==')
+{
+  // 28a: srcKitRoot không tồn tại
+  const fx = makeFixture()
+  const lostSrc = join(fx, 'src-da-mat')
+  writeFileSync(join(fx, 'bin', SIDECAR), sidecarJson(lostSrc, HASH))
+  rmSync(join(fx, 'bin', 'story-kb'))
+  const r = spawnSync(PY, [join(fx, 'bin', 'story-doctor'), '--root', fx, '--repair'],
+    { encoding: 'utf8', timeout: 120000, cwd: emptyCwd, env: noKbEnv })
+  check('DR28', '28a exit 1 (không PASS)', r.status === 1, `code=${r.status}`)
+  check('DR28', '28a in lệnh cp hướng dẫn', r.stdout.includes('cp') && r.stdout.includes('story-kb'), r.stdout)
+  check('DR28', '28a KHÔNG copy mù', !existsSync(join(fx, 'bin', 'story-kb')))
+  rmSync(fx, { recursive: true, force: true })
+
+  // 28b: srcKitRoot tồn tại nhưng tree hash ≠ sidecar.kitHash (source khác bản)
+  const srcFx = mkdtempSync(join(tmpdir(), 'doctor-tests-src-'))
+  for (const sub of ['bin', 'agents', 'skills']) {
+    mkdirSync(join(srcFx, sub), { recursive: true })
+    copyTree(join(KIT_ROOT, sub), join(srcFx, sub))
+  }
+  const kbPath = join(srcFx, 'bin', 'story-kb')
+  writeFileSync(kbPath, readFileSync(kbPath, 'utf8') + '\n# drift-local\n') // hash lệch
+  const fx2 = makeFixture()
+  writeFileSync(join(fx2, 'bin', SIDECAR), sidecarJson(srcFx, HASH))
+  rmSync(join(fx2, 'bin', 'story-kb'))
+  const r2 = spawnSync(PY, [join(fx2, 'bin', 'story-doctor'), '--root', fx2, '--repair'],
+    { encoding: 'utf8', timeout: 120000, cwd: emptyCwd, env: noKbEnv })
+  check('DR28', '28b exit 1 (không PASS)', r2.status === 1, `code=${r2.status}`)
+  check('DR28', '28b in lệnh cp hướng dẫn', r2.stdout.includes('cp') && r2.stdout.includes('story-kb'), r2.stdout)
+  check('DR28', '28b KHÔNG copy từ source lệch hash', !existsSync(join(fx2, 'bin', 'story-kb')))
+  rmSync(fx2, { recursive: true, force: true })
+  rmSync(srcFx, { recursive: true, force: true })
+}
+
+// ---- DR29: --uninstall --yes dọn sidecar ---------------------------------------
+console.log('== [DR29] uninstall dọn sidecar ==')
+{
+  const fx = makeFixture()
+  writeFileSync(join(fx, 'bin', SIDECAR), sidecarJson(KIT_ROOT, HASH))
+  const r = run(['--root', fx, '--uninstall', '--yes'], { cwd: emptyCwd, env: noKbEnv })
+  check('DR29', 'exit 0', r.status === 0, `code=${r.status} stderr=${r.stderr}`)
+  check('DR29', 'sidecar biến mất', !existsSync(join(fx, 'bin', SIDECAR)))
+  check('DR29', 'PLAN/xoá nêu sidecar', r.stdout.includes(SIDECAR), r.stdout)
+  rmSync(fx, { recursive: true, force: true })
+}
+
+// ---- DR30: sidecar JSON hỏng → WARN fail-open, không crash ---------------------
+console.log('== [DR30] sidecar hỏng → fail-open WARN ==')
+{
+  const fx = makeFixture()
+  writeFileSync(join(fx, 'bin', SIDECAR), '{hong')
+  const r = spawnSync(PY, [join(fx, 'bin', 'story-doctor'), '--root', fx, '--json'],
+    { encoding: 'utf8', timeout: 60000, cwd: emptyCwd, env: noKbEnv })
+  check('DR30', 'exit 0 (không crash, WARN không FAIL)', r.status === 0, `code=${r.status} stderr=${r.stderr}`)
+  const out = JSON.parse(r.stdout)
+  const c = out.checks.find(x => x.name === 'bins')
+  check('DR30', 'bins WARN (không PASS)', c && c.status === 'warn', c && JSON.stringify(c))
+  check('DR30', 'detail nhắc sidecar hỏng', c && c.detail.includes(SIDECAR), c && c.detail)
+  rmSync(fx, { recursive: true, force: true })
+}
+
+// ---- DR31: sidecar-mode exec-bit mất → FAIL nêu tên + --repair chmod heals -----
+// (review SF-1 P1: nhánh nonexec sidecar-mode chưa có test — DR24 chỉ phủ orphan/missing)
+console.log('== [DR31] sidecar-mode nonexec → FAIL + repair chmod ==')
+{
+  const fx = makeFixture()
+  writeFileSync(join(fx, 'bin', SIDECAR), sidecarJson(KIT_ROOT, HASH))
+  if (process.platform === 'win32') {
+    console.log('  [SKIP] Windows NTFS không represent exec-bit')
+    pass++
+  } else {
+    chmodSync(join(fx, 'bin', 'story-kb'), 0o644)
+    const r = spawnSync(PY, [join(fx, 'bin', 'story-doctor'), '--root', fx, '--json'],
+      { encoding: 'utf8', timeout: 60000, cwd: emptyCwd, env: noKbEnv })
+    check('DR31', 'exit 1', r.status === 1, `code=${r.status}`)
+    const out = JSON.parse(r.stdout)
+    const c = out.checks.find(x => x.name === 'bins')
+    check('DR31', 'bins FAIL nonexec nêu tên', c && c.status === 'fail' && c.detail.includes('story-kb'), c && JSON.stringify(c))
+    // repair: chmod branch heals
+    const r2 = spawnSync(PY, [join(fx, 'bin', 'story-doctor'), '--root', fx, '--repair'],
+      { encoding: 'utf8', timeout: 120000, cwd: emptyCwd, env: noKbEnv })
+    check('DR31', 'repair exit 0', r2.status === 0, `code=${r2.status} stderr=${r2.stderr}`)
+    check('DR31', 'log chmod 755', r2.stdout.includes('chmod 755'), r2.stdout)
+    const mode = statSync(join(fx, 'bin', 'story-kb')).mode & 0o777
+    check('DR31', 'exec-bit khôi phục', (mode & 0o111) === 0o111, mode.toString(8))
+    const r3 = spawnSync(PY, [join(fx, 'bin', 'story-doctor'), '--root', fx, '--json'],
+      { encoding: 'utf8', timeout: 60000, cwd: emptyCwd, env: noKbEnv })
+    check('DR31', 're-check exit 0', r3.status === 0, `code=${r3.status}`)
+  }
+  rmSync(fx, { recursive: true, force: true })
+}
+
 rmSync(emptyCwd, { recursive: true, force: true })
 
 console.log(`\n== TOTAL: ${pass} PASS / ${fail} FAIL ==`)
@@ -509,4 +742,4 @@ if (failures.length) {
   console.log('FAILURES:\n- ' + failures.join('\n- '))
   process.exit(1)
 }
-console.log('HARNESS GREEN (story-doctor 21 DR)')
+console.log('HARNESS GREEN (story-doctor 22 DR)')

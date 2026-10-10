@@ -27,7 +27,7 @@ import { promisify } from 'node:util'
 import { createHash } from 'node:crypto'
 import { accessSync, readFileSync, existsSync, mkdirSync, readdirSync, cpSync, rmSync, writeFileSync, chmodSync, statSync, renameSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { dirname } from 'node:path'
+import { dirname, resolve } from 'node:path'
 const execFileAsync = promisify(execFileCb)
 
 // Resolve the PRODUCTION orca binary explicitly. Why: when running inside the
@@ -1279,6 +1279,24 @@ export function installKit(orca, { root, kitRoot: kitRootOverride } = {}) {
         rmSync(join(claude, 'skills', name), { recursive: true, force: true })
       } catch { /* dọn được cái nào hay cái đó */ }
     }
+    // Sidecar install-coverage (LOCAL-5 SF-1): story-doctor chạy từ vị trí CÀI
+    // không có kit.json — ghi provides/srcKitRoot/kitHash VÔ ĐIỀU KIỆN TRƯỚC
+    // early-return để refresh mỗi activate, kể cả marker khớp. Atomic tmp+rename.
+    try {
+      const binDir = join(claude, 'bin')
+      mkdirSync(binDir, { recursive: true })
+      const sidecar = {
+        provides: (manifest.provides || [])
+          .filter(e => e && typeof e === 'object' && e.type === 'bin' && typeof e.name === 'string')
+          .map(e => e.name).sort(),
+        srcKitRoot: resolve(kitRoot),
+        kitHash,
+      }
+      const scPath = join(binDir, '.kit-provides.json')
+      const scTmp = scPath + '.tmp'
+      writeFileSync(scTmp, JSON.stringify(sidecar, null, 2) + '\n')
+      renameSync(scTmp, scPath)
+    } catch { /* sidecar chỉ phục vụ story-doctor — không chặn install */ }
     if (existsSync(marker) && readFileSync(marker, 'utf8').trim() === expectedMarker && installedKitIntact(claude, kitRoot)) return true
     for (const name of ['skills', 'agents', 'bin']) {
       const src = join(kitRoot, name)

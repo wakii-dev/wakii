@@ -29,13 +29,14 @@ function tempDir(tag) {
   return dir
 }
 
-// fake orca: task-list SF-1=done SF-2=in_progress — STORY_MINDMAP_RUN skíp discovery
+// fake orca: vocabulary orca THẬT (task-handlers.ts:9-16 — completed/dispatched,
+// không phải done/in_progress vocab giả từng làm test xanh ảo) — STORY_MINDMAP_RUN skíp discovery
 const FAKE_ORCA = `#!/usr/bin/env node
 const args = process.argv.slice(2)
 if (args.includes('task-list')) {
   console.log(JSON.stringify({ result: { tasks: [
-    { task_title: 'VU SF-1 lam gi do', status: 'done' },
-    { task_title: 'VU SF-2 lam khac', status: 'in_progress' }
+    { task_title: 'VU SF-1 lam gi do', status: 'completed' },
+    { task_title: 'VU SF-2 lam khac', status: 'dispatched' }
   ] } }))
   process.exit(0)
 }
@@ -107,9 +108,9 @@ function load(p) { return JSON.parse(readFileSync(p, 'utf8')) }
   check('T2.5', 'tests giữ nguyên', JSON.stringify(sf1a.tests) === JSON.stringify(sf1b.tests))
   check('T2.6', 'filesTouched giữ nguyên', JSON.stringify(sf1a.filesTouched) === JSON.stringify(sf1b.filesTouched))
   check('T2.7', 'title giữ nguyên', sf1a.title === sf1b.title)
-  check('T2.8', 'sf-1 state pending → done', sf1b.state === 'pending' && sf1a.state === 'done', `${sf1b.state} → ${sf1a.state}`)
+  check('T2.8', 'sf-1 state pending → done (map completed→done)', sf1b.state === 'pending' && sf1a.state === 'done', `${sf1b.state} → ${sf1a.state}`)
   const sf2a = after.nodes.find(n => n.id === 'sf-2')
-  check('T2.9', 'sf-2 state in-progress giữ (khớp nguồn)', sf2a.state === 'in-progress', sf2a.state)
+  check('T2.9', 'sf-2 in-progress giữ (map dispatched→in-progress khớp nguồn)', sf2a.state === 'in-progress', sf2a.state)
   const task = after.nodes.find(n => n.id === 't-1.1')
   check('T2.10', 'task state không đụng (không có nguồn)', task.state === 'pending', task.state)
   const step = after.nodes.find(n => n.id === 's-1.1')
@@ -147,8 +148,8 @@ function load(p) { return JSON.parse(readFileSync(p, 'utf8')) }
 const args = process.argv.slice(2)
 if (args.includes('task-list')) {
   console.log(JSON.stringify({ result: { tasks: [
-    { task_title: 'VU SF-1 a', status: 'done' },
-    { task_title: 'VU SF-2 b', status: 'done' }
+    { task_title: 'VU SF-1 a', status: 'completed' },
+    { task_title: 'VU SF-2 b', status: 'completed' }
   ] } }))
   process.exit(0)
 }
@@ -182,6 +183,46 @@ process.exit(1)
   check('T2.23', 'file INVALID exit 1', r.status === 1, `exit=${r.status}`)
   check('T2.24', 'file INVALID không đè', readFileSync(p, 'utf8') === '{ vỡ')
   rmSync(dir, { recursive: true, force: true })
+}
+
+// ═══ 6. no-downgrade — node done absorbing: orchestration reset (ready) không hạ done (P1-4) ═══
+{
+  const dir = tempDir('no-down')
+  const fake = join(dir, 'fake-orca.mjs')
+  writeFileSync(fake, `#!/usr/bin/env node
+const args = process.argv.slice(2)
+if (args.includes('task-list')) {
+  console.log(JSON.stringify({ result: { tasks: [
+    { task_title: 'VU SF-1 lam gi do', status: 'ready' }
+  ] } }))
+  process.exit(0)
+}
+if (args.includes('run-list')) { console.log(JSON.stringify({ result: { runs: [] } })); process.exit(0) }
+process.exit(1)
+`)
+  const p = fixture(dir)
+  const doc = load(p)
+  doc.nodes.find(n => n.id === 'sf-1').state = 'done' // đã xong trước đó
+  writeFileSync(p, JSON.stringify(doc, null, 2) + '\n')
+  const r = runUpdater(['--update-state', p], { STORY_ORCA_BIN: fake, STORY_MINDMAP_RUN: 'test-run' })
+  check('T2.25', 'updater exit 0', r.status === 0, `exit=${r.status} out=${r.stdout} err=${r.stderr}`)
+  check('T2.26', 'done absorbing — ready không hạ done', load(p).nodes.find(n => n.id === 'sf-1').state === 'done', load(p).nodes.find(n => n.id === 'sf-1').state)
+  check('T2.27', 'không đổi gì → unchanged (không ghi)', /unchanged/.test(r.stdout), r.stdout)
+  check('T2.30', 'WARN no-downgrade có dấu vết trên stderr (review C P2)', /no-downgrade: sf-1 giữ done \(nguồn: pending\)/.test(r.stderr || ''), r.stderr)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+// ═══ 7. ORCA_STATE_MAP exported (contract SF-3) — vocabulary orca thật, value ∈ KNOWN_STATE ═══
+{
+  // require bin chạy main() khi chưa có main-guard → probe qua subprocess cho RED sạch
+  const probe = script => spawnSync(process.execPath, ['-e', script], { encoding: 'utf8', timeout: 15_000 })
+  const reqBin = `require(${JSON.stringify(BIN)})`
+  const r1 = probe(`const m = ${reqBin}; console.log('map:' + (m.ORCA_STATE_MAP instanceof Map) + ':' + m.ORCA_STATE_MAP.get('completed'))`)
+  check('T2.28', 'ORCA_STATE_MAP exported + completed→done', r1.status === 0 && r1.stdout.trim() === 'map:true:done', `exit=${r1.status} out=${r1.stdout} err=${(r1.stderr || '').split('\n')[0]}`)
+  const r2 = probe(`const m = ${reqBin};
+const bad = [...m.ORCA_STATE_MAP.values()].filter(v => !m.KNOWN_STATE.has(v));
+console.log('inv:' + (bad.length === 0) + ':' + ['ready|pending', 'dispatched|in-progress', 'failed|blocked', 'blocked|blocked', 'pending|pending'].every(p => { const [k, v] = p.split('|'); return m.ORCA_STATE_MAP.get(k) === v }))`)
+  check('T2.29', 'mọi value ∈ KNOWN_STATE + đủ cặp spec', r2.status === 0 && r2.stdout.trim() === 'inv:true:true', `exit=${r2.status} out=${r2.stdout} err=${(r2.stderr || '').split('\n')[0]}`)
 }
 
 console.log(`\n${pass} PASS, ${fail} FAIL`)

@@ -37,16 +37,25 @@ cd resources/plugins/launch/stablyai.orca-superpowers-launcher
 node tests/story-verify-tests.mjs   # 1) baseline trước khi sửa
 # 2) sửa tests/story-verify-tests.mjs — fixture/stub/config theo §2;
 #    nếu contract bin thật sự đổi, bin + test trong cùng commit
-node tests/story-verify-tests.mjs   # 3) kỳ vọng: TOTAL 6 PASS / 0 FAIL
+node tests/story-verify-tests.mjs   # 3) kỳ vọng: TOTAL 29 PASS / 0 FAIL (LOCAL-5 SF-3)
 ```
 
-- Đổi số assert → cập nhật comment đầu test và con số "6 PASS" trong runbook này.
+- Đổi số assert → cập nhật comment đầu test và con số "29 PASS" trong runbook này.
 - Thêm scenario: đi qua `runScenario()` (tự cấp fake HOME, tự dọn bằng `rmSync`),
   assert trên dòng `code:…dest:…` duy nhất, không parse phần stdout khác.
+  Row-line cột `[B1:…]` nằm ở stdout, KHÔNG ở detail line — assert B1:FAIL
+  qua `stdout.includes`, note lỗi qua `line.includes` (S14 là ví dụ).
+- B3 scoping (SF-3): mindmap fixture truyền qua option `mindmaps` của
+  `runScenario()` ({ "<file>.wakii": {story, epic, dest, linear} }); token story
+  derive từ basename `sf-91-hv` = `hv` — mindmap KHÔNG khớp `hv` exact/`hv-*`
+  sẽ không được derive (0/>1-match → fail-open, review:?).
+- Decoy evidence (S13/S15): CẦN 2 decoy `sf-91+stale` + `sf-910-stale` — `ls`
+  sort theo collation locale (byte-order thì '+' thắng, en_US bỏ-punctuation thì
+  'sf-910' thắng); thiếu 1 trong 2 → test không còn RED chắc chắn trên code cũ.
 
 ## 4. Verify sau refresh
 
-1. `node tests/story-verify-tests.mjs` → `TOTAL 6 PASS / 0 FAIL`.
+1. `node tests/story-verify-tests.mjs` → `TOTAL 29 PASS / 0 FAIL`.
 2. `node tests/kit-verify-manifest.mjs` → hai dạng FAIL chấp nhận được:
    - Fingerprint `bundled-plugins.json contentHash` — tests/ nằm trong plugin tree,
      mọi thay đổi bytes (kể cả file test) làm fingerprint cũ lệch cho tới khi

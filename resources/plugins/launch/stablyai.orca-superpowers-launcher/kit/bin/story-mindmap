@@ -49,6 +49,17 @@ const MAX_BYTES = 5 * 1024 * 1024;
 const KNOWN_KIND = new Set(['epic', 'sf', 'task', 'step', 'area', 'file']);
 const KNOWN_REL = new Set(['contains', 'depends-on', 'flows-to', 'impacts', 'writes']);
 const KNOWN_STATE = new Set(['pending', 'in-progress', 'done', 'blocked', 'complete']);
+// vocabulary orca thật (task-handlers.ts:9-16) → state schema v1 — hằng số exported
+// (contract SF-3): mọi value ∈ KNOWN_STATE; giá trị ngoài bảng → pending (node
+// không bị decoder drop âm thầm — P0-1). No-downgrade `done` nằm ở updater.
+const ORCA_STATE_MAP = new Map([
+  ['pending', 'pending'],
+  ['ready', 'pending'],
+  ['dispatched', 'in-progress'],
+  ['completed', 'done'],
+  ['failed', 'blocked'],
+  ['blocked', 'blocked'],
+]);
 
 // ── decoder ─────────────────────────────────────────────────────────────────
 function invalid(reason) { return { valid: false, error: `INVALID: ${reason}` }; }
@@ -212,10 +223,7 @@ function readOrcaStates(orcaBin, epic, warnings) {
     for (const t of tasks) {
       const m = String(t.task_title || '').match(/\bSF-(\d+)\b/i);
       if (!m) continue;
-      const st = String(t.status || '');
-      map.set(+m[1], st === 'done' ? 'done'
-        : (st === 'in_progress' || st === 'in-progress') ? 'in-progress'
-        : (st === 'failed' || st === 'blocked') ? 'blocked' : 'pending');
+      map.set(+m[1], ORCA_STATE_MAP.get(String(t.status || '')) ?? 'pending');
     }
     return map;
   } catch {
@@ -438,6 +446,13 @@ function cmdUpdateState(fileArg) {
     if (!n || n.kind !== 'sf') continue;
     const m = String(n.id).match(/^sf-(\d+)$/);
     if (!m || !states.has(+m[1])) continue;
+    if (n.state === 'done') {
+      // no-downgrade: orchestration reset không hạ node đã xong (P1-4) — WARN để
+      // "sao SF không update" không thành câu hỏi không có log (review C P2)
+      const next = states.get(+m[1]);
+      if (next !== 'done') console.error(`WARN: no-downgrade: ${n.id} giữ done (nguồn: ${next})`);
+      continue;
+    }
     const next = states.get(+m[1]);
     if (n.state !== next) { changed.push(`${n.id}: ${n.state || '—'} → ${next}`); n.state = next; }
   }
@@ -629,4 +644,5 @@ function main() {
   return cmdGenerate(argv);
 }
 
-main();
+module.exports = { ORCA_STATE_MAP, KNOWN_STATE }; // contract SF-3 — test import được
+if (require.main === module) main();

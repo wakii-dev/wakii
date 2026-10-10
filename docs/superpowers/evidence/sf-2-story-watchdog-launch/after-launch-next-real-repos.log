@@ -1,0 +1,13 @@
+14:42 sf-3-session-ui-learn-review: ⚠ STALLED-COLD (MỚI) — không terminal (post-restart?) — agent vắng, commit cuối 0h · owner=—
+14:42 sf-1-story-doctor-install: ⚠ STALLED-COLD (đã biết) — không terminal (post-restart?) — agent vắng, commit cuối 0h · owner=—
+14:42 sf-2-story-watchdog-launch: ⚠ STALLED-COLD (đã biết) — không terminal (post-restart?) — agent vắng, commit cuối 1h · owner=—
+14:42 sf-3-story-verify-story: ⚠ STALLED-COLD (đã biết) — không terminal (post-restart?) — agent vắng, commit cuối 0h · owner=—
+── launch-next (DRY-RUN):
+  SKIP wakii-site — repo đa-story (11 stories) — chỉ định --story
+  SKIP ecommerce — repo đa-story (7 stories) — chỉ định --story
+  SKIP orca — repo đa-story (15 stories) — chỉ định --story
+  SKIP hub-store — repo đa-story (10 stories) — chỉ định --story
+  SKIP iloveenglishclup — repo đa-story (7 stories) — chỉ định --story
+  SKIP English — repo đa-story (5 stories) — chỉ định --story
+  SKIP iloveenglishclup-vocabulary-learn — repo đa-story (5 stories) — chỉ định --story
+  ⚠ launch-next SKIP toàn cục: wakii-site ecommerce orca hub-store iloveenglishclup English iloveenglishclup-vocabulary-learn — repo đa-story, chỉ định --story <slug> (exit 0, 0 launch)

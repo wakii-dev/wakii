@@ -67,10 +67,12 @@ const PACK2 = `# Context pack SF-2 — Lớp xem
 ## ACCEPTANCE
 - double-click mở được
 `
-// orca stub: dispatch theo subcommand — run-list (discovery) → 1 run; task-list → SF states
+// orca stub: dispatch theo subcommand — run-list (discovery) → 1 run; task-list →
+// SF states theo vocabulary orca THẬT (task-handlers.ts:9-16 — vocab in_progress
+// giả từng làm generate test xanh ảo, SF-3)
 const ORCA_STUB = `const a = process.argv.slice(2)
 if (a[1] === 'run-list') console.log('{"result":{"runs":[{"id":"run_stub1","objective":"VX-1: đồ án thử — mindmap fixture","legacy":0,"updated_at":"2026-09-27T00:00:00Z"}]}}')
-else console.log('{"result":{"tasks":[{"task_title":"SF-1 Lớp nền","status":"in_progress"},{"task_title":"SF-2 Lớp xem","status":"pending"}]}}')
+else console.log('{"result":{"tasks":[{"task_title":"SF-1 Lớp nền","status":"dispatched"},{"task_title":"SF-2 Lớp xem","status":"pending"}]}}')
 `
 // impact stub: 1 area computed
 const IMPACT_STUB = `console.log('{"base":"main","changed":[],"affectedAreas":["src/terminal"],"impact":[]}')`
@@ -336,6 +338,66 @@ function tempStory(tag, { pack2 = PACK2, bracket = BRACKET } = {}) {
   // chạy lần nữa — idempotent → không commit rác
   execFileSync('bash', [wrapper, '--reason', 'close', '--commit'], { cwd: dir, encoding: 'utf8', env: { ...process.env, ...env } })
   check('c8', 'lần 2 không commit thêm', git(dir, 'rev-list', '--count', 'HEAD').trim() === '2', git(dir, 'log', '--oneline'))
+  rmSync(dir, { recursive: true, force: true })
+}
+
+// ══ c9: generate --bracket qua map vocabulary orca thật (P2-1 — fix readOrcaStates
+// cover cả generate lẫn update-state; failed→blocked không drop node) ══
+{
+  const bracket6 = `# Story: VX-9 — vocab map fixture
+Destination: story/vx-9-vocab
+
+## SF-1 mot
+Tier: 0
+linear:
+Tasks: t1
+
+## SF-2 hai
+Tier: 0
+linear:
+Tasks: t2
+
+## SF-3 ba
+Tier: 0
+linear:
+Tasks: t3
+
+## SF-4 bon
+Tier: 0
+linear:
+Tasks: t4
+
+## SF-5 nam
+Tier: 0
+linear:
+Tasks: t5
+
+## SF-6 sau
+Tier: 0
+linear:
+Tasks: t6
+`
+  const { dir } = tempStory('vocab', { bracket: bracket6 })
+  const orca = join(dir, 'stubs', 'orca-vocab.mjs')
+  writeFileSync(orca, `const a = process.argv.slice(2)
+if (a[1] === 'run-list') console.log('{"result":{"runs":[{"id":"run_v","objective":"VX-9 vocab","legacy":0,"updated_at":"2026-10-10T00:00:00Z"}]}}')
+else console.log('{"result":{"tasks":[' +
+  ['SF-1 mot|pending', 'SF-2 hai|ready', 'SF-3 ba|dispatched', 'SF-4 bon|completed', 'SF-5 nam|failed', 'SF-6 sau|blocked']
+    .map(s => { const i = s.lastIndexOf('|'); return JSON.stringify({ task_title: s.slice(0, i), status: s.slice(i + 1) }) }).join(',')
+  + ']}}')
+`)
+  chmodSync(orca, 0o755)
+  const r = run(bin, ['--bracket', 'docs/superpowers/brackets/vx-1-do-an-thu.md'], dir,
+    { STORY_ORCA_BIN: orca, STORY_IMPACT_BIN: join(dir, 'stubs', 'impact.mjs') })
+  check('c9', 'exit 0', r.code === 0, `code=${r.code} out=${r.out}`)
+  const doc = JSON.parse(readFileSync(join(dir, 'docs/superpowers/mindmaps/vx-9-vocab.wakii'), 'utf8'))
+  const st = Object.fromEntries(doc.nodes.filter(n => n.kind === 'sf').map(n => [n.id, n.state]))
+  check('c9', 'pending→pending', st['sf-1'] === 'pending', JSON.stringify(st))
+  check('c9', 'ready→pending', st['sf-2'] === 'pending', JSON.stringify(st))
+  check('c9', 'dispatched→in-progress', st['sf-3'] === 'in-progress', JSON.stringify(st))
+  check('c9', 'completed→done (không pending — P0 đảo trạng thái)', st['sf-4'] === 'done', JSON.stringify(st))
+  check('c9', 'failed→blocked (node không bị drop — P0-1)', st['sf-5'] === 'blocked', JSON.stringify(st))
+  check('c9', 'blocked→blocked', st['sf-6'] === 'blocked', JSON.stringify(st))
   rmSync(dir, { recursive: true, force: true })
 }
 

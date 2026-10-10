@@ -50,3 +50,7 @@
   khác — fix là quyết định coordinator/USER.
 - **NAVIGATOR.md pre-existing (P2 review-1)**: "breaker ≥3 blocked/ngày" + "FOCUS trống" không có logic
   tương ứng trong bin hiện tại — hẹn micro-fix docs riêng.
+
+## 2026-10-10 — LOCAL-5 sf-2 (story-watchdog scoping)
+- **Skill gap**: story-launch prompt CHECK 5 ghi `git push -u origin sf-2-story-watchdog-launch` — trong SF worktree orca, `origin` = upstream stablyai/orca → 403. Đúng: `git push -u wakii-dev HEAD:sf-2-story-watchdog-launch` (remote tên `wakii-dev`). Suggested change: sửa template CHECK 5 trong story-workflow SKILL.md / launcher prompt builder — push qua remote fork (resolve theo remote URL, không hardcode `origin`).
+- **Minor**: story-diff-review flag `console.log` trong tests/*.mjs (harness chuẩn kit) + "file ngoài plan" khi chỉ đọc epic plan — 2 false positive lặp lại mỗi SF kit; suggested: whitelist `tests/*-tests.mjs` console.log + đọc SF plan file nếu tên khớp worktree.
