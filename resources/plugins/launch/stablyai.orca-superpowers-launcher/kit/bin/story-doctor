@@ -320,16 +320,20 @@ def check_bins(kit_root, root, kit_json):
 
 
 def cp_hint(src_root, dst_dir, names):
+    if sys.platform == "win32":
+        return " & ".join(f'copy /Y "{src_root}\\bin\\{n}" "{dst_dir}\\"' for n in names[:5])
     return " · ".join(f"cp '{src_root}/bin/{n}' '{dst_dir}/'" for n in names[:5])
 
 
 def check_bins_sidecar(root):
     dst = os.path.join(root, "bin")
     sidecar, err = load_sidecar(root)
+    # .tmp = crash-window giữa write/rename sidecar (installKit atomic write) — noise, tự hồi phục.
     installed = sorted(
         f for f in (os.listdir(dst) if os.path.isdir(dst) else [])
         if os.path.isfile(os.path.join(dst, f))
-        and not f.endswith(".html") and not f.endswith(".pyc"))
+        and not f.endswith(".html") and not f.endswith(".pyc")
+        and f != SIDECAR_NAME + ".tmp")
     if sidecar is None:
         if err is not None:
             return Check("bins", "warn",
@@ -467,7 +471,8 @@ def check_orphans(root, kit_json):
         and not f.endswith(".html")
         and not f.endswith(".pyc")
         and f != ".DS_Store"
-        and f != SIDECAR_NAME)
+        and f != SIDECAR_NAME
+        and f != SIDECAR_NAME + ".tmp")
     if extra:
         return Check("orphans", "warn",
                      f"orphan bins (retire sót): {', '.join(extra)}",
@@ -616,7 +621,11 @@ def repair_copy_bins(root, r):
     except OSError as e:
         return False, f"hash srcKitRoot lỗi ({e})" + manual
     want = str(r.get("kitHash") or "")
-    if want and actual != want:
+    if not want:
+        # Spec nhánh (a) đòi hash khớp — sidecar không kitHash thì không có gì để
+        # khớp: fail-closed, không copy mù (kit không ghi kitHash thì không sidecar).
+        return False, "sidecar thiếu kitHash — không xác minh được source" + manual
+    if actual != want:
         return False, f"srcKitRoot tree {actual} ≠ sidecar {want} (source khác bản đã cài)" + manual
     copied = 0
     for n in names:

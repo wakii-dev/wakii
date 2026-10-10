@@ -704,6 +704,37 @@ console.log('== [DR30] sidecar hỏng → fail-open WARN ==')
   rmSync(fx, { recursive: true, force: true })
 }
 
+// ---- DR31: sidecar-mode exec-bit mất → FAIL nêu tên + --repair chmod heals -----
+// (review SF-1 P1: nhánh nonexec sidecar-mode chưa có test — DR24 chỉ phủ orphan/missing)
+console.log('== [DR31] sidecar-mode nonexec → FAIL + repair chmod ==')
+{
+  const fx = makeFixture()
+  writeFileSync(join(fx, 'bin', SIDECAR), sidecarJson(KIT_ROOT, HASH))
+  if (process.platform === 'win32') {
+    console.log('  [SKIP] Windows NTFS không represent exec-bit')
+    pass++
+  } else {
+    chmodSync(join(fx, 'bin', 'story-kb'), 0o644)
+    const r = spawnSync(PY, [join(fx, 'bin', 'story-doctor'), '--root', fx, '--json'],
+      { encoding: 'utf8', timeout: 60000, cwd: emptyCwd, env: noKbEnv })
+    check('DR31', 'exit 1', r.status === 1, `code=${r.status}`)
+    const out = JSON.parse(r.stdout)
+    const c = out.checks.find(x => x.name === 'bins')
+    check('DR31', 'bins FAIL nonexec nêu tên', c && c.status === 'fail' && c.detail.includes('story-kb'), c && JSON.stringify(c))
+    // repair: chmod branch heals
+    const r2 = spawnSync(PY, [join(fx, 'bin', 'story-doctor'), '--root', fx, '--repair'],
+      { encoding: 'utf8', timeout: 120000, cwd: emptyCwd, env: noKbEnv })
+    check('DR31', 'repair exit 0', r2.status === 0, `code=${r2.status} stderr=${r2.stderr}`)
+    check('DR31', 'log chmod 755', r2.stdout.includes('chmod 755'), r2.stdout)
+    const mode = statSync(join(fx, 'bin', 'story-kb')).mode & 0o777
+    check('DR31', 'exec-bit khôi phục', (mode & 0o111) === 0o111, mode.toString(8))
+    const r3 = spawnSync(PY, [join(fx, 'bin', 'story-doctor'), '--root', fx, '--json'],
+      { encoding: 'utf8', timeout: 60000, cwd: emptyCwd, env: noKbEnv })
+    check('DR31', 're-check exit 0', r3.status === 0, `code=${r3.status}`)
+  }
+  rmSync(fx, { recursive: true, force: true })
+}
+
 rmSync(emptyCwd, { recursive: true, force: true })
 
 console.log(`\n== TOTAL: ${pass} PASS / ${fail} FAIL ==`)
@@ -711,4 +742,4 @@ if (failures.length) {
   console.log('FAILURES:\n- ' + failures.join('\n- '))
   process.exit(1)
 }
-console.log('HARNESS GREEN (story-doctor 21 DR)')
+console.log('HARNESS GREEN (story-doctor 22 DR)')

@@ -19,7 +19,7 @@
 - [x] T3. TDD RED fixture tautology (DR22): doctor BÊN TRONG fake install root (kit_root==root, chạy từ `<root>/bin/`) + sidecar có + xoá 1 provides-bin → hiện tại PASS sai (tautology); sau fix → bins FAIL nêu đúng tên
 - [x] T4. TDD RED fixture không-sidecar (DR23): kit_root==root, KHÔNG sidecar → hiện tại PASS; sau fix → bins WARN fail-open (không PASS)
 - [x] T5. installKit ghi sidecar vô điều kiện TRƯỚC early-return marker-khớp (main.mjs ~1275-1282): `{provides:[bin names], srcKitRoot (absolute), kitHash}` — atomic write; DR25: install 2 lần — lần 2 early-return vẫn refresh (value/mtime đúng)
-- [x] T6. check_bins sidecar-mode (kit.json vắng ở install dir): missing = provides ∉ installed → FAIL nêu tên; orphan = installed ∉ provides → WARN-only (P1-2: sidecar stale có thể che bin mới); exec-bit check kept cho provided∩installed (DR24)
+- [x] T6. check_bins sidecar-mode (kit.json vắng ở install dir): missing = provides ∉ installed → FAIL nêu tên; orphan = installed ∉ provides → WARN-only (P1-2: sidecar stale có thể che bin mới); exec-bit check cho provided∩installed (DR31 — review P1: DR24 KHÔNG phủ exec-bit)
 - [x] T7. check_orphans whitelist `.kit-provides.json` (DR26 — scanner hiện sẽ xoá nó)
 - [x] T8. `--repair` copy-bins nhánh 1: srcKitRoot tồn tại + tree hash khớp sidecar.kitHash → copy bin thiếu (guard under_root + chmod 755 SAU copy) (DR27)
 - [x] T9. `--repair` nhánh 2: source mất/hash lệch → FAIL + in lệnh cp hướng dẫn tay, không PASS (DR28 variant không-source + hash-lệch)
