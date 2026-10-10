@@ -75,6 +75,28 @@ describe('editor minimap one-shot stamp (desktop store wiring)', () => {
   })
 })
 
+describe('retired managed servers experiment', () => {
+  it('drops the stored toggle, since managed servers are the default SSH path', () => {
+    expect('experimentalManagedServers' in normalizeLegacyProfile({})).toBe(false)
+    expect(
+      'experimentalManagedServers' in normalizeLegacyProfile({ experimentalManagedServers: true })
+    ).toBe(false)
+  })
+})
+
+describe('retired chat default selectors', () => {
+  it('keeps Chat UI on while dropping both older keys from a saved profile', () => {
+    const normalized = normalizeLegacyProfile({
+      experimentalNativeChat: true,
+      experimentalStructuredNativeChat: false,
+      openAgentTabsInChatByDefault: false
+    })
+    expect(normalized.experimentalNativeChat).toBe(true)
+    expect(normalized).not.toHaveProperty('experimentalStructuredNativeChat')
+    expect(normalized).not.toHaveProperty('openAgentTabsInChatByDefault')
+  })
+})
+
 describe('structured chat shell environment settings', () => {
   it('keeps a valid saved list and an explicit opt-out', () => {
     const normalized = normalizeLegacyProfile({

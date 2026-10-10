@@ -194,6 +194,17 @@ describe('humanizeTerminalError', () => {
     expect(humanized).toContain('still running')
   })
 
+  it('says a terminal held by the previous Wakii version is still running', () => {
+    const raw =
+      "Error invoking remote method 'pty:spawn': SshPtyHeldByPreviousRelayError: SSH_PTY_HELD_BY_PREVIOUS_RELAY: pty2:old-epoch:1"
+    const humanized = humanizeTerminalError(raw)
+    expect(humanized).not.toContain('SSH_PTY_HELD_BY_PREVIOUS_RELAY')
+    expect(humanized).not.toContain('pty2:old-epoch:1')
+    expect(humanized).toContain('previous Wakii version')
+    expect(humanized).toContain('still running')
+    expect(isExplainedTerminalError(raw)).toBe(true)
+  })
+
   it('replaces only the unreattachable line in an aggregated error', () => {
     const humanized = humanizeTerminalError('Paste failed.\nSSH_SESSION_EXPIRED: orca:2f1c@@pty-7')
     expect(humanized.startsWith('Paste failed.\n')).toBe(true)
@@ -240,6 +251,15 @@ describe('isExplainedTerminalError', () => {
         'Error invoking remote method \'pty:spawn\': Error: PTY "orca:2f1c@@pty-7" not found'
       )
     ).toBe(true)
+  })
+
+  it('explains a pane whose saved session another host connection owns, without an issue link', () => {
+    const raw = "Error invoking remote method 'pty:spawn': Error: terminal_pane_owner_host_mismatch"
+    expect(isExplainedTerminalError(raw)).toBe(true)
+    const humanized = humanizeTerminalError(raw)
+    expect(humanized).toContain('belongs to another host connection')
+    expect(humanized).toContain('Open a new terminal')
+    expect(humanized).not.toContain('terminal_pane_owner_host_mismatch')
   })
 
   it('keeps the issue link for errors Wakii cannot explain', () => {
@@ -324,7 +344,7 @@ describe('TerminalErrorToast environment footer', () => {
 
     view.rerender(
       React.createElement(TerminalErrorToast, {
-        error: 'Second failure.\n\n---\nWakii: embedded\nOS: linux 6.8 (x64)',
+        error: 'Second failure.\n\n---\nOrca: embedded\nOS: linux 6.8 (x64)',
         onDismiss: vi.fn()
       })
     )
@@ -342,6 +362,34 @@ describe('TerminalErrorToast environment footer', () => {
     )
 
     await waitFor(() => expect(environmentMocks.resolveFooter).not.toHaveBeenCalled())
+  })
+
+  it('omits client details for a terminal the previous Wakii version runs on the host', async () => {
+    const view = render(
+      React.createElement(TerminalErrorToast, {
+        error:
+          "Error invoking remote method 'pty:spawn': SshPtyHeldByPreviousRelayError: SSH_PTY_HELD_BY_PREVIOUS_RELAY: pty2:old-epoch:1",
+        onDismiss: vi.fn()
+      })
+    )
+
+    expect(view.container.textContent).toContain('previous Wakii version')
+    await waitFor(() => expect(environmentMocks.resolveFooter).not.toHaveBeenCalled())
+    expect(view.container.textContent).not.toContain('OS:')
+  })
+
+  it('omits client details for a remote pane whose session cannot be reattached', async () => {
+    const error = "Error invoking remote method 'pty:attach': Error: Session not found: pty-7"
+    const remote = render(
+      React.createElement(TerminalErrorToast, { error, paneOnClient: false, onDismiss: vi.fn() })
+    )
+    expect(remote.container.textContent).toContain("couldn't reattach")
+    await waitFor(() => expect(environmentMocks.resolveFooter).not.toHaveBeenCalled())
+    expect(remote.container.textContent).not.toContain('OS:')
+    cleanup()
+
+    const local = render(React.createElement(TerminalErrorToast, { error, onDismiss: vi.fn() }))
+    await waitFor(() => expect(local.container.textContent).toContain('OS: darwin'))
   })
 
   it('shows the issue request once for a host error that already asks for one', () => {
@@ -423,7 +471,7 @@ describe('TerminalErrorToast folder workspace path errors', () => {
 
     expect(humanized).not.toContain('folder_workspace_path_missing')
     expect(humanized).toBe(
-      "Error invoking remote method 'pty:spawn': Error: Orca cannot find /Users/me/ara_company. Remove and re-import the folder."
+      "Error invoking remote method 'pty:spawn': Error: Wakii cannot find /Users/me/ara_company. Remove and re-import the folder."
     )
   })
 
@@ -445,7 +493,7 @@ describe('TerminalErrorToast folder workspace path errors', () => {
 
     const toast = view.container.querySelector('[data-terminal-error-toast]')
     expect(toast?.textContent).toContain(
-      'Orca cannot tell which SSH connection owns this folder scope.'
+      'Wakii cannot tell which SSH connection owns this folder scope.'
     )
     expect(toast?.textContent).not.toContain('folder_workspace_connection_ambiguous')
     expect(toast?.querySelector('a')).toBeNull()
@@ -460,7 +508,7 @@ describe('TerminalErrorToast folder workspace path errors', () => {
     )
 
     const toast = view.container.querySelector('[data-terminal-error-toast]')
-    expect(toast?.textContent).toContain('Orca cannot find /Users/me/ara_company')
+    expect(toast?.textContent).toContain('Wakii cannot find /Users/me/ara_company')
     expect(toast?.querySelector('a')?.textContent).toBe('file an issue')
   })
 
@@ -473,7 +521,7 @@ describe('TerminalErrorToast folder workspace path errors', () => {
     )
 
     const toast = view.container.querySelector('[data-terminal-error-toast]')
-    expect(toast?.textContent).toContain('Orca cannot find /Users/me/ara_company')
+    expect(toast?.textContent).toContain('Wakii cannot find /Users/me/ara_company')
     expect(toast?.textContent).not.toContain('folder_workspace_path_missing')
     expect(toast?.textContent).not.toContain('If this persists')
     expect(toast?.querySelector('a')).toBeNull()

@@ -31,9 +31,7 @@ type FileExplorerFilesTreePaneProps = {
   activeRepo: Repo | null
   worktreePath: string | null
   displayRootPath: string | null
-  visibleFilesWorktreePath: string | null
   explorerView: RightSidebarExplorerView
-  isFilesViewActive: boolean
   activeFileId: string | null
   hasNameFilter: boolean
   nameFilterSource: FileExplorerNameFilterProjectionSource | null
@@ -46,6 +44,8 @@ type FileExplorerFilesTreePaneProps = {
   ignoredByRelativePath: Set<string>
   rowExpandedPaths: Set<string>
   visibleRowCount: number
+  visibleFilesWorktreePath: string | null
+  isFilesViewActive: boolean
   openEditors: FileExplorerOpenEditorsSlot
   handleExplorerBackgroundContextMenuCapture: (event: React.MouseEvent<HTMLDivElement>) => void
   handleExplorerBackgroundDoubleClick: (event: React.MouseEvent<HTMLDivElement>) => void
@@ -56,9 +56,7 @@ export function FileExplorerFilesTreePane({
   activeRepo,
   worktreePath,
   displayRootPath,
-  visibleFilesWorktreePath,
   explorerView,
-  isFilesViewActive,
   activeFileId,
   hasNameFilter,
   nameFilterSource,
@@ -71,6 +69,8 @@ export function FileExplorerFilesTreePane({
   ignoredByRelativePath,
   rowExpandedPaths,
   visibleRowCount,
+  visibleFilesWorktreePath,
+  isFilesViewActive,
   openEditors,
   handleExplorerBackgroundContextMenuCapture,
   handleExplorerBackgroundDoubleClick
@@ -90,7 +90,8 @@ export function FileExplorerFilesTreePane({
     inlineInputState,
     rowScrolling,
     handlers,
-    nodeCommands
+    nodeCommands,
+    fileDropOwnerRef
   } = paneState
   const { inlineInput, inlineInputIndex, startNew, dismissInlineInput, handleInlineSubmit } =
     inlineInputState
@@ -123,9 +124,8 @@ export function FileExplorerFilesTreePane({
   } = nodeCommands
 
   // Why: the root explorer container must stay mounted for loading, error,
-  // and empty states so the data-native-file-drop-target marker is always
-  // present. Without this, external file drops would have no target surface
-  // when the tree is empty, still loading, or showing a read error.
+  // and empty states so it always owns OS file drops; otherwise an empty,
+  // loading or failed tree would have no drop target.
   const isEmptyState = visibleRowCount === 0 && !inlineInput
   const isNameFilterLoading = nameFilterSource?.relativePaths === null
   const isRootLoading = !rootCache || (!!displayRootPath && loadingDirPaths.has(displayRootPath))
@@ -164,6 +164,7 @@ export function FileExplorerFilesTreePane({
             'bg-border',
           isNativeDragOver && explorerView === 'files' && !nativeDropTargetDir && 'bg-border'
         )}
+        ref={fileDropOwnerRef}
         viewportRef={scrollRef}
         viewportTabIndex={-1}
         viewportClassName="h-full min-h-0 py-2"
@@ -172,6 +173,7 @@ export function FileExplorerFilesTreePane({
           visibleFilesWorktreePath ? (displayRootPath ?? undefined) : undefined
         }
         onWheelCapture={handleWheelCapture}
+        onDragOverCapture={rootDragHandlers.onDragOverCapture}
         onDragOver={rootDragHandlers.onDragOver}
         onDragEnter={rootDragHandlers.onDragEnter}
         onDragLeave={rootDragHandlers.onDragLeave}

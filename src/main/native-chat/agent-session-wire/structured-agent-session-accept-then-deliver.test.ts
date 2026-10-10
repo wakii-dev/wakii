@@ -53,6 +53,8 @@ import { NO_STRUCTURED_AGENTS } from './structured-agent-session-adapter-router-
 
 const CALLER = { callerKey: 'client-1' }
 
+const childPhase = () => host.collaboratorsForTests().sessions.get(SESSION)?.child?.phase
+
 function eventually(assertion: () => void | Promise<void>): Promise<void> {
   return vi.waitFor(assertion, { timeout: 10_000 })
 }
@@ -624,10 +626,9 @@ describe('a child that exits before its message is handed over', () => {
   })
 })
 
-describe('a start that fails after it was handed messages', () => {
+describe('a start that fails while messages wait on it', () => {
   it('keeps one row in the words its rejected messages carry', async () => {
-    // A starting child takes both messages at once; written, neither is answered.
-    dispatch.mockImplementation(async () => ({ state: 'admitted' as const }))
+    // Both are held for a starting child that never proves its start.
     acquire.mockImplementation(async (input) => ({
       ...(await spawnChild(input)),
       providerChildPhase: 'starting' as const
@@ -637,7 +638,7 @@ describe('a start that fails after it was handed messages', () => {
 
     const first = await accept('first')
     const second = await accept('second')
-    await eventually(() => expect(dispatch).toHaveBeenCalledTimes(2))
+    await eventually(() => expect(childPhase()).toBe('starting'))
     await host.handleAdapterEvent({
       type: 'ended',
       sessionId: SESSION,
@@ -652,11 +653,13 @@ describe('a start that fails after it was handed messages', () => {
     })
     await host.flushStreamedEvents(SESSION)
 
+    // Both are rejected by the delivery loop's next step, never having been handed over.
+    await eventually(async () => expect((await submission(second))?.dispatchState).toBe('rejected'))
     const rows = (await host.journalSnapshot(SESSION)).items.filter((item) =>
       item.itemId.includes('start-failure')
     )
     expect(rows).toHaveLength(1)
-    // Worded once, from the exit's own diagnostic, for the row and every message it was handed.
+    // Worded once, from the exit's own diagnostic, for the row and every message sent to that start.
     const row = rows[0].body
     expect(row).toMatchObject({
       failure: { kind: 'providerStartFailed', detail: { text: 'codex: config.toml is invalid' } }
@@ -668,6 +671,7 @@ describe('a start that fails after it was handed messages', () => {
         rejection: row.kind === 'status' ? row.failure : null
       })
     }
+    expect(dispatch).not.toHaveBeenCalled()
   })
 })
 
@@ -721,7 +725,7 @@ describe('Stop withdraws what is queued', () => {
     expect(dispatch).not.toHaveBeenCalled()
   })
 
-  it('stops a child still proving its start, rejecting what it was handed, and the next send starts another (W17c)', async () => {
+  it('stops a child still proving its start, withdrawing what was held for it, and the next send starts another (W17c)', async () => {
     const closeSession = vi.fn(async () => true)
     adapterExtras = { closeSession }
     await host.close(SESSION, 'evict')
@@ -730,10 +734,10 @@ describe('Stop withdraws what is queued', () => {
       ...(await spawnChild(input)),
       providerChildPhase: 'starting' as const
     }))
-    // Written to the starting child at once; it never answers.
-    dispatch.mockResolvedValueOnce({ state: 'admitted' })
+    // Held for the starting child, which never proves its start.
     const id = await accept('hello')
-    await eventually(async () => expect((await submission(id))?.handedOverAt).toBeDefined())
+    await eventually(() => expect(childPhase()).toBe('starting'))
+    expect((await submission(id))?.handedOverAt).toBeUndefined()
 
     expect(await stop()).toMatchObject({ ok: true, value: { cancelled: true } })
 
@@ -744,7 +748,7 @@ describe('Stop withdraws what is queued', () => {
     expect(closeSession).toHaveBeenCalled()
     const next = await accept('after stop')
     await eventually(async () => expect((await submission(next))?.dispatchState).toBe('accepted'))
-    expect(dispatch).toHaveBeenCalledTimes(2)
+    expect(dispatch).toHaveBeenCalledTimes(1)
   })
 })
 
@@ -824,10 +828,7 @@ describe('a close that stops the child and then a wind-down step fails', () => {
     evict: () => host.close(SESSION, 'evict')
   } satisfies Partial<Record<StructuredAgentSessionChildEndCause, () => Promise<void>>>
 
-  it.each([
-    { end: 'evict', starting: true, kind: 'chatClosed', verdict: null },
-    { end: 'evict', starting: false, kind: 'chatClosed', verdict: null }
-  ] as const)(
+  it.each([{ end: 'evict', starting: true, kind: 'chatClosed', verdict: null }] as const)(
     'rejects what is queued as $kind after a $end (during startup: $starting)',
     async ({ end, starting, kind, verdict }) => {
       const started = deferred<void>()

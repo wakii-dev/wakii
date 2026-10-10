@@ -196,6 +196,12 @@ function getNextFloatingWorkspaceTerminalTab(
   ]
 }
 
+export function isFloatingWorkspacePanelVisible(
+  doc: Pick<Document, 'querySelector'> = document
+): boolean {
+  return Boolean(doc.querySelector(`${FLOATING_WORKSPACE_PANEL_SELECTOR}[aria-hidden="false"]`))
+}
+
 export function isFloatingWorkspacePanelFocused(
   doc: Pick<Document, 'activeElement'> | null = typeof document === 'undefined' ? null : document
 ): boolean {
