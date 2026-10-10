@@ -446,7 +446,13 @@ function cmdUpdateState(fileArg) {
     if (!n || n.kind !== 'sf') continue;
     const m = String(n.id).match(/^sf-(\d+)$/);
     if (!m || !states.has(+m[1])) continue;
-    if (n.state === 'done') continue; // no-downgrade: orchestration reset không hạ node đã xong (P1-4)
+    if (n.state === 'done') {
+      // no-downgrade: orchestration reset không hạ node đã xong (P1-4) — WARN để
+      // "sao SF không update" không thành câu hỏi không có log (review C P2)
+      const next = states.get(+m[1]);
+      if (next !== 'done') console.error(`WARN: no-downgrade: ${n.id} giữ done (nguồn: ${next})`);
+      continue;
+    }
     const next = states.get(+m[1]);
     if (n.state !== next) { changed.push(`${n.id}: ${n.state || '—'} → ${next}`); n.state = next; }
   }

@@ -208,6 +208,7 @@ process.exit(1)
   check('T2.25', 'updater exit 0', r.status === 0, `exit=${r.status} out=${r.stdout} err=${r.stderr}`)
   check('T2.26', 'done absorbing — ready không hạ done', load(p).nodes.find(n => n.id === 'sf-1').state === 'done', load(p).nodes.find(n => n.id === 'sf-1').state)
   check('T2.27', 'không đổi gì → unchanged (không ghi)', /unchanged/.test(r.stdout), r.stdout)
+  check('T2.30', 'WARN no-downgrade có dấu vết trên stderr (review C P2)', /no-downgrade: sf-1 giữ done \(nguồn: pending\)/.test(r.stderr || ''), r.stderr)
   rmSync(dir, { recursive: true, force: true })
 }
 
