@@ -188,6 +188,11 @@ def connect_db():
 
 def cmd_index(args):
     mem = mem_dir(args)
+    # repo chưa dùng KG (thư mục memory không tồn tại) = trạng thái HỢP LỆ — không
+    # phải lỗi: index rỗng + exit 0 (hook watchdog không ERROR mỗi pass vô nghĩa)
+    if not mem.is_dir():
+        print("story-memory index — +0 triples (repo chưa có docs/superpowers/memory — chưa dùng KG)")
+        sys.exit(0)
     ents, e1 = parse_mem_file(mem / "entities.md", 4)
     tris, e2 = parse_mem_file(mem / "triples.md", 4)
     provs, e3 = parse_mem_file(mem / "provenance.md", 5)
