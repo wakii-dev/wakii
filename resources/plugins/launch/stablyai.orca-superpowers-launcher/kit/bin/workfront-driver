@@ -16,6 +16,7 @@ while [[ $# -gt 0 ]]; do
     --repo) REPO_DIR="$2"; REPO_EXPLICIT=1; shift 2 ;;
     --base) BASE_BRANCH="$2"; shift 2 ;;
     --loop|--once|--dry) MODE="$1"; shift ;;
+    --unblock) UNBLOCK_SF="${2:-}"; [[ -n "$UNBLOCK_SF" ]] && shift 2 || { echo "--unblock cần <sf-N>"; exit 2; } ;;
     *) if [[ -z "$SLUG" ]]; then SLUG="$1"; else echo "thừa đối số: $1"; exit 1; fi; shift ;;
   esac
 done
@@ -109,14 +110,20 @@ RESOLVER="${STORY_MINDMAP_BIN:-$KIT_DIR/story-mindmap}"
 [ -f "$RESOLVER" ] || RESOLVER="$HOME/.claude/bin/story-mindmap"
 [ -f "$RESOLVER" ] || RESOLVER=""
 RESOLVED_JSON=""
+RESOLVE_RC=0
 resolve_mm(){ # ok → RESOLVED_JSON (states đã merge) + repoint $MM khi local thiếu
+  RESOLVE_RC=0
   [ -n "$RESOLVER" ] || return 1
-  # story branch chứa mindmap snapshot — discover theo slug (story/<slug>, <slug>, wakii-dev/*slug*)
-  local sbranch
-  sbranch=$(git -C "$REPO_DIR" branch --list "*$SLUG*" --format='%(refname:short)' 2>/dev/null | head -1)
-  local dest_args=()
-  [[ -n "$sbranch" ]] && dest_args=(--dest "$sbranch")
-  RESOLVED_JSON=$("$RESOLVER" --resolve "$MM" --repo "$REPO_DIR" "${dest_args[@]}" --json 2>>"$LOG") || RESOLVED_JSON=""
+  # KHÔNG truyền --dest: resolver tự resolve meta.dest (head/remote/đuôi '/<dest>')
+  # — --dest tường minh phá dest-upgrade (fixture VU32: source=local, không upgrade)
+  local rc=0
+  RESOLVED_JSON=$("$RESOLVER" --resolve "$MM" --repo "$REPO_DIR" --json 2>>"$LOG") || rc=$?
+  if [ "$rc" = 3 ]; then
+    RESOLVE_RC=3
+    echo "không có mindmap $SLUG — resolve MISS (không local, không dest, không worktree anh em)"
+    log "không có mindmap $SLUG — resolve MISS (không local, không dest, không worktree anh em)"
+    return 3
+  fi
   printf '%s' "$RESOLVED_JSON" | grep -q '"ok":true' || { RESOLVED_JSON=""; return 1; }
   local _info _file _src _up
   _info=$(printf '%s' "$RESOLVED_JSON" | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{try{const j=JSON.parse(d);console.log([j.file||"",j.source||"",Array.isArray(j.upgraded)?j.upgraded.join(","):""].join("\t"))}catch{console.log("\t\t")}})')
@@ -130,6 +137,9 @@ resolve_mm(){ # ok → RESOLVED_JSON (states đã merge) + repoint $MM khi local
   log "MM resolve: source=$_src${_up:+ dest-upgrade=$_up}"
   return 0
 }
+# wiring (LOCAL-4 sf-2 — trước đây defined-but-never-called): resolve state chuẩn
+# giữa các worktree TRƯỚC khi đọc; MISS mọi nguồn → fail-loud (không im lặng chạy rỗng)
+resolve_mm || { [ "${RESOLVE_RC:-0}" = 3 ] && exit 1; true; }
 # ── đọc state mindmap: xuất "sf-id state" mỗi dòng; exit≠0 khi mindmap hỏng
 sf_states(){ # qua resolver khi có (state chuẩn mọi worktree), không thì legacy $MM
   if [ -n "$RESOLVED_JSON" ]; then
@@ -149,8 +159,33 @@ let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{try{const j=JSON.parse(d
   fi
   node -e '
 const j=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));
-
+console.log(j.nodes.filter(n=>n.kind==="sf").length);' "$MM"; }
+tick_sf(){ # node phải tồn tại + re-read sau ghi — vẫn pending → exit 1
+  node -e '
+const fs=require("fs"),[mm,sf]=process.argv.slice(1);
+const j=JSON.parse(fs.readFileSync(mm,"utf8"));
+const n=j.nodes.find(x=>x.id===sf);
+if(!n){ console.error("tick_sf: node "+sf+" không tồn tại"); process.exit(1); }
+n.state="done";
+if(!j.meta) j.meta={};
+j.meta.updatedAt=new Date().toISOString().slice(0,19)+"Z";
+fs.writeFileSync(mm,JSON.stringify(j,null,2)+"\n");
+const r=JSON.parse(fs.readFileSync(mm,"utf8")).nodes.find(x=>x.id===sf);
+if(!r||r.state!=="done"){ console.error("tick_sf: node "+sf+" vẫn pending sau ghi"); process.exit(1); }' "$MM" "$1"; }
+st_get(){ node -e '
+const fs=require("fs"),[f,k,d]=process.argv.slice(1);
+try{const s=JSON.parse(fs.readFileSync(f,"utf8"));console.log(s[k]??d)}catch{console.log(d)}' "$ST" "$1" "${2:-}"; }
+st_set(){ node -e '
+const fs=require("fs"),[f,k,v]=process.argv.slice(1);
+let s={}; try{s=JSON.parse(fs.readFileSync(f,"utf8"))}catch{}
 s[k]=v; fs.writeFileSync(f,JSON.stringify(s,null,2));' "$ST" "$1" "$2"; }
+block_sf(){ # $1=sf $2=reason — fence state-reset (ILEC 04/10): blocked kèm at+reason,
+  # chỉ --unblock <sf> của người clears; state.json bị viết lại ngoài driver không
+  # mở khóa dispatch (driver xem blocked là hành động của người)
+  st_set "blocked_$1" 1
+  st_set "blocked_${1}_at" "$(date -u +%FT%TZ)"
+  st_set "blocked_${1}_reason" "$2"
+}
 orca_run_active(){ # chống double-dispatch khi user có run tay
   "$ORCA_BIN" orchestration run-list --json 2>/dev/null | grep -q "\"$SLUG\""; }
 
@@ -271,7 +306,7 @@ one_pass(){
   local att; att=$(st_get "attempts_$SF" 0); [[ "$att" =~ ^[0-9]+$ ]] || att=0
   # caps vòng lặp: mọi outcome không phải DONE-VERIFIED đều +1 — ≥3 → BLOCKED (không phân biệt loại)
   if [[ "$att" -ge 3 ]]; then
-    log "BLOCKED: $SF attempts=$att ≥3 — leo user"; st_set "blocked_$SF" 1; return
+    log "BLOCKED: $SF attempts=$att ≥3 — leo user"; block_sf "$SF" "attempts ≥3 (3 lần cùng hướng)"; return
   fi
   # Nhánh 3: đã verify PASS → tick + sang SF kế
   if [[ "$v" == "DONE-VERIFIED" ]]; then
@@ -296,7 +331,7 @@ one_pass(){
       st_set "$vkey" "${verdict:-NO-VERDICT}"
       att=$((att+1)); st_set "attempts_$SF" "$att"
       if [[ "$att" -ge 3 ]]; then
-        log "BLOCKED: $SF verify không DONE-VERIFIED ×$att — leo user"; st_set "blocked_$SF" 1
+        log "BLOCKED: $SF verify không DONE-VERIFIED ×$att — leo user"; block_sf "$SF" "attempts ≥3 (3 lần cùng hướng)"
       fi
     fi
     return
@@ -327,18 +362,18 @@ one_pass(){
       if [[ $rc -eq 0 ]]; then
         st_set "$vkey" ""; log "LAUNCH $SF OK — pass kế verify lại"
       else
-        log "BLOCKED: story-launch $SF exit≠0/bị chặn — leo user"; st_set "blocked_$SF" 1
+        log "BLOCKED: story-launch $SF exit≠0/bị chặn — leo user"; block_sf "$SF" "attempts ≥3 (3 lần cùng hướng)"
       fi
       ;;
     FAIL-VERIFIED)
       # v1 ruling: code đỏ → KHÔNG dispatch vào primary — BLOCKED + leo user (fix-worker trong worktree = GD3)
-      log "BLOCKED: $SF FAIL-VERIFIED — code đỏ cần fix trong worktree SF (GD3). Leo user."; st_set "blocked_$SF" 1
+      log "BLOCKED: $SF FAIL-VERIFIED — code đỏ cần fix trong worktree SF (GD3). Leo user."; block_sf "$SF" "attempts ≥3 (3 lần cùng hướng)"
       ;;
     TICKED)
       # tick không ăn: đếm, ≥2 → BLOCKED (mindmap bị writer khác kéo ngược?)
       att=$((att+1)); st_set "attempts_$SF" "$att"
       if [[ "$att" -ge 2 ]]; then
-        log "BLOCKED: $SF tick không ăn ×$att — leo user"; st_set "blocked_$SF" 1; return
+        log "BLOCKED: $SF tick không ăn ×$att — leo user"; block_sf "$SF" "attempts ≥3 (3 lần cùng hướng)"; return
       fi
       log "Đồng bộ lạ: $SF TICKED nhưng vẫn pending — tick lại (lần $att/2)"
       tick_sf "$SF" || log "tick_sf $SF exit≠0 — pass kế xử lý"
@@ -386,24 +421,34 @@ dry_plan(){ # DRY: chỉ sf_states + log nhánh sẽ chọn — KHÔNG dispatch,
 }
 
 render_digest(){
+  # absolute paths qua argv (portable mode: cwd=worktree không có navigator/ — ENOENT crash cũ)
   node -e '
-const fs=require("fs"),p="docs/superpowers/navigator/DIGEST.md";
-const drv="docs/superpowers/navigator/driver";
+const fs=require("fs"),[nav,dig]=process.argv.slice(1);
 let blocks="";
-for(const d of fs.readdirSync(drv)){
+let ds=[]; try{ ds=fs.readdirSync(drv); }catch{ process.exit(0); } // không có driver dir → không digest, fail-open
+for(const d of ds){
   const log=drv+"/"+d+"/driver.log"; if(!fs.existsSync(log))continue;
   const lines=fs.readFileSync(log,"utf8").trim().split("\n").slice(-4);
   blocks+="### "+d+"\n"+lines.map(l=>"- "+l).join("\n")+"\n\n";
 }
-let old=""; try{ old=fs.readFileSync(p,"utf8"); }catch{}
+let old=""; try{ old=fs.readFileSync(dig,"utf8"); }catch{}
 const m=old.match(/<!-- TOP3-START -->[\s\S]*<!-- TOP3-END -->/);
 const top=m?m[0]+"\n":"";
-fs.writeFileSync(p, "# DIGEST — "+new Date().toISOString().slice(0,10)+"\n\n"+top+"## Driver actions\n\n"+blocks);' 2>>"$LOG"
+fs.writeFileSync(dig, "# DIGEST — "+new Date().toISOString().slice(0,10)+"\n\n"+top+"## Driver actions\n\n"+blocks);' "$REPO_DIR/$NAV" "$REPO_DIR/$NAV/DIGEST.md" 2>>"$LOG"
 }
 
 main(){
   local t0; t0=$(date +%s)
   log "=== driver start ($MODE slug=$SLUG dry=$DRY_RUN) ==="
+  # --unblock <sf-N>: human gate duy nhất clears blocked (fence state-reset — LOCAL-5 sf-1)
+  if [ -n "${UNBLOCK_SF:-}" ]; then
+    st_set "blocked_$UNBLOCK_SF" 0
+    st_set "blocked_${UNBLOCK_SF}_at" ""
+    st_set "blocked_${UNBLOCK_SF}_reason" ""
+    log "UNBLOCK $UNBLOCK_SF (human gate) — driver sẽ xét lại SF này ở pass kế"
+    echo "UNBLOCK: $UNBLOCK_SF đã mở khóa — driver sẽ xét lại ở pass kế"
+    return 0
+  fi
   if [[ "$DRY_RUN" == "1" ]]; then
     dry_plan  # DRY: KHÔNG gọi one_pass
   else
