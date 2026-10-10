@@ -32,7 +32,7 @@ export function CustomAgentCommandField({
               </code>{' '}
               {translate(
                 'auto.components.settings.CommitMessageAiPane.3f1b26cc91',
-                'to pass the command input as an argument; otherwise Orca pipes it on stdin.'
+                'to pass the command input as an argument; otherwise Wakii pipes it on stdin.'
               )}
             </>
           )}

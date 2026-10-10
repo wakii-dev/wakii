@@ -1,3 +1,4 @@
+import type { AgentSessionAccountKind } from '../../shared/agent-session-availability'
 import { agentSessionFailureFact, providerDiagnosticOf } from '../../shared/agent-session-failure'
 import type {
   AgentJournalMessageItem,
@@ -11,13 +12,13 @@ import {
 } from './codex-app-server-connection'
 import { isCodexAppServerUnsupportedError } from './codex-app-server-session'
 import type { CodexDispatchEchoes } from './codex-structured-dispatch-echo'
-import { codexTurnLifecycleIdentity } from './codex-structured-journal-translation-turns'
 import { readCodexTurnId } from './codex-structured-thread-facts'
 import {
   codexRunningOrOpeningTurn,
   type CodexTurnOpenWaits
 } from './codex-structured-turn-open-wait'
 import {
+  codexAnsweredTurn,
   codexDispatchRejection,
   codexTurnEndRejection
 } from './codex-structured-turn-end-settlement'
@@ -53,6 +54,7 @@ export function isCodexTurnOptionKey(key: string): boolean {
 
 /** The session state one turn needs. */
 export type CodexTurnHost = {
+  account?: AgentSessionAccountKind
   connection: Pick<CodexAppServerConnection, 'request'>
   threadId: string
   options: Map<string, string>
@@ -230,14 +232,11 @@ export async function dispatchCodexTurn(
         answer.via
       )
     : null
-  const rejection = endedFirst ? codexTurnEndRejection(endedFirst) : null
+  const rejection = endedFirst ? codexTurnEndRejection(endedFirst, session.account) : null
   return rejection && answer.turnId
     ? {
         state: 'rejected',
-        answeredInTurn: {
-          turn: codexTurnLifecycleIdentity(input.sessionId, answer.turnId),
-          via: answer.via
-        },
+        ...codexAnsweredTurn(session, input.sessionId, answer.turnId, answer.via),
         ...rejection
       }
     : { state: 'admitted' }

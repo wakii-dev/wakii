@@ -190,7 +190,7 @@ export function TerminalPane({
               <p id="default-shell-help" className="text-xs text-muted-foreground">
                 {translate(
                   'auto.components.settings.TerminalPane.59573d0b33',
-                  'Enter a shell name on PATH or an executable path. Orca starts it as a login shell.'
+                  'Enter a shell name on PATH or an executable path. Wakii starts it as a login shell.'
                 )}
               </p>
               {shellValidationError ? (

@@ -1,4 +1,3 @@
-import { ImeInput } from '@/lib/ime-text-field'
 import React from 'react'
 import {
   Search as SearchIcon,
@@ -16,6 +15,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { ToggleButton } from './SearchResultItems'
 import { translate } from '@/i18n/i18n'
+import { ImeInput } from '@/lib/ime-text-field'
 
 export type ReplaceDisabledReason =
   | 'no-results'
@@ -100,9 +100,9 @@ export function SearchQueryRow({
         </button>
         <SearchIcon className="size-3.5 shrink-0 text-muted-foreground" />
         <ImeInput
+          data-file-search-input="true"
           ref={inputRef}
           type="text"
-          data-file-search-input="true"
           className="min-w-0 flex-1 bg-transparent py-1 text-xs text-foreground outline-none placeholder:text-muted-foreground/50"
           aria-label={translate(
             'auto.components.right.sidebar.SearchQueryRow.queryLabel',
@@ -168,7 +168,7 @@ export function SearchQueryRow({
           data-ignore-file-explorer-keys="true"
         >
           <Replace className="size-3.5 shrink-0 text-muted-foreground" />
-          <input
+          <ImeInput
             type="text"
             className="min-w-0 flex-1 bg-transparent py-1 text-xs text-foreground outline-none placeholder:text-muted-foreground/50"
             aria-label={translate(

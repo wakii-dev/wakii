@@ -68,7 +68,7 @@ function ProjectViewTab({
           ? view.name
           : translate(
               'auto.components.github.project.ProjectViewWrapper.2edf5e7e77',
-              "{{value0}} — Wakii doesn't support {{value1}} project views yet. File a feature request at {{value2}}.",
+              "{{value0}} — Orca doesn't support {{value1}} project views yet. File a feature request at {{value2}}.",
               { value0: view.name, value1: layoutLabel, value2: ORCA_FEATURE_REQUEST_URL }
             )
       }
@@ -88,7 +88,7 @@ function ProjectViewTab({
   if (supported) {
     return tab
   }
-  const message = `Wakii doesn't support ${layoutLabel} project views yet.`
+  const message = `Orca doesn't support ${layoutLabel} project views yet.`
   return (
     <HoverCard openDelay={200} closeDelay={100}>
       <HoverCardTrigger asChild>

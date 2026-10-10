@@ -199,6 +199,7 @@ export async function resolveStoryDetail(
 export const SUPERPOWERS_STORY_DETAIL_METHODS = [
   defineMethod({
     name: 'superpowers.storyDetail',
+    permission: 'workspace',
     params: SuperpowersStoryDetailParams,
     handler: (params, { runtime }) => resolveStoryDetail(runtime, params.storyId)
   })
