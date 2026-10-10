@@ -77,11 +77,11 @@ if [[ "$PORTABLE" == "1" ]]; then
   node -e '
 const fs=require("fs"),path=process.argv[1],os=require("os");
 const jp=os.homedir()+"/.claude.json";
-try{const j=JSON.parse(fs.readFileSync(jp,"utf8"));j.projects=j.projects||{};
+let j={projects:{}};try{j=JSON.parse(fs.readFileSync(jp,"utf8"))}catch(e){}j.projects=j.projects||{};
 if(!j.projects[path]||!j.projects[path].hasTrustDialogAccepted){
 j.projects[path]=Object.assign({},j.projects[path],{hasTrustDialogAccepted:true,hasCompletedProjectOnboarding:true});
 fs.writeFileSync(jp,JSON.stringify(j,null,2));console.log("trust: injected cho "+path);}
-else console.log("trust: đã có");}catch(e){console.log("trust: skip ("+e.message+")")}' "$WT" >> "$LOG" 2>&1 || true
+else console.log("trust: đã có");' "$WT" >> "$LOG" 2>&1 || true
 fi
 
 log(){ echo "$(date -u +%FT%TZ) $*" >> "$LOG"; }
@@ -145,16 +145,57 @@ Dòng cuối PHẢI là: VERDICT: DONE-VERIFIED|NOT-DONE|FAIL-VERIFIED — <1 d�
     --disallowedTools "Bash(git push:*)" "Bash(git merge:*)" "Bash(git commit:*)" "Bash(git checkout:*)" "Bash(git reset:*)" "Bash(git rebase:*)" "Bash(git clean:*)" "WebFetch" "WebSearch" 2>&1 | tail -5
 }
 
-run_worker(){ # GD2: worker headless trong per-story worktree — pattern proven 6/6 vocabulary-module
+# ── Agent Permissions setting (Wakii app: Yolo/Manual) ──
+# Đọc settings.agentDefaultArgs[agent] từ profile store của app — toggle AgentsPane
+# KHÔNG có storage riêng: nó ghi flag bypass vào agentDefaultArgs (tui-agent-launch-defaults).
+read_agent_perm_args(){ # $1=agent (claude) → in args string (rỗng = Manual)
+  local candidates=(
+    "$HOME/Library/Application Support/Wakii/profiles/local-default/orca-data.json"
+    "$HOME/Library/Application Support/Wakii/profiles/"*/orca-data.json
+  )
+  local f
+  for f in $candidates; do
+    [[ -f "$f" ]] || continue
+    node -e '
+const fs=require("fs"),[f,agent]=process.argv.slice(1);
+try{const j=JSON.parse(fs.readFileSync(f,"utf8"));
+const args=j.settings&&j.settings.agentDefaultArgs&&j.settings.agentDefaultArgs[agent];
+if(typeof args==="string") console.log(args);}catch{}' "$f" "$1" 2>>"$LOG" || true
+    return 0
+  done
+  return 0
+}
+agent_perm_is_yolo(){ # 0=yolo (bypass flag) / 1=manual
+  local args; args=$(read_agent_perm_args "${1:-claude}")
+  [[ "$args" == *"--dangerously-skip-permissions"* ]]
+}
+
+run_worker(){ # GD2: theo Agent Permissions setting — Yolo headless bypass / Manual visible pane
   local sf="$1"
-  "$TIMEOUT" 45m claude -p "Story $SLUG — SF $sf CHƯA LÀM/XONG MỘT PHẦN. Tiếp tục theo task DAG trong mindmap docs/superpowers/mindmaps/$SLUG.wakii (node $sf + tasks con):
+  local brief="Story $SLUG — SF $sf CHƯA LÀM/XONG MỘT PHẦN. Tiếp tục theo task DAG trong mindmap docs/superpowers/mindmaps/$SLUG.wakii (node $sf + tasks con):
 - Đối chiếu git log + git status: task đã xong bỏ qua, làm task KẾ TIẾP.
 - TDD: đọc pattern dự án trước (schema/routes/tests hiện có), viết test trước, code tối thiểu đạt.
 - Commit từng task xong: git commit -m \"feat($SLUG): t-x.x <mô tả>\" trên branch hiện tại (KHÔNG push).
-- Dòng cuối PHẢI là: VERDICT: DONE|PARTIAL — <tasks xong / còn lại>" \
-    --permission-mode acceptEdits \
-    --allowedTools "Read" "Glob" "Grep" "Write" "Edit" "Bash(git log:*)" "Bash(git diff:*)" "Bash(git status *)" "Bash(git add:*)" "Bash(git commit:*)" "Bash(pnpm vitest:*)" "Bash(pnpm tc:*)" "Bash(pnpm typecheck)" "Bash(pnpm lint)" "Bash(node *)" \
-    --disallowedTools "Bash(git push:*)" "Bash(git merge:*)" "Bash(git checkout:*)" "Bash(git reset:*)" "Bash(git rebase:*)" "Bash(git clean:*)" "WebFetch" "WebSearch" 2>&1 | tail -5
+- Dòng cuối PHẢI là: VERDICT: DONE|PARTIAL — <tasks xong / còn lại>"
+  if agent_perm_is_yolo claude; then
+    # YOLO: headless bypass — chạy unattended trọn vòng
+    "$TIMEOUT" 45m claude -p "$brief" --dangerously-skip-permissions 2>&1 | tail -5
+  else
+    # MANUAL: visible pane — user duyệt permission tại pane (3h sau pass kế kiểm tra)
+    local title="story-worker-$SLUG" handle
+    handle=$(orca terminal list --json 2>/dev/null | node -e '
+let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{try{const j=JSON.parse(d);
+const x=(j.result.terminals||[]).find(x=>(x.title||"")===process.argv[1]);
+console.log(x?x.handle:"")}catch{console.log("")}})' "$title")
+    if [[ -z "$handle" ]]; then
+      local wt; wt=$(sf_wt "$sf")
+      handle=$(orca terminal create --worktree "path:$REPO_DIR" --title "$title"         --command "cd '$wt' && claude --permission-mode acceptEdits" --json 2>/dev/null         | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{try{const j=JSON.parse(d);console.log((j.result&&j.result.terminal&&j.result.terminal.handle)||"")}catch{console.log("")}});')
+      [[ -z "$handle" ]] && { log "WORKER $sf: MANUAL mode không tạo được pane — bỏ lượt"; return 1; }
+      ensure_trust "$wt"; sleep 12
+    fi
+    orca terminal send --terminal "$handle" --text "$brief" --enter 2>&1 | tail -1
+    log "WORKER $sf: prompt gửi vào pane (MANUAL) — pass kế kiểm tra git + verify"
+  fi
 }
 
 prep_convergence(){ # VIẾT PACK TRƯỚC — caller chỉ set done_gate khi thành công (retry pass kế nếu lỗi)
