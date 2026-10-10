@@ -1,30 +1,38 @@
 {
-  "comment": "Recommended permissions.allow cho STORY REPO — merge vào .claude/settings.json (permissions.allow) để coordinator/worker acceptEdits không stall ở lệnh chuẩn. REVIEW TRƯỚC KHI MERGE — allowlist mở rộng là trade-off có chủ đích (worker cũng được các quyền này; lệnh nguy hiểm để ra ngoài danh sách). Mẫu lệnh merge: gh api không cần — merge tay các phần tử vào permissions.allow.",
+  "comment": "Recommended permissions cho STORY REPO — merge vào .claude/settings.local.json ở MAIN-CHECKOUT ROOT (worktree session resolve về main root; settings.json tracked sẽ là conflict-surface mới cho upstream-sync battery — đã loại). Phạm vi: allowlist = CHỐNG STALL, KHÔNG phải containment — containment = story-guard-dangerous + section deny dưới + 2 cửa người. REVIEW TRƯỚC KHI MERGE.",
   "permissions": {
     "allow": [
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git merge --no-ff:*)",
       "Bash(git merge:*)",
       "Bash(git push:*)",
       "Bash(git log:*)",
       "Bash(git diff:*)",
-      "Bash(git status)",
-      "Bash(git status --porcelain)",
+      "Bash(git status:*)",
       "Bash(git rev-parse:*)",
       "Bash(git show-ref:*)",
-      "Bash(git worktree list)",
+      "Bash(git worktree list:*)",
       "Bash(gh pr view:*)",
       "Bash(gh pr create:*)",
       "Bash(gh pr list:*)",
       "Bash(gh run list:*)",
       "Bash(gh run view:*)",
       "Bash(gh release view:*)",
-      "Bash(node:*)",
-      "Bash(npx vitest run:*)",
-      "Bash(npm test)",
       "Bash(pnpm test:*)",
-      "Bash(pnpm tc:*)"
+      "Bash(pnpm tc:*)",
+      "Bash(pnpm vitest:*)",
+      "Bash(npx vitest run:*)",
+      "Bash(orca worktree show:*)",
+      "Bash(orca terminal read:*)",
+      "Bash(~/.claude/bin/story-verify:*)"
+    ],
+    "deny": [
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git push origin wakii-dev:*)",
+      "Bash(git push origin main:*)",
+      "Bash(git push origin master:*)",
+      "Bash(git add -f:*)"
     ]
   }
 }
