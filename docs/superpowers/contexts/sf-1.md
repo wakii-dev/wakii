@@ -1,43 +1,50 @@
-# Context pack — LOCAL-4 sf-1 — story-launch ownership-probe mở rộng
+# Context pack — LOCAL-5 sf-1 — story-doctor install-coverage (sidecar manifest)
 
-> ⚠️ Bản 11:44 hôm nay bị ĐÈ bởi copy chéo story khác (nội dung FI-478). Bản này là
-> bản CHÍNH THỨC của LOCAL-4 — các file fi458-*, sf-1-clone-vs-vscode, sf-1-editor-parity,
-> vsc901-*, vu-14/ trong thư mục này là vật liệu story KHÁC, KHÔNG thuộc LOCAL-4, bỏ qua.
-
-Nguồn: phân tích 13 sai phạm ILEC 03/10 (session coordinator 04/10) + prior-art probe kit bins.
+> BƯỚC-0: header phải chứa "LOCAL-5 sf-1". Sai → pack của story khác, DỪNG báo.
 
 ## Spec slice
-`story-launch` ĐÃ có pre-dispatch ownership probe (dòng ~211-221, lib `story-ownership-probe`,
-fail-open): chỉ phát hiện worker live **trong SF worktree đích** qua run/worktree ownership.
-Đêm 03/10 ILEC lọt 2 case vì probe mù 2 vùng:
-1. Worker Claude sống với cwd = **primary checkout** của repo story (không thuộc SF worktree nào).
-2. Worker ngoài orchestration (terminal spawn tay/kịch bản — run-list không thấy).
+`story-doctor` chạy từ vị trí CÀI (`~/.claude/bin`) → `src==dst` → check bins PASS
+tautology (live repro 10/10: "PASS 60 bins" trong khi kit nguồn 59 / cài 61). Repair
+PASS 9/9 (04/10) trong khi `story-pane-watch` (provides bin) KHÔNG tồn tại ở install —
+chiều provides ∉ installed không được phát hiện, repair không copy.
 
-Nhiệm vụ: mở rộng probe (lib + caller) phủ đủ 2 vùng trên; khi phát hiện → TỪ CHẶN launch,
-in bằng chứng (pid/handle/cwd); **giữ nguyên fail-open** (không có data → không phán → cho qua).
-KHÔNG tự kill tiến trình nào.
+Fix (user chốt): **sidecar manifest** `~/.claude/bin/.kit-provides.json`:
+- installKit (main.mjs, lúc copy bins) ghi snapshot `provides[].name` (type=bin) vào
+  sidecar — mỗi lần install ghi mới
+- `check_bins`: khi kit.json KHÔNG có ở install dir (src==dst case), đọc sidecar
+  thay kit.json → đối chiếu installed vs provides → missing (provides ∉ installed)
+  → FAIL + repair copy lại (repair re-run installKit — đã có cơ chế)
+- Khi chạy từ KIT SOURCE (kit.json có) → behavior hiện tại giữ nguyên (orphan quét
+  + so src với dst)
 
 ## Touch map
-- `resources/plugins/launch/stablyai.orca-superpowers-launcher/kit/bin/story-launch` — khối pre-dispatch
-- `resources/plugins/launch/stablyai.orca-superpowers-launcher/kit/bin/story-ownership-probe` — thêm probe primary/out-of-band
-- tests kit (`tests/*.mjs` — file test pattern theo suite hiện có)
-- kit.json — nếu đổi description entry → rehash kitHash (`computeKitHash` main.mjs) + fingerprint (`verify-packaged-plugin-resources.cjs`); thứ tự rehash: bin → kitHash → kit.json → fingerprint cuối (fence 30/09)
-- CHỈ sửa trong wakii repo; source repo story-team-kit = legacy frozen (ruling 22/09)
+- `kit/bin/story-doctor` — check_bins (~dòng 268-292: orphan quét + missing list
+  đã có sẵn ở chiều src→dst), cmd_repair
+- `main.mjs` — installKit copy bins + GHI sidecar (mới)
+- `tests/story-doctor-tests.mjs` — fixture sandbox: fake install dir + kit source
+- `tests/kit-verify-manifest.mjs` — không đụng (manifest không đổi)
+- rehash: bin đổi → kitHash + fingerprint (thứ tự chuẩn)
 
-## ACCEPTANCE (user-visible)
-- Tái lập kịch bản đêm 03/10 ở mức test: khi tồn tại process agent cwd-trong-primary của story
-  đang mở → `story-launch` thoát ≠0 với thông báo chứa pid + cwd (không đẻ worktree trùng).
-- Khi môi trường sạch → launch đi qua như cũ (không hồi quy launch hiện có).
-- Suite kit xanh (trừ known-red platform-guard đã có SKIP).
+## Interface contract
+- Sidecar: JSON array các tên bin (vd `["story-launch","story-pane-watch",...]`),
+  ghi atomic, ghi MỖI lần installKit copy bins
+- `check_bins` khi đọc sidecar: missing = provides(sidecar) ∉ installed(dstdir);
+  orphan = installed ∉ provides(sidecar) (2 chiều, hết tautology)
+- `--repair` với missing → re-run installKit (tự copy + tự refresh sidecar)
+
+## Dep states
+- provides = 75 bins (kit.json 2.21.0, kitHash 788c9a11 — sẽ đổi theo rehash Task 4
+  story: KHÔNG hardcode số)
+- `core.filemode=false` trên máy → exec-bit phải qua `git update-index --chmod=+x`
+- Harness: story-doctor-tests.mjs (21 DR) phải giữ GREEN
+
+## ACCEPTANCE
+1. Xoá 1 provides-bin khỏi fake install → doctor FAIL nêu đúng tên bin
+2. `--repair` copy lại đủ + PASS
+3. Doctor chạy từ kit source: KHÔNG còn tautology — phát hiện lệch src/dst
+4. Sidecar refresh mỗi install (test: install 2 lần, sidecar mtime/value đúng)
 
 ## Boundary
-- KHÔNG đụng session ILEC đang sống; KHÔNG kill tiến trình.
-- KHÔNG đổi story-workflow SKILL.md, KHÔNG thêm bin mới (provides count giữ nguyên).
-- Exec-bit: giữ 755 cho bin sửa — chmod TRƯỚC khi hash (fence rehash).
-
-## Cập nhật 04/10 trưa — gốc rễ một phần ĐÃ fix ngoài story (commit 617a18a354)
-story-launch probe cha bare-name → `--no-parent` âm thầm (sf-2 VU-32 mồ côi) đã đổi: probe
-`branch:$DEST` → `--parent-worktree path:<path>`. sf-1 CẦN: (a) test hồi quy cho path này
-(fixture bare-name vs branch: selector), (b) phần mở rộng probe primary/out-of-band như
-spec chính trên vẫn còn nguyên. KitHash hiện 2eabae90, fingerprint 633ac342 — rehash lại
-nếu đổi thêm.
+- KHÔNG đụng: settings.json, hooks wiring, story-medic/medic flows
+- KHÔNG bump version (release lo)
+- Uninstall: xoá sidecar cùng lúc xoá bins (--uninstall flow)

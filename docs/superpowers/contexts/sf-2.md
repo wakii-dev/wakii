@@ -1,39 +1,43 @@
-# Context pack — LOCAL-4 sf-2 — Mindmap state nhất quán giữa worktrees
+# Context pack — LOCAL-5 sf-2 — story-watchdog --launch-next scoping
 
-> ⚠️ Bản 11:44 bị đè bởi copy chéo — bản này là bản CHÍNH THỨC LOCAL-4.
-
-Nguồn: bệnh FI-30 (tick nằm ở 1 copy, driver phải verify lại) + VU-32 (merge trong story-hub,
-primary copy `pending` mãi → worker mới làm lại việc đã merge) + case vocabulary-learn.wakii
-chỉ tồn tại trong worktree riêng, master không thấy.
+> BƯỚC-0: header phải chứa "LOCAL-5 sf-2". Sai → DỪNG báo.
 
 ## Spec slice
-Mindmap `.wakii` là file per-worktree — merge SF xảy ra trong story-hub worktree khiến state
-ở copy đó mới, copy trên primary stale; ngược lại mindmap nằm trong worktree riêng thì primary
-KHÔNG THẤY (vocabulary-learn vừa chứng minh). Consumer (workfront-driver verify, story-watchdog,
-worker mới) nhìn nhầm copy → kết luận sai "chưa làm" → làm lại việc đã merge.
+`story-watchdog --launch-next` scan toàn bộ `mindmaps/*.wakii` của repo → launch
+story STALE trong repo đa-story (04/10: FI-417/441/463/486/498 — dest không tồn
+tại, attempt fail giữa chừng, coordinator phải STOP mid-flight).
 
-Nhiệm vụ: chọn ĐÚNG 1 phương án canonical-state (ghi rationale vào spec SF):
-- (A) Consumer đọc mindmap từ **nhánh đích** khi tồn tại (`git show <dest>:docs/.../<slug>.wakii`),
-  fallback primary copy; hoặc
-- (B) **Tick-back sweep**: sau merge, sync state sf node đã merge ngược về primary copy
-  (mở rộng `story-mindmap-trigger --reason sweep/close` hoặc story-close).
-
-Tiêu chí: ít moving-part, idempotent, không đòi mạng/LLM, fail-open. Implement + test kịch bản
-FI-30/VU-32.
+Fix (fail-closed):
+- Repo có **>1 mindmap** → `--launch-next` KHÔNG `--story <slug>` = **SKIP + warning**
+  (exit 0, không launch gì)
+- `--story <slug>` → chỉ scan mindmap `<slug>.wakii` — launch SF kế của ĐÚNG story đó
+- Dest branch không tồn tại → skip + warning (không attempt)
+- Repo **single-mindmap** → behavior hiện tại GIỮ NGUYÊN (regression bắt buộc)
 
 ## Touch map
-- `kit/bin/story-mindmap` và/hoặc `story-mindmap-trigger`, `story-close` (tuỳ phương án)
-- Consumers cần nhất quán: `workfront-driver` (sf_states), `story-watchdog`, `story-resume`
-- tests kit + rehash (kitHash + fingerprint — fence thứ tự 30/09)
-- Schema v1 GIỮ NGUYÊN (wakii-validate phải vẫn OK)
+- `kit/bin/story-watchdog` — khối --launch-next (tìm "launch-next" trong file)
+- `tests/story-watchdog-tests.mjs` — fixture repo (mindmaps đa + đơn)
+- `docs/` reference story-watchdog (nếu có) — ghi scoping mới
 
-## ACCEPTANCE (user-visible)
-- Fixture: nhánh đích có sf-1 done, primary copy pending → hàm đọc chuẩn trả về **done**.
-- Kịch bản worktree-only mindmap (vocabulary-learn): driver chỉ định --repo + mindmap ngoài
-  primary → đọc được đúng file story (hoặc báo MISSING rõ ràng, không im lặng đọc nhầm).
-- Không đổi gì trên mindmap đang sống của story khác (read-only ngoài story này).
-- Suite kit xanh.
+## Interface contract
+- `--launch-next [--story <slug>]` — --story trước --launch-next hoặc sau đều
+  parse được (arg loop case riêng)
+- SKIP: stdout chứa "SKIP" + lý do ("repo đa-story — chỉ định --story", "dest
+  không tồn tại"); exit 0 (không phải lỗi)
+- Launch path khi đủ điều kiện: GIỮ NGUYÊN logic hiện có (không rewrite launcher)
+
+## Dep states
+- Fixture: sandbox dir với docs/superpowers/mindmaps/ chứa 2+ .wakii (1 story
+  dest-tồn-tại, 1 story stale-dest-missing) — sinh trong test, không đụng repo thật
+- W-suite watchdog hiện có phải giữ GREEN
+
+## ACCEPTANCE
+1. Đa-story, không --story → SKIP + warning, 0 launch, exit 0
+2. --story <slug> (dest tồn tại) → launch SF kế đúng story
+3. --story <slug> (dest missing) → SKIP + warning
+4. Single-story → hành vi cũ nguyên vẹn
+5. Suite watchdog GREEN
 
 ## Boundary
-- KHÔNG tick hộ story VU-32/vocabulary-learn thật; fixture dùng mindmap synthetic.
-- KHÔNG đụng schema/panel/mindmap viewer.
+- KHÔNG đụng logic verify/tick/driver — chỉ --launch-next path
+- KHÔNG thêm auto-relaunch thời gian thực (đó là driver --loop)
