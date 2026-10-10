@@ -72,6 +72,24 @@ dispatch khi gate `blocked_sf-N` đóng trong `state.json`. Gate **mở chỉ sa
 `features/{slug}` (việc lẻ) · cấm prefix `wakii-dev/` trên remote wakii-dev/wakii ·
 worktree name vẫn dash-form (orca fold `/`→`-`).
 
+## Permission model (04/10 — ruling siết bypass)
+
+- **Mọi agent story spawn = hai bước acceptEdits** (`terminal create --command
+  "claude --permission-mode acceptEdits"` + wait + send) — CẤM `--agent claude`
+  (template Orca cài sẵn `--dangerously-skip-permissions`). Enforced trong
+  story-launch (test L-suite) + recipe SKILL.md.
+- **Coordinator ≠ bypass** — cùng acceptEdits; lệnh Bash chuẩn của coordinator
+  (git/gh/node/test) vào **repo allowlist** để không stall: merge
+  `kit/permission-allowlist.json` vào `.claude/settings.json` của repo story
+  (review trước khi merge — allowlist mở rộng là trade-off có chủ đích, ghi
+  trong file).
+- **Worker KHÔNG push** — enforce bằng prompt contract (instructions), không
+  bằng permission (allowlist project-level áp cả worker); ai cần push thật sự
+  = coordinator.
+- **Detection tại cửa**: story-preflight check 7/8 (LOCAL-4 sf-3) — agent sống
+  trên primary + `--dangerously-skip-permissions` → WARN; doctor `--live` +
+  watchdog bypass-pid baseline → escalate pid mới.
+
 ## Số vận hành
 
 Ngưỡng (context budget, timeout 45m, attempts ×3, breaker, nhịp tick 3h/30') nằm ở

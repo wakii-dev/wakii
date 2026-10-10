@@ -634,6 +634,10 @@ luận khi chưa thấy); (3) tester review độc lập (code-reviewer) trướ
 (Optional: đính memory patterns qua `story-memory inject` — xem reference.)
 Brief còn phải có phần WHY theo **BA LAYER** (section "BA LAYER" ở trên): tại sao
 tính năng tồn tại, ai dùng, acceptance nghĩa là gì.
+**Permission model** (section OPERATING-MODEL): spawn coordinator/worker = hai bước
+acceptEdits — CẤM `--agent claude`; trước khi launch, bảo đảm repo story đã merge
+allowlist chuẩn `kit/permission-allowlist.json` vào `.claude/settings.json`
+(coordinator/worker không stall ở lệnh git/gh/node chuẩn).
 
 In-session fast path (small SFs, interactive): dispatch the `task-executor`
 agent (green) with the same prompt content — it runs the workflow loop for

@@ -1,34 +1,51 @@
-# Context pack — LOCAL-4 sf-3 — story-preflight: agent-alive-trên-primary + cảnh báo bypass
+# Context pack — LOCAL-5 sf-3 — story-verify + story-mindmap defects
 
-> ⚠️ Bản 11:44 bị đè bởi copy chéo — bản này là bản CHÍNH THỨC LOCAL-4.
+> BƯỚC-0: header phải chứa "LOCAL-5 sf-3". Sai → DỪNG báo.
 
-Nguồn: sai phạm A1/A3 (pid 72180 `--dangerously-skip-permissions` cwd=master ILEC) + B1
-(5-6 session trên primary) đêm 03/10 — không công cụ nào cảnh báo tại cửa.
-
-## Spec slice
-`story-preflight` thêm 2 check mới theo pattern checks hiện có (PASS/WARN/FAIL + hint):
-1. **primary-agent-alive**: nếu cwd đang là primary checkout của repo có story đang mở
-   (mindmap active/dest branch tồn tại) và tồn tại process agent (claude/node TUI) với cwd
-   trong primary → WARN (hoặc FAIL khi cấu hình strict) kèm danh sách pid + cwd.
-2. **permission-bypass-detected**: phát hiện process `claude` chạy cờ
-   `--dangerously-skip-permissions` trong repo/checkout đang xét → WARN ghi rõ vi phạm
-   LUẬT human-in-the-loop 24/09.
-
-Chỉ CẢNH BÁO ở cửa — không kill, không ghi state. Fail-open khi lsof/ps lỗi hoặc thiếu
-quyền; tôn trọng pattern GUARD_OFF nếu preflight có escape tương ứng.
+## Spec slice (3 defects — P0 xác minh mức source)
+1. **B3 mindmap-glob** (`story-verify` ~dòng 184 + 422): `for wf in
+   "$wt"/docs/superpowers/mindmaps/*.wakii` lấy match ĐẦU — story cũ
+   alphabetically-trước (vd FI-305) chặn story local → B3 FAIL ảo
+   → Fix: resolve mindmap theo **story ID hiện tại** (từ audit/dest/kích hoạt),
+   không first-match glob
+2. **B1 evidence anchor** (`story-verify` ~dòng 246-247): gate tìm
+   `docs/superpowers/evidence/<sf-ngắn>/test-run.txt` trong khi flow ghi
+   `evidence/<tên-worktree-đầy-đủ>/` → anchor hụt
+   → Fix: **full-worktree-name bắt buộc** + fallback theo slug
+3. **`story-mindmap --update-state`** (~416-470): `readOrcaStates` map
+   `done/in_progress` trong khi orca thật emit
+   `pending|ready|dispatched|completed|failed|blocked` (task-handlers.ts:10-16)
+   → `completed` không khớp "done" → node bị ghi `pending` (đảo trạng thái)
+   → Fix: bảng map orca→mindmap: `completed→done`; `failed→failed`;
+   `ready|dispatched→in-progress`; `pending|blocked→pending`;
+   done-node KHÔNG bao giờ bị hạ. Test stub đổi đúng vocabulary orca
+   (stub cũ dùng vocab giả → xanh ảo)
 
 ## Touch map
-- `kit/bin/story-preflight` — thêm 2 check (giữ output format hiện có)
-- tests kit (check mới chạy được trên macOS test env — không đòi Linux-only tools)
-- rehash kitHash + fingerprint nếu đổi bin (fence thứ tự 30/09; chmod 755 TRƯỚC hash)
+- `kit/bin/story-verify` — 2 vị trí glob (184, 422) + B1 evidence gate (246-247)
+- `kit/bin/story-mindmap` — readOrcaStates + update-state map
+- `tests/` — story-verify + story-mindmap test files (tìm theo tên)
+- KHÔNG đụng: `--resolve` mode của story-mindmap (LOCAL-4 sf-2 — vừa land)
 
-## ACCEPTANCE (user-visible)
-- Chạy `story-preflight` trên primary ILEC (môi trường có agent sống thật) → cảnh báo đúng
-  pid đang sống; trên checkout sạch → không cảnh báo ảo.
-- Output mới không phá consumer hiện có của preflight (parse không vỡ).
-- Suite kit xanh.
+## Interface contract
+- B3: hàm resolve-mindmap nhận (story_hint) → trả path .wakii đúng hoặc lỗi
+  rõ; không đổi CLI signature
+- update-state: vocabulary map là HẰNG SỐ exported (test import được)
+- States mindmap v1: pending/done (sf) · in-progress/complete (epic) — KHÔNG
+  thêm state mới
+
+## Dep states
+- `--resolve` (LOCAL-4 sf-2) đọc state chuẩn giữa worktrees — GIỮ NGUYÊN
+- fixture 2-mindmaps xung đột alphabetical: FI-305 style (tên trước) + story
+  local (tên sau)
+
+## ACCEPTANCE
+1. Fixture glob-xung-đột → B3 resolve đúng story local (không FAIL ảo)
+2. Evidence full-worktree-name → B1 PASS; thiếu → FAIL rõ
+3. Fixture orca `completed` → mindmap `done` (không `pending`)
+4. Fixture orca `failed` → không upgrade thành done
+5. Suite story-verify + story-mindmap GREEN
 
 ## Boundary
-- KHÔNG tự kill; KHÔNG block cứng mặc định (WARN mặc định, FAIL chỉ qua flag).
-- KHÔNG đụng story-guard-* hooks (cơ chế khác — PreToolUse).
-- Cross-platform: dùng lệnh có trên macOS + Linux (lsof/ps); Windows → skip check với ghi chú (theo support-matrix).
+- KHÔNG đụng --resolve, KHÔNG đổi schema v1, KHÔNG thêm state
+- Defect chỉ fix trong 2 bin nêu trên

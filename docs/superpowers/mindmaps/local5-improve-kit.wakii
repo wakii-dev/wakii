@@ -1,0 +1,30 @@
+{
+  "wakiiMindmap": 1,
+  "meta": {
+    "story": "LOCAL-5",
+    "generator": "story-workflow CREATE",
+    "generatedAt": "2026-10-10T22:30:00Z",
+    "dest": "story-local5-improve-kit",
+    "worktreeModel": "story-hub"
+  },
+  "nodes": [
+    { "id": "epic", "kind": "epic", "title": "LOCAL-5 — kit improvements (3 defect cụm quan sát thật 04-10/10)" },
+    { "id": "sf-1", "kind": "sf", "tier": 0,
+      "title": "story-doctor install-coverage — sidecar manifest + srcKitRoot repair",
+      "summary": "Doctor chạy từ vị trí cài phát hiện bin thiếu theo sidecar (hết PASS tautology); repair có tay copy từ kit source hoặc FAIL in hướng dẫn; sidecar sống qua install/uninstall/orphans. 12-13 tasks.",
+      "linear": "" },
+    { "id": "sf-2", "kind": "sf", "tier": 0,
+      "title": "story-watchdog --launch-next scoping — hết launch story stale",
+      "summary": "Repo đa-story không --story → SKIP + warning (fail-closed); --story <slug> launch đúng story với dash-normalization; dest-absent skip sau ls-remote; single-story giữ nguyên. 8-10 tasks.",
+      "linear": "" },
+    { "id": "sf-3", "kind": "sf", "tier": 0,
+      "title": "story-verify + story-mindmap defects — B3 glob / B1 anchor / update-state map",
+      "summary": "B3 resolve mindmap theo story ID (hết FAIL ảo do glob alphabetical); B1 anchor full-worktree-name + neo biên fallback; --update-state map vocabulary orca (completed→done, không bao giờ completed→pending). 10-11 tasks.",
+      "linear": "" }
+  ],
+  "edges": [
+    { "from": "epic", "to": "sf-1", "rel": "contains" },
+    { "from": "epic", "to": "sf-2", "rel": "contains" },
+    { "from": "epic", "to": "sf-3", "rel": "contains" }
+  ]
+}

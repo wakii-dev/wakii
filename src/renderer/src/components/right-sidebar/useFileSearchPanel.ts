@@ -2,6 +2,7 @@ import type React from 'react'
 import { useCallback, useEffect, useRef } from 'react'
 import { useAppStore } from '@/store'
 import { useActiveWorktree } from '@/store/selectors'
+import { useFileSearchScope } from './useFileSearchScope'
 import { cancelRevealFrame } from './search-match-open'
 import type { FileSearchPanelModel } from './file-search-panel-model'
 import { useFileSearchRunner } from './useFileSearchRunner'
@@ -10,7 +11,6 @@ import { useFileSearchReplaceCancelGuard } from './use-file-search-replace-cance
 import { useFileSearchReplacePanel } from './use-file-search-replace-panel'
 import { useFileSearchResultsPanel } from './use-file-search-results-panel'
 import { useFileSearchInputFocus } from './use-file-search-input-focus'
-import { useFileSearchScope } from './useFileSearchScope'
 
 const EMPTY_COLLAPSED_FILES = new Set<string>()
 
@@ -90,6 +90,15 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
     updateActiveSearchState
   })
 
+  const isCurrentOwner = useFileSearchScope({
+    activeWorktreeId,
+    worktreePath,
+    explorerView,
+    executeSearch,
+    cancelPendingSearch,
+    updateActiveSearchState
+  })
+
   const focusQueryInput = useCallback(() => {
     inputRef.current?.focus()
   }, [])
@@ -146,28 +155,10 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
     consumeFileSearchSeedRequest
   })
 
-  // Why: results from a previous worktree/explorer scope must never render after a switch;
-  // the scope hook owns clearing and marks which owner is still current (upstream contract).
-  useEffect(() => {
-    if (!worktreePath) {
-      cancelPendingSearch()
-      updateActiveSearchState({ results: null, resultOwner: null, error: null })
-    }
-  }, [worktreePath, cancelPendingSearch, updateActiveSearchState])
-  const isCurrentOwner = useFileSearchScope({
-    activeWorktreeId,
-    worktreePath,
-    explorerView,
-    executeSearch,
-    cancelPendingSearch,
-    updateActiveSearchState
-  })
-  const resultsAreCurrent = isCurrentOwner(fileSearchResultOwner)
-  const currentResults = resultsAreCurrent ? fileSearchResults : null
-  const currentResultOwner = resultsAreCurrent ? fileSearchResultOwner : null
   const resultsPanel = useFileSearchResultsPanel({
-    results: currentResults,
-    resultOwner: currentResultOwner,
+    results: fileSearchResults,
+    resultOwner: fileSearchResultOwner,
+    isCurrentOwner,
     collapsedFiles: fileSearchCollapsedFiles,
     query: fileSearchQuery,
     worktreePath,
@@ -204,7 +195,7 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
   } = useFileSearchReplacePanel({
     activeWorktreeId,
     worktreePath,
-    results: currentResults,
+    results: fileSearchResults,
     query: fileSearchQuery,
     replaceTerm: fileSearchReplaceQuery,
     replaceVisible: fileSearchReplaceVisible,
@@ -233,6 +224,9 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
         return
       }
       if (e.key === 'Escape') {
+        e.preventDefault()
+        e.stopPropagation()
+        inputRef.current?.blur()
         closeHistory()
         if (fileSearchQuery) {
           handleClearSearch()
@@ -305,8 +299,8 @@ export function useFileSearchPanel(explorerView: 'files' | 'search'): FileSearch
     },
     resultsProps: {
       results: resultsPanel.results,
-      error: searchState?.error,
-      hasCommittedResults: fileSearchResults !== null,
+      error: resultsPanel.resultsAreCurrent ? searchState?.error : null,
+      hasCommittedResults: resultsPanel.resultsAreCurrent && fileSearchResults !== null,
       query: fileSearchQuery,
       loading: fileSearchLoading,
       rows: resultsPanel.rows,

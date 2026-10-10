@@ -1,19 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { RuntimeTerminalWriter } from './runtime-terminal-writer'
+import { TERMINAL_INPUT_CHUNK_MAX_BYTES } from '../../shared/terminal-input'
+import { getAgentPromptSubmitDelayMs } from '../../shared/agent-prompt-injection'
 import {
   WRITE_ACCEPTED,
   writeRefused,
   writeUnverifiable,
   type WriteSettlement
 } from '../../shared/pty-write-settlement'
-import { TERMINAL_INPUT_CHUNK_MAX_BYTES } from '../../shared/terminal-input'
-
-import { getAgentPromptSubmitDelayMs } from '../../shared/agent-prompt-injection'
-
-// Why (#59): the raw single-line fast path bypasses bracketed-paste framing, so
-// the only Enter safety left is the writer's own pacing. These pins prove the
-// suffix hold is computed from the text byte length it receives — framing or
-// no framing — and never skipped for unframed payloads.
 
 afterEach(() => vi.useRealTimers())
 
@@ -167,7 +161,6 @@ describe('requested terminal write settlement', () => {
     expect(settled).not.toHaveBeenCalled()
   })
 })
-
 function makeWriter(platform: NodeJS.Platform = 'linux'): {
   writer: RuntimeTerminalWriter
   write: ReturnType<typeof vi.fn>
