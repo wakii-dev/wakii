@@ -81,7 +81,7 @@ let j={projects:{}};try{j=JSON.parse(fs.readFileSync(jp,"utf8"))}catch(e){}j.pro
 if(!j.projects[path]||!j.projects[path].hasTrustDialogAccepted){
 j.projects[path]=Object.assign({},j.projects[path],{hasTrustDialogAccepted:true,hasCompletedProjectOnboarding:true});
 fs.writeFileSync(jp,JSON.stringify(j,null,2));console.log("trust: injected cho "+path);}
-else console.log("trust: đã có");' "$WT" >> "$LOG" 2>&1 || true
+else console.log("trust: đã có");' "$WT" >&2 2>>/dev/null || true
 fi
 
 log(){ echo "$(date -u +%FT%TZ) $*" >> "$LOG"; }
