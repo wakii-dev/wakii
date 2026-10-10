@@ -1,7 +1,6 @@
 import { extname } from 'node:path'
 import type { WakiiFileOpenPayload } from '../../shared/wakii-file-open-payload'
 import type { WakiiMindmap } from '../../shared/wakii-mindmap-types'
-import { authorizeExternalPath } from './filesystem-auth'
 
 // Keep this module in sync with WAKII_FILE_EXTENSIONS in config/electron-builder.config.cjs
 // and the .wakii ProgID block in config/nsis/orca-installer-hooks.nsh — a mismatch on either
@@ -106,9 +105,6 @@ export function decodeWakiiContents(filePath: string, contents: string): WakiiFi
   if (!validation.ok) {
     return wakiiFileError(filePath, 'schema', validation.reason)
   }
-  // Why here, not before the read: only a successfully-read file is worth whitelisting for
-  // the renderer's later fs access (refresh/authorization), matching the markdown pattern.
-  authorizeExternalPath(filePath)
   return { path: filePath, mindmap: validation.mindmap }
 }
 

@@ -1,3 +1,4 @@
+import { ImeInput } from '@/lib/ime-text-field'
 import React from 'react'
 import {
   Search as SearchIcon,
@@ -98,9 +99,10 @@ export function SearchQueryRow({
           {replaceVisible ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
         </button>
         <SearchIcon className="size-3.5 shrink-0 text-muted-foreground" />
-        <input
+        <ImeInput
           ref={inputRef}
           type="text"
+          data-file-search-input="true"
           className="min-w-0 flex-1 bg-transparent py-1 text-xs text-foreground outline-none placeholder:text-muted-foreground/50"
           aria-label={translate(
             'auto.components.right.sidebar.SearchQueryRow.queryLabel',

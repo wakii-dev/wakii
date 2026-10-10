@@ -2,10 +2,13 @@ import { useCallback, useDeferredValue, useMemo, type RefObject } from 'react'
 import type { SearchFileResult, SearchMatch, SearchResult } from '../../../../shared/code-search-types'
 import { buildSearchRows, setAllSearchFilesCollapsed } from './search-rows'
 import { openMatchResult } from './search-match-open'
+import type { FileSearchResultOwner } from '@/lib/file-search-result-owner'
 
 type ResultsPanelArgs = {
   results: SearchResult | null
   resultOwner: Parameters<typeof openMatchResult>[0]['resultOwner']
+  /** Currency gate from useFileSearchScope — stale results never render or open. */
+  isCurrentOwner: (owner: FileSearchResultOwner | null | undefined) => boolean
   collapsedFiles: Set<string>
   query: string
   worktreePath: string | null
@@ -19,6 +22,7 @@ type ResultsPanelArgs = {
 
 type ResultsPanel = {
   results: SearchResult | null
+  resultsAreCurrent: boolean
   rows: ReturnType<typeof buildSearchRows>
   onToggleCollapsedFile: (filePath: string) => void
   onExpandAll: () => void
@@ -32,6 +36,7 @@ export function useFileSearchResultsPanel(args: ResultsPanelArgs): ResultsPanel 
   const {
     results,
     resultOwner,
+    isCurrentOwner,
     collapsedFiles,
     query,
     worktreePath,
@@ -43,18 +48,25 @@ export function useFileSearchResultsPanel(args: ResultsPanelArgs): ResultsPanel 
     revealInnerRafRef
   } = args
 
+  const resultsAreCurrent = isCurrentOwner(resultOwner)
   const committedSearchResults = useMemo(
-    () => ({ results, owner: resultOwner }),
-    [resultOwner, results]
+    () => ({
+      results: resultsAreCurrent ? results : null,
+      owner: resultsAreCurrent ? resultOwner : null
+    }),
+    [resultOwner, results, resultsAreCurrent]
   )
   const deferredSearchResults = useDeferredValue(committedSearchResults)
+  const deferredResultsAreCurrent = isCurrentOwner(deferredSearchResults.owner)
   const searchRows = useMemo(
     () =>
       buildSearchRows(
-        query.trim() && worktreePath ? deferredSearchResults.results : null,
+        deferredResultsAreCurrent && query.trim() && worktreePath
+          ? deferredSearchResults.results
+          : null,
         collapsedFiles
       ),
-    [deferredSearchResults.results, collapsedFiles, query, worktreePath]
+    [deferredSearchResults.results, collapsedFiles, query, worktreePath, deferredResultsAreCurrent]
   )
 
   const handleExpandAll = useCallback(() => {
@@ -69,6 +81,9 @@ export function useFileSearchResultsPanel(args: ResultsPanelArgs): ResultsPanel 
 
   const handleMatchClick = useCallback(
     (fileResult: SearchFileResult, match: SearchMatch) => {
+      if (!deferredResultsAreCurrent) {
+        return
+      }
       openMatchResult({
         resultOwner: deferredSearchResults.owner,
         fileResult,
@@ -79,11 +94,19 @@ export function useFileSearchResultsPanel(args: ResultsPanelArgs): ResultsPanel 
         revealInnerRafRef
       })
     },
-    [deferredSearchResults.owner, openFile, setPendingEditorReveal, revealRafRef, revealInnerRafRef]
+    [
+      deferredSearchResults.owner,
+      openFile,
+      setPendingEditorReveal,
+      revealRafRef,
+      revealInnerRafRef,
+      deferredResultsAreCurrent
+    ]
   )
 
   return {
     results: deferredSearchResults.results,
+    resultsAreCurrent: deferredResultsAreCurrent,
     rows: searchRows,
     onToggleCollapsedFile: toggleCollapsedFile,
     onExpandAll: handleExpandAll,

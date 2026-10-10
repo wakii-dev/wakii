@@ -36,9 +36,12 @@ export const AGENT_SESSION_WRITE_NOTICE_COPY = {
   historyUnavailable: "Orca couldn't open this chat's history right now.",
   savedByNewerOrca: 'Chats were saved by a newer Orca.',
   updateOrcaToKeepUsing: 'Update Orca to keep using them.',
+  chatSavedByNewerOrca: 'This chat was saved by a newer Orca.',
+  updateOrcaToOpenChat: 'Update Orca to open it.',
   unsupported:
     'This needs a newer Orca on the computer running this chat. Update Orca there, then try again.',
   notAvailable: "This isn't available in this chat.",
+  cannotRunHere: "Orca can't run this agent in a chat here.",
   unreachable: "Orca couldn't reach the agent.",
   recordFailed: "Orca couldn't save this to the chat's history.",
   conversationCleared: 'This conversation has been cleared.',
@@ -88,4 +91,10 @@ export type AgentSessionWriteNoticePart =
 /** Causes that already say the history can't be read here, so no sentence after them says it
  *  again. */
 export const AGENT_SESSION_HISTORY_UNREAD_CAUSES: ReadonlySet<AgentSessionWriteNoticeSentence> =
-  new Set(['historyUnusable', 'historyUnavailable', 'historyUnreadable', 'savedByNewerOrca'])
+  new Set([
+    'historyUnusable',
+    'historyUnavailable',
+    'historyUnreadable',
+    'savedByNewerOrca',
+    'chatSavedByNewerOrca'
+  ])

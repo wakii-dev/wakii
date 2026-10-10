@@ -1,3 +1,4 @@
+import { AGENT_HOOK_INFER_INTERRUPT_METHOD } from '../shared/agent-hook-interrupt-reconciliation'
 import { homedir } from 'node:os'
 import type { RelayDispatcher } from './dispatcher'
 import type { PtyEnvAugmenter, PtyHandler } from './pty-handler'
@@ -25,6 +26,7 @@ import { selectOpenCodeHookAgent } from '../shared/opencode-launch-command'
 import { relayLogLine } from './relay-diagnostic-log'
 import { restoreOrStripOverlayEnv } from '../shared/agent-overlay-env'
 import { registerManagedHookInstaller } from './managed-hook-installer'
+import { readSessionShellStartupEnvVar } from '../main/pty/shell-startup-env'
 
 export class RelayAgentHookRuntime {
   private readonly hookServer: RelayAgentHookServer
@@ -69,6 +71,9 @@ export class RelayAgentHookRuntime {
   }
 
   private registerPtyEnvironment(): void {
+    this.ptyHandler.setClaudeTerminalEvidenceListener((paneKey, evidence) => {
+      this.hookServer.claudeTerminalInterrupts.observe(paneKey, evidence)
+    })
     this.ptyHandler.setAgentPresenceTrigger((paneKey) => {
       void this.hookServer.checkAgentPresence(paneKey)
     })
@@ -122,7 +127,12 @@ export class RelayAgentHookRuntime {
           env.ORCA_OPENCODE_SOURCE_CONFIG_DIR = sourceDir
         }
       } else {
-        this.pluginOverlay.installOpenCodePlugin(opencodeAgent, context.env)
+        this.pluginOverlay.installOpenCodePlugin(opencodeAgent, {
+          ...context.env,
+          XDG_CONFIG_HOME:
+            readSessionShellStartupEnvVar('XDG_CONFIG_HOME', context.env, context.shell) ??
+            context.env.XDG_CONFIG_HOME
+        })
       }
     }
     const explicitKind = isPiCompatibleAgentType(context.launchAgent)
@@ -181,6 +191,9 @@ export class RelayAgentHookRuntime {
   }
 
   private registerHandlers(): void {
+    this.dispatcher.onRequest(AGENT_HOOK_INFER_INTERRUPT_METHOD, async (params) => ({
+      applied: this.hookServer.inferInterrupt(params)
+    }))
     this.dispatcher.onRequest(AGENT_HOOK_REQUEST_REPLAY_METHOD, async () => ({
       replayed: this.hookServer.replayCachedPayloadsForPanes()
     }))

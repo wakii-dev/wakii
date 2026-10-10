@@ -13,6 +13,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { QuickLaunchAgentMenuItems } from './QuickLaunchButton'
 import TabBarCreateEntry from './TabBarCreateEntry'
 import { TabStripScrollIndicator } from './TabStripScrollIndicator'
+import { TabStripTooltipProvider } from './TabStripTooltipProvider'
 import { getTabStripScrollMaskClassName } from './tab-strip-scroll-metrics'
 import type { useTabStripOverflowNavigation } from './tab-strip-overflow-navigation'
 import type { useTabStripDragScrollHandlers } from './tab-strip-drag-scroll'
@@ -88,8 +89,13 @@ export function renderTabBarSurface({
   } = createMenu
   const { orderedItems, sortableIds, dropIndicatorByVisibleId } = itemProjection
   const clientHostedBrowserRows = props.clientHostedBrowserRows ?? EMPTY_CLIENT_HOSTED_ROWS
-  const { tabStripRef, tabStripOverflowState, activeTabDockSide, scrollTabStrip } =
-    tabStripNavigation
+  const {
+    tabStripRef,
+    tabStripOverflowState,
+    activeTabDockSide,
+    scrollTabStrip,
+    subscribeToStripResize
+  } = tabStripNavigation
   const includeTopTabBorder = tabStripChrome !== 'floating-panel'
   const renderedItems = renderTabBarItems({
     items: orderedItems,
@@ -154,20 +160,23 @@ export function renderTabBarSurface({
               .filter(Boolean)
               .join(' ')}
           >
-            {renderedItems}
-            {clientHostedBrowserRows.length > 0 ? (
-              <ClientHostedBrowserTabRows
-                rows={clientHostedBrowserRows}
-                worktreeId={worktreeId}
-                groupId={resolvedGroupId}
-                groupActiveTabId={props.groupActiveTabId ?? null}
-                includeTopTabBorder={includeTopTabBorder}
-              />
-            ) : null}
+            <TabStripTooltipProvider>
+              {renderedItems}
+              {clientHostedBrowserRows.length > 0 ? (
+                <ClientHostedBrowserTabRows
+                  rows={clientHostedBrowserRows}
+                  worktreeId={worktreeId}
+                  groupId={resolvedGroupId}
+                  groupActiveTabId={props.groupActiveTabId ?? null}
+                  includeTopTabBorder={includeTopTabBorder}
+                />
+              ) : null}
+            </TabStripTooltipProvider>
           </div>
           <TabStripScrollIndicator
-            metrics={tabStripOverflowState}
+            hasOverflow={tabStripOverflowState.hasOverflow}
             scrollContainerRef={tabStripRef}
+            subscribeToStripResize={subscribeToStripResize}
             disabled={tabStripDragScroll.isTabDragActive}
           />
         </div>

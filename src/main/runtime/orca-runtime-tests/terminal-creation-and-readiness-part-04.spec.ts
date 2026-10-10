@@ -244,7 +244,8 @@ describe('WakiiRuntimeService', () => {
     expect(spawn).toHaveBeenCalledWith(
       expect.objectContaining({
         worktreeId: TEST_WORKTREE_ID,
-        persistHostSessionBinding: true
+        persistHostSessionBinding: true,
+        placement: { kind: 'new-tab' }
       })
     )
   })
