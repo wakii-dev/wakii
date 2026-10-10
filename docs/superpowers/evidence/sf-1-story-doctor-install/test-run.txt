@@ -42,3 +42,14 @@ CHECK 4 caveat: SF CLI-only — không có UI/browser; verify = real-flow 6 bư�
 (output gốc /tmp/sf1-flow*.log) + live check read-only. Không delegate, tự nhìn từng bước.
 
 plan: docs/superpowers/plans/2026-10-10-local5-sf-1-doctor-install-coverage-plan.md (12/12 tick)
+
+── fix round (review CHANGES-REQUESTED → APPROVED) ──────────────────────────────
+code commit: a47e33f3ea  (fix(kit): sf-1 review round — DR31 + fail-closed kitHash rỗng + cp_hint win32 + whitelist .tmp)
+review verdict: CHANGES-REQUESTED (1 P1 + 3 P2) → fix trọn → APPROVED; đã post worktree comment kèm CHECKLIST-4Q
+tdd: RED→GREEN (DR31 meta-test: tắt nhánh nonexec sidecar-mode → DR31 đỏ PASS-giả tái hiện → khôi phục → xanh)
+
+battery sau fix:
+  node tests/story-doctor-tests.mjs   → rc=0  179 PASS / 0 FAIL  (22 DR — thêm DR31)
+  node tests/kit-verify-manifest.mjs  → rc=0  31 PASS / 0 FAIL
+  node tests/kit-manifest-negative-tests.mjs → rc=0  GREEN
+  rehash: kitHash b80460920ed215da → 72d0fc1f4301e5e2 · fingerprint → df49507d… · verify OK
