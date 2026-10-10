@@ -101,10 +101,11 @@ function wtEntry(id, path, { linear = null, baseRef = '', parentId = null, branc
 
 // verify config ghim trong fake HOME — gate matrix đúng mặc định + distributed
 // OFF (B4 không fetch) → hành vi bin không đổi theo máy chạy + không mạng.
-function pinKitConfig(home) {
+// smoke: bật runtimeSmoke để cover smoke evidence fallback (P2 SF-3).
+function pinKitConfig(home, { smoke = false } = {}) {
   mkdirSync(join(home, '.claude'), { recursive: true })
   writeFileSync(join(home, '.claude', 'story-kit.json'), JSON.stringify({
-    verify: { evidenceGate: true, realModeRule: true, reviewerChecklist: true, runtimeSmoke: false, tddMode: true },
+    verify: { evidenceGate: true, realModeRule: true, reviewerChecklist: true, runtimeSmoke: smoke, tddMode: true },
     distributed: { enabled: false }
   }))
 }
@@ -113,9 +114,9 @@ function pinKitConfig(home) {
 // đều ổn; stub JSON dùng CÙNG chuỗi đó → match hoặc không là hành vi thật.
 // mindmaps: null = không có; else { "<file>.wakii": {story, epic, dest, linear} } —
 // B3 scoping (SF-3) đòi fixture đa-mindmap theo tên (token `hv` từ sf-91-hv).
-function runScenario(tag, buildWorktrees, { withBracket = true, mindmaps = null, jsonOut = false } = {}) {
+function runScenario(tag, buildWorktrees, { withBracket = true, mindmaps = null, smoke = false, jsonOut = false } = {}) {
   const home = mkdtempSync(join(tmpdir(), `story-verify-${tag}-`))
-  pinKitConfig(home)
+  pinKitConfig(home, { smoke })
   const wt = makeWorktree(home)
   if (!withBracket) {
     rmSync(join(wt, 'docs', 'superpowers', 'brackets'), { recursive: true, force: true })
@@ -298,6 +299,77 @@ const PARENT_ID = 'wt-parent-x1'
     }
   })
   check('S11', 'exact <stem>.wakii thắng boundary <token>-*', line.includes('review:FI-100') && line.includes('dest:story/hv-exact'), line.trim())
+  rmSync(home, { recursive: true, force: true })
+}
+
+// 12. B1 evidence — fixture-pin chính sách: primary = thư mục TÊN WORKTREE ĐẦY ĐỦ;
+//     decoy slug (`sf-91+decoy`, hash cũ) không được thắng khi primary tồn tại (P1-5)
+{
+  const { line, home } = runScenario('s12', () => [
+    wtEntry('wt-other', 'C:/elsewhere/unrelated', { linear: 'FI-1', baseRef: 'refs/heads/o' })
+  ], { withBracket: false, mindmaps: null })
+  check('S12', 'evidence full-worktree-name → gate PASS, không warn', line !== '' && !line.includes('evidence thiếu'), line.trim())
+  rmSync(home, { recursive: true, force: true })
+}
+
+// 13. B1 fallback neo biên: `sf-91-*` khớp slug dir, KHÔNG khớp `sf-910-*`/`sf-91+*`
+//     (glob `sf-91*` cũ bắt nhầm decoy — 2 decoy vì `ls` sort theo collation locale:
+//     byte-order '+' thắng, en_US bỏ-punctuation 'sf-910' thắng → cũ FAIL ảo chắc chắn)
+{
+  const { line, home } = runScenario('s13', (wtPath) => {
+    const head = (GIT(['-C', wtPath, 'rev-parse', '--short', 'HEAD']).stdout || '').trim()
+    const ed = join(wtPath, 'docs', 'superpowers', 'evidence')
+    rmSync(join(ed, SF), { recursive: true, force: true }) // bỏ primary — đi qua fallback
+    for (const d of ['sf-91+stale', 'sf-910-stale']) {
+      mkdirSync(join(ed, d), { recursive: true }) // decoy: glob cũ `sf-91*` match, glob mới loại
+      writeFileSync(join(ed, d, 'test-run.txt'), `stale\nHEAD 0000000\n`)
+    }
+    mkdirSync(join(ed, 'sf-91-real'), { recursive: true }) // slug convention thật (sf-<n>-<slug>)
+    writeFileSync(join(ed, 'sf-91-real', 'test-run.txt'), `run\nHEAD ${head}\ntdd: RED→GREEN\n`)
+    return [wtEntry('wt-other', 'C:/elsewhere/unrelated', { linear: 'FI-1', baseRef: 'refs/heads/o' })]
+  })
+  check('S13', 'fallback `sf-<n>-*` lấy đúng slug dir (decoy bị neo biên loại)', line !== '' && !line.includes('evidence thiếu') && !line.includes('thiếu dòng'), line.trim())
+  rmSync(home, { recursive: true, force: true })
+}
+
+// 14. Evidence thiếu hẳn → FAIL RÕ (chính sách: thiếu = FAIL, không âm thầm PASS)
+{
+  const { line, stdout, home } = runScenario('s14', (wtPath) => {
+    rmSync(join(wtPath, 'docs', 'superpowers', 'evidence', SF), { recursive: true, force: true })
+    return [wtEntry('wt-other', 'C:/elsewhere/unrelated', { linear: 'FI-1', baseRef: 'refs/heads/o' })]
+  })
+  check('S14', 'thiếu evidence → B1 FAIL (row) + note rõ (detail)', stdout.includes('B1:FAIL') && line.includes('evidence thiếu'), line.trim())
+  rmSync(home, { recursive: true, force: true })
+}
+
+// 15. Smoke fallback (P2) — cùng luật neo biên: slug dir `sf-91-smoke` thắng,
+//     decoy (glob cũ match, mới loại) không được chọn
+{
+  const { stdout, home } = runScenario('s15', (wtPath) => {
+    const head = (GIT(['-C', wtPath, 'rev-parse', '--short', 'HEAD']).stdout || '').trim()
+    const ed = join(wtPath, 'docs', 'superpowers', 'evidence')
+    for (const d of ['sf-91+stale', 'sf-910-stale']) {
+      mkdirSync(join(ed, d), { recursive: true })
+      writeFileSync(join(ed, d, 'smoke.txt'), `stale\nHEAD 0000000\n`)
+    }
+    mkdirSync(join(ed, 'sf-91-smoke'), { recursive: true })
+    writeFileSync(join(ed, 'sf-91-smoke', 'smoke.txt'), `smoke ok\nHEAD ${head}\n`)
+    return [wtEntry('wt-other', 'C:/elsewhere/unrelated', { linear: 'FI-1', baseRef: 'refs/heads/o' })]
+  }, { smoke: true })
+  check('S15', 'smoke fallback neo biên → Smoke:PASS', stdout.includes('Smoke:PASS'), stdout)
+  rmSync(home, { recursive: true, force: true })
+}
+
+// 15b. Smoke chỉ có evidence ngoài biên (`sf-910-*`) → glob mới KHÔNG match →
+//      Smoke:FAIL rõ (glob cũ match decoy → grep hash-rỗng pass ảo → test này RED)
+{
+  const { stdout, home } = runScenario('s15b', (wtPath) => {
+    const ed = join(wtPath, 'docs', 'superpowers', 'evidence')
+    mkdirSync(join(ed, 'sf-910-stale'), { recursive: true })
+    writeFileSync(join(ed, 'sf-910-stale', 'smoke.txt'), `stale\nHEAD 0000000\n`)
+    return [wtEntry('wt-other', 'C:/elsewhere/unrelated', { linear: 'FI-1', baseRef: 'refs/heads/o' })]
+  }, { smoke: true })
+  check('S15b', 'smoke ngoài biên → không match, FAIL rõ', stdout.includes('Smoke:FAIL') && stdout.includes('smoke evidence thiếu'), stdout)
   rmSync(home, { recursive: true, force: true })
 }
 
