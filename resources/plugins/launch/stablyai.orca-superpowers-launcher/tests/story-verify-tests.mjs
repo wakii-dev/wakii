@@ -303,8 +303,9 @@ const PARENT_ID = 'wt-parent-x1'
   rmSync(home, { recursive: true, force: true })
 }
 
-// 12. B1 evidence — fixture-pin chính sách: primary = thư mục TÊN WORKTREE ĐẦY ĐỦ;
-//     decoy slug (`sf-91+decoy`, hash cũ) không được thắng khi primary tồn tại (P1-5)
+// 12. B1 evidence — fixture-pin nửa primary của chính sách: evidence tại thư mục
+//     TÊN WORKTREE ĐẦY ĐỦ → gate PASS, không rơi fallback (P1-5; precedence
+//     primary-thắng-decoy nằm ở S13 — S13 bỏ primary rồi mới đặt decoy)
 {
   const { line, home } = runScenario('s12', () => [
     wtEntry('wt-other', 'C:/elsewhere/unrelated', { linear: 'FI-1', baseRef: 'refs/heads/o' })

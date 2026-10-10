@@ -143,7 +143,7 @@ except Exception: print(0)" "$VERIFY_CFG_FILE" 2>/dev/null
 # exact <hint>.wakii → boundary-anchored <hint>-* (dash-normalized: fi-458 ≡ fi458).
 # 0/>1 match → MM_PICK rỗng (fail-open như linear-rỗng, KHÔNG chọn hộ theo
 # alphabet — bệnh FI-305/local4-sf-3); MM_ERR chỉ khác rỗng khi AMBIGUOUS.
-resolve_mindmap() { # $1 wt $2 sf-basename → MM_PICK path|rỗng · MM_ERR ""|ambiguous:<names>
+resolve_mindmap() { # $1 wt $2 sf-basename → MM_PICK path|rỗng · MM_ERR ""|ambiguous:<số-mindmap>
   MM_PICK=""; MM_ERR=""
   local dir="$1/docs/superpowers/mindmaps" out
   [ -d "$dir" ] || return 0
