@@ -29,8 +29,9 @@ tương ứng trong settings.json; kit/hooks vắng → skip im lặng).
 --live: thêm check môi trường sống — sf-lineage (SF worktree mồ côi, không lineage
 cha qua `orca worktree list`; fail-open khi orca chết).
 Chạy từ kit/bin (dev): kit.json sibling có → full check. Chạy từ ~/.claude/bin:
-installKit không copy kit.json → checks phụ thuộc manifest fail-open WARN
-(marker vẫn là nguồn truth). Exit: 0 (chỉ PASS/WARN) · 1 (≥1 FAIL) · 2 (usage /
+installKit không copy kit.json → check_bins đọc sidecar .kit-provides.json
+(provides + srcKitRoot + kitHash, installKit ghi mỗi install); sidecar vắng →
+fail-open WARN. Exit: 0 (chỉ PASS/WARN) · 1 (≥1 FAIL) · 2 (usage /
 uninstall PLAN chờ --yes).
 """
 import hashlib
@@ -54,6 +55,10 @@ for _s in (sys.stdout, sys.stderr):
 
 MARKER_NAME = ".story-team-kit-version"
 MARKER_RE = re.compile(r"^([1-9]\d*\.\d+\.\d+)(?::([0-9a-f]{8,64}))?$")
+# Sidecar install-coverage (LOCAL-5 SF-1): installKit ghi <root>/bin/.kit-provides.json
+# {provides:[bin names], srcKitRoot, kitHash} — máy CÀI không có kit.json → đây là
+# nguồn truth cho check_bins (hết tautology kit_root==root).
+SIDECAR_NAME = ".kit-provides.json"
 HOOK_WRAPPERS = (
     ("SessionStart", "hook-session-start"),
     ("PostToolUse", "hook-post-tool-use"),
@@ -112,6 +117,22 @@ def provides(kit_json):
         {"bin": bins, "agent": agents, "skill": skills}.setdefault(
             e.get("type"), set()).add(e["name"])
     return bins, agents, skills
+
+
+def load_sidecar(root):
+    """Sidecar do installKit ghi ở <root>/bin — Returns (dict|None, err|None).
+    Vắng → (None, None) — không phải lỗi (fail-open ở caller)."""
+    path = os.path.join(root, "bin", SIDECAR_NAME)
+    if not os.path.isfile(path):
+        return None, None
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError) as e:
+        return None, str(e)
+    if not isinstance(data, dict) or not isinstance(data.get("provides"), list):
+        return None, "schema sai (cần object {provides:[...], srcKitRoot, kitHash})"
+    return data, None
 
 
 # ── computeKitHash python-port (main.mjs) ────────────────────────────────────
@@ -267,7 +288,11 @@ def check_kit_hash(kit_root, kit_json, marker_hash):
     return Check("kit-hash", "pass", f"kitHash {actual} khớp tree")
 
 
-def check_bins(kit_root, root):
+def check_bins(kit_root, root, kit_json):
+    # Chế độ CÀI (kit.json vắng ở kit_root — doctor chạy từ vị trí cài): so
+    # provides từ sidecar với installed — 2 chiều, hết tautology kit_root==root.
+    if kit_json is None:
+        return check_bins_sidecar(root)
     src_dir = os.path.join(kit_root, "bin")
     if not os.path.isdir(src_dir):
         return Check("bins", "fail", f"kit/bin không tồn tại ở {kit_root}",
@@ -291,6 +316,63 @@ def check_bins(kit_root, root):
                          repair={"kind": "chmod",
                                  "files": [os.path.join(dst, f) for f in nonexec]})
     return Check("bins", "pass", f"{len(src)} bins đủ ở {dst}"
+                 + ("" if sys.platform == "win32" else ", executable"))
+
+
+def cp_hint(src_root, dst_dir, names):
+    return " · ".join(f"cp '{src_root}/bin/{n}' '{dst_dir}/'" for n in names[:5])
+
+
+def check_bins_sidecar(root):
+    dst = os.path.join(root, "bin")
+    sidecar, err = load_sidecar(root)
+    installed = sorted(
+        f for f in (os.listdir(dst) if os.path.isdir(dst) else [])
+        if os.path.isfile(os.path.join(dst, f))
+        and not f.endswith(".html") and not f.endswith(".pyc"))
+    if sidecar is None:
+        if err is not None:
+            return Check("bins", "warn",
+                         f"sidecar {SIDECAR_NAME} không đọc được ({err}) — không xác minh được install coverage",
+                         "cài lại kit qua launcher (installKit ghi lại sidecar)")
+        if not installed:
+            return Check("bins", "fail", f"{dst} không tồn tại/rỗng (chưa cài kit?)",
+                         "kích hoạt lại plugin launcher (installKit tự cài)",
+                         repair={"kind": "install"})
+        return Check("bins", "warn",
+                     f"không có sidecar {SIDECAR_NAME} và kit.json — không xác minh được install coverage ({len(installed)} bins tìm thấy)",
+                     "cài lại kit qua launcher (installKit ghi sidecar)")
+    prov = sorted({str(n) for n in sidecar.get("provides") if isinstance(n, str)})
+    pset = set(prov)
+    missing = [n for n in prov if not os.path.isfile(os.path.join(dst, n))]
+    orph = [f for f in installed
+            if f not in pset and f != SIDECAR_NAME and f != ".DS_Store"]
+    if missing:
+        src = str(sidecar.get("srcKitRoot") or "")
+        hint = f" hoặc copy tay: {cp_hint(src, dst, missing)}" if src else ""
+        detail = (f"thiếu {len(missing)} bin theo sidecar ở {dst}: {', '.join(missing[:5])}"
+                  + ("…" if len(missing) > 5 else ""))
+        if orph:
+            detail += f"; orphan theo sidecar: {', '.join(sorted(orph)[:5])}"
+        return Check("bins", "fail", detail,
+                     "cài lại kit qua launcher" + hint,
+                     repair={"kind": "copy-bins", "src": src, "names": missing,
+                             "kitHash": str(sidecar.get("kitHash") or "")})
+    if sys.platform != "win32":
+        nonexec = [n for n in prov if not os.access(os.path.join(dst, n), os.X_OK)]
+        if nonexec:
+            return Check("bins", "fail",
+                         f"bin không executable (POSIX): {', '.join(nonexec[:5])}",
+                         f"chmod +x {dst}/* hoặc cài lại (installKit chmod 755)",
+                         repair={"kind": "chmod",
+                                 "files": [os.path.join(dst, f) for f in nonexec]})
+    if orph:
+        # WARN-only: sidecar stale có thể che bin mới hợp lệ — không FAIL mù.
+        return Check("bins", "warn",
+                     f"{len(prov)} bins đủ; orphan theo sidecar (installed ∉ provides"
+                     f" — sidecar stale?): {', '.join(sorted(orph)[:5])}",
+                     "đối chiếu sidecar với cài mới (cài lại kit qua launcher để refresh)")
+    return Check("bins", "pass", f"{len(prov)} bins đủ theo sidecar ở {dst}"
                  + ("" if sys.platform == "win32" else ", executable"))
 
 
@@ -384,7 +466,8 @@ def check_orphans(root, kit_json):
         and f not in bins
         and not f.endswith(".html")
         and not f.endswith(".pyc")
-        and f != ".DS_Store")
+        and f != ".DS_Store"
+        and f != SIDECAR_NAME)
     if extra:
         return Check("orphans", "warn",
                      f"orphan bins (retire sót): {', '.join(extra)}",
@@ -517,11 +600,46 @@ def remove_path(path):
         os.remove(path)
 
 
+def repair_copy_bins(root, r):
+    """LOCAL-5 SF-1 — 2 nhánh: srcKitRoot còn tồn tại + tree hash khớp sidecar →
+    copy bin thiếu trực tiếp (under_root + chmod 755 SAU copy — copy2 giữ mode
+    nguồn). Source mất/hash lệch → (False, note chứa lệnh cp hướng dẫn tay) —
+    không im lặng, checks sau vẫn FAIL."""
+    src = str(r.get("src") or "")
+    names = [str(n) for n in (r.get("names") or [])]
+    dst_dir = os.path.join(root, "bin")
+    manual = " — copy tay: " + cp_hint(src, dst_dir, names) if names else ""
+    if not src or not os.path.isdir(src):
+        return False, f"srcKitRoot mất ({src or 'trống'})" + manual
+    try:
+        actual = compute_kit_hash_py(src)
+    except OSError as e:
+        return False, f"hash srcKitRoot lỗi ({e})" + manual
+    want = str(r.get("kitHash") or "")
+    if want and actual != want:
+        return False, f"srcKitRoot tree {actual} ≠ sidecar {want} (source khác bản đã cài)" + manual
+    copied = 0
+    for n in names:
+        from_p, to_p = os.path.join(src, "bin", n), os.path.join(dst_dir, n)
+        if not under_root(to_p, root) or not os.path.isfile(from_p):
+            continue
+        try:
+            shutil.copy2(from_p, to_p)
+            os.chmod(to_p, 0o755)
+            copied += 1
+        except OSError:
+            continue
+    if copied == len(names):
+        return True, f"copy {copied} bin thiếu từ {src}: {', '.join(names[:5])}" \
+                     + ("…" if len(names) > 5 else "")
+    return False, f"copy {copied}/{len(names)} bin từ {src} (thiếu/lỗi)" + manual
+
+
 def apply_repairs(checks, root, kit_root):
     """Chạy fix AN TOÀN từ check results: xoá orphan (chỉ path check báo, chỉ
     dưới root), chmod 755 bins, re-run installKit 1 lần nếu có check đòi.
     KHÔNG BAO GIỜ sửa settings.json trực tiếp, đụng KB hay gì ngoài root."""
-    removes, chmods, do_install = [], [], False
+    removes, chmods, do_install, copy_bins = [], [], False, []
     for c in checks:
         r = c.repair
         if not r:
@@ -532,6 +650,8 @@ def apply_repairs(checks, root, kit_root):
             removes.extend(r.get("paths") or [])
         elif r.get("kind") == "chmod":
             chmods.extend(r.get("files") or [])
+        elif r.get("kind") == "copy-bins":
+            copy_bins.append(r)
     done, skipped = [], []
     for p in removes:
         if under_root(p, root) and os.path.lexists(p):
@@ -549,6 +669,9 @@ def apply_repairs(checks, root, kit_root):
                 done.append(f"chmod 755: {p}")
             except OSError as e:
                 skipped.append(f"chmod lỗi {p}: {e}")
+    for r in copy_bins:
+        ok, note = repair_copy_bins(root, r)
+        (done if ok else skipped).append(note)
     if do_install:
         ok, note = run_install_kit(root, kit_root)
         (done if ok else skipped).append(note)
@@ -569,7 +692,7 @@ def collect_checks(root, kit_root, kit_json, kb_dir, live=False):
     checks = [
         check_marker(root, kit_json),
         check_kit_hash(kit_root, kit_json, mm.group(2) if mm else None),
-        check_bins(kit_root, root),
+        check_bins(kit_root, root, kit_json),
         check_deps(),
         check_hooks(root),
         check_kb(kb_dir),
@@ -664,6 +787,7 @@ def uninstall_targets(root, kit_json):
     t = [(os.path.join(root, "skills", s), "skill") for s in sorted(skills)]
     t += [(os.path.join(root, "agents", f"{a}.md"), "agent") for a in sorted(agents)]
     t += [(os.path.join(root, "bin", b), "bin") for b in sorted(bins)]
+    t += [(os.path.join(root, "bin", SIDECAR_NAME), "sidecar")]
     t += [(os.path.join(root, MARKER_NAME), "marker")]
     return t
 
