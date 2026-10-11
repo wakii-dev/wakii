@@ -21,6 +21,37 @@
 
 ---
 
+## ⚡ What you get today
+
+**Describe a feature. Get back a reviewed PR.** Wakii's built-in story team
+runs the whole pipeline for you — you approve the spec at the start and
+merge the PR at the end; the agents handle everything in between:
+
+- **10 specialist agents** — impact analyst, spec & plan critics, parallel
+  task executors, independent reviewer and verifier, stall watchdog
+- **Isolated parallel execution** — every sub-feature runs in its own git
+  worktree; attempts are compared and the winner merges
+- **Gated by evidence, not vibes** — a real browser walkthrough, green
+  tests, ticked plan, independent review, and a merged branch before
+  anything counts as done
+- **Full-platform releases** — macOS (Apple Silicon + Intel), Windows, and
+  Android builds on every release
+- **14 skills + 48 story CLIs** — design pipelines, browser and emulator
+  automation, Linear ops, machine control — composing into one workflow
+
+## 🧭 Where we're heading
+
+- **Orchestrated human-in-the-loop** — agents route questions to you with
+  business context and a recommendation; everything answerable from the
+  spec, they answer themselves
+- **One orchestrator per repo** — the workflow driver reads the room:
+  detects existing worktree topology, resolves docs from the right host,
+  and never double-dispatches
+- **Fork-native PR visibility** — status for every remote, not just the
+  default
+
+Follow the live [roadmap →](https://wakii.xyz/roadmap/)
+
 Wakii is a fork of [Orca](https://github.com/stablyai/orca) (MIT) — the AI
 orchestrator that runs Codex, Claude Code, OpenCode, Pi and **any other CLI
 agent** side-by-side, each in its own isolated git worktree.
