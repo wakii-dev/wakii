@@ -3,7 +3,7 @@
 </div>
 
 <p align="center">
-  <a href="https://wakii.xyz"><img src="https://img.shields.io/badge/web-wakii.dev-45E0A8?logo=safari&logoColor=45E0A8" alt="wakii.dev" /></a>
+  <a href="https://wakii.xyz"><img src="https://img.shields.io/badge/web-wakii.xyz-45E0A8?logo=safari&logoColor=45E0A8" alt="wakii.xyz" /></a>
   <img src="https://img.shields.io/badge/10-agents-C026D3?style=flat" alt="10 agents" />
   <img src="https://img.shields.io/badge/14-public%20skills-8b5cf6?style=flat" alt="14 public skills" />
   <img src="https://img.shields.io/badge/license-MIT-08C?style=flat" alt="License: MIT" />
