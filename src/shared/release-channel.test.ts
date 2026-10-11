@@ -54,25 +54,20 @@ describe('release channel', () => {
     expect(hasDedicatedReleaseRepo('rc')).toBe(false)
   })
 
-  // Why: an hourly tag linked against the main repo 404s — the tag only exists
-  // in the hourly repo.
-  it('builds release-notes links against the repo that published the version', () => {
-    expect(getReleaseNotesUrlForVersion('1.4.160-hourly.202607281400')).toBe(
-      'https://github.com/stablyai/orca-hourly/releases/tag/v1.4.160-hourly.202607281400'
-    )
-    expect(getReleaseNotesUrlForVersion('1.4.160-daily.202607281300')).toBe(
-      'https://github.com/stablyai/orca-daily/releases/tag/v1.4.160-daily.202607281300'
+  // Fork semantics: mọi release của fork nằm ở wakii-dev/wakii (repo dev-channel
+  // của upstream không tồn tại trên fork), và fork-release-cut chỉ tag bare
+  // vX.Y.Z — link release chỉ cần version core, không kèm suffix -local.*.
+  it('builds release-notes links against the fork release repo', () => {
+    expect(getReleaseNotesUrlForVersion('1.4.223-local.1791710644440.a2178ce18bc6')).toBe(
+      'https://github.com/wakii-dev/wakii/releases/tag/v1.4.223'
     )
     expect(getReleaseNotesUrlForVersion('1.4.160')).toBe(
-      'https://github.com/stablyai/orca/releases/tag/v1.4.160'
+      'https://github.com/wakii-dev/wakii/releases/tag/v1.4.160'
     )
     expect(getReleaseNotesUrlForVersion('v1.4.160-rc.3')).toBe(
-      'https://github.com/stablyai/orca/releases/tag/v1.4.160-rc.3'
+      'https://github.com/wakii-dev/wakii/releases/tag/v1.4.160'
     )
-    expect(getReleaseNotesUrlForVersion('1.4.160-adhoc.20260728140533')).toBe(
-      'https://github.com/stablyai/orca-adhoc/releases/tag/v1.4.160-adhoc.20260728140533'
-    )
-    expect(getReleaseNotesUrlForVersion(null)).toBe('https://github.com/stablyai/orca/releases')
+    expect(getReleaseNotesUrlForVersion(null)).toBe('https://github.com/wakii-dev/wakii/releases')
   })
 
   it('round-trips an hourly version stamp as UTC', () => {

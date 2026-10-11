@@ -1,4 +1,5 @@
 import { compareAppVersions, isValidAppVersion } from './app-version'
+import { FORK_RELEASE_REPO } from './fork-release-repo'
 
 export type ReleaseChannel = 'stable' | 'rc' | 'hourly' | 'daily' | 'adhoc'
 
@@ -221,17 +222,18 @@ export function getVersionChannel(version: string): ReleaseChannel | null {
 }
 
 /**
- * Release-notes page for a version, in whichever repo published it. Dev-channel
- * tags exist only in their own repo, so a main-repo tag URL for one 404s.
+ * Release-notes page for a version. The fork publishes every release to one
+ * repo (upstream's per-channel repos don't exist here — see the publish block
+ * in config/electron-builder.config.cjs), and fork-release-cut only tags bare
+ * vX.Y.Z, so the link needs the version core without any -local.* suffix.
  * A null version falls back to the plain releases listing (not /releases/latest
  * — /latest also breaks when GitHub's API is degraded).
  */
 export function getReleaseNotesUrlForVersion(version: string | null): string {
-  const channel = version ? getVersionChannel(version) : null
-  const repo = channel ? getReleaseRepoForChannel(channel) : MAIN_RELEASE_REPO
-  return version
-    ? `https://github.com/${repo}/releases/tag/v${normalizeTagToVersion(version)}`
-    : `https://github.com/${repo}/releases`
+  const versionCore = version ? normalizeTagToVersion(version).split('-')[0] : null
+  return versionCore
+    ? `https://github.com/${FORK_RELEASE_REPO}/releases/tag/v${versionCore}`
+    : `https://github.com/${FORK_RELEASE_REPO}/releases`
 }
 
 /**
