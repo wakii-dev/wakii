@@ -226,7 +226,10 @@ planning and review skills below.
 | -- | --------- |
 | 🤖 | **10-agent story team** — adversarial specialists with checks-and-balances; self-approval never counts as a gate |
 | 🧠 | **20 bundled skills** — planning, review, design pipelines, machine-control platform skills |
-| 🛠️ | **50 `story-*` CLIs** — gate checks, stall watchdog, preflight, story tests |
+| 🛠️ | **48 `story-*` CLIs** — gate checks, stall watchdog, preflight, story tests |
+| 🔐 | **Permission model** — agents spawn `acceptEdits` (zero bypass), deny-list blocks force-push and protected pushes |
+| 👁️ | **Pane-watch HITL relay** — agent approval requests reach you, not the void |
+| 🪝 | **Rehash fence** — pre-commit blocks kit commits with stale hashes |
 | 🎨 | **HoiVu branding** — rebranded UI, fork-local full plugin access |
 
 ## 🔀 Inherited from Orca (kept intact)
