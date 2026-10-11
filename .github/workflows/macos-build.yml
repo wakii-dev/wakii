@@ -75,6 +75,9 @@ jobs:
           mkdir -p dist/release
           mv dist/orca-macos-arm64.dmg "dist/Wakii-$RELEASE_VERSION-arm64.dmg" || true
           mv dist/orca-macos-x64.dmg "dist/Wakii-$RELEASE_VERSION-x64.dmg" || true
+          # The renamed DMGs must match the names latest-mac.yml references, or the
+          # updater's readiness probe 404s them and every check reports "not ready".
+          node config/scripts/patch-mac-update-manifest.mjs dist/latest-mac.yml "$RELEASE_VERSION"
           for f in dist/Wakii-*.dmg dist/Wakii-*.zip dist/latest-mac.yml; do
             [ -e "$f" ] && cp "$f" dist/release/
           done
