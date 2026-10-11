@@ -4,8 +4,8 @@
 
 <p align="center">
   <a href="https://wakii.dev"><img src="https://img.shields.io/badge/web-wakii.dev-45E0A8?logo=safari&logoColor=45E0A8" alt="wakii.dev" /></a>
-  <img src="https://img.shields.io/badge/9-agents-C026D3?style=flat" alt="9 agents" />
-  <img src="https://img.shields.io/badge/13-public%20skills-8b5cf6?style=flat" alt="13 public skills" />
+  <img src="https://img.shields.io/badge/10-agents-C026D3?style=flat" alt="10 agents" />
+  <img src="https://img.shields.io/badge/14-public%20skills-8b5cf6?style=flat" alt="14 public skills" />
   <img src="https://img.shields.io/badge/license-MIT-08C?style=flat" alt="License: MIT" />
   <img src="https://img.shields.io/badge/macOS%20%7C%20Windows%20%7C%20Linux-4493F8?style=flat-square" alt="macOS, Windows, Linux" />
 </p>
@@ -42,7 +42,7 @@ installs itself on first run — no setup, enabled by default.
 
 Monitor and steer your agents from your phone — get notified when an agent finishes and send follow-ups from anywhere.
 
-[iOS App Store](https://apps.apple.com/us/app/orca-ide/id6766130217) · [Android APK 0.0.52](https://github.com/stablyai/orca/releases/download/mobile-android-v0.0.52/app-release.apk) · [Docs →](https://www.onorca.dev/docs/mobile)
+[iOS App Store](https://apps.apple.com/us/app/orca-ide/id6766130217) · [Android APK](https://github.com/wakii-dev/wakii/releases/latest) · [Docs →](https://www.onorca.dev/docs/mobile)
 
 </td>
 <td width="50%">
@@ -202,7 +202,7 @@ matches**. Skills compose — the story workflow is itself built from the
 planning and review skills below.
 
 <div align="center">
-  <img src=".github/assets/skills-chips.svg" width="100%" alt="13 public skills — /command chips by category" />
+  <img src=".github/assets/skills-chips.svg" width="100%" alt="14 public skills — /command chips by category" />
 </div>
 
 <details>
@@ -234,6 +234,11 @@ planning and review skills below.
 | `/figma-orientation` | Routes any Figma task to the right skill or MCP call | Loads first on Figma work, reads what you actually want, then routes — before you guess wrong |
 | `/graph-engineering` | Knowledge graphs + agent orchestration, taught with examples | Ontology design, entity extraction, GraphRAG, parallel fan-out, verifier separation, the stop rule |
 | `/prompt-master` | One production-ready prompt for the tool you name | Extracts real intent, identifies the target tool, outputs a single optimized prompt with zero wasted tokens |
+| `/computer-use` | Drives a real computer — screen, keyboard, mouse | Grounds the agent in what is actually on screen before acting; screenshots over DOM guesses |
+| `/linear-tickets` | Linear ticket ops without the API sprawl | Reads teams, issues and states, creates and updates tickets — the right call per task |
+| `/orca-cli` | Drives the Orca IDE from the command line | Worktrees, terminals, browser, notifications — the full surface as composable commands |
+| `/orca-emulator` · `/orca-emulator-android` | iOS and Android emulators, scripted | Boots, installs, drives and tears down emulator sessions for mobile verification |
+| `/orca-per-workspace-env` | Per-workspace environment setup | Isolates env/config per Orca workspace so agents never share state |
 
 </details>
 
@@ -241,9 +246,9 @@ planning and review skills below.
 
 | ✨ | Highlight |
 | -- | --------- |
-| 🤖 | **9-agent story team** — adversarial specialists with checks-and-balances; self-approval never counts as a gate |
+| 🤖 | **10-agent story team** — adversarial specialists with checks-and-balances; self-approval never counts as a gate |
 | 🧠 | **20 bundled skills** — planning, review, design pipelines, machine-control platform skills |
-| 🛠️ | **39 `story-*` CLIs** — gate checks, stall watchdog, preflight, story tests |
+| 🛠️ | **50 `story-*` CLIs** — gate checks, stall watchdog, preflight, story tests |
 | 🎨 | **HoiVu branding** — rebranded UI, fork-local full plugin access |
 
 ## 🔀 Inherited from Orca (kept intact)
@@ -271,16 +276,16 @@ Full wall with screenshots:
 
 ## 📦 Download
 
-macOS builds ship on [GitHub Releases](https://github.com/wakii-dev/wakii/releases)
+Builds ship on [GitHub Releases](https://github.com/wakii-dev/wakii/releases)
 — unsigned, so right-click → **Open** on first launch (or allow it in
 System Settings → Privacy & Security):
 
 | Machine       | Asset                                                                                                                            |
 | ------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Apple Silicon | [Wakii-1.4.214-arm64.dmg](https://github.com/wakii-dev/wakii/releases/download/v1.4.214/Wakii-1.4.214-arm64.dmg)                  |
-| Intel         | [Wakii-1.4.214-x64.dmg](https://github.com/wakii-dev/wakii/releases/download/v1.4.214/Wakii-1.4.214-x64.dmg)                      |
-| Android       | [app-release.apk](https://github.com/wakii-dev/wakii/releases/download/v1.4.214/app-release.apk)                    |
-| Windows       | [orca-windows-setup.exe](https://github.com/wakii-dev/wakii/releases/download/v1.4.214/orca-windows-setup.exe)                     |
+| Apple Silicon | [Wakii-1.4.222-arm64.dmg](https://github.com/wakii-dev/wakii/releases/download/v1.4.222/Wakii-1.4.222-arm64.dmg)                  |
+| Intel         | [Wakii-1.4.222-x64.dmg](https://github.com/wakii-dev/wakii/releases/download/v1.4.222/Wakii-1.4.222-x64.dmg)                      |
+| Android       | [app-release.apk](https://github.com/wakii-dev/wakii/releases/download/v1.4.222/app-release.apk)                    |
+| Windows       | [orca-windows-setup.exe](https://github.com/wakii-dev/wakii/releases/download/v1.4.222/orca-windows-setup.exe)                     |
 
 Build from source ([guide](#-developing)) works everywhere.
 
