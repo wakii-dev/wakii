@@ -42,36 +42,36 @@ watch, steer, and merge from the app or your phone.
 
 | | Feature | One-liner | Docs |
 | - | ------- | --------- | ---- |
-| 🪟 | **Parallel worktrees** | fan one prompt across five agents, merge the winner | [→](https://www.onorca.dev/docs/model/worktrees) |
-| ⌨️ | **Terminal splits** | Ghostty-class, WebGL, scrollback survives restarts | [→](https://www.onorca.dev/docs/terminal) |
-| 🎨 | **Design mode** | click any UI element → HTML, CSS + screenshot into the prompt | [→](https://www.onorca.dev/docs/browser/design-mode) |
-| 🔀 | **GitHub & Linear** | PRs, issues, boards — open a worktree from any task | [→](https://www.onorca.dev/docs/review/linear) |
-| 🌐 | **SSH worktrees** | agents on a beefy remote, auto-reconnect included | [→](https://www.onorca.dev/docs/ssh) |
-| 💬 | **Annotate AI diffs** | comment any diff line, ship back to the agent | [→](https://www.onorca.dev/docs/review/annotate-ai-diff) |
-| 📎 | **Drag files to agents** | drag files or images straight into a prompt | [→](https://www.onorca.dev/docs/editing/file-explorer) |
-| 📱 | **Mobile companion** | monitor and steer from your phone | [→](https://www.onorca.dev/docs/mobile) |
-| ⚡ | **Orca CLI** | script every workflow — worktree, snapshot, click, fill | [→](https://www.onorca.dev/docs/cli/overview) |
+| 🪟 | **Parallel worktrees** | fan one prompt across five agents, merge the winner | [→](https://wakii.dev/docs/worktrees) |
+| ⌨️ | **Terminal splits** | Ghostty-class, WebGL, scrollback survives restarts | [→](https://wakii.dev/docs/terminal) |
+| 🎨 | **Design mode** | click any UI element → HTML, CSS + screenshot into the prompt | [→](https://wakii.dev/docs/design-mode) |
+| 🔀 | **GitHub & Linear** | PRs, issues, boards — open a worktree from any task | [→](https://wakii.dev/docs/linear) |
+| 🌐 | **SSH worktrees** | agents on a beefy remote, auto-reconnect included | [→](https://wakii.dev/docs/ssh) |
+| 💬 | **Annotate AI diffs** | comment any diff line, ship back to the agent | [→](https://wakii.dev/docs/annotate-ai-diff) |
+| 📎 | **Drag files to agents** | drag files or images straight into a prompt | [→](https://wakii.dev/docs/file-explorer) |
+| 📱 | **Mobile companion** | monitor and steer from your phone | [→](https://wakii.dev/docs/mobile) |
+| ⚡ | **Orca CLI** | script every workflow — worktree, snapshot, click, fill | [→](https://wakii.dev/docs/cli) |
 
 ### In motion
 
 <table>
 <tr>
 <td width="50%">
-  <a href="https://www.onorca.dev/docs/model/worktrees"><picture><source srcset="docs/site/public/docs/tab-split.gif" type="image/gif"><img src="docs/site/public/docs/posters/tab-split.jpg" alt="Parallel worktree orchestration" width="100%" /></picture></a>
+  <a href="https://wakii.dev/docs/worktrees"><picture><source srcset="docs/site/public/docs/tab-split.gif" type="image/gif"><img src="docs/site/public/docs/posters/tab-split.jpg" alt="Parallel worktree orchestration" width="100%" /></picture></a>
   <p align="center"><sub><b>Parallel worktrees</b> — five agents, one prompt, merge the winner</sub></p>
 </td>
 <td width="50%">
-  <a href="https://www.onorca.dev/docs/browser/design-mode"><picture><source srcset="docs/site/public/docs/orca-design-mode.gif" type="image/gif"><img src="resources/onboarding/feature-wall/tile-05.poster.jpg" alt="Design mode" width="100%" /></picture></a>
+  <a href="https://wakii.dev/docs/design-mode"><picture><source srcset="docs/site/public/docs/orca-design-mode.gif" type="image/gif"><img src="resources/onboarding/feature-wall/tile-05.poster.jpg" alt="Design mode" width="100%" /></picture></a>
   <p align="center"><sub><b>Design mode</b> — click UI, ship context to the agent</sub></p>
 </td>
 </tr>
 <tr>
 <td width="50%">
-  <a href="https://www.onorca.dev/docs/review/annotate-ai-diff"><picture><source srcset="docs/site/public/docs/annotate-ai-diff.gif" type="image/gif"><img src="resources/onboarding/feature-wall/tile-08.poster.jpg" alt="Annotate AI diffs" width="100%" /></picture></a>
+  <a href="https://wakii.dev/docs/annotate-ai-diff"><picture><source srcset="docs/site/public/docs/annotate-ai-diff.gif" type="image/gif"><img src="resources/onboarding/feature-wall/tile-08.poster.jpg" alt="Annotate AI diffs" width="100%" /></picture></a>
   <p align="center"><sub><b>Annotate diffs</b> — comment lines, agent fixes</sub></p>
 </td>
 <td width="50%">
-  <a href="https://www.onorca.dev/docs/terminal"><picture><source srcset="resources/onboarding/feature-wall/tile-02.gif" type="image/gif"><img src="resources/onboarding/feature-wall/tile-02.poster.jpg" alt="Terminal splits" width="100%" /></picture></a>
+  <a href="https://wakii.dev/docs/terminal"><picture><source srcset="resources/onboarding/feature-wall/tile-02.gif" type="image/gif"><img src="resources/onboarding/feature-wall/tile-02.poster.jpg" alt="Terminal splits" width="100%" /></picture></a>
   <p align="center"><sub><b>Terminal splits</b> — WebGL, infinite, survives restarts</sub></p>
 </td>
 </tr>
@@ -88,11 +88,11 @@ watch, steer, and merge from the app or your phone.
 
 Agents on a beefy remote box — full editing, git, terminals, auto-reconnect.
 
-[Docs →](https://www.onorca.dev/docs/ssh)
+[Docs →](https://wakii.dev/docs/ssh)
 
 </td>
 <td width="50%">
-  <a href="https://www.onorca.dev/docs/ssh"><picture><source srcset="resources/onboarding/feature-wall/tile-06.gif" type="image/gif"><img src="resources/onboarding/feature-wall/tile-06.poster.jpg" alt="SSH worktrees" width="100%" /></picture></a>
+  <a href="https://wakii.dev/docs/ssh"><picture><source srcset="resources/onboarding/feature-wall/tile-06.gif" type="image/gif"><img src="resources/onboarding/feature-wall/tile-06.poster.jpg" alt="SSH worktrees" width="100%" /></picture></a>
 </td>
 </tr>
 <tr>
@@ -102,11 +102,11 @@ Agents on a beefy remote box — full editing, git, terminals, auto-reconnect.
 
 VS Code-class editor, autosave everywhere — drag files or images into a prompt.
 
-[Docs →](https://www.onorca.dev/docs/editing/file-explorer)
+[Docs →](https://wakii.dev/docs/file-explorer)
 
 </td>
 <td width="50%">
-  <a href="https://www.onorca.dev/docs/editing/file-explorer"><picture><source srcset="resources/onboarding/feature-wall/tile-07.gif" type="image/gif"><img src="resources/onboarding/feature-wall/tile-07.poster.jpg" alt="Drag files to agents" width="100%" /></picture></a>
+  <a href="https://wakii.dev/docs/file-explorer"><picture><source srcset="resources/onboarding/feature-wall/tile-07.gif" type="image/gif"><img src="resources/onboarding/feature-wall/tile-07.poster.jpg" alt="Drag files to agents" width="100%" /></picture></a>
 </td>
 </tr>
 <tr>
@@ -116,11 +116,11 @@ VS Code-class editor, autosave everywhere — drag files or images into a prompt
 
 Agents drive Orca too — script every workflow.
 
-[Docs →](https://www.onorca.dev/docs/cli/overview)
+[Docs →](https://wakii.dev/docs/cli)
 
 </td>
 <td width="50%">
-  <a href="https://www.onorca.dev/docs/cli/overview"><picture><source srcset="resources/onboarding/feature-wall/tile-09.gif" type="image/gif"><img src="resources/onboarding/feature-wall/tile-09.poster.jpg" alt="Orca CLI" width="100%" /></picture></a>
+  <a href="https://wakii.dev/docs/cli"><picture><source srcset="resources/onboarding/feature-wall/tile-09.gif" type="image/gif"><img src="resources/onboarding/feature-wall/tile-09.poster.jpg" alt="Orca CLI" width="100%" /></picture></a>
 </td>
 </tr>
 <tr>
