@@ -35,6 +35,12 @@ describe('fetchChangelog', () => {
     fetchMock.mockReset()
   })
 
+  it('fetches the fork changelog from wakii.xyz', async () => {
+    fetchMock.mockResolvedValue(jsonResponse([]))
+    await fetchChangelog('1.1.21', '1.1.19')
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('https://wakii.xyz/whats-new/changelog.json')
+  })
+
   it('returns exact match when the incoming version has rich content', async () => {
     const entries = makeEntries([
       {
@@ -76,7 +82,8 @@ describe('fetchChangelog', () => {
     expect(result!.release.title).toBe('Release 1.1.17')
     expect(result!.release.description).toBe('Cool feature')
     // Why: fallback entries link to the generic changelog, not a version-specific page.
-    expect(result!.release.releaseNotesUrl).toBe('https://onorca.dev/changelog')
+    // Fork: fallback trỏ danh sách release fork (wakii-dev/wakii), không phải changelog upstream.
+    expect(result!.release.releaseNotesUrl).toBe('https://github.com/wakii-dev/wakii/releases')
     expect(result!.releasesBehind).toBe(2)
   })
 
@@ -98,7 +105,8 @@ describe('fetchChangelog', () => {
 
     expect(result).not.toBeNull()
     expect(result!.release.title).toBe('Release 1.1.17')
-    expect(result!.release.releaseNotesUrl).toBe('https://onorca.dev/changelog')
+    // Fork: fallback trỏ danh sách release fork (wakii-dev/wakii), không phải changelog upstream.
+    expect(result!.release.releaseNotesUrl).toBe('https://github.com/wakii-dev/wakii/releases')
     // releasesBehind is from local (index 2) to incoming (index 0) = 2
     expect(result!.releasesBehind).toBe(2)
   })
@@ -168,7 +176,8 @@ describe('fetchChangelog', () => {
 
     expect(result).not.toBeNull()
     expect(result!.release.title).toBe('Release 1.1.18')
-    expect(result!.release.releaseNotesUrl).toBe('https://onorca.dev/changelog')
+    // Fork: fallback trỏ danh sách release fork (wakii-dev/wakii), không phải changelog upstream.
+    expect(result!.release.releaseNotesUrl).toBe('https://github.com/wakii-dev/wakii/releases')
   })
 
   it('shows rich entry when local version is not in JSON (very old user)', async () => {
@@ -186,7 +195,8 @@ describe('fetchChangelog', () => {
 
     expect(result).not.toBeNull()
     expect(result!.release.title).toBe('Release 1.1.17')
-    expect(result!.release.releaseNotesUrl).toBe('https://onorca.dev/changelog')
+    // Fork: fallback trỏ danh sách release fork (wakii-dev/wakii), không phải changelog upstream.
+    expect(result!.release.releaseNotesUrl).toBe('https://github.com/wakii-dev/wakii/releases')
     // releasesBehind is null because the local version isn't in the JSON.
     expect(result!.releasesBehind).toBeNull()
   })

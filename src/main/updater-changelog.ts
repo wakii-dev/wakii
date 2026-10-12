@@ -10,7 +10,11 @@ type ChangelogEntry = {
   releaseNotesUrl: string
 }
 
-const CHANGELOG_URL = 'https://onorca.dev/changelog'
+// Fork: changelog của wakii do wakii-site phục vụ (schema khớp ChangelogEntry).
+// Entry không có mediaUrl thì card rơi về plain — link release vẫn đúng fork.
+const CHANGELOG_FETCH_URL = 'https://wakii.xyz/whats-new/changelog.json'
+// Link "generic changelog page" của nhánh fallback — danh sách release fork.
+const CHANGELOG_FALLBACK_URL = 'https://github.com/wakii-dev/wakii/releases'
 
 function isValidEntry(entry: ChangelogEntry): boolean {
   return (
@@ -42,7 +46,7 @@ export async function fetchChangelog(
   incomingVersion: string,
   localVersion: string
 ): Promise<ChangelogData | null> {
-  const res = await net.fetch('https://onorca.dev/whats-new/changelog.json', {
+  const res = await net.fetch(CHANGELOG_FETCH_URL, {
     signal: AbortSignal.timeout(5000)
   })
   if (!res.ok) {
@@ -127,7 +131,7 @@ export async function fetchChangelog(
     const { version: _, ...release } = candidate
     // Why: the shown content is from an older entry, not the incoming version.
     // Point to the generic changelog page so the link doesn't mislead.
-    return { release: { ...release, releaseNotesUrl: CHANGELOG_URL }, releasesBehind }
+    return { release: { ...release, releaseNotesUrl: CHANGELOG_FALLBACK_URL }, releasesBehind }
   }
 
   return null
