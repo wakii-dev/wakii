@@ -4,12 +4,14 @@ import type { WorkspaceHostScope } from '../../../../shared/ui-chrome-types'
 import {
   ALL_EXECUTION_HOSTS_SCOPE,
   LOCAL_EXECUTION_HOST_ID,
+  toRuntimeExecutionHostId,
   type ExecutionHostId
 } from '../../../../shared/execution-host'
 import {
   buildExecutionHostRegistry,
   type ExecutionHostHealth
 } from '../../../../shared/execution-host-registry'
+import { getExecutionHostHealthLabel } from '../../../../shared/execution-host-health'
 import {
   expandEquivalentExecutionHostIds,
   pickerExecutionHosts
@@ -69,7 +71,7 @@ export function buildSidebarHostOptions(args: {
     }
   }
   const activeRuntimeHostId = args.settings?.activeRuntimeEnvironmentId?.trim()
-    ? (`runtime:${encodeURIComponent(args.settings.activeRuntimeEnvironmentId.trim())}` as const)
+    ? toRuntimeExecutionHostId(args.settings.activeRuntimeEnvironmentId.trim())
     : null
   return buildExecutionHostRegistry({
     repos: args.repos,
@@ -161,22 +163,7 @@ export function getCheckedHostRows<T extends SidebarHostOption>(
 }
 
 export function getSidebarHostHealthLabel(health: SidebarHostScopeOption['health']): string {
-  switch (health) {
-    case 'local':
-      return 'Local'
-    case 'available':
-      return 'Connected'
-    case 'connecting':
-      return 'Connecting'
-    case 'blocked':
-      return 'Update needed'
-    case 'disconnected':
-      return 'Disconnected'
-    case 'error':
-      return 'Needs attention'
-    case 'mixed':
-      return 'Mixed'
-  }
+  return health === 'mixed' ? 'Mixed' : getExecutionHostHealthLabel(health)
 }
 
 /**

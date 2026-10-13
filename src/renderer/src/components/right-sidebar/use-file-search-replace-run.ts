@@ -58,7 +58,7 @@ export function useFileSearchReplaceRun({
             captureFileExplorerOperationGuard(worktreeId, getFileExplorerOperationOwner(worktreeId)),
           buildIo: (route) =>
             buildReplaceAllIo({
-              settings: route.settings,
+              target: route.target,
               worktreeId,
               worktreePath,
               connectionId: route.connectionId,

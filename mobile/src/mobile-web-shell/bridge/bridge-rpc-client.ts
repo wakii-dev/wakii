@@ -1,4 +1,3 @@
-import type { BrowserScreencastFrame } from '../../transport/browser-screencast-protocol'
 import type { RpcClient, SendRequestOptions } from '../../transport/rpc-client'
 import type { ConnectionState, RpcResponse, RpcSuccess } from '../../transport/types'
 import {
@@ -27,6 +26,7 @@ import { createBridgeClientNotifications } from './bridge-client-notifications'
 import type { BridgeSafeAreaInsets } from './bridge-safe-area-insets'
 import { createPageBackConsumers, type PageBackConsumer } from './page-back-consumers'
 import { BridgeClientRequests } from './bridge-client-requests'
+import { readBridgeRequestFrameOptions, readBridgeRpcEnvelope } from './bridge-client-rpc-envelope'
 import { BridgeClientSubscriptions } from './bridge-client-subscriptions'
 import { isBridgeNativeMethod, type BridgeNativeVerb } from './bridge-native-verbs'
 import { BRIDGE_ROUTE_PARAM_CLEAR, type BridgeClearableRouteParam } from './bridge-route-update'
@@ -45,6 +45,8 @@ export {
   BridgeClientNotReadyError,
   BridgeReplyRefusedError,
   BridgeRequestOversizedError,
+  BridgeRpcEnvelopeInvalidError,
+  BridgeRpcEnvelopeUngrantedError,
   BridgeSendFailedError,
   BridgeShellReplacedError
 } from './bridge-client-errors'
@@ -205,6 +207,8 @@ export function createBridgeRpcClient(options: BridgeRpcClientOptions): BridgeRp
     }
   }
 
+  const hasGrant = (name: string) => shellSession.current()?.grants.native.includes(name) === true
+
   /** For the members whose contract is a boolean: a frame that did not leave is a false, whichever
    *  of the two reasons it was. */
   const posted = (frame: BridgeClientMessage): boolean => sendFrame(frame) === 'sent'
@@ -334,8 +338,10 @@ export function createBridgeRpcClient(options: BridgeRpcClientOptions): BridgeRp
       )
     }
     const [method, params, requestOptions] = args
-    const id = nextId()
     return new Promise<RpcResponse>((resolve, reject) => {
+      // A refused envelope throws here, which rejects before an id is minted or a frame is posted.
+      const frameOptions = readBridgeRequestFrameOptions(requestOptions, hasGrant)
+      const id = nextId()
       requests.open(id, { resolve, reject })
       const outcome = sendFrame({
         v: BRIDGE_PROTOCOL_VERSION,
@@ -347,7 +353,7 @@ export function createBridgeRpcClient(options: BridgeRpcClientOptions): BridgeRp
         // as `sendRequest(m)`; no call site passes one, and no wire that carries `undefined` exists
         // to carry it. The spread is what states the intent for a carrier that would.
         ...(args.length > 1 ? { params } : {}),
-        ...(requestOptions === undefined ? {} : { options: requestOptions })
+        ...frameOptions
       })
       if (outcome !== 'sent') {
         requests.abandon(id)
@@ -364,7 +370,7 @@ export function createBridgeRpcClient(options: BridgeRpcClientOptions): BridgeRp
     method: string,
     params: unknown,
     onData: (result: unknown) => void,
-    subscribeOptions?: { onBinaryFrame?: (frame: BrowserScreencastFrame) => void }
+    subscribeOptions?: Parameters<RpcClient['subscribe']>[3]
   ): () => void {
     requireSession()
     if (closed) {
@@ -376,10 +382,12 @@ export function createBridgeRpcClient(options: BridgeRpcClientOptions): BridgeRp
     if (subscriptions.size >= BRIDGE_MAX_SUBSCRIPTIONS) {
       throw new BridgeClientCapExceededError(`over ${BRIDGE_MAX_SUBSCRIPTIONS} subscriptions`)
     }
+    const { onBinaryFrame, envelope: fields } = subscribeOptions ?? {}
+    const envelope = readBridgeRpcEnvelope(fields, hasGrant)
     const id = nextId()
     // A frame that never left already told the listener and gave the slot back; the caller still
     // gets a dispose, because it has no way to know which of the two it is holding.
-    if (!subscriptions.open(id, method, params, onData, subscribeOptions?.onBinaryFrame)) {
+    if (!subscriptions.open(id, method, params, onData, onBinaryFrame, envelope)) {
       return () => undefined
     }
     let disposed = false
@@ -411,7 +419,7 @@ export function createBridgeRpcClient(options: BridgeRpcClientOptions): BridgeRp
     send: posted,
     requireSession,
     isClosed: () => closed,
-    hasGrant: (name) => shellSession.current()?.grants.native.includes(name) === true
+    hasGrant
   })
 
   const unsubscribeFromMessages = options.onMessage(receive)

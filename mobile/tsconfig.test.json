@@ -5,8 +5,8 @@
   "extends": "./tsconfig.json",
   "exclude": [
     "node_modules",
-    // These three are Node-side, not React Native: they import the desktop main process or
-    // src/shared/child-process, whose modules are written against @types/node. This program's libs
+    // These four are Node-side, not React Native: they import the desktop main process or
+    // @orca/process-host, whose modules are written against @types/node. This program's libs
     // are React Native's, where `setTimeout` answers a number rather than a NodeJS.Timeout, so
     // pulling that graph in reports ~280 errors about the desktop rather than about mobile. Their
     // own runtime coverage is vitest, which runs them under Node.

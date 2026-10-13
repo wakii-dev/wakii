@@ -10,6 +10,7 @@
 import { agentJournalSubmissionKey } from '../../../shared/agent-session-journal-item-key'
 import { isRootAgentJournalItem } from '../../../shared/agent-session-journal-producer'
 import { latestStructuredAgentSessionTurn } from '../../../shared/structured-agent-session-live-turn'
+import { isSubagentBlock } from '../../../shared/native-chat-types'
 import type {
   AgentJournalCursor,
   AgentJournalRenderItem,
@@ -32,6 +33,7 @@ import {
   HISTORY_PAGE_CONTENT_BUDGET_BYTES,
   historyEntryBytes,
   newestWholeSequenceGroups,
+  wholeSubagentGroupsStart,
   oversizedHistoryItem,
   submissionBytesByItemId
 } from './agent-session-history-page-bounds'
@@ -55,23 +57,35 @@ export type AgentSessionHistoryScope = 'every-agent' | 'own-agent'
 
 /**
  * The newest `limit` of the session's own rows, in whole sequence groups, and every
- * row after the oldest of them: a subagent's rows ride along with the conversation
- * they happened in, so its burst cannot crowd the conversation off the page. The page
- * stays contiguous and starts at its first item, as the cursor means. Fewer own rows
- * than `limit` reach back to the start. With no subagent rows this is the newest
- * `limit` rows, as before.
+ * row after the oldest of them: a subagent's rows, and each subagent's own row, ride
+ * along with the conversation they happened in, so a burst or a fan-out cannot crowd
+ * the conversation off the page. The page stays contiguous and starts at its first
+ * item, as the cursor means; the byte budget still bounds it. Fewer own rows than
+ * `limit` reach back to the start. With no subagent rows this is the newest `limit`
+ * rows, as before. A page reaches back to the first sibling of each subagent group it holds
+ * part of, so loading an older page does not renumber a group's ordinals or move its row.
  */
 function conversationWindow(
   items: readonly AgentJournalRenderItem[],
   limit: number
 ): AgentJournalRenderItem[] {
-  const own = items.filter(isRootAgentJournalItem)
+  const own = items.filter((item) => isRootAgentJournalItem(item) && !isSubagentRow(item))
   if (own.length === items.length) {
     return newestWholeSequenceGroups(items, limit)
   }
   const ownWindow = newestWholeSequenceGroups(own, limit)
   const start = ownWindow.length < own.length ? ownWindow[0]?.sequence : undefined
-  return start === undefined ? [...items] : items.filter((item) => item.sequence >= start)
+  if (start === undefined) {
+    return [...items]
+  }
+  const reach = newestWholeSequenceGroups(own, 2 * limit)
+  const floor = reach.length < own.length ? reach[0]!.sequence : Number.NEGATIVE_INFINITY
+  const whole = wholeSubagentGroupsStart(items, start, floor)
+  return items.filter((item) => item.sequence >= whole)
+}
+
+function isSubagentRow(item: AgentJournalRenderItem): boolean {
+  return item.body.kind === 'message' && item.body.blocks.some(isSubagentBlock)
 }
 
 export function readAgentSessionHistory(

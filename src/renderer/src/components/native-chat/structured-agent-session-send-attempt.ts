@@ -18,10 +18,8 @@ import {
   type StructuredAgentSessionSendAnswer,
   type StructuredAgentSessionSendEvidence
 } from '../../../../shared/structured-agent-session-send-evidence'
-import {
-  ensureRuntimeEnvironmentCompatible,
-  type RuntimeClientTarget
-} from '@/runtime/runtime-rpc-client'
+import { ensureRuntimeEnvironmentCompatible } from '@/runtime/runtime-rpc-client'
+import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
 import { RuntimeRpcCallError } from '@/runtime/runtime-rpc-result'
 import { isRuntimeCompatBlockError } from '@/runtime/runtime-protocol-compat'
 import {

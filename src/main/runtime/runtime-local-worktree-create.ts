@@ -23,6 +23,7 @@ import { createRuntimeLocalGitWorktree } from './runtime-local-git-worktree-crea
 import { resolveRuntimeLocalWorktreeCreateBase } from './runtime-local-worktree-create-base'
 import { materializeRuntimeLocalWorktree } from './runtime-local-worktree-materialization'
 import { resolveRuntimeSetupDecision } from './runtime-local-worktree-setup'
+import { WorktreeCreateSetupChoiceRefusedError } from './worktree-create-setup-choice-refusal'
 import type { PreparationRearmHolder } from '../worktree-create-preparation'
 import {
   localWorktreeCreateExecutionHost,
@@ -70,7 +71,17 @@ async function performRuntimeLocalWorktreeCreate<T>(args: RuntimeLocalWorktreeCr
   // Why before any git work: an `ask` repo with no decision must refuse with nothing created, as
   // the desktop create does; checked after the add, it left an orphan worktree behind.
   if (getEffectiveHooks(repo)?.scripts.setup) {
-    shouldRunSetupForCreate(repo, resolveRuntimeSetupDecision(request))
+    try {
+      shouldRunSetupForCreate(repo, resolveRuntimeSetupDecision(request))
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message === 'Setup decision required for this repository'
+      ) {
+        throw new WorktreeCreateSetupChoiceRefusedError(error.message, { cause: error })
+      }
+      throw error
+    }
   }
   // Username and base resolution are independent read-only probes. Starting
   // both before awaiting removes one serial git/config round trip from create.

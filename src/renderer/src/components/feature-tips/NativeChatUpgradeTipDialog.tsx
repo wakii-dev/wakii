@@ -55,6 +55,7 @@ export function NativeChatUpgradeTipDialog({
   open,
   tip,
   primaryBusy,
+  chatModeOn,
   onOpenChange,
   onPrimaryAction,
   onSettingsClick
@@ -62,11 +63,14 @@ export function NativeChatUpgradeTipDialog({
   open: boolean
   tip: FeatureTip
   primaryBusy: boolean
+  /** Live Chat UI setting. */
+  chatModeOn: boolean
   onOpenChange: (open: boolean) => void
   onPrimaryAction: () => void
   onSettingsClick: () => void
 }): JSX.Element {
   const primaryButtonRef = useRef<HTMLButtonElement>(null)
+  const offerChatMode = !chatModeOn
 
   return (
     <FeatureTipDialogFrame
@@ -142,7 +146,18 @@ export function NativeChatUpgradeTipDialog({
         </div>
       </DialogHeader>
 
-      <DialogFooter className="mt-8 flex sm:justify-stretch">
+      <DialogFooter className="mt-8 flex flex-row items-center">
+        {offerChatMode ? (
+          // Why: plain text, flush with the copy, so Enable Now reads as the only button.
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            disabled={primaryBusy}
+            className="mr-4 shrink-0 cursor-pointer rounded-sm text-sm font-medium whitespace-nowrap text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
+          >
+            {translate('featureTips.nativeChatUpgrade.leaveOff', 'Leave Off')}
+          </button>
+        ) : null}
         <FeatureTipActions
           currentTip={tip}
           primaryBusy={primaryBusy}
@@ -151,7 +166,11 @@ export function NativeChatUpgradeTipDialog({
           showSkip={false}
           fullWidth
           primaryButtonRef={primaryButtonRef}
-          label={translate('featureTips.nativeChatUpgrade.gotIt', 'Got it')}
+          label={
+            offerChatMode
+              ? translate('featureTips.nativeChatUpgrade.enableNow', 'Enable Now')
+              : translate('featureTips.nativeChatUpgrade.gotIt', 'Got It')
+          }
         />
       </DialogFooter>
     </FeatureTipDialogFrame>

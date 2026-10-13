@@ -27,7 +27,7 @@ export class OrcaRuntimeWithCreateTerminal extends OrcaRuntimeWithTerminalCreate
     const rendererWindow = opts.rendererBacked === true ? availableAuthoritativeWindow : null
     const shouldCreateInBackground =
       worktreeSelector !== undefined &&
-      (Boolean(opts.agentSessionClaim) ||
+      (Boolean(opts.agentSessionClaim || opts.requireFreshPane) ||
         (!requiresRendererFocus && opts.rendererBacked !== true) ||
         availableAuthoritativeWindow === null)
     if (shouldCreateInBackground) {
@@ -123,7 +123,7 @@ export class OrcaRuntimeWithCreateTerminal extends OrcaRuntimeWithTerminalCreate
         try {
           const { launchAgent } = launchOpts
           launchOpts.onPtySpawnDispatched?.({ launchConfig: effectiveLaunchConfig, launchAgent })
-          result = await this.ptyController.spawn({
+          result = await dependencies.spawnInAdmittedPane(this.store, this.ptyController, {
             cols: 120,
             rows: 40,
             cwd,
@@ -164,12 +164,12 @@ export class OrcaRuntimeWithCreateTerminal extends OrcaRuntimeWithTerminalCreate
             ...(launchOpts.agentSessionCreateOperationId
               ? { agentSessionCreateOperationId: launchOpts.agentSessionCreateOperationId }
               : {}),
-            ...(launchOpts.signal ? { signal: launchOpts.signal } : {}),
+            ...dependencies.callerSpawnScope(launchOpts),
             ...(launchOpts.onPtySpawnCommitted
               ? { onPtySpawnCommitted: reportPtySpawnCommitted }
               : {}),
             ...(adoptedBeforeLaunch ? { adoptedStablePane: adoptedBeforeLaunch } : {}),
-            placement: dependencies.runtimeNewTabPlacement(),
+            ...dependencies.newTabIn(launchOpts),
             ...(launchOpts.sessionId ? { sessionId: launchOpts.sessionId } : {}),
             ...(!adoptedBeforeLaunch && launchOpts.isNewSession ? { isNewSession: true } : {}),
             ...dependencies.BACKGROUND_TERMINAL_SPAWN_FLAGS
@@ -260,7 +260,7 @@ export class OrcaRuntimeWithCreateTerminal extends OrcaRuntimeWithTerminalCreate
               ...(launchOpts.viewMode ? { viewMode: launchOpts.viewMode } : {}),
               activate: presentation === 'focused',
               ...(presentation ? { presentation } : {}),
-              ...dependencies.ownerSurfacing(opts.surfaceOwner !== false),
+              ...dependencies.terminalRevealViewerOptions(opts),
               tabId,
               leafId
             })

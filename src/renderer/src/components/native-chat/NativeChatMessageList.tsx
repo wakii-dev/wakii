@@ -15,7 +15,7 @@ import { nativeChatTaskListPredecessors } from './native-chat-task-list-history'
 import { NativeChatTaskList } from './NativeChatTaskList'
 import { useNativeChatTurnStatus } from './use-native-chat-turn-status'
 import { NativeChatAwaitingInputRow } from './NativeChatAwaitingInputRow'
-import type { RuntimeFileOperationArgs } from '@/runtime/runtime-file-client'
+import type { RuntimeFileOperationArgs } from '@/runtime/runtime-file-client-types'
 import type { NativeChatTurnActivity } from '../../../../shared/native-chat-turn-activity'
 import { NativeChatTurnActivityLine } from './NativeChatTurnActivityLine'
 import {
@@ -157,6 +157,11 @@ export function NativeChatMessageList({
     subagentDisclosure,
     openSubagentSections
   } = useNativeChatSubagentSections(messages, subagentRows, subagentRoster)
+  // Folded subagent rows stay loaded, so a reopened reply keeps its reveal.
+  const loadedMessageIds = useMemo(
+    () => new Set([...messages.map(({ id }) => id), ...subagentSections.pathOf.keys()]),
+    [messages, subagentSections]
+  )
   const taskListPredecessors = useMemo(() => nativeChatTaskListPredecessors(messages), [messages])
   const taskListState = useMemo(() => nativeChatTaskListState(messages), [messages])
   // Each row's turn, which turn is live, and the order the rows draw in, resolved once.
@@ -228,7 +233,8 @@ export function NativeChatMessageList({
     isVisible,
     // One pin serves both: revealing a diff and jumping from the rail are
     // mutually exclusive things to be doing.
-    revealIndex: nativeChatSlotIndexOf(slots, railJump?.messageId ?? revealedDiff?.messageId)
+    revealIndex: nativeChatSlotIndexOf(slots, railJump?.messageId ?? revealedDiff?.messageId),
+    typography
   })
   const { showJump, onScroll, scrollToBottom, scrollMessageToTop, readerLeavesEnd } =
     useNativeChatTranscriptScroll({
@@ -389,6 +395,7 @@ export function NativeChatMessageList({
               >
                 <NativeChatTranscriptItems
                   slots={slots}
+                  loadedMessageIds={loadedMessageIds}
                   context={rowContext}
                   window={transcriptWindow}
                 />

@@ -28,7 +28,7 @@ export class SystemSshPortForwardProvider implements SshPortForwardProvider {
     // Why: this stderr stays attached for the forward's whole lifetime but is
     // only used to build the exit-error detail, so keep a bounded tail — a chatty
     // remote sshd could otherwise grow it unbounded on a long-lived forward
-    // (mirrors MAX_RELAY_STARTUP_BUFFER_BYTES in ssh-relay-deploy-helpers).
+    // (mirrors MAX_RELAY_STARTUP_BUFFER_BYTES in ssh-relay-sentinel).
     const MAX_STDERR_TAIL_BYTES = 64 * 1024
     let stderr = ''
     const onStderr = (chunk: Buffer): void => {

@@ -15,9 +15,9 @@ function candidate(path: string): SearchFileResult {
 }
 
 const GUARD: FileExplorerOperationGuard = {
-  route: { settings: { activeRuntimeEnvironmentId: null }, expectedExecutionHostId: 'local' },
+  route: { target: { kind: 'local' } as const, expectedExecutionHostId: 'local' },
   assertCurrent: () => ({
-    settings: { activeRuntimeEnvironmentId: null },
+    target: { kind: 'local' } as const,
     expectedExecutionHostId: 'local'
   })
 }

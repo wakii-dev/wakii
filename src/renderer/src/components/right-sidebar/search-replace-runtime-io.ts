@@ -6,6 +6,7 @@ import { statRuntimePath } from '@/runtime/runtime-file-metadata-client'
 import { writeRuntimeFile } from '@/runtime/runtime-file-mutation-client'
 import { getRelativePathInsideWorktree } from '@/runtime/runtime-file-routing'
 import type { RuntimeFileOperationArgs } from '@/runtime/runtime-file-client-types'
+import { runtimeTargetEnvironmentId } from '@/runtime/runtime-client-target'
 import { useAppStore } from '@/store'
 import type { ReplaceAllIo } from './search-replace-all-runner'
 
@@ -13,14 +14,14 @@ import type { ReplaceAllIo } from './search-replace-all-runner'
 // clients the explorer's create/rename/delete already use — no new wire
 // surface, so SSH worktrees behave exactly like those proven flows.
 export function buildReplaceAllIo(context: RuntimeFileOperationArgs): ReplaceAllIo {
-  const runtimeEnvironmentId = context.settings?.activeRuntimeEnvironmentId?.trim() || null
+  const runtimeEnvironmentId = runtimeTargetEnvironmentId(context.target)
   const remoteEcho = Boolean(context.connectionId || runtimeEnvironmentId)
 
   return {
     stat: (filePath) => statRuntimePath(context, filePath),
     read: async (filePath) =>
       readRuntimeFileContent({
-        settings: context.settings,
+        target: context.target,
         filePath,
         relativePath: getRelativePathInsideWorktree(context.worktreePath, filePath) ?? filePath,
         worktreeId: context.worktreeId ?? undefined,

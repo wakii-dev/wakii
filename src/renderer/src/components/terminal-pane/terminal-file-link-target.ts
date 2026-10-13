@@ -1,3 +1,4 @@
+import { useAppStore } from '@/store'
 import {
   isPathInsideWorktree,
   resolveTerminalFileLink,
@@ -5,15 +6,13 @@ import {
 } from '@/lib/terminal-links'
 import { normalizeAbsolutePath } from '@/lib/terminal-path-normalization'
 import { parseWslUncPath } from '../../../../shared/wsl-paths'
-import {
-  isRemoteRuntimeFileOperation,
-  type RuntimeFileOperationArgs
-} from '@/runtime/runtime-file-client'
+import { isRemoteRuntimeFileOperation } from '@/runtime/runtime-file-routing'
 import {
   getTerminalFileContext,
   mapTerminalFilePath,
   terminalLinkWslDistro,
-  terminalPathWslDistro
+  terminalPathWslDistro,
+  type TerminalFileContext
 } from './terminal-file-path-mapping'
 import type { createTerminalPathExistenceBatch } from './terminal-path-existence-batch'
 import {
@@ -22,6 +21,10 @@ import {
   writeTerminalPathExistsCache
 } from './terminal-path-exists-cache'
 import { resolveKnownWorktreeRootPathLink } from './terminal-worktree-path-link'
+import {
+  hostFileLinkTargetExists,
+  isHostPathOutsideWorkspace
+} from './terminal-host-file-link-existence'
 
 /** Where detected path text resolves and is checked: a terminal pane's or a chat's folder. */
 export type FileLinkHost = {
@@ -38,7 +41,7 @@ export type FileLinkTarget = {
   absolutePath: string
   line: number | null
   column: number | null
-  fileContext: RuntimeFileOperationArgs
+  fileContext: TerminalFileContext
   isRemoteRuntimePath: boolean
   cacheKey: string
   isKnownWorktreeRoot: boolean
@@ -60,15 +63,17 @@ export function resolveFileLinkTarget(
     host.worktreePath,
     terminalLinkWslDistro(host.wslDistro, host.runtimeEnvironmentId)
   )
-  const isKnownWorktreeRoot = Boolean(resolveKnownWorktreeRootPathLink(absolutePath))
-  if (/[\\/]$/.test(parsed.pathText) && !isKnownWorktreeRoot) {
-    return null
-  }
   const fileContext = getTerminalFileContext(
     host.worktreeId,
     host.worktreePath,
     host.runtimeEnvironmentId
   )
+  const isKnownWorktreeRoot = Boolean(
+    resolveKnownWorktreeRootPathLink(absolutePath, useAppStore.getState(), fileContext)
+  )
+  if (/[\\/]$/.test(parsed.pathText) && !isKnownWorktreeRoot) {
+    return null
+  }
   const isRemoteRuntimePath = isRemoteRuntimeFileOperation(fileContext, absolutePath)
   return {
     absolutePath,
@@ -117,12 +122,21 @@ export function mayCheckFileLinkTargetUnprompted(
 export async function fileLinkTargetExists(
   target: FileLinkTarget,
   cache: Map<string, boolean>,
-  pathExists: FileLinkPathExistence
+  pathExists: FileLinkPathExistence,
+  terminalHandle?: string | null
 ): Promise<boolean> {
   // Why: exact known workspace roots must stay clickable for SSH or
   // stale local paths even when filesystem probing says "missing".
   if (target.isKnownWorktreeRoot) {
     return true
+  }
+  if (!target.fileContext.sourceHostResolved) {
+    // Why: no owner means no host to ask; a local stat would answer for the wrong machine.
+    throw new Error('The terminal workspace host could not be determined')
+  }
+  if (isHostPathOutsideWorkspace(target)) {
+    // Why: a local stat here would answer for this computer, not the server that printed the path.
+    return hostFileLinkTargetExists(target, cache, terminalHandle)
   }
   const exists =
     readTerminalPathExistsCache(cache, target.cacheKey) ??

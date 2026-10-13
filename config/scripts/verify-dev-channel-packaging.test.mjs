@@ -34,11 +34,28 @@ afterEach(() => {
 })
 
 describe('electron-builder dev-channel identity', () => {
-  it('keeps the SignPath publisherName on stable Windows builds', () => {
-    const config = loadConfigWithEnv({})
+  const SIGNPATH_RELAY_ENV = {
+    ORCA_WIN_UNINSTALLER_EXPORT_PATH: 'unsigned/uninstaller',
+    ORCA_WIN_UNINSTALLER_SIGNED_PATH: 'signed/uninstaller'
+  }
+
+  it('keeps the SignPath publisherName on signed stable Windows builds', () => {
+    const config = loadConfigWithEnv(SIGNPATH_RELAY_ENV)
 
     expect(config.win.signtoolOptions.publisherName).toBe('SignPath Foundation')
     expect(config.win.verifyUpdateCodeSignature).toBeUndefined()
+    expect(config.publish.repo).toBe('orca')
+    expect(config.publish.releaseType).toBe('draft')
+  })
+
+  // Fork stable builds are unsigned (no SignPath secrets): an unsigned build
+  // that advertises a publisherName makes the installed app Authenticode-reject
+  // every downloaded installer — "publisher doesn't match Wakii" (13/10).
+  it('drops the publisherName and disables update signature checks on unsigned stable Windows builds', () => {
+    const config = loadConfigWithEnv({})
+
+    expect(config.win.signtoolOptions?.publisherName).toBeUndefined()
+    expect(config.win.verifyUpdateCodeSignature).toBe(false)
     expect(config.publish.repo).toBe('orca')
     expect(config.publish.releaseType).toBe('draft')
   })

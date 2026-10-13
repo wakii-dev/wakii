@@ -1,10 +1,8 @@
 import { ipcMain } from 'electron'
 import type { GitBlameOptions, GitBlameResult } from '../../../shared/git-blame-types'
 import { getBlame } from '../../git/blame'
-import {
-  getSshGitProvider,
-  SSH_GIT_PROVIDER_UNAVAILABLE_MESSAGE
-} from '../../providers/ssh-git-dispatch'
+import { requireReachableGitRoute } from '../../providers/execution-host-provider-dispatch'
+import { getConnectionExecutionHostId } from '../../../shared/execution-host'
 import { resolveRegisteredWorktreePath } from '../registered-worktree-roots-cache'
 import { validateGitRelativeFilePath } from '../filesystem-path-containment'
 import { getLocalGitOptionsForRegisteredWorktree } from '../local-worktree-runtime-options'
@@ -19,14 +17,7 @@ export function registerFilesystemGitBlameHandlers(context: FilesystemHandlerCon
       args: { worktreePath: string; connectionId?: string } & GitBlameOptions
     ): Promise<GitBlameResult> => {
       // Why 'interactive': blame is user-waiting (cursor/hover-triggered) — tier 0.
-      if (args.connectionId) {
-        const filePath = validateGitRelativeFilePath(args.worktreePath, args.filePath)
-        const provider = getSshGitProvider(args.connectionId)
-        if (!provider) {
-          throw new Error(SSH_GIT_PROVIDER_UNAVAILABLE_MESSAGE)
-        }
-        return provider.getBlame(args.worktreePath, { filePath })
-      }
+      requireReachableGitRoute(getConnectionExecutionHostId(args.connectionId))
       const worktreePath = await resolveRegisteredWorktreePath(args.worktreePath, store)
       const filePath = validateGitRelativeFilePath(worktreePath, args.filePath)
       const gitOptions = getLocalGitOptionsForRegisteredWorktree(

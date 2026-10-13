@@ -58,6 +58,7 @@ export abstract class CliInstallLocation {
   protected readonly hasUnverifiedAppImageRuntime: boolean
   protected readonly appImageCacheRootPath: string
   protected readonly appImageExtractRunner?: (appImagePath: string, cwd: string) => Promise<void>
+  protected readonly appImageDeadlineAt?: number
 
   protected get commandName(): string {
     if (!this.isPackaged && !this.commandPathOverride) {
@@ -117,6 +118,7 @@ export abstract class CliInstallLocation {
     this.appImageCacheRootPath =
       options.appImageCacheRootPath ?? getAppImageCacheRootPath(this.homePath)
     this.appImageExtractRunner = options.appImageExtractRunner
+    this.appImageDeadlineAt = options.appImageDeadlineAt
   }
 
   protected resolveInstallSpec(): InstallSpec | null {
@@ -274,7 +276,8 @@ export abstract class CliInstallLocation {
       ? {
           appImagePath: this.appImagePath,
           cacheRootPath: this.appImageCacheRootPath,
-          runExtract: this.appImageExtractRunner
+          runExtract: this.appImageExtractRunner,
+          deadlineAt: this.appImageDeadlineAt
         }
       : null
   }

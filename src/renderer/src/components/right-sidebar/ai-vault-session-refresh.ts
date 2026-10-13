@@ -20,10 +20,15 @@ import {
   resetAiVaultSessionResultCacheForTest
 } from './ai-vault-session-result-cache'
 import {
-  aiVaultSessionListArgs,
+  refreshAiVaultSessionList,
+  type AiVaultConditionalSnapshot,
   cacheAiVaultSessionList,
   readCachedAiVaultSessionList
 } from './ai-vault-session-list-request'
+import {
+  getAgentSessionIdsKey,
+  resetAgentSessionIdsRefreshKeys
+} from './ai-vault-agent-session-refresh-key'
 import { createBrowserUuid } from '@/lib/browser-uuid'
 
 // In-app session creation bypasses the cache so the new session appears promptly.
@@ -32,10 +37,11 @@ const FORCED_RESCAN_MIN_INTERVAL_MS = 30_000
 let lastForcedRescanAt = 0
 
 /** Takes the shared forced-rescan budget when it is free. Every caller outside the panel that forces
- *  a scan must take it too, or it would amplify full scans the same way. */
-export function claimAiVaultForcedRescan(): boolean {
+ *  a scan must take it too, or it would amplify full scans the same way. A user's explicit request
+ *  takes it even when spent, as the panel's Refresh does, so no automatic rescan follows it. */
+export function claimAiVaultForcedRescan(userRequested = false): boolean {
   const now = Date.now()
-  if (lastForcedRescanAt + FORCED_RESCAN_MIN_INTERVAL_MS > now) {
+  if (!userRequested && lastForcedRescanAt + FORCED_RESCAN_MIN_INTERVAL_MS > now) {
     return false
   }
   lastForcedRescanAt = now
@@ -44,7 +50,7 @@ export function claimAiVaultForcedRescan(): boolean {
 
 export function resetAiVaultForcedRescanThrottleForTest(): void {
   lastForcedRescanAt = 0
-  agentSessionIdsKeyBySnapshot = new WeakMap<object, string>()
+  resetAgentSessionIdsRefreshKeys()
   resetAiVaultSessionResultCacheForTest()
 }
 
@@ -61,33 +67,6 @@ type AiVaultRefreshArgs = { force?: boolean; background?: boolean; reuseLoadedDe
 // merge, which is the bug this guard exists to prevent.
 function isMergedAiVaultHostScope(scope: ExecutionHostScope): boolean {
   return requestedExecutionHostScope(scope) === ALL_EXECUTION_HOSTS_SCOPE
-}
-
-// Why: this selector runs on every store write; index each immutable status snapshot once.
-// Why resettable: every production writer replaces the map, but test fixtures commonly
-// mutate `mockStoreState.agentStatusByPaneKey[key]` in place, which would keep serving the
-// key cached for the identity they mutated.
-let agentSessionIdsKeyBySnapshot = new WeakMap<object, string>()
-
-function getAgentSessionIdsKey(
-  agentStatusByPaneKey: Record<string, { providerSession?: { id?: string } | null }> | undefined
-): string {
-  if (!agentStatusByPaneKey) {
-    return ''
-  }
-  const cached = agentSessionIdsKeyBySnapshot.get(agentStatusByPaneKey)
-  if (cached !== undefined) {
-    return cached
-  }
-  const ids: string[] = []
-  for (const entry of Object.values(agentStatusByPaneKey)) {
-    if (entry.providerSession?.id) {
-      ids.push(entry.providerSession.id)
-    }
-  }
-  const key = ids.sort().join('\n')
-  agentSessionIdsKeyBySnapshot.set(agentStatusByPaneKey, key)
-  return key
 }
 
 export function useAiVaultSessionRefresh(
@@ -116,6 +95,9 @@ export function useAiVaultSessionRefresh(
   const pendingForceRef = useRef(false)
   const pendingBackgroundRef = useRef(true)
   const lastAppliedScanRef = useRef<{ scopeKey: string; scannedAt: string } | null>(null)
+  const conditionalSnapshotRef = useRef<(AiVaultConditionalSnapshot & { scopeKey: string }) | null>(
+    null
+  )
   const mountedRef = useRef(true)
   const publicationGateRef = useRef<AiVaultSessionPublicationGate>(undefined!)
   publicationGateRef.current ??= new AiVaultSessionPublicationGate()
@@ -155,7 +137,11 @@ export function useAiVaultSessionRefresh(
         lastAppliedScanRef.current = { scopeKey: scanKey, scannedAt: cachedResult.scannedAt }
         setError(null)
         publicationGateRef.current.publish(cachedResult, (published) => {
-          applyScan(published, selectedLimit)
+          applyScan(published, selectedLimit, (applied) => {
+            conditionalSnapshotRef.current = published.fingerprint
+              ? { scopeKey: scanKey, fingerprint: published.fingerprint, result: applied }
+              : null
+          })
         })
         setLoading(false)
         return
@@ -191,11 +177,11 @@ export function useAiVaultSessionRefresh(
         sessionLimit: selectedLimit
       }
       try {
-        const result = await window.api.aiVault.listSessions(
-          aiVaultSessionListArgs(request, {
-            force: args.force,
-            requestToken: requestTokenRef.current
-          })
+        const previous = conditionalSnapshotRef.current
+        const result = await refreshAiVaultSessionList(
+          request,
+          { force: args.force, requestToken: requestTokenRef.current },
+          previous?.scopeKey === scanKey ? previous : undefined
         )
         // A superseded scan resolves cancelled rather than rejecting, so the
         // main-process log stays clean; its empty body must not be painted.
@@ -217,7 +203,8 @@ export function useAiVaultSessionRefresh(
         if (
           !isMergedAiVaultHostScope(hostScope) &&
           lastAppliedScanRef.current?.scopeKey === scanKey &&
-          lastAppliedScanRef.current.scannedAt === result.scannedAt
+          lastAppliedScanRef.current.scannedAt === result.scannedAt &&
+          result.fingerprint === undefined
         ) {
           return
         }
@@ -225,7 +212,11 @@ export function useAiVaultSessionRefresh(
         cacheAiVaultSessionList(request, result, { replaceHostEntries: args.force === true })
         publicationGateRef.current.publish(result, (published) => {
           if (mountedRef.current && scanKey === currentScanScopeKey()) {
-            applyScan(published, selectedLimit)
+            applyScan(published, selectedLimit, (applied) => {
+              conditionalSnapshotRef.current = published.fingerprint
+                ? { scopeKey: scanKey, fingerprint: published.fingerprint, result: applied }
+                : null
+            })
           }
         })
       } catch (err) {

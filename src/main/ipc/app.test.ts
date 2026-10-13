@@ -118,7 +118,6 @@ vi.mock('./macos-keyboard-layout-change-notifications', () => ({
 }))
 
 const windowsProbes = vi.hoisted(() => ({
-  isWslAvailable: vi.fn(() => true),
   isWslAvailableAsync: vi.fn(async () => true),
   listWslDistros: vi.fn(() => ['Ubuntu']),
   listWslDistrosAsync: vi.fn(async () => ['Ubuntu']),
@@ -127,7 +126,6 @@ const windowsProbes = vi.hoisted(() => ({
 }))
 
 vi.mock('../wsl', () => ({
-  isWslAvailable: windowsProbes.isWslAvailable,
   isWslAvailableAsync: windowsProbes.isWslAvailableAsync,
   listWslDistros: windowsProbes.listWslDistros,
   listWslDistrosAsync: windowsProbes.listWslDistrosAsync
@@ -227,6 +225,37 @@ describe('registerAppHandlers', () => {
     await vi.advanceTimersByTimeAsync(150)
 
     expect(appRelaunchMock).toHaveBeenCalledTimes(1)
+    expect(appExitMock).toHaveBeenCalledWith(0)
+  })
+
+  it('runs exit-only cleanup after pre-relaunch cleanup on relaunch, never on restart', async () => {
+    let finishExitCleanup!: () => void
+    const onBeforeRelaunch = vi.fn()
+    const onBeforeRelaunchExit = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          finishExitCleanup = resolve
+        })
+    )
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: relaunch and restart never read the store.
+    registerAppHandlers({} as never, { onBeforeRelaunch, onBeforeRelaunchExit })
+
+    await handlers.get('app:restart')?.(null)
+    await vi.advanceTimersByTimeAsync(150)
+    expect(onBeforeRelaunchExit).not.toHaveBeenCalled()
+
+    const relaunchPromise = Promise.resolve(handlers.get('app:relaunch')?.(null))
+    await vi.advanceTimersByTimeAsync(0)
+    expect(onBeforeRelaunchExit).toHaveBeenCalledOnce()
+    expect(onBeforeRelaunch.mock.invocationCallOrder.at(-1)).toBeLessThan(
+      onBeforeRelaunchExit.mock.invocationCallOrder[0]
+    )
+    await vi.advanceTimersByTimeAsync(150)
+    expect(appExitMock).not.toHaveBeenCalled()
+
+    finishExitCleanup()
+    await relaunchPromise
+    await vi.advanceTimersByTimeAsync(150)
     expect(appExitMock).toHaveBeenCalledWith(0)
   })
 
@@ -433,7 +462,6 @@ describe('registerAppHandlers', () => {
     expect(windowsProbes.isWslAvailableAsync).toHaveBeenCalledTimes(1)
     expect(windowsProbes.listWslDistrosAsync).toHaveBeenCalledTimes(1)
     expect(windowsProbes.isPwshAvailableAsync).toHaveBeenCalledTimes(1)
-    expect(windowsProbes.isWslAvailable).not.toHaveBeenCalled()
     expect(windowsProbes.listWslDistros).not.toHaveBeenCalled()
     expect(windowsProbes.isPwshAvailable).not.toHaveBeenCalled()
   })

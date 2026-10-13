@@ -3,7 +3,7 @@ import { lstatSync, readlinkSync, statSync } from 'node:fs'
 import { mkdir, mkdtemp, rename, rm, rmdir, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { dirname, isAbsolute, join, resolve } from 'node:path'
-import { runProcess } from '../../shared/child-process/run-process'
+import { runProcess } from '@orca/process-host'
 import { resolveCachedAppImagePayloadRoot } from './appimage-cache-layout'
 import { removeExtractedAppImagePayload } from './appimage-payload-removal'
 import { LINUX_CLI_COMMAND_NAME } from './bundled-cli-launcher-path'
@@ -31,10 +31,18 @@ export type AppImageExtractedRoot = {
   stableLauncherPath: string
 }
 
+export type AppImageExtractRunner = (
+  appImagePath: string,
+  cwd: string,
+  timeoutMs: number
+) => Promise<void>
+
 export type AppImageExtractionOptions = {
   appImagePath: string
   cacheRootPath?: string
-  runExtract?: (appImagePath: string, cwd: string) => Promise<void>
+  runExtract?: AppImageExtractRunner
+  /** Absolute time (ms) by which every extraction attempt must have finished. */
+  deadlineAt?: number
 }
 
 export function getAppImageCacheRootPath(homePath = homedir()): string {
@@ -126,7 +134,8 @@ export function isAppImageInstalledLauncherOwnedBySibling(
     return (
       targetRoot !== null &&
       hasPayloadLauncher(targetRoot) &&
-      dirname(targetRoot) !== resolveAppImageNamespacePath(options)
+      dirname(targetRoot) !== resolveAppImageNamespacePath(options) &&
+      dirname(targetRoot) !== resolveLegacyAppImageNamespacePath(options)
     )
   } catch {
     return false
@@ -138,7 +147,7 @@ export async function ensureAppImageExtractedRoot(
 ): Promise<AppImageExtractedRoot | null> {
   for (let attempt = 0; attempt < MAX_GENERATION_ATTEMPTS; attempt += 1) {
     const root = resolveAppImageExtractedRoot(options)
-    if (!root) {
+    if (!root || remainingExtractionMs(options) <= 0) {
       return null
     }
     const complete =
@@ -177,7 +186,11 @@ async function extractAppImageGeneration(
   const stagingPath = await mkdtemp(join(namespacePath, EXTRACTION_STAGING_PREFIX))
   const stopTracking = trackAppImageExtraction(stagingPath)
   try {
-    await (options.runExtract ?? runAppImageExtract)(options.appImagePath, stagingPath)
+    const timeoutMs = remainingExtractionMs(options)
+    if (timeoutMs <= 0) {
+      return false
+    }
+    await (options.runExtract ?? runAppImageExtract)(options.appImagePath, stagingPath, timeoutMs)
     const extractedPath = join(stagingPath, EXTRACT_OUTPUT_DIR)
     if (!hasPayloadLauncher(extractedPath) || !isCurrentGeneration(options, root)) {
       return false
@@ -194,11 +207,30 @@ async function extractAppImageGeneration(
   }
 }
 
+function remainingExtractionMs(options: AppImageExtractionOptions): number {
+  return options.deadlineAt === undefined
+    ? APPIMAGE_EXTRACTION_TIMEOUT_MS
+    : Math.min(APPIMAGE_EXTRACTION_TIMEOUT_MS, options.deadlineAt - Date.now())
+}
+
 function digest(value: string): string {
   return createHash('sha256').update(value).digest('hex').slice(0, 24)
 }
 
+// Why a versioned key: builds before generation leases prune every generation in
+// digest(appImagePath) except their own, including one a newer build still runs from. They never
+// scan this namespace. Rolling back to such a build reopens that window for its own namespace only.
+const NAMESPACE_KEY_VERSION = 'generation-lease-v1'
+
 export function resolveAppImageNamespacePath(options: AppImageExtractionOptions): string {
+  return join(
+    resolveAppImageCacheRootPath(options),
+    digest(`${NAMESPACE_KEY_VERSION}\0${options.appImagePath}`)
+  )
+}
+
+/** The namespace pre-lease builds used for this AppImage path. */
+export function resolveLegacyAppImageNamespacePath(options: AppImageExtractionOptions): string {
   return join(resolveAppImageCacheRootPath(options), digest(options.appImagePath))
 }
 
@@ -259,12 +291,16 @@ async function renameRoot(sourcePath: string, destinationPath: string): Promise<
   }
 }
 
-async function runAppImageExtract(appImagePath: string, cwd: string): Promise<void> {
+async function runAppImageExtract(
+  appImagePath: string,
+  cwd: string,
+  timeoutMs: number
+): Promise<void> {
   const result = await runProcess({
     program: appImagePath,
     args: ['--appimage-extract'],
     cwd,
-    timeoutMs: APPIMAGE_EXTRACTION_TIMEOUT_MS,
+    timeoutMs,
     maxOutputBytes: 1024 * 1024,
     terminationBarrier: true
   })

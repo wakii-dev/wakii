@@ -17,7 +17,8 @@ import {
   isAgentLaunchPaneSpawnHeld
 } from '@/lib/agent-launch-pane-spawn-hold'
 import { seedNativeChatAppliedSessionOptions } from '@/components/native-chat/native-chat-session-option-cache'
-import { callRuntimeRpc, RuntimeRpcCallError } from '@/runtime/runtime-rpc-client'
+import { callRuntimeRpc } from '@/runtime/runtime-rpc-client'
+import { RuntimeRpcCallError } from '@/runtime/runtime-rpc-result'
 import { createAgentSessionOperationId } from '@/runtime/agent-session-operation-id'
 import { isAgentLaunchResult } from '../../../shared/agent-launch-intent'
 import { AGENT_LAUNCH_TAB_CLOSED_CODE } from '../../../shared/agent-launch-tab-closed'

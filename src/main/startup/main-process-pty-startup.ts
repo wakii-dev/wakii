@@ -1,12 +1,10 @@
 import { app } from 'electron'
 import { classifyError } from '../telemetry/classify-error'
 import { track } from '../telemetry/client'
-import { getPtyIdForPaneKey } from '../ipc/pty'
-import {
-  getDaemonProvider,
-  initDaemonPtyProvider,
-  listLiveDaemonPtyIds
-} from '../daemon/daemon-init'
+import { getPtyIdForPaneKey } from '../ipc/pty/pane/key-state'
+import { getDaemonProvider, listLiveDaemonPtyIds } from '../daemon/daemon-provider-state'
+import { initDaemonPtyProvider } from '../daemon/daemon-provider-init'
+import { resolveTerminalSpawnAdmissionMode } from '../daemon/terminal-spawn-gate'
 import {
   getCodexPaneAccount,
   hasAnyRecordedLegacyWslCodexPane,
@@ -138,7 +136,9 @@ export function startTerminalRuntimeStartupServices(): WindowsDesktopStartupServ
       // Why: only GUI-spawned macOS daemons watch for login-session death; a headless
       // serve daemon must survive its spawning session ending (SSH disconnect).
       await initDaemonPtyProvider(signal, {
-        macosLoginSessionWatch: process.platform === 'darwin' && !state.isServeMode
+        macosLoginSessionWatch: process.platform === 'darwin' && !state.isServeMode,
+        // Why both: desktop and `orca serve` share one restore budget per machine (D1 Q1).
+        spawnAdmission: resolveTerminalSpawnAdmissionMode()
       })
       // Why: a retained shell keeps its launch-time Codex home even when the current routing lane changes.
       const hasRetainedManagedHostPane = hasRecordedManagedHostCodexPane()

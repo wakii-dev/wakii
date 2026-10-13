@@ -18,12 +18,38 @@ export function commandReceiptScope(
   return operationIdScope === 'global' ? { kind: 'global' } : { kind: 'caller', callerKey }
 }
 
-/** The pointer locates the result; if its row is gone, the command stays spent: read what remains, else unknown, never rerun. */
+/** What a replay answers from: a pointer (if its row is gone the command stays spent: read what remains, else unknown, never rerun), or the outcome itself. */
 export const commandReceiptResultSchema = z.discriminatedUnion('kind', [
   z.strictObject({
     kind: z.literal('journal-row'),
     epoch: z.string().min(1),
     sequence: z.int().positive()
+  }),
+  z.strictObject({
+    kind: z.literal('queued-draft'),
+    messageId: z.string().min(1)
+  }),
+  /** An accepted prompt answer, kept whole: no rewind or later revision changes its replay. Its
+   *  values are the resolution the prompt's row holds, bounded as that row is. */
+  z.strictObject({
+    kind: z.literal('prompt-answer'),
+    itemId: z.string().min(1),
+    revision: z.int().positive(),
+    resolution: z.strictObject({
+      state: z.literal('resolved'),
+      selectedOptionId: z.string().nullable(),
+      answers: z
+        .array(
+          z.strictObject({
+            questionId: z.string(),
+            optionIds: z.array(z.string()),
+            other: z.string().optional()
+          })
+        )
+        .optional(),
+      resolvedBy: z.string().nullable(),
+      resolvedAt: z.number().nullable()
+    })
   }),
   z.strictObject({
     kind: z.literal('no-op'),
@@ -33,7 +59,12 @@ export const commandReceiptResultSchema = z.discriminatedUnion('kind', [
         cancelled: z.literal(false),
         turnId: z.string().optional()
       }),
-      z.strictObject({ kind: z.literal('queue-resume'), resumed: z.literal(false) })
+      z.strictObject({ kind: z.literal('queue-resume'), resumed: z.literal(false) }),
+      z.strictObject({
+        kind: z.literal('queue-delete'),
+        messageId: z.string().min(1),
+        disposition: z.enum(['dispatched', 'withdrawn', 'missing'])
+      })
     ])
   })
 ])
@@ -75,7 +106,7 @@ export const commandReceiptSchema = z.discriminatedUnion('status', [
 
 export type CommandReceipt = z.infer<typeof commandReceiptSchema>
 
-/** Additive and inert until cutover; a version bump here would prevent older builds writing. */
+/** Additive, so no version bump: one would stop older builds writing this database. */
 export function ensureCommandReceiptsTable(db: Database.Database): void {
   db.exec(`
 CREATE TABLE IF NOT EXISTS agent_session_command_receipts (

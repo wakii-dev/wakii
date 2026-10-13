@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type JSX } from 'react'
 import { toast } from 'sonner'
 import { getDefaultVoiceSettings } from '../../../../shared/constants'
+import { isInNativeChatUpgradeTipAudience } from '../../../../shared/native-chat-upgrade-tip-audience'
 import {
   ORCHESTRATION_ENABLED_STORAGE_KEY,
   ORCHESTRATION_SETUP_DISMISSED_STORAGE_KEY,
@@ -32,9 +33,10 @@ export default function FeatureTipsModal(): JSX.Element | null {
   const openSettingsTarget = useAppStore((s) => s.openSettingsTarget)
   const settings = useAppStore((s) => s.settings)
   const updateSettings = useAppStore((s) => s.updateSettings)
+  const updateSettingsOrThrow = useAppStore((s) => s.updateSettingsOrThrow)
   const seenTipIds = useAppStore((s) => s.featureTipsSeenIds)
   const featureInteractions = useAppStore((s) => s.featureInteractions)
-  const inNativeChatUpgradeTipAudience = useAppStore((s) => s.inNativeChatUpgradeTipAudience)
+  const nativeChatUpgradeTipVariant = useAppStore((s) => s.nativeChatUpgradeTipVariant)
   const markFeatureTipsSeen = useAppStore((s) => s.markFeatureTipsSeen)
   const modalData = useAppStore((s) => s.modalData)
   const showAiVaultSearch = useAppStore((s) => s.showAiVaultSearch)
@@ -49,7 +51,7 @@ export default function FeatureTipsModal(): JSX.Element | null {
     modalData,
     seenTipIds,
     featureInteractions,
-    inNativeChatUpgradeTipAudience,
+    inNativeChatUpgradeTipAudience: isInNativeChatUpgradeTipAudience(nativeChatUpgradeTipVariant),
     settings,
     webClient: isWebClientLocation()
   })
@@ -136,9 +138,25 @@ export default function FeatureTipsModal(): JSX.Element | null {
       return
     }
 
-    markFeatureTipsSeen([currentTip.id])
+    if (currentTip.action !== 'learn-native-chat-upgrade') {
+      markFeatureTipsSeen([currentTip.id])
+    }
     switch (currentTip.action) {
       case 'learn-native-chat-upgrade': {
+        if (settings?.experimentalNativeChat !== true) {
+          setPrimaryBusy(true)
+          try {
+            await updateSettingsOrThrow({ experimentalNativeChat: true })
+          } catch {
+            toast.error(
+              translate('featureTips.nativeChatUpgrade.enableError', 'Could not enable chat mode.')
+            )
+            return
+          } finally {
+            setPrimaryBusy(false)
+          }
+        }
+        markFeatureTipsSeen([currentTip.id])
         closeModal()
         break
       }
@@ -300,6 +318,7 @@ export default function FeatureTipsModal(): JSX.Element | null {
         open={isOpen}
         tip={currentTip}
         primaryBusy={primaryBusy}
+        chatModeOn={settings?.experimentalNativeChat === true}
         onOpenChange={handleOpenChange}
         onPrimaryAction={() => void handlePrimaryAction()}
         onSettingsClick={openNativeChatSettings}

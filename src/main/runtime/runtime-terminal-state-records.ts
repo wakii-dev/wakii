@@ -9,7 +9,7 @@ import type { TerminalTitleTracker } from '../../shared/terminal-output-side-eff
 import type { TuiAgent } from '../../shared/tui-agent'
 import type { TerminalAgent } from '../../shared/terminal-agent'
 import type { HeadlessEmulator } from '../daemon/headless-emulator'
-import type { PtyProviderBufferSnapshot } from '../providers/types'
+import type { PtyProviderBufferSnapshot } from '../providers/pty-provider-contract'
 import type { RetainedTailRedrawCursor } from './terminal-tail-redraw-buffer'
 import type { TerminalTailWaitState } from './terminal-wait-tail-state'
 import type { TerminalCommandPaint } from './terminal-command-paint'

@@ -10,7 +10,7 @@ import {
 import { toast } from 'sonner'
 import { useMountedRef } from '@/hooks/useMountedRef'
 import { translate } from '@/i18n/i18n'
-import { unwrapRuntimeRpcResult } from '@/runtime/runtime-rpc-client'
+import { unwrapRuntimeRpcResult } from '@/runtime/runtime-rpc-result'
 import { extractRuntimeTransportDiagnostics } from '@/runtime/runtime-status-probe-diagnostics'
 import { useAppStore } from '@/store'
 import {

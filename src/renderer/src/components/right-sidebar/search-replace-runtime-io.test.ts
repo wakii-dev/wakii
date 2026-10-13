@@ -39,7 +39,7 @@ vi.mock('@/store', () => ({
 }))
 
 const LOCAL_CONTEXT = {
-  settings: { activeRuntimeEnvironmentId: null },
+  target: { kind: 'local' } as const,
   worktreeId: 'wt-1',
   worktreePath: '/wt',
   connectionId: undefined

@@ -139,7 +139,11 @@ function boundBlock(block: NativeChatBlock, state: TranscriptBoundState): Native
       input: boundToolInput(block.input, budget, 0, state)
     }
   }
-  if (block.type === 'subagent-group' || block.type === 'background-task') {
+  if (
+    block.type === 'subagent-group' ||
+    block.type === 'subagent' ||
+    block.type === 'background-task'
+  ) {
     return boundWorkerTranscriptActivityBlock(block, {
       clipMetadata: (value) => clipMetadata(value, state),
       clipText: (value) => clipText(value, state),

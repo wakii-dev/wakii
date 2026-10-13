@@ -37,6 +37,9 @@ const CutoverRecordSchema = z.object({
   manifestSha256: z.string().regex(/^[a-f0-9]{64}$/),
   // Terminals proven exited before the fence; any other live lease later means work started.
   provenPtyIds: z.array(z.string().min(1).max(256)).max(10_000),
+  // COMPAT(legacy-relay-bridge, revisit 2027-01-15): leases converted while their relay may still
+  // run them; the bridge serves those panes, so they never read as terminals started under the fence.
+  bridgedPtyIds: z.array(z.string().min(1).max(256)).max(10_000).optional(),
   // Committed, with the source rows kept so a downgraded build still sees the host's projects.
   sourceRetainedAt: z.string().datetime().optional(),
   // A delta move after an older build changed the source: the migration it extends, never merges.

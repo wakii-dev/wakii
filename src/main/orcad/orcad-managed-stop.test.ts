@@ -73,7 +73,8 @@ function running(): { lock: OrcadInstanceLock; request: OrcadManagedStopRequest 
   const lock = acquireOrcadInstanceLock(root, {
     identity: () => 'uid-1000',
     version: () => '1.0.0',
-    startedAtMs: () => 5_000
+    startedAtMs: () => 5_000,
+    incarnation: () => null
   })
   const { pid, startedAtMs, nonce } = lock.record
   return {
@@ -189,11 +190,14 @@ describe('completing a managed stop', () => {
     })
   })
 
-  it('treats a reused PID with a different start time as proof of exit', async () => {
+  it('treats a reused PID with a different stored creation time as proof of exit', async () => {
     const { request } = running()
-    expect(await completeOrcadManagedStop(request, options({ startedAtMs: () => 99_000 }))).toBe(
-      'exited'
-    )
+    expect(
+      await completeOrcadManagedStop(
+        request,
+        options({ startedAtMs: () => 99_000, platform: 'win32' })
+      )
+    ).toBe('exited')
   })
 
   it.each([

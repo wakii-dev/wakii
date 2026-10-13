@@ -34,7 +34,7 @@ export function useFileSearchReplaceUndo({
         getFileExplorerOperationOwner(worktreeId)
       )
       const io = buildReplaceAllIo({
-        settings: guard.route.settings,
+        target: guard.route.target,
         worktreeId,
         worktreePath,
         connectionId: guard.route.connectionId,

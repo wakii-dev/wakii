@@ -48,10 +48,17 @@ let rig: QueuedMessageTestRig
 const MANUAL_IDLE_SWEEP = { idleMs: 0, intervalMs: 60 * 60 * 1000 }
 
 beforeEach(async () => {
+  vi.useFakeTimers()
   rig = await createQueuedMessageTestRig({ restartable: true })
 })
 
-afterEach(() => rig.dispose())
+afterEach(async () => {
+  try {
+    await rig.dispose()
+  } finally {
+    vi.useRealTimers()
+  }
+})
 
 async function queuedDraft(text: string): Promise<string> {
   const queued = await rig.send(text, 'queue-if-active').result
@@ -87,7 +94,7 @@ function derivedPauses(): string[] {
 
 /** Lets the drain run its steps; none may hand a card off. */
 async function expectNothingSent(...draftIds: string[]): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, 250))
+  await vi.advanceTimersByTimeAsync(250)
   for (const draftId of draftIds) {
     expect(await rig.handoff(draftId)).toBeUndefined()
   }
@@ -151,10 +158,7 @@ async function watchClient(): Promise<ClientView[]> {
       const hostWorking = isStructuredAgentSessionMainAgentWorking(running, all)
       // As use-structured-agent-session.ts derives it.
       const working = hostWorking || (nextQueuedMessageId !== null && !hostWorking)
-      const cards = projectQueuedMessageCards(queued, all, {
-        hasPendingPrompt: false,
-        queuePaused: queuePause !== null
-      })
+      const cards = projectQueuedMessageCards(queued, all, { queuePaused: queuePause !== null })
       // As use-structured-agent-session-queued-messages.ts derives them.
       const header = queuedMessagesQueuePause(cards, queuePause) !== null
       const queueHeld = header && !working

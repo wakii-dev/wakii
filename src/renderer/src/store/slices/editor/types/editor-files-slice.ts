@@ -1,8 +1,12 @@
 import type { HttpLinkSourceOwner } from '@/lib/http-link-routing'
+import type { CheckRunDetailsTabPatch } from '@/components/editor/check-run-details-tab'
 import type {
-  CheckRunDetailsTabPatch,
-  OpenCheckRunDetailsState
-} from '@/components/editor/check-run-details-tab'
+  CombinedDiffAlternate,
+  ConflictReviewEntry,
+  ConflictReviewState,
+  OpenCheckRunDetailsState,
+  OpenChatVisualTabState
+} from '../../../../../../shared/editor-tab-view-types'
 import type {
   GitBranchChangeEntry,
   GitBranchCompareSummary,
@@ -14,10 +18,7 @@ import type { WakiiFileOpenPayload } from '../../../../../../shared/wakii-file-o
 import type {
   BranchCompareLike,
   ClosedEditorTabSnapshot,
-  CombinedDiffAlternate,
   CommitCompareLike,
-  ConflictReviewEntry,
-  ConflictReviewState,
   EditorOpenTargetOptions,
   EditorTabSelection,
   OpenFile
@@ -170,6 +171,7 @@ export type EditorFilesSlice = {
     state: CheckRunDetailsTabPatch
   ) => void
   reloadOpenCheckRunDetailsTab: (fileId: string) => Promise<void>
+  openChatVisualTab: (worktreeId: string, visual: OpenChatVisualTabState) => void
   openBranchAllDiffs: (
     worktreeId: string,
     worktreePath: string,

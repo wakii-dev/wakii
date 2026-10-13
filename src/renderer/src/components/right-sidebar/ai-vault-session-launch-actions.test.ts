@@ -2,7 +2,7 @@
 import { renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AiVaultSession } from '../../../../shared/ai-vault-types'
-import type { WebRuntimeTerminalCreateOutcome } from '@/runtime/web-runtime-session'
+import type { WebRuntimeTerminalCreateOutcome } from '@/runtime/web-runtime-session-types'
 
 const mocks = vi.hoisted(() => ({
   buildAiVaultForkStartupForWorktree: vi.fn(),

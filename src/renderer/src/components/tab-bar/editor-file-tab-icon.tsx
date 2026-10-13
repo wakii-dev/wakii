@@ -1,5 +1,5 @@
 import { createElement } from 'react'
-import { GitCompareArrows, Eye, ShieldAlert, ListChecks } from 'lucide-react'
+import { GitCompareArrows, Eye, ShieldAlert, ListChecks, ChartColumn } from 'lucide-react'
 import {
   FILE_ICON_COLOR_CLASS,
   getFileTypeIcon,
@@ -15,6 +15,7 @@ export function EditorFileTabIcon({
   isActive,
   isConflictReview,
   isCheckDetails,
+  isChatVisual,
   isDiff,
   isMarkdownPreviewTab,
   iconColorGroup
@@ -23,6 +24,7 @@ export function EditorFileTabIcon({
   isActive: boolean
   isConflictReview: boolean
   isCheckDetails: boolean
+  isChatVisual: boolean
   isDiff: boolean
   isMarkdownPreviewTab: boolean
   iconColorGroup: FileTypeIconColorGroup | null
@@ -37,6 +39,13 @@ export function EditorFileTabIcon({
   if (isCheckDetails) {
     return (
       <ListChecks
+        className={`w-3 h-3 mr-1 shrink-0 ${isActive ? 'text-foreground' : 'text-muted-foreground'}`}
+      />
+    )
+  }
+  if (isChatVisual) {
+    return (
+      <ChartColumn
         className={`w-3 h-3 mr-1 shrink-0 ${isActive ? 'text-foreground' : 'text-muted-foreground'}`}
       />
     )

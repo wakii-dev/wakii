@@ -5,6 +5,7 @@ import {
   isGitBlameSupportedForHost
 } from '@/runtime/runtime-git-blame-client'
 import { useAppStore } from '@/store'
+import { requireRuntimeTargetForFileOwner } from '@/lib/file-owner-runtime-target'
 import type { GitBlameLine } from '../../../../shared/git-blame-types'
 import {
   appendGitBlameHover,
@@ -173,7 +174,11 @@ export function useMonacoGitBlame(args: UseMonacoGitBlameArgs): void {
     }
 
     const context = {
-      settings: { activeRuntimeEnvironmentId },
+      target: requireRuntimeTargetForFileOwner(
+        useAppStore.getState(),
+        worktreeId,
+        activeRuntimeEnvironmentId
+      ),
       worktreeId,
       worktreePath,
       connectionId: args.connectionId ?? undefined

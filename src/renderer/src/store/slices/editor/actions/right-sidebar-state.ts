@@ -5,7 +5,7 @@ import type {
   RightSidebarExplorerView
 } from '../../../../../../shared/ui-chrome-types'
 import { defaultFileSearchState } from '../search/file-search-state'
-import type { RuntimeClientTarget } from '../../../../runtime/runtime-client-target'
+import type { RuntimeClientTarget } from '../../../../../../shared/runtime-client-target'
 
 /** A chat visual shown in place of the active tab. Identity only, never the HTML. */
 export type RightSidebarVisualRoute = {
@@ -33,6 +33,8 @@ export type RightSidebarVisualState = RightSidebarVisualRoute & {
 
 export type RightSidebarState = {
   rightSidebarOpen: boolean
+  /** In memory: the tab the mounted sidebar renders, which differs from rightSidebarTab when that tab is hidden here. */
+  rightSidebarEffectiveTab: ActiveRightSidebarTab | null
   rightSidebarWidth: number
   rightSidebarTab: ActiveRightSidebarTab
   rightSidebarExplorerView: RightSidebarExplorerView
@@ -46,6 +48,7 @@ export type RightSidebarState = {
   /** Session-scoped collapsed flag for the explorer's Open Editors section (not persisted). */
   openEditorsCollapsed: boolean
   setOpenEditorsCollapsed: (collapsed: boolean) => void
+  setRightSidebarEffectiveTab: (tab: ActiveRightSidebarTab | null) => void
   toggleRightSidebar: () => void
   setRightSidebarOpen: (open: boolean) => void
   setRightSidebarWidth: (width: number) => void
@@ -77,7 +80,10 @@ export function createRightSidebarState(set: EditorSet, _get: EditorGet): RightS
     rightSidebarVisual: null,
     activityBarPosition: 'top',
     openEditorsCollapsed: false,
+    rightSidebarEffectiveTab: null,
     setOpenEditorsCollapsed: (collapsed) => set({ openEditorsCollapsed: collapsed }),
+    setRightSidebarEffectiveTab: (tab) =>
+      set((s) => (s.rightSidebarEffectiveTab === tab ? {} : { rightSidebarEffectiveTab: tab })),
     toggleRightSidebar: () =>
       set((s) => ({
         rightSidebarOpen: !s.rightSidebarOpen,
