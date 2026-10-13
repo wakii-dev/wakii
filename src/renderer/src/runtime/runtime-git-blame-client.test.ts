@@ -43,14 +43,14 @@ function withWindow(api: Record<string, unknown>): void {
 }
 
 const localContext = {
-  settings: { activeRuntimeEnvironmentId: null },
+  target: { kind: 'local' } as const,
   worktreeId: null,
   worktreePath: 'C:/repo',
   connectionId: undefined
 } as const
 
 const runtimeContext = {
-  settings: { activeRuntimeEnvironmentId: 'env-1' },
+  target: { kind: 'environment', environmentId: 'env-1' } as const,
   worktreeId: 'wt-9',
   worktreePath: 'C:/repo',
   connectionId: undefined
@@ -109,13 +109,13 @@ describe('getRuntimeGitBlame', () => {
 
   it('keeps hosts independent — a disabled environment does not disable another', async () => {
     const oldHost = {
-      settings: { activeRuntimeEnvironmentId: 'env-old' },
+      target: { kind: 'environment', environmentId: 'env-old' } as const,
       worktreeId: 'wt-1',
       worktreePath: '/w',
       connectionId: undefined
     } as const
     const newHost = {
-      settings: { activeRuntimeEnvironmentId: 'env-new' },
+      target: { kind: 'environment', environmentId: 'env-new' } as const,
       worktreeId: 'wt-1',
       worktreePath: '/w',
       connectionId: undefined

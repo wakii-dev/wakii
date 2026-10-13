@@ -106,7 +106,7 @@ export function useFileSearchReplacePanel(args: ReplacePanelArgs): ReplacePanel 
         getFileExplorerOperationOwner(worktreeId)
       ).route
       return buildReplaceAllIo({
-        settings: route.settings,
+        target: route.target,
         worktreeId,
         worktreePath,
         connectionId: route.connectionId,

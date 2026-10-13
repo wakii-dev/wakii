@@ -72,6 +72,16 @@ const isWinHourly = process.env.ORCA_WIN_HOURLY === '1'
 const isWinDaily = process.env.ORCA_WIN_DAILY === '1'
 const isWinAdhoc = process.env.ORCA_WIN_ADHOC === '1'
 const isWinDevChannel = isWinHourly || isWinDaily || isWinAdhoc
+// Why: the updater (NsisUpdater.verifySignature) Authenticode-checks every
+// downloaded installer against the publisherName baked into the *installed*
+// app's app-update.yml. A build that will not be signed must not advertise it —
+// the fork's release chain has no SignPath secrets, so its stable installers
+// are unsigned and any auto-update between them dies with
+// "The installer's publisher doesn't match Wakii" (13/10). Signed builds set
+// the uninstaller relay env vars, so their absence = this build is unsigned.
+const isWinSignedViaSignPath =
+  !!process.env.ORCA_WIN_UNINSTALLER_EXPORT_PATH &&
+  !!process.env.ORCA_WIN_UNINSTALLER_SIGNED_PATH
 const isMacRelease = process.env.ORCA_MAC_RELEASE === '1' || isMacHourly || isMacDaily || isMacAdhoc
 const isLinuxArm64Release = process.env.ORCA_LINUX_ARM64_RELEASE === '1'
 const localBuildVersion =
@@ -526,7 +536,8 @@ module.exports = {
     // (NsisUpdater.verifySignature), and skips verification entirely when that
     // name is absent. An unsigned build that still claimed 'SignPath Foundation'
     // would therefore reject its own channel's next build — and its way back to
-    // stable with it. Dropping it is what makes dev→dev and dev→stable work.
+    // stable with it. Dropping it is what makes dev→dev and dev→stable work —
+    // and, since 13/10, unsigned-fork stable→stable too (isWinSignedViaSignPath).
     // Why a sign hook on a build that does not sign: it is the only moment
     // electron-builder exposes the NSIS uninstaller (built in its own makensis
     // pass, embedded, then deleted). The hook signs nothing — it relays the file
@@ -535,9 +546,13 @@ module.exports = {
     // its existing channel split above.
     signtoolOptions: {
       sign: signWindowsUninstallerViaSignPath,
-      ...(isWinDevChannel ? {} : { publisherName: 'SignPath Foundation' })
+      ...(isWinDevChannel || !isWinSignedViaSignPath
+        ? {}
+        : { publisherName: 'SignPath Foundation' })
     },
-    ...(isWinDevChannel ? { verifyUpdateCodeSignature: false } : {}),
+    ...(isWinDevChannel || !isWinSignedViaSignPath
+      ? { verifyUpdateCodeSignature: false }
+      : {}),
     extraResources: [
       ...commonExtraResources,
       ...windowsRuntimeResources,

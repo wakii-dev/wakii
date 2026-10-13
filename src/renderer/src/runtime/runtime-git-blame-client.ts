@@ -1,7 +1,8 @@
 import type { GitBlameResult } from '../../../shared/git-blame-types'
 import { GIT_BLAME_UNSUPPORTED_HOST_MARKER } from '../../../shared/git-blame-types'
 import { resolveLocalWorktreePath, type RuntimeGitContext } from './runtime-git-client-context'
-import { callRuntimeRpc, getActiveRuntimeTarget } from './runtime-rpc-client'
+import { callRuntimeRpc } from './runtime-rpc-client'
+import type { RuntimeClientTarget } from '../../../shared/runtime-client-target'
 import { RuntimeRpcCallError } from './runtime-rpc-result'
 import { toRuntimeWorktreeSelector } from './runtime-worktree-selector'
 
@@ -25,8 +26,7 @@ export function resetGitBlameDisabledHosts(): void {
   disabledHostKeys.clear()
 }
 
-function hostKeyFor(context: RuntimeGitContext): string | null {
-  const target = getActiveRuntimeTarget(context.settings)
+function hostKeyFor(target: RuntimeClientTarget, context: RuntimeGitContext): string | null {
   if (target.kind === 'environment') {
     return `runtime:${target.environmentId}`
   }
@@ -35,7 +35,7 @@ function hostKeyFor(context: RuntimeGitContext): string | null {
 }
 
 export function isGitBlameSupportedForHost(context: RuntimeGitContext): boolean {
-  const key = hostKeyFor(context)
+  const key = hostKeyFor(context.target, context)
   return key === null || !disabledHostKeys.has(key)
 }
 
@@ -54,11 +54,11 @@ export async function getRuntimeGitBlame(
   context: RuntimeGitContext,
   filePath: string
 ): Promise<GitBlameResult> {
-  const hostKey = hostKeyFor(context)
+  const hostKey = hostKeyFor(context.target, context)
+  const target = context.target
   if (hostKey !== null && disabledHostKeys.has(hostKey)) {
     throw new GitBlameHostUnsupportedError()
   }
-  const target = getActiveRuntimeTarget(context.settings)
   try {
     if (target.kind === 'local' || !context.worktreeId) {
       const blame = window.api.git.blame

@@ -15,6 +15,7 @@ export function EditorFileTabIcon({
   isActive,
   isConflictReview,
   isCheckDetails,
+  isChatVisual,
   isDiff,
   isMarkdownPreviewTab,
   iconColorGroup
@@ -23,6 +24,7 @@ export function EditorFileTabIcon({
   isActive: boolean
   isConflictReview: boolean
   isCheckDetails: boolean
+  isChatVisual: boolean
   isDiff: boolean
   isMarkdownPreviewTab: boolean
   iconColorGroup: FileTypeIconColorGroup | null

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { createElement, useCallback, useEffect, useRef, useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { GitCompareArrows, Eye, ShieldAlert, Pin, ListChecks, ChartColumn } from 'lucide-react'
 import { Input } from '@/components/ui/input'
@@ -8,7 +8,7 @@ import { getEditorDisplayLabel } from '@/components/editor/editor-labels'
 import { renameFileOnDisk } from '@/lib/rename-file'
 import { isImeCompositionKeyDown } from '@/lib/ime-composition-keyboard-event'
 import { detectLanguage } from '@/lib/language-detect'
-import { getFileTypeIconColor } from '@/lib/file-type-icons'
+import { getFileTypeIcon, getFileTypeIconColor } from '@/lib/file-type-icons'
 import { useRepoById, useWorktreeById } from '@/store/selectors'
 import { useAppStore } from '@/store'
 import { STATUS_COLORS, STATUS_LABELS } from '../right-sidebar/status-display'
@@ -93,6 +93,7 @@ export default function EditorFileTab({
   const isConflictReview = file.mode === 'conflict-review'
   const isCheckDetails = file.mode === 'check-details'
   const isChatVisual = file.mode === 'chat-visual'
+  const FileIcon = getFileTypeIcon(file.filePath)
   const isMarkdownPreviewTab = file.mode === 'markdown-preview'
   const HoverIcon = isConflictReview
     ? ShieldAlert
