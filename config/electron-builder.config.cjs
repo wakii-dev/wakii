@@ -1,18 +1,36 @@
 const { chmodSync, existsSync, readdirSync, readFileSync, writeFileSync } = require('node:fs')
 const { execFileSync } = require('node:child_process')
 const { join, resolve } = require('node:path')
+const {
+  MACOS_FOLDER_USAGE_DESCRIPTIONS,
+  applyMacHelperFolderUsageDescriptions
+} = require('./scripts/macos-folder-usage-descriptions.cjs')
 const electronBuilderNativeRebuild = require('./scripts/electron-builder-native-rebuild.cjs')
 const {
   assertPackagedDaemonEntryExists,
-  verifyPackagedDaemonEntryBoots
+  verifyPackagedDaemonEntryBoots,
+  verifyPackagedMacTerminalHostBoots
 } = require('./scripts/verify-packaged-daemon-entry.cjs')
 const {
+  buildMacTerminalHost,
+  macTerminalHostSignIgnore,
+  verifyMacTerminalHost
+} = require('./scripts/macos-terminal-host-bundle.cjs')
+const {
   assertPackagedNativeVariantsInstalled,
+  assertProcessHostOutputBuilt,
   createPackagedRuntimeNodeModuleResources,
   prunePackagedRuntimeNodeModules,
   verifyPackagedMainRuntimeDeps
 } = require('./packaged-runtime-node-modules.cjs')
 const { verifyLinuxGlibcFloor } = require('./scripts/verify-linux-glibc-floor.cjs')
+const {
+  verifyPackagedWindowsAgentHook
+} = require('./scripts/verify-packaged-windows-agent-hook.cjs')
+const {
+  ensureBundledWaylandClipboard,
+  finalizePackagedWaylandClipboard
+} = require('./wayland-clipboard-resources.cjs')
 const { writeMacBuildCompatibility } = require('./scripts/mac-build-compatibility.cjs')
 const {
   MOBILE_WEB_BUNDLE_DIR,
@@ -74,8 +92,13 @@ const devChannelBuildVersion = isHourlyChannel
 // to install. Keeping adhoc/daily separate from hourly too means a branch build
 // or a once-a-day cut cannot be picked up by someone who only meant to ride
 // main's hourlies.
-// dev channel repos (orca-hourly/daily/adhoc của upstream) không tồn tại trên fork —
-// update feed duy nhất = wakii-dev/wakii (xem publish ở dưới).
+const devChannelRepo = isHourlyChannel
+  ? 'orca-hourly'
+  : isDailyChannel
+    ? 'orca-daily'
+    : isAdhocChannel
+      ? 'orca-adhoc'
+      : null
 const appId = 'com.stablyai.orca'
 const featureWallResources = {
   from: 'resources/onboarding/feature-wall',
@@ -171,12 +194,6 @@ const rpmElectronRuntimeDependencies = [
 const MARKDOWN_FILE_EXTENSIONS = ['md', 'markdown', 'mdx']
 const TABULAR_FILE_EXTENSIONS = ['csv', 'tsv']
 
-// Keep in sync with isWakiiDocumentName() in src/main/ipc/wakii-documents.ts, the .wakii
-// ProgID block in config/nsis/orca-installer-hooks.nsh, and the main capture in
-// src/main/startup/os-opened-wakii-files.ts — a mismatch anywhere leaves the association
-// silently dead (the markdown rule of 4 places).
-const WAKII_FILE_EXTENSIONS = ['wakii']
-
 // Why: the config must load on a host-only install without resolving unused Windows addons.
 // This is load-time tolerance only; beforePack enforces that the target's natives are installed.
 // Why one package: @vscode/windows-process-tree is the only os: win32 npm addon;
@@ -187,11 +204,33 @@ const windowsRuntimeResources = existsSync(
   ? createPackagedRuntimeNodeModuleResources('win32')
   : []
 
+// Shared with the terminal host helper so its purpose strings cannot drift from the app's.
+const macUsageDescriptions = {
+  NSAppleEventsUsageDescription:
+    'Wakii allows terminal-launched developer tools to automate local apps when you request it.',
+  NSBluetoothAlwaysUsageDescription:
+    'Wakii allows terminal-launched developer tools to access Bluetooth devices when you request it.',
+  NSBluetoothPeripheralUsageDescription:
+    'Wakii allows terminal-launched developer tools to access Bluetooth devices when you request it.',
+  NSCameraUsageDescription: "Application requests access to the device's camera.",
+  NSLocationUsageDescription:
+    'Wakii allows terminal-launched developer tools to access location when you request it.',
+  NSLocalNetworkUsageDescription:
+    'Wakii allows terminal-launched developer tools to discover and connect to local development servers when you request it.',
+  NSMicrophoneUsageDescription: "Application requests access to the device's microphone.",
+  NSAudioCaptureUsageDescription:
+    'Wakii allows terminal-launched developer tools to capture desktop audio when you request it.',
+  NSBonjourServices: ['_http._tcp', '_https._tcp'],
+  ...MACOS_FOLDER_USAGE_DESCRIPTIONS
+}
+// Developer ID team that signs every release-channel mac build.
+const ORCA_MAC_TEAM_ID = '6CX3WHS9HZ'
+
 /** @type {import('electron-builder').Configuration} */
 module.exports = {
   appId,
   productName: 'Wakii',
-  protocols: [{ name: 'Orca', schemes: ['orca'] }],
+  protocols: [{ name: 'Wakii', schemes: ['orca'] }],
   toolsets: { appimage: '1.0.3' },
   ...(devChannelBuildVersion
     ? { extraMetadata: { version: devChannelBuildVersion } }
@@ -301,6 +340,7 @@ module.exports = {
   // disappears from Agent Session History in packaged builds only. Worker
   // entries reached solely from the Electron main process stay packed, since
   // asar redirects their app.asar paths.
+  // Why: `orca serve` runs the orcad selection entry under ELECTRON_RUN_AS_NODE too (#27307).
   asarUnpack: [
     'out/package.json',
     'out/cli/**',
@@ -327,6 +367,7 @@ module.exports = {
     'out/main/plugin-host-entry.js',
     'out/main/computer-sidecar.js',
     'out/main/parcel-watcher-process-entry.js',
+    'out/main/orcad/orcad-local-serve-selection-entry.js',
     'out/main/chunks/**',
     'resources/**',
     'node_modules/ws/**',
@@ -341,11 +382,19 @@ module.exports = {
   },
   // electron-builder calls this with the context alone. The second parameter is the bundle root,
   // so a test can point the guard at a scratch bundle instead of needing the repo's out/ built.
-  beforePack: (context, mobileWebBundleDir = MOBILE_WEB_BUNDLE_DIR) => {
+  beforePack: (
+    context,
+    mobileWebBundleDir = MOBILE_WEB_BUNDLE_DIR,
+    ensureWaylandClipboard = ensureBundledWaylandClipboard
+  ) => {
     assertPackagedNativeVariantsInstalled(context.electronPlatformName, context.arch)
     assertBundledRipgrepInstalled()
+    assertProcessHostOutputBuilt()
     assertOrcadTemplateBuilt()
     assertMobileWebBundleBuilt(mobileWebBundleDir)
+    if (context.electronPlatformName === 'linux') {
+      ensureWaylandClipboard(context.arch)
+    }
   },
   afterPack: async (context) => {
     const resourcesDir =
@@ -365,11 +414,11 @@ module.exports = {
       writeFileSync(join(resourcesDir, 'package-type'), 'AppImage')
     }
     if (context.electronPlatformName === 'darwin') {
-      const architectureByEnum = { 1: 'x64', 3: 'arm64' }
-      const architecture = architectureByEnum[context.arch]
-      if (!architecture) {
-        throw new Error(`Unsupported local-build compatibility architecture: ${context.arch}`)
-      }
+      applyMacHelperFolderUsageDescriptions(
+        join(context.appOutDir, `${context.packager.appInfo.productFilename}.app`),
+        context.packager.appInfo.productFilename
+      )
+      const architecture = macSliceArch(context.arch, 'local-build compatibility')
       const version = context.packager.appInfo.version
       let commit = process.env.ORCA_BUILD_COMMIT || process.env.GITHUB_SHA || 'unknown'
       if (commit === 'unknown') {
@@ -394,6 +443,7 @@ module.exports = {
     if (context.electronPlatformName === 'linux') {
       // Why the arch is passed: symbol-version checks pass happily on a wrong-architecture binary,
       // so a cross-built slice could ship the host's pty.node and only fail at runtime.
+      finalizePackagedWaylandClipboard(resourcesDir)
       verifyLinuxGlibcFloor(context.appOutDir, {
         targetArch: { 1: 'x64', 3: 'arm64' }[context.arch]
       })
@@ -409,6 +459,7 @@ module.exports = {
     const canExecuteTargetArch = context.arch === hostArchEnum || context.arch === 4
     if (context.electronPlatformName === 'win32') {
       verifyPackagedWindowsNodePty(resourcesDir, context.arch, { canExecuteTargetArch })
+      verifyPackagedWindowsAgentHook(resourcesDir, context.arch)
     }
     verifySkillsCliRuntime(join(resourcesDir, 'app.asar.unpacked', 'out'), resourcesDir, {
       executeCommands: canExecuteTargetArch
@@ -449,7 +500,7 @@ module.exports = {
       chmodSync(join(resourcesDir, filename), 0o755)
     }
     if (context.electronPlatformName === 'darwin') {
-      await signMacComputerUseHelper(join(resourcesDir, 'Orca Computer Use.app'), context.packager)
+      await signMacComputerUseHelper(join(resourcesDir, 'Wakii Computer Use.app'), context.packager)
       await signMacStandaloneHelper(
         join(resourcesDir, '..', 'MacOS', 'orca-notification-status'),
         'orca-notification-status',
@@ -460,10 +511,11 @@ module.exports = {
         'orca-keyboard-layout',
         context.packager
       )
+      await packageMacTerminalHost(join(resourcesDir, '..', '..'), context)
     }
   },
   win: {
-    executableName: 'Orca',
+    executableName: 'Wakii',
     // Why: Windows installers are signed after electron-builder packaging by
     // SignPath, so the packager cannot infer the updater publisherName.
     //
@@ -498,6 +550,12 @@ module.exports = {
         from: 'native/windows-cli-launcher/.build/orca.exe',
         to: 'bin/orca.exe'
       },
+      // Why resources/bin: SignPath signs every unsigned PE under win-unpacked, and the hook
+      // installer copies this signed file into ~/.orca/agent-hooks (#20913).
+      {
+        from: 'native/windows-agent-hook/.build/orca-agent-hook.exe',
+        to: 'bin/orca-agent-hook.exe'
+      },
       {
         from: 'node_modules/agent-browser/bin/agent-browser-win32-x64.exe',
         to: 'agent-browser-win32-x64.exe'
@@ -522,11 +580,9 @@ module.exports = {
     include: resolve(__dirname, 'nsis', 'orca-installer-hooks.nsh')
   },
   mac: {
-    // Why rank Alternate: Orca joins Finder's "Open With" list without claiming
+    // Why rank Alternate: Wakii joins Finder's "Open With" list without claiming
     // LSHandlerRank ownership, so whichever editor the user already prefers stays the default.
     // Why one entry per extension: app-builder-lib globs `*.${ext}`, which an array would break.
-    // Why the .wakii entry claims Owner instead: it is a brand-new format with no incumbent
-    // owner, so the app is its default handler from the first install (spec 2026-09-27 §6).
     fileAssociations: [
       ...MARKDOWN_FILE_EXTENSIONS.map((ext) => ({
         ext,
@@ -534,13 +590,6 @@ module.exports = {
         description: 'Markdown Document',
         role: 'Editor',
         rank: 'Alternate'
-      })),
-      ...WAKII_FILE_EXTENSIONS.map((ext) => ({
-        ext,
-        name: 'Wakii Mindmap',
-        description: 'Wakii Mindmap Story File',
-        role: 'Editor',
-        rank: 'Owner'
       })),
       ...TABULAR_FILE_EXTENSIONS.map((ext) => ({
         ext,
@@ -553,28 +602,12 @@ module.exports = {
     icon: 'resources/build/icon.icns',
     entitlements: 'resources/build/entitlements.mac.plist',
     entitlementsInherit: 'resources/build/entitlements.mac.plist',
-    signIgnore: [...bundledRipgrepMacSignIgnore, ...orcadTemplateMacSignIgnore],
-    extendInfo: {
-      NSAppleEventsUsageDescription:
-        'Wakii allows terminal-launched developer tools to automate local apps when you request it.',
-      NSBluetoothAlwaysUsageDescription:
-        'Wakii allows terminal-launched developer tools to access Bluetooth devices when you request it.',
-      NSBluetoothPeripheralUsageDescription:
-        'Wakii allows terminal-launched developer tools to access Bluetooth devices when you request it.',
-      NSCameraUsageDescription: "Application requests access to the device's camera.",
-      NSLocationUsageDescription:
-        'Wakii allows terminal-launched developer tools to access location when you request it.',
-      NSLocalNetworkUsageDescription:
-        'Wakii allows terminal-launched developer tools to discover and connect to local development servers when you request it.',
-      NSMicrophoneUsageDescription: "Application requests access to the device's microphone.",
-      NSAudioCaptureUsageDescription:
-        'Wakii allows terminal-launched developer tools to capture desktop audio when you request it.',
-      NSBonjourServices: ['_http._tcp', '_https._tcp'],
-      NSDocumentsFolderUsageDescription:
-        "Application requests access to the user's Documents folder.",
-      NSDownloadsFolderUsageDescription:
-        "Application requests access to the user's Downloads folder."
-    },
+    signIgnore: [
+      ...bundledRipgrepMacSignIgnore,
+      ...orcadTemplateMacSignIgnore,
+      ...macTerminalHostSignIgnore
+    ],
+    extendInfo: macUsageDescriptions,
     // Why: local macOS validation builds should launch without Apple release
     // credentials. Hardened runtime + notarization stay enabled only on the
     // explicit release path so production artifacts remain strict while dev
@@ -601,8 +634,8 @@ module.exports = {
         to: 'agent-browser-darwin-${arch}'
       },
       {
-        from: 'native/computer-use-macos/.build/release/Orca Computer Use.app',
-        to: 'Orca Computer Use.app'
+        from: 'native/computer-use-macos/.build/release/Wakii Computer Use.app',
+        to: 'Wakii Computer Use.app'
       },
       featureWallResources
     ],
@@ -642,11 +675,8 @@ module.exports = {
     // override. A desktop entry's MimeType only adds a handler - mimeapps.list still owns the
     // default. .mdx is deliberately absent: Ubuntu 24.04's mime database maps it to
     // application/x-genesis-32x-rom, so claiming it here would need a glob override.
-    // .wakii is the opposite case: a brand-new type that shared-mime-info does NOT know, so
-    // resources/linux/packaging/after-install.sh registers the type + glob and refreshes the
-    // mime database; the desktop entry alone would reference an unknown type.
-    mimeTypes: ['text/markdown', 'text/csv', 'text/tab-separated-values', 'application/vnd.wakii-mindmap'],
-    // Why: Ubuntu desktop ships GNOME Orca as the `orca` package and /usr/bin/orca.
+    mimeTypes: ['text/markdown', 'text/csv', 'text/tab-separated-values'],
+    // Why: Ubuntu desktop ships GNOME Wakii as the `orca` package and /usr/bin/orca.
     // The Linux installer should not claim those system package/file names.
     executableName: 'orca-ide',
     // Why: the icns source lets electron-builder emit standard hicolor PNG
@@ -663,6 +693,10 @@ module.exports = {
       ...commonExtraResources,
       ...createPackagedRuntimeNodeModuleResources('linux'),
       linuxSpeechNativeResource,
+      {
+        from: 'native/wayland-clipboard/.build/${arch}/orca-wayland-clipboard',
+        to: 'bin/orca-wayland-clipboard'
+      },
       {
         from: 'resources/linux/bin/orca-ide',
         to: 'bin/orca-ide'
@@ -730,17 +764,18 @@ module.exports = {
   // (node-pty) for each target architecture when producing dual-arch macOS
   // builds (x64 + arm64). With npmRebuild disabled, CI on an arm64 runner
   // packages arm64 binaries into the x64 DMG, causing "posix_spawnp failed"
-  // on Intel Macs. The beforeBuild hook performs Orca's targeted rebuild and
+  // on Intel Macs. The beforeBuild hook performs Wakii's targeted rebuild and
   // returns false so electron-builder does not rebuild optional cpu-features.
   npmRebuild: true,
   publish: {
-    // Wakii releases live on the fork; the update feed MUST point here —
-    // pointing at stablyai/orca makes electron-updater install UPSTREAM Orca
-    // over Wakii on user machines (feed mismatch found in the 1.4.211 audit).
     provider: 'github',
-    owner: 'wakii-dev',
-    repo: 'wakii',
-    releaseType: 'release'
+    owner: 'stablyai',
+    repo: devChannelRepo ?? 'orca',
+    // Why draft on the main repo: `--publish always` otherwise creates a
+    // public GitHub release as soon as the first platform uploads, and
+    // /releases/latest serves a missing Windows exe. release-cut undrafts
+    // only after every required asset exists.
+    releaseType: devChannelRepo ? 'prerelease' : 'draft'
   }
 }
 
@@ -772,7 +807,7 @@ function chmodUnixCliLaunchers(resourcesDir, electronPlatformName) {
 async function signMacComputerUseHelper(helperAppPath, packager) {
   if (!existsSync(helperAppPath)) {
     if (isMacRelease) {
-      throw new Error(`Missing Orca Computer Use helper app at ${helperAppPath}`)
+      throw new Error(`Missing Wakii Computer Use helper app at ${helperAppPath}`)
     }
     return
   }
@@ -786,7 +821,7 @@ async function signMacComputerUseHelper(helperAppPath, packager) {
     findInstalledMacSigningIdentity(codeSigningInfo?.keychainFile) ??
     (isMacRelease ? null : '-')
   if (!identity) {
-    throw new Error('Missing signing identity for Orca Computer Use helper app')
+    throw new Error('Missing signing identity for Wakii Computer Use helper app')
   }
   // Why: TCC grants attach to this nested app's code identity. Sign it before
   // the outer Orca.app is sealed so production builds preserve that identity.
@@ -796,7 +831,41 @@ async function signMacComputerUseHelper(helperAppPath, packager) {
   })
 }
 
-async function signMacStandaloneHelper(helperPath, helperName, packager) {
+// electron-builder `Arch` enum: x64=1, arm64=3. A universal (4) slice has no single arch.
+function macSliceArch(archEnum, purpose) {
+  const arch = { 1: 'x64', 3: 'arm64' }[archEnum]
+  if (!arch) {
+    throw new Error(`Unsupported ${purpose} architecture: ${archEnum}`)
+  }
+  return arch
+}
+
+// Why after the node_modules prune: the helper copies this slice's node-pty.
+async function packageMacTerminalHost(appPath, context) {
+  const arch = macSliceArch(context.arch, 'macOS terminal host')
+  await buildMacTerminalHost({
+    appPath,
+    arch,
+    iconPath: resolve(__dirname, '../resources/build/icon.icns'),
+    entitlementsPath: resolve(__dirname, '../resources/build/entitlements.mac.plist'),
+    usageDescriptions: macUsageDescriptions,
+    signCode: (path, { entitlements }) =>
+      signMacStandaloneHelper(path, 'terminal host', context.packager, entitlements)
+  })
+  // Only a local build may skip a slice this host cannot run; a shipped slice must serve a PTY.
+  await verifyPackagedMacTerminalHostBoots(appPath, {
+    arch,
+    required: isMacRelease || process.env.CI === 'true'
+  })
+  await verifyMacTerminalHost({
+    appPath,
+    arch,
+    usageDescriptions: macUsageDescriptions,
+    expectedTeamId: isMacRelease ? ORCA_MAC_TEAM_ID : null
+  })
+}
+
+async function signMacStandaloneHelper(helperPath, helperName, packager, entitlements) {
   if (!existsSync(helperPath)) {
     if (isMacRelease) {
       throw new Error(`Missing ${helperName} helper at ${helperPath}`)
@@ -818,6 +887,9 @@ async function signMacStandaloneHelper(helperPath, helperName, packager) {
   const args = ['--force', '--sign', identity]
   if (isMacRelease) {
     args.push('--options', 'runtime', '--timestamp')
+  }
+  if (entitlements) {
+    args.push('--entitlements', entitlements)
   }
   args.push(helperPath)
   execFileSync('codesign', args, { stdio: 'inherit' })

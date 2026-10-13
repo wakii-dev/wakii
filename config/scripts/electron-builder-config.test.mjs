@@ -8,6 +8,12 @@ import { writeMobileWebBundleFixtureTree } from './mobile-web-bundle-fixture-tre
 
 const REPO_ROOT = join(import.meta.dirname, '..', '..')
 const SRC_MAIN_DIR = join(REPO_ROOT, 'src', 'main')
+const MAIN_BUILD_ENTRY_POINTS_PATH = join(
+  REPO_ROOT,
+  'config',
+  'build-plugins',
+  'main-build-entry-points.ts'
+)
 
 const require = createRequire(import.meta.url)
 const electronBuilderConfig = require('../electron-builder.config.cjs')
@@ -353,8 +359,32 @@ describe('electron-builder config', () => {
     const entryFilename = 'wsl-transcript-fs-process-entry.js'
     expect(electronBuilderConfig.asarUnpack).toContain(`out/main/${entryFilename}`)
 
-    const viteConfig = await readFile(join(REPO_ROOT, 'electron.vite.config.ts'), 'utf8')
-    expect(viteConfig).toMatch(new RegExp(`'${entryFilename.replace(/\.js$/, '')}':\\s*resolve\\(`))
+    const entryPoints = await readFile(MAIN_BUILD_ENTRY_POINTS_PATH, 'utf8')
+    expect(entryPoints).toMatch(
+      new RegExp(`'${entryFilename.replace(/\.js$/, '')}':\\s*resolve\\(`)
+    )
+  })
+
+  // Why: the CLI runs this entry under ELECTRON_RUN_AS_NODE, which cannot read
+  // app.asar, so a packed copy sends every `orca serve` to Electron (#27307).
+  it('unpacks the orcad serve-selection entry the CLI runs', async () => {
+    const sharedSource = await readFile(
+      join(REPO_ROOT, 'src', 'shared', 'orcad-local-serve-selection.ts'),
+      'utf8'
+    )
+    const entryName = sharedSource.match(/ORCAD_LOCAL_SERVE_SELECTION_ENTRY = '([^']+)'/)?.[1]
+    expect(entryName).toBeDefined()
+
+    const matcher = new FileMatcher(
+      '/app',
+      '/dest',
+      (value) => value,
+      electronBuilderConfig.asarUnpack
+    )
+    const isUnpacked = matcher.createFilter()
+    expect(
+      isUnpacked(join('/app', 'out', 'main', `${entryName}.js`), { isDirectory: () => false })
+    ).toBe(true)
   })
 
   // Why: the scanner service is forked with ELECTRON_RUN_AS_NODE, so asar is
@@ -379,7 +409,10 @@ describe('electron-builder config', () => {
     // longer exists.
     const viteConfig = await readFile(join(REPO_ROOT, 'electron.vite.config.ts'), 'utf8')
     expect(viteConfig).toContain("entryFileNames: '[name].js'")
-    expect(viteConfig).toMatch(new RegExp(`'${entryFilename.replace(/\.js$/, '')}':\\s*resolve\\(`))
+    const entryPoints = await readFile(MAIN_BUILD_ENTRY_POINTS_PATH, 'utf8')
+    expect(entryPoints).toMatch(
+      new RegExp(`'${entryFilename.replace(/\.js$/, '')}':\\s*resolve\\(`)
+    )
   })
 
   it('keeps the worker-thread hang watchdog inside app.asar', () => {
@@ -651,7 +684,11 @@ describe('arch-aware packaging guard', () => {
   })
 
   const packHost = (arch) =>
-    electronBuilderConfig.beforePack({ electronPlatformName: process.platform, arch }, bundleDir)
+    electronBuilderConfig.beforePack(
+      { electronPlatformName: process.platform, arch },
+      bundleDir,
+      () => undefined
+    )
 
   it('allows packaging the host platform and architecture', () => {
     expect(() => packHost(HOST_ARCH)).not.toThrow()

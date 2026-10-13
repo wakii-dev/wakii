@@ -11,8 +11,8 @@ import {
 import { nodeServerTestPaths } from './node-server-test-paths.mjs'
 import { ORCAD_CHILD_ENTRY_POINTS } from './orcad-entry-build.mjs'
 import { NODE_RUNTIME_PIN } from '../../src/shared/node-runtime-pin.ts'
-import { runProcessSync } from './script-child-process.mjs'
-import { NODE_SERVER_RUNNERS } from './node-server-qualification.mjs'
+import { runProcessSync } from '@orca/process-host'
+import { NODE_SERVER_RUNNERS, nodeServerQualification } from './node-server-qualification.mjs'
 
 const temporaryDirs = []
 afterEach(() => {
@@ -63,6 +63,82 @@ it('runs the matrix when a dependency is deleted or graph analysis fails', async
   expect((await classifyNodeServerChanges([])).shouldRun).toBe(true)
 })
 
+function workspaceTree(imported = '@orca/process-host') {
+  const manifest = (name, source) =>
+    JSON.stringify({
+      name,
+      exports: { '.': { 'orca-source': source, default: './dist/index.js' } }
+    })
+  return moduleTree({
+    'entry.ts': `export * from '${imported}'`,
+    'pnpm-workspace.yaml': 'packages:\n  - src/packages/*\n',
+    'src/packages/process-host/package.json': manifest(
+      '@orca/process-host',
+      './src/run-process.ts'
+    ),
+    'src/packages/process-host/src/run-process.ts':
+      "import('@orca/byte-buffer'); require('./private'); export const value = 1",
+    'src/packages/process-host/src/private.ts': 'module.exports = 2',
+    'src/packages/process-host/dist/index.js': "require('./missing-stale-output')",
+    'src/packages/byte-buffer/package.json': manifest('@orca/byte-buffer', './src/byte-buffer.ts'),
+    'src/packages/byte-buffer/src/byte-buffer.ts': 'export const value = 3',
+    'src/packages/unrelated/package.json': manifest('@orca/unrelated', './src/unrelated.ts'),
+    'src/packages/unrelated/src/unrelated.ts': 'throw Error("unrelated")'
+  })
+}
+
+it('tracks workspace source and manifest closures without trusting dist or widening to unrelated packages', async () => {
+  const root = workspaceTree()
+  const inputs = await collectNodeServerInputs({ root, entryPoints: ['entry.ts'] })
+  expect([...inputs].sort()).toEqual([
+    'entry.ts',
+    'src/packages/byte-buffer/package.json',
+    'src/packages/byte-buffer/src/byte-buffer.ts',
+    'src/packages/process-host/package.json',
+    'src/packages/process-host/src/private.ts',
+    'src/packages/process-host/src/run-process.ts'
+  ])
+  for (const file of [
+    'src/packages/process-host/package.json',
+    'src/packages/process-host/src/private.ts',
+    'src/packages/byte-buffer/src/byte-buffer.ts'
+  ]) {
+    expect((await classifyNodeServerChanges([file], async () => inputs)).shouldRun).toBe(true)
+  }
+  expect(
+    (
+      await classifyNodeServerChanges(
+        ['src/packages/unrelated/src/unrelated.ts'],
+        async () => inputs
+      )
+    ).shouldRun
+  ).toBe(false)
+})
+
+it.each([
+  'src/packages/process-host/.gitignore',
+  'src/packages/process-host/scripts/build-dist.mjs',
+  'src/packages/process-host/tsconfig.json'
+])('runs for a change to the process-host build input %s', async (file) => {
+  const result = await classifyNodeServerChanges([file], async () => new Set())
+  expect(result.shouldRun).toBe(true)
+  expect(result.reason).toBe(`Build or CI input changed: ${file}`)
+})
+
+it.each(['@orca/unknown', '@orca/process-host/private'])(
+  'retains qualification for an unresolved internal package export: %s',
+  async (specifier) => {
+    const root = workspaceTree(specifier)
+    const result = await classifyNodeServerChanges(
+      ['src/packages/process-host/src/run-process.ts'],
+      () => collectNodeServerInputs({ root, entryPoints: ['entry.ts'] })
+    )
+    expect(result.shouldRun).toBe(true)
+    expect(result.graphUnavailable).toBe(true)
+    expect(result.reason).toContain('No public orca-source export')
+  }
+)
+
 it.each([
   ['tests/e2e/daemon-running-work-probe.unit.test.ts'],
   ['config/scripts/zip-extractor-command.test.mjs'],
@@ -88,6 +164,8 @@ it.each([
   '.github/actions/restore-pnpm-verification/action.yml',
   '.github/actions/prepare-headless-compiler/action.yml',
   'config/scripts/headless-detector-compiler-cache.mjs',
+  'config/scripts/workspace-source-exports.mjs',
+  'config/scripts/workspace-source-exports.test.mjs',
   '.github/actions/prepare-native-runtime/action.yml',
   '.github/actions/prepare-orcad-prebuilds/action.yml',
   '.github/workflows/node-server-tests.yml',
@@ -259,6 +337,133 @@ it.each([
   }
 })
 
+const registry = 'config/scripts/vitest-node-runtime-files.mjs'
+const unrelatedSshUnit = 'src/main/ssh/pinned-runtime-materializer-context.test.ts'
+
+function qualificationTree(extra = {}) {
+  return moduleTree({
+    'entry.ts': `import './${registry}'; throw Error('never execute')`,
+    [registry]: 'export const NODE_RUNTIME_INCLUDE = []',
+    [unrelatedSshUnit]: 'throw Error("never execute unrelated test")',
+    ...extra
+  })
+}
+
+it('keeps a Node harness smoke without widening it for an unrelated modified SSH unit', async () => {
+  const root = qualificationTree()
+  writeFileSync(join(root, registry), 'export const NODE_RUNTIME_INCLUDE = ["new.unit.test.ts"]')
+  const changed = [registry, unrelatedSshUnit]
+  const scope = await classifyNodeServerChanges(
+    changed,
+    () => collectNodeServerInputs({ root, entryPoints: ['entry.ts'] }),
+    { modifiedFiles: changed }
+  )
+  expect(scope.shouldRun).toBe(true)
+  expect(nodeServerQualification(changed, scope)).toEqual({
+    qualification: false,
+    runners: ['ubuntu-22.04']
+  })
+  expect(nodeServerQualification(changed, scope, { fullQualification: true })).toEqual({
+    qualification: true,
+    runners: NODE_SERVER_RUNNERS
+  })
+})
+
+it.each([
+  ['src/main/daemon/daemon-authenticated-client-activity.test.ts', NODE_SERVER_RUNNERS, true],
+  [
+    'src/main/daemon/daemon-endpoint-windows.test.ts',
+    ['ubuntu-22.04', 'windows-2022', 'windows-11-arm'],
+    false
+  ]
+])('retains daemon platform coverage: %s', async (daemon, runners, qualification) => {
+  const root = qualificationTree({ [daemon]: 'throw Error("unselected")' })
+  const diff = [registry, daemon, unrelatedSshUnit]
+  const g = await collectNodeServerInputs({ root, entryPoints: ['entry.ts'] })
+  expect(g.has(registry)).toBe(true)
+  expect(g.has(daemon)).toBe(false)
+  const s = await classifyNodeServerChanges(diff, async () => g, { modifiedFiles: diff })
+  expect(s.shouldRun).toBe(true)
+  expect(nodeServerQualification(diff, s)).toEqual({ qualification, runners })
+})
+
+it('keeps every host when the modified SSH production module is an actual consumer', async () => {
+  const ssh = 'src/main/ssh/pinned-runtime-materializer.ts'
+  const root = qualificationTree({
+    'entry.ts': `import './${registry}'; import './${ssh}'; throw Error('never execute')`,
+    [ssh]: 'export const materializer = 1'
+  })
+  const changed = [registry, ssh, unrelatedSshUnit]
+  const scope = await classifyNodeServerChanges(
+    changed,
+    () => collectNodeServerInputs({ root, entryPoints: ['entry.ts'] }),
+    { modifiedFiles: changed }
+  )
+  expect(scope.shouldRun).toBe(true)
+  expect(scope).toMatchObject({ graphResolved: true, matchedFiles: [registry, ssh] })
+  expect(nodeServerQualification(changed, scope)).toEqual({
+    qualification: true,
+    runners: NODE_SERVER_RUNNERS
+  })
+})
+
+it.each(['added', 'deleted', 'renamed', 'unknown', 'duplicate', 'foreign'])(
+  'retains complete-path qualification when modification evidence is %s',
+  async (status) => {
+    const root = qualificationTree()
+    const changed = [registry, unrelatedSshUnit]
+    let modifiedFiles = [registry]
+    if (status === 'deleted' || status === 'renamed') {
+      rmSync(join(root, unrelatedSshUnit))
+    }
+    if (status === 'renamed') {
+      const renamed = 'src/main/ssh/renamed-context.test.ts'
+      writeFileSync(join(root, renamed), 'throw Error("never execute renamed test")')
+      changed.push(renamed)
+    }
+    if (status === 'duplicate') {
+      modifiedFiles = [registry, registry]
+    }
+    if (status === 'foreign') {
+      modifiedFiles = [registry, 'src/main/ssh/foreign.test.ts']
+    }
+    const scope = await classifyNodeServerChanges(
+      changed,
+      () => collectNodeServerInputs({ root, entryPoints: ['entry.ts'] }),
+      status === 'unknown' ? {} : { modifiedFiles }
+    )
+    expect(scope.shouldRun).toBe(true)
+    expect(nodeServerQualification(changed, scope)).toEqual({
+      qualification: true,
+      runners: NODE_SERVER_RUNNERS
+    })
+  }
+)
+
+it('retains protected server tests and broken imports despite complete modification evidence', async () => {
+  const protectedTest = 'src/main/sqlite/example.test.ts'
+  const root = qualificationTree({ [protectedTest]: 'export const value = 1' })
+  const changed = [registry, protectedTest, unrelatedSshUnit]
+  const collect = () => collectNodeServerInputs({ root, entryPoints: ['entry.ts'] })
+  const protectedScope = await classifyNodeServerChanges(changed, collect, {
+    modifiedFiles: changed
+  })
+  expect(nodeServerQualification(changed, protectedScope)).toEqual({
+    qualification: true,
+    runners: NODE_SERVER_RUNNERS
+  })
+  writeFileSync(join(root, 'entry.ts'), `import './${registry}'; import './missing'`)
+  const brokenChanged = [registry, unrelatedSshUnit]
+  const brokenScope = await classifyNodeServerChanges(brokenChanged, collect, {
+    modifiedFiles: brokenChanged
+  })
+  expect(brokenScope.graphUnavailable).toBe(true)
+  expect(nodeServerQualification(brokenChanged, brokenScope)).toEqual({
+    qualification: true,
+    runners: NODE_SERVER_RUNNERS
+  })
+})
+
 describe('the actual Bun build and profile-test dependency graph', () => {
   let inputs
   beforeAll(async () => {
@@ -295,7 +500,7 @@ describe('the actual Bun build and profile-test dependency graph', () => {
     'src/main/worker-thread-entry-path.ts',
     'config/scripts/zip-extractor-command.mjs',
     'config/scripts/windows-process-tree-gyp-rebuild.mjs',
-    'config/scripts/relay-windows-process-tree-prepared-addon.mjs',
+    'config/scripts/windows-process-tree-prepared-addon.mjs',
     'config/scripts/orcad-windows-prebuild-cache.mjs',
     'config/scripts/profile-state-worker-smoke.mjs',
     'config/scripts/vitest-host-ports-setup.ts',

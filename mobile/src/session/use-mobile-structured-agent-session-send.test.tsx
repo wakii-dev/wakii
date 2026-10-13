@@ -10,9 +10,9 @@ import { markRpcDeliveryUnknown } from '../transport/rpc-delivery-ambiguity'
 import { structuredSendResultFixture } from './structured-agent-send-result.test-fixture'
 import { useMobileStructuredAgentSession } from './use-mobile-structured-agent-session'
 import { agentSessionFailureWords } from '../../../src/shared/agent-session-failure-words'
+import { agentJournalSubmissionKey } from '../../../src/shared/agent-session-journal-item-key'
 import {
   useMobileNativeChatSendError,
-  mobileNativeChatSendErrorMessage,
   type MobileNativeChatSendErrorDetails
 } from './use-mobile-native-chat-send-error'
 
@@ -65,6 +65,7 @@ describe('mobile structured send actions', () => {
   let banner: ReturnType<typeof useMobileNativeChatSendError> | null = null
   let listener: ((value: unknown) => void) | null = null
   let storedOperations: Map<string, string>
+  let agent = 'codex'
   const onSendError = vi.fn()
   const sendRequest = vi.fn<RpcClient['sendRequest']>()
   const subscribe = vi.fn<RpcClient['subscribe']>((_method, _params, onData) => {
@@ -92,15 +93,11 @@ describe('mobile structured send actions', () => {
       sourceIdentity: 'host-a\0workspace-a',
       enabled: true,
       connected: true,
-      agent: 'codex',
+      agent,
       hostSupport: null,
       onSendError
     })
-    return createElement(
-      'span',
-      null,
-      mobileNativeChatSendErrorMessage(banner, hook.session.messages)
-    )
+    return createElement('span', null, banner.message)
   }
 
   async function mountSession(): Promise<void> {
@@ -148,6 +145,20 @@ describe('mobile structured send actions', () => {
     hook = null
     banner = null
     listener = null
+    agent = 'codex'
+  })
+
+  it("sends a command the chat's own agent runs as a message, though Codex's host claims it", async () => {
+    sendRequest.mockImplementation(async (method) =>
+      method === 'agentSession.send' ? sendResult('accepted') : ok({ models: [], current: {} })
+    )
+    agent = 'opencode'
+    await mountSession()
+    await act(async () => {
+      expect(await hook!.sendWithOutcome('/review')).toBe('accepted')
+    })
+    expect(calls()).toHaveLength(1)
+    expect(onSendError).not.toHaveBeenCalled()
   })
 
   it.each(['unknown', 'pending', 'accepted'] as const)(
@@ -192,20 +203,27 @@ describe('mobile structured send actions', () => {
     await act(async () => {
       expect(await hook!.sendWithOutcome('same text')).toBe('accepted')
     })
-    expect(hook!.session.messages).toEqual(messages)
+    // The new send is drawn under its own id until its row lands.
+    const sent = agentJournalSubmissionKey(sentIds()[0] ?? '')
+    expect(hook!.session.messages.map((message) => message.id)).toEqual([messages[0]?.id, sent])
+    expect(hook!.session.messages[0]).toEqual(messages[0])
     expect(event.page.submissions[0]?.dispatchState).toBe('unknown')
     expect(calls()).toHaveLength(1)
   })
 
+  // The recorded row is the message: in place, as not sent, with the sign-in row saying why once.
   it.each(['reply-before-row', 'row-before-commit'] as const)(
-    'states delivery once and leaves auth guidance in the transcript for %s',
+    'leaves a recorded rejection to its row, with no banner and nothing handed back, for %s',
     async (order) => {
-      const fact = {
-        kind: 'notSignedIn',
-        detail: { text: 'The provider key expired.', audience: 'person' }
-      } as const
+      const fact = { kind: 'notSignedIn' } as const
       const words = agentSessionFailureWords(fact, { agentName: 'Codex', surface: 'row' })
+      const value = structuredSendResultFixture('rejected', words.text)
+      if (!('submission' in value)) {
+        throw new Error('expected submission')
+      }
+      value.submission.rejection = fact
       const event = snapshotEvent()
+      const sentRow = agentJournalSubmissionKey(value.submission.clientMessageId)
       event.page.items = [
         {
           itemId: 'auth-row',
@@ -213,13 +231,16 @@ describe('mobile structured send actions', () => {
           revision: 1,
           observedAt: 1,
           body: { kind: 'status', tone: 'error', ...words }
+        },
+        {
+          itemId: sentRow,
+          sequence: 2,
+          revision: 1,
+          observedAt: 2,
+          body: { kind: 'message', role: 'user', blocks: [{ type: 'text', text: 'my message' }] }
         }
       ]
-      const value = structuredSendResultFixture('rejected', words.text)
-      if (!('submission' in value)) {
-        throw new Error('expected submission')
-      }
-      value.submission.rejection = fact
+      event.page.submissions = [value.submission]
       sendRequest.mockImplementation(async (method) => {
         if (method !== 'agentSession.send') {
           return ok({ models: [], current: {} })
@@ -237,16 +258,16 @@ describe('mobile structured send actions', () => {
       })
       await mountSession()
       await act(async () => {
-        expect(await hook!.sendWithOutcome('my message')).toBe('rejected')
+        expect(await hook!.sendWithOutcome('my message')).toBe('accepted')
       })
-      expect(onSendError).toHaveBeenCalledExactlyOnceWith(words.text, { failure: fact })
       if (order === 'reply-before-row') {
-        expect(renderer!.root.findByType('span').children.join('')).toBe(words.text)
         act(() => listener?.(event))
       }
-      expect(renderer!.root.findByType('span').children.join('')).toBe('Your message was not sent.')
-      expect(JSON.stringify(hook!.session.messages)).toContain(words.text)
-      expect(onSendError).toHaveBeenCalledTimes(1)
+      expect(onSendError).not.toHaveBeenCalled()
+      expect(renderer!.root.findByType('span').children).toEqual([])
+      expect(hook!.session.messages.find((message) => message.id === sentRow)).toMatchObject({
+        unsent: true
+      })
     }
   )
 

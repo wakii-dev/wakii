@@ -151,6 +151,7 @@ describe('WakiiRuntimeService', () => {
           workspaceStatus: 'in-progress',
           sortOrder: 0,
           linkedIssue: 123,
+          linkedItems: [{ provider: 'github', type: 'issue', number: 123 }],
           linkedPR: null,
           linkedLinearIssue: null,
           linkedGitLabMR: null,

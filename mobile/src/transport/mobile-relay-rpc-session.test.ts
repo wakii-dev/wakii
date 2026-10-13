@@ -367,4 +367,44 @@ describe('mobile relay RPC session', () => {
       vi.useRealTimers()
     }
   })
+
+  it('sends requests and streams with no envelope byte for byte as before', async () => {
+    const { session } = await authenticateSession()
+    void session.sendRequest('status.get', { a: 1 })
+    session.subscribe('terminal.subscribe', { terminal: 't1' }, () => undefined)
+    await vi.waitFor(() => expect(fakes.sendText).toHaveBeenCalledTimes(2))
+    expect(
+      fakes.sendText.mock.calls.map((call) => String(call[0]).replace(/"id":"[^"]+"/, ''))
+    ).toEqual([
+      '{,"method":"status.get","params":{"a":1},"deviceToken":"device-token"}',
+      '{,"method":"terminal.subscribe","params":{"terminal":"t1"},"deviceToken":"device-token"}'
+    ])
+  })
+
+  it('merges an envelope under the transport fields on requests, subscribes and unsubscribes', async () => {
+    const { session } = await authenticateSession()
+    const envelope = {
+      executionHost: 'runtime:a',
+      id: 'x',
+      method: 'x',
+      params: 'x',
+      deviceToken: 'x'
+    }
+    void session.sendRequest('status.get', { a: 1 }, { envelope })
+    const dispose = session.subscribe('terminal.subscribe', { terminal: 't1' }, () => undefined, {
+      envelope
+    })
+    await vi.waitFor(() => expect(fakes.sendText).toHaveBeenCalledTimes(2))
+    dispose()
+    const frames = fakes.sendText.mock.calls.map((call) => JSON.parse(String(call[0])))
+    expect(frames).toEqual([
+      expect.objectContaining({ method: 'status.get', params: { a: 1 } }),
+      expect.objectContaining({ method: 'terminal.subscribe', params: { terminal: 't1' } }),
+      expect.objectContaining({ method: 'terminal.unsubscribe' })
+    ])
+    for (const frame of frames) {
+      expect(frame).toMatchObject({ executionHost: 'runtime:a', deviceToken: 'device-token' })
+      expect(frame.id).not.toBe('x')
+    }
+  })
 })

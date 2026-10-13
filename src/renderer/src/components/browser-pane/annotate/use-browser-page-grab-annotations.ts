@@ -156,6 +156,10 @@ export function useBrowserPageGrabAnnotations({
       setPendingAnnotationPayload(() =>
         grabPayloadRef.current === grab.payload ? grab.payload : null
       )
+      // The live box measured for the previous selection must not place this one's card.
+      setBrowserOverlayViewport((current) =>
+        current.target ? { ...current, target: undefined } : current
+      )
       return
     }
     if (!grab.contextMenu) {
@@ -170,6 +174,7 @@ export function useBrowserPageGrabAnnotations({
     grab.contextMenu,
     grabIntent,
     recordFeatureInteraction,
+    setBrowserOverlayViewport,
     showGrabToast
   ])
 

@@ -267,16 +267,22 @@ describe('the instant tab', () => {
     await replayLaunch(runtime, { presentation: 'focused' }, CLI)
 
     expect(terminalOptions(runtime)).toMatchObject({ surfaceOwner: false })
+    expect(terminalOptions(runtime)).not.toHaveProperty('presentation')
   })
 
-  it('reveals the spawn as before when the window never said it showed the tab', async () => {
+  it('defers viewer policy to the host reveal when early publication failed', async () => {
     const runtime = hostWithWindow({ reply: new Error('renderer_unavailable') })
 
     const result = await replayLaunch(runtime, {}, CLI)
 
     expect(result.outcome.kind).toBe('terminal')
     expect(result.placement).toBeUndefined()
-    expect(terminalOptions(runtime)).not.toHaveProperty('surfaceOwner')
+    expect(terminalOptions(runtime)).toMatchObject({ surfaceOwner: false })
+    const viewer = terminalOptions(runtime).agentLaunchViewer
+    expect(typeof viewer).toBe('function')
+    if (typeof viewer === 'function') {
+      expect(viewer()).toBe('reveal-owner')
+    }
   })
 
   it('records the pane it showed with the launch, and lets the pane attach once the agent runs', async () => {

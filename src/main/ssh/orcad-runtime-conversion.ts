@@ -33,24 +33,20 @@ import type { SshTarget } from '../../shared/ssh-types'
 import {
   assessOrcadMigrationTerminals,
   type CensusHostRelayTerminals,
-  retireProvenExitedLeases,
-  type ListRelayPtyIds
+  retireProvenExitedLeases
 } from './orcad-migration-terminal-gate'
 import { createManagedOrcadEnvironment } from './orcad-runtime-deployment'
 import { retainOrcadMigrationSource } from './orcad-migration-source-retention'
-import { hasRegisteredDirectSshAuthority } from './ssh-target-registry'
 
 export type OrcadManagedConversionArgs = {
   sshTargetId: string
   name: string
-  /** The relay's process list, asked while the host is still connected directly. */
-  listRelayPtyIds: ListRelayPtyIds | null
-  /** With no relay session to ask, the census of the host's relay endpoints that must prove exit. */
+  /** The census of the host's relay endpoints that must prove exit. */
   censusHost?: ((target: SshTarget) => ReturnType<CensusHostRelayTerminals>) | null
   /** The destination's T6-9 catalog client, reached through the server's tunnel. */
   destinationFor: (environment: KnownRuntimeEnvironment) => OrcadMigrationDestinationCatalog
   /** Releases the direct SSH session after the terminal check, before the fence. */
-  releaseDirectSession: (sshTargetId: string) => Promise<void>
+  releaseDirectSession?: (sshTargetId: string) => Promise<void>
   now?: () => Date
   signal?: AbortSignal
 }
@@ -146,19 +142,18 @@ async function fenceOrResume(
     )
   }
   const store = targetStore.getOrcadMigrationSource()
-  // Asked while the relay still answers; the fence re-checks leases once it holds.
+  // The fence re-checks leases once it holds.
   const censusHost = args.censusHost
   const terminalProof = await assessOrcadMigrationTerminals(
     store,
     target.id,
-    args.listRelayPtyIds,
     censusHost ? () => censusHost(target) : null
   )
-  if (terminalProof.verdict !== 'exited') {
+  if (terminalProof.verdict === 'live' || terminalProof.verdict === 'unverifiable') {
     return refuse(terminalProof.verdict, 'orcad_migration_terminals', terminalProof.reason)
   }
   retireProvenExitedLeases(store, target.id, terminalProof)
-  await args.releaseDirectSession(target.id)
+  await args.releaseDirectSession?.(target.id)
   const result = await runTargetLifecycle(target.id, () =>
     fenceOrcadMigrationSource({
       userDataPath,
@@ -168,7 +163,6 @@ async function fenceOrResume(
       destinationEnvironmentId: randomUUID(),
       destinationName: args.name,
       terminalProof,
-      hasDirectSshAuthority: hasRegisteredDirectSshAuthority,
       now: args.now,
       signal: args.signal
     })

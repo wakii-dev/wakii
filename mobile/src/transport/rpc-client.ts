@@ -1,5 +1,7 @@
 import type { BrowserScreencastFrame } from './browser-screencast-protocol'
 import { DirectRpcClient } from './direct-rpc-client'
+import type { RpcEnvelopeFields } from './rpc-envelope-fields'
+import type { UnvalidatedRpcRequestPort } from './unvalidated-rpc-request-port'
 import type {
   ConnectionLogSink,
   ConnectionState,
@@ -17,6 +19,8 @@ export type SendRequestOptions = {
 
 type SubscribeOptions = {
   onBinaryFrame?: (frame: BrowserScreencastFrame) => void
+  /** Extra top-level wire fields, sent with the subscribe and every resend and unsubscribe of it. */
+  envelope?: RpcEnvelopeFields
 }
 
 type StreamingListener = (result: unknown) => void

@@ -1039,23 +1039,23 @@
         "0e3cf53060": "未找到浏览器选项卡 {{value0}}",
         "2f6637fe6c": "浏览器选项卡 {{value0}} 已固定",
         "a8d2bf8e9e": "没有可关闭的活动浏览器选项卡",
-        "291c8ed902": "当远程运行时处于活动状态时，浏览器选项卡不可用",
-        "f45fa2b03c": "当远程运行时处于活动状态时，浏览器配置文件不可用",
         "f000b2ff76": "没有活动的工作树",
         "56d3ec4203": "无法创建无标题 Markdown 文件。",
         "f6300deb8b": "新浏览器选项卡",
         "7a64b31991": "当远程运行时处于活动状态时，本地终端创建不可用",
         "60428567b4": "当远程运行时处于活动状态时，本地终端显示不可用",
+        "ef223fbb6b": "有设备尝试连接但未配对",
+        "11992d0337": "如果这是您的手机或其他 Wakii 客户端，请从设置 → 移动端重新配对。",
+        "6573cfe955": "打开移动端设置",
+        "unresolvedTerminalWorktreeOwner": "由于无法解析工作树所有者，终端创建不可用",
+        "291c8ed902": "当远程运行时处于活动状态时，浏览器选项卡不可用",
+        "f45fa2b03c": "当远程运行时处于活动状态时，浏览器配置文件不可用",
         "f8aaf2bde3": "工作区已上传",
         "2fe88c2e06": "远程工作区同步不可用",
         "workspaceChangedOnAnotherDevice": "工作区已在另一台设备上更改",
         "2ec42e1c52": "还没有远程工作区",
         "88214a785b": "工作区同步等待本地会话恢复(hydration)并超时",
-        "4f78ba5885": "工作区已同步",
-        "ef223fbb6b": "有设备尝试连接但未配对",
-        "11992d0337": "如果这是您的手机或其他 Wakii 客户端，请从设置 → 移动端重新配对。",
-        "6573cfe955": "打开移动端设置",
-        "unresolvedTerminalWorktreeOwner": "由于无法解析工作树所有者，终端创建不可用"
+        "4f78ba5885": "工作区已同步"
       },
       "useSettingsNavigationMetadata": {
         "4a728cd56b": "仍在完善中的新功能。尝试一下。",
@@ -2938,7 +2938,6 @@
             "efb3843e75": "筛选并排序工作区",
             "93b7381d50": "筛选",
             "a615e24679": "排序",
-            "4cc5b73efe": "正在查找非活动工作区...",
             "5bf2e88480": "已扫描 {{value0}}/{{value1}} 个{{value2}}",
             "searchPlaceholder": "搜索工作区",
             "ageFilter": "时间",
@@ -2950,7 +2949,6 @@
             "1d3503357d": "删除继续期间，你可以关闭此窗口并稍后回来。",
             "4c2990886e": "已删除 {{value0}}/{{value1}}",
             "86ba852118": "{{value0}}，{{value1}} 个失败",
-            "7b7bde5181": "到目前为止已检查工作区：{{value0}}",
             "deletingCount": "正在删除工作区：{{value0}}",
             "deleteCount": "删除工作区：{{value0}}？",
             "selectedForDeletionCount": "已选择删除：{{value0}}",
@@ -2958,7 +2956,9 @@
             "archivedStatus": "已归档",
             "readyStatus": "就绪",
             "f637f63882": "资源管理器统计到 {{value0}} 个，此列表找到 {{value1}} 个。该计数仅依据 Wakii 的活动记录，而此次扫描还会检查每个工作区的 git 历史，并跳过未连接的远程主机。",
-            "74f6c16279": "返回"
+            "74f6c16279": "返回",
+            "4cc5b73efe": "正在查找非活动工作区...",
+            "7b7bde5181": "到目前为止已检查工作区：{{value0}}"
           },
           "backgroundRemoval": {
             "removed": "已删除工作区：{{value0}}",
@@ -3027,7 +3027,8 @@
           }
         },
         "dialog": {
-          "f26c4baeda": "关闭"
+          "f26c4baeda": "关闭",
+          "minimize": "最小化"
         },
         "repo": {
           "multi": {
@@ -3184,11 +3185,12 @@
             "42b283ecfc": "Wakii 无法安全地重新连接此终端，因为主机无法验证其保存的会话。 Wakii 保持保存的会话不变。单击“重试”立即尝试重新连接。如果仍然无法重新连接，请打开一个新终端。",
             "e16012e31e": "拥有该会话的终端守护程序已退出，因此该会话及其回滚无法恢复。打开新终端以继续。",
             "sessionUnavailable": "Wakii 无法重新连接到主机上此窗格的终端会话。打开新终端以继续。",
-            "heldByPreviousRelay": "该终端仍在主机上以先前版本的 Wakii 运行，当前版本无法连接到它。它会一直运行直到退出。请打开新终端以继续在此工作。",
             "sourceRestoring": "重新连接该终端 — 正在重新建立其输出。会话仍在进行。",
             "ptyAllocationLimit": "系统无法再分配 pty 设备。请在 Wakii 或其他程序中关闭一些不用的终端，然后重试。",
             "terminalProcessLimit": "系统无法再启动终端进程。请关闭不用的终端或退出不用的进程，然后重试。",
-            "ownerHostMismatch": "此终端保存的会话属于另一个主机连接，因此 Wakii 无法在此重新附加它。请打开新终端以继续。"
+            "hostTerminalCap": "主机上运行的终端数量已达到 Wakii 允许的上限。请关闭一个不再需要的终端，然后重试。",
+            "ownerHostMismatch": "此终端保存的会话属于另一个主机连接，因此 Wakii 无法在此重新附加它。请打开新终端以继续。",
+            "heldByPreviousRelay": "该终端仍在主机上以先前版本的 Wakii 运行，当前版本无法连接到它。它会一直运行直到退出。请打开新终端以继续在此工作。"
           },
           "TerminalProcessExitOverlay": {
             "capacityTitle": "已达到 Git Bash 控制台上限",
@@ -3279,6 +3281,7 @@
                 "ce8248b835": "工作树路径不可用。",
                 "internalTooManyPaths": "拖放的路径过多，无法安全粘贴到终端。",
                 "internalPathsTooLarge": "拖放的路径列表过大，无法安全粘贴到终端。",
+                "internalHostMismatch": "请拖放与此终端位于同一主机的文件。",
                 "b4cf68e889": "已跳过 {{value0}} {{value1}}。",
                 "writeTimeout": "文件拖放已取消：终端在安全超时前未接受路径。",
                 "writeRejected": "文件拖放已取消：终端无法接受路径。"
@@ -3444,7 +3447,8 @@
             "ec2adf093e": "在新终端中启动 {{value0}}",
             "465e432ef1": "无法为 {{value0}} 构建启动命令。",
             "e518f544b1": "未检测到智能体",
-            "8dea9b5cdf": "没有启用智能体"
+            "8dea9b5cdf": "没有启用智能体",
+            "needsServerUpdate": "请更新此服务器上的 Wakii 以列出此工作区的智能体"
           },
           "RecentTabSwitcher": {
             "329638ff6f": "切换选项卡",
@@ -3725,10 +3729,10 @@
             "connectedHostCount_one": "{{count}} 个主机",
             "connectedHostCount_other": "{{count}} 个主机",
             "connecting": "正在连接…",
-            "workspaceConflict": "工作区冲突",
-            "workspaceSyncError": "工作区同步错误",
             "runtime_unavailable_transport_up": "Wakii 不可用",
-            "runtime_workspace_window_closed": "工作区窗口已关闭"
+            "runtime_workspace_window_closed": "工作区窗口已关闭",
+            "workspaceConflict": "工作区冲突",
+            "workspaceSyncError": "工作区同步错误"
           },
           "CaffeinateStatusSegment": {
             "active": "生效中",
@@ -3761,7 +3765,6 @@
             "54e8d6bb2d": "Fable",
             "d79c3362c4": "5小时",
             "a79c64f87e": "Fable",
-            "8295903d17": "切换后继续旧对话之前，请重新启动实时 Claude 终端。",
             "c98ea88392": "没有其他账户",
             "9332ba8684": "切换到",
             "d450654fa2": "Claude 账户",
@@ -3803,7 +3806,8 @@
             "codexSignInError": "Codex 登录失败，请重试。",
             "cursorUsageMenu": "Cursor 用量",
             "hiddenUsageProviders": "另有：{{value0}}",
-            "zcodeUsageMenu": "Z代码使用"
+            "zcodeUsageMenu": "Z代码使用",
+            "8295903d17": "切换后继续旧对话之前，请重新启动实时 Claude 终端。"
           },
           "StatusBarUsageEmptyCta": {
             "828c764a79": "连接账户",
@@ -4001,6 +4005,10 @@
             "compactTitle": "用量显示现已精简",
             "compactBody": "每个服务提供商显示一个主要指标。在用量菜单中选择“<detailed>详细</detailed>”即可查看更多限额。"
           },
+          "usageUnitLabel": {
+            "used": "已用",
+            "remaining": "剩余"
+          },
           "UsagePercentageDisplayChangeNotice": {
             "title": "用量现在显示已用百分比",
             "body": "更喜欢剩余额度？请在设置中更改。",
@@ -4104,6 +4112,11 @@
             "resumingTooltip": "正在恢复中断的聊天并请它们继续…",
             "resumingProgressLabel": "正在恢复聊天 {{value0}}/{{value1}}",
             "resumingProgressAria": "正在恢复聊天，已完成 {{value0}}/{{value1}}。点击查看详情。",
+            "resumedLabelOne": "已恢复 1 个聊天",
+            "resumedLabel": "已恢复 {{value0}} 个聊天",
+            "resumedAriaOne": "已恢复 1 个聊天。点击查看。",
+            "resumedAria": "已恢复 {{value0}} 个聊天。点击查看。",
+            "resumedTooltip": "重启后 Wakii 恢复的聊天。点击查看。",
             "resumingLabelOne": "正在恢复 1 个聊天",
             "resumingLabel": "正在恢复 {{value0}} 个聊天",
             "resumingAriaOne": "正在恢复 1 个聊天。点击查看详情。",
@@ -4617,7 +4630,6 @@
           "statusCantUpdate": "无法更新",
           "cantUpdateReason": "此技能安装在 Wakii 无法安全更新的位置，因此 npx skills update 命令不会更改它。",
           "chipCurrent": "最新",
-          "chipUnrecognized": "无法识别",
           "chipInaccessible": "无法访问",
           "chipDuplicate": "重复",
           "chipExternalLink": "外部链接",
@@ -4626,15 +4638,13 @@
           "chipInRepo": "在仓库中",
           "chipPluginCache": "插件缓存",
           "tipCurrent": "这里的技能已是最新，更新不会更改它。",
-          "tipUnrecognized": "这里的技能内容与任何官方版本都不匹配，因此 Wakii 无法安全更新它。请移除或替换此处的内容以允许更新。",
           "tipInaccessible": "Wakii 无法读取这里的技能（权限或文件错误），因此无法检查或更新它。",
-          "tipDuplicate": "此技能除主副本外还安装在这里，因此 npx skills update 命令无法访问它。请移除它以允许更新。",
+          "tipDuplicate": "此技能除主副本外还安装在这里，因此 更新命令无法访问它。请移除它以允许更新。",
           "tipExternalLink": "这是一个指向 Wakii 技能文件夹之外的快捷方式；更新不会跟随它。",
           "tipBrokenLink": "这是一个指向已不存在内容的快捷方式，可以安全删除。",
           "tipReadOnly": "这里的技能位于只读位置，需更改其权限后才能更新。",
           "tipInRepo": "这里的技能位于某个项目内，而非全局技能；Wakii 只更新全局技能。",
           "tipPluginCache": "这里的技能由插件管理；请改为更新插件。",
-          "skippedReasonUnrecognized": "此处的副本与官方版本不一致 — 它可能被修改过，或是同名但内容不同的技能。Wakii 将其排除在更新之外，以免覆盖它。如果您希望 Wakii 更新此技能，请删除它。",
           "skippedReasonReadOnly": "此副本位于只读位置，因此 Wakii 未将其纳入更新。请更改其权限，让 Wakii 更新它。",
           "skippedReasonInaccessible": "Wakii 无法读取此副本，因此未将该技能纳入更新。",
           "skippedReasonInRepo": "这是项目技能而非全局技能 — Wakii 只更新您的全局技能，因此将其排除在更新之外。",
@@ -4642,6 +4652,9 @@
           "skippedReasonExternalLink": "此副本是指向 Wakii 技能文件夹之外的快捷方式，因此 Wakii 未将其纳入更新。",
           "skippedReasonBrokenLink": "此副本是指向已不存在内容的快捷方式，因此 Wakii 将其排除 — 您可以放心删除。",
           "skippedReasonDuplicate": "这是独立的副本，因此更新不会触及它 — 该命令只刷新主副本。请删除此副本并重新安装技能，使此位置跟随主副本。",
+          "chipUnrecognized": "无法识别",
+          "tipUnrecognized": "这里的技能内容与任何官方版本都不匹配，因此 Wakii 无法安全更新它。请移除或替换此处的内容以允许更新。",
+          "skippedReasonUnrecognized": "此处的副本与官方版本不一致 — 它可能被修改过，或是同名但内容不同的技能。Wakii 将其排除在更新之外，以免覆盖它。如果您希望 Wakii 更新此技能，请删除它。",
           "skippedReasonNewer": "此副本的版本比当前 Wakii 版本内置的更新，因此 Wakii 未动它，以免回退。更新 Wakii 后两者将恢复一致。",
           "skippedReasonStaleRecord": "技能更新器没有此副本的有效记录，因此它报告技能已是最新且不做任何更改。请重新安装，使记录恢复一致：{{value0}}",
           "chipNewer": "Newer",
@@ -4686,7 +4699,9 @@
           "scanOutsideRoot": "此插件路径指向插件缓存之外，Wakii 已将其跳过。",
           "scanIoErrorWithCode": "Wakii 无法读取此插件路径（{{value0}}）。",
           "scanIoError": "Wakii 无法读取此插件路径。",
-          "scanIssueLimit": "被跳过的插件文件夹过多，Wakii 无法逐一列出。"
+          "scanIssueLimit": "被跳过的插件文件夹过多，Wakii 无法逐一列出。",
+          "unselectedForeignOne": "有 1 个非 Wakii 安装的技能未选中。",
+          "unselectedForeignMany": "有 {{value0}} 个非 Wakii 安装的技能未选中。"
         },
         "SkillFreshnessStatusPill": {
           "updateAvailable": "有可用更新",
@@ -4701,8 +4716,12 @@
           "stillOutdated": "更新运行后仍为过期状态。"
         },
         "SkillUpdateRow": {
-          "oneLocation": "1 location",
-          "manyLocations": "{{value0}} locations"
+          "oneLocation": "1 个位置",
+          "manyLocations": "{{value0}} 个位置",
+          "notFromOrca": "非 Wakii 安装",
+          "notFromOrcaSourceTip": "安装自 {{value0}}。选中后会替换为 Wakii 的版本。",
+          "notFromOrcaNoRecordTip": "此副本没有 Wakii 安装记录。选中后会替换为 Wakii 的版本。",
+          "includeSkill": "包含 {{value0}}"
         },
         "host": {
           "local": "此机器",
@@ -5128,18 +5147,21 @@
           "e52454b7f6": "作为文件夹打开"
         },
         "AddRepoRemoteStep": {
-          "5b205b5281": "停止扫描",
           "6680289908": "/home/user/project",
           "ef410aa881": "远程路径",
-          "0416bde073": "在设置中添加",
-          "df6fbcf880": "未配置 SSH 目标。",
           "44637f43bd": "SSH 目标",
-          "80557be85a": "选择已连接的 SSH 目标并输入 Git 存储库的路径。",
+          "serverDescription": "选择 {{server}} 连接的 SSH 主机，并输入该主机上 Git 仓库的路径。",
+          "serverEmpty": "{{server}} 还没有 SSH 主机。",
+          "serverAddHost": "添加 SSH 主机",
           "91b93a90a4": "打开远程项目",
           "007651bdf9": "导航到目录并单击“选择”以选择它。",
           "dd3ff65486": "浏览远程文件系统",
           "36d427bb66": "添加远程项目",
           "35831a7312": "添加...",
+          "5b205b5281": "停止扫描",
+          "0416bde073": "在设置中添加",
+          "df6fbcf880": "未配置 SSH 目标。",
+          "80557be85a": "选择已连接的 SSH 目标并输入 Git 存储库的路径。",
           "lockedDescription": "输入 {{value0}} 上 Git 仓库的路径。",
           "lockedDisconnected": "{{value0}} 已断开连接。",
           "93e0221434": "连接"
@@ -5319,7 +5341,9 @@
           "b79b39d865": "删除项目",
           "removeDescriptionSsh": "此操作仅将 {{name}} 从 Wakii 中移除。文件仍保留在 {{host}} 上 — 重新添加该 SSH 主机即可恢复。",
           "removeDescriptionLocal": "此操作仅将 {{name}} 从 Wakii 中移除。文件仍保留在您的磁盘上。",
-          "removeDescriptionVmRecipe": "这会从 Wakii 中删除 {{name}}。其VM配方决定是否永久删除环境及其文件。"
+          "removeDescriptionVmRecipe": "这会从 Wakii 中删除 {{name}}。其VM配方决定是否永久删除环境及其文件。",
+          "openTerminalWarningOne": "此项目中 1 个打开的终端将被关闭。",
+          "openTerminalWarningMany": "此项目中 {{count}} 个打开的终端将被关闭。"
         },
         "ScrollToCurrentWorkspaceToolbarButton": {
           "23989bb663": "显示活动工作区"
@@ -5523,7 +5547,7 @@
           "allHostsDetail": "显示所有主机",
           "configuredSshHost": "已配置 SSH",
           "projectSshHost": "项目 SSH",
-          "activeRuntimeHost": "活动服务器",
+          "activeRuntimeHost": "新项目的默认主机",
           "projectRuntimeHost": "项目服务器",
           "631b97eea9": "主机范围",
           "2d4f0eb933": "默认",
@@ -5887,13 +5911,16 @@
                   "5f9ffac036": "克隆远程 Git 存储库",
                   "7edb8ebe24": "从 URL 克隆",
                   "a6c20dca96": "从 SSH 目标打开项目",
-                  "3d162cc76f": "远程项目",
+                  "serverSshTitle": "此服务器 SSH 主机上的项目",
+                  "serverSshDescription": "从此服务器连接的 SSH 主机打开项目文件夹",
+                  "serverSshUpdate": "更新此服务器后才能在其 SSH 主机上添加项目",
                   "fb4fc5380e": "本地项目、Git 仓库或包含多个仓库的文件夹",
                   "2281fdc8c7": "浏览文件夹",
+                  "runtimeBrowseDescription": "此主机上的现有 Git 仓库或文件夹",
+                  "3d162cc76f": "远程项目",
                   "sshCreateUnavailable": "SSH 主机暂不可用",
                   "sshBrowseTitle": "在 SSH 主机上打开项目",
-                  "sshBrowseDescription": "此 SSH 主机上的现有 Git 仓库或文件夹",
-                  "runtimeBrowseDescription": "此主机上的现有 Git 仓库或文件夹"
+                  "sshBrowseDescription": "此 SSH 主机上的现有 Git 仓库或文件夹"
                 }
               }
             }
@@ -6248,7 +6275,6 @@
         "AddRemoteHostDialog": {
           "sshHostRequired": "必须填写主机或 SSH 配置别名。",
           "sshPortInvalid": "端口必须介于 1 到 65535 之间。",
-          "sshRelayGraceInvalid": "终端超时时间必须介于 60 到 {{value0}} 秒之间。",
           "sshSaved": "已添加 SSH 主机。",
           "sshSaveFailed": "添加 SSH 主机失败。",
           "serverFieldsRequired": "必须填写服务器名称和配对码。",
@@ -6257,7 +6283,10 @@
           "serverTitle": "添加远程服务器",
           "sshTitle": "添加 SSH 主机",
           "serverDescription": "与另一台电脑上运行的 Wakii 配对。",
+          "serverRunsAsYou": "此设备将能够在此服务器上以你的身份运行命令。",
           "sshDescription": "添加一台可通过 SSH 登录并持久保存的机器。",
+          "serverSshTitle": "向 {{server}} 添加 SSH 主机",
+          "serverSshDescription": "{{server}} 会保存此主机并连接到它。密码和密钥口令会在连接时询问。",
           "cancel": "取消",
           "saving": "正在保存...",
           "save": "保存",
@@ -6312,7 +6341,8 @@
           "sshConfigPickerAddAllEmpty": "全部添加到 Wakii",
           "identityFileFromConfigHint": "故意留空：Wakii 使用 ~/.ssh/config 解析为 {{value0}} 的每个密钥。键入一个路径以仅使用该键。",
           "sshConfigPickerRetry": "重试",
-          "sshConfigPickerResolving": "阅读…"
+          "sshConfigPickerResolving": "阅读…",
+          "sshRelayGraceInvalid": "终端超时时间必须介于 60 到 {{value0}} 秒之间。"
         },
         "ForgetSshWorkspaceDialog": {
           "reconnectFailed": "重新连接失败",
@@ -6522,7 +6552,6 @@
         "AccountsPane": {
           "c2d2751587": "删除账户",
           "dbb9626ed1": "取消",
-          "854ebbcc45": "Wakii 将删除此已保存账户的托管 Claude 身份验证。如果当前处于活动状态，Wakii 将回退到系统默认的 Claude 登录名。",
           "63843e37e2": "删除 Claude 账户？",
           "380a7736cc": "移除此账户会永久删除其托管的 Codex 主目录，包括其中存储的所有 Codex 会话历史记录和 MCP 登录信息。此操作无法撤销。如果该账户当前处于活动状态，Wakii 将回退到系统默认的 Codex 登录。",
           "0d47394635": "删除 Codex 账户？",
@@ -6570,12 +6599,10 @@
           "3fe7862418": "{{value0}} 没有受管理的 Claude 账户。Wakii 将使用该环境的系统默认 Claude 登录，直到您在此处添加一个。",
           "3455cf43fa": "Claude 登录。",
           "fcc4093fc1": "使用您当前 {{value0}} Codex 登录名。",
-          "79e484c3b2": "用于共享 Claude 身份验证文件的可选账户切换器。",
           "8bbfd74556": "Claude 账户",
           "72b36ea174": "可选。Wakii 可使用系统默认 Claude 登录；仅当你需要快速切换且不想迁移聊天会话时才添加账户。",
           "26ef4b55be": "Claude",
           "2743cdc0af": "Claude 账户更新失败。",
-          "b15ce90870": "{{value0}} -> {{value1}}。在继续旧会话之前重新启动实时 Claude 终端。",
           "f921d32606": "Claude 账户已更新。",
           "5bf8764953": "Codex 账户更新失败。",
           "9baf45d071": "当前设备",
@@ -6686,7 +6713,10 @@
               "placeholder": "留空以使用 /connect 或 OPENCODE_API_KEY 保存的密钥",
               "help": "用于在状态栏中显示 OpenCode Go 使用情况。下面的会话 Cookie 仅旧版控制台 (OpenCode Black) 账号需要。"
             }
-          }
+          },
+          "854ebbcc45": "Wakii 将删除此已保存账户的托管 Claude 身份验证。如果当前处于活动状态，Wakii 将回退到系统默认的 Claude 登录名。",
+          "79e484c3b2": "用于共享 Claude 身份验证文件的可选账户切换器。",
+          "b15ce90870": "{{value0}} -> {{value1}}。在继续旧会话之前重新启动实时 Claude 终端。"
         },
         "AdvancedPane": {
           "40b29e0bf3": "重新启动",
@@ -6776,7 +6806,7 @@
           "codexSessionSourceInfo": "关于导入 Codex 历史记录",
           "codexSessionSourceTooltip": "Wakii 在隔离的主目录中运行 Codex。将此项指向您现有的 Codex 主目录以导入会话历史记录。留空则使用 ~/.codex。",
           "03e1a5081a": "on {{value0}}",
-          "25a41a9aad": "重新检测活动服务器上安装的智能体",
+          "25a41a9aad": "重新检测此服务器上安装的代理",
           "remoteDetectionFailed": "无法检测已安装的智能体。请检查主机连接后重试。",
           "retryDetection": "Retry",
           "storedDefaultUndetected": "已保存为默认值，但目前未检测到",
@@ -8169,11 +8199,11 @@
           "6ce4664003": "刷新服务器",
           "b07070ed3c": "没有连接服务器",
           "78692becbd": "本地桌面",
-          "64b6bea541": "活动服务器",
+          "64b6bea541": "新项目的默认主机",
           "99ac81fb43": "切换到 {{value0}}。",
           "b5b5114cb0": "删除了 {{value0}}。",
           "6cb6eae14f": "无法保存运行时环境。",
-          "7b5986c8df": "已保存 {{value0}}。准备好后可通过活动服务器进行切换。",
+          "7b5986c8df": "已连接到 {{value0}}。若要默认在其上创建新项目，请在“高级 > 新项目的默认主机”中选择它。",
           "5ef712f407": "名为“{{value0}}”的服务器已存在。",
           "0c55a47480": "需要名称和配对代码。",
           "e6410d72c3": "无法加载运行时环境。",
@@ -8200,7 +8230,7 @@
           "hostModelCapabilityProjectSetup": "项目设置",
           "hostModelCapabilityTaskSourceContext": "任务来源上下文",
           "hostModelCapabilityWorkspaceRunContext": "工作区运行上下文",
-          "3f67e8078a": "默认使用此电脑。仅当你希望受支持的项目、文件、终端、提供商检查以及浏览器/移动端接续通过某个服务器运行时，才选择已保存的服务器。",
+          "3f67e8078a": "除非在此选择已保存的服务器，否则新项目会在这台电脑上创建。现有项目、文件和终端仍留在各自的主机上。",
           "2c85efb3e8": "选择已保存的服务器后，此浏览器会将配对的 Wakii 运行时用作默认主机。",
           "serverConnected": "已连接",
           "serverChecking": "正在检查…",
@@ -8208,7 +8238,7 @@
           "disconnectedServer": "已断开与 {{value0}} 的连接。",
           "connectToRemoteServers": "连接到远程服务器",
           "connectToRemoteServersHelp": "配对另一个 Wakii 运行时，然后在此处连接或断开连接。仅当你想更改默认主机时，才使用高级 > 活动服务器。",
-          "activeServerRowHelp": "用于通过服务器路由的项目、终端和提供商检查的活动服务器。",
+          "activeServerRowHelp": "新项目的默认主机。现有项目仍留在各自的主机上。",
           "disconnect": "断开连接",
           "connect": "连接",
           "advanced": "高级",
@@ -8222,8 +8252,8 @@
           "updateServer": "更新",
           "reviewServerUpdates": "服务器更新",
           "orcaVersion": "Wakii v{{value0}}",
-          "removeActiveServerBlocked": "请先在“高级”中选择另一个活动服务器，然后再移除此服务器。",
-          "removeActiveServerDescription": "请先在“高级”中选择另一个活动服务器，然后再移除此服务器。现有的主机会话将保留。",
+          "removeActiveServerBlocked": "此服务器是新项目的默认主机。请先在“高级”中选择另一个主机，然后再移除它。",
+          "removeActiveServerDescription": "此服务器是新项目的默认主机。请先在“高级”中选择另一个主机，然后再移除它。现有的主机会话将保留。",
           "updatingServers": "正在更新服务器…",
           "workflow": "远程服务器工作流程",
           "connectWorkflow": "连接到主机",
@@ -8262,6 +8292,7 @@
           "de6d5cff95": "这台电脑（",
           "de77eb1b65": "连接地址",
           "ff80904fc4": "为浏览器或桌面客户端创建可撤销的访问授权。",
+          "pairedRunsAsYou": "已配对的客户端可以在此电脑上以你的身份运行命令。",
           "f8500e134a": "分享此 Wakii 服务器",
           "d6c081adf4": "复制 URL 失败。",
           "df0aa45a86": "复制的配对 URL。",
@@ -8509,10 +8540,6 @@
           "f8050f6307": "已同步 {{value0}} 服务器{{value1}}",
           "68c13b4589": "测试失败",
           "81d08bcddf": "连接成功",
-          "2c4ee7332b": "无法重置远程中继",
-          "db2e48975e": "远程中继已重置",
-          "025e107643": "无法结束远程终端",
-          "90e308c98b": "远程终端结束",
           "a43de1d3ee": "断开连接失败",
           "e95d5ae10e": "连接失败",
           "c2a69510e3": "删除目标失败",
@@ -8520,11 +8547,15 @@
           "2227ce47b6": "保存目标失败",
           "f602009125": "目标已添加",
           "b4ba0ce33d": "目标已更新",
-          "3879cbaa52": "终端超时时间必须介于 60 到 {{value0}} 秒之间，或保持终端运行直到重置。",
           "4db9afce1c": "端口必须介于 1 和 65535 之间",
           "0e5aa04161": "需要主机或 SSH 配置别名",
           "f1fc50dad2": "无法加载 SSH 目标",
           "0cda732f43": "连接测试失败",
+          "2c4ee7332b": "无法重置远程中继",
+          "db2e48975e": "远程中继已重置",
+          "025e107643": "无法结束远程终端",
+          "90e308c98b": "远程终端结束",
+          "3879cbaa52": "终端超时时间必须介于 60 到 {{value0}} 秒之间，或保持终端运行直到重置。",
           "terminateUnverifiable": "无法访问 {{terminals}} 远程终端。重新连接以结束它们。"
         },
         "SshPassphraseDialog": {
@@ -8554,30 +8585,27 @@
           "7f7b3d7ab4": "删除目标",
           "3d21a22d0e": "移除目标",
           "3d8af2949f": "编辑目标",
+          "18968ede9e": "错误",
+          "f0871e6bfb": "连接",
+          "47e94bd6ba": "已连接",
           "762a48c662": "重置远程中继",
           "97dea4e8cf": "正在重置远程中继",
           "da16e108e6": "结束远程终端",
           "c77f1abfe3": "结束远程终端",
-          "18968ede9e": "错误",
-          "f0871e6bfb": "连接",
-          "47e94bd6ba": "已连接",
           "a883f5a00f": "终端超时：{{value0}}",
           "8ce71262f4": "终端保持运行直到重置"
         },
         "SshTargetDestructiveActions": {
+          "3bb0cf0ee4": "这将删除目标并结束任何活动的远程终端。",
+          "4808966c41": "删除 SSH 目标",
           "7e66942808": "这将停止此 SSH 目标上的活动终端会话。重新连接不会恢复它们。",
           "accf177a03": "结束远程终端？",
           "26be00392d": "这将强制停止此 SSH 目标的远程中继。该目标的活动远程终端和端口转发将结束。",
-          "570a7a0574": "重置远程中继？",
-          "3bb0cf0ee4": "这将删除目标并结束任何活动的远程终端。",
-          "4808966c41": "删除 SSH 目标"
+          "570a7a0574": "重置远程中继？"
         },
         "SshTargetForm": {
           "fea9cb402e": "取消",
-          "1b19b00e93": "有限超时时间必须介于 60 秒到 7 天之间。",
           "137e88ce8d": "Wakii 与此主机断开连接后，远程终端会继续运行。",
-          "b574994adc": "需要停止它们时，请使用“结束远程终端”或“重置中继”。",
-          "71fc546097": "保持终端运行直到重置",
           "92f80edbfd": "远程终端持久化",
           "feae1d1e69": "可选。相当于 ProxyJump / ssh -J。",
           "11bcb4507a": "bastion.example.com",
@@ -8599,8 +8627,6 @@
           "a62b4cb39a": "保存更改",
           "29af933cd5": "新的 SSH 目标",
           "f2331ce599": "编辑 SSH 目标",
-          "7c13f58c91": "直到重置",
-          "55c56cf2c7": "断开连接后的超时时间（秒）",
           "4a342f44c1": "高级连接",
           "e9609ddca6": "代理、跳板主机和连接复用",
           "8c922dffba": "复用 SSH 连接以加快设置",
@@ -8610,6 +8636,11 @@
           "editDescription": "更新此机器的连接详情。更改将在下次连接时生效。",
           "addDescription": "添加一台可通过 SSH 登录的持久机器。",
           "editingPrefix": "正在编辑",
+          "1b19b00e93": "有限超时时间必须介于 60 秒到 7 天之间。",
+          "b574994adc": "需要停止它们时，请使用“结束远程终端”或“重置中继”。",
+          "71fc546097": "保持终端运行直到重置",
+          "7c13f58c91": "直到重置",
+          "55c56cf2c7": "断开连接后的超时时间（秒）",
           "remoteRuntime": "运行时",
           "remoteRuntimeHelp": "哪个 Node.js 在此主机上运行 Wakii。 Wakii 管理的Node自己上传，不需要npm；主机节点使用已安装在那里的 Node.js。",
           "remoteRuntimeAuto": "自动",
@@ -10479,12 +10510,15 @@
               "ebd5369acf": "环境",
               "d198440ce3": "运行时",
               "baec27aa8f": "将此浏览器连接到已保存的 Wakii 服务器。",
-              "3517fb2ec0": "活动服务器",
+              "3517fb2ec0": "远程 Wakii 服务器",
               "c6e5a03aa0": "开发盒",
               "f1575f1e09": "网络客户端",
               "81444c4102": "配对网址",
               "104f4d7dbd": "配对",
-              "4575341c77": "选择本地桌面、添加已保存的远程 Wakii 服务器或生成配对 URL。"
+              "4575341c77": "选择本地桌面、添加已保存的远程 Wakii 服务器或生成配对 URL。",
+              "defaultHostKeyword": "默认主机",
+              "newProjectsKeyword": "新项目",
+              "activeServerKeyword": "活动服务器"
             }
           }
         },
@@ -11160,7 +11194,7 @@
           "sourceControlAiDefaults": "方案、提示和托管评审默认值由此客户端共享；模型选择和发现则限定在智能体运行的主机内。",
           "projectOnThisHost": "此主机上的项目",
           "repositorySourceControlAi": "这些覆盖项应用于此项目设置，并继承客户端的源代码管理 AI 默认值，直至自定义。",
-          "agentLaunchDefaults": "默认智能体、命令覆盖、CLI 参数和启动环境是客户端偏好。SSH 和远程服务器启动仍会在运行时验证主机可用性。",
+          "agentLaunchDefaults": "默认代理、命令覆盖、CLI 参数和启动环境保存在所选主机上。",
           "clientDefaultProjectScopes": "客户端默认 + 项目范围",
           "terminalQuickCommands": "命令保存在此客户端，然后限定为全局或某项目设置，以便从所选终端上下文运行。",
           "hostOverride": "主机覆盖",
@@ -11505,12 +11539,12 @@
           "pathGroup": "手机访问此电脑的方式",
           "anywhereTitle": "Wakii Relay",
           "anywhereDescription": "手机可通过蜂窝网络或任意 Wi‑Fi 连接。仅 Relay 需要登录。",
-          "signInRequired": "仅 Relay 需要 — 局域网无需账号。",
           "relayUnavailable": "此版本不支持 Wakii Relay。请使用局域网。",
           "signInAgain": "重新登录以使用 Relay",
           "localTitle": "局域网",
           "retrying": "重试",
-          "relayCell": "中继单元"
+          "relayCell": "中继单元",
+          "signInRequired": "仅 Relay 需要 — 局域网无需账号。"
         },
         "MobilePairingSetupSection": {
           "title": "配对手机",
@@ -11612,7 +11646,7 @@
           "failed": "更新失败",
           "serviceManagerHelp": "通过启动此服务器的服务管理器更新 Wakii。",
           "unpackedHelp": "开发版本必须从其源代码检出进行更新。",
-          "legacyHelp": "手动更新此服务器一次以启用远程更新。"
+          "legacyHelp": "此服务器无法远程更新。请在服务器主机上更新 Wakii。"
         },
         "BrowserLinkRoutingSetting": {
           "description": "在 Wakii 内置浏览器中打开来自终端、Markdown 和编辑器的 http(s) 链接。{{shortcut}} 始终使用系统浏览器。",
@@ -12015,7 +12049,6 @@
         },
         "BrowserTerminalLinkActionsSetting": {
           "title": "终端 URL 点击次数",
-          "description": "单击终端或聊天记录中的链接时显示可用的操作。关闭此功能需要在终端中单击 {{modifier}}。",
           "descriptionV2": "控制点击终端窗格和聊天记录中打印的已检测的 URL。",
           "plainClickLabel": "简单的点击",
           "plainClickDescription": "选择左键单击是显示操作、打开 URL 还是将其留给终端。 Cmd/Ctrl-单击始终直接打开。",
@@ -12025,7 +12058,8 @@
           "middleClickAriaLabel": "中键单击",
           "actionsLabel": "操作",
           "openUrlLabel": "打开网址",
-          "leaveToTerminalLabel": "前往航站楼"
+          "leaveToTerminalLabel": "前往航站楼",
+          "description": "单击终端或聊天记录中的链接时显示可用的操作。关闭此功能需要在终端中单击 {{modifier}}。"
         },
         "ReleaseChannelSection": {
           "switchFailed": "无法切换到该版本。",
@@ -12292,6 +12326,20 @@
           "usageDescription": "Cursor 按两个随账单周期重置的额度池计费，用完后按需计费。",
           "usageLabel": "用量",
           "usageTitle": "每月套餐用量"
+        },
+        "ZcodeCliSetupSection": {
+          "title": "通过 ZCode 使用 GLM",
+          "description": "登录后即可将 GLM 用作编程代理。上方的配额 API 密钥仅用于监控用量；ZCode 自行管理登录和模型选择。",
+          "help": "选择对应套餐站点的浏览器登录，或使用 ZCode 的隐藏输入 API 密钥设置。登录后，启动 ZCode 并使用 /model 选择 GLM 模型。",
+          "zai": "Z.AI 浏览器登录",
+          "bigmodel": "BigModel 浏览器登录",
+          "apiKey": "ZCode API 密钥设置",
+          "close": "关闭设置终端",
+          "loading": "正在加载登录终端…",
+          "terminalTitle": "ZCode 登录",
+          "terminalLabel": "ZCode 登录终端",
+          "apiKeyInstructions": "按 Enter 启动 ZCode，然后输入 /login 并选择套餐站点的 API 密钥选项。在 ZCode 的隐藏输入提示中输入密钥。",
+          "oauthInstructions": "按 Enter 运行登录命令，然后打开 ZCode 输出的授权网址。登录信息保存在此终端的执行主机上。"
         },
         "ZcodePlanAccountsSection": {
           "site": {
@@ -13728,7 +13776,8 @@
             "resumeInChatTranscriptMissing": "无法加载此对话的历史记录，因此无法在聊天中恢复。",
             "resumeInChatFailed": "无法在新聊天中恢复此会话。",
             "resumeInNewCliUnavailable": "无法在 CLI 中打开此会话。",
-            "resumeInNewCliHostTooOld": "请更新运行此聊天的主机上的 Wakii，才能在新的 CLI 中恢复它。"
+            "resumeInNewCliHostTooOld": "请更新运行此聊天的主机上的 Wakii，才能在新的 CLI 中恢复它。",
+            "folderWorkspaceUnavailable": "文件夹工作区不再可用。"
           },
           "AiVaultPanelControls": {
             "scanningSessions": "正在扫描会话",
@@ -13830,7 +13879,9 @@
             "copied": "已复制",
             "copy": "复制",
             "noFirstPromptAvailable": "没有可用的首次提示",
-            "loadingFirstPrompt": "正在加载首次提示…"
+            "loadingFirstPrompt": "正在加载首次提示…",
+            "folder": "文件夹",
+            "resumeInFolder": "在文件夹中恢复"
           },
           "AiVaultSessionRow": {
             "resumeAgentSession": "恢复 {{value0}} 会话",
@@ -13927,7 +13978,12 @@
             "noRecordedWorktree": "此会话没有记录工作树。",
             "archivedJumpUnavailable": "此会话位于已归档的工作树中。",
             "noActiveWorktreeMatch": "没有与此会话匹配的活动工作树。",
-            "noActiveWorktreeTarget": "没有可用的活动工作树。"
+            "noActiveWorktreeTarget": "没有可用的活动工作树。",
+            "activeFolder": "文件夹",
+            "archivedFolder": "已归档的文件夹",
+            "archivedFolderJumpUnavailable": "此会话位于已归档的文件夹中。",
+            "currentFolder": "当前文件夹",
+            "jumpToFolder": "跳转到文件夹"
           },
           "AiVaultSessionSubagents": {
             "subagentsCount": "子智能体（{{value0}}）",
@@ -14979,11 +15035,11 @@
                 "d90d2e1f6d": "跟踪会话和每周使用情况。",
                 "8919321417": "Codex 登录失败。",
                 "c7b90c140b": "添加了 Codex 账户。",
-                "4e71d72912": "Claude 登录失败。",
                 "9ddeb558f9": "已添加 Claude 账户。",
                 "29d0653961": "登入",
                 "945865332e": "登录",
-                "accountStatusUnknown": "账户状态未知"
+                "accountStatusUnknown": "账户状态未知",
+                "4e71d72912": "Claude 登录失败。"
               },
               "UsagePage": {
                 "64265cb295": "29% 已用 5小时",
@@ -17673,6 +17729,7 @@
         "selectMachine": "选择 {{value0}} 上的全部聊天",
         "sshHost": "SSH",
         "done": "完成",
+        "resultListLabel": "本次恢复的聊天",
         "continueUnconfirmed": "对于 {{value0}} 聊天，未确认继续传送。在发送另一条消息之前打开它们进行检查。",
         "continueUnconfirmed_one": "对于 {{value0}} 聊天，未确认继续传送。在发送另一条消息之前打开它进行检查。",
         "continueUnconfirmed_other": "对于 {{value0}} 聊天，未确认继续传送。在发送另一条消息之前打开它们进行检查。",
@@ -17804,6 +17861,11 @@
         "attention": "需要处理",
         "running": "已运行 {{value0}}",
         "filter": "显示聊天"
+      },
+      "NativeChatResumeAutoNote": {
+        "resuming": "重启后正在自动恢复。",
+        "resumed": "重启后已自动恢复。",
+        "changeInSettings": "在设置中更改"
       }
     },
     "i18n": {
@@ -17910,6 +17972,7 @@
         "couldNotStart": "{{agent}} 无法启动。",
         "editSavedArguments": "请在设置 > 智能体 > 参数中编辑。",
         "couldNotRestart": "{{agent}} 无法重新启动。",
+        "codexCliTooOld": "Codex {{installedVersion}} 版本过旧，无法用于聊天。请更新到 {{minimumVersion}} 或更高版本。",
         "notSignedIn": "{{agent}} 尚未登录。",
         "claudeSystemNotSignedIn": "Claude 尚未登录。请运行 `{{loginCommand}}`，或在 Claude 账户设置中选择账户。",
         "claudeManagedNotSignedIn": "此 Claude 账户尚未登录。请在 Claude 账户设置中重新登录。",
@@ -17925,14 +17988,16 @@
         "managedAccountUnsupported": "当 WSL 中添加了 Claude 账户时，Claude 聊天需要 Windows Claude 账户。",
         "launchFolderMissing": "此聊天运行所在的文件夹已不存在。请恢复该文件夹以继续此聊天。",
         "historyInOtherAccount": "此聊天的历史记录位于另一个 Claude 账户中。请切换回该账户以继续此聊天。",
+        "claudeAccountFolderMissing": "所选 Claude 账户的文件夹不存在。请重新登录该账户或选择其他账户。",
+        "claudeAccountSetupFailed": "无法设置所选 Claude 账户。请重试或选择其他账户。",
         "agentCommandNotRunnable": "{{agent}} 在设置 → 智能体中的命令必须是 Wakii 能找到的程序路径或名称，且不能包含参数或变量。请修改或重置。",
         "chooseClaudeAccount": "请在 Claude 账户设置中选择或添加一个。",
         "chooseClaudeAccountThenRunCommand": "请在 Claude 账户设置中选择或添加一个，然后重新运行 /{{command}}。",
         "chooseClaudeAccountThenSend": "请在 Claude 账户设置中选择或添加一个，然后重新发送您的消息。",
         "providerExitedRow": "{{agent}} 在生成此回复时停止了。您可以在此对话中继续。",
         "providerExitedRejection": "{{agent}} 在发送此消息前已停止。",
-        "providerRejected": "提供商未接受此消息。",
-        "providerRejectedQuoted": "提供商未接受此消息：{{detail}}。",
+        "providerRejected": "{{agent}} 未接受此消息。",
+        "providerRejectedQuoted": "{{agent}} 未接受此消息：{{detail}}。",
         "attachmentEmpty": "此消息中的一张图片为空，因此消息未发送。",
         "attachmentTooLarge": "此消息中的一张图片过大，因此消息未发送。",
         "attachmentLargerThan": "此消息中的一张图片超过 {{size}} MB，因此消息未发送。",
@@ -18085,10 +18150,10 @@
         "imagePasteFailed": "图片粘贴失败。",
         "worktreeNotReady": "工作树未就绪 — 请稍后重试。",
         "pasteUnavailable": "无法粘贴 — 此聊天当前不接受输入。",
-        "uploadingAttachments": "正在将 {{value0}} 个文件上传到远端…",
         "model": "模型",
         "effort": "推理强度",
         "fastMode": "快速模式",
+        "speed": "速度",
         "thinking": "思考",
         "options": "选项",
         "sessionOptions": "会话选项",
@@ -18109,7 +18174,8 @@
           "high": "高",
           "xhigh": "极高",
           "max": "最大",
-          "ultra": "极致"
+          "ultra": "极致",
+          "standard": "标准"
         },
         "noCommandsOrSkills": "没有匹配的命令或技能",
         "commands": "命令",
@@ -18140,8 +18206,22 @@
         "attachmentOwnerChanged": "此工作区在附加时更改了主机 - 再次删除文件。",
         "attachmentUnreadable": "无法读取删除的文件。",
         "tooManyAttachments": "每次最多附加 {{value0}} 个文件。",
+        "permissions": "权限",
+        "permissionAsk": "请求批准",
+        "permissionAskDescription": "在设置未允许的编辑和命令前询问",
+        "permissionAskCodexDescription": "在此工作区中编辑文件并运行命令；其他操作前会询问",
+        "permissionAskSharedDescription": "在执行尚未获准的编辑或命令前询问",
+        "permissionAcceptEdits": "接受编辑",
+        "permissionAcceptEditsDescription": "批准文件编辑和文件命令；其余操作会询问",
+        "permissionAuto": "替我批准",
+        "permissionAutoDescription": "代你审核批准请求",
+        "permissionFullAccess": "完全访问",
+        "permissionFullAccessDescription": "编辑或运行命令前从不询问",
+        "permissionFullAccessCodexDescription": "从不询问；可以编辑任何文件并使用网络",
+        "permissionFullAccessSharedDescription": "编辑或运行命令前从不询问",
         "pasteFailed": "粘贴失败。",
         "commandAttachmentsUnsupported": "使用聊天会话命令前，请先移除附件。",
+        "uploadingAttachments": "正在将 {{value0}} 个文件上传到远端…",
         "mentionHint": "引用文件："
       },
       "tool": {
@@ -18268,6 +18348,10 @@
         "showTerminal": "显示终端",
         "showChat": "显示聊天视图"
       },
+      "resumeInNewChat": {
+        "notSavedYet": "{{agent}} 尚未保存此对话。请在它回复后重试。",
+        "cannotResume": "此 {{agent}} 对话无法在本机聊天中恢复。"
+      },
       "state": {
         "loading": {
           "label": "正在加载聊天",
@@ -18347,6 +18431,8 @@
         "one": "1 个已更改的文件",
         "many": "{{count}} 更改了文件",
         "partial": "部分差异",
+        "showDiff": "显示差异",
+        "hideDiff": "隐藏差异",
         "recorded": "本轮记录编辑的总计。"
       },
       "receipt": {
@@ -18370,7 +18456,9 @@
         "orcaStopUpdate": "此回复进行期间，{{machine}} 上的 Wakii 为更新而重新启动。",
         "orcaStopQuit": "此回复进行期间，{{machine}} 上的 Wakii 已关闭。",
         "orcaStopCrash": "此回复进行期间，{{machine}} 上的 Wakii 意外停止。",
-        "orcaStopCanContinue": "你可以在此对话中继续。"
+        "orcaStopRemote": "此回复进行期间，{{machine}} 上的 Wakii 已停止。",
+        "orcaStopCanContinue": "你可以在此对话中继续。",
+        "orcaStopUnnamedServer": "远程服务器"
       },
       "providerFrame": {
         "byteLength": "{{value0}} 字节"
@@ -18459,6 +18547,8 @@
         "subtitle": "文件将作为智能体可以读取的路径添加到您的消息中。"
       },
       "copyCode": "复制代码",
+      "wrapLines": "自动换行",
+      "disableLineWrap": "关闭自动换行",
       "context": {
         "unavailable": "上下文用量暂时未知，将在智能体下次响应后提供。",
         "summary": "上下文：{{used}}/{{window}} token（{{percent}}%），根据上一次响应的估算值。",
@@ -18506,10 +18596,8 @@
       },
       "queuedMessages": {
         "alreadySent": "此消息已发送。",
-        "editAlreadySent": "已发送 — 你的文本仍在输入框中。",
         "listLabel": "排队的消息",
         "behindReturnedHold": "等待中 — 前面有一条消息需要处理",
-        "awaitingAnswerHold": "等待你的回答",
         "steer": "立即发送",
         "send": "发送",
         "steerHint": "提交且不中断模型",
@@ -18534,6 +18622,16 @@
         "sendConfirmSend": "发送消息",
         "fromSender": "来自",
         "pausedSendFailedWaiting": "无法发送。智能体完成后，点按发送以重试。",
+        "save": "保存",
+        "editingMessage": "正在编辑消息",
+        "cancelEditing": "取消编辑",
+        "editChanged": "你编辑时此消息已更改。你编辑的内容已放入聊天输入框。",
+        "editChangedPrompt": "你编辑时此消息已更改。回答智能体后，你编辑的内容会出现在聊天输入框中。",
+        "editFailed": "此消息无法编辑。",
+        "editGone": "此消息已发送或移除。你编辑的内容已放入聊天输入框。",
+        "editGonePrompt": "此消息已发送或移除。回答智能体后，你编辑的内容会出现在聊天输入框中。",
+        "editAlreadySent": "已发送 — 你的文本仍在输入框中。",
+        "awaitingAnswerHold": "等待你的回答",
         "queuePausedRestarted": "因 Wakii 重新启动，队列已暂停",
         "queuePausedCleared": "清除对话后，队列已暂停"
       },
@@ -18576,6 +18674,7 @@
       },
       "visualUnavailable": "可视化不可用",
       "visualLoading": "正在加载可视化",
+      "visualOpenInNewTab": "在新标签页中打开",
       "visualOpenInSidebar": "在侧边栏中打开",
       "visualClose": "关闭可视化",
       "structuredSessionLaunchFailed": "无法打开 {{value0}} 聊天",
@@ -19394,6 +19493,7 @@
       "sortResultsAriaLabel": "排序结果：{{value0}}",
       "consent": "启用全文搜索吗？ Wakii 根据本地代理记录在此计算机上构建索引，包括完整对话和每个工具输出最多 3,072 个字符。内容未经过编辑。经过身份验证的配对客户端可以搜索它。",
       "remoteDisabled": "此计算机上已禁用搜索。在该计算机上启用转录索引以搜索其会话。",
+      "titleOnly": "此计算机上的全文搜索已关闭，因此仅匹配会话标题。",
       "notReady": "搜索索引尚未准备好。稍后再试。",
       "noService": "在此计算机上无法进行搜索。它可能需要 Wakii 更新或具有搜索支持的运行时。",
       "failed": "无法搜索这台计算机。检查其连接并重试。",
@@ -19708,5 +19808,16 @@
   },
   "projectField": {
     "updateFailed": "无法更新项目字段"
-  }
+  },
+  "settings.agents.environmentName": "环境变量名称",
+  "settings.agents.environmentValue": "{{name}} 的值",
+  "settings.agents.savedEnvironment": "已保存的值 · 输入以替换",
+  "settings.agents.newEnvironment": "值",
+  "settings.agents.removeEnvironment": "删除",
+  "settings.agents.loadingHost": "正在加载代理设置…",
+  "settings.agents.updateHost": "请更新此服务器以编辑其代理启动设置。",
+  "settings.agents.readFailed": "无法读取代理设置。请检查主机连接并重试。",
+  "settings.agents.saveFailed": "无法保存代理设置。请检查主机连接并重试。",
+  "settings.agents.hostDefaults": "所选主机上新代理的默认设置。",
+  "settings.agents.save": "保存"
 }

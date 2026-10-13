@@ -6,10 +6,11 @@ import type {
 import { getManagedOrcadFenceEnvironmentId } from '../../shared/managed-orcad-ssh-owner'
 import type { ServeReadiness } from '../server/serve-readiness'
 import { computeLocalOrcadBuildHash } from './orcad-local-build-hash'
+import { sshOrcadHostTransport } from './orcad-ssh-host-transport'
 import { probeActiveOrcadReadiness } from './orcad-active-readiness'
 import { resolveOrcadRemoteContext, type OrcadRemoteContext } from './orcad-remote-context'
 import { ORCAD_INSTALL_MODEL } from './remote-install-model'
-import { computeRemoteInstallDir } from './ssh-relay-versioned-install'
+import { computeRemoteInstallDir } from './remote-versioned-install'
 import { getSshConnectionManager, getSshTargetRegistryStore } from './ssh-target-registry'
 
 export const ORCAD_BIND_HOST = '127.0.0.1'
@@ -62,7 +63,7 @@ export async function resolveLinkedOrcadContext(
     throw new Error('The managed Orca server SSH registration is no longer valid.')
   }
   const connection = await connectionManager.connect(target)
-  return resolveOrcadRemoteContext(target, connection, signal)
+  return resolveOrcadRemoteContext(target, sshOrcadHostTransport(connection), signal)
 }
 
 /** The slot options every remote lifecycle step takes for this managed server. */

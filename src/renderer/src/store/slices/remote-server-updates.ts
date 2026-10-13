@@ -5,7 +5,7 @@ import { isUserManagedRuntimeEnvironment } from '../../../../shared/runtime-envi
 import type { RuntimeRpcResponse } from '../../../../shared/runtime-rpc-envelope'
 import type { RuntimeStatus } from '../../../../shared/runtime-types'
 import type { UpdateCheckOptions } from '../../../../shared/update-status-types'
-import { unwrapRuntimeRpcResult } from '@/runtime/runtime-rpc-client'
+import { unwrapRuntimeRpcResult } from '@/runtime/runtime-rpc-result'
 import {
   checkingRemoteServerUpdateEntry,
   inspectRemoteServerUpdate,

@@ -1,6 +1,7 @@
 /** The managed-server actions behind both the Managed servers settings and runtime RPC. */
 import {
   cancelManagedOrcadStop,
+  forgetManagedOrcadEnvironment,
   getManagedOrcadRuntimeStatus,
   recoverManagedOrcadEnvironment,
   rollbackManagedOrcadEnvironment,
@@ -8,8 +9,10 @@ import {
   updateManagedOrcadEnvironment
 } from '../ssh/orcad-runtime-lifecycle'
 import type { ManagedServerActions } from '../runtime/managed-server-actions-registry'
-import type { ExecutionHostId } from '../../shared/execution-host'
-import { retireRemovedRuntimeEnvironment } from './runtime-environment-removal-cleanup'
+import {
+  retireRemovedRuntimeEnvironment,
+  type RemovedServerStore
+} from './runtime-environment-removal-cleanup'
 
 export type ManagedOrcadActionOptions = {
   getUserDataPath: () => string
@@ -19,14 +22,20 @@ export type ManagedOrcadActionOptions = {
   clearHostServerNotes: (sshTargetId: string, environmentId: string) => void
   /** Drops the SSH host's stale managed-server state once its server is unlinked. */
   clearHostServerStatus: (sshTargetId: string) => void
-  /** Drops the unlinked server's workspace session partition. */
-  forgetHostSession: (hostId: ExecutionHostId) => void
+  /** Holds what an unlinked server leaves in the profile. */
+  store: RemovedServerStore
 }
 
 export function createManagedOrcadActions(
   options: ManagedOrcadActionOptions
 ): ManagedServerActions {
   const userDataPath = options.getUserDataPath
+  const unlinkPolicy = {
+    isActiveEnvironment: (environmentId: string) =>
+      options.getActiveEnvironmentId() === environmentId,
+    retireLocalState: (environmentId: string) =>
+      retireRemovedRuntimeEnvironment(environmentId, options.invalidateTransport, options.store)
+  }
   return {
     status: (selector) => getManagedOrcadRuntimeStatus(userDataPath(), selector),
     update: async (selector, force) => {
@@ -61,25 +70,19 @@ export function createManagedOrcadActions(
       return result
     },
     stop: async (selector) => {
-      const result = await stopManagedOrcadEnvironment(
-        userDataPath(),
-        { selector },
-        {
-          isActiveEnvironment: (environmentId) =>
-            options.getActiveEnvironmentId() === environmentId,
-          retireLocalState: (environmentId) =>
-            retireRemovedRuntimeEnvironment(
-              environmentId,
-              options.invalidateTransport,
-              options.forgetHostSession
-            )
-        }
-      )
+      const result = await stopManagedOrcadEnvironment(userDataPath(), { selector }, unlinkPolicy)
       if (result.outcome === 'unlinked') {
         options.clearHostServerStatus(result.sshTargetId)
       }
       return result
     },
-    cancelStop: (selector) => cancelManagedOrcadStop(userDataPath(), { selector })
+    cancelStop: (selector) => cancelManagedOrcadStop(userDataPath(), { selector }),
+    forget: async (selector) => {
+      const result = await forgetManagedOrcadEnvironment(userDataPath(), { selector }, unlinkPolicy)
+      if (result.outcome === 'forgotten') {
+        options.clearHostServerStatus(result.sshTargetId)
+      }
+      return result
+    }
   }
 }

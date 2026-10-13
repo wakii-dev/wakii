@@ -2,6 +2,7 @@ import { useRef, type JSX } from 'react'
 import { MessagesSquare, SquareTerminal, type LucideIcon } from 'lucide-react'
 import type { FeatureTip } from '../../../../shared/feature-tips'
 import { DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
 import { FeatureTipActions } from './FeatureTipActions'
 import {
@@ -55,6 +56,7 @@ export function NativeChatUpgradeTipDialog({
   open,
   tip,
   primaryBusy,
+  chatModeOn,
   onOpenChange,
   onPrimaryAction,
   onSettingsClick
@@ -62,11 +64,14 @@ export function NativeChatUpgradeTipDialog({
   open: boolean
   tip: FeatureTip
   primaryBusy: boolean
+  /** Live Chat UI setting. */
+  chatModeOn: boolean
   onOpenChange: (open: boolean) => void
   onPrimaryAction: () => void
   onSettingsClick: () => void
 }): JSX.Element {
   const primaryButtonRef = useRef<HTMLButtonElement>(null)
+  const offerChatMode = !chatModeOn
 
   return (
     <FeatureTipDialogFrame
@@ -78,6 +83,7 @@ export function NativeChatUpgradeTipDialog({
         primaryButtonRef.current?.focus({ preventScroll: true })
       }}
       visual={<NativeChatUpgradeFeatureTipVisual />}
+      tall={offerChatMode}
     >
       <DialogHeader className="text-left">
         <div>
@@ -85,6 +91,14 @@ export function NativeChatUpgradeTipDialog({
           <DialogTitle size="display">
             {translate('featureTips.nativeChatUpgrade.title', 'Native chat got an upgrade')}
           </DialogTitle>
+          {offerChatMode ? (
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              {translate(
+                'featureTips.nativeChatUpgrade.chatModeNote',
+                'New agent tabs still open in the terminal, as before.'
+              )}
+            </p>
+          ) : null}
           <DialogDescription className="mt-3 max-w-2xl">
             <span className="block space-y-3 leading-relaxed">
               <span className="block">
@@ -142,16 +156,25 @@ export function NativeChatUpgradeTipDialog({
         </div>
       </DialogHeader>
 
-      <DialogFooter className="mt-8 flex sm:justify-stretch">
+      <DialogFooter className="mt-8 flex sm:justify-end">
+        {offerChatMode ? (
+          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={primaryBusy}>
+            {translate('featureTips.nativeChatUpgrade.okay', 'Okay')}
+          </Button>
+        ) : null}
         <FeatureTipActions
           currentTip={tip}
           primaryBusy={primaryBusy}
           onPrimaryAction={onPrimaryAction}
           onSkip={() => onOpenChange(false)}
           showSkip={false}
-          fullWidth
+          fullWidth={!offerChatMode}
           primaryButtonRef={primaryButtonRef}
-          label={translate('featureTips.nativeChatUpgrade.gotIt', 'Got it')}
+          label={
+            offerChatMode
+              ? translate('featureTips.nativeChatUpgrade.enableNow', 'Enable Now')
+              : translate('featureTips.nativeChatUpgrade.gotIt', 'Got It')
+          }
         />
       </DialogFooter>
     </FeatureTipDialogFrame>

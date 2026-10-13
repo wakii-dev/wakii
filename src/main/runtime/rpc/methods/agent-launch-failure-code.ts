@@ -14,6 +14,7 @@ import {
 } from '../../../../shared/agent-launch-session-already-exists'
 import type { TerminalSpawnDispatch } from '../../../agent-launch/agent-launch-not-started'
 import { FolderWorkspaceCreateRefusedError } from '../../../project-groups/folder-workspace-create-refusal'
+import { WorktreeCreateSetupChoiceRefusedError } from '../../worktree-create-setup-choice-refusal'
 
 /** Long enough for every code this path raises, with room for one a later guard adds. */
 const LAUNCH_FAILURE_CODE_MAX_LENGTH = 128
@@ -65,6 +66,9 @@ export function launchFailureWithoutEffectsCode(
   }
   if (error instanceof FolderWorkspaceCreateRefusedError) {
     return folderCreateRefusalCode(error)
+  }
+  if (error instanceof WorktreeCreateSetupChoiceRefusedError && targetKind === 'create-worktree') {
+    return agentLaunchFailureCode(error)
   }
   if (error instanceof AgentLaunchPaneAlreadyLiveError && targetKind === 'existing') {
     return AGENT_LAUNCH_PANE_ALREADY_LIVE_CODE

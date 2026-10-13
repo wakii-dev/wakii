@@ -85,6 +85,7 @@ vi.mock('../ipc/worktree-symlinks', () => ({
 }))
 
 import { createRuntimeLocalManagedWorktree } from './runtime-local-worktree-create'
+import { WorktreeCreateSetupChoiceRefusedError } from './worktree-create-setup-choice-refusal'
 import type { PreparationRearmHolder } from '../worktree-create-preparation'
 import {
   createWorktreeCreateTimingRecorder,
@@ -547,9 +548,11 @@ describe('runtime create setup decision', () => {
     const timing = createWorktreeCreateTimingRecorder()
     // No requested base, so a create that got past the check would resolve the default base.
     const request = { baseBranch: undefined }
-    await expect(createWorktree(request, undefined, timing, askRepo)).rejects.toThrow(
-      'Setup decision required for this repository'
+    const refusal = await createWorktree(request, undefined, timing, askRepo).catch(
+      (error: unknown) => error
     )
+    expect(refusal).toBeInstanceOf(WorktreeCreateSetupChoiceRefusedError)
+    expect(refusal).toMatchObject({ message: 'Setup decision required for this repository' })
     // Hooks come from the main checkout (no worktree path): the new worktree doesn't exist yet.
     expect(mocks.effectiveHooks.mock.calls).toEqual([[expect.objectContaining({ path: '/repo' })]])
     for (const gitWork of [mocks.defaultBase, mocks.remoteBase, mocks.hasBase, mocks.refresh]) {

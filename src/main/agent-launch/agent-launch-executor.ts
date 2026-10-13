@@ -1,8 +1,9 @@
 /**
  * The one place an agent launch is sequenced — for the surfaces moved onto it: `agent.launch`,
  * `worktree.create` (CLI and mobile create) through `createWorktreeWithStartupAgent`, whose
- * `legacy-host` create still starts the agent itself, and orchestration workers, local and
- * federated. The desktop agent tab still starts agents its own way; moving it here is later work.
+ * `legacy-host` create still starts the agent itself, orchestration workers, local and
+ * federated, and server-run automations. The desktop agent tab still starts agents its own way;
+ * moving it here is later work.
  *
  * The mode decision is shared, not copied: `agent-launch-mode` owns it, and
  * `orchestration-worker-start-mode` is a thin adapter over it supplying orchestration's receipt
@@ -371,10 +372,9 @@ async function createTerminalSurface(
  * Two warnings, both true, neither droppable.
  *
  * Mirrors how the create combines its own failures — `appendFailure` in
- * runtime-local-worktree-terminal-startup.ts, and the startup-terminal catch in
- * runtime-remote-managed-worktree-create.ts — which append rather than replace.
+ * runtime-local-worktree-terminal-startup.ts — which append rather than replace.
  */
-function combineLaunchWarnings(
+export function combineLaunchWarnings(
   create: string | undefined,
   surface: string | undefined
 ): string | undefined {
