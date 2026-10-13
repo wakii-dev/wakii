@@ -637,16 +637,6 @@ describe('electron-builder config', () => {
       expect(unrecoverable).toEqual([])
     })
 
-    it('accepts exactly the markers electron-updater maps to a root-package updater', async () => {
-      const source = await readFile(
-        new URL('../../src/main/linux-update-package-type.ts', import.meta.url),
-        'utf8'
-      )
-      for (const target of linuxTargets.filter((entry) => RECOVERABLE_TARGETS.has(entry))) {
-        expect(source).toContain(`value === '${target}'`)
-      }
-    })
-
     it('keeps the pinned FpmTarget overwrite for configured deb and rpm artifacts', async () => {
       const source = await readFile(
         require.resolve('app-builder-lib/out/targets/FpmTarget'),

@@ -84,30 +84,26 @@ describe('NativeChatUpgradeTipDialog', () => {
   it('shows only Got It when chat mode is already on', () => {
     const html = renderDialog(true)
     const text = textOf(html)
-    expect(text).not.toContain('New agent tabs still open in the terminal')
     expect(text).not.toContain('Turn on chat mode')
     expect(text).not.toContain('Enable Now')
-    expect(text).not.toContain('Okay')
+    expect(text).not.toContain('Leave Off')
     expect(html).not.toContain('role="switch"')
-    expect(html).toContain('27rem')
-    expect(html).not.toContain('33rem')
   })
 
-  it('offers Okay and Enable Now when chat mode is off, without a switch', () => {
+  it('offers Leave Off and Enable Now when chat mode is off, without a switch', () => {
     const html = renderDialog(false)
     const text = textOf(html)
-    expect(text).toContain('New agent tabs still open in the terminal, as before.')
-    expect(text).toContain('Okay')
+    expect(text).toContain('Leave Off')
     expect(text).toContain('Enable Now')
     expect(text).not.toContain('Got It')
     expect(text).not.toContain('Turn on chat mode')
     expect(html).not.toContain('role="switch"')
-    expect(html).toContain('33rem')
+    expect(html).toContain('27rem')
     // The way back to the terminal stays in the tip.
     expect(text).toContain('Resume in New CLI copies a Claude or Codex chat')
   })
 
-  it('dismisses with Okay and runs the primary action only with Enable Now', () => {
+  it('dismisses with Leave Off and runs the primary action only with Enable Now', () => {
     const onPrimaryAction = vi.fn()
     const onOpenChange = vi.fn()
     const container = document.createElement('div')
@@ -115,10 +111,14 @@ describe('NativeChatUpgradeTipDialog', () => {
     act(() => root.render(dialog(false, onPrimaryAction, onOpenChange)))
     const buttons = container.querySelectorAll<HTMLButtonElement>('footer button')
     expect(buttons).toHaveLength(2)
-    expect(buttons[0]?.textContent).toBe('Okay')
-    expect(buttons[0]?.getAttribute('data-variant')).toBe('ghost')
+    expect(buttons[0]?.textContent).toBe('Leave Off')
+    // Leave Off is plain text, not a Button primitive.
+    expect(buttons[0]?.hasAttribute('data-variant')).toBe(false)
     expect(buttons[1]?.textContent).toBe('Enable Now')
     expect(buttons[1]?.getAttribute('data-variant')).toBe('default')
+    // Enable Now takes the row width Leave Off leaves.
+    expect(buttons[1]?.classList.contains('flex-1')).toBe(true)
+    expect(buttons[0]?.classList.contains('flex-1')).toBe(false)
     act(() => buttons[0]?.click())
     expect(onOpenChange).toHaveBeenCalledWith(false)
     expect(onPrimaryAction).not.toHaveBeenCalled()
@@ -134,7 +134,6 @@ describe('NativeChatUpgradeTipDialog', () => {
     expect(container.querySelectorAll('footer button')).toHaveLength(1)
     expect(container.querySelector('footer button')?.textContent).toBe('Got It')
     expect(container.querySelector('[role="switch"]')).toBeNull()
-    expect(container.textContent).not.toContain('New agent tabs still open in the terminal')
     act(() => root.unmount())
   })
 

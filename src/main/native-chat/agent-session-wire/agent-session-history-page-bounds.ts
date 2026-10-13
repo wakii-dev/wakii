@@ -8,6 +8,7 @@ import type {
 } from '../../../shared/agent-session-journal-types'
 import { REMOTE_RUNTIME_MAX_OUTBOUND_JSON_BYTES } from '../../../shared/remote-runtime-memory-limits'
 import { agentSessionHostStatusBody } from '../../../shared/agent-session-host-status-rows'
+import { subagentFoldKey, subagentItemBlock } from '../../../shared/native-chat-subagent-items'
 
 export const AGENT_SESSION_HISTORY_MAX_PAGE_BYTES = REMOTE_RUNTIME_MAX_OUTBOUND_JSON_BYTES / 2
 
@@ -125,4 +126,30 @@ export function newestWholeSequenceGroups(
     count += group.length
   }
   return selected.toReversed().flat()
+}
+
+/** `start` moved back to the first sibling of every subagent group the window holds part of, but
+ *  never past `floor`: a group spread over a long turn, or helpers outside any turn, may still
+ *  split rather than grow the page without bound. */
+export function wholeSubagentGroupsStart(
+  items: readonly AgentJournalRenderItem[],
+  start: number,
+  floor: number
+): number {
+  const firstOf = new Map<string, number>()
+  for (const item of items) {
+    const block = item.body.kind === 'message' ? subagentItemBlock(item.body) : null
+    if (block !== null && !firstOf.has(subagentFoldKey(block))) {
+      firstOf.set(subagentFoldKey(block), item.sequence)
+    }
+  }
+  let whole = start
+  for (let index = items.length - 1; index >= 0 && items[index]!.sequence >= whole; index--) {
+    const item = items[index]!
+    const block = item.body.kind === 'message' ? subagentItemBlock(item.body) : null
+    if (block !== null) {
+      whole = Math.max(floor, Math.min(whole, firstOf.get(subagentFoldKey(block))!))
+    }
+  }
+  return whole
 }

@@ -642,7 +642,7 @@ describe('WakiiRuntimeService', () => {
       )
       expect(spawn).not.toHaveBeenCalled()
     } finally {
-      running.finish({ tabTakenBack: false })
+      running.finish({ kind: 'proceed' })
     }
   })
 })

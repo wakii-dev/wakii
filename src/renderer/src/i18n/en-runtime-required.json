@@ -1563,7 +1563,9 @@
         },
         "SshPane": {
           "94c5284560": "Targets",
-          "a7d28dff81": "Add a remote host to connect to it in Wakii."
+          "a7d28dff81": "Add a remote host to connect to it in Wakii.",
+          "syncedServerPlural": "Synced {{count}} servers",
+          "syncedServerSingular": "Synced {{count}} server"
         },
         "SshTargetCard": {
           "47e94bd6ba": "connected",
@@ -1859,6 +1861,18 @@
           "terminalsElsewhere_other": "Runs the relay while {{count}} terminals another Wakii desktop or session opened on this host are running.",
           "terminalsLive_one": "Runs the relay until its {{count}} open terminal is closed, then moves to a managed server.",
           "terminalsLive_other": "Runs the relay until its {{count}} open terminals are closed, then moves to a managed server."
+        },
+        "task": {
+          "tracker": {
+            "integration": {
+              "cards": {
+                "connectedSitePlural": "{{count}} sites connected",
+                "connectedSiteSingular": "{{count}} site connected",
+                "connectedWorkspacePlural": "{{count}} workspaces connected",
+                "connectedWorkspaceSingular": "{{count}} workspace connected"
+              }
+            }
+          }
         },
         "terminal": {
           "windows": {

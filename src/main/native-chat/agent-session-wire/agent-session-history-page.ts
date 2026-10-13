@@ -33,6 +33,7 @@ import {
   HISTORY_PAGE_CONTENT_BUDGET_BYTES,
   historyEntryBytes,
   newestWholeSequenceGroups,
+  wholeSubagentGroupsStart,
   oversizedHistoryItem,
   submissionBytesByItemId
 } from './agent-session-history-page-bounds'
@@ -61,7 +62,8 @@ export type AgentSessionHistoryScope = 'every-agent' | 'own-agent'
  * the conversation off the page. The page stays contiguous and starts at its first
  * item, as the cursor means; the byte budget still bounds it. Fewer own rows than
  * `limit` reach back to the start. With no subagent rows this is the newest `limit`
- * rows, as before.
+ * rows, as before. A page reaches back to the first sibling of each subagent group it holds
+ * part of, so loading an older page does not renumber a group's ordinals or move its row.
  */
 function conversationWindow(
   items: readonly AgentJournalRenderItem[],
@@ -73,7 +75,13 @@ function conversationWindow(
   }
   const ownWindow = newestWholeSequenceGroups(own, limit)
   const start = ownWindow.length < own.length ? ownWindow[0]?.sequence : undefined
-  return start === undefined ? [...items] : items.filter((item) => item.sequence >= start)
+  if (start === undefined) {
+    return [...items]
+  }
+  const reach = newestWholeSequenceGroups(own, 2 * limit)
+  const floor = reach.length < own.length ? reach[0]!.sequence : Number.NEGATIVE_INFINITY
+  const whole = wholeSubagentGroupsStart(items, start, floor)
+  return items.filter((item) => item.sequence >= whole)
 }
 
 function isSubagentRow(item: AgentJournalRenderItem): boolean {

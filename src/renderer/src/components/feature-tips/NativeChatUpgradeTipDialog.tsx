@@ -2,7 +2,6 @@ import { useRef, type JSX } from 'react'
 import { MessagesSquare, SquareTerminal, type LucideIcon } from 'lucide-react'
 import type { FeatureTip } from '../../../../shared/feature-tips'
 import { DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
 import { FeatureTipActions } from './FeatureTipActions'
 import {
@@ -83,7 +82,6 @@ export function NativeChatUpgradeTipDialog({
         primaryButtonRef.current?.focus({ preventScroll: true })
       }}
       visual={<NativeChatUpgradeFeatureTipVisual />}
-      tall={offerChatMode}
     >
       <DialogHeader className="text-left">
         <div>
@@ -91,14 +89,6 @@ export function NativeChatUpgradeTipDialog({
           <DialogTitle size="display">
             {translate('featureTips.nativeChatUpgrade.title', 'Native chat got an upgrade')}
           </DialogTitle>
-          {offerChatMode ? (
-            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-              {translate(
-                'featureTips.nativeChatUpgrade.chatModeNote',
-                'New agent tabs still open in the terminal, as before.'
-              )}
-            </p>
-          ) : null}
           <DialogDescription className="mt-3 max-w-2xl">
             <span className="block space-y-3 leading-relaxed">
               <span className="block">
@@ -156,11 +146,17 @@ export function NativeChatUpgradeTipDialog({
         </div>
       </DialogHeader>
 
-      <DialogFooter className="mt-8 flex sm:justify-end">
+      <DialogFooter className="mt-8 flex flex-row items-center">
         {offerChatMode ? (
-          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={primaryBusy}>
-            {translate('featureTips.nativeChatUpgrade.okay', 'Okay')}
-          </Button>
+          // Why: plain text, flush with the copy, so Enable Now reads as the only button.
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            disabled={primaryBusy}
+            className="mr-4 shrink-0 cursor-pointer rounded-sm text-sm font-medium whitespace-nowrap text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
+          >
+            {translate('featureTips.nativeChatUpgrade.leaveOff', 'Leave Off')}
+          </button>
         ) : null}
         <FeatureTipActions
           currentTip={tip}
@@ -168,7 +164,7 @@ export function NativeChatUpgradeTipDialog({
           onPrimaryAction={onPrimaryAction}
           onSkip={() => onOpenChange(false)}
           showSkip={false}
-          fullWidth={!offerChatMode}
+          fullWidth
           primaryButtonRef={primaryButtonRef}
           label={
             offerChatMode

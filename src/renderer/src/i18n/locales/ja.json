@@ -648,13 +648,6 @@
             }
           }
         },
-        "worktree": {
-          "background": {
-            "terminals": {
-              "setupTitle": "設定"
-            }
-          }
-        },
         "work": {
           "item": {
             "direct": {
@@ -6883,14 +6876,6 @@
           "1626524572": "Nautilus",
           "0de9fda203": "破棄",
           "c71770c455": "{basePrompt}",
-          "f19a56498d": ";ブランチプレフィックス設定は引き続き適用されます。",
-          "800edb1e54": "fix-login-flow",
-          "5d569f5199": "。 Wakii は次のような最後のセグメントのみを生成します。",
-          "570817d126": "と",
-          "56580dcf60": "。参考にすることもできます",
-          "9c9b54e4ea": "組み込みのブランチ名プロンプト",
-          "69bf4830c2": "Wakii も含めて",
-          "9241b59bf5": "使用",
           "a869d0edd8": "ブランチ名コマンドテンプレート",
           "e784ea62dc": "詳細設定",
           "d9b65054ef": ") をタスクを要約した短い名前にします。 Wakii 自身が名前を付けたブランチのみが名前変更され、プッシュされた後は名前が変更されません。",
@@ -6901,8 +6886,7 @@
           "cfd82406dd": "保存中…",
           "40e7be7850": "保存済み",
           "7c7e34a66d": "未保存の変更",
-          "a4fa380b67": "{assistantMessage}",
-          "2ee2779c05": "{firstPrompt}"
+          "commandTemplateDescription": "<basePrompt>{basePrompt}</basePrompt> を使うと、Wakii の<promptLink>組み込みのブランチ名プロンプト</promptLink>を含めることができます。<firstPrompt>{firstPrompt}</firstPrompt> と <assistantMessage>{assistantMessage}</assistantMessage> も参照できます。Wakii が生成するのは <example>fix-login-flow</example> のような最後のセグメントだけで、ブランチプレフィックス設定は引き続き適用されます。"
         },
         "AutoRenameBranchPromptEditor": {
           "63121132c0": "破棄",
@@ -7500,13 +7484,6 @@
           "aa204f185f": "現在の GitHub CLI REST、Search、および GraphQL のレート制限。",
           "612a440e57": "GitHub API の予算",
           "2cde9044a8": "graphql",
-          "36e3de3619": "などのコマンドが古い履歴と比較されるのを防ぎます。対象のブランチにコミットしていない変更やローカルのみのコミットがある場合、Wakii は更新をスキップします。",
-          "d072a12995": "git diff main...HEAD",
-          "db3a127eb1": "。これにより、",
-          "3ae3de8898": "master",
-          "5bf885be48": "または",
-          "ffba483bae": "main",
-          "976afc6b3e": "ワークスペースを作成すると、Wakii はリモートベースを更新し、一致するローカルブランチを安全に fast-forward します。対象は",
           "1ec5c91e1d": "ブランチ名に Git ユーザー名を使用するか、カスタムプレフィックスを使用するか、プレフィックスを使用しないかを選択します。",
           "330f584b50": "ブランチプレフィックス",
           "1ffaadf0a0": "ワークツリーの作成時にブランチ名に追加されるプレフィックス。",
@@ -7527,7 +7504,8 @@
           "compareAgainstUpstreamTitle": "既定の比較ベース",
           "compareAgainstUpstreamDescription": "ソース管理がコミット済み変更の比較に既定で使うベースを選択します。ブランチの upstream は現在のブランチに自動的に追従し、upstream がない場合はリポジトリの既定ブランチにフォールバックします。比較ベースは各ワークツリーの Git パネルからワークツリーごとに変更できます。Pull Request やリベースの対象は変更されません。",
           "compareBaseRepositoryDefault": "リポジトリ既定",
-          "compareBaseBranchUpstream": "ブランチの upstream"
+          "compareBaseBranchUpstream": "ブランチの upstream",
+          "refreshLocalBaseDescription": "ワークスペースを作成すると、Wakii はリモートのベースを更新し、<mainBranch>main</mainBranch> や <masterBranch>master</masterBranch> など、対応するローカルブランチを安全に fast-forward します。これにより、<diffCommand>git diff main...HEAD</diffCommand> などのコマンドが古い履歴と比較されるのを防ぎます。対象のブランチにコミットしていない変更やローカルのみのコミットがある場合、Wakii は更新をスキップします。"
         },
         "HiddenExperimentalGroup": {
           "7c4e18d2f6": "このマシンで太字グリッチのキャプチャジェスチャーを有効にします。{{samplingShortcut}} でサンプリングバーストを開始し、{{captureShortcut}} でペインの証拠をディスクに保存します。",
@@ -7960,18 +7938,13 @@
         },
         "RepositoryHooksSection": {
           "af49e2a19e": "ファイルは存在しますが、Wakii は有効な `scripts` または `issueCommand` 定義を見つけることができませんでした。",
-          "3397879bee": "ローカルコマンドが存在する場合は、どのコマンドを実行するかを選択します。",
           "39da2ae12f": "orca.yaml",
-          "ac9038d2cc": "両方のとき",
           "32fec28f5b": "コマンドソース",
           "bbbd6e0bc4": "コマンドソースとorca.yaml",
           "c9bc1bfd8f": "詳細設定",
           "610d90fdbd": "コマンドソースと orca.yaml の詳細。",
-          "52aef29e69": "リポジトリのデフォルトを使用するには空白のままにします",
           "4084720f47": "{{artifact_url}} を完了",
           "13394103bd": "カスタム GitHub Issue コマンド",
-          "70ad20f883": "リンクされた号または PR URL をご覧ください。",
-          "b997331366": "オプションの上書き。使用",
           "2cc27dc12b": "リンクされた Issue コマンドのユーザーごとのオプションのオーバーライド。",
           "b91a0f297d": "ワークツリーがアーカイブされる前に実行されるローカルおよび共有スクリプト。",
           "9a100323ff": "アーカイブスクリプト",
@@ -8030,8 +8003,6 @@
           "e03d9a8f38": "毎回尋ねる",
           "8dbe6bedf5": "無効",
           "0e0dd5b9a5": "ロード済み",
-          "9b12f15b1e": "存在するとき。",
-          "c85c2c88a2": "{{artifact_url}}",
           "fac13f8c1e": "権威ある",
           "0518758f38": "両方",
           "d2b3016c20": "共有",
@@ -8044,7 +8015,11 @@
           "81057d5f71": "保存中…",
           "da37d6f10e": "コピー",
           "3149964b66": "コピーしました",
-          "waitForSetupBeforeAgent": "セットアップが完了するまで待ってから Agent を開始してください"
+          "waitForSetupBeforeAgent": "セットアップが完了するまで待ってから Agent を開始してください",
+          "issueCommandDescription": "任意の上書きです。リンクされた Issue または PR の URL には <artifactUrl>{{artifact_url}}</artifactUrl> を使用します。",
+          "issueCommandSharedDefault": "空欄のままにすると、<yaml>orca.yaml</yaml> のリポジトリのデフォルトを使用します。",
+          "issueCommandOptionalDefault": "空欄のままにすると、<yaml>orca.yaml</yaml> にリポジトリのデフォルトがあればそれを使用します。",
+          "commandSourceDescription": "<yaml>orca.yaml</yaml> とローカルの両方にコマンドがある場合は、どちらを実行するかを選択します。"
         },
         "RepositoryIconPicker": {
           "2b7d27b93c": "{{value0}} リポジトリカラーを使用する",
@@ -8574,7 +8549,6 @@
           "a7d28dff81": "Wakii で接続するリモートホストを追加します。",
           "94c5284560": "ターゲット",
           "f495689b82": "インポートに失敗しました",
-          "f8050f6307": "{{value0}} サーバー{{value1}} を同期しました",
           "68c13b4589": "テストが失敗しました",
           "81d08bcddf": "接続成功",
           "a43de1d3ee": "切断に失敗しました",
@@ -8588,12 +8562,8 @@
           "0e5aa04161": "ホストまたは SSH 構成エイリアスが必要です",
           "f1fc50dad2": "SSH ターゲットのロードに失敗しました",
           "0cda732f43": "接続テストに失敗しました",
-          "2c4ee7332b": "リモートリレーのリセットに失敗しました",
-          "db2e48975e": "リモートリレーリセット",
-          "025e107643": "リモートターミナルの終了に失敗しました",
-          "90e308c98b": "リモートターミナルが終了しました",
-          "3879cbaa52": "ターミナルのタイムアウトは 60 ～ {{value0}} 秒にする必要があります。そうでない場合は、リセットされるまでターミナルをアクティブにしておく必要があります。",
-          "terminateUnverifiable": "{{terminals}} リモートターミナルに到達できませんでした。再接続して終了します。"
+          "syncedServerSingular": "{{count}} 台のサーバーを同期しました",
+          "syncedServerPlural": "{{count}} 台のサーバーを同期しました"
         },
         "SshPassphraseDialog": {
           "d5a234456f": "キャンセル",
@@ -9002,13 +8972,8 @@
           "1ba81c0ff0": "推奨",
           "cfde55c7b0": "モデルのダウンロードに失敗しました。",
           "43fd4f454b": "音声モデル",
-          "7cf715f891": "が開催されます。",
-          "295d84b849": "一度開始し、もう一度停止します。ホールド: 言いながら言い続ける",
-          "ff9a680010": "トグル: 押す",
           "ba4a900d1d": "ディクテーションモード",
           "0121960365": "音声ディクテーションを有効にする",
-          "366e1b4f36": "フォーカスされたペインにテキストを書き込むことができます。",
-          "4465596675": "プレス",
           "62d2a84d31": "OpenAI APIキーのクリアに失敗しました",
           "37aba8bb63": "OpenAI APIキーがクリアされました",
           "8572bbb537": "OpenAI APIキーの保存に失敗しました",
@@ -9028,7 +8993,9 @@
           "1eac933202": "macOS のプライバシーとセキュリティを開きました。アクセスを許可した後、ディクテーションを再度有効にします。",
           "cd9fe37556": "マイクの許可が与えられました",
           "6fa734ed95": "{{value0}} を削除",
-          "openAiKeyName": "OpenAI 転写キー"
+          "openAiKeyName": "OpenAI 転写キー",
+          "dictationShortcutDescription": "{{shortcut}} を押すと、フォーカスされているペインにテキストを音声入力できます。",
+          "dictationModesDescription": "トグル: {{shortcut}} を1回押すと開始し、もう一度押すと停止します。ホールド: {{shortcut}} を押している間、音声入力します。"
         },
         "WorktreeSymlinksSection": {
           "1c1e35b219": "{{value0}} を削除",
@@ -11088,21 +11055,23 @@
                 "60996beda6": "Jira サイトを追加",
                 "7ca5ffffdb": "Jira Cloud の Issue を閲覧・作成し、そこから作業を開始します。",
                 "a1093a06c7": "セットアップ操作を表示する前に、Jira へのアクセスを確認しています。",
-                "9fa04a032e": "{{value0}} サイト{{value1}} が接続されました",
                 "cef18762a2": "Linear の設定で発行した個人用 API キーでアクセスを追加します。フルアクセスキーでは、キーの所有者が参照できるすべてのチームが見えます。",
                 "6224fe9d34": "接続された各 Linear ワークスペースには、アクティブなランタイムが保存したキーが 1 つあります。フルアクセスキーはキー所有者がアクセスできるすべてのチームを対象にできます。制限付きキーはいつでも置き換えられます。",
                 "1a12e33fe5": "Linear アクセスを追加",
                 "622c224082": "ワークスペースへのアクセスを追加",
                 "eae4a9f16b": "Linear アクセスを追加して、Issue を閲覧およびリンクします。",
                 "fe9231215b": "セットアップ操作を表示する前に Linear アクセスを確認中。",
-                "e1f5e6424c": "{{value0}} ワークスペース{{value1}} が接続されました",
                 "disconnect_all": "切断",
                 "account_scope_prefix": "アカウントスコープ",
                 "2d60ec7921": "APIトークンを使用して Jira Cloudサイトに接続するか、パーソナルアクセストークンまたはユーザー名とパスワードを使用してセルフホスト Jira に接続します。認証情報は選択されたリモートランタイムに送信され、ランタイムがサポートする暗号化で保存されます。",
                 "977e360b71": "APIトークンを使用して Jira Cloudサイトに接続するか、パーソナルアクセストークンまたはユーザー名とパスワードを使用してセルフホスト Jira に接続します。認証情報はローカルに保存され、ローカルランタイムストレージがサポートする場合は暗号化されます。",
                 "statusConnected": "接続済み",
                 "statusNotConnected": "接続されていません",
-                "linearTokenName": "リニア API トークン"
+                "linearTokenName": "リニア API トークン",
+                "connectedSiteSingular": "{{count}} 件のサイトに接続済み",
+                "connectedSitePlural": "{{count}} 件のサイトに接続済み",
+                "connectedWorkspaceSingular": "{{count}} 件のワークスペースに接続済み",
+                "connectedWorkspacePlural": "{{count}} 件のワークスペースに接続済み"
               }
             }
           }
@@ -17695,7 +17664,8 @@
         "notConfirmedMany": "{{value0}} 件のチャットが再開されたことを確認できませんでした",
         "notConfirmedOtherOne": "他のチャット 1 件が再開されたことを確認できませんでした",
         "notConfirmedOtherMany": "他のチャット {{value0}} 件が再開されたことを確認できませんでした",
-        "show": "表示",
+        "viewChats": "チャットを表示",
+        "review": "確認",
         "activityUnnamed": "名前なし",
         "activityApproval": "承認待ち: {{value0}}",
         "activityQuestion": "回答待ち: {{value0}}",
