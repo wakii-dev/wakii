@@ -63,7 +63,11 @@ function verifyPackagedDaemonEntryBoots(resourcesDir, options = {}) {
   console.log('[verify-packaged-daemon-entry] OK — packaged daemon-entry loads under plain Node')
 }
 
-const TERMINAL_HOST_BOOT_TIMEOUT_MS = 20_000
+// Why overridable: a cold first exec of a freshly ad-hoc-signed x64 Electron
+// helper under Rosetta on a 3-vcpu hosted runner can exceed 20s before the
+// daemon socket even appears (fork CI: GitHub macos-15 M1). Default unchanged.
+const TERMINAL_HOST_BOOT_TIMEOUT_MS =
+  Number(process.env.ORCA_TERMINAL_HOST_BOOT_TIMEOUT_MS ?? '') || 20_000
 // Arithmetic so the shell echoing the typed command cannot satisfy the check.
 const TERMINAL_HOST_BOOT_COMMAND = 'echo "OK $((6*7))" && exit'
 const TERMINAL_HOST_BOOT_OUTPUT = 'OK 42'
