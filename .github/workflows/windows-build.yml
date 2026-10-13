@@ -50,6 +50,13 @@ jobs:
         run: pnpm install --frozen-lockfile
         working-directory: mobile
 
+      # Why: upstream's build:release includes build:native, which compiles
+      # native/windows-agent-hook — but build:win goes through build:desktop,
+      # which doesn't, and electron-builder's afterPack verify refuses to
+      # package without the hook exe (agent hook bin, #20913).
+      - name: Prepare the Windows agent hook
+        uses: ./.github/actions/prepare-windows-agent-hook
+
       - name: Build Windows app
         run: pnpm run build:win
         env:
