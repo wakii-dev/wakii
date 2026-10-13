@@ -179,17 +179,31 @@ console.log('== F6 primary có story mở + agent sống → WARN đúng pid, kh
   rmSync(repo, { recursive: true, force: true })
 }
 
-console.log('== F7 claude bypass trong repo → WARN vi phạm LUẬT; strict → FAIL ==')
+console.log('== F7 claude bypass trong repo + setting Manual → WARN; strict → FAIL ==')
 {
   const repo = makeStoryRepo('f7')
   const agent = spawnSimAgent(repo, { bypass: true })
   withAgents([agent], () => {
-    const r = runPreflight(repo, { flags: ['--branch', 'story/test-main'] })
-    check('F7', 'WARN bypass', r.out.includes('⚠ BYPASS permissions'), r.out)
-    check('F7', 'ghi LUẬT human-in-the-loop 24/09', r.out.includes('human-in-the-loop') && r.out.includes('24/09'), r.out)
+    // WAKII_AGENT_PERM_ARGS='' = Manual (hermetic — không đọc profile thật của máy)
+    const r = runPreflight(repo, { flags: ['--branch', 'story/test-main'], env: { WAKII_AGENT_PERM_ARGS: '' } })
+    check('F7', 'WARN bypass (Manual)', r.out.includes('⚠ BYPASS permissions'), r.out)
+    check('F7', 'ghi setting Wakii = Manual', r.out.includes('setting Wakii = Manual'), r.out)
     check('F7', 'WARN không chặn (exit 0)', r.code === 0, `code=${r.code}`)
-    const rs = runPreflight(repo, { flags: ['--branch', 'story/test-main'], env: { PREFLIGHT_STRICT_AGENT: '1' } })
+    const rs = runPreflight(repo, { flags: ['--branch', 'story/test-main'], env: { PREFLIGHT_STRICT_AGENT: '1', WAKII_AGENT_PERM_ARGS: '' } })
     check('F7', 'strict → FAIL exit 1', rs.code === 1 && rs.out.includes('PRE-FLIGHT FAIL'), `code=${rs.code}`)
+  })
+  rmSync(repo, { recursive: true, force: true })
+}
+
+console.log('== F7b claude bypass trong repo + setting Yolo → ✓ khớp setting, không WARN ==')
+{
+  const repo = makeStoryRepo('f7b')
+  const agent = spawnSimAgent(repo, { bypass: true })
+  withAgents([agent], () => {
+    const r = runPreflight(repo, { flags: ['--branch', 'story/test-main'], env: { WAKII_AGENT_PERM_ARGS: '--dangerously-skip-permissions' } })
+    check('F7b', '✓ khớp setting Yolo', r.out.includes('khớp Agent Permissions setting Wakii (Yolo)'), r.out)
+    check('F7b', 'không WARN/FAIL bypass', !r.out.includes('⚠ BYPASS') && !r.out.includes('❌ BYPASS'), r.out)
+    check('F7b', 'exit 0', r.code === 0, `code=${r.code}`)
   })
   rmSync(repo, { recursive: true, force: true })
 }

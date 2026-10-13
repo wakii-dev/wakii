@@ -172,7 +172,9 @@ elif command -v ps >/dev/null 2>&1 && command -v lsof >/dev/null 2>&1 && [ -n "$
   fi
 
   # 8. claude --dangerously-skip-permissions hoặc --permission-mode bypassPermissions
-  # trong repo đang xét → vi phạm LUẬT human-in-the-loop 24/09 (M4: 2 variant cùng ý).
+  # trong repo đang xét. Ruling 13/10 (thay LUẬT 24/09): bypass HỢP LỆ khi Agent
+  # Permissions setting của app Wakii = Yolo (agentDefaultArgs.claude); chỉ cảnh báo
+  # khi setting = Manual (bypass không thuộc ai — nghi agent lạ).
   # [s] chống self-match argv của chính awk.
   BYP_PIDS=$(printf '%s\n' "$PS_OUT" | awk '/--dangerously-skip-permission[s]/ || /--permission-mode[ ]bypassPermission[s]/ { if ($0 !~ /awk|grep|lsof|story-preflight/) print $1 }')
   if [ -n "$BYP_PIDS" ]; then
@@ -182,11 +184,28 @@ elif command -v ps >/dev/null 2>&1 && command -v lsof >/dev/null 2>&1 && [ -n "$
       case "$cwd/" in "$ROOT_P"/*) BYP_HIT="$BYP_HIT · pid $pid" ;; esac
     done < <(_pid_cwd "$BYP_PIDS")
     if [ -n "$BYP_HIT" ]; then
-      if [ "$AG_STRICT" = "1" ]; then
-        echo "❌ BYPASS permissions: claude chạy --dangerously-skip-permissions trong repo này (${BYP_HIT#" · "}) — vi phạm LUẬT human-in-the-loop 24/09 — dừng, đổi cách/hỏi"; FAIL=1
-      else
-        echo "⚠ BYPASS permissions: claude chạy --dangerously-skip-permissions trong repo này (${BYP_HIT#" · "}) — vi phạm LUẬT human-in-the-loop 24/09 (KHÔNG bypass; bị chặn → đổi cách/hỏi)"
-      fi
+      WAKII_YOLO=$(node -e '
+const fs=require("fs");
+if(process.env.WAKII_AGENT_PERM_ARGS!==undefined){console.log(process.env.WAKII_AGENT_PERM_ARGS);process.exit(0)}
+const appdata=process.env.APPDATA||require("os").homedir()+"/AppData/Roaming";
+const cands=[appdata+"/orca/profiles/local-default/orca-data.json",
+  appdata+"/Wakii/profiles/local-default/orca-data.json",
+  require("os").homedir()+"/Library/Application Support/Wakii/profiles/local-default/orca-data.json"];
+for(const f of cands){try{const j=JSON.parse(fs.readFileSync(f,"utf8"));
+const a=j.settings&&j.settings.agentDefaultArgs&&j.settings.agentDefaultArgs.claude;
+if(typeof a==="string"){console.log(a);break}}catch{}}' 2>/dev/null)
+      case "$WAKII_YOLO" in
+        *--dangerously-skip-permissions*|*bypassPermissions*)
+          echo "✓ bypass permissions (${BYP_HIT#" · "}) — khớp Agent Permissions setting Wakii (Yolo)"
+          ;;
+        *)
+          if [ "$AG_STRICT" = "1" ]; then
+            echo "❌ BYPASS permissions: claude chạy bypass trong repo này (${BYP_HIT#" · "}) — setting Wakii = Manual — agent lạ, dừng hỏi"; FAIL=1
+          else
+            echo "⚠ BYPASS permissions: claude chạy bypass trong repo này (${BYP_HIT#" · "}) — setting Wakii = Manual — KHÔNG thuộc spawn chuẩn (nghi agent lạ → kiểm tra)"
+          fi
+          ;;
+      esac
     fi
   fi
 else

@@ -209,13 +209,30 @@ What: làm gì đó đầu tiên
 Tasks: task-a / task-b
 `, 'utf8')
   const orcaLog = join(dir, 'orca.log')
-  const r = runLaunch(dir, stub, ['SF-1', '--bracket', bf], { STUB_ORCA_LOG: orcaLog })
+  // WAKII_AGENT_PERM_ARGS='' = Manual (hermetic — không đọc profile thật của máy)
+  const r = runLaunch(dir, stub, ['SF-1', '--bracket', bf], { STUB_ORCA_LOG: orcaLog, WAKII_AGENT_PERM_ARGS: '' })
   check('L6', 'exit 0 + LAUNCHED', r.code === 0 && r.out.includes('LAUNCHED ✓'), `code=${r.code} out=${r.out}`)
   check('L6', 'cha = story worktree (không hậu tố -coordinator)', r.out.includes('worktree cha trên branch story-test-1-hub chưa có'), r.out)
   const log = existsSync(orcaLog) ? readFileSync(orcaLog, 'utf8') : ''
   check('L6', 'create --base-branch story-test-1-hub', log.includes('--base-branch') && log.includes('story-test-1-hub'), log)
-  check('L6', 'worker acceptEdits (LUẬT 24/09 — không bypass)', log.includes('--permission-mode acceptEdits'), log)
+  check('L6', 'setting Manual → worker acceptEdits', log.includes('--permission-mode acceptEdits'), log)
   check('L6', 'không --agent / không skip-permissions trong spawn', !log.includes('--agent') && !log.includes('dangerously-skip-permissions'), log)
+  rmSync(dir, { recursive: true, force: true })
+}
+
+console.log('== L6b launch Yolo: Agent Permissions setting → spawn theo args app ==')
+{
+  const dir = tempDir('l6b')
+  const stub = makeOrcaLaunchStub(dir)
+  const bf = writeBracket(dir)
+  const orcaLog = join(dir, 'orca.log')
+  const r = runLaunch(dir, stub, ['SF-1', '--bracket', bf], { STUB_ORCA_LOG: orcaLog, WAKII_AGENT_PERM_ARGS: '--dangerously-skip-permissions' })
+  check('L6b', 'exit 0 + LAUNCHED', r.code === 0 && r.out.includes('LAUNCHED ✓'), `code=${r.code} out=${r.out}`)
+  check('L6b', 'báo mode bypass theo setting', r.out.includes('bypass (theo setting Wakii)'), r.out)
+  const log = existsSync(orcaLog) ? readFileSync(orcaLog, 'utf8') : ''
+  check('L6b', 'spawn có --dangerously-skip-permissions', log.includes('--dangerously-skip-permissions'), log)
+  check('L6b', 'spawn không acceptEdits', !log.includes('acceptEdits'), log)
+  check('L6b', 'vẫn không --agent', !log.includes('--agent'), log)
   rmSync(dir, { recursive: true, force: true })
 }
 

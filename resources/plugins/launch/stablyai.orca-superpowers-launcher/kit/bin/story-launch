@@ -477,10 +477,41 @@ if [ -n "$_hub_path" ]; then
 else
   echo "  (worktree cha trên branch $DEST chưa có — tạo ở APPROVE; launch tiếp không lineage)"
 fi
-# LUẬT 24/09 (enforce 04/10): cấm spawn bypass — template agent 'claude' của Orca
-# cài sẵn --dangerously-skip-permissions (bằng chứng: pid 20066 LOCAL-4 sf-4 worker).
+# Ruling 13/10 (thay LUẬT 24/09): spawn claude THEO Agent Permissions setting của app
+# Wakii — settings.agentDefaultArgs.claude trong profile store (toggle Yolo/Manual
+# ở AgentsPane). Yolo → dùng args của app (bypass); Manual/rỗng → acceptEdits.
+# Override test: WAKII_AGENT_PERM_ARGS. Hai bước spawn giữ nguyên (cấm --agent claude
+# — template bypass bất chấp setting).
+read_agent_perm_args(){ # $1=agent → in args string (rỗng = Manual)
+  local agent="$1" f
+  local candidates=(
+    "${APPDATA:-$HOME/AppData/Roaming}/Wakii/profiles/local-default/orca-data.json"
+    "${APPDATA:-$HOME/AppData/Roaming}/Wakii/profiles/"*/orca-data.json
+    "${APPDATA:-$HOME/AppData/Roaming}/orca/profiles/local-default/orca-data.json"
+    "${APPDATA:-$HOME/AppData/Roaming}/orca/profiles/"*/orca-data.json
+    "$HOME/Library/Application Support/Wakii/profiles/local-default/orca-data.json"
+    "$HOME/Library/Application Support/Wakii/profiles/"*/orca-data.json
+  )
+  for f in "${candidates[@]}"; do
+    [ -f "$f" ] || continue
+    node -e '
+const fs=require("fs"),[f,agent]=process.argv.slice(1);
+try{const j=JSON.parse(fs.readFileSync(f,"utf8"));
+const args=j.settings&&j.settings.agentDefaultArgs&&j.settings.agentDefaultArgs[agent];
+if(typeof args==="string") console.log(args);}catch{}' "$f" "$agent" 2>/dev/null || true
+    return 0
+  done
+  return 0
+}
+AGENT_PERM_ARGS="${WAKII_AGENT_PERM_ARGS-$(read_agent_perm_args claude)}"
+case "$AGENT_PERM_ARGS" in
+  *--dangerously-skip-permissions*|*bypassPermissions*)
+    AGENT_ARGS="$AGENT_PERM_ARGS"; AGENT_MODE="bypass (theo setting Wakii)";;
+  *)
+    AGENT_ARGS="--permission-mode acceptEdits"; AGENT_MODE="acceptEdits";;
+esac
 # Hai bước theo guide orca-cli custom-argv: create trần → terminal create argv tường
-# minh acceptEdits → wait tui-idle → send prompt qua --text (khỏi nhét prompt vào argv).
+# minh ($AGENT_ARGS) → wait tui-idle → send prompt qua --text (khỏi nhét prompt vào argv).
 CREATE_OUT="$(orca worktree create --name "sf-$N-$SLUG" ${LINEAR:+"--linear-issue" "$LINEAR"} \
   --base-branch "$DEST" $PARENT_FLAG --json 2>&1)"
 WID="$(printf '%s' "$CREATE_OUT" | python3 -c 'import json,sys
@@ -496,7 +527,7 @@ if [ -z "$WID" ]; then
   exit 1
 fi
 AGENT_CH="$(orca terminal create --worktree "id:$WID" --title "sf-$N-$SLUG" \
-  --command "claude --permission-mode acceptEdits" --json 2>/dev/null \
+  --command "claude $AGENT_ARGS" --json 2>/dev/null \
   | python3 -c 'import json,sys
 try:
   r=json.load(sys.stdin)["result"]
@@ -505,7 +536,7 @@ except Exception:
   print("")')"
 orca terminal wait --terminal "$AGENT_CH" --for tui-idle --timeout-ms 90000 --json >/dev/null 2>&1 || true
 if orca terminal send --terminal "$AGENT_CH" --text "$PROMPT" --enter --json >/dev/null 2>&1; then
-  echo "LAUNCHED ✓ sf-$N-$SLUG (acceptEdits, human-in-the-loop)"
+  echo "LAUNCHED ✓ sf-$N-$SLUG ($AGENT_MODE)"
 else
   echo "LAUNCH FAIL ở bước send prompt — worktree ĐÃ tạo ($WID), gửi tay prompt theo references/sf-launch-prompt.md"
   exit 1

@@ -26,8 +26,9 @@ WATCHDOG (cron 30')          DRIVER (workfront-driver --loop, 3h/pass)
 1. **CREATE** — bracket/mindmap `.wakii` + context packs → `wakii-validate` OK → *cửa người 1: approve*
 2. **APPROVE** — story worktree (dest `story/{feature}`) + coordinator + orchestration DAG
 3. **LAUNCH SF** — `story-launch` (`--local` nếu không Linear): probe lineage cha
-   (`branch:$DEST`) → create worktree → hai bước spawn `claude --permission-mode
-   acceptEdits` (cấm `--agent claude` — template bypass) → wait → send prompt
+   (`branch:$DEST`) → create worktree → hai bước spawn `claude` theo Agent
+   Permissions setting app Wakii (Yolo → args app/bypass; Manual → acceptEdits;
+   cấm `--agent claude` — template bypass) → wait → send prompt
 4. **SF EXECUTE** — worker: TDD + commit atomic + browser verify (Rule 0) + rolling
    review; story-preflight chặn sai branch / agent-lạ / secret
 5. **SF DONE** — story-verify sạch → coordinator merge `--no-ff` về dest →
@@ -45,7 +46,7 @@ WATCHDOG (cron 30')          DRIVER (workfront-driver --loop, 3h/pass)
 | Ownership-probe mở rộng | story-launch | 2 worker cùng story (kể cả trên primary, ngoài orchestration) |
 | Lineage probe `branch:$DEST` + `--live` sf-lineage | story-launch / story-doctor | worktree mồ côi |
 | `WAKII_DRIVER_WT` + `--repo` root-only | workfront-driver | driver đẻ worktree sai vị trí |
-| Hai bước spawn `acceptEdits` | story-launch | bypass permissions (template Orca) |
+| Hai bước spawn theo setting (`WAKII_AGENT_PERM_ARGS`) | story-launch | bypass bất chấp toggle (template `--agent claude`) |
 | `linear-rate-limit run` | mọi Linear mutation | 429 rơi qua sàng im lặng |
 | preflight: agent-alive-primary + bypass-detected | story-preflight | worker tràn primary |
 | STORY-COMPLETE = MERGEABLE | SKILL.md | PR treo conflict chờ người nhìn |
@@ -72,12 +73,14 @@ dispatch khi gate `blocked_sf-N` đóng trong `state.json`. Gate **mở chỉ sa
 `features/{slug}` (việc lẻ) · cấm prefix `wakii-dev/` trên remote wakii-dev/wakii ·
 worktree name vẫn dash-form (orca fold `/`→`-`).
 
-## Permission model (ruling (a) 04/10 — siết bypass; adversarial review 10/10)
+## Permission model (ruling 13/10 — spawn theo Agent Permissions setting; trước đó: ruling (a) 04/10 siết bypass)
 
-- **Worker/coordinator do story-launch spawn = hai bước acceptEdits** — enforced
-  trong story-launch (test L-suite). **Carve-out**: `workfront-driver run_worker`
-  nhánh YOLO vẫn spawn `--dangerously-skip-permissions` theo toggle app (known
-  debt — driver out-of-scope LOCAL-5, gộp khi writer xong).
+- **Worker/coordinator do story-launch spawn = hai bước custom-argv THEO SETTING
+  app Wakii** (`settings.agentDefaultArgs.claude` trong profile store — toggle
+  Yolo/Manual ở AgentsPane): Yolo → args của app (bypass); Manual/rỗng →
+  acceptEdits. Vẫn cấm `--agent claude` — template bypass bất chấp setting.
+  Enforced trong story-launch (test L-suite, override `WAKII_AGENT_PERM_ARGS`).
+  `workfront-driver run_worker` cũng theo cùng toggle từ LOCAL-5.
 - **Distribution allowlist**: merge `kit/permission-allowlist.json` vào
   `.claude/settings.local.json` ở **MAIN-CHECKOUT ROOT** — worktree session
   resolve settings.local.json về main root (docs ≥2.1.211) → tới được worker,
@@ -93,7 +96,8 @@ worktree name vẫn dash-form (orca fold `/`→`-`).
   phần của DONE theo template) — dest/protected cấm bằng deny list + review;
   ai merge = người.
 - **Detection tại cửa**: story-preflight check 7/8 — agent sống trên primary +
-  bypass (cả `--permission-mode bypassPermissions`) → WARN; watchdog deck
+  bypass (cả `--permission-mode bypassPermissions`): khớp setting Yolo → ✓;
+  setting Manual → WARN (nghi agent lạ); watchdog deck
   bypass-pid baseline là quy trình session-level (không phải bin).
 
 ## Số vận hành
