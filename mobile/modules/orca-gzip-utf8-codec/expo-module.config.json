@@ -1,9 +1,0 @@
-{
-  "platforms": ["ios", "android"],
-  "ios": {
-    "modules": ["OrcaGzipUtf8CodecModule"]
-  },
-  "android": {
-    "modules": ["expo.modules.orcagziputf8codec.OrcaGzipUtf8CodecModule"]
-  }
-}

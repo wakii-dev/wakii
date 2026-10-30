@@ -43,13 +43,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install mobile workspace deps
-        # Why: build:desktop bundles the mobile web app (upstream OTA phase A) —
-        # its esbuild resolves react-native/expo from mobile/node_modules, a
-        # separate workspace with its own lockfile not covered by the root install.
-        run: pnpm install --frozen-lockfile
-        working-directory: mobile
-
       # Why: upstream's build:release includes build:native, which compiles
       # native/windows-agent-hook — but build:win goes through build:desktop,
       # which doesn't, and electron-builder's afterPack verify refuses to
