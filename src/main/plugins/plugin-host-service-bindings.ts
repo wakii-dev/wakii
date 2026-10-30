@@ -1,6 +1,6 @@
 import { promises as fs } from 'node:fs'
 import * as nodePath from 'node:path'
-import type { PluginEventName } from '../../shared/plugins/plugin-manifest'
+import type { PluginEventName } from '../../shared/plugins/manifest/plugin-manifest'
 import {
   PLUGIN_WORKSPACE_FILE_LIST_LIMIT,
   PLUGIN_WORKSPACE_TERMINAL_LIMIT
@@ -8,6 +8,7 @@ import {
 import type { PluginHostServices } from './plugin-host-methods'
 import { PluginSecretsStore } from './plugin-secrets-store'
 import { PluginKvStore } from './plugin-storage-store'
+import type { PluginJsonValue } from '../../shared/plugins/workers/plugin-host-api'
 import type { TerminalInputKind } from '../../shared/terminal-input-kind'
 import type { RuntimeAgentPromptWriteOptions } from '../runtime/runtime-terminal-contracts'
 import {
@@ -164,20 +165,23 @@ export function bindPluginHostServices(input: {
     storage: {
       get: (key, itemKey) => new PluginKvStore(pluginsDataDir, key, 'storage.json').get(itemKey),
       set: (key, itemKey, value) =>
-        new PluginKvStore(pluginsDataDir, key, 'storage.json').set(itemKey, value),
+        // SAFETY: the host API validated this result against its zod schema before dispatch.
+        new PluginKvStore(pluginsDataDir, key, 'storage.json').set(itemKey, value as PluginJsonValue),
       delete: (key, itemKey) =>
         new PluginKvStore(pluginsDataDir, key, 'storage.json').delete(itemKey),
       keys: (key) => new PluginKvStore(pluginsDataDir, key, 'storage.json').keys()
     },
     secrets: {
       get: (key, itemKey) => new PluginSecretsStore(pluginsDataDir, key).get(itemKey),
-      set: (key, itemKey, value) => new PluginSecretsStore(pluginsDataDir, key).set(itemKey, value),
+      // SAFETY: the host API's secrets result schema is a string; zod validated it before dispatch.
+      set: (key, itemKey, value) => new PluginSecretsStore(pluginsDataDir, key).set(itemKey, value as string),
       delete: (key, itemKey) => new PluginSecretsStore(pluginsDataDir, key).delete(itemKey)
     },
     settings: {
       getAll: (key) => new PluginKvStore(pluginsDataDir, key, 'settings.json').getAll(),
+      // SAFETY: the host API validated this result against its zod schema before dispatch.
       set: (key, itemKey, value) =>
-        new PluginKvStore(pluginsDataDir, key, 'settings.json').set(itemKey, value)
+        new PluginKvStore(pluginsDataDir, key, 'settings.json').set(itemKey, value as PluginJsonValue)
     },
     subscribeEvents
   }

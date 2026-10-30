@@ -1,10 +1,7 @@
 export function getStatusPluginPostSource(hookPathname: string): string[] {
   return [
     'async function post(hookEventName, extraProperties) {',
-    '  // Why: resolve coords per post — the endpoint file may have been',
-    '  // rewritten by a newer Wakii since the last call. Pane/tab/worktree IDs',
-    '  // stay on process.env because they are per-PTY (stable for the life of',
-    '  // the OpenCode process), not per-Wakii-instance.',
+    '  // Refresh endpoint coordinates per post after Orca restarts; per-PTY identity stays in process.env.',
     '  const coords = resolveHookCoords();',
     '  const paneKey = process.env.ORCA_PANE_KEY;',
     '  if (!coords.port || !coords.token || !paneKey) return false;',
@@ -20,7 +17,7 @@ export function getStatusPluginPostSource(hookPathname: string): string[] {
     '    worktreeId: process.env.ORCA_WORKTREE_ID || "",',
     '    env: coords.env,',
     '    version: coords.version,',
-    // opencodeMajor is set only by the OpenCode 2 setup() path, never read from OpenCode's version.
+    // Mark only recognized OpenCode 2 setup contexts, never infer from binary version.
     '    ...(reportingOpenCodeMajor ? { opencodeMajor: reportingOpenCodeMajor } : {}),',
     '    ...(reportingOpenCodeTui ? { opencodeTui: 1 } : {}),',
     '    ...(reportingOpenCodeMajor < 2 && isOpenCodeCommandProcess("serve") && coords.openCodeTui === "1" ? { opencodeSharedServer: 1 } : {}),',
@@ -34,15 +31,14 @@ export function getStatusPluginPostSource(hookPathname: string): string[] {
     '      method: "POST",',
     '      headers: {',
     '        "Content-Type": "application/json",',
-    '        "X-Wakii-Agent-Hook-Token": coords.token,',
+    '        "X-Orca-Agent-Hook-Token": coords.token,',
     '      },',
     '      body,',
     '      signal: controller.signal,',
     '    });',
     '    return response.ok;',
     '  } catch {',
-    '    // Why: OpenCode session events must never fail the agent run just',
-    '    // because Wakii is unavailable or the local loopback request failed.',
+    '    // Orca/loopback failures must never fail the agent run.',
     '    return false;',
     '  } finally {',
     '    clearTimeout(timeout);',

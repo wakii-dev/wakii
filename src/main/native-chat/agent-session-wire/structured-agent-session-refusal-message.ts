@@ -1,12 +1,3 @@
-/**
- * Human-readable text for a lease refusal.
- *
- * A latched session is the one place a bare code is worst: the user is looking at a chat that will
- * not open, and `agent_session_ownership_unknown` tells them neither what Wakii could not prove nor
- * what they can do about it. Every message here names the specific evidence that is missing and
- * the action that supplies it.
- */
-
 import { terminalOwnerRefusalMessage } from '../../../shared/agent-session-legacy-handoff-lease'
 import type { AgentSessionRecord } from '../../../shared/agent-session-record'
 import type {
@@ -24,17 +15,14 @@ function latchedMessage(record: AgentSessionRecord): string {
     return terminalOwnerRefusalMessage(record.lease)
   }
   return record.lease.ownerProcess
-    ? `Wakii cannot prove that ${ownerDescription(record)} — the previous owner of this session — has exited, so it will not start a second agent on the same conversation. Quit that process and reopen this chat.`
-    : 'Wakii cannot tell whether an agent started for this session before the app stopped, so it will not start a second one on the same conversation. Quit any leftover agent process for this workspace and reopen this chat.'
+    ? `Orca cannot prove that ${ownerDescription(record)} — the previous owner of this session — has exited, so it will not start a second agent on the same conversation. Quit that process and reopen this chat.`
+    : 'Orca cannot tell whether an agent started for this session before the app stopped, so it will not start a second one on the same conversation. Quit any leftover agent process for this workspace and reopen this chat.'
 }
 
-/**
- * A situation whose own words the store's code would get wrong: each of these reaches the chat as
- * `ownership_unknown` or `conflict`, which by code alone would read as the latched-owner story.
- */
+/** Prefer situation-specific wording when bare ownership/conflict codes would describe the wrong problem. */
 const SITUATION_MESSAGES: Partial<Record<AgentSessionAnyRefusalReason, string>> = {
   replaySuperseded: 'A newer start of this chat replaced this one. Try again.',
-  leaseMoved: 'This chat changed hands while Wakii was starting it. Try again.',
+  leaseMoved: 'This chat changed hands while Orca was starting it. Try again.',
   spawnIdentityMismatch:
     'The agent that started was not the one Orca launched, so Orca did not use it. Try again.',
   identityMismatch:
@@ -43,16 +31,12 @@ const SITUATION_MESSAGES: Partial<Record<AgentSessionAnyRefusalReason, string>> 
   tabIdTaken: 'Another chat already uses this tab. Try again.',
   conversationHeldElsewhere:
     'Another chat is already working in this conversation. Open that chat to continue.',
-  // Also a damaged record, which no update opens.
+  // Damage is also unreadable; updating alone cannot repair it.
   recordUnreadable:
     "Orca can't read this chat's saved state. If a newer version of Orca saved it, update Orca to open it; otherwise start a new chat."
 }
 
-/**
- * The words and the situation for a store refusal. The reason is what the emitter named, when it
- * named one; the latched branches name their own. Null when neither has a story to tell, and the
- * caller keeps its own wording.
- */
+/** Return situation-specific reason/text, or null to preserve the caller’s wording. */
 export function structuredAgentSessionRefusalMessage(
   emitted: AgentSessionRefusalReference,
   record: AgentSessionRecord | null
@@ -82,7 +66,7 @@ export function structuredAgentSessionRefusalMessage(
   if (code === 'execution_owner_reconciling') {
     return {
       message:
-        'Wakii is still working out who owns this session on this machine. Reopen the chat in a moment.',
+        'Orca is still working out who owns this session on this machine. Reopen the chat in a moment.',
       reference: { code, details: { reason: 'hostReconciling' } }
     }
   }

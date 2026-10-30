@@ -1,5 +1,5 @@
 export const AMP_PLUGIN_FILE = 'orca-agent-status.ts'
-export const AMP_PLUGIN_MARKER = 'Managed by Wakii. Do not edit; changes may be overwritten.'
+export const AMP_PLUGIN_MARKER = 'Managed by Orca. Do not edit; changes may be overwritten.'
 
 export function getAmpPluginSource(): string {
   return [
@@ -48,8 +48,7 @@ export function getAmpPluginSource(): string {
     '}',
     '',
     'function resolveHookCoords(): HookCoords {',
-    '  // Why: Amp sessions can outlive an Wakii restart; the endpoint file is',
-    '  // rewritten on each start, so read it per event before falling back to env.',
+    '  // Re-read endpoints per event because Amp sessions can outlive an Orca restart.',
     '  const fileEnv = readEndpointFile() ?? {}',
     '  return {',
     '    port: fileEnv.port || process.env.ORCA_AGENT_HOOK_PORT,',
@@ -101,7 +100,7 @@ export function getAmpPluginSource(): string {
     '      signal: controller.signal,',
     '      headers: {',
     '        "Content-Type": "application/json",',
-    '        "X-Wakii-Agent-Hook-Token": coords.token',
+    '        "X-Orca-Agent-Hook-Token": coords.token',
     '      },',
     '      body: JSON.stringify({',
     '        paneKey,',
@@ -115,7 +114,7 @@ export function getAmpPluginSource(): string {
     '      })',
     '    })',
     '  } catch {',
-    '    // Why: Wakii status reporting must never affect the Amp run.',
+    '    // Status reporting must never affect the Amp run.',
     '  } finally {',
     '    clearTimeout(timeout)',
     '  }',
@@ -143,8 +142,7 @@ export function getAmpPluginSource(): string {
     '  }',
     '}',
     'function enqueuePost(hookEventName: string, payload: Record<string, unknown>): void {',
-    '  // Why: keep hook callbacks non-blocking without retaining unbounded',
-    '  // payload closures when Wakii is down and each POST waits for timeout.',
+    '  // Bound queued payloads while a disconnected Orca makes each POST time out.',
     '  if (postQueue.length >= MAX_PENDING_POSTS) {',
     '    postQueue.shift()',
     '  }',

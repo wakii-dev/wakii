@@ -154,6 +154,7 @@ export const ghMutationsAndProjectsApi = {
     return () => ipcRenderer.removeListener('gh:workItemMutated', listener)
   },
   checkOrcaStarred: (): Promise<boolean | null> => ipcRenderer.invoke('gh:checkOrcaStarred'),
+  starOrca: (source: AppStarSource): Promise<boolean> => ipcRenderer.invoke('gh:starWakii', source),
   starWakii: (source: AppStarSource): Promise<boolean> => ipcRenderer.invoke('gh:starWakii', source),
   rateLimit: (args?: { force?: boolean }): Promise<GetRateLimitResult> =>
     ipcRenderer.invoke('gh:rateLimit', args),

@@ -2,7 +2,7 @@
 
 import '@testing-library/jest-dom/vitest'
 
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, render, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -53,7 +53,7 @@ beforeEach(() => {
   vi.stubGlobal('IntersectionObserver', InViewObserver)
   clearNativeChatVisualCacheForTests()
   callRuntimeRpc.mockReset()
-  callRuntimeRpc.mockResolvedValue({ ok: true, revision: 'r1', sizeBytes: 9, html: '<p>v</p>' })
+  callRuntimeRpc.mockResolvedValue({ ok: true, revision: 'r1', html: '<p>v</p>', path: '/v' })
 })
 
 afterEach(() => {
@@ -75,27 +75,6 @@ describe('NativeChatMarkdown visuals', () => {
       expect(container).not.toHaveTextContent('::orca-visual')
     } finally {
       useAppStore.setState({ settings })
-    }
-  })
-
-  it('opens the visual in its own workspace tab', async () => {
-    const openChatVisualTab = vi.fn()
-    const original = useAppStore.getState().openChatVisualTab
-    useAppStore.setState({ openChatVisualTab })
-    try {
-      const { container } = render(
-        withOwner(<NativeChatMarkdown content={LINE} visualMessageId="m1" />)
-      )
-      await waitFor(() => expect(container.querySelector('iframe')).not.toBeNull())
-      fireEvent.click(screen.getByRole('button', { name: 'Open in new tab' }))
-      expect(openChatVisualTab).toHaveBeenCalledWith('wt-1', {
-        target: { kind: 'local' },
-        sessionId: 'session-alpha',
-        file: 'usage.html',
-        title: 'Usage'
-      })
-    } finally {
-      useAppStore.setState({ openChatVisualTab: original })
     }
   })
 
@@ -125,7 +104,12 @@ describe('NativeChatMarkdown visuals', () => {
   it('keeps a mounted visual frame while the rest of the reply streams in', async () => {
     const { container, rerender } = render(
       withOwner(
-        <NativeChatMarkdown content={`Intro\n\n${LINE}\n\nMore`} visualMessageId="m1" streaming />
+        <NativeChatMarkdown
+          content={`Intro\n\n${LINE}\n\n\`\`\`text\nsettled\n\`\`\`\n\nMore`}
+          visualMessageId="m1"
+          growing
+          streaming
+        />
       )
     )
     await waitFor(() => expect(container.querySelector('iframe')).not.toBeNull())
@@ -133,8 +117,19 @@ describe('NativeChatMarkdown visuals', () => {
     rerender(
       withOwner(
         <NativeChatMarkdown
-          content={`Intro\n\n${LINE}\n\nMore text arriving now`}
+          content={`Intro\n\n${LINE}\n\n\`\`\`text\nsettled\n\`\`\`\n\nMore text arriving now`}
           visualMessageId="m1"
+          growing
+          streaming
+        />
+      )
+    )
+    rerender(
+      withOwner(
+        <NativeChatMarkdown
+          content={`Intro\n\n${LINE}\n\n\`\`\`text\nsettled\n\`\`\`\n\nMore text arriving now\n\n::orca-visual{file="../invalid.html"}\n\nend`}
+          visualMessageId="m1"
+          growing
           streaming
         />
       )

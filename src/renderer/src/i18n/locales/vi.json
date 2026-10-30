@@ -13024,7 +13024,12 @@
                 "actionRequiredHint": "Cần thực hiện thao tác thủ công trên GitHub (ví dụ: phê duyệt hoạt động chạy) để bỏ chặn việc hợp nhất.",
                 "b3195cba33": "Bỏ đánh dấu tác giả là bot",
                 "f588b46a6c": "Đánh dấu tác giả là bot",
-                "e45324fbed": "Không tải được chi tiết kiểm tra."
+                "e45324fbed": "Không tải được chi tiết kiểm tra.",
+                "operation": {
+                  "rebase": "Rebase",
+                  "merge": "Merge",
+                  "cherryPick": "Cherry-pick"
+                }
               },
               "empty": {
                 "state": {

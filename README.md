@@ -1,129 +1,130 @@
-<div align="center">
-  <img src=".github/assets/wakii-banner.svg" width="100%" alt="Wakii — the agentic IDE with a built-in superpowers team" />
-</div>
+<h1 align="center">
+  <a href="https://onOrca.dev"><img src="resources/build/icon.png" alt="Orca" width="64" valign="middle" /></a> Orca
+</h1>
 
 <p align="center">
-  <a href="https://wakii.xyz"><img src="https://img.shields.io/badge/web-wakii.xyz-45E0A8?logo=safari&logoColor=45E0A8" alt="wakii.xyz" /></a>
-  <img src="https://img.shields.io/badge/10-agents-C026D3?style=flat" alt="10 agents" />
-  <img src="https://img.shields.io/badge/14-public%20skills-8b5cf6?style=flat" alt="14 public skills" />
+  <a href="https://github.com/stablyai/orca"><img src="https://img.shields.io/github/stars/stablyai/orca?style=flat&amp;label=%E2%98%85&amp;color=08C" alt="GitHub stars" /></a>
+  <a href="https://github.com/stablyai/orca/releases"><img src="docs/assets/readme-downloads.svg" alt="Total downloads across all releases" /></a>
   <img src="https://img.shields.io/badge/license-MIT-08C?style=flat" alt="License: MIT" />
-  <img src="https://img.shields.io/badge/macOS%20%7C%20Windows%20%7C%20Linux-4493F8?style=flat-square" alt="macOS, Windows, Linux" />
+  <a href="https://discord.gg/fzjDKHxv8Q"><img src="https://img.shields.io/badge/Discord-5865F2?logo=discord&logoColor=white" alt="Join the Orca Discord" /></a>
+  <a href="https://x.com/orca_build"><img src="https://img.shields.io/badge/X-000000?logo=x&logoColor=white" alt="Follow Orca on X" /></a>
+  <img src="https://img.shields.io/badge/macOS%20%7C%20Windows%20%7C%20Linux-4493F8?style=flat-square" alt="Supported platforms: macOS, Windows, and Linux" />
 </p>
 
 <p align="center">
-  <a href="https://wakii.xyz"><b>Website</b></a> ·
-  <a href="https://wakii.xyz/docs/getting-started/">Docs</a> ·
-  <a href="https://wakii.xyz/skills/">Skills</a> ·
-  <a href="https://wakii.xyz/roadmap/">Roadmap</a> ·
-  <a href="https://github.com/wakii-dev/wakii/releases">Download</a> ·
-  <a href="https://github.com/stablyai/orca">Upstream: stablyai/orca</a>
+  <sub><a href="docs/readme/README.zh-CN.md">中文</a> · <a href="docs/readme/README.ja.md">日本語</a> · <a href="docs/readme/README.ko.md">한국어</a> · <a href="docs/readme/README.es.md">Español</a> · <a href="docs/readme/README.fr.md">Français</a> · <a href="docs/readme/README.pt.md">Português</a> · <a href="docs/readme/README.tr.md">Türkçe</a> · <a href="docs/readme/README.ru.md">Русский</a></sub>
 </p>
 
----
+<p align="center">
+  <strong>The AI Orchestrator for 100x builders.</strong><br/>
+  Run Codex, ClaudeCode, OpenCode or Pi side-by-side — each in its own worktree, tracked in one place.
+</p>
 
-## ⚡ What you get today
+<h3 align="center"><a href="https://onorca.dev/download"><ins>Download Orca</ins></a></h3>
 
-**Describe a feature. Get back a reviewed PR.** Wakii's built-in story team
-runs the whole pipeline for you — you approve the spec at the start and
-merge the PR at the end; the agents handle everything in between:
+<p align="center">
+  <img src="docs/assets/readme-hero.jpg" alt="Orca desktop app running agents in parallel worktrees, with the Orca mobile companion app in the corner" width="960" />
+</p>
 
-- **10 specialist agents** — impact analyst, spec & plan critics, parallel
-  task executors, independent reviewer and verifier, stall watchdog
-- **Isolated parallel execution** — every sub-feature runs in its own git
-  worktree; attempts are compared and the winner merges
-- **Gated by evidence, not vibes** — a real browser walkthrough, green
-  tests, ticked plan, independent review, and a merged branch before
-  anything counts as done
-- **Full-platform releases** — macOS (Apple Silicon + Intel), Windows, and
-  Android builds on every release
-- **14 skills + 48 story CLIs** — design pipelines, browser and emulator
-  automation, Linear ops, machine control — composing into one workflow
-
-## 🧭 Where we're heading
-
-- **Orchestrated human-in-the-loop** — agents route questions to you with
-  business context and a recommendation; everything answerable from the
-  spec, they answer themselves
-- **One orchestrator per repo** — the workflow driver reads the room:
-  detects existing worktree topology, resolves docs from the right host,
-  and never double-dispatches
-- **Fork-native PR visibility** — status for every remote, not just the
-  default
-
-Follow the live [roadmap →](https://wakii.xyz/roadmap/)
-
-Wakii is a fork of [Orca](https://github.com/stablyai/orca) (MIT) — the AI
-orchestrator that runs Codex, Claude Code, OpenCode, Pi and **any other CLI
-agent** side-by-side, each in its own isolated git worktree.
-
-On top of that base, Wakii ships a complete **agentic workflow kit** that
-installs itself on first run — no setup, enabled by default.
-
-## 🖼️ The product
-
-<picture>
-  <source srcset="docs/assets/feature-wall/mobile-companion-app-showcase.gif" type="image/gif">
-  <img src="docs/assets/feature-wall/mobile-companion-app-showcase.jpg" alt="Wakii — desktop agents steered from mobile" width="100%" />
-</picture>
-
-**One prompt in, a reviewed PR out** — agents run in parallel worktrees while you
-watch, steer, and merge from the app or your phone.
-
-### At a glance
-
-| | Feature | One-liner | Docs |
-| - | ------- | --------- | ---- |
-| 🪟 | **Parallel worktrees** | fan one prompt across five agents, merge the winner | [→](https://wakii.xyz/docs/worktrees) |
-| ⌨️ | **Terminal splits** | Ghostty-class, WebGL, scrollback survives restarts | [→](https://wakii.xyz/docs/terminal) |
-| 🎨 | **Design mode** | click any UI element → HTML, CSS + screenshot into the prompt | [→](https://wakii.xyz/docs/design-mode) |
-| 🔀 | **GitHub & Linear** | PRs, issues, boards — open a worktree from any task | [→](https://wakii.xyz/docs/linear) |
-| 🌐 | **SSH worktrees** | agents on a beefy remote, auto-reconnect included | [→](https://wakii.xyz/docs/ssh) |
-| 💬 | **Annotate AI diffs** | comment any diff line, ship back to the agent | [→](https://wakii.xyz/docs/annotate-ai-diff) |
-| 📎 | **Drag files to agents** | drag files or images straight into a prompt | [→](https://wakii.xyz/docs/file-explorer) |
-| 📱 | **Mobile companion** | monitor and steer from your phone | [→](https://wakii.xyz/docs/mobile) |
-| ⚡ | **Orca CLI** | script every workflow — worktree, snapshot, click, fill | [→](https://wakii.xyz/docs/cli) |
-
-### In motion
-
-<table>
-<tr>
-<td width="50%">
-  <a href="https://wakii.xyz/docs/worktrees"><picture><source srcset="docs/site/public/docs/tab-split.gif" type="image/gif"><img src="docs/site/public/docs/posters/tab-split.jpg" alt="Parallel worktree orchestration" width="100%" /></picture></a>
-  <p align="center"><sub><b>Parallel worktrees</b> — five agents, one prompt, merge the winner</sub></p>
-</td>
-<td width="50%">
-  <a href="https://wakii.xyz/docs/design-mode"><picture><source srcset="docs/site/public/docs/orca-design-mode.gif" type="image/gif"><img src="resources/onboarding/feature-wall/tile-05.poster.jpg" alt="Design mode" width="100%" /></picture></a>
-  <p align="center"><sub><b>Design mode</b> — click UI, ship context to the agent</sub></p>
-</td>
-</tr>
-<tr>
-<td width="50%">
-  <a href="https://wakii.xyz/docs/annotate-ai-diff"><picture><source srcset="docs/site/public/docs/annotate-ai-diff.gif" type="image/gif"><img src="resources/onboarding/feature-wall/tile-08.poster.jpg" alt="Annotate AI diffs" width="100%" /></picture></a>
-  <p align="center"><sub><b>Annotate diffs</b> — comment lines, agent fixes</sub></p>
-</td>
-<td width="50%">
-  <a href="https://wakii.xyz/docs/terminal"><picture><source srcset="resources/onboarding/feature-wall/tile-02.gif" type="image/gif"><img src="resources/onboarding/feature-wall/tile-02.poster.jpg" alt="Terminal splits" width="100%" /></picture></a>
-  <p align="center"><sub><b>Terminal splits</b> — WebGL, infinite, survives restarts</sub></p>
-</td>
-</tr>
-</table>
-
-<details>
-<summary><b>More — SSH, drag-files, CLI, mobile</b></summary>
+## Features
 
 <table>
 <tr>
 <td width="50%" valign="middle">
 
-### SSH Worktrees
+### Mobile Companion
 
-Agents on a beefy remote box — full editing, git, terminals, auto-reconnect.
+Monitor and steer your agents from your phone — get notified when an agent finishes and send follow-ups from anywhere.
 
-[Docs →](https://wakii.xyz/docs/ssh)
+[iOS App Store](https://apps.apple.com/us/app/orca-ide/id6766130217) · [Android APK](https://www.onorca.dev/download/android) · [Docs →](https://www.onorca.dev/docs/mobile)
 
 </td>
 <td width="50%">
-  <a href="https://wakii.xyz/docs/ssh"><picture><source srcset="resources/onboarding/feature-wall/tile-06.gif" type="image/gif"><img src="resources/onboarding/feature-wall/tile-06.poster.jpg" alt="SSH worktrees" width="100%" /></picture></a>
+  <a href="https://www.onorca.dev/docs/mobile"><picture><source srcset="docs/assets/feature-wall/mobile-companion-app-showcase.gif" type="image/gif"><img src="docs/assets/feature-wall/mobile-companion-app-showcase.jpg" alt="Orca desktop with the mobile companion app" width="100%" /></picture></a>
+</td>
+</tr>
+<tr>
+<td width="50%" valign="middle">
+
+### Parallel Worktrees
+
+Fan one prompt across five agents, each in its own isolated git worktree — compare the results and merge the winner.
+
+[Docs →](https://www.onorca.dev/docs/model/worktrees)
+
+</td>
+<td width="50%">
+  <a href="https://www.onorca.dev/docs/model/worktrees"><picture><source srcset="docs/site/public/docs/tab-split.gif" type="image/gif"><img src="docs/site/public/docs/posters/tab-split.jpg" alt="Parallel worktree orchestration" width="100%" /></picture></a>
+</td>
+</tr>
+<tr>
+<td width="50%" valign="middle">
+
+### Terminal Splits
+
+Ghostty-class terminals with WebGL rendering, infinite splits, and scrollback that survives restarts.
+
+[Docs →](https://www.onorca.dev/docs/terminal)
+
+</td>
+<td width="50%">
+  <a href="https://www.onorca.dev/docs/terminal"><picture><source srcset="resources/onboarding/feature-wall/tile-02.webp" type="image/webp"><img src="resources/onboarding/feature-wall/tile-02.poster.jpg" alt="Terminal splits" width="100%" /></picture></a>
+</td>
+</tr>
+<tr>
+<td width="50%" valign="middle">
+
+### Design Mode
+
+Click any UI element in a real Chromium window to send its HTML, CSS, and a cropped screenshot straight into your agent's prompt.
+
+[Docs →](https://www.onorca.dev/docs/browser/design-mode)
+
+</td>
+<td width="50%">
+  <a href="https://www.onorca.dev/docs/browser/design-mode"><picture><source srcset="docs/site/public/docs/orca-design-mode.gif" type="image/gif"><img src="resources/onboarding/feature-wall/tile-05.poster.jpg" alt="Embedded browser and Design Mode" width="100%" /></picture></a>
+</td>
+</tr>
+<tr>
+<td width="50%" valign="middle">
+
+### GitHub &amp; Linear, Native
+
+Browse PRs, issues, and project boards in-app — open a worktree from any task and review without a context switch.
+
+[Docs →](https://www.onorca.dev/docs/review/linear)
+
+</td>
+<td width="50%">
+  <a href="https://www.onorca.dev/docs/review/linear"><picture><source srcset="resources/onboarding/feature-wall/tile-03.webp" type="image/webp"><img src="resources/onboarding/feature-wall/tile-03.poster.jpg" alt="GitHub and Linear task workflows in Orca" width="100%" /></picture></a>
+</td>
+</tr>
+<tr>
+<td width="50%" valign="middle">
+
+### SSH Worktrees
+
+Run agents on a beefy remote box with full file editing, git, and terminals — auto-reconnect and port forwarding included.
+
+[Docs →](https://www.onorca.dev/docs/ssh)
+
+</td>
+<td width="50%">
+  <a href="https://www.onorca.dev/docs/ssh"><picture><source srcset="resources/onboarding/feature-wall/tile-06.webp" type="image/webp"><img src="resources/onboarding/feature-wall/tile-06.poster.jpg" alt="Remote worktrees over SSH" width="100%" /></picture></a>
+</td>
+</tr>
+<tr>
+<td width="50%" valign="middle">
+
+### Annotate AI Diffs
+
+Drop comments on any diff line and ship them back to the agent — review, edit, and commit without leaving Orca.
+
+[Docs →](https://www.onorca.dev/docs/review/annotate-ai-diff)
+
+</td>
+<td width="50%">
+  <a href="https://www.onorca.dev/docs/review/annotate-ai-diff"><picture><source srcset="docs/site/public/docs/annotate-ai-diff.gif" type="image/gif"><img src="resources/onboarding/feature-wall/tile-08.poster.jpg" alt="Annotate AI-generated diffs" width="100%" /></picture></a>
 </td>
 </tr>
 <tr>
@@ -131,13 +132,13 @@ Agents on a beefy remote box — full editing, git, terminals, auto-reconnect.
 
 ### Drag Files to Agents
 
-VS Code-class editor, autosave everywhere — drag files or images into a prompt.
+VS Code's editor with autosave everywhere — drag files or images straight into an agent prompt.
 
-[Docs →](https://wakii.xyz/docs/file-explorer)
+[Docs →](https://www.onorca.dev/docs/editing/file-explorer)
 
 </td>
 <td width="50%">
-  <a href="https://wakii.xyz/docs/file-explorer"><picture><source srcset="resources/onboarding/feature-wall/tile-07.gif" type="image/gif"><img src="resources/onboarding/feature-wall/tile-07.poster.jpg" alt="Drag files to agents" width="100%" /></picture></a>
+  <a href="https://www.onorca.dev/docs/editing/file-explorer"><picture><source srcset="resources/onboarding/feature-wall/tile-07.gif" type="image/gif"><img src="resources/onboarding/feature-wall/tile-07.poster.jpg" alt="Drag files and images into an agent prompt" width="100%" /></picture></a>
 </td>
 </tr>
 <tr>
@@ -145,180 +146,134 @@ VS Code-class editor, autosave everywhere — drag files or images into a prompt
 
 ### Orca CLI
 
-Agents drive Orca too — script every workflow.
+Agents drive Orca too — script every workflow with `orca worktree create`, `snapshot`, `click`, and `fill`.
 
-[Docs →](https://wakii.xyz/docs/cli)
-
-</td>
-<td width="50%">
-  <a href="https://wakii.xyz/docs/cli"><picture><source srcset="resources/onboarding/feature-wall/tile-09.gif" type="image/gif"><img src="resources/onboarding/feature-wall/tile-09.poster.jpg" alt="Orca CLI" width="100%" /></picture></a>
-</td>
-</tr>
-<tr>
-<td width="50%" valign="middle">
-
-### Mobile Companion
-
-Monitor and steer from your phone — notified when agents finish.
-
-[iOS App Store](https://apps.apple.com/us/app/orca-ide/id6766130217) · [Android APK](https://github.com/wakii-dev/wakii/releases/latest)
+[Docs →](https://www.onorca.dev/docs/cli/overview)
 
 </td>
 <td width="50%">
-  <picture><source srcset="docs/assets/feature-wall/mobile-companion-app-showcase.gif" type="image/gif"><img src="docs/assets/feature-wall/mobile-companion-app-showcase.jpg" alt="Mobile companion" width="100%" /></picture>
+  <a href="https://www.onorca.dev/docs/cli/overview"><picture><source srcset="resources/onboarding/feature-wall/tile-09.webp" type="image/webp"><img src="resources/onboarding/feature-wall/tile-09.poster.jpg" alt="Script Orca from the CLI" width="100%" /></picture></a>
 </td>
 </tr>
 </table>
 
-</details>
+**Also in the box:**
 
-## ⚙️ How the crew ships
+- **[Quick open](https://www.onorca.dev/docs/model/quick-open)** — Search across worktrees, files, agents, commands, and repo context without leaving your flow.
+- **[Account switcher &amp; usage tracking](https://www.onorca.dev/docs/agents/usage-tracking)** — See Claude and Codex usage and rate-limit resets, and hot-swap accounts without re-logging in.
+- **[Rich repo previews](https://www.onorca.dev/docs/editing/markdown)** — Preview Markdown, images, PDFs, and repo docs in the workspace.
+- **[Computer Use](https://www.onorca.dev/docs/cli/computer-use)** — Let agents operate desktop apps and visible UI when a workflow needs real interaction.
+- **[Notifications and unread state](https://www.onorca.dev/docs/notifications)** — Know when an agent finishes or needs attention, then mark threads unread to come back later.
+- **And many, many more** — we ship daily, so this list is perpetually behind. The [changelog](https://github.com/stablyai/orca/releases) is the real feature list.
 
-<div align="center">
-  <img src=".github/assets/pipeline.svg" width="100%" alt="idea → impact → plan → bracket → parallel SFs → gates → PR" />
-</div>
+---
 
-**One specialist per stage — and the checker is never the builder.** The
-impact-analyst maps the blast radius before code exists; the spec-critic and
-plan-critic attack the spec and the task DAG; task-executors implement
-independent sub-features in parallel worktrees; the code-reviewer and
-verifier hold the gates (self-reports don't count); the watchdog auto-resumes
-anything that stalls.
+## Supported Agents
 
-<details>
-<summary><b>The gates (B0–B5) &amp; verdicts</b></summary>
+Works with **any CLI agent** — if it runs in a terminal, it runs in Orca.
 
-| Gate | Checks |
-| ---- | ------ |
-| **B0** | Browser test — the agent actually opened the app and walked the flow |
-| **B1** | Code + tests pass |
-| **B2** | Plan checkboxes ticked |
-| **B3** | Independent review done |
-| **B4** | Branch merged to the story branch |
-| **B5** | Linear issue set to Done |
+<p>
+  <a href="https://docs.anthropic.com/claude/docs/claude-code"><kbd><img src="docs/assets/claude-logo.svg" alt="Claude Code logo" width="16" valign="middle" /> Claude Code</kbd></a> &nbsp;
+  <a href="https://github.com/openai/codex"><kbd><img src="https://www.google.com/s2/favicons?domain=openai.com&sz=64" alt="Codex logo" width="16" valign="middle" /> Codex</kbd></a> &nbsp;
+  <a href="https://x.ai/cli"><kbd><img src="https://www.google.com/s2/favicons?domain=x.ai&sz=64" alt="Grok logo" width="16" valign="middle" /> Grok</kbd></a> &nbsp;
+  <a href="https://cursor.com/cli"><kbd><img src="https://www.google.com/s2/favicons?domain=cursor.com&sz=64" alt="Cursor logo" width="16" valign="middle" /> Cursor</kbd></a> &nbsp;
+  <a href="https://docs.github.com/en/copilot/how-tos/set-up/install-copilot-cli"><kbd><img src="https://www.google.com/s2/favicons?domain=github.com&sz=64" alt="GitHub Copilot logo" width="16" valign="middle" /> GitHub Copilot</kbd></a> &nbsp;
+  <a href="https://dev.meta.ai/docs/muse-code"><kbd><img src="src/shared/agent-icons/muse.png" alt="Muse logo" width="16" valign="middle" /> Muse</kbd></a> &nbsp;
+  <a href="https://deepseek-harness.github.io/deepseek-harness/"><kbd><img src="src/shared/agent-icons/dsh.png" alt="DeepSeek Harness logo" width="16" valign="middle" /> DeepSeek Harness</kbd></a> &nbsp;
+  <a href="https://zcode.z.ai/en/docs"><kbd><img src="src/shared/agent-icons/zcode.png" alt="ZCode logo" width="16" valign="middle" /> ZCode</kbd></a> &nbsp;
+  <a href="https://opencode.ai/docs/cli/"><kbd><img src="https://www.google.com/s2/favicons?domain=opencode.ai&sz=64" alt="OpenCode logo" width="16" valign="middle" /> OpenCode</kbd></a> &nbsp;
+  <a href="https://mimo.xiaomi.com/coder"><kbd><img src="https://www.google.com/s2/favicons?domain=mimo.xiaomi.com&sz=64" alt="MiMo Code logo" width="16" valign="middle" /> MiMo Code</kbd></a> &nbsp;
+  <a href="https://ampcode.com/manual#install"><kbd><img src="https://www.google.com/s2/favicons?domain=ampcode.com&sz=64" alt="Amp logo" width="16" valign="middle" /> Amp</kbd></a> &nbsp;
+  <a href="https://openclaude.gitlawb.com/"><kbd><img src="resources/openclaude-logo.png" alt="OpenClaude logo" width="16" valign="middle" /> OpenClaude</kbd></a> &nbsp;
+  <a href="https://antigravity.google/docs/cli-overview"><kbd><img src="https://www.google.com/s2/favicons?domain=antigravity.google&sz=64" alt="Antigravity logo" width="16" valign="middle" /> Antigravity</kbd></a> &nbsp;
+  <a href="https://pi.dev"><kbd><img src="https://pi.dev/favicon.svg" alt="Pi logo" width="16" valign="middle" /> Pi</kbd></a> &nbsp;
+  <a href="https://omp.sh"><kbd><img src="https://omp.sh/favicon.svg" alt="oh-my-pi logo" width="16" valign="middle" /> oh-my-pi</kbd></a> &nbsp;
+  <a href="https://hermes-agent.nousresearch.com/docs/"><kbd><img src="https://www.google.com/s2/favicons?domain=nousresearch.com&sz=64" alt="Hermes Agent logo" width="16" valign="middle" /> Hermes Agent</kbd></a> &nbsp;
+  <a href="https://devin.ai/cli"><kbd><img src="https://www.google.com/s2/favicons?domain=devin.ai&sz=64" alt="Devin logo" width="16" valign="middle" /> Devin</kbd></a> &nbsp;
+  <a href="https://goose-docs.ai/docs/quickstart/"><kbd><img src="https://www.google.com/s2/favicons?domain=goose-docs.ai&sz=64" alt="Goose logo" width="16" valign="middle" /> Goose</kbd></a> &nbsp;
+  <a href="https://docs.augmentcode.com/cli/overview"><kbd><img src="https://www.google.com/s2/favicons?domain=augmentcode.com&sz=64" alt="Auggie logo" width="16" valign="middle" /> Auggie</kbd></a> &nbsp;
+  <a href="https://github.com/autohandai/code-cli"><kbd><img src="https://www.google.com/s2/favicons?domain=autohand.ai&sz=64" alt="Autohand Code logo" width="16" valign="middle" /> Autohand Code</kbd></a> &nbsp;
+  <a href="https://github.com/charmbracelet/crush"><kbd><img src="https://www.google.com/s2/favicons?domain=charm.sh&sz=64" alt="Charm logo" width="16" valign="middle" /> Charm</kbd></a> &nbsp;
+  <a href="https://docs.cline.bot/cline-cli/overview"><kbd><img src="https://www.google.com/s2/favicons?domain=cline.bot&sz=64" alt="Cline logo" width="16" valign="middle" /> Cline</kbd></a> &nbsp;
+  <a href="https://www.codebuddy.ai/cli"><kbd><img src="https://www.google.com/s2/favicons?domain=codebuddy.ai&sz=64" alt="CodeBuddy logo" width="16" valign="middle" /> CodeBuddy</kbd></a> &nbsp;
+  <a href="https://www.codebuff.com/docs/help/quick-start"><kbd><img src="https://www.google.com/s2/favicons?domain=codebuff.com&sz=64" alt="Codebuff logo" width="16" valign="middle" /> Codebuff</kbd></a> &nbsp;
+  <a href="https://freebuff.com"><kbd><img src="src/shared/agent-icons/freebuff.png" alt="Freebuff logo" width="16" valign="middle" /> Freebuff</kbd></a> &nbsp;
+  <a href="https://commandcode.ai/docs/quickstart"><kbd><img src="https://www.google.com/s2/favicons?domain=commandcode.ai&sz=64" alt="Command Code logo" width="16" valign="middle" /> Command Code</kbd></a> &nbsp;
+  <a href="https://docs.continue.dev/cli/quickstart"><kbd><img src="https://www.google.com/s2/favicons?domain=continue.dev&sz=64" alt="Continue logo" width="16" valign="middle" /> Continue</kbd></a> &nbsp;
+  <a href="https://docs.factory.ai/cli/getting-started/quickstart"><kbd><img src="docs/assets/droid-logo.svg" alt="Droid logo" width="16" valign="middle" /> Droid</kbd></a> &nbsp;
+  <a href="https://kilo.ai/docs/cli"><kbd><img src="https://raw.githubusercontent.com/Kilo-Org/kilocode/main/packages/kilo-vscode/assets/icons/kilo-light.svg" alt="Kilocode logo" width="16" valign="middle" /> Kilocode</kbd></a> &nbsp;
+  <a href="https://www.kimi.com/code/docs/en/kimi-code-cli/getting-started.html"><kbd><img src="https://www.google.com/s2/favicons?domain=moonshot.cn&sz=64" alt="Kimi logo" width="16" valign="middle" /> Kimi</kbd></a> &nbsp;
+  <a href="https://kiro.dev/docs/cli/"><kbd><img src="https://www.google.com/s2/favicons?domain=kiro.dev&sz=64" alt="Kiro logo" width="16" valign="middle" /> Kiro</kbd></a> &nbsp;
+  <a href="https://github.com/mistralai/mistral-vibe"><kbd><img src="https://www.google.com/s2/favicons?domain=mistral.ai&sz=64" alt="Mistral Vibe logo" width="16" valign="middle" /> Mistral Vibe</kbd></a> &nbsp;
+  <a href="https://github.com/QwenLM/qwen-code"><kbd><img src="https://www.google.com/s2/favicons?domain=qwenlm.github.io&sz=64" alt="Qwen Code logo" width="16" valign="middle" /> Qwen Code</kbd></a> &nbsp;
+  <a href="https://support.atlassian.com/rovo/docs/install-and-run-rovo-dev-cli-on-your-device/"><kbd><img src="https://www.google.com/s2/favicons?domain=atlassian.com&sz=64" alt="Rovo Dev logo" width="16" valign="middle" /> Rovo Dev</kbd></a> &nbsp;
+  <kbd>+ any CLI agent</kbd>
+</p>
 
-Verifier verdicts: `COMPLETE` · `READY-TO-DONE` · `INCOMPLETE` ·
-`VIOLATION` · `NOT-LAUNCHED`.
+---
 
-</details>
+## Install
 
-## 🧠 How skills work
+### Desktop — macOS, Windows, Linux
 
-Skills are **packaged instruction sets** loaded on demand — progressive
-disclosure instead of a bloated system prompt: name and one-line description
-stay cheap in context; the **full instructions load only when your task
-matches**. Skills compose — the story workflow is itself built from the
-planning and review skills below.
+- **[Download from onOrca.dev](https://onorca.dev/download)**
+- Or grab a build directly: [macOS Apple Silicon](https://github.com/stablyai/orca/releases/latest/download/orca-macos-arm64.dmg) · [macOS Intel](https://github.com/stablyai/orca/releases/latest/download/orca-macos-x64.dmg) · [Windows (.exe)](https://github.com/stablyai/orca/releases/latest/download/orca-windows-setup.exe) · [Linux AppImage](https://github.com/stablyai/orca/releases/latest/download/orca-linux.AppImage) · [All builds](https://github.com/stablyai/orca/releases/latest)
 
-<div align="center">
-  <img src=".github/assets/skills-chips.svg" width="100%" alt="14 public skills — /command chips by category" />
-</div>
-
-<details>
-<summary><b>Full catalog — command, what it does, how it works</b></summary>
-
-**Workflow — the idea-to-PR spine**
-
-| Command | What it does | How it works |
-| ------- | ------------ | ------------ |
-| `/writing-plans-linear` | Plans detailed enough for an engineer with zero context | Decomposes the spec into bite-sized tasks (files, code, how to test) and publishes to Linear for team visibility |
-| `/story-workflow` | Runs large features as epic + sub-feature brackets | Analyzes once at epic level, writes a bracket file with dependencies, launches each sub-feature as an isolated workflow |
-| `/orca-superpowers-workflow` | The end-to-end pipeline in one command | Impact analysis → Linear issue → spec → plan → task DAG → gated execution → verification, auto-activating the Orca bridges at every transition |
-
-**Design — from brief to shipped UI**
-
-| Command | What it does | How it works |
-| ------- | ------------ | ------------ |
-| `/frontend-design` | UI that reads as intentional, never templated | Approaches each brief like a design lead — grounds the design in the subject before writing a line |
-| `/gpt-taste` | Breaks the statistical biases of AI-generated design | Enforces layout randomization, AIDA structure, editorial typography, gapless bento grids, strict GSAP ScrollTriggers |
-| `/design-taste-frontend` | Anti-slop review of UI that is already built | Audit-first pass: reads the brief, infers intent, checks the built UI against taste rules contextually |
-| `/image-to-code` | One reference image → a real component | Reads the image like an art director (hierarchy, spacing, tokens), then produces code against it as a fidelity target |
-| `/mock-prototype` | Three HTML design directions to pick from | Drafts 3 directions, hosts each on an unlisted link, waits for your pick, polishes the chosen one |
-| `/web-design-guidelines` | 105 concrete web interface rules, enforced in code | Heuristic engine (vendored from vercel-labs, MIT) covering accessibility, focus, forms, animation, layout |
-
-**Reference & tooling**
-
-| Command | What it does | How it works |
-| ------- | ------------ | ------------ |
-| `/figma-orientation` | Routes any Figma task to the right skill or MCP call | Loads first on Figma work, reads what you actually want, then routes — before you guess wrong |
-| `/graph-engineering` | Knowledge graphs + agent orchestration, taught with examples | Ontology design, entity extraction, GraphRAG, parallel fan-out, verifier separation, the stop rule |
-| `/prompt-master` | One production-ready prompt for the tool you name | Extracts real intent, identifies the target tool, outputs a single optimized prompt with zero wasted tokens |
-| `/computer-use` | Drives a real computer — screen, keyboard, mouse | Grounds the agent in what is actually on screen before acting; screenshots over DOM guesses |
-| `/linear-tickets` | Linear ticket ops without the API sprawl | Reads teams, issues and states, creates and updates tickets — the right call per task |
-| `/orca-cli` | Drives the Orca IDE from the command line | Worktrees, terminals, browser, notifications — the full surface as composable commands |
-| `/orca-emulator` · `/orca-emulator-android` | iOS and Android emulators, scripted | Boots, installs, drives and tears down emulator sessions for mobile verification |
-| `/orca-per-workspace-env` | Per-workspace environment setup | Isolates env/config per Orca workspace so agents never share state |
-
-</details>
-
-## ⚡ What the kit adds on top of Orca
-
-| ✨ | Highlight |
-| -- | --------- |
-| 🤖 | **10-agent story team** — adversarial specialists with checks-and-balances; self-approval never counts as a gate |
-| 🧠 | **20 bundled skills** — planning, review, design pipelines, machine-control platform skills |
-| 🛠️ | **48 `story-*` CLIs** — gate checks, stall watchdog, preflight, story tests |
-| 🔐 | **Permission model** — agents spawn `acceptEdits` (zero bypass), deny-list blocks force-push and protected pushes |
-| 👁️ | **Pane-watch HITL relay** — agent approval requests reach you, not the void |
-| 🪝 | **Rehash fence** — pre-commit blocks kit commits with stale hashes |
-| 🎨 | **HoiVu branding** — rebranded UI, fork-local full plugin access |
-
-## 🔀 Inherited from Orca (kept intact)
-
-<details>
-<summary><b>Feature wall</b></summary>
-
-- **Parallel worktrees** — fan one prompt across agents, merge the winner
-- **Terminal splits** — every agent gets a real terminal
-- **GitHub & Linear, native** — issues, PRs and story tracking built in
-- **SSH worktrees · design mode · AI-diff annotation · drag-files-to-agents**
-- **Mobile companion** — steer agents from your phone
-
-Full wall with screenshots:
-[upstream README](https://github.com/stablyai/orca#features).
-
-</details>
-
-## 🌿 Branches
-
-| Branch      | Purpose                                                                 |
-| ----------- | ----------------------------------------------------------------------- |
-| `wakii-dev` | **default — Wakii development happens here**                            |
-| `main`      | mirrors `stablyai/orca` main, auto-synced daily by GitHub Action        |
-
-## 📦 Download
-
-Builds ship on [GitHub Releases](https://github.com/wakii-dev/wakii/releases)
-— unsigned, so right-click → **Open** on first launch (or allow it in
-System Settings → Privacy & Security):
-
-| Machine       | Asset                                                                                                                            |
-| ------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Apple Silicon | [Wakii-1.4.222-arm64.dmg](https://github.com/wakii-dev/wakii/releases/download/v1.4.222/Wakii-1.4.222-arm64.dmg)                  |
-| Intel         | [Wakii-1.4.222-x64.dmg](https://github.com/wakii-dev/wakii/releases/download/v1.4.222/Wakii-1.4.222-x64.dmg)                      |
-| Android       | [app-release.apk](https://github.com/wakii-dev/wakii/releases/download/v1.4.222/app-release.apk)                    |
-| Windows       | [orca-windows-setup.exe](https://github.com/wakii-dev/wakii/releases/download/v1.4.222/orca-windows-setup.exe)                     |
-
-Build from source ([guide](#-developing)) works everywhere.
-
-## 🚀 Developing
+_Or via a package manager:_
 
 ```bash
-pnpm install
-pnpm dev        # desktop dev build
+# macOS (Homebrew)
+# Always use the full name; bare `orca` is an unrelated Plotly cask.
+brew install --cask stablyai/orca/orca
+# Upgrade an existing install
+brew upgrade --cask stablyai/orca/orca
+
+# Arch Linux (AUR) — or stably-orca-git to build from source
+yay -S stably-orca-bin
 ```
 
-Full guide: [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md). The
-mobile↔desktop relay lives in [`cloud/`](cloud/README.md) with its own setup
-guide.
+### Mobile Companion — iOS, Android
 
-## 📄 License
+Pair with your desktop app to monitor and steer your agents from your phone.
 
-MIT — same as upstream Orca. The bundled story-team kit originates from
-[superpowers](https://github.com/obra/superpowers) (MIT) by Jesse Vincent.
+- **iOS:** [Download on the App Store](https://apps.apple.com/us/app/orca-ide/id6766130217)
+- **Android:** [Download APK](https://www.onorca.dev/download/android) · [Install guide](https://www.onorca.dev/docs/android-apk)
 
-## 👥 Contributors
+---
 
-<div align="center">
-  <img src=".github/assets/contributors.svg" width="100%" alt="Contributors: HoiVu — author; Claude (Anthropic) — AI coding agent; Kiro (AWS) — AI coding agent; stablyai/orca — upstream" />
-</div>
+## Community &amp; Support
+
+- **Discord:** Join the community on **[Discord](https://discord.gg/fzjDKHxv8Q)**.
+- **Twitter / X:** Follow **[@orca_build](https://x.com/orca_build)** for updates and announcements.
+- **WeChat:** Scan to join the Orca community WeChat group.
+
+  <img src="docs/assets/wechat-qr.jpg" alt="WeChat QR code for the Orca community" width="160" />
+
+- **Feedback &amp; Ideas:** We ship fast. Missing something? [Request a new feature](https://github.com/stablyai/orca/issues).
+- **Privacy:** See the [privacy &amp; telemetry docs](https://www.onorca.dev/docs/telemetry) for what anonymous usage data Orca collects and how to opt out.
+- **Show Support:** [Star](https://github.com/stablyai/orca) this repo to follow along with our daily ships.
+
+---
+
+## Developing
+
+Want to contribute or run locally? See our [CONTRIBUTING.md](.github/CONTRIBUTING.md) guide.
+
+The relay that pairs the mobile app with a desktop host is also in this repository under
+[`cloud/`](cloud/README.md), with a separate pnpm workspace and setup guide.
+
+<a href="https://github.com/stablyai/orca/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=stablyai/orca" alt="Orca contributors" />
+</a>
+
+<p align="center">
+  <img src="docs/assets/star-history.png" alt="GitHub star history chart for stablyai/orca" width="880" />
+</p>
+
+## Signed Builds
+
+Windows code signing sponsored/provided by [SignPath.io](https://signpath.io), certificate by [SignPath Foundation](https://signpath.org).
+
+## License
+
+Orca is free and open source under the [MIT License](LICENSE).

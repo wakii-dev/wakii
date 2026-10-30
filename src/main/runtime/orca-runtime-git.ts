@@ -5,11 +5,6 @@ import { RuntimeGitStatusCommands } from './runtime-git-status-commands'
 import { RuntimeGitSyncCommands } from './runtime-git-sync-commands'
 import type { RuntimeGitCommandHost } from './runtime-git-command-target'
 
-export type {
-  ResolvedRuntimeGitWorktree,
-  RuntimeGitCommandHost
-} from './runtime-git-command-target'
-
 export class RuntimeGitCommands {
   readonly getRuntimeGitStatus: RuntimeGitStatusCommands['getRuntimeGitStatus']
   readonly getRuntimeGitSubmoduleStatus: RuntimeGitStatusCommands['getRuntimeGitSubmoduleStatus']
@@ -17,6 +12,7 @@ export class RuntimeGitCommands {
   readonly getRuntimeGitHistory: RuntimeGitStatusCommands['getRuntimeGitHistory']
   readonly getRuntimeGitBlame: RuntimeGitStatusCommands['getRuntimeGitBlame']
   readonly getRuntimeGitConflictOperation: RuntimeGitStatusCommands['getRuntimeGitConflictOperation']
+  readonly getRuntimeGitMutationInFlight: RuntimeGitStatusCommands['getRuntimeGitMutationInFlight']
   readonly checkoutRuntimeGitBranch: RuntimeGitStatusCommands['checkoutRuntimeGitBranch']
   readonly listRuntimeGitLocalBranches: RuntimeGitStatusCommands['listRuntimeGitLocalBranches']
   readonly getRuntimeGitDiff: RuntimeGitDiffCommands['getRuntimeGitDiff']
@@ -36,12 +32,14 @@ export class RuntimeGitCommands {
   readonly rebaseRuntimeGitFromBase: RuntimeGitSyncCommands['rebaseRuntimeGitFromBase']
   readonly pushRuntimeGit: RuntimeGitSyncCommands['pushRuntimeGit']
   readonly commitRuntimeGit: RuntimeGitSyncCommands['commitRuntimeGit']
+  readonly completeRuntimeGitMerge: RuntimeGitSyncCommands['completeRuntimeGitMerge']
   readonly generateRuntimeCommitMessage: RuntimeGitGenerationCommands['generateRuntimeCommitMessage']
   readonly cancelRuntimeGenerateCommitMessage: RuntimeGitGenerationCommands['cancelRuntimeGenerateCommitMessage']
   readonly generateRuntimePullRequestFields: RuntimeGitGenerationCommands['generateRuntimePullRequestFields']
   readonly cancelRuntimeGeneratePullRequestFields: RuntimeGitGenerationCommands['cancelRuntimeGeneratePullRequestFields']
   readonly discoverRuntimeCommitMessageModels: RuntimeGitGenerationCommands['discoverRuntimeCommitMessageModels']
   readonly stageRuntimeGitPath: RuntimeGitStagingCommands['stageRuntimeGitPath']
+  readonly resolveRuntimeGitConflict: RuntimeGitStagingCommands['resolveRuntimeGitConflict']
   readonly unstageRuntimeGitPath: RuntimeGitStagingCommands['unstageRuntimeGitPath']
   readonly bulkStageRuntimeGitPaths: RuntimeGitStagingCommands['bulkStageRuntimeGitPaths']
   readonly bulkUnstageRuntimeGitPaths: RuntimeGitStagingCommands['bulkUnstageRuntimeGitPaths']
@@ -61,6 +59,7 @@ export class RuntimeGitCommands {
     this.getRuntimeGitHistory = status.getRuntimeGitHistory.bind(status)
     this.getRuntimeGitBlame = status.getRuntimeGitBlame.bind(status)
     this.getRuntimeGitConflictOperation = status.getRuntimeGitConflictOperation.bind(status)
+    this.getRuntimeGitMutationInFlight = status.getRuntimeGitMutationInFlight.bind(status)
     this.checkoutRuntimeGitBranch = status.checkoutRuntimeGitBranch.bind(status)
     this.listRuntimeGitLocalBranches = status.listRuntimeGitLocalBranches.bind(status)
     this.getRuntimeGitDiff = diff.getRuntimeGitDiff.bind(diff)
@@ -80,6 +79,7 @@ export class RuntimeGitCommands {
     this.rebaseRuntimeGitFromBase = sync.rebaseRuntimeGitFromBase.bind(sync)
     this.pushRuntimeGit = sync.pushRuntimeGit.bind(sync)
     this.commitRuntimeGit = sync.commitRuntimeGit.bind(sync)
+    this.completeRuntimeGitMerge = sync.completeRuntimeGitMerge.bind(sync)
     this.generateRuntimeCommitMessage = generation.generateRuntimeCommitMessage.bind(generation)
     this.cancelRuntimeGenerateCommitMessage =
       generation.cancelRuntimeGenerateCommitMessage.bind(generation)
@@ -90,6 +90,7 @@ export class RuntimeGitCommands {
     this.discoverRuntimeCommitMessageModels =
       generation.discoverRuntimeCommitMessageModels.bind(generation)
     this.stageRuntimeGitPath = staging.stageRuntimeGitPath.bind(staging)
+    this.resolveRuntimeGitConflict = staging.resolveRuntimeGitConflict.bind(staging)
     this.unstageRuntimeGitPath = staging.unstageRuntimeGitPath.bind(staging)
     this.bulkStageRuntimeGitPaths = staging.bulkStageRuntimeGitPaths.bind(staging)
     this.bulkUnstageRuntimeGitPaths = staging.bulkUnstageRuntimeGitPaths.bind(staging)

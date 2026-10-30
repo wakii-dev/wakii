@@ -35,12 +35,6 @@ describe('fetchChangelog', () => {
     fetchMock.mockReset()
   })
 
-  it('fetches the fork changelog from wakii.xyz', async () => {
-    fetchMock.mockResolvedValue(jsonResponse([]))
-    await fetchChangelog('1.1.21', '1.1.19')
-    expect(fetchMock.mock.calls[0]?.[0]).toBe('https://wakii.xyz/whats-new/changelog.json')
-  })
-
   it('returns exact match when the incoming version has rich content', async () => {
     const entries = makeEntries([
       {
@@ -62,8 +56,6 @@ describe('fetchChangelog', () => {
   })
 
   it('falls back to the most recent rich entry when incoming version is not in JSON', async () => {
-    // Incoming 1.1.21 is not in JSON; 1.1.17 has rich content.
-    // User is on 1.1.15 which is behind 1.1.17.
     const entries = makeEntries([
       {
         version: '1.1.17',
@@ -81,15 +73,11 @@ describe('fetchChangelog', () => {
     expect(result).not.toBeNull()
     expect(result!.release.title).toBe('Release 1.1.17')
     expect(result!.release.description).toBe('Cool feature')
-    // Why: fallback entries link to the generic changelog, not a version-specific page.
-    // Fork: fallback trỏ danh sách release fork (wakii-dev/wakii), không phải changelog upstream.
-    expect(result!.release.releaseNotesUrl).toBe('https://github.com/wakii-dev/wakii/releases')
+    expect(result!.release.releaseNotesUrl).toBe('https://onorca.dev/changelog')
     expect(result!.releasesBehind).toBe(2)
   })
 
   it('falls back when incoming version is in JSON but has no rich content', async () => {
-    // Incoming 1.1.21 exists but has empty description and no media.
-    // 1.1.17 has rich content.
     const entries = makeEntries([
       { version: '1.1.21', description: '', mediaUrl: undefined },
       {
@@ -105,9 +93,7 @@ describe('fetchChangelog', () => {
 
     expect(result).not.toBeNull()
     expect(result!.release.title).toBe('Release 1.1.17')
-    // Fork: fallback trỏ danh sách release fork (wakii-dev/wakii), không phải changelog upstream.
-    expect(result!.release.releaseNotesUrl).toBe('https://github.com/wakii-dev/wakii/releases')
-    // releasesBehind is from local (index 2) to incoming (index 0) = 2
+    expect(result!.release.releaseNotesUrl).toBe('https://onorca.dev/changelog')
     expect(result!.releasesBehind).toBe(2)
   })
 
@@ -125,7 +111,6 @@ describe('fetchChangelog', () => {
   })
 
   it('treats description-only entries (no media) as non-rich', async () => {
-    // Exact match has a description but no mediaUrl — should not count as rich.
     const entries = makeEntries([
       { version: '1.1.21', description: 'Bug fixes and improvements' },
       { version: '1.1.20', description: 'Minor tweaks' },
@@ -139,7 +124,6 @@ describe('fetchChangelog', () => {
   })
 
   it('skips rich entries that the user has already passed', async () => {
-    // User is on 1.1.18, which is ahead of the only rich entry (1.1.17).
     const entries = makeEntries([
       { version: '1.1.20', description: '' },
       { version: '1.1.18' },
@@ -153,14 +137,10 @@ describe('fetchChangelog', () => {
 
     const result = await fetchChangelog('1.1.20', '1.1.18')
 
-    // 1.1.18 is at index 1, 1.1.17 is at index 2 — user is already past it.
     expect(result).toBeNull()
   })
 
   it('shows rich entry at the same version as localVersion', async () => {
-    // User is on 1.1.18 which has rich content; incoming 1.1.20 has none.
-    // The user may not have seen the rich card for 1.1.18 (e.g., they updated
-    // silently), so showing it is better than showing nothing.
     const entries = makeEntries([
       { version: '1.1.20', description: '' },
       {
@@ -176,8 +156,7 @@ describe('fetchChangelog', () => {
 
     expect(result).not.toBeNull()
     expect(result!.release.title).toBe('Release 1.1.18')
-    // Fork: fallback trỏ danh sách release fork (wakii-dev/wakii), không phải changelog upstream.
-    expect(result!.release.releaseNotesUrl).toBe('https://github.com/wakii-dev/wakii/releases')
+    expect(result!.release.releaseNotesUrl).toBe('https://onorca.dev/changelog')
   })
 
   it('shows rich entry when local version is not in JSON (very old user)', async () => {
@@ -195,16 +174,11 @@ describe('fetchChangelog', () => {
 
     expect(result).not.toBeNull()
     expect(result!.release.title).toBe('Release 1.1.17')
-    // Fork: fallback trỏ danh sách release fork (wakii-dev/wakii), không phải changelog upstream.
-    expect(result!.release.releaseNotesUrl).toBe('https://github.com/wakii-dev/wakii/releases')
-    // releasesBehind is null because the local version isn't in the JSON.
+    expect(result!.release.releaseNotesUrl).toBe('https://onorca.dev/changelog')
     expect(result!.releasesBehind).toBeNull()
   })
 
   it('skips rich entries when local version is newer than all changelog entries', async () => {
-    // Local version 1.1.25 is not in the JSON and is newer than the latest
-    // changelog entry (1.1.20). The rich entry at 1.1.17 is stale — the user
-    // has already passed it.
     const entries = makeEntries([
       { version: '1.1.20', description: '' },
       {
@@ -255,7 +229,6 @@ describe('fetchChangelog', () => {
     const result = await fetchChangelog('1.1.21', '1.1.15')
 
     expect(result!.release.title).toBe('Release 1.1.21')
-    // Exact match keeps its own releaseNotesUrl.
     expect(result!.release.releaseNotesUrl).toBe('https://onorca.dev/changelog/1.1.21')
   })
 

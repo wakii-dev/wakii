@@ -29,7 +29,7 @@ describe('fetchPrHeadTrackingRef', () => {
 
     expect(gitExecFileAsyncMock).toHaveBeenCalledWith(
       ['fetch', 'origin', '+refs/heads/feature/x:refs/remotes/origin/feature/x'],
-      { cwd: '/repo' }
+      { cwd: '/repo', timeout: REVIEW_HEAD_FETCH_TIMEOUT_MS }
     )
   })
 
@@ -40,14 +40,20 @@ describe('fetchPrHeadTrackingRef', () => {
     expect(gitExecFileAsyncMock).not.toHaveBeenCalled()
   })
 
-  it('fetches a GitHub pull head into its remote-scoped Wakii ref for local repos', async () => {
+  it('throws for an SSH repo named only by executionHostId', async () => {
+    await expect(
+      fetchPrHeadTrackingRef({ path: '/repo', executionHostId: 'ssh:gpu' }, 'origin', 'feature/x')
+    ).rejects.toThrow('SSH Git provider is not available')
+    expect(gitExecFileAsyncMock).not.toHaveBeenCalled()
+  })
+
+  it('fetches a GitHub pull head into its remote-scoped Orca ref for local repos', async () => {
     const localRef = await fetchGitHubPullRequestHeadRef(
       { path: '/repo', connectionId: null },
       'origin',
       42
     )
 
-    // The fetch is bounded so a stalled remote can't hang PR resolution.
     expect(gitExecFileAsyncMock).toHaveBeenCalledWith(
       ['fetch', '--no-tags', 'origin', `+refs/pull/42/head:refs/orca/pull/${ORIGIN_COMPONENT}/42`],
       { cwd: '/repo', timeout: REVIEW_HEAD_FETCH_TIMEOUT_MS }

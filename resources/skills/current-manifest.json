@@ -18,138 +18,18 @@
       ]
     },
     {
-      "name": "design-taste-frontend",
-      "sourcePath": "skills/design-taste-frontend",
-      "packageDigest": "c0ebfb928bd5fe7ed99a3732bdbd074df7377373ed2435a62908e346398a5d62",
+      "name": "jira-tickets",
+      "sourcePath": "skills/jira-tickets",
+      "packageDigest": "48ca2a93818e17bf1e942452e835800e8f967a935d3082e1e9c03fff9ddb3d19",
       "files": [
         {
           "path": "SKILL.md",
-          "size": 37079,
+          "size": 2129,
           "executable": false,
           "classification": "text",
-          "exactSha256": "8c207109f7a96542af80630cf1d5d26527b70351d88d4249fb95999d830e07e5",
-          "textNormalizedSha256": "8c207109f7a96542af80630cf1d5d26527b70351d88d4249fb95999d830e07e5",
-          "identitySha256": "8c207109f7a96542af80630cf1d5d26527b70351d88d4249fb95999d830e07e5"
-        },
-        {
-          "path": "references/ai-tells.md",
-          "size": 8307,
-          "executable": false,
-          "classification": "text",
-          "exactSha256": "69b0716c530273547cee43f8ef1578cc4c76a379196ee5e50d7fc7f39e321f56",
-          "textNormalizedSha256": "84762a481f828cf19e4e16b9b589f926bd3655af4393bb7854c35927d47b0ba1",
-          "identitySha256": "84762a481f828cf19e4e16b9b589f926bd3655af4393bb7854c35927d47b0ba1"
-        },
-        {
-          "path": "references/appendices.md",
-          "size": 7563,
-          "executable": false,
-          "classification": "text",
-          "exactSha256": "8f89a736734735f77e9b9a21bdb2f3d445e009a0e1e9250b5c770cf4dae42437",
-          "textNormalizedSha256": "5c49143aef9efad3e9939bd7f1d1bb19fbd8b67d30ff48393c853b3e5a225ec1",
-          "identitySha256": "5c49143aef9efad3e9939bd7f1d1bb19fbd8b67d30ff48393c853b3e5a225ec1"
-        },
-        {
-          "path": "references/block-library.md",
-          "size": 2249,
-          "executable": false,
-          "classification": "text",
-          "exactSha256": "7a7a784533ad36961310347717201ffe83591032e7205a182fa67a73a8c44944",
-          "textNormalizedSha256": "a42b5955cfe3343f7bdc5a261e42ba87fe492c3a46b9d1e632b69157e994400a",
-          "identitySha256": "a42b5955cfe3343f7bdc5a261e42ba87fe492c3a46b9d1e632b69157e994400a"
-        },
-        {
-          "path": "references/design-directives.md",
-          "size": 25243,
-          "executable": false,
-          "classification": "text",
-          "exactSha256": "f092ecb972b3786d97ea00d469d30ebb246e9614f3ecf100220ac40ea40ac975",
-          "textNormalizedSha256": "369e7342c8ab3ae73672e317c455b141f31457e6ea1866f39e6f319234d944f8",
-          "identitySha256": "369e7342c8ab3ae73672e317c455b141f31457e6ea1866f39e6f319234d944f8"
-        },
-        {
-          "path": "references/dial-definitions.md",
-          "size": 1781,
-          "executable": false,
-          "classification": "text",
-          "exactSha256": "af226c602caa08c1f3b3ef96dd71339e4125d812b35e115757083b933f23ae55",
-          "textNormalizedSha256": "b29da63a298367e999210267871973deb9760ea59a673ea8f2f6fb41a1c97d98",
-          "identitySha256": "b29da63a298367e999210267871973deb9760ea59a673ea8f2f6fb41a1c97d98"
-        },
-        {
-          "path": "references/gsap-skeletons.md",
-          "size": 4734,
-          "executable": false,
-          "classification": "text",
-          "exactSha256": "c0bcb82cc4bfde0eaac390e1ff93a4bcac0d0a2aa848c100d78abc43d5ac4d7a",
-          "textNormalizedSha256": "5e52ac341d2087dfef3838da340c35bf268ef9a49aa752c3dcc142a954cc85e7",
-          "identitySha256": "5e52ac341d2087dfef3838da340c35bf268ef9a49aa752c3dcc142a954cc85e7"
-        },
-        {
-          "path": "references/vocabulary.md",
-          "size": 4490,
-          "executable": false,
-          "classification": "text",
-          "exactSha256": "f42640d33f8cc80b4749738c001eb7b94217ba729aef4421d55e3dfeb17c956e",
-          "textNormalizedSha256": "d3a086c7046aee4f8a249a2ce3b6cc2e9fcccd0dd303dfb56b18bb5f661bc2ec",
-          "identitySha256": "d3a086c7046aee4f8a249a2ce3b6cc2e9fcccd0dd303dfb56b18bb5f661bc2ec"
-        }
-      ]
-    },
-    {
-      "name": "figma-orientation",
-      "sourcePath": "skills/figma-orientation",
-      "packageDigest": "ed332cbd84157f70ce79d959d235bd64c28c4c741e15baebf2ebda823992a1ea",
-      "files": [
-        {
-          "path": "SKILL.md",
-          "size": 7675,
-          "executable": false,
-          "classification": "text",
-          "exactSha256": "4775dfc30ce34af5f517fa8c9ee7ec93d76febefce815f6103b4912b217cba38",
-          "textNormalizedSha256": "4775dfc30ce34af5f517fa8c9ee7ec93d76febefce815f6103b4912b217cba38",
-          "identitySha256": "4775dfc30ce34af5f517fa8c9ee7ec93d76febefce815f6103b4912b217cba38"
-        }
-      ]
-    },
-    {
-      "name": "frontend-design",
-      "sourcePath": "skills/frontend-design",
-      "packageDigest": "d19145386e035de88569cae57dd42b82411eeb8de07f872bcc892866e310dea4",
-      "files": [
-        {
-          "path": "LICENSE-upstream",
-          "size": 10351,
-          "executable": false,
-          "classification": "text",
-          "exactSha256": "eb3d7b5485466acbd81f2b496f595ab637d2792e268206b27d99e793bdb67549",
-          "textNormalizedSha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
-          "identitySha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
-        },
-        {
-          "path": "SKILL.md",
-          "size": 8260,
-          "executable": false,
-          "classification": "text",
-          "exactSha256": "1608ea77fbb6fc30d13a97d12cfa8ebf31358d40f0dd97beed24829d6b3f45dd",
-          "textNormalizedSha256": "1608ea77fbb6fc30d13a97d12cfa8ebf31358d40f0dd97beed24829d6b3f45dd",
-          "identitySha256": "1608ea77fbb6fc30d13a97d12cfa8ebf31358d40f0dd97beed24829d6b3f45dd"
-        }
-      ]
-    },
-    {
-      "name": "image-to-code",
-      "sourcePath": "skills/image-to-code",
-      "packageDigest": "b95f4002562d165d0943c6bf7e8981fa7f2007c69642e9ddad0efaf6f8509fe2",
-      "files": [
-        {
-          "path": "SKILL.md",
-          "size": 36272,
-          "executable": false,
-          "classification": "text",
-          "exactSha256": "54c69584b1ff6a3adb04591f2f35bd27a39970f478627404b643b23b83d4a081",
-          "textNormalizedSha256": "54c69584b1ff6a3adb04591f2f35bd27a39970f478627404b643b23b83d4a081",
-          "identitySha256": "54c69584b1ff6a3adb04591f2f35bd27a39970f478627404b643b23b83d4a081"
+          "exactSha256": "5534da4000f4f4c87f7dbb263345a213068c0099a1440186adea865e17d90dfe",
+          "textNormalizedSha256": "5534da4000f4f4c87f7dbb263345a213068c0099a1440186adea865e17d90dfe",
+          "identitySha256": "5534da4000f4f4c87f7dbb263345a213068c0099a1440186adea865e17d90dfe"
         }
       ]
     },
@@ -172,16 +52,16 @@
     {
       "name": "orca-cli",
       "sourcePath": "skills/orca-cli",
-      "packageDigest": "0736bcbbb69ed18f9a36a58ad2eda47b6db55b30509953cf5ba5f0032058c535",
+      "packageDigest": "b461950523a5d2a7be9c35d9029190204cf4c5f082d49edb55090dda234e924e",
       "files": [
         {
           "path": "SKILL.md",
-          "size": 2372,
+          "size": 2312,
           "executable": false,
           "classification": "text",
-          "exactSha256": "aa76f86505010096e8ea9edda1705a78aae7af45e54485f3fe0460664c1d9e4a",
-          "textNormalizedSha256": "aa76f86505010096e8ea9edda1705a78aae7af45e54485f3fe0460664c1d9e4a",
-          "identitySha256": "aa76f86505010096e8ea9edda1705a78aae7af45e54485f3fe0460664c1d9e4a"
+          "exactSha256": "e9759aea664f54561946eeb40a6328031330860cda0817f2c2aa2cf529d5c1b3",
+          "textNormalizedSha256": "e9759aea664f54561946eeb40a6328031330860cda0817f2c2aa2cf529d5c1b3",
+          "identitySha256": "e9759aea664f54561946eeb40a6328031330860cda0817f2c2aa2cf529d5c1b3"
         }
       ]
     },
@@ -214,6 +94,22 @@
           "exactSha256": "3ade4e6f8f2717ca899fd841e61f116963a406e9527015b803854c16d012e278",
           "textNormalizedSha256": "3ade4e6f8f2717ca899fd841e61f116963a406e9527015b803854c16d012e278",
           "identitySha256": "3ade4e6f8f2717ca899fd841e61f116963a406e9527015b803854c16d012e278"
+        }
+      ]
+    },
+    {
+      "name": "orca-jira",
+      "sourcePath": "skills/orca-jira",
+      "packageDigest": "815931fe3f4b52437ca15db4b512ce4033b84b3ce1639df0882cc4f7adfc005d",
+      "files": [
+        {
+          "path": "SKILL.md",
+          "size": 2080,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "ca83c4662fbc2306efb9043674998b0ca5abacc78ec2e5f85e5db80288e6777a",
+          "textNormalizedSha256": "ca83c4662fbc2306efb9043674998b0ca5abacc78ec2e5f85e5db80288e6777a",
+          "identitySha256": "ca83c4662fbc2306efb9043674998b0ca5abacc78ec2e5f85e5db80288e6777a"
         }
       ]
     },
@@ -252,102 +148,16 @@
     {
       "name": "orchestration",
       "sourcePath": "skills/orchestration",
-      "packageDigest": "195f26431ecfb6df41b941b22958a2330b110bac7b7e97004e0b35fe586e41d9",
+      "packageDigest": "13530b8456bd56f4b06f95e848e9b99211eecaac2939aae49ed96da5a197c1f5",
       "files": [
         {
           "path": "SKILL.md",
-          "size": 3671,
+          "size": 3876,
           "executable": false,
           "classification": "text",
-          "exactSha256": "cd1b364bf35781bad06bf75ab1766afa8d6cec69cb2060529691d89871a2098a",
-          "textNormalizedSha256": "cd1b364bf35781bad06bf75ab1766afa8d6cec69cb2060529691d89871a2098a",
-          "identitySha256": "cd1b364bf35781bad06bf75ab1766afa8d6cec69cb2060529691d89871a2098a"
-        }
-      ]
-    },
-    {
-      "name": "prompt-master",
-      "sourcePath": "skills/prompt-master",
-      "packageDigest": "371a8212e0e7d44d822e5d7226f21e444317c81705553d71aa831ce11611f21e",
-      "files": [
-        {
-          "path": "LICENSE",
-          "size": 1098,
-          "executable": false,
-          "classification": "text",
-          "exactSha256": "0e1cb4fc0f3b84b7e0180246a2966cfedf5eaa84158d620f9bc0ceb8fa96431b",
-          "textNormalizedSha256": "29e8ba0b54274eaa92b7cb074fe1765ba7b83993e0d2605e5308c6972a47daa7",
-          "identitySha256": "29e8ba0b54274eaa92b7cb074fe1765ba7b83993e0d2605e5308c6972a47daa7"
-        },
-        {
-          "path": "README.md",
-          "size": 21435,
-          "executable": false,
-          "classification": "text",
-          "exactSha256": "9fc5c156c32f0d41c2147ef3bd7672fa18cac16dd6535880002b28db9c5db518",
-          "textNormalizedSha256": "0990269b91ccbcd50e6574bd89edbf176043e097cf1584a5746240bc473afefc",
-          "identitySha256": "0990269b91ccbcd50e6574bd89edbf176043e097cf1584a5746240bc473afefc"
-        },
-        {
-          "path": "SKILL.md",
-          "size": 27165,
-          "executable": false,
-          "classification": "text",
-          "exactSha256": "b85718374d27bbada453791af92b7ae0b3256e5552d2f3f9d940ca4183131e4b",
-          "textNormalizedSha256": "b85718374d27bbada453791af92b7ae0b3256e5552d2f3f9d940ca4183131e4b",
-          "identitySha256": "b85718374d27bbada453791af92b7ae0b3256e5552d2f3f9d940ca4183131e4b"
-        },
-        {
-          "path": "references/patterns.md",
-          "size": 6165,
-          "executable": false,
-          "classification": "text",
-          "exactSha256": "dacb32a507cef7532b4a24055cb62c574d049bee9b3de4ba8fdeddc3882367fa",
-          "textNormalizedSha256": "2d2eb623396ce5edade402cfcafbd457af093cf85fa5966c34c210e58ce1f9d1",
-          "identitySha256": "2d2eb623396ce5edade402cfcafbd457af093cf85fa5966c34c210e58ce1f9d1"
-        },
-        {
-          "path": "references/templates.md",
-          "size": 17102,
-          "executable": false,
-          "classification": "text",
-          "exactSha256": "492a7a104c0e5a731af7a44dc7ed1577f1c6076af6cf61caa920ca3a590b8638",
-          "textNormalizedSha256": "0850a3871058077bfc6a16372fa3beb28d81f02baab8d42d3607ddc3a681ae67",
-          "identitySha256": "0850a3871058077bfc6a16372fa3beb28d81f02baab8d42d3607ddc3a681ae67"
-        }
-      ]
-    },
-    {
-      "name": "web-design-guidelines",
-      "sourcePath": "skills/web-design-guidelines",
-      "packageDigest": "8bc72b2de7be62424f82db4949a3aecf1f8f99d70e295d80428d825b9e8f0b9f",
-      "files": [
-        {
-          "path": "SKILL.md",
-          "size": 2029,
-          "executable": false,
-          "classification": "text",
-          "exactSha256": "8472f537a12e2dbbd83e400844c7dbf2452d617ab3614780d0c02f6017f2b623",
-          "textNormalizedSha256": "8472f537a12e2dbbd83e400844c7dbf2452d617ab3614780d0c02f6017f2b623",
-          "identitySha256": "8472f537a12e2dbbd83e400844c7dbf2452d617ab3614780d0c02f6017f2b623"
-        },
-        {
-          "path": "resources/LICENSE-upstream",
-          "size": 1089,
-          "executable": false,
-          "classification": "text",
-          "exactSha256": "13071e827f4b5cfdb252ab27758488ae86dc8fa392fe36a45ea7952e05546519",
-          "textNormalizedSha256": "6cd1609c9c12233507cdd2ce0d32e9a721e3c27494951be06b90090deeeb7af2",
-          "identitySha256": "6cd1609c9c12233507cdd2ce0d32e9a721e3c27494951be06b90090deeeb7af2"
-        },
-        {
-          "path": "resources/web-interface-guidelines.md",
-          "size": 7950,
-          "executable": false,
-          "classification": "text",
-          "exactSha256": "00d0ca1473f1db8632b832a1d1a62bc116e15bb57ee58a38c1a74d3108fb9443",
-          "textNormalizedSha256": "5a775e6411f790f518dbc9c1fa7c50a89e6873502d9a3530a6eb223a590bcfe8",
-          "identitySha256": "5a775e6411f790f518dbc9c1fa7c50a89e6873502d9a3530a6eb223a590bcfe8"
+          "exactSha256": "ce9a81cb2e6bbb8487107d2e088bf9fd6e0ba71ebc6bcc1929f827fde65fec6b",
+          "textNormalizedSha256": "ce9a81cb2e6bbb8487107d2e088bf9fd6e0ba71ebc6bcc1929f827fde65fec6b",
+          "identitySha256": "ce9a81cb2e6bbb8487107d2e088bf9fd6e0ba71ebc6bcc1929f827fde65fec6b"
         }
       ]
     }

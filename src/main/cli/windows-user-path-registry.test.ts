@@ -1,9 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import {
-  invalidateWindowsUserPathRegistryCache,
-  readWindowsUserPathRegistry,
-  WindowsUserPathRegistryReader
-} from './windows-user-path-registry'
+import { WindowsUserPathRegistryReader } from './windows-user-path-registry'
 
 function registryModule(pathValue?: string, type = 2) {
   return {
@@ -16,21 +12,6 @@ function registryModule(pathValue?: string, type = 2) {
 }
 
 describe('WindowsUserPathRegistryReader', () => {
-  it('reads Unicode REG_EXPAND_SZ values without expanding the stored text', async () => {
-    const registry = registryModule('%LOCALAPPDATA%\\Wakii;C:\\工具\\bin;C:\\Développement')
-    const reader = new WindowsUserPathRegistryReader({
-      platform: 'win32',
-      registryLoader: async () => registry
-    })
-
-    await expect(reader.read()).resolves.toEqual({
-      state: 'success',
-      value: '%LOCALAPPDATA%\\Wakii;C:\\工具\\bin;C:\\Développement',
-      expandable: true
-    })
-    expect(registry.getRegistryKey).toHaveBeenCalledWith(0x80000001, 'Environment')
-  })
-
   it('distinguishes a missing Path value from a registry read failure', async () => {
     const missingReader = new WindowsUserPathRegistryReader({
       platform: 'win32',
@@ -82,10 +63,10 @@ describe('WindowsUserPathRegistryReader', () => {
     now += 1
     const refreshed = reader.readFresh()
     expect(registryLoader).toHaveBeenCalledTimes(2)
-    resolveRegistry(registryModule('C:\\Tools;C:\\Wakii'))
+    resolveRegistry(registryModule('C:\\Tools;C:\\Orca'))
     await expect(refreshed).resolves.toEqual({
       state: 'success',
-      value: 'C:\\Tools;C:\\Wakii',
+      value: 'C:\\Tools;C:\\Orca',
       expandable: true
     })
   })
@@ -96,32 +77,13 @@ describe('WindowsUserPathRegistryReader', () => {
   ])('preserves whether registry type $type expands variables', async ({ type, expandable }) => {
     const reader = new WindowsUserPathRegistryReader({
       platform: 'win32',
-      registryLoader: async () => registryModule('%LOCALAPPDATA%\\Wakii', type)
+      registryLoader: async () => registryModule('%LOCALAPPDATA%\\Orca', type)
     })
 
     await expect(reader.read()).resolves.toEqual({
       state: 'success',
-      value: '%LOCALAPPDATA%\\Wakii',
+      value: '%LOCALAPPDATA%\\Orca',
       expandable
     })
   })
-
-  it('does not load the Windows-only dependency on other platforms', async () => {
-    const registryLoader = vi.fn(async () => registryModule('C:\\Tools'))
-    const reader = new WindowsUserPathRegistryReader({
-      platform: 'linux',
-      registryLoader
-    })
-
-    await expect(reader.read()).resolves.toMatchObject({ state: 'unknown' })
-    expect(registryLoader).not.toHaveBeenCalled()
-  })
-
-  it.runIf(process.platform === 'win32')(
-    'loads the real native addon and reads the current Windows user PATH',
-    async () => {
-      invalidateWindowsUserPathRegistryCache()
-      await expect(readWindowsUserPathRegistry()).resolves.toMatchObject({ state: 'success' })
-    }
-  )
 })

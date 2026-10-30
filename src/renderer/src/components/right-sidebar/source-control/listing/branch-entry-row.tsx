@@ -1,13 +1,12 @@
 import React from 'react'
 import { MessageSquare } from 'lucide-react'
-import { FILE_ICON_COLOR_CLASS, getFileTypeIcon, getFileTypeIconColor } from '@/lib/file-type-icons'
-import { cn } from '@/lib/utils'
+import { FileTypeIcon } from '@/components/FileTypeIcon'
 import { basename, dirname, joinPath } from '@/lib/path'
 import { WORKSPACE_FILE_PATH_MIME } from '@/lib/workspace-file-drag'
 import { writeWorkspaceFileDragSourceForWorkspace } from '@/lib/workspace-file-drag-source'
-import { translate } from '@/i18n/i18n'
 import type { GitBranchChangeEntry } from '../../../../../../shared/git-diff-compare-types'
 import { DiffLineCounts } from './diff-line-counts'
+import { reviewNoteCountTitle } from './review-note-count-title'
 import { SourceControlEntryContextMenu } from './entry-context-menu'
 import { toPermanentSourceControlRowOpenEvent, type SourceControlRowOpenEvent } from './split-open'
 import { SOURCE_CONTROL_TREE_FILE_PADDING_PX, SOURCE_CONTROL_TREE_INDENT_PX } from './row-layout'
@@ -34,8 +33,6 @@ export function BranchEntryRow({
   commentCount: number
   showPathHint?: boolean
 }): React.JSX.Element {
-  const FileIcon = getFileTypeIcon(entry.path)
-  const iconColorGroup = getFileTypeIconColor(entry.path)
   const fileName = basename(entry.path)
   const parentDir = dirname(entry.path)
   const dirPath = parentDir === '.' ? '' : parentDir
@@ -65,12 +62,10 @@ export function BranchEntryRow({
         onClick={(e) => onOpen(e)}
         onDoubleClick={(e) => onOpen(toPermanentSourceControlRowOpenEvent(e))}
       >
-        {/* Why: icon carries the file-type color; git status color stays on the badge below (C4). */}
-        {React.createElement(FileIcon, {
-          className: cn(
-            'size-3.5 shrink-0',
-            iconColorGroup ? FILE_ICON_COLOR_CLASS[iconColorGroup] : 'text-muted-foreground'
-          )
+        {React.createElement(FileTypeIcon, {
+          filePath: entry.path,
+          className: 'size-3.5 shrink-0',
+          style: { color: STATUS_COLORS[entry.status] }
         })}
         <span className="min-w-0 flex-1 truncate text-xs">
           <span className="text-foreground">{fileName}</span>
@@ -81,11 +76,7 @@ export function BranchEntryRow({
         {commentCount > 0 && (
           <span
             className="flex shrink-0 items-center gap-0.5 text-[10px] text-muted-foreground"
-            title={translate(
-              'auto.components.right.sidebar.SourceControl.657e0c90ad',
-              '{{value0}} note{{value1}}',
-              { value0: commentCount, value1: commentCount === 1 ? '' : 's' }
-            )}
+            title={reviewNoteCountTitle(commentCount)}
           >
             <MessageSquare className="size-3" />
             <span className="tabular-nums">{commentCount}</span>

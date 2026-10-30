@@ -16,7 +16,7 @@ import {
   structuredAgentSessionCreate,
   structuredAgentSupportProbe
 } from './mobile-session-launch-operations'
-import { structuredSessionRandomUuid } from './structured-session-operation-id'
+import { randomV4Uuid } from '../platform/random-v4-uuid'
 import { rememberMobileCreatedStructuredSession } from './mobile-created-structured-sessions'
 
 type StructuredCreateSupport = {
@@ -42,10 +42,10 @@ function createParamsFor(
   worktree: string
 ): StructuredAgentSessionCreateParams {
   return structuredAgentSessionCreateParams({
-    sessionId: createStructuredAgentSessionId(agent, structuredSessionRandomUuid),
+    sessionId: createStructuredAgentSessionId(agent, randomV4Uuid),
     worktree,
     agent,
-    randomUuid: structuredSessionRandomUuid
+    randomUuid: randomV4Uuid
   })
 }
 
@@ -65,8 +65,7 @@ function failedMessage(agent: AgentSessionHandleProvider): string {
   return `Could not open ${TUI_AGENT_DISPLAY_NAMES[agent]} chat.`
 }
 
-/** Only a refusal the host names as definitive may become `failed`; anything else keeps the
- *  outcome unknown so no legacy sibling terminal is created for a session that may exist. */
+// Only definitive refusal permits failure/fallback; uncertain creates may already own a session and must not create a sibling.
 function classifyCreateRefusal(
   agent: AgentSessionHandleProvider,
   code: string,
@@ -143,18 +142,21 @@ export async function createMobileStructuredAgentSession(
     }
   }
 
+  // Inspect malformed replies as unconfirmed rather than classifying them as refusals.
   if (!response || typeof response !== 'object' || typeof response.ok !== 'boolean') {
     return unknownCreateResult(agent, new Error(unconfirmedMessage(agent)))
   }
   if (!response.ok) {
+    const error = response.error as { code?: unknown; message?: unknown } | null | undefined
     if (
-      !response.error ||
-      typeof response.error !== 'object' ||
-      typeof response.error.code !== 'string'
+      !error ||
+      typeof error !== 'object' ||
+      typeof error.code !== 'string' ||
+      typeof error.message !== 'string'
     ) {
       return unknownCreateResult(agent, new Error(unconfirmedMessage(agent)))
     }
-    return classifyCreateRefusal(agent, response.error.code, response.error.message)
+    return classifyCreateRefusal(agent, error.code, error.message)
   }
   const result = response.result as AgentSessionMutationResult<AgentSessionAttachResult>
   if (!result || typeof result !== 'object' || typeof result.ok !== 'boolean') {
@@ -164,7 +166,8 @@ export async function createMobileStructuredAgentSession(
     if (
       !result.refusal ||
       typeof result.refusal !== 'object' ||
-      typeof result.refusal.code !== 'string'
+      typeof result.refusal.code !== 'string' ||
+      typeof result.refusal.message !== 'string'
     ) {
       return unknownCreateResult(agent, new Error(unconfirmedMessage(agent)))
     }

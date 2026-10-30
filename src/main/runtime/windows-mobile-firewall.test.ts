@@ -17,7 +17,7 @@ function environment(
   return {
     platform: 'win32',
     isPackaged: true,
-    executablePath: "C:\\Users\\O'Brien\\Wakii\\Wakii.exe",
+    executablePath: "C:\\Users\\O'Brien\\Orca\\Orca.exe",
     systemRoot: 'C:\\Windows',
     runPowerShell,
     ...overrides
@@ -53,12 +53,12 @@ describe('windows mobile firewall', () => {
     // Why: without ActiveStore, GPO-applied Block rules are invisible and the
     // post-repair re-inspection could report a false success on managed hosts.
     expect(script).toContain(
-      "Get-NetFirewallApplicationFilter -PolicyStore ActiveStore -Program 'C:\\Users\\O''Brien\\Wakii\\Wakii.exe'"
+      "Get-NetFirewallApplicationFilter -PolicyStore ActiveStore -Program 'C:\\Users\\O''Brien\\Orca\\Orca.exe'"
     )
     expect(script).toContain('Get-NetFirewallProfile -PolicyStore ActiveStore -Name Private')
     expect(script).toContain("LocalPort | Where-Object { [string]$_ -eq 'Any'")
     expect(script).toContain("[string]$_ -eq '6768'")
-    expect(script).toContain("C:\\Users\\O''Brien\\Wakii\\Wakii.exe")
+    expect(script).toContain("C:\\Users\\O''Brien\\Orca\\Orca.exe")
     expect(script).toContain("$profile -match 'Private'")
     expect(script).toContain("Get-NetIPAddress -IPAddress '192.168.0.108'")
     expect(script).toContain('Get-NetFirewallAddressFilter')
@@ -173,7 +173,7 @@ describe('windows mobile firewall', () => {
     }
   })
 
-  it('repairs only Wakii mobile pairing on private networks after elevation', async () => {
+  it('repairs only Orca mobile pairing on private networks after elevation', async () => {
     const runPowerShell = vi.fn().mockResolvedValue('{"launched":true,"exitCode":0}')
     await expect(repairWindowsMobileFirewall(6769, environment(runPowerShell))).resolves.toEqual({
       ok: true
@@ -183,7 +183,7 @@ describe('windows mobile firewall', () => {
     const encoded = outerScript.match(/'-EncodedCommand', '([^']+)'/)?.[1]
     expect(encoded).toBeTruthy()
     const repairScript = Buffer.from(encoded!, 'base64').toString('utf16le')
-    expect(repairScript).toContain("-Name 'Wakii.MobilePairing'")
+    expect(repairScript).toContain("-Name 'Orca.MobilePairing'")
     expect(repairScript).toContain(
       "Where-Object { $_.Enabled -eq 'True' -and $_.Direction -eq 'Inbound' -and $_.Action -eq 'Block' }"
     )
@@ -191,20 +191,16 @@ describe('windows mobile firewall', () => {
     expect(repairScript).toContain('-Profile Private')
     expect(repairScript).toContain('-Protocol TCP')
     expect(repairScript).toContain('-LocalPort 6769')
-    expect(repairScript).toContain("-Program 'C:\\Users\\O''Brien\\Wakii\\Wakii.exe'")
+    expect(repairScript).toContain("-Program 'C:\\Users\\O''Brien\\Orca\\Orca.exe'")
     expect(repairScript).toContain('-EdgeTraversalPolicy Block')
   })
 
   it('keeps the elevated child encoded because Start-Process re-splits its ArgumentList', async () => {
-    // Why: `Start-Process -ArgumentList` joins the array into one ShellExecuteEx parameter
-    // string without quoting and PowerShell re-splits it on whitespace, which collapses runs
-    // of spaces. Measured on Windows 11: a `-Command` payload turned `C:\My  App\Wakii.exe`
-    // into `C:\My App\Wakii.exe`, i.e. a firewall rule for the wrong program. Base64 is the
-    // only form that survives that hop, so this site must not follow the local runner.
+    // Elevated Start-Process joins/re-splits argv and collapses spaces in executable paths; only this hop needs base64.
     const runPowerShell = vi.fn().mockResolvedValue('{"launched":true,"exitCode":0}')
     await repairWindowsMobileFirewall(
       6769,
-      environment(runPowerShell, { executablePath: 'C:\\My  App\\Wakii.exe' })
+      environment(runPowerShell, { executablePath: 'C:\\My  App\\Orca.exe' })
     )
 
     const outerScript = runPowerShell.mock.calls[0]![0] as string
@@ -214,13 +210,11 @@ describe('windows mobile firewall', () => {
 
     const encoded = outerScript.match(/'-EncodedCommand', '([^']+)'/)?.[1]
     const repairScript = Buffer.from(encoded!, 'base64').toString('utf16le')
-    expect(repairScript).toContain("-Program 'C:\\My  App\\Wakii.exe'")
+    expect(repairScript).toContain("-Program 'C:\\My  App\\Orca.exe'")
   })
 
   it('runs the local PowerShell over argv with a plain -Command script', async () => {
-    // Why: execFile reaches CreateProcess with no shell in between, so the script needs no
-    // base64 armouring, and argv preserves runs of spaces that the elevated hop cannot.
-    // `-EncodedCommand` here was pure EDR signal.
+    // Direct CreateProcess argv preserves spaces without encoding; -EncodedCommand here only adds EDR signal.
     const execFileMock = vi.mocked(execFile)
     execFileMock.mockImplementation(((_file, _args, _options, callback) => {
       callback(null, '{"privateFirewallEnabled":true,"networkCategory":"Private"}', '')
@@ -230,7 +224,7 @@ describe('windows mobile firewall', () => {
     await inspectWindowsMobileFirewall(6768, undefined, {
       platform: 'win32',
       isPackaged: true,
-      executablePath: 'C:\\My  App\\Wakii.exe',
+      executablePath: 'C:\\My  App\\Orca.exe',
       systemRoot: 'C:\\Windows'
     })
 
@@ -241,7 +235,7 @@ describe('windows mobile firewall', () => {
     expect(args).not.toContain('-ExecutionPolicy')
     // The script travels as ONE argv element, so its spaces and newlines survive verbatim.
     expect(args).toHaveLength(4)
-    expect(args![3]).toContain("-Program 'C:\\My  App\\Wakii.exe'")
+    expect(args![3]).toContain("-Program 'C:\\My  App\\Orca.exe'")
     expect(args![3]).toContain('\n')
   })
 

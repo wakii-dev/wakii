@@ -1,6 +1,8 @@
 // @vitest-environment happy-dom
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { callAntigravityAccounts } from '@/runtime/runtime-antigravity-accounts-client'
+import type { AntigravityAccountState } from '../../../../shared/antigravity-account-types'
 import { getDefaultSettings } from '../../../../shared/constants'
 import type {
   ClaudeManagedAccountSummary,
@@ -25,14 +27,24 @@ const renderPane = (scope: SettingsHostScope): React.JSX.Element => (
 
 const fake = vi.hoisted(() => {
   const state: {
+    query: string
     pendingSelect: ((roster: unknown) => void) | null
     write: ReturnType<typeof vi.fn>
     rosters: Map<string, unknown>
     watchedTargets: unknown[]
-  } = { pendingSelect: null, write: vi.fn(), rosters: new Map(), watchedTargets: [] }
+    selects: unknown[][]
+  } = {
+    query: 'claude',
+    pendingSelect: null,
+    write: vi.fn(),
+    rosters: new Map(),
+    watchedTargets: [],
+    selects: []
+  }
   return state
 })
 vi.mock('@/i18n/i18n', () => ({
+  getIntlLocale: () => 'en',
   i18n: { language: 'en' },
   translate: (_key: string, fallback: string, values?: Record<string, string | number>) =>
     Object.entries(values ?? {}).reduce(
@@ -43,7 +55,7 @@ vi.mock('@/i18n/i18n', () => ({
 vi.mock('@/store', () => ({
   useAppStore: (selector: (state: Record<string, unknown>) => unknown) =>
     selector({
-      settingsSearchQuery: 'claude',
+      settingsSearchQuery: fake.query,
       rateLimits: {
         codex: null,
         codexTarget: { runtime: 'host', wslDistro: null },
@@ -52,9 +64,15 @@ vi.mock('@/store', () => ({
         grok: { updatedAt: 0 }
       },
       runtimeEnvironments: [],
+      runtimeStatusByEnvironmentId: new Map(),
       recordFeatureInteraction: fake.write,
       fetchSettings: fake.write
     })
+}))
+vi.mock('@/runtime/runtime-antigravity-accounts-client', () => ({
+  callAntigravityAccounts: vi.fn(),
+  callAntigravityChatSignIn: vi.fn(),
+  subscribeAntigravityChatSignIn: vi.fn()
 }))
 vi.mock('@/runtime/runtime-provider-accounts-client', () => {
   const empty = () => ({
@@ -79,10 +97,12 @@ vi.mock('@/runtime/runtime-provider-accounts-client', () => {
       })
       return { close: vi.fn() }
     },
-    selectClaudeProviderAccount: () =>
-      new Promise((resolve) => {
+    selectClaudeProviderAccount: (...args: unknown[]) => {
+      fake.selects.push(args)
+      return new Promise((resolve) => {
         fake.pendingSelect = resolve
-      }),
+      })
+    },
     selectCodexProviderAccount: fake.write,
     removeClaudeProviderAccount: fake.write,
     removeCodexProviderAccount: fake.write
@@ -107,8 +127,10 @@ function claudeRoster(id: string, email: string, active: boolean): ClaudeRateLim
 }
 
 beforeEach(() => {
+  fake.query = 'claude'
   fake.pendingSelect = null
   fake.watchedTargets = []
+  fake.selects = []
   fake.rosters.set('local', claudeRoster('acct-l', 'local@desktop.test', false))
   fake.rosters.set('server-a', claudeRoster('acct-a', 'alpha@server-a.test', false))
   fake.rosters.set('server-b', claudeRoster('acct-b', 'beta@server-b.test', false))
@@ -135,6 +157,38 @@ it('lists the accounts of the host chosen in the page, not the focused server', 
   expect(fake.watchedTargets).toEqual([{ kind: 'local' }])
 })
 
+it('shows Windows account guidance for the page owner rather than the focused server', async () => {
+  fake.query = 'antigravity'
+  const empty: AntigravityAccountState = {
+    accounts: [],
+    activeAccountId: null,
+    selectedAccountId: null,
+    currentAccount: null
+  }
+  vi.mocked(callAntigravityAccounts).mockResolvedValue(empty)
+  render(
+    <AccountsPane
+      settings={focusedElsewhere}
+      updateSettings={vi.fn()}
+      hostScope={scopeFor('server-a')}
+      accountOwnerPlatform="win32"
+    />
+  )
+
+  expect(await screen.findByText('No native agy account is signed in.')).toBeTruthy()
+  expect(callAntigravityAccounts).toHaveBeenCalledWith(
+    { kind: 'environment', environmentId: 'server-a' },
+    { runtime: 'host', wslDistro: null },
+    'List'
+  )
+  expect(
+    screen.getByText(
+      'Select applies and verifies the host default agy credential. Command choices and later account changes are handled by agy. Existing sessions may keep their previous account.'
+    )
+  ).toBeTruthy()
+  expect(screen.queryByText(/Selection applies to new agy sessions on this host/)).toBeNull()
+})
+
 it("drops a server's late account result after the page moves to another server", async () => {
   const view = render(renderPane(scopeFor('server-a')))
   await act(async () => {})
@@ -146,7 +200,6 @@ it("drops a server's late account result after the page moves to another server"
 
   await act(async () => fake.pendingSelect?.(claudeRoster('acct-a', 'alpha@server-a.test', true)))
 
-  // Server A's roster must not replace server B's in the pane now scoped to B.
   expect(screen.queryByText('alpha@server-a.test')).toBeNull()
   expect(screen.getByText('beta@server-b.test')).toBeTruthy()
 })
@@ -168,4 +221,31 @@ it('keeps a late account result once the pane is back on the server it was sent 
   await act(async () => fake.pendingSelect?.(claudeRoster('acct-a', 'alpha@server-a.test', true)))
 
   expect(within(alphaRow()).getByText('Active')).toBeTruthy()
+})
+
+it("shows a WSL host's distro accounts from this desktop and selects for that distro", async () => {
+  const roster = claudeRoster('acct-w', 'wsl@ubuntu.test', false)
+  roster.accounts = roster.accounts.map((account) => ({
+    ...account,
+    managedAuthRuntime: 'wsl',
+    wslDistro: 'Ubuntu'
+  }))
+  fake.rosters.set('local', roster)
+  render(
+    <AccountsPane
+      settings={focusedElsewhere}
+      updateSettings={vi.fn()}
+      hostScope={scopeFor(null)}
+      wslHostDistro="Ubuntu"
+      wslSupportedPlatform
+      wslAvailable
+      wslDistros={['Ubuntu']}
+    />
+  )
+  await act(async () => {})
+  expect(fake.watchedTargets).toEqual([{ kind: 'local' }])
+  fireEvent.click(screen.getByText('wsl@ubuntu.test'))
+  expect(fake.selects).toEqual([
+    [{ kind: 'local' }, { accountId: 'acct-w', runtime: 'wsl', wslDistro: 'Ubuntu' }]
+  ])
 })

@@ -1,30 +1,7 @@
+import { parseExecutionHostId } from '../../../src/shared/execution-host'
 import type { HostStackRouteTarget } from '../navigation/host-stack-navigation'
 import { mobileSessionRouteTarget } from '../session/mobile-session-route'
 import type { HostCredentialStatus } from '../transport/types'
-
-export type DesktopNotificationSource =
-  | 'agent-task-complete'
-  | 'terminal-bell'
-  | 'test'
-  | 'gate-open'
-  | 'gate-closed'
-
-export type DesktopNotificationEvent = {
-  source: DesktopNotificationSource
-  worktreeId?: string
-  storyId?: string
-  gateId?: string
-  notificationId?: string
-}
-
-export type LocalNotificationData = {
-  source: DesktopNotificationSource
-  hostId: string
-  worktreeId?: string
-  storyId?: string
-  gateId?: string
-  notificationId?: string
-}
 
 export type NotificationNavigationOptions = {
   knownHostIds?: ReadonlySet<string>
@@ -35,31 +12,7 @@ function readNonEmptyString(value: unknown): string | null {
   return typeof value === 'string' && value.trim().length > 0 ? value : null
 }
 
-export function buildLocalNotificationData(
-  event: DesktopNotificationEvent,
-  hostId: string
-): LocalNotificationData {
-  const data: LocalNotificationData = {
-    source: event.source,
-    hostId
-  }
-  if (event.worktreeId) {
-    data.worktreeId = event.worktreeId
-  }
-  if (event.storyId) {
-    data.storyId = event.storyId
-  }
-  if (event.gateId) {
-    data.gateId = event.gateId
-  }
-  if (event.notificationId) {
-    data.notificationId = event.notificationId
-  }
-  return data
-}
-
-/** Where a tap should land. `sessionTarget` is null for a host-only notification, whose
- *  `/h/<id>` push is shallow enough to need no host-stack coordination. */
+// Host-only taps need no stack coordination; sessionTarget identifies deep workspace destinations.
 export type NotificationNavigationTarget = Readonly<{
   hostId: string
   sessionTarget: HostStackRouteTarget | null
@@ -93,21 +46,19 @@ export function getNotificationNavigationTarget(
   }
 
   const worktreeId = readNonEmptyString(record.worktreeId)
-  // Gate taps with a story id land on the story screen; gateId rides as an inert param the story wrapper ignores.
-  const gateSource = record.source === 'gate-open' || record.source === 'gate-closed'
-  const storyId = gateSource ? readNonEmptyString(record.storyId) : null
-  const gateId = gateSource ? readNonEmptyString(record.gateId) : null
+  // Accept only relayed servers; unknown execution hosts retain the paired desktop route.
+  const executionHost = parseExecutionHostId(readNonEmptyString(record.executionHost))
   const credentialStatus = options.credentialStatusByHostId?.get(hostId)
   return {
     hostId,
-    sessionTarget: storyId
-      ? {
-          name: '[hostId]/stories/[...storyId]',
-          params: { hostId, storyId, ...(gateId ? { gateId } : {}) }
-        }
-      : worktreeId
-        ? mobileSessionRouteTarget({ hostId, worktreeId })
-        : null,
+    sessionTarget: worktreeId
+      ? mobileSessionRouteTarget({
+          hostId,
+          worktreeId,
+          paneKey: readNonEmptyString(record.paneKey) ?? undefined,
+          ...(executionHost?.kind === 'runtime' ? { executionHost: executionHost.id } : {})
+        })
+      : null,
     ...(credentialStatus === 'missing'
       ? { credentialRecovery: 're-pair' as const }
       : credentialStatus === 'temporarily-unavailable'

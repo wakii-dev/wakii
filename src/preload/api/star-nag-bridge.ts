@@ -23,6 +23,8 @@ export const starNagApi = {
   disable: (): Promise<void> => ipcRenderer.invoke('star-nag:disable'),
   openWeb: (): Promise<void> => ipcRenderer.invoke('star-nag:openWeb'),
   starWakii: (): Promise<boolean> => ipcRenderer.invoke('star-nag:starWakii'),
+  // Upstream renderer (StarNagCard) calls starOrca; both route to the same nag star.
+  starOrca: (): Promise<boolean> => ipcRenderer.invoke('star-nag:starWakii'),
   forceShow: (): Promise<void> => ipcRenderer.invoke('star-nag:forceShow'),
   agentValueMoment: (): Promise<{ status: 'ready'; mode: 'gh' | 'web' } | { status: 'skipped' }> =>
     ipcRenderer.invoke('star-nag:agentValueMoment'),

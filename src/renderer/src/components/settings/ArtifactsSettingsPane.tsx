@@ -6,6 +6,7 @@ import { useOrcaProfileAuthStatusRefresh } from '@/hooks/use-orca-profile-auth-s
 import { useAppStore } from '@/store'
 import { isWebClientLocation } from '@/lib/web-client-location'
 import { translate } from '@/i18n/i18n'
+import { OrcaSignInButton, OrcaSignInWaitNotice } from '../OrcaSignInProgress'
 
 type HowToStep = { key: string; title: string; description: string }
 
@@ -18,10 +19,8 @@ export function ArtifactsSettingsPane({
 }): React.JSX.Element {
   const openArtifactsPage = useAppStore((state) => state.openArtifactsPage)
   const authStatus = useAppStore((state) => state.orcaProfileAuthStatus)
-  const connect = useAppStore((state) => state.connectCurrentOrcaProfile)
   const signedIn = authStatus?.state === 'connected'
-  // Why: the capability lives in the desktop host's store and is deliberately absent from the
-  // settings.update allowlist, so a web client can only mirror it — never grant it.
+  // Only the desktop host can grant sharing; web clients mirror it because settings.update excludes this capability.
   const isWebClient = isWebClientLocation()
   const sharingEnabled = settings.artifactSharingEnabled === true
 
@@ -40,7 +39,7 @@ export function ArtifactsSettingsPane({
             description: isWebClient
               ? translate(
                   'auto.components.settings.artifacts.enableStepWebDescription',
-                  'Open Settings → Artifacts in the Wakii desktop app on the host device and enable publishing.'
+                  'Open Settings → Artifacts in the Orca desktop app on the host device and enable publishing.'
                 )
               : translate(
                   'auto.components.settings.artifacts.enableStepDescription',
@@ -69,7 +68,7 @@ export function ArtifactsSettingsPane({
     },
     {
       key: 'manage',
-      title: translate('auto.components.settings.artifacts.manageStepTitle', 'Manage it in Wakii'),
+      title: translate('auto.components.settings.artifacts.manageStepTitle', 'Manage it in Orca'),
       description: translate(
         'auto.components.settings.artifacts.manageStepDescription',
         'Open Artifacts from the sidebar to preview or remove links.'
@@ -120,20 +119,16 @@ export function ArtifactsSettingsPane({
             <p className="text-xs leading-relaxed text-muted-foreground">
               {translate(
                 'auto.components.settings.artifacts.signInDescription',
-                'Use your Wakii account to upload artifacts and manage their public links.'
+                'Use your Orca account to upload artifacts and manage their public links.'
               )}
             </p>
           </div>
-          <Button
-            type="button"
-            size="sm"
-            disabled={authStatus?.configured !== true}
-            onClick={() => void connect()}
-          >
+          <OrcaSignInButton size="sm" disabled={authStatus?.configured !== true}>
             {authStatus?.state === 'reconnect-required'
               ? translate('auto.components.settings.artifacts.signInAgain', 'Sign in again')
-              : translate('auto.components.settings.artifacts.signIn', 'Sign in to Wakii')}
-          </Button>
+              : translate('auto.components.settings.artifacts.signIn', 'Sign in to Orca')}
+          </OrcaSignInButton>
+          <OrcaSignInWaitNotice className="basis-full" />
         </section>
       ) : null}
       <section className="space-y-4 py-5">

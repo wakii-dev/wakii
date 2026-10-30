@@ -1,15 +1,15 @@
-import type { NativeChatUpgradeTipVariant } from '../../shared/native-chat-upgrade-tip-audience'
+import type { NativeChatUpgradeTipVariant } from '../../shared/native-chat/native-chat-upgrade-tip-audience'
 import type { OnboardingState } from '../../shared/onboarding-state-types'
 
 export type OnboardingApi = {
   get: () => Promise<OnboardingState>
-  // Why: main merges the checklist field-by-field, so a partial checklist is fine.
+  // Main merges checklist fields individually.
   update: (
     updates: Partial<Omit<OnboardingState, 'checklist'>> & {
       checklist?: Partial<OnboardingState['checklist']>
     }
   ) => Promise<OnboardingState>
-  /** Read-only: main decides the audience once, from the profile as saved before the chat upgrade. */
+  /** Audience is fixed from the profile saved before the chat upgrade. */
   getNativeChatUpgradeTipVariant: () => Promise<NativeChatUpgradeTipVariant>
 }
 
@@ -24,6 +24,8 @@ export type StarNagApi = {
   disable: () => Promise<void>
   openWeb: () => Promise<void>
   starWakii: () => Promise<boolean>
+  // Upstream renderer (StarNagCard) calls starOrca; same nag star.
+  starOrca: () => Promise<boolean>
   forceShow: () => Promise<void>
   agentValueMoment: () => Promise<{ status: 'ready'; mode: 'gh' | 'web' } | { status: 'skipped' }>
   showAgentValueMoment: () => Promise<void>

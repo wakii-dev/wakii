@@ -9,20 +9,22 @@ import type {
   LinearViewMode,
   TaskItem
 } from './mobile-tasks-legacy-foundation'
+import { mountFixture } from '../test-support/rpc-recording/recorder-fixture-shape'
 import type { PickerProjectionModel } from './use-mobile-tasks-picker-projection'
 
-// Why: the tasks barrel pulls the whole react-native screen graph in; re-export only the
-// linear pieces this hook uses, straight from their leaf modules, and count grouping calls.
+// Import real Linear leaves without the native screen barrel; count their grouping calls.
 const groupingInputSizes: number[] = []
 
 vi.mock('./mobile-tasks-dependencies', async () => {
   const react = await import('react')
   const { colors } = await import('../theme/mobile-theme')
+  const { useMobileColorScheme } = await import('../theme/use-mobile-color-scheme')
   const { githubProjectIdentityKey } = await import('../../../src/shared/github/project-identity')
   return {
     useCallback: react.useCallback,
     useMemo: react.useMemo,
     colors,
+    useMobileColorScheme,
     githubProjectKey: githubProjectIdentityKey,
     TaskProviderLogo: () => null,
     getLinkedWorkItemSuggestedName: () => ''
@@ -38,13 +40,15 @@ vi.mock('./mobile-tasks-legacy-foundation', async () => {
     groupLinearIssues: (issues: LinearIssue[], groupBy: LinearGroupBy, orderBy: LinearOrderBy) => {
       groupingInputSizes.push(issues.length)
       return linear.groupLinearIssues(issues, groupBy, orderBy)
+    },
+    groupSortedLinearIssues: (issues: readonly LinearIssue[], groupBy: LinearGroupBy) => {
+      groupingInputSizes.push(issues.length)
+      return linear.groupSortedLinearIssues(issues, groupBy)
     }
   }
 })
 
-const { compareLinearIssues, groupLinearIssues } = await import(
-  './mobile-tasks-legacy-foundation'
-)
+const { sortLinearIssues, groupLinearIssues } = await import('./mobile-tasks-legacy-foundation')
 const { useMobileTasksProviderViewProjection } =
   await import('./use-mobile-tasks-provider-view-projection')
 
@@ -66,8 +70,6 @@ const ASSIGNEES = [
 const GROUPINGS: LinearGroupBy[] = ['none', 'status', 'assignee', 'priority', 'team']
 const ORDERINGS: LinearOrderBy[] = ['priority', 'updated', 'identifier']
 
-/** Deterministic issues: every field is a pure function of the index, so grouping,
- *  ordering and comparison counts repeat exactly across runs. */
 function makeIssue(index: number): LinearIssue {
   const state = STATES[(index * 3) % STATES.length]!
   const team = TEAMS[(index * 5) % TEAMS.length]!
@@ -87,11 +89,14 @@ function makeIssue(index: number): LinearIssue {
 
 function makeItems(count: number): TaskItem[] {
   return Array.from({ length: count }, (_, index) => ({
-    id: `task-${index}`,
+    key: `task-${index}`,
+    subtitle: 'Linear issue',
+    status: 'Open',
+    updatedAt: '2026-01-01T00:00:00Z',
     provider: 'linear' as const,
     title: `Issue ${index}`,
     source: makeIssue(index)
-  })) as unknown as TaskItem[]
+  }))
 }
 
 type ProbeInput = {
@@ -110,15 +115,14 @@ const DEFAULT_INPUT: ProbeInput = {
   githubProjectPickerSearch: ''
 }
 
-/** The hook mutates the model it is handed, so each render gets a fresh envelope around
- *  the same input identities — exactly how the picker projection feeds it in the app. */
 function createModel(input: ProbeInput): PickerProjectionModel {
-  return {
+  return mountFixture<PickerProjectionModel>({
+    effectiveRepoIds: new Set<string>(),
     activeGitHubProject: null,
-    defaultGitHubPreset: 'open',
+    defaultGitHubPreset: 'issues',
     githubKind: 'issues',
-    githubMode: 'repo',
-    githubPreset: 'open',
+    githubMode: 'items',
+    githubPreset: 'issues',
     githubProjectPickerSearch: input.githubProjectPickerSearch,
     githubProjectSearch: '',
     githubProjectSettings: { pinned: [], recent: [] },
@@ -126,6 +130,14 @@ function createModel(input: ProbeInput): PickerProjectionModel {
     githubProjects: [],
     gitlabFilter: 'opened',
     hostedRepos: [],
+    jiraConnection: {
+      connected: false,
+      sites: [],
+      selection: null,
+      credentialError: null,
+      unavailableReason: null
+    },
+    jiraFilter: 'assigned',
     items: input.items,
     linearDisplayProperties: new Set(['state', 'priority']),
     linearFilter: 'all',
@@ -140,13 +152,12 @@ function createModel(input: ProbeInput): PickerProjectionModel {
     selectedLinearWorkspaceId: 'all',
     setAppliedGithubProjectSearch: () => {},
     setSelectedRepoIds: () => {}
-  } as unknown as PickerProjectionModel
+  })
 }
 
 type Projection = ReturnType<typeof useMobileTasksProviderViewProjection>
 
-// Why: a stack, not a nullable handle — the react-test-renderer types degrade to `any`
-// when mobile dependencies are absent, and a union with them trips the type-aware gate.
+// Use a renderer stack: missing mobile types degrade handles to any, making a nullable union fail type-aware lint.
 const mounted: ReactTestRenderer[] = []
 let latest: Projection | null = null
 let renderCount = 0
@@ -186,16 +197,19 @@ function current(): Projection {
   return latest
 }
 
-/** The pre-change board memo, kept verbatim as the parity and count oracle. */
 function legacyProjection(input: ProbeInput): {
   issuesForView: LinearIssue[]
   listSections: LinearIssueSection[]
   boardSections: LinearIssueSection[]
 } {
-  const issuesForView = input.items
-    .filter((item): item is Extract<TaskItem, { provider: 'linear' }> => item.provider === 'linear')
-    .map((item) => item.source)
-    .sort((a, b) => compareLinearIssues(a, b, input.linearOrderBy))
+  const issuesForView = sortLinearIssues(
+    input.items
+      .filter(
+        (item): item is Extract<TaskItem, { provider: 'linear' }> => item.provider === 'linear'
+      )
+      .map((item) => item.source),
+    input.linearOrderBy
+  )
   return {
     issuesForView,
     listSections: groupLinearIssues(issuesForView, input.linearGroupBy, input.linearOrderBy),
@@ -209,8 +223,6 @@ function legacyProjection(input: ProbeInput): {
 
 type WorkCounts = { groupingCalls: number; issueVisits: number; comparisons: number }
 
-/** Counts the projection's grouping calls, per-issue grouping visits, and sort-comparator
- *  invocations. Operation counts only — nothing here is time, CPU or memory. */
 function countLinearWork(run: () => void): WorkCounts {
   const nativeSort = Array.prototype.sort
   let comparisons = 0
@@ -224,7 +236,7 @@ function countLinearWork(run: () => void): WorkCounts {
           return compare(a, b)
         })
     )
-  } as typeof Array.prototype.sort
+  }
   try {
     run()
   } finally {
@@ -258,12 +270,10 @@ afterEach(() => {
 
 describe('useMobileTasksProviderViewProjection linear sections', () => {
   it.each(GROUPINGS.filter((groupBy) => groupBy !== 'none'))(
-    'matches the list sections for the board when grouping is %s',
+    'reuses the list sections for the board when grouping is %s',
     (linearGroupBy) => {
       const projection = mount({ linearGroupBy })
-      expect(summarizeSections(projection.linearBoardSections)).toEqual(
-        summarizeSections(projection.linearIssueSections)
-      )
+      expect(projection.linearBoardSections).toBe(projection.linearIssueSections)
       expect(summarizeSections(projection.linearBoardSections)).toEqual(
         summarizeSections(legacyProjection({ ...DEFAULT_INPUT, linearGroupBy }).boardSections)
       )
@@ -285,26 +295,35 @@ describe('useMobileTasksProviderViewProjection linear sections', () => {
     expect(projection.linearListEntries.every((entry) => entry.type === 'issue')).toBe(true)
   })
 
-  it.each(ORDERINGS)('matches the pre-change sections for every grouping at order %s', (order) => {
-    for (const linearGroupBy of GROUPINGS) {
-      const projection = mount({ linearGroupBy, linearOrderBy: order })
-      const legacy = legacyProjection({
-        ...DEFAULT_INPUT,
-        linearGroupBy,
-        linearOrderBy: order
-      })
-      expect(summarizeSections(projection.linearIssueSections)).toEqual(
-        summarizeSections(legacy.listSections)
-      )
-      expect(summarizeSections(projection.linearBoardSections)).toEqual(
-        summarizeSections(legacy.boardSections)
-      )
-      expect(projection.linearIssuesForView.map((issue) => issue.id)).toEqual(
-        legacy.issuesForView.map((issue) => issue.id)
-      )
-      unmountAll()
+  it.each(ORDERINGS)(
+    'preserves literal issue order and pre-change section parity at order %s',
+    (order) => {
+      const items = makeItems(3)
+      const expectedIds = {
+        priority: ['issue-1', 'issue-2', 'issue-0'],
+        updated: ['issue-2', 'issue-1', 'issue-0'],
+        identifier: ['issue-0', 'issue-2', 'issue-1']
+      }
+      for (const linearGroupBy of GROUPINGS) {
+        const projection = mount({ items, linearGroupBy, linearOrderBy: order })
+        const legacy = legacyProjection({
+          ...DEFAULT_INPUT,
+          linearGroupBy,
+          linearOrderBy: order,
+          items
+        })
+        expect(summarizeSections(projection.linearIssueSections)).toEqual(
+          summarizeSections(legacy.listSections)
+        )
+        expect(summarizeSections(projection.linearBoardSections)).toEqual(
+          summarizeSections(legacy.boardSections)
+        )
+        expect(projection.linearIssuesForView.map((issue) => issue.id)).toEqual(expectedIds[order])
+        expect(items.map((item) => item.source.id)).toEqual(['issue-0', 'issue-1', 'issue-2'])
+        unmountAll()
+      }
     }
-  })
+  )
 })
 
 describe('useMobileTasksProviderViewProjection transitions', () => {
@@ -313,9 +332,7 @@ describe('useMobileTasksProviderViewProjection transitions', () => {
     expect(current().linearBoardSections).not.toBe(current().linearIssueSections)
 
     const grouped = rerender({ linearGroupBy: 'status' })
-    expect(summarizeSections(grouped.linearBoardSections)).toEqual(
-      summarizeSections(grouped.linearIssueSections)
-    )
+    expect(grouped.linearBoardSections).toBe(grouped.linearIssueSections)
     expect(summarizeSections(grouped.linearBoardSections)).toEqual(
       summarizeSections(
         legacyProjection({ ...DEFAULT_INPUT, linearGroupBy: 'status' }).boardSections
@@ -323,9 +340,7 @@ describe('useMobileTasksProviderViewProjection transitions', () => {
     )
 
     const assignee = rerender({ linearGroupBy: 'assignee' })
-    expect(summarizeSections(assignee.linearBoardSections)).toEqual(
-      summarizeSections(assignee.linearIssueSections)
-    )
+    expect(assignee.linearBoardSections).toBe(assignee.linearIssueSections)
     expect(summarizeSections(assignee.linearBoardSections)).toEqual(
       summarizeSections(
         legacyProjection({ ...DEFAULT_INPUT, linearGroupBy: 'assignee' }).boardSections
@@ -344,9 +359,7 @@ describe('useMobileTasksProviderViewProjection transitions', () => {
     const firstSections = first.linearBoardSections
     const next = rerender({ linearGroupBy: 'priority', linearOrderBy: 'identifier' })
     expect(next.linearBoardSections).not.toBe(firstSections)
-    expect(summarizeSections(next.linearBoardSections)).toEqual(
-      summarizeSections(next.linearIssueSections)
-    )
+    expect(next.linearBoardSections).toBe(next.linearIssueSections)
     expect(summarizeSections(next.linearBoardSections)).toEqual(
       summarizeSections(
         legacyProjection({
@@ -360,23 +373,21 @@ describe('useMobileTasksProviderViewProjection transitions', () => {
 
   it('keeps section identity across an unrelated rerender', () => {
     const first = mount({ linearGroupBy: 'status' })
-    const boardSections = first.linearBoardSections
-    const listSections = first.linearIssueSections
+    const sections = first.linearBoardSections
     const entries = first.linearListEntries
     const after = rerender({ linearGroupBy: 'status', githubProjectPickerSearch: 'orca' })
     expect(renderCount).toBe(2)
-    expect(after.linearBoardSections).toBe(boardSections)
-    expect(after.linearIssueSections).toBe(listSections)
+    expect(after.linearBoardSections).toBe(sections)
+    expect(after.linearIssueSections).toBe(sections)
     expect(after.linearListEntries).toBe(entries)
   })
 
   it('keeps section identity across a list/board view switch', () => {
     const list = mount({ linearGroupBy: 'team', linearViewMode: 'list' })
-    const boardSections = list.linearBoardSections
-    const listSections = list.linearIssueSections
+    const sections = list.linearBoardSections
     const board = rerender({ linearGroupBy: 'team', linearViewMode: 'board' })
-    expect(board.linearBoardSections).toBe(boardSections)
-    expect(board.linearIssueSections).toBe(listSections)
+    expect(board.linearBoardSections).toBe(sections)
+    expect(board.linearIssueSections).toBe(sections)
   })
 
   it('rebuilds both section sets when a refresh hands back an equal-but-new array', () => {
@@ -384,9 +395,7 @@ describe('useMobileTasksProviderViewProjection transitions', () => {
     const sections = first.linearBoardSections
     const refreshed = rerender({ linearGroupBy: 'status', items: makeItems(50) })
     expect(refreshed.linearBoardSections).not.toBe(sections)
-    expect(summarizeSections(refreshed.linearBoardSections)).toEqual(
-      summarizeSections(refreshed.linearIssueSections)
-    )
+    expect(refreshed.linearBoardSections).toBe(refreshed.linearIssueSections)
     expect(summarizeSections(refreshed.linearBoardSections)).toEqual(summarizeSections(sections))
   })
 
@@ -402,7 +411,7 @@ describe('useMobileTasksProviderViewProjection transitions', () => {
 })
 
 describe('useMobileTasksProviderViewProjection grouping work', () => {
-  it('does no more grouping work than the pre-change projection for a grouped mount', () => {
+  it('halves the grouping work for a grouped mount against the pre-change projection', () => {
     const input = { ...DEFAULT_INPUT, linearGroupBy: 'status' as const }
     const before = countLinearWork(() => {
       legacyProjection(input)
@@ -411,15 +420,14 @@ describe('useMobileTasksProviderViewProjection grouping work', () => {
       mount(input)
     })
     expect(before.groupingCalls).toBe(2)
-    expect(after.groupingCalls).toBe(2)
+    expect(after.groupingCalls).toBe(1)
     expect(before.issueVisits).toBe(100)
-    expect(after.issueVisits).toBe(100)
-    // The hook's hoisted sort plus one re-sort per grouped section set costs exactly
-    // what the legacy oracle's sort + two internal re-sorts cost — never more.
-    expect(after.comparisons).toBe(before.comparisons)
+    expect(after.issueVisits).toBe(50)
+    // Legacy groupings each re-sorted 50 ordered issues; reuse sorting before grouping to avoid both comparator passes.
+    expect(before.comparisons - after.comparisons).toBe(2 * (input.items.length - 1))
   })
 
-  it('keeps both none grouping calls at the pre-change cost', () => {
+  it('keeps both none grouping calls but drops their re-sorts', () => {
     const input = { ...DEFAULT_INPUT, linearGroupBy: 'none' as const }
     const before = countLinearWork(() => {
       legacyProjection(input)
@@ -429,7 +437,7 @@ describe('useMobileTasksProviderViewProjection grouping work', () => {
     })
     expect([before.groupingCalls, after.groupingCalls]).toEqual([2, 2])
     expect([before.issueVisits, after.issueVisits]).toEqual([100, 100])
-    expect(after.comparisons).toBe(before.comparisons)
+    expect(before.comparisons - after.comparisons).toBe(2 * (input.items.length - 1))
   })
 
   it('does no grouping work on an unrelated rerender', () => {

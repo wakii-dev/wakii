@@ -1,8 +1,15 @@
 import { getBoundPluginHostMethod, type PluginHostServices } from './plugin-host-method-bindings'
-import { isQualifiedPluginKey } from '../../shared/plugins/plugin-manifest'
-import { gatePluginHostCall as decidePluginHostCall } from '../../shared/plugins/plugin-capability-gate'
-import type { PluginCapabilityKind } from '../../shared/plugins/plugin-capabilities'
-import type { PluginPanelActionOutcome } from '../../shared/plugins/plugin-panel-bridge'
+import { isQualifiedPluginKey } from '../../shared/plugins/manifest/plugin-manifest'
+import {
+  gatePluginHostCall as decidePluginHostCall,
+  type PluginGateErrorCode
+} from '../../shared/plugins/capabilities/plugin-capability-gate'
+import type { PluginSurface } from '../../shared/plugins/frames/plugin-protocol'
+import type { PluginCapabilityKind } from '../../shared/plugins/capabilities/plugin-capabilities'
+import type {
+  PluginPanelActionErrorCode,
+  PluginPanelActionOutcome
+} from '../../shared/plugins/plugin-panel-bridge'
 import type { PluginAuditLog } from './plugin-audit-log'
 
 /**
@@ -28,6 +35,19 @@ export type ExecutePluginHostCallInput = {
   audit?: Pick<PluginAuditLog, 'record'>
 }
 
+// Upstream gates by surface kind; the fork call sites only know the panel bridge flag.
+function surfaceOfCall(input: ExecutePluginHostCallInput): PluginSurface {
+  return input.viaPanel ? 'panel' : 'worker'
+}
+
+// The panel outcome code is an open wire set; gate codes map 1:1 except surface denials.
+const PANEL_CODE_OF_GATE_CODE: Record<PluginGateErrorCode, PluginPanelActionErrorCode> = {
+  unknown_method: 'unknown_method',
+  capability_denied: 'capability_denied',
+  consent_required: 'consent_required',
+  not_permitted: 'panel_forbidden'
+}
+
 export async function executePluginHostCall(
   input: ExecutePluginHostCallInput
 ): Promise<PluginPanelActionOutcome> {
@@ -35,11 +55,11 @@ export async function executePluginHostCall(
     return { ok: false, code: 'invalid_request', error: 'invalid qualified plugin key' }
   }
   const gate = decidePluginHostCall(
-    { grantedCapabilities: input.grantedCapabilities, viaPanel: input.viaPanel },
+    { grantedCapabilities: input.grantedCapabilities, surface: surfaceOfCall(input) },
     input.method
   )
   if (!gate.granted) {
-    return { ok: false, code: gate.code, error: gate.error }
+    return { ok: false, code: PANEL_CODE_OF_GATE_CODE[gate.code], error: gate.error }
   }
   const bound = getBoundPluginHostMethod(input.method)
   if (!bound) {

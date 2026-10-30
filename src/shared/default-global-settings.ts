@@ -4,11 +4,10 @@ import type { VoiceSettings } from './speech-types'
 import { DEFAULT_TERMINAL_FONT_WEIGHT, DEFAULT_TERMINAL_FONT_WEIGHT_BOLD } from './terminal-fonts'
 import { getDefaultTerminalQuickCommands } from './terminal-quick-commands'
 import { TASK_PROVIDERS } from './task-providers'
-import { getDefaultSourceControlAiSettings } from './source-control-ai'
+import { getDefaultSourceControlAiSettings } from './source-control-ai-settings'
 import { DEFAULT_APP_ICON_ID } from './app-icon'
 import { DEFAULT_OPEN_IN_APPLICATIONS } from './open-in-applications'
 import { DEFAULT_DISABLED_TUI_AGENTS } from './tui-agent-selection'
-import { DEFAULT_TUI_AGENT_ARGS, DEFAULT_TUI_AGENT_ENV } from './tui-agent-launch-defaults'
 import { UI_LANGUAGE_SYSTEM } from './ui-language'
 import {
   DEFAULT_LEFT_SIDEBAR_TINT_COLOR,
@@ -40,24 +39,22 @@ export function buildDefaultSettings(args: {
     autoRenameBranchFromWorkDefaultedOn: true,
     branchPrefix: 'git-username',
     branchPrefixCustom: '',
+    jiraIssueKeyCasing: 'lowercase',
     theme: 'system',
+    pluginAppTheme: null,
+    pluginAppThemeLight: null,
+    pluginAppThemeDark: null,
+    pluginIconTheme: null,
     leftSidebarAppearanceMode: 'default',
     leftSidebarTintColor: DEFAULT_LEFT_SIDEBAR_TINT_COLOR,
     leftSidebarTintOpacity: DEFAULT_LEFT_SIDEBAR_TINT_OPACITY,
     uiLanguage: UI_LANGUAGE_SYSTEM,
+    uiLanguagePortugueseMigrationApplied: true,
     appIcon: DEFAULT_APP_ICON_ID,
     appFontFamily: args.appFontFamily,
     editorAutoSave: false,
     editorAutoSaveDelayMs: args.editorAutoSaveDelayMs,
-    // Why on: minimap is core VS Code parity. This default only covers new profiles;
-    // existing ones persisted `false` and are flipped once by the stamp below
-    // (shared/editor-minimap-settings.ts, applied by both the Electron store and
-    // the web client's localStorage store). A manual opt-out after the stamp survives.
-    editorMinimapEnabled: true,
-    editorMinimapEnabledDefaultedOnForAllUsers: true,
-    // Why empty: the editor keeps following the terminal font unless the user opts in.
-    editorFontFamily: '',
-    editorWordWrap: true,
+    editorMinimapEnabled: false,
     editorStickyScroll: false,
     // Why on: GitLens-lite inline blame is the core value of the feature; existing
     // profiles without the field also render it on (the renderer defaults to true).
@@ -66,6 +63,9 @@ export function buildDefaultSettings(args: {
     editorCursorSmoothCaretAnimation: 'on',
     editorRenderWhitespace: 'selection',
     editorBreadcrumbsEnabled: true,
+    // Why empty: the editor keeps following the terminal font unless the user opts in.
+    editorFontFamily: '',
+    editorWordWrap: true,
     richMarkdownSpellcheckEnabled: true,
     markdownReviewToolsEnabled: true,
     primarySelectionMiddleClickPaste: args.primarySelectionMiddleClickPaste,
@@ -85,8 +85,7 @@ export function buildDefaultSettings(args: {
     terminalGpuAcceleration: 'auto',
     // Why 'auto': enable ligatures only for known ligature fonts, never forced. Resolver in shared/terminal-ligatures.ts.
     terminalLigatures: 'auto',
-    // Why on: the addon is lazy-loaded off the critical path and only creates
-    // canvas layers once a pane receives an image; parser/decoder setup still has overhead.
+    // Lazy image addon stays off the critical path and creates canvas layers only on first image; decoder setup still has overhead.
     terminalInlineImages: true,
     terminalCursorStyle: 'block',
     terminalCursorStyleDefaultedToBlock: true,
@@ -122,37 +121,35 @@ export function buildDefaultSettings(args: {
     // Why: default-on everywhere so it round-trips across platforms; only darwin acts on it.
     showMenuBarIcon: true,
     terminalClipboardOnSelect: false,
-    // Why: only the run of spaces shared by every selected line is dropped, so
-    // relative indentation survives and the clipboard loses only the gutter.
+    // Trim only the shared leading-space gutter, preserving relative indentation.
     terminalCopyTrimsGutter: true,
-    // Why: default on so Zellij/tmux/nvim copy works out of the box. Query
-    // replies stay disabled and payload size is capped in the OSC 52 handler.
-    // This default only covers new profiles; existing ones persisted `false`
-    // and are flipped once by the stamp below (shared/osc52-clipboard-settings.ts,
-    // applied by both the Electron store and the web client's localStorage store).
+    // Default OSC52 supports Zellij/tmux/nvim with queries disabled and capped writes; the stamp migrates persisted false once in both Electron and web localStorage stores.
     terminalAllowOsc52Clipboard: true,
     terminalAllowOsc52ClipboardDefaultedOnForAllUsers: true,
     claudeAgentTeamsMode: 'off',
-    setupScriptLaunchMode: 'new-tab',
     terminalScrollbackRows: DESKTOP_TERMINAL_SCROLLBACK_ROWS_DEFAULT,
     httpProxyUrl: '',
     httpProxyBypassRules: '',
+    nodeDistMirrorUrl: '',
     electronHttp1CompatibilityMode: false,
     openLinksInApp: false,
     localhostWorktreeLabelsEnabled: false,
     openLinksInAppPreferencePrompted: false,
     openLinksInAppModifierInverts: false,
+    openLinksInAppInBackground: false,
     terminalLinkActionPopoverEnabled: true,
     terminalLinkClickBehavior: 'actions',
     terminalUrlMiddleClickBehavior: 'open',
     experimentalNativeChat: false,
+    experimentalBrowserExtensions: false,
     nativeChatResumeWorkOnRestart: false,
     nativeChatQueueFollowUps: true,
     nativeChatInlineVisuals: true,
+    nativeChatLinkPreviews: true,
     nativeChatInheritShellEnvironment: true,
     nativeChatShellEnvironmentVariables: [],
     nativeChatSessionOptions: {},
-    // The shipped Claude and Codex arguments carry their bypass flags.
+    // New chats of agents on their own settings; others start in their agent permission.
     nativeChatPermissionMode: 'full-access',
     openInApplications: [...DEFAULT_OPEN_IN_APPLICATIONS],
     rightSidebarOpenByDefault: true,
@@ -168,6 +165,9 @@ export function buildDefaultSettings(args: {
     artifactSharingEnabled: false,
     agentSkillSharingEnabled: false,
     nestedWorkerMaxDepth: 1,
+    orchestrationChatErrorEscalationEnabled: true,
+    orchestrationHeartbeatsEnabled: true,
+    orchestrationHeartbeatIntervalMinutes: 5,
     showArtifactsButton: false,
     showSkillsButton: false,
     showMobileButton: true,
@@ -198,8 +198,7 @@ export function buildDefaultSettings(args: {
     activeClaudeManagedAccountId: null,
     terminalScopeHistoryByWorktree: true,
     terminalHiddenViewParking: true,
-    // C1 kill switches — runtime reads stay `!== false` so older persisted
-    // settings objects (which omit them) keep the default-on behavior.
+    // Default-on kill switches use !== false so older persisted settings retain behavior.
     terminalSshViewParking: true,
     terminalHiddenWorktreeRetentionBudget: true,
     browserGuestWorktreeRetentionBudget: true,
@@ -208,15 +207,16 @@ export function buildDefaultSettings(args: {
     terminalModelQueryAuthority: true,
     defaultTuiAgent: null,
     disabledTuiAgents: [...DEFAULT_DISABLED_TUI_AGENTS],
-    // Wakii fork: bundled plugins (superpowers-launcher + kit self-install) là
-    // phần lõi — bật plugin system mặc định thay vì false như upstream.
     pluginSystemEnabled: true,
+    pluginSystemDefaultedOn: true,
     disabledPlugins: [],
     pluginConsents: {},
     devPluginPaths: [],
     claudeAgentTeamsDefaultDisabledMigrated: true,
+    sshRemoteCliControlExistingHostsMigrated: true,
     skipDeleteWorktreeConfirm: false,
     alwaysForceDeleteWorktrees: false,
+    alwaysForceDeletePreservedBranches: false,
     skipCloseTerminalWithRunningProcessConfirm: false,
     skipDeleteAutomationConfirm: false,
     skipDeleteArtifactConfirm: false,
@@ -235,10 +235,14 @@ export function buildDefaultSettings(args: {
     zcodePlanSite: 'zai',
     geminiCliOAuthEnabled: false,
     agentCmdOverrides: {},
-    agentDefaultArgs: { ...DEFAULT_TUI_AGENT_ARGS },
-    agentDefaultEnv: { ...DEFAULT_TUI_AGENT_ENV },
+    // Arguments hold only the user's own text; the permission flag comes from the choice below.
+    agentDefaultArgs: {},
+    agentDefaultEnv: {},
     agentYoloDefaultsMigrated: true,
+    agentPermissionDefault: 'full-access',
+    agentPermissionOverrides: {},
     agentStatusHooksEnabled: true,
+    claudeSubagentNavigationEnabled: true,
     agentWorkspaceTrustEnabled: true,
     codexTerminalServerIsolation: true,
     codexSharedServerWarning: true,
@@ -270,6 +274,8 @@ export function buildDefaultSettings(args: {
     agentHibernationIdleMs: 30 * 60 * 1000,
     experimentalNewWorktreeCardStyle: false,
     experimentalEphemeralVms: false,
+    experimentalConnectors: false,
+    experimentalWslHosts: false,
     compactWorktreeCards: false,
     // Why: local desktop stays the default until the user picks a saved runtime environment.
     activeRuntimeEnvironmentId: null,

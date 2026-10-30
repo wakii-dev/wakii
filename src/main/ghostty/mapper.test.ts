@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { mapGhosttyToOrca } from './mapper'
 
-describe('mapGhosttyToWakii — font & cursor', () => {
+describe('mapGhosttyToOrca — font & cursor', () => {
   it('maps supported keys to GlobalSettings', () => {
     const result = mapGhosttyToOrca({
       'font-family': 'JetBrains Mono',
@@ -101,7 +101,7 @@ describe('mapGhosttyToWakii — font & cursor', () => {
   })
 })
 
-describe('mapGhosttyToWakii — macos-option-as-alt', () => {
+describe('mapGhosttyToOrca — macos-option-as-alt', () => {
   it('maps on to true', () => {
     const result = mapGhosttyToOrca({ 'macos-option-as-alt': 'on' }, true)
     expect(result.diff).toEqual({ terminalMacOptionAsAlt: 'true' })
@@ -145,7 +145,7 @@ describe('mapGhosttyToWakii — macos-option-as-alt', () => {
   })
 })
 
-describe('mapGhosttyToWakii — background & colors', () => {
+describe('mapGhosttyToOrca — background & colors', () => {
   it('maps background-opacity to terminalBackgroundOpacity', () => {
     const result = mapGhosttyToOrca({ 'background-opacity': '0.72' })
     expect(result.diff).toEqual({ terminalBackgroundOpacity: 0.72 })
@@ -171,8 +171,6 @@ describe('mapGhosttyToWakii — background & colors', () => {
   })
 
   it('maps background-blur-radius = 0 to windowBackgroundBlur false without a drop note', () => {
-    // Why: 0 means blur is off — there is no radius value being lost, so the
-    // "radius not preserved" note would be misleading here.
     const result = mapGhosttyToOrca({ 'background-blur-radius': '0' })
     expect(result.diff).toEqual({ windowBackgroundBlur: false })
     expect(result.unsupportedKeys).toEqual([])
@@ -251,7 +249,7 @@ describe('mapGhosttyToWakii — background & colors', () => {
   })
 })
 
-describe('mapGhosttyToWakii — palette', () => {
+describe('mapGhosttyToOrca — palette', () => {
   it('maps palette array to terminalColorOverrides ANSI fields', () => {
     const result = mapGhosttyToOrca({
       palette: ['0=#000000', '1=#ff0000', '3=#ffaa00', '15=#ffffff']
@@ -280,10 +278,8 @@ describe('mapGhosttyToWakii — palette', () => {
   })
 })
 
-describe('mapGhosttyToWakii — window & padding', () => {
-  // Why: window-padding-color and window-padding-balance are not imported —
-  // the CSS vars Orca sets for them have no consuming rules today, so the
-  // mapper must treat the keys as unsupported rather than silently dropping.
+describe('mapGhosttyToOrca — window & padding', () => {
+  // These window-padding variables have no consuming CSS rules, so importing them would be a silent no-op.
   it('marks window-padding-color as unsupported', () => {
     const result = mapGhosttyToOrca({ 'window-padding-color': '#202020' })
     expect(result.diff).toEqual({})
@@ -297,7 +293,7 @@ describe('mapGhosttyToWakii — window & padding', () => {
   })
 })
 
-describe('mapGhosttyToWakii — unsupported keys', () => {
+describe('mapGhosttyToOrca — unsupported keys', () => {
   it('marks unknown keys as unsupported', () => {
     const result = mapGhosttyToOrca({ 'unknown-key': 'value' })
     expect(result.diff).toEqual({})

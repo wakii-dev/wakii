@@ -1,3 +1,4 @@
+import '../rpc/unused-default-rpc-methods.test-fixture'
 import { pairedRuntimeConnectionFromOffer } from '../../../shared/paired-runtime-connection'
 import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -20,44 +21,57 @@ import {
   DelegatedMobileDeviceSyncParamsSchema
 } from '../../../shared/delegated-mobile-device-contract'
 import { decodeTerminalStreamFrame } from '../../../shared/terminal-stream-protocol'
-import { sendRemoteRuntimeRequest } from '../../../shared/remote-runtime-client'
+import { sendRemoteRuntimeRequest } from '../../../shared/remote-runtime/remote-runtime-client'
+import { mintBrowserScreencastSubscriptionId } from '../browser-screencast-subscription-id'
 import { OrcaRuntimeService } from '../orca-runtime'
+import { setRuntimeBrowserCommandsFactory } from '../runtime-browser-commands-factory'
 import { readRuntimeMetadata } from '../runtime-metadata'
 import { OrcaRuntimeRpcServer } from '../runtime-rpc'
+import { STATUS_METHODS } from '../rpc/methods/status'
+import { TERMINAL_METHODS } from '../rpc/methods/terminal'
+import { BROWSER_CORE_METHODS } from '../rpc/methods/browser-core'
+import { BROWSER_SCREENCAST_METHODS } from '../rpc/methods/browser-screencast'
+import { SSH_METHODS } from '../rpc/methods/ssh'
+import { RUNTIME_CLIENT_CAPABILITY_METHODS } from '../rpc/methods/runtime-client-capabilities'
+import { CLIENT_UI_METHODS } from '../rpc/methods/client-ui'
+import { PAIRING_METHODS } from '../rpc/methods/pairing'
 import { sendRequest } from '../runtime-rpc-test-harness'
 import { makeStore } from '../runtime-rpc-worktree-store-fixtures'
 import type { MobileDesktopRelayHosts } from './mobile-desktop-relay-hosts'
-import type * as PassthroughSocketModule from '../../../shared/remote-runtime-passthrough-socket'
+import type * as PassthroughSocketModule from '../../../shared/remote-runtime/remote-runtime-passthrough-socket'
 
 const passthroughOpens = vi.hoisted(() => {
   const hostReplies: string[] = []
   return { count: 0, hostReplies }
 })
-vi.mock('../../../shared/remote-runtime-passthrough-socket', async (importOriginal) => {
-  const original = await importOriginal<typeof PassthroughSocketModule>()
-  return {
-    ...original,
-    openRemoteRuntimePassthroughSocket: (
-      ...[pairing, capabilities, callbacks, options]: Parameters<
-        typeof original.openRemoteRuntimePassthroughSocket
-      >
-    ) => {
-      passthroughOpens.count += 1
-      return original.openRemoteRuntimePassthroughSocket(
-        pairing,
-        capabilities,
-        {
-          ...callbacks,
-          onText: (plaintext) => {
-            passthroughOpens.hostReplies.push(plaintext)
-            callbacks.onText(plaintext)
-          }
-        },
-        options
-      )
+vi.mock(
+  '../../../shared/remote-runtime/remote-runtime-passthrough-socket',
+  async (importOriginal) => {
+    const original = await importOriginal<typeof PassthroughSocketModule>()
+    return {
+      ...original,
+      openRemoteRuntimePassthroughSocket: (
+        ...[pairing, capabilities, callbacks, options]: Parameters<
+          typeof original.openRemoteRuntimePassthroughSocket
+        >
+      ) => {
+        passthroughOpens.count += 1
+        return original.openRemoteRuntimePassthroughSocket(
+          pairing,
+          capabilities,
+          {
+            ...callbacks,
+            onText: (plaintext) => {
+              passthroughOpens.hostReplies.push(plaintext)
+              callbacks.onText(plaintext)
+            }
+          },
+          options
+        )
+      }
     }
   }
-})
+)
 
 vi.mock('../../git/worktree', () => {
   const worktrees = [
@@ -75,7 +89,6 @@ vi.mock('../../git/worktree', () => {
   }
 })
 
-/** Exposes the per-terminal phone seats the runtime keeps behind a protected map. */
 class SeatObservableRuntime extends OrcaRuntimeService {
   seatClientIds(ptyId: string): string[] {
     return [...(this.mobileSubscribers.get(ptyId)?.keys() ?? [])]
@@ -116,6 +129,16 @@ describe('mobile desktop relay: phone -> desktop -> server', () => {
     const server = new OrcaRuntimeRpcServer({
       runtime,
       userDataPath,
+      methods: [
+        ...STATUS_METHODS,
+        ...TERMINAL_METHODS,
+        ...BROWSER_CORE_METHODS,
+        ...BROWSER_SCREENCAST_METHODS,
+        ...SSH_METHODS,
+        ...RUNTIME_CLIENT_CAPABILITY_METHODS,
+        ...CLIENT_UI_METHODS,
+        ...PAIRING_METHODS
+      ],
       enableWebSocket: true,
       wsPort: 0
     })
@@ -136,7 +159,6 @@ describe('mobile desktop relay: phone -> desktop -> server', () => {
     return parsePairingCode(offer.pairingUrl)!
   }
 
-  /** A server, and a desktop whose only configured server is it, as `env-1`. */
   async function startTopology() {
     const host = await startRuntime()
     const desktopSpawns: string[] = []
@@ -148,6 +170,7 @@ describe('mobile desktop relay: phone -> desktop -> server', () => {
     const retirementListeners = new Set<(environmentId: string) => void>()
     const state = {
       capable: true,
+      hostedPages: new Set<string>(),
       retire: (environmentId: string) =>
         retirementListeners.forEach((listener) => listener(environmentId))
     }
@@ -173,7 +196,6 @@ describe('mobile desktop relay: phone -> desktop -> server', () => {
           params,
           5_000
         )
-        // An older server: the same status without the delegated-devices capability.
         return method === 'status.get' && !state.capable && response.ok
           ? {
               ...response,
@@ -181,10 +203,14 @@ describe('mobile desktop relay: phone -> desktop -> server', () => {
             }
           : response
       },
+      hostsBrowserPage: (environmentId, browserPageId) =>
+        environmentId === 'env-1' && state.hostedPages.has(browserPageId),
       onEnvironmentRetired: (listener) => {
         retirementListeners.add(listener)
         return () => retirementListeners.delete(listener)
-      }
+      },
+      onStatusChanged: () => () => {},
+      watchChanges: () => ({ close: () => {}, current: () => true })
     }
     desktop.server.setMobileDesktopRelayHosts(hosts)
     const metadata = readRuntimeMetadata(host.userDataPath)!
@@ -301,7 +327,7 @@ describe('mobile desktop relay: phone -> desktop -> server', () => {
 
   it('relays a terminal subscribe, its binary stream, input and a query reply as the phone delegated device', async () => {
     const { host, desktop, children, syncedNames, handle } = await startTopology()
-    // A phone another desktop relays to this one is that desktop's to relay, never re-relayed.
+    // Never re-relay a phone another desktop relayed here.
     const registry = desktop.server.getDeviceRegistry()!
     const otherDesktop = registry.getDevice(
       pair(desktop.server, 'runtime', 'Other Mac').pairedDeviceId!
@@ -312,7 +338,6 @@ describe('mobile desktop relay: phone -> desktop -> server', () => {
     const phone = await connectPhone(desktop.server, 'iPhone')
 
     const streamId = await subscribe(phone, handle)
-    // Host and desktop share a process counter here, so compare against the id the host sent.
     const hostStreamId = z
       .object({
         id: z.literal('sub'),
@@ -324,7 +349,6 @@ describe('mobile desktop relay: phone -> desktop -> server', () => {
           .find((frame) => frame.id === 'sub' && frame.result?.type === 'subscribed')
       ).result.streamId
     expect(streamId).not.toBe(hostStreamId)
-    // The snapshot arrives as binary frames under the id the phone was given, never the host's.
     await vi.waitFor(() =>
       expect(
         phone.binaries.some((bytes) => decodeTerminalStreamFrame(bytes)?.streamId === streamId)
@@ -335,7 +359,7 @@ describe('mobile desktop relay: phone -> desktop -> server', () => {
     ).toBe(false)
     expect(syncedNames).toEqual([[`iPhone via ${desktop.runtime.readMachineName()}`]])
     const delegated = children()[0]!
-    // The host seats the phone's delegated device, never the desktop's token for it.
+    // Seat the delegated phone, never the desktop token.
     expect(host.runtime.seatClientIds('pty-shared')).toEqual([delegated.token])
 
     phone.send('in', 'terminal.send', {
@@ -345,7 +369,7 @@ describe('mobile desktop relay: phone -> desktop -> server', () => {
     })
     expect(isOk(await phone.next('in'))).toBe(true)
     expect(host.writes).toContain('ls')
-    // terminal.send cross-checks client.id against the socket's device: only a swapped token passes.
+    // terminal.send cross-checks client.id against socket identity; only the delegated token passes.
     phone.send('query', 'terminal.send', {
       terminal: handle,
       text: '\x1b[0n',
@@ -387,11 +411,11 @@ describe('mobile desktop relay: phone -> desktop -> server', () => {
       ok: true,
       result: { clientCapabilities: ['relay.test.v1'] }
     })
-    // The server applied it to the relayed phone's socket; its answer stays with the relay.
     await vi.waitFor(() =>
       expect(
         passthroughOpens.hostReplies.some((frame) =>
-          frame.includes('"clientCapabilities":["relay.test.v1"]')
+          // Client-placed tabs require the declared capability.
+          frame.includes('"clientCapabilities":["relay.test.v1","browser.clientHost.v1"]')
         )
       ).toBe(true)
     )
@@ -422,7 +446,6 @@ describe('mobile desktop relay: phone -> desktop -> server', () => {
     const revoked = children()[0]!
 
     await host.server.revokeMobileDevice(revoked.deviceId)
-    // The open stream ends as unavailable, never as an unpaired phone.
     expect(errorCode(await phone.next('sub', (frame) => frame.ok === false))).toBe(
       'remote_runtime_unavailable'
     )
@@ -431,7 +454,6 @@ describe('mobile desktop relay: phone -> desktop -> server', () => {
     expect(errorCode(await phone.next('after-1'))).toBe('remote_runtime_unavailable')
     phone.send('after-2', 'terminal.list', {})
     expect(errorCode(await phone.next('after-2'))).toBe('remote_runtime_unavailable')
-    // One refused attempt, then no retries of the dead token.
     expect(passthroughOpens.count - opensBefore).toBe(1)
 
     state.retire('env-1')
@@ -444,19 +466,129 @@ describe('mobile desktop relay: phone -> desktop -> server', () => {
     const phone = await connectPhone(desktop.server, 'iPhone')
     const opensBefore = passthroughOpens.count
 
-    for (const method of ['settings.get', 'status.get']) {
-      phone.send(`${method}:targeted`, method, {})
-      phone.send(`${method}:untargeted`, method, {}, null)
-      const targeted = await phone.next(`${method}:targeted`)
-      const untargeted = await phone.next(`${method}:untargeted`)
-      expect(isOk(targeted)).toBe(true)
-      expect(targeted.result).toEqual(untargeted.result)
-    }
+    phone.send('settings:targeted', 'settings.get', {})
+    phone.send('settings:untargeted', 'settings.get', {}, null)
+    const targeted = await phone.next('settings:targeted')
+    expect(isOk(targeted)).toBe(true)
+    expect(targeted.result).toEqual((await phone.next('settings:untargeted')).result)
     expect(passthroughOpens.count).toBe(opensBefore)
-    // An execution-host method under the same target still relays.
     phone.send('list', 'terminal.list', {})
     expect(isOk(await phone.next('list'))).toBe(true)
     expect(passthroughOpens.count).toBe(opensBefore + 1)
+  })
+
+  it('serves a browser call on the desktop when the desktop renders that server page itself', async () => {
+    const { host, desktop, state } = await startTopology()
+    state.hostedPages.add('hosted-page')
+    const phone = await connectPhone(desktop.server, 'iPhone')
+    const desktopGoto = vi.spyOn(desktop.runtime, 'browserGoto').mockResolvedValue({
+      url: 'http://example.test/',
+      title: 'Example'
+    })
+    const hostGoto = vi.spyOn(host.runtime, 'browserGoto').mockResolvedValue({
+      url: 'http://example.test/',
+      title: 'Example'
+    })
+
+    phone.send('hosted', 'browser.goto', {
+      worktree: WORKTREE,
+      page: 'hosted-page',
+      url: 'http://example.test/'
+    })
+    expect(isOk(await phone.next('hosted'))).toBe(true)
+    expect(desktopGoto).toHaveBeenCalledWith({ page: 'hosted-page', url: 'http://example.test/' })
+    expect(hostGoto).not.toHaveBeenCalled()
+
+    phone.send('server', 'browser.goto', {
+      worktree: WORKTREE,
+      page: 'server-page',
+      url: 'http://example.test/'
+    })
+    expect(isOk(await phone.next('server'))).toBe(true)
+    expect(hostGoto).toHaveBeenCalledWith(expect.objectContaining({ page: 'server-page' }))
+    expect(desktopGoto).toHaveBeenCalledTimes(1)
+  })
+
+  it('streams a desktop-hosted page and releases it through the subscription id, never on the server', async () => {
+    const { host, desktop, state } = await startTopology()
+    state.hostedPages.add('hosted-page')
+    const phone = await connectPhone(desktop.server, 'iPhone')
+    const subscriptionId = mintBrowserScreencastSubscriptionId('hosted-page', 'nonce')
+    let release = (): void => {}
+    const released = new Promise<void>((resolve) => (release = resolve))
+    const desktopScreencast = vi
+      .spyOn(desktop.runtime, 'browserScreencast')
+      .mockImplementation(async (_params, stream) => {
+        stream.emit?.({
+          type: 'ready',
+          subscriptionId,
+          browserPageId: 'hosted-page',
+          format: 'jpeg',
+          tab: {
+            browserPageId: 'hosted-page',
+            index: 0,
+            url: 'http://a.test/',
+            title: 'A',
+            active: true
+          }
+        })
+        await released
+      })
+    const desktopCleanup = vi
+      .spyOn(desktop.runtime, 'cleanupSubscription')
+      .mockImplementation(() => release())
+    const hostScreencast = vi.spyOn(host.runtime, 'browserScreencast')
+    const hostCleanup = vi.spyOn(host.runtime, 'cleanupSubscription')
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: unsubscribe only checks a provider exists; the spies replace every command it would reach.
+    setRuntimeBrowserCommandsFactory(() => ({}) as never)
+    cleanups.push(() => setRuntimeBrowserCommandsFactory(null))
+
+    phone.send('cast', 'browser.screencast', {
+      worktree: WORKTREE,
+      page: 'hosted-page',
+      format: 'jpeg'
+    })
+    expect(
+      await phone.next('cast', (frame) => JSON.stringify(frame).includes(subscriptionId))
+    ).toMatchObject({ ok: true, result: { type: 'ready', subscriptionId } })
+    expect(desktopScreencast).toHaveBeenCalledWith(
+      { page: 'hosted-page', format: 'jpeg' },
+      expect.anything()
+    )
+
+    phone.send('uncast', 'browser.screencast.unsubscribe', { subscriptionId })
+    expect(await phone.next('uncast')).toMatchObject({ ok: true, result: { unsubscribed: true } })
+    expect(desktopCleanup).toHaveBeenCalledWith(subscriptionId)
+    expect(hostScreencast).not.toHaveBeenCalled()
+    expect(hostCleanup).not.toHaveBeenCalledWith(subscriptionId)
+  })
+
+  it('answers a targeted status from the server, so a server workspace gates on its own features', async () => {
+    const { host, desktop } = await startTopology()
+    const phone = await connectPhone(desktop.server, 'iPhone')
+    const StatusSchema = z.looseObject({ runtimeId: z.string(), capabilities: z.array(z.string()) })
+
+    phone.send('status:server', 'status.get', {})
+    phone.send('status:desktop', 'status.get', {}, null)
+    const server = StatusSchema.parse((await phone.next('status:server')).result)
+    const own = StatusSchema.parse((await phone.next('status:desktop')).result)
+    expect(server.runtimeId).toBe(host.runtime.getRuntimeId())
+    expect(own.runtimeId).toBe(desktop.runtime.getRuntimeId())
+    expect(server.capabilities).toEqual(host.runtime.getStatus().capabilities)
+  })
+
+  it("answers a targeted SSH state from the server, which holds a server workspace's SSH targets", async () => {
+    const { desktop } = await startTopology()
+    const phone = await connectPhone(desktop.server, 'iPhone')
+    const answeredByServer = (id: string) =>
+      passthroughOpens.hostReplies.some((frame) => JSON.parse(frame).id === id)
+
+    phone.send('ssh:server', 'ssh.getState', { targetId: 'devbox' })
+    phone.send('ssh:desktop', 'ssh.getState', { targetId: 'devbox' }, null)
+    expect(isOk(await phone.next('ssh:server'))).toBe(true)
+    expect(isOk(await phone.next('ssh:desktop'))).toBe(true)
+    expect(answeredByServer('ssh:server')).toBe(true)
+    expect(answeredByServer('ssh:desktop')).toBe(false)
   })
 
   it('refuses binary-frame methods and unknown servers without running anything on the desktop', async () => {
@@ -476,7 +608,6 @@ describe('mobile desktop relay: phone -> desktop -> server', () => {
     phone.send('garbled', 'terminal.create', create, 'runtime:')
     expect(errorCode(await phone.next('garbled'))).toBe('invalid_argument')
     expect(desktopSpawns).toEqual([])
-    // No target, `local` and the desktop's own SSH hosts are today's local call.
     const opensBefore = passthroughOpens.count
     phone.send('absent', 'terminal.list', {}, null)
     phone.send('local', 'terminal.list', {}, 'local')

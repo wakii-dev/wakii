@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { mapGhosttyToOrca } from './mapper'
 
-describe('mapGhosttyToWakii — split-divider-color', () => {
+describe('mapGhosttyToOrca — split-divider-color', () => {
   it('maps valid hex to both dark and light divider colors', () => {
     const result = mapGhosttyToOrca({ 'split-divider-color': '#ff5500' })
     expect(result.diff).toEqual({
@@ -27,7 +27,7 @@ describe('mapGhosttyToWakii — split-divider-color', () => {
   })
 })
 
-describe('mapGhosttyToWakii — unfocused-split-opacity', () => {
+describe('mapGhosttyToOrca — unfocused-split-opacity', () => {
   it('maps valid float to terminalInactivePaneOpacity', () => {
     const result = mapGhosttyToOrca({ 'unfocused-split-opacity': '0.5' })
     expect(result.diff).toEqual({ terminalInactivePaneOpacity: 0.5 })
@@ -47,11 +47,8 @@ describe('mapGhosttyToWakii — unfocused-split-opacity', () => {
   })
 })
 
-describe('mapGhosttyToWakii — scrollback-limit', () => {
-  // Why: Ghostty's scrollback-limit is a byte budget (where 0 means unlimited),
-  // while xterm's scrollback is a row count (where 0 means disabled). The
-  // units and sentinel values don't line up, so we treat the key as
-  // unsupported rather than silently mis-applying it by orders of magnitude.
+describe('mapGhosttyToOrca — scrollback-limit', () => {
+  // Ghostty budgets bytes (0 unlimited); xterm counts rows (0 disabled), so values cannot map safely.
   it('marks scrollback-limit as unsupported', () => {
     const result = mapGhosttyToOrca({ 'scrollback-limit': '50000' })
     expect(result.diff).toEqual({})
@@ -59,7 +56,7 @@ describe('mapGhosttyToWakii — scrollback-limit', () => {
   })
 })
 
-describe('mapGhosttyToWakii — window-padding', () => {
+describe('mapGhosttyToOrca — window-padding', () => {
   it('maps window-padding-x to terminalPaddingX', () => {
     const result = mapGhosttyToOrca({ 'window-padding-x': '8' })
     expect(result.diff).toEqual({ terminalPaddingX: 8 })
@@ -115,7 +112,7 @@ describe('mapGhosttyToWakii — window-padding', () => {
   })
 })
 
-describe('mapGhosttyToWakii — adjust-cell-height', () => {
+describe('mapGhosttyToOrca — adjust-cell-height', () => {
   it('maps a percentage to terminalLineHeight', () => {
     const result = mapGhosttyToOrca({ 'adjust-cell-height': '35%' })
     expect(result.diff).toEqual({ terminalLineHeight: 1.35 })
@@ -183,7 +180,7 @@ describe('mapGhosttyToWakii — adjust-cell-height', () => {
   })
 })
 
-describe('mapGhosttyToWakii — cursor-text', () => {
+describe('mapGhosttyToOrca — cursor-text', () => {
   it('maps valid hex to terminalColorOverrides.cursorAccent', () => {
     const result = mapGhosttyToOrca({ 'cursor-text': '#ffffff' })
     expect(result.diff).toEqual({
@@ -199,9 +196,7 @@ describe('mapGhosttyToWakii — cursor-text', () => {
   })
 })
 
-describe('mapGhosttyToWakii — bold-color', () => {
-  // Why: xterm.js ITheme has no bold color slot (xtermjs/xterm.js#6032), so bold-color can never
-  // render; the importer must list it as unsupported rather than claim it was applied (#8595).
+describe('mapGhosttyToOrca — bold-color', () => {
   it('reports valid bold-color as unsupported and does not apply it', () => {
     const result = mapGhosttyToOrca({ 'bold-color': '#ff0000' })
     expect(result.diff).toEqual({})
@@ -215,7 +210,7 @@ describe('mapGhosttyToWakii — bold-color', () => {
   })
 })
 
-describe('mapGhosttyToWakii — mouse-hide-while-typing', () => {
+describe('mapGhosttyToOrca — mouse-hide-while-typing', () => {
   it('maps true to terminalMouseHideWhileTyping', () => {
     const result = mapGhosttyToOrca({ 'mouse-hide-while-typing': 'true' })
     expect(result.diff).toEqual({ terminalMouseHideWhileTyping: true })
@@ -235,7 +230,7 @@ describe('mapGhosttyToWakii — mouse-hide-while-typing', () => {
   })
 })
 
-describe('mapGhosttyToWakii — selection-word-chars', () => {
+describe('mapGhosttyToOrca — selection-word-chars', () => {
   it('treats selection-word-chars as unsupported due to semantic inversion', () => {
     const result = mapGhosttyToOrca({ 'selection-word-chars': ':/?#@' })
     expect(result.diff).toEqual({})
@@ -243,7 +238,7 @@ describe('mapGhosttyToWakii — selection-word-chars', () => {
   })
 })
 
-describe('mapGhosttyToWakii — cursor-opacity', () => {
+describe('mapGhosttyToOrca — cursor-opacity', () => {
   it('maps valid float to terminalCursorOpacity', () => {
     const result = mapGhosttyToOrca({ 'cursor-opacity': '0.75' })
     expect(result.diff).toEqual({ terminalCursorOpacity: 0.75 })
@@ -263,7 +258,7 @@ describe('mapGhosttyToWakii — cursor-opacity', () => {
   })
 })
 
-describe('mapGhosttyToWakii — empty values', () => {
+describe('mapGhosttyToOrca — empty values', () => {
   it('rejects empty background-opacity', () => {
     const result = mapGhosttyToOrca({ 'background-opacity': '' })
     expect(result.diff).toEqual({})
@@ -283,7 +278,7 @@ describe('mapGhosttyToWakii — empty values', () => {
   })
 })
 
-describe('mapGhosttyToWakii — negative padding', () => {
+describe('mapGhosttyToOrca — negative padding', () => {
   it('rejects negative window-padding-x', () => {
     const result = mapGhosttyToOrca({ 'window-padding-x': '-4' })
     expect(result.diff).toEqual({})

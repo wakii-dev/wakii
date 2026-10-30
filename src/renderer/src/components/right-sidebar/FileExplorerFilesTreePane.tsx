@@ -18,6 +18,7 @@ import type { FileExplorerRowProjection } from './file-explorer-row-projection'
 import type { useFileExplorerSelection } from './useFileExplorerSelection'
 import type { useFileExplorerTree } from './useFileExplorerTree'
 import type { useFileExplorerTreePaneState } from './use-file-explorer-tree-pane-state'
+import type { WslHostUnavailableReason } from '../terminal-pane/use-wsl-host-unavailable-reason'
 
 export type FileExplorerOpenEditorsSlot = {
   entries: OpenEditorsEntry[]
@@ -49,6 +50,8 @@ type FileExplorerFilesTreePaneProps = {
   openEditors: FileExplorerOpenEditorsSlot
   handleExplorerBackgroundContextMenuCapture: (event: React.MouseEvent<HTMLDivElement>) => void
   handleExplorerBackgroundDoubleClick: (event: React.MouseEvent<HTMLDivElement>) => void
+  // Upstream prop: retry cannot succeed while WSL hosts are off; the error banner stays hidden then.
+  wslHostUnavailable?: WslHostUnavailableReason | null
 }
 
 /** Presentational tree pane: every effect it renders from lives in useFileExplorerTreePaneState. */
@@ -73,7 +76,8 @@ export function FileExplorerFilesTreePane({
   isFilesViewActive,
   openEditors,
   handleExplorerBackgroundContextMenuCapture,
-  handleExplorerBackgroundDoubleClick
+  handleExplorerBackgroundDoubleClick,
+  wslHostUnavailable = null
 }: FileExplorerFilesTreePaneProps): React.JSX.Element {
   const { loadingDirPaths, rootError } = tree
   const rootCache = displayRootPath ? tree.dirCache[displayRootPath] : undefined
@@ -187,7 +191,11 @@ export function FileExplorerFilesTreePane({
           onDoubleClick: handleExplorerBackgroundDoubleClick
         }}
       >
-        {treeError !== null && !isLoading && !hasNameFilter && displayRootPath && (
+        {treeError !== null &&
+          !isLoading &&
+          !hasNameFilter &&
+          displayRootPath &&
+          wslHostUnavailable !== 'turned-off' && (
           <div className="px-2 py-1 text-xs text-muted-foreground" role="status">
             {showTree && <p>{treeError}</p>}
             <Button variant="ghost" size="xs" onClick={() => void tree.refreshDir(displayRootPath)}>

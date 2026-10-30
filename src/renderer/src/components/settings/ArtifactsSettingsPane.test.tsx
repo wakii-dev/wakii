@@ -50,7 +50,7 @@ describe('ArtifactsSettingsPane', () => {
 
   afterEach(cleanup)
 
-  it('explains the complete sharing workflow', () => {
+  it('hides sign-in for a connected profile', () => {
     render(
       <ArtifactsSettingsPane
         settings={{ ...getDefaultSettings('/tmp'), showArtifactsButton: true }}
@@ -58,26 +58,7 @@ describe('ArtifactsSettingsPane', () => {
       />
     )
 
-    expect(screen.getByText('How to use Artifacts')).toBeInTheDocument()
-    expect(screen.getByText('Choose a file to share')).toBeInTheDocument()
-    expect(
-      screen.getByText(
-        'Open an HTML or Markdown file and select Share as artifact, or ask an agent to share it.'
-      )
-    ).toBeInTheDocument()
-    expect(screen.getByText('Copy the public link')).toBeInTheDocument()
-    expect(
-      screen.getByText('After publishing, copy the link and send it to your team.')
-    ).toBeInTheDocument()
-    expect(screen.getByText('Manage it in Wakii')).toBeInTheDocument()
-    expect(
-      screen.getByText('Preview, copy, and manage links shared through your account.')
-    ).toBeInTheDocument()
-    expect(
-      screen.queryByText('Uploads require sign-in; public links do not.')
-    ).not.toBeInTheDocument()
-    expect(screen.queryByText('Wakii account')).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Sign in to Wakii' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Sign in to Orca' })).not.toBeInTheDocument()
   })
 
   it('offers sign in for a local profile', async () => {
@@ -86,7 +67,7 @@ describe('ArtifactsSettingsPane', () => {
     render(<ArtifactsSettingsPane settings={getDefaultSettings('/tmp')} updateSettings={vi.fn()} />)
 
     expect(screen.getByText('Sign in to share artifacts')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Sign in to Wakii' }))
+    await user.click(screen.getByRole('button', { name: 'Sign in to Orca' }))
     expect(mocks.connect).toHaveBeenCalledOnce()
   })
 
@@ -102,7 +83,7 @@ describe('ArtifactsSettingsPane', () => {
     render(<ArtifactsSettingsPane settings={getDefaultSettings('/tmp')} updateSettings={vi.fn()} />)
 
     expect(mocks.fetchAuthStatus).toHaveBeenCalledOnce()
-    expect(screen.getByRole('button', { name: 'Sign in to Wakii' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Sign in to Orca' })).toBeDisabled()
   })
 
   it('controls only sidebar visibility and always allows opening Artifacts', async () => {
@@ -127,17 +108,6 @@ describe('ArtifactsSettingsPane', () => {
     expect(openButton).toBeEnabled()
     await user.click(openButton)
     expect(mocks.openArtifactsPage).toHaveBeenCalledOnce()
-  })
-
-  it('describes public publishing and existing-link retention', () => {
-    render(<ArtifactsSettingsPane settings={getDefaultSettings('/tmp')} updateSettings={vi.fn()} />)
-
-    expect(
-      screen.getByRole('switch', { name: 'Allow publishing public artifact links' })
-    ).toHaveAttribute('aria-checked', 'false')
-    expect(screen.getByText(/Publish HTML and Markdown files as links/)).toBeInTheDocument()
-    expect(screen.getByText(/Existing links remain until you delete them/)).toBeInTheDocument()
-    expect(screen.queryByText(/Off by default/)).not.toBeInTheDocument()
   })
 
   it('grants and revokes the publish capability through the toggle', async () => {
@@ -165,7 +135,7 @@ describe('ArtifactsSettingsPane', () => {
     expect(updateSettings).toHaveBeenLastCalledWith({ artifactSharingEnabled: false })
   })
 
-  it('makes the capability read-only on web, where the grant never reaches the host', async () => {
+  it('disables the publish toggle on web without updating settings', async () => {
     const user = userEvent.setup()
     const updateSettings = vi.fn()
     mocks.state.isWebClient = true
@@ -190,6 +160,9 @@ describe('ArtifactsSettingsPane', () => {
       <ArtifactsSettingsPane settings={getDefaultSettings('/tmp')} updateSettings={vi.fn()} />
     )
 
+    expect(
+      screen.getByRole('switch', { name: 'Allow publishing public artifact links' })
+    ).toHaveAttribute('aria-checked', 'false')
     expect(screen.getByText('Enable artifact sharing')).toBeInTheDocument()
     expect(
       screen.getByText('Turn on “Allow publishing public artifact links” above.')

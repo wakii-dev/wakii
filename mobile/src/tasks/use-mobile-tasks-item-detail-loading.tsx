@@ -1,22 +1,20 @@
 import type { ProviderCheckSummary } from '../../../src/shared/github/pull-request-types'
 import type { GitLabWorkItem } from './mobile-tasks-provider-detail-types'
 import type { ItemDetailMetadataEffectsModel } from './use-mobile-tasks-item-detail-metadata-effects'
+import { fetchJiraIssueDetail } from './mobile-jira-task-source'
+import { createJiraTask } from './mobile-tasks-item-mapping'
 import {
   type HostedReviewDecision,
   buildGitLabCheckSummary,
   useEffect
 } from './mobile-tasks-dependencies'
+import { type TaskItem, createLinearTask } from './mobile-tasks-legacy-foundation'
 import {
-  type DetailComment,
-  type GitHubAssignableUser,
-  type GitHubDetailCheck,
-  type GitHubDetailFile,
-  type GitHubPRReviewSummary,
-  type LinearIssue,
-  type TaskItem,
-  createLinearTask,
-  isSuccess
-} from './mobile-tasks-legacy-foundation'
+  githubItemDetailRead,
+  gitlabItemDetailRead,
+  linearIssueCommentsRead,
+  linearIssueRead
+} from './mobile-task-item-detail-operations'
 
 type GitLabHydratedStatus = Pick<GitLabWorkItem, 'mergeable' | 'reviewDecision' | 'reviewerCount'>
 
@@ -81,8 +79,8 @@ export function useMobileTasksItemDetailLoading<Model extends ItemDetailLoadingI
 
     const loadDetails = async (): Promise<void> => {
       if (actionItem.provider === 'github') {
-        const response = await client.sendRequest(
-          'github.workItemDetails',
+        const reply = await githubItemDetailRead.request(
+          client,
           {
             repo: `id:${actionItem.source.repoId}`,
             number: actionItem.source.number,
@@ -90,33 +88,7 @@ export function useMobileTasksItemDetailLoading<Model extends ItemDetailLoadingI
           },
           { timeoutMs: 30_000 }
         )
-        if (!isSuccess(response)) {
-          throw new Error(response.error.message)
-        }
-        const details = response.result as {
-          body?: string
-          comments?: DetailComment[]
-          item?: {
-            labels?: string[]
-            reviewDecision?: string | null
-            reviewRequests?: GitHubAssignableUser[]
-            latestReviews?: GitHubPRReviewSummary[]
-          }
-          assignees?: string[]
-          headSha?: string
-          baseSha?: string
-          pullRequestId?: string
-          checks?: GitHubDetailCheck[]
-          files?: Array<{
-            path: string
-            oldPath?: string
-            status?: GitHubDetailFile['status']
-            additions?: number
-            deletions?: number
-            isBinary?: boolean
-            viewerViewedState?: 'DISMISSED' | 'VIEWED' | 'UNVIEWED'
-          }>
-        } | null
+        const details = githubItemDetailRead.interpret(reply)
         if (!details) {
           throw new Error('Details not found')
         }
@@ -141,8 +113,8 @@ export function useMobileTasksItemDetailLoading<Model extends ItemDetailLoadingI
       }
 
       if (actionItem.provider === 'gitlab') {
-        const response = await client.sendRequest(
-          'gitlab.workItemDetails',
+        const reply = await gitlabItemDetailRead.request(
+          client,
           {
             repo: `id:${actionItem.source.repoId}`,
             iid: actionItem.source.number,
@@ -151,25 +123,7 @@ export function useMobileTasksItemDetailLoading<Model extends ItemDetailLoadingI
           },
           { timeoutMs: 30_000 }
         )
-        if (!isSuccess(response)) {
-          throw new Error(response.error.message)
-        }
-        const details = response.result as {
-          body?: string
-          comments?: DetailComment[]
-          item?: { labels?: string[]; mergeable?: 'MERGEABLE' | 'CONFLICTING' | 'UNKNOWN' }
-          assignees?: string[]
-          pipelineJobs?: Array<{
-            id?: number
-            name: string
-            stage: string
-            status: string
-            webUrl?: string | null
-            duration?: number | null
-          }>
-          reviewers?: unknown[]
-          approvalState?: { approvalsRequired: number | null; approvalsLeft: number | null }
-        } | null
+        const details = gitlabItemDetailRead.interpret(reply)
         if (!details) {
           throw new Error('Details not found')
         }
@@ -230,17 +184,55 @@ export function useMobileTasksItemDetailLoading<Model extends ItemDetailLoadingI
         return
       }
 
-      const [issueResponse, commentsResponse] = await Promise.all([
-        client.sendRequest(
-          'linear.getIssue',
+      if (actionItem.provider === 'jira') {
+        const { issue, comments } = await fetchJiraIssueDetail(client, {
+          key: actionItem.source.key,
+          siteId: actionItem.source.siteId
+        })
+        if (!stale) {
+          setDetailPayload({
+            provider: 'jira',
+            description: issue.description ?? '',
+            comments,
+            labels: issue.labels ?? [],
+            assignee: issue.assignee?.displayName,
+            projectName: issue.project.name || issue.project.key,
+            issueTypeName: issue.issueType.name,
+            priorityName: issue.priority?.name
+          })
+          setActionItem((current) => {
+            if (
+              current?.provider !== 'jira' ||
+              current.source.key !== issue.key ||
+              current.source.siteId !== issue.siteId
+            ) {
+              return current
+            }
+            // Keep identity stable so detail hydration cannot fetch itself again.
+            const alreadyHydrated =
+              current.title === issue.title &&
+              current.status === issue.status.name &&
+              current.source.description === issue.description &&
+              (current.source.labels ?? []).length === (issue.labels ?? []).length &&
+              current.source.assignee?.accountId === issue.assignee?.accountId
+            return alreadyHydrated ? current : createJiraTask(issue)
+          })
+        }
+        return
+      }
+
+      // Interpret after Promise.all to preserve fail-fast transport and issue-before-comment policy precedence; startRpcOperation would await slower peers.
+      const [issueReply, commentsReply] = await Promise.all([
+        linearIssueRead.request(
+          client,
           {
             id: actionItem.source.id,
             workspaceId: actionItem.source.workspaceId
           },
           { timeoutMs: 30_000 }
         ),
-        client.sendRequest(
-          'linear.issueComments',
+        linearIssueCommentsRead.request(
+          client,
           {
             issueId: actionItem.source.id,
             workspaceId: actionItem.source.workspaceId
@@ -248,13 +240,9 @@ export function useMobileTasksItemDetailLoading<Model extends ItemDetailLoadingI
           { timeoutMs: 30_000 }
         )
       ])
-      if (!isSuccess(issueResponse)) {
-        throw new Error(issueResponse.error.message)
-      }
-      const issue = issueResponse.result as LinearIssue | null
-      const comments = isSuccess(commentsResponse)
-        ? ((commentsResponse.result as DetailComment[]) ?? [])
-        : []
+      const issue = linearIssueRead.interpret(issueReply)
+      const accepted = linearIssueCommentsRead.interpret(commentsReply)
+      const comments = accepted.accepted ? (accepted.value ?? []) : []
       if (!issue) {
         throw new Error('Details not found')
       }
