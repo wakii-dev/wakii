@@ -260,7 +260,7 @@ const r5 = spawnSync('python3', [join(BIN, 'team-session-brief')], {
 ok(r5.status === 0, 'brief exit 0')
 ok(/bạn là weaver/.test(r5.stdout), 'brief xưng danh weaver')
 ok(/PLAN-GATE ĐANG OPEN/.test(r5.stdout), 'brief báo gate OPEN + Bước 0')
-ok(/\[PLAN\]/.test(r5.stdout), 'brief chỉ thị post [PLAN]')
+ok(/team-chat plan/.test(r5.stdout), 'brief chỉ thị lệnh plan template')
 
 // unregister dọn
 r = run('team-orch', ['unregister', '--pane', 'term_newworker'])

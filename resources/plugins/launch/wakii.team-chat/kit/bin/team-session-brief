@@ -78,12 +78,15 @@ def main():
         print()
         print("⛔ PLAN-GATE ĐANG OPEN — Bước 0 (G3.5):")
         print("  1. Điều tra (được tự do: Read/Grep/Glob).")
-        print("  2. Post kế hoạch vào chat: team-chat send \"[PLAN] <các bước + DoD>\"")
+        print("  2. Post kế hoạch: ~/.claude/bin/team-chat plan \"<các bước + DoD đo được>\"")
         print("     (tên của bạn đã khóa theo pane — không cần --from)")
         print("  3. DỪNG LẠI chờ Captain duyệt — mọi lệnh ghi file đang bị guard chặn.")
-        print("  4. Khi gate đóng (Captain duyệt) → làm việc → DONE 3 phần. KHÔNG commit.")
+        print("  4. Gate đóng → làm việc → báo: team-chat done \"<task>\" --did … --test … --evidence …")
+        print("     (thiếu 1 trong 3 flag là bị từ chối — hiến pháp §0.0)")
+        print("     Kẹt 15 phút: team-chat blocked \"<lý do>\". KHÔNG commit.")
+        print("     Khuôn mọi tin: skills/team-workflow/TEMPLATES.md")
     else:
-        print("Gate plan: đã đóng (được phép làm việc). Hoàn tất thì post DONE 3 phần, không commit.")
+        print("Gate plan: đã đóng. Hoàn tất: team-chat done \"<task>\" --did … --test … --evidence … ; kẹt: team-chat blocked. KHÔNG commit.")
     tail = chat_tail(room)
     if tail:
         print(f"── {len(tail)} tin cuối #{room} ──")

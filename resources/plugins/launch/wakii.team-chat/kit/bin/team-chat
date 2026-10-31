@@ -23,22 +23,24 @@ PY
 }
 
 send_msg() {
-  local text="$1" from="${TEAM_CHAT_FROM:-${ORCA_AGENT_NAME:-worker}}" role="" role_set=0 channel="general"
+  local text="$1" from="${TEAM_CHAT_FROM:-${ORCA_AGENT_NAME:-worker}}" from_set=0 role="" role_set=0 channel="general"
   while [ $# -gt 1 ]; do case "$1" in
-    --from) from="$2"; shift 2 ;;
+    --from) from="$2"; from_set=1; shift 2 ;;
     --role) role="$2"; role_set=1; shift 2 ;;
     --channel) channel="$2"; shift 2 ;;
     *) shift ;;
   esac; done
   # P0-2 danh tính: pane đã đăng ký (team-orch worker-start) → tên bị khóa theo
-  # registration. --from khác tên đăng ký = từ chối, chống worker giả danh nhau.
+  # registration. Không --from → ép về tên thật; --from khác tên = từ chối.
   if [ -n "${ORCA_AGENT_PANE:-}" ]; then
     REG_NAME=$(REGISTERED_NAME)
-    if [ -n "$REG_NAME" ] && [ "$from" != "$REG_NAME" ]; then
-      echo "TỪ CHỐI: pane này đăng ký là '$REG_NAME' — không gửi được với tên '$from'." >&2
-      exit 1
+    if [ -n "$REG_NAME" ]; then
+      if [ "$from_set" -eq 1 ] && [ "$from" != "$REG_NAME" ]; then
+        echo "TỪ CHỐI: pane này đăng ký là '$REG_NAME' — không gửi được với tên '$from'." >&2
+        exit 1
+      fi
+      from="$REG_NAME"
     fi
-    [ -n "$REG_NAME" ] && from="$REG_NAME"
   fi
   # Role mặc định suy từ tên Captain quen thuộc; --role tường minh luôn thắng.
   if [ "$role_set" -eq 0 ]; then
@@ -148,10 +150,32 @@ for l in sys.stdin:
 case "$CMD" in
   send)  [ $# -eq 0 ] && { echo "usage: team-chat send \"<text>\" [--from name] [--role r] [--channel c]" >&2; exit 2; }
          send_msg "$@" ;;
+  # ── Template commands (§0.0 + G3.5): format bắt buộc — worker không thể viết sai ──
+  plan)  # team-chat plan "<các bước + DoD>" [--channel c] → tin [PLAN] ...
+         [ $# -eq 0 ] && { echo "usage: team-chat plan \"<các bước + DoD đo được>\" [--channel c]" >&2; exit 2; }
+         TEXT="$1"; shift
+         send_msg "[PLAN] $TEXT" --role worker "$@" ;;
+  done)  # team-chat done "<task>" --did .. --test .. --evidence .. → DONE 3 phần (bắt buộc đủ 3)
+         TID=""; DID=""; TST=""; EVD=""
+         TID="$1"; shift
+         while [ $# -gt 0 ]; do case "$1" in
+           --did) DID="$2"; shift 2 ;;
+           --test) TST="$2"; shift 2 ;;
+           --evidence) EVD="$2"; shift 2 ;;
+           *) shift ;;
+         esac; done
+         [ -n "$TID" ] && [ -n "$DID" ] && [ -n "$TST" ] && [ -n "$EVD" ] || {
+           echo "usage: team-chat done \"<task>\" --did \"<đã làm>\" --test \"<cách test>\" --evidence \"<bằng chứng>\"" >&2
+           echo "DONE phải ĐỦ 3 phần (hiến pháp §0.0) — thiếu là bị trả lại." >&2; exit 2; }
+         send_msg "DONE $TID — ① Đã làm: $DID ② Cách test: $TST ③ Bằng chứng: $EVD" --role worker "$@" ;;
+  blocked) # team-chat blocked "<lý do>" → BLOCKED (anti-grind: block×3 → Captain ép hướng)
+         [ $# -eq 0 ] && { echo "usage: team-chat blocked \"<lý do + đã thử gì>\"" >&2; exit 2; }
+         TEXT="$1"; shift
+         send_msg "BLOCKED $TEXT" --role worker "$@" ;;
   event) [ $# -lt 2 ] && { echo "usage: team-chat event <kind> --repo <id> [--run-id r] [--task-id t] [--actor a] [--data json]" >&2; exit 2; }
          emit_event "$@" ;;
   read)  read_msgs "$@" ;;
   tail)  tail_msgs "$@" ;;
   path)  echo "$LOG" ;;
-  *)     echo "usage: team-chat send|read|tail|event|path" >&2; exit 2 ;;
+  *)     echo "usage: team-chat send|plan|done|blocked|read|tail|event|path — templates xem skills/team-workflow/TEMPLATES.md" >&2; exit 2 ;;
 esac
