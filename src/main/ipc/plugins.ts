@@ -189,11 +189,11 @@ export function registerPluginHandlers(
 
   ipcMain.handle('plugins:readPanelEntry', (event, args: unknown) => {
     const parsed = readPanelEntryArgsSchema.parse(args)
-    // Panel mở = user muốn plugin sống. invokeCommand chạy workerController
-    // .ensure() TRƯỚC khi check handler — "no handler" bị nuốt, worker đã dậy
-    // (chat bus poller không chết im sau restart). Fire-and-forget để entry
-    // không chờ worker spawn.
-    void pluginService.invokeCommand(parsed.pluginKey, '__panelWake').catch(() => undefined)
+    // Contract panelWake: plugin nào muốn panel đánh thức worker (chat
+    // poller...) contribute command "panelWake" — panel mở là bằng chứng
+    // user muốn plugin sống. Plugin không khai báo → assert throw trước
+    // ensure, catch nuốt (no-op). Fire-and-forget, không chờ spawn.
+    void pluginService.invokeCommand(parsed.pluginKey, 'panelWake').catch(() => undefined)
     return openFrameEntry(event.sender, (ownerKey, isCurrent) =>
       pluginService.panels.open(ownerKey, parsed.pluginKey, parsed.panelId, isCurrent)
     )

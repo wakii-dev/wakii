@@ -1338,6 +1338,7 @@ export default function activate(orca) {
   // Command invoke là trigger đánh thức worker này (worker lazy-start);
   // activate() mới là nơi poller chat sống. Không có action declarative
   // "open panel" nên team.chat báo qua notification + trả trạng thái bus.
+  orca.commands.register('panelWake', async () => ({ ok: true }))
   orca.commands.register('team.chat', async () => {
     const tail = await readTail(5)
     await orca.host.call('notifications.show', {
@@ -1386,6 +1387,33 @@ export default function activate(orca) {
 
   let lastSendAt = 0
   let lastTailLen = -1
+  // Captain luôn online (CEO ruling 1/11): poller là router — mọi tin của
+  // Owner/@captain được ACK ngay vào room + chuyển tiếp vào terminal Captain
+  // (claude thật) nếu đã cấu hình storage 'team.captain.terminal' = handle.
+  let captainSeenAt = Date.now()
+  const captainAck = async (msg) => {
+    const preview = String(msg.text || '').slice(0, 60)
+    await appendLine({
+      from: 'captain', role: 'captain', channel: msg.channel || 'general',
+      text: `📡 Captain đã nhận: "${preview}" — đang xử lý.`
+    }).catch(() => {})
+    await orca.host.call('notifications.show', {
+      title: 'Wakii Team — lệnh mới từ CEO',
+      body: String(msg.text || '').slice(0, 120)
+    }).catch(() => {})
+  }
+  const captainRoute = async (msg) => {
+    try {
+      const stored = await orca.host.call('storage.get', { key: 'team.captain.terminal' })
+      const handle = stored && stored.value
+      if (!handle) return // chưa cấu hình terminal Captain — ACK vẫn đủ chứng tỏ online
+      await orca.host.call('terminal.sendText', {
+        terminalId: handle,
+        text: `[CEO→captain] ${msg.from}: ${msg.text}\n(trả lời qua: ~/.claude/bin/team-chat send "..." --from captain --role captain)\n`,
+        enter: true
+      })
+    } catch { /* route best-effort — ACK đã khẳng định presence */ }
+  }
   const tick = async () => {
     try {
       const stored = await orca.host.call('storage.get', { key: 'team.chat.send' })
@@ -1400,6 +1428,18 @@ export default function activate(orca) {
       if (tail.length !== lastTailLen) {
         lastTailLen = tail.length
         await orca.host.call('storage.set', { key: 'team.chat.tail', value: tail }).catch(() => {})
+      }
+      // Router Captain: quét tin mới từ outside (owner/@captain) kể từ lần trước.
+      for (const line of tail) {
+        let m
+        try { m = JSON.parse(line) } catch { continue }
+        if (typeof m.at !== 'number' || m.at <= captainSeenAt) continue
+        if (m.from === 'captain') { captainSeenAt = m.at; continue }
+        if (m.role === 'owner' || /@captain/i.test(String(m.text || ''))) {
+          captainSeenAt = m.at
+          await captainAck(m)
+          await captainRoute(m)
+        }
       }
     } catch { /* chat là best-effort — không chặn activate */ }
   }

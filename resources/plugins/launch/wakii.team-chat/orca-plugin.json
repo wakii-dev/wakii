@@ -29,6 +29,11 @@
         "id": "team.doctor",
         "title": "Team: Kit Doctor (toolbox health)",
         "context": "global"
+      },
+      {
+        "id": "panelWake",
+        "title": "Team: (nội bộ) panel wake",
+        "context": "global"
       }
     ],
     "events": [
