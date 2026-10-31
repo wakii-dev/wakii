@@ -45,10 +45,21 @@ def main():
 
     if tool == "Bash":
         cmd = hook.get("tool_input", {}).get("command", "")
-        write_sig = any(sig in cmd for sig in (">>", ">", "tee ", "sed -i", "perl -i"))
-        if not write_sig:
+        # Hàng rào heuristic (không phải tường): shell redirect + interpreter
+        # eval + lệnh đổi file hệ thống. User hoặc dàng buộc hơn thì nói chuyện
+        # với Captain, đừng vòng fence.
+        write_sigs = (">>", ">", "tee ", "sed -i", "perl -i",
+                      "python3 -c", "python -c", "node -e", "node --eval",
+                      "perl -e", "ruby -e")
+        import re
+        file_ops = re.search(r"(^|[;&|]\s*|\b)(mv|cp|dd|rsync|install|truncate|shred)\s", cmd)
+        git_commit = re.search(r"\bgit\b[^|;&]*\bcommit\b", cmd)
+        if not (any(s in cmd for s in write_sigs) or file_ops or git_commit):
             return 0
-        print(f"PLAN-GATE OPEN (G3.5): Bash có ghi file bị chặn ở {cwd}.\n"
+        why = ("git commit bị chặn — worker không commit (Team Contract)"
+               if git_commit and not (any(s in cmd for s in write_sigs) or file_ops)
+               else "Bash có ghi/đổi file bị chặn")
+        print(f"PLAN-GATE OPEN (G3.5): {why} ở {cwd}.\n"
               f"Bước 0 (§2.2): post [PLAN] vào chat → Captain duyệt → "
               f"team-orch gate-resolve --plan --worktree {cwd}", file=sys.stderr)
         return 2

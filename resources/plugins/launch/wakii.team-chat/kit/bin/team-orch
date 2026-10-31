@@ -20,6 +20,76 @@ repo_of_cwd() { # repoId từ worktree hiện tại qua app — đơn giản ho�
   echo "${TEAM_REPO_ID:-unknown}"
 }
 
+# ── Registration pane→worker (P0-2): nguồn sự thật cho danh tính + brief ──
+REG="${TEAM_WORKERS_REG:-$HOME/.claude/chat/.workers.json}"
+reg_put() { # pane name worktree task run repo room
+  python3 - "$REG" "$@" <<'PY'
+import json, sys, os, time
+path, pane, name, wt, task, run, repo, room = sys.argv[1:9]
+try: reg = json.load(open(path, encoding="utf-8"))
+except Exception: reg = {}
+reg[pane] = {"name": name, "worktree": wt, "task": task, "run": run,
+             "repo": repo, "room": room, "at": int(time.time() * 1000)}
+os.makedirs(os.path.dirname(path), exist_ok=True)
+json.dump(reg, open(path, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+PY
+}
+reg_get() { # pane → in JSON entry hoặc rỗng
+  python3 - "$REG" "$1" <<'PY'
+import json, sys
+try: reg = json.load(open(sys.argv[1], encoding="utf-8"))
+except Exception: sys.exit(0)
+e = reg.get(sys.argv[2])
+if e: print(json.dumps(e))
+PY
+}
+pane_of_worker_json() { # <json receipt> → in terminal handle hoặc rỗng (argv, không pipe — heredoc chiếm stdin)
+  python3 -c '
+import json, sys
+def dig(o):
+    if isinstance(o, dict):
+        for k in ("terminal", "terminalHandle", "terminal_handle", "pane", "handle"):
+            v = o.get(k)
+            if isinstance(v, str) and v.startswith("term_"): return v
+        for v in o.values():
+            r = dig(v)
+            if r: return r
+    elif isinstance(o, list):
+        for v in o:
+            r = dig(v)
+            if r: return r
+    return None
+try: d = json.loads(sys.argv[1])
+except Exception: sys.exit(0)
+h = dig(d)
+if h: print(h)
+' "$1"
+}
+# Cài hooks team (guard G3.5 + SessionStart brief) vào .claude/settings.json của worktree.
+install_worker_hooks() { # worktreePath
+  WT_DIR="$1/.claude"; mkdir -p "$WT_DIR"
+  BINDIR="$(cd "$(dirname "$0")" && pwd)"
+  GUARD_BIN="$BINDIR/story-guard-plan-gate"; BRIEF_BIN="$BINDIR/team-session-brief"
+  [ -x "$GUARD_BIN" ] || GUARD_BIN="$HOME/.claude/bin/story-guard-plan-gate"
+  [ -x "$BRIEF_BIN" ] || BRIEF_BIN="$HOME/.claude/bin/team-session-brief"
+  python3 - "$WT_DIR/settings.json" "$GUARD_BIN" "$BRIEF_BIN" <<'PY'
+import json, sys, os
+spath, guard, brief = sys.argv[1:4]
+try: s = json.load(open(spath, encoding="utf-8"))
+except Exception: s = {}
+hooks = s.setdefault("hooks", {})
+def up(name, matcher, cmd):
+    arr = hooks.setdefault(name, [])
+    if not any(h.get("hooks", [{}])[0].get("command", "").endswith(cmd.rsplit("/", 1)[-1]) for h in arr):
+        entry = {"hooks": [{"type": "command", "command": cmd}]}
+        if matcher: entry["matcher"] = matcher
+        arr.append(entry)
+up("PreToolUse", "Edit|Write|NotebookEdit|Bash", guard)
+up("SessionStart", "", brief)
+json.dump(s, open(spath, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+PY
+}
+
 case "$CMD" in
   feature-open)
     # feature-open --name <slug> --repo <id> [--objective "..."] → worktree + phòng + .wakii skeleton
@@ -49,8 +119,40 @@ case "$CMD" in
       --run) RUN="$2"; PASS+=("$1" "$2"); shift 2 ;;
       *) PASS+=("$1"); shift ;;
     esac; done
-    OUT=$("$ORCA" orchestration "$CMD" ${PASS[@]+"${PASS[@]}"} 2>&1) || { echo "$OUT"; exit 1; }
+    HAS_JSON=0; for a in ${PASS[@]+"${PASS[@]}"}; do [ "$a" = "--json" ] && HAS_JSON=1; done
+    JSON_ARGS=${PASS[@]+"${PASS[@]}"}
+    [ "$HAS_JSON" -eq 1 ] || JSON_ARGS="$JSON_ARGS --json"
+    OUT=$("$ORCA" orchestration "$CMD" $JSON_ARGS 2>&1) || { echo "$OUT"; exit 1; }
+    echo "$OUT"
     WT_PATH="${WT#explicit:}"; [ -n "$WT_PATH" ] || WT_PATH="$(pwd)"
+    # Bóc worktree path thật từ receipt (worktree selector → path tuyệt đối)
+    WT_REAL=$(echo "$OUT" | python3 -c "
+import json,sys
+def dig(o):
+    if isinstance(o,dict):
+        for k in ('workspace','worktreePath','worktree_path','path','checkout'):
+            v=o.get(k)
+            if isinstance(v,str) and v.startswith('/'): return v
+        for v in o.values():
+            r=dig(v)
+            if r: return r
+    elif isinstance(o,list):
+        for v in o:
+            r=dig(v)
+            if r: return r
+try: print(dig(json.load(sys.stdin)) or '')
+except Exception: pass
+" 2>/dev/null)
+    [ -n "$WT_REAL" ] && WT_PATH="$WT_REAL"
+    install_worker_hooks "$WT_PATH"
+    PANE=$(pane_of_worker_json "$OUT" 2>/dev/null)
+    [ -z "$PANE" ] && PANE="${TEAM_WORKER_PANE:-}"
+    if [ -n "$PANE" ]; then
+      reg_put "$PANE" "${NAME%%-*}" "$WT_PATH" "$TASK" "$RUN" "$REPO" "${REPO}-${NAME%%-*}"
+      echo "team-orch: đăng ký $PANE → ${NAME%%-*} (danh tính khóa theo pane)"
+    else
+      echo "team-orch: ⚠ chưa bóc được pane từ receipt — đăng ký tay: team-orch register --pane <handle> --name ${NAME%%-*} --worktree $WT_PATH"
+    fi
     if [ "$PLAN" -eq 1 ]; then
       mkdir -p "$GATES_DIR"
       printf '{"taskId":"%s","planGateOpen":true,"worktreePath":"%s"}\n' "$TASK" "$WT_PATH" > "$(marker "$WT_PATH")"
@@ -65,6 +167,20 @@ case "$CMD" in
     while [ $# -gt 0 ]; do case "$1" in
       --plan) PLAN=1; shift ;; --worktree) WT="$2"; shift 2 ;; *) PASS+=("$1"); shift ;;
     esac; done
+    # P0-2: worker không tự duyệt plan của chính mình — pane đã đăng ký vào đúng
+    # worktree này thì từ chối (Captain/CEO chạy từ terminal không đăng ký thì qua).
+    MY_PANE="${ORCA_AGENT_PANE:-}"
+    if [ -n "$MY_PANE" ] && [ -n "$WT" ]; then
+      MY_REG=$(reg_get "$MY_PANE")
+      if [ -n "$MY_REG" ]; then
+        REG_WT=$(echo "$MY_REG" | python3 -c "import json,sys;print(json.load(sys.stdin).get('worktree',''))" 2>/dev/null)
+        REG_NAME=$(echo "$MY_REG" | python3 -c "import json,sys;print(json.load(sys.stdin).get('name',''))" 2>/dev/null)
+        if [ "$REG_WT" = "$WT" ]; then
+          echo "TỪ CHỐI: pane này đăng ký là worker '$REG_NAME' của worktree $WT — worker không tự duyệt plan của mình (§2.2). Captain duyệt từ terminal của Captain." >&2
+          exit 3
+        fi
+      fi
+    fi
     OUT=$("$ORCA" orchestration "$CMD" ${PASS[@]+"${PASS[@]}"} 2>&1) || { echo "$OUT"; exit 1; }
     if [ "$PLAN" -eq 1 ] && [ -n "$WT" ]; then
       MP="$(marker "$WT")"
@@ -73,6 +189,30 @@ case "$CMD" in
       echo "team-orch: plan-gate CLOSED @ $WT — worker được làm"
     fi
     echo "$OUT"
+    ;;
+  register)
+    # register --pane <handle> --name <n> --worktree <path> [--task --run --repo --room]
+    PANE="" NAME="" WTV="" TASK="" RUN="" REPO="" ROOM="general"
+    while [ $# -gt 0 ]; do case "$1" in
+      --pane) PANE="$2"; shift 2 ;; --name) NAME="$2"; shift 2 ;; --worktree) WTV="$2"; shift 2 ;;
+      --task) TASK="$2"; shift 2 ;; --run) RUN="$2"; shift 2 ;; --repo) REPO="$2"; shift 2 ;;
+      --room) ROOM="$2"; shift 2 ;; *) shift ;;
+    esac; done
+    [ -n "$PANE" ] && [ -n "$NAME" ] && [ -n "$WTV" ] || { echo "register cần --pane + --name + --worktree" >&2; exit 2; }
+    reg_put "$PANE" "$NAME" "$WTV" "$TASK" "$RUN" "$REPO" "$ROOM"
+    echo "→ đăng ký $PANE = $NAME @ $WTV"
+    ;;
+  unregister)
+    while [ $# -gt 0 ]; do case "$1" in --pane) PANE="$2"; shift 2 ;; *) shift ;; esac; done
+    [ -n "${PANE:-}" ] || { echo "unregister cần --pane" >&2; exit 2; }
+    python3 - "$REG" "$PANE" <<'PY'
+import json, sys
+try: reg = json.load(open(sys.argv[1], encoding="utf-8"))
+except Exception: reg = {}
+reg.pop(sys.argv[2], None)
+json.dump(reg, open(sys.argv[1], "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+PY
+    echo "→ xoá đăng ký $PANE"
     ;;
   worker-stop|worker-abandon)
     ACTOR="system"; REPO="$(repo_of_cwd)"

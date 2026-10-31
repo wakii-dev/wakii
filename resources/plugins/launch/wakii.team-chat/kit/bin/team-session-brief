@@ -1,0 +1,97 @@
+#!/usr/bin/env python3
+"""team-session-brief — SessionStart hook cho worker trong team (G3.5 Bước 0).
+
+In brief tự chứa cho phiên claude trong worktree: tôi là ai, room nào,
+run/task, gate đang mở hay đóng, 5 tin cuối room, và luật Bước 0 nếu gate
+OPEN. Nguồn sự thật: bảng đăng ký ~/.claude/chat/.workers.json (pane→name,
+do team-orch worker-start ghi) + marker plan-gate theo cwd + bus chat.
+Không đăng ký pane → im lặng thoát 0 (terminal thường, không chặn ai).
+"""
+import base64
+import datetime
+import json
+import os
+import sys
+
+sys.dont_write_bytecode = True
+
+CHAT_DIR = os.path.join(os.path.expanduser("~"), ".claude", "chat")
+REG_PATH = os.environ.get("TEAM_WORKERS_REG", os.path.join(CHAT_DIR, ".workers.json"))
+GATES_DIR = os.environ.get("TEAM_TASK_GATES_DIR", os.path.join(CHAT_DIR, ".task-gates"))
+
+
+def load_registration(pane):
+    try:
+        with open(REG_PATH, encoding="utf-8") as f:
+            reg = json.load(f)
+        entry = reg.get(pane)
+        return entry if isinstance(entry, dict) else None
+    except Exception:
+        return None
+
+
+def gate_open(cwd):
+    marker = os.path.join(
+        GATES_DIR,
+        base64.urlsafe_b64encode(cwd.encode()).decode().rstrip("=") + ".json",
+    )
+    try:
+        with open(marker, encoding="utf-8") as f:
+            return bool(json.load(f).get("planGateOpen"))
+    except Exception:
+        return False
+
+
+def chat_tail(room, limit=5):
+    path = os.path.join(CHAT_DIR, "team-chat.jsonl")
+    out = []
+    try:
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                try:
+                    m = json.loads(line)
+                except Exception:
+                    continue
+                if room in ("general", "*") or m.get("channel") == room:
+                    out.append(m)
+    except FileNotFoundError:
+        return []
+    return out[-limit:]
+
+
+def main():
+    pane = os.environ.get("ORCA_AGENT_PANE", "")
+    if not pane:
+        return 0
+    reg = load_registration(pane)
+    if not reg:
+        return 0
+    name = reg.get("name", "worker")
+    room = reg.get("room") or "general"
+    cwd = reg.get("worktree") or os.getcwd()
+    print(f"═ TEAM BRIEF — bạn là {name} (worker) ═")
+    print(f"Room: #{room} · Repo: {reg.get('repo', '?')} · Run: {reg.get('run', '?')} · Task: {reg.get('task', '?')}")
+    print(f"Worktree: {cwd}")
+    print("Hiến pháp §0.0: đúng đắn trên hết · chưa rõ thì hỏi · KHÔNG BỊA · DONE phải 3 phần (đã làm/cách test/bằng chứng).")
+    print("Đọc chat: ~/.claude/bin/team-chat read --last 20")
+    if gate_open(cwd):
+        print()
+        print("⛔ PLAN-GATE ĐANG OPEN — Bước 0 (G3.5):")
+        print("  1. Điều tra (được tự do: Read/Grep/Glob).")
+        print("  2. Post kế hoạch vào chat: team-chat send \"[PLAN] <các bước + DoD>\"")
+        print("     (tên của bạn đã khóa theo pane — không cần --from)")
+        print("  3. DỪNG LẠI chờ Captain duyệt — mọi lệnh ghi file đang bị guard chặn.")
+        print("  4. Khi gate đóng (Captain duyệt) → làm việc → DONE 3 phần. KHÔNG commit.")
+    else:
+        print("Gate plan: đã đóng (được phép làm việc). Hoàn tất thì post DONE 3 phần, không commit.")
+    tail = chat_tail(room)
+    if tail:
+        print(f"── {len(tail)} tin cuối #{room} ──")
+        for m in tail:
+            ts = datetime.datetime.fromtimestamp(m.get("at", 0) / 1000).strftime("%H:%M")
+            print(f"{ts} {m.get('from', '?')}: {str(m.get('text', ''))[:110]}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

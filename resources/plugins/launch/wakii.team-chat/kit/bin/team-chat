@@ -11,6 +11,17 @@ set -u
 LOG="${TEAM_CHAT_LOG:-$HOME/.claude/chat/team-chat.jsonl}"
 CMD="${1:-read}"; [ $# -gt 0 ] && shift
 
+# Tên đã đăng ký của pane này (P0-2); rỗng = pane chưa đăng ký (terminal tự do).
+REGISTERED_NAME() {
+  python3 - "${TEAM_WORKERS_REG:-$HOME/.claude/chat/.workers.json}" "${ORCA_AGENT_PANE:-}" <<'PY' 2>/dev/null
+import json, sys
+try: reg = json.load(open(sys.argv[1], encoding="utf-8"))
+except Exception: raise SystemExit
+e = reg.get(sys.argv[2])
+if isinstance(e, dict): print(e.get("name", ""))
+PY
+}
+
 send_msg() {
   local text="$1" from="${TEAM_CHAT_FROM:-${ORCA_AGENT_NAME:-worker}}" role="" role_set=0 channel="general"
   while [ $# -gt 1 ]; do case "$1" in
@@ -19,6 +30,16 @@ send_msg() {
     --channel) channel="$2"; shift 2 ;;
     *) shift ;;
   esac; done
+  # P0-2 danh tính: pane đã đăng ký (team-orch worker-start) → tên bị khóa theo
+  # registration. --from khác tên đăng ký = từ chối, chống worker giả danh nhau.
+  if [ -n "${ORCA_AGENT_PANE:-}" ]; then
+    REG_NAME=$(REGISTERED_NAME)
+    if [ -n "$REG_NAME" ] && [ "$from" != "$REG_NAME" ]; then
+      echo "TỪ CHỐI: pane này đăng ký là '$REG_NAME' — không gửi được với tên '$from'." >&2
+      exit 1
+    fi
+    [ -n "$REG_NAME" ] && from="$REG_NAME"
+  fi
   # Role mặc định suy từ tên Captain quen thuộc; --role tường minh luôn thắng.
   if [ "$role_set" -eq 0 ]; then
     case "$from" in
