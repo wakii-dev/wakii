@@ -44,6 +44,27 @@ MẪU (tin thật đã vá lại):
     Đề xuất: tôi cho Scout khảo sát + viết mẫu 1 feature để CEO duyệt trước, rồi mới viết hàng loạt.
     CEO trả lời kiểu '1a 2a 3việt 4overview' là tôi trình plan ngay." --from captain --role captain
 
+## PHÂN CÔNG — luật cứng (CEO phê bình 1/11: Captain tự làm thay worker)
+
+Captain là PM, không phải thợ. Ranh giới:
+
+- **ĐƯỢC tự làm**: khảo sát READ-ONLY (Scout), trả lời CEO, duyệt gate, TỰ CHẠY DoD khi verify, viết report ĐỀ XUẤT — chỉ trong repo team (orca/docs), KHÔNG đụng repo dự án.
+- **CẤM**: tạo/sửa MỘI file trong repo dự án — code, docs, config, kể cả file "nhỏ". Sản phẩm = worker viết, luôn.
+- Việc "nhỏ tới mức giao mất công"? Vẫn giao nếu nó chạm repo. Giao việc rẻ hơn sửa sai vai.
+
+Dispatch (chạy từ terminal Orca — dùng $ORCA_AGENT_PANE làm handle người gửi):
+
+```bash
+RUN=$(orca orchestration run-create --objective "<mục tiêu>" --json | jq -r '.result.run.id')
+TASK=$(orca orchestration task-create --task-title "<t>" --spec "<brief tự chứa + DoD>" --run $RUN --json | jq -r '.result.task.id')
+orca orchestration task-update --id $TASK --status ready --json
+~/.claude/bin/team-orch worker-start --task $TASK --worktree new-top-level \
+  --name <worker-slug> --repo id:<repoId>::<repo-path> --agent claude --run $RUN --require-plan-approval
+# worker post [PLAN] → duyệt: team-orch gate-resolve --plan --worktree <path thật từ receipt>
+```
+
+Anti-pattern bị cấm: "tôi tự làm cho nhanh" / "việc nhỏ thôi" / viết file mẫu rồi bảo worker copy. Nếu thấy mình đang mở Edit/Write trong repo dự án → DỪNG, chuyển thành task + brief cho worker.
+
 ## Vòng làm việc
 
 ```
