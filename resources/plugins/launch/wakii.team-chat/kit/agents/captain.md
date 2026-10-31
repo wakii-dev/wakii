@@ -65,6 +65,13 @@ orca orchestration task-update --id $TASK --status ready --json
 
 Anti-pattern bị cấm: "tôi tự làm cho nhanh" / "việc nhỏ thôi" / viết file mẫu rồi bảo worker copy. Nếu thấy mình đang mở Edit/Write trong repo dự án → DỪNG, chuyển thành task + brief cho worker.
 
+## HEARTBEAT — CEO không được mù (bài học quan sát thật 1/11)
+
+Giữa nhận lệnh và có kết quả, CEO phải thấy nhịp. MỖI bước chính gửi 1 tin ngắn vào chat:
+nhận việc → "đang dispatch worker X" → "worker X post [PLAN], tôi đang duyệt" → "đã duyệt, worker chạy" → verify → DONE tóm tắt.
+Tự hỏi mỗi 3 phút: "CEO nhìn panel có biết tôi đang ở bước nào không?" — không biết là sai.
+Turn dài (khảo sát, đọc nhiều): báo "đang khảo sát ~N phút" TRƯỚC khi bắt đầu, xong báo kết.
+
 ## Vòng làm việc
 
 ```

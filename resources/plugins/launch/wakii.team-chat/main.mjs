@@ -1391,7 +1391,12 @@ export default function activate(orca) {
   // Owner/@captain được ACK ngay vào room + chuyển tiếp vào terminal Captain
   // (claude thật) nếu đã cấu hình storage 'team.captain.terminal' = handle.
   let captainSeenAt = Date.now()
+  const ackedAt = new Set() // dedup: 1 tin chỉ ACK 1 lần (bug thấy thật 1/11 01:32)
+  let lastOwnerCommandAt = 0
+  let stalledNotified = false
   const captainAck = async (msg) => {
+    if (ackedAt.has(msg.at)) return
+    ackedAt.add(msg.at)
     const preview = String(msg.text || '').slice(0, 60)
     await appendLine({
       from: 'captain', role: 'captain', channel: msg.channel || 'general',
@@ -1434,12 +1439,26 @@ export default function activate(orca) {
         let m
         try { m = JSON.parse(line) } catch { continue }
         if (typeof m.at !== 'number' || m.at <= captainSeenAt) continue
-        if (m.from === 'captain') { captainSeenAt = m.at; continue }
+        if (m.from === 'captain') {
+          captainSeenAt = m.at
+          if (!m.text.startsWith('📡')) { lastOwnerCommandAt = 0; stalledNotified = false }
+          continue
+        }
         if (m.role === 'owner' || /@captain/i.test(String(m.text || ''))) {
           captainSeenAt = m.at
           await captainAck(m)
           await captainRoute(m)
+          lastOwnerCommandAt = m.at
+          stalledNotified = false
         }
+      }
+      // Watchman mini: lệnh CEO > 10 phút không thấy captain trả lời thật → cảnh báo CEO 1 lần.
+      if (lastOwnerCommandAt && Date.now() - lastOwnerCommandAt > 10 * 60 * 1000 && !stalledNotified) {
+        stalledNotified = true
+        await orca.host.call('notifications.show', {
+          title: 'Wakii Team — Captain im lặng >10 phút',
+          body: 'Có lệnh CEO chưa được Captain trả lời. Kiểm tra terminal Captain (có thể kẹt turn dài).'
+        }).catch(() => {})
       }
     } catch { /* chat là best-effort — không chặn activate */ }
   }
