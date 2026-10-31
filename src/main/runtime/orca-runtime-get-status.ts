@@ -31,8 +31,6 @@ import {
   BROWSER_UNAVAILABLE_ERROR_CODE,
   browserUnavailableMessage
 } from '../../shared/runtime-types'
-import { MOBILE_WEB_BUNDLE_CAPABILITY } from '../../shared/mobile-web-bundle/mobile-web-bundle-capability'
-import { loadBundledMobileWebBundle } from './bundled-mobile-web-bundle'
 import { runtimeTerminalDegradation } from './native-terminal-availability'
 import { isWindowsProcessStartTimeAvailable } from '../windows/windows-process-table'
 import type { RuntimeWorktreeLifecycleEvent } from './orca-runtime-core'
@@ -127,10 +125,6 @@ export abstract class OrcaRuntimeWithGetStatus extends OrcaRuntimeWithPtyControl
       capabilities.push(DESKTOP_BROWSER_BRIDGE_RUNTIME_CAPABILITY)
     }
     capabilities.push(...darkSwitchRuntimeCapabilities())
-    // Dev/serve installs may lack out/mobile-web; never advertise downloads this install cannot produce.
-    if (loadBundledMobileWebBundle()) {
-      capabilities.push(MOBILE_WEB_BUNDLE_CAPABILITY)
-    }
     // Report the actual failure so operators are not told to fix already-correct configuration.
     const cause = canBrowse || hasHeadlessCommands ? null : runtimeBrowserUnavailableCause()
     const degradations: RuntimeDegradation[] = cause

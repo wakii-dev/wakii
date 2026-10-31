@@ -1,7 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
-import { normalizePath, transformWithOxc, type Plugin } from 'vite'
 import { configDefaults, defaultExclude, defineConfig } from 'vitest/config'
 import { UNIT_INCLUDE, UNIT_EXCLUDE, UNIT_SETUP_FILES } from './scripts/ci-unit-files.mjs'
 import TimingSequencer from './scripts/ci-unit-sequencer.mjs'
@@ -21,26 +20,9 @@ const measurementFile = 'src/main/foreign-sqlite-readers/foreign-sqlite-reader-e
 const paletteMeasurementFile =
   'src/renderer/src/lib/palette-match/palette-match-performance.test.ts'
 const measurementFiles = [measurementFile, paletteMeasurementFile]
-const phoneContractPattern = /\/mobile\/src\/.*\.(?:ts|tsx)(?:\?.*)?$/
 const transforms = {
-  oxc: { exclude: [/\.js$/, phoneContractPattern] },
+  oxc: { exclude: [/\.js$/] },
   plugins: [
-    {
-      // These plain TS consumers need no Expo app configuration in root-only installs.
-      name: 'phone-contract-oxc',
-      enforce: 'pre',
-      async transform(source, id) {
-        const filename = normalizePath(id.split('?')[0])
-        if (!phoneContractPattern.test(filename)) {
-          return null
-        }
-        const result = await transformWithOxc(source, filename, { tsconfig: false })
-        for (const warning of result.warnings) {
-          this.warn(warning)
-        }
-        return { code: result.code, map: result.map }
-      }
-    } satisfies Plugin,
     ...(moduleCachePath ? [moduleCacheResolutionKey()] : []),
     {
       // Unit tests have no asset server; retain real catalog parsing through fetch(data:).

@@ -1,7 +1,7 @@
 const { existsSync } = require('node:fs')
 const { join } = require('node:path')
 
-// Only main-valued switches compile dark paths; marked main/mobile-web/orcad/template outputs cannot ship.
+// Only main-valued switches compile dark paths; marked main/orcad/template outputs cannot ship.
 // Packaging and release templates also reject enabled switch environment variables.
 const DARK_BUILD_SWITCHES = [
   // src/shared/layout-owner-switch.ts

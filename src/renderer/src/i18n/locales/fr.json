@@ -22755,38 +22755,6 @@
       "visualOpenInSidebar": "Ouvrir dans la barre latérale",
       "visualClose": "Fermer la visualisation",
       "structuredSessionLaunchFailed": "Impossible d'ouvrir le chat {{value0}}",
-      "handoff": {
-        "stage": {
-          "finishingChat": null,
-          "finishingTerminal": null,
-          "openingTerminal": null,
-          "resumingChat": null,
-          "verifyingTerminal": null,
-          "verifyingChat": null,
-          "recovering": null,
-          "manualRecovery": null
-        },
-        "switchingOwner": null,
-        "mode": {
-          "switching": null,
-          "terminal": null,
-          "chat": null
-        },
-        "switchingAfterTurn": null,
-        "returningAfterTurn": null,
-        "cancel": null,
-        "switchAfterTurn": null,
-        "stopTurnAndSwitch": null,
-        "openAgentTui": null,
-        "returnAfterTurn": null,
-        "returnToChat": null,
-        "agentOpenOnHost": null,
-        "agentOpen": null,
-        "exitTerminal": null,
-        "retryProof": null,
-        "retry": null,
-        "details": null
-      },
       "structuredSessionLaunchFailedDescription": "Wakii n'a pas pu ouvrir une discussion structurée {{value0}}. Consultez les journaux pour plus de détails."
     },
     "tab": {

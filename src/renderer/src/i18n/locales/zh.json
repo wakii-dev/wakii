@@ -21963,38 +21963,6 @@
       "visualOpenInSidebar": "在侧边栏中打开",
       "visualClose": "关闭可视化",
       "structuredSessionLaunchFailed": "无法打开 {{value0}} 聊天",
-      "handoff": {
-        "stage": {
-          "finishingChat": null,
-          "finishingTerminal": null,
-          "openingTerminal": null,
-          "resumingChat": null,
-          "verifyingTerminal": null,
-          "verifyingChat": null,
-          "recovering": null,
-          "manualRecovery": null
-        },
-        "switchingOwner": null,
-        "mode": {
-          "switching": null,
-          "terminal": null,
-          "chat": null
-        },
-        "switchingAfterTurn": null,
-        "returningAfterTurn": null,
-        "cancel": null,
-        "switchAfterTurn": null,
-        "stopTurnAndSwitch": null,
-        "openAgentTui": null,
-        "returnAfterTurn": null,
-        "returnToChat": null,
-        "agentOpenOnHost": null,
-        "agentOpen": null,
-        "exitTerminal": null,
-        "retryProof": null,
-        "retry": null,
-        "details": null
-      },
       "structuredSessionLaunchFailedDescription": "Wakii 无法打开结构化 {{value0}} 聊天。有关详细信息，请参阅日志。"
     },
     "tab": {

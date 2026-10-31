@@ -1,6 +1,11 @@
 {
   "$schema": "../node_modules/oxlint/configuration_schema.json",
-  "plugins": ["import", "jsx-a11y", "react-hooks", "vitest"],
+  "plugins": [
+    "import",
+    "jsx-a11y",
+    "react-hooks",
+    "vitest"
+  ],
   "categories": {
     "correctness": "off",
     "suspicious": "off",
@@ -14,14 +19,21 @@
     "import/export": "warn",
     "import/named": "warn",
     "import/namespace": "warn",
-    "import/no-cycle": ["warn", { "maxDepth": 3 }],
+    "import/no-cycle": [
+      "warn",
+      {
+        "maxDepth": 3
+      }
+    ],
     "import/no-duplicates": "warn",
     "import/no-empty-named-blocks": "warn",
     "import/no-self-import": "warn"
   },
   "overrides": [
     {
-      "files": ["src/renderer/src/**/*.{ts,tsx}"],
+      "files": [
+        "src/renderer/src/**/*.{ts,tsx}"
+      ],
       "rules": {
         "jsx-a11y/alt-text": "warn",
         "jsx-a11y/anchor-has-content": "warn",
@@ -31,19 +43,20 @@
       }
     },
     {
-      "files": ["**/*.{test,spec}.{ts,tsx}", "tests/**/*.{ts,tsx}"],
+      "files": [
+        "**/*.{test,spec}.{ts,tsx}",
+        "tests/**/*.{ts,tsx}"
+      ],
       "rules": {
         "vitest/no-conditional-tests": "warn",
         "vitest/no-focused-tests": "warn",
         "vitest/no-identical-title": "warn"
       }
-    },
-    {
-      "files": ["mobile/**/*.{ts,tsx}"],
-      "rules": {
-        "react-hooks/exhaustive-deps": "warn"
-      }
     }
   ],
-  "ignorePatterns": ["**/node_modules", "**/dist", "**/out"]
+  "ignorePatterns": [
+    "**/node_modules",
+    "**/dist",
+    "**/out"
+  ]
 }

@@ -13,6 +13,18 @@
       "da1df6e6dab96373add40b36a5dee7d6b29e5a92e0cf827466ea1ad364546961",
       "f49b29fb6b209956907688692387adcdc509fad344555f09badaf383106f5f39"
     ],
+    "design-taste-frontend": [
+      "8c207109f7a96542af80630cf1d5d26527b70351d88d4249fb95999d830e07e5"
+    ],
+    "figma-orientation": [
+      "4775dfc30ce34af5f517fa8c9ee7ec93d76febefce815f6103b4912b217cba38"
+    ],
+    "frontend-design": [
+      "1608ea77fbb6fc30d13a97d12cfa8ebf31358d40f0dd97beed24829d6b3f45dd"
+    ],
+    "image-to-code": [
+      "54c69584b1ff6a3adb04591f2f35bd27a39970f478627404b643b23b83d4a081"
+    ],
     "jira-tickets": [
       "5534da4000f4f4c87f7dbb263345a213068c0099a1440186adea865e17d90dfe"
     ],
@@ -148,6 +160,12 @@
       "ee559224b6047d01db02d9aabdfbcc94475394e6f11f4076ce785c42faee63c6",
       "f3bae76495657f27458969fe2d6510098f39b429580870f5e79fac3493f891ee",
       "f7da0dd40d8681e2b0303fa0fa2f7ee4e36f2eca6495a4af57b92b9857dff732"
+    ],
+    "prompt-master": [
+      "b85718374d27bbada453791af92b7ae0b3256e5552d2f3f9d940ca4183131e4b"
+    ],
+    "web-design-guidelines": [
+      "8472f537a12e2dbbd83e400844c7dbf2452d617ab3614780d0c02f6017f2b623"
     ]
   }
 }

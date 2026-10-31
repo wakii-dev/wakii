@@ -23154,38 +23154,6 @@
       "structuredSessionCloseFailed": "Could not close this chat session",
       "structuredSessionLaunchFailed": "Could not open {{value0}} chat",
       "structuredSessionCloseFailedDescription": "The terminal stayed open so the provider remains recoverable.",
-      "handoff": {
-        "stage": {
-          "finishingChat": null,
-          "finishingTerminal": null,
-          "openingTerminal": null,
-          "resumingChat": null,
-          "verifyingTerminal": null,
-          "verifyingChat": null,
-          "recovering": null,
-          "manualRecovery": null
-        },
-        "switchingOwner": null,
-        "mode": {
-          "switching": null,
-          "terminal": null,
-          "chat": null
-        },
-        "switchingAfterTurn": null,
-        "returningAfterTurn": null,
-        "cancel": null,
-        "switchAfterTurn": null,
-        "stopTurnAndSwitch": null,
-        "openAgentTui": null,
-        "returnAfterTurn": null,
-        "returnToChat": null,
-        "agentOpenOnHost": null,
-        "agentOpen": null,
-        "exitTerminal": null,
-        "retryProof": null,
-        "retry": null,
-        "details": null
-      },
       "structuredSessionLaunchFailedDescription": "Wakii could not open a structured {{value0}} chat. See the logs for details."
     },
     "tab": {

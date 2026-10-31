@@ -134,7 +134,7 @@ function requireLinkTarget(op: BundledSkillOp): string {
 
 async function applyOp(run: SkillRun, op: BundledSkillOp): Promise<string | undefined> {
   const { filesystem } = run.input
-  const files = [{ path: 'SKILL.md', text: run.source.text }]
+  const files = run.source.files
   const verify = verifier(run, op.path, op.observed)
   for (const cleanup of op.cleanup) {
     await settleCleanup(run, cleanup)

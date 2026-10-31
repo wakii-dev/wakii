@@ -21984,38 +21984,6 @@
       "visualOpenInSidebar": "사이드바에서 열기",
       "visualClose": "시각화 닫기",
       "structuredSessionLaunchFailed": "{{value0}} 채팅을 열 수 없습니다.",
-      "handoff": {
-        "stage": {
-          "finishingChat": null,
-          "finishingTerminal": null,
-          "openingTerminal": null,
-          "resumingChat": null,
-          "verifyingTerminal": null,
-          "verifyingChat": null,
-          "recovering": null,
-          "manualRecovery": null
-        },
-        "switchingOwner": null,
-        "mode": {
-          "switching": null,
-          "terminal": null,
-          "chat": null
-        },
-        "switchingAfterTurn": null,
-        "returningAfterTurn": null,
-        "cancel": null,
-        "switchAfterTurn": null,
-        "stopTurnAndSwitch": null,
-        "openAgentTui": null,
-        "returnAfterTurn": null,
-        "returnToChat": null,
-        "agentOpenOnHost": null,
-        "agentOpen": null,
-        "exitTerminal": null,
-        "retryProof": null,
-        "retry": null,
-        "details": null
-      },
       "structuredSessionLaunchFailedDescription": "Wakii는 구조화된 {{value0}} 채팅을 열 수 없습니다. 자세한 내용은 로그를 참조하세요."
     },
     "tab": {

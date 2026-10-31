@@ -203,7 +203,9 @@ describe('plan digest', () => {
     const before = await buildBundledSkillPlan({ ...input, sources: [NEW_SOURCE] })
     const after = await buildBundledSkillPlan({
       ...input,
-      sources: [{ ...NEW_SOURCE, text: `${NEW_TEXT}more\n` }]
+      sources: [
+        { ...NEW_SOURCE, files: [{ path: 'SKILL.md', text: `${NEW_TEXT}more\n` }] }
+      ]
     })
     expect(after.plan.planDigest).not.toBe(before.plan.planDigest)
   })

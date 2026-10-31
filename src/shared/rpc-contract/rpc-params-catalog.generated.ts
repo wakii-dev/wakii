@@ -34,7 +34,6 @@ import {
   PairingProvisionRelayParamsSchema
 } from '../mobile-relay-credential-contract'
 import { MobileRelayHostWorktreesParamsSchema } from '../mobile-relay-hosts-contract'
-import { MobileWebBundleChunkParamsSchema } from '../mobile-web-bundle/bundle-rpc-contract'
 import { OrcadMigrationBlobChunkRequestSchema } from '../orcad-migration/orcad-migration-blob-transfer'
 import { OrcadMigrationSnapshotChunkRequestSchema } from '../orcad-migration/orcad-migration-scrollback'
 import {
@@ -1230,9 +1229,6 @@ export const RPC_PARAMS_BY_METHOD = {
   'mobileRelay.hosts.list': null,
   'mobileRelay.hosts.worktrees': MobileRelayHostWorktreesParamsSchema,
   'mobileRelay.projectSections': null,
-  'mobileWeb.bundle.chunk': MobileWebBundleChunkParamsSchema,
-  'mobileWeb.bundle.manifest': null,
-  'mobileWeb.bundle.range': MobileWebBundleChunkParamsSchema,
   'nativeChat.readSession': NativeChatSession,
   'nativeChat.subscribe': NativeChatSession,
   'nativeChat.unsubscribe': NativeChatUnsubscribe,

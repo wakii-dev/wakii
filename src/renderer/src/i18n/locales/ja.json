@@ -21997,38 +21997,6 @@
       "visualOpenInSidebar": "サイドバーで開く",
       "visualClose": "ビジュアライゼーションを閉じる",
       "structuredSessionLaunchFailed": "{{value0}} チャットを開けませんでした",
-      "handoff": {
-        "stage": {
-          "finishingChat": null,
-          "finishingTerminal": null,
-          "openingTerminal": null,
-          "resumingChat": null,
-          "verifyingTerminal": null,
-          "verifyingChat": null,
-          "recovering": null,
-          "manualRecovery": null
-        },
-        "switchingOwner": null,
-        "mode": {
-          "switching": null,
-          "terminal": null,
-          "chat": null
-        },
-        "switchingAfterTurn": null,
-        "returningAfterTurn": null,
-        "cancel": null,
-        "switchAfterTurn": null,
-        "stopTurnAndSwitch": null,
-        "openAgentTui": null,
-        "returnAfterTurn": null,
-        "returnToChat": null,
-        "agentOpenOnHost": null,
-        "agentOpen": null,
-        "exitTerminal": null,
-        "retryProof": null,
-        "retry": null,
-        "details": null
-      },
       "structuredSessionLaunchFailedDescription": "Wakii は構造化された {{value0}} チャットを開けませんでした。詳細についてはログを参照してください。"
     },
     "tab": {

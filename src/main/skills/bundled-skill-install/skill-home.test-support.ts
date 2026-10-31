@@ -31,7 +31,7 @@ export const NEW_TEXT = `---\nname: ${NAME}\ndescription: New\n---\n\nNew body\n
 const digest = (text: string) => createHash('sha256').update(text).digest('hex')
 export const NEW_SOURCE: BundledSkillSource = {
   name: NAME,
-  text: NEW_TEXT,
+  files: [{ path: 'SKILL.md', text: NEW_TEXT }],
   releasedDigests: [digest(OLD_TEXT), digest(NEW_TEXT)]
 }
 export const NPX_LOCK = JSON.stringify({

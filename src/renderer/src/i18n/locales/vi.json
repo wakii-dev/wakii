@@ -18103,38 +18103,6 @@
       "structuredSessionCloseFailed": "Không thể đóng phiên trò chuyện này",
       "structuredSessionLaunchFailed": "Không thể mở cuộc trò chuyện {{value0}}",
       "structuredSessionCloseFailedDescription": "Thiết bị terminal vẫn mở để nhà cung cấp vẫn có thể phục hồi được.",
-      "handoff": {
-        "stage": {
-          "finishingChat": "Đang kết thúc phiên trò chuyện…",
-          "finishingTerminal": "Hoàn thiện terminal agent…",
-          "openingTerminal": "Khai trương terminal agent…",
-          "resumingChat": "Đang tiếp tục phiên trò chuyện…",
-          "verifyingTerminal": "Đang xác minh terminal của agent…",
-          "verifyingChat": "Đang xác minh phiên trò chuyện…",
-          "recovering": "Đang khôi phục phiên agent...",
-          "manualRecovery": "Phiên Agent cần phục hồi"
-        },
-        "switchingOwner": "Đang chuyển chủ sở hữu phiên…",
-        "mode": {
-          "switching": "Chuyển đổi",
-          "terminal": "Terminal",
-          "chat": "Trò chuyện"
-        },
-        "switchingAfterTurn": "Chuyển đổi sau lượt này",
-        "returningAfterTurn": "Trở lại sau lượt này",
-        "cancel": "Hủy",
-        "switchAfterTurn": "Chuyển đổi sau lượt này",
-        "stopTurnAndSwitch": "Dừng quay và chuyển đổi",
-        "openAgentTui": "Mở agent TUI",
-        "returnAfterTurn": "Trở lại sau lượt này",
-        "returnToChat": "Quay lại trò chuyện",
-        "agentOpenOnHost": "Agent đang mở tại terminal vào {{value0}}.",
-        "agentOpen": "Agent được mở trong terminal.",
-        "exitTerminal": "Thoát khỏi terminal của agent để tiếp tục trò chuyện.",
-        "retryProof": "Thử lại bằng chứng",
-        "retry": "Thử lại",
-        "details": "Chi tiết"
-      },
       "structuredSessionLaunchFailedDescription": "Wakii không thể mở cuộc trò chuyện có cấu trúc {{value0}}. Xem nhật ký để biết chi tiết.",
       "subagents": {
         "state": {

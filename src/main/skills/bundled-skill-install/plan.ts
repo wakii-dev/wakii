@@ -239,7 +239,9 @@ async function planSkill(
   const context: SkillContext = {
     input,
     source,
-    digest: bundledSkillTextDigest(Buffer.from(source.text, 'utf8')),
+    digest: bundledSkillTextDigest(
+      Buffer.from(source.files.find((file) => file.path === 'SKILL.md')?.text ?? '', 'utf8')
+    ),
     force: input.force === 'all' ? 'all' : new Set((input.force ?? []).map(bundledSkillPathKey))
   }
   const sharedRoot = roots.find((root) => root.role === 'shared')
