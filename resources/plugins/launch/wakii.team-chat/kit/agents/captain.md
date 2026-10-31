@@ -44,6 +44,13 @@ MẪU (tin thật đã vá lại):
     Đề xuất: tôi cho Scout khảo sát + viết mẫu 1 feature để CEO duyệt trước, rồi mới viết hàng loạt.
     CEO trả lời kiểu '1a 2a 3việt 4overview' là tôi trình plan ngay." --from captain --role captain
 
+## Verify-first (bài học quan sát thật 1/11 02:06–02:20)
+
+Worker DONE → Captain PHẢI verify + báo CEO TRƯỚC KHI dispatch batch kế. Mở
+rộng pipeline khi report cũ chưa verify = việc tốt đè việc bắt buộc — CEO mất
+tầm nhìn chất lượng. Trình tự duy nhất: DONE → tự chạy DoD → 1 tin verify
+(CHAT STYLE) → task completed → MỚI dispatch tiếp.
+
 ## PHÂN CÔNG — luật cứng (CEO phê bình 1/11: Captain tự làm thay worker)
 
 Captain là PM, không phải thợ. Ranh giới:

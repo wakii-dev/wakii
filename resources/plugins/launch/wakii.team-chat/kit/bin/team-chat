@@ -152,6 +152,7 @@ case "$CMD" in
          send_msg "$@" ;;
   # ── Template commands (§0.0 + G3.5): format bắt buộc — worker không thể viết sai ──
   plan)  # team-chat plan "<các bước + DoD>" [--channel c] → tin [PLAN] ...
+         case "$1" in -*) echo "usage: team-chat plan \"<các bước + DoD đo được>\" [--channel c] (text positional, không phải flag)" >&2; exit 2 ;; esac
          [ $# -eq 0 ] && { echo "usage: team-chat plan \"<các bước + DoD đo được>\" [--channel c]" >&2; exit 2; }
          TEXT="$1"; shift; TPL_PASS=()
          while [ $# -gt 0 ]; do case "$1" in
@@ -172,6 +173,7 @@ case "$CMD" in
            echo "DONE phải ĐỦ 3 phần (hiến pháp §0.0) — thiếu là bị trả lại." >&2; exit 2; }
          send_msg "DONE $TID — ① Đã làm: $DID ② Cách test: $TST ③ Bằng chứng: $EVD" --role worker ${TPL_PASS[@]+"${TPL_PASS[@]}"} ;;
   blocked) # team-chat blocked "<lý do>" → BLOCKED (anti-grind: block×3 → Captain ép hướng)
+         case "$1" in -*) echo "usage: team-chat blocked \"<lý do + đã thử gì>\"" >&2; exit 2 ;; esac
          [ $# -eq 0 ] && { echo "usage: team-chat blocked \"<lý do + đã thử gì>\"" >&2; exit 2; }
          TEXT="$1"; shift; TPL_PASS=()
          while [ $# -gt 0 ]; do case "$1" in

@@ -125,6 +125,11 @@ case "$CMD" in
     # Snapshot worktrees TRƯỚC spawn — fallback vững khi receipt không lộ path
     # (selector 'new-top-level': dig() miss → marker/hooks ghi nhầm chỗ, worker
     # chạy trần trụi — sự cố thật 1/11 docs-writer).
+    TERM_BEFORE=$("$ORCA" terminal list --json 2>/dev/null | python3 -c "
+import json,sys
+try: print('\n'.join(t.get('handle','') for t in json.load(sys.stdin)['result']['terminals']))
+except Exception: pass
+" 2>/dev/null)
     WT_BEFORE=$("$ORCA" worktree list --json 2>/dev/null | python3 -c "
 import json,sys
 try: print('\n'.join(w.get('path','') for w in json.load(sys.stdin)['result']['worktrees']))
@@ -159,7 +164,12 @@ except Exception: pass
     [ -n "$WT_REAL" ] && WT_PATH="$WT_REAL"
     install_worker_hooks "$WT_PATH"
     PANE=$(pane_of_worker_json "$OUT" 2>/dev/null)
-    [ -z "$PANE" ] && PANE="${TEAM_WORKER_PANE:-}"
+    [ -n "$PANE" ] || PANE=$(diff <(printf '%s\n' "$TERM_BEFORE") <("$ORCA" terminal list --json 2>/dev/null | python3 -c "
+import json,sys
+try: print('\n'.join(t.get('handle','') for t in json.load(sys.stdin)['result']['terminals']))
+except Exception: pass
+" 2>/dev/null) 2>/dev/null | grep '^> ' | head -1 | cut -c3-)
+    [ -n "$PANE" ] || PANE="${TEAM_WORKER_PANE:-}"
     if [ -n "$PANE" ]; then
       reg_put "$PANE" "${NAME%%-*}" "$WT_PATH" "$TASK" "$RUN" "$REPO" "${REPO}-${NAME%%-*}"
       echo "team-orch: đăng ký $PANE → ${NAME%%-*} (danh tính khóa theo pane)"
