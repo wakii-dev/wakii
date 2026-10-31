@@ -59,6 +59,11 @@ ok(m.from === 'smith', 'plan from=smith theo registration: ' + m.from)
 r = run(['plan', 'giả danh', '--from', 'weaver'], { ORCA_AGENT_PANE: 'term_s' })
 ok(r.status === 1, 'plan spoof qua --from phải bị chặn')
 
+// 5b) passthrough: --from/--channel không bị vòng parse template nuốt
+r = run(['done', 'P', '--did', 'a', '--test', 'b', '--evidence', 'c', '--from', 'smith', '--channel', 'demo'])
+ok(r.status === 0 && lastLine().from === 'smith' && lastLine().channel === 'demo',
+  'done passthrough --from/--channel: ' + JSON.stringify(lastLine()))
+
 // 6) TEMPLATES.md tồn tại trong skill + chứa đủ markers
 const tpl = readFileSync(join(HERE, '..', 'skills', 'team-workflow', 'TEMPLATES.md'), 'utf8')
 for (const marker of ['[PLAN]', 'DONE', 'BLOCKED', '📡', '[CEO→captain]', '🏁', '👷', '✅', 'run.created', 'lesson.proposed']) {
