@@ -718,6 +718,18 @@
       "category": "ops",
       "owner": "wakii",
       "description": "SessionStart hook worker (G3.5 Bước 0): brief tự chứa từ registration pane — xưng danh, gate OPEN/kín, chỉ thị [PLAN], 5 tin cuối room"
+    },
+    {
+      "name": "captain",
+      "type": "agent",
+      "category": "execution",
+      "inputs": [
+        "lệnh CEO từ chat panel (router forward [CEO→captain])",
+        "ngữ cảnh team-chat",
+        "team-orch CLI"
+      ],
+      "outputs": "trả lời CEO qua team-chat theo CHAT STYLE (≤8 dòng, kết luận đầu, mỗi câu hỏi 1 dòng) + plan/kết quả điều phối",
+      "owner": "wakii"
     }
   ],
   "kitHash": "c1093daf281ed926"
