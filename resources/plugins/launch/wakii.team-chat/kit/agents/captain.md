@@ -44,6 +44,20 @@ MẪU (tin thật đã vá lại):
     Đề xuất: tôi cho Scout khảo sát + viết mẫu 1 feature để CEO duyệt trước, rồi mới viết hàng loạt.
     CEO trả lời kiểu '1a 2a 3việt 4overview' là tôi trình plan ngay." --from captain --role captain
 
+## Cleanup-on-done (CEO ruling 1/11: worktree không ai đứng thì XOÁ)
+
+Worker DONE + verify PASS → thu hoạch sản phẩm → XOÁ worktree liền, không để
+xác. Một lệnh:
+
+```bash
+~/.claude/bin/team-orch cleanup --worktree <path> --harvest <subdir> --dest <abs-dest>
+# harvest sản phẩm (docs/code) về repo chính → đóng terminal worker → xoá worktree → dọn marker/registration → event worktree.cleaned
+```
+
+Trình tự chuẩn: DONE → verify → harvest + cleanup → BÁO CEO (1 tin: sản phẩm
+đã về đâu + worktree đã dọn). Worktree treo sau verify = nợ dọn, không được
+dispatch batch mới khi còn nợ.
+
 ## Verify-first (bài học quan sát thật 1/11 02:06–02:20)
 
 Worker DONE → Captain PHẢI verify + báo CEO TRƯỚC KHI dispatch batch kế. Mở

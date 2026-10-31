@@ -222,6 +222,53 @@ except Exception: pass
     fi
     echo "$OUT"
     ;;
+  cleanup)
+    # cleanup --worktree <path> [--harvest <subdir> --dest <abs>] — worker rời + không ai hoạt động:
+    # thu hoạch sản phẩm (nếu có) → đóng terminal → XOÁ WORKTREE → dọn marker/registration → event.
+    # Luật cleanup-on-merge (§9): worktree không keeping ai sau khi verify PASS.
+    WT="" HARVEST="" DEST=""
+    while [ $# -gt 0 ]; do case "$1" in
+      --worktree) WT="$2"; shift 2 ;;
+      --harvest) HARVEST="$2"; shift 2 ;;
+      --dest) DEST="$2"; shift 2 ;;
+      *) shift ;;
+    esac; done
+    [ -n "$WT" ] || { echo "cleanup cần --worktree <path> [--harvest <subdir> --dest <abs>]" >&2; exit 2; }
+    [ -d "$WT" ] || { echo "worktree không tồn tại: $WT" >&2; exit 1; }
+    # 1) thu hoạch sản phẩm vào đích trước khi xoá (mất là mất thật)
+    if [ -n "$HARVEST" ] && [ -n "$DEST" ] && [ -d "$WT/$HARVEST" ]; then
+      mkdir -p "$DEST"
+      cp -R "$WT/$HARVEST/." "$DEST/" && echo "team-orch: harvest $WT/$HARVEST → $DEST"
+    fi
+    # 2) đóng terminal worker đứng ở worktree này (pane từ registration)
+    CPANE=$(python3 - "$REG" "$WT" <<'PY'
+import json, sys
+try: reg = json.load(open(sys.argv[1], encoding="utf-8"))
+except Exception: sys.exit(0)
+for pane, e in reg.items():
+    if isinstance(e, dict) and e.get("worktree") == sys.argv[2]:
+        print(pane); break
+PY
+)
+    if [ -n "$CPANE" ]; then
+      "$ORCA" terminal close --terminal "$CPANE" --json > /dev/null 2>&1 || true
+      python3 - "$REG" "$CPANE" <<'PY'
+import json, sys
+try: reg = json.load(open(sys.argv[1], encoding="utf-8"))
+except Exception: reg = {}
+reg.pop(sys.argv[2], None)
+json.dump(reg, open(sys.argv[1], "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+PY
+      echo "team-orch: đóng terminal + unregister $CPANE"
+    fi
+    # 3) xoá worktree + marker
+    "$ORCA" worktree remove --worktree "path:$WT" --force --json > /dev/null 2>&1 \
+      && echo "team-orch: ĐÃ XOÁ worktree $WT" \
+      || { echo "worktree remove fail (xem selector path:)" >&2; "$ORCA" worktree remove --worktree "$WT" --force --json > /dev/null 2>&1 && echo "team-orch: ĐÃ XOÁ worktree $WT" || exit 1; }
+    rm -f "$(marker "$WT")"
+    emit worktree.cleaned system "$(repo_of_cwd)" "" "" "{\"worktree\":\"$WT\"}"
+    echo "team-orch: cleanup xong — marker dọn, event worktree.cleaned phát"
+    ;;
   register)
     # register --pane <handle> --name <n> --worktree <path> [--task --run --repo --room]
     PANE="" NAME="" WTV="" TASK="" RUN="" REPO="" ROOM="general"
