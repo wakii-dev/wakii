@@ -711,6 +711,13 @@
       "category": "ops",
       "owner": "wakii",
       "description": "Retro cuối run (§5): auto-sync → digest → run.summary + lesson.proposed drafts — CEO duyệt qua chat"
+    },
+    {
+      "name": "team-session-brief",
+      "type": "bin",
+      "category": "ops",
+      "owner": "wakii",
+      "description": "SessionStart hook worker (G3.5 Bước 0): brief tự chứa từ registration pane — xưng danh, gate OPEN/kín, chỉ thị [PLAN], 5 tin cuối room"
     }
   ],
   "kitHash": "e7e68fce941a65cd"
