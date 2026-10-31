@@ -181,7 +181,16 @@ except Exception: pass
         fi
       fi
     fi
-    OUT=$("$ORCA" orchestration "$CMD" ${PASS[@]+"${PASS[@]}"} 2>&1) || { echo "$OUT"; exit 1; }
+    # --id tùy chọn: orchestration gate là ceremony bổ sung; khi worker đang
+    # держ dispatch active, orchestration từ chối mở gate (task_not_startable)
+    # — plan-gate của TEAM vẫn phải duyệt được (marker + event là nguồn sự thật).
+    HAS_ID=0
+    for a in ${PASS[@]+"${PASS[@]}"}; do [ "$a" = "--id" ] && HAS_ID=1; done
+    if [ "$HAS_ID" -eq 1 ]; then
+      OUT=$("$ORCA" orchestration "$CMD" ${PASS[@]+"${PASS[@]}"} 2>&1) || echo "team-orch: orchestration gate skipped — $OUT" >&2
+    else
+      OUT="(không có --id — chỉ đóng plan-gate team)"
+    fi
     if [ "$PLAN" -eq 1 ] && [ -n "$WT" ]; then
       MP="$(marker "$WT")"
       [ -f "$MP" ] && printf '{"taskId":null,"planGateOpen":false,"worktreePath":"%s"}\n' "$WT" > "$MP"
