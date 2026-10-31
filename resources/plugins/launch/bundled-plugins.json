@@ -2,9 +2,9 @@
   "version": 1,
   "plugins": [
     {
-      "pluginKey": "stablyai.orca-superpowers-launcher",
-      "path": "stablyai.orca-superpowers-launcher",
-      "contentHash": "978289a32439e9c23c8e0776dbb1c1b4086f87960f8bec663b7067a3f7c85da5"
+      "pluginKey": "wakii.team-chat",
+      "path": "wakii.team-chat",
+      "contentHash": "37c64265ff4c943b4740959a1428f94093c382330676c1e6c8d41a13d9d1db85"
     }
   ]
 }

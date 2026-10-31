@@ -12,13 +12,13 @@ import { createRequire } from 'node:module'
 
 const requireCjs = createRequire(import.meta.url)
 const { hashPackagedPluginTree } = requireCjs('./verify-packaged-plugin-resources.cjs')
-const launcherMain = pathToFileURL(path.resolve('resources/plugins/launch/stablyai.orca-superpowers-launcher/main.mjs'))
+const launcherMain = pathToFileURL(path.resolve('resources/plugins/launch/wakii.team-chat/main.mjs'))
 const { computeKitHash } = await import(launcherMain)
 
-const KIT_DIR = 'resources/plugins/launch/stablyai.orca-superpowers-launcher/kit'
+const KIT_DIR = 'resources/plugins/launch/wakii.team-chat/kit'
 const KIT_JSON = `${KIT_DIR}/kit.json`
 const BUNDLED = 'resources/plugins/launch/bundled-plugins.json'
-const LAUNCHER_DIR = 'resources/plugins/launch/stablyai.orca-superpowers-launcher'
+const LAUNCHER_DIR = 'resources/plugins/launch/wakii.team-chat'
 
 const staged = execFileSync('git', ['diff', '--cached', '--name-only'], { encoding: 'utf8' })
   .split('\n').map((l) => l.trim()).filter(Boolean)
@@ -40,7 +40,7 @@ if (kitJson.kitHash !== actualKitHash) {
   )
 }
 const actualFp = hashPackagedPluginTree(LAUNCHER_DIR)
-const entry = bundled.plugins.find((x) => x.pluginKey === 'stablyai.orca-superpowers-launcher')
+const entry = bundled.plugins.find((x) => x.pluginKey === 'wakii.team-chat')
 if (!entry || entry.contentHash !== actualFp) {
   hints.push(
     `fingerprint stale: bundled=${(entry?.contentHash ?? '—').slice(0, 8)} ≠ tree ${actualFp.slice(0, 8)}`,

@@ -1,0 +1,91 @@
+#!/bin/bash
+# team-chat — CLI vào bus chat team (~/.claude/chat/team-chat.jsonl) cho Captain/workers.
+# Panel trong app đọc cùng file qua plugin wakii.team-chat.
+#
+# Usage:
+#   team-chat send "<text>" [--from <tên>] [--role captain|worker|owner|system] [--channel <kênh>]
+#   team-chat read  [--last N] [--channel <kênh>]     # in N tin mới nhất (default 20)
+#   team-chat tail  [-f] [--channel <kênh>]           # tin mới nhất; -f = theo dõi live
+#   team-chat path                                      # in đường dẫn bus
+set -u
+LOG="${TEAM_CHAT_LOG:-$HOME/.claude/chat/team-chat.jsonl}"
+CMD="${1:-read}"; [ $# -gt 0 ] && shift
+
+send_msg() {
+  local text="$1" from="${TEAM_CHAT_FROM:-${ORCA_AGENT_NAME:-worker}}" role="" role_set=0 channel="general"
+  while [ $# -gt 1 ]; do case "$1" in
+    --from) from="$2"; shift 2 ;;
+    --role) role="$2"; role_set=1; shift 2 ;;
+    --channel) channel="$2"; shift 2 ;;
+    *) shift ;;
+  esac; done
+  # Role mặc định suy từ tên Captain quen thuộc; --role tường minh luôn thắng.
+  if [ "$role_set" -eq 0 ]; then
+    case "$from" in
+      captain*|zcode*) role="captain" ;;
+      owner*|hoivu*) role="owner" ;;
+      *) role="worker" ;;
+    esac
+  fi
+  mkdir -p "$(dirname "$LOG")"
+  python3 - "$LOG" "$from" "$role" "$channel" "$text" <<'PY'
+import json, sys, time
+log, frm, role, channel, text = sys.argv[1:6]
+line = json.dumps({"at": int(time.time()*1000), "from": frm[:40], "role": role[:12],
+                   "channel": channel[:32], "text": text[:4000]})
+with open(log, "a", encoding="utf-8") as f:
+    f.write(line + "\n")
+PY
+  echo "→ #$channel $from: ${text:0:60}"
+}
+
+read_msgs() {
+  local n=20 channel=""
+  while [ $# -gt 0 ]; do case "$1" in
+    --last|-n) n="$2"; shift 2 ;;
+    --channel) channel="$2"; shift 2 ;;
+    *) shift ;;
+  esac; done
+  [ -f "$LOG" ] || { echo "(chưa có tin nhắn — bus: $LOG)"; exit 0; }
+  python3 - "$LOG" "$n" "$channel" <<'PY'
+import json, sys, datetime
+log, n, channel = sys.argv[1], int(sys.argv[2]), sys.argv[3]
+try:
+    lines = [l for l in open(log, encoding="utf-8") if l.strip()]
+except FileNotFoundError:
+    lines = []
+for l in lines[-n*3 if channel else -n:]:
+    try:
+        m = json.loads(l)
+    except Exception:
+        continue
+    if channel and m.get("channel") != channel:
+        continue
+    t = datetime.datetime.fromtimestamp(m["at"]/1000).strftime("%H:%M")
+    print(f'{t} {m.get("from","?"):12.12} [{m.get("role","?"):7.7}] {m.get("text","")}')
+PY
+}
+
+tail_msgs() {
+  if [ "${1:-}" = "-f" ]; then
+    [ -f "$LOG" ] && tail -n 20 "$LOG" >/dev/null 2>&1
+    exec tail -f "$LOG" 2>/dev/null | python3 -u -c '
+import sys, json, datetime
+for l in sys.stdin:
+    try: m = json.loads(l)
+    except Exception: continue
+    t = datetime.datetime.fromtimestamp(m["at"]/1000).strftime("%H:%M")
+    print(f"{t} {m.get(chr(102)+chr(114)+chr(111)+chr(109),chr(63)):12.12} [{m.get(chr(114)+chr(111)+chr(108)+chr(101),chr(63)):7.7}] {m.get(chr(116)+chr(101)+chr(120)+chr(116),chr(32))}", flush=True)
+'
+  fi
+  read_msgs --last 5
+}
+
+case "$CMD" in
+  send)  [ $# -eq 0 ] && { echo "usage: team-chat send \"<text>\" [--from name] [--role r] [--channel c]" >&2; exit 2; }
+         send_msg "$@" ;;
+  read)  read_msgs "$@" ;;
+  tail)  tail_msgs "$@" ;;
+  path)  echo "$LOG" ;;
+  *)     echo "usage: team-chat send|read|tail|path" >&2; exit 2 ;;
+esac

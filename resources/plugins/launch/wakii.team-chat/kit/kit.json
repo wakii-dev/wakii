@@ -1,7 +1,7 @@
 {
   "name": "story-team-kit",
-  "version": "2.23.1",
-  "description": "10-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới.",
+  "version": "2.24.0",
+  "description": "10-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới. 31/10: team-chat bus + team-workflow skill (HOI-15/16).",
   "requires": {
     "claude-code": ">=2.0",
     "external": {
@@ -560,7 +560,103 @@
       "type": "bin",
       "category": "execution",
       "description": "workfront driver — 1 story = 1 navigator: verify executor → tick mindmap → convergence → DONE gate (cửa người); --repo <path> portable (worktree per-story, PR completion); attempts ≥3 blocked, breaker, single-instance, outcome logging instincts-v0 (03/10)"
+    },
+    {
+      "name": "team-chat",
+      "type": "bin",
+      "category": "ops",
+      "description": "CLI vào bus chat team (~/.claude/chat/team-chat.jsonl): send/read/tail — Captain & workers báo DONE/BLOCKED, panel app đọc cùng bus",
+      "owner": "wakii"
+    },
+    {
+      "name": "team-workflow",
+      "type": "skill",
+      "category": "execution",
+      "inputs": [
+        "mục tiêu từ Owner",
+        "Linear project wakii-ade"
+      ],
+      "outputs": "Captain điều phối: ticket → worker-start → verify DoD (battery) → gate → merge → audit; workers báo qua team-chat",
+      "description": "Team workflow Captain-centric (adapt TEAM-WORKFLOW v2.1 cho desktop) — bảng chọn workflow, vòng lặp 4 bước, cheat sheet orchestration",
+      "owner": "wakii"
+    },
+    {
+      "name": "be-dev",
+      "type": "agent",
+      "category": "execution",
+      "inputs": [
+        "task + worktree + brief có DoD"
+      ],
+      "outputs": "DONE/BLOCKED + code trong worktree",
+      "description": "BE developer — services, API, DB",
+      "owner": "wakii"
+    },
+    {
+      "name": "fe-dev",
+      "type": "agent",
+      "category": "execution",
+      "inputs": [
+        "task + worktree + brief có DoD"
+      ],
+      "outputs": "DONE/BLOCKED + code trong worktree",
+      "description": "FE developer — UI remotes, components",
+      "owner": "wakii"
+    },
+    {
+      "name": "ui-dev",
+      "type": "agent",
+      "category": "execution",
+      "inputs": [
+        "task + worktree + brief có DoD"
+      ],
+      "outputs": "DONE/BLOCKED + code trong worktree",
+      "description": "UI với ui-kit",
+      "owner": "wakii"
+    },
+    {
+      "name": "forge",
+      "type": "agent",
+      "category": "infra",
+      "inputs": [
+        "task + worktree + brief có DoD"
+      ],
+      "outputs": "DONE/BLOCKED + code trong worktree",
+      "description": "DevOps — Docker, CI/CD, monitoring",
+      "owner": "wakii"
+    },
+    {
+      "name": "mason",
+      "type": "agent",
+      "category": "review",
+      "inputs": [
+        "task + worktree + brief có DoD"
+      ],
+      "outputs": "DONE/BLOCKED + code trong worktree",
+      "description": "QA — tests, characterization",
+      "owner": "wakii"
+    },
+    {
+      "name": "gate-keeper",
+      "type": "agent",
+      "category": "review",
+      "inputs": [
+        "task + worktree + brief có DoD"
+      ],
+      "outputs": "DONE/BLOCKED + code trong worktree",
+      "description": "Verify gate trước merge",
+      "owner": "wakii"
+    },
+    {
+      "name": "e2e-runner",
+      "type": "agent",
+      "category": "ops",
+      "inputs": [
+        "task + worktree + brief có DoD"
+      ],
+      "outputs": "DONE/BLOCKED + code trong worktree",
+      "description": "Chạy stack thật + e2e",
+      "owner": "wakii"
     }
   ],
-  "kitHash": "0bd74482407c8766"
+  "kitHash": "4a839f7aab6b61d0"
 }

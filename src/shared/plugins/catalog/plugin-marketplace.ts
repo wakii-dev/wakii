@@ -19,6 +19,10 @@ export const PLUGIN_MARKETPLACE_ENTRY_LIMIT = 2_048
 export const PLUGIN_MARKETPLACE_CATEGORY_LIMIT = 16
 
 export const OFFICIAL_PLUGIN_PUBLISHER = 'stablyai'
+
+// Fork (Wakii): bundled plugins may ship under the wakii publisher too — same
+// bundling privilege, our own namespace. Must survive upstream merges.
+export const OFFICIAL_PLUGIN_PUBLISHERS = new Set(['stablyai', 'wakii'])
 export const OFFICIAL_PLUGIN_ID_PREFIX = 'orca-'
 export const OFFICIAL_MARKETPLACE_OWNER = 'stablyai'
 export const OFFICIAL_MARKETPLACE_REPOSITORY = 'orca-plugins'
@@ -254,7 +258,7 @@ export function isReservedPluginIdentity(pluginKey: string): boolean {
 
 /** Orca's own publisher; reserved, so only the official catalog and bundled content carry it. */
 export function hasOfficialPluginPublisher(pluginKey: string): boolean {
-  return splitQualifiedPluginKey(pluginKey)?.publisher === OFFICIAL_PLUGIN_PUBLISHER
+  return OFFICIAL_PLUGIN_PUBLISHERS.has(splitQualifiedPluginKey(pluginKey)?.publisher ?? '')
 }
 
 type GitRepositoryIdentity = {

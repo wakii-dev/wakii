@@ -51,11 +51,11 @@ describe('Phase 1 launch plugin content', () => {
       .filter((entry) => entry.isDirectory())
       .map((entry) => entry.name)
       .sort()
-    // Why: stablyai.orca-superpowers-launcher is bundled-only (bundled-plugins.json)
+    // Why: wakii.team-chat is bundled-only (bundled-plugins.json)
     // — it ships with the app and is deliberately absent from the marketplace index.
     expect(localPluginDirectories).toEqual([
       ...marketplace.plugins.map((plugin) => plugin.id).sort(),
-      'stablyai.orca-superpowers-launcher'
+      'wakii.team-chat'
     ])
 
     const contributionKinds = new Set<string>()

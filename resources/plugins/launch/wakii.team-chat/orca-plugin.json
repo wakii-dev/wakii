@@ -1,0 +1,57 @@
+{
+  "manifestVersion": 1,
+  "id": "team-chat",
+  "publisher": "wakii",
+  "name": "Wakii Team Chat",
+  "version": "1.0.0",
+  "description": "Khung chat cho team agent (Captain + workers + Owner): message bus JSONL (~/.claude/chat/team-chat.jsonl) + panel trong app. Kế thừa superpowers-launcher: vẫn tự cài story-team-kit làm toolbox của Captain (HOI-15/HOI-16).",
+  "engines": {
+    "orca": ">=1.4.0"
+  },
+  "pluginApi": 1,
+  "main": "main.mjs",
+  "contributes": {
+    "panels": [
+      {
+        "id": "team-chat",
+        "title": "Team Chat",
+        "icon": "message-circle",
+        "entry": "panel.html"
+      }
+    ],
+    "commands": [
+      {
+        "id": "team.chat",
+        "title": "Team: Mở Team Chat",
+        "context": "global"
+      },
+      {
+        "id": "team.doctor",
+        "title": "Team: Kit Doctor (toolbox health)",
+        "context": "global"
+      }
+    ],
+    "events": [
+      {
+        "on": "agent.status.changed"
+      }
+    ]
+  },
+  "capabilities": [
+    {
+      "kind": "workspace:read"
+    },
+    {
+      "kind": "agent:read"
+    },
+    {
+      "kind": "terminal:send"
+    },
+    {
+      "kind": "notifications:show"
+    },
+    {
+      "kind": "storage:own"
+    }
+  ]
+}

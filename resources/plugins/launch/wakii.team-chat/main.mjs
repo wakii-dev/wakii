@@ -228,7 +228,7 @@ async function sendToTerminal(orca, text, { terminalId } = {}) {
 // Stories live as bracket files under docs/superpowers/brackets/*.md.
 // Fallback source: issues-with-children from Linear (no bracket file yet).
 
-import { readFile, readdir, writeFile, unlink } from 'node:fs/promises'
+import { readFile, readdir, writeFile, unlink, appendFile, mkdir } from 'node:fs/promises'
 import { join, basename, extname } from 'node:path'
 import { tmpdir } from 'node:os'
 
@@ -1343,407 +1343,59 @@ export function installKit(orca, { root, kitRoot: kitRootOverride } = {}) {
 export default function activate(orca) {
   setKitGuardLogger((line) => orca.log(line))
   installKit(orca)
-  // Story-request poll: panel writes story.request {linear} (fork: panel can
-  // storage.set) → worker finds the bracket file with that linear ID and loads it.
-  let lastReqAt = 0
-  // process any pending request immediately at spawn (worker may be cold)
-  const processRequest = async () => {
+
+  // ── Team Chat bus (HOI-16): log JSONL là nguồn sự thật duy nhất ──────────
+  // ~/.claude/chat/team-chat.jsonl — mọi thành viên ghi/đọc cùng format:
+  //   {"at":<ms>,"from":"<tên>","role":"captain|worker|owner|system","channel":"<kênh>","text":"..."}
+  // Panel → storage 'team.chat.send' (single slot) → poller append file + xoá slot.
+  // CLI (Captain/workers) → bin team-chat append thẳng file.
+  // Outbound: poller refresh storage 'team.chat.tail' (200 tin cuối) mỗi 2s cho panel.
+  const chatDir = join(homeDir(), '.claude', 'chat')
+  const chatLog = join(chatDir, 'team-chat.jsonl')
+
+  const readTail = async (limit = 200) => {
     try {
-      const stored = await orca.host.call('storage.get', { key: 'story.request' })
-      const req = stored?.value
-      if (req && typeof req.linear === 'string' && req.at && req.at !== lastReqAt) {
-        lastReqAt = req.at
-        if (typeof req.file === 'string' && req.file.endsWith('.wakii')) {
-          await loadFromWakiiFile(orca, req.file)
-          return true
-        }
-        if (typeof req.file === 'string' && req.file.endsWith('.md')) {
-          await loadFromBracketFile(orca, req.file)
-          return true
-        }
-        // linear-scan fallback — mindmaps canonical first, brackets legacy
-        for (const r of await storyScanRoots()) {
-          for (const w of await scanWakiiDir(r)) {
-            if (w.linear === req.linear) {
-              await loadFromWakiiFile(orca, w.file)
-              return true
-            }
-          }
-        }
-        for (const r of await storyScanRoots()) {
-          const d = join(r, 'docs', 'superpowers', 'brackets')
-          let ents = []
-          try { ents = await readdir(d) } catch { continue }
-          for (const f of ents.filter(x => x.endsWith('.md'))) {
-            const text = await readFile(join(d, f), 'utf8').catch(() => '')
-            const hm = text.match(/^#\s+Story:\s*([A-Za-z]+-\d+)\s/m)
-            if (hm && hm[1] === req.linear) {
-              await loadFromBracketFile(orca, f)
-              return true
-            }
-          }
-        }
-        orca.log('story request unmatched: ' + req.linear)
-      }
-    } catch { /* silent */ }
-    return false
-  }
-  void processRequest()
-  const reqTimer = setInterval(() => { void processRequest() }, 3000)
-  reqTimer.unref?.()
-  orca.commands.register('superpowers.start', async (args) => {
-    const idea = args && (args.idea || args.text || '')
-    const res = await sendToTerminal(orca, buildStartPrompt(idea, args?.autonomous, args?.polish, args?.subagents, args?.simplify, args?.auditLog, args?.executeMode, args?.story, args?.mindsetBrowser))
-    if (res.ok) orca.log(`superpowers.start → terminal ${res.terminalId}: ${res.text}`)
-    return res
-  })
-
-  orca.commands.register('superpowers.storyLoad', async (args) => loadStorySnapshot(orca, args))
-
-  orca.commands.register('superpowers.storyList', async () => listStories(orca))
-
-  // story.states — children states THEO EPIC (bất kể snapshot nào): panel gọi
-  // khi load bracket để có state màu + children đúng story, không phụ thuộc snapshot cũ.
-  orca.commands.register('superpowers.storyStates', async (args) => {
-    try {
-      const epic = typeof args?.epic === 'string' && /^[A-Za-z]+-\d+$/.test(args.epic) ? args.epic : null
-      if (!epic) return { ok: false, error: 'epic required (FI-169)' }
-      const r = await linearChildrenFull(epic)
-      const children = (r.children || [])
-        .filter(c => c.state?.type !== 'canceled' && c.state?.type !== 'duplicate')
-        .map(c => ({
-          identifier: c.identifier, title: c.title, url: c.url,
-          stateName: c.state?.name ?? null, stateType: c.state?.type ?? null, stateColor: c.state?.color ?? null
-        }))
-      const out = { epic, children, fetchedAt: new Date().toISOString() }
-      await orca.host.call('storage.set', { key: 'story.states.' + epic, value: out })
-      return { ok: true, children: children.length }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
-      orca.log('story states failed: ' + message)
-      return { ok: false, error: message }
-    }
-  })
-
-  // story.tasks — agent activity: terminal titles (đang làm gì) + plan checkbox
-  // progress (đã làm bao nhiêu %) per SF worktree. Panel bracket hiển thị.
-  const collectStoryTasks = async () => {
-    try {
-      const out = { agents: [], progress: {}, fetchedAt: new Date().toISOString() }
-      // 1. Agents đang chạy: terminal titles theo worktree (DEV runtime — story
-      // worktrees sống trong app dev; production binary + ORCA_USER_DATA_PATH)
-      try {
-        const { stdout } = await execFileAsync(orcaBin(), ['terminal', 'list', '--json'],
-          { timeout: 15000, maxBuffer: 2 * 1024 * 1024,
-            env: { ...process.env, ORCA_USER_DATA_PATH: join(homeDir(), 'Library', 'Application Support', 'orca-dev') } })
-        const parsed = JSON.parse(stdout)
-        // chỉ giữ terminal trong worktree sf-* THẬT (tồn tại trên đĩa trong workspace
-        // trees) — tránh title mồ côi của story cũ ghép nhầm vào node story mới
-        const wsBase2 = join(homeDir(), 'orca', 'workspaces')
-        for (const t of parsed?.result?.terminals ?? []) {
-          const wtPath = (t.worktreeId || '').split('::')[1] || ''
-          const wt = wtPath.split('/').pop()
-          if (!wt || !t.title || /^\s*$/.test(t.title)) continue
-          if (!wt.startsWith('sf-')) continue
-          let exists = false
-          try { await readFile(join(wtPath, '.git'), 'utf8'); exists = true } catch {
-            try { await readdir(wtPath); exists = wtPath.includes('/workspaces/') } catch { exists = false }
-          }
-          if (exists) out.agents.push({ worktree: wt, title: t.title.trim().slice(0, 120) })
-        }
-      } catch { /* terminal list unavailable */ }
-      // 2. Plan progress: đếm checkboxes trong mỗi sf worktree plan mới nhất
-      const roots = await storyScanRoots()
-      for (const r of roots) {
-        const plansDir = join(r, 'docs', 'superpowers', 'plans')
-        let ents = []
-        try { ents = await readdir(plansDir) } catch { continue }
-        const wt = r.split('/').pop()
-        for (const f of ents.filter(x => x.endsWith('.md')).sort().reverse().slice(0, 2)) {
-          const text = await readFile(join(plansDir, f), 'utf8').catch(() => '')
-          const done = (text.match(/- \[x\]/g) || []).length
-          const todo = (text.match(/- \[ \]/g) || []).length
-          // task ĐANG CHẠY = dòng [ ] đầu tiên (làm sạch markdown prefix)
-          let cur = ''
-          const cm = text.match(/^[ \t]*- \[ \][ \t]*(.+)$/m)
-          if (cm) cur = cm[1].replace(/\*\*|`/g, '').replace(/^\d+[.)][ \t]*/, '').slice(0, 44)
-          if (done + todo > 0) {
-            let eff = done
-            const est = done === 0 && todo > 0
-            if (est) {
-              // agent chưa tick plan file → ước lượng theo commits trên branch
-              // (mỗi task ~1 commit): đếm commits từ điểm fork story đích
-              try {
-                const { execFile: ef2 } = await import('node:child_process')
-                const { promisify: pf2 } = await import('node:util')
-                const ef2a = pf2(ef2)
-                const dest = 'story/fi169-nextjs-migration'
-                const { stdout: gl } = await ef2a('git', ['-C', r, 'rev-list', '--count', `${dest}..HEAD`], { timeout: 5000 }).catch(() => ({ stdout: '0' }))
-                const commits = parseInt(gl.trim() || '0', 10)
-                eff = Math.min(commits, todo)
-              } catch { eff = 0 }
-            }
-            const prev = out.progress[wt]
-            const curObj = { plan: f, done: eff, total: done + todo,
-              pct: Math.round((eff / (done + todo)) * 100), est: done === 0 && eff > 0, cur }
-            if (!prev || curObj.total > prev.total) out.progress[wt] = curObj
-          }
-        }
-      }
-      await orca.host.call('storage.set', { key: 'story.tasks', value: out })
-      return { ok: true, agents: out.agents.length, progressSfs: Object.keys(out.progress).length }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
-      orca.log('story tasks failed: ' + message)
-      return { ok: false, error: message }
+      const raw = await readFile(chatLog, 'utf8')
+      return raw.split('\n').filter((l) => l.trim()).slice(-limit)
+    } catch {
+      return []
     }
   }
-  orca.commands.register('superpowers.storyTasks', () => collectStoryTasks())
-  // Poll story.viewed → nạp story.states cho story panel đang mở (panel không
-  // invoke được command — đây là đường panel⇄worker handshake cho states)
-  const statesTimer = setInterval(async () => {
-    try {
-      const stored = await orca.host.call('storage.get', { key: 'story.viewed' })
-      const v = stored?.value
-      if (v && typeof v.epic === 'string' && /^[A-Za-z]+-\d+$/.test(v.epic)) {
-        const cur = await orca.host.call('storage.get', { key: 'story.states.' + v.epic })
-        const c = cur?.value
-        // refresh nếu chưa có hoặc quá 60s
-        const stale = !c || !c.fetchedAt || (Date.now() - new Date(c.fetchedAt).getTime() > 60000)
-        if (stale) {
-          const lf = await linearChildrenFull(v.epic)
-          const children = (lf.children || [])
-            .filter(ch => ch.stateType !== 'canceled' && ch.stateType !== 'duplicate')
-            .map(ch => ({ identifier: ch.identifier, title: ch.title, url: ch.url,
-              stateName: ch.stateName, stateType: ch.stateType, stateColor: ch.stateColor }))
-          await orca.host.call('storage.set', { key: 'story.states.' + v.epic,
-            value: { epic: v.epic, children, fetchedAt: new Date().toISOString() } })
-        }
-      }
-    } catch { /* silent */ }
-  }, 20000)
-  statesTimer.unref?.()
 
-  // TỰ REFRESH 15s — panel bracket luôn có dữ liệu tươi mà không cần ai invoke
-  const tasksTimer = setInterval(() => { void collectStoryTasks() }, 15000)
-  tasksTimer.unref?.()
-  void collectStoryTasks()
-
-  // story.list: worker tự quét lúc start + mỗi 60s — panel chỉ đọc storage.
-  // Trước đây chỉ chạy qua command thủ công → autocomplete luôn rỗng.
-  void listStories(orca)
-  const listTimer = setInterval(() => { void listStories(orca) }, 60000)
-  listTimer.unref?.()
-
-  // ---- Story Ops: poll request từ panel (resume/watchdog/refresh) + refresh 60s
-  let lastOpsReqAt = 0
-  const processOpsRequest = async () => {
-    try {
-      const stored = await orca.host.call('storage.get', { key: 'story.ops.request' })
-      const req = stored?.value
-      if (req && req.at && req.at !== lastOpsReqAt) {
-        lastOpsReqAt = req.at
-        let result = null
-        if (req.action === 'refresh') {
-          result = await listStories(orca)
-        } else if (req.action === 'share-artifact' && typeof req.name === 'string' && req.name
-                   && !req.name.includes('..') && !req.name.includes('/') && typeof req.html === 'string' && req.html.length > 16) {
-          // Share bracket → HTML file → orca artifacts share (link public qua account)
-          const tmpHtml = join(tmpdir(), 'wakii-bracket-' + Date.now() + '.html')
-          await writeFile(tmpHtml, req.html, 'utf8')
-          result = await execFileAsync(orcaBin(), ['artifacts', 'share', tmpHtml])
-            .then(({ stdout }) => {
-              let url = null
-              try {
-                const parsed = JSON.parse(stdout)
-                url = parsed?.result?.url ?? parsed?.result?.shareUrl ?? parsed?.url ?? null
-              } catch { /* output không phải JSON — dùng raw */ }
-              return { ok: true, stdout: url ? 'artifact: ' + url : String(stdout).slice(0, 500) }
-            })
-            .catch((e) => ({ ok: false, error: String((e && (e.stderr || e.message)) || e).slice(0, 400) }))
-          await unlink(tmpHtml).catch(() => {})
-        } else if (req.action === 'resume' && typeof req.sf === 'string') {
-          result = await runKit('story-resume', [req.sf, '--send'])
-        } else if (req.action === 'watchdog') {
-          // --with-index khớp cron mặc định kit — pass xong index memory (fail-safe)
-          result = await runKit('story-watchdog', ['--with-index'])
-        } else if (req.action === 'verify') {
-          result = await runKit('story-verify', [])
-        } else if (req.action === 'verify-config') {
-          // Panel ⚙ verify gates — get (không set) / merge-set vào
-          // ~/.claude/story-kit.json (kit bins đọc cùng file; fail-open
-          // default trong story-verify). Config trả qua stdout (JSON).
-          const DEF = { evidenceGate: true, realModeRule: true, reviewerChecklist: true, runtimeSmoke: false, tddMode: true }
-          const cfgPath = join(process.env.HOME || '', '.claude', 'story-kit.json')
-          let cfg = {}
-          try { cfg = JSON.parse(readFileSync(cfgPath, 'utf8')) } catch { /* missing/corrupt → defaults */ }
-          if (req.set && typeof req.set === 'object' && !Array.isArray(req.set)) {
-            cfg.verify = Object.assign(DEF, cfg.verify || {}, req.set)
-            try {
-              mkdirSync(dirname(cfgPath), { recursive: true })
-              writeFileSync(cfgPath, JSON.stringify(cfg, null, 2) + '\n')
-            } catch (e) { result = { ok: false, error: String((e && e.message) || e).slice(0, 200) } }
-          }
-          if (!result || result.ok !== false) {
-            const eff = Object.assign(DEF, cfg.verify || {})
-            result = { ok: true, stdout: JSON.stringify(eff) }
-          }
-        } else if (req.action === 'launch') {
-          // launch mọi SF sẵn sàng (deps Done, đã approve, chưa có worktree)
-          result = await runKit('story-watchdog', ['--launch-next', '--with-index'])
-        } else if (req.action === 'stats') {
-          result = await runKit('story-stats', [])
-        } else if (req.action === 'memory-query' && typeof req.q === 'string' && req.q.trim()) {
-          // graph memory v2.0 — query patterns team đã học (kèm provenance)
-          result = await runKit('story-memory', ['query', req.q.trim()])
-        } else if (req.action === 'memory-stats') {
-          result = await runKit('story-memory', ['stats'])
-        } else if (req.action === 'attempts') {
-          // attempt-cap: attempt log hôm nay (3 lần cùng approach → đổi hướng)
-          result = await runKit('story-attempt', ['show'])
-        } else if (req.action === 'visual-regress' && typeof req.baseline === 'string' && req.baseline.trim()
-                   && typeof req.current === 'string' && req.current.trim()) {
-          result = await runKit('story-visual-regress', ['--baseline', req.baseline.trim(), '--current', req.current.trim()])
-        } else if (req.action === 'bracket-save' && typeof req.file === 'string' && req.file
-                   && !req.file.includes('..') && !req.file.includes('/') && !req.file.includes('\\')
-                   && typeof req.content === 'string') {
-          // Bracket node CRUD (panel drag/edit, legacy fallback) — ghi lại file
-          // .md gốc qua storyScanRoots (cùng nguồn với fileRead)
-          let written = null
-          for (const r of await storyScanRoots()) {
-            const p = join(r, 'docs', 'superpowers', 'brackets', req.file)
-            try { await writeFile(p, req.content, 'utf8'); written = p; break } catch { continue }
-          }
-          result = written
-            ? { ok: true, stdout: 'saved bracket: ' + written }
-            : { ok: false, error: 'bracket file not writable in any workspace: ' + req.file }
-        } else if (req.action === 'wakii-save' && typeof req.file === 'string' && typeof req.content === 'string') {
-          // Wakii node CRUD (panel) — canonical mindmaps/*.wakii, validate
-          // fail-closed + state-race merge trong saveWakiiStory
-          result = await saveWakiiStory(orca, req.file, req.content, req.baseGeneratedAt, req.deletedIds)
-        } else if (req.action === 'gap-answer' && typeof req.epic === 'string' && typeof req.text === 'string' && req.text.trim()) {
-          result = await postGapAnswer(req.epic, req.text.trim())
-        } else if (req.action === 'close' && typeof req.epic === 'string') {
-          result = await postCloseStory(req.epic)
-        } else if (req.action !== 'refresh') {
-          return
-        }
-        if (result) {
-          await orca.host.call('storage.set', {
-            key: 'story.ops.result',
-            value: { action: req.action, sf: req.sf ?? null, ok: result.ok,
-                     output: String(result.stdout || result.error || '').slice(0, 2000),
-                     at: new Date().toISOString() }
-          })
-        }
-        await collectStoryOps(orca)
-      }
-    } catch { /* silent */ }
+  const appendLine = async (msg) => {
+    await mkdir(chatDir, { recursive: true })
+    const line = JSON.stringify({
+      at: Date.now(),
+      from: String(msg.from || 'unknown').slice(0, 40),
+      role: String(msg.role || 'system').slice(0, 12),
+      channel: String(msg.channel || 'general').slice(0, 32),
+      text: String(msg.text || '').slice(0, 4000)
+    })
+    await appendFile(chatLog, line + '\n')
   }
-  void processOpsRequest()
-  const opsReqTimer = setInterval(() => { void processOpsRequest() }, 3000)
-  opsReqTimer.unref?.()
-  const opsTimer = setInterval(() => { void collectStoryOps(orca) }, 60000)
-  opsTimer.unref?.()
-  // ═══ DASHBOARD GATES ═══
-  let lastDashGateAt = 0
-  const processDashGate = async () => {
+
+  let lastSendAt = 0
+  let lastTailLen = -1
+  const tick = async () => {
     try {
-      const stored = await orca.host.call('storage.get', { key: 'dash.gate.request' })
-      const req = stored?.value
-      if (req && req.at && req.at !== lastDashGateAt) {
-        lastDashGateAt = req.at
-        const gates = {
-          'preflight': ['story-preflight'],
-          'diff-review': ['story-diff-review'],
-          'test': ['story-test', 'http://localhost:4200', '--flow', 'orders'],
-          'snapshot': ['story-snapshot-env'],
-          'verify': ['story-verify'],
-        }
-        // 5-gate chain (khớp README kit): preflight → diff-review → test →
-        // snapshot-env → post-merge. post-merge cần nhánh đích (req.dest).
-        if (req.gate === 'post-merge') {
-          if (typeof req.dest !== 'string' || !req.dest.trim()) {
-            await orca.host.call('storage.set', {
-              key: 'dash.gate.result',
-              value: { gate: 'post-merge', pass: false, output: 'post-merge cần dest branch (req.dest, vd story/<epic>-<slug>)', at: Date.now() }
-            })
-            return
-          }
-          orca.log('dash gate: post-merge')
-          const pm = await runKit('story-post-merge', [req.dest.trim()])
-          await orca.host.call('storage.set', {
-            key: 'dash.gate.result',
-            value: { gate: 'post-merge', pass: pm.ok, output: String(pm.stdout || pm.error || '').slice(-500), at: Date.now() }
-          })
-          return
-        }
-        const args = gates[req.gate]
-        if (!args) return
-        orca.log(`dash gate: ${req.gate}`)
-        const result = await runKit(args[0], args.slice(1))
-        await orca.host.call('storage.set', {
-          key: 'dash.gate.result',
-          value: { gate: req.gate, pass: result.ok, output: String(result.stdout || result.error || '').slice(-500), at: Date.now() }
-        })
+      const stored = await orca.host.call('storage.get', { key: 'team.chat.send' })
+      const req = stored?.value?.value !== undefined ? stored.value.value : stored?.value
+      if (req && typeof req === 'object' && typeof req.at === 'number' && req.at !== lastSendAt
+          && typeof req.text === 'string' && req.text.trim()) {
+        lastSendAt = req.at
+        await appendLine({ from: req.from, role: req.role, channel: req.channel, text: req.text })
+        await orca.host.call('storage.set', { key: 'team.chat.send', value: null }).catch(() => {})
       }
-    } catch { /* silent */ }
+      const tail = await readTail()
+      if (tail.length !== lastTailLen) {
+        lastTailLen = tail.length
+        await orca.host.call('storage.set', { key: 'team.chat.tail', value: tail }).catch(() => {})
+      }
+    } catch { /* chat là best-effort — không chặn activate */ }
   }
-  const dashTimer = setInterval(() => { void processDashGate() }, 3000)
-  dashTimer.unref?.()
+  void tick()
+  const chatTimer = setInterval(() => { void tick() }, 2000)
 
-  orca.commands.register('superpowers.storyOps', () => collectStoryOps(orca))
-
-  orca.commands.register('superpowers.debugEnv', async () => {
-    const { execFile: ef } = await import('node:child_process')
-    const { promisify: pf } = await import('node:util')
-    const efA = pf(ef)
-    const { stdout } = await efA('which', ['orca'], {})
-    const { stdout: lsOut } = await efA('ls', ['-la', stdout.trim()], {}).catch(e => ({ stdout: 'ERR ' + e.message }))
-    return { path: process.env.PATH, whichOrca: stdout.trim(), ls: lsOut.slice(0, 200), cwd: process.cwd() }
-  })
-
-  orca.commands.register('superpowers.plan', async (args) => {
-    const idea = args && (args.idea || args.text || '')
-    const res = await sendToTerminal(orca, buildPlanPrompt(idea, args?.autonomous, args?.polish, args?.simplify, args?.auditLog, args?.executeMode, args?.story))
-    if (res.ok) orca.log(`superpowers.plan → terminal ${res.terminalId}: ${res.text}`)
-    return res
-  })
-
-  orca.commands.register('superpowers.quickFix', async (args) => {
-    const idea = args && (args.idea || args.text || '')
-    const res = await sendToTerminal(orca, buildQuickFixPrompt(idea, args?.autonomous, args?.polish, args?.subagents, args?.simplify, args?.executeMode))
-    if (res.ok) orca.log(`superpowers.quickFix → terminal ${res.terminalId}: ${res.text}`)
-    return res
-  })
-
-  orca.commands.register('superpowers.continuePlan', async (args) => {
-    const planPath = args && args.planPath
-    if (!planPath) return { ok: false, reason: 'planPath required' }
-    const res = await sendToTerminal(orca, buildContinuePlanPrompt(planPath, args?.autonomous, args?.executeMode))
-    if (res.ok) orca.log(`superpowers.continuePlan → terminal ${res.terminalId}: ${res.text}`)
-    return res
-  })
-
-  orca.commands.register('superpowers.resume', async (args) => {
-    const hint = args && (args.hint || args.text || '')
-    const res = await sendToTerminal(orca, buildResumePrompt(hint))
-    if (res.ok) orca.log(`superpowers.resume → terminal ${res.terminalId}`)
-    return res
-  })
-
-  orca.commands.register('superpowers.status', async () => {
-    const res = await sendToTerminal(orca, buildStatusPrompt())
-    if (res.ok) orca.log(`superpowers.status → terminal ${res.terminalId}`)
-    return res
-  })
-
-  orca.commands.register('superpowers.resolve', async (args) => {
-    const gateId = args && args.gateId
-    const resolution = args && args.resolution
-    if (!gateId || !resolution) return { ok: false, reason: 'gateId + resolution required' }
-    const res = await sendToTerminal(orca, buildGatePrompt(gateId, resolution))
-    if (res.ok) orca.log(`superpowers.resolve → terminal ${res.terminalId}: ${res.text}`)
-    return res
-  })
+  orca.log('wakii.team-chat v1.0.0: chat bus sẵn sàng — ' + chatLog)
+  return () => clearInterval(chatTimer)
 }

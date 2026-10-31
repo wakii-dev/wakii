@@ -60,7 +60,7 @@ ok(`marker = ${kitJson.version} (khớp kit.json)`, ver === kitJson.version || v
   const require2 = createRequire(import.meta.url)
   const { hashPackagedPluginTree } = require2(resolve(pluginRoot, '..', '..', '..', '..', 'config', 'scripts', 'verify-packaged-plugin-resources.cjs'))
   const index = JSON.parse(readFileSync(resolve(pluginRoot, '..', 'bundled-plugins.json'), 'utf8'))
-  const entry = (index.plugins || []).find(e => e.pluginKey === 'stablyai.orca-superpowers-launcher')
+  const entry = (index.plugins || []).find(e => e.pluginKey === 'wakii.team-chat')
   const actualHash = hashPackagedPluginTree(pluginRoot)
   ok('bundled-plugins.json: contentHash khớp bytes plugin', !!entry && entry.contentHash === actualHash,
     `manifest=${String(entry?.contentHash).slice(0, 16)} actual=${actualHash.slice(0, 16)} — rehash qua hashPackagedPluginTree`)

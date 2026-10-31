@@ -2,7 +2,7 @@
 
 > Đọc file này trước khi lần đầu dùng kit. Mỗi bin 1 dòng: *làm gì*. Nhóm theo giai đoạn lifecycle — không phải alphabet.
 >
-> **Điểm vào duy nhất bạn cần nhớ: `story`** (umbrella — `story status` ≡ `story-status`,
+> **Điểm vào duy nhất bạn cần nhớ: `story`** (và `team-chat send|read|tail` để nói chuyện team — panel Team Chat trong app đọc cùng bus) (umbrella — `story status` ≡ `story-status`,
 > `story doctor --fix` ≡ `story-doctor --repair`, `story list` liệt kê đủ 59 bins).
 > Từ agent ngoài Claude Code: `kit/ZCODE-ADAPTER.md`.
 > Đây là root file (không cài vào `~/.claude`) — nguồn tra cứu, không phải công cụ.
