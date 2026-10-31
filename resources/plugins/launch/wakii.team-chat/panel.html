@@ -27,7 +27,7 @@
   .msg .who .role { color: #8b8b93; }
   .msg .body { white-space: pre-wrap; word-break: break-word; }
   .msg .time { font-size: 10px; color: #6d6d75; margin-top: 3px; text-align: right; }
-  form { display: flex; gap: 8px; padding: 10px 14px; border-top: 1px solid #232328; }
+  .composer { display: flex; gap: 8px; padding: 10px 14px; border-top: 1px solid #232328; }
   input#name { width: 90px; background: #17171b; border: 1px solid #2b2b31; color: #e6e6e9; border-radius: 8px; padding: 8px 10px; }
   input#text { flex: 1; background: #17171b; border: 1px solid #2b2b31; color: #e6e6e9; border-radius: 8px; padding: 8px 10px; }
   button { background: #2f6f3f; color: #fff; border: 0; border-radius: 8px; padding: 8px 14px; cursor: pointer; font-weight: 600; }
@@ -39,28 +39,28 @@
 <body>
 <header><span class="dot off" id="live"></span> Team Chat <small id="count"></small></header>
 <div id="messages"><div id="empty">Chưa có tin nhắn.<br>Captain / workers gửi từ terminal:<br><code>team-chat send "xin chào"</code></div></div>
-<form id="form">
+<div class="composer">
   <input id="name" placeholder="tên bạn" />
   <input id="text" placeholder="Nhắn cả team… (Enter)" autocomplete="off" />
-  <button id="send">Gửi</button>
-</form>
+  <button id="send" type="button">Gửi</button>
+</div>
 <script>
-  var seq = 0, pending = {}
+  // Shell của Orca inject sẵn window.orca (envelope protocol). KHÔNG dùng
+  // postMessage trực tiếp — host drop mọi tin không phải envelope. Shell cũng
+  // chặn submit ở capture phase (CSP form-action 'none') nên composer dùng
+  // button + keydown Enter, không dùng <form>.
   function call(action, params) {
-    return new Promise(function (resolve) {
-      var requestId = 'req-' + ++seq
-      pending[requestId] = resolve
-      window.parent.postMessage({ type: 'orca-panel-action', requestId: requestId, action: action, params: params || {} }, '*')
-    })
+    return Promise.race([
+      window.orca.host.call(action, params || {}),
+      new Promise(function (_, reject) {
+        setTimeout(function () { reject(new Error('panel call timeout')) }, 8000)
+      })
+    ])
   }
-  window.addEventListener('message', function (event) {
-    var d = event.data
-    if (!d || d.type !== 'orca-panel-action-result') return
-    var r = pending[d.requestId]; if (r) { delete pending[d.requestId]; r(d.result) }
-  })
 
   var messages = document.getElementById('messages'), empty = document.getElementById('empty')
-  var nameInput = document.getElementById('name'), countEl = document.getElementById('count')
+  var nameInput = document.getElementById('name'), textInput = document.getElementById('text')
+  var sendBtn = document.getElementById('send'), countEl = document.getElementById('count')
   var lastLen = -1
 
   function fmt(ts) {
@@ -91,8 +91,7 @@
 
   function poll() {
     call('storage.get', { key: 'team.chat.tail' }).then(function (r) {
-      var v = r && r.ok !== false && r.value
-      var lines = (v && v.value !== undefined ? v.value : v) || []
+      var lines = (r && r.value) || []
       document.getElementById('live').classList.remove('off')
       if (lines.length !== lastLen) { lastLen = lines.length; if (lines.length) render(lines) }
       setTimeout(poll, 2000)
@@ -102,15 +101,14 @@
     })
   }
 
-  // Single-slot serializer: tin kế chỉ ghi khi tin trước được worker pick (≤2.5s).
+  // Single-slot serializer: tin kế chỉ ghi khi tin trước được poller pick (≤2.5s).
   var sendChain = Promise.resolve()
-  document.getElementById('form').addEventListener('submit', function (e) {
-    e.preventDefault()
-    var text = document.getElementById('text').value.trim()
+  function send() {
+    var text = textInput.value.trim()
     if (!text) return
     var from = (nameInput.value || 'owner').trim().slice(0, 40)
-    document.getElementById('text').value = ''
-    document.getElementById('send').disabled = true
+    textInput.value = ''
+    sendBtn.disabled = true
     sendChain = sendChain
       .then(function () {
         return call('storage.set', {
@@ -120,13 +118,23 @@
       })
       .then(function () { return new Promise(function (res) { setTimeout(res, 2500) }) })
       .then(function () {
-        document.getElementById('send').disabled = false
-        document.getElementById('text').focus()
+        sendBtn.disabled = false
+        textInput.focus()
       })
+      .catch(function () { sendBtn.disabled = false })
+  }
+  sendBtn.addEventListener('click', send)
+  textInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); send() }
   })
 
-  nameInput.value = localStorage.getItem('teamchat.name') || ''
-  nameInput.addEventListener('change', function () { localStorage.setItem('teamchat.name', nameInput.value) })
+  // Tên lưu qua plugin storage — opaque origin không có localStorage.
+  nameInput.addEventListener('change', function () {
+    call('storage.set', { key: 'team.chat.name', value: nameInput.value.trim().slice(0, 40) }).catch(function () {})
+  })
+  call('storage.get', { key: 'team.chat.name' }).then(function (r) {
+    if (r && typeof r.value === 'string' && r.value) nameInput.value = r.value
+  }).catch(function () {})
   poll()
 </script>
 </body>

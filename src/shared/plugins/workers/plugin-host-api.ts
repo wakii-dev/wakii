@@ -115,6 +115,10 @@ export type PluginHostMethodSpec<
 
 const ALL_SURFACES = ['worker', 'panel', 'editor'] as const
 const WORKER_ONLY = ['worker'] as const
+// Same trust frame as the v0 facade table: the store is plugin-private and a
+// panel session is bound to the owning plugin, so panels may poll their own
+// keys — the plugin's worker can already read the same store.
+const WORKER_AND_PANEL = ['worker', 'panel'] as const
 
 const spec = <P extends z.ZodType, R extends z.ZodType>(
   entry: PluginHostMethodSpec<P, R>
@@ -159,7 +163,7 @@ export const PLUGIN_HOST_API = {
     scope: 'plugin-private',
     capability: 'storage:own',
     mutation: false,
-    surfaces: WORKER_ONLY,
+    surfaces: WORKER_AND_PANEL,
     params: storageGetParams,
     result: storageGetResult
   }),
@@ -169,7 +173,7 @@ export const PLUGIN_HOST_API = {
     scope: 'plugin-private',
     capability: 'storage:own',
     mutation: true,
-    surfaces: WORKER_ONLY,
+    surfaces: WORKER_AND_PANEL,
     params: storageSetParams,
     result: storageSetResult
   }),

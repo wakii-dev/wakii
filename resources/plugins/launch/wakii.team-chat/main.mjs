@@ -1,25 +1,15 @@
-// Orca Superpowers Launcher — plugin worker entry (pluginApi 1).
+// Wakii Team Chat — plugin worker entry (pluginApi 1).
 //
 // Runs inside the out-of-process plugin worker (plain Node, no Electron).
 // The default export receives the `orca` API: command registration + the
 // capability-gated host API.
 //
-// IMPORTANT (v1.3): the panel→worker bridge is a CLOSED transport. Only three
-// host actions are reachable from a sandboxed panel iframe (see Orca's
-// plugin-host-api.js PANEL_ACTIONS list): workspace.readContext, terminal.sendText,
-// notifications.show. There is NO route to plugin-registered commands. So the
-// panel can only ever *type a string into a terminal*. We lean into that:
-// every panel button composes a prompt and sends it via terminal.sendText —
-// the agent in that terminal does the real work (renders progress, resolves
-// gates, runs the skill). No CLI spawn, no snapshot, no DAG rendering here.
-//
-// POLICY MOVED TO SKILL.md (v1.3):
-//   - COMMENT_AUDIT  → orca-superpowers-workflow SKILL.md Principle 7 (default ON; opt-out via "audit-log: off" token)
-//   - FIGMA          → SKILL.md Principle 8 (auto-triggers when description has figma.com URL)
-//   - AUTONOMOUS self-review → SKILL.md Principle 3
-// Prompt now carries only: idea + short mode flags + audit opt-out token.
-// Directives.json keeps the OPT-IN ones (polish/simplify/plan-only/quick-fix/subagent)
-// + the compact audit-off / autonomous-on tokens.
+// Panel bridge (wakii fork 31/10): panels may call storage.get/storage.set
+// (plugin-private store, session-bound to this plugin) plus
+// workspace.readContext/notifications.show. Chat flow: panel writes
+// 'team.chat.send' single-slot → poller below appends to the JSONL bus and
+// refreshes 'team.chat.tail' (200 tin cuối) mỗi 2s cho panel poll.
+// CLI bins (team-chat/team-orch/…) append thẳng bus — một nguồn sự thật.
 
 import directives from './directives.json' with { type: 'json' }
 import { execFile as execFileCb } from 'node:child_process'
@@ -1343,6 +1333,26 @@ export function installKit(orca, { root, kitRoot: kitRootOverride } = {}) {
 export default function activate(orca) {
   setKitGuardLogger((line) => orca.log(line))
   installKit(orca)
+
+  // ── Commands (manifest declares team.chat / team.doctor) ────────────────
+  // Command invoke là trigger đánh thức worker này (worker lazy-start);
+  // activate() mới là nơi poller chat sống. Không có action declarative
+  // "open panel" nên team.chat báo qua notification + trả trạng thái bus.
+  orca.commands.register('team.chat', async () => {
+    const tail = await readTail(5)
+    await orca.host.call('notifications.show', {
+      title: 'Wakii Team Chat',
+      body: `Chat bus đang chạy — mở panel Team Chat ở sidebar phải. ${tail.length} tin mới nhất trên bus.`
+    })
+    return { ok: true, recent: tail.length }
+  })
+  orca.commands.register('team.doctor', async () => {
+    await orca.host.call('notifications.show', {
+      title: 'Wakii Team Doctor',
+      body: 'Chạy `story-doctor` trong terminal để kiểm tra toolbox (kit bins + guards).'
+    })
+    return { ok: true }
+  })
 
   // ── Team Chat bus (HOI-16): log JSONL là nguồn sự thật duy nhất ──────────
   // ~/.claude/chat/team-chat.jsonl — mọi thành viên ghi/đọc cùng format:
