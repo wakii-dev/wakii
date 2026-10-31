@@ -84,7 +84,8 @@ PYST
   LRL_BIN="${LRL_BIN:-$HOME/.claude/bin/linear-rate-limit}"
   states=""
   CACHE_FILE="${LINEAR_STATES_CACHE:-$HOME/.claude/.linear-states.cache}"
-  if [ -x "$LRL_BIN" ] && "$LRL_BIN" check >/dev/null 2>&1; then
+  # check: exit 0 = SẠCH, exit 3 = đang rate-limit → nhánh cache/chú thích là khi check FAIL.
+  if [ -x "$LRL_BIN" ] && ! "$LRL_BIN" check >/dev/null 2>&1; then
     states=""
     if [ -n "$ids_all" ] && [ -f "$CACHE_FILE" ]; then
       # Cache lại từ lần fetch thành công gần nhất — dùng ID cần + dán nhãn giờ chụp.

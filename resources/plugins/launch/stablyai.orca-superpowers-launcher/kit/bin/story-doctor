@@ -924,6 +924,14 @@ def main(argv):
     # kit root = bin/../ — story-doctor luôn nằm trong kit/bin (repo lẫn install).
     kit_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     kit_json, _err = load_kit_json(kit_root)
+    # Chạy từ bản CÀI (không có kit.json kề bin): sidecar .kit-provides.json ghi
+    # srcKitRoot mỗi activate — dùng nó để kiểm tra ĐẦY ĐỦ thay vì degrade 4 WARN.
+    if kit_json is None:
+        sc, _sc_err = load_sidecar(root)
+        src = sc.get("srcKitRoot") if isinstance(sc, dict) else None
+        if src and os.path.isfile(os.path.join(src, "kit.json")):
+            kit_root = src
+            kit_json, _err = load_kit_json(kit_root)
 
     if uninstall:
         cmd_uninstall(root, kit_root, kit_json, kb_dir, yes)
