@@ -1,4 +1,5 @@
 import type { MarkdownDocument } from '../../shared/filesystem-entry-types'
+import type { BrowserTabCreateRequest } from '../../shared/browser-tab-create-request'
 import type { WakiiFileOpenPayload } from '../../shared/wakii-file-open-payload'
 import { ipcRenderer } from 'electron'
 import type { PersistedUIState } from '../../shared/persisted-ui-state-types'
@@ -61,14 +62,6 @@ export const uiStateAndMenuCommandsApi = {
   },
   consumePendingMarkdownFileOpens: (): Promise<MarkdownDocument[]> =>
     ipcRenderer.invoke('ui:consumePendingMarkdownFileOpens'),
-  onOpenWakiiFile: (callback: (payload: WakiiFileOpenPayload) => void): (() => void) => {
-    const listener = (_event: Electron.IpcRendererEvent, payload: WakiiFileOpenPayload): void =>
-      callback(payload)
-    ipcRenderer.on('ui:openWakiiFile', listener)
-    return () => ipcRenderer.removeListener('ui:openWakiiFile', listener)
-  },
-  consumePendingWakiiFileOpens: (): Promise<WakiiFileOpenPayload[]> =>
-    ipcRenderer.invoke('ui:consumePendingWakiiFileOpens'),
   onOpenSetupGuide: (callback: () => void): (() => void) => {
     const listener = (_event: Electron.IpcRendererEvent) => callback()
     ipcRenderer.on('ui:openSetupGuide', listener)
@@ -163,34 +156,21 @@ export const uiStateAndMenuCommandsApi = {
     ipcRenderer.on('ui:worktreeHistoryNavigate', listener)
     return () => ipcRenderer.removeListener('ui:worktreeHistoryNavigate', listener)
   },
-  onRequestTabCreate: (
-    callback: (data: {
-      requestId: string
-      url: string
-      worktreeId?: string
-      browserPageId?: string
-      sessionProfileId?: string | null
-      sessionPartition?: string
-      activate?: boolean
-      fallbackWorktreeId?: string
-    }) => void
-  ): (() => void) => {
-    const listener = (
-      _event: Electron.IpcRendererEvent,
-      data: {
-        requestId: string
-        url: string
-        worktreeId?: string
-        browserPageId?: string
-        sessionProfileId?: string | null
-        sessionPartition?: string
-        activate?: boolean
-        fallbackWorktreeId?: string
-      }
-    ) => callback(data)
+  onRequestTabCreate: (callback: (data: BrowserTabCreateRequest) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, data: BrowserTabCreateRequest) =>
+      callback(data)
     ipcRenderer.on('browser:requestTabCreate', listener)
     return () => ipcRenderer.removeListener('browser:requestTabCreate', listener)
   },
+  onOpenWakiiFile: (callback: (payload: WakiiFileOpenPayload) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, payload: WakiiFileOpenPayload): void =>
+      callback(payload)
+    ipcRenderer.on('ui:openWakiiFile', listener)
+    return () => ipcRenderer.removeListener('ui:openWakiiFile', listener)
+  },
+  consumePendingWakiiFileOpens: (): Promise<WakiiFileOpenPayload[]> =>
+    ipcRenderer.invoke('ui:consumePendingWakiiFileOpens'),
+
   replyTabCreate: (reply: { requestId: string; browserPageId?: string; error?: string }): void => {
     ipcRenderer.send('browser:tabCreateReply', reply)
   },

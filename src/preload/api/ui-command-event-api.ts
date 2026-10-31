@@ -7,6 +7,7 @@ import type {
   JiraSavedFilterState,
   JiraSavedFilterMutation
 } from '../../shared/jira/jira-saved-filters'
+import type { BrowserTabCreateRequest } from '../../shared/browser-tab-create-request'
 import type { MarkdownDocument } from '../../shared/filesystem-entry-types'
 import type { WakiiFileOpenPayload } from '../../shared/wakii-file-open-payload'
 import type { PersistedUIState } from '../../shared/persisted-ui-state-types'
@@ -120,18 +121,7 @@ export type UiCommandEventApi = {
   onJumpToWorktreeIndex: (callback: (index: number) => void) => () => void
   onJumpToTabIndex: (callback: (index: number) => void) => () => void
   onWorktreeHistoryNavigate: (callback: (direction: 'back' | 'forward') => void) => () => void
-  onRequestTabCreate: (
-    callback: (data: {
-      requestId: string
-      url: string
-      worktreeId?: string
-      browserPageId?: string
-      sessionProfileId?: string | null
-      sessionPartition?: string
-      activate?: boolean
-      fallbackWorktreeId?: string
-    }) => void
-  ) => () => void
+  onRequestTabCreate: (callback: (data: BrowserTabCreateRequest) => void) => () => void
   replyTabCreate: (reply: { requestId: string; browserPageId?: string; error?: string }) => void
   /** Tells main this window can take browser tab requests: listening, with its workspaces restored. */
   browserTabRequestsReady: () => void
