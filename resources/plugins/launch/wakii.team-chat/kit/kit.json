@@ -1,6 +1,6 @@
 {
   "name": "story-team-kit",
-  "version": "2.24.0",
+  "version": "2.24.1",
   "description": "10-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới. 31/10: team-chat bus + team-workflow skill (HOI-15/16).",
   "requires": {
     "claude-code": ">=2.0",
@@ -656,7 +656,19 @@
       "outputs": "DONE/BLOCKED + code trong worktree",
       "description": "Chạy stack thật + e2e",
       "owner": "wakii"
+    },
+    {
+      "name": "design-system",
+      "type": "agent",
+      "category": "review",
+      "owner": "wakii",
+      "inputs": [
+        "3 hướng mock hoặc hướng CEO đã chọn",
+        "STYLEGUIDE.md + tokens main.css"
+      ],
+      "outputs": "pre-check on-system/off-system mỗi hướng + handoff-spec (map token/primitive) cho Weaver",
+      "description": "Design-system guardian (Artisan) — gác STYLEGUIDE trước G1.5 và chuyển hướng chọn thành spec thực thi"
     }
   ],
-  "kitHash": "4a839f7aab6b61d0"
+  "kitHash": "da27516a1e6ed622"
 }
