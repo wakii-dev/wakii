@@ -1,0 +1,101 @@
+#!/usr/bin/env python3
+"""team-retro — retrospective cuối run (§5): auto-sync → digest → events.
+
+Usage: team-retro --run <id> [--no-sync] [--events <file>]
+Tự chạy team-orch sync trước (trừ --no-sync). In digest; ghi run.summary +
+lesson.proposed vào events. GĐ1: lesson là gợi ý (§9a GĐ2 mới enforcement).
+"""
+import json
+import os
+import subprocess
+import sys
+
+sys.dont_write_bytecode = True
+HERE = os.path.dirname(os.path.abspath(__file__))
+EV = os.environ.get("TEAM_EVENTS_LOG",
+                    os.path.join(os.path.expanduser("~"), ".claude", "chat", "team-events.jsonl"))
+
+def emit_event(kind, repo, run, task, actor, data):
+    subprocess.run([os.path.join(HERE, "team-chat"), "event", kind, "--repo", repo,
+                    "--run-id", run, "--task", task, "--actor", actor,
+                    "--data", json.dumps(data, ensure_ascii=False)],
+                   capture_output=True, text=True)
+
+def load_events():
+    events = []
+    try:
+        for l in open(EV, encoding="utf-8"):
+            try: events.append(json.loads(l))
+            except Exception: continue
+    except FileNotFoundError: pass
+    return events
+
+def main():
+    run_id = None; no_sync = False
+    args = sys.argv[1:]
+    i = 0
+    while i < len(args):
+        if args[i] == "--run": run_id = args[i+1]; i += 2
+        elif args[i] == "--no-sync": no_sync = True; i += 1
+        else: i += 1
+    if not run_id:
+        print("usage: team-retro --run <id> [--no-sync]"); return 2
+
+    if not no_sync:
+        r = subprocess.run([os.path.join(HERE, "team-orch"), "sync"],
+                           capture_output=True, text=True, timeout=120)
+        if r.stdout.strip():
+            print(r.stdout.strip())
+
+    events = [e for e in load_events() if e.get("runId") == run_id]
+    if not events:
+        print(f"(không có events cho run {run_id} — chạy team-orch sync?)"); return 1
+
+    from collections import Counter
+    kinds = Counter(e["kind"] for e in events)
+    tasks_done = kinds.get("task.completed", 0)
+    tasks_abandoned = kinds.get("task.abandoned", 0)
+    blocked = kinds.get("worker.blocked", 0)
+    lost = kinds.get("worker.lost", 0)
+    plan_approved = kinds.get("plan.approved", 0)
+    lessons = kinds.get("lesson.approved", 0)
+
+    # hire→done per task
+    hired = {e["taskId"]: e["at"] for e in events if e["kind"] == "worker.hired" and e.get("taskId")}
+    done = [e for e in events if e["kind"] == "worker.done" and e.get("taskId") in hired]
+    times = [(e["at"] - hired[e["taskId"]]) / 60000 for e in done
+             if 0 < (e["at"] - hired[e["taskId"]]) / 60000 < 24 * 60]
+
+    repo = events[0].get("repoId", "unknown")
+    duration_min = (events[-1]["at"] - events[0]["at"]) / 60000
+
+    print(f"═ RETRO run {run_id} ({repo})")
+    print(f"  tasks: {tasks_done} done · {tasks_abandoned} abandoned")
+    print(f"  workers: {len(set(e['actor'] for e in events if e['kind'] in ('worker.hired','worker.done','worker.blocked')))} người")
+    if times: print(f"  hire→done TB: {sum(times)/len(times):.0f}'")
+    print(f"  gates: {plan_approved} plan approved · {kinds.get('gate.resolved',0)} gate resolved")
+    print(f"  ⚠ blocked: {blocked} · lost: {lost}")
+    print(f"  thời lượng: {duration_min:.0f}' · lessons: {lessons}")
+
+    # run.summary event
+    summary = {"tasks": tasks_done, "abandoned": tasks_abandoned, "blocked": blocked,
+               "lost": lost, "minutes": round(duration_min),
+               "avgHireToDone": round(sum(times)/len(times)) if times else None}
+    emit_event("run.summary", repo, run_id, "", "scribe", summary)
+
+    # lesson drafts từ pattern
+    drafts = []
+    if blocked >= 3: drafts.append(f"BLOCKED×{blocked} trong run này — soi nguyên nhân chung, đề xuất fence")
+    if lost >= 1: drafts.append(f"worker.lost×{lost} — terminal chết; đề xuất Watchman detect sớm")
+    if tasks_abandoned >= 2: drafts.append(f"abandoned×{tasks_abandoned} — brief có thể thiếu context (Luật 2)")
+    if not drafts:
+        drafts.append("Không pattern bất thường — giữ nguyên fence hiện tại")
+    for d in drafts:
+        emit_event("lesson.proposed", repo, run_id, "", "scribe", {"text": d})
+        print(f"  📝 lesson draft: {d}")
+
+    print(f"→ run.summary + {len(drafts)} lesson.proposed ghi vào events (CEO duyệt qua team-chat)")
+    return 0
+
+if __name__ == "__main__":
+    sys.exit(main())

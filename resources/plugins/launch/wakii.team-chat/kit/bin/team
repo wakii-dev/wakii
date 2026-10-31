@@ -1,0 +1,28 @@
+#!/bin/bash
+# team — umbrella họ bins team-*: `team chat send …` ≡ team-chat send, `team orch …` ≡ team-orch.
+# Ghép từ dài→ngắn như `story`; không args → help nhóm.
+_src="${BASH_SOURCE[0]}"
+while [ -L "$_src" ]; do
+  _dir="$(cd "$(dirname "$_src")" && pwd -P)"; _src="$(readlink "$_src")"
+  case "$_src" in /*) ;; *) _src="$_dir/$_src" ;; esac
+done
+HERE="$(cd "$(dirname "$_src")" && pwd -P)"
+
+if [ $# -eq 0 ]; then
+  cat <<'HELP'
+team — team-system umbrella (v2 Đợt 1a)
+
+Chat      team chat send|read|tail|event — văn phòng + machine events
+Vận hành  team orch <orchestration lệnh…> — wrapper phát event + plan-gate (G3.5)
+Nhân sự   team who <actor> — hồ sơ từ events (§7.1)
+Học       team retro --run <id> — auto-sync + digest + lesson drafts (§5)
+HELP
+  exit 0
+fi
+args=("$@"); total=${#args[@]}
+for ((k=total; k>=1; k--)); do
+  name="team"; for ((i=0; i<k; i++)); do name="$name-${args[i]}"; done
+  [ -x "$HERE/$name" ] && exec "$HERE/$name" "${args[@]:k}"
+done
+echo "team: không thấy bin cho '$*' — chạy 'team' xem help" >&2
+exit 64

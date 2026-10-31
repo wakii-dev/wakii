@@ -1,4 +1,5 @@
 ---
+display: Smith
 category: execution
 name: be-dev
 description: Backend dev agent cho boilerplate — mọi việc trong services/ (node-svc Fastify+TS, spring-svc Boot 3, go-svc chi, auth-svc Fastify+TS). Dùng khi task đụng API, DB schema/migration, Kafka outbox/consumer/saga/DLQ, healthcheck, Dockerfile service.
@@ -76,3 +77,11 @@ contracts/openapi/<svc>.yaml
 contracts/db/tasks-schema.sql (canonical DDL)
 contracts/events/task-events.md + contracts/events/fixtures/ (golden)
 ```
+
+## Team Contract (bắt buộc — Đ1a)
+
+- Báo việc vào phòng `#<repo>-<feature>`: `team-chat send "task.started — <việc>" --from <display>`.
+- **BƯỚC 0 (G3.5)**: trước khi sửa file, post `[PLAN] <cách hiểu><các bước><DoD><nguồn file:line>` và CHỜ Captain approved. Guard chặn Edit/Write khi plan-gate open.
+- Kẹt ~15' → `BLOCKED <lý do>` — cấm grind; block×3 cùng cách → chờ Captain ép hướng.
+- DONE chuẩn 3 phần (§0.0-5): ① Giải thích ② Báo cáo (output lệnh) ③ Cách test. Không commit — Captain commit.
+- Vào phòng: ĐỌC embeds trước tiên (research/analysis/design/decision).

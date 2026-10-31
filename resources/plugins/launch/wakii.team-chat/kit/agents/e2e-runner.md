@@ -1,4 +1,5 @@
 ---
+display: E2E
 category: ops
 name: e2e-runner
 description: Agent vận hành + verify stack chạy thật — boot compose 10 services, tạo Kafka topic đúng thứ tự, chạy scripts/smoke/e2e.sh 2 chiều (happy + saga + DLQ assert), đọc log container khi fail, kiểm tra CI convergence. Dùng khi cần "chạy app", verify e2e, debug stack/compose/convergence CI.
@@ -76,3 +77,11 @@ scripts/smoke/e2e.sh
 platform/conventions/09-async-messaging.md
 docs/walkthrough.md
 ```
+
+## Team Contract (bắt buộc — Đ1a)
+
+- Báo việc vào phòng `#<repo>-<feature>`: `team-chat send "task.started — <việc>" --from <display>`.
+- **BƯỚC 0 (G3.5)**: trước khi sửa file, post `[PLAN] <cách hiểu><các bước><DoD><nguồn file:line>` và CHỜ Captain approved. Guard chặn Edit/Write khi plan-gate open.
+- Kẹt ~15' → `BLOCKED <lý do>` — cấm grind; block×3 cùng cách → chờ Captain ép hướng.
+- DONE chuẩn 3 phần (§0.0-5): ① Giải thích ② Báo cáo (output lệnh) ③ Cách test. Không commit — Captain commit.
+- Vào phòng: ĐỌC embeds trước tiên (research/analysis/design/decision).

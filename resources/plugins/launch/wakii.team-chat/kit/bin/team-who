@@ -1,0 +1,72 @@
+#!/usr/bin/env python3
+"""team-who — hồ sơ nhân viên từ events (§7.1). DẪN XUẤT từ event log, cấm state riêng.
+
+Usage: team-who <actor> [--events <file>] [--last N]
+       team-who --list
+"""
+import json
+import os
+import sys
+import datetime
+
+sys.dont_write_bytecode = True
+
+EV = os.environ.get("TEAM_EVENTS_LOG",
+                    os.path.join(os.path.expanduser("~"), ".claude", "chat", "team-events.jsonl"))
+
+def load():
+    events = []
+    try:
+        for l in open(EV, encoding="utf-8"):
+            try: events.append(json.loads(l))
+            except Exception: continue  # lỗ F: skip dòng hỏng
+    except FileNotFoundError:
+        pass
+    return events
+
+def fmt_ts(ms):
+    return datetime.datetime.fromtimestamp(ms / 1000).strftime("%d/%m %H:%M")
+
+def main():
+    args = sys.argv[1:]
+    events = load()
+    if "--list" in args:
+        from collections import Counter
+        actors = Counter(e.get("actor", "?") for e in events)
+        for a, n in actors.most_common():
+            print(f"{a:16.16} {n:4d} events")
+        return 0
+    if not args:
+        print("usage: team-who <actor> | --list"); return 2
+    actor = args[0]
+    mine = [e for e in events if e.get("actor") == actor]
+    if not mine:
+        print(f"(chưa có event nào cho '{actor}')"); return 0
+    from collections import Counter
+    kinds = Counter(e["kind"] for e in mine)
+    hired = [e for e in mine if e["kind"] == "worker.hired"]
+    done = [e for e in mine if e["kind"] == "worker.done"]
+    blocked = [e for e in mine if e["kind"] == "worker.blocked"]
+    lost = [e for e in mine if e["kind"] == "worker.lost"]
+    # time from hire to done
+    times = []
+    for d in done:
+        matching_h = [h for h in hired if h.get("taskId") and h.get("taskId") == d.get("taskId")]
+        if matching_h:
+            dt = (d["at"] - matching_h[-1]["at"]) / 60000
+            if 0 < dt < 24 * 60:
+                times.append(dt)
+    print(f"═ {actor} — {len(mine)} events")
+    for k, n in kinds.most_common():
+        print(f"  {k:24.24} {n}")
+    if times:
+        print(f"  hire→done: {len(times)} lần, TB {sum(times)/len(times):.0f}'")
+    if blocked:
+        print(f"  ⚠ BLOCKED {len(blocked)} lần — retro soi")
+    if lost:
+        print(f"  ⚠ LOST {len(lost)} lần")
+    print(f"  từ {fmt_ts(mine[0]['at'])} → {fmt_ts(mine[-1]['at'])}")
+    return 0
+
+if __name__ == "__main__":
+    sys.exit(main())

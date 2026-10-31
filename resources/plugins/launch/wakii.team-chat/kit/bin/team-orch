@@ -1,0 +1,123 @@
+#!/bin/bash
+# team-orch — wrapper orchestration CLI (§2.5) + plan-gate G3.5 (§2.2) gắn WORKTREE PATH (§0.3).
+# Chạy lệnh orca orchestration thật; sau lệnh biết-shape → phát event (id=entity → dedup với sync).
+# Marker plan-gate: $TEAM_TASK_GATES_DIR/<base64url(worktreePath)>.json {taskId, planGateOpen}
+# Sync (T0): thuần CLI run-list/task-list/worker-list — không RPC.
+set -u
+ORCA="${ORCA_BIN:-/opt/homebrew/bin/orca}"
+GATES_DIR="${TEAM_TASK_GATES_DIR:-$HOME/.claude/chat/.task-gates}"
+EVENTS="${TEAM_EVENTS_LOG:-$HOME/.claude/chat/team-events.jsonl}"
+CMD="${1:-}"; [ $# -gt 0 ] && shift
+
+b64() { printf '%s' "$1" | base64 | tr '+/' '-_' | tr -d '='; }
+marker() { echo "$GATES_DIR/$(b64 "$1").json"; }
+emit() { # kind actor repo run task data
+  TC="$HOME/.claude/bin/team-chat"; [ -x "$TC" ] || TC="$(dirname "$0")/team-chat"
+  "$TC" event "$1" --repo "${3:-unknown}" ${4:+--run-id "$4"} ${5:+--task-id "$5"} \
+    --actor "$2" --data "${6:-{\}}" 2>/dev/null | grep -o '→ .*' || true
+}
+repo_of_cwd() { # repoId từ worktree hiện tại qua app — đơn giản hoá: env hoặc 'unknown'
+  echo "${TEAM_REPO_ID:-unknown}"
+}
+
+case "$CMD" in
+  feature-open)
+    # feature-open --name <slug> --repo <id> [--objective "..."] → worktree + phòng + .wakii skeleton
+    NAME="" REPO="" OBJ=""
+    while [ $# -gt 0 ]; do case "$1" in
+      --name) NAME="$2"; shift 2 ;; --repo) REPO="$2"; shift 2 ;;
+      --objective) OBJ="$2"; shift 2 ;; *) shift ;;
+    esac; done
+    [ -n "$NAME" ] && [ -n "$REPO" ] || { echo "feature-open cần --name + --repo" >&2; exit 2; }
+    RUN=$("$ORCA" orchestration run-create --objective "${OBJ:-$NAME}" --json | python3 -c "import json,sys;print(json.load(sys.stdin)['result']['run']['id'])" 2>/dev/null)
+    [ -n "$RUN" ] || { echo "run-create fail" >&2; exit 1; }
+    TC="$(dirname "$0")/team-chat"
+    "$TC" send "🏁 Feature #$REPO-$NAME mở — run $RUN" --from captain --role captain --channel "$REPO-$NAME" >/dev/null 2>&1
+    emit run.created captain "$REPO" "$RUN" "" "{\"feature\":\"$NAME\"}"
+    echo "RUN=$RUN  ROOM=#$REPO-$NAME"
+    echo "Tiếp: orca worktree create --name $NAME (Captain) → worker-start trong worktree đó"
+    ;;
+  worker-start)
+    PLAN=0 WT="" NAME="worker" TASK="" REPO="" RUN=""
+    while [ $# -gt 0 ]; do case "$1" in
+      --require-plan-approval) PLAN=1; shift ;;
+      --name) NAME="$2"; shift 2 ;;
+      --worktree) WT="$2"; shift 2 ;;
+      --task) TASK="$2"; shift 2 ;;
+      --repo) REPO="$2"; shift 2 ;;
+      --run) RUN="$2"; shift 2 ;;
+      *) shift ;;
+    esac; done
+    OUT=$("$ORCA" orchestration "$CMD" "$@" 2>&1) || { echo "$OUT"; exit 1; }
+    WT_PATH="${WT#explicit:}"; [ -n "$WT_PATH" ] || WT_PATH="$(pwd)"
+    if [ "$PLAN" -eq 1 ]; then
+      mkdir -p "$GATES_DIR"
+      printf '{"taskId":"%s","planGateOpen":true,"worktreePath":"%s"}\n' "$TASK" "$WT_PATH" > "$(marker "$WT_PATH")"
+      emit plan.gate.open captain "$REPO" "$RUN" "$TASK" "{\"worktree\":\"$WT_PATH\"}"
+    fi
+    emit worker.hired "${NAME%%-*}" "$REPO" "$RUN" "$TASK" '{"via":"team-orch"}'
+    echo "$OUT"
+    [ "$PLAN" -eq 1 ] && echo "team-orch: plan-gate OPEN @ $WT_PATH (worker phải post [PLAN] chờ duyệt)"
+    ;;
+  gate-resolve)
+    WT=""; PLAN=0
+    while [ $# -gt 0 ]; do case "$1" in
+      --plan) PLAN=1; shift ;; --worktree) WT="$2"; shift 2 ;; *) shift ;;
+    esac; done
+    OUT=$("$ORCA" orchestration "$CMD" "$@" 2>&1) || { echo "$OUT"; exit 1; }
+    if [ "$PLAN" -eq 1 ] && [ -n "$WT" ]; then
+      MP="$(marker "$WT")"
+      [ -f "$MP" ] && printf '{"taskId":null,"planGateOpen":false,"worktreePath":"%s"}\n' "$WT" > "$MP"
+      emit plan.approved captain "$(repo_of_cwd)" "" "" "{\"worktree\":\"$WT\"}"
+      echo "team-orch: plan-gate CLOSED @ $WT — worker được làm"
+    fi
+    echo "$OUT"
+    ;;
+  worker-stop|worker-abandon)
+    ACTOR="system"; REPO="$(repo_of_cwd)"
+    OUT=$("$ORCA" orchestration "$CMD" "$@" 2>&1) || { echo "$OUT"; exit 1; }
+    emit worker.lost system "$REPO" "" "" "{\"cmd\":\"$CMD\"}"
+    [ "$CMD" = "worker-abandon" ] && emit task.abandoned system "$REPO" "" "" '{}'
+    echo "$OUT"
+    ;;
+  task-update)
+    OUT=$("$ORCA" orchestration "$CMD" "$@" 2>&1) || { echo "$OUT"; exit 1; }
+    echo "$OUT" | grep -q '"status": *"completed"' && emit task.completed system "$(repo_of_cwd)" "" "" '{}'
+    echo "$OUT"
+    ;;
+  sync)
+    # §2.5 reconciliation — thuần CLI (T0 findings). Đối chiếu DB thật vs events, phát thiếu.
+    python3 - "$ORCA" "$EVENTS" "$(dirname "$0")/team-chat" <<'PY'
+import json, subprocess, sys, os
+orca, ev_path, tc = sys.argv[1:4]
+def jrun(args):
+    r = subprocess.run([orca, "orchestration"] + args, capture_output=True, text=True, timeout=30)
+    try: return json.loads(r.stdout).get("result", {})
+    except Exception: return {}
+def emit(kind, repo, run, task, actor="system", data="{}"):
+    subprocess.run([tc, "event", kind, "--repo", repo] + (["--run-id", run] if run else [])
+                   + (["--task-id", task] if task else []) + ["--actor", actor, "--data", data],
+                   capture_output=True, text=True)
+seen = set()
+try:
+    for l in open(ev_path, encoding="utf-8"):
+        try:
+            e = json.loads(l)
+            seen.add((e.get("kind"), e.get("taskId") or e.get("runId") or ""))
+        except Exception: continue
+except FileNotFoundError: pass
+runs = jrun(["run-list", "--json"]).get("runs", [])
+n = 0
+for run in runs[:50]:  # 50 run gần nhất — đủ cho máy 1 team
+    rid = run.get("id", "")
+    for t in jrun(["task-list", "--run", rid, "--json"]).get("tasks", []):
+        tid, st = t.get("id"), t.get("status")
+        if st == "completed" and ("task.completed", tid) not in seen:
+            emit("task.completed", "unknown", rid, tid); n += 1
+        if st in ("failed", "abandoned") and ("task.abandoned", tid) not in seen:
+            emit("task.abandoned", "unknown", rid, tid); n += 1
+print(f"team-orch sync: quét {len(runs)} runs — phát bổ sung {n} event thiếu (id-dedup tự no-op phần trùng)")
+PY
+    ;;
+  *) exec "$ORCA" orchestration "$CMD" "$@" ;;
+esac

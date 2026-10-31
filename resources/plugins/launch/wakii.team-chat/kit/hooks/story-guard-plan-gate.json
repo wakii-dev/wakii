@@ -1,0 +1,17 @@
+{
+  "description": "PreToolUse guard G3.5 (§2.2): chặn Edit/Write/bash-ghi khi plan-gate OPEN theo worktree path. Read tự do. Fence gắn path không env — vá lỗ 1 vòng 5. exit 2 block, fail-open, WAKII_GUARD_OFF/TEAM_PLAN_GATE_OFF tắt.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|NotebookEdit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 {KIT_BIN}/story-guard-plan-gate",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

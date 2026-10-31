@@ -1,6 +1,6 @@
 {
   "name": "story-team-kit",
-  "version": "2.24.1",
+  "version": "2.25.0",
   "description": "10-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới. 31/10: team-chat bus + team-workflow skill (HOI-15/16).",
   "requires": {
     "claude-code": ">=2.0",
@@ -668,7 +668,50 @@
       ],
       "outputs": "pre-check on-system/off-system mỗi hướng + handoff-spec (map token/primitive) cho Weaver",
       "description": "Design-system guardian (Artisan) — gác STYLEGUIDE trước G1.5 và chuyển hướng chọn thành spec thực thi"
+    },
+    {
+      "name": "team",
+      "type": "bin",
+      "category": "ops",
+      "owner": "wakii",
+      "description": "umbrella họ team-*: team chat/orch/who/retro — §Đ1a"
+    },
+    {
+      "name": "team-orch",
+      "type": "bin",
+      "category": "ops",
+      "owner": "wakii",
+      "inputs": [
+        "orchestration lệnh + --require-plan-approval + worktree path"
+      ],
+      "outputs": "event phát tự động + marker plan-gate theo path + sync reconciliation thuần CLI",
+      "description": "Wrapper orchestration: feature-open/worker-start/gate-resolve/stop/abandon/task-update phát event; sync đối chiếu DB thật"
+    },
+    {
+      "name": "story-guard-plan-gate",
+      "type": "bin",
+      "category": "review",
+      "owner": "wakii",
+      "inputs": [
+        "stdin JSON Claude PreToolUse + cwd"
+      ],
+      "outputs": "exit 2 chặn Edit/Write/bash-ghi khi plan-gate open; exit 0 fail-open",
+      "description": "Guard G3.5 — chặn-sắt trước khi Captain duyệt [PLAN]; fence theo worktree path"
+    },
+    {
+      "name": "team-who",
+      "type": "bin",
+      "category": "ops",
+      "owner": "wakii",
+      "description": "Hồ sơ nhân viên từ events (§7.1): đếm kinds, hire→done TB, BLOCKED/LOST cảnh báo — dẫn xuất thuần, cấm state riêng"
+    },
+    {
+      "name": "team-retro",
+      "type": "bin",
+      "category": "ops",
+      "owner": "wakii",
+      "description": "Retro cuối run (§5): auto-sync → digest → run.summary + lesson.proposed drafts — CEO duyệt qua chat"
     }
   ],
-  "kitHash": "da27516a1e6ed622"
+  "kitHash": "1c9a21bf6a3acbea"
 }

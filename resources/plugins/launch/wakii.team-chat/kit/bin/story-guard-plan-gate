@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+"""story-guard-plan-gate — PreToolUse guard G3.5 (§2.2): chặn-sắt khi plan-gate OPEN.
+
+Cách hoạt động: marker $TEAM_TASK_GATES_DIR/<base64url(cwd)>.json có
+"planGateOpen": true → chặn MỌI tool ghi (Edit/Write/NotebookEdit) và Bash có
+phần-tử ghi file (>, >>, tee, sed -i, perl -i). Read/Grep/Glob tự do (§2.2).
+Fence gắn WORKTREE PATH (§0.3) — cwd không thể unset như env (vá lỗ 1 vòng 5).
+Exit 2 = chặn + stderr hướng dẫn; mọi lỗi parse/marker → exit 0 fail-open.
+WAKII_GUARD_OFF=1 hoặc TEAM_PLAN_GATE_OFF=1 → tắt.
+"""
+import base64
+import json
+import os
+import sys
+
+sys.dont_write_bytecode = True
+for _s in (sys.stdin, sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
+def main():
+    if os.environ.get("WAKII_GUARD_OFF") or os.environ.get("TEAM_PLAN_GATE_OFF"):
+        return 0
+    try:
+        hook = json.load(sys.stdin)
+    except Exception:
+        return 0
+    tool = hook.get("tool_name", "")
+    cwd = hook.get("cwd") or os.getcwd()
+
+    if tool not in ("Edit", "Write", "NotebookEdit", "Bash"):
+        return 0
+
+    gates_dir = os.environ.get("TEAM_TASK_GATES_DIR",
+                               os.path.join(os.path.expanduser("~"), ".claude", "chat", ".task-gates"))
+    marker_name = base64.urlsafe_b64encode(cwd.encode()).decode().rstrip("=") + ".json"
+    try:
+        with open(os.path.join(gates_dir, marker_name), encoding="utf-8") as f:
+            if not json.load(f).get("planGateOpen"):
+                return 0
+    except Exception:
+        return 0  # không marker / marker lỗi → không chặn (fail-open cho non-team repo)
+
+    if tool == "Bash":
+        cmd = hook.get("tool_input", {}).get("command", "")
+        write_sig = any(sig in cmd for sig in (">>", ">", "tee ", "sed -i", "perl -i"))
+        if not write_sig:
+            return 0
+        print(f"PLAN-GATE OPEN (G3.5): Bash có ghi file bị chặn ở {cwd}.\n"
+              f"Bước 0 (§2.2): post [PLAN] vào chat → Captain duyệt → "
+              f"team-orch gate-resolve --plan --worktree {cwd}", file=sys.stderr)
+        return 2
+
+    print(f"PLAN-GATE OPEN (G3.5): {tool} bị chặn ở {cwd}.\n"
+          f"Bước 0 (§2.2): post [PLAN] vào chat → Captain duyệt → "
+          f"team-orch gate-resolve --plan --worktree {cwd}", file=sys.stderr)
+    return 2
+
+if __name__ == "__main__":
+    sys.exit(main())

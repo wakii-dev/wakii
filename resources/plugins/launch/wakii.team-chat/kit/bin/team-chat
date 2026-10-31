@@ -39,6 +39,49 @@ PY
   echo "→ #$channel $from: ${text:0:60}"
 }
 
+emit_event() {
+  # team-chat event <kind> --repo <id> [--repo-path p] [--run-id r] [--task-id t]
+  #   [--actor a] [--data '<json>'] — id = sha1(kind|sourceEntityId) (vòng 5: dedup qua đường phát).
+  local kind="$1" repo="" repo_path="" run="" task="" actor="system" data="{}"
+  [ $# -gt 0 ] && shift
+  while [ $# -gt 0 ]; do case "$1" in
+    --repo) repo="$2"; shift 2 ;;
+    --repo-path) repo_path="$2"; shift 2 ;;
+    --run-id) run="$2"; shift 2 ;;
+    --task-id) task="$2"; shift 2 ;;
+    --actor) actor="$2"; shift 2 ;;
+    --data) data="$2"; shift 2 ;;
+    *) shift ;;
+  esac; done
+  [ -n "$repo" ] || { echo "team-chat event: --repo <repoId> bắt buộc (§1 spec)" >&2; exit 2; }
+  EVENTS_LOG="${TEAM_EVENTS_LOG:-$HOME/.claude/chat/team-events.jsonl}"
+  mkdir -p "$(dirname "$EVENTS_LOG")"
+  python3 - "$EVENTS_LOG" "$kind" "$repo" "$repo_path" "$run" "$task" "$actor" "$data" <<'PY'
+import hashlib, json, sys, time
+log, kind, repo, repo_path, run, task, actor, data = sys.argv[1:9]
+try: d = json.loads(data)
+except Exception: d = {}
+src = task or run or f"{kind}|{int(time.time()*1000)}|{actor}"
+eid = hashlib.sha1(f"{kind}|{src}".encode()).hexdigest()[:12]
+line = {"v": 1, "id": eid, "at": int(time.time() * 1000), "kind": kind, "repoId": repo,
+        "repoPath": repo_path or None, "runId": run or None, "taskId": task or None,
+        "actor": actor, "data": d}
+seen = set()
+try:
+    for l in open(log, encoding="utf-8"):
+        try: seen.add(json.loads(l).get("id"))
+        except Exception: continue  # dòng hỏng — bỏ qua (lỗ F), không chặn bus
+except FileNotFoundError:
+    pass
+if eid in seen:
+    print(f"→ event {kind} {actor} ({eid}) [dedup — đã có]")
+else:
+    with open(log, "a", encoding="utf-8") as f:
+        f.write(json.dumps(line, ensure_ascii=False) + "\n")
+    print(f"→ event {kind} {actor} ({eid})")
+PY
+}
+
 read_msgs() {
   local n=20 channel=""
   while [ $# -gt 0 ]; do case "$1" in
@@ -84,8 +127,10 @@ for l in sys.stdin:
 case "$CMD" in
   send)  [ $# -eq 0 ] && { echo "usage: team-chat send \"<text>\" [--from name] [--role r] [--channel c]" >&2; exit 2; }
          send_msg "$@" ;;
+  event) [ $# -lt 2 ] && { echo "usage: team-chat event <kind> --repo <id> [--run-id r] [--task-id t] [--actor a] [--data json]" >&2; exit 2; }
+         emit_event "$@" ;;
   read)  read_msgs "$@" ;;
   tail)  tail_msgs "$@" ;;
   path)  echo "$LOG" ;;
-  *)     echo "usage: team-chat send|read|tail|path" >&2; exit 2 ;;
+  *)     echo "usage: team-chat send|read|tail|event|path" >&2; exit 2 ;;
 esac
