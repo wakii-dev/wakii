@@ -122,10 +122,18 @@ case "$CMD" in
     HAS_JSON=0; for a in ${PASS[@]+"${PASS[@]}"}; do [ "$a" = "--json" ] && HAS_JSON=1; done
     JSON_ARGS=${PASS[@]+"${PASS[@]}"}
     [ "$HAS_JSON" -eq 1 ] || JSON_ARGS="$JSON_ARGS --json"
+    # Snapshot worktrees TRƯỚC spawn — fallback vững khi receipt không lộ path
+    # (selector 'new-top-level': dig() miss → marker/hooks ghi nhầm chỗ, worker
+    # chạy trần trụi — sự cố thật 1/11 docs-writer).
+    WT_BEFORE=$("$ORCA" worktree list --json 2>/dev/null | python3 -c "
+import json,sys
+try: print('\n'.join(w.get('path','') for w in json.load(sys.stdin)['result']['worktrees']))
+except Exception: pass
+" 2>/dev/null)
     OUT=$("$ORCA" orchestration "$CMD" $JSON_ARGS 2>&1) || { echo "$OUT"; exit 1; }
     echo "$OUT"
     WT_PATH="${WT#explicit:}"; [ -n "$WT_PATH" ] || WT_PATH="$(pwd)"
-    # Bóc worktree path thật từ receipt (worktree selector → path tuyệt đối)
+    # Bóc worktree path thật: (1) từ receipt, (2) snapshot-diff worktree list
     WT_REAL=$(echo "$OUT" | python3 -c "
 import json,sys
 def dig(o):
@@ -143,6 +151,11 @@ def dig(o):
 try: print(dig(json.load(sys.stdin)) or '')
 except Exception: pass
 " 2>/dev/null)
+    [ -n "$WT_REAL" ] || WT_REAL=$(diff <(printf '%s\n' "$WT_BEFORE") <("$ORCA" worktree list --json 2>/dev/null | python3 -c "
+import json,sys
+try: print('\n'.join(w.get('path','') for w in json.load(sys.stdin)['result']['worktrees']))
+except Exception: pass
+" 2>/dev/null) 2>/dev/null | grep '^> ' | head -1 | cut -c3-)
     [ -n "$WT_REAL" ] && WT_PATH="$WT_REAL"
     install_worker_hooks "$WT_PATH"
     PANE=$(pane_of_worker_json "$OUT" 2>/dev/null)
