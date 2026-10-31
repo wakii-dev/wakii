@@ -1409,8 +1409,17 @@ export default function activate(orca) {
   }
   const captainRoute = async (msg) => {
     try {
-      const stored = await orca.host.call('storage.get', { key: 'team.captain.terminal' })
-      const handle = stored && stored.value
+      // Nguồn terminal Captain (ưu tiên): registration pane name==captain
+      // (team-captain-spawn ghi) → storage key cũ.
+      let handle = null
+      try {
+        const reg = JSON.parse(await readFile(join(homeDir(), '.claude', 'chat', '.workers.json'), 'utf8'))
+        handle = Object.entries(reg).find(([, e]) => e && e.name === 'captain')?.[0] || null
+      } catch { /* chưa có registration */ }
+      if (!handle) {
+        const stored = await orca.host.call('storage.get', { key: 'team.captain.terminal' })
+        handle = stored && stored.value
+      }
       if (!handle) return // chưa cấu hình terminal Captain — ACK vẫn đủ chứng tỏ online
       await orca.host.call('terminal.sendText', {
         terminalId: handle,

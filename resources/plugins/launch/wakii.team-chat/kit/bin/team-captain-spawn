@@ -1,0 +1,50 @@
+#!/bin/bash
+# team-captain-spawn — (tự-)heal Captain luôn online (CEO ruling 1/11).
+# Terminal Captain chết theo restart app → lệnh này dựng lại ĐỦ 1 lệnh:
+# terminal claude mới + brief (đọc hợp đồng captain.md) + nối router
+# (registration pane name==captain; router ưu tiên nguồn này).
+# Usage: team-captain-spawn [--repo <selector>] [--title <t>]
+set -u
+ORCA="${ORCA_BIN:-/opt/homebrew/bin/orca}"
+HERE="$(cd "$(dirname "$0")" && pwd)"
+REPO_SEL="" TITLE="Captain (always-online)"
+while [ $# -gt 0 ]; do case "$1" in
+  --repo) REPO_SEL="$2"; shift 2 ;;
+  --title) TITLE="$2"; shift 2 ;;
+  *) shift ;;
+esac; done
+
+echo "team-captain-spawn: dựng Captain terminal mới..."
+OUT=$("$ORCA" terminal create ${REPO_SEL:+--worktree "$REPO_SEL"} --title "$TITLE" \
+  --command "claude --dangerously-skip-permissions" --json 2>&1) || { echo "$OUT" >&2; exit 1; }
+PANE=$(printf '%s' "$OUT" | python3 -c '
+import json, sys
+def dig(o):
+    if isinstance(o, dict):
+        for k in ("handle", "terminal"):
+            v = o.get(k)
+            if isinstance(v, str) and v.startswith("term_"): return v
+        for v in o.values():
+            r = dig(v)
+            if r: return r
+    return None
+try: print(dig(json.load(sys.stdin)) or "")
+except Exception: pass
+')
+[ -n "$PANE" ] || { echo "không bóc được terminal handle — xem output:" >&2; echo "$OUT" >&2; exit 1; }
+echo "→ terminal: $PANE"
+
+# Repo path cho registration (worktree active nếu biết, không thì để trống)
+REPO_PATH=""
+[ -n "$REPO_SEL" ] && REPO_PATH="${REPO_SEL#path:}"
+TC="$HERE/team-chat"; [ -x "$TC" ] || TC="$HOME/.claude/bin/team-chat"
+"$TC" send "🔄 Captain terminal mới ($PANE) — đang brief..." --from system --role system --channel general > /dev/null 2>&1 || true
+
+# Brief: Captain đọc hợp đồng đầy đủ trong captain.md — brief ở đây chỉ trỏ tới.
+sleep 8  # đợi claude boot trong terminal
+"$ORCA" terminal send --terminal "$PANE" --text "Bạn là CAPTAIN của Wakii team — thường trực (always-online) trong terminal này. HỢP ĐỒNG ĐẦY ĐỦ của bạn nằm ở ~/.claude/agents/captain.md — ĐỌC NGAY trước khi làm bất kỳ việc gì (gồm: CHAT STYLE 6 luật · PHÂN CÔNG cứng · Verify-first · Cleanup-on-done · Commit hygiene cấm trailer AI · HEARTBEAT). Khuôn tin: ~/.claude/skills/team-workflow/TEMPLATES.md. Cách trả lời CEO: ~/.claude/bin/team-chat send \"<tin theo CHAT STYLE>\" --from captain --role captain. Điều phối worker: ~/.claude/bin/team-orch (worker-start/feature-open/gate-resolve/cleanup). Đọc ngữ cảnh: ~/.claude/bin/team-chat read --last 15. Xác nhận bạn đã hiểu bằng 1 tin team-chat (CHAT STYLE) — xong nằm chờ lệnh CEO qua router." --enter --json > /dev/null 2>&1 \
+  && echo "→ brief đã gửi vào terminal"
+
+# Nối router: registration name=captain (router ưu tiên nguồn này)
+"$HERE/team-orch" register --pane "$PANE" --name captain --worktree "$REPO_PATH" --repo team --room general
+echo "team-captain-spawn XONG — Captain online tại $PANE. Router đã nối qua registration."
