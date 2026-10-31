@@ -38,17 +38,18 @@ case "$CMD" in
     echo "Tiếp: orca worktree create --name $NAME (Captain) → worker-start trong worktree đó"
     ;;
   worker-start)
-    PLAN=0 WT="" NAME="worker" TASK="" REPO="" RUN=""
+    # Flags của orchestration phải qua nguyên vẹn; mình chỉ bóc thêm giá trị cho marker/events.
+    PLAN=0 WT="" NAME="worker" TASK="" REPO="" RUN=""; PASS=()
     while [ $# -gt 0 ]; do case "$1" in
       --require-plan-approval) PLAN=1; shift ;;
-      --name) NAME="$2"; shift 2 ;;
-      --worktree) WT="$2"; shift 2 ;;
-      --task) TASK="$2"; shift 2 ;;
-      --repo) REPO="$2"; shift 2 ;;
-      --run) RUN="$2"; shift 2 ;;
-      *) shift ;;
+      --name) NAME="$2"; PASS+=("$1" "$2"); shift 2 ;;
+      --worktree) WT="$2"; PASS+=("$1" "$2"); shift 2 ;;
+      --task) TASK="$2"; PASS+=("$1" "$2"); shift 2 ;;
+      --repo) REPO="$2"; PASS+=("$1" "$2"); shift 2 ;;
+      --run) RUN="$2"; PASS+=("$1" "$2"); shift 2 ;;
+      *) PASS+=("$1"); shift ;;
     esac; done
-    OUT=$("$ORCA" orchestration "$CMD" "$@" 2>&1) || { echo "$OUT"; exit 1; }
+    OUT=$("$ORCA" orchestration "$CMD" ${PASS[@]+"${PASS[@]}"} 2>&1) || { echo "$OUT"; exit 1; }
     WT_PATH="${WT#explicit:}"; [ -n "$WT_PATH" ] || WT_PATH="$(pwd)"
     if [ "$PLAN" -eq 1 ]; then
       mkdir -p "$GATES_DIR"
@@ -60,11 +61,11 @@ case "$CMD" in
     [ "$PLAN" -eq 1 ] && echo "team-orch: plan-gate OPEN @ $WT_PATH (worker phải post [PLAN] chờ duyệt)"
     ;;
   gate-resolve)
-    WT=""; PLAN=0
+    WT=""; PLAN=0; PASS=()
     while [ $# -gt 0 ]; do case "$1" in
-      --plan) PLAN=1; shift ;; --worktree) WT="$2"; shift 2 ;; *) shift ;;
+      --plan) PLAN=1; shift ;; --worktree) WT="$2"; shift 2 ;; *) PASS+=("$1"); shift ;;
     esac; done
-    OUT=$("$ORCA" orchestration "$CMD" "$@" 2>&1) || { echo "$OUT"; exit 1; }
+    OUT=$("$ORCA" orchestration "$CMD" ${PASS[@]+"${PASS[@]}"} 2>&1) || { echo "$OUT"; exit 1; }
     if [ "$PLAN" -eq 1 ] && [ -n "$WT" ]; then
       MP="$(marker "$WT")"
       [ -f "$MP" ] && printf '{"taskId":null,"planGateOpen":false,"worktreePath":"%s"}\n' "$WT" > "$MP"
@@ -82,7 +83,10 @@ case "$CMD" in
     ;;
   task-update)
     OUT=$("$ORCA" orchestration "$CMD" "$@" 2>&1) || { echo "$OUT"; exit 1; }
-    echo "$OUT" | grep -q '"status": *"completed"' && emit task.completed system "$(repo_of_cwd)" "" "" '{}'
+    if echo "$OUT" | grep -qi 'completed'; then
+      TID=$(echo "$OUT" | grep -o 'task_[a-zA-Z0-9]*' | head -1)
+      emit task.completed system "$(repo_of_cwd)" "" "$TID" '{}'
+    fi
     echo "$OUT"
     ;;
   sync)
