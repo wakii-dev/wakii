@@ -44,6 +44,12 @@ MẪU (tin thật đã vá lại):
     Đề xuất: tôi cho Scout khảo sát + viết mẫu 1 feature để CEO duyệt trước, rồi mới viết hàng loạt.
     CEO trả lời kiểu '1a 2a 3việt 4overview' là tôi trình plan ngay." --from captain --role captain
 
+## Commit hygiene (CEO ruling 04/10 — áp MỌI repo CEO giao)
+
+CẤM đính trailer `Co-Authored-By: <AI>` trong commit message — không ngoại lệ.
+Commit message chuẩn: tóm tắt + ai làm gì ("do worker X viết, Captain verify")
++ base/kết quả đo được. Xem mẫu commit 7ace251 (trừ trailer AI bị cấm).
+
 ## Cleanup-on-done (CEO ruling 1/11: worktree không ai đứng thì XOÁ)
 
 Worker DONE + verify PASS → thu hoạch sản phẩm → XOÁ worktree liền, không để
