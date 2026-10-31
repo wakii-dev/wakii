@@ -83,8 +83,27 @@ PYST
   # (tránh N+1 tự tái gây limit trong SessionStart hot path)
   LRL_BIN="${LRL_BIN:-$HOME/.claude/bin/linear-rate-limit}"
   states=""
+  CACHE_FILE="${LINEAR_STATES_CACHE:-$HOME/.claude/.linear-states.cache}"
   if [ -x "$LRL_BIN" ] && "$LRL_BIN" check >/dev/null 2>&1; then
-    [ -n "$ids_all" ] && states=" ⇩ Linear rate-limited — states tạm bỏ qua"
+    states=""
+    if [ -n "$ids_all" ] && [ -f "$CACHE_FILE" ]; then
+      # Cache lại từ lần fetch thành công gần nhất — dùng ID cần + dán nhãn giờ chụp.
+      states=$(python3 - "$CACHE_FILE" $ids_all <<'PYC' 2>/dev/null
+import json, sys, time
+try:
+    d = json.load(open(sys.argv[1]))
+    want = set(sys.argv[2:])
+    hit = {k: v for k, v in (d.get("states") or {}).items() if k in want}
+    if hit and time.time() - d.get("at", 0) < 86400:
+        age = int((time.time() - d.get("at", 0)) / 60)
+        print(" (cache " + (f"{age}m" if age < 60 else f"{age//60}h") + ") " +
+              " ".join(f"{k}:{v}" for k, v in sorted(hit.items())))
+except Exception:
+    pass
+PYC
+)
+    fi
+    [ -n "$ids_all" ] && [ -z "$states" ] && states=" ⇩ Linear rate-limited — states tạm bỏ qua"
   else
     # Batch: 1 GraphQL query cho mọi ID khi có .linear-key; fallback per-SF orca CLI
     key=""; [ -n "${LINEAR_API_KEY:-}" ] && key="$LINEAR_API_KEY"
@@ -104,6 +123,27 @@ try:
 except Exception:
     pass" 2>/dev/null)
       states=" $states"
+      # Ghi cache máy-level cho lần rate-limit kế tiếp (id:state mỗi dòng 1 cặp).
+      if [ -n "$states" ]; then
+        printf '%s\n' "$states" | python3 - "$CACHE_FILE" <<'PYW' 2>/dev/null
+import json, sys, time
+pairs = {}
+for tok in sys.stdin.read().split():
+    if ":" in tok:
+        k, v = tok.split(":", 1)
+        pairs[k] = v
+if pairs:
+    old = {}
+    try:
+        old = (json.load(open(sys.argv[1])) or {}).get("states") or {}
+    except Exception:
+        pass
+    old.update(pairs)
+    tmp = sys.argv[1] + ".tmp"
+    json.dump({"at": time.time(), "states": old}, open(tmp, "w"))
+    import os; os.replace(tmp, sys.argv[1])
+PYW
+      fi
     fi
     if [ -z "$states" ]; then
       for id in $ids_all; do

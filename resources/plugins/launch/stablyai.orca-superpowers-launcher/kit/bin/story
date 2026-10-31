@@ -1,0 +1,56 @@
+#!/bin/bash
+# story — umbrella cho cả họ bins story-* (vài alias khác): `story status` = story-status.
+# Quy tắc ghép: join các từ bằng '-', thử từ dài nhất về ngắn nhất (story coordinator pass
+# → story-coordinator-pass, không có thì story-coordinator pass ...). Không args → help nhóm.
+# PATH-friendly: installer/doctor symlink file này vào ~/.local/bin (xem story-doctor --fix).
+# Resolve symlink chain (story thường được symlink từ ~/.local/bin) — bash 3.2 không có readlink -f.
+_src="${BASH_SOURCE[0]}"
+while [ -L "$_src" ]; do
+  _dir="$(cd "$(dirname "$_src")" && pwd -P)"
+  _src="$(readlink "$_src")"
+  case "$_src" in /*) ;; *) _src="$_dir/$_src" ;; esac
+done
+HERE="$(cd "$(dirname "$_src")" && pwd -P)"
+
+if [ $# -eq 0 ]; then
+  cat <<'HELP'
+story — story-team-kit umbrella (gọi bin không cần gõ đủ đường dẫn)
+
+Dùng: story <từ...> [args…]   ·   story status  ≡  story-status
+
+Quan sát     status · top · stats · sequence · snapshot-env
+Khởi động    preflight · impact · plan-validate · mindmap · mindmap-trigger
+Chạy         attempt · checkpoint · diff-review · coordinator-pass · watchdog
+Chất lượng   doctor [--fix] · verify · evidence · guard-dangerous · guard-envfiles · guard-secrets
+Linear       linear-rate-limit (check|note|clear|pending|run) · fact-pack · close
+Vận hành     top · stats · compact-recovery · distributed-claim · hooks-install
+
+Danh sách đủ 59 bins: story list  ·  Chi tiết từng bin: INDEX.md (cùng kit)
+HELP
+  exit 0
+fi
+
+if [ "$1" = "list" ]; then
+  ls "$HERE" | grep -v __pycache__ | grep -v '^story$' | sort
+  exit 0
+fi
+
+# Ghép từ dài nhất → ngắn nhất; phần còn lại làm args của bin tìm thấy.
+args=("$@")
+total=${#args[@]}
+for ((k=total; k>=1; k--)); do
+  name="story"
+  for ((i=0; i<k; i++)); do name="$name-${args[i]}"; done
+  if [ -x "$HERE/$name" ]; then
+    exec "$HERE/$name" "${args[@]:k}"
+  fi
+done
+
+# Alias ngoài họ story-*:
+case "$1" in
+  linear-rate-limit|hook-post-tool-use|hook-session-start|hook-stop|wakii-*|workfront|vscode|source)
+    bin="$1"; shift; [ -x "$HERE/$bin" ] && exec "$HERE/$bin" "$@" ;;
+esac
+
+echo "story: không thấy bin cho '$*' — thử: story list" >&2
+exit 64

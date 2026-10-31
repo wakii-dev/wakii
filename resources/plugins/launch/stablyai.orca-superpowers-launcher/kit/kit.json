@@ -1,6 +1,6 @@
 {
   "name": "story-team-kit",
-  "version": "2.22.0",
+  "version": "2.23.0",
   "description": "10-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới.",
   "requires": {
     "claude-code": ">=2.0",
@@ -291,6 +291,12 @@
       "description": "số liệu vận hành per SF — cycle-time, khối lượng, events sống sót (Linear GraphQL + worktree git)"
     },
     {
+      "name": "story",
+      "type": "bin",
+      "category": "infra",
+      "description": "umbrella dispatcher — `story <từ>` ≡ bin story-<từ> (story status, story doctor --fix, story list); symlink vào ~/.local/bin bởi doctor --fix"
+    },
+    {
       "name": "story-status",
       "type": "bin",
       "category": "ops",
@@ -556,5 +562,5 @@
       "description": "workfront driver — 1 story = 1 navigator: verify executor → tick mindmap → convergence → DONE gate (cửa người); --repo <path> portable (worktree per-story, PR completion); attempts ≥3 blocked, breaker, single-instance, outcome logging instincts-v0 (03/10)"
     }
   ],
-  "kitHash": "0c364b1decc8efd7"
+  "kitHash": "08afc7f4d1041652"
 }

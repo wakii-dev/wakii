@@ -73,7 +73,7 @@ MIN_NODE_MAJOR = 20
 def usage(msg=None):
     if msg:
         print(f"usage error: {msg}", file=sys.stderr)
-    print("usage: story-doctor [--root <install-dir>] [--kb-dir <path>] [--json]",
+    print("usage: story-doctor [--fix|--repair] [--root <install-dir>] [--kb-dir <path>] [--json]",
           file=sys.stderr)
     sys.exit(2)
 
@@ -589,6 +589,29 @@ def run_install_kit(root, kit_root):
     return False, f"installKit không thành công ({note})"
 
 
+def ensure_story_on_path(root):
+    """Symlink bin/story vào ~/.local/bin (tạo sẵn) — trả note hướng dẫn nếu
+    ~/.local/bin chưa nằm trong PATH. Best-effort, không fail repair."""
+    import shutil
+    try:
+        target = os.path.expanduser("~/.local/bin")
+        os.makedirs(target, exist_ok=True)
+        link = os.path.join(target, "story")
+        src = os.path.join(root, "bin", "story")
+        if not os.path.isfile(src):
+            return None
+        if os.path.islink(link) or os.path.exists(link):
+            os.remove(link)
+        os.symlink(src, link)
+        path_dirs = os.environ.get("PATH", "").split(os.pathsep)
+        if any(os.path.abspath(d) == os.path.abspath(target) for d in path_dirs if d):
+            return f"story trên PATH: {link} (story status / story doctor --fix)"
+        return (f"story symlink tại {link} — thêm vào PATH:\n"
+                f"  echo 'export PATH=\"$HOME/.local/bin:$PATH\"' >> ~/.zshrc && exec $SHELL")
+    except Exception as e:
+        return None
+
+
 def under_root(path, root):
     """repair/uninstall CHỈ đụng path trong install root — chặn path trốn ra ngoài."""
     path, root = os.path.abspath(path), os.path.abspath(root)
@@ -766,6 +789,9 @@ def cmd_repair(root, kit_root, kit_json, kb_dir):
         print("không có fix an toàn nào để chạy — FAIL (nếu có) cần fix tay (xem `fix:` ở check thường).")
     else:
         done, skipped = apply_repairs(before, root, kit_root)
+        note = ensure_story_on_path(root)
+        if note:
+            done.append(note)
         after = collect_checks(root, kit_root, kit_json, kb_dir)
         if done:
             print("đã repair:")
@@ -867,7 +893,7 @@ def parse_args(argv):
         elif a == "--json":
             as_json = True
             i += 1
-        elif a == "--repair":
+        elif a in ("--repair", "--fix"):
             repair = True
             i += 1
         elif a == "--uninstall":
@@ -885,7 +911,7 @@ def parse_args(argv):
         else:
             usage(f"flag không rõ: {a}")
     if repair and uninstall:
-        usage("--repair và --uninstall loại nhau")
+        usage("--repair/--fix và --uninstall loại nhau")
     if yes and not uninstall:
         usage("--yes chỉ dùng cùng --uninstall")
     return root, kb_dir, as_json, repair, uninstall, yes, live
