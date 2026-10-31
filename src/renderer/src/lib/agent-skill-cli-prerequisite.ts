@@ -7,12 +7,9 @@ type EnsureOrcaCliAvailableOptions = {
   registrationPromptDelayMs?: number
 }
 
-export const AGENT_SKILL_CLI_PREREQUISITE_NOTICE =
-  'Before opening setup, Wakii may show a system prompt to register the Wakii CLI command on PATH.'
-
-export const CLI_PREREQUISITE_REGISTRATION_TOAST = 'Wakii needs to register its CLI on PATH.'
+export const CLI_PREREQUISITE_REGISTRATION_TOAST = 'Orca needs to register its CLI on PATH.'
 export const CLI_PREREQUISITE_REGISTRATION_TOAST_DESCRIPTION =
-  'Approve the system prompt so skill setup can use the Wakii CLI command.'
+  'Approve the system prompt so skill setup can use the Orca CLI command.'
 
 export function isOrcaCliAvailableOnPath(status: CliInstallStatus | null | undefined): boolean {
   return status?.state === 'installed' && status.pathConfigured === true
@@ -37,8 +34,7 @@ export async function ensureOrcaCliAvailableForAgentSkillTerminal({
     }
 
     if (status.state !== 'installed' || status.pathConfigured === false) {
-      // Why: macOS may immediately show a native authorization prompt, so the
-      // user needs app-level context before that OS dialog appears.
+      // Show app context before macOS can immediately present its native authorization prompt.
       await showOrcaCliRegistrationPromptToast(registrationPromptDelayMs)
       const next = await window.api.cli.install()
       onStatusChange?.(next)
@@ -53,14 +49,14 @@ export async function ensureOrcaCliAvailableForAgentSkillTerminal({
         ? error.message
         : translate(
             'auto.lib.agent.skill.cli.prerequisite.8d6eedf97e',
-            'Failed to register the Wakii CLI in PATH.'
+            'Failed to register the Orca CLI in PATH.'
           )
     )
     return null
   }
 }
 
-export async function showOrcaCliRegistrationPromptToast(delayMs = 700): Promise<void> {
+async function showOrcaCliRegistrationPromptToast(delayMs = 700): Promise<void> {
   toast.message(CLI_PREREQUISITE_REGISTRATION_TOAST, {
     description: CLI_PREREQUISITE_REGISTRATION_TOAST_DESCRIPTION
   })
@@ -79,14 +75,14 @@ function showCliPrerequisiteWarning(status: CliInstallStatus): void {
     toast.warning(
       translate(
         'auto.lib.agent.skill.cli.prerequisite.2db0bd7515',
-        'Wakii CLI registration is unavailable'
+        'Orca CLI registration is unavailable'
       ),
       {
         description:
           status.detail ??
           translate(
             'auto.lib.agent.skill.cli.prerequisite.15cbedc3e3',
-            'Install the Wakii CLI before running agent skill setup.'
+            'Install the Orca CLI before running agent skill setup.'
           )
       }
     )
@@ -97,14 +93,14 @@ function showCliPrerequisiteWarning(status: CliInstallStatus): void {
     toast.warning(
       translate(
         'auto.lib.agent.skill.cli.prerequisite.e99d7dc36f',
-        'Wakii CLI registration needs attention'
+        'Orca CLI registration needs attention'
       ),
       {
         description:
           status.detail ??
           translate(
             'auto.lib.agent.skill.cli.prerequisite.15cbedc3e3',
-            'Install the Wakii CLI before running agent skill setup.'
+            'Install the Orca CLI before running agent skill setup.'
           )
       }
     )
@@ -115,7 +111,7 @@ function showCliPrerequisiteWarning(status: CliInstallStatus): void {
     toast.warning(
       translate(
         'auto.lib.agent.skill.cli.prerequisite.windowsPathUnknown',
-        'Wakii could not check your Windows user PATH'
+        'Orca could not check your Windows user PATH'
       ),
       {
         description:
@@ -130,19 +126,18 @@ function showCliPrerequisiteWarning(status: CliInstallStatus): void {
   }
 
   if (status.pathConfigured === false) {
-    // Why: the skill installer opens a real shell; agents only get the expected
-    // Orca affordances when that shell can resolve the Orca CLI command.
+    // Installer shells must resolve the Orca CLI for agent skill affordances to work.
     toast.warning(
       translate(
         'auto.lib.agent.skill.cli.prerequisite.79371593b0',
-        'Wakii CLI is not visible on PATH yet'
+        'Orca CLI is not visible on PATH yet'
       ),
       {
         description:
           status.detail ??
           translate(
             'auto.lib.agent.skill.cli.prerequisite.0f116999f1',
-            'Restart your shell or add the Wakii CLI directory to PATH before setup.'
+            'Restart your shell or add the Orca CLI directory to PATH before setup.'
           )
       }
     )

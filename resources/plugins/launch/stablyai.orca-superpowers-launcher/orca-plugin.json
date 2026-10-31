@@ -4,7 +4,7 @@
   "publisher": "stablyai",
   "name": "Orca Superpowers Launcher",
   "version": "1.6.2",
-  "description": "Control deck panel for orca-superpowers-workflow. v1.6.2: xoá card Story Ops (panel Story tab gọn lại — canvas vẫn tô trạng thái SF từ story.ops; worker giữ nguyên mọi action cho bracket-save/share).",
+  "description": "Control deck panel for orca-superpowers-workflow. v1.6.2: xo\u00e1 card Story Ops (panel Story tab g\u1ecdn l\u1ea1i \u2014 canvas v\u1eabn t\u00f4 tr\u1ea1ng th\u00e1i SF t\u1eeb story.ops; worker gi\u1eef nguy\u00ean m\u1ecdi action cho bracket-save/share).",
   "engines": {
     "orca": ">=1.4.0"
   },
@@ -100,19 +100,16 @@
       "kind": "workspace:read"
     },
     {
+      "kind": "agent:read"
+    },
+    {
       "kind": "terminal:send"
     },
     {
       "kind": "notifications:show"
     },
     {
-      "kind": "clipboard:write"
-    },
-    {
-      "kind": "events:subscribe"
-    },
-    {
-      "kind": "storage"
+      "kind": "storage:own"
     }
   ]
 }

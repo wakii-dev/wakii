@@ -1,4 +1,4 @@
-import { writeFile, rm } from 'node:fs/promises'
+import { mkdir, realpath, rename, writeFile, rm, symlink, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import {
@@ -20,6 +20,37 @@ import {
 import type { AgentSessionAttachParams } from './structured-agent-session-attach'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../shared/constants'
 import { openTestJournalHostDatabase } from '../agent-session-journal/journal-host-database-test-support'
+import {
+  claudeProviderHandle,
+  codexProviderHandle
+} from '../../../shared/agent-session-provider-handle-encoding'
+import { adoptedDirectoryProbes } from '../agent-session-journal/adopted-directory-probe'
+import { writeOpenCodeSqliteDatabase } from '../../ai-vault/session-scanner-opencode-sqlite-fixture'
+import { structuredAgentRuntimeRegistration } from '../../runtime/structured-agent-runtime-registrations'
+import { structuredAgentsDeclaringNothing } from './structured-agent-session-adapter-router-test-support'
+import { resolveAgentSessionLaunchDirectory } from '../../runtime/agent-session-launch-directory'
+import { createClaudeStructuredLaunchResolver } from '../../runtime/structured-agent-launch-composition.test-support'
+
+vi.mock('../../ai-vault/session-scanner-opencode-sqlite-worker-spawn', async (original) => {
+  const query = await import('../transcript-opencode-sqlite-query')
+  return {
+    ...(await original<object>()),
+    readOpenCodeTranscriptPageViaWorker: query.readOpenCodeTranscriptPage,
+    readOpenCodeTranscriptSignalViaWorker: async (args: { dbPath: string; sessionId: string }) =>
+      query.readOpenCodeTranscriptSignal(args.dbPath, args.sessionId)
+  }
+})
+
+import {
+  codexLegacyMirrorRecords,
+  writeCodexHistoryFixture
+} from '../agent-session-journal/codex-history-test-fixture'
+import { structuredAgentRuntimeMetadata } from '../../runtime/structured-agent-runtime-metadata'
+import {
+  resolveStructuredAgentSessionAdoptionForCreate,
+  structuredAgentSessionAdoptAttach
+} from '../../runtime/structured-agent-session-create-adoption'
+import { prepareCodexAiVaultSessionResume } from '../../codex/codex-ai-vault-session-resume'
 
 let rig: RestTestRig
 beforeEach(async () => {
@@ -28,6 +59,7 @@ beforeEach(async () => {
 afterEach(async () => {
   await rig.dispose()
   vi.restoreAllMocks()
+  vi.unstubAllEnvs()
 })
 
 async function adoptedParams(history = 'adopted history', threadId = THREAD) {
@@ -47,7 +79,7 @@ async function adoptedParams(history = 'adopted history', threadId = THREAD) {
     ].join('\n')
   )
   return createTestParams(undefined, {
-    adopt: { providerHandle: { kind: 'codex', threadId }, transcriptPath }
+    adopt: { providerHandle: codexProviderHandle(threadId), transcriptPath }
   })
 }
 
@@ -62,10 +94,335 @@ function anotherSession(params: AgentSessionAttachParams): AgentSessionAttachPar
   })
 }
 
+it.each([
+  ['matching', THREAD],
+  ['legacy', THREAD],
+  ['mismatched', '019fd532-7c11-7a90-b6de-4e1a2c3d5f61']
+] as const)(
+  'resolves a selected-account rollout with %s metadata before at-rest publication',
+  async (_kind, metadataId) => {
+    vi.stubEnv('ORCA_USER_DATA_PATH', join(rig.root, 'host-data'))
+    const accountHome = { variable: 'CODEX_HOME', path: join(rig.root, 'selected-account') }
+    const sessions = join(accountHome.path, 'sessions')
+    await mkdir(sessions, { recursive: true })
+    const rollout = await writeCodexHistoryFixture(
+      sessions,
+      THREAD,
+      ['saved CLI turn'],
+      undefined,
+      metadataId
+    )
+    if (_kind === 'legacy') {
+      await writeFile(
+        rollout.filePath,
+        [
+          { type: 'session_meta', payload: { id: THREAD, cwd: rig.root } },
+          ...codexLegacyMirrorRecords()
+        ]
+          .map((record) => JSON.stringify(record))
+          .join('\n')
+      )
+    }
+    if (metadataId !== THREAD) {
+      // Keep filename lookup valid so the imported metadata is what refuses the mismatched source.
+      await rename(rollout.filePath, join(sessions, `rollout-2026-10-27T00-00-00-${THREAD}.jsonl`))
+    }
+    const metadata = structuredAgentRuntimeMetadata('codex')
+    if (!metadata?.transcriptImport) {
+      throw new Error('Codex transcript importer is not registered')
+    }
+    const adoption = await resolveStructuredAgentSessionAdoptionForCreate({
+      settings: {},
+      agent: 'codex',
+      transcriptImport: metadata.transcriptImport,
+      providerSessionId: THREAD,
+      selectedAccountHome: accountHome,
+      launchEnv: {},
+      workspaceCwd: rig.root,
+      prepareCodexResume: (args) =>
+        prepareCodexAiVaultSessionResume(args, {
+          runtimeHome: null,
+          systemCodexHomePath: join(rig.root, 'system-account'),
+          preparePinnedLaunchHome: async () => {
+            throw new Error('At-rest adoption must not ready a fork launch')
+          }
+        })
+    })
+    expect(adoption.accountHome).toEqual(accountHome)
+    expect(adoption.transcriptPath).toBe(
+      await realpath(join(sessions, `rollout-2026-10-27T00-00-00-${THREAD}.jsonl`))
+    )
+    const result = await rig.host.create(
+      CALLER,
+      createTestParams(undefined, {
+        accountHome: adoption.accountHome,
+        adopt: structuredAgentSessionAdoptAttach({
+          definition: metadata.definition,
+          handleNamesTranscript: metadata.transcriptImport.handleNamesTranscript,
+          conversationStore:
+            metadata.transcriptImport.conversationStore({
+              accountHome: adoption.accountHome,
+              launchEnv: {}
+            }) ?? undefined,
+          transcriptPath: adoption.transcriptPath,
+          providerSessionId: THREAD,
+          workspaceCwd: rig.root
+        })
+      })
+    )
+    expect(rig.adapter.acquire).not.toHaveBeenCalled()
+    expect(rig.adapter.dispatch).not.toHaveBeenCalled()
+    if (metadataId !== THREAD) {
+      expect(result).toMatchObject({
+        ok: false,
+        refusal: {
+          code: 'agent_session_identity_required',
+          details: { reason: 'transcriptUnreadable' },
+          createAttemptRefusedBeforeCommit: true
+        }
+      })
+      expect(rig.store.listRecords()).toEqual([])
+      expect(rig.store.listOperationRows()).toEqual([])
+      expect(rig.store.listVisibleSessionIds()).toEqual([])
+      return
+    }
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      throw new Error('Real selected-account adoption failed')
+    }
+    const snapshot = await rig.host.journalSnapshot(SESSION)
+    expect(snapshot.items.map(({ body }) => body)).toEqual(
+      _kind === 'legacy'
+        ? [
+            { kind: 'message', role: 'user', blocks: [{ type: 'text', text: 'Prompt' }] },
+            {
+              kind: 'message',
+              role: 'system',
+              blocks: [{ type: 'text', text: 'Context compacted', presentation: 'compaction' }]
+            },
+            { kind: 'message', role: 'assistant', blocks: [{ type: 'text', text: 'Response' }] }
+          ]
+        : [
+            { kind: 'message', role: 'user', blocks: [{ type: 'text', text: 'saved CLI turn' }] },
+            {
+              kind: 'message',
+              role: 'assistant',
+              blocks: [{ type: 'text', text: 'saved CLI turn answer' }]
+            }
+          ]
+    )
+    expect(result.value.page.items).toEqual(snapshot.items)
+    expect(rig.store.getRecord(SESSION)?.accountHome).toEqual(accountHome)
+    expect(rig.store.getRecord(SESSION)?.providerHandleChain).toMatchObject([
+      { origin: 'adopted', mintedAtFence: 1, handle: { nativeId: THREAD } }
+    ])
+    expect(rig.store.listVisibleSessionIds()).toEqual([SESSION])
+  }
+)
+
+it.each([100, 1000])(
+  'imports %s source rows into a linked workspace with one fresh probe and zero replay work',
+  async (size) => {
+    const physical = await realpath(rig.root)
+    const registered = join(rig.root, 'registered')
+    await symlink(physical, registered, process.platform === 'win32' ? 'junction' : 'dir')
+    const transcriptPath = join(rig.root, `${THREAD}.jsonl`)
+    // Captured CLI transcript metadata; relocate fixture identity/cwd into the isolated host.
+    const captured = (
+      await readFile(
+        join(__dirname, '..', '__fixtures__', 'openclaude-0.31.0-local-command-rows.jsonl'),
+        'utf8'
+      )
+    )
+      .split('\n')
+      .filter(Boolean)
+      .map((line) => JSON.parse(line))
+      .find((row) => row.type === 'user' && !row.isMeta)
+    expect(captured.cwd).toBe('/tmp/project')
+    await writeFile(
+      transcriptPath,
+      `${Array.from({ length: size }, (_, index) =>
+        JSON.stringify({
+          ...captured,
+          uuid: `original-${index}`,
+          sessionId: THREAD,
+          cwd: physical,
+          message: { role: 'user', content: 'original physical-keyed context' }
+        })
+      ).join('\n')}\n`
+    )
+    const params = createTestParams(undefined, {
+      agent: 'claude',
+      provider: 'claude',
+      accountHome: { variable: 'CLAUDE_CONFIG_DIR', path: rig.root },
+      adopt: {
+        providerHandle: claudeProviderHandle(THREAD, null),
+        transcriptPath,
+        source: { providerSessionId: THREAD, workspaceCwd: registered }
+      }
+    })
+    const probe = vi.spyOn(adoptedDirectoryProbes, 'matches')
+    const publishTab = vi.fn(async () => {
+      expect(rig.store.getRecord(SESSION)?.providerHandleChain[0].handle.nativeId).toBe(THREAD)
+    })
+    const result = await rig.host.create(CALLER, params, { publishTab })
+    expect(result).toMatchObject({
+      ok: true,
+      value: {
+        page: {
+          items: expect.arrayContaining([
+            expect.objectContaining({
+              body: expect.objectContaining({
+                blocks: [{ type: 'text', text: 'original physical-keyed context' }]
+              })
+            })
+          ])
+        }
+      }
+    })
+    expect(publishTab).toHaveBeenCalledOnce()
+    expect(rig.store.getRecord(SESSION)?.accountHome).toEqual(params.accountHome)
+    expect(params.adopt?.source?.workspaceCwd).toBe(registered)
+    const record = rig.store.getRecord(SESSION)!
+    expect(
+      await resolveAgentSessionLaunchDirectory(
+        { store: rig.store, resolveWorkspacePath: async () => registered },
+        record
+      )
+    ).toBe(registered)
+    expect(record.providerHandleChain[0].handle.nativeId).toBe(THREAD)
+    const hasTranscript = vi.fn(
+      async ({
+        providerSessionId,
+        claudeConfigDir
+      }: {
+        providerSessionId: string
+        claudeConfigDir: string
+      }) =>
+        providerSessionId === THREAD &&
+        claudeConfigDir === rig.root &&
+        (await readFile(transcriptPath, 'utf8')).includes(THREAD)
+    )
+    const launch = await createClaudeStructuredLaunchResolver({
+      store: rig.store,
+      resolveWorkspacePath: async () => registered,
+      resolveCommand: () => ({ command: process.execPath, prefixArgs: [] }),
+      resolveInheritedEnv: async () => ({}),
+      resolveAuthPolicy: () => ({ account: 'system' }),
+      resolveLaunchArgs: () => [],
+      hasTranscript
+    })({
+      identity: {
+        sessionId: SESSION,
+        workspaceId: record.location.workspaceId,
+        hostId: 'local',
+        agent: 'claude',
+        providerHandle: record.providerHandleChain[0].handle
+      }
+    })
+    expect(launch).toMatchObject({
+      cwd: registered,
+      providerSessionId: THREAD,
+      claudeConfigDir: rig.root,
+      options: { resume: THREAD }
+    })
+    expect(hasTranscript).toHaveBeenCalledWith({
+      providerSessionId: THREAD,
+      claudeConfigDir: rig.root
+    })
+    expect(rig.adapter.acquire).not.toHaveBeenCalled()
+    expect(probe).toHaveBeenCalledOnce()
+    await rig.host.flushAllStreamedEvents()
+    await rig.restart()
+    await rm(transcriptPath)
+    expect(await rig.host.create(CALLER, params)).toMatchObject({ ok: true, replayed: true })
+    expect(probe).toHaveBeenCalledOnce()
+  }
+)
+
+it('uses current selected ancestors, then refuses retargeted/foreign sources before ownership', async () => {
+  const physical = join(await realpath(rig.root), 'physical')
+  const moved = join(await realpath(rig.root), 'moved')
+  const registered = join(rig.root, 'registered')
+  await mkdir(physical)
+  await mkdir(moved)
+  await symlink(physical, registered, process.platform === 'win32' ? 'junction' : 'dir')
+  await symlink(moved, join(physical, 'pkg'), process.platform === 'win32' ? 'junction' : 'dir')
+  const sourceCwd = join(physical, 'pkg')
+  const workspaceCwd = join(registered, 'pkg')
+  expect(await realpath(workspaceCwd)).toBe(moved)
+  const transcriptPath = join(rig.root, `${THREAD}.jsonl`)
+  const save = async (sessionId: string, cwd: string) =>
+    writeFile(
+      transcriptPath,
+      `${JSON.stringify({
+        type: 'user',
+        uuid: 'original',
+        sessionId,
+        cwd,
+        message: { role: 'user', content: 'ancestor context' }
+      })}\n`
+    )
+  const params = createTestParams(undefined, {
+    agent: 'claude',
+    provider: 'claude',
+    accountHome: { variable: 'CLAUDE_CONFIG_DIR', path: rig.root },
+    adopt: {
+      providerHandle: claudeProviderHandle(THREAD, null),
+      transcriptPath,
+      source: { providerSessionId: THREAD, workspaceCwd }
+    }
+  })
+  const probe = vi.spyOn(adoptedDirectoryProbes, 'matches')
+  await save('wrong-provider', sourceCwd)
+  expect(await rig.host.create(CALLER, params)).toMatchObject({ ok: false })
+  expect(probe).not.toHaveBeenCalled()
+  await save(THREAD, join(rig.root, 'foreign'))
+  expect(await rig.host.create(CALLER, params)).toMatchObject({ ok: false })
+  expect(rig.store.listRecords()).toEqual([])
+  await save(THREAD, sourceCwd)
+  await rm(registered)
+  await symlink(moved, registered, process.platform === 'win32' ? 'junction' : 'dir')
+  expect(await rig.host.create(CALLER, params)).toMatchObject({ ok: false })
+  expect(rig.store.listRecords()).toEqual([])
+  await rm(registered)
+  await symlink(physical, registered, process.platform === 'win32' ? 'junction' : 'dir')
+  expect(await rig.host.create(CALLER, params)).toMatchObject({ ok: true })
+  expect(probe).toHaveBeenLastCalledWith(workspaceCwd, sourceCwd, expect.any(AbortSignal))
+  expect(await rig.host.create(CALLER, params)).toMatchObject({ ok: true, replayed: true })
+})
+
+it.each(['opencode', 'opencode2'] as const)(
+  'commits %s actual database history using the same linked-cwd admission',
+  async (agent) => {
+    const definition = structuredAgentRuntimeRegistration(agent)!.definition
+    await rig.dispose()
+    rig = await createRestTestRig({ agents: structuredAgentsDeclaringNothing([definition]) })
+    const physical = await realpath(rig.root)
+    const registered = join(rig.root, 'registered')
+    await symlink(physical, registered, process.platform === 'win32' ? 'junction' : 'dir')
+    const transcriptPath = join(rig.root, 'opencode.db')
+    writeOpenCodeSqliteDatabase(transcriptPath, [
+      { id: THREAD, directory: physical, turns: [{ role: 'user', parts: ['database context'] }] }
+    ])
+    const params = createTestParams(undefined, {
+      agent,
+      provider: agent,
+      accountHome: { kind: 'opencode', locator: { kind: 'unmanaged' } },
+      adopt: {
+        providerHandle: { agent, transport: definition.handleTransport, nativeId: THREAD },
+        transcriptPath,
+        source: { providerSessionId: THREAD, workspaceCwd: registered }
+      }
+    })
+    expect(await rig.host.create(CALLER, params)).toMatchObject({ ok: true })
+    expect(rig.store.getRecord(SESSION)?.providerHandleChain[0].handle.nativeId).toBe(THREAD)
+    expect(rig.adapter.acquire).not.toHaveBeenCalled()
+  }
+)
+
 it('imports adoption at rest and resumes its original provider identity after its source disappears', async () => {
   const params = await adoptedParams()
-  const history = vi.fn(async () => null)
-  rig.host.deps.adapter.providerHistoryWindow = history
   expect(await rig.host.create(CALLER, params)).toMatchObject({
     ok: true,
     value: {
@@ -82,13 +439,12 @@ it('imports adoption at rest and resumes its original provider identity after it
     { origin: 'adopted', mintedAtFence: 1, handle: { nativeId: THREAD } }
   ])
   expect(rig.adapter.acquire).not.toHaveBeenCalled()
-  expect(history).not.toHaveBeenCalled()
   await rm(join(rig.root, 'rollout.jsonl'))
   expect(
     await rig.host.create(CALLER, {
       ...params,
       accountHome: { variable: 'CODEX_HOME', path: '/drifted/account' },
-      adopt: { providerHandle: { kind: 'codex', threadId: THREAD } }
+      adopt: { providerHandle: codexProviderHandle(THREAD) }
     })
   ).toMatchObject({ ok: true, replayed: true })
   expect(await rig.host.send(CALLER, restTestSend('new work'))).toMatchObject({ ok: true })
@@ -99,10 +455,6 @@ it('imports adoption at rest and resumes its original provider identity after it
         providerHandle: expect.objectContaining({ nativeId: THREAD })
       })
     })
-  )
-  expect(history).toHaveBeenCalledOnce()
-  expect(history.mock.invocationCallOrder[0]).toBeLessThan(
-    rig.adapter.acquire.mock.invocationCallOrder[0]
   )
   expect(rig.store.getRecord(SESSION)?.accountHome).toEqual(params.accountHome)
 })
@@ -116,7 +468,14 @@ it('refuses concurrent adoption of a provider conversation by another session', 
   expect(results.filter((result) => result.ok)).toHaveLength(1)
   expect(results.filter((result) => !result.ok)).toMatchObject([
     {
-      refusal: { code: 'agent_session_conflict', details: { reason: 'conversationHeldElsewhere' } }
+      refusal: {
+        code: 'agent_session_conflict',
+        details: {
+          reason: 'conversationHeldElsewhere',
+          owner: { sessionId: expect.any(String), workspaceId: params.location.workspaceId }
+        },
+        createAttemptRefusedBeforeCommit: true
+      }
     }
   ])
   expect(rig.store.listRecords()).toHaveLength(1)
@@ -138,16 +497,25 @@ it('refuses concurrent founding under a tab another chat already owns', async ()
   expect(rig.adapter.acquire).not.toHaveBeenCalled()
 })
 
-it('validates adoption history before founding anything', async () => {
-  const params = await adoptedParams()
-  await writeFile(join(rig.root, 'rollout.jsonl'), 'not a transcript\n')
-  expect(await rig.host.create(CALLER, params)).toMatchObject({
-    ok: false,
-    refusal: { code: 'agent_session_identity_required' }
-  })
-  expect(rig.store.listRecords()).toEqual([])
-  expect(rig.store.listOperationRows()).toEqual([])
-})
+it.each(['missing', 'empty', 'malformed'] as const)(
+  'refuses %s history before founding anything',
+  async (source) => {
+    const params = await adoptedParams()
+    await (source === 'missing'
+      ? rm(join(rig.root, 'rollout.jsonl'))
+      : writeFile(join(rig.root, 'rollout.jsonl'), source === 'empty' ? '' : '{broken json}\n'))
+    expect(await rig.host.create(CALLER, params)).toMatchObject({
+      ok: false,
+      refusal: {
+        code: 'agent_session_identity_required',
+        details: { reason: source === 'empty' ? 'transcriptNotFound' : 'transcriptUnreadable' },
+        createAttemptRefusedBeforeCommit: true
+      }
+    })
+    expect(rig.store.listRecords()).toEqual([])
+    expect(rig.store.listOperationRows()).toEqual([])
+  }
+)
 
 it('does not found a record whose account namespace its agent cannot drive', async () => {
   const params = createTestParams(undefined, {

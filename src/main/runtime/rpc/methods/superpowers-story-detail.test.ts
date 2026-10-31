@@ -73,7 +73,12 @@ function seedGateOnWorktree(
   worktreeId: string | null,
   gate: { id: string; question: string; options?: string; createdAt?: string }
 ): void {
-  const task = db.createTask({ spec })
+  const run = db.createRun({
+    objective: spec,
+    coordinatorHandle: null,
+    coordinatorPaneKey: null
+  })
+  const task = db.createTask({ spec, runId: run.id })
   if (worktreeId !== null) {
     const { dispatch } = db.createStartingWorkerDispatch({
       taskId: task.id,

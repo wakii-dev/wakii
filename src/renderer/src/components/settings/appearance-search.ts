@@ -21,7 +21,7 @@ export const getThemeEntries = createLocalizedCatalog((): SettingsSearchEntry[] 
     title: translate('auto.components.settings.appearance.search.71e06350b4', 'Theme'),
     description: translate(
       'auto.components.settings.appearance.search.0709c794f7',
-      'Choose how Wakii looks in the app window.'
+      'Choose how Orca looks in the app window.'
     ),
     keywords: [
       ...translateSearchKeyword('auto.components.settings.appearance.search.262fe1d24f', 'dark'),
@@ -36,34 +36,39 @@ export const getLanguageEntries = createLocalizedCatalog((): SettingsSearchEntry
     title: translate('settings.appearance.language.title', 'Language'),
     description: translate(
       'settings.appearance.language.description',
-      'Choose the language used by the Wakii interface.'
+      'Choose the language used by the Orca interface.'
     ),
     keywords: [
       ...translateSearchKeyword('settings.appearance.language.title', 'Language'),
       ...translateSearchKeyword(
         'settings.appearance.language.description',
-        'Choose the language used by the Wakii interface.'
+        'Choose the language used by the Orca interface.'
       ),
       ...translateSearchKeyword('settings.appearance.language.system', 'System'),
       ...translateSearchKeyword('settings.appearance.language.english', 'English'),
       ...translateSearchKeyword('settings.appearance.language.chinese', '中文（简体）'),
+      ...translateSearchKeyword(
+        'settings.appearance.language.chineseTraditional',
+        '繁體中文（台灣）'
+      ),
       ...translateSearchKeyword('settings.appearance.language.korean', '한국어'),
       ...translateSearchKeyword('settings.appearance.language.japanese', '日本語'),
       ...translateSearchKeyword('settings.appearance.language.spanish', 'Español'),
       ...translateSearchKeyword('settings.appearance.language.french', 'Français'),
-      ...translateSearchKeyword('settings.appearance.language.vietnamese', 'Tiếng Việt', {
-        aliases: ['vietnamese']
-      }),
-      // Why: the native word for "language" only reaches search via the localized
-      // title in its own UI locale — index each here so speakers can find (and
-      // switch to) their language whatever the current interface locale is.
-      '语言', // Chinese (Simplified)
-      '語言', // Chinese (Traditional)
-      '언어', // Korean
-      '言語', // Japanese
-      'Idioma', // Spanish
-      'Langue', // French
-      'Ngôn ngữ', // Vietnamese
+      ...translateSearchKeyword('settings.appearance.language.portuguese', 'Português (Brasil)'),
+      ...translateSearchKeyword('settings.appearance.language.russian', 'Русский'),
+      ...translateSearchKeyword('settings.appearance.language.turkish', 'Türkçe'),
+      ...translateSearchKeyword('settings.appearance.language.german', 'Deutsch'),
+      // Index native language words in every locale so users can find their language from an unfamiliar UI.
+      '语言',
+      '語言',
+      '언어',
+      '言語',
+      'Idioma',
+      'Langue',
+      'Язык',
+      'Dil',
+      'Sprache',
       ...translateSearchKeyword(
         'auto.components.settings.appearance.search.language.locale',
         'locale'
@@ -97,7 +102,7 @@ export const getTypographyEntries = createLocalizedCatalog((): SettingsSearchEnt
     title: translate('auto.components.settings.appearance.search.ddb991024d', 'IDE Font'),
     description: translate(
       'auto.components.settings.appearance.search.07c7c38fac',
-      'Choose the font used by the Wakii interface.'
+      'Choose the font used by the Orca interface.'
     ),
     keywords: [
       ...translateSearchKeyword('auto.components.settings.appearance.search.24094af355', 'font'),
@@ -177,7 +182,7 @@ export const getTitlebarEntries = createLocalizedCatalog((): SettingsSearchEntry
     title: translate('auto.components.settings.appearance.search.fdd31b00d0', 'Titlebar App Name'),
     description: translate(
       'auto.components.settings.appearance.search.18b4c4c30b',
-      'Show Wakii in the titlebar.'
+      'Show Orca in the titlebar.'
     ),
     keywords: [
       ...translateSearchKeyword(

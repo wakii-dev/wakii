@@ -9,6 +9,7 @@ import { useOrcaProfileAuthStatusRefresh } from '@/hooks/use-orca-profile-auth-s
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 import type { AppState } from '@/store/types'
+import { OrcaSignInButton, OrcaSignInWaitNotice } from '../OrcaSignInProgress'
 
 const LONG_WORKSPACE_NAME = 'feature/dev-toast-layout-with-a-long-workspace-name'
 const DEV_TOAST_DESCRIPTION =
@@ -134,12 +135,9 @@ function showDeleteFailureToast(): void {
   })
 }
 
-// Dev-only preview of the first-party Wakii Cloud sign-in. The sidebar/titlebar
-// account switcher is hidden in packaged builds while the feature is in
-// progress; this surfaces it (and its status) in dev when the env vars are set.
+// Preview Cloud auth under dev environment flags while packaged account switchers remain hidden.
 function OrcaCloudDevSubsection(): React.JSX.Element {
   const authStatus = useAppStore((s) => s.orcaProfileAuthStatus)
-  const connect = useAppStore((s) => s.connectCurrentOrcaProfile)
   const signOut = useAppStore((s) => s.signOutCurrentOrcaProfile)
   const refresh = useAppStore((s) => s.fetchOrcaProfileAuthStatus)
   const configured = authStatus?.configured === true
@@ -150,7 +148,7 @@ function OrcaCloudDevSubsection(): React.JSX.Element {
     <section className="space-y-3">
       <div className="flex items-start justify-between gap-3">
         <SettingsSubsectionHeader
-          title={translate('auto.components.settings.DevToolsPane.orcaCloud', 'Wakii Cloud')}
+          title={translate('auto.components.settings.DevToolsPane.orcaCloud', 'Orca Cloud')}
           description={translate(
             'auto.components.settings.DevToolsPane.orcaCloudDescription',
             'Dev-only preview of first-party cloud sign-in. Hidden in production; in dev it also appears in the sidebar account switcher once ORCA_CLOUD_API_URL and ORCA_CLOUD_CLIENT_ID are set.'
@@ -173,13 +171,14 @@ function OrcaCloudDevSubsection(): React.JSX.Element {
                 {translate('auto.components.settings.DevToolsPane.orcaCloudSignOut', 'Sign out')}
               </Button>
             ) : (
-              <Button type="button" variant="outline" size="sm" onClick={() => void connect()}>
+              <OrcaSignInButton variant="outline" size="sm">
                 {translate(
                   'auto.components.settings.DevToolsPane.orcaCloudConnect',
                   'Connect profile'
                 )}
-              </Button>
+              </OrcaSignInButton>
             )}
+            {connected ? null : <OrcaSignInWaitNotice className="basis-full" />}
             <Button type="button" variant="ghost" size="sm" onClick={() => void refresh()}>
               {translate(
                 'auto.components.settings.DevToolsPane.orcaCloudRefresh',

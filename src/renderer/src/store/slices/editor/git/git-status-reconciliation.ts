@@ -131,9 +131,11 @@ export function reconcileOpenFilesForStatus(
   statusIsComplete: boolean
 ): OpenFile[] {
   let entriesByPath: Map<string, GitStatusEntry> | undefined
+  let stagedEntriesByPath: Map<string, GitStatusEntry> | undefined
   let changed = false
 
-  const nextOpenFiles = openFiles.flatMap((file) => {
+  const nextOpenFiles = openFiles.flatMap((originalFile) => {
+    let file = originalFile
     if (file.worktreeId !== worktreeId) {
       return [file]
     }
@@ -144,6 +146,25 @@ export function reconcileOpenFilesForStatus(
       file.mode === 'wakii-viewer'
     ) {
       return [file]
+    }
+
+    if (file.mode === 'diff' && file.diffSource === 'staged') {
+      if (!stagedEntriesByPath) {
+        stagedEntriesByPath = new Map()
+        for (const entry of nextEntries) {
+          if (entry.area === 'staged') {
+            stagedEntriesByPath.set(entry.path, entry)
+          }
+        }
+      }
+      const entry = stagedEntriesByPath.get(file.relativePath)
+      if (entry) {
+        const oldPath = entry.status === 'renamed' ? entry.oldPath : undefined
+        if (file.branchOldPath !== oldPath) {
+          changed = true
+          file = { ...file, branchOldPath: oldPath }
+        }
+      }
     }
 
     if (!file.conflict) {

@@ -7,7 +7,7 @@ import {
   PLUGIN_WORKSPACE_LABEL_MAX_LENGTH,
   PLUGIN_WORKSPACE_TERMINAL_LIMIT
 } from '../../shared/plugins/plugin-host-api'
-import type { PluginEventName } from '../../shared/plugins/plugin-manifest'
+import type { PluginEventName } from '../../shared/plugins/manifest/plugin-manifest'
 import type { BoundPluginHostMethod } from './plugin-host-method-binding'
 import { definePluginMethod } from './plugin-host-method-binding'
 

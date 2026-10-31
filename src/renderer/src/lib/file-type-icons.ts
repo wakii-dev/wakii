@@ -1,6 +1,7 @@
 import { File, FileCog, FileLock, FileTerminal, Smartphone, type LucideIcon } from 'lucide-react'
 import { COMPOUND_EXTENSIONS, FILE_ICON_BY_EXTENSION } from './file-type-icon-extension-table'
 import { FILE_ICON_BY_NAME } from './file-type-icon-name-table'
+import type { ActivePluginIconTheme } from '../store/plugin-icon-themes'
 
 export type FileTypeIconColorGroup =
   | 'codeTsJs'
@@ -153,4 +154,44 @@ export function getFileTypeIconColor(filePath: string | undefined | null): FileT
     return null
   }
   return classifyFile(filename).colorGroup
+}
+
+function ownIconIndex(entries: Partial<Record<string, number>>, key: string): number | null {
+  if (!Object.hasOwn(entries, key)) {
+    return null
+  }
+  const index = entries[key]
+  return Number.isInteger(index) && index !== undefined && index >= 0 ? index : null
+}
+
+// Longest dotted suffix first, so a theme's `d.ts` wins over `ts` and `gz` still matches `a.tar.gz`.
+function ownExtensionIconIndex(
+  entries: Partial<Record<string, number>>,
+  filename: string
+): number | null {
+  const parts = filename.split('.')
+  for (let start = 1; start < parts.length; start += 1) {
+    const index = ownIconIndex(entries, parts.slice(start).join('.'))
+    if (index !== null) {
+      return index
+    }
+  }
+  return null
+}
+
+/** The active plugin icon theme's icon index for a path: exact name, then extension, then
+ *  its file icon. */
+export function getPluginFileTypeIconIndex(
+  theme: ActivePluginIconTheme | null,
+  filePath: string | undefined | null
+): number | null {
+  const filename = getFilename(filePath).toLowerCase()
+  if (!theme || !filename) {
+    return null
+  }
+  return (
+    ownIconIndex(theme.fileNames, filename) ??
+    ownExtensionIconIndex(theme.fileExtensions, filename) ??
+    ownIconIndex(theme.icons, 'file')
+  )
 }

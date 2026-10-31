@@ -78,8 +78,8 @@ function removeCalls(exec: ExecMock): string[][] {
     .filter((args) => args[0] === 'remote' && args[1] === 'remove')
 }
 
-describe('isWakiiGeneratedPrRemoteName', () => {
-  it('matches Wakii-generated names, including disambiguated ones', () => {
+describe('isOrcaGeneratedPrRemoteName', () => {
+  it('matches Orca-generated names, including disambiguated ones', () => {
     expect(isOrcaGeneratedPrRemoteName('pr-head')).toBe(true)
     expect(isOrcaGeneratedPrRemoteName('pr-contributor-orca')).toBe(true)
     expect(isOrcaGeneratedPrRemoteName('pr-head-2')).toBe(true)
@@ -94,8 +94,8 @@ describe('isWakiiGeneratedPrRemoteName', () => {
 })
 
 describe('reconcileOrphanedPrRemotesWithExec', () => {
-  it('leaves a remote alone when no worktree metadata ever proves Wakii created it (user-created, ambiguous)', async () => {
-    // Same naming shape a user could coincidentally pick; no pushTarget anywhere claims it.
+  it('leaves a remote alone when no worktree metadata ever proves Orca created it (user-created, ambiguous)', async () => {
+    // Remote naming alone does not establish Orca ownership.
     const exec = makeExec({ remotes: remoteLines([{ name: FORK_REMOTE, url: FORK_URL }]) })
     const reclaimed = await reconcileOrphanedPrRemotesWithExec(
       REPO_PATH,
@@ -108,7 +108,7 @@ describe('reconcileOrphanedPrRemotesWithExec', () => {
     expect(removeCalls(exec)).toEqual([])
   })
 
-  it('leaves a remote alone that is not shaped like an Wakii-generated pr-* remote', async () => {
+  it('leaves a remote alone that is not shaped like an Orca-generated pr-* remote', async () => {
     const exec = makeExec({
       remotes: remoteLines([{ name: 'my-fork', url: FORK_URL }])
     })
@@ -142,7 +142,6 @@ describe('reconcileOrphanedPrRemotesWithExec', () => {
       branchConfig: `branch.contributor/fix.remote ${FORK_REMOTE}`,
       localBranches: 'contributor/fix\nmain'
     })
-    // Metadata for the worktree that created it is gone, but the branch it preserved lives on.
     const reclaimed = await reconcileOrphanedPrRemotesWithExec(
       REPO_PATH,
       REPO_ID,
@@ -157,7 +156,6 @@ describe('reconcileOrphanedPrRemotesWithExec', () => {
   it('reclaims a remote whose protecting branch config is stale (path 2, branch since deleted)', async () => {
     const exec = makeExec({
       remotes: remoteLines([{ name: FORK_REMOTE, url: FORK_URL }]),
-      // Config line survives even though `contributor/fix` no longer exists.
       branchConfig: `branch.contributor/fix.remote ${FORK_REMOTE}`,
       localBranches: 'main'
     })
@@ -172,15 +170,14 @@ describe('reconcileOrphanedPrRemotesWithExec', () => {
     expect(removeCalls(exec)).toEqual([['remote', 'remove', FORK_REMOTE]])
   })
 
-  it('reclaims a remote left behind by a worktree removed outside Wakii (path 3)', async () => {
+  it('reclaims a remote left behind by a worktree removed outside Orca (path 3)', async () => {
     const exec = makeExec({ remotes: remoteLines([{ name: FORK_REMOTE, url: FORK_URL }]) })
-    // Metadata still records the (now-vanished) worktree's Orca-created pushTarget.
     const reclaimed = await reconcileOrphanedPrRemotesWithExec(
       REPO_PATH,
       REPO_ID,
       storeOf({ [worktreeId('/wt/gone')]: forkTarget() }),
       exec,
-      [] // no live worktrees at all
+      []
     )
     expect(reclaimed).toEqual([FORK_REMOTE])
     expect(removeCalls(exec)).toEqual([['remote', 'remove', FORK_REMOTE]])
@@ -192,9 +189,8 @@ describe('reconcileOrphanedPrRemotesWithExec', () => {
       REPO_PATH,
       REPO_ID,
       storeOf({
-        // The worktree whose removal originally bailed (legacy metadata, no remoteCreated flag)...
+        // The original worktree lacks ownership, but its removed sibling inherited the Orca-created marker.
         [worktreeId('/wt/legacy')]: forkTarget({ remoteCreated: false }),
-        // ...but a sibling that reused the remote correctly inherited ownership, and is also gone.
         [worktreeId('/wt/sibling-gone')]: forkTarget({ remoteCreated: true })
       }),
       exec,

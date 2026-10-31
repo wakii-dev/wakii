@@ -15,10 +15,9 @@ import type {
 import { MobileNotificationReplayBuffer } from './mobile-notification-replay'
 import { notifyRuntimeListeners } from './runtime-async-boundaries'
 import { getNotificationSettings, getRuntimeDesktopSurface } from './runtime-desktop-surface'
-import {
-  MobileNotificationDismissalStore,
-  type DeliveredNotificationIdentity
-} from './mobile-notification-dismissal-store'
+import { MobileNotificationDismissalStore } from './mobile-notification-dismissal-store'
+import { DesktopClientPresenceTracker } from './desktop-client-presence-tracker'
+import type { DeliveredNotificationIdentity } from '../../shared/mobile-notification-identity'
 
 export type MobileNotificationDispatchEvent = {
   type: 'notification'
@@ -27,17 +26,20 @@ export type MobileNotificationDispatchEvent = {
   desktopAway?: boolean
   emittedAt?: number
   source: 'agent-task-complete' | 'terminal-bell' | 'test' | 'plugin' | 'gate-open' | 'gate-closed'
-  title: string
-  body: string
-  worktreeId?: string
   // Gate routing fields (gate-open/gate-closed); optional so old clients ignore them.
   gateId?: string
   storyId?: string
+  title: string
+  body: string
+  worktreeId?: string
+  /** The pane the phone opens on tap; old phones ignore it and open the workspace's default tab. */
+  paneKey?: string
+  /** See `NotificationDispatchRequest.executionHost`; old phones ignore it and open the desktop's. */
+  executionHost?: `runtime:${string}`
   notificationId?: string
   notificationSeq?: number
   notificationEpoch?: string
-  // Why: background push must tell "needs input" from "finished" without re-deriving
-  // it from the title. Optional and additive — old clients ignore it.
+  // Additive state distinguishes input-needed from finished in push; old clients ignore it.
   agentState?: AgentStatusState
   /** See `NotificationDispatchRequest.attentionKey`: cooldowns key on it instead of the workspace. */
   attentionKey?: string
@@ -69,6 +71,7 @@ export class RuntimeMobileNotificationController {
   private readonly replay = new MobileNotificationReplayBuffer()
   private pushRegistrar: MobilePushRegistrar | null = null
   private dismissalStore: MobileNotificationDismissalStore | null = null
+  private readonly desktopClients = new DesktopClientPresenceTracker()
 
   configureDismissalStore(userDataPath: string): void {
     this.dismissalStore = new MobileNotificationDismissalStore(userDataPath)
@@ -110,6 +113,27 @@ export class RuntimeMobileNotificationController {
     return (await this.pushRegistrar?.unregister(deviceId)) ?? { unregistered: false }
   }
 
+  /** `bindForget` runs for a connection without a live report, before it is recorded. */
+  reportDesktopClientPresence(
+    connectionId: string,
+    away: boolean,
+    bindForget: (forget: () => void) => void
+  ): void {
+    if (!this.desktopClients.has(connectionId)) {
+      bindForget(() => this.desktopClients.forget(connectionId))
+    }
+    this.desktopClients.report(connectionId, away, Date.now())
+  }
+
+  // Unknown must not silence phones; require fresh desktop/local activity. Headless serves use attached desktops, whose silence means away (#31570).
+  private resolveDesktopAway(): boolean | undefined {
+    if (this.desktopClients.anyPresent(Date.now())) {
+      return false
+    }
+    const surface = getRuntimeDesktopSurface()
+    return surface.isAwayForMobileNotifications ? surface.isAwayForMobileNotifications() : true
+  }
+
   onDispatched(listener: (event: MobileNotificationEvent) => void): () => void {
     this.listeners.add(listener)
     return () => this.listeners.delete(listener)
@@ -133,7 +157,7 @@ export class RuntimeMobileNotificationController {
       event = {
         ...event,
         legacySocketAllowed,
-        desktopAway: getRuntimeDesktopSurface().isAwayForMobileNotifications?.()
+        desktopAway: this.resolveDesktopAway()
       }
     }
     const seq = this.replay.record(event)

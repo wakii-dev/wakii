@@ -16,6 +16,7 @@ import type { GitPushTarget, GitWorktreeInfo } from '../../shared/worktree/types
 import type { GitHistoryOptions, GitHistoryResult } from '../../shared/git-history'
 import type { GitBlameOptions, GitBlameResult } from '../../shared/git-blame-types'
 import type { CommitMessageDraftContext } from '../../shared/commit-message-generation'
+import type { ConflictResolution } from '../../shared/source-control-entry-actions'
 import type { GitProviderStatusOptions } from './git-provider-status-options'
 import type { GitAdmissionTier } from '../git/command-runner/git-exec-options'
 
@@ -32,14 +33,21 @@ export type IGitProvider = {
   getHistory(worktreePath: string, options?: GitHistoryOptions): Promise<GitHistoryResult>
   getBlame(worktreePath: string, options: GitBlameOptions): Promise<GitBlameResult>
   commit(worktreePath: string, message: string): Promise<{ success: boolean; error?: string }>
+  completeMerge(worktreePath: string): Promise<{ success: boolean; error?: string }>
   getStagedCommitContext(worktreePath: string): Promise<CommitMessageDraftContext | null>
   getDiff(
     worktreePath: string,
     filePath: string,
     staged: boolean,
-    compareAgainstHead?: boolean
+    compareAgainstHead?: boolean,
+    oldPath?: string
   ): Promise<GitDiffResult>
   stageFile(worktreePath: string, filePath: string): Promise<void>
+  resolveConflict(
+    worktreePath: string,
+    filePath: string,
+    resolution: ConflictResolution
+  ): Promise<void>
   unstageFile(worktreePath: string, filePath: string): Promise<void>
   bulkStageFiles(
     worktreePath: string,
@@ -109,7 +117,12 @@ export type IGitProvider = {
     cwd: string,
     options?: { signal?: AbortSignal; timeoutMs?: number }
   ): Promise<{ stdout: string; stderr: string }>
-  getRemoteFileUrl(worktreePath: string, relativePath: string, line: number): Promise<string | null>
+  getRemoteFileUrl(
+    worktreePath: string,
+    relativePath: string,
+    line: number,
+    endLine?: number
+  ): Promise<string | null>
   getRemoteCommitUrl(worktreePath: string, sha: string): Promise<string | null>
   worktreeIsClean(
     worktreePath: string,

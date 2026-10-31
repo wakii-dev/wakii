@@ -51,6 +51,7 @@ function Harness(props: {
     inlineInput: props.inlineInput as never,
     selectedPaths: new Set(),
     selectedNode: fileNode,
+    pathOwner: 'unresolved',
     activateNode: vi.fn(),
     moveSelection: vi.fn(),
     toggleDir: vi.fn(),

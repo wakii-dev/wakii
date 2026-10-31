@@ -2,14 +2,9 @@
   "version": 1,
   "plugins": [
     {
-      "pluginKey": "stablyai.orca-navigation-shortcuts",
-      "path": "stablyai.orca-navigation-shortcuts",
-      "contentHash": "ec6cefc26cee8708272aeb3550b20b2593d099d69c256713ededc9f31e2517d7"
-    },
-    {
       "pluginKey": "stablyai.orca-superpowers-launcher",
       "path": "stablyai.orca-superpowers-launcher",
-      "contentHash": "06ae9a45962115f6af5b20c9e5c2f2a3fc229ed82fd7a65a21698f2bb85fc00e"
+      "contentHash": "af19bb0c936a81994008cfe2f9249fbfaf6b11165b17404c26fd2b8c061f0a1e"
     }
   ]
 }

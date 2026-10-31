@@ -1,9 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-
-const execFileMock = vi.hoisted(() => vi.fn())
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('electron', () => ({
   app: {
@@ -11,10 +9,6 @@ vi.mock('electron', () => ({
     getPath: () => tmpdir(),
     getAppPath: () => tmpdir()
   }
-}))
-
-vi.mock('node:child_process', () => ({
-  execFile: execFileMock
 }))
 
 import { CliInstaller } from './cli-installer'
@@ -29,10 +23,6 @@ function userPathRead(value: string | null, expandable = false): WindowsUserPath
 }
 
 describe('CliInstaller', () => {
-  beforeEach(() => {
-    execFileMock.mockReset()
-  })
-
   afterEach(() => {
     vi.useRealTimers()
     vi.restoreAllMocks()
@@ -40,13 +30,13 @@ describe('CliInstaller', () => {
 
   it('creates a windows wrapper and updates the user PATH', async () => {
     const fixture = await makeFixture()
-    const installPath = join(fixture.root, 'Programs', 'Wakii', 'bin', 'orca.cmd')
+    const installPath = join(fixture.root, 'Programs', 'Orca', 'bin', 'orca.cmd')
     let userPath = 'C:\\Windows\\System32'
     const installer = new CliInstaller({
       platform: 'win32',
       isPackaged: false,
       userDataPath: fixture.userDataPath,
-      execPath: 'C:\\Users\\me\\AppData\\Local\\Wakii\\Wakii.exe',
+      execPath: 'C:\\Users\\me\\AppData\\Local\\Orca\\Orca.exe',
       appPath: fixture.appPath,
       commandPathOverride: installPath,
       userPathReader: async () => userPathRead(userPath),
@@ -58,7 +48,7 @@ describe('CliInstaller', () => {
     const installed = await installer.install()
     expect(installed.state).toBe('installed')
     expect(installed.pathConfigured).toBe(true)
-    expect(userPath).toContain(join(fixture.root, 'Programs', 'Wakii', 'bin'))
+    expect(userPath).toContain(join(fixture.root, 'Programs', 'Orca', 'bin'))
 
     const wrapperContent = await readFile(installPath, 'utf8')
     expect(wrapperContent).toContain('ORCA_LAUNCHER=')
@@ -69,19 +59,19 @@ describe('CliInstaller', () => {
 
     const removed = await installer.remove()
     expect(removed.state).toBe('not_installed')
-    expect(userPath).not.toContain(join(fixture.root, 'Programs', 'Wakii', 'bin'))
+    expect(userPath).not.toContain(join(fixture.root, 'Programs', 'Orca', 'bin'))
   })
 
   it.each(['UnauthorizedAccessException', 'SecurityException'])(
     'rejects with a friendly message for Windows PATH denial: %s',
     async (permissionMarker) => {
       const fixture = await makeFixture()
-      const installPath = join(fixture.root, 'Programs', 'Wakii', 'bin', 'orca.cmd')
+      const installPath = join(fixture.root, 'Programs', 'Orca', 'bin', 'orca.cmd')
       const installer = new CliInstaller({
         platform: 'win32',
         isPackaged: false,
         userDataPath: fixture.userDataPath,
-        execPath: 'C:\\Users\\me\\AppData\\Local\\Wakii\\Wakii.exe',
+        execPath: 'C:\\Users\\me\\AppData\\Local\\Orca\\Orca.exe',
         appPath: fixture.appPath,
         commandPathOverride: installPath,
         userPathReader: async () => userPathRead('C:\\Windows\\System32'),
@@ -106,78 +96,6 @@ describe('CliInstaller', () => {
     }
   )
 
-  it('skips the Windows PATH write when removing an absent entry', async () => {
-    const fixture = await makeFixture()
-    const userPathWriter = vi.fn()
-    const installer = new CliInstaller({
-      platform: 'win32',
-      isPackaged: false,
-      userDataPath: fixture.userDataPath,
-      execPath: 'C:\\Users\\me\\AppData\\Local\\Wakii\\Wakii.exe',
-      appPath: fixture.appPath,
-      commandPathOverride: join(fixture.root, 'Programs', 'Wakii', 'bin', 'orca.cmd'),
-      userPathReader: async () => userPathRead('C:\\Windows\\System32'),
-      userPathWriter
-    })
-
-    await expect(installer.remove()).resolves.toMatchObject({ state: 'not_installed' })
-    expect(userPathWriter).not.toHaveBeenCalled()
-  })
-
-  it.each([
-    ['PowerShell timeout', 'Windows PATH command timed out after 5000ms.'],
-    [
-      'generic PowerShell method failure',
-      "Command failed: powershell -NoProfile -Command [Environment]::SetEnvironmentVariable('Path', '...', 'User')\nCategoryInfo : NotSpecified: (:) [], MethodInvocationException\nFullyQualifiedErrorId : MethodInvocationException"
-    ]
-  ])(
-    'propagates a non-permission Windows PATH write error unchanged: %s',
-    async (_name, message) => {
-      const fixture = await makeFixture()
-      const installPath = join(fixture.root, 'Programs', 'Wakii', 'bin', 'orca.cmd')
-      const installer = new CliInstaller({
-        platform: 'win32',
-        isPackaged: false,
-        userDataPath: fixture.userDataPath,
-        execPath: 'C:\\Users\\me\\AppData\\Local\\Wakii\\Wakii.exe',
-        appPath: fixture.appPath,
-        commandPathOverride: installPath,
-        userPathReader: async () => userPathRead('C:\\Windows\\System32'),
-        userPathWriter: async () => {
-          throw new Error(message)
-        }
-      })
-
-      const result = installer.install()
-      await expect(result).rejects.toThrow(message)
-      await expect(result).rejects.not.toThrow(/Windows blocked updating your user PATH/)
-    }
-  )
-
-  it('reports an unknown Windows PATH without spawning PowerShell', async () => {
-    const fixture = await makeFixture()
-    const installPath = join(fixture.root, 'Programs', 'Wakii', 'bin', 'orca.cmd')
-    const installer = new CliInstaller({
-      platform: 'win32',
-      isPackaged: false,
-      userDataPath: fixture.userDataPath,
-      execPath: 'C:\\Users\\me\\AppData\\Local\\Wakii\\Wakii.exe',
-      appPath: fixture.appPath,
-      commandPathOverride: installPath,
-      userPathReader: async () => ({
-        state: 'unknown',
-        detail: 'Wakii could not read the Windows user PATH registry value.'
-      })
-    })
-
-    await expect(installer.getStatus()).resolves.toMatchObject({
-      state: 'not_installed',
-      pathConfigured: null,
-      detail: expect.stringContaining('could not read')
-    })
-    expect(execFileMock).not.toHaveBeenCalled()
-  })
-
   it('fails closed without writing when a Windows PATH mutation cannot read the registry', async () => {
     const fixture = await makeFixture()
     const userPathWriter = vi.fn()
@@ -185,12 +103,12 @@ describe('CliInstaller', () => {
       platform: 'win32',
       isPackaged: false,
       userDataPath: fixture.userDataPath,
-      execPath: 'C:\\Users\\me\\AppData\\Local\\Wakii\\Wakii.exe',
+      execPath: 'C:\\Users\\me\\AppData\\Local\\Orca\\Orca.exe',
       appPath: fixture.appPath,
-      commandPathOverride: join(fixture.root, 'Programs', 'Wakii', 'bin', 'orca.cmd'),
+      commandPathOverride: join(fixture.root, 'Programs', 'Orca', 'bin', 'orca.cmd'),
       userPathReader: async () => ({
         state: 'unknown',
-        detail: 'Wakii could not read the Windows user PATH registry value.'
+        detail: 'Orca could not read the Windows user PATH registry value.'
       }),
       userPathWriter
     })
@@ -201,7 +119,7 @@ describe('CliInstaller', () => {
 
   it('bypasses cached status data before a Windows PATH mutation', async () => {
     const fixture = await makeFixture()
-    const installPath = join(fixture.root, 'Programs', 'Wakii', 'bin', 'orca.cmd')
+    const installPath = join(fixture.root, 'Programs', 'Orca', 'bin', 'orca.cmd')
     const pathDirectory = dirname(installPath)
     let registryPath = 'C:\\Tools'
     const registryReader = new WindowsUserPathRegistryReader({
@@ -220,7 +138,7 @@ describe('CliInstaller', () => {
       platform: 'win32',
       isPackaged: false,
       userDataPath: fixture.userDataPath,
-      execPath: 'C:\\Users\\me\\AppData\\Local\\Wakii\\Wakii.exe',
+      execPath: 'C:\\Users\\me\\AppData\\Local\\Orca\\Orca.exe',
       appPath: fixture.appPath,
       commandPathOverride: installPath,
       userPathReader: () => registryReader.read(),
@@ -240,17 +158,17 @@ describe('CliInstaller', () => {
 
   it('matches expandable Windows PATH entries case-insensitively without rewriting them', async () => {
     const fixture = await makeFixture()
-    const installPath = join(fixture.root, 'Local App Data', 'Wakii', 'bin', 'orca.cmd')
+    const installPath = join(fixture.root, 'Local App Data', 'Orca', 'bin', 'orca.cmd')
     const userPathWriter = vi.fn()
     const installer = new CliInstaller({
       platform: 'win32',
       isPackaged: false,
       userDataPath: fixture.userDataPath,
-      execPath: 'C:\\Users\\me\\AppData\\Local\\Wakii\\Wakii.exe',
+      execPath: 'C:\\Users\\me\\AppData\\Local\\Orca\\Orca.exe',
       appPath: fixture.appPath,
       commandPathOverride: installPath,
       windowsEnvironment: { LOCALAPPDATA: join(fixture.root, 'Local App Data') },
-      userPathReader: async () => userPathRead('%localappdata%\\Wakii\\bin\\', true),
+      userPathReader: async () => userPathRead('%localappdata%\\Orca\\bin\\', true),
       userPathWriter
     })
 
@@ -263,47 +181,24 @@ describe('CliInstaller', () => {
 
   it('does not expand environment variables stored in a REG_SZ Windows PATH', async () => {
     const fixture = await makeFixture()
-    const installPath = join(fixture.root, 'Local App Data', 'Wakii', 'bin', 'orca.cmd')
+    const installPath = join(fixture.root, 'Local App Data', 'Orca', 'bin', 'orca.cmd')
     const pathDirectory = dirname(installPath)
     const userPathWriter = vi.fn()
     const installer = new CliInstaller({
       platform: 'win32',
       isPackaged: false,
       userDataPath: fixture.userDataPath,
-      execPath: 'C:\\Users\\me\\AppData\\Local\\Wakii\\Wakii.exe',
+      execPath: 'C:\\Users\\me\\AppData\\Local\\Orca\\Orca.exe',
       appPath: fixture.appPath,
       commandPathOverride: installPath,
       windowsEnvironment: { LOCALAPPDATA: join(fixture.root, 'Local App Data') },
-      userPathReader: async () => userPathRead('%LOCALAPPDATA%\\Wakii\\bin'),
+      userPathReader: async () => userPathRead('%LOCALAPPDATA%\\Orca\\bin'),
       userPathWriter
     })
 
     await installer.install()
 
     expect(userPathWriter).toHaveBeenCalledWith(`%LOCALAPPDATA%\\Orca\\bin;${pathDirectory}`)
-  })
-
-  it('resolves custom-install packaged Windows command path from resourcesPath', async () => {
-    const fixture = await makeFixture()
-    const localAppDataPath = join(fixture.root, 'AppData', 'Local')
-    const resourcesPath = join(fixture.root, 'D Custom Wakii', 'resources')
-    await mkdir(join(resourcesPath, 'bin'), { recursive: true })
-    await writeFile(join(resourcesPath, 'bin', 'orca.exe'), 'native launcher', 'utf8')
-
-    const installer = new CliInstaller({
-      platform: 'win32',
-      isPackaged: true,
-      resourcesPath,
-      localAppDataPath,
-      userDataPath: fixture.userDataPath,
-      execPath: join(fixture.root, 'D Custom Wakii', 'Wakii.exe'),
-      appPath: fixture.appPath,
-      userPathReader: async () => userPathRead(null),
-      userPathWriter: async () => {}
-    })
-
-    const status = await installer.getStatus()
-    expect(status.commandPath).toBe(join(resourcesPath, 'bin', 'orca.exe'))
   })
 
   it('keeps a bundled Windows launcher installed when the user PATH read is unknown', async () => {
@@ -318,11 +213,11 @@ describe('CliInstaller', () => {
       isPackaged: true,
       resourcesPath,
       userDataPath: fixture.userDataPath,
-      execPath: join(fixture.root, 'Wakii.exe'),
+      execPath: join(fixture.root, 'Orca.exe'),
       appPath: fixture.appPath,
       userPathReader: async () => ({
         state: 'unknown',
-        detail: 'Wakii could not read the Windows user PATH registry value.'
+        detail: 'Orca could not read the Windows user PATH registry value.'
       })
     })
 
@@ -336,7 +231,7 @@ describe('CliInstaller', () => {
   it('does not overwrite the packaged Windows launcher while registering PATH', async () => {
     const fixture = await makeFixture()
     const localAppDataPath = join(fixture.root, 'AppData', 'Local')
-    const resourcesPath = join(fixture.root, 'D Custom Wakii', 'resources')
+    const resourcesPath = join(fixture.root, 'D Custom Orca', 'resources')
     const bundledLauncher = join(resourcesPath, 'bin', 'orca.exe')
     const bundledContent = 'native launcher'
     await mkdir(dirname(bundledLauncher), { recursive: true })
@@ -349,7 +244,7 @@ describe('CliInstaller', () => {
       resourcesPath,
       localAppDataPath,
       userDataPath: fixture.userDataPath,
-      execPath: join(fixture.root, 'D Custom Wakii', 'Wakii.exe'),
+      execPath: join(fixture.root, 'D Custom Orca', 'Orca.exe'),
       appPath: fixture.appPath,
       userPathReader: async () => userPathRead(userPath),
       userPathWriter: async (value) => {

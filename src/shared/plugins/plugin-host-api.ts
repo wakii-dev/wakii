@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { PLUGIN_EVENT_NAMES } from './plugin-manifest'
-import type { PluginCapabilityKind } from './plugin-capabilities'
+import { PLUGIN_EVENT_NAMES } from './manifest/plugin-manifest'
+import type { PluginCapabilityKind } from './capabilities/plugin-capabilities'
 
 /**
  * Host API v0 — the separately-versioned public facade plugins call. Every
@@ -235,7 +235,7 @@ export const PLUGIN_HOST_API_V0: readonly PluginHostMethodSpec[] = [
     name: 'storage.get',
     since: '1.0',
     scope: 'plugin-private',
-    capability: 'storage',
+    capability: 'storage:own',
     mutation: false,
     // Panel-callable: the store is plugin-private and the panel session is
     // bound to the owning plugin's identity, so a panel can never read
@@ -249,7 +249,7 @@ export const PLUGIN_HOST_API_V0: readonly PluginHostMethodSpec[] = [
     name: 'storage.set',
     since: '1.0',
     scope: 'plugin-private',
-    capability: 'storage',
+    capability: 'storage:own',
     mutation: true,
     // Panel-callable mutation: audit-logged with actor `plugin:<id>` like
     // every mutation; scope argument above is why this stays safe.
@@ -261,7 +261,7 @@ export const PLUGIN_HOST_API_V0: readonly PluginHostMethodSpec[] = [
     name: 'storage.delete',
     since: '1.0',
     scope: 'plugin-private',
-    capability: 'storage',
+    capability: 'storage:own',
     mutation: true,
     panel: false,
     params: storageDeleteParams,
@@ -271,7 +271,7 @@ export const PLUGIN_HOST_API_V0: readonly PluginHostMethodSpec[] = [
     name: 'storage.keys',
     since: '1.0',
     scope: 'plugin-private',
-    capability: 'storage',
+    capability: 'storage:own',
     mutation: false,
     panel: false,
     params: storageKeysParams,
@@ -281,7 +281,7 @@ export const PLUGIN_HOST_API_V0: readonly PluginHostMethodSpec[] = [
     name: 'secrets.get',
     since: '1.0',
     scope: 'plugin-private',
-    capability: 'secrets',
+    capability: 'secrets:own',
     mutation: false,
     panel: false,
     params: secretsGetParams,
@@ -291,7 +291,7 @@ export const PLUGIN_HOST_API_V0: readonly PluginHostMethodSpec[] = [
     name: 'secrets.set',
     since: '1.0',
     scope: 'plugin-private',
-    capability: 'secrets',
+    capability: 'secrets:own',
     mutation: true,
     panel: false,
     params: secretsSetParams,
@@ -301,7 +301,7 @@ export const PLUGIN_HOST_API_V0: readonly PluginHostMethodSpec[] = [
     name: 'secrets.delete',
     since: '1.0',
     scope: 'plugin-private',
-    capability: 'secrets',
+    capability: 'secrets:own',
     mutation: true,
     panel: false,
     params: secretsDeleteParams,
@@ -331,7 +331,7 @@ export const PLUGIN_HOST_API_V0: readonly PluginHostMethodSpec[] = [
     name: 'events.subscribe',
     since: '1.0',
     scope: 'host-events',
-    capability: 'events:subscribe',
+    capability: 'agent:read',
     mutation: false,
     panel: false,
     params: eventsSubscribeParams,

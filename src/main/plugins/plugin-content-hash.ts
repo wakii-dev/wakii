@@ -2,33 +2,25 @@ import { createHash } from 'node:crypto'
 import { createReadStream } from 'node:fs'
 import { lstat, readdir } from 'node:fs/promises'
 import { join, relative } from 'node:path'
-import { pluginPathSegmentError } from '../../shared/plugins/plugin-path-safety'
+import { pluginPathSegmentError } from '../../shared/plugins/installation/plugin-path-safety'
 
-/**
- * Deterministic hash of a plugin's file tree. The hash names the immutable
- * install directory (`<userData>/plugins/<publisher>.<id>/<hash>/`), so two
- * installs of identical content share a name and a mutated install is
- * detectable. Hashes relative paths + file bytes in sorted order; symlinks
- * are refused outright (installed trees must be self-contained).
- */
+// Immutable installs use sorted path/content hashes and reject symlinks to stay self-contained.
 
-const MAX_PLUGIN_FILES = 2_000
-const MAX_PLUGIN_TOTAL_BYTES = 50 * 1024 * 1024
-// Junk bỏ qua khi hash: gitignored và sinh lại cục bộ mỗi lần chạy test kit
-// (__pycache__/*.pyc) hoặc Finder (.DS_Store) — có trên máy rehash nhưng không
-// bao giờ có trong CI checkout, tính vào hash làm fingerprint lệch theo máy
-// (1.4.209 fail 2 lần vì 2 file .pyc). Phải mirror đúng skip-set + seed của
-// config/scripts/verify-packaged-plugin-resources.cjs — hai implementation
-// này phải cùng giá trị trên cùng một cây; lockstep được chốt máy móc bởi
-// config/scripts/plugin-tree-hash-lockstep.test.mjs (sửa 1 bên → chạy test đó).
-const JUNK_ENTRY_NAMES = new Set(['.DS_Store'])
-const JUNK_EXTENSIONS = ['.pyc']
+export const MAX_PLUGIN_FILES = 2_000
+export const MAX_PLUGIN_TOTAL_BYTES = 50 * 1024 * 1024
 
 type PluginFile = { path: string; size: number }
 
 export type PluginTreeHashResult =
   | { ok: true; hash: string; fileCount: number; totalBytes: number }
   | { ok: false; error: string }
+
+// Junk bỏ qua khi hash: gitignored và sinh lại cục bộ mỗi lần chạy (kit/bin/__pycache__/*.pyc)
+// hoặc Finder (.DS_Store) — có mặt trên máy rehash nhưng không tồn tại trong CI checkout.
+// Tính vào hash làm fingerprint lệch theo máy. Phải mirror hashPackagedPluginTree
+// (verify-packaged-plugin-resources.cjs) — lockstep chốt bởi plugin-tree-hash-lockstep.test.mjs.
+const JUNK_ENTRY_NAMES = new Set(['.DS_Store'])
+const JUNK_EXTENSIONS = ['.pyc']
 
 async function collectFiles(
   root: string,
@@ -37,17 +29,13 @@ async function collectFiles(
   counters: { entries: number; bytes: number }
 ): Promise<string | null> {
   const entries = await readdir(dir, { withFileTypes: true })
-  // Why: localeCompare ordering varies with host locale/ICU data; content
-  // addresses must sort identically on macOS, Linux, and Windows.
+  // localeCompare varies by locale/ICU; content identities must match across hosts.
   entries.sort((left, right) => (left.name < right.name ? -1 : left.name > right.name ? 1 : 0))
   for (const entry of entries) {
     if (dir === root && entry.name === '.git') {
       continue
     }
-    if (
-      JUNK_ENTRY_NAMES.has(entry.name) ||
-      JUNK_EXTENSIONS.some((ext) => entry.name.endsWith(ext))
-    ) {
+    if (JUNK_ENTRY_NAMES.has(entry.name) || JUNK_EXTENSIONS.some((ext) => entry.name.endsWith(ext))) {
       continue
     }
     if (entry.isDirectory() && entry.name === '__pycache__') {
@@ -112,8 +100,7 @@ export async function hashPluginTree(root: string): Promise<PluginTreeHashResult
       return { ok: false, error }
     }
     const hash = createHash('sha256')
-    // Why: every record is length-framed so path/content delimiters inside a
-    // plugin file cannot make two different trees share one hash preimage.
+    // Length framing prevents delimiter-containing paths/bytes from sharing a hash preimage.
     hash.update('orca-plugin-tree-v2\0')
     let totalBytes = 0
     for (const file of files) {

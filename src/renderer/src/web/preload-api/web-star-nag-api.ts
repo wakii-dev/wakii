@@ -12,6 +12,7 @@ export function createWebStarNagApi(): Partial<PreloadApi> {
       disable: () => Promise.resolve(),
       openWeb: () => Promise.resolve(),
       starWakii: () => Promise.resolve(false),
+      starOrca: () => Promise.resolve(false),
       forceShow: () => Promise.resolve(),
       agentValueMoment: () => Promise.resolve({ status: 'skipped' }),
       showAgentValueMoment: () => Promise.resolve(),

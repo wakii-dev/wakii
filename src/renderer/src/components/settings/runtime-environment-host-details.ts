@@ -1,9 +1,9 @@
 import { translate } from '@/i18n/i18n'
 import {
-  describeRuntimeCompatBlock,
   evaluateRuntimeCompat,
   type RuntimeCompatVerdict
 } from '../../../../shared/protocol-compat'
+import { describeRuntimeCompatBlock } from '@/lib/runtime-host-copy'
 import {
   MIN_COMPATIBLE_RUNTIME_SERVER_VERSION,
   PROJECT_HOST_SETUP_RUNTIME_CAPABILITY,
@@ -54,7 +54,7 @@ export function getHostDetailsSummary(details: RuntimeHostDetails | undefined): 
   if (details.runtimeStatus === null && details.compatibility === null) {
     return translate(
       'auto.components.settings.RuntimeEnvironmentsPane.serverRuntimeUnavailable',
-      'Wakii unavailable'
+      'Orca unavailable'
     )
   }
   if (details.compatibility?.kind === 'blocked') {
@@ -78,7 +78,7 @@ export function getHostDetailsDescription(details: RuntimeHostDetails | undefine
   if (details.runtimeStatus === null && details.compatibility === null) {
     const unavailableDescription = translate(
       'auto.components.settings.RuntimeEnvironmentsPane.serverRuntimeUnavailableDescription',
-      'SSH transport is connected, but the Wakii runtime did not answer. The host may still be running.'
+      'SSH transport is connected, but the Orca runtime did not answer. The host may still be running.'
     )
     return details.error ? `${unavailableDescription} ${details.error}` : unavailableDescription
   }
@@ -155,12 +155,12 @@ function getHostModelCapabilityLabel(capability: string): string {
 export function getActiveServerModeDescription(allowLocalRuntime: boolean): string {
   return allowLocalRuntime
     ? translate(
-        'auto.components.settings.RuntimeEnvironmentsPane.3f67e8078a',
-        'New projects are created on this computer unless you choose a saved server here. Existing projects, files and terminals stay on their own host.'
+        'auto.components.settings.serverList.defaultHostHelp',
+        'Existing projects stay where they are.'
       )
     : translate(
-        'auto.components.settings.RuntimeEnvironmentsPane.2c85efb3e8',
-        'Selecting a saved server makes this browser use that paired Wakii runtime as its default Host.'
+        'auto.components.settings.serverList.defaultHostWebHelp',
+        'This browser opens new projects on the chosen server.'
       )
 }
 
@@ -182,8 +182,7 @@ export function getRuntimeServerConnectionState(
   if (details.compatibility?.kind === 'blocked') {
     return 'disconnected'
   }
-  // A compatibility verdict is positive runtime evidence even when an older
-  // client omitted the full status payload.
+  // Compatibility verdicts prove runtime availability even when older clients omit full status.
   if (
     details.status === 'ready' &&
     details.runtimeStatus === null &&
@@ -195,9 +194,7 @@ export function getRuntimeServerConnectionState(
     hasStatusEntry: true,
     status: details.runtimeStatus,
     remoteControl: details.remoteControl,
-    // A ready details phase is transport evidence only; status.get may still
-    // have failed or been omitted by an older peer. Error details need
-    // diagnostics to prove transport reachability.
+    // Ready details prove only transport; older/failed probes can omit runtime status, and errors need reachability diagnostics.
     transportStatus: details.status === 'ready' ? 'connected' : 'disconnected'
   })
 }
@@ -216,7 +213,7 @@ export function getRuntimeServerConnectionLabel(state: RuntimeServerConnectionSt
     case 'runtime-unavailable':
       return translate(
         'auto.components.settings.RuntimeEnvironmentsPane.serverRuntimeUnavailable',
-        'Wakii unavailable'
+        'Orca unavailable'
       )
     case 'workspace-window-closed':
       return translate(
@@ -238,19 +235,5 @@ export function getRuntimeServerConnectionLabel(state: RuntimeServerConnectionSt
         'auto.components.settings.RuntimeEnvironmentsPane.serverDisconnected',
         'Disconnected'
       )
-  }
-}
-
-export function getRuntimeServerDotClass(state: RuntimeServerConnectionState): string {
-  switch (state) {
-    case 'connected':
-      return 'bg-emerald-500'
-    case 'runtime-unavailable':
-    case 'checking':
-    case 'workspace-window-closed':
-    case 'reconnecting':
-      return 'bg-yellow-500'
-    case 'disconnected':
-      return 'bg-muted-foreground/40'
   }
 }

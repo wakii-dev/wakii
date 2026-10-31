@@ -8,11 +8,14 @@ import {
 } from './appimage-extracted-root'
 import { CliCommandInspection } from './cli-command-inspection'
 import {
+  buildMacPrivilegedSymlinkReadableCommand,
   buildMacPrivilegedSymlinkTransaction,
   capturedExpectedEntry,
   hasSameIdentity,
   hasSameSnapshot,
   inspectStableCommand,
+  isSameDirectoryEntry,
+  isUnreadableSymlink,
   quarantineCommandPath,
   readEntrySnapshot,
   type CommandQuarantine,
@@ -30,32 +33,34 @@ export class CliCommandInstallation extends CliCommandInspection {
     if (!commandPath || !launcherPath || status.state === 'installed') {
       return
     }
+    if (await isSameDirectoryEntry(commandPath, launcherPath)) {
+      throw new Error(`Refusing to register ${commandPath} as a link to itself.`)
+    }
 
     const inspected = await this.inspectStableSymlink(commandPath, launcherPath)
     if (inspected.status.state === 'conflict') {
       throw new Error(
-        `Refusing to replace non-Wakii command at ${commandPath}. Remove it and register again if it is no longer needed.`
+        `Refusing to replace non-Orca command at ${commandPath}. Remove it and register again if it is no longer needed.`
       )
     }
     if (inspected.status.state === 'installed') {
       return
     }
 
-    let quarantine: CommandQuarantine
-    try {
-      quarantine = await this.quarantineCommandPath(commandPath)
-    } catch (error) {
-      if (this.platform !== 'darwin' || !isPermissionError(error)) {
-        throw error
+    const quarantine = await this.quarantineUnlessPrivileged(commandPath)
+    if (!quarantine) {
+      await this.runPrivilegedSymlinkTransaction('install', commandPath, launcherPath, inspected)
+      const installed = await this.inspectStableSymlink(commandPath, launcherPath)
+      if (installed.status.state !== 'installed') {
+        throw new Error(`Could not register the Orca command at ${commandPath}.`)
       }
-      await this.installSymlinkWithPrivileges(commandPath, launcherPath, inspected)
       return
     }
 
     if (!(await capturedExpectedEntry(quarantine, inspected))) {
       await this.restoreQuarantinedCommand(quarantine, commandPath)
       throw new Error(
-        `Refusing to replace non-Wakii command at ${commandPath}. Remove it and register again if it is no longer needed.`
+        `Refusing to replace non-Orca command at ${commandPath}. Remove it and register again if it is no longer needed.`
       )
     }
 
@@ -71,29 +76,24 @@ export class CliCommandInstallation extends CliCommandInspection {
   protected async removeSymlink(commandPath: string): Promise<void> {
     const launcherPath = await this.resolveLauncherPath()
     if (!launcherPath) {
-      throw new Error('The Wakii CLI launcher is no longer available.')
+      throw new Error('The Orca CLI launcher is no longer available.')
     }
     const inspected = await this.inspectStableSymlink(commandPath, launcherPath)
     if (inspected.status.state === 'not_installed') {
       return
     }
     if (inspected.status.state === 'conflict') {
-      throw new Error(`Refusing to remove non-Wakii command at ${commandPath}.`)
+      throw new Error(`Refusing to remove non-Orca command at ${commandPath}.`)
     }
 
-    let quarantine: CommandQuarantine
-    try {
-      quarantine = await this.quarantineCommandPath(commandPath)
-    } catch (error) {
-      if (this.platform !== 'darwin' || !isPermissionError(error)) {
-        throw error
-      }
-      await this.removeSymlinkWithPrivileges(commandPath, inspected)
+    const quarantine = await this.quarantineUnlessPrivileged(commandPath)
+    if (!quarantine) {
+      await this.runPrivilegedSymlinkTransaction('remove', commandPath, launcherPath, inspected)
       return
     }
     if (!(await capturedExpectedEntry(quarantine, inspected))) {
       await this.restoreQuarantinedCommand(quarantine, commandPath)
-      throw new Error(`Refusing to remove non-Wakii command at ${commandPath}.`)
+      throw new Error(`Refusing to remove non-Orca command at ${commandPath}.`)
     }
     await this.discardQuarantinedCommand(quarantine)
   }
@@ -173,17 +173,34 @@ export class CliCommandInstallation extends CliCommandInspection {
     const extractedRoot = await ensureAppImageExtractedRoot(extractionOptions)
     if (!extractedRoot) {
       throw new Error(
-        `Could not extract the Wakii AppImage at ${this.appImagePath}. Check that it is executable and that ${this.appImageCacheRootPath} has free space.`
+        `Could not extract the Orca AppImage at ${this.appImagePath}. Check that it is executable and that ${this.appImageCacheRootPath} has free space.`
       )
     }
     return extractedRoot
   }
 
+  // Repair unreadable root-owned links before checking ownership.
   private async inspectStableSymlink(
     commandPath: string,
     launcherPath: string
   ): Promise<StableCommandInspection> {
-    return inspectStableCommand(commandPath, () => this.inspectSymlink(commandPath, launcherPath))
+    const inspect = () =>
+      inspectStableCommand(commandPath, () => this.inspectSymlink(commandPath, launcherPath))
+    const inspected = await inspect()
+    if (this.platform !== 'darwin' || !isUnreadableSymlink(inspected)) {
+      return inspected
+    }
+    await this.privilegedRunner(
+      buildMacPrivilegedSymlinkReadableCommand({
+        commandPath,
+        expected: inspected.snapshot.identity
+      })
+    )
+    const readable = await inspect()
+    if (isUnreadableSymlink(readable)) {
+      throw new Error(`Could not read the command at ${commandPath}.`)
+    }
+    return readable
   }
 
   private async inspectStableLegacyCommand(
@@ -277,39 +294,26 @@ export class CliCommandInstallation extends CliCommandInspection {
     }
   }
 
-  private async installSymlinkWithPrivileges(
+  /** Null when the directory is read-only, so only the privileged transaction can change it. */
+  private async quarantineUnlessPrivileged(commandPath: string): Promise<CommandQuarantine | null> {
+    try {
+      return await this.quarantineCommandPath(commandPath)
+    } catch (error) {
+      if (this.platform !== 'darwin' || !isPermissionError(error)) {
+        throw error
+      }
+      return null
+    }
+  }
+
+  private async runPrivilegedSymlinkTransaction(
+    action: 'install' | 'remove',
     commandPath: string,
     launcherPath: string,
     inspected: StableCommandInspection
   ): Promise<void> {
     await this.privilegedRunner(
-      buildMacPrivilegedSymlinkTransaction({
-        action: 'install',
-        commandPath,
-        launcherPath,
-        expected: inspected.snapshot?.identity ?? null,
-        expectedFileSha256: inspected.fileSha256,
-        expectedRawSymlinkTarget: inspected.rawSymlinkTarget
-      })
-    )
-    const installed = await this.inspectStableSymlink(commandPath, launcherPath)
-    if (installed.status.state !== 'installed') {
-      throw new Error(`Could not register the Wakii command at ${commandPath}.`)
-    }
-  }
-
-  private async removeSymlinkWithPrivileges(
-    commandPath: string,
-    inspected: StableCommandInspection
-  ): Promise<void> {
-    await this.privilegedRunner(
-      buildMacPrivilegedSymlinkTransaction({
-        action: 'remove',
-        commandPath,
-        expected: inspected.snapshot?.identity ?? null,
-        expectedFileSha256: inspected.fileSha256,
-        expectedRawSymlinkTarget: inspected.rawSymlinkTarget
-      })
+      buildMacPrivilegedSymlinkTransaction({ action, commandPath, launcherPath, inspected })
     )
   }
 }

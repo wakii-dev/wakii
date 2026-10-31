@@ -7,8 +7,10 @@ import { createExplorerDirState } from './actions/explorer-dir-state'
 import { createOpenFileState } from './actions/open-file-state'
 import { createOpenFileAction } from './actions/open-file-action'
 import { createMarkdownPreviewActions } from './actions/markdown-preview-actions'
+import { createPluginNewFileActions } from './actions/untitled-file-creation'
 import { createCloseFileAction } from './actions/close-file-action'
 import { createRecentlyClosedEditorTabs } from './actions/recently-closed-editor-tabs'
+import { createWakiiViewerActions } from './actions/wakii-viewer-actions'
 import { createOpenFileMutations } from './actions/open-file-mutations'
 import { createRestoredEditorOwner } from './actions/restored-editor-owner'
 import { createRekeyOpenFilesAction } from './actions/rekey-open-files-action'
@@ -18,7 +20,6 @@ import { createOpenCombinedDiff } from './actions/open-combined-diff'
 import { createOpenConflictFile } from './actions/open-conflict-file'
 import { createOpenConflictReview } from './actions/open-conflict-review'
 import { createCheckRunDetailsActions } from './actions/check-run-details-actions'
-import { createChatVisualTabActions } from './actions/chat-visual-tab-actions'
 import { createEditorCursorLine } from './actions/editor-cursor-line'
 import { createGitStatusActions } from './actions/git-status-actions'
 import { createGitRemoteStatus } from './actions/git-remote-status'
@@ -29,7 +30,7 @@ import { createFileSearchActions } from './actions/file-search-actions'
 import { createEditorRevealFocusState } from './actions/editor-reveal-focus-state'
 import { createMarkdownLinkAction } from './actions/markdown-link-action'
 import { createHydrateEditorSession } from './actions/hydrate-editor-session'
-import { createWakiiViewerActions } from './actions/wakii-viewer-actions'
+import { createEditorBufferIdentityActions } from './actions/editor-buffer-identity-actions'
 
 export const createEditorSlice: StateCreator<AppState, [], [], EditorSlice> = (set, get) => ({
   ...createEditorDraftState(set, get),
@@ -38,8 +39,10 @@ export const createEditorSlice: StateCreator<AppState, [], [], EditorSlice> = (s
   ...createOpenFileState(set, get),
   ...createOpenFileAction(set, get),
   ...createMarkdownPreviewActions(set, get),
+  ...createPluginNewFileActions(set, get),
   ...createCloseFileAction(set, get),
   ...createRecentlyClosedEditorTabs(set, get),
+  ...createWakiiViewerActions(set, get),
   ...createOpenFileMutations(set, get),
   ...createRestoredEditorOwner(set, get),
   ...createRekeyOpenFilesAction(set, get),
@@ -49,7 +52,6 @@ export const createEditorSlice: StateCreator<AppState, [], [], EditorSlice> = (s
   ...createOpenConflictFile(set, get),
   ...createOpenConflictReview(set, get),
   ...createCheckRunDetailsActions(set, get),
-  ...createChatVisualTabActions(set, get),
   ...createEditorCursorLine(set, get),
   ...createGitStatusActions(set, get),
   ...createGitRemoteStatus(set, get),
@@ -59,6 +61,6 @@ export const createEditorSlice: StateCreator<AppState, [], [], EditorSlice> = (s
   ...createFileSearchActions(set, get),
   ...createEditorRevealFocusState(set, get),
   ...createMarkdownLinkAction(set, get),
-  ...createWakiiViewerActions(set, get),
-  ...createHydrateEditorSession(set, get)
+  ...createHydrateEditorSession(set, get),
+  ...createEditorBufferIdentityActions(set, get)
 })

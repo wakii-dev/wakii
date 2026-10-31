@@ -19,6 +19,7 @@ export function buildInterfaceSettingsSections({
   isWebClient,
   nativeChatEnabled,
   hostQueuesMessages,
+  typedChatPermissions,
   managedBrowserCreationEnabled,
   mobileEmulatorCreationEnabled
 }: SettingsNavigationBuildOptions): SettingsNavSection[] {
@@ -50,7 +51,7 @@ export function buildInterfaceSettingsSections({
             ),
             icon: MessageSquare,
             searchEntries: [
-              getChatPermissionSearchEntry(),
+              getChatPermissionSearchEntry(typedChatPermissions),
               ...getChatAppearanceSearchEntries(),
               ...getChatBehaviorSearchEntries().filter(
                 (entry) => hostQueuesMessages || entry.targetSectionId !== 'chat-queue-follow-ups'

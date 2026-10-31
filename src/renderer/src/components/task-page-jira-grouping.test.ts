@@ -1,3 +1,4 @@
+import { defaultJiraListColumnIds, visibleJiraListColumns } from './jira-list-columns'
 // @vitest-environment happy-dom
 
 import '@testing-library/jest-dom/vitest'
@@ -13,8 +14,8 @@ import { groupJiraIssuesByStatus, TaskPageJiraIssueList } from './task-page-jira
 import {
   getSingleJiraProjectScope,
   loadTaskPageJiraProjectStatusOrder
-} from './task-page-jira-status-order'
-import type { JiraIssue, JiraProjectStatusOrder } from '../../../shared/jira-types'
+} from './task-page/jira/task-page-jira-status-order'
+import type { JiraIssue, JiraProjectStatusOrder } from '../../../shared/jira/jira-types'
 
 const { jiraGetProjectStatusOrderMock } = vi.hoisted(() => ({
   jiraGetProjectStatusOrderMock: vi.fn()
@@ -174,6 +175,7 @@ describe('Jira issue status grouping', () => {
         TooltipProvider,
         null,
         React.createElement(TaskPageJiraIssueList, {
+          columns: visibleJiraListColumns(defaultJiraListColumnIds()),
           formatUpdatedAt: () => 'today',
           getStatusTone: () => 'border-border',
           issues: [

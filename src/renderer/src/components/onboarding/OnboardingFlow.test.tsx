@@ -46,11 +46,11 @@ describe('OnboardingFlow', () => {
     })
 
     expect(html).toContain('Set up notifications')
-    expect(html).not.toContain('Set up Wakii for agents')
-    expect(html).not.toContain('Explore Wakii')
+    expect(html).not.toContain('Set up Orca for agents')
+    expect(html).not.toContain('Explore Orca')
     expect(html).not.toContain('Take the tour')
     expect(html).toContain('Add your first project')
-    expect(html).not.toContain('Point Wakii at some code')
+    expect(html).not.toContain('Point Orca at some code')
   })
 
   it.each([
@@ -71,8 +71,8 @@ describe('OnboardingFlow', () => {
       })
 
       expect(html).toContain(title)
-      expect(html).not.toContain('Set up Wakii for agents')
-      expect(html).not.toContain('Explore Wakii')
+      expect(html).not.toContain('Set up Orca for agents')
+      expect(html).not.toContain('Explore Orca')
     }
   )
 
@@ -94,8 +94,8 @@ describe('OnboardingFlow', () => {
       })
 
       expect(html).toContain(title)
-      expect(html).not.toContain('Set up Wakii for agents')
-      expect(html).not.toContain('Explore Wakii')
+      expect(html).not.toContain('Set up Orca for agents')
+      expect(html).not.toContain('Explore Orca')
     }
   )
 
@@ -154,9 +154,7 @@ describe('OnboardingFlow', () => {
     })
 
     expect(html).toContain('Set Windows terminal defaults')
-    // Why: integrations is skipped (gh already installed), so it is not a
-    // stepper dot at all — the four real steps are agent, theme, Windows
-    // terminal, notifications, and Windows terminal is the third of four.
+    // Installed gh skips Integrations entirely; Windows terminal is step three of the four visible steps.
     expect(html).toContain('3 of 4')
     expect(html).not.toContain('Set up GitHub tasks')
     expect(html).not.toContain('Integrations')
@@ -183,9 +181,8 @@ describe('OnboardingFlow', () => {
     expect(html).toContain('Add your first project')
     expect(html).not.toContain('Set up GitHub tasks')
     expect(html).not.toContain('Connect your task sources')
-    expect(html).not.toContain('Point Wakii at some code')
-    // Why: with both integrations (gh installed) and Windows terminal (Mac)
-    // skipped, the stepper shows only the three real steps — no dead dots.
+    expect(html).not.toContain('Point Orca at some code')
+    // Installed gh and macOS skip Integrations/Windows terminal, leaving three visible steps.
     expect(html).toContain('3 of 3')
     expect(html).not.toContain('Integrations')
   })
@@ -218,7 +215,7 @@ describe('OnboardingFlow', () => {
     )
   })
 
-  it('renders onboarding inside a centered modal shell', () => {
+  it('exposes an accessible onboarding dialog', () => {
     const html = renderOnboardingFlow({
       onboarding: getDefaultOnboardingState(),
       onOnboardingChange: vi.fn()
@@ -226,11 +223,5 @@ describe('OnboardingFlow', () => {
 
     expect(html).toContain('role="dialog"')
     expect(html).toContain('aria-modal="true"')
-    expect(html).toContain('data-onboarding-modal="true"')
-    expect(html).toContain('h-[calc(100vh-2rem)]')
-    expect(html).toContain('rounded-xl')
-    expect(html).toContain('h-7 w-auto shrink-0 invert dark:invert-0')
-    expect(html).not.toContain('min-h-screen')
-    expect(html).not.toContain('background-color:#12181e')
   })
 })

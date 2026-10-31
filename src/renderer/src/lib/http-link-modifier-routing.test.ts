@@ -9,7 +9,7 @@ describe('modifier routing across link source owners', () => {
   const openUrlMock = vi.fn()
   const setActiveWorktreeMock = vi.fn()
   const createBrowserTabMock = vi.fn()
-  const openRuntimeBrowserTabMock = vi.fn(() => Promise.resolve())
+  const openRuntimeBrowserTabMock = vi.fn((): Promise<string | null> => Promise.resolve(null))
   const storeState = {
     settings: {} as {
       openLinksInApp?: boolean
@@ -32,7 +32,8 @@ describe('modifier routing across link source owners', () => {
     vi.unstubAllGlobals()
   })
 
-  it('still lets the inverting modifier pull a local link into Wakii', () => {
+  it('still lets the inverting modifier pull a local link into Orca', () => {
+    registerWorkspaceHttpLinkBrowserOpener(null)
     storeState.settings = { openLinksInApp: false, openLinksInAppModifierInverts: true }
 
     openHttpLink('https://example.com/', {
@@ -46,7 +47,7 @@ describe('modifier routing across link source owners', () => {
     })
   })
 
-  it('lets an inverting modifier reach Wakii on the owning runtime', () => {
+  it('lets an inverting modifier reach Orca on the owning runtime', () => {
     storeState.settings = {
       openLinksInApp: false,
       openLinksInAppModifierInverts: true,

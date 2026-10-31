@@ -1,13 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { RuntimeTerminalWriter } from './runtime-terminal-writer'
-import { TERMINAL_INPUT_CHUNK_MAX_BYTES } from '../../shared/terminal-input'
-import { getAgentPromptSubmitDelayMs } from '../../shared/agent-prompt-injection'
+import { isTerminalInputPaused } from './terminal-input-admission'
+import { terminalInputSourceForClient } from './rpc/methods/terminal/terminal-input-delivery'
 import {
   WRITE_ACCEPTED,
   writeRefused,
   writeUnverifiable,
   type WriteSettlement
 } from '../../shared/pty-write-settlement'
+import { TERMINAL_INPUT_CHUNK_MAX_BYTES } from '../../shared/terminal-input'
 
 afterEach(() => vi.useRealTimers())
 
@@ -161,58 +162,25 @@ describe('requested terminal write settlement', () => {
     expect(settled).not.toHaveBeenCalled()
   })
 })
-function makeWriter(platform: NodeJS.Platform = 'linux'): {
-  writer: RuntimeTerminalWriter
-  write: ReturnType<typeof vi.fn>
-} {
-  const write = vi.fn(() => true)
-  return { writer: new RuntimeTerminalWriter(write, () => platform), write }
-}
 
-describe('runtime terminal writer pacing', () => {
-  afterEach(() => {
-    vi.useRealTimers()
-  })
-
-  it('holds Enter for the settle window after raw unframed single-line text', async () => {
-    vi.useFakeTimers()
-    const { writer, write } = makeWriter()
-    const text = 'git status'
-    const holdMs = getAgentPromptSubmitDelayMs('linux', Buffer.byteLength(text, 'utf8'))
-    const done = writer.writeAction('pty-1', { text, enter: true }, `${text}\r`, {
-      inputKind: 'driving'
-    })
-
-    await vi.advanceTimersByTimeAsync(0)
-    expect(write).toHaveBeenCalledTimes(1)
-    expect(write).toHaveBeenNthCalledWith(1, 'pty-1', text, 'driving')
-
-    await vi.advanceTimersByTimeAsync(holdMs - 1)
-    expect(write).toHaveBeenCalledTimes(1)
-
-    await vi.advanceTimersByTimeAsync(1)
-    expect(write).toHaveBeenNthCalledWith(2, 'pty-1', '\r', 'driving')
-    await done
-  })
-
-  it('paces Enter on the full text byte length including the chunked ingest floor', async () => {
-    vi.useFakeTimers()
-    const { writer, write } = makeWriter()
-    const text = 'y'.repeat(TERMINAL_INPUT_CHUNK_MAX_BYTES + 1)
-    const holdMs = getAgentPromptSubmitDelayMs('linux', Buffer.byteLength(text, 'utf8'))
-    expect(holdMs).toBeGreaterThan(getAgentPromptSubmitDelayMs('linux', 0))
-    const done = writer.writeAction('pty-1', { text, enter: true }, `${text}\r`, {
-      inputKind: 'driving'
-    })
-
-    await vi.advanceTimersByTimeAsync(0)
-    expect(write).toHaveBeenCalledTimes(2)
-
-    await vi.advanceTimersByTimeAsync(holdMs - 1)
-    expect(write).toHaveBeenCalledTimes(2)
-
-    await vi.advanceTimersByTimeAsync(1)
-    expect(write).toHaveBeenNthCalledWith(3, 'pty-1', '\r', 'driving')
-    await done
-  })
+it.each([
+  ['desktop', { kind: 'desktop' }, { id: 'desktop', type: 'desktop' }],
+  ['local CLI', { kind: 'local-cli' }, { id: 'orca-cli', type: 'desktop' }],
+  ['paired CLI', { kind: 'paired-device', deviceId: 'cli' }, { id: 'orca-cli', type: 'desktop' }],
+  ['orchestration', undefined, undefined],
+  ['mobile', { kind: 'paired-device', deviceId: 'phone' }, { id: 'phone', type: 'mobile' }],
+  ['legacy', { kind: 'paired-device', deviceId: 'old' }, undefined],
+  ['unknown', { kind: 'paired-device', deviceId: 'other' }, { id: 'unknown' }]
+] as const)('admits %s by source and driver', (source, caller, client) => {
+  const inputSource =
+    source === 'orchestration' ? undefined : terminalInputSourceForClient(client, caller)
+  for (const phone of [false, true]) {
+    const runtime = {
+      getDriver: () =>
+        phone ? { kind: 'mobile' as const, clientId: 'phone' } : { kind: 'desktop' as const }
+    }
+    expect(isTerminalInputPaused(runtime, 'pty', inputSource)).toBe(
+      phone && ['desktop', 'unknown'].includes(source)
+    )
+  }
 })

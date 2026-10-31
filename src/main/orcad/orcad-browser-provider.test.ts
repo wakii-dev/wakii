@@ -1,11 +1,16 @@
-import { chmod, mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { chmod, mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { runProcess, spawnProcess } from '@orca/process-host'
+import { agentBrowserCommandOf } from '../browser/agent-browser-bridge-test-harness'
 import { ExternalChromiumBrowserProcess } from './external-chromium-browser-process'
-import { installedElectronCandidates, resolveOrcadBrowserProvider } from './orcad-browser-provider'
-import { orcadAgentBrowserNativeName } from './orcad-agent-browser-binary'
+import {
+  installedElectronCandidates,
+  resolveInstalledElectronExecutable,
+  resolveOrcadBrowserProvider
+} from './orcad-browser-provider'
+import { orcadAgentBrowserNativeName } from '../../shared/orcad-agent-browser-name'
 import {
   runtimeBrowserUnavailableCause,
   setRuntimeBrowserUnavailableCause
@@ -27,14 +32,6 @@ let root: string
 let screenshotPath: string
 let browserState: BrowserState
 
-function commandFromArgs(args: readonly string[]): string[] {
-  let index = 0
-  while (['--session', '--profile', '--args'].includes(args[index] ?? '')) {
-    index += 2
-  }
-  return args.slice(index, -1)
-}
-
 function success(data: unknown) {
   return Promise.resolve({
     code: 0,
@@ -47,7 +44,7 @@ function success(data: unknown) {
 
 function installAgentBrowserMock(): void {
   runProcessMock.mockImplementation(async (spec) => {
-    const command = commandFromArgs(spec.args ?? [])
+    const command = agentBrowserCommandOf(spec.args ?? [], spec.input)
     if (command[0] === 'open') {
       const active = browserState.tabs.find((tab) => tab.tabId === browserState.activeTabId)!
       active.url = command[1]
@@ -71,6 +68,9 @@ function installAgentBrowserMock(): void {
     }
     if (command[0] === 'screenshot') {
       return success({ path: screenshotPath })
+    }
+    if (command.join(' ') === 'snapshot -i --delta') {
+      return success({ snapshot: { kind: 'unchanged', revision: 2, baseRevision: 1 } })
     }
     if (command[0] === 'close') {
       return success({ closed: true })
@@ -106,11 +106,10 @@ describe('ExternalChromiumBrowserProcess', () => {
     )
     await processHandle.start()
     const commands = processHandle.createCommands({
+      getRuntimeId: () => 'fixture-runtime',
       getAgentBrowserBridge: () => null,
-      resolveWorktreeSelector: async (selector) => ({ id: selector }),
+      resolveWorkspaceSelector: async (selector) => ({ id: selector }),
       resolveBrowserWorkspace: async (selector) => ({ id: selector }),
-      // Unused by the sidecar command paths under test; the daemon's real host is
-      // OrcaRuntimeService, which owns the client-hosted registries.
       resolveBrowserNetworkExecutionHost: () => {
         throw new Error('No browser network execution host')
       },
@@ -152,6 +151,18 @@ describe('ExternalChromiumBrowserProcess', () => {
       commands.browserScreenshot({ format: 'png', worktree: 'worktree-1', page: 'page-1' })
     ).resolves.toEqual({ data: Buffer.from('fixture-image').toString('base64'), format: 'png' })
     await expect(
+      commands.browserSnapshot({
+        interactive: true,
+        delta: true,
+        worktree: 'worktree-1',
+        page: 'page-1'
+      })
+    ).resolves.toMatchObject({
+      browserPageId: 'page-1',
+      snapshot: { kind: 'unchanged', revision: 2, baseRevision: 1 },
+      url: 'https://fixture.test/next'
+    })
+    await expect(
       commands.browserExec({
         page: 'page-1',
         worktree: 'worktree-1',
@@ -177,7 +188,7 @@ describe('ExternalChromiumBrowserProcess', () => {
 describe('cross-platform browser provider paths', () => {
   it('resolves installed Electron launchers on macOS, Linux, and Windows', () => {
     expect(installedElectronCandidates('darwin', '/Users/test', {})).toContain(
-      '/Users/test/Applications/Wakii.app/Contents/MacOS/Wakii'
+      '/Users/test/Applications/Orca.app/Contents/MacOS/Orca'
     )
     expect(installedElectronCandidates('linux', '/home/test', {})).toContain(
       '/home/test/.local/bin/orca-ide'
@@ -186,7 +197,7 @@ describe('cross-platform browser provider paths', () => {
       installedElectronCandidates('win32', 'C:\\Users\\test', {
         LOCALAPPDATA: 'C:\\Users\\test\\AppData\\Local'
       })
-    ).toContain('C:\\Users\\test\\AppData\\Local\\Programs\\Wakii\\Wakii.exe')
+    ).toContain('C:\\Users\\test\\AppData\\Local\\Programs\\Orca\\Orca.exe')
   })
 
   it('uses platform-specific bundled agent-browser names', () => {
@@ -196,7 +207,35 @@ describe('cross-platform browser provider paths', () => {
   })
 })
 
-describe('resolveWakiidBrowserProvider', () => {
+describe.skipIf(process.platform === 'win32')('resolveInstalledElectronExecutable', () => {
+  async function writeExecutable(path: string, content: Buffer | string): Promise<void> {
+    await mkdir(join(path, '..'), { recursive: true })
+    await writeFile(path, content)
+    await chmod(path, 0o755)
+  }
+
+  it('rejects a symlink to the bash CLI shim and picks the install-dir binary', async () => {
+    const shim = join(root, 'share', 'orca-ide-shim')
+    const link = join(root, 'bin', 'orca-ide')
+    const electron = join(root, 'opt', 'Orca', 'orca-ide')
+    await writeExecutable(shim, '#!/usr/bin/env bash\nexec true\n')
+    await mkdir(join(link, '..'), { recursive: true })
+    await symlink(shim, link)
+    await writeExecutable(electron, Buffer.from([0x7f, 0x45, 0x4c, 0x46, 0]))
+
+    await expect(resolveInstalledElectronExecutable([link, electron])).resolves.toBe(electron)
+    await expect(resolveInstalledElectronExecutable([link])).resolves.toBeNull()
+  })
+
+  it('still accepts an AppImage-style binary', async () => {
+    const appImage = join(root, 'Orca.AppImage')
+    await writeExecutable(appImage, Buffer.from([0x7f, 0x45, 0x4c, 0x46, 2, 1, 1, 0]))
+
+    await expect(resolveInstalledElectronExecutable([appImage])).resolves.toBe(appImage)
+  })
+})
+
+describe('resolveOrcadBrowserProvider', () => {
   it('uses ORCA_BROWSER_EXECUTABLE when Electron is absent', async () => {
     const executable = join(root, process.platform === 'win32' ? 'chromium.exe' : 'chromium')
     await writeFile(executable, '')

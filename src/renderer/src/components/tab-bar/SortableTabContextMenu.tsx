@@ -1,13 +1,4 @@
-import {
-  PanelLeftClose,
-  PanelRightClose,
-  Pin,
-  PinOff,
-  Pencil,
-  SquareTerminal,
-  X,
-  ListX
-} from 'lucide-react'
+import { Pencil, Pin, PinOff, SquareTerminal, X } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +16,7 @@ import { TabSessionSurfaceSwitchMenuItems } from './TabSessionSurfaceSwitchMenuI
 import type { NativeChatTabSession } from './tab-session-history-switch'
 import { TAB_CONTEXT_MENU_CONTENT_CLASS } from './tab-context-menu-sizing'
 import { CopyTabIdMenuItem } from './CopyTabIdMenuItem'
+import { CloseSplitPaneMenuItem } from './CloseSplitPaneMenuItem'
 
 const TAB_COLORS = [
   {
@@ -101,25 +93,23 @@ type SortableTabContextMenuProps = {
   hasTabsToLeft: boolean
   isPinned: boolean
   onOpenChange: (open: boolean) => void
+  onSessionSwitchComplete?: () => void
+  sessionSwitchOpening?: number | null
   onActivate: (tabId: string) => void
   onClose: (tabId: string) => void
   onCloseOthers: (tabId: string) => void
   onCloseToRight: (tabId: string) => void
   onCloseToLeft: (tabId: string) => void
+  onCloseSplitPane?: () => void
   onRenameOpen: () => void
   onSetTabColor: (tabId: string, color: string | null) => void
   onTogglePin: () => void
-  /** True when this tab is an agent terminal that can switch between the terminal
-   *  and native chat views; gates the "Switch view" menu item. Structured
-   *  sessions never qualify — they have no terminal underneath. */
+  /** Only terminal-backed agent tabs can switch view; structured chats have no terminal beneath them. */
   canToggleViewMode?: boolean
-  /** True when the tab is currently showing the native chat view (drives the
-   *  item's label/icon between "chat" and "terminal"). */
+  /** Select the destination label/icon from the tab’s current chat/terminal view. */
   isChatView?: boolean
-  /** Toggle the tab between terminal and native chat view. */
   onToggleViewMode?: () => void
   canSplitTerminal?: boolean
-  /** Set only for a native chat tab. */
   nativeChat?: NativeChatTabSession
 }
 
@@ -131,15 +121,14 @@ export function SortableTabContextMenu({
   open,
   point,
   tabCount,
-  hasTabsToRight,
-  hasTabsToLeft,
   isPinned,
   onOpenChange,
+  onSessionSwitchComplete,
+  sessionSwitchOpening,
   onActivate,
   onClose,
   onCloseOthers,
-  onCloseToRight,
-  onCloseToLeft,
+  onCloseSplitPane,
   onRenameOpen,
   onSetTabColor,
   onTogglePin,
@@ -155,8 +144,7 @@ export function SortableTabContextMenu({
 
   const closeShortcut = useOptionalShortcutLabel('tab.close')
   const renameShortcut = useOptionalShortcutLabel('tab.rename')
-  // Why: switching a tab into chat view is hidden while that toggle is removed; a tab already in
-  // chat view keeps its way back.
+  // Keep the route back from chat even while switching terminals into chat is disabled.
   const showTerminalViewSwitch = canToggleViewMode && isChatView && onToggleViewMode !== undefined
 
   return (
@@ -187,15 +175,17 @@ export function SortableTabContextMenu({
               <SquareTerminal className="size-3.5 shrink-0" />
               {translate(
                 'components.tab.bar.SortableTabContextMenu.switchToTerminalView',
-                'Switch to terminal view'
+                'Continue with Terminal Agent'
               )}
             </DropdownMenuItem>
           </>
         ) : null}
         <TabSessionSurfaceSwitchMenuItems
+          key={sessionSwitchOpening}
           tab={tab}
           nativeChat={nativeChat}
           leadingSeparator={!showTerminalViewSwitch}
+          onComplete={onSessionSwitchComplete}
         />
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={onTogglePin}>
@@ -215,32 +205,18 @@ export function SortableTabContextMenu({
           {translate('auto.components.tab.bar.SortableTabContextMenu.89359a36f7', 'Close')}
           {closeShortcut ? <DropdownMenuShortcut>{closeShortcut}</DropdownMenuShortcut> : null}
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onCloseOthers(tab.id)} disabled={tabCount <= 1}>
-          <ListX className="size-3.5" />
+        <DropdownMenuItem inset onSelect={() => onCloseOthers(tab.id)} disabled={tabCount <= 1}>
           {translate('auto.components.tab.bar.SortableTabContextMenu.8d16f9cd30', 'Close Others')}
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onCloseToRight(tab.id)} disabled={!hasTabsToRight}>
-          <PanelRightClose className="size-3.5" />
-          {translate(
-            'auto.components.tab.bar.SortableTabContextMenu.c1ee099c7e',
-            'Close Tabs To The Right'
-          )}
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onCloseToLeft(tab.id)} disabled={!hasTabsToLeft}>
-          <PanelLeftClose className="size-3.5" />
-          {translate(
-            'components.tab.bar.SortableTabContextMenu.closeTabsToLeft',
-            'Close Tabs To The Left'
-          )}
-        </DropdownMenuItem>
+        <CloseSplitPaneMenuItem onCloseSplitPane={onCloseSplitPane} />
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={onRenameOpen}>
           <Pencil className="size-3.5" />
           {translate('auto.components.tab.bar.SortableTabContextMenu.2f697b3c31', 'Change Title')}
           {renameShortcut ? <DropdownMenuShortcut>{renameShortcut}</DropdownMenuShortcut> : null}
         </DropdownMenuItem>
-        <div className="px-2 pt-1.5 pb-1">
-          <div className="text-xs font-medium text-muted-foreground mb-1.5">
+        <div className="pt-1.5 pr-2.5 pb-1.5 pl-8">
+          <div className="text-2xs font-semibold text-muted-foreground mb-1.5">
             {translate('auto.components.tab.bar.SortableTabContextMenu.35e8892fd0', 'Tab Color')}
           </div>
           <div className="flex flex-wrap gap-2">

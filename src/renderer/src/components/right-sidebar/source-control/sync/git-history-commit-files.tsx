@@ -7,16 +7,13 @@ import {
   toSourceControlRowOpenEvent,
   type SourceControlRowOpenEvent
 } from '../listing/split-open'
-import { FILE_ICON_COLOR_CLASS, getFileTypeIcon, getFileTypeIconColor } from '@/lib/file-type-icons'
-import { cn } from '@/lib/utils'
+import { FileTypeIcon } from '@/components/FileTypeIcon'
 import { basename, dirname } from '@/lib/path'
 import { translate } from '@/i18n/i18n'
 import { formatGitHistoryTimestamp } from './git-history-format'
 import type { GitBranchChangeEntry } from '../../../../../../shared/git-diff-compare-types'
 import type { GitFileStatus } from '../../../../../../shared/git-status-types'
 
-// State for a single commit's lazily-loaded file list. Owned by GitHistoryPanel,
-// populated through the onLoadCommitFiles loader supplied by SourceControl.
 export type GitHistoryCommitFilesState =
   | { status: 'loading' }
   | { status: 'error'; error: string }
@@ -30,8 +27,6 @@ function CommitFileRow({
   onOpen: (entry: GitBranchChangeEntry, event: SourceControlRowOpenEvent) => void
 }): React.JSX.Element {
   const status = entry.status as GitFileStatus
-  const FileIcon = getFileTypeIcon(entry.path)
-  const iconColorGroup = getFileTypeIconColor(entry.path)
   const fileName = basename(entry.path)
   const parentDir = dirname(entry.path)
   const dirPath = parentDir === '.' ? '' : parentDir
@@ -45,12 +40,10 @@ function CommitFileRow({
       onClick={(event) => onOpen(entry, toSourceControlRowOpenEvent(event))}
       onDoubleClick={(event) => onOpen(entry, toPermanentSourceControlRowOpenEvent(event))}
     >
-      {/* Why: icon carries the file-type color; git status color stays on the badge below (C4). */}
-      {createElement(FileIcon, {
-        className: cn(
-          'size-3.5 shrink-0',
-          iconColorGroup ? FILE_ICON_COLOR_CLASS[iconColorGroup] : 'text-muted-foreground'
-        )
+      {createElement(FileTypeIcon, {
+        filePath: entry.path,
+        className: 'size-3.5 shrink-0',
+        style: { color: STATUS_COLORS[status] }
       })}
       <span className="min-w-0 flex-1 truncate">
         <span className="text-foreground">{fileName}</span>
@@ -145,7 +138,6 @@ export function GitHistoryCommitFiles({
   onOpenFile: (entry: GitBranchChangeEntry, event: SourceControlRowOpenEvent) => void
   onOpenAll?: () => void
 }): React.JSX.Element {
-  // Author and date move off the dense commit row and surface here on expand.
   const meta = [author, formatGitHistoryTimestamp(timestamp)].filter(Boolean).join(' · ')
   return (
     <div className="border-l border-border/60 bg-muted/20">

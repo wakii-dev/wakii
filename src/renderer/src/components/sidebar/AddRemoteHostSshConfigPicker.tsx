@@ -53,8 +53,7 @@ export function AddRemoteHostSshConfigPicker({
     []
   )
   const isResolving = resolvingAlias != null
-  // Why: filtering re-runs against a cached parse, so keep the field usable while a
-  // refresh (or a failed load the user can retry) is outstanding.
+  // Filtering uses cached config; refreshes/errors must not disable the field.
   const filterDisabled = isBulkImporting || isResolving
   const picksDisabled = isBulkImporting || isResolving
   const canAddAll =
@@ -71,8 +70,8 @@ export function AddRemoteHostSshConfigPicker({
         </DialogTitle>
         <DialogDescription>
           {translate(
-            'auto.components.sidebar.AddRemoteHostDialog.sshConfigPickerDescription',
-            'Pick a host to fill the form, or add every new host to Wakii’s host list.'
+            'auto.components.sidebar.AddRemoteHostDialog.sshConfigPickerImportDescription',
+            'Pick a host to fill the form, or add every new host to Orca’s host list.'
           )}
         </DialogDescription>
       </DialogHeader>
@@ -150,8 +149,7 @@ export function AddRemoteHostSshConfigPicker({
             </p>
           </div>
         ) : (
-          // Why: these rows act on click and there is no selected row to track, so they stay
-          // plain buttons rather than a listbox whose aria-selected would always be a lie.
+          // Rows act without selection state, so plain buttons avoid false listbox aria-selected semantics.
           <ul
             aria-label={translate(
               'auto.components.sidebar.AddRemoteHostDialog.sshConfigPickerHostsLabel',
@@ -198,8 +196,8 @@ export function AddRemoteHostSshConfigPicker({
                       className="mt-0.5 shrink-0 border-emerald-500/40 text-[10.5px] text-emerald-400"
                     >
                       {translate(
-                        'auto.components.sidebar.AddRemoteHostDialog.sshConfigPickerInWakii',
-                        'In Wakii'
+                        'auto.components.sidebar.AddRemoteHostDialog.sshConfigPickerInOrca',
+                        'In Orca'
                       )}
                     </Badge>
                   ) : host.previouslyRemoved ? (
@@ -209,7 +207,7 @@ export function AddRemoteHostSshConfigPicker({
                     >
                       {translate(
                         'auto.components.sidebar.AddRemoteHostDialog.sshConfigPickerPreviouslyRemoved',
-                        'Removed from Wakii'
+                        'Removed from Orca'
                       )}
                     </Badge>
                   ) : null}
@@ -246,11 +244,10 @@ export function AddRemoteHostSshConfigPicker({
             : newHostCount > 0
               ? translate(
                   'auto.components.sidebar.AddRemoteHostDialog.sshConfigPickerAddAll',
-                  'Add all {{value0}} to Wakii',
+                  'Add all {{value0}} to Orca',
                   { value0: newHostCount }
                 )
-              : // Why: the remainder can be already-in-Orca or merely tombstoned, so the
-                // label cannot claim either one specifically.
+              : // Remaining hosts may be saved or tombstoned; copy must not assume either.
                 totalHostCount > 0
                 ? translate(
                     'auto.components.sidebar.AddRemoteHostDialog.sshConfigPickerNoNewHosts',
@@ -258,7 +255,7 @@ export function AddRemoteHostSshConfigPicker({
                   )
                 : translate(
                     'auto.components.sidebar.AddRemoteHostDialog.sshConfigPickerAddAllEmpty',
-                    'Add all to Wakii'
+                    'Add all to Orca'
                   )}
         </Button>
         <Button

@@ -59,7 +59,12 @@ function seedPendingGateOnWorktree(
   spec: string,
   worktreeId: string | null
 ): void {
-  const task = db.createTask({ spec })
+  const run = db.createRun({
+    objective: spec,
+    coordinatorHandle: null,
+    coordinatorPaneKey: null
+  })
+  const task = db.createTask({ spec, runId: run.id })
   const { dispatch } = db.createStartingWorkerDispatch({
     taskId: task.id,
     startOptions: {},

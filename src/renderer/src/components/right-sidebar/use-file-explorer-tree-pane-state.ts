@@ -1,12 +1,10 @@
 import type { Dispatch, RefObject, SetStateAction } from 'react'
 import { useEffect, useMemo, useRef } from 'react'
 import { useAppStore } from '@/store'
-import { getRuntimeEnvironmentIdForWorktree } from '@/lib/worktree-runtime-owner'
+import { runtimeEnvironmentIdOrLocalUnlessTwin } from '@/lib/worktree-runtime-owner'
 import { useWorkspaceFileBrowserActionPredicate } from '@/lib/file-preview'
 import type { RuntimeFileOperationArgs } from '@/runtime/runtime-file-client-types'
 import type { OpenFile } from '@/store/slices/editor'
-import { openWakiiFileRevealingFloatingWorkspace } from '@/hooks/ipc-events/os-wakii-file-open-bridge'
-import type { WakiiFileOpenPayload } from '../../../../shared/wakii-file-open-payload'
 import type { Repo } from '../../../../shared/repo-types'
 import type { FileExplorerRowProjection } from './file-explorer-row-projection'
 import type { TreeNode } from './file-explorer-types'
@@ -18,11 +16,13 @@ import { useFileExplorerImport } from './useFileExplorerImport'
 import { useFileExplorerInlineInput } from './useFileExplorerInlineInput'
 import { useFileExplorerNodeCommands } from './use-file-explorer-node-commands'
 import { useFileExplorerRowScrolling } from './use-file-explorer-row-scrolling'
+import { useFileExplorerLoadMore } from './use-file-explorer-load-more'
 import { useFileExplorerTreeLoadEffects } from './use-file-explorer-tree-load-effects'
 import { useFileExplorerWatch } from './useFileExplorerWatch'
 import type { useFileExplorerSelection } from './useFileExplorerSelection'
 import type { useFileExplorerTree } from './useFileExplorerTree'
 import { runtimeTargetForOwnerEnvironment } from '@/runtime/runtime-client-target'
+import type { LocalPathOpenOwner } from '@/lib/local-path-open-guard'
 
 type UseFileExplorerTreePaneStateParams = {
   onRevealOutsideRoot?: () => void
@@ -44,6 +44,7 @@ type UseFileExplorerTreePaneStateParams = {
   rowProjection: FileExplorerRowProjection
   rowExpandedPaths: Set<string>
   visibleRowCount: number
+  pathOwner: LocalPathOpenOwner
 }
 
 type UseFileExplorerTreePaneStateResult = {
@@ -62,14 +63,7 @@ type UseFileExplorerTreePaneStateResult = {
   fileDropOwnerRef: (root: HTMLElement | null) => void
 }
 
-/**
- * Owns every effect and command handler behind the explorer tree pane.
- *
- * Why: this must be called by FileExplorer above its `!worktreePath` early
- * return. The reset guard and SSH generation refs live here, and losing them
- * for a single null-worktree render would re-reset the tree — dropping the
- * whole directory cache — when the same workspace comes back.
- */
+/** Call above FileExplorer’s null-worktree return; losing reset/SSH refs for one render would discard the returning workspace’s directory cache. */
 export function useFileExplorerTreePaneState({
   onRevealOutsideRoot,
   activeWorktreeId,
@@ -89,7 +83,8 @@ export function useFileExplorerTreePaneState({
   selectedNode,
   rowProjection,
   rowExpandedPaths,
-  visibleRowCount
+  visibleRowCount,
+  pathOwner
 }: UseFileExplorerTreePaneStateParams): UseFileExplorerTreePaneStateResult {
   const {
     dirCache,
@@ -102,6 +97,7 @@ export function useFileExplorerTreePaneState({
     markPathAsDirectory,
     refreshTree,
     refreshDir,
+    loadMoreDir,
     isDirStale,
     resetAndLoad
   } = tree
@@ -131,7 +127,7 @@ export function useFileExplorerTreePaneState({
       : false
   })
   const ownerRuntimeEnvironmentId = useAppStore((s) =>
-    getRuntimeEnvironmentIdForWorktree(s, activeWorktreeId)
+    runtimeEnvironmentIdOrLocalUnlessTwin(s, activeWorktreeId)
   )
   const toggleDir = useAppStore((s) => s.toggleDir)
   const openFile = useAppStore((s) => s.openFile)
@@ -181,6 +177,7 @@ export function useFileExplorerTreePaneState({
   })
 
   useFileExplorerTreeLoadEffects({
+    workspaceKey: activeWorktreeId,
     visibleFilesWorktreePath,
     displayRootPath,
     expanded: effectiveExpanded,
@@ -245,25 +242,19 @@ export function useFileExplorerTreePaneState({
     loadingDirPaths,
     rootCache,
     loadDir,
+    loadMoreDir,
     setSelectedPath: setSingleSelectedPath,
     activeFileId,
     openFiles
   })
 
-  // Why: the desktop preload carries the wakii reader IPC; web clients omit it and
-  // .wakii rows degrade to the plain text editor.
-  const wakiiViewerRoute = useMemo(() => {
-    const readWakiiDocument = window.api.fs.readWakiiDocument
-    if (!readWakiiDocument) {
-      return null
-    }
-    return {
-      readDocument: (filePath: string) => readWakiiDocument({ filePath }),
-      openViewer: (payload: WakiiFileOpenPayload) => {
-        void openWakiiFileRevealingFloatingWorkspace(payload)
-      }
-    }
-  }, [])
+  useFileExplorerLoadMore({
+    virtualizer: rowScrolling.virtualizer,
+    rowProjection,
+    dirCache,
+    loadingDirPaths,
+    loadMoreDir
+  })
 
   const handlers = useFileExplorerHandlers({
     activeWorktreeId,
@@ -275,7 +266,6 @@ export function useFileExplorerTreePaneState({
     statPath,
     markPathAsDirectory,
     setSelectedPath: setSingleSelectedPath,
-    wakiiViewer: wakiiViewerRoute,
     scrollRef
   })
 
@@ -297,7 +287,8 @@ export function useFileExplorerTreePaneState({
     refreshDir,
     handleClick: handlers.handleClick,
     toggleDir: hasNameFilter ? handleToggleNameFilterDir : toggleDir,
-    scrollToIndex: rowScrolling.scrollToIndex
+    scrollToIndex: rowScrolling.scrollToIndex,
+    pathOwner
   })
 
   return {
