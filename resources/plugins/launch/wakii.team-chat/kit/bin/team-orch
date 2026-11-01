@@ -173,8 +173,8 @@ try:
 except Exception: print(len(panes))
 PY
 )
-        if [ "${CNT:-0}" -ge 3 ]; then
-          echo "TỪ CHỐI: room #$ROOM_ đã đủ 3 worker (grid 3 — max CEO ruling). Hoàn thành/xoá worker hiện có trước khi thuê thêm." >&2
+        if [ "${CNT:-0}" -ge 6 ]; then
+          echo "TỪ CHỐI: room #$ROOM_ đã đủ 6 worker (grid 2 hàng × 3 cột). Hoàn thành/xoá worker hiện có trước khi thuê thêm." >&2
           exit 4
         fi
       fi
@@ -242,13 +242,37 @@ PY
           WT="$ROOM_WT"
           echo "team-orch: worker dùng CHUNG worktree room — $ROOM_WT"
         fi
-        NEW_PANE=$("$ORCA" terminal split --terminal "$CAP_PANE" --direction vertical \
+        SPLIT_CFG=$(python3 - "$REG" "$ROOM_" "$CAP_PANE" "$ORCA" <<'PY' 2>/dev/null
+import json, sys, subprocess
+reg_p, room, cap, orca = sys.argv[1:5]
+try:
+    ts = json.loads(subprocess.run([orca, 'terminal', 'list', '--json'],
+                                   capture_output=True, text=True, timeout=15).stdout)['result']['terminals']
+except Exception:
+    print('vertical	' + cap); raise SystemExit
+live = {t.get('handle') for t in ts}
+tab = next((t.get('tabId') for t in ts if t.get('handle') == cap), None)
+n = sum(1 for t in ts if tab and t.get('tabId') == tab)
+if n < 3:
+    print('vertical	' + cap); raise SystemExit
+try: reg = json.load(open(reg_p, encoding='utf-8'))
+except Exception: reg = {}
+order = [p for p, e in sorted(reg.items(), key=lambda kv: kv[1].get('at', 0))
+         if isinstance(e, dict) and e.get('room') == room and p in live]
+row1 = ([cap] + [q for q in order if q != cap])[:3]
+base = row1[(n - 3) % len(row1)]
+print('horizontal	' + base)
+PY
+)
+        SPLIT_DIR=$(printf '%s' "$SPLIT_CFG" | cut -f1); SPLIT_BASE=$(printf '%s' "$SPLIT_CFG" | cut -f2)
+        [ -n "$SPLIT_DIR" ] && [ -n "$SPLIT_BASE" ] || { SPLIT_DIR="vertical"; SPLIT_BASE="$CAP_PANE"; }
+        NEW_PANE=$("$ORCA" terminal split --terminal "$SPLIT_BASE" --direction "$SPLIT_DIR" \
                      --command "claude --dangerously-skip-permissions" --json 2>/dev/null \
                    | python3 -c 'import json,sys; print(json.load(sys.stdin)["result"]["split"]["handle"])' 2>/dev/null)
         if [ -n "$NEW_PANE" ]; then
           sleep 8  # claude phải boot xong trước khi orchestration gõ task vào pane
           SPLIT_PANE="$NEW_PANE"
-          echo "team-orch: grid-3 — worker là pane split trong tab captain ($NEW_PANE)"
+          echo "team-orch: grid — worker pane $NEW_PANE ($SPLIT_DIR từ ${SPLIT_BASE%%-*}) trong tab captain"
         else
           echo "team-orch: ⚠ split từ captain fail — worker mở tab riêng như cũ" >&2
         fi
