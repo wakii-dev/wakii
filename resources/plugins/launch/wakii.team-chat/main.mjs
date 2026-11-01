@@ -1613,7 +1613,9 @@ export default function activate(orca) {
                   const out = await new Promise((res) => execFileCb(orcaBin, ['worktree', 'list', '--json'], { timeout: 15000 }, (e, o) => res(e ? '' : o)))
                   if (out) {
                     const wts = JSON.parse(out).result.worktrees.map((w) => w.path)
-                    repoPath = wts.find((p) => p.endsWith('/' + repo)) || wts.find((p) => p.includes(repo)) || ''
+                    // repo không khớp/bỏ trống → worktree ĐANG MỞ (CEO vừa gặp
+                    // 'team' fallback fail): room vẫn có worktree thật để làm.
+                    repoPath = wts.find((p) => p.endsWith('/' + repo)) || wts.find((p) => p.includes(repo)) || wts[0] || ''
                   }
                 } catch { /* list fail */ }
                 let wtPath = ''

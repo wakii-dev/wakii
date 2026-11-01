@@ -214,7 +214,7 @@
 
 <div id="newRoomForm">
   <div class="flabel">🆕 Room mới — 1 feature = 1 khung chat</div>
-  <input type="text" id="nrRepo" maxlength="24" placeholder="repo (vd vocabulary)" />
+  <input type="text" id="nrRepo" maxlength="24" placeholder="repo (bỏ trống = repo đang mở)" />
   <input type="text" id="nrName" maxlength="32" placeholder="tên feature (vd notifications)" />
   <div class="hint" id="nrHint" style="margin:2px 0 6px">room sẽ là #<b id="nrPreview">repo-tên</b></div>
   <button type="button" id="nrCreate" style="width:100%">Tạo room</button>
@@ -673,9 +673,9 @@
     if (nrForm.classList.contains('open')) document.getElementById('nrName').focus()
   })
   function nrId() {
-    var r = (document.getElementById('nrRepo').value || 'team').trim().toLowerCase().replace(/[^a-z0-9-]/g, '')
+    var r = (document.getElementById('nrRepo').value || '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '')
     var n = (document.getElementById('nrName').value || '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '')
-    return r + '-' + n
+    return r ? r + '-' + n : n // repo bỏ trống → worker tự dùng worktree đang mở
   }
   ;['nrRepo', 'nrName'].forEach(function (id) {
     document.getElementById(id).addEventListener('input', function () {
@@ -695,7 +695,7 @@
     var b = document.getElementById('nrCreate')
     b.disabled = true; b.textContent = '→ đang tạo…'
     call('storage.set', { key: 'team.chat.roomCmd', value: {
-      at: Date.now(), action: 'create', room: id.split('-').slice(1).join('-') ? id : id, repo: (document.getElementById('nrRepo').value || 'team').trim().toLowerCase()
+      at: Date.now(), action: 'create', room: id, repo: (document.getElementById('nrRepo').value || '').trim().toLowerCase()
     } }).catch(function () {})
     setTimeout(function () {
       nrForm.classList.remove('open')
