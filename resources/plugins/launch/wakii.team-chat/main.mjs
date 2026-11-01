@@ -1588,7 +1588,16 @@ export default function activate(orca) {
           const roomsPath = join(chatDir, 'rooms.json')
           let rooms = {}
           try { rooms = JSON.parse(await readFile(roomsPath, 'utf8')) } catch { /* chưa có */ }
-          if (rcReq.action === 'close' || rcReq.action === 'open') {
+          if (rcReq.action === 'update') {
+            // Metadata room do CEO định nghĩa trong settings: name/description/
+            // worktree/ticket/files/artifacts/plan/mindmap…
+            const meta = (rcReq.meta && typeof rcReq.meta === 'object') ? rcReq.meta : {}
+            if (!rooms[rcReq.room]) rooms[rcReq.room] = { feature: rcReq.room, status: 'open', createdAt: Date.now() }
+            for (const k of ['name', 'description', 'worktree', 'ticket', 'files', 'artifacts', 'plan', 'mindmap', 'repo', 'run']) {
+              if (meta[k] !== undefined) rooms[rcReq.room][k] = String(meta[k]).slice(0, 2000)
+            }
+            await writeFile(roomsPath, JSON.stringify(rooms, null, 1))
+          } else if (rcReq.action === 'close' || rcReq.action === 'open') {
             if (rooms[rcReq.room]) rooms[rcReq.room].status = rcReq.action === 'close' ? 'closed' : 'open'
             await writeFile(roomsPath, JSON.stringify(rooms, null, 1))
           } else if (rcReq.action === 'delete') {
@@ -1631,6 +1640,7 @@ export default function activate(orca) {
             status: rooms[c] ? rooms[c].status : (c === 'general' ? 'open' : 'open'),
             feature: rooms[c] ? rooms[c].feature : null,
             run: rooms[c] ? rooms[c].run : null,
+            meta: rooms[c] || null,
             msgs: seen.get(c) || 0,
             lastAt: Math.max(...tail.filter((l) => { try { return JSON.parse(l).channel === c } catch { return false } }).map((l) => { try { return JSON.parse(l).at } catch { return 0 } }), 0)
           }))

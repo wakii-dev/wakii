@@ -130,6 +130,11 @@
   .room-mgmt .rn { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .room-mgmt .st { color: #6d6d75; font-size: 11px; flex: none; }
   .room-mgmt button { background: #26262c; padding: 3px 9px; font-weight: 400; font-size: 12px; flex: none; }
+  .set-sec textarea {
+    width: 100%; background: #17171b; border: 1px solid #2b2b31; color: #e6e6e9;
+    border-radius: 8px; padding: 7px 9px; font-size: 12px; min-height: 42px; resize: vertical;
+    font-family: inherit; margin-bottom: 6px;
+  }
   .mem-row .rm {
     background: none; border: 0; color: #c24040; font-size: 15px; cursor: pointer;
     padding: 2px 6px; flex: none; font-weight: 700;
@@ -160,6 +165,19 @@
     <div class="lbl">Đội hình — avatar · tên thật · chức vụ</div>
     <div id="members"></div>
     <button type="button" class="ghost" id="addMember">+ Thêm worker</button>
+  </div>
+  <div class="set-sec" id="roomMetaSec">
+    <div class="lbl" id="roomMetaTitle">Room</div>
+    <input type="text" id="rmName" maxlength="40" placeholder="Tên hiển thị" style="margin-bottom:6px" />
+    <input type="text" id="rmWorktree" maxlength="300" placeholder="Worktree path (vd /Users/hoivu/orca/projects/vocabulary)" style="margin-bottom:6px;font-family:ui-monospace,Menlo,monospace;font-size:12px" />
+    <textarea id="rmDesc" maxlength="500" placeholder="Mô tả room — feature này làm gì, ai tham gia…"></textarea>
+    <input type="text" id="rmTicket" maxlength="300" placeholder="Ticket (Linear/GitHub URL hoặc ID)" style="margin-bottom:6px" />
+    <textarea id="rmPlan" maxlength="3000" placeholder="Plan (các bước / DoD)"></textarea>
+    <textarea id="rmFiles" maxlength="3000" placeholder="Files chính (mỗi dòng 1 path)"></textarea>
+    <textarea id="rmArtifacts" maxlength="3000" placeholder="Artifacts (link design, docs, report — mỗi dòng 1)"></textarea>
+    <textarea id="rmMindmap" maxlength="3000" placeholder="Mindmap / cấu trúc (dạng大纲)"></textarea>
+    <button type="button" id="saveRoomMeta" class="ghost">💾 Lưu thông tin room</button>
+    <div class="hint">Metadata gắn với room đang mở — Captain + worker đọc rooms.json để biết ngữ cảnh.</div>
   </div>
   <div class="set-sec">
     <div class="lbl">Captain — luôn online</div>
@@ -602,12 +620,44 @@
     setTimeout(function () { b.disabled = false; b.textContent = '🔔 Wake up Captain' }, 10000)
     call('storage.set', { key: 'team.chat.captainCmd', value: { at: Date.now(), action: 'wake', room: room } }).catch(function () {})
   })
+  function fillRoomMeta() {
+    var r = roomList.find(function (x) { return x.id === activeRoom })
+    var m = (r && r.meta) || {}
+    document.getElementById('roomMetaTitle').textContent = 'Room #' + activeRoom
+    document.getElementById('rmName').value = m.name || ''
+    document.getElementById('rmWorktree').value = m.worktree || ''
+    document.getElementById('rmDesc').value = m.description || ''
+    document.getElementById('rmTicket').value = m.ticket || ''
+    document.getElementById('rmPlan').value = m.plan || ''
+    document.getElementById('rmFiles').value = m.files || ''
+    document.getElementById('rmArtifacts').value = m.artifacts || ''
+    document.getElementById('rmMindmap').value = m.mindmap || ''
+  }
+  document.getElementById('saveRoomMeta').addEventListener('click', function () {
+    var b = document.getElementById('saveRoomMeta')
+    b.disabled = true; b.textContent = '→ đã lưu ✓'
+    setTimeout(function () { b.disabled = false; b.textContent = '💾 Lưu thông tin room' }, 2500)
+    call('storage.set', { key: 'team.chat.roomCmd', value: {
+      at: Date.now(), action: 'update', room: activeRoom,
+      meta: {
+        name: document.getElementById('rmName').value.trim(),
+        worktree: document.getElementById('rmWorktree').value.trim(),
+        description: document.getElementById('rmDesc').value.trim(),
+        ticket: document.getElementById('rmTicket').value.trim(),
+        plan: document.getElementById('rmPlan').value.trim(),
+        files: document.getElementById('rmFiles').value.trim(),
+        artifacts: document.getElementById('rmArtifacts').value.trim(),
+        mindmap: document.getElementById('rmMindmap').value.trim()
+      }
+    } }).catch(function () {})
+  })
   document.getElementById('kebab').addEventListener('click', function () {
     settingsEl.classList.add('open')
     document.getElementById('ceoName').value = ceoName
     document.getElementById('concurrency').value = concurrency
     renderMembers()
     renderRoomRows()
+    fillRoomMeta()
   })
   document.getElementById('closeSettings').addEventListener('click', function () {
     settingsEl.classList.remove('open')
