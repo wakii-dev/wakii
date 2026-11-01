@@ -1526,7 +1526,8 @@ export default function activate(orca) {
       // inject) → chạy bin team-captain-spawn của kit.
       const cc = await orca.host.call('storage.get', { key: 'team.chat.captainCmd' }).catch(() => null)
       const ccReq = cc && cc.value
-      if (ccReq && typeof ccReq === 'object' && ccReq.at && ccReq.at !== lastCaptainCmdAt && ccReq.action === 'wake') {
+      if (ccReq && typeof ccReq === 'object' && ccReq.at && ccReq.at !== lastCaptainCmdAt
+          && (ccReq.action === 'wake' || ccReq.action === 'adopt' || ccReq.action === 'release')) {
         lastCaptainCmdAt = ccReq.at
         const room = ccReq.room || 'general'
         orca.log('[wake] nhận lệnh wake room=' + room)

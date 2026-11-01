@@ -164,8 +164,13 @@
   <div class="set-sec">
     <div class="lbl">Captain — luôn online</div>
     <div id="captainStatus" class="hint" style="margin:0 0 8px">… đang kiểm tra</div>
-    <div style="display:flex;gap:8px;align-items:center">
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+      <input type="text" id="captainPane" placeholder="dán terminal id (term_…)" style="flex:1;background:#17171b;border:1px solid #2b2b31;color:#e6e6e9;border-radius:8px;padding:7px 9px;font-size:12px;font-family:ui-monospace,Menlo,monospace" />
+      <button type="button" class="ghost" id="adoptCaptain">🤝 Nhận làm Captain</button>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
       <button type="button" id="wakeCaptain">🔔 Wake up Captain</button>
+      <button type="button" class="ghost" id="releaseCaptain" style="background:#2a1a1a;border:1px solid #4a2b2b;color:#e8cfcf">🔓 Release Captain</button>
       <span class="hint" id="wakeHint" style="margin:0">gắn worktree room đang mở</span>
     </div>
     <div class="hint">Mỗi tin CEO đều tự kiểm tra: Captain offline → tự đánh thức → chuyển tiếp. Terminal sinh ở workspace; kéo vào floating workspace 1 lần là router theo.</div>
@@ -546,6 +551,8 @@
       if (!el) return
       var byRoom = (r && r.value) || {}
       var s = byRoom[activeRoom] || { online: false }
+      var paneInput = document.getElementById('captainPane')
+      if (paneInput && s.online && s.pane && !paneInput.value) paneInput.value = s.pane
       if (s.online) {
         el.textContent = '🟢 Trực #' + activeRoom + ' — @ ' + (s.worktree || '?')
         el.style.color = '#6fcf97'
@@ -557,6 +564,21 @@
   }
   setInterval(refreshCaptainStatus, 5000)
   refreshCaptainStatus()
+  document.getElementById('adoptCaptain').addEventListener('click', function () {
+    var b = document.getElementById('adoptCaptain')
+    var pane = (document.getElementById('captainPane').value || '').trim()
+    if (!/^term_[A-Za-z0-9-]+$/.test(pane)) { b.textContent = '→ id chưa hợp lệ'; setTimeout(function () { b.textContent = '🤝 Nhận làm Captain' }, 2000); return }
+    b.disabled = true; b.textContent = '→ đang nhận…'
+    setTimeout(function () { b.disabled = false; b.textContent = '🤝 Nhận làm Captain' }, 6000)
+    call('storage.set', { key: 'team.chat.captainCmd', value: { at: Date.now(), action: 'adopt', room: activeRoom, pane: pane } }).catch(function () {})
+  })
+  document.getElementById('releaseCaptain').addEventListener('click', function () {
+    var b = document.getElementById('releaseCaptain')
+    b.disabled = true; b.textContent = '→ đang release…'
+    setTimeout(function () { b.disabled = false; b.textContent = '🔓 Release Captain' }, 6000)
+    var pi = document.getElementById('captainPane'); if (pi) pi.value = ''
+    call('storage.set', { key: 'team.chat.captainCmd', value: { at: Date.now(), action: 'release', room: activeRoom } }).catch(function () {})
+  })
   document.getElementById('wakeCaptain').addEventListener('click', function () {
     var b = document.getElementById('wakeCaptain')
     var room = activeRoom === 'general' ? 'general' : activeRoom
