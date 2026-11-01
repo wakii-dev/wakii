@@ -1413,6 +1413,7 @@ export default function activate(orca) {
     } catch { /* mirror best-effort */ }
   }
   let lastRoomCmdAt = 0
+  let lastCaptainCmdAt = 0
   let captainSeenAt = Date.now()
   const ackedAt = new Set() // dedup: 1 tin chỉ ACK 1 lần (bug thấy thật 1/11 01:32)
   let lastOwnerCommandAt = 0
@@ -1460,6 +1461,47 @@ export default function activate(orca) {
         lastSendAt = req.at
         await appendLine({ from: req.from, role: req.role, channel: req.channel, text: req.text })
         await orca.host.call('storage.set', { key: 'team.chat.send', value: null }).catch(() => {})
+      }
+      // Wake Captain từ panel settings: spawn terminal claude gắn worktree của room.
+      // Worker không có API tạo terminal nhưng CÓ child_process + ORCA_BIN (app
+      // inject) → chạy bin team-captain-spawn của kit.
+      const cc = await orca.host.call('storage.get', { key: 'team.chat.captainCmd' }).catch(() => null)
+      const ccReq = cc && cc.value
+      if (ccReq && typeof ccReq === 'object' && ccReq.at && ccReq.at !== lastCaptainCmdAt && ccReq.action === 'wake') {
+        lastCaptainCmdAt = ccReq.at
+        const room = ccReq.room || 'general'
+        void (async () => {
+          try {
+            // Worktree của room: (1) registration worker của room → (2) repo trong
+            // rooms.json khớp path worktree list → (3) worktree đầu tiên.
+            let wt = ''
+            try {
+              const reg = JSON.parse(await readFile(join(chatDir, '.workers.json'), 'utf8'))
+              wt = Object.values(reg).find((e) => e && e.room === room && e.worktree && e.name !== 'captain')?.worktree || ''
+            } catch { /* chưa có registration */ }
+            const orcaBin = process.env.ORCA_BIN || 'orca'
+            if (!wt) {
+              try {
+                const rooms = JSON.parse(await readFile(join(chatDir, 'rooms.json'), 'utf8'))
+                const repo = rooms[room] && rooms[room].repo
+                const out = await new Promise((res) => execFileCb(orcaBin, ['worktree', 'list', '--json'], (e, o) => res(e ? '' : o)))
+                const wts = JSON.parse(out).result.worktrees.map((w) => w.path)
+                wt = wts.find((p) => repo && p.endsWith('/' + repo)) || wts.find((p) => repo && p.includes(repo)) || wts[0] || ''
+              } catch { /* list fail → fallback dưới */ }
+            }
+            if (!wt) {
+              await orca.host.call('notifications.show', { title: 'Wakii Team — wake Captain thất bại', body: 'Không tìm thấy worktree nào cho room #' + room }).catch(() => {})
+              return
+            }
+            const spawnBin = join(homeDir(), '.claude', 'bin', 'team-captain-spawn')
+            await new Promise((res) => execFileCb('bash', [spawnBin, '--repo', 'path:' + wt], { timeout: 120000 }, () => res()))
+            await orca.host.call('notifications.show', {
+              title: 'Wakii Team — Captain đã online',
+              body: 'Terminal Captain gắn worktree ' + wt + ' (room #' + room + '). Kéo tab vào floating workspace nếu muốn — router theo handle.'
+            }).catch(() => {})
+          } catch { /* wake best-effort */ }
+        })()
+        await orca.host.call('storage.set', { key: 'team.chat.captainCmd', value: null }).catch(() => {})
       }
       // Room commands từ panel settings: close (🔒 giữ lịch sử) / delete (xoá tab + purge tin)
       const rc = await orca.host.call('storage.get', { key: 'team.chat.roomCmd' }).catch(() => null)

@@ -162,6 +162,14 @@
     <button type="button" class="ghost" id="addMember">+ Thêm worker</button>
   </div>
   <div class="set-sec">
+    <div class="lbl">Captain — luôn online</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button type="button" id="wakeCaptain">🔔 Wake up Captain</button>
+      <span class="hint" id="wakeHint" style="margin:0">gắn worktree room đang mở</span>
+    </div>
+    <div class="hint">Terminal Captain sinh ra ở workspace; kéo tab vào floating workspace một lần là router đi theo (handle không đổi). Wake lại sau restart app.</div>
+  </div>
+  <div class="set-sec">
     <div class="lbl">Khung chat (rooms)</div>
     <div id="roomRows"></div>
     <div class="hint">🔒 đóng = tab mờ, giữ lịch sử. 🗑 xoá = xoá tab + toàn bộ tin của room (không hoàn tác).</div>
@@ -529,6 +537,13 @@
       box.appendChild(row)
     })
   }
+  document.getElementById('wakeCaptain').addEventListener('click', function () {
+    var b = document.getElementById('wakeCaptain')
+    var room = activeRoom === 'general' ? 'general' : activeRoom
+    b.disabled = true; b.textContent = '→ đang đánh thức…'
+    setTimeout(function () { b.disabled = false; b.textContent = '🔔 Wake up Captain' }, 10000)
+    call('storage.set', { key: 'team.chat.captainCmd', value: { at: Date.now(), action: 'wake', room: room } }).catch(function () {})
+  })
   document.getElementById('kebab').addEventListener('click', function () {
     settingsEl.classList.add('open')
     document.getElementById('ceoName').value = ceoName
