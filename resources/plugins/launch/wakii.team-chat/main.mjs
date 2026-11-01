@@ -1412,6 +1412,7 @@ export default function activate(orca) {
       }
     } catch { /* mirror best-effort */ }
   }
+  let lastRoomCmdAt = 0
   let captainSeenAt = Date.now()
   const ackedAt = new Set() // dedup: 1 tin chỉ ACK 1 lần (bug thấy thật 1/11 01:32)
   let lastOwnerCommandAt = 0
@@ -1459,6 +1460,32 @@ export default function activate(orca) {
         lastSendAt = req.at
         await appendLine({ from: req.from, role: req.role, channel: req.channel, text: req.text })
         await orca.host.call('storage.set', { key: 'team.chat.send', value: null }).catch(() => {})
+      }
+      // Room commands từ panel settings: close (🔒 giữ lịch sử) / delete (xoá tab + purge tin)
+      const rc = await orca.host.call('storage.get', { key: 'team.chat.roomCmd' }).catch(() => null)
+      const rcReq = rc && rc.value
+      if (rcReq && typeof rcReq === 'object' && rcReq.at && rcReq.at !== lastRoomCmdAt && rcReq.room && rcReq.room !== 'general') {
+        lastRoomCmdAt = rcReq.at
+        try {
+          const roomsPath = join(chatDir, 'rooms.json')
+          let rooms = {}
+          try { rooms = JSON.parse(await readFile(roomsPath, 'utf8')) } catch { /* chưa có */ }
+          if (rcReq.action === 'close' || rcReq.action === 'open') {
+            if (rooms[rcReq.room]) rooms[rcReq.room].status = rcReq.action === 'close' ? 'closed' : 'open'
+            await writeFile(roomsPath, JSON.stringify(rooms, null, 1))
+          } else if (rcReq.action === 'delete') {
+            delete rooms[rcReq.room]
+            await writeFile(roomsPath, JSON.stringify(rooms, null, 1))
+            const raw = await readFile(chatLog, 'utf8').catch(() => '')
+            const kept = raw.split('\n').filter((l) => {
+              if (!l.trim()) return false
+              try { return (JSON.parse(l).channel || 'general') !== rcReq.room } catch { return true }
+            })
+            await writeFile(chatLog, kept.map((l) => l + '\n').join(''))
+            lastTailLen = -1 // buộc publish lại tail + rooms
+          }
+        } catch { /* room cmd best-effort */ }
+        await orca.host.call('storage.set', { key: 'team.chat.roomCmd', value: null }).catch(() => {})
       }
       const tail = await readTail()
       if (tail.length !== lastTailLen) {

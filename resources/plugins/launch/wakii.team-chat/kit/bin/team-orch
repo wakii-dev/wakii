@@ -299,6 +299,36 @@ PY
     emit worktree.cleaned system "$(repo_of_cwd)" "" "" "{\"worktree\":\"$WT\"}"
     echo "team-orch: cleanup xong — marker dọn, event worktree.cleaned phát"
     ;;
+  room-close)
+    # room-close <room> — đóng khung (tab mờ 🔒, giữ lịch sử tin)
+    ROOM="${1:-}"; [ -n "$ROOM" ] && [ "$ROOM" != "general" ] || { echo "room-close cần <room> (không phải general)" >&2; exit 2; }
+    rooms_reg close "$ROOM" && echo "→ 🔒 room #$ROOM đã đóng (tab mờ, lịch sử còn)"
+    ;;
+  room-delete)
+    # room-delete <room> — XOÁ khung: registry + toàn bộ tin của room khỏi bus (không hoàn tác)
+    ROOM="${1:-}"; [ -n "$ROOM" ] && [ "$ROOM" != "general" ] || { echo "room-delete cần <room> (không xoá được general)" >&2; exit 2; }
+    ROOMS="$HOME/.claude/chat/rooms.json"; LOG="${TEAM_CHAT_LOG:-$HOME/.claude/chat/team-chat.jsonl}"
+    python3 - "$ROOMS" "$LOG" "$ROOM" <<'PY'
+import json, sys, os
+rooms_p, log_p, room = sys.argv[1:4]
+try: reg = json.load(open(rooms_p, encoding="utf-8"))
+except Exception: reg = {}
+gone = reg.pop(room, None)
+json.dump(reg, open(rooms_p, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+kept, dropped = [], 0
+try:
+    for l in open(log_p, encoding="utf-8"):
+        try: m = json.loads(l)
+        except Exception: kept.append(l); continue
+        if (m.get("channel") or "general") == room: dropped += 1
+        else: kept.append(l)
+except FileNotFoundError: pass
+tmp = log_p + ".tmp"
+open(tmp, "w", encoding="utf-8").writelines(kept)
+os.replace(tmp, log_p)
+print(f"→ 🗑 room #{room}: {'có trong registry, đã xoá' if gone else 'không có trong registry'}; {dropped} tin đã xoá khỏi bus")
+PY
+    ;;
   register)
     # register --pane <handle> --name <n> --worktree <path> [--task --run --repo --room]
     PANE="" NAME="" WTV="" TASK="" RUN="" REPO="" ROOM="general"

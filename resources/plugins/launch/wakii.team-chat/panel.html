@@ -94,6 +94,10 @@
   .mem-row input.av { width: 38px; text-align: center; flex: none; }
   .mem-row input.nm { flex: 1; }
   .mem-row input.ti { flex: 1.2; }
+  .room-mgmt { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; font-size: 12px; }
+  .room-mgmt .rn { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .room-mgmt .st { color: #6d6d75; font-size: 11px; flex: none; }
+  .room-mgmt button { background: #26262c; padding: 3px 9px; font-weight: 400; font-size: 12px; flex: none; }
   .mem-row .rm {
     background: none; border: 0; color: #c24040; font-size: 15px; cursor: pointer;
     padding: 2px 6px; flex: none; font-weight: 700;
@@ -124,6 +128,11 @@
     <div class="lbl">Đội hình — avatar · tên thật · chức vụ</div>
     <div id="members"></div>
     <button type="button" class="ghost" id="addMember">+ Thêm worker</button>
+  </div>
+  <div class="set-sec">
+    <div class="lbl">Khung chat (rooms)</div>
+    <div id="roomRows"></div>
+    <div class="hint">🔒 đóng = tab mờ, giữ lịch sử. 🗑 xoá = xoá tab + toàn bộ tin của room (không hoàn tác).</div>
   </div>
   <div class="set-sec">
     <div class="lbl">Vận hành</div>
@@ -322,11 +331,35 @@
   document.getElementById('addMember').addEventListener('click', function () {
     membersEl.appendChild(memberRow({ av: '👤', nm: '', ti: 'Worker' }))
   })
+  function sendRoomCmd(action, room) {
+    call('storage.set', { key: 'team.chat.roomCmd', value: { at: Date.now(), action: action, room: room } }).catch(function () {})
+  }
+  function renderRoomRows() {
+    var box = document.getElementById('roomRows')
+    box.innerHTML = ''
+    var rooms = roomList.filter(function (r) { return r.id !== 'general' })
+    if (!rooms.length) { box.textContent = '(chưa có room feature nào)'; box.style.color = '#6d6d75'; return }
+    rooms.forEach(function (r) {
+      var row = document.createElement('div'); row.className = 'room-mgmt'
+      var rn = document.createElement('span'); rn.className = 'rn'; rn.textContent = '#' + r.id
+      var st = document.createElement('span'); st.className = 'st'
+      st.textContent = r.status === 'closed' ? '🔒 đã đóng' : r.msgs + ' tin'
+      var closeB = document.createElement('button'); closeB.type = 'button'; closeB.textContent = r.status === 'closed' ? 'mở lại' : '🔒'
+      closeB.addEventListener('click', function () { sendRoomCmd(r.status === 'closed' ? 'open' : 'close', r.id) })
+      var delB = document.createElement('button'); delB.type = 'button'; delB.textContent = '🗑'
+      delB.addEventListener('click', function () {
+        if (window.confirm('Xoá #' + r.id + ' và toàn bộ tin của room này? Không hoàn tác.')) sendRoomCmd('delete', r.id)
+      })
+      row.appendChild(rn); row.appendChild(st); row.appendChild(closeB); row.appendChild(delB)
+      box.appendChild(row)
+    })
+  }
   document.getElementById('kebab').addEventListener('click', function () {
     settingsEl.classList.add('open')
     document.getElementById('ceoName').value = ceoName
     document.getElementById('concurrency').value = concurrency
     renderMembers()
+    renderRoomRows()
   })
   document.getElementById('closeSettings').addEventListener('click', function () {
     settingsEl.classList.remove('open')
