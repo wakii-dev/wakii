@@ -1446,6 +1446,19 @@ export default function activate(orca) {
     aliveCache = { at: Date.now(), panes }
     return panes
   }
+  let termsCache = { at: 0, sig: '' }
+  const publishTerminals = async () => {
+    if (Date.now() - termsCache.at < 10000) return
+    termsCache.at = Date.now()
+    try {
+      const orcaBin = process.env.ORCA_BIN || 'orca'
+      const out = await new Promise((res) => execFileCb(orcaBin, ['terminal', 'list', '--json'], { timeout: 15000 }, (e, o) => res(e ? '' : o)))
+      if (!out) return
+      const list = JSON.parse(out).result.terminals.map((t) => ({ handle: t.handle, title: (t.title || '').slice(0, 60) }))
+      const sig = JSON.stringify(list)
+      if (sig !== termsCache.sig) { termsCache.sig = sig; await orca.host.call('storage.set', { key: 'team.chat.terminals', value: list }).catch(() => {}) }
+    } catch { /* best-effort */ }
+  }
   const captainEntries = async () => {
     try {
       const reg = JSON.parse(await readFile(join(homeDir(), '.claude', 'chat', '.workers.json'), 'utf8'))
@@ -1624,6 +1637,7 @@ export default function activate(orca) {
           .sort((a, b) => (a.id === 'general' ? -1 : b.id === 'general' ? 1 : b.lastAt - a.lastAt))
         await orca.host.call('storage.set', { key: 'team.chat.rooms', value: list }).catch(() => {})
       }
+      void publishTerminals()
       // Captain status cho settings panel: theo TỪNG room (room = worktree + captain trực).
       // Room-set tự tính mỗi tick (registry + kênh trong tail) — không phụ thuộc
       // biến chỉ cập nhật khi tail đổi (bug settings 🔴 dù captain online).
