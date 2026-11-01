@@ -59,6 +59,36 @@ def chat_tail(room, limit=5):
     return out[-limit:]
 
 
+
+# Vai trò chuyên biệt: tên đăng ký (worker-start --name) → agent brief có sẵn
+# trong kit. Brief nạp NGUYÊN VĂN vào phiên — worker terminal có đầy hợp đồng
+# role mà không cần Task-tool subagent.
+ROLE_AGENTS = [
+    ("impact", "phase0-impact-analyst.md",
+     'team-chat impact "<yêu cầu>" --scope .. --arch .. --risk .. --effort .. --deps .. --rec ..'),
+    ("review", "code-reviewer.md",
+     'team-chat review "<scope>" --checked ".." --findings ".." --verdict ok|cần-sửa'),
+    ("verify", "verifier.md",
+     'team-chat done "<task>" --did .. --test .. --evidence ..'),
+    ("security", "security-audit.md",
+     'team-chat review "<scope>" --checked ".." --findings ".." --verdict ok|cần-sửa'),
+]
+
+
+def role_agent_brief(name):
+    n = (name or "").lower()
+    for prefix, fname, cmd in ROLE_AGENTS:
+        if not n.startswith(prefix):
+            continue
+        here = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir, "agents", fname)
+        live = os.path.join(os.path.expanduser("~"), ".claude", "agents", fname)
+        for path in (here, live):
+            if os.path.isfile(path):
+                with open(path, encoding="utf-8") as f:
+                    return fname, f.read(), cmd
+    return None, None, None
+
+
 def main():
     pane = os.environ.get("ORCA_AGENT_PANE", "")
     if not pane:
@@ -81,6 +111,14 @@ def main():
     print(f"═ TEAM BRIEF — bạn là {name} (worker)" + (f" — {title}" if title else "") + " ═")
     print(f"Room: #{room} · Repo: {reg.get('repo', '?')} · Run: {reg.get('run', '?')} · Task: {reg.get('task', '?')}")
     print(f"Worktree: {cwd}")
+    agent_name, agent_body, agent_cmd = role_agent_brief(name)
+    if agent_body:
+        print()
+        print(f"═ VAI TRÒ CHUYÊN BIỆT: {agent_name} — hợp đồng nguyên văn ═")
+        print(agent_body)
+        print("═ BÁO CÁO TRONG ROOM (thay cho markdown Task-tool) ═")
+        print(f"  ~/.claude/bin/{agent_cmd}")
+
     print("Hiến pháp §0.0: đúng đắn trên hết · chưa rõ thì hỏi · KHÔNG BỊA · DONE phải 3 phần (đã làm/cách test/bằng chứng).")
     print("Đọc chat: ~/.claude/bin/team-chat read --last 20")
     if gate_open(cwd):

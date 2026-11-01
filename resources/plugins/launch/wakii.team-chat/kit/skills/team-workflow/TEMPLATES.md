@@ -11,6 +11,10 @@ flag là thấy usage).
 | `team-chat plan "<các bước + DoD đo được>"` | `[PLAN] <text>` | Plan-gate đang OPEN — Bước 0 (G3.5). Đề xuất kế hoạch, DỪNG chờ duyệt |
 | `team-chat done "<task>" --did "…" --test "…" --evidence "…"` | `DONE <task> — ① Đã làm: … ② Cách test: … ③ Bằng chứng: …` | Hoàn thành. **Thiếu 1 trong 3 flag = lệnh từ chối** (hiến pháp §0.0) |
 | `team-chat blocked "<lý do + đã thử gì>"` | `BLOCKED <lý do>` | Kẹt ~15 phút. Block×3 cùng cách → ngừng, chờ Captain ép hướng |
+| `team-chat impact "<yêu cầu>" --scope .. --arch .. --risk .. --effort .. --deps .. --rec ..` | `[IMPACT] … ①-⑥` | **Stage 1** — worker `impact-*` (agent phase0-impact-analyst). Đủ 6 chiều bắt buộc, thiếu = trả lại |
+| `team-chat design "<flow, màn hình, data model, trade-off>"` | `[DESIGN] …` card 🎨 | **Stage 3** — bằng chứng thiết kế trình CEO duyệt |
+| `team-chat mindmap "<cây thụt lề 2 space/cấp>"` | `[MINDMAP] …` card 🧠 | **Stage 3** — cây tính năng trình CEO duyệt |
+| `team-chat review "<scope>" --checked ".." --findings ".." --verdict ok\|cần-sửa` | `[REVIEW] … ①-③` | **Stage 5** — worker `reviewer-*` (agent code-reviewer) review độc lập trước harvest |
 
 Tên người gửi: pane đã đăng ký thì TỰ KHÓA đúng tên (bỏ `--from`). KHÔNG commit — Captain giữ merge.
 

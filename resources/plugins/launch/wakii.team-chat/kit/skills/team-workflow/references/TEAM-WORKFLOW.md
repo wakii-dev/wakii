@@ -335,3 +335,20 @@ orca terminal close --terminal <handle> --json  # KHÔNG phải kill
 ---
 
 *Tài liệu này là OPERATING MANUAL — session sau đọc file này + SKILL.md là biết đủ mọi thứ.*
+
+## 6. Vòng đời feature 5 STAGE — CEO duyệt từng cổng (CEO ruling 1/11)
+
+Mọi feature trong room chat đi đúng thứ tự — bằng chứng mỗi stage là CARD trong
+room (nút Duyệt cho CEO), KHÔNG dispatch stage kế khi chưa duyệt:
+
+| Stage | Ai làm | Bằng chứng (card) |
+|---|---|---|
+| 1 NGHIÊN CỨU + IMPACT | worker `impact-*` (agent `phase0-impact-analyst`, READ-ONLY) | `team-chat impact` — 6 chiều bắt buộc |
+| 2 BRAINSTORM | Captain hỏi CEO | `team-chat ask` — form chip bấm |
+| 3 DESIGN + MINDMAP | worker design / Captain tổng hợp | `team-chat design` + `team-chat mindmap` |
+| 4 SPEC + SCAFFOLD | smith/weaver | `[PLAN]` → DONE như thường |
+| 5 THI CÔNG + REVIEW | workers + worker `reviewer-*` (agent `code-reviewer`) độc lập | DONE ③ → `team-chat review` verdict ok mới harvest |
+
+Luật: "tăng tốc" = thêm worker TRONG stage (không nhảy stage) · tin "duyệt" chỉ
+mở gate cho stage đang trình · reviewer KHÔNG là người viết code · 3 tầng test:
+worker tự test (DONE ③) → reviewer chạy lại độc lập → Captain verify DoD đo được.

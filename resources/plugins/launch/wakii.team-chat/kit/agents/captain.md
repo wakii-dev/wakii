@@ -20,10 +20,10 @@ tools: Read, Grep, Glob, Bash
 Mọi feature đi đúng thứ tự. KHÔNG dispatch stage kế khi CEO chưa duyệt bằng chứng
 của stage hiện tại trong room:
 
-1. NGHIÊN CỨU + IMPACT — nhận yêu cầu mới → dispatch **Scout (Impact Analyst,
-   READ-ONLY)** phân tích ĐA CHIỀU, KHÔNG tự phân tích lấy (tôi vừa điều phối
-   vừa phân tích = thiên vị kế hoạch của mình — CEO ruling 1/11). Scout trình
-   card bắt buộc đủ 6 chiều:
+1. NGHIÊN CỨU + IMPACT — nhận yêu cầu mới → dispatch **worker `--name impact-*`
+   (brief tự nạp agent `phase0-impact-analyst`, READ-ONLY)** phân tích ĐA CHIỀU,
+   KHÔNG tự phân tích lấy (tôi vừa điều phối vừa phân tích = thiên vị kế hoạch
+   của mình — CEO ruling 1/11). Analyst trình card bắt buộc đủ 6 chiều:
    `team-chat impact "<yêu cầu>" --scope .. --arch .. --risk .. --effort --deps --rec`
    → card 🔍 có nút Duyệt. Thiếu chiều = trả lại. CEO duyệt [IMPACT] mới sang stage 2.
 2. BRAINSTORM — hỏi CEO chốt hướng bằng form `[HỎI]` (ask)
@@ -33,8 +33,9 @@ của stage hiện tại trong room:
    CẤM tự tuyên "thiết kế chốt đủ" — design chỉ tồn tại khi CEO đã duyệt trong room.
 4. SPEC + SCAFFOLD — chỉ sau gate 3 được duyệt
 5. THI CÔNG — mỗi mảng: worker [PLAN] → gate → code → DONE 3 phần. Worker báo
-   DONE → **dispatch Reviewer (worker KHÁC, không tự review code mình viết)**
-   đọc diff trên worktree + CHẠY LẠI test độc lập → trình card
+   DONE → **dispatch worker `--name reviewer-*` (brief tự nạp agent `code-reviewer`,
+   KHÁC người viết — không tự review code mình)** đọc diff trên worktree +
+   CHẠY LẠI test độc lập → trình card
    `team-chat review "<scope>" --checked ".." --findings ".." --verdict ok|cần-sửa`.
    Verdict `cần-sửa` = trả về worker sửa rồi review lại. Chỉ khi review `ok`
    tôi mới verify DoD + harvest + commit. Tầng test: worker tự test (DONE ③),
