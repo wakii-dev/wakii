@@ -21,10 +21,27 @@ GATES_DIR = os.environ.get("TEAM_TASK_GATES_DIR", os.path.join(CHAT_DIR, ".task-
 
 
 def load_registration(pane):
+    """ORCA_AGENT_PANE mang pane key 'tabId:leafId' (alias ORCA_PANE_KEY);
+    .workers.json keyed theo handle 'term_*' — đổi qua terminal list."""
     try:
         with open(REG_PATH, encoding="utf-8") as f:
             reg = json.load(f)
-        entry = reg.get(pane)
+    except Exception:
+        return None
+    try:
+        import subprocess
+        key = pane
+        if key and key not in reg and ':' in key:
+            tab, leaf = key.split(':', 1)
+            out = subprocess.run(
+                [os.environ.get("ORCA_BIN", "orca"), "terminal", "list", "--json"],
+                capture_output=True, text=True, timeout=15,
+            ).stdout
+            for t in json.loads(out).get("result", {}).get("terminals", []):
+                if t.get("tabId") == tab and t.get("leafId") == leaf:
+                    key = t.get("handle", key)
+                    break
+        entry = reg.get(key)
         return entry if isinstance(entry, dict) else None
     except Exception:
         return None

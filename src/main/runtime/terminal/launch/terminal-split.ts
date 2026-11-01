@@ -47,6 +47,8 @@ export abstract class OrcaRuntimeWithSplitTerminal extends OrcaRuntimeWithStopEx
       retrySplit?: string
       /** The user's own act (a CLI or window split); without it a stopped WSL distro holds the start. */
       wslUserAct?: true
+      /** Team grid: wrap the tab's whole tree as row 1 and open this pane as a full-width row below. */
+      wrapRow?: true
     } = {},
     // Internal creation evidence; RPC and preload callers never supply it.
     createdWorktree?: Worktree
@@ -79,7 +81,8 @@ export abstract class OrcaRuntimeWithSplitTerminal extends OrcaRuntimeWithStopEx
           env: opts.env,
           envToDelete: opts.envToDelete,
           activate: opts.activate,
-          ...(opts.wslUserAct ? { wslUserAct: true } : {})
+          ...(opts.wslUserAct ? { wslUserAct: true } : {}),
+          ...(opts.wrapRow ? { wrapRow: true } : {})
         }
       )
     }

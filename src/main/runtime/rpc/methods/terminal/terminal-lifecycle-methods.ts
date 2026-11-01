@@ -153,7 +153,8 @@ export const TERMINAL_LIFECYCLE_METHODS = [
               env: params.env,
               // The window's split shows why its start failed, as its own spawn did.
               keepPaneOnStartFailure: true,
-              wslUserAct: true
+              wslUserAct: true,
+              ...(params.wrapRow ? { wrapRow: true } : {})
             })
           : // The schema requires a handle when no pane is named.
             await runtime.splitTerminal(params.terminal ?? '', {
@@ -162,7 +163,8 @@ export const TERMINAL_LIFECYCLE_METHODS = [
               env: params.env,
               telemetrySource: params.telemetrySource,
               retrySplit: params.retrySplit,
-              wslUserAct: true
+              wslUserAct: true,
+              ...(params.wrapRow ? { wrapRow: true } : {})
             })
     })
   }),

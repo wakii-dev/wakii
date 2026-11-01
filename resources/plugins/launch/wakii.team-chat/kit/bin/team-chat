@@ -13,11 +13,21 @@ CMD="${1:-read}"; [ $# -gt 0 ] && shift
 
 # Tên đã đăng ký của pane này (P0-2); rỗng = pane chưa đăng ký (terminal tự do).
 REGISTERED_NAME() {
-  python3 - "${TEAM_WORKERS_REG:-$HOME/.claude/chat/.workers.json}" "${ORCA_AGENT_PANE:-}" <<'PY' 2>/dev/null
-import json, sys
+  python3 - "${TEAM_WORKERS_REG:-$HOME/.claude/chat/.workers.json}" "${ORCA_AGENT_PANE:-}" "${ORCA_BIN:-orca}" <<'PY' 2>/dev/null
+import json, subprocess, sys
 try: reg = json.load(open(sys.argv[1], encoding="utf-8"))
 except Exception: raise SystemExit
-e = reg.get(sys.argv[2])
+pane = sys.argv[2]
+if pane and pane not in reg and ':' in pane:
+    tab, leaf = pane.split(':', 1)
+    try:
+        out = subprocess.run([sys.argv[3], 'terminal', 'list', '--json'],
+                             capture_output=True, text=True, timeout=15).stdout
+        for t in json.loads(out).get('result', {}).get('terminals', []):
+            if t.get('tabId') == tab and t.get('leafId') == leaf:
+                pane = t.get('handle', pane); break
+    except Exception: pass
+e = reg.get(pane)
 if isinstance(e, dict): print(e.get("name", ""))
 PY
 }

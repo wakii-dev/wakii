@@ -150,11 +150,21 @@ case "$CMD" in
     # CEO ruling: 1 room tối đa 3 worker (terminal grid 3). Đếm worker cùng
     # room (theo pane đăng ký + terminal còn sống) — vượt thì từ chối thẳng.
     if [ -n "${ORCA_AGENT_PANE:-}" ]; then
-      MY_ROOM=$(python3 - "$REG" "$ORCA_AGENT_PANE" <<'PY' 2>/dev/null
-import json, sys
+      MY_ROOM=$(python3 - "$REG" "$ORCA_AGENT_PANE" "$ORCA" <<'PY' 2>/dev/null
+import json, subprocess, sys
 try: reg = json.load(open(sys.argv[1], encoding="utf-8"))
 except Exception: sys.exit(0)
-e = reg.get(sys.argv[2]) or {}
+pane = sys.argv[2]
+if pane and pane not in reg and ':' in pane:
+    tab, leaf = pane.split(':', 1)
+    try:
+        out = subprocess.run([sys.argv[3], 'terminal', 'list', '--json'],
+                             capture_output=True, text=True, timeout=15).stdout
+        for t in json.loads(out).get('result', {}).get('terminals', []):
+            if t.get('tabId') == tab and t.get('leafId') == leaf:
+                pane = t.get('handle', pane); break
+    except Exception: pass
+e = reg.get(pane) or {}
 print(e.get("room", "") if isinstance(e, dict) else "")
 PY
 )
@@ -259,14 +269,21 @@ try: reg = json.load(open(reg_p, encoding='utf-8'))
 except Exception: reg = {}
 order = [p for p, e in sorted(reg.items(), key=lambda kv: kv[1].get('at', 0))
          if isinstance(e, dict) and e.get('room') == room and p in live]
-row1 = ([cap] + [q for q in order if q != cap])[:3]
-base = row1[(n - 3) % len(row1)]
-print('horizontal	' + base)
+row2 = [q for q in order if q != cap][2:]  # worker thứ 3 trở đi = hàng 2
+if n == 3:
+    print('wrap	' + cap); raise SystemExit  # hàng 2 full-width (app --wrap-row)
+base = row2[0] if row2 else cap
+print('vertical	' + base)
 PY
 )
         SPLIT_DIR=$(printf '%s' "$SPLIT_CFG" | cut -f1); SPLIT_BASE=$(printf '%s' "$SPLIT_CFG" | cut -f2)
         [ -n "$SPLIT_DIR" ] && [ -n "$SPLIT_BASE" ] || { SPLIT_DIR="vertical"; SPLIT_BASE="$CAP_PANE"; }
-        NEW_PANE=$("$ORCA" terminal split --terminal "$SPLIT_BASE" --direction "$SPLIT_DIR" \
+        if [ "$SPLIT_DIR" = "wrap" ]; then
+          SPLIT_ARGS=(--terminal "$SPLIT_BASE" --direction horizontal --wrap-row)
+        else
+          SPLIT_ARGS=(--terminal "$SPLIT_BASE" --direction "$SPLIT_DIR")
+        fi
+        NEW_PANE=$("$ORCA" terminal split "${SPLIT_ARGS[@]}" \
                      --command "claude --dangerously-skip-permissions" --json 2>/dev/null \
                    | python3 -c 'import json,sys; print(json.load(sys.stdin)["result"]["split"]["handle"])' 2>/dev/null)
         if [ -n "$NEW_PANE" ]; then

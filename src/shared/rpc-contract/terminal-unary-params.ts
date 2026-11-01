@@ -283,6 +283,8 @@ export const TerminalSplit = z
     telemetrySource: z.enum(TERMINAL_PANE_SPLIT_SOURCES).optional(),
     // Timed-out split identity, gated on TERMINAL_SPLIT_RETRY_RUNTIME_CAPABILITY; reject blank rather than treating it as a fresh split.
     retrySplit: z.string().min(1, 'Missing split id').optional(),
+    // Team grid: wrap the tab's whole tree as row 1 and open this pane as a full-width row below.
+    wrapRow: z.boolean().optional(),
     // Layout-owner build: a window names its own pane; main writes the split and starts it.
     pane: z
       .object({

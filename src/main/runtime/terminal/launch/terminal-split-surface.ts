@@ -5,7 +5,7 @@ import type { RuntimeTerminalSplit } from '../../../../shared/runtime-types'
 import { makePaneKey, parsePaneKey } from '../../../../shared/stable-pane-id'
 import { recordPtySurface, spawnSurfaceClaimSequence } from '../../pty-recorded-surface-topology'
 import { randomUUID } from 'node:crypto'
-import { runtimeSplitPlacement } from '../../runtime-terminal-spawn-placement'
+import { runtimeSplitPlacement, wrapRowSplitPlacement } from '../../runtime-terminal-spawn-placement'
 import { REJECTED_SPLIT_PTY_STOP_TIMEOUT_MS, ownerSurfacing } from '../../orca-runtime-core'
 import type { Worktree } from '../../../../shared/worktree/types'
 import { spawnInAdmittedPane, withdrawRuntimePane } from '../../runtime-pane-admission'
@@ -24,6 +24,8 @@ export type TerminalSplitOptions = {
   telemetrySource?: TerminalPaneSplitSource
   /** The user's own act (a CLI or window split); without it a stopped WSL distro holds the start. */
   wslUserAct?: true
+  /** Team grid: wrap the tab's whole tree as row 1 and open this pane as a full-width row below. */
+  wrapRow?: true
 }
 
 export abstract class OrcaRuntimeWithSplitPtyBackedTerminal extends OrcaRuntimeWithSplitTerminal {
@@ -86,7 +88,15 @@ export abstract class OrcaRuntimeWithSplitPtyBackedTerminal extends OrcaRuntimeW
       tabId: parentTabId,
       leafId,
       persistHostSessionBinding: true,
-      placement: runtimeSplitPlacement(parsedPaneKey.leafId, direction),
+      placement:
+        (opts.wrapRow === true
+          ? wrapRowSplitPlacement(
+              this.getWorkspaceSessionForWorktree(workspace.id)?.terminalLayoutsByTabId?.[parentTabId]
+                ?.root,
+              parsedPaneKey.leafId,
+              leafId
+            )
+          : null) ?? runtimeSplitPlacement(parsedPaneKey.leafId, direction),
       // Layout-owner build: views mounting the pane from main's frame attach, never spawn.
       ...this.paneStartStatusArgs({}),
       ...(sourceAuthority.persisted
