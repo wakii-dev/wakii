@@ -321,7 +321,10 @@ import json, sys, os
 rooms_p, log_p, room = sys.argv[1:4]
 try: reg = json.load(open(rooms_p, encoding="utf-8"))
 except Exception: reg = {}
-gone = reg.pop(room, None)
+gone = room in reg
+if gone:
+    reg[room] = dict(reg[room] or {})
+    reg[room]["status"] = "deleted"  # nhớ đã xoá: publish lọc bỏ, không hồi sinh
 json.dump(reg, open(rooms_p, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 kept, dropped = [], 0
 try:
@@ -334,7 +337,7 @@ except FileNotFoundError: pass
 tmp = log_p + ".tmp"
 open(tmp, "w", encoding="utf-8").writelines(kept)
 os.replace(tmp, log_p)
-print(f"→ 🗑 room #{room}: {'có trong registry, đã xoá' if gone else 'không có trong registry'}; {dropped} tin đã xoá khỏi bus")
+print(f"→ 🗑 room #{room}: {'đã xoá (nhớ deleted — không tự hồi sinh)' if gone else 'không có trong registry (đã đánh dấu deleted nếu tồn tại)'}; {dropped} tin đã xoá khỏi bus")
 PY
     ;;
   register)

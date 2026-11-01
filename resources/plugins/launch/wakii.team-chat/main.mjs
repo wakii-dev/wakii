@@ -1637,9 +1637,10 @@ export default function activate(orca) {
           } catch { /* skip dòng hỏng */ }
         }
         const list = [...new Set([...Object.keys(rooms), ...seen.keys()])]
+          .filter((c) => !rooms[c] || rooms[c].status !== 'deleted') // xoá là xoá hẳn — không hồi sinh
           .map((c) => ({
             id: c,
-            status: rooms[c] ? rooms[c].status : (c === 'general' ? 'open' : 'open'),
+            status: rooms[c] ? rooms[c].status : 'open',
             feature: rooms[c] ? rooms[c].feature : null,
             run: rooms[c] ? rooms[c].run : null,
             meta: rooms[c] || null,
@@ -1658,9 +1659,12 @@ export default function activate(orca) {
         const live = await livePanes()
         let roomsReg = {}
         try { roomsReg = JSON.parse(await readFile(join(chatDir, 'rooms.json'), 'utf8')) } catch { /* chưa có */ }
-        const roomSet = new Set([...Object.keys(roomsReg)])
+        const roomSet = new Set(Object.keys(roomsReg).filter((r) => roomsReg[r].status !== 'deleted'))
         for (const line of tail) {
-          try { roomSet.add(JSON.parse(line).channel || 'general') } catch { /* skip */ }
+          try {
+            const ch = JSON.parse(line).channel
+            if (ch && !(roomsReg[ch] && roomsReg[ch].status === 'deleted')) roomSet.add(ch)
+          } catch { /* skip */ }
         }
         const byRoom = {}
         for (const r of roomSet) {

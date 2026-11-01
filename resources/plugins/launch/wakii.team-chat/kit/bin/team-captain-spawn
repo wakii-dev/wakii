@@ -81,7 +81,7 @@ echo "→ terminal: $PANE"
 REPO_PATH=""
 [ -n "$REPO_SEL" ] && REPO_PATH="${REPO_SEL#path:}"
 TC="$HERE/team-chat"; [ -x "$TC" ] || TC="$HOME/.claude/bin/team-chat"
-"$TC" send "🔄 Captain terminal mới ($PANE) — đang brief..." --from system --role system --channel "${ROOM:-general}" > /dev/null 2>&1 || true
+[ -n "$ROOM" ] && "$TC" send "🔄 Captain terminal mới ($PANE) — đang brief..." --from system --role system --channel "$ROOM" > /dev/null 2>&1 || true
 
 # Brief: Captain đọc hợp đồng đầy đủ trong captain.md — brief ở đây chỉ trỏ tới.
 sleep 8  # đợi claude boot trong terminal

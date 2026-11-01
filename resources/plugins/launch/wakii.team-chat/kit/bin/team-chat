@@ -23,13 +23,27 @@ PY
 }
 
 send_msg() {
-  local text="$1" from="${TEAM_CHAT_FROM:-${ORCA_AGENT_NAME:-worker}}" from_set=0 role="" role_set=0 channel="general"
+  local text="$1" from="${TEAM_CHAT_FROM:-${ORCA_AGENT_NAME:-worker}}" from_set=0 role="" role_set=0 channel="__DEFAULT__"
   while [ $# -gt 1 ]; do case "$1" in
     --from) from="$2"; from_set=1; shift 2 ;;
     --role) role="$2"; role_set=1; shift 2 ;;
     --channel) channel="$2"; shift 2 ;;
     *) shift ;;
   esac; done
+  # Mặc định linh hoạt (không block): thiếu --channel → room open mới nhất;
+  # 'general' chỉ khi không còn room open (general đã xoá không hồi sinh).
+  if [ "$channel" = "__DEFAULT__" ]; then
+    channel=$(python3 - "$HOME/.claude/chat/rooms.json" <<'PY' 2>/dev/null
+import json, sys
+try: reg = json.load(open(sys.argv[1], encoding="utf-8"))
+except Exception: print("general"); raise SystemExit
+opens = [(v.get("createdAt", 0), k) for k, v in reg.items()
+         if isinstance(v, dict) and v.get("status") == "open"]
+print(max(opens)[1] if opens else "general")
+PY
+)
+    [ -n "$channel" ] || channel="general"
+  fi
   # P0-2 danh tính: pane đã đăng ký (team-orch worker-start) → tên bị khóa theo
   # registration. Không --from → ép về tên thật; --from khác tên = từ chối.
   if [ -n "${ORCA_AGENT_PANE:-}" ]; then
