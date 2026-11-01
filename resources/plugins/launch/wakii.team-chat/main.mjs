@@ -1509,7 +1509,7 @@ export default function activate(orca) {
       // Room commands từ panel settings: close (🔒 giữ lịch sử) / delete (xoá tab + purge tin)
       const rc = await orca.host.call('storage.get', { key: 'team.chat.roomCmd' }).catch(() => null)
       const rcReq = rc && rc.value
-      if (rcReq && typeof rcReq === 'object' && rcReq.at && rcReq.at !== lastRoomCmdAt && rcReq.room && rcReq.room !== 'general') {
+      if (rcReq && typeof rcReq === 'object' && rcReq.at && rcReq.at !== lastRoomCmdAt && rcReq.room) {
         lastRoomCmdAt = rcReq.at
         try {
           const roomsPath = join(chatDir, 'rooms.json')
@@ -1565,7 +1565,7 @@ export default function activate(orca) {
         await orca.host.call('storage.set', { key: 'team.chat.rooms', value: list }).catch(() => {})
       }
       // Captain status cho settings panel: online/offline + worktree.
-      {
+      try {
         const caps = await captainPanes()
         const live = await liveCaptainPanes()
         const entry = caps.find((c) => live.has(c.pane))
@@ -1573,7 +1573,7 @@ export default function activate(orca) {
                              : { online: false, pane: null, worktree: null }
         const sig = JSON.stringify(status)
         if (sig !== lastCaptainSig) { lastCaptainSig = sig; await orca.host.call('storage.set', { key: 'team.chat.captain', value: status }).catch(() => {}) }
-      }
+      } catch (e) { orca.log('[captain-status] lỗi: ' + (e && e.message || e)) }
       void mirrorRoster()
       // Router Captain: quét tin mới từ outside (owner/@captain) kể từ lần trước.
       for (const line of tail) {

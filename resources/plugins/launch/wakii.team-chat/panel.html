@@ -439,7 +439,9 @@
           all.forEach(function (m) { seen[m.channel || 'general'] = true })
           roomList = Object.keys(seen).map(function (id) { return { id: id, status: 'open', msgs: 0 } })
         }
-        if (!roomList.some(function (x) { return x.id === activeRoom })) activeRoom = 'general'
+        if (!roomList.some(function (x) { return x.id === activeRoom })) {
+          activeRoom = roomList[0] ? roomList[0].id : 'general'
+        }
         if (!(activeRoom in readCount)) readCount[activeRoom] = roomList.find(function (x) { return x.id === activeRoom }).msgs || 0
         renderRooms()
       }).catch(function () { renderRooms() })

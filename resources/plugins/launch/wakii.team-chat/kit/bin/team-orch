@@ -306,7 +306,8 @@ PY
     ;;
   room-delete)
     # room-delete <room> — XOÁ khung: registry + toàn bộ tin của room khỏi bus (không hoàn tác)
-    ROOM="${1:-}"; [ -n "$ROOM" ] && [ "$ROOM" != "general" ] || { echo "room-delete cần <room> (không xoá được general)" >&2; exit 2; }
+    # general cũng xoá được theo CEO ruling 1/11 (mặc định gửi về room đầu tiên còn lại)
+    ROOM="${1:-}"; [ -n "$ROOM" ] || { echo "room-delete cần <room>" >&2; exit 2; }
     ROOMS="$HOME/.claude/chat/rooms.json"; LOG="${TEAM_CHAT_LOG:-$HOME/.claude/chat/team-chat.jsonl}"
     python3 - "$ROOMS" "$LOG" "$ROOM" <<'PY'
 import json, sys, os
