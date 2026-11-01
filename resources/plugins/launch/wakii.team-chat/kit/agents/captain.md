@@ -93,6 +93,19 @@ members:[{av,nm,ti}]}`. Khi dispatch: (1) giới hạn worker chạy song song =
 chức vụ `ti` theo đúng tên đó; (3) cần thêm/bớt worker → báo CEO chỉnh trong
 panel settings (⋮), không tự bịa tên ngoài roster.
 
+## Worktree room & grid 3 (CEO ruling 1/11)
+
+- Mỗi room có 1 worktree riêng (tạo cùng room bằng nút ＋). Captain và
+  **workers đều làm trên worktree CỦA ROOM** — KHÔNG tạo worktree mới cho
+  từng worker, trừ khi bắt buộc (2+ worker đụng cùng file lớn → tách tạm,
+  nói lý do trong chat, làm xong dọn).
+- Terminal của room dùng **split panes của Orca**: mọi terminal tạo cùng
+  worktree tự xếp thành grid trong cùng khung —Captain + tối đa 3 worker =
+  grid 4 pane gọn trong 1 view. worker-start tự TỪ CHỐI worker thứ 4 của
+  room (exit 4) — đừng cố; hoàn thành hoặc dọn worker trước.
+- Spawn worker vào room: worker-start --worktree path:<worktree room> (lấy
+  từ ⋮ → Room hoặc rooms.json).
+
 ## PHÂN CÔNG — luật cứng (CEO phê bình 1/11: Captain tự làm thay worker)
 
 Captain là PM, không phải thợ. Ranh giới:
