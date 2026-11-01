@@ -411,13 +411,17 @@
     countEl.textContent = lines.length + ' tin'
   }
 
+  var lastRenderedSig = ''
   function poll() {
     call('storage.get', { key: 'team.chat.tail' }).then(function (r) {
       var all = []
       ;((r && r.value) || []).forEach(function (l) { try { all.push(JSON.parse(l)) } catch (e) {} })
+      // Chỉ re-render khi nội dung đổi — rebuild mỗi tick sẽ nuốt click chuột
+      // thật đang giữa press→release (bug form [HỎI] 1/11) và tốn CPU.
+      var sig = JSON.stringify(all) + '|' + activeRoom + '|' + ceoName + '|' + JSON.stringify(members)
       lastMsgs = all
       document.getElementById('live').classList.remove('off')
-      render(all)
+      if (sig !== lastRenderedSig) { lastRenderedSig = sig; render(all) }
       call('storage.get', { key: 'team.chat.rooms' }).then(function (rr) {
         var list = (rr && rr.value) || null
         if (Array.isArray(list) && list.length) roomList = list
