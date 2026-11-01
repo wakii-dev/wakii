@@ -1390,6 +1390,28 @@ export default function activate(orca) {
   // Captain luôn online (CEO ruling 1/11): poller là router — mọi tin của
   // Owner/@captain được ACK ngay vào room + chuyển tiếp vào terminal Captain
   // (claude thật) nếu đã cấu hình storage 'team.captain.terminal' = handle.
+  // Mirror roster + settings (panel settings ghi storage) ra file cho
+  // Captain/bins/CLI đọc: ~/.claude/chat/roster.json {ceo, concurrency, members}
+  let rosterMirror = ''
+  const mirrorRoster = async () => {
+    try {
+      const [nm, ro, st] = await Promise.all([
+        orca.host.call('storage.get', { key: 'team.chat.name' }).catch(() => null),
+        orca.host.call('storage.get', { key: 'team.chat.roster' }).catch(() => null),
+        orca.host.call('storage.get', { key: 'team.chat.settings' }).catch(() => null)
+      ])
+      const data = {
+        ceo: (nm && nm.value) || 'CEO',
+        concurrency: (st && st.value && st.value.concurrency) || 3,
+        members: (ro && Array.isArray(ro.value)) ? ro.value : []
+      }
+      const s = JSON.stringify(data)
+      if (s !== rosterMirror) {
+        rosterMirror = s
+        await writeFile(join(chatDir, 'roster.json'), s + '\n')
+      }
+    } catch { /* mirror best-effort */ }
+  }
   let captainSeenAt = Date.now()
   const ackedAt = new Set() // dedup: 1 tin chỉ ACK 1 lần (bug thấy thật 1/11 01:32)
   let lastOwnerCommandAt = 0
@@ -1467,6 +1489,7 @@ export default function activate(orca) {
           .sort((a, b) => (a.id === 'general' ? -1 : b.id === 'general' ? 1 : b.lastAt - a.lastAt))
         await orca.host.call('storage.set', { key: 'team.chat.rooms', value: list }).catch(() => {})
       }
+      void mirrorRoster()
       // Router Captain: quét tin mới từ outside (owner/@captain) kể từ lần trước.
       for (const line of tail) {
         let m

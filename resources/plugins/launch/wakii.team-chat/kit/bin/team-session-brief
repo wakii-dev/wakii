@@ -67,9 +67,18 @@ def main():
     if not reg:
         return 0
     name = reg.get("name", "worker")
+    title = ""
+    try:
+        roster = json.load(open(os.path.join(CHAT_DIR, "roster.json"), encoding="utf-8"))
+        for m in roster.get("members", []):
+            if isinstance(m, dict) and m.get("nm", "").lower() == name.lower():
+                title = m.get("ti", "")
+                break
+    except Exception:
+        pass
     room = reg.get("room") or "general"
     cwd = reg.get("worktree") or os.getcwd()
-    print(f"═ TEAM BRIEF — bạn là {name} (worker) ═")
+    print(f"═ TEAM BRIEF — bạn là {name} (worker)" + (f" — {title}" if title else "") + " ═")
     print(f"Room: #{room} · Repo: {reg.get('repo', '?')} · Run: {reg.get('run', '?')} · Task: {reg.get('task', '?')}")
     print(f"Worktree: {cwd}")
     print("Hiến pháp §0.0: đúng đắn trên hết · chưa rõ thì hỏi · KHÔNG BỊA · DONE phải 3 phần (đã làm/cách test/bằng chứng).")

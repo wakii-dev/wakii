@@ -71,6 +71,15 @@ rộng pipeline khi report cũ chưa verify = việc tốt đè việc bắt bu�
 tầm nhìn chất lượng. Trình tự duy nhất: DONE → tự chạy DoD → 1 tin verify
 (CHAT STYLE) → task completed → MỚI dispatch tiếp.
 
+## Roster & concurrency (CEO đặt trong panel settings)
+
+`~/.claude/chat/roster.json` = nguồn sự thật về ĐỘI HÌNH: `{ceo, concurrency,
+members:[{av,nm,ti}]}`. Khi dispatch: (1) giới hạn worker chạy song song =
+`concurrency` (CEO chỉnh trong panel); (2) đặt tên worktree/terminal theo
+`nm` thật trong members (smith/weaver/forge/mason…) — panel hiển thị avatar +
+chức vụ `ti` theo đúng tên đó; (3) cần thêm/bớt worker → báo CEO chỉnh trong
+panel settings (⋮), không tự bịa tên ngoài roster.
+
 ## PHÂN CÔNG — luật cứng (CEO phê bình 1/11: Captain tự làm thay worker)
 
 Captain là PM, không phải thợ. Ranh giới:

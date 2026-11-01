@@ -11,15 +11,20 @@
   body {
     font: 13px/1.45 -apple-system, "Segoe UI", Roboto, sans-serif;
     background: #101114; color: #e6e6e9;
-    display: flex; flex-direction: column;
+    display: flex; flex-direction: column; position: relative;
   }
   header {
-    padding: 8px 14px 6px; border-bottom: 1px solid #232328;
+    padding: 8px 10px 6px 14px; border-bottom: 1px solid #232328;
     display: flex; align-items: center; gap: 8px; font-weight: 600; flex: none;
   }
   header .dot { width: 8px; height: 8px; border-radius: 50%; background: #3fb96f; flex: none; }
   header .dot.off { background: #c24040; }
   header small { margin-left: auto; font-weight: 400; color: #8b8b93; }
+  #kebab {
+    background: none; border: 0; color: #b9b9c0; cursor: pointer; font-size: 16px;
+    line-height: 1; padding: 2px 6px; border-radius: 6px; flex: none; font-weight: 700;
+  }
+  #kebab:hover { background: #26262c; }
   #rooms {
     display: flex; gap: 4px; padding: 6px 10px; border-bottom: 1px solid #232328;
     overflow-x: auto; flex: none; scrollbar-width: thin;
@@ -37,34 +42,103 @@
     min-width: 16px; text-align: center; padding: 0 4px; display: none;
   }
   .room .badge.show { display: inline-block; }
-  #messages { flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
-  .msg { max-width: 88%; padding: 7px 10px; border-radius: 10px; background: #1b1b20; border: 1px solid #26262c; }
-  .msg.mine { align-self: flex-end; background: #1d2b22; border-color: #2b4231; }
-  .msg .who { font-size: 11px; color: #8fb8f9; margin-bottom: 2px; }
-  .msg .who .role { color: #8b8b93; }
-  .msg .body { white-space: pre-wrap; word-break: break-word; }
-  .msg .time { font-size: 10px; color: #6d6d75; margin-top: 3px; text-align: right; }
+  #messages { flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+  .row { display: flex; gap: 8px; align-items: flex-start; }
+  .row.mine { flex-direction: row-reverse; }
+  .avatar {
+    width: 28px; height: 28px; border-radius: 50%; flex: none;
+    display: flex; align-items: center; justify-content: center; font-size: 15px;
+    background: #26262c; user-select: none;
+  }
+  .msg { max-width: calc(88% - 36px); min-width: 0; }
+  .meta { display: flex; align-items: baseline; gap: 6px; margin-bottom: 2px; flex-wrap: wrap; }
+  .row.mine .meta { justify-content: flex-end; }
+  .meta .nm { font-weight: 600; color: #8fb8f9; font-size: 12px; }
+  .meta .title { color: #8b8b93; font-size: 11px; }
+  .meta .time { color: #6d6d75; font-size: 10px; margin-left: auto; }
+  .bubble {
+    padding: 7px 10px; border-radius: 10px; background: #1b1b20;
+    border: 1px solid #26262c; white-space: pre-wrap; word-break: break-word;
+  }
+  .row.mine .bubble { background: #1d2b22; border-color: #2b4231; }
+  .bubble.k-plan { border-left: 3px solid #4f83cc; }
+  .bubble.k-done { border-left: 3px solid #3fb96f; }
+  .bubble.k-blocked { border-left: 3px solid #c24040; }
+  .tagline { font-size: 10px; color: #6d6d75; margin-top: 3px; }
+  .notice {
+    align-self: center; max-width: 92%; color: #8b8b93; font-size: 12px;
+    background: #16161a; border: 1px dashed #2b2b31; border-radius: 8px;
+    padding: 4px 10px; text-align: center;
+  }
   .composer { display: flex; gap: 8px; padding: 10px 14px; border-top: 1px solid #232328; flex: none; }
-  input#name { width: 82px; background: #17171b; border: 1px solid #2b2b31; color: #e6e6e9; border-radius: 8px; padding: 8px 10px; }
   input#text { flex: 1; background: #17171b; border: 1px solid #2b2b31; color: #e6e6e9; border-radius: 8px; padding: 8px 10px; }
   button { background: #2f6f3f; color: #fff; border: 0; border-radius: 8px; padding: 8px 14px; cursor: pointer; font-weight: 600; }
   button:disabled { opacity: .5; }
   #empty { color: #8b8b93; text-align: center; margin-top: 40px; line-height: 1.8; }
-  #empty code { background: #1b1b20; padding: 2px 6px; border-radius: 6px; }
+
+  /* ── Settings overlay ── */
+  #settings {
+    position: absolute; inset: 0; background: #101114; display: none;
+    flex-direction: column; z-index: 10; padding: 12px 14px; gap: 10px; overflow-y: auto;
+  }
+  #settings.open { display: flex; }
+  #settings h3 { margin: 0; font-size: 13px; display: flex; align-items: center; }
+  #settings h3 button { margin-left: auto; background: #26262c; padding: 4px 10px; font-weight: 400; }
+  .set-sec { border: 1px solid #232328; border-radius: 10px; padding: 10px; }
+  .set-sec .lbl { font-size: 11px; color: #8b8b93; margin-bottom: 6px; }
+  .set-sec input[type=text], .set-sec input[type=number] {
+    width: 100%; background: #17171b; border: 1px solid #2b2b31; color: #e6e6e9;
+    border-radius: 8px; padding: 7px 9px; font-size: 13px;
+  }
+  .mem-row { display: flex; gap: 6px; margin-bottom: 6px; align-items: center; }
+  .mem-row input.av { width: 38px; text-align: center; flex: none; }
+  .mem-row input.nm { flex: 1; }
+  .mem-row input.ti { flex: 1.2; }
+  .mem-row .rm {
+    background: none; border: 0; color: #c24040; font-size: 15px; cursor: pointer;
+    padding: 2px 6px; flex: none; font-weight: 700;
+  }
+  .ghost { background: #26262c; font-weight: 400; }
+  .hint { font-size: 11px; color: #6d6d75; margin-top: 6px; }
 </style>
 </head>
 <body>
-<header><span class="dot off" id="live"></span> Team Chat <small id="count"></small></header>
+<header>
+  <span class="dot off" id="live"></span> Team Chat <small id="count"></small>
+  <button id="kebab" title="Cài đặt">⋮</button>
+</header>
 <div id="rooms"></div>
 <div id="messages"><div id="empty">Chưa có tin nhắn trong khung này.</div></div>
 <div class="composer">
-  <input id="name" placeholder="tên bạn" />
-  <input id="text" placeholder="Nhắn…" autocomplete="off" />
+  <input id="text" placeholder="Nhắn với room đang mở…" autocomplete="off" />
   <button id="send" type="button">Gửi</button>
 </div>
+
+<div id="settings">
+  <h3>Cài đặt đội hình <button type="button" id="closeSettings">Đóng</button></h3>
+  <div class="set-sec">
+    <div class="lbl">Tên CEO (người gửi từ panel)</div>
+    <input type="text" id="ceoName" maxlength="24" placeholder="CEO" />
+  </div>
+  <div class="set-sec">
+    <div class="lbl">Đội hình — avatar · tên thật · chức vụ</div>
+    <div id="members"></div>
+    <button type="button" class="ghost" id="addMember">+ Thêm worker</button>
+  </div>
+  <div class="set-sec">
+    <div class="lbl">Vận hành</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span style="font-size:12px;color:#b9b9c0;flex:none">Worker chạy song song tối đa</span>
+      <input type="number" id="concurrency" min="1" max="8" style="width:64px" />
+    </div>
+    <div class="hint">Captain đọc giới hạn này khi dispatch (file roster.json). 1–8.</div>
+  </div>
+  <button type="button" id="saveSettings">Lưu cài đặt</button>
+</div>
+
 <script>
   // Shell Orca inject window.orca — KHÔNG postMessage trực tiếp; shell chặn
-  // submit (CSP form-action none) nên composer dùng button + keydown Enter.
+  // submit (CSP form-action none) nên mọi nút là type=button + keydown Enter.
   function call(action, params) {
     return Promise.race([
       window.orca.host.call(action, params || {}),
@@ -73,27 +147,48 @@
   }
 
   var messages = document.getElementById('messages'), empty = document.getElementById('empty')
-  var nameInput = document.getElementById('name'), textInput = document.getElementById('text')
-  var sendBtn = document.getElementById('send'), countEl = document.getElementById('count')
-  var roomsEl = document.getElementById('rooms')
+  var textInput = document.getElementById('text'), sendBtn = document.getElementById('send')
+  var countEl = document.getElementById('count'), roomsEl = document.getElementById('rooms')
+  var settingsEl = document.getElementById('settings')
 
-  // ── Room state: 1 feature = 1 khung chat ──
-  var activeRoom = 'general'          // 'general' | '<repo>-<feature>'
+  var DEFAULT_MEMBERS = [
+    { av: '🧭', nm: 'captain', ti: 'Điều phối (PM)' },
+    { av: '🔨', nm: 'smith', ti: 'BE Developer' },
+    { av: '🧵', nm: 'weaver', ti: 'FE Developer' },
+    { av: '🔥', nm: 'forge', ti: 'Infra / DevOps' },
+    { av: '🧱', nm: 'mason', ti: 'QA / Tests' },
+    { av: '🔭', nm: 'scout', ti: 'Research' },
+    { av: '🛡️', nm: 'warden', ti: 'Reviewer' }
+  ]
+  var ROLE_TITLE = { owner: 'CEO', captain: 'Điều phối (PM)', worker: 'Worker', system: 'Hệ thống' }
+  var members = DEFAULT_MEMBERS.slice()
+  var ceoName = 'CEO'
+  var concurrency = 3
+
+  function memberOf(m) {
+    var f = String(m.from || '').toLowerCase()
+    var hit = members.find(function (x) { return x.nm && x.nm.toLowerCase() === f })
+    if (hit) return hit
+    if (m.role === 'owner') return { av: '👑', nm: m.from, ti: 'CEO' }
+    if (m.role === 'captain') return { av: '🧭', nm: m.from, ti: 'Điều phối (PM)' }
+    if (m.role === 'system') return { av: '⚙️', nm: m.from, ti: '' }
+    return { av: (f[0] || '?').toUpperCase(), nm: m.from, ti: ROLE_TITLE[m.role] || 'Worker' }
+  }
+  function kindOf(text) {
+    if (/^\[PLAN/i.test(text)) return 'k-plan'
+    if (/^DONE/i.test(text)) return 'k-done'
+    if (/^BLOCKED/i.test(text)) return 'k-blocked'
+    return ''
+  }
+
+  var activeRoom = 'general'
   var roomList = [{ id: 'general', status: 'open', msgs: 0 }]
-  var readCount = {}                  // room → số tin đã xem (badge = total - seen)
+  var readCount = {}
   var lastMsgs = []
 
   function fmt(ts) {
     var d = new Date(ts)
     return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2)
-  }
-
-  function parseTail(lines) {
-    var out = []
-    lines.forEach(function (l) {
-      try { out.push(JSON.parse(l)) } catch (e) {}
-    })
-    return out
   }
 
   function renderRooms() {
@@ -115,8 +210,7 @@
       b.addEventListener('click', function () {
         activeRoom = r.id
         readCount[r.id] = roomList.find(function (x) { return x.id === r.id }).msgs || 0
-        render(lastMsgs)
-        renderRooms()
+        render(lastMsgs); renderRooms()
         call('storage.set', { key: 'team.chat.ui.activeRoom', value: activeRoom }).catch(function () {})
       })
       roomsEl.appendChild(b)
@@ -125,21 +219,34 @@
 
   function render(all) {
     var lines = all.filter(function (m) { return (m.channel || 'general') === activeRoom })
-    var headerRoom = activeRoom === 'general' ? 'Team' : '#' + activeRoom
-    empty.textContent = 'Chưa có tin nhắn trong ' + headerRoom + '.'
+    empty.textContent = 'Chưa có tin nhắn trong ' + (activeRoom === 'general' ? 'Team' : '#' + activeRoom) + '.'
     empty.style.display = lines.length ? 'none' : 'block'
     messages.innerHTML = ''
     lines.forEach(function (m) {
-      var el = document.createElement('div')
-      el.className = 'msg' + (m.role === 'owner' ? ' mine' : '')
-      var who = document.createElement('div'); who.className = 'who'; who.textContent = m.from
-      var role = document.createElement('span'); role.className = 'role'
-      role.textContent = ' · ' + m.role + (m.channel && m.channel !== 'general' ? ' · #' + m.channel : '')
-      who.appendChild(role)
-      var body = document.createElement('div'); body.className = 'body'; body.textContent = m.text
-      var time = document.createElement('div'); time.className = 'time'; time.textContent = fmt(m.at)
-      el.appendChild(who); el.appendChild(body); el.appendChild(time)
-      messages.appendChild(el)
+      var text = String(m.text || '')
+      // Thông báo hệ thống / ACK: hiện gọn giữa, không avatar
+      if (m.role === 'system' || text.indexOf('📡') === 0) {
+        var n = document.createElement('div'); n.className = 'notice'
+        n.textContent = text; messages.appendChild(n); return
+      }
+      var mem = memberOf(m)
+      var row = document.createElement('div')
+      row.className = 'row' + (m.role === 'owner' ? ' mine' : '')
+      var av = document.createElement('div'); av.className = 'avatar'; av.textContent = mem.av
+      av.title = mem.nm + (mem.ti ? ' · ' + mem.ti : '')
+      var msg = document.createElement('div'); msg.className = 'msg'
+      var meta = document.createElement('div'); meta.className = 'meta'
+      var nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = m.from
+      meta.appendChild(nm)
+      if (mem.ti && mem.ti !== m.from) { var ti = document.createElement('span'); ti.className = 'title'; ti.textContent = mem.ti; meta.appendChild(ti) }
+      if (m.channel && m.channel !== 'general') { var ch = document.createElement('span'); ch.className = 'title'; ch.textContent = '#' + m.channel; meta.appendChild(ch) }
+      var time = document.createElement('span'); time.className = 'time'; time.textContent = fmt(m.at)
+      meta.appendChild(time)
+      var bubble = document.createElement('div'); bubble.className = 'bubble ' + kindOf(text)
+      bubble.textContent = text
+      msg.appendChild(meta); msg.appendChild(bubble)
+      row.appendChild(av); row.appendChild(msg)
+      messages.appendChild(row)
     })
     messages.scrollTop = messages.scrollHeight
     countEl.textContent = lines.length + ' tin'
@@ -147,15 +254,15 @@
 
   function poll() {
     call('storage.get', { key: 'team.chat.tail' }).then(function (r) {
-      var all = parseTail((r && r.value) || [])
+      var all = []
+      ;((r && r.value) || []).forEach(function (l) { try { all.push(JSON.parse(l)) } catch (e) {} })
       lastMsgs = all
       document.getElementById('live').classList.remove('off')
       render(all)
-      // room list: ưu tiên storage do poller publish
       call('storage.get', { key: 'team.chat.rooms' }).then(function (rr) {
         var list = (rr && rr.value) || null
         if (Array.isArray(list) && list.length) roomList = list
-        else { // fallback: tự suy từ tail
+        else {
           var seen = { general: true }
           all.forEach(function (m) { seen[m.channel || 'general'] = true })
           roomList = Object.keys(seen).map(function (id) { return { id: id, status: 'open', msgs: 0 } })
@@ -171,12 +278,12 @@
     })
   }
 
-  // Single-slot serializer: tin kế chỉ ghi khi poller pick tin trước (≤2.5s).
+  // ── Gửi: tên = CEO name từ settings; room = tab đang mở ──
   var sendChain = Promise.resolve()
   function send() {
     var text = textInput.value.trim()
     if (!text) return
-    var from = (nameInput.value || 'owner').trim().slice(0, 40)
+    var from = (ceoName || 'CEO').trim().slice(0, 40)
     var room = activeRoom === 'general' ? 'general' : activeRoom
     textInput.value = ''
     sendBtn.disabled = true
@@ -196,17 +303,68 @@
     if (e.key === 'Enter') { e.preventDefault(); send() }
   })
 
-  nameInput.addEventListener('change', function () {
-    call('storage.set', { key: 'team.chat.name', value: nameInput.value.trim().slice(0, 40) }).catch(function () {})
+  // ── Settings ──
+  var membersEl = document.getElementById('members')
+  function memberRow(mem) {
+    var row = document.createElement('div'); row.className = 'mem-row'
+    var av = document.createElement('input'); av.className = 'av'; av.type = 'text'; av.value = mem.av || ''; av.maxLength = 3
+    var nm = document.createElement('input'); nm.className = 'nm'; nm.type = 'text'; nm.value = mem.nm || ''; nm.maxLength = 24; nm.placeholder = 'tên'
+    var ti = document.createElement('input'); ti.className = 'ti'; ti.type = 'text'; ti.value = mem.ti || ''; ti.maxLength = 30; ti.placeholder = 'chức vụ'
+    var rm = document.createElement('button'); rm.className = 'rm'; rm.type = 'button'; rm.textContent = '✕'
+    rm.addEventListener('click', function () { row.remove() })
+    row.appendChild(av); row.appendChild(nm); row.appendChild(ti); row.appendChild(rm)
+    return row
+  }
+  function renderMembers() {
+    membersEl.innerHTML = ''
+    members.forEach(function (m) { membersEl.appendChild(memberRow(m)) })
+  }
+  document.getElementById('addMember').addEventListener('click', function () {
+    membersEl.appendChild(memberRow({ av: '👤', nm: '', ti: 'Worker' }))
   })
-  call('storage.get', { key: 'team.chat.name' }).then(function (r) {
-    if (r && typeof r.value === 'string' && r.value) nameInput.value = r.value
-  }).catch(function () {})
-  // khôi phục room đang mở lần trước
-  call('storage.get', { key: 'team.chat.ui.activeRoom' }).then(function (r) {
-    if (r && typeof r.value === 'string' && r.value) activeRoom = r.value
-  }).catch(function () {})
-  poll()
+  document.getElementById('kebab').addEventListener('click', function () {
+    settingsEl.classList.add('open')
+    document.getElementById('ceoName').value = ceoName
+    document.getElementById('concurrency').value = concurrency
+    renderMembers()
+  })
+  document.getElementById('closeSettings').addEventListener('click', function () {
+    settingsEl.classList.remove('open')
+  })
+  document.getElementById('saveSettings').addEventListener('click', function () {
+    ceoName = document.getElementById('ceoName').value.trim() || 'CEO'
+    concurrency = Math.min(8, Math.max(1, parseInt(document.getElementById('concurrency').value, 10) || 3))
+    members = [...membersEl.querySelectorAll('.mem-row')]
+      .map(function (row) {
+        return {
+          av: row.querySelector('.av').value.trim() || '👤',
+          nm: row.querySelector('.nm').value.trim(),
+          ti: row.querySelector('.ti').value.trim()
+        }
+      })
+      .filter(function (m) { return m.nm })
+    Promise.all([
+      call('storage.set', { key: 'team.chat.name', value: ceoName }),
+      call('storage.set', { key: 'team.chat.roster', value: members }),
+      call('storage.set', { key: 'team.chat.settings', value: { concurrency: concurrency } })
+    ]).then(function () {
+      settingsEl.classList.remove('open')
+      render(lastMsgs)
+    }).catch(function () {})
+  })
+
+  // ── Khởi động: nạp roster/settings đã lưu ──
+  Promise.all([
+    call('storage.get', { key: 'team.chat.name' }),
+    call('storage.get', { key: 'team.chat.roster' }),
+    call('storage.get', { key: 'team.chat.settings' }),
+    call('storage.get', { key: 'team.chat.ui.activeRoom' })
+  ]).then(function (rs) {
+    if (rs[0] && typeof rs[0].value === 'string' && rs[0].value) ceoName = rs[0].value
+    if (Array.isArray(rs[1] && rs[1].value) && rs[1].value.length) members = rs[1].value
+    if (rs[2] && rs[2].value && rs[2].value.concurrency) concurrency = rs[2].value.concurrency
+    if (rs[3] && typeof rs[3].value === 'string' && rs[3].value) activeRoom = rs[3].value
+  }).catch(function () {}).then(function () { poll() })
 </script>
 </body>
 </html>
