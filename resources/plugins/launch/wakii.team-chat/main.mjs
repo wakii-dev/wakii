@@ -1493,6 +1493,45 @@ export default function activate(orca) {
       try { orca.log('wakii.team-chat mindmaps LỖI (best-effort): ' + ((e && e.message) || e)) } catch {}
     }
   }
+
+  // WATCHDOG (CEO 1/11): worker pane chết/im lặng không còn âm thầm — poller
+  // so REG với terminal list + lastOutputAt, post tin ⚠️ vào room (mỗi sự kiện
+  // 1 lần) và dọn REG chết. Best-effort: lỗi không được giết poller.
+  const wdNotified = new Map() // paneHandle -> {kind, at}
+  const watchWorkers = async () => {
+    try {
+      let reg = {}
+      try { reg = JSON.parse(readFileSync(join(chatDir, '.workers.json'), 'utf8')) } catch { return }
+      const listOut = await new Promise((res) => execFileCb(orcaBin, ['terminal', 'list', '--json'], { timeout: 15000 }, (e, o) => res(e ? '' : o)))
+      if (!listOut) return
+      const terms = JSON.parse(listOut).result.terminals
+      const byHandle = new Map(terms.map((t) => [t.handle, t]))
+      let dirty = false
+      for (const [pane, e] of Object.entries(reg)) {
+        if (!pane.startsWith('term_') || !e || typeof e !== 'object') continue
+        const room = e.room || ''
+        const t = byHandle.get(pane)
+        const notify = (kind) => {
+          const key = pane + ':' + kind
+          const last = wdNotified.get(key)
+          if (last && Date.now() - last < 30 * 60 * 1000) return
+          wdNotified.set(key, Date.now())
+          appendLine({ from: 'system', role: 'system', channel: room,
+            text: '⚠️ WATCHDOG: worker ' + (e.name || pane.slice(0, 14)) + ' ' + kind + ' (room #' + room + '). Captain: verify worktree worker này ngay — việc có thể đã xong chưa kịp báo DONE; dở thì respawn --background.' }).catch(() => {})
+        }
+        if (!t) {
+          notify('pane đã CHẾT')
+          delete reg[pane]
+          dirty = true
+          continue
+        }
+        const staleMs = Date.now() - (t.lastOutputAt || 0)
+        if (staleMs > 15 * 60 * 1000 && e.name && e.name !== 'captain') notify('im lặng >15 phút')
+      }
+      if (dirty) writeFileSync(join(chatDir, '.workers.json'), JSON.stringify(reg, null, 1))
+    } catch { /* watchdog best-effort */ }
+  }
+
   const publishTerminals = async () => {
     if (Date.now() - termsCache.at < 10000) return
     termsCache.at = Date.now()
@@ -1748,6 +1787,7 @@ export default function activate(orca) {
       }
       void publishTerminals()
       void publishMindmaps().catch(() => {})
+      void watchWorkers().catch(() => {})
       // Captain status cho settings panel: theo TỪNG room (room = worktree + captain trực).
       // Room-set tự tính mỗi tick (registry + kênh trong tail) — không phụ thuộc
       // biến chỉ cập nhật khi tail đổi (bug settings 🔴 dù captain online).

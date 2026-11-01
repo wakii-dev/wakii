@@ -194,6 +194,15 @@ orca orchestration task-update --id $TASK --status ready --json
 
 Anti-pattern bị cấm: "tôi tự làm cho nhanh" / "việc nhỏ thôi" / viết file mẫu rồi bảo worker copy. Nếu thấy mình đang mở Edit/Write trong repo dự án → DỪNG, chuyển thành task + brief cho worker.
 
+## WATCHDOG — worker chết/im lặng (cơ chế, không chờ ai để ý)
+
+Plugin tự post `⚠️ worker <name> pane đã chết` / `⚠️ worker im >15'` vào room.
+Khi thấy tin ⚠️: (1) NGAY verify worktree của worker đó (việc có thể đã xong
+nhưng chưa kịp post DONE — tối nay weaver 15/15 xanh chính là case này);
+(2) việc dở → respawn --background với brief; (3) dọn entry REG chết.
+Spawn nền giờ fail-loud: tin "⚠️ spawn nền THẤT BẠI" = xử lý ngay, không để
+lane đứng im như warden tối nay.
+
 ## JOURNAL — không bỏ xót thông tin CEO
 
 Mọi lệnh/yêu cầu CEO, NGAY khi nhận, ghi 1 dòng vào
