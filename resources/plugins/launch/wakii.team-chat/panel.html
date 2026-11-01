@@ -25,6 +25,18 @@
     line-height: 1; padding: 2px 6px; border-radius: 6px; flex: none; font-weight: 700;
   }
   #kebab:hover { background: #26262c; }
+  #newRoomBtn {
+    background: none; border: 1px dashed #2b4231; color: #6fcf97; cursor: pointer;
+    font-size: 14px; line-height: 1; padding: 1px 7px; border-radius: 6px; flex: none; font-weight: 700;
+  }
+  #newRoomBtn:hover { background: #1d2b22; }
+  #newRoomForm {
+    position: absolute; top: 40px; right: 10px; width: 250px; z-index: 20;
+    background: #101114; border: 1px solid #2b4231; border-radius: 10px; padding: 10px;
+    display: none; box-shadow: 0 8px 24px rgba(0,0,0,.5);
+  }
+  #newRoomForm.open { display: block; }
+  #newRoomForm input { width: 100%; background: #17171b; border: 1px solid #2b2b31; color: #e6e6e9; border-radius: 8px; padding: 7px 9px; font-size: 12px; margin-bottom: 6px; }
   #rooms {
     display: flex; gap: 4px; padding: 6px 10px; border-bottom: 1px solid #232328;
     overflow-x: auto; flex: none; scrollbar-width: thin;
@@ -189,6 +201,7 @@
 <body>
 <header>
   <span class="dot off" id="live"></span> Team Chat <small id="count"></small>
+  <button id="newRoomBtn" title="Tạo room mới (feature mới)">＋</button>
   <button id="kebab" title="Cài đặt">⋮</button>
 </header>
 <div id="rooms"></div>
@@ -198,6 +211,13 @@
   <button id="send" type="button">Gửi</button>
 </div>
 
+<div id="newRoomForm">
+  <div class="flabel">🆕 Room mới — 1 feature = 1 khung chat</div>
+  <input type="text" id="nrRepo" maxlength="24" placeholder="repo (vd vocabulary)" />
+  <input type="text" id="nrName" maxlength="32" placeholder="tên feature (vd notifications)" />
+  <div class="hint" id="nrHint" style="margin:2px 0 6px">room sẽ là #<b id="nrPreview">repo-tên</b></div>
+  <button type="button" id="nrCreate" style="width:100%">Tạo room</button>
+</div>
 <div id="settings">
   <h3>Cài đặt đội hình <button type="button" id="closeSettings">Đóng</button></h3>
   <details class="set-sec" open>
@@ -616,6 +636,47 @@
       box.appendChild(row)
     })
   }
+  // ── Tạo room mới (nút ＋ cạnh ⋮) ──
+  var nrForm = document.getElementById('newRoomForm')
+  document.getElementById('newRoomBtn').addEventListener('click', function () {
+    nrForm.classList.toggle('open')
+    if (nrForm.classList.contains('open')) document.getElementById('nrName').focus()
+  })
+  function nrId() {
+    var r = (document.getElementById('nrRepo').value || 'team').trim().toLowerCase().replace(/[^a-z0-9-]/g, '')
+    var n = (document.getElementById('nrName').value || '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '')
+    return r + '-' + n
+  }
+  ;['nrRepo', 'nrName'].forEach(function (id) {
+    document.getElementById(id).addEventListener('input', function () {
+      var prev = nrId()
+      document.getElementById('nrPreview').textContent = prev
+      var ok = /^[a-z0-9][a-z0-9-]{1,40}$/.test(prev)
+      document.getElementById('nrCreate').disabled = !ok
+      document.getElementById('nrHint').style.color = ok ? '' : '#e07a7a'
+    })
+    document.getElementById(id).addEventListener('keydown', function (e) { if (e.key === 'Enter') document.getElementById('nrCreate').click() })
+  })
+  document.getElementById('nrCreate').addEventListener('click', function () {
+    var id = nrId()
+    if (roomList.some(function (x) { return x.id === id })) {
+      document.getElementById('nrHint').textContent = 'room #' + id + ' đã tồn tại'; document.getElementById('nrHint').style.color = '#e07a7a'; return
+    }
+    var b = document.getElementById('nrCreate')
+    b.disabled = true; b.textContent = '→ đang tạo…'
+    call('storage.set', { key: 'team.chat.roomCmd', value: {
+      at: Date.now(), action: 'create', room: id.split('-').slice(1).join('-') ? id : id, repo: (document.getElementById('nrRepo').value || 'team').trim().toLowerCase()
+    } }).catch(function () {})
+    setTimeout(function () {
+      nrForm.classList.remove('open')
+      b.disabled = false; b.textContent = 'Tạo room'
+      document.getElementById('nrRepo').value = ''; document.getElementById('nrName').value = ''
+      document.getElementById('nrPreview').textContent = 'repo-tên'
+      activeRoom = id // tự chuyển sang khung mới khi hiện
+      readCount[id] = 0
+    }, 3500)
+  })
+
   // Tooltip auto: mọi button có title → data-tip (chạy lại khi DOM đổi — renderRoomRows tạo nút mới)
   var tipObserver = new MutationObserver(function () {
     document.querySelectorAll('button[title]:not([data-tip])').forEach(function (b) {

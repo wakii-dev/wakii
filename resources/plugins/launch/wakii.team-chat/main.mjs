@@ -1590,7 +1590,17 @@ export default function activate(orca) {
           const roomsPath = join(chatDir, 'rooms.json')
           let rooms = {}
           try { rooms = JSON.parse(await readFile(roomsPath, 'utf8')) } catch { /* chưa có */ }
-          if (rcReq.action === 'update') {
+          if (rcReq.action === 'create') {
+            const room = String(rcReq.room || '').toLowerCase()
+            const repo = String(rcReq.repo || 'team').toLowerCase()
+            if (!/^[a-z0-9][a-z0-9-]{1,40}$/.test(room)) throw new Error('tên room không hợp lệ')
+            if (rooms[room] && rooms[room].status !== 'deleted') throw new Error('room #' + room + ' đã tồn tại')
+            rooms[room] = { feature: room.includes('-') ? room.split('-').slice(1).join('-') : room, repo, run: '', status: 'open', createdAt: Date.now() }
+            await writeFile(roomsPath, JSON.stringify(rooms, null, 1))
+            lastTailLen = -1 // ép publish tabs mới
+            appendLine({ from: 'captain', role: 'captain', channel: room,
+              text: '🏁 Room #' + room + ' mở — CEO tạo từ panel. Đặt metadata trong ⋮ → Room; thêm orchestration: team-orch feature-open --repo ' + repo + ' --name ' + (room.includes('-') ? room.split('-').slice(1).join('-') : room) }).catch(() => {})
+          } else if (rcReq.action === 'update') {
             // Metadata room do CEO định nghĩa trong settings: name/description/
             // worktree/ticket/files/artifacts/plan/mindmap…
             const meta = (rcReq.meta && typeof rcReq.meta === 'object') ? rcReq.meta : {}
