@@ -1470,6 +1470,7 @@ export default function activate(orca) {
       if (ccReq && typeof ccReq === 'object' && ccReq.at && ccReq.at !== lastCaptainCmdAt && ccReq.action === 'wake') {
         lastCaptainCmdAt = ccReq.at
         const room = ccReq.room || 'general'
+        orca.log('[wake] nhận lệnh wake room=' + room)
         void (async () => {
           try {
             // Worktree của room: (1) registration worker của room → (2) repo trong
@@ -1489,12 +1490,14 @@ export default function activate(orca) {
                 wt = wts.find((p) => repo && p.endsWith('/' + repo)) || wts.find((p) => repo && p.includes(repo)) || wts[0] || ''
               } catch { /* list fail → fallback dưới */ }
             }
+            orca.log('[wake] worktree=' + (wt || '(trống)'))
             if (!wt) {
               await orca.host.call('notifications.show', { title: 'Wakii Team — wake Captain thất bại', body: 'Không tìm thấy worktree nào cho room #' + room }).catch(() => {})
               return
             }
             const spawnBin = join(homeDir(), '.claude', 'bin', 'team-captain-spawn')
-            await new Promise((res) => execFileCb('bash', [spawnBin, '--repo', 'path:' + wt], { timeout: 120000 }, () => res()))
+            orca.log('[wake] chạy ' + spawnBin + ' ORCA_BIN=' + (process.env.ORCA_BIN || '(không có)'))
+            await new Promise((res) => execFileCb('bash', [spawnBin, '--repo', 'path:' + wt], { timeout: 120000 }, (e, so, se) => { orca.log('[wake] spawn xong err=' + (e && e.message || 'null') + ' out=' + String(so).slice(0, 120)); res() }))
             await orca.host.call('notifications.show', {
               title: 'Wakii Team — Captain đã online',
               body: 'Terminal Captain gắn worktree ' + wt + ' (room #' + room + '). Kéo tab vào floating workspace nếu muốn — router theo handle.'
