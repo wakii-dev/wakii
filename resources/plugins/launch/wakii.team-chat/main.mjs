@@ -1611,7 +1611,7 @@ export default function activate(orca) {
             if (m.channel) seen.set(m.channel, (seen.get(m.channel) || 0) + 1)
           } catch { /* skip dòng hỏng */ }
         }
-        const list = [...new Set(['general', ...Object.keys(rooms), ...seen.keys()])]
+        const list = [...new Set([...Object.keys(rooms), ...seen.keys()])]
           .map((c) => ({
             id: c,
             status: rooms[c] ? rooms[c].status : (c === 'general' ? 'open' : 'open'),
