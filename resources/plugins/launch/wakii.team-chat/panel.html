@@ -423,8 +423,21 @@
       var closeB = document.createElement('button'); closeB.type = 'button'; closeB.textContent = r.status === 'closed' ? 'mở lại' : '🔒'
       closeB.addEventListener('click', function () { sendRoomCmd(r.status === 'closed' ? 'open' : 'close', r.id, closeB) })
       var delB = document.createElement('button'); delB.type = 'button'; delB.textContent = '🗑'
+      delB.title = 'Xoá room + toàn bộ tin (không hoàn tác)'
+      // Sandbox chặn window.confirm — xác nhận 2 bước ngay trên nút.
+      var armed = false, armTimer = null
       delB.addEventListener('click', function () {
-        if (window.confirm('Xoá #' + r.id + ' và toàn bộ tin của room này? Không hoàn tác.')) sendRoomCmd('delete', r.id, delB)
+        if (!armed) {
+          armed = true
+          delB.textContent = 'Chắc chắn?'
+          delB.style.background = '#7a2e2e'
+          armTimer = setTimeout(function () {
+            armed = false; delB.textContent = '🗑'; delB.style.background = ''
+          }, 3000)
+          return
+        }
+        clearTimeout(armTimer)
+        sendRoomCmd('delete', r.id, delB)
       })
       row.appendChild(rn); row.appendChild(st); row.appendChild(closeB); row.appendChild(delB)
       box.appendChild(row)
