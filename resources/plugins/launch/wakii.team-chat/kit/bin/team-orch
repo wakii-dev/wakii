@@ -178,8 +178,6 @@ PY
       fi
     fi
     HAS_JSON=0; for a in ${PASS[@]+"${PASS[@]}"}; do [ "$a" = "--json" ] && HAS_JSON=1; done
-    JSON_ARGS=${PASS[@]+"${PASS[@]}"}
-    [ "$HAS_JSON" -eq 1 ] || JSON_ARGS="$JSON_ARGS --json"
     # Snapshot worktrees TRƯỚC spawn — fallback vững khi receipt không lộ path
     # (selector 'new-top-level': dig() miss → marker/hooks ghi nhầm chỗ, worker
     # chạy trần trụi — sự cố thật 1/11 docs-writer).
@@ -193,7 +191,74 @@ import json,sys
 try: print('\n'.join(w.get('path','') for w in json.load(sys.stdin)['result']['worktrees']))
 except Exception: pass
 " 2>/dev/null)
-    OUT=$("$ORCA" orchestration "$CMD" $JSON_ARGS 2>&1) || { echo "$OUT"; exit 1; }
+    # GRID-3 (CEO ruling): room có captain pane sống → worker là pane SPLIT
+    # trong tab captain, rồi trao pane cho orchestration qua --terminal —
+    # supervision (worker-read/stop/release) giữ nguyên. Split fail → fallback
+    # tab riêng như cũ, không block việc thuê worker.
+    SPLIT_PANE=""
+    HAS_TERM_FLAG=0; for a in ${PASS[@]+"${PASS[@]}"}; do [ "$a" = "--terminal" ] && HAS_TERM_FLAG=1; done
+    if [ "$HAS_TERM_FLAG" -eq 0 ] && [ -n "${MY_ROOM:-}" ] && [ "$MY_ROOM" != "general" ]; then
+      CAP_PANE=$(python3 - "$REG" "$MY_ROOM" "$ORCA" <<'PY' 2>/dev/null
+import json, sys, subprocess
+try: reg = json.load(open(sys.argv[1], encoding="utf-8"))
+except Exception: sys.exit(0)
+room = sys.argv[2]
+cands = [p for p, e in reg.items()
+         if isinstance(e, dict) and e.get("name") == "captain" and e.get("room") == room]
+if not cands: sys.exit(0)
+try:
+    out = subprocess.run([sys.argv[3], "terminal", "list", "--json"],
+                         capture_output=True, text=True, timeout=15).stdout
+    live = {t.get("handle") for t in json.loads(out).get("result", {}).get("terminals", [])}
+    for p in cands:
+        if p in live: print(p); break
+except Exception:
+    print(cands[-1])
+PY
+)
+      if [ -n "$CAP_PANE" ]; then
+        NEW_PANE=$("$ORCA" terminal split --terminal "$CAP_PANE" --direction vertical \
+                     --command "claude --dangerously-skip-permissions" --json 2>/dev/null \
+                   | python3 -c 'import json,sys; print(json.load(sys.stdin)["result"]["split"]["handle"])' 2>/dev/null)
+        if [ -n "$NEW_PANE" ]; then
+          sleep 8  # claude phải boot xong trước khi orchestration gõ task vào pane
+          SPLIT_PANE="$NEW_PANE"
+          echo "team-orch: grid-3 — worker là pane split trong tab captain ($NEW_PANE)"
+        else
+          echo "team-orch: ⚠ split từ captain fail — worker mở tab riêng như cũ" >&2
+        fi
+      fi
+    fi
+    if [ -n "$SPLIT_PANE" ]; then
+      # --terminal là chế độ reuse: creation/setup options (--name, --base-branch,
+      # --setup) bị orchestration từ chối (invalid_argument) — lọc khỏi argv.
+      FILTERED=()
+      skip=0
+      for a in ${PASS[@]+"${PASS[@]}"}; do
+        if [ "$skip" -eq 1 ]; then skip=0; continue; fi
+        case "$a" in
+          --name|--base-branch|--setup) skip=1; continue ;;
+        esac
+        FILTERED+=("$a")
+      done
+      ARGS=(${FILTERED[@]+"${FILTERED[@]}"})
+      [ "$HAS_JSON" -eq 1 ] || ARGS+=(--json)
+      ARGS+=(--terminal "$SPLIT_PANE")
+    else
+      ARGS=(${PASS[@]+"${PASS[@]}"})
+      [ "$HAS_JSON" -eq 1 ] || ARGS+=(--json)
+    fi
+    OUT=$("$ORCA" orchestration "$CMD" "${ARGS[@]}" 2>&1) || {
+      if [ -n "$SPLIT_PANE" ]; then
+        echo "team-orch: ⚠ orchestration từ chối pane split — đóng pane, fallback tab riêng" >&2
+        "$ORCA" terminal close --terminal "$SPLIT_PANE" >/dev/null 2>&1
+        ARGS=(${PASS[@]+"${PASS[@]}"})
+        [ "$HAS_JSON" -eq 1 ] || ARGS+=(--json)
+        OUT=$("$ORCA" orchestration "$CMD" "${ARGS[@]}" 2>&1) || { echo "$OUT"; exit 1; }
+      else
+        echo "$OUT"; exit 1
+      fi
+    }
     echo "$OUT"
     WT_PATH="${WT#explicit:}"; [ -n "$WT_PATH" ] || WT_PATH="$(pwd)"
     # Bóc worktree path thật: (1) từ receipt, (2) snapshot-diff worktree list
@@ -229,7 +294,7 @@ except Exception: pass
 " 2>/dev/null) 2>/dev/null | grep '^> ' | head -1 | cut -c3-)
     [ -n "$PANE" ] || PANE="${TEAM_WORKER_PANE:-}"
     if [ -n "$PANE" ]; then
-      reg_put "$PANE" "${NAME%%-*}" "$WT_PATH" "$TASK" "$RUN" "$REPO" "${REPO}-${NAME%%-*}"
+      reg_put "$PANE" "${NAME%%-*}" "$WT_PATH" "$TASK" "$RUN" "$REPO" "${MY_ROOM:-${REPO}-${NAME%%-*}}"
       echo "team-orch: đăng ký $PANE → ${NAME%%-*} (danh tính khóa theo pane)"
     else
       echo "team-orch: ⚠ chưa bóc được pane từ receipt — đăng ký tay: team-orch register --pane <handle> --name ${NAME%%-*} --worktree $WT_PATH"
