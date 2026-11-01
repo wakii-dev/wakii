@@ -242,7 +242,8 @@
 
 <div id="newRoomForm">
   <div class="flabel">🆕 Room mới — 1 feature = 1 khung chat</div>
-  <input type="text" id="nrRepo" maxlength="24" placeholder="repo (bỏ trống = repo đang mở)" />
+  <input list="projDatalist" type="text" id="nrRepo" maxlength="24" placeholder="repo (bỏ trống = repo đang mở)" />
+        <datalist id="projDatalist"></datalist>
   <input type="text" id="nrName" maxlength="32" placeholder="tên feature (vd notifications)" />
   <div class="hint" id="nrHint" style="margin:2px 0 6px">room sẽ là #<b id="nrPreview">repo-tên</b></div>
   <button type="button" id="nrCreate" style="width:100%">Tạo room</button>
@@ -719,10 +720,25 @@
   function poll() {
     Promise.all([
       call('storage.get', { key: 'team.chat.tail' }),
-      call('storage.get', { key: 'team.chat.mindmaps' }).catch(function () { return null })
+      call('storage.get', { key: 'team.chat.mindmaps' }).catch(function () { return null }),
+      call('storage.get', { key: 'team.chat.projects' }).catch(function () { return null })
     ]).then(function (rs) {
       var r = rs[0]
       window.mmLive = (rs[1] && rs[1].value) || {}
+      var projR = rs[2] && rs[2].value
+      if (projR && projR.items) {
+        window.projects = projR
+        var dl = document.getElementById('projDatalist')
+        if (dl && dl.children.length !== projR.items.length) {
+          dl.innerHTML = ''
+          projR.items.forEach(function (it) {
+            var o = document.createElement('option'); o.value = it.name; o.label = it.path.slice(0, 60)
+            dl.appendChild(o)
+          })
+        }
+        var ri = document.getElementById('roomRepo')
+        if (ri && !ri.value && projR.current) ri.value = projR.current
+      }
       var all = []
       ;((r && r.value) || []).forEach(function (l) { try { all.push(JSON.parse(l)) } catch (e) {} })
       // Chỉ re-render khi nội dung đổi — rebuild mỗi tick sẽ nuốt click chuột

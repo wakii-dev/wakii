@@ -1532,6 +1532,45 @@ export default function activate(orca) {
     } catch { /* watchdog best-effort */ }
   }
 
+  // Danh sách project đang mở cho create-room (CEO 1/11 tối: phải load được
+  // current project / select project — hết cảnh gõ tay repo rồi fallback "team").
+  // current = worktree của terminal active mới nhất; items = repo duy nhất từ
+  // worktree list. Throttle 60s như terminals.
+  let projectsAt = 0
+  const publishProjects = async () => {
+    try {
+      if (Date.now() - projectsAt < 60000) return
+      projectsAt = Date.now()
+      const out = await new Promise((res) => execFileCb(orcaBin, ['worktree', 'list', '--json'], { timeout: 15000 }, (e, o) => res(e ? '' : o)))
+      if (!out) return
+      const wts = JSON.parse(out).result.worktrees
+      const items = []
+      const seen = new Set()
+      for (const w of wts) {
+        const p = String(w.path || '')
+        if (!p.startsWith('/')) continue
+        const m = p.match(/\/workspaces\/([^/]+)\//)
+        const name = m ? m[1] : (p.split('/').filter(Boolean).slice(-1)[0] || p)
+        if (seen.has(name)) continue
+        seen.add(name)
+        items.push({ name, path: m ? p.slice(0, p.indexOf('/workspaces/')) : p })
+      }
+      let current = ''
+      try {
+        const tOut = await new Promise((res) => execFileCb(orcaBin, ['terminal', 'list', '--json'], { timeout: 15000 }, (e, o) => res(e ? '' : o)))
+        if (tOut) {
+          const terms = JSON.parse(tOut).result.terminals
+          const withWt = terms.filter((t) => t.worktreePath).sort((a, b) => (b.lastOutputAt || 0) - (a.lastOutputAt || 0))
+          const wt = withWt[0] && String(withWt[0].worktreePath)
+          if (wt) {
+            const mm = wt.match(/\/workspaces\/([^/]+)\//)
+            current = mm ? mm[1] : (wt.split('/').filter(Boolean).slice(-1)[0] || '')
+          }
+        }
+      } catch { /* current best-effort */ }
+      await orca.host.call('storage.set', { key: 'team.chat.projects', value: { current, items } }).catch(() => {})
+    } catch { /* projects best-effort */ }
+  }
   const publishTerminals = async () => {
     if (Date.now() - termsCache.at < 10000) return
     termsCache.at = Date.now()
@@ -1786,6 +1825,7 @@ export default function activate(orca) {
         await orca.host.call('storage.set', { key: 'team.chat.rooms', value: list }).catch(() => {})
       }
       void publishTerminals()
+      void publishProjects()
       void publishMindmaps().catch(() => {})
       void watchWorkers().catch(() => {})
       // Captain status cho settings panel: theo TỪNG room (room = worktree + captain trực).
