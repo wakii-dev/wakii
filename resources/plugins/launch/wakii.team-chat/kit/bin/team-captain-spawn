@@ -7,12 +7,48 @@
 set -u
 ORCA="${ORCA_BIN:-/opt/homebrew/bin/orca}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
-REPO_SEL="" TITLE="Captain (always-online)"
+REPO_SEL="" TITLE="Captain (always-online)" FORCE=0
 while [ $# -gt 0 ]; do case "$1" in
   --repo) REPO_SEL="$2"; shift 2 ;;
   --title) TITLE="$2"; shift 2 ;;
+  --force) FORCE=1; shift ;;
   *) shift ;;
 esac; done
+
+ORCA="${ORCA_BIN:-/opt/homebrew/bin/orca}"
+
+# Idempotent: captain đã ONLINE thì không làm gì (--force để ép dựng lại).
+if [ "$FORCE" -eq 0 ]; then
+  ALIVE=$(python3 - "$HOME/.claude/chat/.workers.json" "$ORCA" <<'PY'
+import json, subprocess, sys, os
+try: reg = json.load(open(sys.argv[1], encoding="utf-8"))
+except Exception: sys.exit(0)
+panes = [p for p, e in reg.items() if isinstance(e, dict) and e.get("name") == "captain"]
+if not panes: sys.exit(0)
+try:
+    out = subprocess.run([sys.argv[2], "terminal", "list", "--json"], capture_output=True, text=True, timeout=15).stdout
+    live = {t.get("handle") for t in json.loads(out).get("result", {}).get("terminals", [])}
+except Exception: sys.exit(0)
+alive = [p for p in panes if p in live]
+if alive: print(alive[0])
+PY
+)
+  if [ -n "$ALIVE" ]; then
+    echo "team-captain-spawn: Captain ĐÃ online ($ALIVE) — không làm gì. (--force để dựng lại)"
+    exit 0
+  fi
+fi
+
+# Dọn registration captain cũ (chết/theo yêu cầu force) trước khi đăng ký mới.
+python3 - "$HOME/.claude/chat/.workers.json" <<'PY'
+import json, sys, os
+p = sys.argv[1]
+try: reg = json.load(open(p, encoding="utf-8"))
+except Exception: reg = {}
+for pane in [k for k, e in reg.items() if isinstance(e, dict) and e.get("name") == "captain"]:
+    reg.pop(pane)
+json.dump(reg, open(p, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+PY
 
 echo "team-captain-spawn: dựng Captain terminal mới..."
 OUT=$("$ORCA" terminal create ${REPO_SEL:+--worktree "$REPO_SEL"} --title "$TITLE" \

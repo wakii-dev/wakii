@@ -1564,6 +1564,16 @@ export default function activate(orca) {
           .sort((a, b) => (a.id === 'general' ? -1 : b.id === 'general' ? 1 : b.lastAt - a.lastAt))
         await orca.host.call('storage.set', { key: 'team.chat.rooms', value: list }).catch(() => {})
       }
+      // Captain status cho settings panel: online/offline + worktree.
+      {
+        const caps = await captainPanes()
+        const live = await liveCaptainPanes()
+        const entry = caps.find((c) => live.has(c.pane))
+        const status = entry ? { online: true, pane: entry.pane, worktree: entry.worktree }
+                             : { online: false, pane: null, worktree: null }
+        const sig = JSON.stringify(status)
+        if (sig !== lastCaptainSig) { lastCaptainSig = sig; await orca.host.call('storage.set', { key: 'team.chat.captain', value: status }).catch(() => {}) }
+      }
       void mirrorRoster()
       // Router Captain: quét tin mới từ outside (owner/@captain) kể từ lần trước.
       for (const line of tail) {

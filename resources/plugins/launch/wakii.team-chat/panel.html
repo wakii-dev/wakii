@@ -163,11 +163,12 @@
   </div>
   <div class="set-sec">
     <div class="lbl">Captain — luôn online</div>
+    <div id="captainStatus" class="hint" style="margin:0 0 8px">… đang kiểm tra</div>
     <div style="display:flex;gap:8px;align-items:center">
       <button type="button" id="wakeCaptain">🔔 Wake up Captain</button>
       <span class="hint" id="wakeHint" style="margin:0">gắn worktree room đang mở</span>
     </div>
-    <div class="hint">Terminal Captain sinh ra ở workspace; kéo tab vào floating workspace một lần là router đi theo (handle không đổi). Wake lại sau restart app.</div>
+    <div class="hint">Mỗi tin CEO đều tự kiểm tra: Captain offline → tự đánh thức → chuyển tiếp. Terminal sinh ở workspace; kéo vào floating workspace 1 lần là router theo.</div>
   </div>
   <div class="set-sec">
     <div class="lbl">Khung chat (rooms)</div>
@@ -537,6 +538,22 @@
       box.appendChild(row)
     })
   }
+  function refreshCaptainStatus() {
+    call('storage.get', { key: 'team.chat.captain' }).then(function (r) {
+      var el = document.getElementById('captainStatus')
+      var s = r && r.value
+      if (!el) return
+      if (s && s.online) {
+        el.textContent = '🟢 Online — pane ' + String(s.pane || '').slice(0, 14) + '… @ ' + (s.worktree || '?')
+        el.style.color = '#6fcf97'
+      } else {
+        el.textContent = '🔴 Offline — sẽ TỰ ĐÁNH THỨC khi CEO gửi tin kế tiếp'
+        el.style.color = '#e07a7a'
+      }
+    }).catch(function () {})
+  }
+  setInterval(refreshCaptainStatus, 5000)
+  refreshCaptainStatus()
   document.getElementById('wakeCaptain').addEventListener('click', function () {
     var b = document.getElementById('wakeCaptain')
     var room = activeRoom === 'general' ? 'general' : activeRoom
