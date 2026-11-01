@@ -116,6 +116,10 @@
     color: #b8e6c4;
   }
   .ev.bad { border-left-color: #c24040; color: #e6b8b8; }
+  .m-img { max-width: 100%; border-radius: 8px; margin: 4px 0; display: block; border: 1px solid #26262c; }
+  .attach-bar { display: flex; align-items: center; gap: 6px; margin: 4px 0; font-size: 11px; color: #9db8e8; }
+  .attach-bar img { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; border: 1px solid #3a3a42; }
+  .attach-bar button { background: none; border: none; color: #e07a7a; cursor: pointer; font-size: 13px; padding: 0 4px; }
   /* ── Form tương tác ── */
   .f-q { margin: 6px 0 2px; font-weight: 600; }
   .f-opts { display: flex; flex-wrap: wrap; gap: 5px; margin: 3px 0 8px; }
@@ -384,6 +388,15 @@
     })
   }
   function addBodyLine(box, line) {
+    var imTk = line.match(/^📷([0-9a-f]{6,24})$/)
+    if (imTk) {
+      var d0 = document.createElement('div')
+      var imEl = document.createElement('img'); imEl.className = 'm-img'
+      d0.appendChild(imEl)
+      box.appendChild(d0)
+      imgFor(imEl, imTk[1])
+      return
+    }
     var d = document.createElement('div')
     var mk = line.match(/^([•\-])\s+(.*)$/)
     var nm = line.match(/^(\d+)[.)]\s+(.*)$/)
@@ -685,7 +698,7 @@
       ;((r && r.value) || []).forEach(function (l) { try { all.push(JSON.parse(l)) } catch (e) {} })
       // Chỉ re-render khi nội dung đổi — rebuild mỗi tick sẽ nuốt click chuột
       // thật đang giữa press→release (bug form [HỎI] 1/11) và tốn CPU.
-      var sig = JSON.stringify(all) + '|' + activeRoom + '|' + ceoName + '|' + JSON.stringify(members) + '|' + JSON.stringify(outbox) + '|' + JSON.stringify(window.mmLive || {})
+      var sig = JSON.stringify(all) + '|' + activeRoom + '|' + ceoName + '|' + JSON.stringify(members) + '|' + JSON.stringify(outbox) + '|' + JSON.stringify(window.mmLive || {}) + '|' + JSON.stringify(imgCache || {})
       lastMsgs = all
       document.getElementById('live').classList.remove('off')
       if (sig !== lastRenderedSig) { lastRenderedSig = sig; render(all, outbox.slice()) }
@@ -742,15 +755,78 @@
     outbox.push({ at: Date.now(), from: from, role: role, channel: room, text: text })
     pumpOutbox()
   }
+  // ── Paste ảnh vào message (CEO 1/11): clipboard → downscale ≤900px JPEG →
+  // slot riêng team.chat.img.<id> (cap 256KB/slot của host) → tin nhắn chỉ chứa
+  // token 📷<id>; panel render <img> lazy-fetch từ slot.
+  var pendingImg = null
+  var attachBar = document.createElement('div'); attachBar.className = 'attach-bar'; attachBar.style.display = 'none'
+  textInput.parentNode.insertBefore(attachBar, textInput)
+  function renderAttachBar() {
+    attachBar.style.display = pendingImg ? 'flex' : 'none'
+    attachBar.innerHTML = ''
+    if (!pendingImg) return
+    var th = document.createElement('img'); th.src = pendingImg
+    var lb = document.createElement('span'); lb.textContent = '📷 ảnh đính kèm — gửi kèm tin này'
+    var rm = document.createElement('button'); rm.type = 'button'; rm.textContent = '✕'
+    rm.addEventListener('click', function () { pendingImg = null; renderAttachBar() })
+    attachBar.appendChild(th); attachBar.appendChild(lb); attachBar.appendChild(rm)
+  }
+  function downscaleToDataURL(dataUrl, cb) {
+    var im = new Image()
+    im.onload = function () {
+      var MAX = 900, sc = Math.min(1, MAX / Math.max(im.width, im.height))
+      var cv = document.createElement('canvas')
+      cv.width = Math.max(1, Math.round(im.width * sc)); cv.height = Math.max(1, Math.round(im.height * sc))
+      cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height)
+      var out = cv.toDataURL('image/jpeg', 0.82)
+      cb(out.length > 250000 ? cv.toDataURL('image/jpeg', 0.6) : out)
+    }
+    im.onerror = function () { cb(null) }
+    im.src = dataUrl
+  }
+  document.addEventListener('paste', function (e) {
+    var items = (e.clipboardData && e.clipboardData.items) || []
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].type && items[i].type.indexOf('image/') === 0) {
+        var f = items[i].getAsFile()
+        if (!f) continue
+        e.preventDefault()
+        var fr = new FileReader()
+        fr.onload = function () { downscaleToDataURL(String(fr.result), function (url) { if (url) { pendingImg = url; renderAttachBar() } }) }
+        fr.readAsDataURL(f)
+        return
+      }
+    }
+  })
+  var imgCache = {}
+  function imgFor(el, id) {
+    if (imgCache[id]) { el.src = imgCache[id]; return }
+    el.alt = '📷' + id
+    call('storage.get', { key: 'team.chat.img.' + id }).then(function (r) {
+      var du = r && r.value && r.value.dataUrl
+      if (!du) return
+      imgCache[id] = du
+      el.src = du
+      lastRenderedSig = '' // ảnh về rồi — vẽ lại 1 lần cho chỗ giữ
+    }).catch(function () {})
+  }
+
   function send() {
     var text = textInput.value.trim()
-    if (!text) return
+    var img = pendingImg
+    if (!text && !img) return
     var from = (ceoName || 'CEO').trim().slice(0, 40)
     var room = activeRoom === 'general' ? 'general' : activeRoom
     if (outbox.some(function (it) { return it.text === text && it.channel === room })) {
       textInput.value = ''; textInput.focus(); return // tin đang gửi — chặn bản 2
     }
     textInput.value = ''
+    if (img) {
+      pendingImg = null; renderAttachBar()
+      var iid = Date.now().toString(16) + Math.floor(Math.random() * 1e6).toString(16)
+      call('storage.set', { key: 'team.chat.img.' + iid, value: { at: Date.now(), mime: 'image/jpeg', dataUrl: img } }).catch(function () {})
+      text = (text ? text + '\n' : '') + '📷' + iid
+    }
     postAs(from, 'owner', room, text)
     sendBtn.disabled = true
     textInput.focus()
