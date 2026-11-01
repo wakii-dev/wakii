@@ -7,13 +7,15 @@
 set -u
 ORCA="${ORCA_BIN:-/opt/homebrew/bin/orca}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
-REPO_SEL="" TITLE="Captain (always-online)" FORCE=0
+REPO_SEL="" TITLE="Captain (always-online)" FORCE=0 ROOM=""
 while [ $# -gt 0 ]; do case "$1" in
   --repo) REPO_SEL="$2"; shift 2 ;;
   --title) TITLE="$2"; shift 2 ;;
+  --room) ROOM="$2"; shift 2 ;;
   --force) FORCE=1; shift ;;
   *) shift ;;
 esac; done
+[ -n "$ROOM" ] && TITLE="Captain #$ROOM"
 
 ORCA="${ORCA_BIN:-/opt/homebrew/bin/orca}"
 
@@ -29,8 +31,13 @@ try:
     out = subprocess.run([sys.argv[2], "terminal", "list", "--json"], capture_output=True, text=True, timeout=15).stdout
     live = {t.get("handle") for t in json.loads(out).get("result", {}).get("terminals", [])}
 except Exception: sys.exit(0)
-alive = [p for p in panes if p in live]
-if alive: print(alive[0])
+if len(sys.argv) > 3 and sys.argv[3]:
+    room = sys.argv[3]
+    cand = [p for p in panes if reg.get(p, {}).get("room") == room and p in live]
+    cand += [p for p in panes if not reg.get(p, {}).get("room") and p in live]
+else:
+    cand = [p for p in panes if p in live]
+if cand: print(cand[0])
 PY
 )
   if [ -n "$ALIVE" ]; then
@@ -78,9 +85,11 @@ TC="$HERE/team-chat"; [ -x "$TC" ] || TC="$HOME/.claude/bin/team-chat"
 
 # Brief: Captain đọc hợp đồng đầy đủ trong captain.md — brief ở đây chỉ trỏ tới.
 sleep 8  # đợi claude boot trong terminal
-"$ORCA" terminal send --terminal "$PANE" --text "Bạn là CAPTAIN của Wakii team — thường trực (always-online) trong terminal này. HỢP ĐỒNG ĐẦY ĐỦ của bạn nằm ở ~/.claude/agents/captain.md — ĐỌC NGAY trước khi làm bất kỳ việc gì (gồm: CHAT STYLE 6 luật · PHÂN CÔNG cứng · Verify-first · Cleanup-on-done · Commit hygiene cấm trailer AI · HEARTBEAT). Khuôn tin: ~/.claude/skills/team-workflow/TEMPLATES.md. Cách trả lời CEO: ~/.claude/bin/team-chat send \"<tin theo CHAT STYLE>\" --from captain --role captain. Điều phối worker: ~/.claude/bin/team-orch (worker-start/feature-open/gate-resolve/cleanup). Đọc ngữ cảnh: ~/.claude/bin/team-chat read --last 15. Xác nhận bạn đã hiểu bằng 1 tin team-chat (CHAT STYLE) — xong nằm chờ lệnh CEO qua router." --enter --json > /dev/null 2>&1 \
+ROOM_BRIEF=""
+[ -n "$ROOM" ] && ROOM_BRIEF=" Bạn TRỰC room #${ROOM} — MỌI trả lời PHẢI kèm --channel ${ROOM} để CEO thấy đúng khung. Worktree room này là nơi anh chạy lệnh/verify."
+"$ORCA" terminal send --terminal "$PANE" --text "Bạn là CAPTAIN của Wakii team — thường trực (always-online) trong terminal này. HỢP ĐỒNG ĐẦY ĐỦ của bạn nằm ở ~/.claude/agents/captain.md — ĐỌC NGAY trước khi làm bất kỳ việc gì (gồm: CHAT STYLE 6 luật · PHÂN CÔNG cứng · Verify-first · Cleanup-on-done · Commit hygiene cấm trailer AI · HEARTBEAT). Khuôn tin: ~/.claude/skills/team-workflow/TEMPLATES.md. Cách trả lời CEO: ~/.claude/bin/team-chat send \"<tin theo CHAT STYLE>\" --from captain --role captain. Điều phối worker: ~/.claude/bin/team-orch (worker-start/feature-open/gate-resolve/cleanup). Đọc ngữ cảnh: ~/.claude/bin/team-chat read --last 15.${ROOM_BRIEF} Xác nhận bạn đã hiểu bằng 1 tin team-chat (CHAT STYLE${ROOM:+ vào room #${ROOM}}) — xong nằm chờ lệnh CEO qua router." --enter --json > /dev/null 2>&1 \
   && echo "→ brief đã gửi vào terminal"
 
 # Nối router: registration name=captain (router ưu tiên nguồn này)
-"$HERE/team-orch" register --pane "$PANE" --name captain --worktree "$REPO_PATH" --repo team --room general
+"$HERE/team-orch" register --pane "$PANE" --name captain --worktree "$REPO_PATH" --repo team --room "${ROOM:-general}"
 echo "team-captain-spawn XONG — Captain online tại $PANE. Router đã nối qua registration."

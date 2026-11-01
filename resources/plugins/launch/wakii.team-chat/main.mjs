@@ -1431,25 +1431,83 @@ export default function activate(orca) {
       body: String(msg.text || '').slice(0, 120)
     }).catch(() => {})
   }
+  // ── Captain room-scoped: mỗi room = 1 worktree + 1 captain trực ──
+  let aliveCache = { at: 0, panes: new Set() }
+  const livePanes = async () => {
+    if (Date.now() - aliveCache.at < 20000) return aliveCache.panes
+    let panes = new Set()
+    try {
+      const orcaBin = process.env.ORCA_BIN || 'orca'
+      const out = await new Promise((res) => execFileCb(orcaBin, ['terminal', 'list', '--json'], { timeout: 15000 }, (e, o) => res(e ? '' : o)))
+      if (out) for (const t of JSON.parse(out).result.terminals) panes.add(t.handle)
+    } catch { /* list fail → rỗng để wake */ }
+    aliveCache = { at: Date.now(), panes }
+    return panes
+  }
+  const captainEntries = async () => {
+    try {
+      const reg = JSON.parse(await readFile(join(homeDir(), '.claude', 'chat', '.workers.json'), 'utf8'))
+      return Object.entries(reg)
+        .filter(([, e]) => e && e.name === 'captain')
+        .map(([pane, e]) => ({ pane, room: e.room || null, worktree: e.worktree || '' }))
+    } catch { return [] }
+  }
+  const resolveRoomWorktree = async (room) => {
+    try {
+      const reg = JSON.parse(await readFile(join(chatDir, '.workers.json'), 'utf8'))
+      const wt = Object.values(reg).find((e) => e && e.room === room && e.worktree && e.name !== 'captain')?.worktree
+      if (wt) return wt
+    } catch { /* chưa có registration */ }
+    try {
+      const rooms = JSON.parse(await readFile(join(chatDir, 'rooms.json'), 'utf8'))
+      const repo = rooms[room] && rooms[room].repo
+      const orcaBin = process.env.ORCA_BIN || 'orca'
+      const out = await new Promise((res) => execFileCb(orcaBin, ['worktree', 'list', '--json'], { timeout: 15000 }, (e, o) => res(e ? '' : o)))
+      if (!out) return ''
+      const wts = JSON.parse(out).result.worktrees.map((w) => w.path)
+      return wts.find((p) => repo && p.endsWith('/' + repo)) || wts.find((p) => repo && p.includes(repo)) || wts[0] || ''
+    } catch { return '' }
+  }
+  const forwardTo = async (handle, msg) => {
+    await orca.host.call('terminal.sendText', {
+      terminalId: handle,
+      text: `[CEO→captain|#${msg.channel || 'general'}] ${msg.from}: ${msg.text}\n(trả lời vào ĐÚNG room: ~/.claude/bin/team-chat send "..." --from captain --role captain --channel ${msg.channel || 'general'})\n`,
+      enter: true
+    })
+  }
+  const wakingRooms = new Set()
+  const wakeCaptainFor = async (room) => {
+    if (wakingRooms.has(room)) return
+    wakingRooms.add(room)
+    try {
+      const spawnBin = join(homeDir(), '.claude', 'bin', 'team-captain-spawn')
+      const wt = await resolveRoomWorktree(room)
+      const args = ['--room', room].concat(wt ? ['--repo', 'path:' + wt] : [])
+      await new Promise((res) => execFileCb('bash', [spawnBin].concat(args), { timeout: 120000 }, () => res()))
+      aliveCache = { at: 0, panes: new Set() }
+    } catch { /* wake best-effort */ } finally { wakingRooms.delete(room) }
+  }
   const captainRoute = async (msg) => {
     try {
-      // Nguồn terminal Captain (ưu tiên): registration pane name==captain
-      // (team-captain-spawn ghi) → storage key cũ.
-      let handle = null
-      try {
-        const reg = JSON.parse(await readFile(join(homeDir(), '.claude', 'chat', '.workers.json'), 'utf8'))
-        handle = Object.entries(reg).find(([, e]) => e && e.name === 'captain')?.[0] || null
-      } catch { /* chưa có registration */ }
-      if (!handle) {
-        const stored = await orca.host.call('storage.get', { key: 'team.captain.terminal' })
-        handle = stored && stored.value
-      }
-      if (!handle) return // chưa cấu hình terminal Captain — ACK vẫn đủ chứng tỏ online
-      await orca.host.call('terminal.sendText', {
-        terminalId: handle,
-        text: `[CEO→captain] ${msg.from}: ${msg.text}\n(trả lời qua: ~/.claude/bin/team-chat send "..." --from captain --role captain)\n`,
-        enter: true
-      })
+      const room = msg.channel || 'general'
+      const entries = await captainEntries()
+      const live = await livePanes()
+      // Captain TRỰC ROOM: ưu tiên entry khớp room; fallback captain toàn cục
+      const pick = entries.find((c) => c.room === room && live.has(c.pane))
+             || entries.find((c) => !c.room && live.has(c.pane))
+      if (pick) { await forwardTo(pick.pane, msg); return }
+      appendLine({ from: 'system', role: 'system', channel: room,
+        text: '💤 Captain#' + room + ' đang offline — tự đánh thức (gắn worktree room)…' }).catch(() => {})
+      void (async () => {
+        try {
+          await wakeCaptainFor(room)
+          await new Promise((r) => setTimeout(r, 12000)) // chờ Captain nhận brief (script gửi ở giây 8)
+          const after = await captainEntries()
+          const live2 = await livePanes()
+          const ok2 = after.find((c) => c.room === room && live2.has(c.pane)) || after.find((c) => !c.room && live2.has(c.pane))
+          if (ok2) await forwardTo(ok2.pane, msg)
+        } catch { /* bỏ qua */ }
+      })()
     } catch { /* route best-effort — ACK đã khẳng định presence */ }
   }
   const tick = async () => {
@@ -1564,15 +1622,17 @@ export default function activate(orca) {
           .sort((a, b) => (a.id === 'general' ? -1 : b.id === 'general' ? 1 : b.lastAt - a.lastAt))
         await orca.host.call('storage.set', { key: 'team.chat.rooms', value: list }).catch(() => {})
       }
-      // Captain status cho settings panel: online/offline + worktree.
+      // Captain status cho settings panel: theo TỪNG room (room = worktree + captain trực).
       try {
-        const caps = await captainPanes()
-        const live = await liveCaptainPanes()
-        const entry = caps.find((c) => live.has(c.pane))
-        const status = entry ? { online: true, pane: entry.pane, worktree: entry.worktree }
-                             : { online: false, pane: null, worktree: null }
-        const sig = JSON.stringify(status)
-        if (sig !== lastCaptainSig) { lastCaptainSig = sig; await orca.host.call('storage.set', { key: 'team.chat.captain', value: status }).catch(() => {}) }
+        const entries = await captainEntries()
+        const live = await livePanes()
+        const byRoom = {}
+        for (const r of new Set(['general', ...roomListSeen])) {
+          const hit = entries.find((c) => c.room === r && live.has(c.pane)) || entries.find((c) => !c.room && live.has(c.pane))
+          byRoom[r] = hit ? { online: true, pane: hit.pane, worktree: hit.worktree } : { online: false }
+        }
+        const sig = JSON.stringify(byRoom)
+        if (sig !== lastCaptainSig) { lastCaptainSig = sig; await orca.host.call('storage.set', { key: 'team.chat.captain', value: byRoom }).catch(() => {}) }
       } catch (e) { orca.log('[captain-status] lỗi: ' + (e && e.message || e)) }
       void mirrorRoster()
       // Router Captain: quét tin mới từ outside (owner/@captain) kể từ lần trước.

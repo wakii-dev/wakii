@@ -543,13 +543,14 @@
   function refreshCaptainStatus() {
     call('storage.get', { key: 'team.chat.captain' }).then(function (r) {
       var el = document.getElementById('captainStatus')
-      var s = r && r.value
       if (!el) return
-      if (s && s.online) {
-        el.textContent = '🟢 Online — pane ' + String(s.pane || '').slice(0, 14) + '… @ ' + (s.worktree || '?')
+      var byRoom = (r && r.value) || {}
+      var s = byRoom[activeRoom] || { online: false }
+      if (s.online) {
+        el.textContent = '🟢 Trực #' + activeRoom + ' — @ ' + (s.worktree || '?')
         el.style.color = '#6fcf97'
       } else {
-        el.textContent = '🔴 Offline — sẽ TỰ ĐÁNH THỨC khi CEO gửi tin kế tiếp'
+        el.textContent = '🔴 Chưa có Captain trực #' + activeRoom + ' — tự đánh thức ở tin kế'
         el.style.color = '#e07a7a'
       }
     }).catch(function () {})
