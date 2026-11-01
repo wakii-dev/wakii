@@ -105,7 +105,15 @@
   .composer { display: flex; gap: 8px; padding: 10px 14px; border-top: 1px solid #232328; flex: none; }
   input#text { flex: 1; background: #17171b; border: 1px solid #2b2b31; color: #e6e6e9; border-radius: 8px; padding: 8px 10px; }
   button { background: #2f6f3f; color: #fff; border: 0; border-radius: 8px; padding: 8px 14px; cursor: pointer; font-weight: 600; }
-  button:disabled { opacity: .5; }
+  button:disabled { opacity: .35; cursor: default; }
+  .ibtn {
+    width: 30px; height: 30px; padding: 0; flex: none;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 400; border-radius: 8px;
+  }
+  .ibtn.ok { background: #1d2b22; border: 1px solid #2b4231; }
+  .ibtn.no { background: #2a1a1a; border: 1px solid #4a2b2b; }
+  .ibtn.ghosty { background: #26262c; }
   #empty { color: #8b8b93; text-align: center; margin-top: 40px; line-height: 1.8; }
 
   /* ── Settings overlay ── */
@@ -138,6 +146,7 @@
   .room-mgmt .rn { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .room-mgmt .st { color: #6d6d75; font-size: 11px; flex: none; }
   .room-mgmt button { background: #26262c; padding: 3px 9px; font-weight: 400; font-size: 12px; flex: none; }
+  .room-mgmt button.ibtn { width: 26px; height: 26px; font-size: 13px; padding: 0; }
   .set-sec textarea {
     width: 100%; background: #17171b; border: 1px solid #2b2b31; color: #e6e6e9;
     border-radius: 8px; padding: 7px 9px; font-size: 12px; min-height: 42px; resize: vertical;
@@ -184,7 +193,10 @@
     <textarea id="rmFiles" maxlength="3000" placeholder="Files chính (mỗi dòng 1 path)"></textarea>
     <textarea id="rmArtifacts" maxlength="3000" placeholder="Artifacts (link design, docs, report — mỗi dòng 1)"></textarea>
     <textarea id="rmMindmap" maxlength="3000" placeholder="Mindmap / cấu trúc (dạng大纲)"></textarea>
-    <button type="button" id="saveRoomMeta" class="ghost">💾 Lưu thông tin room</button>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button type="button" id="saveRoomMeta" class="ibtn ghosty" title="Lưu thông tin room" disabled>💾</button>
+      <span class="hint" id="roomMetaHint" style="margin:0">đổi gì đó để bật Lưu</span>
+    </div>
     <div class="hint">Metadata gắn với room đang mở — Captain + worker đọc rooms.json để biết ngữ cảnh.</div>
   </details>
   <details class="set-sec" open>
@@ -193,12 +205,12 @@
     <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
       <input type="text" id="captainPane" list="termDatalist" placeholder="chọn terminal đang chạy (hoặc dán term_…)" style="flex:1;background:#17171b;border:1px solid #2b2b31;color:#e6e6e9;border-radius:8px;padding:7px 9px;font-size:12px;font-family:ui-monospace,Menlo,monospace" />
       <datalist id="termDatalist"></datalist>
-      <button type="button" class="ghost" id="adoptCaptain">🤝 Nhận làm Captain</button>
+      <button type="button" class="ibtn ghosty" id="adoptCaptain" title="Nhận terminal này làm Captain" disabled>🤝</button>
     </div>
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
-      <button type="button" id="wakeCaptain">🔔 Wake up Captain</button>
-      <button type="button" class="ghost" id="releaseCaptain" style="background:#2a1a1a;border:1px solid #4a2b2b;color:#e8cfcf">🔓 Release Captain</button>
-      <span class="hint" id="wakeHint" style="margin:0">gắn worktree room đang mở</span>
+      <button type="button" class="ibtn" id="wakeCaptain" title="Wake up Captain (tự động khi có tin — bấm để chủ động)">🔔</button>
+      <button type="button" class="ibtn no" id="releaseCaptain" title="Release Captain để chọn terminal khác" disabled>🔓</button>
+      <span class="hint" id="wakeHint" style="margin:0"></span>
     </div>
     <div class="hint">Mỗi tin CEO đều tự kiểm tra: Captain offline → tự đánh thức → chuyển tiếp. Terminal sinh ở workspace; kéo vào floating workspace 1 lần là router theo.</div>
   </details>
@@ -510,7 +522,9 @@
       .then(function () { sendBtn.disabled = false; textInput.focus() })
       .catch(function () { sendBtn.disabled = false })
   }
-  sendBtn.addEventListener('click', send)
+  sendBtn.disabled = true
+  textInput.addEventListener('input', function () { sendBtn.disabled = !textInput.value.trim() })
+  sendBtn.addEventListener('click', function () { send(); sendBtn.disabled = !textInput.value.trim() })
   textInput.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') { e.preventDefault(); send() }
   })
@@ -549,10 +563,13 @@
       var rn = document.createElement('span'); rn.className = 'rn'; rn.textContent = '#' + r.id
       var st = document.createElement('span'); st.className = 'st'
       st.textContent = r.status === 'closed' ? '🔒 đã đóng' : r.msgs + ' tin'
-      var closeB = document.createElement('button'); closeB.type = 'button'; closeB.textContent = r.status === 'closed' ? 'mở lại' : '🔒'
+      var closeB = document.createElement('button'); closeB.type = 'button'; closeB.className = 'ibtn ghosty'
+      closeB.textContent = r.status === 'closed' ? '🔓' : '🔒'
+      closeB.title = r.status === 'closed' ? 'Mở lại room (giữ lịch sử)' : 'Đóng room — tab mờ, giữ lịch sử'
       closeB.addEventListener('click', function () { sendRoomCmd(r.status === 'closed' ? 'open' : 'close', r.id, closeB) })
-      var delB = document.createElement('button'); delB.type = 'button'; delB.textContent = '🗑'
-      delB.title = 'Xoá room + toàn bộ tin (không hoàn tác)'
+      var delB = document.createElement('button'); delB.type = 'button'; delB.className = 'ibtn no'
+      delB.textContent = '🗑'
+      delB.title = 'Xoá room + toàn bộ tin (không hoàn tác — bấm 2 lần)'
       // Sandbox chặn window.confirm — xác nhận 2 bước ngay trên nút.
       var armed = false, armTimer = null
       delB.addEventListener('click', function () {
@@ -604,6 +621,7 @@
       }
     }).catch(function () {})
   }
+  document.getElementById('captainPane').addEventListener('input', function () { refreshCaptainStatus() })
   setInterval(function () {
     refreshCaptainStatus()
     if (settingsEl.classList.contains('open')) {
@@ -635,6 +653,20 @@
     setTimeout(function () { b.disabled = false; b.textContent = '🔔 Wake up Captain' }, 10000)
     call('storage.set', { key: 'team.chat.captainCmd', value: { at: Date.now(), action: 'wake', room: room } }).catch(function () {})
   })
+  var roomMetaDirty = false
+  function markRoomMetaDirty() {
+    roomMetaDirty = true
+    var b = document.getElementById('saveRoomMeta')
+    if (b) { b.disabled = false }
+    var h = document.getElementById('roomMetaHint')
+    if (h) h.textContent = 'có thay đổi chưa lưu'
+  }
+  function bindRoomMetaDirty() {
+    ;['rmName', 'rmWorktree', 'rmDesc', 'rmTicket', 'rmPlan', 'rmFiles', 'rmArtifacts', 'rmMindmap'].forEach(function (id) {
+      var el = document.getElementById(id)
+      if (el && !el.__dirtyBound) { el.addEventListener('input', markRoomMetaDirty); el.__dirtyBound = true }
+    })
+  }
   function fillRoomMeta() {
     var r = roomList.find(function (x) { return x.id === activeRoom })
     var m = (r && r.meta) || {}
@@ -647,11 +679,16 @@
     document.getElementById('rmFiles').value = m.files || ''
     document.getElementById('rmArtifacts').value = m.artifacts || ''
     document.getElementById('rmMindmap').value = m.mindmap || ''
+    roomMetaDirty = false
+    var b = document.getElementById('saveRoomMeta'); if (b) b.disabled = true
+    var h = document.getElementById('roomMetaHint'); if (h) h.textContent = 'đổi gì đó để bật Lưu'
+    bindRoomMetaDirty()
   }
   document.getElementById('saveRoomMeta').addEventListener('click', function () {
     var b = document.getElementById('saveRoomMeta')
-    b.disabled = true; b.textContent = '→ đã lưu ✓'
-    setTimeout(function () { b.disabled = false; b.textContent = '💾 Lưu thông tin room' }, 2500)
+    b.disabled = true; b.textContent = '✓'
+    var h = document.getElementById('roomMetaHint'); if (h) h.textContent = 'đã lưu — chờ worker ghi rooms.json'
+    setTimeout(function () { b.textContent = '💾'; roomMetaDirty = false }, 2000)
     call('storage.set', { key: 'team.chat.roomCmd', value: {
       at: Date.now(), action: 'update', room: activeRoom,
       meta: {
