@@ -1485,6 +1485,9 @@ export default function activate(orca) {
             lastTailLen = -1 // buộc publish lại tail + rooms
           }
         } catch { /* room cmd best-effort */ }
+        // Luôn ép publish lại tail+rooms — close/open không đổi độ dài tail nên
+        // không được ràng vào điều kiện đó (bug 'nút không phản hồi' CEO bắt).
+        lastTailLen = -1
         await orca.host.call('storage.set', { key: 'team.chat.roomCmd', value: null }).catch(() => {})
       }
       const tail = await readTail()

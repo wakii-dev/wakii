@@ -405,7 +405,9 @@
   document.getElementById('addMember').addEventListener('click', function () {
     membersEl.appendChild(memberRow({ av: '👤', nm: '', ti: 'Worker' }))
   })
-  function sendRoomCmd(action, room) {
+  function sendRoomCmd(action, room, btn) {
+    if (btn) { btn.disabled = true; btn.textContent = '…' }
+    setTimeout(function () { renderRoomRows() }, 3500) // nạp lại trạng thái mới từ poller
     call('storage.set', { key: 'team.chat.roomCmd', value: { at: Date.now(), action: action, room: room } }).catch(function () {})
   }
   function renderRoomRows() {
@@ -419,10 +421,10 @@
       var st = document.createElement('span'); st.className = 'st'
       st.textContent = r.status === 'closed' ? '🔒 đã đóng' : r.msgs + ' tin'
       var closeB = document.createElement('button'); closeB.type = 'button'; closeB.textContent = r.status === 'closed' ? 'mở lại' : '🔒'
-      closeB.addEventListener('click', function () { sendRoomCmd(r.status === 'closed' ? 'open' : 'close', r.id) })
+      closeB.addEventListener('click', function () { sendRoomCmd(r.status === 'closed' ? 'open' : 'close', r.id, closeB) })
       var delB = document.createElement('button'); delB.type = 'button'; delB.textContent = '🗑'
       delB.addEventListener('click', function () {
-        if (window.confirm('Xoá #' + r.id + ' và toàn bộ tin của room này? Không hoàn tác.')) sendRoomCmd('delete', r.id)
+        if (window.confirm('Xoá #' + r.id + ' và toàn bộ tin của room này? Không hoàn tác.')) sendRoomCmd('delete', r.id, delB)
       })
       row.appendChild(rn); row.appendChild(st); row.appendChild(closeB); row.appendChild(delB)
       box.appendChild(row)
