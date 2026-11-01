@@ -262,9 +262,9 @@
     <div class="hint">Mỗi tin CEO đều tự kiểm tra: Captain offline → tự đánh thức → chuyển tiếp. Terminal sinh ở workspace; kéo vào floating workspace 1 lần là router theo.</div>
   </details>
   <details class="set-sec">
-    <summary>Khung chat (rooms)</summary>
+    <summary id="curRoomTitle">Room này</summary>
     <div id="roomRows"></div>
-    <div class="hint">🔒 đóng = tab mờ, giữ lịch sử. 🗑 xoá = xoá tab + toàn bộ tin của room (không hoàn tác).</div>
+    <div class="hint">Chỉ tác động trên room ĐANG MỞ. 🔒 đóng = tab mờ, giữ lịch sử; 🗑 xoá = xoá tab + toàn bộ tin (không hoàn tác).</div>
   </details>
   <details class="set-sec">
     <summary>Vận hành</summary>
@@ -603,8 +603,10 @@
   function renderRoomRows() {
     var box = document.getElementById('roomRows')
     box.innerHTML = ''
-    var rooms = roomList.filter(function (r) { return r.id !== 'general' })
-    if (!rooms.length) { box.textContent = '(chưa có room feature nào)'; box.style.color = '#6d6d75'; return }
+    var titleEl = document.getElementById('curRoomTitle')
+    if (titleEl) titleEl.textContent = 'Room này — #' + activeRoom
+    var rooms = roomList.filter(function (r) { return r.id === activeRoom })
+    if (!rooms.length) { box.textContent = '(room này đã bị xoá hoặc chưa có — bấm ＋ để tạo)'; box.style.color = '#6d6d75'; return }
     rooms.forEach(function (r) {
       var row = document.createElement('div'); row.className = 'room-mgmt'
       var rn = document.createElement('span'); rn.className = 'rn'; rn.textContent = '#' + r.id
