@@ -92,6 +92,7 @@
   .mm { margin: 2px 0 4px; }
   .mm-node { line-height: 1.55; padding: 1px 0; border-left: 1px solid #6fbfcf55; }
   .mm-node.d0 { font-weight: 600; border-left: none; }
+  .mm-file { font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: #6fbfcf; background: #6fbfcf18; border-radius: 4px; padding: 1px 6px; display: inline-block; margin: 2px 0 4px; }
   .c-title { font-weight: 600; margin-bottom: 4px; }
   .c-sec { margin: 5px 0 0; padding-left: 8px; border-left: 2px solid #2b2b31; }
   .c-sec > .c-lbl { font-weight: 600; font-size: 11px; color: #8fb8f9; }
@@ -367,6 +368,13 @@
     }
     if (kind === 'k-mindmap') {
       // Cây tính năng từ indentation (2 space = 1 cấp) — bằng chứng trình CEO
+      // Dòng 📄 <path>.wakii đầu tiên = file sơ đồ tư duy, render thành chip.
+      var fm = rest.match(/^\s*📄\s*(\S+\.wakii)\s*\n?/)
+      if (fm) {
+        rest = rest.replace(fm[0], '')
+        var chip = document.createElement('div'); chip.className = 'mm-file'; chip.textContent = '📄 ' + fm[1]
+        bubble.appendChild(chip)
+      }
       var mmBox = document.createElement('div'); mmBox.className = 'mm'
       rest.split('\n').forEach(function (ln) {
         if (!ln.trim()) return

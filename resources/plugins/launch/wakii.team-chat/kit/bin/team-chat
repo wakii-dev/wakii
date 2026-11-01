@@ -204,15 +204,29 @@ case "$CMD" in
          esac; done
          meta_note "plan" "[DESIGN] chờ CEO duyệt" ${TPL_PASS[@]+"${TPL_PASS[@]}"}
          send_msg "[DESIGN] $TEXT" --role worker ${TPL_PASS[@]+"${TPL_PASS[@]}"} ;;
-  mindmap) # team-chat mindmap "<cây thụt lề>" [--channel c] → [MINDMAP] cây tính năng trình CEO duyệt
-         case "$1" in -*) echo "usage: team-chat mindmap \"<cây thụt lề, mỗi dòng 1 node>\" [--channel c]" >&2; exit 2 ;; esac
-         [ $# -eq 0 ] && { echo "usage: team-chat mindmap \"<cây>\" [--channel c]" >&2; exit 2; }
-         TEXT="$1"; shift; TPL_PASS=()
+  mindmap) # team-chat mindmap "<cây thụt lề>" [--file docs/mindmap.wakii] [--channel c]
+         # Sơ đồ tư duy FEATURE (scope/luồng — KHÔNG phải design UI). Ghi file .wakii
+         # (chuẩn Wakii) trong worktree + card 🧠 trình CEO duyệt scope.
+         case "$1" in -*) echo "usage: team-chat mindmap \"<cây thụt lề, 2 space/cấp>\" [--file docs/mindmap.wakii] [--channel c]" >&2; exit 2 ;; esac
+         [ $# -eq 0 ] && { echo "usage: team-chat mindmap \"<cây>\" [--file f] [--channel c]" >&2; exit 2; }
+         TEXT="$1"; shift; MM_FILE=""; TPL_PASS=()
          while [ $# -gt 0 ]; do case "$1" in
+           --file) MM_FILE="$2"; shift 2 ;;
            *) TPL_PASS+=("$1"); shift ;;
          esac; done
-         meta_note "mindmap" "$TEXT" ${TPL_PASS[@]+"${TPL_PASS[@]}"}
-         send_msg "[MINDMAP] $TEXT" --role worker ${TPL_PASS[@]+"${TPL_PASS[@]}"} ;;
+         [ -n "$MM_FILE" ] || MM_FILE="docs/mindmap.wakii"
+         MM_DIR=$(dirname "$MM_FILE"); mkdir -p "$MM_DIR" 2>/dev/null || true
+         python3 - "$MM_FILE" "$TEXT" <<'PY' 2>/dev/null || true
+import sys
+path, tree = sys.argv[1], sys.argv[2]
+with open(path, "w", encoding="utf-8") as f:
+    f.write("# wakii-mindmap v1\n")
+    f.write(tree.rstrip() + "\n")
+PY
+         echo "mindmap: đã lưu $MM_FILE"
+         meta_note "mindmap" "$MM_FILE" ${TPL_PASS[@]+"${TPL_PASS[@]}"}
+         send_msg "[MINDMAP] 📄 $MM_FILE
+$TEXT" --role worker ${TPL_PASS[@]+"${TPL_PASS[@]}"} ;;
   impact) # team-chat impact "<yêu cầu>" --scope --arch --risk --effort --deps --rec → [IMPACT] đa chiều (Scout, stage 1)
          REQ_="$1"; shift
          SCOPE_="" ARCH_="" RISK_="" EFF_="" DEPS_="" REC_=""; TPL_PASS=()

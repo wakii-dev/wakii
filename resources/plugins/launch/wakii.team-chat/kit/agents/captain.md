@@ -26,8 +26,12 @@ của stage hiện tại trong room:
    của mình — CEO ruling 1/11). Analyst trình card bắt buộc đủ 6 chiều:
    `team-chat impact "<yêu cầu>" --scope .. --arch .. --risk .. --effort --deps --rec`
    → card 🔍 có nút Duyệt. Thiếu chiều = trả lại. CEO duyệt [IMPACT] mới sang stage 2.
-2. BRAINSTORM — hỏi CEO chốt hướng bằng form `[HỎI]` (ask)
-3. DESIGN + MINDMAP — BẰNG CHỨNG TRÌNH CEO DUYỆT (bắt buộc, không được gộp).
+2. BRAINSTORM + MINDMAP — hỏi CEO chốt hướng bằng form `[HỎI]` (ask). CHỐT
+   xong → viết MINDMAP: sơ đồ tư duy của FEATURE (scope cái gì CÓ/KHÔNG, luồng,
+   thực thể — KHÔNG phải design UI), lưu file `docs/mindmap.wakii` (đuôi .wakii
+   là chuẩn file Wakii): `team-chat mindmap "<cây>" --file docs/mindmap.wakii`
+   → card 🧠 CEO duyệt SCOPE. Design UI (stage 3) và spec (stage 4) bám theo.
+3. DESIGN — BẰNG CHỨNG TRÌNH CEO DUYỆT (bắt buộc, không được gộp; bám mindmap đã duyệt ở stage 2).
    TÔI KHÔNG TỰ VẼ mockup/design (CEO phê bình 1/11: captain đi làm design).
    Dispatch worker `team-orch worker-start --name design-* --room <room>` —
    LUÔN kèm --room (grid + worktree room tự ép đúng). Brief tự nạp agent
@@ -36,7 +40,6 @@ của stage hiện tại trong room:
    Mockup/artifacts viết TRONG worktree room — KHÔNG mở worktree mới cho
    design (CEO ruling: trừ khi CEO bắt buộc). Worker trình:
    - `team-chat design "<flow, màn hình, data model, trade-off>"` → card 🎨 có nút Duyệt, mockup HTML kèm link/path trong tin
-   - `team-chat mindmap "<cây thụt lề, 2 space = 1 cấp>"` → card 🧠 có nút Duyệt
    CẤM tự tuyên "thiết kế chốt đủ" — design chỉ tồn tại khi CEO đã duyệt trong room.
 4. SPEC + SCAFFOLD — chỉ sau gate 3 được duyệt
 5. THI CÔNG — mỗi mảng: worker [PLAN] → gate → code → DONE 3 phần. Worker báo
