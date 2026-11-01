@@ -22,6 +22,28 @@ if isinstance(e, dict): print(e.get("name", ""))
 PY
 }
 
+# Ghi metadata room (settings ⋮) cho bằng chứng design/mindmap — best-effort,
+# room không có trong registry thì bỏ qua, không block tin nhắn.
+meta_note() { # field value [--channel c ...passthrough]
+  FIELD_="$1" VALUE_="$2"; shift 2; CHANNEL_=""
+  while [ $# -gt 0 ]; do case "$1" in
+    --channel) CHANNEL_="$2"; break ;; *) shift ;;
+  esac; done
+  python3 - "$HOME/.claude/chat/rooms.json" "$FIELD_" "$VALUE_" "$CHANNEL_" <<'PY' 2>/dev/null || true
+import json, sys
+path, field, value, channel = sys.argv[1:5]
+try: reg = json.load(open(path, encoding="utf-8"))
+except Exception: sys.exit(0)
+if not channel:
+    opens = [(v.get("createdAt", 0), k) for k, v in reg.items()
+             if isinstance(v, dict) and v.get("status") == "open"]
+    channel = max(opens)[1] if opens else ""
+if channel and channel in reg:
+    reg[channel][field] = value[:2000]
+    json.dump(reg, open(path, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+PY
+}
+
 send_msg() {
   local text="$1" from="${TEAM_CHAT_FROM:-${ORCA_AGENT_NAME:-worker}}" from_set=0 role="" role_set=0 channel="__DEFAULT__"
   while [ $# -gt 1 ]; do case "$1" in
@@ -173,6 +195,24 @@ case "$CMD" in
            *) TPL_PASS+=("$1"); shift ;;
          esac; done
          send_msg "[PLAN] $TEXT" --role worker ${TPL_PASS[@]+"${TPL_PASS[@]}"} ;;
+  design) # team-chat design "<thiết kế>" [--channel c] → [DESIGN] bằng chứng trình CEO duyệt (stage-gate 3)
+         case "$1" in -*) echo "usage: team-chat design \"<flow, màn hình, data model, trade-off>\" [--channel c]" >&2; exit 2 ;; esac
+         [ $# -eq 0 ] && { echo "usage: team-chat design \"<nội dung thiết kế>\" [--channel c]" >&2; exit 2; }
+         TEXT="$1"; shift; TPL_PASS=()
+         while [ $# -gt 0 ]; do case "$1" in
+           *) TPL_PASS+=("$1"); shift ;;
+         esac; done
+         meta_note "plan" "[DESIGN] chờ CEO duyệt" ${TPL_PASS[@]+"${TPL_PASS[@]}"}
+         send_msg "[DESIGN] $TEXT" --role worker ${TPL_PASS[@]+"${TPL_PASS[@]}"} ;;
+  mindmap) # team-chat mindmap "<cây thụt lề>" [--channel c] → [MINDMAP] cây tính năng trình CEO duyệt
+         case "$1" in -*) echo "usage: team-chat mindmap \"<cây thụt lề, mỗi dòng 1 node>\" [--channel c]" >&2; exit 2 ;; esac
+         [ $# -eq 0 ] && { echo "usage: team-chat mindmap \"<cây>\" [--channel c]" >&2; exit 2; }
+         TEXT="$1"; shift; TPL_PASS=()
+         while [ $# -gt 0 ]; do case "$1" in
+           *) TPL_PASS+=("$1"); shift ;;
+         esac; done
+         meta_note "mindmap" "$TEXT" ${TPL_PASS[@]+"${TPL_PASS[@]}"}
+         send_msg "[MINDMAP] $TEXT" --role worker ${TPL_PASS[@]+"${TPL_PASS[@]}"} ;;
   done)  # team-chat done "<task>" --did .. --test .. --evidence .. → DONE 3 phần (bắt buộc đủ 3)
          TID=""; DID=""; TST=""; EVD=""; TPL_PASS=()
          TID="$1"; shift

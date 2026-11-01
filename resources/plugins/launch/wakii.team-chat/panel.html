@@ -83,6 +83,11 @@
   .c-head.k-plan { color: #7fa8dc; }
   .c-head.k-done { color: #6fcf97; }
   .c-head.k-blocked { color: #e07a7a; }
+  .c-head.k-design { color: #b79ae0; }
+  .c-head.k-mindmap { color: #6fbfcf; }
+  .mm { margin: 2px 0 4px; }
+  .mm-node { line-height: 1.55; padding: 1px 0; border-left: 1px solid #6fbfcf55; }
+  .mm-node.d0 { font-weight: 600; border-left: none; }
   .c-title { font-weight: 600; margin-bottom: 4px; }
   .c-sec { margin: 5px 0 0; padding-left: 8px; border-left: 2px solid #2b2b31; }
   .c-sec > .c-lbl { font-weight: 600; font-size: 11px; color: #8fb8f9; }
@@ -349,12 +354,27 @@
   function renderContent(bubble, text, kind) {
     bubble.innerHTML = ''
     var rest = text
-    if (kind === 'k-plan' || kind === 'k-done' || kind === 'k-blocked') {
-      var labels = { 'k-plan': '📋 Plan', 'k-done': '✅ Done', 'k-blocked': '⛔ Blocked' }
+    if (kind === 'k-plan' || kind === 'k-done' || kind === 'k-blocked' || kind === 'k-design' || kind === 'k-mindmap') {
+      var labels = { 'k-plan': '📋 Plan', 'k-done': '✅ Done', 'k-blocked': '⛔ Blocked', 'k-design': '🎨 Design — chờ CEO duyệt', 'k-mindmap': '🧠 Mindmap — chờ CEO duyệt' }
       var h = document.createElement('div'); h.className = 'c-head ' + kind
       h.textContent = labels[kind]
       bubble.appendChild(h)
-      rest = text.replace(/^\[PLAN\]\s*/, '').replace(/^DONE\s*/, '').replace(/^BLOCKED\s*/, '')
+      rest = text.replace(/^\[PLAN\]\s*/, '').replace(/^DONE\s*/, '').replace(/^BLOCKED\s*/, '').replace(/^\[DESIGN\]\s*/, '').replace(/^\[MINDMAP\]\s*/, '')
+    }
+    if (kind === 'k-mindmap') {
+      // Cây tính năng từ indentation (2 space = 1 cấp) — bằng chứng trình CEO
+      var mmBox = document.createElement('div'); mmBox.className = 'mm'
+      rest.split('\n').forEach(function (ln) {
+        if (!ln.trim()) return
+        var ind = ln.match(/^[ \t]*/)[0].replace(/\t/g, '  ')
+        var depth = Math.min(Math.floor(ind.length / 2), 5)
+        var nd = document.createElement('div'); nd.className = 'mm-node d' + depth
+        nd.style.marginLeft = (depth * 13) + 'px'
+        inlineInto(nd, ln.trim().replace(/^[-•*]\s*/, ''))
+        mmBox.appendChild(nd)
+      })
+      if (mmBox.children.length) bubble.appendChild(mmBox)
+      return
     }
     if (kind === 'k-done') {
       // DONE 3 phần: tách tiêu đề + ①②③ sections (chịu cả 1 dòng lẫn nhiều dòng)
@@ -413,24 +433,26 @@
     box.appendChild(sendB)
     msg.appendChild(box)
   }
-  function appendPlanActions(msg, m, text) {
+  function appendPlanActions(msg, m, text, tag) {
     var acts = document.createElement('div'); acts.className = 'f-acts'
-    var preview = text.replace(/^\[PLAN\]\s*/, '').split('\n')[0].slice(0, 40)
+    var preview = text.replace(/^\[[A-Z]+\]\s*/, '').split('\n')[0].slice(0, 40)
     var okB = document.createElement('button'); okB.type = 'button'; okB.className = 'f-act ok'; okB.textContent = '✅ Duyệt'
     okB.addEventListener('click', function () {
       okB.disabled = true; okB.textContent = '→ đã duyệt ✓'
-      postAs(ceoName || 'CEO', 'owner', m.channel || 'general', 'Duyệt [PLAN] ' + m.from + ': "' + preview + '" — Captain mở gate cho worker làm.')
+      postAs(ceoName || 'CEO', 'owner', m.channel || 'general', 'Duyệt ' + tag + ' ' + m.from + ': "' + preview + '" — Captain mở gate cho worker làm.')
     })
     var noB = document.createElement('button'); noB.type = 'button'; noB.className = 'f-act no'; noB.textContent = '✏️ Yêu cầu sửa'
     noB.addEventListener('click', function () {
       noB.disabled = true; noB.textContent = '→ đã gửi ✓'
-      postAs(ceoName || 'CEO', 'owner', m.channel || 'general', 'Yêu cầu sửa [PLAN] ' + m.from + ': "' + preview + '" — nêu điều cần đổi.')
+      postAs(ceoName || 'CEO', 'owner', m.channel || 'general', 'Yêu cầu sửa ' + tag + ' ' + m.from + ': "' + preview + '" — nêu điều cần đổi.')
     })
     acts.appendChild(okB); acts.appendChild(noB)
     msg.appendChild(acts)
   }
   function kindOf(text) {
     if (/^\[PLAN/i.test(text)) return 'k-plan'
+    if (/^\[DESIGN/i.test(text)) return 'k-design'
+    if (/^\[MINDMAP/i.test(text)) return 'k-mindmap'
     if (/^DONE/i.test(text)) return 'k-done'
     if (/^BLOCKED/i.test(text)) return 'k-blocked'
     return ''
@@ -510,10 +532,12 @@
       var bubble = document.createElement('div'); bubble.className = 'bubble ' + kindOf(text)
       renderContent(bubble, text, kindOf(text))
       msg.appendChild(meta); msg.appendChild(bubble)
-      // Form tương tác: [HỎI] → chip trả lời nhanh; [PLAN] → nút Duyệt cho CEO
+      // Form tương tác: [HỎI] → chip trả lời nhanh; [PLAN]/[DESIGN]/[MINDMAP] → nút Duyệt cho CEO
       if (m.role !== 'owner') {
         if (text.indexOf('[HỎI]') === 0) appendAskForm(msg, m)
-        else if (kindOf(text) === 'k-plan') appendPlanActions(msg, m, text)
+        else if (kindOf(text) === 'k-plan') appendPlanActions(msg, m, text, '[PLAN]')
+        else if (kindOf(text) === 'k-design') appendPlanActions(msg, m, text, '[DESIGN]')
+        else if (kindOf(text) === 'k-mindmap') appendPlanActions(msg, m, text, '[MINDMAP]')
       }
       row.appendChild(av); row.appendChild(msg)
       messages.appendChild(row)

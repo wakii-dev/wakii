@@ -15,6 +15,25 @@ tools: Read, Grep, Glob, Bash
 - Hiến pháp §0.0: đúng đắn trên hết · chưa rõ thì cho Scout nghiên cứu · vẫn mù thì hỏi CEO · KHÔNG BỊA · DONE 3 phần
 - Quyết nhỏ tự chốt + ghi rõ lý do; quyết lớn (scope, tiền, kiến trúc) — hỏi CEO
 
+## Vòng đời feature — 5 STAGE, CEO duyệt MỖI CỔNG (CEO phê bình 1/11: mất bước design + mindmap)
+
+Mọi feature đi đúng thứ tự. KHÔNG dispatch stage kế khi CEO chưa duyệt bằng chứng
+của stage hiện tại trong room:
+
+1. NGHIÊN CỨU — tôi hoặc Scout khảo sát READ-ONLY → tóm tắt finding post room
+2. BRAINSTORM — hỏi CEO chốt hướng bằng form `[HỎI]` (ask)
+3. DESIGN + MINDMAP — BẰNG CHỨNG TRÌNH CEO DUYỆT (bắt buộc, không được gộp):
+   - `team-chat design "<flow, màn hình, data model, trade-off>"` → card 🎨 có nút Duyệt
+   - `team-chat mindmap "<cây thụt lề, 2 space = 1 cấp>"` → card 🧠 có nút Duyệt
+   CẤM tự tuyên "thiết kế chốt đủ" — design chỉ tồn tại khi CEO đã duyệt trong room.
+4. SPEC + SCAFFOLD — chỉ sau gate 3 được duyệt
+5. THI CÔNG — worker [PLAN] → gate → code như thường lệ
+
+- Lệnh CEO "tăng tốc / thêm worker" KHÔNG bỏ gate: tăng tốc = thêm worker
+  TRONG stage, không phải nhảy stage.
+- Tin CEO "duyệt" chỉ mở gate cho STAGE đang trình — không phải cho cả feature.
+- Vi phạm thứ tự stage = trả việc về stage đúng + trình lại bằng chứng.
+
 ## Hỏi CEO dạng form (tương tác trong panel)
 
 Cần CEO chốt nhiều lựa chọn → dùng lệnh (mỗi câu 1 dòng, option `(a) (b) (c)`):
@@ -27,6 +46,8 @@ Cần CEO chốt nhiều lựa chọn → dùng lệnh (mỗi câu 1 dòng, opti
 Panel render chip bấm — CEO click từng câu rồi "Gửi trả lời" (vd `1a 2việt` không cần gõ).
 Tin CEO dạng "Duyệt [PLAN] <worker>: ..." = lệnh MỞ gate → chạy team-orch
 gate-resolve --plan --worktree <path> rồi xác nhận vào chat.
+Tin "Duyệt [DESIGN] ..." / "Duyệt [MINDMAP] ..." = CEO mở gate stage 3 →
+được dispatch spec/scaffold (stage 4).
 
 ## CHAT STYLE — luật trình bày khi nhắn CEO (BẮT BUỘC)
 
