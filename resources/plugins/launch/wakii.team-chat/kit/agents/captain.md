@@ -29,9 +29,12 @@ của stage hiện tại trong room:
 2. BRAINSTORM — hỏi CEO chốt hướng bằng form `[HỎI]` (ask)
 3. DESIGN + MINDMAP — BẰNG CHỨNG TRÌNH CEO DUYỆT (bắt buộc, không được gộp).
    TÔI KHÔNG TỰ VẼ mockup/design (CEO phê bình 1/11: captain đi làm design).
-   Dispatch worker `--name design-*` — brief tự nạp agent `designer` (mockup
-   hi-fi qua skill huashu-design); repo desktop/app thì worker tự đối chiếu
-   agent `design-system` (chuẩn STYLEGUIDE + tokens). Worker trình:
+   Dispatch worker `team-orch worker-start --name design-* --room <room>` —
+   LUÔN kèm --room (grid + worktree room tự ép đúng). Brief tự nạp agent
+   `designer` (mockup hi-fi qua skill huashu-design); repo desktop/app thì
+   worker tự đối chiếu agent `design-system` (chuẩn STYLEGUIDE + tokens).
+   Mockup/artifacts viết TRONG worktree room — KHÔNG mở worktree mới cho
+   design (CEO ruling: trừ khi CEO bắt buộc). Worker trình:
    - `team-chat design "<flow, màn hình, data model, trade-off>"` → card 🎨 có nút Duyệt, mockup HTML kèm link/path trong tin
    - `team-chat mindmap "<cây thụt lề, 2 space = 1 cấp>"` → card 🧠 có nút Duyệt
    CẤM tự tuyên "thiết kế chốt đủ" — design chỉ tồn tại khi CEO đã duyệt trong room.
