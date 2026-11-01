@@ -108,6 +108,14 @@
     background: #17171b; border: 1px solid #26262c; border-radius: 4px; padding: 0 4px;
   }
   .c-path { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: #9db8e8; }
+  .ev {
+    font-family: ui-monospace, Menlo, monospace; font-size: 11px; line-height: 1.5;
+    background: #101014; border: 1px solid #26262c; border-left: 3px solid #3fb96f;
+    border-radius: 6px; padding: 6px 8px; margin: 4px 0;
+    white-space: pre-wrap; word-break: break-word; max-height: 220px; overflow: auto;
+    color: #b8e6c4;
+  }
+  .ev.bad { border-left-color: #c24040; color: #e6b8b8; }
   /* ── Form tương tác ── */
   .f-q { margin: 6px 0 2px; font-weight: 600; }
   .f-opts { display: flex; flex-wrap: wrap; gap: 5px; margin: 3px 0 8px; }
@@ -360,6 +368,21 @@
     }
     if (last < s.length) el.appendChild(document.createTextNode(s.slice(last)))
   }
+  // Bằng chứng hiển thị thẳng trong chat: fenced block ```…``` → hộp terminal
+  // (viền xanh pass, đỏ khi có FAIL/Error), text còn lại render như thường.
+  function appendBody(box, text) {
+    var parts = String(text).split(/```(?:[a-zA-Z]*)\n?/)
+    parts.forEach(function (part, i) {
+      if (i % 2 === 1) {
+        var pre = document.createElement('pre')
+        pre.className = 'ev' + (/FAIL|✗|Traceback|Error:|error TS/i.test(part) ? ' bad' : '')
+        pre.textContent = part.replace(/\n$/, '')
+        box.appendChild(pre)
+      } else {
+        part.split('\n').forEach(function (ln) { if (ln.trim()) addBodyLine(box, ln) })
+      }
+    })
+  }
   function addBodyLine(box, line) {
     var d = document.createElement('div')
     var mk = line.match(/^([•\-])\s+(.*)$/)
@@ -451,7 +474,7 @@
           v.className = /cần-sửa|can-sua/i.test(sv) ? 'rv-fix' : 'rv-ok'
           v.textContent = /cần-sửa|can-sua/i.test(sv) ? '⛔ ' + sv : '✅ ' + sv
           sec.appendChild(v)
-        } else { sv.split('\n').forEach(function (ln) { if (ln.trim()) addBodyLine(sec, ln) }) }
+        } else { appendBody(sec, sv) }
         bubble.appendChild(sec)
       })
       return
@@ -468,7 +491,7 @@
         var sec = document.createElement('div'); sec.className = 'c-sec'
         var l = document.createElement('div'); l.className = 'c-lbl'; l.textContent = ilbls[i] || '·'
         sec.appendChild(l)
-        s.split('\n').forEach(function (ln) { if (ln.trim()) addBodyLine(sec, ln) })
+        appendBody(sec, s)
         bubble.appendChild(sec)
       })
       return
@@ -485,12 +508,12 @@
         var sec = document.createElement('div'); sec.className = 'c-sec'
         var l = document.createElement('div'); l.className = 'c-lbl'; l.textContent = lbls[i] || '·'
         sec.appendChild(l)
-        s.split('\n').forEach(function (ln) { if (ln.trim()) addBodyLine(sec, ln) })
+        appendBody(sec, s)
         bubble.appendChild(sec)
       })
       return
     }
-    rest.split('\n').forEach(function (ln) { addBodyLine(bubble, ln) })
+    appendBody(bubble, rest)
   }
   function appendAskForm(msg, m) {
     var picks = {}

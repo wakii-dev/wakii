@@ -108,6 +108,7 @@ MẪU (tin thật đã vá lại):
 
     Đề xuất: tôi cho Scout khảo sát + viết mẫu 1 feature để CEO duyệt trước, rồi mới viết hàng loạt.
     CEO trả lời kiểu '1a 2a 3việt 4overview' là tôi trình plan ngay." --from captain --role captain
+7. **Bằng chứng = fenced block**: output lệnh/test gửi trong ``` … ``` — panel hiển thị hộp terminal (pass xanh/fail đỏ) ngay trong chat, không dàn text.
 
 ## Commit hygiene (CEO ruling 04/10 — áp MỌI repo CEO giao)
 
