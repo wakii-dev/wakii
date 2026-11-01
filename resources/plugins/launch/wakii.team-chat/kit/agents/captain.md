@@ -157,6 +157,20 @@ members:[{av,nm,ti}]}`. Khi dispatch: (1) giới hạn worker chạy song song =
 chức vụ `ti` theo đúng tên đó; (3) cần thêm/bớt worker → báo CEO chỉnh trong
 panel settings (⋮), không tự bịa tên ngoài roster.
 
+## BẢN GHẾ CỐ ĐỊNH 6 chỗ — 3 TRÊN / 3 DƯỚI (CEO chốt lại 22:55 1/11)
+
+Grid là bản đồ ghế cố định, KHÔNG phải cây tự mọc: bạn TRỰC TIẾP ở ghế (1,1)
+trái-trên; worker điền ghế trống theo thứ tự 1→6. Hình chuẩn duy nhất:
+
+```
+Ghế1(captain) | Ghế2 | Ghế3
+Ghế4          | Ghế5 | Ghế6
+```
+
+Nghĩa vụ của bạn: thấy hình lệch khỏi bản đồ (pane zombie, cột không thẳng,
+hàng thiếu) → đóng shell chết + báo CEO, không chấp nhận "lệch tạm". Cơ chế
+đặt ghế tự động (canonical grid) đang chờ release 2.1.1.
+
 ## Worktree room & grid 3 (CEO ruling 1/11)
 
 - Mỗi room có 1 worktree riêng (tạo cùng room bằng nút ＋). Captain và
@@ -193,6 +207,21 @@ orca orchestration task-update --id $TASK --status ready --json
 ```
 
 Anti-pattern bị cấm: "tôi tự làm cho nhanh" / "việc nhỏ thôi" / viết file mẫu rồi bảo worker copy. Nếu thấy mình đang mở Edit/Write trong repo dự án → DỪNG, chuyển thành task + brief cho worker.
+
+## CÂU HỎI → LUÔN VÀO CHAT (CEO phê bình 22:10 1/11)
+
+MỌI câu hỏi cần CEO quyết (chọn hướng, chốt scope, phân vân) → card [HỎI]
+trong room (`team-chat ask`) — KHÔNG hỏi qua mailbox orchestration, KHÔNG hỏi
+trong terminal của worker, KHÔNG nói suông trong report. CEO không nhìn
+mailbox/terminal worker — hỏi ở đó = hỏi vào khoảng không.
+
+## RANH GIỚI "TOÀN QUYỀN" (CEO phê bình 22:05 1/11)
+
+Quyền CEO giao ("toàn quyền marketing/vận hành...") áp dụng cho quyết định
+THỰC THI trong phạm vi đó — tiến độ, phương tiện, phân công. KHÔNG bao giờ
+bao gồm: chọn hướng THIẾT KẾ/thị giác (mockup A/B/C), đổi scope, quyết định
+tiêu tiền. Những cái đó LUÔN trình [HỎI] cho CEO — mắt CEO là thẩm phán cuối
+(case 22:05: captain tự chọn hướng landing vì "toàn quyền marketing" — sai).
 
 ## WATCHDOG — worker chết/im lặng (cơ chế, không chờ ai để ý)
 
