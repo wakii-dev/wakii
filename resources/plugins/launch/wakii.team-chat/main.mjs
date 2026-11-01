@@ -1595,11 +1595,49 @@ export default function activate(orca) {
             const repo = String(rcReq.repo || 'team').toLowerCase()
             if (!/^[a-z0-9][a-z0-9-]{1,40}$/.test(room)) throw new Error('tên room không hợp lệ')
             if (rooms[room] && rooms[room].status !== 'deleted') throw new Error('room #' + room + ' đã tồn tại')
-            rooms[room] = { feature: room.includes('-') ? room.split('-').slice(1).join('-') : room, repo, run: '', status: 'open', createdAt: Date.now() }
+            const feature = room.includes('-') ? room.split('-').slice(1).join('-') : room
+            rooms[room] = { feature, repo, run: '', status: 'open', createdAt: Date.now() }
             await writeFile(roomsPath, JSON.stringify(rooms, null, 1))
             lastTailLen = -1 // ép publish tabs mới
             appendLine({ from: 'captain', role: 'captain', channel: room,
-              text: '🏁 Room #' + room + ' mở — CEO tạo từ panel. Đặt metadata trong ⋮ → Room; thêm orchestration: team-orch feature-open --repo ' + repo + ' --name ' + (room.includes('-') ? room.split('-').slice(1).join('-') : room) }).catch(() => {})
+              text: '🏁 Room #' + room + ' mở — đang tạo worktree cho room…' }).catch(() => {})
+            // CEO ruling: 1 room = 1 worktree = 1 captain; workers dùng CHUNG
+            // worktree room (chỉ tách khi bắt buộc). Worktree/captain fail không
+            // chặn room (linh hoạt không block) — báo vào room để CEO biết.
+            void (async () => {
+              try {
+                const orcaBin = process.env.ORCA_BIN || 'orca'
+                // resolve repo path từ worktree list (match tên repo)
+                let repoPath = ''
+                try {
+                  const out = await new Promise((res) => execFileCb(orcaBin, ['worktree', 'list', '--json'], { timeout: 15000 }, (e, o) => res(e ? '' : o)))
+                  if (out) {
+                    const wts = JSON.parse(out).result.worktrees.map((w) => w.path)
+                    repoPath = wts.find((p) => p.endsWith('/' + repo)) || wts.find((p) => p.includes(repo)) || ''
+                  }
+                } catch { /* list fail */ }
+                let wtPath = ''
+                if (repoPath) {
+                  try {
+                    const out = await new Promise((res) => execFileCb(orcaBin, ['worktree', 'create', '--repo', 'path:' + repoPath, '--name', feature, '--no-parent', '--json'], { timeout: 60000 }, (e, o) => res(e ? '' : o)))
+                    if (out) {
+                      try { wtPath = JSON.parse(out).result.worktree.path || '' } catch { wtPath = '' }
+                    }
+                  } catch { /* create fail */ }
+                }
+                let roomsNow = {}
+                try { roomsNow = JSON.parse(await readFile(roomsPath, 'utf8')) } catch { /* rỗng */ }
+                if (roomsNow[room]) { roomsNow[room].worktree = wtPath; await writeFile(roomsPath, JSON.stringify(roomsNow, null, 1)) }
+                appendLine({ from: 'system', role: 'system', channel: room,
+                  text: wtPath ? '📁 Worktree room: ' + wtPath + ' — captain + workers đều làm ở đây.'
+                    : '⚠ Chưa tạo được worktree (repo "' + repo + '" chưa mở trong app?). Room chat vẫn dùng được; mở repo rồi tạo lại metadata worktree trong ⋮.' }).catch(() => {})
+                // captain trực room, đứng trên worktree room
+                if (wtPath) {
+                  const spawnBin = join(homeDir(), '.claude', 'bin', 'team-captain-spawn')
+                  execFileCb('bash', [spawnBin, '--room', room, '--repo', 'path:' + wtPath], { timeout: 120000 }, () => {})
+                }
+              } catch (e) { orca.log('[create-room] lỗi: ' + (e && e.message || e)) }
+            })()
           } else if (rcReq.action === 'update') {
             // Metadata room do CEO định nghĩa trong settings: name/description/
             // worktree/ticket/files/artifacts/plan/mindmap…
