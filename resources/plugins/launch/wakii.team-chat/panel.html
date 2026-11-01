@@ -147,6 +147,13 @@
   .room-mgmt .st { color: #6d6d75; font-size: 11px; flex: none; }
   .room-mgmt button { background: #26262c; padding: 3px 9px; font-weight: 400; font-size: 12px; flex: none; }
   .room-mgmt button.ibtn { width: 26px; height: 26px; font-size: 13px; padding: 0; }
+  .flabel { font-size: 10px; color: #8b8b93; margin: 7px 0 3px; display: flex; gap: 5px; align-items: center; }
+  .flabel .ftag { background: #1b1b20; border: 1px solid #2b2b31; border-radius: 4px; padding: 0 5px; font-size: 9px; letter-spacing: .3px; }
+  .fld { position: relative; }
+  .fld > .fic { position: absolute; left: 8px; top: 9px; opacity: .65; font-size: 12px; pointer-events: none; }
+  .fld > input { padding-left: 28px !important; }
+  .fld.t-link > input { border-color: #2b3a52; color: #9db8e8; text-decoration: underline; text-decoration-color: #2b3a52; text-underline-offset: 3px; }
+  .fld.t-path > input { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: #b8c7a8; }
   .set-sec textarea {
     width: 100%; background: #17171b; border: 1px solid #2b2b31; color: #e6e6e9;
     border-radius: 8px; padding: 7px 9px; font-size: 12px; min-height: 42px; resize: vertical;
@@ -174,10 +181,11 @@
 
 <div id="settings">
   <h3>Cài đặt đội hình <button type="button" id="closeSettings">Đóng</button></h3>
-  <div class="set-sec">
-    <div class="lbl">Tên CEO (người gửi từ panel)</div>
-    <input type="text" id="ceoName" maxlength="24" placeholder="CEO" />
-  </div>
+  <details class="set-sec" open>
+    <summary>Người dùng</summary>
+    <div class="flabel">👑 Tên CEO — hiển thị khi bạn nhắn <span class="ftag">text</span></div>
+    <input type="text" id="ceoName" maxlength="24" placeholder="Ví dụ: Hoi" />
+  </details>
   <details class="set-sec">
     <summary>Đội hình — avatar · tên thật · chức vụ</summary>
     <div id="members"></div>
@@ -203,7 +211,7 @@
     <summary>Captain — luôn online</summary>
     <div id="captainStatus" class="hint" style="margin:0 0 8px">… đang kiểm tra</div>
     <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
-      <input type="text" id="captainPane" list="termDatalist" placeholder="chọn terminal đang chạy (hoặc dán term_…)" style="flex:1;background:#17171b;border:1px solid #2b2b31;color:#e6e6e9;border-radius:8px;padding:7px 9px;font-size:12px;font-family:ui-monospace,Menlo,monospace" />
+      <div class="fld t-path" style="flex:1"><span class="fic">🖥</span><input type="text" id="captainPane" list="termDatalist" placeholder="terminal id — bấm để chọn từ danh sách ▾" style="width:100%;background:#17171b;border:1px solid #2b2b31;color:#e6e6e9;border-radius:8px;padding:7px 9px 7px 28px;font-size:12px;font-family:ui-monospace,Menlo,monospace" title="Select: bấm để thấy danh sách terminal đang chạy — hoặc gõ/dán term_… thủ công" /></div>
       <datalist id="termDatalist"></datalist>
       <button type="button" class="ibtn ghosty" id="adoptCaptain" title="Nhận terminal này làm Captain" disabled>🤝</button>
     </div>
