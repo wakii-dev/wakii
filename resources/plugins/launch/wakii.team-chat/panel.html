@@ -65,6 +65,21 @@
   .bubble.k-done { border-left: 3px solid #3fb96f; }
   .bubble.k-blocked { border-left: 3px solid #c24040; }
   .tagline { font-size: 10px; color: #6d6d75; margin-top: 3px; }
+  /* ── Content templates ── */
+  .c-head { font-weight: 700; font-size: 11px; letter-spacing: .4px; margin-bottom: 4px; text-transform: uppercase; }
+  .c-head.k-plan { color: #7fa8dc; }
+  .c-head.k-done { color: #6fcf97; }
+  .c-head.k-blocked { color: #e07a7a; }
+  .c-title { font-weight: 600; margin-bottom: 4px; }
+  .c-sec { margin: 5px 0 0; padding-left: 8px; border-left: 2px solid #2b2b31; }
+  .c-sec > .c-lbl { font-weight: 600; font-size: 11px; color: #8fb8f9; }
+  .c-item { padding-left: 13px; text-indent: -13px; margin: 2px 0; }
+  .c-item .c-mk { color: #6d6d75; }
+  .c-code {
+    font-family: ui-monospace, Menlo, monospace; font-size: 11.5px;
+    background: #17171b; border: 1px solid #26262c; border-radius: 4px; padding: 0 4px;
+  }
+  .c-path { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: #9db8e8; }
   .notice {
     align-self: center; max-width: 92%; color: #8b8b93; font-size: 12px;
     background: #16161a; border: 1px dashed #2b2b31; border-radius: 8px;
@@ -183,6 +198,65 @@
     if (m.role === 'system') return { av: '⚙️', nm: m.from, ti: '' }
     return { av: (f[0] || '?').toUpperCase(), nm: m.from, ti: ROLE_TITLE[m.role] || 'Worker' }
   }
+  // ── Content templates: render nội dung có cấu trúc, an toàn (DOM, không innerHTML) ──
+  function inlineInto(el, s) {
+    var re = /(`[^`]+`|(?:~\/|\/)[A-Za-z0-9_.\/-]+)/g
+    var last = 0, m
+    while ((m = re.exec(s)) !== null) {
+      if (m.index > last) el.appendChild(document.createTextNode(s.slice(last, m.index)))
+      if (m[0].charCodeAt(0) === 96) {
+        var c = document.createElement('code'); c.className = 'c-code'
+        c.textContent = m[0].slice(1, -1); el.appendChild(c)
+      } else {
+        var p = document.createElement('span'); p.className = 'c-path'
+        p.textContent = m[0]; el.appendChild(p)
+      }
+      last = m.index + m[0].length
+    }
+    if (last < s.length) el.appendChild(document.createTextNode(s.slice(last)))
+  }
+  function addBodyLine(box, line) {
+    var d = document.createElement('div')
+    var mk = line.match(/^([•\-])\s+(.*)$/)
+    var nm = line.match(/^(\d+)[.)]\s+(.*)$/)
+    if (mk || nm) {
+      d.className = 'c-item'
+      var marker = document.createElement('span'); marker.className = 'c-mk'
+      marker.textContent = mk ? '• ' : nm[1] + '. '
+      d.appendChild(marker)
+      inlineInto(d, mk ? mk[2] : nm[2])
+    } else { inlineInto(d, line) }
+    box.appendChild(d)
+  }
+  function renderContent(bubble, text, kind) {
+    bubble.innerHTML = ''
+    var rest = text
+    if (kind === 'k-plan' || kind === 'k-done' || kind === 'k-blocked') {
+      var labels = { 'k-plan': '📋 Plan', 'k-done': '✅ Done', 'k-blocked': '⛔ Blocked' }
+      var h = document.createElement('div'); h.className = 'c-head ' + kind
+      h.textContent = labels[kind]
+      bubble.appendChild(h)
+      rest = text.replace(/^\[PLAN\]\s*/, '').replace(/^DONE\s*/, '').replace(/^BLOCKED\s*/, '')
+    }
+    if (kind === 'k-done') {
+      // DONE 3 phần: tách tiêu đề + ①②③ sections (chịu cả 1 dòng lẫn nhiều dòng)
+      var secs = rest.split(/[①②③]/)
+      var title = (secs.shift() || '').replace(/[\s—-]+$/, '').trim()
+      if (title) { var t = document.createElement('div'); t.className = 'c-title'; inlineInto(t, title); bubble.appendChild(t) }
+      var lbls = ['① Đã làm', '② Cách test', '③ Bằng chứng']
+      secs.forEach(function (sRaw, i) {
+        var s = sRaw.trim().replace(/^:\s*/, '')
+        if (!s) return
+        var sec = document.createElement('div'); sec.className = 'c-sec'
+        var l = document.createElement('div'); l.className = 'c-lbl'; l.textContent = lbls[i] || '·'
+        sec.appendChild(l)
+        s.split('\n').forEach(function (ln) { if (ln.trim()) addBodyLine(sec, ln) })
+        bubble.appendChild(sec)
+      })
+      return
+    }
+    rest.split('\n').forEach(function (ln) { addBodyLine(bubble, ln) })
+  }
   function kindOf(text) {
     if (/^\[PLAN/i.test(text)) return 'k-plan'
     if (/^DONE/i.test(text)) return 'k-done'
@@ -252,7 +326,7 @@
       var time = document.createElement('span'); time.className = 'time'; time.textContent = fmt(m.at)
       meta.appendChild(time)
       var bubble = document.createElement('div'); bubble.className = 'bubble ' + kindOf(text)
-      bubble.textContent = text
+      renderContent(bubble, text, kindOf(text))
       msg.appendChild(meta); msg.appendChild(bubble)
       row.appendChild(av); row.appendChild(msg)
       messages.appendChild(row)
