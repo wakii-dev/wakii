@@ -435,7 +435,7 @@
         var list = (rr && rr.value) || null
         if (Array.isArray(list) && list.length) roomList = list
         else {
-          var seen = { general: true }
+          var seen = {}
           all.forEach(function (m) { seen[m.channel || 'general'] = true })
           roomList = Object.keys(seen).map(function (id) { return { id: id, status: 'open', msgs: 0 } })
         }

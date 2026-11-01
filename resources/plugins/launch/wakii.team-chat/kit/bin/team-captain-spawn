@@ -57,9 +57,10 @@ for pane in [k for k, e in reg.items() if isinstance(e, dict) and e.get("name") 
 json.dump(reg, open(p, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 PY
 
-echo "team-captain-spawn: dựng Captain terminal mới..."
-OUT=$("$ORCA" terminal create ${REPO_SEL:+--worktree "$REPO_SEL"} --title "$TITLE" \
-  --command "claude --dangerously-skip-permissions" --json 2>&1) || { echo "$OUT" >&2; exit 1; }
+echo "team-captain-spawn: dựng Captain terminal mới (agent-launch — tự xử trust folder)..."
+# terminal create thô kẹt Claude trust prompt; agent launch là pipeline chuẩn của
+# Orca (surface terminal) — trust + agent-start được app lo.
+OUT=$("$ORCA" agent launch --agent claude --surface terminal ${REPO_SEL:+--worktree "$REPO_SEL"} --json 2>&1) || { echo "$OUT" >&2; exit 1; }
 PANE=$(printf '%s' "$OUT" | python3 -c '
 import json, sys
 def dig(o):
@@ -81,7 +82,7 @@ echo "→ terminal: $PANE"
 REPO_PATH=""
 [ -n "$REPO_SEL" ] && REPO_PATH="${REPO_SEL#path:}"
 TC="$HERE/team-chat"; [ -x "$TC" ] || TC="$HOME/.claude/bin/team-chat"
-"$TC" send "🔄 Captain terminal mới ($PANE) — đang brief..." --from system --role system --channel general > /dev/null 2>&1 || true
+"$TC" send "🔄 Captain terminal mới ($PANE) — đang brief..." --from system --role system --channel "${ROOM:-general}" > /dev/null 2>&1 || true
 
 # Brief: Captain đọc hợp đồng đầy đủ trong captain.md — brief ở đây chỉ trỏ tới.
 sleep 8  # đợi claude boot trong terminal
