@@ -1330,6 +1330,15 @@ export function installKit(orca, { root, kitRoot: kitRootOverride } = {}) {
   }
 }
 
+// ── Crash diagnostics (CEO ruling 1/11: 'thêm log') — mọi lỗi chết worker phải
+// để lại stack trong log app trước khi supervisor thấy 'Stopped after an error'.
+process.on('uncaughtException', (e) => {
+  try { console.error('[wakii.team-chat] UNCAUGHT:', e && e.stack || e) } catch {}
+})
+process.on('unhandledRejection', (e) => {
+  try { console.error('[wakii.team-chat] UNHANDLED:', (e && e.stack) || e) } catch {}
+})
+
 export default function activate(orca) {
   setKitGuardLogger((line) => orca.log(line))
   installKit(orca)
@@ -1480,7 +1489,9 @@ export default function activate(orca) {
       if (Object.keys(out).length || mmCache.size) {
         await orca.host.call('storage.set', { key: 'team.chat.mindmaps', value: out }).catch(() => {})
       }
-    } catch { /* live embed là best-effort — không giết poller */ }
+    } catch (e) {
+      try { orca.log('wakii.team-chat mindmaps LỖI (best-effort): ' + ((e && e.message) || e)) } catch {}
+    }
   }
   const publishTerminals = async () => {
     if (Date.now() - termsCache.at < 10000) return
@@ -1789,8 +1800,11 @@ export default function activate(orca) {
       }
     } catch { /* chat là best-effort — không chặn activate */ }
   }
-  void tick()
-  const chatTimer = setInterval(() => { void tick() }, 2000)
+  orca.log('wakii.team-chat activate: tick đầu…')
+  void tick().catch((e) => orca.log('wakii.team-chat tick đầu LỖI: ' + ((e && e.stack) || e)))
+  const chatTimer = setInterval(() => {
+    tick().catch((e) => orca.log('wakii.team-chat tick LỖI (bỏ qua, tick kế tiếp): ' + ((e && e.stack) || e)))
+  }, 2000)
 
   orca.log('wakii.team-chat v1.0.0: chat bus sẵn sàng — ' + chatLog)
   return () => clearInterval(chatTimer)
