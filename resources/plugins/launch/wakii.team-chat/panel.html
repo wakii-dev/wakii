@@ -14,12 +14,29 @@
     display: flex; flex-direction: column;
   }
   header {
-    padding: 10px 14px; border-bottom: 1px solid #232328;
-    display: flex; align-items: center; gap: 8px; font-weight: 600;
+    padding: 8px 14px 6px; border-bottom: 1px solid #232328;
+    display: flex; align-items: center; gap: 8px; font-weight: 600; flex: none;
   }
-  header .dot { width: 8px; height: 8px; border-radius: 50%; background: #3fb96f; }
+  header .dot { width: 8px; height: 8px; border-radius: 50%; background: #3fb96f; flex: none; }
   header .dot.off { background: #c24040; }
   header small { margin-left: auto; font-weight: 400; color: #8b8b93; }
+  #rooms {
+    display: flex; gap: 4px; padding: 6px 10px; border-bottom: 1px solid #232328;
+    overflow-x: auto; flex: none; scrollbar-width: thin;
+  }
+  .room {
+    flex: none; border: 1px solid #2b2b31; background: #17171b; color: #b9b9c0;
+    border-radius: 999px; padding: 3px 10px; font-size: 12px; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 5px; max-width: 160px;
+  }
+  .room .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .room.active { background: #1d2b22; border-color: #2b4231; color: #cfe8d4; }
+  .room.closed { opacity: .55; }
+  .room .badge {
+    background: #c24040; color: #fff; border-radius: 999px; font-size: 10px;
+    min-width: 16px; text-align: center; padding: 0 4px; display: none;
+  }
+  .room .badge.show { display: inline-block; }
   #messages { flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
   .msg { max-width: 88%; padding: 7px 10px; border-radius: 10px; background: #1b1b20; border: 1px solid #26262c; }
   .msg.mine { align-self: flex-end; background: #1d2b22; border-color: #2b4231; }
@@ -27,8 +44,8 @@
   .msg .who .role { color: #8b8b93; }
   .msg .body { white-space: pre-wrap; word-break: break-word; }
   .msg .time { font-size: 10px; color: #6d6d75; margin-top: 3px; text-align: right; }
-  .composer { display: flex; gap: 8px; padding: 10px 14px; border-top: 1px solid #232328; }
-  input#name { width: 90px; background: #17171b; border: 1px solid #2b2b31; color: #e6e6e9; border-radius: 8px; padding: 8px 10px; }
+  .composer { display: flex; gap: 8px; padding: 10px 14px; border-top: 1px solid #232328; flex: none; }
+  input#name { width: 82px; background: #17171b; border: 1px solid #2b2b31; color: #e6e6e9; border-radius: 8px; padding: 8px 10px; }
   input#text { flex: 1; background: #17171b; border: 1px solid #2b2b31; color: #e6e6e9; border-radius: 8px; padding: 8px 10px; }
   button { background: #2f6f3f; color: #fff; border: 0; border-radius: 8px; padding: 8px 14px; cursor: pointer; font-weight: 600; }
   button:disabled { opacity: .5; }
@@ -38,45 +55,84 @@
 </head>
 <body>
 <header><span class="dot off" id="live"></span> Team Chat <small id="count"></small></header>
-<div id="messages"><div id="empty">Chưa có tin nhắn.<br>Captain / workers gửi từ terminal:<br><code>team-chat send "xin chào"</code></div></div>
+<div id="rooms"></div>
+<div id="messages"><div id="empty">Chưa có tin nhắn trong khung này.</div></div>
 <div class="composer">
   <input id="name" placeholder="tên bạn" />
-  <input id="text" placeholder="Nhắn cả team… (Enter)" autocomplete="off" />
+  <input id="text" placeholder="Nhắn…" autocomplete="off" />
   <button id="send" type="button">Gửi</button>
 </div>
 <script>
-  // Shell của Orca inject sẵn window.orca (envelope protocol). KHÔNG dùng
-  // postMessage trực tiếp — host drop mọi tin không phải envelope. Shell cũng
-  // chặn submit ở capture phase (CSP form-action 'none') nên composer dùng
-  // button + keydown Enter, không dùng <form>.
+  // Shell Orca inject window.orca — KHÔNG postMessage trực tiếp; shell chặn
+  // submit (CSP form-action none) nên composer dùng button + keydown Enter.
   function call(action, params) {
     return Promise.race([
       window.orca.host.call(action, params || {}),
-      new Promise(function (_, reject) {
-        setTimeout(function () { reject(new Error('panel call timeout')) }, 8000)
-      })
+      new Promise(function (_, reject) { setTimeout(function () { reject(new Error('timeout')) }, 8000) })
     ])
   }
 
   var messages = document.getElementById('messages'), empty = document.getElementById('empty')
   var nameInput = document.getElementById('name'), textInput = document.getElementById('text')
   var sendBtn = document.getElementById('send'), countEl = document.getElementById('count')
-  var lastLen = -1
+  var roomsEl = document.getElementById('rooms')
+
+  // ── Room state: 1 feature = 1 khung chat ──
+  var activeRoom = 'general'          // 'general' | '<repo>-<feature>'
+  var roomList = [{ id: 'general', status: 'open', msgs: 0 }]
+  var readCount = {}                  // room → số tin đã xem (badge = total - seen)
+  var lastMsgs = []
 
   function fmt(ts) {
     var d = new Date(ts)
     return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2)
   }
 
-  function render(lines) {
-    empty.style.display = 'none'
-    messages.innerHTML = ''
+  function parseTail(lines) {
+    var out = []
     lines.forEach(function (l) {
-      var m; try { m = JSON.parse(l) } catch (e) { return }
+      try { out.push(JSON.parse(l)) } catch (e) {}
+    })
+    return out
+  }
+
+  function renderRooms() {
+    roomsEl.innerHTML = ''
+    roomList.forEach(function (r) {
+      var b = document.createElement('button')
+      b.className = 'room' + (r.id === activeRoom ? ' active' : '') + (r.status === 'closed' ? ' closed' : '')
+      b.type = 'button'
+      var nm = document.createElement('span'); nm.className = 'nm'
+      nm.textContent = '#' + (r.id.length > 18 ? r.id.slice(0, 16) + '…' : r.id)
+      b.appendChild(nm)
+      if (r.status === 'closed') { var lk = document.createElement('span'); lk.textContent = '🔒'; b.appendChild(lk) }
+      var unread = Math.max(0, (r.msgs || 0) - (readCount[r.id] || (r.id === activeRoom ? (r.msgs || 0) : 0)))
+      if (r.id !== activeRoom && unread > 0) {
+        var badge = document.createElement('span'); badge.className = 'badge show'
+        badge.textContent = unread > 99 ? '99+' : String(unread)
+        b.appendChild(badge)
+      }
+      b.addEventListener('click', function () {
+        activeRoom = r.id
+        readCount[r.id] = roomList.find(function (x) { return x.id === r.id }).msgs || 0
+        render(lastMsgs)
+        renderRooms()
+        call('storage.set', { key: 'team.chat.ui.activeRoom', value: activeRoom }).catch(function () {})
+      })
+      roomsEl.appendChild(b)
+    })
+  }
+
+  function render(all) {
+    var lines = all.filter(function (m) { return (m.channel || 'general') === activeRoom })
+    var headerRoom = activeRoom === 'general' ? 'Team' : '#' + activeRoom
+    empty.textContent = 'Chưa có tin nhắn trong ' + headerRoom + '.'
+    empty.style.display = lines.length ? 'none' : 'block'
+    messages.innerHTML = ''
+    lines.forEach(function (m) {
       var el = document.createElement('div')
       el.className = 'msg' + (m.role === 'owner' ? ' mine' : '')
-      var who = document.createElement('div'); who.className = 'who'
-      who.textContent = m.from
+      var who = document.createElement('div'); who.className = 'who'; who.textContent = m.from
       var role = document.createElement('span'); role.className = 'role'
       role.textContent = ' · ' + m.role + (m.channel && m.channel !== 'general' ? ' · #' + m.channel : '')
       who.appendChild(role)
@@ -91,9 +147,23 @@
 
   function poll() {
     call('storage.get', { key: 'team.chat.tail' }).then(function (r) {
-      var lines = (r && r.value) || []
+      var all = parseTail((r && r.value) || [])
+      lastMsgs = all
       document.getElementById('live').classList.remove('off')
-      if (lines.length !== lastLen) { lastLen = lines.length; if (lines.length) render(lines) }
+      render(all)
+      // room list: ưu tiên storage do poller publish
+      call('storage.get', { key: 'team.chat.rooms' }).then(function (rr) {
+        var list = (rr && rr.value) || null
+        if (Array.isArray(list) && list.length) roomList = list
+        else { // fallback: tự suy từ tail
+          var seen = { general: true }
+          all.forEach(function (m) { seen[m.channel || 'general'] = true })
+          roomList = Object.keys(seen).map(function (id) { return { id: id, status: 'open', msgs: 0 } })
+        }
+        if (!roomList.some(function (x) { return x.id === activeRoom })) activeRoom = 'general'
+        if (!(activeRoom in readCount)) readCount[activeRoom] = roomList.find(function (x) { return x.id === activeRoom }).msgs || 0
+        renderRooms()
+      }).catch(function () { renderRooms() })
       setTimeout(poll, 2000)
     }).catch(function () {
       document.getElementById('live').classList.add('off')
@@ -101,26 +171,24 @@
     })
   }
 
-  // Single-slot serializer: tin kế chỉ ghi khi tin trước được poller pick (≤2.5s).
+  // Single-slot serializer: tin kế chỉ ghi khi poller pick tin trước (≤2.5s).
   var sendChain = Promise.resolve()
   function send() {
     var text = textInput.value.trim()
     if (!text) return
     var from = (nameInput.value || 'owner').trim().slice(0, 40)
+    var room = activeRoom === 'general' ? 'general' : activeRoom
     textInput.value = ''
     sendBtn.disabled = true
     sendChain = sendChain
       .then(function () {
         return call('storage.set', {
           key: 'team.chat.send',
-          value: { at: Date.now(), from: from, role: 'owner', channel: 'general', text: text }
+          value: { at: Date.now(), from: from, role: 'owner', channel: room, text: text }
         })
       })
       .then(function () { return new Promise(function (res) { setTimeout(res, 2500) }) })
-      .then(function () {
-        sendBtn.disabled = false
-        textInput.focus()
-      })
+      .then(function () { sendBtn.disabled = false; textInput.focus() })
       .catch(function () { sendBtn.disabled = false })
   }
   sendBtn.addEventListener('click', send)
@@ -128,12 +196,15 @@
     if (e.key === 'Enter') { e.preventDefault(); send() }
   })
 
-  // Tên lưu qua plugin storage — opaque origin không có localStorage.
   nameInput.addEventListener('change', function () {
     call('storage.set', { key: 'team.chat.name', value: nameInput.value.trim().slice(0, 40) }).catch(function () {})
   })
   call('storage.get', { key: 'team.chat.name' }).then(function (r) {
     if (r && typeof r.value === 'string' && r.value) nameInput.value = r.value
+  }).catch(function () {})
+  // khôi phục room đang mở lần trước
+  call('storage.get', { key: 'team.chat.ui.activeRoom' }).then(function (r) {
+    if (r && typeof r.value === 'string' && r.value) activeRoom = r.value
   }).catch(function () {})
   poll()
 </script>

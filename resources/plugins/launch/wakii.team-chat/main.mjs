@@ -1442,6 +1442,30 @@ export default function activate(orca) {
       if (tail.length !== lastTailLen) {
         lastTailLen = tail.length
         await orca.host.call('storage.set', { key: 'team.chat.tail', value: tail }).catch(() => {})
+        // Room list cho panel tabs: registry (rooms.json) + mọi channel từng
+        // xuất hiện trong tail (room tự phát vẫn hiện tab).
+        let rooms = {}
+        try {
+          rooms = JSON.parse(await readFile(join(chatDir, 'rooms.json'), 'utf8'))
+        } catch { /* chưa có registry */ }
+        const seen = new Map()
+        for (const line of tail) {
+          try {
+            const m = JSON.parse(line)
+            if (m.channel) seen.set(m.channel, (seen.get(m.channel) || 0) + 1)
+          } catch { /* skip dòng hỏng */ }
+        }
+        const list = [...new Set(['general', ...Object.keys(rooms), ...seen.keys()])]
+          .map((c) => ({
+            id: c,
+            status: rooms[c] ? rooms[c].status : (c === 'general' ? 'open' : 'open'),
+            feature: rooms[c] ? rooms[c].feature : null,
+            run: rooms[c] ? rooms[c].run : null,
+            msgs: seen.get(c) || 0,
+            lastAt: Math.max(...tail.filter((l) => { try { return JSON.parse(l).channel === c } catch { return false } }).map((l) => { try { return JSON.parse(l).at } catch { return 0 } }), 0)
+          }))
+          .sort((a, b) => (a.id === 'general' ? -1 : b.id === 'general' ? 1 : b.lastAt - a.lastAt))
+        await orca.host.call('storage.set', { key: 'team.chat.rooms', value: list }).catch(() => {})
       }
       // Router Captain: quét tin mới từ outside (owner/@captain) kể từ lần trước.
       for (const line of tail) {

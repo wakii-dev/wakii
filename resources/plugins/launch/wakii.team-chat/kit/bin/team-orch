@@ -43,6 +43,25 @@ e = reg.get(sys.argv[2])
 if e: print(json.dumps(e))
 PY
 }
+rooms_reg() { # rooms_reg open <room> <feature> <repo> <run> | close <room> | list
+  python3 - "$HOME/.claude/chat/rooms.json" "$@" <<'PY'
+import json, sys, os, time
+path, cmd = sys.argv[1], sys.argv[2]
+try: reg = json.load(open(path, encoding="utf-8"))
+except Exception: reg = {}
+if cmd == "open":
+    room, feature, repo, run = sys.argv[3:7]
+    reg[room] = {"feature": feature, "repo": repo, "run": run,
+                 "status": "open", "createdAt": int(time.time() * 1000)}
+elif cmd == "close":
+    room = sys.argv[3]
+    if room in reg: reg[room]["status"] = "closed"
+elif cmd == "list":
+    print(json.dumps(reg)); sys.exit(0)
+os.makedirs(os.path.dirname(path), exist_ok=True)
+json.dump(reg, open(path, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+PY
+}
 pane_of_worker_json() { # <json receipt> → in terminal handle hoặc rỗng (argv, không pipe — heredoc chiếm stdin)
   python3 -c '
 import json, sys
@@ -104,7 +123,8 @@ case "$CMD" in
     TC="$(dirname "$0")/team-chat"
     "$TC" send "🏁 Feature #$REPO-$NAME mở — run $RUN" --from captain --role captain --channel "$REPO-$NAME" >/dev/null 2>&1
     emit run.created captain "$REPO" "$RUN" "" "{\"feature\":\"$NAME\"}"
-    echo "RUN=$RUN  ROOM=#$REPO-$NAME"
+    rooms_reg open "$REPO-$NAME" "$NAME" "$REPO" "$RUN"
+    echo "RUN=$RUN  ROOM=#$REPO-$NAME (khung chat riêng — panel tự hiện tab)"
     echo "Tiếp: orca worktree create --name $NAME (Captain) → worker-start trong worktree đó"
     ;;
   worker-start)
@@ -240,6 +260,15 @@ except Exception: pass
       mkdir -p "$DEST"
       cp -R "$WT/$HARVEST/." "$DEST/" && echo "team-orch: harvest $WT/$HARVEST → $DEST"
     fi
+    # Bóc room TRƯỚC khi unregister (registration là nguồn room).
+    CROOM=$(python3 - "$REG" "$WT" <<'PY'
+import json, sys
+try: reg = json.load(open(sys.argv[1], encoding="utf-8"))
+except Exception: sys.exit(0)
+print(next((e.get("room") for e in reg.values()
+            if isinstance(e, dict) and e.get("worktree") == sys.argv[2]), ""))
+PY
+)
     # 2) đóng terminal worker đứng ở worktree này (pane từ registration)
     CPANE=$(python3 - "$REG" "$WT" <<'PY'
 import json, sys
@@ -266,6 +295,7 @@ PY
       && echo "team-orch: ĐÃ XOÁ worktree $WT" \
       || { echo "worktree remove fail (xem selector path:)" >&2; "$ORCA" worktree remove --worktree "$WT" --force --json > /dev/null 2>&1 && echo "team-orch: ĐÃ XOÁ worktree $WT" || exit 1; }
     rm -f "$(marker "$WT")"
+    [ -n "$CROOM" ] && [ "$CROOM" != "general" ] && rooms_reg close "$CROOM" || true
     emit worktree.cleaned system "$(repo_of_cwd)" "" "" "{\"worktree\":\"$WT\"}"
     echo "team-orch: cleanup xong — marker dọn, event worktree.cleaned phát"
     ;;

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Template commands (1/11): plan/done/blocked ép đúng khuôn §0.0 + G3.5;
 // done thiếu flag phải từ chối; identity pane vẫn khóa tên qua send_msg.
-import { mkdtempSync, writeFileSync, mkdirSync, readFileSync, rmSync } from 'node:fs'
+import { mkdtempSync, writeFileSync, mkdirSync, readFileSync, rmSync, chmodSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
 import { tmpdir } from 'node:os'
 import { join, dirname } from 'node:path'
@@ -63,6 +63,33 @@ ok(r.status === 1, 'plan spoof qua --from phải bị chặn')
 r = run(['done', 'P', '--did', 'a', '--test', 'b', '--evidence', 'c', '--from', 'smith', '--channel', 'demo'])
 ok(r.status === 0 && lastLine().from === 'smith' && lastLine().channel === 'demo',
   'done passthrough --from/--channel: ' + JSON.stringify(lastLine()))
+
+// 5c) rooms registry: feature-open mở room, cleanup đóng room
+import { spawnSync as _sp } from 'node:child_process'
+const T2 = mkdtempSync(join(tmpdir(), 'pg-rooms-'))
+const stubOrca = join(T2, 'orca')
+writeFileSync(stubOrca, '#!/bin/bash\nif [ "$1" = worktree ] || [ "$1" = terminal ]; then echo OK; else echo \'{"result":{"run":{"id":"run_r"}}}\'; fi\n')
+chmodSync(stubOrca, 0o755)
+const roomsPath = join(T2, '.claude', 'chat', 'rooms.json')
+const envRooms = {
+  ...process.env,
+  ORCA_BIN: stubOrca,
+  TEAM_CHAT_LOG: join(T2, 'c.jsonl'),
+  TEAM_EVENTS_LOG: join(T2, 'e.jsonl'),
+  TEAM_TASK_GATES_DIR: join(T2, 'g'),
+  TEAM_WORKERS_REG: join(T2, 'r.json'),
+  HOME: T2
+}
+mkdirSync(join(T2, 'g')); mkdirSync(join(T2, 'wt'))
+let rr = spawnSync('bash', [join(BIN, 'team-orch'), 'feature-open', '--name', 'pay', '--repo', 'shop'], { encoding: 'utf8', env: envRooms })
+ok(rr.status === 0, 'feature-open room: ' + rr.stderr)
+let rooms = JSON.parse(readFileSync(roomsPath, 'utf8'))
+ok(rooms['shop-pay'] && rooms['shop-pay'].status === 'open' && rooms['shop-pay'].run === 'run_r', 'registry mở room shop-pay')
+writeFileSync(join(T2, 'r.json'), JSON.stringify({ term_a: { name: 'w', worktree: join(T2, 'wt'), room: 'shop-pay' } }))
+rr = spawnSync('bash', [join(BIN, 'team-orch'), 'cleanup', '--worktree', join(T2, 'wt')], { encoding: 'utf8', env: envRooms })
+ok(rr.status === 0, 'cleanup room: ' + rr.stderr)
+rooms = JSON.parse(readFileSync(roomsPath, 'utf8'))
+ok(rooms['shop-pay'].status === 'closed', 'cleanup đóng room shop-pay')
 
 // 6) TEMPLATES.md tồn tại trong skill + chứa đủ markers
 const tpl = readFileSync(join(HERE, '..', 'skills', 'team-workflow', 'TEMPLATES.md'), 'utf8')

@@ -182,8 +182,25 @@ case "$CMD" in
          send_msg "BLOCKED $TEXT" --role worker ${TPL_PASS[@]+"${TPL_PASS[@]}"} ;;
   event) [ $# -lt 2 ] && { echo "usage: team-chat event <kind> --repo <id> [--run-id r] [--task-id t] [--actor a] [--data json]" >&2; exit 2; }
          emit_event "$@" ;;
+  rooms) python3 - "$HOME/.claude/chat/rooms.json" "$LOG" <<'PY'
+import json, sys, os
+try: reg = json.load(open(sys.argv[1], encoding="utf-8"))
+except Exception: reg = {}
+counts = {}
+try:
+    for l in open(sys.argv[2], encoding="utf-8"):
+        try: m = json.loads(l)
+        except Exception: continue
+        c = m.get("channel", "general"); counts[c] = counts.get(c, 0) + 1
+except FileNotFoundError: pass
+print(f"{'#general':32} {counts.get('general', 0):5} tin (mặc định)")
+for room, e in sorted(reg.items(), key=lambda kv: -kv[1].get("createdAt", 0)):
+    mark = "🟢" if e.get("status") == "open" else "🔒"
+    print(f"#{room:31} {counts.get(room, 0):5} tin {mark} feature={e.get('feature','?')} run={(e.get('run') or '?')[:18]}")
+PY
+  ;;
   read)  read_msgs "$@" ;;
   tail)  tail_msgs "$@" ;;
   path)  echo "$LOG" ;;
-  *)     echo "usage: team-chat send|plan|done|blocked|read|tail|event|path — templates xem skills/team-workflow/TEMPLATES.md" >&2; exit 2 ;;
+  *)     echo "usage: team-chat send|plan|done|blocked|rooms|read|tail|event|path — templates xem skills/team-workflow/TEMPLATES.md" >&2; exit 2 ;;
 esac
