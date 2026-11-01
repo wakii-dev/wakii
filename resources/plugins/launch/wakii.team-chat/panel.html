@@ -80,6 +80,23 @@
     background: #17171b; border: 1px solid #26262c; border-radius: 4px; padding: 0 4px;
   }
   .c-path { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: #9db8e8; }
+  /* ── Form tương tác ── */
+  .f-q { margin: 6px 0 2px; font-weight: 600; }
+  .f-opts { display: flex; flex-wrap: wrap; gap: 5px; margin: 3px 0 8px; }
+  .f-opt {
+    background: #17171b; border: 1px solid #2b2b31; color: #b9b9c0; border-radius: 999px;
+    font-size: 12px; padding: 3px 10px; cursor: pointer;
+  }
+  .f-opt.picked { background: #1d2b22; border-color: #2b4231; color: #cfe8d4; font-weight: 600; }
+  .f-send {
+    background: #2f6f3f; border: 0; color: #fff; border-radius: 8px; font-size: 12px;
+    padding: 4px 12px; cursor: pointer; margin-top: 2px;
+  }
+  .f-send:disabled { opacity: .5; }
+  .f-acts { display: flex; gap: 6px; margin-top: 6px; }
+  .f-act { border-radius: 8px; font-size: 12px; padding: 4px 12px; cursor: pointer; border: 1px solid #2b2b31; background: #17171b; color: #e6e6e9; }
+  .f-act.ok { background: #1d2b22; border-color: #2b4231; color: #cfe8d4; }
+  .f-act.no { background: #2a1a1a; border-color: #4a2b2b; color: #e8cfcf; }
   .notice {
     align-self: center; max-width: 92%; color: #8b8b93; font-size: 12px;
     background: #16161a; border: 1px dashed #2b2b31; border-radius: 8px;
@@ -257,6 +274,60 @@
     }
     rest.split('\n').forEach(function (ln) { addBodyLine(bubble, ln) })
   }
+  function appendAskForm(msg, m) {
+    var picks = {}
+    var box = document.createElement('div'); box.className = 'f-box'
+    m.text.split('\n').forEach(function (line) {
+      var qm = line.match(/^\s*(\d+)[.)]\s+(.+)$/)
+      if (!qm) return
+      var qn = qm[1], body = qm[2]
+      var q = document.createElement('div'); q.className = 'f-q'; q.textContent = qn + '. ' + body.replace(/\s*\([a-z]\)\s*[^()]*/g, '').trim()
+      box.appendChild(q)
+      var opts = document.createElement('div'); opts.className = 'f-opts'
+      var re = /\(([a-z])\)\s*([^()]+?)(?=\s*\([a-z]\)|$)/g, om
+      while ((om = re.exec(body)) !== null) {
+        (function (letter, label) {
+          var b = document.createElement('button'); b.type = 'button'; b.className = 'f-opt'
+          b.textContent = letter + ') ' + label.trim()
+          b.addEventListener('click', function () {
+            picks[qn] = letter
+            opts.querySelectorAll('.f-opt').forEach(function (x) { x.classList.remove('picked') })
+            b.classList.add('picked')
+            sendB.disabled = false
+            sendB.textContent = 'Gửi trả lời: ' + Object.keys(picks).map(function (k) { return k + picks[k] }).sort().join(' ')
+          })
+          opts.appendChild(b)
+        })(om[1], om[2])
+      }
+      if (opts.children.length) box.appendChild(opts)
+    })
+    if (!box.children.length) return
+    var sendB = document.createElement('button'); sendB.type = 'button'; sendB.className = 'f-send'
+    sendB.disabled = true; sendB.textContent = 'Chọn câu trả lời…'
+    sendB.addEventListener('click', function () {
+      var ans = Object.keys(picks).map(function (k) { return k + picks[k] }).sort().join(' ')
+      sendB.disabled = true; sendB.textContent = '→ đã gửi ✓'
+      postAs(ceoName || 'CEO', 'owner', m.channel || 'general', ans + ' (trả lời form #' + (m.channel || 'general') + ')')
+    })
+    box.appendChild(sendB)
+    msg.appendChild(box)
+  }
+  function appendPlanActions(msg, m, text) {
+    var acts = document.createElement('div'); acts.className = 'f-acts'
+    var preview = text.replace(/^\[PLAN\]\s*/, '').split('\n')[0].slice(0, 40)
+    var okB = document.createElement('button'); okB.type = 'button'; okB.className = 'f-act ok'; okB.textContent = '✅ Duyệt'
+    okB.addEventListener('click', function () {
+      okB.disabled = true; okB.textContent = '→ đã duyệt ✓'
+      postAs(ceoName || 'CEO', 'owner', m.channel || 'general', 'Duyệt [PLAN] ' + m.from + ': "' + preview + '" — Captain mở gate cho worker làm.')
+    })
+    var noB = document.createElement('button'); noB.type = 'button'; noB.className = 'f-act no'; noB.textContent = '✏️ Yêu cầu sửa'
+    noB.addEventListener('click', function () {
+      noB.disabled = true; noB.textContent = '→ đã gửi ✓'
+      postAs(ceoName || 'CEO', 'owner', m.channel || 'general', 'Yêu cầu sửa [PLAN] ' + m.from + ': "' + preview + '" — nêu điều cần đổi.')
+    })
+    acts.appendChild(okB); acts.appendChild(noB)
+    msg.appendChild(acts)
+  }
   function kindOf(text) {
     if (/^\[PLAN/i.test(text)) return 'k-plan'
     if (/^DONE/i.test(text)) return 'k-done'
@@ -328,6 +399,11 @@
       var bubble = document.createElement('div'); bubble.className = 'bubble ' + kindOf(text)
       renderContent(bubble, text, kindOf(text))
       msg.appendChild(meta); msg.appendChild(bubble)
+      // Form tương tác: [HỎI] → chip trả lời nhanh; [PLAN] → nút Duyệt cho CEO
+      if (m.role !== 'owner') {
+        if (text.indexOf('[HỎI]') === 0) appendAskForm(msg, m)
+        else if (kindOf(text) === 'k-plan') appendPlanActions(msg, m, text)
+      }
       row.appendChild(av); row.appendChild(msg)
       messages.appendChild(row)
     })
@@ -363,6 +439,12 @@
 
   // ── Gửi: tên = CEO name từ settings; room = tab đang mở ──
   var sendChain = Promise.resolve()
+  function postAs(from, role, room, text) {
+    sendChain = sendChain
+      .then(function () { return call('storage.set', { key: 'team.chat.send', value: { at: Date.now(), from: from, role: role, channel: room, text: text } }) })
+      .then(function () { return new Promise(function (res) { setTimeout(res, 2500) }) })
+    return sendChain
+  }
   function send() {
     var text = textInput.value.trim()
     if (!text) return

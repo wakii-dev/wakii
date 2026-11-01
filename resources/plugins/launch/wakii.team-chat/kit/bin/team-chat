@@ -172,6 +172,14 @@ case "$CMD" in
            echo "usage: team-chat done \"<task>\" --did \"<đã làm>\" --test \"<cách test>\" --evidence \"<bằng chứng>\"" >&2
            echo "DONE phải ĐỦ 3 phần (hiến pháp §0.0) — thiếu là bị trả lại." >&2; exit 2; }
          send_msg "DONE $TID — ① Đã làm: $DID ② Cách test: $TST ③ Bằng chứng: $EVD" --role worker ${TPL_PASS[@]+"${TPL_PASS[@]}"} ;;
+  ask)   # team-chat ask "<dòng 'N. câu? (a) .. (b) ..'>" → form hỏi CEO — panel hiện chip bấm
+         case "$1" in -*) echo "usage: team-chat ask \"1. Câu hỏi? (a) lựa chọn (b) lựa chọn\" (mỗi câu 1 dòng)" >&2; exit 2 ;; esac
+         [ $# -eq 0 ] && { echo "usage: team-chat ask \"<câu hỏi + options>\"" >&2; exit 2; }
+         TEXT="$1"; shift; TPL_PASS=()
+         while [ $# -gt 0 ]; do case "$1" in
+           *) TPL_PASS+=("$1"); shift ;;
+         esac; done
+         send_msg "[HỎI] $TEXT" ${TPL_PASS[@]+"${TPL_PASS[@]}"} ;;
   blocked) # team-chat blocked "<lý do>" → BLOCKED (anti-grind: block×3 → Captain ép hướng)
          case "$1" in -*) echo "usage: team-chat blocked \"<lý do + đã thử gì>\"" >&2; exit 2 ;; esac
          [ $# -eq 0 ] && { echo "usage: team-chat blocked \"<lý do + đã thử gì>\"" >&2; exit 2; }
@@ -202,5 +210,5 @@ PY
   read)  read_msgs "$@" ;;
   tail)  tail_msgs "$@" ;;
   path)  echo "$LOG" ;;
-  *)     echo "usage: team-chat send|plan|done|blocked|rooms|read|tail|event|path — templates xem skills/team-workflow/TEMPLATES.md" >&2; exit 2 ;;
+  *)     echo "usage: team-chat send|plan|done|ask|blocked|rooms|read|tail|event|path — templates xem skills/team-workflow/TEMPLATES.md" >&2; exit 2 ;;
 esac

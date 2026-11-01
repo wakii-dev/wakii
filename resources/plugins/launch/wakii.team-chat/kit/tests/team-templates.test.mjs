@@ -59,6 +59,12 @@ ok(m.from === 'smith', 'plan from=smith theo registration: ' + m.from)
 r = run(['plan', 'giả danh', '--from', 'weaver'], { ORCA_AGENT_PANE: 'term_s' })
 ok(r.status === 1, 'plan spoof qua --from phải bị chặn')
 
+// 4b) ask → [HỎI] prefix
+r = run(['ask', '1. Chọn? (a) x (b) y', '--from', 'captain', '--role', 'captain'])
+ok(r.status === 0 && lastLine().text.startsWith('[HỎI] 1. Chọn?'), 'ask prefix [HỎI]: ' + lastLine().text.slice(0, 20))
+r = run(['ask', '--help'])
+ok(r.status === 2, 'ask --help bị chặn')
+
 // 5b) passthrough: --from/--channel không bị vòng parse template nuốt
 r = run(['done', 'P', '--did', 'a', '--test', 'b', '--evidence', 'c', '--from', 'smith', '--channel', 'demo'])
 ok(r.status === 0 && lastLine().from === 'smith' && lastLine().channel === 'demo',
