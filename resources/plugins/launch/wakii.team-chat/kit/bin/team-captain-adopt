@@ -1,0 +1,59 @@
+#!/bin/bash
+# team-captain-adopt — NHẬN một terminal ĐANG MỞ làm Captain (option thủ công của CEO).
+# Không tạo terminal mới: gửi brief Captain vào terminal có sẵn + đăng ký router.
+# Usage: team-captain-adopt --pane <handle> [--room <room>] [--worktree <path>]
+#   --pane     handle terminal (xem: orca terminal list)
+#   --room     room captain trực (mặc định: room đầu rooms.json hoặc general)
+#   --worktree worktree gắn kèm (mặc định: resolve theo room)
+set -u
+ORCA="${ORCA_BIN:-/opt/homebrew/bin/orca}"
+HERE="$(cd "$(dirname "$0")" && pwd)"
+PANE="" ROOM="" WT=""
+while [ $# -gt 0 ]; do case "$1" in
+  --pane) PANE="$2"; shift 2 ;;
+  --room) ROOM="$2"; shift 2 ;;
+  --worktree) WT="$2"; shift 2 ;;
+  *) shift ;;
+esac; done
+[ -n "$PANE" ] || { echo "usage: team-captain-adopt --pane <handle> [--room <room>] [--worktree <path>]" >&2; exit 2; }
+
+# room mặc định: room mở mới nhất trong registry
+[ -n "$ROOM" ] || ROOM=$(python3 - "$HOME/.claude/chat/rooms.json" <<'PY'
+import json, sys
+try: reg = json.load(open(sys.argv[1], encoding="utf-8"))
+except Exception: sys.exit(0)
+opens = [(v.get("createdAt", 0), k) for k, v in reg.items() if isinstance(v, dict) and v.get("status") == "open"]
+print(max(opens)[1] if opens else "general")
+PY
+)
+# worktree: chỉ định → resolve theo room → cwd hiện tại
+if [ -z "$WT" ]; then
+  WT=$(python3 - "$HOME/.claude/chat/.workers.json" "$ROOM" <<'PY'
+import json, sys
+try: reg = json.load(open(sys.argv[1], encoding="utf-8"))
+except Exception: sys.exit(0)
+print(next((e.get("worktree", "") for e in reg.values()
+            if isinstance(e, dict) and e.get("room") == sys.argv[2] and e.get("worktree") and e.get("name") != "captain"), ""))
+PY
+)
+fi
+[ -n "$WT" ] || WT="$(pwd)"
+
+# xoá đăng ký captain cũ cùng room (1 room 1 captain) rồi đăng ký pane này
+python3 - "$HOME/.claude/chat/.workers.json" "$ROOM" <<'PY'
+import json, sys
+p = sys.argv[1]
+try: reg = json.load(open(p, encoding="utf-8"))
+except Exception: reg = {}
+for k in [k for k, e in reg.items() if isinstance(e, dict) and e.get("name") == "captain" and e.get("room") == sys.argv[2]]:
+    reg.pop(k)
+json.dump(reg, open(p, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+PY
+"$HERE/team-orch" register --pane "$PANE" --name captain --worktree "$WT" --repo team --room "$ROOM"
+
+# gửi brief vào terminal đang mở (term có thể đang chạy claude — text vào input của nó)
+"$ORCA" terminal send --terminal "$PANE" --text "Bạn được CEO chỉ định làm CAPTAIN trực room #${ROOM} của Wakii team. HỢP ĐỒNG ĐẦY ĐỦ: ~/.claude/agents/captain.md — đọc NGAY (CHAT STYLE · PHÂN CÔNG cứng · Verify-first · Cleanup-on-done · Commit hygiene cấm trailer AI · HEARTBEAT). Mọi trả lời PHẢI kèm --channel ${ROOM}. Điều phối: ~/.claude/bin/team-orch (feature-open/worker-start/gate-resolve/cleanup). Ngữ cảnh: ~/.claude/bin/team-chat read --last 15. Xác nhận bằng 1 tin team-chat (CHAT STYLE, vào room #${ROOM}) rồi nằm chờ lệnh CEO." --enter --json > /dev/null 2>&1 \
+  && echo "→ brief đã gửi vào terminal $PANE" \
+  || echo "⚠ không gửi được brief (terminal bận?) — tự dán brief tay nếu cần" >&2
+
+echo "team-captain-adopt XONG: terminal $PANE = Captain trực #${ROOM} @ $WT"

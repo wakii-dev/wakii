@@ -741,7 +741,20 @@
       ],
       "outputs": "terminal Captain mới + brief + router registration — heal sau restart app",
       "description": "(Tự-)heal Captain luôn online: dựng terminal claude + brief đọc captain.md + nối router qua registration pane name==captain"
+    },
+    {
+      "name": "team-captain-adopt",
+      "type": "bin",
+      "category": "ops",
+      "owner": "wakii",
+      "inputs": [
+        "--pane <handle>",
+        "--room <room>",
+        "--worktree <path>"
+      ],
+      "outputs": "terminal có sẵn trở thành Captain trực room (brief + registration)",
+      "description": "Option thủ công CEO: nhận terminal ĐANG MỞ làm Captain — gửi brief + đăng ký router, không tạo terminal mới"
     }
   ],
-  "kitHash": "b2ee212876f681ba"
+  "kitHash": "db16147d10199d1a"
 }
