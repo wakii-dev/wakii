@@ -34,9 +34,8 @@ except Exception: sys.exit(0)
 if len(sys.argv) > 3 and sys.argv[3]:
     room = sys.argv[3]
     cand = [p for p in panes if reg.get(p, {}).get("room") == room and p in live]
-    cand += [p for p in panes if not reg.get(p, {}).get("room") and p in live]
 else:
-    cand = [p for p in panes if p in live]
+    cand = [p for p in panes if p in live]  # không chỉ định room → bất kỳ captain sống
 if cand: print(cand[0])
 PY
 )

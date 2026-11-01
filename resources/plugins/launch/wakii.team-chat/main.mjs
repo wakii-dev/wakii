@@ -1494,9 +1494,8 @@ export default function activate(orca) {
       const room = msg.channel || 'general'
       const entries = await captainEntries()
       const live = await livePanes()
-      // Captain TRỰC ROOM: ưu tiên entry khớp room; fallback captain toàn cục
+      // STRICT 1 room 1 captain: chỉ captain đăng ký đúng room này (CEO ruling 1/11)
       const pick = entries.find((c) => c.room === room && live.has(c.pane))
-             || entries.find((c) => !c.room && live.has(c.pane))
       if (pick) { await forwardTo(pick.pane, msg); return }
       appendLine({ from: 'system', role: 'system', channel: room,
         text: '💤 Captain#' + room + ' đang offline — tự đánh thức (gắn worktree room)…' }).catch(() => {})
@@ -1506,7 +1505,7 @@ export default function activate(orca) {
           await new Promise((r) => setTimeout(r, 12000)) // chờ Captain nhận brief (script gửi ở giây 8)
           const after = await captainEntries()
           const live2 = await livePanes()
-          const ok2 = after.find((c) => c.room === room && live2.has(c.pane)) || after.find((c) => !c.room && live2.has(c.pane))
+          const ok2 = after.find((c) => c.room === room && live2.has(c.pane))
           if (ok2) await forwardTo(ok2.pane, msg)
         } catch { /* bỏ qua */ }
       })()
@@ -1630,7 +1629,7 @@ export default function activate(orca) {
         const live = await livePanes()
         const byRoom = {}
         for (const r of new Set(['general', ...roomListSeen])) {
-          const hit = entries.find((c) => c.room === r && live.has(c.pane)) || entries.find((c) => !c.room && live.has(c.pane))
+          const hit = entries.find((c) => c.room === r && live.has(c.pane))
           byRoom[r] = hit ? { online: true, pane: hit.pane, worktree: hit.worktree } : { online: false }
         }
         const sig = JSON.stringify(byRoom)
