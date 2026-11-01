@@ -73,6 +73,7 @@
     border: 1px solid #26262c; white-space: pre-wrap; word-break: break-word;
   }
   .row.mine .bubble { background: #1d2b22; border-color: #2b4231; }
+  .msg.pending { opacity: .55; }
   .bubble.k-plan { border-left: 3px solid #4f83cc; }
   .bubble.k-done { border-left: 3px solid #3fb96f; }
   .bubble.k-blocked { border-left: 3px solid #c24040; }
@@ -471,8 +472,18 @@
     })
   }
 
-  function render(all) {
+  function render(all, pending) {
     var lines = all.filter(function (m) { return (m.channel || 'general') === activeRoom })
+    // Pending echo: tin CEO vừa gửi chưa lên bus — hiện mờ cuối khung, tự thay
+    // bằng bản thật khi bus có tin cùng at (không lặp).
+    if (pending) {
+      var known = new Set(all.map(function (m) { return m.at + '|' + m.text }))
+      pending.forEach(function (it) {
+        if ((it.channel || 'general') === activeRoom && !known.has(it.at + '|' + it.text)) {
+          lines.push({ at: it.at, from: it.from, role: it.role, channel: it.channel, text: it.text, pending: true })
+        }
+      })
+    }
     empty.textContent = 'Chưa có tin nhắn trong ' + (activeRoom === 'general' ? 'Team' : '#' + activeRoom) + '.'
     empty.style.display = lines.length ? 'none' : 'block'
     messages.innerHTML = ''
@@ -518,10 +529,10 @@
       ;((r && r.value) || []).forEach(function (l) { try { all.push(JSON.parse(l)) } catch (e) {} })
       // Chỉ re-render khi nội dung đổi — rebuild mỗi tick sẽ nuốt click chuột
       // thật đang giữa press→release (bug form [HỎI] 1/11) và tốn CPU.
-      var sig = JSON.stringify(all) + '|' + activeRoom + '|' + ceoName + '|' + JSON.stringify(members)
+      var sig = JSON.stringify(all) + '|' + activeRoom + '|' + ceoName + '|' + JSON.stringify(members) + '|' + JSON.stringify(outbox)
       lastMsgs = all
       document.getElementById('live').classList.remove('off')
-      if (sig !== lastRenderedSig) { lastRenderedSig = sig; render(all) }
+      if (sig !== lastRenderedSig) { lastRenderedSig = sig; render(all, outbox.slice()) }
       call('storage.get', { key: 'team.chat.rooms' }).then(function (rr) {
         var list = (rr && rr.value) || null
         if (Array.isArray(list) && list.length) roomList = list
