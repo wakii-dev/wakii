@@ -1,0 +1,87 @@
+#!/bin/bash
+# team-worker-split — thuê worker trong room bằng SPLIT pane của terminal Captain
+# (CEO ruling: 1 room = 1 worktree; captain + tối đa 3 worker xếp split-grid
+# trong CÙNG khung terminal). Terminal mới = pane con, không phải tab riêng.
+# Usage: team-worker-split --room <room> --name <tên-worker> [--title <t>]
+set -u
+ORCA="${ORCA_BIN:-/opt/homebrew/bin/orca}"
+HERE="$(cd "$(dirname "$0")" && pwd)"
+ROOM="" NAME="" TITLE=""
+while [ $# -gt 0 ]; do case "$1" in
+  --room) ROOM="$2"; shift 2 ;;
+  --name) NAME="$2"; shift 2 ;;
+  --title) TITLE="$2"; shift 2 ;;
+  *) shift ;;
+esac; done
+[ -n "$ROOM" ] && [ -n "$NAME" ] || { echo "usage: team-worker-split --room <room> --name <tên>" >&2; exit 2; }
+
+REG="$HOME/.claude/chat/.workers.json"
+ROOMS="$HOME/.claude/chat/rooms.json"
+WT=$(python3 - "$ROOMS" "$REG" "$ROOM" <<'PY'
+import json, sys
+wt = ""
+try: wt = (json.load(open(sys.argv[1], encoding="utf-8")).get(sys.argv[2]) or {}).get("worktree", "")
+except Exception: pass
+if not wt:
+    try:
+        reg = json.load(open(sys.argv[2], encoding="utf-8"))
+        wt = next((e.get("worktree", "") for e in reg.values()
+                   if isinstance(e, dict) and e.get("room") == sys.argv[3] and e.get("worktree")), "")
+    except Exception: pass
+print(wt)
+PY
+)
+[ -n "$WT" ] || WT="$(pwd)"  # chót: cwd — room nên có worktree trong metadata
+
+# Max 3 worker/room (grid 3) — cùng luật worker-start
+CNT=$(python3 - "$REG" "$ROOM" "$ORCA" <<'PY'
+import json, sys, subprocess
+try: reg = json.load(open(sys.argv[1], encoding="utf-8"))
+except Exception: print(0); sys.exit(0)
+panes = [p for p, e in reg.items() if isinstance(e, dict) and e.get("room") == sys.argv[2] and e.get("name") != "captain"]
+try:
+    out = subprocess.run([sys.argv[3], "terminal", "list", "--json"], capture_output=True, text=True, timeout=15).stdout
+    live = {t.get("handle") for t in json.loads(out).get("result", {}).get("terminals", [])}
+    print(sum(1 for p in panes if p in live))
+except Exception: print(len(panes))
+PY
+)
+if [ "${CNT:-0}" -ge 3 ]; then
+  echo "TỪ CHỐI: room #$ROOM đã đủ 3 worker (grid 3). Hoàn thành/dọn worker trước." >&2
+  exit 4
+fi
+
+# Pane gốc để split: captain của room (fallback terminal đang mở đầu tiên)
+BASE=$(python3 - "$REG" "$ROOM" "$ORCA" <<'PY'
+import json, sys, subprocess
+try: reg = json.load(open(sys.argv[1], encoding="utf-8"))
+except Exception: sys.exit(0)
+cands = [p for p, e in reg.items() if isinstance(e, dict) and e.get("name") == "captain" and e.get("room") == sys.argv[2]]
+if not cands: sys.exit(0)
+print(cands[0])
+PY
+)
+if [ -z "$BASE" ]; then echo "room #$ROOM chưa có captain — chạy team-captain-spawn --room $ROOM trước." >&2; exit 3; fi
+
+echo "team-worker-split: split pane từ captain ($BASE)…"
+OUT=$("$ORCA" terminal split --terminal "$BASE" --direction vertical \
+  --command "claude --dangerously-skip-permissions" --json 2>&1) || { echo "$OUT" >&2; exit 1; }
+PANE=$(printf '%s' "$OUT" | python3 -c '
+import json, sys
+def dig(o):
+    if isinstance(o, dict):
+        v = o.get("handle")
+        if isinstance(v, str) and v.startswith("term_"): return v
+        for x in o.values():
+            r = dig(x)
+            if r: return r
+print(dig(json.loads(sys.stdin.read())) or "")
+')
+[ -n "$PANE" ] || { echo "không bóc được pane từ split — output:" >&2; echo "$OUT" >&2; exit 1; }
+[ -n "$TITLE" ] && "$ORCA" terminal rename --terminal "$PANE" --title "$TITLE" >/dev/null 2>&1 || true
+
+"$HERE/team-orch" register --pane "$PANE" --name "$NAME" --worktree "$WT" --repo team --room "$ROOM"
+sleep 8
+"$ORCA" terminal send --terminal "$PANE" --text "Bạn là $NAME — worker trong room #${ROOM} (Wakii team). Worktree: $WT. HỢP ĐỒNG: ~/.claude/agents/captain.md mục Team Contract + Templates: ~/.claude/skills/team-workflow/TEMPLATES.md. Nói chuyện qua chat: ~/.claude/bin/team-chat send \"...\" (KHÔNG --from — tên theo pane). Có plan-gate: post [PLAN] trước khi ghi file: team-chat plan \"...\". DONE: team-chat done --did --test --evidence. KHÔNG commit. Xác nhận 1 tin rồi nhận lệnh." --enter --json > /dev/null 2>&1 \
+  && echo "→ brief đã gửi"
+echo "team-worker-split XONG: $NAME = $PANE (pane split, room #$ROOM, grid $((CNT+1))/3)"

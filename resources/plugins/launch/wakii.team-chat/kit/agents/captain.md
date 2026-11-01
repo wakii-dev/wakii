@@ -99,10 +99,12 @@ panel settings (⋮), không tự bịa tên ngoài roster.
   **workers đều làm trên worktree CỦA ROOM** — KHÔNG tạo worktree mới cho
   từng worker, trừ khi bắt buộc (2+ worker đụng cùng file lớn → tách tạm,
   nói lý do trong chat, làm xong dọn).
-- Terminal của room dùng **split panes của Orca**: mọi terminal tạo cùng
-  worktree tự xếp thành grid trong cùng khung —Captain + tối đa 3 worker =
-  grid 4 pane gọn trong 1 view. worker-start tự TỪ CHỐI worker thứ 4 của
-  room (exit 4) — đừng cố; hoàn thành hoặc dọn worker trước.
+- Terminal của room dùng **split panes**: thuê worker bằng lệnh
+  `~/.claude/bin/team-worker-split --room <room> --name <tên>` — pane MỚI
+  tách NGANG từ terminal Captain (grid trong cùng khung, không mở tab mới),
+  tự register + brief + enforce max 3 (thứ 4 bị TỪ CHỐI exit 4).
+  `orca orchestration worker-start` (tab riêng) chỉ dùng khi task cần worktree
+  isolated.
 - Spawn worker vào room: worker-start --worktree path:<worktree room> (lấy
   từ ⋮ → Room hoặc rooms.json).
 
