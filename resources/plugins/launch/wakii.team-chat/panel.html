@@ -555,33 +555,50 @@
   }
 
   // ── Gửi: tên = CEO name từ settings; room = tab đang mở ──
-  var sendChain = Promise.resolve()
+  // HÀNG ĐỢI (không block, không mất tin): mọi tin vào outbox; pump ghi slot
+  // → đợi worker pick (slot sạch) → flush tin kế. Double-send trùng nội dung
+  // đang chờ bị chặn trong send().
+  var outbox = []
+  var pumping = false
+  function pumpOutbox() {
+    if (pumping || !outbox.length) return
+    pumping = true
+    var item = outbox[0]
+    call('storage.set', { key: 'team.chat.send', value: item }).then(function () {
+      var waited = 0
+      var iv = setInterval(function () {
+        call('storage.get', { key: 'team.chat.send' }).then(function (r) {
+          var v = r && r.value
+          if (!v || !v.at || v.at !== item.at) {
+            clearInterval(iv); outbox.shift(); pumping = false
+            sendBtn.disabled = !textInput.value.trim()
+            pumpOutbox()
+          } else if ((waited += 500) >= 6000) {
+            clearInterval(iv)
+            call('storage.set', { key: 'team.chat.send', value: item }).catch(function () {})
+            outbox.shift(); pumping = false; setTimeout(pumpOutbox, 2000)
+          }
+        }).catch(function () { clearInterval(iv); outbox.shift(); pumping = false; setTimeout(pumpOutbox, 500) })
+      }, 500)
+    }).catch(function () { outbox.shift(); pumping = false; setTimeout(pumpOutbox, 500) })
+  }
   function postAs(from, role, room, text) {
-    sendChain = sendChain
-      .then(function () { return call('storage.set', { key: 'team.chat.send', value: { at: Date.now(), from: from, role: role, channel: room, text: text } }) })
-      .then(function () { return new Promise(function (res) { setTimeout(res, 2500) }) })
-    return sendChain
+    outbox.push({ at: Date.now(), from: from, role: role, channel: room, text: text })
+    pumpOutbox()
   }
   function send() {
     var text = textInput.value.trim()
     if (!text) return
     var from = (ceoName || 'CEO').trim().slice(0, 40)
     var room = activeRoom === 'general' ? 'general' : activeRoom
+    if (outbox.some(function (it) { return it.text === text && it.channel === room })) {
+      textInput.value = ''; textInput.focus(); return // tin đang gửi — chặn bản 2
+    }
     textInput.value = ''
+    postAs(from, 'owner', room, text)
     sendBtn.disabled = true
-    sendChain = sendChain
-      .then(function () {
-        return call('storage.set', {
-          key: 'team.chat.send',
-          value: { at: Date.now(), from: from, role: 'owner', channel: room, text: text }
-        })
-      })
-      .then(function () { return new Promise(function (res) { setTimeout(res, 2500) }) })
-      .then(function () { sendBtn.disabled = false; textInput.focus() })
-      .catch(function () { sendBtn.disabled = false })
+    textInput.focus()
   }
-  sendBtn.disabled = true
-  textInput.addEventListener('input', function () { sendBtn.disabled = !textInput.value.trim() })
   sendBtn.addEventListener('click', function () { send(); sendBtn.disabled = !textInput.value.trim() })
   textInput.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') { e.preventDefault(); send() }
