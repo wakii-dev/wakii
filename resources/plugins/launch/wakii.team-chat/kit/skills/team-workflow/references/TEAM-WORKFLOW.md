@@ -346,8 +346,8 @@ room (nút Duyệt cho CEO), KHÔNG dispatch stage kế khi chưa duyệt:
 | 1 NGHIÊN CỨU + IMPACT | worker `impact-*` (agent `phase0-impact-analyst`, READ-ONLY) | `team-chat impact` — 6 chiều bắt buộc |
 | 2 BRAINSTORM | Captain hỏi CEO | `team-chat ask` — form chip bấm |
 | 3 DESIGN + MINDMAP | worker design / Captain tổng hợp | `team-chat design` + `team-chat mindmap` |
-| 4 SPEC + SCAFFOLD | smith/weaver | `[PLAN]` → DONE như thường |
-| 5 THI CÔNG + REVIEW | workers + worker `reviewer-*` (agent `code-reviewer`) độc lập | DONE ③ → `team-chat review` verdict ok mới harvest |
+| 4 SPEC + SCAFFOLD + TEST TRƯỚC | smith/weaver + `mason-*` viết acceptance tests từ DoD | `[PLAN]` → DONE; test là hợp đồng đo được |
+| 5 THI CÔNG + REVIEW + SMOKE | workers + `reviewer-*` (agent `code-reviewer`) + `mason-*` e2e smoke cuối gói | DONE ③ (chạy suite mason) → `team-chat review` ok → mason smoke → harvest |
 
 Luật: "tăng tốc" = thêm worker TRONG stage (không nhảy stage) · tin "duyệt" chỉ
 mở gate cho stage đang trình · reviewer KHÔNG là người viết code · 3 tầng test:

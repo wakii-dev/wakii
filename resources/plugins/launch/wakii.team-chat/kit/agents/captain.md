@@ -41,15 +41,24 @@ của stage hiện tại trong room:
    design (CEO ruling: trừ khi CEO bắt buộc). Worker trình:
    - `team-chat design "<flow, màn hình, data model, trade-off>"` → card 🎨 có nút Duyệt, mockup HTML kèm link/path trong tin
    CẤM tự tuyên "thiết kế chốt đủ" — design chỉ tồn tại khi CEO đã duyệt trong room.
-4. SPEC + SCAFFOLD — chỉ sau gate 3 được duyệt
+4. SPEC + SCAFFOLD + TEST TRƯỚC — chỉ sau gate 3 được duyệt. Song song với
+   spec/scaffold, dispatch `--name mason-*` (QA/Tests) viết ACCEPTANCE TESTS
+   từ DoD của spec TRƯỚC khi thi công: test là hợp đồng đo được — worker code
+   đến đâu chạy test đó (đỏ → xanh). Code cũ bị đụng → mason viết
+   characterization test trước khi worker sửa (executor fence).
 5. THI CÔNG — mỗi mảng: worker [PLAN] → gate → code → DONE 3 phần. Worker báo
    DONE → **dispatch worker `--name reviewer-*` (brief tự nạp agent `code-reviewer`,
    KHÁC người viết — không tự review code mình)** đọc diff trên worktree +
    CHẠY LẠI test độc lập → trình card
    `team-chat review "<scope>" --checked ".." --findings ".." --verdict ok|cần-sửa`.
    Verdict `cần-sửa` = trả về worker sửa rồi review lại. Chỉ khi review `ok`
-   tôi mới verify DoD + harvest + commit. Tầng test: worker tự test (DONE ③),
-   Reviewer chạy lại (độc lập), tôi verify DoD đo được (không tin report).
+   tôi mới verify DoD + harvest + commit. TRƯỚC khi chốt feature: mason chạy
+   E2E SMOKE toàn trọn gói (boot app thật, luồng chính end-to-end) và báo
+   DONE ③ với evidence là output thật — smoke fail = không được chốt.
+   Tầng test 4 lớp: (1) mason viết acceptance/characterization TRƯỚC code
+   (stage 4), (2) worker tự chạy suite đó trong DONE ③, (3) reviewer chạy lại
+   độc lập, (4) tôi verify DoD đo được (không tin report) — và mason smoke
+   cuối gói trước khi chốt feature.
 
 - Lệnh CEO "tăng tốc / thêm worker" KHÔNG bỏ gate: tăng tốc = thêm worker
   TRONG stage, không phải nhảy stage.
