@@ -86,6 +86,9 @@
   .c-head.k-design { color: #b79ae0; }
   .c-head.k-mindmap { color: #6fbfcf; }
   .c-head.k-impact { color: #d9b380; }
+  .c-head.k-review { color: #9ac2b0; }
+  .rv-ok { color: #6fcf97; font-weight: 700; }
+  .rv-fix { color: #e07a7a; font-weight: 700; }
   .mm { margin: 2px 0 4px; }
   .mm-node { line-height: 1.55; padding: 1px 0; border-left: 1px solid #6fbfcf55; }
   .mm-node.d0 { font-weight: 600; border-left: none; }
@@ -355,12 +358,12 @@
   function renderContent(bubble, text, kind) {
     bubble.innerHTML = ''
     var rest = text
-    if (kind === 'k-plan' || kind === 'k-done' || kind === 'k-blocked' || kind === 'k-design' || kind === 'k-mindmap' || kind === 'k-impact') {
-      var labels = { 'k-plan': '📋 Plan', 'k-done': '✅ Done', 'k-blocked': '⛔ Blocked', 'k-design': '🎨 Design — chờ CEO duyệt', 'k-mindmap': '🧠 Mindmap — chờ CEO duyệt', 'k-impact': '🔍 Impact — phân tích đa chiều' }
+    if (kind === 'k-plan' || kind === 'k-done' || kind === 'k-blocked' || kind === 'k-design' || kind === 'k-mindmap' || kind === 'k-impact' || kind === 'k-review') {
+      var labels = { 'k-plan': '📋 Plan', 'k-done': '✅ Done', 'k-blocked': '⛔ Blocked', 'k-design': '🎨 Design — chờ CEO duyệt', 'k-mindmap': '🧠 Mindmap — chờ CEO duyệt', 'k-impact': '🔍 Impact — phân tích đa chiều', 'k-review': '🔎 Review code — độc lập với người viết' }
       var h = document.createElement('div'); h.className = 'c-head ' + kind
       h.textContent = labels[kind]
       bubble.appendChild(h)
-      rest = text.replace(/^\[PLAN\]\s*/, '').replace(/^DONE\s*/, '').replace(/^BLOCKED\s*/, '').replace(/^\[DESIGN\]\s*/, '').replace(/^\[MINDMAP\]\s*/, '').replace(/^\[IMPACT\]\s*/, '')
+      rest = text.replace(/^\[PLAN\]\s*/, '').replace(/^DONE\s*/, '').replace(/^BLOCKED\s*/, '').replace(/^\[DESIGN\]\s*/, '').replace(/^\[MINDMAP\]\s*/, '').replace(/^\[IMPACT\]\s*/, '').replace(/^\[REVIEW\]\s*/, '')
     }
     if (kind === 'k-mindmap') {
       // Cây tính năng từ indentation (2 space = 1 cấp) — bằng chứng trình CEO
@@ -375,6 +378,27 @@
         mmBox.appendChild(nd)
       })
       if (mmBox.children.length) bubble.appendChild(mmBox)
+      return
+    }
+    if (kind === 'k-review') {
+      var rsecs = rest.split(/[①②③]/)
+      var rtitle = (rsecs.shift() || '').replace(/[\s—-]+$/, '').trim()
+      if (rtitle) { var rt = document.createElement('div'); rt.className = 'c-title'; inlineInto(rt, rtitle); bubble.appendChild(rt) }
+      var rlbls = ['① Đã kiểm', '② Phát hiện', '③ Phán quyết']
+      rsecs.forEach(function (sRaw, i) {
+        var sv = sRaw.trim().replace(/^:\s*/, '')
+        if (!sv) return
+        var sec = document.createElement('div'); sec.className = 'c-sec'
+        var l = document.createElement('div'); l.className = 'c-lbl'; l.textContent = rlbls[i] || '·'
+        sec.appendChild(l)
+        if (i === 2) {
+          var v = document.createElement('div')
+          v.className = /cần-sửa|can-sua/i.test(sv) ? 'rv-fix' : 'rv-ok'
+          v.textContent = /cần-sửa|can-sua/i.test(sv) ? '⛔ ' + sv : '✅ ' + sv
+          sec.appendChild(v)
+        } else { sv.split('\n').forEach(function (ln) { if (ln.trim()) addBodyLine(sec, ln) }) }
+        bubble.appendChild(sec)
+      })
       return
     }
     if (kind === 'k-impact') {
@@ -472,6 +496,7 @@
     if (/^\[DESIGN/i.test(text)) return 'k-design'
     if (/^\[MINDMAP/i.test(text)) return 'k-mindmap'
     if (/^\[IMPACT/i.test(text)) return 'k-impact'
+    if (/^\[REVIEW/i.test(text)) return 'k-review'
     if (/^DONE/i.test(text)) return 'k-done'
     if (/^BLOCKED/i.test(text)) return 'k-blocked'
     return ''

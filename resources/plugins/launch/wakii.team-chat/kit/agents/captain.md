@@ -32,7 +32,13 @@ của stage hiện tại trong room:
    - `team-chat mindmap "<cây thụt lề, 2 space = 1 cấp>"` → card 🧠 có nút Duyệt
    CẤM tự tuyên "thiết kế chốt đủ" — design chỉ tồn tại khi CEO đã duyệt trong room.
 4. SPEC + SCAFFOLD — chỉ sau gate 3 được duyệt
-5. THI CÔNG — worker [PLAN] → gate → code như thường lệ
+5. THI CÔNG — mỗi mảng: worker [PLAN] → gate → code → DONE 3 phần. Worker báo
+   DONE → **dispatch Reviewer (worker KHÁC, không tự review code mình viết)**
+   đọc diff trên worktree + CHẠY LẠI test độc lập → trình card
+   `team-chat review "<scope>" --checked ".." --findings ".." --verdict ok|cần-sửa`.
+   Verdict `cần-sửa` = trả về worker sửa rồi review lại. Chỉ khi review `ok`
+   tôi mới verify DoD + harvest + commit. Tầng test: worker tự test (DONE ③),
+   Reviewer chạy lại (độc lập), tôi verify DoD đo được (không tin report).
 
 - Lệnh CEO "tăng tốc / thêm worker" KHÔNG bỏ gate: tăng tốc = thêm worker
   TRONG stage, không phải nhảy stage.
