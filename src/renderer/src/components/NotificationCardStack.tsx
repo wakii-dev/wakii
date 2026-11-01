@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react'
+import { useAppStore } from '@/store'
 import { NOTIFICATION_CARD_STACK_HEIGHT_VAR } from '@/lib/notification-card-stack-height'
 import {
   measureComposerClearance,
@@ -18,6 +19,12 @@ const STACK_STYLE = {
 
 export function NotificationCardStack({ children }: { children: ReactNode }): React.JSX.Element {
   const stackRef = useRef<HTMLDivElement>(null)
+  // CEO ruling 1/11: toast không được đè sidebar phải — offset theo chiều rộng
+  // sidebar đang mở (chat panel), kẹp trong phần nội dung còn lại.
+  const rightSidebarOpen = useAppStore((s) => s.rightSidebarOpen)
+  const rightSidebarWidth = useAppStore((s) => s.rightSidebarWidth)
+  const rightInset =
+    rightSidebarOpen && rightSidebarWidth ? `calc(${rightSidebarWidth}px + 1rem)` : undefined
 
   useEffect(() => {
     const stack = stackRef.current
@@ -66,8 +73,9 @@ export function NotificationCardStack({ children }: { children: ReactNode }): Re
   return (
     <div
       ref={stackRef}
-      style={STACK_STYLE}
-      className="pointer-events-none fixed right-4 z-50 flex w-[360px] max-w-[calc(100vw-32px)] flex-col-reverse gap-2 overflow-y-auto scrollbar-sleek [&>*]:pointer-events-auto [&>*]:shrink-0 max-[480px]:left-4 max-[480px]:right-4 max-[480px]:w-auto"
+      style={{ ...STACK_STYLE, ...(rightInset ? { right: rightInset } : {}) }}
+      className="pointer-events-none fixed right-4 z-50 flex w-[360px] max-w-[calc(100vw-32px)] flex-col-reverse gap-2 overflow-y-auto scrollbar-sleek [&>*]:pointer-events-auto [&>*]:shrink-0 max-[480px]:left-4 max-[480px]:right-4 max-[480px]:w-auto motion-safe:transition-[right] motion-safe:duration-150"
+      data-notification-stack=""
     >
       {children}
     </div>

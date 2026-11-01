@@ -85,3 +85,32 @@ docs/walkthrough.md
 - Kẹt ~15' → `BLOCKED <lý do>` — cấm grind; block×3 cùng cách → chờ Captain ép hướng.
 - DONE chuẩn 3 phần (§0.0-5): ① Giải thích ② Báo cáo (output lệnh) ③ Cách test. Không commit — Captain commit.
 - Vào phòng: ĐỌC embeds trước tiên (research/analysis/design/decision).
+
+
+## UI verify bằng Orca browser (Wakii team 1/11)
+
+App có UI (web/Next.js) → tự verify LỖI UI bằng browser nhúng của Orca, KHÔNG
+đoán mò từ code:
+
+```bash
+ORCA="orca"                                    # trong terminal Orca: $ORCA_BIN
+$ORCA tab create --url http://localhost:3000   # mở app (URL dev server từ forge/weaver)
+$ORCA snapshot --compact                       # cây accessibility + element refs @e1 @e2
+$ORCA click --element e3                       # bấm nút theo ref
+$ORCA fill --element e5 --value "test@x.com"   # điền form
+$ORCA keypress --key Enter
+$ORCA eval --expression "document.title"       # đọc trạng thái DOM
+$ORCA screenshot --format jpeg                 # chụp màn hiện tại
+```
+
+Luồng verify: đi ĐÚNG luồng chính trong spec (đăng ký → deck → học card), mỗi
+màn hình chụp 1 screenshot. Thấy sai khác spec/design (layout vỡ, text sai,
+lỗi console qua eval) = PHÁT HIỆN UI bug — ghi rõ màn + bước +expected/actual.
+
+Báo cáo: card `team-chat review "UI <feature>" --checked ".." --findings ".."
+--verdict ok|cần-sửa`. Evidence screenshot cho CEO thấy trong chat:
+1. Downscale nếu to: `sips -Z 900 shot.jpeg` (macOS)
+2. Copy vào media bus: `cp shot.jpeg ~/.claude/chat/media/<id>.jpg`
+3. Tin nhắn chứa dòng riêng `📷<id>` — panel tự hiển thị ảnh (plugin import slot).
+
+Screenshot đặt id ngắn như ui-login, ui-deck — dễ đọc trong báo cáo.

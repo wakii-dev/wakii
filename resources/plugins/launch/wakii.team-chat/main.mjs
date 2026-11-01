@@ -1468,6 +1468,7 @@ export default function activate(orca) {
   // terminal agent mở được + dọn slot cũ — giữ N ảnh mới nhất (tổng cap 5MB).
   let mediaSweepTick = 0
   const MEDIA_KEEP = 16
+  const mediaImported = new Set()
   const sweepMediaSlots = async () => {
     try {
       const keysRes = await orca.host.call('storage.keys').catch(() => null)
@@ -1493,6 +1494,20 @@ export default function activate(orca) {
       for (const e of excess) {
         await orca.host.call('storage.delete', { key: e.key }).catch(() => {})
       }
+      // Chiều ngược: agent/CEO copy ảnh vào chatDir/media/<id>.jpg → import slot
+      // để token 📷<id> hiển thị trong chat (cap 200KB — agent tự sips downscale).
+      try {
+        const dir = join(chatDir, 'media')
+        for (const f of readdirSync(dir)) {
+          const mId = f.replace(/\.(jpe?g|png)$/i, '')
+          if (!mId || mediaImported.has(mId) || seen.has('team.chat.img.' + mId)) continue
+          const buf = readFileSync(join(dir, f))
+          if (buf.byteLength > 200 * 1024) { mediaImported.add(mId); continue }
+          const dataUrl = 'data:image/jpeg;base64,' + buf.toString('base64')
+          await orca.host.call('storage.set', { key: 'team.chat.img.' + mId, value: { at: Date.now(), mime: 'image/jpeg', dataUrl } }).catch(() => {})
+          mediaImported.add(mId)
+        }
+      } catch { /* import best-effort */ }
     } catch { /* sweep best-effort */ }
   }
   const mmCache = new Map()

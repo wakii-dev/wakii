@@ -502,6 +502,25 @@ os.replace(tmp, log_p)
 print(f"→ 🗑 room #{room}: {'đã xoá (nhớ deleted — không tự hồi sinh)' if gone else 'không có trong registry (đã đánh dấu deleted nếu tồn tại)'}; {dropped} tin đã xoá khỏi bus")
 PY
     ;;
+  reg-clean)
+    # Dọn REG: xoá entry pane đã chết (không còn trong terminal list) — bug CEO
+    # báo 1/11: REG tích tụ entry chết làm đội hình room hiển thị sai.
+    LIST_RAW=$("$ORCA" terminal list --json 2>/dev/null)
+    python3 - "$REG" "$LIST_RAW" <<'PY'
+import json, sys, os
+try: reg = json.load(open(sys.argv[1], encoding="utf-8"))
+except Exception: sys.exit(0)
+try: live = {t.get("handle") for t in json.loads(sys.argv[2])["result"]["terminals"]}
+except Exception: live = set()
+if not live:
+    print("reg-clean: terminal list rỗng/lỗi — HỦY, không dọn gì (chống xoá nhầm entry sống)")
+    sys.exit(1)
+dead = [p for p in reg if p.startswith("term_") and p not in live]
+for p in dead: del reg[p]
+json.dump(reg, open(sys.argv[1], "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+print(f"reg-clean: bỏ {len(dead)} pane chết; còn {len(reg)} entry sống")
+PY
+    ;;
   register)
     # register --pane <handle> --name <n> --worktree <path> [--task --run --repo --room]
     PANE="" NAME="" WTV="" TASK="" RUN="" REPO="" ROOM="general"

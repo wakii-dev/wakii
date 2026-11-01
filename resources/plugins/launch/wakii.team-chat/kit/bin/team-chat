@@ -253,6 +253,21 @@ $TEXT" --role worker ${TPL_PASS[@]+"${TPL_PASS[@]}"} ;;
            echo "usage: team-chat impact \"<yêu cầu>\" --scope \"..\" --arch \"..\" --risk \"..\" --effort \"..\" --deps \"..\" --rec \"..\"" >&2
            echo "IMPACT phải ĐỦ 6 chiều — thiếu chiều nào là phân tích 1 chiều, bị trả lại." >&2; exit 2; }
          send_msg "[IMPACT] $REQ_ — ① Phạm vi: $SCOPE_ ② Kiến trúc: $ARCH_ ③ Rủi ro: $RISK_ ④ Effort: $EFF_ ⑤ Phụ thuộc: $DEPS_ ⑥ Đề xuất: $REC_" --role worker ${TPL_PASS[@]+"${TPL_PASS[@]}"} ;;
+  bug)   # team-chat bug "<mô tả>" --steps .. --expected .. --actual .. [--shot "📷id"] → card 🔥 [BUG]
+         DESC_B="$1"; shift
+         STEPS_="" EXP_="" ACT_="" SHOT_=""; TPL_PASS=()
+         while [ $# -gt 0 ]; do case "$1" in
+           --steps) STEPS_="$2"; shift 2 ;;
+           --expected) EXP_="$2"; shift 2 ;;
+           --actual) ACT_="$2"; shift 2 ;;
+           --shot) SHOT_="$2"; shift 2 ;;
+           *) TPL_PASS+=("$1"); shift ;;
+         esac; done
+         [ -n "$DESC_B" ] && [ -n "$EXP_" ] && [ -n "$ACT_" ] || {
+           echo "usage: team-chat bug \"<mô tả>\" --steps \"<tái hiện>\" --expected \"<đúng>\" --actual \"<sai>\" [--shot 📷id]" >&2
+           echo "BUG phải đủ: mô tả + kỳ vọng + thực tế (thiếu là trả lại — không đoán mò)." >&2; exit 2; }
+         send_msg "[BUG] $DESC_B — ① Tái hiện: ${STEPS_:-xem ảnh đính kèm} ② Kỳ vọng: $EXP_ ③ Thực tế: $ACT_${SHOT_:+
+$SHOT_}" --role worker ${TPL_PASS[@]+"${TPL_PASS[@]}"} ;;
   review) # team-chat review "<scope>" --checked .. --findings .. --verdict ok|cần-sửa → [REVIEW] của Reviewer (độc lập với người viết)
          SCOPE_R="$1"; shift
          CHK_="" FND_="" VERDICT_=""; TPL_PASS=()

@@ -52,9 +52,13 @@ của stage hiện tại trong room:
    CHẠY LẠI test độc lập → trình card
    `team-chat review "<scope>" --checked ".." --findings ".." --verdict ok|cần-sửa`.
    Verdict `cần-sửa` = trả về worker sửa rồi review lại. Chỉ khi review `ok`
-   tôi mới verify DoD + harvest + commit. TRƯỚC khi chốt feature: mason chạy
-   E2E SMOKE toàn trọn gói (boot app thật, luồng chính end-to-end) và báo
-   DONE ③ với evidence là output thật — smoke fail = không được chốt.
+   tôi mới verify DoD + harvest + commit. TRƯỚC khi chốt feature: dispatch
+   `--name e2e-*` (agent e2e-runner) TỰ VERIFY UI bằng Orca browser nhúng:
+   mở app thật, đi đúng luồng chính theo spec (snapshot/click/fill/keypress),
+   chụp screenshot từng màn (`orca screenshot --format jpeg`), đối chiếu
+   design đã duyệt — báo card [REVIEW] verdict + evidence 📷 screenshot hiển
+   thị ngay trong chat (cp vào ~/.claude/chat/media/<id>.jpg + dòng 📷<id>).
+   Verdict `cần-sửa` = trả worker UI sửa rồi verify lại. UI chưa verify = không chốt feature.
    Tầng test 4 lớp: (1) mason viết acceptance/characterization TRƯỚC code
    (stage 4), (2) worker tự chạy suite đó trong DONE ③, (3) reviewer chạy lại
    độc lập, (4) tôi verify DoD đo được (không tin report) — và mason smoke
@@ -201,3 +205,25 @@ Worker xong  → TỰ VERIFY (chạy DoD, không tin report) → báo CEO 3 ph�
 
 - `~/.claude/bin/team-chat read --last 10` — đọc ngữ cảnh trước khi trả lời
 - Báo cáo DÀI: ghi `docs/superpowers/reports/<slug>.md`, chat chỉ tóm tắt 5 dòng + link
+
+## XỬ LÝ BUG CEO BÁO (ruling 1/11 — 5 bước khép vòng)
+
+CEO paste ảnh/mô tả bug vào room → router forward tôi → tôi đi ĐÚNG 5 bước:
+
+1. TIẾP NHẬN: ACK + post card `team-chat bug "<mô tả>" --steps ".." --expected
+   ".." --actual ".." --shot "📷<id>"` (đủ 3 phần — thiếu là trả lại). Ảnh CEO
+   paste là bằng chứng GỐC — giữ token trong card.
+2. PHÂN LOẠI: 1 tin chốt mức (blocker/major/minor) + vùng nghi (UI/BE/data).
+   Bug phức tạp → dispatch `--name impact-*` 6 chiều; bug nhỏ bỏ qua cho nhanh.
+3. TÁI HIỆN: dispatch `--name e2e-*` — Orca browser đi theo --steps, chụp
+   screenshot màn lỗi. KHÔNG tái hiện được → hỏi CEO bằng form [HỎI] (env,
+   tài khoản, bước thiếu) — CẤM đoán mò sửa.
+4. SỬA: worker đúng vùng, plan gate FAST-TRACK 1 dòng (tôi duyệt tức thì) —
+   vẫn qua gate cho ledger. Ảnh trước-fix kèm brief.
+5. VERIFY + ĐÓNG: reviewer code + e2e tái hiện lại CÙNG luồng — 1 tin 2 ảnh
+   trước 🔴 / sau 🟢. Tôi tổng hợp → CEO bấm "✅ Đã sửa — đóng bug" trên card.
+   CHỈ CEO đóng bug.
+
+Luật ưu tiên: tin CEO có chữ "gấp" = pause worker đang chạy ngay; không = xếp
+sau task đang dở. Worker chết giữa việc (pane chết, REG stale) = tôi phát
+hiện qua heartbeat, tự dọn REG + báo CEO trước khi tái điều phối.

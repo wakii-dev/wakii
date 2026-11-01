@@ -103,6 +103,8 @@ ROLE_AGENTS = [
      'team-chat impact "<phát hiện>" --scope .. --arch .. --risk .. --effort .. --deps .. --rec ..'),
     ("warden", "code-reviewer.md",
      'team-chat review "<scope>" --checked ".." --findings ".." --verdict ok|cần-sửa'),
+    ("e2e", "e2e-runner.md",
+     'orca tab create/snapshot/click/fill/screenshot → team-chat review "UI …" + 📷<id>'),
 ]
 
 

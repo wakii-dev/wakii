@@ -87,6 +87,7 @@
   .c-head.k-mindmap { color: #6fbfcf; }
   .c-head.k-impact { color: #d9b380; }
   .c-head.k-review { color: #9ac2b0; }
+  .c-head.k-bug { color: #e07a7a; }
   .rv-ok { color: #6fcf97; font-weight: 700; }
   .rv-fix { color: #e07a7a; font-weight: 700; }
   .mm { margin: 2px 0 4px; }
@@ -412,12 +413,12 @@
   function renderContent(bubble, text, kind, m) {
     bubble.innerHTML = ''
     var rest = text
-    if (kind === 'k-plan' || kind === 'k-done' || kind === 'k-blocked' || kind === 'k-design' || kind === 'k-mindmap' || kind === 'k-impact' || kind === 'k-review') {
-      var labels = { 'k-plan': '📋 Plan', 'k-done': '✅ Done', 'k-blocked': '⛔ Blocked', 'k-design': '🎨 Design — chờ CEO duyệt', 'k-mindmap': '🧠 Mindmap — chờ CEO duyệt', 'k-impact': '🔍 Impact — phân tích đa chiều', 'k-review': '🔎 Review code — độc lập với người viết' }
+    if (kind === 'k-plan' || kind === 'k-done' || kind === 'k-blocked' || kind === 'k-design' || kind === 'k-mindmap' || kind === 'k-impact' || kind === 'k-review' || kind === 'k-bug') {
+      var labels = { 'k-plan': '📋 Plan', 'k-done': '✅ Done', 'k-blocked': '⛔ Blocked', 'k-design': '🎨 Design — chờ CEO duyệt', 'k-mindmap': '🧠 Mindmap — chờ CEO duyệt', 'k-impact': '🔍 Impact — phân tích đa chiều', 'k-review': '🔎 Review code — độc lập với người viết', 'k-bug': '🔥 Bug — chờ xử lý' }
       var h = document.createElement('div'); h.className = 'c-head ' + kind
       h.textContent = labels[kind]
       bubble.appendChild(h)
-      rest = text.replace(/^\[PLAN\]\s*/, '').replace(/^DONE\s*/, '').replace(/^BLOCKED\s*/, '').replace(/^\[DESIGN\]\s*/, '').replace(/^\[MINDMAP\]\s*/, '').replace(/^\[IMPACT\]\s*/, '').replace(/^\[REVIEW\]\s*/, '')
+      rest = text.replace(/^\[PLAN\]\s*/, '').replace(/^DONE\s*/, '').replace(/^BLOCKED\s*/, '').replace(/^\[DESIGN\]\s*/, '').replace(/^\[MINDMAP\]\s*/, '').replace(/^\[IMPACT\]\s*/, '').replace(/^\[REVIEW\]\s*/, '').replace(/^\[BUG\]\s*/, '')
     }
     if (kind === 'k-mindmap') {
       // Embed .wakii: ưu tiên NỘI DUNG LIVE từ file (slot team.chat.mindmaps —
@@ -469,6 +470,22 @@
         })
       })
       bubble.appendChild(mmBox)
+      return
+    }
+    if (kind === 'k-bug') {
+      var bsecs = rest.split(/[①②③]/)
+      var btitle = (bsecs.shift() || '').replace(/[\s—-]+$/, '').trim()
+      if (btitle) { var bt = document.createElement('div'); bt.className = 'c-title'; inlineInto(bt, btitle); bubble.appendChild(bt) }
+      var blbls = ['① Tái hiện', '② Kỳ vọng', '③ Thực tế']
+      bsecs.forEach(function (sRaw, i) {
+        var sv = sRaw.trim().replace(/^:\s*/, '')
+        if (!sv) return
+        var sec = document.createElement('div'); sec.className = 'c-sec'
+        var l = document.createElement('div'); l.className = 'c-lbl'; l.textContent = blbls[i] || '·'
+        sec.appendChild(l)
+        appendBody(sec, sv)
+        bubble.appendChild(sec)
+      })
       return
     }
     if (kind === 'k-review') {
@@ -582,11 +599,22 @@
     acts.appendChild(okB); acts.appendChild(noB)
     msg.appendChild(acts)
   }
+  function appendBugClose(msg, m, text) {
+    var acts = document.createElement('div'); acts.className = 'f-acts'
+    var okB = document.createElement('button'); okB.type = 'button'; okB.className = 'f-act ok'; okB.textContent = '✅ Đã sửa — đóng bug'
+    okB.addEventListener('click', function () {
+      okB.disabled = true; okB.textContent = '→ đã đóng ✓'
+      postAs(ceoName || 'CEO', 'owner', m.channel || 'general', 'Duyệt [BUG] ' + m.from + ': "' + text.replace(/^\[BUG\]\s*/, '').split('\n')[0].slice(0, 40) + '" — bug ĐÓNG.')
+    })
+    acts.appendChild(okB)
+    msg.appendChild(acts)
+  }
   function kindOf(text) {
     if (/^\[PLAN/i.test(text)) return 'k-plan'
     if (/^\[DESIGN/i.test(text)) return 'k-design'
     if (/^\[MINDMAP/i.test(text)) return 'k-mindmap'
     if (/^\[IMPACT/i.test(text)) return 'k-impact'
+    if (/^\[BUG/i.test(text)) return 'k-bug'
     if (/^\[REVIEW/i.test(text)) return 'k-review'
     if (/^DONE/i.test(text)) return 'k-done'
     if (/^BLOCKED/i.test(text)) return 'k-blocked'
@@ -678,6 +706,7 @@
         else if (kindOf(text) === 'k-design') appendPlanActions(msg, m, text, '[DESIGN]')
         else if (kindOf(text) === 'k-mindmap') appendPlanActions(msg, m, text, '[MINDMAP]')
         else if (kindOf(text) === 'k-impact') appendPlanActions(msg, m, text, '[IMPACT]')
+        else if (kindOf(text) === 'k-bug') appendBugClose(msg, m, text)
       }
       row.appendChild(av); row.appendChild(msg)
       messages.appendChild(row)
