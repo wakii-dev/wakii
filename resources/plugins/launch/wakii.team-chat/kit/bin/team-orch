@@ -16,6 +16,21 @@ emit() { # kind actor repo run task data
   "$TC" event "$1" --repo "${3:-unknown}" ${4:+--run-id "$4"} ${5:+--task-id "$5"} \
     --actor "$2" --data "${6:-{\}}" 2>/dev/null | grep -o '→ .*' || true
 }
+
+# Đợi agent TUI sẵn sàng TRƯỚC khi gõ prompt (CEO bug 1/11: prompt rơi vào
+# shell trống khi claude boot chậm). Sẵn sàng = output pane có dấu hiệu TUI.
+wait_agent_ready() { # $1=pane $2=orca_bin → 0 khi sẵn sàng, 1 sau ~60s
+  local i out
+  for i in $(seq 1 20); do
+    out=$("$2" terminal read --terminal "$1" 2>/dev/null | tail -14)
+    if printf '%s' "$out" | grep -qE 'Claude Code|✻|╭|⏺|Esc to interrupt|no auto-accept'; then
+      return 0
+    fi
+    sleep 3
+  done
+  return 1
+}
+
 repo_of_cwd() { # repoId từ worktree hiện tại qua app — đơn giản hoá: env hoặc 'unknown'
   echo "${TEAM_REPO_ID:-unknown}"
 }
@@ -140,6 +155,7 @@ case "$CMD" in
     while [ $# -gt 0 ]; do case "$1" in
       --require-plan-approval) PLAN=1; shift ;;
       --room) ROOM_FLAG="$2"; shift 2 ;;  # local: room của worker — không qua orchestration
+      --background) BG_SPAWN=1; shift ;;  # local: spawn nền — không chặn turn captain
       --name) NAME="$2"; PASS+=("$1" "$2"); shift 2 ;;
       --worktree) WT="$2"; PASS+=("$1" "$2"); shift 2 ;;
       --task) TASK="$2"; PASS+=("$1" "$2"); shift 2 ;;
@@ -190,6 +206,17 @@ PY
       fi
     fi
     HAS_JSON=0; for a in ${PASS[@]+"${PASS[@]}"}; do [ "$a" = "--json" ] && HAS_JSON=1; done
+    # CEO bug 1/11 tối: spawn CHẶN luồng captain (split+ready+dispatch ~80s/worker
+    # → turn 'Mustering' 3-4 phút, heartbeat đứt). --background: chạy lại toàn bộ
+    # pipeline trong subshell detached, captain nhận quyền điều khiển ngay.
+    if [ "${BG_SPAWN:-0}" -eq 1 ]; then
+      (
+        export ORCA="${ORCA:-}" REG
+        nohup "$0" worker-start ${PASS[@]+"${PASS[@]}"} >/dev/null 2>&1
+      ) >/dev/null 2>&1 &
+      echo "team-orch: spawn nền — worker ${NAME%%-*} đang dựng (split → agent-ready → dispatch), theo dõi room."
+      exit 0
+    fi
     # Snapshot worktrees TRƯỚC spawn — fallback vững khi receipt không lộ path
     # (selector 'new-top-level': dig() miss → marker/hooks ghi nhầm chỗ, worker
     # chạy trần trụi — sự cố thật 1/11 docs-writer).
@@ -287,7 +314,11 @@ PY
                      --command "claude --dangerously-skip-permissions" --json 2>/dev/null \
                    | python3 -c 'import json,sys; print(json.load(sys.stdin)["result"]["split"]["handle"])' 2>/dev/null)
         if [ -n "$NEW_PANE" ]; then
-          sleep 8  # claude phải boot xong trước khi orchestration gõ task vào pane
+          if wait_agent_ready "$NEW_PANE" "$ORCA"; then
+            :
+          else
+            echo "team-orch: ⚠ agent chưa lên sau 60s — orchestration gõ task có thể trượt; theo dõi pane" >&2
+          fi
           SPLIT_PANE="$NEW_PANE"
           echo "team-orch: grid — worker pane $NEW_PANE ($SPLIT_DIR từ ${SPLIT_BASE%%-*}) trong tab captain"
         else

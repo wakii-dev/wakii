@@ -349,6 +349,6 @@ room (nút Duyệt cho CEO), KHÔNG dispatch stage kế khi chưa duyệt:
 | 4 SPEC + SCAFFOLD + TEST TRƯỚC | smith/weaver + `mason-*` viết acceptance tests từ DoD | `[PLAN]` → DONE; test là hợp đồng đo được |
 | 5 THI CÔNG + REVIEW + SMOKE | workers + `reviewer-*` (agent `code-reviewer`) + `mason-*` e2e smoke cuối gói | DONE ③ (chạy suite mason) → `team-chat review` ok → mason smoke → harvest |
 
-Luật: "tăng tốc" = thêm worker TRONG stage (không nhảy stage) · tin "duyệt" chỉ
+Spawn worker luôn `--background` (1/11): spawn đồng bộ chặn captain ~80s/worker → turn "Mustering" 3-4 phút, heartbeat đứt. Luật: "tăng tốc" = thêm worker TRONG stage (không nhảy stage) · tin "duyệt" chỉ
 mở gate cho stage đang trình · reviewer KHÔNG là người viết code · 3 tầng test:
 worker tự test (DONE ③) → reviewer chạy lại độc lập → Captain verify DoD đo được.

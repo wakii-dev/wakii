@@ -84,7 +84,20 @@ TC="$HERE/team-chat"; [ -x "$TC" ] || TC="$HOME/.claude/bin/team-chat"
 [ -n "$ROOM" ] && "$TC" send "🔄 Captain terminal mới ($PANE) — đang brief..." --from system --role system --channel "$ROOM" > /dev/null 2>&1 || true
 
 # Brief: Captain đọc hợp đồng đầy đủ trong captain.md — brief ở đây chỉ trỏ tới.
-sleep 8  # đợi claude boot trong terminal
+# Đợi agent TUI sẵn sàng TRƯỚC khi gõ prompt (CEO bug 1/11: prompt rơi vào shell
+# trống khi claude boot chậm). Sẵn sàng = output pane có dấu hiệu TUI claude.
+wait_agent_ready() { # $1=pane $2=orca_bin → 0 khi sẵn sàng, 1 sau ~60s
+  local i out
+  for i in $(seq 1 20); do
+    out=$("$2" terminal read --terminal "$1" 2>/dev/null | tail -14)
+    if printf '%s' "$out" | grep -qE 'Claude Code|✻|╭|⏺|Esc to interrupt|no auto-accept'; then
+      return 0
+    fi
+    sleep 3
+  done
+  return 1
+}
+if ! wait_agent_ready "$PANE" "$ORCA"; then echo "⚠ captain agent chưa lên 60s — brief có thể trượt" >&2; fi
 ROOM_BRIEF=""
 [ -n "$ROOM" ] && ROOM_BRIEF=" Bạn TRỰC room #${ROOM} — MỌI trả lời PHẢI kèm --channel ${ROOM} để CEO thấy đúng khung. Worktree room này là nơi anh chạy lệnh/verify."
 "$ORCA" terminal send --terminal "$PANE" --text "Bạn là CAPTAIN của Wakii team — thường trực (always-online) trong terminal này. HỢP ĐỒNG ĐẦY ĐỦ của bạn nằm ở ~/.claude/agents/captain.md — ĐỌC NGAY trước khi làm bất kỳ việc gì (gồm: CHAT STYLE 6 luật · PHÂN CÔNG cứng · Verify-first · Cleanup-on-done · Commit hygiene cấm trailer AI · HEARTBEAT). Khuôn tin: ~/.claude/skills/team-workflow/TEMPLATES.md. Cách trả lời CEO: ~/.claude/bin/team-chat send \"<tin theo CHAT STYLE>\" --from captain --role captain. Điều phối worker: ~/.claude/bin/team-orch (worker-start/feature-open/gate-resolve/cleanup). Đọc ngữ cảnh: ~/.claude/bin/team-chat read --last 15.${ROOM_BRIEF} Xác nhận bạn đã hiểu bằng 1 tin team-chat (CHAT STYLE${ROOM:+ vào room #${ROOM}}) — xong nằm chờ lệnh CEO qua router." --enter --json > /dev/null 2>&1 \

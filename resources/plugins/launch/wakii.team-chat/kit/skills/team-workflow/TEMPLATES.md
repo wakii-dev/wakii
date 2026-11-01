@@ -9,6 +9,8 @@ flag là thấy usage).
 | Lệnh | Tin tạo ra | Khi nào |
 |---|---|---|
 | `team-chat plan "<các bước + DoD đo được>"` | `[PLAN] <text>` | Plan-gate đang OPEN — Bước 0 (G3.5). Đề xuất kế hoạch, DỪNG chờ duyệt |
+
+**Spawn worker (Captain)**: `team-orch worker-start --name <role>-* --room <room> --background` — LUÔN `--background` (spawn đồng bộ chặn captain ~80s/worker, sự cố "Mustering 3-4 phút" 1/11). Worker tự ACK vào room khi nạp brief xong.
 | `team-chat done "<task>" --did "…" --test "…" --evidence "…"` | `DONE <task> — ① Đã làm: … ② Cách test: … ③ Bằng chứng: …` | Hoàn thành. **Thiếu 1 trong 3 flag = lệnh từ chối** (hiến pháp §0.0) |
 | `team-chat blocked "<lý do + đã thử gì>"` | `BLOCKED <lý do>` | Kẹt ~15 phút. Block×3 cùng cách → ngừng, chờ Captain ép hướng |
 | `team-chat impact "<yêu cầu>" --scope .. --arch .. --risk .. --effort .. --deps .. --rec ..` | `[IMPACT] … ①-⑥` | **Stage 1** — worker `impact-*` (agent phase0-impact-analyst). Đủ 6 chiều bắt buộc, thiếu = trả lại |

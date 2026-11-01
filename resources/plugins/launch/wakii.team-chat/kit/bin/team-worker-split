@@ -81,7 +81,21 @@ print(dig(json.loads(sys.stdin.read())) or "")
 [ -n "$TITLE" ] && "$ORCA" terminal rename --terminal "$PANE" --title "$TITLE" >/dev/null 2>&1 || true
 
 "$HERE/team-orch" register --pane "$PANE" --name "$NAME" --worktree "$WT" --repo team --room "$ROOM"
-sleep 8
+# Đợi agent TUI sẵn sàng TRƯỚC khi gõ prompt (CEO bug 1/11: prompt rơi vào
+# shell trống khi claude boot chậm). Sẵn sàng = output pane có dấu hiệu TUI.
+wait_agent_ready() { # $1=pane $2=orca_bin → 0 khi sẵn sàng, 1 sau ~60s
+  local i out
+  for i in $(seq 1 20); do
+    out=$("$2" terminal read --terminal "$1" 2>/dev/null | tail -14)
+    if printf '%s' "$out" | grep -qE 'Claude Code|✻|╭|⏺|Esc to interrupt|no auto-accept'; then
+      return 0
+    fi
+    sleep 3
+  done
+  return 1
+}
+
+if ! wait_agent_ready "$PANE" "$ORCA"; then echo "⚠ agent chưa lên 60s — brief có thể trượt" >&2; fi
 "$ORCA" terminal send --terminal "$PANE" --text "Bạn là $NAME — worker trong room #${ROOM} (Wakii team). Worktree: $WT. HỢP ĐỒNG: ~/.claude/agents/captain.md mục Team Contract + Templates: ~/.claude/skills/team-workflow/TEMPLATES.md. Nói chuyện qua chat: ~/.claude/bin/team-chat send \"...\" (KHÔNG --from — tên theo pane). Có plan-gate: post [PLAN] trước khi ghi file: team-chat plan \"...\". DONE: team-chat done --did --test --evidence. KHÔNG commit. Xác nhận 1 tin rồi nhận lệnh." --enter --json > /dev/null 2>&1 \
   && echo "→ brief đã gửi"
 echo "team-worker-split XONG: $NAME = $PANE (pane split, room #$ROOM, grid $((CNT+1))/3)"

@@ -192,6 +192,10 @@ Anti-pattern bị cấm: "tôi tự làm cho nhanh" / "việc nhỏ thôi" / vi�
 Giữa nhận lệnh và có kết quả, CEO phải thấy nhịp. MỖI bước chính gửi 1 tin ngắn vào chat:
 nhận việc → "đang dispatch worker X" → "worker X post [PLAN], tôi đang duyệt" → "đã duyệt, worker chạy" → verify → DONE tóm tắt.
 Tự hỏi mỗi 3 phút: "CEO nhìn panel có biết tôi đang ở bước nào không?" — không biết là sai.
+Spawn worker (`team-orch worker-start`) LUÔN kèm `--background` — spawn đồng
+bộ chặn turn captain tới ~80s/worker (sự cố thật 1/11 tối: turn "Mustering"
+3-4 phút, heartbeat đứt, CEO thấy team đứng hình). Sau khi spawn nền xong,
+theo dõi worker qua room (worker tự xác nhận khi nạp brief xong).
 Turn dài (khảo sát, đọc nhiều): báo "đang khảo sát ~N phút" TRƯỚC khi bắt đầu, xong báo kết.
 
 ## Vòng làm việc
