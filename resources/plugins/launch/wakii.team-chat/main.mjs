@@ -1463,53 +1463,6 @@ export default function activate(orca) {
   // mindmap) → đọc file (cache theo mtime) → publish slot để panel render cây
   // tương tác ngay trong room; file đổi là card cập nhật theo. Toàn bộ
   // best-effort: embed fail (file thiếu, host từ chối…) KHÔNG được làm chết poller.
-  // Media paste (CEO 1/11): panel ghi slot team.chat.img.<id> {at,mime,dataUrl}
-  // (cap host 256KB/slot). Việc của poller: persist PNG vào chatDir/media cho
-  // terminal agent mở được + dọn slot cũ — giữ N ảnh mới nhất (tổng cap 5MB).
-  let mediaSweepTick = 0
-  const MEDIA_KEEP = 16
-  const mediaImported = new Set()
-  const sweepMediaSlots = async () => {
-    try {
-      const keysRes = await orca.host.call('storage.keys').catch(() => null)
-      const keys = (keysRes && Array.isArray(keysRes.value) ? keysRes.value : []).filter((k) => k.startsWith('team.chat.img.'))
-      if (!keys.length) return
-      const seen = new Set()
-      const withAt = []
-      for (const k of keys.slice(0, 64)) {
-        const r = await orca.host.call('storage.get', { key: k }).catch(() => null)
-        const v = r && r.value
-        if (!v || !v.dataUrl) continue
-        seen.add(k)
-        withAt.push({ key: k, at: v.at || 0, v })
-        try {
-          const b64 = String(v.dataUrl).split(',')[1] || ''
-          const id = k.slice('team.chat.img.'.length)
-          const dir = join(chatDir, 'media')
-          mkdirSync(dir, { recursive: true })
-          writeFileSync(join(dir, id + '.jpg'), Buffer.from(b64, 'base64'))
-        } catch { /* persist best-effort */ }
-      }
-      const excess = withAt.sort((a, b) => b.at - a.at).slice(MEDIA_KEEP)
-      for (const e of excess) {
-        await orca.host.call('storage.delete', { key: e.key }).catch(() => {})
-      }
-      // Chiều ngược: agent/CEO copy ảnh vào chatDir/media/<id>.jpg → import slot
-      // để token 📷<id> hiển thị trong chat (cap 200KB — agent tự sips downscale).
-      try {
-        const dir = join(chatDir, 'media')
-        for (const f of readdirSync(dir)) {
-          const mId = f.replace(/\.(jpe?g|png)$/i, '')
-          if (!mId || mediaImported.has(mId) || seen.has('team.chat.img.' + mId)) continue
-          const buf = readFileSync(join(dir, f))
-          if (buf.byteLength > 200 * 1024) { mediaImported.add(mId); continue }
-          const dataUrl = 'data:image/jpeg;base64,' + buf.toString('base64')
-          await orca.host.call('storage.set', { key: 'team.chat.img.' + mId, value: { at: Date.now(), mime: 'image/jpeg', dataUrl } }).catch(() => {})
-          mediaImported.add(mId)
-        }
-      } catch { /* import best-effort */ }
-    } catch { /* sweep best-effort */ }
-  }
   const mmCache = new Map()
   const publishMindmaps = async () => {
     try {
@@ -1795,7 +1748,6 @@ export default function activate(orca) {
       }
       void publishTerminals()
       void publishMindmaps().catch(() => {})
-      if (++mediaSweepTick % 60 === 0) void sweepMediaSlots()
       // Captain status cho settings panel: theo TỪNG room (room = worktree + captain trực).
       // Room-set tự tính mỗi tick (registry + kênh trong tail) — không phụ thuộc
       // biến chỉ cập nhật khi tail đổi (bug settings 🔴 dù captain online).
