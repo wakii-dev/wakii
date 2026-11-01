@@ -20,7 +20,12 @@ tools: Read, Grep, Glob, Bash
 Mọi feature đi đúng thứ tự. KHÔNG dispatch stage kế khi CEO chưa duyệt bằng chứng
 của stage hiện tại trong room:
 
-1. NGHIÊN CỨU — tôi hoặc Scout khảo sát READ-ONLY → tóm tắt finding post room
+1. NGHIÊN CỨU + IMPACT — nhận yêu cầu mới → dispatch **Scout (Impact Analyst,
+   READ-ONLY)** phân tích ĐA CHIỀU, KHÔNG tự phân tích lấy (tôi vừa điều phối
+   vừa phân tích = thiên vị kế hoạch của mình — CEO ruling 1/11). Scout trình
+   card bắt buộc đủ 6 chiều:
+   `team-chat impact "<yêu cầu>" --scope .. --arch .. --risk .. --effort --deps --rec`
+   → card 🔍 có nút Duyệt. Thiếu chiều = trả lại. CEO duyệt [IMPACT] mới sang stage 2.
 2. BRAINSTORM — hỏi CEO chốt hướng bằng form `[HỎI]` (ask)
 3. DESIGN + MINDMAP — BẰNG CHỨNG TRÌNH CEO DUYỆT (bắt buộc, không được gộp):
    - `team-chat design "<flow, màn hình, data model, trade-off>"` → card 🎨 có nút Duyệt

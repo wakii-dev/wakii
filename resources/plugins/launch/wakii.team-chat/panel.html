@@ -85,6 +85,7 @@
   .c-head.k-blocked { color: #e07a7a; }
   .c-head.k-design { color: #b79ae0; }
   .c-head.k-mindmap { color: #6fbfcf; }
+  .c-head.k-impact { color: #d9b380; }
   .mm { margin: 2px 0 4px; }
   .mm-node { line-height: 1.55; padding: 1px 0; border-left: 1px solid #6fbfcf55; }
   .mm-node.d0 { font-weight: 600; border-left: none; }
@@ -354,12 +355,12 @@
   function renderContent(bubble, text, kind) {
     bubble.innerHTML = ''
     var rest = text
-    if (kind === 'k-plan' || kind === 'k-done' || kind === 'k-blocked' || kind === 'k-design' || kind === 'k-mindmap') {
-      var labels = { 'k-plan': '📋 Plan', 'k-done': '✅ Done', 'k-blocked': '⛔ Blocked', 'k-design': '🎨 Design — chờ CEO duyệt', 'k-mindmap': '🧠 Mindmap — chờ CEO duyệt' }
+    if (kind === 'k-plan' || kind === 'k-done' || kind === 'k-blocked' || kind === 'k-design' || kind === 'k-mindmap' || kind === 'k-impact') {
+      var labels = { 'k-plan': '📋 Plan', 'k-done': '✅ Done', 'k-blocked': '⛔ Blocked', 'k-design': '🎨 Design — chờ CEO duyệt', 'k-mindmap': '🧠 Mindmap — chờ CEO duyệt', 'k-impact': '🔍 Impact — phân tích đa chiều' }
       var h = document.createElement('div'); h.className = 'c-head ' + kind
       h.textContent = labels[kind]
       bubble.appendChild(h)
-      rest = text.replace(/^\[PLAN\]\s*/, '').replace(/^DONE\s*/, '').replace(/^BLOCKED\s*/, '').replace(/^\[DESIGN\]\s*/, '').replace(/^\[MINDMAP\]\s*/, '')
+      rest = text.replace(/^\[PLAN\]\s*/, '').replace(/^DONE\s*/, '').replace(/^BLOCKED\s*/, '').replace(/^\[DESIGN\]\s*/, '').replace(/^\[MINDMAP\]\s*/, '').replace(/^\[IMPACT\]\s*/, '')
     }
     if (kind === 'k-mindmap') {
       // Cây tính năng từ indentation (2 space = 1 cấp) — bằng chứng trình CEO
@@ -374,6 +375,23 @@
         mmBox.appendChild(nd)
       })
       if (mmBox.children.length) bubble.appendChild(mmBox)
+      return
+    }
+    if (kind === 'k-impact') {
+      // IMPACT đa chiều: tiêu đề + ①-⑥ sections (Scout trình CEO trước brainstorm)
+      var isecs = rest.split(/[①②③④⑤⑥]/)
+      var ititle = (isecs.shift() || '').replace(/[\s—-]+$/, '').trim()
+      if (ititle) { var it = document.createElement('div'); it.className = 'c-title'; inlineInto(it, ititle); bubble.appendChild(it) }
+      var ilbls = ['① Phạm vi', '② Kiến trúc', '③ Rủi ro', '④ Effort', '⑤ Phụ thuộc', '⑥ Đề xuất']
+      isecs.forEach(function (sRaw, i) {
+        var s = sRaw.trim().replace(/^:\s*/, '')
+        if (!s) return
+        var sec = document.createElement('div'); sec.className = 'c-sec'
+        var l = document.createElement('div'); l.className = 'c-lbl'; l.textContent = ilbls[i] || '·'
+        sec.appendChild(l)
+        s.split('\n').forEach(function (ln) { if (ln.trim()) addBodyLine(sec, ln) })
+        bubble.appendChild(sec)
+      })
       return
     }
     if (kind === 'k-done') {
@@ -453,6 +471,7 @@
     if (/^\[PLAN/i.test(text)) return 'k-plan'
     if (/^\[DESIGN/i.test(text)) return 'k-design'
     if (/^\[MINDMAP/i.test(text)) return 'k-mindmap'
+    if (/^\[IMPACT/i.test(text)) return 'k-impact'
     if (/^DONE/i.test(text)) return 'k-done'
     if (/^BLOCKED/i.test(text)) return 'k-blocked'
     return ''
@@ -538,6 +557,7 @@
         else if (kindOf(text) === 'k-plan') appendPlanActions(msg, m, text, '[PLAN]')
         else if (kindOf(text) === 'k-design') appendPlanActions(msg, m, text, '[DESIGN]')
         else if (kindOf(text) === 'k-mindmap') appendPlanActions(msg, m, text, '[MINDMAP]')
+        else if (kindOf(text) === 'k-impact') appendPlanActions(msg, m, text, '[IMPACT]')
       }
       row.appendChild(av); row.appendChild(msg)
       messages.appendChild(row)
