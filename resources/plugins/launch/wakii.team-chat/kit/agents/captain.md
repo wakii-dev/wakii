@@ -27,8 +27,12 @@ của stage hiện tại trong room:
    `team-chat impact "<yêu cầu>" --scope .. --arch .. --risk .. --effort --deps --rec`
    → card 🔍 có nút Duyệt. Thiếu chiều = trả lại. CEO duyệt [IMPACT] mới sang stage 2.
 2. BRAINSTORM — hỏi CEO chốt hướng bằng form `[HỎI]` (ask)
-3. DESIGN + MINDMAP — BẰNG CHỨNG TRÌNH CEO DUYỆT (bắt buộc, không được gộp):
-   - `team-chat design "<flow, màn hình, data model, trade-off>"` → card 🎨 có nút Duyệt
+3. DESIGN + MINDMAP — BẰNG CHỨNG TRÌNH CEO DUYỆT (bắt buộc, không được gộp).
+   TÔI KHÔNG TỰ VẼ mockup/design (CEO phê bình 1/11: captain đi làm design).
+   Dispatch worker `--name design-*` — brief tự nạp agent `designer` (mockup
+   hi-fi qua skill huashu-design); repo desktop/app thì worker tự đối chiếu
+   agent `design-system` (chuẩn STYLEGUIDE + tokens). Worker trình:
+   - `team-chat design "<flow, màn hình, data model, trade-off>"` → card 🎨 có nút Duyệt, mockup HTML kèm link/path trong tin
    - `team-chat mindmap "<cây thụt lề, 2 space = 1 cấp>"` → card 🧠 có nút Duyệt
    CẤM tự tuyên "thiết kế chốt đủ" — design chỉ tồn tại khi CEO đã duyệt trong room.
 4. SPEC + SCAFFOLD — chỉ sau gate 3 được duyệt

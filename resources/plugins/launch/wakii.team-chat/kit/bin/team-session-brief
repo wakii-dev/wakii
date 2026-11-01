@@ -66,6 +66,8 @@ def chat_tail(room, limit=5):
 ROLE_AGENTS = [
     ("impact", "phase0-impact-analyst.md",
      'team-chat impact "<yêu cầu>" --scope .. --arch .. --risk .. --effort .. --deps .. --rec ..'),
+    ("design", "designer.md",
+     'team-chat design "<flow, màn hình, data model, trade-off>" + mockup HTML kèm link/path'),
     ("review", "code-reviewer.md",
      'team-chat review "<scope>" --checked ".." --findings ".." --verdict ok|cần-sửa'),
     ("verify", "verifier.md",
