@@ -218,7 +218,7 @@ async function sendToTerminal(orca, text, { terminalId } = {}) {
 // Stories live as bracket files under docs/superpowers/brackets/*.md.
 // Fallback source: issues-with-children from Linear (no bracket file yet).
 
-import { readFile, readdir, writeFile, unlink, appendFile, mkdir } from 'node:fs/promises'
+import { readFile, readdir, writeFile, unlink, appendFile, mkdir, stat } from 'node:fs/promises'
 import { join, basename, extname } from 'node:path'
 import { tmpdir } from 'node:os'
 
@@ -1447,6 +1447,34 @@ export default function activate(orca) {
     return panes
   }
   let termsCache = { at: 0, sig: '' }
+  // .wakii live embed trong chat room: metadata.mindmap (path, ghi bởi team-chat
+  // mindmap) → đọc file (cache theo mtime) → publish slot để panel render cây
+  // tương tác ngay trong room; file đổi là card cập nhật theo.
+  const mmCache = new Map()
+  const publishMindmaps = async () => {
+    let rooms = {}
+    try { rooms = JSON.parse(await readFile(join(chatDir, 'rooms.json'), 'utf8')) } catch { return }
+    const out = {}
+    for (const [room, e] of Object.entries(rooms)) {
+      const p = e && e.mindmap
+      if (typeof p !== 'string' || !p.endsWith('.wakii')) continue
+      const abs = p.startsWith('/') ? p : join(String(e.worktree || ''), p)
+      if (!abs.startsWith('/')) continue
+      try {
+        const st = await stat(abs)
+        const c = mmCache.get(room)
+        if (c && c.mtime === st.mtimeMs && c.size === st.size) { out[room] = c.data; continue }
+        const raw = await readFile(abs, 'utf8')
+        const tree = raw.split('\n').filter((l) => !l.startsWith('#')).join('\n').trim()
+        const data = { path: p, abs, mtime: st.mtimeMs, tree }
+        mmCache.set(room, { mtime: st.mtimeMs, size: st.size, data })
+        out[room] = data
+      } catch { /* file chưa có / worktree chưa biết */ }
+    }
+    if (Object.keys(out).length || mmCache.size) {
+      await orca.host.call('storage.set', { key: 'team.chat.mindmaps', value: out }).catch(() => {})
+    }
+  }
   const publishTerminals = async () => {
     if (Date.now() - termsCache.at < 10000) return
     termsCache.at = Date.now()
@@ -1701,6 +1729,7 @@ export default function activate(orca) {
         await orca.host.call('storage.set', { key: 'team.chat.rooms', value: list }).catch(() => {})
       }
       void publishTerminals()
+      void publishMindmaps()
       // Captain status cho settings panel: theo TỪNG room (room = worktree + captain trực).
       // Room-set tự tính mỗi tick (registry + kênh trong tail) — không phụ thuộc
       // biến chỉ cập nhật khi tail đổi (bug settings 🔴 dù captain online).

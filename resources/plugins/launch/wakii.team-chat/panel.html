@@ -93,6 +93,11 @@
   .mm-node { line-height: 1.55; padding: 1px 0; border-left: 1px solid #6fbfcf55; }
   .mm-node.d0 { font-weight: 600; border-left: none; }
   .mm-file { font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: #6fbfcf; background: #6fbfcf18; border-radius: 4px; padding: 1px 6px; display: inline-block; margin: 2px 0 4px; }
+  .mm-node.parent { cursor: pointer; }
+  .mm-tw { display: inline-block; width: 12px; color: #6fbfcf99; font-size: 9px; }
+  .mm-node.closed > .mm-tw::after { content: '▸'; }
+  .mm-node.parent:not(.closed) > .mm-tw::after { content: '▾'; }
+  .mm-rowhidden { display: none; }
   .c-title { font-weight: 600; margin-bottom: 4px; }
   .c-sec { margin: 5px 0 0; padding-left: 8px; border-left: 2px solid #2b2b31; }
   .c-sec > .c-lbl { font-weight: 600; font-size: 11px; color: #8fb8f9; }
@@ -356,7 +361,7 @@
     } else { inlineInto(d, line) }
     box.appendChild(d)
   }
-  function renderContent(bubble, text, kind) {
+  function renderContent(bubble, text, kind, m) {
     bubble.innerHTML = ''
     var rest = text
     if (kind === 'k-plan' || kind === 'k-done' || kind === 'k-blocked' || kind === 'k-design' || kind === 'k-mindmap' || kind === 'k-impact' || kind === 'k-review') {
@@ -367,25 +372,55 @@
       rest = text.replace(/^\[PLAN\]\s*/, '').replace(/^DONE\s*/, '').replace(/^BLOCKED\s*/, '').replace(/^\[DESIGN\]\s*/, '').replace(/^\[MINDMAP\]\s*/, '').replace(/^\[IMPACT\]\s*/, '').replace(/^\[REVIEW\]\s*/, '')
     }
     if (kind === 'k-mindmap') {
-      // Cây tính năng từ indentation (2 space = 1 cấp) — bằng chứng trình CEO
-      // Dòng 📄 <path>.wakii đầu tiên = file sơ đồ tư duy, render thành chip.
+      // Embed .wakii: ưu tiên NỘI DUNG LIVE từ file (slot team.chat.mindmaps —
+      // plugin đọc worktree) → cây tương tác gập/mở ngay trong chat; fallback
+      // text trong tin. Dòng 📄 path → chip file.
+      var chan = (m && m.channel) || 'general'
+      var live = (window.mmLive || {})[chan]
       var fm = rest.match(/^\s*📄\s*(\S+\.wakii)\s*\n?/)
-      if (fm) {
-        rest = rest.replace(fm[0], '')
-        var chip = document.createElement('div'); chip.className = 'mm-file'; chip.textContent = '📄 ' + fm[1]
+      if (fm) rest = rest.replace(fm[0], '')
+      var mmPath = live ? live.path : (fm ? fm[1] : '')
+      if (mmPath) {
+        var chip = document.createElement('div'); chip.className = 'mm-file'
+        chip.textContent = '📄 ' + mmPath + (live ? ' · live' : '')
         bubble.appendChild(chip)
       }
-      var mmBox = document.createElement('div'); mmBox.className = 'mm'
-      rest.split('\n').forEach(function (ln) {
-        if (!ln.trim()) return
+      var treeSrc = live ? live.tree : rest
+      var rows = treeSrc.split('\n').filter(function (l) { return l.trim() }).map(function (ln) {
         var ind = ln.match(/^[ \t]*/)[0].replace(/\t/g, '  ')
-        var depth = Math.min(Math.floor(ind.length / 2), 5)
-        var nd = document.createElement('div'); nd.className = 'mm-node d' + depth
-        nd.style.marginLeft = (depth * 13) + 'px'
-        inlineInto(nd, ln.trim().replace(/^[-•*]\s*/, ''))
-        mmBox.appendChild(nd)
+        return { d: Math.min(Math.floor(ind.length / 2), 5), t: ln.trim().replace(/^[-•*]\s*/, '') }
       })
-      if (mmBox.children.length) bubble.appendChild(mmBox)
+      if (!rows.length) return
+      var mmBox = document.createElement('div'); mmBox.className = 'mm'
+      var els = rows.map(function (rw) {
+        var nd = document.createElement('div'); nd.className = 'mm-node d' + rw.d
+        nd.style.marginLeft = (rw.d * 13) + 'px'
+        nd.setAttribute('data-d', rw.d)
+        var tw = document.createElement('span'); tw.className = 'mm-tw'
+        nd.appendChild(tw)
+        inlineInto(nd, rw.t)
+        mmBox.appendChild(nd)
+        return nd
+      })
+      els.forEach(function (nd, i) {
+        var d = parseInt(nd.getAttribute('data-d'), 10)
+        var deeper = 0
+        for (var j = i + 1; j < els.length; j++) {
+          if (parseInt(els[j].getAttribute('data-d'), 10) > d) deeper++
+          else break
+        }
+        if (!deeper) return
+        nd.classList.add('parent')
+        nd.addEventListener('click', function (ev) {
+          ev.stopPropagation()
+          var closed = nd.classList.toggle('closed')
+          for (var j = i + 1; j < els.length; j++) {
+            if (parseInt(els[j].getAttribute('data-d'), 10) > d) els[j].classList.toggle('mm-rowhidden', closed)
+            else break
+          }
+        })
+      })
+      bubble.appendChild(mmBox)
       return
     }
     if (kind === 'k-review') {
@@ -582,7 +617,7 @@
       var time = document.createElement('span'); time.className = 'time'; time.textContent = fmt(m.at)
       meta.appendChild(time)
       var bubble = document.createElement('div'); bubble.className = 'bubble ' + kindOf(text)
-      renderContent(bubble, text, kindOf(text))
+      renderContent(bubble, text, kindOf(text), m)
       msg.appendChild(meta); msg.appendChild(bubble)
       // Form tương tác: [HỎI] → chip trả lời nhanh; [PLAN]/[DESIGN]/[MINDMAP] → nút Duyệt cho CEO
       if (m.role !== 'owner') {
@@ -601,12 +636,17 @@
 
   var lastRenderedSig = ''
   function poll() {
-    call('storage.get', { key: 'team.chat.tail' }).then(function (r) {
+    Promise.all([
+      call('storage.get', { key: 'team.chat.tail' }),
+      call('storage.get', { key: 'team.chat.mindmaps' }).catch(function () { return null })
+    ]).then(function (rs) {
+      var r = rs[0]
+      window.mmLive = (rs[1] && rs[1].value) || {}
       var all = []
       ;((r && r.value) || []).forEach(function (l) { try { all.push(JSON.parse(l)) } catch (e) {} })
       // Chỉ re-render khi nội dung đổi — rebuild mỗi tick sẽ nuốt click chuột
       // thật đang giữa press→release (bug form [HỎI] 1/11) và tốn CPU.
-      var sig = JSON.stringify(all) + '|' + activeRoom + '|' + ceoName + '|' + JSON.stringify(members) + '|' + JSON.stringify(outbox)
+      var sig = JSON.stringify(all) + '|' + activeRoom + '|' + ceoName + '|' + JSON.stringify(members) + '|' + JSON.stringify(outbox) + '|' + JSON.stringify(window.mmLive || {})
       lastMsgs = all
       document.getElementById('live').classList.remove('off')
       if (sig !== lastRenderedSig) { lastRenderedSig = sig; render(all, outbox.slice()) }
