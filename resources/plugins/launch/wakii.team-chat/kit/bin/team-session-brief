@@ -91,6 +91,18 @@ ROLE_AGENTS = [
      'team-chat done "<task>" --did .. --test .. --evidence ..'),
     ("security", "security-audit.md",
      'team-chat review "<scope>" --checked ".." --findings ".." --verdict ok|cần-sửa'),
+    ("smith", "be-dev.md",
+     'team-chat plan/done theo gate — chi tiết trong hợp đồng be-dev'),
+    ("weaver", "fe-dev.md",
+     'team-chat plan/done theo gate — chi tiết trong hợp đồng fe-dev'),
+    ("mason", "mason.md",
+     'team-chat done "<task>" --did "test đã viết" --test "cách chạy" --evidence "output thật"'),
+    ("forge", "forge.md",
+     'team-chat done "<task>" --did .. --test .. --evidence ..'),
+    ("scout", "phase0-impact-analyst.md",
+     'team-chat impact "<phát hiện>" --scope .. --arch .. --risk .. --effort .. --deps .. --rec ..'),
+    ("warden", "code-reviewer.md",
+     'team-chat review "<scope>" --checked ".." --findings ".." --verdict ok|cần-sửa'),
 ]
 
 
