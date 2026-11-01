@@ -1624,11 +1624,19 @@ export default function activate(orca) {
         await orca.host.call('storage.set', { key: 'team.chat.rooms', value: list }).catch(() => {})
       }
       // Captain status cho settings panel: theo TỪNG room (room = worktree + captain trực).
+      // Room-set tự tính mỗi tick (registry + kênh trong tail) — không phụ thuộc
+      // biến chỉ cập nhật khi tail đổi (bug settings 🔴 dù captain online).
       try {
         const entries = await captainEntries()
         const live = await livePanes()
+        let roomsReg = {}
+        try { roomsReg = JSON.parse(await readFile(join(chatDir, 'rooms.json'), 'utf8')) } catch { /* chưa có */ }
+        const roomSet = new Set([...Object.keys(roomsReg)])
+        for (const line of tail) {
+          try { roomSet.add(JSON.parse(line).channel || 'general') } catch { /* skip */ }
+        }
         const byRoom = {}
-        for (const r of new Set(['general', ...roomListSeen])) {
+        for (const r of roomSet) {
           const hit = entries.find((c) => c.room === r && live.has(c.pane))
           byRoom[r] = hit ? { online: true, pane: hit.pane, worktree: hit.worktree } : { online: false }
         }
