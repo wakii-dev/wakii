@@ -277,7 +277,7 @@
   function appendAskForm(msg, m) {
     var picks = {}
     var box = document.createElement('div'); box.className = 'f-box'
-    m.text.split('\n').forEach(function (line) {
+    m.text.replace(/^\[HỎI\]\s*/, '').split('\n').forEach(function (line) {
       var qm = line.match(/^\s*(\d+)[.)]\s+(.+)$/)
       if (!qm) return
       var qn = qm[1], body = qm[2]
