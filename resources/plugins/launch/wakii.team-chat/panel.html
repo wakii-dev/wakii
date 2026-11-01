@@ -116,7 +116,15 @@
   #settings.open { display: flex; }
   #settings h3 { margin: 0; font-size: 13px; display: flex; align-items: center; }
   #settings h3 button { margin-left: auto; background: #26262c; padding: 4px 10px; font-weight: 400; }
-  .set-sec { border: 1px solid #232328; border-radius: 10px; padding: 10px; }
+  .set-sec { border: 1px solid #232328; border-radius: 10px; padding: 8px 10px; }
+  .set-sec > summary {
+    cursor: pointer; font-size: 12px; font-weight: 600; color: #b9b9c0;
+    list-style: none; user-select: none; padding: 2px 0;
+  }
+  .set-sec > summary::before { content: '▸ '; color: #6d6d75; }
+  .set-sec[open] > summary::before { content: '▾ '; }
+  .set-sec > summary:focus { outline: 1px solid #2b4231; border-radius: 6px; }
+  .set-sec > *:not(summary) { margin-top: 8px; }
   .set-sec .lbl { font-size: 11px; color: #8b8b93; margin-bottom: 6px; }
   .set-sec input[type=text], .set-sec input[type=number] {
     width: 100%; background: #17171b; border: 1px solid #2b2b31; color: #e6e6e9;
@@ -161,13 +169,13 @@
     <div class="lbl">Tên CEO (người gửi từ panel)</div>
     <input type="text" id="ceoName" maxlength="24" placeholder="CEO" />
   </div>
-  <div class="set-sec">
-    <div class="lbl">Đội hình — avatar · tên thật · chức vụ</div>
+  <details class="set-sec">
+    <summary>Đội hình — avatar · tên thật · chức vụ</summary>
     <div id="members"></div>
     <button type="button" class="ghost" id="addMember">+ Thêm worker</button>
-  </div>
-  <div class="set-sec" id="roomMetaSec">
-    <div class="lbl" id="roomMetaTitle">Room</div>
+  </details>
+  <details class="set-sec" id="roomMetaSec" open>
+    <summary id="roomMetaTitle">Room</summary>
     <input type="text" id="rmName" maxlength="40" placeholder="Tên hiển thị" style="margin-bottom:6px" />
     <input type="text" id="rmWorktree" maxlength="300" placeholder="Worktree path (vd /Users/hoivu/orca/projects/vocabulary)" style="margin-bottom:6px;font-family:ui-monospace,Menlo,monospace;font-size:12px" />
     <textarea id="rmDesc" maxlength="500" placeholder="Mô tả room — feature này làm gì, ai tham gia…"></textarea>
@@ -178,9 +186,9 @@
     <textarea id="rmMindmap" maxlength="3000" placeholder="Mindmap / cấu trúc (dạng大纲)"></textarea>
     <button type="button" id="saveRoomMeta" class="ghost">💾 Lưu thông tin room</button>
     <div class="hint">Metadata gắn với room đang mở — Captain + worker đọc rooms.json để biết ngữ cảnh.</div>
-  </div>
-  <div class="set-sec">
-    <div class="lbl">Captain — luôn online</div>
+  </details>
+  <details class="set-sec" open>
+    <summary>Captain — luôn online</summary>
     <div id="captainStatus" class="hint" style="margin:0 0 8px">… đang kiểm tra</div>
     <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
       <input type="text" id="captainPane" list="termDatalist" placeholder="chọn terminal đang chạy (hoặc dán term_…)" style="flex:1;background:#17171b;border:1px solid #2b2b31;color:#e6e6e9;border-radius:8px;padding:7px 9px;font-size:12px;font-family:ui-monospace,Menlo,monospace" />
@@ -193,20 +201,20 @@
       <span class="hint" id="wakeHint" style="margin:0">gắn worktree room đang mở</span>
     </div>
     <div class="hint">Mỗi tin CEO đều tự kiểm tra: Captain offline → tự đánh thức → chuyển tiếp. Terminal sinh ở workspace; kéo vào floating workspace 1 lần là router theo.</div>
-  </div>
-  <div class="set-sec">
-    <div class="lbl">Khung chat (rooms)</div>
+  </details>
+  <details class="set-sec">
+    <summary>Khung chat (rooms)</summary>
     <div id="roomRows"></div>
     <div class="hint">🔒 đóng = tab mờ, giữ lịch sử. 🗑 xoá = xoá tab + toàn bộ tin của room (không hoàn tác).</div>
-  </div>
-  <div class="set-sec">
-    <div class="lbl">Vận hành</div>
+  </details>
+  <details class="set-sec">
+    <summary>Vận hành</summary>
     <div style="display:flex;gap:8px;align-items:center">
       <span style="font-size:12px;color:#b9b9c0;flex:none">Worker chạy song song tối đa</span>
       <input type="number" id="concurrency" min="1" max="8" style="width:64px" />
     </div>
     <div class="hint">Captain đọc giới hạn này khi dispatch (file roster.json). 1–8.</div>
-  </div>
+  </details>
   <button type="button" id="saveSettings">Lưu cài đặt</button>
 </div>
 
@@ -596,7 +604,14 @@
       }
     }).catch(function () {})
   }
-  setInterval(refreshCaptainStatus, 5000)
+  setInterval(function () {
+    refreshCaptainStatus()
+    if (settingsEl.classList.contains('open')) {
+      renderRoomRows()
+      if (document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'INPUT') fillRoomMeta()
+      refreshTerminalOptions()
+    }
+  }, 2500)
   refreshCaptainStatus()
   document.getElementById('adoptCaptain').addEventListener('click', function () {
     var b = document.getElementById('adoptCaptain')

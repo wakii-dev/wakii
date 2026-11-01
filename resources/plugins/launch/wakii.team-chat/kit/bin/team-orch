@@ -118,13 +118,20 @@ case "$CMD" in
       --objective) OBJ="$2"; shift 2 ;; *) shift ;;
     esac; done
     [ -n "$NAME" ] && [ -n "$REPO" ] || { echo "feature-open cần --name + --repo" >&2; exit 2; }
-    RUN=$("$ORCA" orchestration run-create --objective "${OBJ:-$NAME}" --json | python3 -c "import json,sys;print(json.load(sys.stdin)['result']['run']['id'])" 2>/dev/null)
-    [ -n "$RUN" ] || { echo "run-create fail" >&2; exit 1; }
+    # Room + chat trước, orchestration sau — run fail (app ngủ, repo chưa mount…)
+    # KHÔNG chặn việc chat/điều phối trong room (linh hoạt không block).
+    ROOM_ID="$REPO-$NAME"
+    rooms_reg open "$ROOM_ID" "$NAME" "$REPO" ""
+    RUN=$("$ORCA" orchestration run-create --objective "${OBJ:-$NAME}" --json 2>/dev/null | python3 -c "import json,sys;print(json.load(sys.stdin)['result']['run']['id'])" 2>/dev/null)
+    if [ -n "$RUN" ]; then
+      rooms_reg open "$ROOM_ID" "$NAME" "$REPO" "$RUN"
+    else
+      echo "⚠ orchestration run-create fail — room vẫn mở, chat hoạt động; thử lại sau (team-orch sync)." >&2
+    fi
     TC="$(dirname "$0")/team-chat"
-    "$TC" send "🏁 Feature #$REPO-$NAME mở — run $RUN" --from captain --role captain --channel "$REPO-$NAME" >/dev/null 2>&1
-    emit run.created captain "$REPO" "$RUN" "" "{\"feature\":\"$NAME\"}"
-    rooms_reg open "$REPO-$NAME" "$NAME" "$REPO" "$RUN"
-    echo "RUN=$RUN  ROOM=#$REPO-$NAME (khung chat riêng — panel tự hiện tab)"
+    "$TC" send "🏁 Feature #$ROOM_ID mở${RUN:+ — run $RUN}" --from captain --role captain --channel "$ROOM_ID" >/dev/null 2>&1
+    [ -n "$RUN" ] && emit run.created captain "$REPO" "$RUN" "" "{\"feature\":\"$NAME\"}"
+    echo "RUN=${RUN:-none}  ROOM=#$ROOM_ID (khung chat riêng — panel tự hiện tab)"
     echo "Tiếp: orca worktree create --name $NAME (Captain) → worker-start trong worktree đó"
     ;;
   worker-start)

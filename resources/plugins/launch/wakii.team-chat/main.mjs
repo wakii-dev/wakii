@@ -1507,11 +1507,13 @@ export default function activate(orca) {
       const room = msg.channel || 'general'
       const entries = await captainEntries()
       const live = await livePanes()
-      // STRICT 1 room 1 captain: chỉ captain đăng ký đúng room này (CEO ruling 1/11)
+      // Linh hoạt không block (CEO ruling 1/11): captain room → captain nào còn sống;
+      // im lặng tuyệt đối là lỗi thiết kế.
       const pick = entries.find((c) => c.room === room && live.has(c.pane))
+             || entries.find((c) => live.has(c.pane))
       if (pick) { await forwardTo(pick.pane, msg); return }
       appendLine({ from: 'system', role: 'system', channel: room,
-        text: '💤 Captain#' + room + ' đang offline — tự đánh thức (gắn worktree room)…' }).catch(() => {})
+        text: '💤 Captain#' + room + ' đang offline — tự đánh thức (gắn worktree room), dự kiến ~1 phút. Việc gấp chạy tay: ~/.claude/bin/team-captain-spawn --room ' + room }).catch(() => {})
       void (async () => {
         try {
           await wakeCaptainFor(room)
