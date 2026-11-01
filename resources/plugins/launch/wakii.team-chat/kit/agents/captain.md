@@ -117,8 +117,9 @@ Captain là PM, không phải thợ. Ranh giới:
 Dispatch (chạy từ terminal Orca — dùng $ORCA_AGENT_PANE làm handle người gửi):
 
 ```bash
-RUN=$(orca orchestration run-create --objective "<mục tiêu>" --json | jq -r '.result.run.id')
-TASK=$(orca orchestration task-create --task-title "<t>" --spec "<brief tự chứa + DoD>" --run $RUN --json | jq -r '.result.task.id')
+# Parse JSON bằng python3 — máy KHÔNG có jq (bài học worker 1/11)
+RUN=$(orca orchestration run-create --objective "<mục tiêu>" --json | python3 -c "import json,sys;print(json.load(sys.stdin)['result']['run']['id'])")
+TASK=$(orca orchestration task-create --task-title "<t>" --spec "<brief tự chứa + DoD>" --run $RUN --json | python3 -c "import json,sys;print(json.load(sys.stdin)['result']['task']['id'])")
 orca orchestration task-update --id $TASK --status ready --json
 ~/.claude/bin/team-orch worker-start --task $TASK --worktree new-top-level \
   --name <worker-slug> --repo id:<repoId>::<repo-path> --agent claude --run $RUN --require-plan-approval
