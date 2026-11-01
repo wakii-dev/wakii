@@ -1431,6 +1431,8 @@ export default function activate(orca) {
       body: String(msg.text || '').slice(0, 120)
     }).catch(() => {})
   }
+  let lastCaptainSig = ''
+  let roomListSeen = []
   // ── Captain room-scoped: mỗi room = 1 worktree + 1 captain trực ──
   let aliveCache = { at: 0, panes: new Set() }
   const livePanes = async () => {
