@@ -8,7 +8,7 @@
 // (plugin-private store, session-bound to this plugin) plus
 // workspace.readContext/notifications.show. Chat flow: panel writes
 // 'team.chat.send' single-slot → poller below appends to the JSONL bus and
-// refreshes 'team.chat.tail' (200 tin cuối) mỗi 2s cho panel poll.
+// refreshes 'team.chat.tail' (500 tin cuối) mỗi 2s cho panel poll.
 // CLI bins (team-chat/team-orch/…) append thẳng bus — một nguồn sự thật.
 
 import directives from './directives.json' with { type: 'json' }
@@ -1369,14 +1369,14 @@ export default function activate(orca) {
   //   {"at":<ms>,"from":"<tên>","role":"captain|worker|owner|system","channel":"<kênh>","text":"..."}
   // Panel → storage 'team.chat.send' (single slot) → poller append file + xoá slot.
   // CLI (Captain/workers) → bin team-chat append thẳng file.
-  // Outbound: poller refresh storage 'team.chat.tail' (200 tin cuối) mỗi 2s cho panel.
+  // Outbound: poller refresh storage 'team.chat.tail' (500 tin cuối) mỗi 2s cho panel.
   const chatDir = join(homeDir(), '.claude', 'chat')
   const chatLog = join(chatDir, 'team-chat.jsonl')
   //appendLine mới mkdir — roomCmd/mirrorRoster ghi thẳng nên dir phải có sẵn
   //từ activate, không thì create-room đầu tiên ENOENT fail âm thầm.
   mkdir(chatDir, { recursive: true }).catch(() => {})
 
-  const readTail = async (limit = 200) => {
+  const readTail = async (limit = 500) => {
     try {
       const raw = await readFile(chatLog, 'utf8')
       return raw.split('\n').filter((l) => l.trim()).slice(-limit)
