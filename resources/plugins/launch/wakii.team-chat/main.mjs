@@ -1768,7 +1768,13 @@ export default function activate(orca) {
                 let wtPath = ''
                 if (repoPath) {
                   try {
-                    const out = await new Promise((res) => execFileCb(orcaBin, ['worktree', 'create', '--repo', 'path:' + repoPath, '--name', feature, '--no-parent', '--json'], { timeout: 60000 }, (e, o) => res(e ? '' : o)))
+                    // Branch mặc định của CLI là <branch-đang-đứng>/<tên> — repo có
+                    // branch gốc dạng wakii-dev/main thì git cấm tạo wakii-dev/<tên>
+                    // (ref conflict), nên room luôn chỉ định branch room/<feature>.
+                    const out = await new Promise((res) => execFileCb(orcaBin, ['worktree', 'create', '--repo', 'path:' + repoPath, '--name', feature, '--branch', 'room/' + feature, '--no-parent', '--json'], { timeout: 60000 }, (e, o, se) => {
+                      if (e) orca.log('[create-room] worktree create lỗi: ' + String(se || e.message || '').split('\n').filter(Boolean).slice(-2).join(' | ').slice(0, 300))
+                      res(e ? '' : o)
+                    }))
                     if (out) {
                       try { wtPath = JSON.parse(out).result.worktree.path || '' } catch { wtPath = '' }
                     }
