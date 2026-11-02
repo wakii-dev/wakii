@@ -3,7 +3,7 @@ import { ArrowUp, Image as ImageIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { translate } from '@/i18n/i18n'
 import { basename } from '@/lib/path'
-import type { NativeChatBlock } from '../../../../shared/native-chat-types'
+import type { NativeChatBlock } from '../../../../shared/native-chat/native-chat-types'
 import { NativeChatCopyButton } from './NativeChatCopyButton'
 import { NativeChatMessageTimestamp } from './NativeChatMessageTimestamp'
 import { nativeChatProviderFrameSummary } from '../../../../shared/native-chat/native-chat-provider-frame-summary'
@@ -208,12 +208,14 @@ function TranscriptImagePreview({
 export function NativeChatImageAttachments({
   blocks,
   runtimeContext,
-  enablePreview = runtimeContext !== undefined
+  enablePreview = runtimeContext !== undefined,
+  className
 }: {
   blocks: NativeChatBlock[]
   runtimeContext?: RuntimeFileOperationArgs | null
   /** Callers without an image owner get label-only chips. */
   enablePreview?: boolean
+  className?: string
 }): React.JSX.Element | null {
   const images = blocks.filter((block) => block.type === 'image-ref')
   if (images.length === 0) {
@@ -222,7 +224,7 @@ export function NativeChatImageAttachments({
   const imageKeyCounts = new Map<string, number>()
   if (!enablePreview) {
     return (
-      <div className="mb-2 flex flex-wrap gap-1.5">
+      <div className={cn('mb-2 flex flex-wrap gap-1.5', className)}>
         {images.map((image) => {
           const label =
             image.alt ??
@@ -253,7 +255,7 @@ export function NativeChatImageAttachments({
     )
   }
   return (
-    <div className="mb-2 flex flex-wrap gap-1.5">
+    <div className={cn('mb-2 flex flex-wrap gap-1.5', className)}>
       {images.map((image) => {
         const label =
           image.alt ??
@@ -355,11 +357,13 @@ export function NativeChatDetailsDisclosure({
   summary,
   lead,
   trail,
+  bodyClassName,
   children
 }: {
   summary: string
   lead?: React.ReactNode
   trail?: React.ReactNode
+  bodyClassName?: string
   children: React.ReactNode
 }): React.JSX.Element {
   return (
@@ -369,12 +373,15 @@ export function NativeChatDetailsDisclosure({
           ›
         </span>
         {lead}
-        <span className="truncate">{summary}</span>
+        <span className="min-w-0 truncate">{summary}</span>
         {trail}
       </summary>
       <pre
         data-native-chat-code-content
-        className="scrollbar-sleek mt-1 max-h-64 overflow-auto whitespace-pre-wrap rounded-md border border-border bg-muted p-2 font-mono text-chat-code text-foreground"
+        className={cn(
+          'scrollbar-sleek mt-1 max-h-64 overflow-auto whitespace-pre-wrap rounded-md border border-border bg-muted p-2 font-mono text-chat-code text-foreground',
+          bodyClassName
+        )}
       >
         {children}
       </pre>

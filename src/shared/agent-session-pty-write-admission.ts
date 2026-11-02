@@ -13,13 +13,13 @@
 import {
   agentSessionLeaseAdmitsWriter,
   isAgentSessionFenceCurrent
-} from './agent-session-lease-adjudication'
+} from './agent-session/lifecycle/agent-session-lease-adjudication'
 import type {
   AgentSessionHandoffStage,
   AgentSessionLease,
   AgentSessionOwnerRuntimeKind,
   AgentSessionRecord
-} from './agent-session-record'
+} from './agent-session/lifecycle/agent-session-record'
 
 /**
  * Every code is already in `AGENT_SESSION_RPC_ERROR_CODES`, so a refusal reaching an old client

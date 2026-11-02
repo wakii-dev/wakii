@@ -9,9 +9,9 @@ import {
 import {
   agentSessionLeaseFixture,
   agentSessionRecordFixture
-} from './agent-session-record.test-fixture'
-import type { AgentSessionLease } from './agent-session-record'
-import { AGENT_SESSION_RPC_ERROR_CODES } from './agent-session-host-authority'
+} from './agent-session/lifecycle/agent-session-record.test-fixture'
+import type { AgentSessionLease } from './agent-session/lifecycle/agent-session-record'
+import { AGENT_SESSION_RPC_ERROR_CODES } from './agent-session/agent-session-host-authority'
 
 function bindingFor(lease: AgentSessionLease) {
   return { sessionId: lease.sessionId, record: agentSessionRecordFixture(lease) }

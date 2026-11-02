@@ -1,6 +1,9 @@
 import type * as ReactModule from 'react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { OpenFile } from '../../store/slices/editor'
+import type * as LucideModule from 'lucide-react'
+import type * as FileTypeIconsModule from '@/lib/file-type-icons'
+import type { ActivePluginIconTheme } from '@/store/plugin-icon-themes'
 
 const reactHookRuntime = vi.hoisted(() => ({
   states: [] as unknown[],
@@ -64,7 +67,9 @@ vi.mock('@dnd-kit/sortable', () => ({
   })
 }))
 
-vi.mock('lucide-react', () => ({
+// Why: the real file-type-icons module (theme lookup) loads every icon in its tables.
+vi.mock('lucide-react', async (importOriginal) => ({
+  ...(await importOriginal<typeof LucideModule>()),
   ArrowDown: function ArrowDown(props: Record<string, unknown>) {
     return { type: 'ArrowDown', props }
   },
@@ -119,41 +124,44 @@ vi.mock('lucide-react', () => ({
   ShieldAlert: function ShieldAlert(props: Record<string, unknown>) {
     return { type: 'ShieldAlert', props }
   },
+  Smartphone: function Smartphone(props: Record<string, unknown>) {
+    return { type: 'Smartphone', props }
+  },
   X: function X(props: Record<string, unknown>) {
     return { type: 'X', props }
   }
 }))
 
-vi.mock('@/components/ui/dropdown-menu', () => ({
-  DropdownMenu: function DropdownMenu(props: { children?: unknown }) {
-    return { type: 'DropdownMenu', props }
+vi.mock('@/components/ui/context-menu', () => ({
+  ContextMenu: function ContextMenu(props: { children?: unknown }) {
+    return { type: 'ContextMenu', props }
   },
-  DropdownMenuContent: function DropdownMenuContent(props: { children?: unknown }) {
-    return { type: 'DropdownMenuContent', props }
+  ContextMenuContent: function ContextMenuContent(props: { children?: unknown }) {
+    return { type: 'ContextMenuContent', props }
   },
-  DropdownMenuItem: function DropdownMenuItem(props: { children?: unknown }) {
-    return { type: 'DropdownMenuItem', props }
+  ContextMenuItem: function ContextMenuItem(props: { children?: unknown }) {
+    return { type: 'ContextMenuItem', props }
   },
-  DropdownMenuSeparator: function DropdownMenuSeparator() {
-    return { type: 'DropdownMenuSeparator', props: {} }
+  ContextMenuSeparator: function ContextMenuSeparator() {
+    return { type: 'ContextMenuSeparator', props: {} }
   },
-  DropdownMenuShortcut: function DropdownMenuShortcut(props: { children?: unknown }) {
-    return { type: 'DropdownMenuShortcut', props }
+  ContextMenuShortcut: function ContextMenuShortcut(props: { children?: unknown }) {
+    return { type: 'ContextMenuShortcut', props }
   },
-  DropdownMenuLabel: function DropdownMenuLabel(props: { children?: unknown }) {
-    return { type: 'DropdownMenuLabel', props }
+  ContextMenuLabel: function ContextMenuLabel(props: { children?: unknown }) {
+    return { type: 'ContextMenuLabel', props }
   },
-  DropdownMenuSub: function DropdownMenuSub(props: { children?: unknown }) {
-    return { type: 'DropdownMenuSub', props }
+  ContextMenuSub: function ContextMenuSub(props: { children?: unknown }) {
+    return { type: 'ContextMenuSub', props }
   },
-  DropdownMenuSubContent: function DropdownMenuSubContent(props: { children?: unknown }) {
-    return { type: 'DropdownMenuSubContent', props }
+  ContextMenuSubContent: function ContextMenuSubContent(props: { children?: unknown }) {
+    return { type: 'ContextMenuSubContent', props }
   },
-  DropdownMenuSubTrigger: function DropdownMenuSubTrigger(props: { children?: unknown }) {
-    return { type: 'DropdownMenuSubTrigger', props }
+  ContextMenuSubTrigger: function ContextMenuSubTrigger(props: { children?: unknown }) {
+    return { type: 'ContextMenuSubTrigger', props }
   },
-  DropdownMenuTrigger: function DropdownMenuTrigger(props: { children?: unknown }) {
-    return { type: 'DropdownMenuTrigger', props }
+  ContextMenuTrigger: function ContextMenuTrigger(props: { children?: unknown }) {
+    return { type: 'ContextMenuTrigger', props }
   }
 }))
 
@@ -192,25 +200,22 @@ vi.mock('@/lib/rename-file', () => ({
   renameFileOnDisk: renameFileOnDiskMock
 }))
 
-vi.mock('@/lib/file-type-icons', () => ({
+const activeIconTheme = vi.hoisted((): { theme: ActivePluginIconTheme | null } => ({ theme: null }))
+
+vi.mock('@/lib/file-type-icons', async (importOriginal) => ({
   getFileTypeIcon: () =>
     function FileIcon(props: Record<string, unknown>) {
       return { type: 'FileIcon', props }
     },
-  // Why: mirrors the real classifier's simulator short-circuit so the tab guard below is exercised.
-  getFileTypeIconColor: (filePath: string | null) =>
-    filePath && /mobile emulator|simulator/i.test(filePath) ? null : 'codeTsJs',
-  FILE_ICON_COLOR_CLASS: {
-    codeTsJs: 'text-file-icon-code-ts-js',
-    code: 'text-file-icon-code',
-    dataConfig: 'text-file-icon-data-config',
-    markupDoc: 'text-file-icon-markup-doc',
-    webStyle: 'text-file-icon-web-style',
-    shell: 'text-file-icon-shell',
-    binaryBuild: 'text-file-icon-binary-build',
-    asset: 'text-file-icon-asset',
-    nameBased: 'text-file-icon-name-based'
-  }
+  getPluginFileTypeIconIndex: (await importOriginal<typeof FileTypeIconsModule>())
+    .getPluginFileTypeIconIndex
+}))
+
+vi.mock('@/store/plugin-icon-themes', () => ({
+  PLUGIN_ICON_ATTRIBUTE: 'data-plugin-icon',
+  useActivePluginIconTheme: (
+    selector: (state: { theme: ActivePluginIconTheme | null }) => unknown
+  ) => selector({ theme: activeIconTheme.theme })
 }))
 
 vi.mock('@/store/selectors', () => ({
@@ -262,8 +267,7 @@ function baseFile(overrides: Partial<OpenFile> = {}): OpenFile {
 async function renderEditorFileTab(
   file: OpenFile,
   onActivate = vi.fn(),
-  onMakePermanent = vi.fn(),
-  isActive = true
+  onMakePermanent = vi.fn()
 ): Promise<{
   element: unknown
   onActivate: ReturnType<typeof vi.fn>
@@ -273,7 +277,7 @@ async function renderEditorFileTab(
   const module = await import('./EditorFileTab')
   const element = module.default({
     file,
-    isActive,
+    isActive: true,
     isPinned: false,
     hasTabsToRight: false,
     hasTabsToLeft: false,
@@ -358,7 +362,7 @@ function findElementsByType(node: unknown, typeName: string): ReactElementLike[]
 }
 
 function findMenuItemByText(node: unknown, label: string): ReactElementLike {
-  const item = findElementsByType(node, 'DropdownMenuItem').find((candidate) =>
+  const item = findElementsByType(node, 'ContextMenuItem').find((candidate) =>
     getText(candidate).includes(label)
   )
   if (!item) {
@@ -370,7 +374,7 @@ function findMenuItemByText(node: unknown, label: string): ReactElementLike {
 /** Picks Rename, then fires the close-autofocus that actually opens the input. */
 function selectRenameFromMenu(node: unknown): void {
   ;(findMenuItemByText(node, 'Rename').props.onSelect as () => void)()
-  const content = findElementsByType(node, 'DropdownMenuContent')[0]!
+  const content = findElementsByType(node, 'ContextMenuContent')[0]!
   ;(content.props.onCloseAutoFocus as (event: { preventDefault: () => void }) => void)({
     preventDefault: vi.fn()
   })
@@ -541,46 +545,46 @@ describe('EditorFileTab rename menu', () => {
   })
 })
 
-describe('EditorFileTab icon color', () => {
-  beforeEach(() => {
-    reactHookRuntime.states = []
-    reactHookRuntime.index = 0
-    vi.clearAllMocks()
-    vi.resetModules()
-    vi.stubGlobal('navigator', { userAgent: 'Mac' })
-    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
-      callback(0)
-      return 1
-    })
-    vi.stubGlobal('cancelAnimationFrame', vi.fn())
-  })
-
-  function iconClassName(element: unknown): string {
-    const icons = findElementsByType(element, 'FileIcon')
-    expect(icons).toHaveLength(1)
-    return String(icons[0].props.className ?? '')
+describe('EditorFileTab icon', () => {
+  const theme: ActivePluginIconTheme = {
+    icons: { file: 3 },
+    fileNames: {},
+    fileExtensions: { md: 7 },
+    folderNames: {},
+    folderNamesExpanded: {}
   }
 
-  it('colors an inactive file tab from the file-type class map', async () => {
-    const file = baseFile({ relativePath: 'src/App.tsx', filePath: '/repo/src/App.tsx' })
-    const element = expandNode((await renderEditorFileTab(file, vi.fn(), vi.fn(), false)).element)
-
-    expect(iconClassName(element)).toContain('text-file-icon-code-ts-js')
+  beforeEach(() => {
+    activeIconTheme.theme = theme
   })
 
-  it('keeps simulator tabs on the neutral tab color even when inactive', async () => {
-    const file = baseFile({ relativePath: 'mobile emulator', filePath: '/repo/mobile emulator' })
-    const element = expandNode((await renderEditorFileTab(file, vi.fn(), vi.fn(), false)).element)
-
-    expect(iconClassName(element)).not.toContain('text-file-icon-')
-    expect(iconClassName(element)).toContain('text-muted-foreground')
+  afterEach(() => {
+    activeIconTheme.theme = null
   })
 
-  it('keeps the active tab on the foreground color regardless of file type', async () => {
-    const file = baseFile({ relativePath: 'src/App.tsx', filePath: '/repo/src/App.tsx' })
-    const element = expandNode((await renderEditorFileTab(file)).element)
+  function themedIconIndexes(node: unknown): unknown[] {
+    return findElementsByType(node, 'span')
+      .map((span) => span.props['data-plugin-icon'])
+      .filter((index) => index !== undefined)
+  }
 
-    expect(iconClassName(element)).toContain('text-foreground')
-    expect(iconClassName(element)).not.toContain('text-file-icon-')
+  it('uses the active plugin file-icon theme like the explorer (#36326)', async () => {
+    const expanded = expandNode((await renderEditorFileTab(baseFile())).element)
+    expect(themedIconIndexes(expanded)).toContain(7)
+    expect(findElementsByType(expanded, 'FileIcon')).toHaveLength(0)
+  })
+
+  it('uses built-in icons when no icon theme is active', async () => {
+    activeIconTheme.theme = null
+    const expanded = expandNode((await renderEditorFileTab(baseFile())).element)
+    expect(themedIconIndexes(expanded)).toHaveLength(0)
+    expect(findElementsByType(expanded, 'FileIcon').length).toBeGreaterThan(0)
+  })
+
+  it('keeps the phone icon on simulator tabs when an icon theme is active', async () => {
+    const simulator = baseFile({ filePath: 'Mobile Emulator', language: 'simulator' })
+    const expanded = expandNode((await renderEditorFileTab(simulator)).element)
+    expect(themedIconIndexes(expanded)).toHaveLength(0)
+    expect(findElementsByType(expanded, 'Smartphone').length).toBeGreaterThan(0)
   })
 })

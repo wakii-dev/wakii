@@ -192,7 +192,9 @@ describe('WakiiRuntimeService', () => {
       'pr',
       null,
       localGitOptions,
-      undefined
+      undefined,
+      undefined,
+      false
     )
     expect(getGitHubPRChecksMock).toHaveBeenCalledWith(
       TEST_REPO_PATH,

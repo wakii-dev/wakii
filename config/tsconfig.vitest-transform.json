@@ -1,0 +1,10 @@
+{
+  "files": [],
+  "include": [],
+  "compilerOptions": { "useDefineForClassFields": true },
+  "references": [
+    { "path": "../src/packages/process-host/tsconfig.json" },
+    { "path": "./tsconfig.node.json" },
+    { "path": "./tsconfig.web.json" }
+  ]
+}

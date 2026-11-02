@@ -21,6 +21,8 @@ const paletteMeasurementFile =
   'src/renderer/src/lib/palette-match/palette-match-performance.test.ts'
 const measurementFiles = [measurementFile, paletteMeasurementFile]
 const transforms = {
+  // Auto-discovery climbs past the repo for files no in-repo tsconfig owns, into an enclosing checkout.
+  tsconfig: resolve(import.meta.dirname, 'tsconfig.vitest-transform.json'),
   oxc: { exclude: [/\.js$/] },
   plugins: [
     ...(moduleCachePath ? [moduleCacheResolutionKey()] : []),

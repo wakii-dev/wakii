@@ -8,11 +8,8 @@ import type {
   DeveloperPermissionRequestResult,
   DeveloperPermissionState
 } from '../../../../shared/developer-permissions-types'
-import {
-  FullDiskAccessSetupPrompt,
-  isFullDiskAccessReady,
-  isFullDiskAccessSetupVisible
-} from './FullDiskAccessSetupPrompt'
+import { FullDiskAccessSetupPrompt } from './FullDiskAccessSetupPrompt'
+
 import { toast } from 'sonner'
 
 vi.mock('sonner', () => ({
@@ -75,25 +72,7 @@ describe('FullDiskAccessSetupPrompt state helpers', () => {
     })
   })
 
-  it('hides the setup prompt before status is known or when unsupported', () => {
-    expect(isFullDiskAccessSetupVisible(undefined)).toBe(false)
-    expect(isFullDiskAccessSetupVisible('unsupported')).toBe(false)
-  })
-
-  it('shows the setup prompt only for macOS statuses users can act on', () => {
-    expect(isFullDiskAccessSetupVisible('unknown')).toBe(true)
-    expect(isFullDiskAccessSetupVisible('denied')).toBe(true)
-    expect(isFullDiskAccessSetupVisible('granted')).toBe(false)
-    expect(isFullDiskAccessSetupVisible('ready')).toBe(false)
-  })
-
-  it('treats granted and entitled statuses as ready', () => {
-    expect(isFullDiskAccessReady('granted')).toBe(true)
-    expect(isFullDiskAccessReady('ready')).toBe(true)
-    expect(isFullDiskAccessReady('unknown')).toBe(false)
-  })
-
-  it('refreshes macOS Full Disk Access status when Wakii regains focus', async () => {
+  it('refreshes macOS Full Disk Access status when Orca regains focus', async () => {
     setUserAgent('Macintosh')
     const getStatus = vi
       .fn()

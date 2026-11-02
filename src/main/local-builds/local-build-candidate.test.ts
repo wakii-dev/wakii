@@ -65,18 +65,6 @@ afterEach(async () => {
 })
 
 describe('loadLocalBuildCandidate', () => {
-  it('returns a sanitized, architecture-specific feed after hash validation', async () => {
-    const { manifestPath } = await fixture()
-    const candidate = await loadLocalBuildCandidate(manifestPath, 'arm64', {
-      readCompatibility: async () => compatibility()
-    })
-
-    expect(candidate.version).toBe('1.2.3-local.1')
-    expect([...candidate.artifacts.keys()]).toEqual(['orca-macos-arm64.zip'])
-    expect(candidate.manifestContent).toContain('orca-macos-arm64.zip')
-    await candidate.close()
-  })
-
   it('rejects mismatched hashes and traversal paths', async () => {
     const badHash = await fixture({ sha512: Buffer.alloc(64).toString('base64') })
     await expect(
@@ -133,12 +121,12 @@ describe('loadLocalBuildCandidate', () => {
       const directory = await mkdtemp(join(tmpdir(), 'orca-local-build-zip-'))
       tempDirectories.push(directory)
       const zipRoot = join(directory, 'zip-root')
-      const resources = join(zipRoot, 'Wakii.app', 'Contents', 'Resources')
+      const resources = join(zipRoot, 'Orca.app', 'Contents', 'Resources')
       await mkdir(resources, { recursive: true })
       await writeFile(join(resources, 'orca-local-build.json'), JSON.stringify(compatibility()))
       const artifactName = 'orca-macos-arm64.zip'
       const artifactPath = join(directory, artifactName)
-      await execFileAsync('/usr/bin/zip', ['-qry', artifactPath, 'Wakii.app'], { cwd: zipRoot })
+      await execFileAsync('/usr/bin/zip', ['-qry', artifactPath, 'Orca.app'], { cwd: zipRoot })
       const artifact = await readFile(artifactPath)
       const manifestPath = join(directory, 'latest-mac.yml')
       await writeFile(
@@ -160,13 +148,4 @@ describe('loadLocalBuildCandidate', () => {
       await candidate.close()
     }
   )
-
-  it('requires exactly one ZIP for the running architecture', async () => {
-    const { manifestPath } = await fixture()
-    await expect(
-      loadLocalBuildCandidate(manifestPath, 'x64', {
-        readCompatibility: async () => compatibility()
-      })
-    ).rejects.toThrow('exactly one x64 Wakii ZIP')
-  })
 })

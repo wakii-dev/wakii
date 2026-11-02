@@ -597,8 +597,7 @@ describe('WakiiRuntimeService', () => {
       1
     )
     const pty = runtime['ptysById'].get('osc-pty')!
-    pty.tabId = null
-    pty.paneKey = null
+    runtime['terminalIdentity'].setRecordedSurface(pty, null, null, undefined)
 
     const { worktrees } = await runtime.getWorktreePs()
     const summary = worktrees.find((worktree) => worktree.worktreeId === TEST_WORKTREE_ID)
@@ -640,8 +639,7 @@ describe('WakiiRuntimeService', () => {
       payload: { state: 'working', prompt: 'hook-fresh agent', agentType: 'codex' }
     })
     const pty = runtime['ptysById'].get('race-pty')!
-    pty.tabId = null
-    pty.paneKey = null
+    runtime['terminalIdentity'].setRecordedSurface(pty, null, null, undefined)
 
     const { worktrees } = await runtime.getWorktreePs()
     const summary = worktrees.find((worktree) => worktree.worktreeId === TEST_WORKTREE_ID)

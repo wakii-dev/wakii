@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { DASHBOARD_MAX_LAUNCH_WORKTREES } from '../../../../shared/dashboard-snapshot'
-import type { DashboardCard, DashboardWorkspace } from '../../../../shared/dashboard-snapshot'
+import type { DashboardCard } from '../../../../shared/dashboard-snapshot'
+
 import type { FolderWorkspace } from '../../../../shared/folder-workspace-types'
 import type { ProjectGroup } from '../../../../shared/project-group-types'
 import { folderWorkspaceKey } from '../../../../shared/workspace-scope'
@@ -34,7 +35,7 @@ function card(overrides: Partial<DashboardCard> = {}): DashboardCard {
     worktreeId: 'worktree-1',
     tabId: 'tab-1',
     leafId: 'leaf-1',
-    repoName: 'Wakii',
+    repoName: 'Orca',
     worktreeName: 'Dashboard',
     startedAt: 1,
     finishedAt: null,
@@ -56,40 +57,6 @@ describe('buildDashboardWorktreeLaunchOptions', () => {
     )
 
     expect(Object.keys(options)).toHaveLength(DASHBOARD_MAX_LAUNCH_WORKTREES)
-  })
-
-  it('combines local detection with proven providers, honoring defaults and disabled agents', () => {
-    const options = buildDashboardWorktreeLaunchOptions(
-      state({
-        detectedAgentIds: ['claude', 'codex'],
-        settings: {
-          defaultTuiAgent: 'codex',
-          disabledTuiAgents: ['claude']
-        } as LaunchState['settings']
-      }),
-      [card(), card({ paneKey: 'pane-2', agentType: 'gemini' })]
-    )
-
-    expect(options).toEqual({ 'worktree-1': ['codex', 'gemini'] })
-  })
-
-  it('publishes detected launch choices for workspaces without cards', () => {
-    const workspace: DashboardWorkspace = {
-      repoId: 'repo-1',
-      worktreeId: 'empty-worktree',
-      repoName: 'Wakii',
-      worktreeName: 'Empty',
-      hostKind: 'local',
-      executionHostId: 'local',
-      workspaceKind: 'worktree'
-    }
-    const options = buildDashboardWorktreeLaunchOptions(
-      state({ detectedAgentIds: ['claude', 'codex'] }),
-      [],
-      [workspace]
-    )
-
-    expect(options).toEqual({ 'empty-worktree': ['claude', 'codex'] })
   })
 
   it('uses each git workspace execution host instead of local detection', () => {

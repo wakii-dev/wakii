@@ -153,6 +153,7 @@ describe('RuntimeMobileNotificationController dispatchPlugin focus gate', () => 
   const defaultSettings: NotificationSettings = {
     enabled: true,
     agentTaskComplete: true,
+    agentNeedsInput: true,
     terminalBell: true,
     suppressWhenFocused: true,
     notifyHiddenWorkspaces: false,

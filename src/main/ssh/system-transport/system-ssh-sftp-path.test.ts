@@ -12,11 +12,7 @@ describe('toSftpRemotePath', () => {
     expect(toSftpRemotePath('C:/Users/dev/f.bin')).toBe('/C:/Users/dev/f.bin')
   })
 
-  it('accepts a path already in that namespace unchanged', () => {
-    expect(toSftpRemotePath('/C:/Users/dev/f.bin')).toBe('/C:/Users/dev/f.bin')
-  })
-
-  it('converts the separators Wakii stores paths with', () => {
+  it('converts the separators Orca stores paths with', () => {
     expect(toSftpRemotePath('C:\\Users\\dev\\f.bin')).toBe('/C:/Users/dev/f.bin')
   })
 

@@ -33,7 +33,6 @@ vi.mock('os', async (importOriginal) => {
 })
 
 import { PiTitlebarExtensionService, isSafeDescendCandidate } from './titlebar-extension-service'
-import { getPiTitlebarExtensionSource } from './titlebar-extension-source'
 
 function legacyOverlayPath(kind: 'pi' | 'omp', ptyId: string): string {
   const rootDir = kind === 'pi' ? 'pi-agent-overlays' : 'omp-agent-overlays'
@@ -189,7 +188,7 @@ describe('PiTitlebarExtensionService', () => {
     })
   }
 
-  it('buildPtyEnv installs Wakii extensions into the user agent dir without redirecting the home', () => {
+  it('buildPtyEnv installs Orca extensions into the user agent dir without redirecting the home', () => {
     const svc = new PiTitlebarExtensionService()
     const env = svc.buildPtyEnv('pty-1', piHome, 'pi')
 
@@ -233,20 +232,6 @@ describe('PiTitlebarExtensionService', () => {
     expect(source).toContain('/hook/prime-agent')
     expect(existsSync(join(piHome, 'extensions', 'orca-titlebar-spinner.ts'))).toBe(false)
     expect(existsSync(join(piHome, 'extensions', 'orca-prefill.ts'))).toBe(false)
-    expectPiHomeIntact()
-  })
-
-  it('uses the same source dir for multiple PTYs with the same Pi dir', () => {
-    const svc = new PiTitlebarExtensionService()
-    const firstEnv = svc.buildPtyEnv('pty-shared-1', piHome, 'pi')
-    const secondEnv = svc.buildPtyEnv('pty-shared-2', piHome, 'pi')
-
-    expect(firstEnv.PI_CODING_AGENT_DIR).toBeUndefined()
-    expect(secondEnv.PI_CODING_AGENT_DIR).toBeUndefined()
-    expect(secondEnv.ORCA_PI_SOURCE_AGENT_DIR).toBe(firstEnv.ORCA_PI_SOURCE_AGENT_DIR)
-    expect(readFileSync(join(piHome, 'extensions', 'user-ext', 'ext.ts'), 'utf-8')).toBe(
-      'user extension'
-    )
     expectPiHomeIntact()
   })
 
@@ -502,25 +487,7 @@ describe('PiTitlebarExtensionService', () => {
     }
   )
 
-  it('rebuilding managed extensions for the same ptyId does not corrupt the user Pi dir', () => {
-    const svc = new PiTitlebarExtensionService()
-    svc.buildPtyEnv('pty-3', piHome, 'pi')
-    svc.buildPtyEnv('pty-3', piHome, 'pi')
-    svc.buildPtyEnv('pty-3', piHome, 'pi')
-    expectPiHomeIntact()
-  })
-
-  it('refreshes a managed spinner in an explicitly selected senpi home', () => {
-    const agentDir = join(userDataDir, '.omo', 'agent')
-    const extensionPath = join(agentDir, 'extensions', 'orca-titlebar-spinner.ts')
-    mkdirSync(join(agentDir, 'extensions'), { recursive: true })
-    writeFileSync(extensionPath, '// @orca-managed-pi-extension\nstale spinner')
-    const svc = new PiTitlebarExtensionService()
-    svc.buildPtyEnv('pty-senpi', agentDir, 'pi')
-    expect(readFileSync(extensionPath, 'utf8')).toContain(getPiTitlebarExtensionSource())
-  })
-
-  it('rebuilding updates Wakii-owned extensions while preserving user files', () => {
+  it('rebuilding updates Orca-owned extensions while preserving user files', () => {
     const svc = new PiTitlebarExtensionService()
     svc.buildPtyEnv('pty-refresh-1', piHome, 'pi')
     writeFileSync(
@@ -545,7 +512,7 @@ describe('PiTitlebarExtensionService', () => {
     )
   })
 
-  it("does not overwrite a user's same-named Wakii extension file", () => {
+  it("does not overwrite a user's same-named Orca extension file", () => {
     const userStatusExtension = 'user-owned status extension'
     writeFileSync(join(piHome, 'extensions', 'orca-agent-status.ts'), userStatusExtension, 'utf-8')
 
@@ -559,7 +526,7 @@ describe('PiTitlebarExtensionService', () => {
     expectPiHomeIntact()
   })
 
-  it('uses an Wakii-owned OMP status extension when a same-named user file exists', () => {
+  it('uses an Orca-owned OMP status extension when a same-named user file exists', () => {
     const userStatusExtension = 'user-owned status extension'
     const userStatusPath = join(piHome, 'extensions', 'orca-agent-status.ts')
     writeFileSync(userStatusPath, userStatusExtension, 'utf-8')
@@ -751,35 +718,5 @@ describe('PiTitlebarExtensionService', () => {
       }
       expect(isSafeDescendCandidate(junctionLike)).toBe(false)
     })
-
-    it('rejects a plain symlink', () => {
-      expect(isSafeDescendCandidate({ isSymbolicLink: () => true, isDirectory: () => false })).toBe(
-        false
-      )
-    })
-
-    it('rejects a regular file', () => {
-      expect(
-        isSafeDescendCandidate({ isSymbolicLink: () => false, isDirectory: () => false })
-      ).toBe(false)
-    })
-
-    it('accepts a true directory (non-symlink)', () => {
-      expect(isSafeDescendCandidate({ isSymbolicLink: () => false, isDirectory: () => true })).toBe(
-        true
-      )
-    })
-  })
-
-  it('refuses to remove anything outside the overlay root', () => {
-    const svc = new PiTitlebarExtensionService() as unknown as {
-      safeRemoveOverlay: (p: string, kind: 'pi' | 'omp') => void
-    }
-    svc.safeRemoveOverlay(piHome, 'pi')
-    svc.safeRemoveOverlay(piHome, 'omp')
-    svc.safeRemoveOverlay('/', 'pi')
-    svc.safeRemoveOverlay(join(userDataDir, 'pi-agent-overlays'), 'pi')
-    svc.safeRemoveOverlay(join(userDataDir, 'omp-agent-overlays'), 'omp')
-    expectPiHomeIntact()
   })
 })

@@ -23,6 +23,7 @@ vi.mock('electron', () => ({
 const defaultSettings: NotificationSettings = {
   enabled: true,
   agentTaskComplete: true,
+  agentNeedsInput: true,
   terminalBell: true,
   suppressWhenFocused: false,
   notifyHiddenWorkspaces: false,

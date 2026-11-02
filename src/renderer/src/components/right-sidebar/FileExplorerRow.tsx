@@ -1,16 +1,8 @@
 import React from 'react'
-import {
-  ChevronRight,
-  CircleAlert,
-  CircleSlash,
-  Folder,
-  FolderOpen,
-  Link,
-  Loader2
-} from 'lucide-react'
+import { ChevronRight, CircleAlert, CircleSlash, Link, Loader2 } from 'lucide-react'
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu'
 import { cn } from '@/lib/utils'
-import { FILE_ICON_COLOR_CLASS, getFileTypeIcon, getFileTypeIconColor } from '@/lib/file-type-icons'
+import { FileTypeIcon, FolderIcon } from '@/components/FileTypeIcon'
 import {
   encodeWorkspaceFilePaths,
   WORKSPACE_FILE_PATH_MIME,
@@ -21,7 +13,6 @@ import {
 import type { GitFileStatus } from '../../../../shared/git-status-types'
 import { STATUS_LABELS } from './status-display'
 import { RENAME_HOTSPOT_ATTR } from './file-explorer-dir-toggle-timing'
-import { getIndentGuideLefts } from './file-explorer-indent-guides'
 import type { TreeNode } from './file-explorer-types'
 import { useFileExplorerRowDrag } from './useFileExplorerRowDrag'
 import { translate } from '@/i18n/i18n'
@@ -30,14 +21,12 @@ import type { RuntimeFileOperationArgs } from '@/runtime/runtime-file-client-typ
 import { createMultiSelectDragGhost } from './file-explorer-multi-drag-image'
 import { FileExplorerRowContextMenu } from './file-explorer-row-context-menu'
 
-// ─── File / Folder Row with Context Menu ─────────────────────────
-
 export type FileExplorerRowProps = {
   node: TreeNode
   displayDepthOffset?: number
   isExpanded: boolean
   isLoading: boolean
-  /** Why: a failed read leaves no children, which otherwise reads as an empty folder. */
+  /** Distinguish failed reads from empty folders. */
   loadError?: string | null
   isSelected: boolean
   isFlashing: boolean
@@ -126,8 +115,6 @@ export function FileExplorerRow({
   onNativeDragTargetChange,
   onNativeDragExpandDir
 }: FileExplorerRowProps): React.JSX.Element {
-  const FileIcon = getFileTypeIcon(node.relativePath || node.name)
-  const iconColorGroup = getFileTypeIconColor(node.relativePath || node.name)
   const showLoadError = node.isDirectory && isExpanded && !isLoading && loadError !== null
   const rowDropDir = node.isDirectory ? node.path : targetDir
   const { setRowDragNode, handleDragOver, handleDragEnter, handleDragLeave, handleDrop } =
@@ -158,17 +145,16 @@ export function FileExplorerRow({
           data-file-explorer-row=""
           data-selected={isSelected ? 'true' : undefined}
           className={cn(
-            'relative flex w-full items-center gap-1 rounded-sm px-2 py-1 text-left text-xs transition-colors',
+            'flex w-full items-center gap-1 rounded-sm px-2 py-1 text-left text-xs transition-colors',
             !isSelected && 'hover:bg-accent hover:text-foreground',
             isSelected && 'text-accent-foreground',
             isFlashing && 'bg-amber-400/20 ring-1 ring-inset ring-amber-400/70'
           )}
           style={{ paddingLeft: `${(node.depth - displayDepthOffset) * 16 + 8}px` }}
           ref={setRowDragNode}
-          // Why: the explorer's OS-drop owner reads the target folder from this at drop time.
+          // The OS-drop owner reads the target folder here at drop time.
           data-file-explorer-drop-dir={rowDropDir}
-          // Why: marks this draggable row so the wheel-capture handler can rescue
-          // scroll Chromium swallows over draggable nodes (file-explorer-drag-scroll-marker).
+          // Let wheel capture rescue scrolling Chromium swallows over draggable rows (file-explorer-drag-scroll-marker).
           data-explorer-draggable="true"
           draggable
           onDragStart={(event) => {
@@ -208,16 +194,6 @@ export function FileExplorerRow({
           onClick={(e) => onClick(e)}
           onDoubleClick={onDoubleClick}
         >
-          {/* Why: `relative` on the button makes it the positioning context for
-             these per-level indent guides. */}
-          {getIndentGuideLefts(node.depth).map((left) => (
-            <span
-              key={left}
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-y-0 w-px bg-muted-foreground/20"
-              style={{ left: `${left}px` }}
-            />
-          ))}
           {node.isDirectory ? (
             <>
               <ChevronRight
@@ -230,10 +206,12 @@ export function FileExplorerRow({
                 <Loader2 className="size-3 shrink-0 animate-spin text-muted-foreground" />
               ) : showLoadError ? (
                 <CircleAlert className="size-3 shrink-0 text-destructive" />
-              ) : isExpanded ? (
-                <FolderOpen className="size-3 shrink-0 text-muted-foreground" />
               ) : (
-                <Folder className="size-3 shrink-0 text-muted-foreground" />
+                <FolderIcon
+                  folderPath={node.name}
+                  open={isExpanded}
+                  className="size-3 shrink-0 text-muted-foreground"
+                />
               )}
             </>
           ) : (
@@ -242,25 +220,20 @@ export function FileExplorerRow({
               {node.isSymlink ? (
                 <Link className="size-3 shrink-0 text-muted-foreground" />
               ) : (
-                React.createElement(FileIcon, {
-                  className: cn(
-                    'size-3 shrink-0',
-                    iconColorGroup ? FILE_ICON_COLOR_CLASS[iconColorGroup] : 'text-muted-foreground'
-                  )
+                React.createElement(FileTypeIcon, {
+                  filePath: node.relativePath || node.name,
+                  className: 'size-3 shrink-0 text-muted-foreground'
                 })
               )}
             </>
           )}
           <span
-            // Why: marks the rename hotspot so the row's click handler can drop
-            // the directory toggle on the second click of a double-click rename.
+            // Suppress directory toggling on the second click of a filename double-click rename.
             {...{ [RENAME_HOTSPOT_ATTR]: '' }}
             className={cn(
               'truncate',
               isSelected && !nodeStatus && !isIgnored && 'text-accent-foreground',
-              // Why: italic glyphs overhang their advance width; truncate's
-              // overflow:hidden clips it, shaving the last char (".md" → ".ma").
-              // pr-0.5 reserves room for the slant so the final letter survives.
+              // Reserve space for italic overhang so truncation does not clip the final letter.
               isIgnored && 'italic pr-0.5'
             )}
             style={
@@ -271,8 +244,11 @@ export function FileExplorerRow({
                   : undefined
             }
             onDoubleClick={(e) => {
-              // Why: scope rename to the filename text so "pin preview" and the
-              // directory toggle stay reachable on the icon and empty row area.
+              // Outside-link rows are browse-only, so their name double-click pins the preview instead.
+              if (node.outsideProject) {
+                return
+              }
+              // Keep icon/empty-row double-clicks available for pin preview and directory toggling.
               e.stopPropagation()
               onStartRename(node)
             }}
