@@ -1,6 +1,6 @@
 {
   "name": "story-team-kit",
-  "version": "2.25.1",
+  "version": "2.25.2",
   "description": "10-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới. 31/10: team-chat bus + team-workflow skill (HOI-15/16).",
   "requires": {
     "claude-code": ">=2.0",
@@ -766,7 +766,17 @@
       ],
       "outputs": "pane split từ terminal Captain + registration + brief — worker xếp grid trong khung room",
       "description": "Thuê worker bằng SPLIT pane của Captain room (grid ≤3) — terminal là pane con, không phải tab riêng"
+    },
+    {
+      "name": "prompt-master",
+      "type": "skill",
+      "category": "knowledge",
+      "inputs": [
+        "viết/sửa prompt cho AI tools"
+      ],
+      "outputs": "prompt tối ưu tự chứa — dùng cho brief dispatch worker và copy marketing",
+      "owner": "wakii"
     }
   ],
-  "kitHash": "dff77619b2a0ffc2"
+  "kitHash": "75aaa985af13287c"
 }

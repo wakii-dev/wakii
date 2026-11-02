@@ -1236,7 +1236,7 @@ const KIT_ROOT = join(fileURLToPath(new URL('.', import.meta.url)), 'kit')
 const RETIRED_SKILL_DIRS = [
   'brainstorm', 'bridge-router', 'execute-plan', 'graph-engineering', 'gpt-taste',
   'design-taste-frontend', 'figma-orientation', 'frontend-design', 'image-to-code',
-  'prompt-master', 'web-design-guidelines',
+  'web-design-guidelines',
 ]
 
 export function installKit(orca, { root, kitRoot: kitRootOverride } = {}) {
