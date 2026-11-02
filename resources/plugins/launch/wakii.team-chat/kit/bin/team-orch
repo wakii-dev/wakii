@@ -386,12 +386,23 @@ PY
     ARGS=(${FILTERED[@]+"${FILTERED[@]}"})
     [ "$HAS_JSON" -eq 1 ] || ARGS+=(--json)
     [ -n "$SPLIT_PANE" ] && ARGS+=(--terminal "$SPLIT_PANE")
+    # A2-nốt (agent_unconfigured 2/11): KHÔNG có --terminal nào đính →
+    # orchestration tự TẠO terminal mới → bắt buộc --agent; mặc định claude
+    # (cùng agent đường split dùng). Có --terminal (user hoặc split) thì bỏ qua.
+    HAS_T=0; for a in ${ARGS[@]+"${ARGS[@]}"}; do [ "$a" = "--terminal" ] && HAS_T=1; done
+    if [ "$HAS_T" -eq 0 ]; then
+      HAS_AGENT=0; for a in ${ARGS[@]+"${ARGS[@]}"}; do [ "$a" = "--agent" ] && HAS_AGENT=1; done
+      [ "$HAS_AGENT" -eq 0 ] && ARGS+=(--agent claude)
+    fi
     OUT=$("$ORCA" orchestration "$CMD" "${ARGS[@]}" 2>&1) || {
       if [ -n "$SPLIT_PANE" ]; then
         echo "team-orch: ⚠ orchestration từ chối pane split — đóng pane, fallback tab riêng" >&2
         "$ORCA" terminal close --terminal "$SPLIT_PANE" >/dev/null 2>&1
         ARGS=(${FILTERED[@]+"${FILTERED[@]}"})  # A2: fallback CŨNG phải lọc creation flags
         [ "$HAS_JSON" -eq 1 ] || ARGS+=(--json)
+        # A2-nốt: pane split đã đóng — không --terminal → cần --agent cho terminal mới
+        HAS_AGENT=0; for a in ${ARGS[@]+"${ARGS[@]}"}; do [ "$a" = "--agent" ] && HAS_AGENT=1; done
+        [ "$HAS_AGENT" -eq 0 ] && ARGS+=(--agent claude)
         OUT=$("$ORCA" orchestration "$CMD" "${ARGS[@]}" 2>&1) || { echo "$OUT"; exit 1; }
       else
         echo "$OUT"; exit 1
