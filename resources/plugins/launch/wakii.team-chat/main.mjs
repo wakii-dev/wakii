@@ -1544,7 +1544,7 @@ export default function activate(orca) {
     try {
       if (Date.now() - projectsAt < 60000) return
       projectsAt = Date.now()
-      const out = await new Promise((res) => execFileCb(orcaBin, ['worktree', 'list', '--json'], { timeout: 15000 }, (e, o) => res(e ? '' : o)))
+      const out = await new Promise((res) => execFileCb(orcaBin(), ['worktree', 'list', '--json'], { timeout: 15000 }, (e, o) => res(e ? '' : o)))
       if (!out) return
       const wts = JSON.parse(out).result.worktrees
       const items = []
@@ -1562,7 +1562,7 @@ export default function activate(orca) {
       let current = ''
       let currentPath = ''
       try {
-        const tOut = await new Promise((res) => execFileCb(orcaBin, ['terminal', 'list', '--json'], { timeout: 15000 }, (e, o) => res(e ? '' : o)))
+        const tOut = await new Promise((res) => execFileCb(orcaBin(), ['terminal', 'list', '--json'], { timeout: 15000 }, (e, o) => res(e ? '' : o)))
         if (tOut) {
           const terms = JSON.parse(tOut).result.terminals
           const withWt = terms.filter((t) => t.worktreePath).sort((a, b) => (b.lastOutputAt || 0) - (a.lastOutputAt || 0))

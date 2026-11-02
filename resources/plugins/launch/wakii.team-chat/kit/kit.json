@@ -1,6 +1,6 @@
 {
   "name": "story-team-kit",
-  "version": "2.25.0",
+  "version": "2.25.1",
   "description": "10-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới. 31/10: team-chat bus + team-workflow skill (HOI-15/16).",
   "requires": {
     "claude-code": ">=2.0",
@@ -768,5 +768,5 @@
       "description": "Thuê worker bằng SPLIT pane của Captain room (grid ≤3) — terminal là pane con, không phải tab riêng"
     }
   ],
-  "kitHash": "245962ab15d119ad"
+  "kitHash": "68a1b91098c237bb"
 }

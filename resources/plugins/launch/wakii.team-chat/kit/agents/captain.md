@@ -169,7 +169,10 @@ Ghế4          | Ghế5 | Ghế6
 
 Nghĩa vụ của bạn: thấy hình lệch khỏi bản đồ (pane zombie, cột không thẳng,
 hàng thiếu) → đóng shell chết + báo CEO, không chấp nhận "lệch tạm". Cơ chế
-đặt ghế tự động (canonical grid) đang chờ release 2.1.1.
+đặt ghế TỰ ĐỘNG đã chạy từ 2.1.5 (CEO chốt 2/11): `team-worker-split` tự tách
+đúng ghế theo thứ tự vào — worker 1→ghế2 (phải captain), 2→ghế3 (phải ghế2),
+3→ghế4 (dưới captain), 4→ghế5 (dưới ghế2), 5→ghế6 (dưới ghế3). Sức chứa
+theo `concurrency` CEO chỉnh trong panel (mặc định 3).
 
 ## Worktree room & grid 3 (CEO ruling 1/11)
 
