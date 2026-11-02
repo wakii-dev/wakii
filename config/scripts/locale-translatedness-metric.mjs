@@ -3,8 +3,8 @@ import path from 'node:path'
 import process from 'node:process'
 import { pathToFileURL } from 'node:url'
 
-import { filterLeavesByPrefix } from './bootstrap-locale-catalog.mjs'
-import { collectStringLeaves, shouldPreserveEnglishValue } from './locale-translation-policy.mjs'
+import { filterLeavesByPrefix } from './locale-catalog/bootstrap-locale-catalog.mjs'
+import { collectStringLeaves, shouldPreserveEnglishValue } from './locale-catalog/locale-translation-policy.mjs'
 
 const LOCALES_DIR = path.join('src', 'renderer', 'src', 'i18n', 'locales')
 

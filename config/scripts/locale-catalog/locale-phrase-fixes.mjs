@@ -2,7 +2,7 @@ import { KO_PHRASE_FIXES_ROUND4 } from './locale-ko-phrase-fixes.mjs'
 import { ZH_PHRASE_FIXES_ROUND5 } from './locale-zh-phrase-fixes-round5.mjs'
 
 import { JA_PHRASE_FIXES } from './locale-ja-phrase-fixes.mjs'
-import { VI_PHRASE_FIXES } from './locale-vi-phrase-fixes.mjs'
+import { VI_PHRASE_FIXES } from '../locale-vi-phrase-fixes.mjs'
 
 // Why: Orca names the Agent concept 智能体; 代理 stays for proxy and user-agent copy.
 const ZH_AGENT_SOURCE = /(?<!user[ -])(?:sub)?agents?\b/i

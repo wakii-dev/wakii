@@ -1,6 +1,6 @@
 import { JA_VALUE_OVERRIDES } from './locale-ja-value-overrides.mjs'
 import { KO_VALUE_OVERRIDES } from './locale-ko-value-overrides.mjs'
-import { VI_VALUE_OVERRIDES } from './locale-vi-value-overrides.mjs'
+import { VI_VALUE_OVERRIDES } from '../locale-vi-value-overrides.mjs'
 import { ZH_VALUE_OVERRIDES } from './locale-zh-value-overrides.mjs'
 
 export const LOCALE_VALUE_OVERRIDES = {

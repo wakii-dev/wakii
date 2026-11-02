@@ -2,7 +2,7 @@ import { CROSS_LOCALE_KEY_OVERRIDES } from './locale-cross-locale-key-overrides.
 import { JA_KEY_OVERRIDES } from './locale-ja-key-overrides.mjs'
 import { KO_KEY_OVERRIDES } from './locale-ko-key-overrides.mjs'
 import { MACOS_TCC_KEY_OVERRIDES } from './locale-macos-tcc-key-overrides.mjs'
-import { VI_KEY_OVERRIDES } from './locale-vi-key-overrides.mjs'
+import { VI_KEY_OVERRIDES } from '../locale-vi-key-overrides.mjs'
 
 export function mergeLocaleKeyOverrides(base) {
   const merged = { ...base }

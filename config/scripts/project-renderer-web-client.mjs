@@ -22,6 +22,21 @@ const visitedEntries = new Set()
 const PDFJS_VIEWER_ASSET_DIRS = ['cmaps', 'standard_fonts', 'wasm']
 const TEXT_REFERENCE_OUTPUT = /\.(?:css|html|m?js|svg)$/
 
+function renameWithWatchersRelease(from, to) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      renameSync(from, to)
+      return
+    } catch (error) {
+      const lastAttempt = attempt >= 5
+      if (error.code !== 'EPERM' || lastAttempt) {
+        throw error
+      }
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 250 * attempt)
+    }
+  }
+}
+
 function assertEntryIsolation() {
   const entryKeys = new Set(
     Object.entries(manifest)
@@ -180,7 +195,7 @@ try {
   await minifyWebOutput()
 
   rmSync(webOutput, { force: true, recursive: true })
-  renameSync(stagingOutput, webOutput)
+  renameWithWatchersRelease(stagingOutput, webOutput)
   // The installed browser client shares renderer bytes; only its selected files may be served.
   writeFileSync(
     join(rendererOutput, '.orca-web-client-files.json'),

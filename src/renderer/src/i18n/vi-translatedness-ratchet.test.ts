@@ -20,9 +20,9 @@ import en from './locales/en.json'
 import vi from './locales/vi.json'
 import { computeTranslatedness } from '../../../../config/scripts/locale-translatedness-metric.mjs'
 
-// Re-baselined after the 2026-10-31 upstream sync: upstream added ~6k untranslated
-// en keys; translated coverage held at 14,993. The vi-1 sweep translates and ratchets up.
-const SF2_SHIP_TRANSLATED_COUNT = 14_993
+// Re-baselined after the 2026-11-02 upstream sync: upstream key renames/removals
+// reset translated coverage to 14,962. The vi-1 sweep translates and ratchets up.
+const SF2_SHIP_TRANSLATED_COUNT = 14_962
 
 describe('vi translatedness ratchet', () => {
   it('never drops below the SF-2 ship baseline', () => {

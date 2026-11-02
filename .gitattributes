@@ -80,3 +80,6 @@
 **/__snapshots__/*.snap text eol=lf
 # Generated, minified bundles (config/scripts/build-plugin-declarative-runtime.mjs).
 /resources/plugins/declarative/orca-test*.mjs linguist-generated=true -diff
+
+# Skill-md test fixtures are byte-compared; CRLF checkout would double the CRs.
+*.skill-md.txt text eol=lf

@@ -6,7 +6,7 @@ import {
   repairTranslatedValue,
   setLeaf,
   shouldPreserveEnglishValue
-} from './locale-translation-policy.mjs'
+} from './locale-catalog/locale-translation-policy.mjs'
 import { computeTranslatedness } from './locale-translatedness-metric.mjs'
 
 describe('vi preserve-English tech labels', () => {
