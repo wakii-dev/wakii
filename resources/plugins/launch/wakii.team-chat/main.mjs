@@ -1372,6 +1372,9 @@ export default function activate(orca) {
   // Outbound: poller refresh storage 'team.chat.tail' (200 tin cuối) mỗi 2s cho panel.
   const chatDir = join(homeDir(), '.claude', 'chat')
   const chatLog = join(chatDir, 'team-chat.jsonl')
+  //appendLine mới mkdir — roomCmd/mirrorRoster ghi thẳng nên dir phải có sẵn
+  //từ activate, không thì create-room đầu tiên ENOENT fail âm thầm.
+  mkdir(chatDir, { recursive: true }).catch(() => {})
 
   const readTail = async (limit = 200) => {
     try {
@@ -1547,8 +1550,9 @@ export default function activate(orca) {
       const items = []
       const seen = new Set()
       for (const w of wts) {
-        const p = String(w.path || '')
-        if (!p.startsWith('/')) continue
+        // Chuẩn hoá \ → / để match /workspaces/ và tách tên trên cả path Windows.
+        const p = String(w.path || '').replace(/\\/g, '/')
+        if (!p.startsWith('/') && !/^[a-z]:/i.test(p)) continue
         const m = p.match(/\/workspaces\/([^/]+)\//)
         const name = m ? m[1] : (p.split('/').filter(Boolean).slice(-1)[0] || p)
         if (seen.has(name)) continue
@@ -1561,7 +1565,7 @@ export default function activate(orca) {
         if (tOut) {
           const terms = JSON.parse(tOut).result.terminals
           const withWt = terms.filter((t) => t.worktreePath).sort((a, b) => (b.lastOutputAt || 0) - (a.lastOutputAt || 0))
-          const wt = withWt[0] && String(withWt[0].worktreePath)
+          const wt = withWt[0] && String(withWt[0].worktreePath).replace(/\\/g, '/')
           if (wt) {
             const mm = wt.match(/\/workspaces\/([^/]+)\//)
             current = mm ? mm[1] : (wt.split('/').filter(Boolean).slice(-1)[0] || '')
@@ -1603,7 +1607,7 @@ export default function activate(orca) {
       const orcaBin = process.env.ORCA_BIN || 'orca'
       const out = await new Promise((res) => execFileCb(orcaBin, ['worktree', 'list', '--json'], { timeout: 15000 }, (e, o) => res(e ? '' : o)))
       if (!out) return ''
-      const wts = JSON.parse(out).result.worktrees.map((w) => w.path)
+      const wts = JSON.parse(out).result.worktrees.map((w) => String(w.path || '').replace(/\\/g, '/'))
       return wts.find((p) => repo && p.endsWith('/' + repo)) || wts.find((p) => repo && p.includes(repo)) || wts[0] || ''
     } catch { return '' }
   }
@@ -1685,7 +1689,7 @@ export default function activate(orca) {
                 const rooms = JSON.parse(await readFile(join(chatDir, 'rooms.json'), 'utf8'))
                 const repo = rooms[room] && rooms[room].repo
                 const out = await new Promise((res) => execFileCb(orcaBin, ['worktree', 'list', '--json'], (e, o) => res(e ? '' : o)))
-                const wts = JSON.parse(out).result.worktrees.map((w) => w.path)
+                const wts = JSON.parse(out).result.worktrees.map((w) => String(w.path || '').replace(/\\/g, '/'))
                 wt = wts.find((p) => repo && p.endsWith('/' + repo)) || wts.find((p) => repo && p.includes(repo)) || wts[0] || ''
               } catch { /* list fail → fallback dưới */ }
             }
@@ -1711,6 +1715,7 @@ export default function activate(orca) {
       if (rcReq && typeof rcReq === 'object' && rcReq.at && rcReq.at !== lastRoomCmdAt && rcReq.room) {
         lastRoomCmdAt = rcReq.at
         try {
+          await mkdir(chatDir, { recursive: true })
           const roomsPath = join(chatDir, 'rooms.json')
           let rooms = {}
           try { rooms = JSON.parse(await readFile(roomsPath, 'utf8')) } catch { /* chưa có */ }
@@ -1736,7 +1741,7 @@ export default function activate(orca) {
                 try {
                   const out = await new Promise((res) => execFileCb(orcaBin, ['worktree', 'list', '--json'], { timeout: 15000 }, (e, o) => res(e ? '' : o)))
                   if (out) {
-                    const wts = JSON.parse(out).result.worktrees.map((w) => w.path)
+                    const wts = JSON.parse(out).result.worktrees.map((w) => String(w.path || '').replace(/\\/g, '/'))
                     // repo không khớp/bỏ trống → worktree ĐANG MỞ (CEO vừa gặp
                     // 'team' fallback fail): room vẫn có worktree thật để làm.
                     repoPath = wts.find((p) => p.endsWith('/' + repo)) || wts.find((p) => p.includes(repo)) || wts[0] || ''
@@ -1787,7 +1792,7 @@ export default function activate(orca) {
             await writeFile(chatLog, kept.map((l) => l + '\n').join(''))
             lastTailLen = -1 // buộc publish lại tail + rooms
           }
-        } catch { /* room cmd best-effort */ }
+        } catch (e) { orca.log('[room-cmd] lỗi: ' + (e && e.message || e)) }
         // Luôn ép publish lại tail+rooms — close/open không đổi độ dài tail nên
         // không được ràng vào điều kiện đó (bug 'nút không phản hồi' CEO bắt).
         lastTailLen = -1

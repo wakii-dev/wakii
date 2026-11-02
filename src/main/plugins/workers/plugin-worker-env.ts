@@ -2,6 +2,8 @@
 
 import { existsSync } from 'node:fs'
 
+import { getBundledLauncherPath } from '../../cli/bundled-cli-launcher-path'
+
 const WORKER_ENV_ALLOWLIST = [
   'PATH',
   'HOME',
@@ -29,7 +31,8 @@ const WORKER_ENV_ALLOWLIST = [
 
 export function buildPluginWorkerEnv(
   baseEnv: NodeJS.ProcessEnv = process.env,
-  platform: NodeJS.Platform = process.platform
+  platform: NodeJS.Platform = process.platform,
+  resourcesPath?: string
 ): Record<string, string> {
   const env: Record<string, string> = {}
   const windowsLookup = new Map<string, string>()
@@ -51,8 +54,14 @@ export function buildPluginWorkerEnv(
   // through ORCA_BIN with a hardcoded /opt/homebrew fallback — pin the real
   // binary so those calls never exit 127 on machines without that path.
   const baseOrcaBin = platform === 'win32' ? windowsLookup.get('ORCA_BIN') : baseEnv.ORCA_BIN
+  // Windows never carries ORCA_BIN from the GUI env and the POSIX candidates
+  // below never exist there — without this pin every kit CLI call (worktree
+  // list/create, captain spawn) resolves a dead /usr/local/bin/orca path.
+  const windowsBundledOrca =
+    platform === 'win32' && resourcesPath ? getBundledLauncherPath('win32', resourcesPath) : null
   env.ORCA_BIN =
     baseOrcaBin ??
+    (windowsBundledOrca && existsSync(windowsBundledOrca) ? windowsBundledOrca : undefined) ??
     [
       '/usr/local/bin/orca',
       '/opt/homebrew/bin/orca',

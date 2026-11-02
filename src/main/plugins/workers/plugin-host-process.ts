@@ -88,7 +88,7 @@ export async function startPluginWorker(
 
   const child: ChildProcess = fork(entryPath, [], {
     // Scrub shell-exported secrets; ELECTRON_RUN_AS_NODE runs the Electron binary as Node.
-    env: buildPluginWorkerEnv(),
+    env: buildPluginWorkerEnv(undefined, undefined, process.resourcesPath),
     // Parent inspector/loader flags must not execute inside third-party workers.
     execArgv: [],
     // Default JSON serialization rejects supported structured-clone payloads (BigInt, cycles, maps).

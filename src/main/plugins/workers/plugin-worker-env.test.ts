@@ -1,4 +1,8 @@
 import { describe, expect, it } from 'vitest'
+import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+
 import { buildPluginWorkerEnv } from './plugin-worker-env'
 
 describe('buildPluginWorkerEnv', () => {
@@ -54,5 +58,19 @@ describe('ORCA_BIN injection', () => {
   it('respects a caller-provided ORCA_BIN', () => {
     const env = buildPluginWorkerEnv({ PATH: '/usr/bin', ORCA_BIN: '/custom/orca' })
     expect(env.ORCA_BIN).toBe('/custom/orca')
+  })
+
+  it('pins ORCA_BIN to the bundled orca.exe on Windows instead of the dead POSIX fallback', () => {
+    const resourcesPath = mkdtempSync(join(tmpdir(), 'orca-worker-env-'))
+    mkdirSync(join(resourcesPath, 'bin'), { recursive: true })
+    writeFileSync(join(resourcesPath, 'bin', 'orca.exe'), '')
+    const env = buildPluginWorkerEnv({ PATH: 'C:\\safe' }, 'win32', resourcesPath)
+    expect(env.ORCA_BIN).toBe(join(resourcesPath, 'bin', 'orca.exe'))
+  })
+
+  it('keeps the POSIX fallback on Windows when the bundled orca.exe is absent', () => {
+    const resourcesPath = mkdtempSync(join(tmpdir(), 'orca-worker-env-'))
+    const env = buildPluginWorkerEnv({ PATH: 'C:\\safe' }, 'win32', resourcesPath)
+    expect(env.ORCA_BIN).toBe('/usr/local/bin/orca')
   })
 })
