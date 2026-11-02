@@ -776,7 +776,17 @@
       ],
       "outputs": "prompt tối ưu tự chứa — dùng cho brief dispatch worker và copy marketing",
       "owner": "wakii"
+    },
+    {
+      "name": "figma-implement-design",
+      "type": "skill",
+      "category": "execution",
+      "inputs": [
+        "Figma URL hoặc node selection (figma-desktop)"
+      ],
+      "outputs": "UI 1:1 với design — tokens main.css + primitives shadcn, đã qua design-system gate review trước PR",
+      "owner": "wakii"
     }
   ],
-  "kitHash": "0b95e924b63174c9"
+  "kitHash": "511a0b64f592f088"
 }
