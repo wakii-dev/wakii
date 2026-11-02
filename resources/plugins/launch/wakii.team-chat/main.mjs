@@ -1399,6 +1399,7 @@ export default function activate(orca) {
 
   let lastSendAt = 0
   let lastTailLen = -1
+  let lastTailSig = ''
   // Captain luôn online (CEO ruling 1/11): poller là router — mọi tin của
   // Owner/@captain được ACK ngay vào room + chuyển tiếp vào terminal Captain
   // (claude thật) nếu đã cấu hình storage 'team.captain.terminal' = handle.
@@ -1844,8 +1845,12 @@ export default function activate(orca) {
         await orca.host.call('storage.set', { key: 'team.chat.roomCmd', value: null }).catch(() => {})
       }
       const tail = await readTail()
-      if (tail.length !== lastTailLen) {
+      // So LAST LINE thay vì length (bug 2/11: bus > 200 dòng → readTail cap 200
+      // → length không bao giờ đổi → panel đứng hình từ khi bus đầy).
+      const lastSig = tail.length ? String(JSON.parse(tail[tail.length - 1]).at || 0) + ':' + String(JSON.parse(tail[tail.length - 1]).from || '') : ''
+      if (lastSig !== lastTailSig || tail.length !== lastTailLen) {
         lastTailLen = tail.length
+        lastTailSig = lastSig
         await orca.host.call('storage.set', { key: 'team.chat.tail', value: tail }).catch(() => {})
         // Room list cho panel tabs: registry (rooms.json) + mọi channel từng
         // xuất hiện trong tail (room tự phát vẫn hiện tab).
