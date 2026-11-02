@@ -951,7 +951,14 @@
   var nrForm = document.getElementById('newRoomForm')
   document.getElementById('newRoomBtn').addEventListener('click', function () {
     nrForm.classList.toggle('open')
-    if (nrForm.classList.contains('open')) { document.getElementById('nrName').focus(); updateWtHint() }
+    if (nrForm.classList.contains('open')) {
+      // Prefill project = project đang FOCUS (CEO 2/11): slot projects.current
+      // do plugin tính từ workspace.readContext — terminal CEO đang nhìn.
+      var ri = document.getElementById('nrRepo')
+      var cur = (window.projects && window.projects.current) || ''
+      if (ri && !ri.value && cur) ri.value = cur
+      document.getElementById('nrName').focus(); updateWtHint()
+    }
   })
   function nrId() {
     var r = (document.getElementById('nrRepo').value || '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '')

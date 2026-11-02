@@ -1561,19 +1561,40 @@ export default function activate(orca) {
       }
       let current = ''
       let currentPath = ''
+      // Ưu tiên FOCUS (CEO ruling 2/11): workspace.readContext trả workspace
+      // đang focus + terminal ids — project default = project của terminal
+      // CEO đang focus, không phải terminal "ồn nhất".
       try {
-        const tOut = await new Promise((res) => execFileCb(orcaBin(), ['terminal', 'list', '--json'], { timeout: 15000 }, (e, o) => res(e ? '' : o)))
-        if (tOut) {
-          const terms = JSON.parse(tOut).result.terminals
-          const withWt = terms.filter((t) => t.worktreePath).sort((a, b) => (b.lastOutputAt || 0) - (a.lastOutputAt || 0))
-          const wt = withWt[0] && String(withWt[0].worktreePath).replace(/\\/g, '/')
-          if (wt) {
-            const mm = wt.match(/\/workspaces\/([^/]+)\//)
-            current = mm ? mm[1] : (wt.split('/').filter(Boolean).slice(-1)[0] || '')
-            currentPath = wt
+        const ctx = await orca.host.call('workspace.readContext').catch(() => null)
+        const ft = ctx && ctx.value && Array.isArray(ctx.value.terminals) && ctx.value.terminals[0]
+        if (ft) {
+          const tOut2 = await new Promise((res) => execFileCb(orcaBin(), ['terminal', 'list', '--json'], { timeout: 15000 }, (e, o) => res(e ? '' : o)))
+          if (tOut2) {
+            const t2 = JSON.parse(tOut2).result.terminals.find((x) => x.handle === ft.handle || x.handle === ft)
+            const w2 = t2 && String(t2.worktreePath || '').replace(/\\/g, '/')
+            if (w2) {
+              const m2 = w2.match(/\/workspaces\/([^/]+)\//)
+              current = m2 ? m2[1] : (w2.split('/').filter(Boolean).slice(-1)[0] || '')
+              currentPath = w2
+            }
           }
         }
-      } catch { /* current best-effort */ }
+      } catch { /* focus best-effort */ }
+      if (!current) {
+        try {
+          const tOut = await new Promise((res) => execFileCb(orcaBin(), ['terminal', 'list', '--json'], { timeout: 15000 }, (e, o) => res(e ? '' : o)))
+          if (tOut) {
+            const terms = JSON.parse(tOut).result.terminals
+            const withWt = terms.filter((t) => t.worktreePath).sort((a, b) => (b.lastOutputAt || 0) - (a.lastOutputAt || 0))
+            const wt = withWt[0] && String(withWt[0].worktreePath).replace(/\\/g, '/')
+            if (wt) {
+              const mm = wt.match(/\/workspaces\/([^/]+)\//)
+              current = mm ? mm[1] : (wt.split('/').filter(Boolean).slice(-1)[0] || '')
+              currentPath = wt
+            }
+          }
+        } catch { /* current best-effort — fallback heuristic */ }
+      }
       await orca.host.call('storage.set', { key: 'team.chat.projects', value: {
         current,
         currentPath,
