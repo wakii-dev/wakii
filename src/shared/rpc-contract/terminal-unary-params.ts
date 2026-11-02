@@ -287,6 +287,8 @@ export const TerminalSplit = z
     retrySplit: z.string().min(1, 'Missing split id').optional(),
     // Team grid: wrap the tab's whole tree as row 1 and open this pane as a full-width row below.
     wrapRow: z.boolean().optional(),
+    // Canonical 6-seat grid: comma list of live leaf ids in seat order (captain first).
+    grid: z.string().max(512).optional(),
     // Layout-owner build: a window names its own pane; main writes the split and starts it.
     pane: z
       .object({

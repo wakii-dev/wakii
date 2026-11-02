@@ -24,6 +24,40 @@ export function newTabIn(opts: {
   }
 }
 
+/**
+ * Canonical 6-seat grid (CEO ruling 2/11): xếp LẠI các pane hiện có vào ghế chuẩn
+ * 3 trên / 3 dưới theo đúng thứ tự seat truyền vào (captain đầu tiên), pane mới
+ * vào ghế kế tiếp. Idempotent: cùng đội hình luôn ra cùng một cây — ghost pane
+ * (không trong seats) được caller xếp cuối. Graft chấp nhận vì addsOnlyLeaf
+ * giờ so theo tập leaf.
+ */
+export function canonicalGridPlacement(
+  seatLeafIds: readonly string[],
+  sourceLeafId: string,
+  newLeafId: string
+): TerminalPanePlacement | null {
+  const seats = seatLeafIds.filter((id) => id && id !== newLeafId)
+  if (seats.length === 0 || seats.length > 5) return null
+  const all = [...seats, newLeafId]
+  const leaf = (id: string): TerminalPaneLayoutNode => ({ type: 'leaf', leafId: id })
+  let row1: TerminalPaneLayoutNode = leaf(all[0])
+  for (let c = 1; c < Math.min(3, all.length); c++) {
+    row1 = { type: 'split', direction: 'vertical', first: row1, second: leaf(all[c]) }
+  }
+  let row2: TerminalPaneLayoutNode | null = null
+  for (let c = 3; c < all.length; c++) {
+    row2 = row2 === null ? leaf(all[c]) : { type: 'split', direction: 'vertical', first: row2, second: leaf(all[c]) }
+  }
+  const proposed: TerminalPaneLayoutNode =
+    row2 === null ? row1 : { type: 'split', direction: 'horizontal', first: row1, second: row2 }
+  return {
+    kind: 'split',
+    parentLeafId: sourceLeafId,
+    direction: 'vertical',
+    proposedRoot: structuredClone(proposed)
+  }
+}
+
 export function runtimeSplitPlacement(
   parentLeafId: string,
   direction: TerminalPaneSplitDirection

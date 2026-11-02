@@ -279,7 +279,7 @@ export const CORE_COMMAND_SPECS: CommandSpec[] = [
     summary: 'Split an existing terminal pane',
     usage:
       'orca terminal split [--terminal <handle>] [--direction horizontal|vertical] [--command <text>] [--wrap-row] [--retry-split <leafId>] [--json]',
-    allowedFlags: [...GLOBAL_FLAGS, 'terminal', 'direction', 'command', 'wrap-row', 'retry-split'],
+    allowedFlags: [...GLOBAL_FLAGS, 'terminal', 'direction', 'command', 'wrap-row', 'grid', 'retry-split'],
     notes: [
       'A timeout does not mean the split failed: the pane may still open and run --command. Re-run the same command with --retry-split <leafId> from the error to wait for that pane instead of splitting again.'
     ],

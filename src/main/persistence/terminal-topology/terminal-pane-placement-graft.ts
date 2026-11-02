@@ -4,8 +4,7 @@ import {
   collectLayoutLeafIdsInOrder,
   insertLeafBeside,
   layoutContainsLeafId,
-  removeLayoutLeaf,
-  samePanesIgnoringRatios
+  removeLayoutLeaf
 } from '../../../shared/workspace-layout/terminal-pane-tree'
 import { cloneLayoutNode } from '../restoring-sessions/terminal-layout-normalization'
 
@@ -37,11 +36,15 @@ function addsOnlyLeaf(
   leafId: string
 ): boolean {
   const without = removeLayoutLeaf(proposed, leafId)
-  return (
-    collectLayoutLeafIdsInOrder(proposed).filter((id) => id === leafId).length === 1 &&
-    without !== null &&
-    samePanesIgnoringRatios(without, root)
-  )
+  if (without === null) return false
+  const proposedIds = collectLayoutLeafIdsInOrder(proposed)
+  if (proposedIds.filter((id) => id === leafId).length !== 1) return false
+  // Canonical grid (CEO 2/11): so theo TẬP leaf — proposed được XẾP LẠI các pane
+  // hiện có vào ghế chuẩn (3 trên/3 dưới) miễn không mất/thêm pane nào ngoài
+  // leaf mới. samePanesIgnoringRatios (so cấu trúc chặt) vẫn dùng ở nơi khác.
+  const rootIds = [...collectLayoutLeafIdsInOrder(root)].sort()
+  const withoutIds = [...collectLayoutLeafIdsInOrder(without)].sort()
+  return rootIds.length === withoutIds.length && rootIds.every((id, i) => id === withoutIds[i])
 }
 
 /** Take the new split without overwriting main's divider positions. */

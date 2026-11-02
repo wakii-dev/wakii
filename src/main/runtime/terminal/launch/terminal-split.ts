@@ -49,6 +49,8 @@ export abstract class OrcaRuntimeWithSplitTerminal extends OrcaRuntimeWithStopEx
       wslUserAct?: true
       /** Team grid: wrap the tab's whole tree as row 1 and open this pane as a full-width row below. */
       wrapRow?: true
+      /** Canonical 6-seat grid: comma list of live leaf ids in seat order (captain first). */
+      grid?: string
     } = {},
     // Internal creation evidence; RPC and preload callers never supply it.
     createdWorktree?: Worktree
@@ -82,7 +84,8 @@ export abstract class OrcaRuntimeWithSplitTerminal extends OrcaRuntimeWithStopEx
           envToDelete: opts.envToDelete,
           activate: opts.activate,
           ...(opts.wslUserAct ? { wslUserAct: true } : {}),
-          ...(opts.wrapRow ? { wrapRow: true } : {})
+          ...(opts.wrapRow ? { wrapRow: true } : {}),
+          ...(opts.grid ? { grid: opts.grid } : {})
         }
       )
     }

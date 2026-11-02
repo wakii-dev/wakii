@@ -251,7 +251,8 @@ export const TERMINAL_HANDLERS: Record<string, CommandHandler> = {
       direction: directionFlag,
       command: getOptionalStringFlag(flags, 'command'),
       ...(retrySplit !== undefined ? { retrySplit } : {}),
-      ...(flags.has('wrap-row') ? { wrapRow: true } : {})
+      ...(flags.has('wrap-row') ? { wrapRow: true } : {}),
+      ...(flags.has('grid') ? { grid: getRequiredStringFlag(flags, 'grid') } : {})
     })
     printResult(result, json, formatTerminalSplit)
   }

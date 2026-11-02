@@ -4,7 +4,7 @@ import type { RuntimeTerminalSplit } from '../../../../shared/runtime-types'
 import { mainOwnsTabLayout } from './main-owned-tab-layout'
 import { ORCA_LAYOUT_OWNER_IS_MAIN } from '../../../../shared/layout-owner-switch'
 import { recordPtySurface, spawnSurfaceClaimSequence } from '../../pty-recorded-surface-topology'
-import { runtimeSplitPlacement, wrapRowSplitPlacement } from '../../runtime-terminal-spawn-placement'
+import { canonicalGridPlacement, runtimeSplitPlacement, wrapRowSplitPlacement } from '../../runtime-terminal-spawn-placement'
 import { spawnInAdmittedPane } from '../../runtime-pane-admission'
 import { resolvePtyFirstSize, type PtyGridSize } from '../../../ipc/pty/pty-first-size'
 import { isTerminalLeafId, makePaneKey } from '../../../../shared/stable-pane-id'
@@ -31,6 +31,8 @@ export type SplitPaneInMainOptions = {
   wslUserAct?: true
   /** Team grid: wrap the tab's whole tree as row 1 and open this pane as a full-width row below. */
   wrapRow?: true
+  /** Canonical 6-seat grid: comma list of live leaf ids in seat order (captain first). */
+  grid?: string
 }
 
 export abstract class OrcaRuntimeWithSplitPaneInMain extends OrcaRuntimeWithSplitPtyBackedTerminal {
@@ -129,6 +131,13 @@ export abstract class OrcaRuntimeWithSplitPaneInMain extends OrcaRuntimeWithSpli
               this.getWorkspaceSessionForWorktree(source.worktreeId)?.terminalLayoutsByTabId?.[
                 source.tabId
               ]?.root,
+              source.leafId,
+              leafId
+            )
+          : null) ??
+        (opts.grid
+          ? canonicalGridPlacement(
+              opts.grid.split(',').map((x) => x.trim()).filter(Boolean),
               source.leafId,
               leafId
             )
