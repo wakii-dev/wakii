@@ -210,9 +210,16 @@ PY
     # → turn 'Mustering' 3-4 phút, heartbeat đứt). --background: chạy lại toàn bộ
     # pipeline trong subshell detached, captain nhận quyền điều khiển ngay.
     if [ "${BG_SPAWN:-0}" -eq 1 ]; then
+      # Fail-loud (lần 2/11 tối — bị mất trong rework 2.1.2-2.1.5, khôi phục):
+      # log file + rc!=0 → tin ⚠️ vào room. KHÔNG nuốt lỗi.
+      LOGF="$HOME/.claude/chat/spawn-$(date +%s)-$RANDOM.log"
       (
-        export ORCA="${ORCA:-}" REG
-        nohup "$0" worker-start ${PASS[@]+"${PASS[@]}"} >/dev/null 2>&1
+        "$0" worker-start ${PASS[@]+"${PASS[@]}"} > "$LOGF" 2>&1
+        rc=$?
+        if [ "$rc" -ne 0 ]; then
+          tail -5 "$LOGF" > "$LOGF.tail" 2>/dev/null
+          TEAM_CHAT_MACHINE=1 "$HOME/.claude/bin/team-chat" send "⚠️ spawn nền THẤT BẠI (rc=$rc, worker ${NAME%%-*}) — log: $LOGF" --from system --role system --channel "${ROOM_:-general}" >/dev/null 2>&1 || true
+        fi
       ) >/dev/null 2>&1 &
       echo "team-orch: spawn nền — worker ${NAME%%-*} đang dựng (split → agent-ready → dispatch), theo dõi room."
       exit 0
@@ -393,6 +400,14 @@ except Exception: pass
     if [ -n "$PANE" ]; then
       reg_put "$PANE" "${NAME%%-*}" "$WT_PATH" "$TASK" "$RUN" "$REPO" "${ROOM_:-${REPO}-${NAME%%-*}}"
       echo "team-orch: đăng ký $PANE → ${NAME%%-*} (danh tính khóa theo pane)"
+      # RECEIPT (CEO 2/11): bin tự post sự thật vào room — captain chỉ được
+      # relay số liệu từ tin này, không tự khai "đã spawn" (gốc lỗi claim-trống).
+      DISPATCH_ID=$(printf '%s' "$OUT" | python3 -c "
+import sys, re
+m = re.search(r'ctx_[0-9a-f]{8,}', sys.stdin.read())
+print(m.group(0) if m else '')" 2>/dev/null)
+      TC_R="$HOME/.claude/bin/team-chat"; [ -x "$TC_R" ] || TC_R="$(dirname "$0")/team-chat"
+      [ -n "${ROOM_:-}" ] && TEAM_CHAT_MACHINE=1 "$TC_R" send "✅ RECEIPT spawned ${NAME%%-*} @ ${PANE%%-*}${DISPATCH_ID:+ · dispatch $DISPATCH_ID}" --from system --role system --channel "$ROOM_" >/dev/null 2>&1 || true
     else
       echo "team-orch: ⚠ chưa bóc được pane từ receipt — đăng ký tay: team-orch register --pane <handle> --name ${NAME%%-*} --worktree $WT_PATH"
     fi
@@ -439,6 +454,16 @@ except Exception: pass
       [ -f "$MP" ] && printf '{"taskId":null,"planGateOpen":false,"worktreePath":"%s"}\n' "$WT" > "$MP"
       emit plan.approved captain "$(repo_of_cwd)" "" "" "{\"worktree\":\"$WT\"}"
       echo "team-orch: plan-gate CLOSED @ $WT — worker được làm"
+      TC_R="$HOME/.claude/bin/team-chat"; [ -x "$TC_R" ] || TC_R="$(dirname "$0")/team-chat"
+      RROOM=$(python3 -c "
+import json, os
+try:
+    reg = json.load(open(os.path.expanduser('~/.claude/chat/rooms.json')))
+    for k, e in reg.items():
+        if isinstance(e, dict) and e.get('worktree') == '$WT':
+            print(k); break
+except Exception: pass" 2>/dev/null)
+      [ -n "$RROOM" ] && TEAM_CHAT_MACHINE=1 "$TC_R" send "✅ RECEIPT gate CLOSED @ ${WT##*/} — worker được làm (task ${TASK:-?})" --from system --role system --channel "$RROOM" >/dev/null 2>&1 || true
     fi
     echo "$OUT"
     ;;

@@ -226,6 +226,16 @@ bao gồm: chọn hướng THIẾT KẾ/thị giác (mockup A/B/C), đổi scope
 tiêu tiền. Những cái đó LUÔN trình [HỎI] cho CEO — mắt CEO là thẩm phán cuối
 (case 22:05: captain tự chọn hướng landing vì "toàn quyền marketing" — sai).
 
+## DISPATCH = CÓ CHỨNG CỨ (CEO bắt 2/11 tối: báo "đang dựng pane" mà không có gì)
+
+Nói "đã hire/spawn worker X" CHỈ hợp lệ khi có đủ: pane handle trong terminal
+list + registration trong .workers.json + ACK của worker trong room. Thiếu
+một trong ba = CHƯA dispatch — cấm báo cáo trước. Sau lệnh spawn --background:
+đợi ACK của worker (fail thì room tự có tin ⚠️), ĐÓNG turn, kiểm lại turn sau.
+Bins giờ TỰ post tin "✅ RECEIPT ..." (spawned/gate CLOSED) vào room — báo cáo
+của anh CHỈ ĐƯỢC copy số liệu (tên, pane handle, dispatch id) từ tin RECEIPT,
+không tự điền tay. Không có RECEIPT trong room = chưa có gì để báo.
+
 ## WATCHDOG — worker chết/im lặng (cơ chế, không chờ ai để ý)
 
 Plugin tự post `⚠️ worker <name> pane đã chết` / `⚠️ worker im >15'` vào room.

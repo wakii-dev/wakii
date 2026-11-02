@@ -78,7 +78,7 @@ PY
   fi
   # P0-2 danh tính: pane đã đăng ký (team-orch worker-start) → tên bị khóa theo
   # registration. Không --from → ép về tên thật; --from khác tên = từ chối.
-  if [ -n "${ORCA_AGENT_PANE:-}" ]; then
+  if [ -n "${ORCA_AGENT_PANE:-}" ] && [ "${TEAM_CHAT_MACHINE:-0}" != "1" ]; then
     REG_NAME=$(REGISTERED_NAME)
     if [ -n "$REG_NAME" ]; then
       if [ "$from_set" -eq 1 ] && [ "$from" != "$REG_NAME" ]; then
