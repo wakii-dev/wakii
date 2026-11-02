@@ -49,6 +49,23 @@ Nguyên tắc chẩn đoán:
 - `RUNNING-EXT`/`BUSY` → KHÔNG đụng. Medic chỉ can thiệp `STALLED*` hoặc có
   bằng chứng chết thật (API timeout/ECONNRESET trong tail).
 
+Quy trình CHẨN ĐOÁN 6 bước (doctrine debug-error — dấu hiệu MƠ HỒ/các nguồn
+lệch nhau → đi đủ 6 bước trước khi kết luận RUNNING/STALLED):
+1. **Thu thập dấu hiệu** — verdict `--check`, terminal status symbol, tail,
+   mtime result/, inbox: nhiều nguồn, không kết luận từ một nguồn
+2. **Tái hiện** — dấu hiệu ổn định: đọc lại sau một nhịp hoặc lệnh khác cùng
+   ra một kết quả; ghi điều kiện xuất hiện
+3. **Phân tích** — đọc từ sự kiện GẦN NHẤT ngược về trước (tail mới→cũ) +
+   ngữ cảnh story + thay đổi gần đây (turn/commit mới nhất)
+4. **Hypothesis xếp hạng** — prompt treo đợi input → session chết giữa turn
+   (API timeout/ECONNRESET) → shell chết → chạy dài chưa xong → watchdog đo nhầm
+5. **Isolate** — chia phạm vi đôi giữa nguồn (check/tail/result/inbox),
+   thêm đúng 1 probe tại biên, theo dấu thứ tự thời gian
+6. **Kiểm nâng cao khi nghi** — mtime result/ · process còn sống qua pane ·
+   inbox còn message · máy vừa ngủ (idle sleep)
+Kết luận chỉ khi isolate ra đúng 1 hypothesis trội; còn mơ hồ → coi đang chạy
+— nguyên tắc "không resume đè" giữ nguyên.
+
 ### Bước 2 — TÁCH BIÊN (chống double-dispatch trước khi chữa)
 
 ```bash

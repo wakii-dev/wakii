@@ -79,6 +79,24 @@ BLOCKED → `NONE-ON-DONE`). BLOCKED đòi thêm `blocked-tried` + `blocked-need
 (kit ≥2.13.0 Team discipline). Report không có fence: WARN `LEGACY-REPORT` hiện tại
 (exit 0) — FAIL từ kit 2.8.0, tập thói quen từ bây giờ.
 
+## DEBUG protocol — verify-fail (doctrine debug-error)
+
+Vòng verify/test FAIL không phải tín hiệu "sửa thử" — mỗi vòng fail đi đủ 8 bước,
+không nhảy bước, không sửa trước khi hiểu:
+
+1. **Thu thập thông tin lỗi** — message, stack trace, error code, môi trường (dev/staging/prod)
+2. **Reproduce** — test case TỐI GIẢN tái hiện lỗi ổn định + ghi bước kích hoạt
+3. **Phân tích** — stack trace đọc TỪ DƯỚI LÊN + ngữ cảnh code + thay đổi gần đây (git diff/log)
+4. **Hypothesis có thứ tự** — null/undefined ref → type mismatch → race condition → resource exhaustion → lỗi logic → dependency
+5. **Isolate** — binary search (chia phạm vi đôi), thêm logging tại biên, theo dấu luồng dữ liệu
+6. **Kiểm tra nâng cao khi nghi** — validation dữ liệu · dependencies · memory/resource · concurrency
+7. **Root cause → fix MINIMAL** — test hồi quy + edge case (KHÔNG fix triệu chứng)
+8. **Prevention** — test chặn tái phát, cải thiện error handling, báo cáo nguyên nhân gốc 1 dòng
+
+Fence bắt cứng: TRƯỚC khi "sửa thử" phải qua bước 4 (hypothesis) + bước 5 (isolate);
+fix chỉ hợp lệ khi đã qua bước 7 hồi quy. Loop caps mục 5 (same-cause ×2) vẫn áp
+dụng: 2 vòng fail cùng nguyên nhân dù đã đi 1-8 → STOP + report coordinator, không vòng 3.
+
 ## ASK-TIMEOUT ladder (kit ≥2.14.6 — coordinator mute không phải lệnh miễn phí)
 
 `ask` coordinator mà không được trả lời → đi đúng bậc thang, KHÔNG improvisate riêng (bài học
