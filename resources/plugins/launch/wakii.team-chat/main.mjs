@@ -1560,6 +1560,7 @@ export default function activate(orca) {
         items.push({ name, path: m ? p.slice(0, p.indexOf('/workspaces/')) : p })
       }
       let current = ''
+      let currentPath = ''
       try {
         const tOut = await new Promise((res) => execFileCb(orcaBin, ['terminal', 'list', '--json'], { timeout: 15000 }, (e, o) => res(e ? '' : o)))
         if (tOut) {
@@ -1569,10 +1570,17 @@ export default function activate(orca) {
           if (wt) {
             const mm = wt.match(/\/workspaces\/([^/]+)\//)
             current = mm ? mm[1] : (wt.split('/').filter(Boolean).slice(-1)[0] || '')
+            currentPath = wt
           }
         }
       } catch { /* current best-effort */ }
-      await orca.host.call('storage.set', { key: 'team.chat.projects', value: { current, items } }).catch(() => {})
+      await orca.host.call('storage.set', { key: 'team.chat.projects', value: {
+        current,
+        currentPath,
+        // root workspaces để panel ghép path worktree dự kiến khi gõ room name
+        root: join(homeDir(), 'orca', 'workspaces').replace(/\\/g, '/'),
+        items
+      } }).catch(() => {})
     } catch { /* projects best-effort */ }
   }
   const publishTerminals = async () => {
@@ -1742,9 +1750,19 @@ export default function activate(orca) {
                   const out = await new Promise((res) => execFileCb(orcaBin, ['worktree', 'list', '--json'], { timeout: 15000 }, (e, o) => res(e ? '' : o)))
                   if (out) {
                     const wts = JSON.parse(out).result.worktrees.map((w) => String(w.path || '').replace(/\\/g, '/'))
-                    // repo không khớp/bỏ trống → worktree ĐANG MỞ (CEO vừa gặp
-                    // 'team' fallback fail): room vẫn có worktree thật để làm.
-                    repoPath = wts.find((p) => p.endsWith('/' + repo)) || wts.find((p) => p.includes(repo)) || wts[0] || ''
+                    // repo khớp tên → dùng; 'team' (bỏ trống) KHÔNG match mù theo
+                    // substring nữa mà rơi về worktree project đang hoạt động
+                    // (currentPath từ publishProjects) — hết cảnh wts[0] trỏ
+                    // nhầm project khác với project CEO đang đứng (2/11).
+                    const matched = wts.find((p) => p.endsWith('/' + repo))
+                      || (repo && repo !== 'team' ? wts.find((p) => p.includes(repo)) : '')
+                    let curWt = ''
+                    try {
+                      const pj = await orca.host.call('storage.get', { key: 'team.chat.projects' }).catch(() => null)
+                      const cp = pj && pj.value && pj.value.currentPath
+                      if (cp) curWt = String(cp).replace(/\\/g, '/')
+                    } catch { /* slot best-effort */ }
+                    repoPath = matched || (curWt && wts.find((p) => p === curWt)) || wts[0] || ''
                   }
                 } catch { /* list fail */ }
                 let wtPath = ''

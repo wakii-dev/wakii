@@ -246,6 +246,7 @@
         <datalist id="projDatalist"></datalist>
   <input type="text" id="nrName" maxlength="32" placeholder="tên feature (vd notifications)" />
   <div class="hint" id="nrHint" style="margin:2px 0 6px">room sẽ là #<b id="nrPreview">repo-tên</b></div>
+  <div class="hint" id="nrWt" style="margin:0 0 6px"></div>
   <button type="button" id="nrCreate" style="width:100%">Tạo room</button>
 </div>
 <div id="settings">
@@ -726,18 +727,21 @@
       var r = rs[0]
       window.mmLive = (rs[1] && rs[1].value) || {}
       var projR = rs[2] && rs[2].value
-      if (projR && projR.items) {
+      if (projR) {
         window.projects = projR
-        var dl = document.getElementById('projDatalist')
-        if (dl && dl.children.length !== projR.items.length) {
-          dl.innerHTML = ''
-          projR.items.forEach(function (it) {
-            var o = document.createElement('option'); o.value = it.name; o.label = it.path.slice(0, 60)
-            dl.appendChild(o)
-          })
+        if (projR.items) {
+          var dl = document.getElementById('projDatalist')
+          if (dl && dl.children.length !== projR.items.length) {
+            dl.innerHTML = ''
+            projR.items.forEach(function (it) {
+              var o = document.createElement('option'); o.value = it.name; o.label = it.path.slice(0, 60)
+              dl.appendChild(o)
+            })
+          }
         }
         var ri = document.getElementById('nrRepo')
         if (ri && !ri.value && projR.current) ri.value = projR.current
+        updateWtHint()
       }
       var all = []
       ;((r && r.value) || []).forEach(function (l) { try { all.push(JSON.parse(l)) } catch (e) {} })
@@ -947,12 +951,23 @@
   var nrForm = document.getElementById('newRoomForm')
   document.getElementById('newRoomBtn').addEventListener('click', function () {
     nrForm.classList.toggle('open')
-    if (nrForm.classList.contains('open')) document.getElementById('nrName').focus()
+    if (nrForm.classList.contains('open')) { document.getElementById('nrName').focus(); updateWtHint() }
   })
   function nrId() {
     var r = (document.getElementById('nrRepo').value || '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '')
     var n = (document.getElementById('nrName').value || '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '')
     return r ? r + '-' + n : n // repo bỏ trống → worker tự dùng worktree đang mở
+  }
+  // Path worktree dự kiến: <root>/<repo|current>/<tên> — hiện ngay khi gõ để
+  // CEO biết room sẽ làm việc trên project nào trước khi bấm Tạo.
+  function updateWtHint() {
+    var el = document.getElementById('nrWt')
+    if (!el) return
+    var pj = window.projects || {}
+    var repo = (document.getElementById('nrRepo').value || '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '')
+    var n = (document.getElementById('nrName').value || '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '')
+    var use = repo || pj.current || ''
+    el.textContent = use && n && pj.root ? '→ worktree: ' + pj.root + '/' + use + '/' + n : ''
   }
   ;['nrRepo', 'nrName'].forEach(function (id) {
     document.getElementById(id).addEventListener('input', function () {
@@ -961,6 +976,7 @@
       var ok = /^[a-z0-9][a-z0-9-]{1,40}$/.test(prev)
       document.getElementById('nrCreate').disabled = !ok
       document.getElementById('nrHint').style.color = ok ? '' : '#e07a7a'
+      updateWtHint()
     })
     document.getElementById(id).addEventListener('keydown', function (e) { if (e.key === 'Enter') document.getElementById('nrCreate').click() })
   })
@@ -979,6 +995,7 @@
       b.disabled = false; b.textContent = 'Tạo room'
       document.getElementById('nrRepo').value = ''; document.getElementById('nrName').value = ''
       document.getElementById('nrPreview').textContent = 'repo-tên'
+      document.getElementById('nrWt').textContent = ''
       activeRoom = id // tự chuyển sang khung mới khi hiện
       readCount[id] = 0
     }, 3500)
