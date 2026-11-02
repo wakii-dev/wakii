@@ -11,6 +11,12 @@ CMD="${1:-}"; [ $# -gt 0 ] && shift
 
 b64() { printf '%s' "$1" | base64 | tr '+/' '-_' | tr -d '='; }
 marker() { echo "$GATES_DIR/$(b64 "$1").json"; }
+bare_wt() { # A3 (CEO batch 2/11): strip prefix selector — marker key = b64(cwd
+            # TRẦN) đúng như story-guard-plan-gate đọc; install_worker_hooks
+            # cũng hết tạo dir rác "path:/Users/..." (1 chỗ strip chung).
+  local p="${1#explicit:}"
+  printf '%s' "${p#path:}"
+}
 emit() { # kind actor repo run task data
   TC="$HOME/.claude/bin/team-chat"; [ -x "$TC" ] || TC="$(dirname "$0")/team-chat"
   "$TC" event "$1" --repo "${3:-unknown}" ${4:+--run-id "$4"} ${5:+--task-id "$5"} \
@@ -151,7 +157,7 @@ case "$CMD" in
     ;;
   worker-start)
     # Flags của orchestration phải qua nguyên vẹn; mình chỉ bóc thêm giá trị cho marker/events.
-    PLAN=0 WT="" NAME="worker" TASK="" REPO="" RUN="" ROOM_FLAG=""; PASS=()
+    PLAN=0 WT="" NAME="worker" TASK="" REPO="" RUN="" RUN_SET=0 ROOM_FLAG=""; PASS=()
     while [ $# -gt 0 ]; do case "$1" in
       --require-plan-approval) PLAN=1; shift ;;
       --room) ROOM_FLAG="$2"; shift 2 ;;  # local: room của worker — không qua orchestration
@@ -160,7 +166,7 @@ case "$CMD" in
       --worktree) WT="$2"; PASS+=("$1" "$2"); shift 2 ;;
       --task) TASK="$2"; PASS+=("$1" "$2"); shift 2 ;;
       --repo) REPO="$2"; PASS+=("$1" "$2"); shift 2 ;;
-      --run) RUN="$2"; PASS+=("$1" "$2"); shift 2 ;;
+      --run) RUN="$2"; RUN_SET=1; PASS+=("$1" "$2"); shift 2 ;;
       *) PASS+=("$1"); shift ;;
     esac; done
     # CEO ruling: 1 room tối đa 3 worker (terminal grid 3). Đếm worker cùng
@@ -210,18 +216,19 @@ PY
     # → turn 'Mustering' 3-4 phút, heartbeat đứt). --background: chạy lại toàn bộ
     # pipeline trong subshell detached, captain nhận quyền điều khiển ngay.
     if [ "${BG_SPAWN:-0}" -eq 1 ]; then
-      # Fail-loud (lần 2/11 tối — bị mất trong rework 2.1.2-2.1.5, khôi phục):
-      # log file + rc!=0 → tin ⚠️ vào room. KHÔNG nuốt lỗi.
-      LOGF="$HOME/.claude/chat/spawn-$(date +%s)-$RANDOM.log"
+      # Fail-loud (A1 — CEO batch 2/11): log spawn-<name>-<ts>.log; pipeline
+      # rc!=0 → tin ⚠️ CÓ LÝ DO (tail log) vào room. KHÔNG nuốt lỗi.
+      LOGF="$HOME/.claude/chat/spawn-${NAME%%-*}-$(date +%s).log"
       (
         "$0" worker-start ${PASS[@]+"${PASS[@]}"} > "$LOGF" 2>&1
         rc=$?
         if [ "$rc" -ne 0 ]; then
           tail -5 "$LOGF" > "$LOGF.tail" 2>/dev/null
-          TEAM_CHAT_MACHINE=1 "$HOME/.claude/bin/team-chat" send "⚠️ spawn nền THẤT BẠI (rc=$rc, worker ${NAME%%-*}) — log: $LOGF" --from system --role system --channel "${ROOM_:-general}" >/dev/null 2>&1 || true
+          REASON=$(tail -3 "$LOGF" 2>/dev/null | tr '\n' ' ' | cut -c1-200)
+          TEAM_CHAT_MACHINE=1 "$HOME/.claude/bin/team-chat" send "⚠️ spawn nền THẤT BẠI — worker ${NAME%%-*} rc=$rc: ${REASON:-log rỗng} | log: $LOGF" --from system --role system --channel "${ROOM_:-general}" >/dev/null 2>&1 || true
         fi
       ) >/dev/null 2>&1 &
-      echo "team-orch: spawn nền — worker ${NAME%%-*} đang dựng (split → agent-ready → dispatch), theo dõi room."
+      echo "team-orch: spawn nền — worker ${NAME%%-*} đang dựng (split → agent-ready → dispatch), log: $LOGF, theo dõi room."
       exit 0
     fi
     # Snapshot worktrees TRƯỚC spawn — fallback vững khi receipt không lộ path
@@ -243,6 +250,18 @@ except Exception: pass
     # tab riêng như cũ, không block việc thuê worker.
     SPLIT_PANE=""
     HAS_TERM_FLAG=0; for a in ${PASS[@]+"${PASS[@]}"}; do [ "$a" = "--terminal" ] && HAS_TERM_FLAG=1; done
+    # consumer_fenced fix (2/11): caller không truyền --run → KHÔNG tự pass run cũ
+    # (orchestration fence Dispatch theo run hiện tại — run cũ gây refuse)
+    if [ "${RUN_SET:-0}" -ne 1 ]; then
+      FILTERED=(); skiprun=0
+      for a in ${PASS[@]+"${PASS[@]}"}; do
+        if [ "$skiprun" -eq 1 ]; then skiprun=0; continue; fi
+        if [ "$a" = "--run" ]; then skiprun=1; continue; fi
+        FILTERED+=("$a")
+      done
+      PASS=(${FILTERED[@]+"${FILTERED[@]}"})
+      RUN=""
+    fi
     if [ "$HAS_TERM_FLAG" -eq 0 ] && [ -n "${ROOM_:-}" ] && [ "$ROOM_" != "general" ]; then
       CAP_PANE=$(python3 - "$REG" "$ROOM_" "$ORCA" <<'PY' 2>/dev/null
 import json, sys, subprocess
@@ -284,38 +303,46 @@ PY
           NEWPASS+=(--worktree "path:$ROOM_WT")
           PASS=(${NEWPASS[@]+"${NEWPASS[@]}"})
           WT="$ROOM_WT"
+          ROOM_WT_REUSE=1  # A2: selector path: có sẵn trong PASS — lọc creation flags
           echo "team-orch: worker dùng CHUNG worktree room — $ROOM_WT"
         fi
-        SPLIT_CFG=$(python3 - "$REG" "$ROOM_" "$CAP_PANE" "$ORCA" <<'PY' 2>/dev/null
-import json, sys, subprocess
+        # CANONICAL GRID (CEO ruling 2/11): mỗi spawn xếp LẠI cây ghế chuẩn
+        # 3-trên/3-dưới từ pane sống của room (captain ghế 1, workers theo thứ tự
+        # đăng ký, ghost cuối) — idempotent, không phụ thuộc lịch sử split/zombie.
+        # Truyền --grid <leaf-ids theo thứ tự ghế> cho app đặt proposedRoot.
+        GRID_SEATS=$(python3 - "$REG" "$ROOM_" "$CAP_PANE" "$ORCA" <<'PY' 2>/dev/null
+import json, subprocess, sys
 reg_p, room, cap, orca = sys.argv[1:5]
 try:
-    ts = json.loads(subprocess.run([orca, 'terminal', 'list', '--json'],
-                                   capture_output=True, text=True, timeout=15).stdout)['result']['terminals']
+    out = subprocess.run([orca, 'terminal', 'list', '--json'], capture_output=True, text=True, timeout=15).stdout
+    terms = {t['handle']: t for t in json.loads(out)['result']['terminals']}
 except Exception:
-    print('vertical	' + cap); raise SystemExit
-live = {t.get('handle') for t in ts}
-tab = next((t.get('tabId') for t in ts if t.get('handle') == cap), None)
-n = sum(1 for t in ts if tab and t.get('tabId') == tab)
-if n < 3:
-    print('vertical	' + cap); raise SystemExit
+    sys.exit(0)
 try: reg = json.load(open(reg_p, encoding='utf-8'))
 except Exception: reg = {}
-order = [p for p, e in sorted(reg.items(), key=lambda kv: kv[1].get('at', 0))
-         if isinstance(e, dict) and e.get('room') == room and p in live]
-row2 = [q for q in order if q != cap][2:]  # worker thứ 3 trở đi = hàng 2
-if n == 3:
-    print('wrap	' + cap); raise SystemExit  # hàng 2 full-width (app --wrap-row)
-base = row2[0] if row2 else cap
-print('vertical	' + base)
+cap_tab = terms.get(cap, {}).get('tabId')
+if not cap_tab: sys.exit(0)
+room_panes = sorted((e.get('at', 0), p) for p, e in reg.items()
+                    if isinstance(e, dict) and e.get('room') == room and p in terms)
+seats = [p for _, p in room_panes if p != cap]
+if cap in terms: seats = [cap] + seats
+seat_leaves = [terms[h]['leafId'] for h in seats if terms[h].get('leafId')]
+known = set(seat_leaves)
+for t in terms.values():
+    lf = t.get('leafId')
+    if t.get('tabId') == cap_tab and lf and lf not in known:
+        seat_leaves.append(lf)  # ghost trong tab → cuối danh sách, dễ thấy để đóng
+if not seat_leaves or len(seat_leaves) > 6: sys.exit(0)
+print(','.join(seat_leaves))
 PY
 )
-        SPLIT_DIR=$(printf '%s' "$SPLIT_CFG" | cut -f1); SPLIT_BASE=$(printf '%s' "$SPLIT_CFG" | cut -f2)
-        [ -n "$SPLIT_DIR" ] && [ -n "$SPLIT_BASE" ] || { SPLIT_DIR="vertical"; SPLIT_BASE="$CAP_PANE"; }
-        if [ "$SPLIT_DIR" = "wrap" ]; then
-          SPLIT_ARGS=(--terminal "$SPLIT_BASE" --direction horizontal --wrap-row)
+        SPLIT_DIR=""; SPLIT_BASE="$CAP_PANE"
+        if [ -n "$GRID_SEATS" ]; then
+          SPLIT_ARGS=(--terminal "$SPLIT_BASE" --grid "$GRID_SEATS")
+          SPLIT_DIR="grid"
         else
-          SPLIT_ARGS=(--terminal "$SPLIT_BASE" --direction "$SPLIT_DIR")
+          SPLIT_ARGS=(--terminal "$SPLIT_BASE" --direction vertical)
+          SPLIT_DIR="vertical-fallback"
         fi
         NEW_PANE=$("$ORCA" terminal split "${SPLIT_ARGS[@]}" \
                      --command "claude --dangerously-skip-permissions" --json 2>/dev/null \
@@ -333,30 +360,37 @@ PY
         fi
       fi
     fi
-    if [ -n "$SPLIT_PANE" ]; then
-      # --terminal là chế độ reuse: creation/setup options (--name, --base-branch,
-      # --setup) bị orchestration từ chối (invalid_argument) — lọc khỏi argv.
+    # A2 (CEO batch 2/11): mode REUSE = worktree có sẵn (selector path:/explicit:)
+    # hoặc pane có sẵn (--terminal captain / pane split mình vừa mở) —
+    # orchestration CẤM creation/setup flags với worktree có sẵn và CẤM --agent
+    # đi kèm --terminal (2 flag loại trừ nhau). Lọc khỏi argv Ở MỌI nhánh,
+    # kể cả fallback khi orchestration từ chối pane split (sự cố 1/11).
+    REUSE=0
+    case "$WT" in path:*|explicit:*) REUSE=1 ;; esac
+    [ "${ROOM_WT_REUSE:-0}" -eq 1 ] && REUSE=1
+    [ "$HAS_TERM_FLAG" -eq 1 ] && REUSE=1
+    [ -n "$SPLIT_PANE" ] && REUSE=1
+    if [ "$REUSE" -eq 1 ]; then
       FILTERED=()
       skip=0
       for a in ${PASS[@]+"${PASS[@]}"}; do
         if [ "$skip" -eq 1 ]; then skip=0; continue; fi
         case "$a" in
-          --name|--base-branch|--setup) skip=1; continue ;;
+          --name|--repo|--base-branch|--display-name|--comment|--setup|--agent) skip=1; continue ;;
         esac
         FILTERED+=("$a")
       done
-      ARGS=(${FILTERED[@]+"${FILTERED[@]}"})
-      [ "$HAS_JSON" -eq 1 ] || ARGS+=(--json)
-      ARGS+=(--terminal "$SPLIT_PANE")
     else
-      ARGS=(${PASS[@]+"${PASS[@]}"})
-      [ "$HAS_JSON" -eq 1 ] || ARGS+=(--json)
+      FILTERED=(${PASS[@]+"${PASS[@]}"})
     fi
+    ARGS=(${FILTERED[@]+"${FILTERED[@]}"})
+    [ "$HAS_JSON" -eq 1 ] || ARGS+=(--json)
+    [ -n "$SPLIT_PANE" ] && ARGS+=(--terminal "$SPLIT_PANE")
     OUT=$("$ORCA" orchestration "$CMD" "${ARGS[@]}" 2>&1) || {
       if [ -n "$SPLIT_PANE" ]; then
         echo "team-orch: ⚠ orchestration từ chối pane split — đóng pane, fallback tab riêng" >&2
         "$ORCA" terminal close --terminal "$SPLIT_PANE" >/dev/null 2>&1
-        ARGS=(${PASS[@]+"${PASS[@]}"})
+        ARGS=(${FILTERED[@]+"${FILTERED[@]}"})  # A2: fallback CŨNG phải lọc creation flags
         [ "$HAS_JSON" -eq 1 ] || ARGS+=(--json)
         OUT=$("$ORCA" orchestration "$CMD" "${ARGS[@]}" 2>&1) || { echo "$OUT"; exit 1; }
       else
@@ -364,7 +398,7 @@ PY
       fi
     }
     echo "$OUT"
-    WT_PATH="${WT#explicit:}"; [ -n "$WT_PATH" ] || WT_PATH="$(pwd)"
+    WT_PATH="$(bare_wt "$WT")"; [ -n "$WT_PATH" ] || WT_PATH="$(pwd)"
     # Bóc worktree path thật: (1) từ receipt, (2) snapshot-diff worktree list
     WT_REAL=$(echo "$OUT" | python3 -c "
 import json,sys
@@ -388,7 +422,7 @@ import json,sys
 try: print('\n'.join(w.get('path','') for w in json.load(sys.stdin)['result']['worktrees']))
 except Exception: pass
 " 2>/dev/null) 2>/dev/null | grep '^> ' | head -1 | cut -c3-)
-    [ -n "$WT_REAL" ] && WT_PATH="$WT_REAL"
+    [ -n "$WT_REAL" ] && WT_PATH="$(bare_wt "$WT_REAL")"
     install_worker_hooks "$WT_PATH"
     PANE=$(pane_of_worker_json "$OUT" 2>/dev/null)
     [ -n "$PANE" ] || PANE=$(diff <(printf '%s\n' "$TERM_BEFORE") <("$ORCA" terminal list --json 2>/dev/null | python3 -c "
@@ -425,6 +459,8 @@ print(m.group(0) if m else '')" 2>/dev/null)
     while [ $# -gt 0 ]; do case "$1" in
       --plan) PLAN=1; shift ;; --worktree) WT="$2"; shift 2 ;; *) PASS+=("$1"); shift ;;
     esac; done
+    WT="$(bare_wt "$WT")"  # A3: so khớp registration + marker theo cwd TRẦN —
+                           # guard đọc key b64(cwd), prefix selector làm gate lệch key
     # P0-2: worker không tự duyệt plan của chính mình — pane đã đăng ký vào đúng
     # worktree này thì từ chối (Captain/CEO chạy từ terminal không đăng ký thì qua).
     MY_PANE="${ORCA_AGENT_PANE:-}"
@@ -452,6 +488,12 @@ print(m.group(0) if m else '')" 2>/dev/null)
     if [ "$PLAN" -eq 1 ] && [ -n "$WT" ]; then
       MP="$(marker "$WT")"
       [ -f "$MP" ] && printf '{"taskId":null,"planGateOpen":false,"worktreePath":"%s"}\n' "$WT" > "$MP"
+      # A3 tương thích ngược: đóng CẢ marker key CŨ có-prefix (bản lỗi trước đây
+      # ghi b64("path:<wt>") / b64("explicit:<wt>") — chỉ tắt nếu file còn tồn tại).
+      for LEG in "path:$WT" "explicit:$WT"; do
+        LP="$(marker "$LEG")"
+        [ -f "$LP" ] && printf '{"taskId":null,"planGateOpen":false,"worktreePath":"%s"}\n' "$LEG" > "$LP"
+      done
       emit plan.approved captain "$(repo_of_cwd)" "" "" "{\"worktree\":\"$WT\"}"
       echo "team-orch: plan-gate CLOSED @ $WT — worker được làm"
       TC_R="$HOME/.claude/bin/team-chat"; [ -x "$TC_R" ] || TC_R="$(dirname "$0")/team-chat"
@@ -479,6 +521,7 @@ except Exception: pass" 2>/dev/null)
       *) shift ;;
     esac; done
     [ -n "$WT" ] || { echo "cleanup cần --worktree <path> [--harvest <subdir> --dest <abs>]" >&2; exit 2; }
+    WT="$(bare_wt "$WT")"  # A3: registration/marker/index theo cwd TRẦN
     [ -d "$WT" ] || { echo "worktree không tồn tại: $WT" >&2; exit 1; }
     # 1) thu hoạch sản phẩm vào đích trước khi xoá (mất là mất thật)
     if [ -n "$HARVEST" ] && [ -n "$DEST" ] && [ -d "$WT/$HARVEST" ]; then
@@ -519,7 +562,7 @@ PY
     "$ORCA" worktree remove --worktree "path:$WT" --force --json > /dev/null 2>&1 \
       && echo "team-orch: ĐÃ XOÁ worktree $WT" \
       || { echo "worktree remove fail (xem selector path:)" >&2; "$ORCA" worktree remove --worktree "$WT" --force --json > /dev/null 2>&1 && echo "team-orch: ĐÃ XOÁ worktree $WT" || exit 1; }
-    rm -f "$(marker "$WT")"
+    rm -f "$(marker "$WT")" "$(marker "path:$WT")" "$(marker "explicit:$WT")"  # A3: dọn cả key legacy
     [ -n "$CROOM" ] && [ "$CROOM" != "general" ] && rooms_reg close "$CROOM" || true
     emit worktree.cleaned system "$(repo_of_cwd)" "" "" "{\"worktree\":\"$WT\"}"
     echo "team-orch: cleanup xong — marker dọn, event worktree.cleaned phát"
