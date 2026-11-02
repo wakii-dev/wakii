@@ -119,6 +119,6 @@ export function resetBundledRipgrepPathCacheForTests(): void {
 // No git/readdir fallback: partial listings would hide damaged installs or security-software blocks.
 export function bundledRipgrepUnavailableError(): Error {
   return new Error(
-    "Orca's bundled search tool (ripgrep) could not start. Reinstall Orca, or allow it in your security software."
+    "Wakii's bundled search tool (ripgrep) could not start. Reinstall Wakii, or allow it in your security software."
   )
 }

@@ -67,17 +67,17 @@ export function readManagedKiroStandaloneTriggers(
   return present
 }
 
-/** Why `file` is not Orca's to rewrite, or null when every field and hook is Orca's. */
+/** Why `file` is not Orca's to rewrite, or null when every field and hook is Wakii's. */
 export function getKiroStandaloneHooksFileConflict(file: Record<string, unknown>): string | null {
   const otherField = Object.keys(file).find((key) => key !== 'version' && key !== 'hooks')
   if (otherField !== undefined) {
-    return `it has a field Orca does not write (${otherField})`
+    return `it has a field Wakii does not write (${otherField})`
   }
   if (!Array.isArray(file.hooks) || file.hooks.length === 0) {
     return 'it has no hooks list'
   }
   if (!file.hooks.every(runsManagedKiroScript)) {
-    return 'it has hooks Orca did not write'
+    return 'it has hooks Wakii did not write'
   }
   return file.version === 'v1' ? null : 'it is not a version "v1" hooks file'
 }

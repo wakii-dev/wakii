@@ -25,7 +25,7 @@ const moveSchema = z
   .partial({ windowId: true })
   .loose()
 
-// Why its own world: the page's main world must never see (or tamper with) Orca's reads.
+// Why its own world: the page's main world must never see (or tamper with) Wakii's reads.
 const DETECT_LANGUAGE_WORLD_ID = 1_998
 const READ_LANG_SCRIPT = "document.documentElement ? document.documentElement.lang : ''"
 

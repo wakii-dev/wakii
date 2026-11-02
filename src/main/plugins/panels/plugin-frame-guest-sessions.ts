@@ -162,7 +162,7 @@ function readDeclarativeRuntime(): Promise<Uint8Array> {
   return readFile(join(app.getAppPath(), 'resources', 'plugins', 'declarative', 'orca-runtime.mjs'))
 }
 
-/** The URL a contribution's guest loads: its HTML entry, or Orca's host page for a module. */
+/** The URL a contribution's guest loads: its HTML entry, or Wakii's host page for a module. */
 function contributionUrl(
   plugin: ValidDiscoveredPlugin,
   frameKey: string,

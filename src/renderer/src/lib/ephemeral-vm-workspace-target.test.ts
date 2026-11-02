@@ -237,7 +237,7 @@ describe('prepareEphemeralVmWorkspaceTarget', () => {
     })
   })
 
-  it('rejects and cleans up an Wakii-server provisioned root before project import', async () => {
+  it('rejects and cleans up a Wakii-server provisioned root before project import', async () => {
     vi.mocked(window.api.ephemeralVm.provision).mockResolvedValue({
       ok: true,
       connectionType: 'orca-server',

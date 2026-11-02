@@ -143,7 +143,7 @@ export function attachBrowserExtensionsToProfileSession(
   stateByProfileId.set(profile.id, { profile, session: sess, loading, loads })
 }
 
-/** Unloads a profile session's extensions and Orca's wiring; its saved extension data stays. */
+/** Unloads a profile session's extensions and Wakii's wiring; its saved extension data stays. */
 async function unloadProfileSession(state: ProfileSessionState): Promise<void> {
   forgetBrowserExtensionLoadFailures({ profileId: state.profile.id })
   await Promise.all([state.loading.catch(() => {}), state.loads.close()])

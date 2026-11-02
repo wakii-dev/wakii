@@ -24,7 +24,7 @@ export const CLAUDE_ACCOUNT_NEEDS_SIGN_IN_MESSAGE =
   'Sign in to this Claude account again before selecting it.'
 
 export const CLAUDE_ACCOUNT_FOLDER_IN_USE_MESSAGE =
-  "Orca couldn't delete this Claude account's folder. Quit any Claude running in this account, then remove it again."
+  "Wakii couldn't delete this Claude account's folder. Quit any Claude running in this account, then remove it again."
 
 export type ClaudeAccountSettings = Pick<
   GlobalSettings,

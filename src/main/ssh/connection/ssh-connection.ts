@@ -559,7 +559,7 @@ export class SshConnection {
     // Probe before platform detection: raw echo works in POSIX, cmd and PowerShell; /bin/sh wrapping does not.
     const channel = spawnTrackedSystemSshChannel(
       this.sessionChannelHost(),
-      'echo ORCA-SYSTEM-SSH-OK',
+      'echo WAKII-SYSTEM-SSH-OK',
       {
         wrapCommand: false
       }

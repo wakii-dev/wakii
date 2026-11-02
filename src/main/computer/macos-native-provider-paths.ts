@@ -7,10 +7,10 @@ export function resolveMacOSComputerUseAppPath(): string | null {
     return override
   }
 
-  const packaged = [join(process.resourcesPath ?? '', 'Orca Computer Use.app')]
+  const packaged = [join(process.resourcesPath ?? '', 'Wakii Computer Use.app')]
   const dev = [
-    join(process.cwd(), 'native/computer-use-macos/.build/release/Orca Computer Use.app'),
-    resolve(__dirname, '../../native/computer-use-macos/.build/release/Orca Computer Use.app')
+    join(process.cwd(), 'native/computer-use-macos/.build/release/Wakii Computer Use.app'),
+    resolve(__dirname, '../../native/computer-use-macos/.build/release/Wakii Computer Use.app')
   ]
   const candidates = process.resourcesPath ? [...packaged, ...dev] : dev
 

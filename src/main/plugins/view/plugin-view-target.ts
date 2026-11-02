@@ -44,7 +44,7 @@ async function liveEntry(
       entry.status === 'pending'
         ? 'is waiting for approval'
         : `is ${entry.status}${entry.error ? `: ${entry.error}` : ''}`
-    throw refuse(`${pluginKey} ${why}, so Orca shows none of its panels or editors.`, [
+    throw refuse(`${pluginKey} ${why}, so Wakii shows none of its panels or editors.`, [
       entry.status === 'pending'
         ? `Approve it first: \`orca plugin enable ${pluginKey}\` prints what it would get.`
         : `\`orca plugin logs ${pluginKey}\` shows why; fix it, then run this again.`

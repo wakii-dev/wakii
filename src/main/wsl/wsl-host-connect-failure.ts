@@ -41,7 +41,7 @@ function notReachableYet(distro: string, reason: string): RemoteRuntimeClientErr
   return new RemoteRuntimeClientError(
     'remote_runtime_unavailable',
     // Why this wording: subscriptions cross IPC as a message, and renderers match this phrase.
-    `Could not connect to the remote Orca runtime in ${distro} yet: ${reason}`
+    `Could not connect to the remote Wakii runtime in ${distro} yet: ${reason}`
   )
 }
 

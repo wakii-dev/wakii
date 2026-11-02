@@ -172,7 +172,7 @@ export function dependentStateSummary(dependencies: OrcadMigrationDependency[]):
 
 export function dependentStateMessage(dependencies: OrcadMigrationDependency[]): string {
   return (
-    'This SSH target is still referenced by saved Orca state that this host’s Orca server cannot take ' +
+    'This SSH target is still referenced by saved Wakii state that this host’s Wakii server cannot take ' +
     `over yet: ${dependentStateSummary(dependencies)}. Remove it, or keep this host in direct SSH mode.`
   )
 }

@@ -128,7 +128,7 @@ function BundledAgentSkillSetupPanel({
             ? translate('auto.components.settings.AgentSkillSetupPanel.installing', 'Installing...')
             : installedButton === 'replace'
               ? translate(
-                  'auto.components.settings.AgentSkillSetupPanel.replaceWithOrcaCopy',
+                  'auto.components.settings.AgentSkillSetupPanel.replaceWithWakiiCopy',
                   "Replace with Orca's copy"
                 )
               : action.kind === 'run' && action.changes

@@ -8,11 +8,11 @@ import { useAppStore } from '../store'
 async function copySignInLink(link: string): Promise<void> {
   try {
     await window.api.ui.writeClipboardText(link)
-    toast.success(translate('auto.components.OrcaSignInProgress.copied', 'Sign-in link copied'))
+    toast.success(translate('auto.components.WakiiSignInProgress.copied', 'Sign-in link copied'))
   } catch (error) {
     console.warn('Could not copy the Orca sign-in link:', error)
     toast.error(
-      translate('auto.components.OrcaSignInProgress.copyFailed', 'Could not copy the link.')
+      translate('auto.components.WakiiSignInProgress.copyFailed', 'Could not copy the link.')
     )
   }
 }
@@ -34,7 +34,7 @@ export function OrcaSignInButton({
       {signingIn ? (
         <>
           <Loader2 className="animate-spin" />
-          {translate('auto.components.OrcaSignInProgress.signingIn', 'Signing in…')}
+          {translate('auto.components.WakiiSignInProgress.signingIn', 'Signing in…')}
         </>
       ) : (
         children
@@ -62,13 +62,13 @@ export function OrcaSignInWaitNotice({
     >
       <span className="pr-2">
         {translate(
-          'auto.components.OrcaSignInProgress.waiting',
+          'auto.components.WakiiSignInProgress.waiting',
           'Waiting for sign-in in your browser'
         )}
       </span>
       <span aria-hidden>·</span>
       <Button type="button" variant="link" size="xs" onClick={() => void copySignInLink(link)}>
-        {translate('auto.components.OrcaSignInProgress.copyLink', 'Copy sign-in link')}
+        {translate('auto.components.WakiiSignInProgress.copyLink', 'Copy sign-in link')}
       </Button>
       <span aria-hidden>·</span>
       <Button
@@ -77,7 +77,7 @@ export function OrcaSignInWaitNotice({
         size="xs"
         onClick={() => void window.api.orcaProfiles.cancelSignIn().catch(() => {})}
       >
-        {translate('auto.components.OrcaSignInProgress.cancel', 'Cancel')}
+        {translate('auto.components.WakiiSignInProgress.cancel', 'Cancel')}
       </Button>
     </div>
   )

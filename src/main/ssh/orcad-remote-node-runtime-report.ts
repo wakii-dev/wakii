@@ -21,7 +21,7 @@ export class RemoteNodeRuntimeSelfTestError extends RelayHostAnsweredError {
     const missing = parseMissingSharedLibrary(output)
     super(
       missing
-        ? `The host is missing ${missing}, which Orca's Node runtime needs. ` +
+        ? `The host is missing ${missing}, which Wakii's Node runtime needs. ` +
             `${installHint(missing)} Then reconnect. (${exit}: ${output})`
         : `The pinned Node runtime did not run on the host (${exit}): ${output}`
     )
@@ -32,7 +32,7 @@ export class RemoteNodeRuntimeSelfTestError extends RelayHostAnsweredError {
 export class RemoteNodeRuntimeNoexecError extends RelayHostAnsweredError {
   constructor(
     readonly output: string,
-    storeDir = 'Orca’s runtime folder'
+    storeDir = 'Wakii’s runtime folder'
   ) {
     super(`The host does not allow running programs from ${storeDir}: ${output}`)
     this.name = 'RemoteNodeRuntimeNoexecError'
@@ -55,7 +55,7 @@ export function assertRemoteNodeRuntimeStoreExecutable(probe: string, storeDir: 
 export class RemoteWindowsBuildUnsupportedError extends RelayHostAnsweredError {
   constructor(readonly build: string) {
     super(
-      `The host runs Windows build ${build}, older than the Windows 10 / Server 2016 Orca's Node runtime needs.`
+      `The host runs Windows build ${build}, older than the Windows 10 / Server 2016 Wakii's Node runtime needs.`
     )
     this.name = 'RemoteWindowsBuildUnsupportedError'
   }
@@ -64,7 +64,7 @@ export class RemoteWindowsBuildUnsupportedError extends RelayHostAnsweredError {
 export class RemoteNodeRuntimeNoExtractorError extends RelayHostAnsweredError {
   constructor() {
     super(
-      "The host has neither System32\\tar.exe nor PowerShell's Expand-Archive to unpack Orca's Node runtime."
+      "The host has neither System32\\tar.exe nor PowerShell's Expand-Archive to unpack Wakii's Node runtime."
     )
     this.name = 'RemoteNodeRuntimeNoExtractorError'
   }

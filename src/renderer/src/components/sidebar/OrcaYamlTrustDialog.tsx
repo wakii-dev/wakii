@@ -22,25 +22,25 @@ function getTitle(kind: ScriptKind, repoName: string, previouslyApproved: boolea
     switch (kind) {
       case 'setup':
         return translate(
-          'auto.components.sidebar.OrcaYamlTrustDialog.setupChangedTitle',
+          'auto.components.sidebar.WakiiYamlTrustDialog.setupChangedTitle',
           "{{repo}}'s setup script changed — run the new version?",
           repo
         )
       case 'archive':
         return translate(
-          'auto.components.sidebar.OrcaYamlTrustDialog.archiveChangedTitle',
+          'auto.components.sidebar.WakiiYamlTrustDialog.archiveChangedTitle',
           "{{repo}}'s archive script changed — run the new version?",
           repo
         )
       case 'issueCommand':
         return translate(
-          'auto.components.sidebar.OrcaYamlTrustDialog.issueCommandChangedTitle',
+          'auto.components.sidebar.WakiiYamlTrustDialog.issueCommandChangedTitle',
           "{{repo}}'s issue command changed — run the new version?",
           repo
         )
       case 'vmRecipe':
         return translate(
-          'auto.components.sidebar.OrcaYamlTrustDialog.vmRecipeChangedTitle',
+          'auto.components.sidebar.WakiiYamlTrustDialog.vmRecipeChangedTitle',
           "{{repo}}'s VM recipe changed — run the new version?",
           repo
         )
@@ -49,25 +49,25 @@ function getTitle(kind: ScriptKind, repoName: string, previouslyApproved: boolea
   switch (kind) {
     case 'setup':
       return translate(
-        'auto.components.sidebar.OrcaYamlTrustDialog.setupRunTitle',
+        'auto.components.sidebar.WakiiYamlTrustDialog.setupRunTitle',
         'Run setup script from {{repo}}?',
         repo
       )
     case 'archive':
       return translate(
-        'auto.components.sidebar.OrcaYamlTrustDialog.archiveRunTitle',
+        'auto.components.sidebar.WakiiYamlTrustDialog.archiveRunTitle',
         'Run archive script from {{repo}}?',
         repo
       )
     case 'issueCommand':
       return translate(
-        'auto.components.sidebar.OrcaYamlTrustDialog.issueCommandRunTitle',
+        'auto.components.sidebar.WakiiYamlTrustDialog.issueCommandRunTitle',
         'Run issue command from {{repo}}?',
         repo
       )
     case 'vmRecipe':
       return translate(
-        'auto.components.sidebar.OrcaYamlTrustDialog.vmRecipeRunTitle',
+        'auto.components.sidebar.WakiiYamlTrustDialog.vmRecipeRunTitle',
         'Run VM recipe from {{repo}}?',
         repo
       )
@@ -80,22 +80,22 @@ function getDescription(kind: ScriptKind, previouslyApproved: boolean): string {
     switch (kind) {
       case 'setup':
         return translate(
-          'auto.components.sidebar.OrcaYamlTrustDialog.setupChangedBody',
+          'auto.components.sidebar.WakiiYamlTrustDialog.setupChangedBody',
           '<code>orca.yaml</code> changed since you last approved. Re-review before it runs when this workspace is created.'
         )
       case 'archive':
         return translate(
-          'auto.components.sidebar.OrcaYamlTrustDialog.archiveChangedBody',
+          'auto.components.sidebar.WakiiYamlTrustDialog.archiveChangedBody',
           '<code>orca.yaml</code> changed since you last approved. Re-review before it runs when this workspace is removed.'
         )
       case 'issueCommand':
         return translate(
-          'auto.components.sidebar.OrcaYamlTrustDialog.issueCommandChangedBody',
+          'auto.components.sidebar.WakiiYamlTrustDialog.issueCommandChangedBody',
           '<code>orca.yaml</code> changed since you last approved. Re-review before it runs when this workspace launches with a linked issue.'
         )
       case 'vmRecipe':
         return translate(
-          'auto.components.sidebar.OrcaYamlTrustDialog.vmRecipeChangedBody',
+          'auto.components.sidebar.WakiiYamlTrustDialog.vmRecipeChangedBody',
           '<code>orca.yaml</code> changed since you last approved. Re-review before it runs before provisioning a VM.'
         )
     }
@@ -103,22 +103,22 @@ function getDescription(kind: ScriptKind, previouslyApproved: boolean): string {
   switch (kind) {
     case 'setup':
       return translate(
-        'auto.components.sidebar.OrcaYamlTrustDialog.setupRunBody',
+        'auto.components.sidebar.WakiiYamlTrustDialog.setupRunBody',
         "This repository's <code>orca.yaml</code> runs on your machine when this workspace is created. Only run if you trust <repo/>."
       )
     case 'archive':
       return translate(
-        'auto.components.sidebar.OrcaYamlTrustDialog.archiveRunBody',
+        'auto.components.sidebar.WakiiYamlTrustDialog.archiveRunBody',
         "This repository's <code>orca.yaml</code> runs on your machine when this workspace is removed. Only run if you trust <repo/>."
       )
     case 'issueCommand':
       return translate(
-        'auto.components.sidebar.OrcaYamlTrustDialog.issueCommandRunBody',
+        'auto.components.sidebar.WakiiYamlTrustDialog.issueCommandRunBody',
         "This repository's <code>orca.yaml</code> runs on your machine when this workspace launches with a linked issue. Only run if you trust <repo/>."
       )
     case 'vmRecipe':
       return translate(
-        'auto.components.sidebar.OrcaYamlTrustDialog.vmRecipeRunBody',
+        'auto.components.sidebar.WakiiYamlTrustDialog.vmRecipeRunBody',
         "This repository's <code>orca.yaml</code> runs on your machine before provisioning a VM. Only run if you trust <repo/>."
       )
   }
@@ -129,28 +129,28 @@ function getScriptHeading(kind: ScriptKind, previouslyApproved: boolean): string
     case 'setup':
       return previouslyApproved
         ? translate(
-            'auto.components.sidebar.OrcaYamlTrustDialog.newSetupScript',
+            'auto.components.sidebar.WakiiYamlTrustDialog.newSetupScript',
             'New setup script'
           )
-        : translate('auto.components.sidebar.OrcaYamlTrustDialog.setupScript', 'Setup script')
+        : translate('auto.components.sidebar.WakiiYamlTrustDialog.setupScript', 'Setup script')
     case 'archive':
       return previouslyApproved
         ? translate(
-            'auto.components.sidebar.OrcaYamlTrustDialog.newArchiveScript',
+            'auto.components.sidebar.WakiiYamlTrustDialog.newArchiveScript',
             'New archive script'
           )
-        : translate('auto.components.sidebar.OrcaYamlTrustDialog.archiveScript', 'Archive script')
+        : translate('auto.components.sidebar.WakiiYamlTrustDialog.archiveScript', 'Archive script')
     case 'issueCommand':
       return previouslyApproved
         ? translate(
-            'auto.components.sidebar.OrcaYamlTrustDialog.newIssueCommand',
+            'auto.components.sidebar.WakiiYamlTrustDialog.newIssueCommand',
             'New issue command'
           )
-        : translate('auto.components.sidebar.OrcaYamlTrustDialog.issueCommand', 'Issue command')
+        : translate('auto.components.sidebar.WakiiYamlTrustDialog.issueCommand', 'Issue command')
     case 'vmRecipe':
       return previouslyApproved
-        ? translate('auto.components.sidebar.OrcaYamlTrustDialog.newVmRecipe', 'New VM recipe')
-        : translate('auto.components.sidebar.OrcaYamlTrustDialog.vmRecipe', 'VM recipe')
+        ? translate('auto.components.sidebar.WakiiYamlTrustDialog.newVmRecipe', 'New VM recipe')
+        : translate('auto.components.sidebar.WakiiYamlTrustDialog.vmRecipe', 'VM recipe')
   }
 }
 
@@ -181,7 +181,7 @@ const OrcaYamlTrustDialog = React.memo(function OrcaYamlTrustDialog() {
   const repoName =
     typeof modalData.repoName === 'string'
       ? modalData.repoName
-      : translate('auto.components.sidebar.OrcaYamlTrustDialog.thisRepository', 'this repository')
+      : translate('auto.components.sidebar.WakiiYamlTrustDialog.thisRepository', 'this repository')
   const scriptKind: ScriptKind =
     modalData.scriptKind === 'archive'
       ? 'archive'
@@ -275,7 +275,7 @@ const OrcaYamlTrustDialog = React.memo(function OrcaYamlTrustDialog() {
             <Trans
               i18n={i18n}
               defaults={translate(
-                'auto.components.sidebar.OrcaYamlTrustDialog.alwaysTrustRepo',
+                'auto.components.sidebar.WakiiYamlTrustDialog.alwaysTrustRepo',
                 'Always trust <code>orca.yaml</code> in <repo/>'
               )}
               components={{ code: <code />, repo: <>{repoName}</> }}
@@ -285,10 +285,10 @@ const OrcaYamlTrustDialog = React.memo(function OrcaYamlTrustDialog() {
 
         <DialogFooter>
           <Button variant="outline" onClick={() => resolveAndClose('skip')}>
-            {translate('auto.components.sidebar.OrcaYamlTrustDialog.43b7bec4cd', "Don't run")}
+            {translate('auto.components.sidebar.WakiiYamlTrustDialog.43b7bec4cd', "Don't run")}
           </Button>
           <Button onClick={() => resolveAndClose('run')}>
-            {translate('auto.components.sidebar.OrcaYamlTrustDialog.f3e2b868fb', 'Run hooks')}
+            {translate('auto.components.sidebar.WakiiYamlTrustDialog.f3e2b868fb', 'Run hooks')}
           </Button>
         </DialogFooter>
       </DialogContent>

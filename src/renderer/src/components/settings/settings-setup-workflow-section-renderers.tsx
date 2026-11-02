@@ -18,9 +18,9 @@ export function renderOrcaAccountSettingsSection(
   return model.showDesktopOnlySettings ? (
     <SettingsSection
       id="orca-account"
-      title={translate('auto.components.settings.orcaAccount.title', 'Wakii Account')}
+      title={translate('auto.components.settings.wakiiAccount.title', 'Wakii Account')}
       description={translate(
-        'auto.components.settings.orcaAccount.description',
+        'auto.components.settings.wakiiAccount.description',
         'Share work instantly and reach your desktop from Wakii Mobile wherever you are.'
       )}
       searchEntries={navigation.getSectionSearchEntries('orca-account')}

@@ -2,7 +2,7 @@ import { useCallback, useRef, useSyncExternalStore } from 'react'
 import { useAppStore } from '@/store'
 
 // Offer Draw once per install independently of capped tours; keep it open until dismissal or ineligibility, with no timeout.
-const MARKUP_DRAW_HINT_SEEN_KEY = 'orca.browser.markup-draw-hint-seen'
+const MARKUP_DRAW_HINT_SEEN_KEY = 'wakii.browser.markup-draw-hint-seen'
 
 // Decline the hint when storage is unavailable to avoid nagging on every open.
 function claimFirstView(): boolean {

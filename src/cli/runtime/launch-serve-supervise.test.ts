@@ -63,7 +63,7 @@ describe('serveOrcaApp --supervise', () => {
   }, 10_000)
 
   it('starts the server from the app, not the copy, once relocated outside it', async () => {
-    const appRoot = join(root, 'Orca.app', 'Contents', 'Resources', 'app.asar.unpacked')
+    const appRoot = join(root, 'Wakii.app', 'Contents', 'Resources', 'app.asar.unpacked')
     process.env.ORCA_SERVE_SUPERVISOR_APP_ROOT = appRoot
     try {
       const child = new FakeChildProcess()

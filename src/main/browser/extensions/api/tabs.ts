@@ -213,7 +213,7 @@ export function registerTabsNamespace(): void {
           }
         }
       ),
-      // Why main-side: Electron's native update navigates without Orca's URL rules.
+      // Why main-side: Electron's native update navigates without Wakii's URL rules.
       update: defineBrowserExtensionMethod(
         z.union([
           z.tuple([updatePropertiesSchema]),

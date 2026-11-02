@@ -34,7 +34,7 @@ import {
 
 export const ORCAD_MIGRATION_LEAVE_BEHIND_TERMINALS = 'orcad_migration_leave_behind_terminals'
 export const ORCAD_MIGRATION_LEAVE_BEHIND_TERMINALS_REASON =
-  'Move anyway needs every terminal on this host closed first, and Orca could not confirm they all exited. Close them, or end them on the host, then connect again.'
+  'Move anyway needs every terminal on this host closed first, and Wakii could not confirm they all exited. Close them, or end them on the host, then connect again.'
 
 export type OrcadMigrationFenceState =
   | { state: 'none' }
@@ -232,9 +232,9 @@ export async function releaseUndeployedMigrationFence(args: {
 function fenceStateReason(state: OrcadMigrationFenceState): string {
   switch (state.state) {
     case 'owned-by-deploy':
-      return 'Orca already runs on this SSH host.'
+      return 'Wakii already runs on this SSH host.'
     case 'fenced-unverifiable':
-      return 'This SSH host is held for a migration whose record is missing. Recover it from this host’s Orca server first.'
+      return 'This SSH host is held for a migration whose record is missing. Recover it from this host’s Wakii server first.'
     case 'stale-journal':
       return 'A migration record names this SSH host but its fence is gone. Resolve that migration first.'
     case 'fenced':

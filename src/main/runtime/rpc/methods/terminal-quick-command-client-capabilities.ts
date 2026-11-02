@@ -50,7 +50,7 @@ export function assertTerminalQuickCommandMutationReadableForClient(
     )
   ) {
     throw new InvalidArgumentError(
-      'Update this Orca client to save this quick command. This version cannot display it in the saved list.'
+      'Update this Wakii client to save this quick command. This version cannot display it in the saved list.'
     )
   }
 }

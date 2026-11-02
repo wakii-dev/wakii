@@ -299,9 +299,9 @@ export function orcadMachineOwnershipUnresolvedMessage(
   const why =
     cause === 'stopped-install'
       ? 'that stopped server left no record of its own'
-      : 'the older Orca server there recorded only a hostname, which does not identify its machine'
+      : 'the older Wakii server there recorded only a hostname, which does not identify its machine'
   return (
-    `Orca can't tell which machine set up the Orca server in ~/${RELAY_REMOTE_DIR}: ` +
+    `Wakii can't tell which machine set up the Wakii server in ~/${RELAY_REMOTE_DIR}: ` +
     `this home may be shared by several machines, and ${why}. ` +
     'If another machine set it up, connect to that one and run the command shown there. ' +
     `If ${hostname ?? 'this machine'} set it up, run this on it, then reconnect: ` +

@@ -101,7 +101,7 @@ export async function authorizeWindowsCheckout(
         (current.branch !== expected.branch || (expected.head && current.head !== expected.head))))
   ) {
     throw new Error(
-      `A different checkout is now at ${root}; Orca left it in place. Delete it again to remove it.`
+      `A different checkout is now at ${root}; Wakii left it in place. Delete it again to remove it.`
     )
   }
   let entry

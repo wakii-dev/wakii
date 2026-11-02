@@ -3,7 +3,7 @@ import type { Automation } from '../../shared/automations-types'
 import type { Store } from '../persistence/loading-store/store'
 import { listOrcadMigrationCutoverChainForTarget } from '../ssh/orcad-migration-cutover-journal'
 
-export const ORCAD_FENCED_AUTOMATION = "This automation now runs on its SSH host's Orca server."
+export const ORCAD_FENCED_AUTOMATION = "This automation now runs on its SSH host's Wakii server."
 
 /** While a move is in flight, or once it took this row, any desktop write would break or duplicate it. Rows Move anyway left behind stay runnable here. */
 export function isOrcadFencedAutomation(

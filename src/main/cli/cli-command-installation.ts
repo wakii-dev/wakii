@@ -52,7 +52,7 @@ export class CliCommandInstallation extends CliCommandInspection {
       await this.runPrivilegedSymlinkTransaction('install', commandPath, launcherPath, inspected)
       const installed = await this.inspectStableSymlink(commandPath, launcherPath)
       if (installed.status.state !== 'installed') {
-        throw new Error(`Could not register the Orca command at ${commandPath}.`)
+        throw new Error(`Could not register the Wakii command at ${commandPath}.`)
       }
       return
     }
@@ -173,7 +173,7 @@ export class CliCommandInstallation extends CliCommandInspection {
     const extractedRoot = await ensureAppImageExtractedRoot(extractionOptions)
     if (!extractedRoot) {
       throw new Error(
-        `Could not extract the Orca AppImage at ${this.appImagePath}. Check that it is executable and that ${this.appImageCacheRootPath} has free space.`
+        `Could not extract the Wakii AppImage at ${this.appImagePath}. Check that it is executable and that ${this.appImageCacheRootPath} has free space.`
       )
     }
     return extractedRoot

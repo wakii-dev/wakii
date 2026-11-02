@@ -17,7 +17,7 @@ export class WslOrcadLaunchDeferredError extends Error {
 export class WslDistroNotRunningError extends Error {
   constructor(distro: string) {
     super(
-      `The WSL distro ${distro} isn’t running, so Orca didn’t start it for a background request.`
+      `The WSL distro ${distro} isn’t running, so Wakii didn’t start it for a background request.`
     )
     this.name = 'WslDistroNotRunningError'
   }
@@ -27,7 +27,7 @@ export class WslDistroNotRunningError extends Error {
 export class WslDistroUnverifiableConnectError extends Error {
   constructor(distro: string) {
     super(
-      `WSL didn’t answer whether ${distro} is running, so Orca didn’t start anything there yet.`
+      `WSL didn’t answer whether ${distro} is running, so Wakii didn’t start anything there yet.`
     )
     this.name = 'WslDistroUnverifiableConnectError'
   }

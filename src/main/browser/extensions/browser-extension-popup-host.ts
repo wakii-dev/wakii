@@ -94,7 +94,7 @@ function popupUrl(extensionId: string, popupPath: string): string {
 export function openBrowserExtensionPopup(options: BrowserExtensionPopupOptions): BrowserWindow {
   const mainWindow = getBrowserExtensionMainWindow()
   if (!mainWindow) {
-    throw new BrowserExtensionApiError('Orca has no window to show the popup in')
+    throw new BrowserExtensionApiError('Wakii has no window to show the popup in')
   }
   const url = popupUrl(options.extensionId, options.popupPath)
   closeBrowserExtensionPopup()

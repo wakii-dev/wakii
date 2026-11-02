@@ -227,7 +227,7 @@ export function SshTargetCard({
           <span className="truncate text-sm font-medium">{target.label}</span>
           {servedByOrcaServer ? (
             <Badge variant="hostContext" className="self-center">
-              {translate('auto.components.settings.SshTargetCard.orcaServer', 'Orca server')}
+              {translate('auto.components.settings.SshTargetCard.wakiiServer', 'Orca server')}
             </Badge>
           ) : null}
           {/* Keep the separator outside monospace spans so its width stays compact. */}

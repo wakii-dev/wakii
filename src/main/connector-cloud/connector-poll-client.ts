@@ -144,7 +144,7 @@ export class ConnectorPollClient {
       }
     }
     if (this.stopReason) {
-      console.warn(`[connector] Orca Cloud stopped this connection: ${this.stopReason}`)
+      console.warn(`[connector] Wakii Cloud stopped this connection: ${this.stopReason}`)
     }
   }
 

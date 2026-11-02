@@ -129,7 +129,7 @@ const PUBLIC_TOKENS = new Set<string>(PLUGIN_APP_THEME_TOKENS)
 const appliedPluginTokens = new WeakMap<object, readonly string[]>()
 // Why: plugin themes load after discovery and Match Terminal after settings; repainting from
 // this cache before first paint avoids flashing the built-in theme on every launch.
-const PLUGIN_THEME_CACHE_KEY = 'orca.pluginAppTheme.lastApplied'
+const PLUGIN_THEME_CACHE_KEY = 'wakii.pluginAppTheme.lastApplied'
 
 function setPluginTokens(root: PluginThemeRoot, tokens: Record<string, string>): void {
   for (const token of appliedPluginTokens.get(root) ?? []) {

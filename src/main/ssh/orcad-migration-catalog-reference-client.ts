@@ -14,7 +14,7 @@ import {
 
 /** Unlike migration-unsupported, this refusal cannot prove no earlier stage exists. */
 export const ORCAD_MIGRATION_DESTINATION_ABORT_BY_REFERENCE_UNSUPPORTED =
-  'orcad_migration_destination_abort_by_reference_unsupported:Update Orca on this host to cancel this move.'
+  'orcad_migration_destination_abort_by_reference_unsupported:Update Wakii on this host to cancel this move.'
 
 /** Abort by manifest identity when the full request cannot fit the sealed frame. */
 export async function abortRemoteOrcadMigrationCatalogByReference(

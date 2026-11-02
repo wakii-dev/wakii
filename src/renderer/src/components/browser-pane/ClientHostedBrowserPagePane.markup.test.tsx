@@ -43,7 +43,7 @@ const placement = {
 beforeEach(() => {
   installClientHostedPaneApi({ ui: { writeClipboardImage: mocks.clipboard } })
   useAppStore.setState({ browserCertificateFailuresByPageId: {} })
-  window.localStorage.setItem('orca.browser.markup-draw-hint-seen', 'true')
+  window.localStorage.setItem('wakii.browser.markup-draw-hint-seen', 'true')
   mocks.capture.mockResolvedValue(image)
   mocks.compose.mockResolvedValue({ dataUrl: 'data:image/png;base64,Y29tcG9zaXRl' })
   mocks.clipboard.mockResolvedValue(undefined)

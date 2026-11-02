@@ -38,7 +38,7 @@ export async function firePluginDevHook(input: {
   const { service, event } = input
   assertPluginSystemEnabled(service)
   if (!isPluginHookName(event)) {
-    throw refuse(`${event} is not an Orca plugin hook.`, [
+    throw refuse(`${event} is not a Wakii plugin hook.`, [
       `Pass one of: ${PLUGIN_HOOK_NAMES.join(', ')}.`
     ])
   }

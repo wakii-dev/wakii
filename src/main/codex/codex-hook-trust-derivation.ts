@@ -67,24 +67,24 @@ export async function deriveCodexHookHashes(
     }
     if (hashes === 'inconsistent') {
       return refused(
-        `${describeCodexVersion(codexVersion)} hashes Orca's status hook differently by its file or position, so Orca does not approve it`
+        `${describeCodexVersion(codexVersion)} hashes Wakii's status hook differently by its file or position, so Wakii does not approve it`
       )
     }
     if (hashes === 'unloaded') {
       // An unloaded scratch home cannot establish version incompatibility.
       return {
         kind: 'pending',
-        failure: `${describeCodexVersion(codexVersion)} listed no hooks from Orca's test home`
+        failure: `${describeCodexVersion(codexVersion)} listed no hooks from Wakii's test home`
       }
     }
     if (!hashes) {
-      return refused(`${describeCodexVersion(codexVersion)} did not recognize Orca's status hook`)
+      return refused(`${describeCodexVersion(codexVersion)} did not recognize Wakii's status hook`)
     }
     return { kind: 'hashes', codexVersion, hashes }
   } catch (error) {
     if (isCodexAppServerUnsupportedError(error)) {
       return refused(
-        `${describeCodexVersion(codexVersion)} is too old for Orca status; update Codex`
+        `${describeCodexVersion(codexVersion)} is too old for Wakii status; update Codex`
       )
     }
     console.warn('[codex-hook-trust] could not derive Codex hook hashes:', error)

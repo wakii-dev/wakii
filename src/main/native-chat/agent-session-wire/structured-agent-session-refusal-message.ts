@@ -13,16 +13,16 @@ function latchedMessage(record: AgentSessionRecord): string {
     return terminalOwnerRefusalMessage(record.lease)
   }
   return record.lease.ownerProcess
-    ? `Orca cannot prove that ${ownerDescription(record)} — the previous owner of this session — has exited, so it will not start a second agent on the same conversation. Quit that process and reopen this chat.`
-    : 'Orca cannot tell whether an agent started for this session before the app stopped, so it will not start a second one on the same conversation. Quit any leftover agent process for this workspace and reopen this chat.'
+    ? `Wakii cannot prove that ${ownerDescription(record)} — the previous owner of this session — has exited, so it will not start a second agent on the same conversation. Quit that process and reopen this chat.`
+    : 'Wakii cannot tell whether an agent started for this session before the app stopped, so it will not start a second one on the same conversation. Quit any leftover agent process for this workspace and reopen this chat.'
 }
 
 /** Prefer situation-specific wording when bare ownership/conflict codes would describe the wrong problem. */
 const SITUATION_MESSAGES: Partial<Record<AgentSessionAnyRefusalReason, string>> = {
   replaySuperseded: 'A newer start of this chat replaced this one. Try again.',
-  leaseMoved: 'This chat changed hands while Orca was starting it. Try again.',
+  leaseMoved: 'This chat changed hands while Wakii was starting it. Try again.',
   spawnIdentityMismatch:
-    'The agent that started was not the one Orca launched, so Orca did not use it. Try again.',
+    'The agent that started was not the one Wakii launched, so Wakii did not use it. Try again.',
   identityMismatch:
     'This chat belongs to a different workspace, agent or account. Start a new chat to continue.',
   sessionExists: 'This chat already exists. Open it to continue.',
@@ -31,7 +31,7 @@ const SITUATION_MESSAGES: Partial<Record<AgentSessionAnyRefusalReason, string>> 
     'Another chat is already working in this conversation. Open that chat to continue.',
   // Damage is also unreadable; updating alone cannot repair it.
   recordUnreadable:
-    "Orca can't read this chat's saved state. If a newer version of Orca saved it, update Orca to open it; otherwise start a new chat."
+    "Wakii can't read this chat's saved state. If a newer version of Wakii saved it, update Wakii to open it; otherwise start a new chat."
 }
 
 /** Return situation-specific reason/text, or null to preserve the caller’s wording. */
@@ -64,7 +64,7 @@ export function structuredAgentSessionRefusalMessage(
   if (code === 'execution_owner_reconciling') {
     return {
       message:
-        'Orca is still working out who owns this session on this machine. Reopen the chat in a moment.',
+        'Wakii is still working out who owns this session on this machine. Reopen the chat in a moment.',
       reference: { code, details: { reason: 'hostReconciling' } }
     }
   }

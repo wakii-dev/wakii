@@ -174,7 +174,7 @@ describe('a message the host accepted and then rejected, on the desktop', () => 
     const notices = deliveryNotices([SEED, restartRejected('lost', 'fix the parser', 3)])
 
     const notice = notices.get(agentJournalSubmissionKey('lost'))
-    expect(notice?.text).toBe('Orca restarted before this message was sent.')
+    expect(notice?.text).toBe('Wakii restarted before this message was sent.')
     expect(notice?.onDismiss).toBeUndefined()
     expect([...notices.keys()]).toEqual([agentJournalSubmissionKey('lost')])
   })

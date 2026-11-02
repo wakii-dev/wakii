@@ -17,7 +17,7 @@ export function setPluginViewForRpc(view: PluginViewDesktop | null): void {
 
 function requirePluginView(): PluginViewDesktop {
   if (!pluginViewForRpc) {
-    throw new Error('Showing plugin panels is only available in the Orca desktop app')
+    throw new Error('Showing plugin panels is only available in the Wakii desktop app')
   }
   return pluginViewForRpc
 }

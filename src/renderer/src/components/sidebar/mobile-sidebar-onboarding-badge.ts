@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { usePairedMobileDevices } from '../mobile/paired-mobile-devices'
 
-const DISMISS_KEY = 'orca.mobile.sidebar-onboarding-dismissed'
+const DISMISS_KEY = 'wakii.mobile.sidebar-onboarding-dismissed'
 
 function readDismissed(): boolean {
   try {

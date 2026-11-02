@@ -250,7 +250,7 @@ export function CandidateRow({
     note = (
       <p className="text-xs text-status-warning-text">
         {translate(
-          'auto.components.settings.PluginUpdateAllDialog.needsOrca',
+          'auto.components.settings.PluginUpdateAllDialog.needsWakii',
           'Needs Orca {{value0}} or later',
           { value0: needsOrca }
         )}

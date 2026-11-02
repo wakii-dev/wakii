@@ -1,5 +1,5 @@
 /**
- * Distros that can't host Orca's server, each refused with the step that fixes it. There is no
+ * Distros that can't host Wakii's server, each refused with the step that fixes it. There is no
  * fallback once the WSL bridge is gone, so a refusal must say what to run, not only what failed.
  */
 import { OrcadHostUnsupportedError } from '../orcad/orcad-host-unavailable'
@@ -47,7 +47,7 @@ export function wslUnsupportedDistroFixMessage(error: unknown): string | null {
   }
   if (error instanceof RemoteNodeRuntimeSelfTestError && NIXOS_STUB_LOADER.test(error.output)) {
     return (
-      'NixOS can’t run Orca’s Node runtime as it is. Turn on nix-ld ' +
+      'NixOS can’t run Wakii’s Node runtime as it is. Turn on nix-ld ' +
       '(programs.nix-ld.enable = true; in configuration.nix), run nixos-rebuild switch, ' +
       `then reconnect. (exit ${error.exitStatus ?? 'unknown'}: ${error.output})`
     )

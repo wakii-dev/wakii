@@ -243,7 +243,7 @@ describe('codex wrapper --no-daemon rule', () => {
         (remote, inherited, inheritedTty, expected, exitCode) => {
           const sandbox = makeSandbox(HELP_WITH_FLAG)
           const bareCall = isPowerShell(shell)
-            ? '$orcaClipboardExit = $LASTEXITCODE\n& (Get-Command codex -CommandType Application | Select-Object -First 1).Source shell\nexit $orcaClipboardExit'
+            ? '$wakiiClipboardExit = $LASTEXITCODE\n& (Get-Command codex -CommandType Application | Select-Object -First 1).Source shell\nexit $wakiiClipboardExit'
             : 'command codex shell'
           const result = run(shell, `codex clipboard\n${bareCall}`, sandbox, {
             FAKE_CODEX_READ_CLIPBOARD_ENV: '1',

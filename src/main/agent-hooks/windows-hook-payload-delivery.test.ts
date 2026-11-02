@@ -338,10 +338,10 @@ const PROVIDERS: Provider[] = [
     script: 'copilot-hook.cmd',
     stdout: '{}',
     install: () => new CopilotHookService().install(),
-    commands: (home) => readEvent(join(home, '.copilot', 'hooks', 'orca.json'), 'Stop'),
+    commands: (home) => readEvent(join(home, '.copilot', 'hooks', 'wakii.json'), 'Stop'),
     seedStale: (home, stale) =>
       writeHooks(
-        join(home, '.copilot', 'hooks', 'orca.json'),
+        join(home, '.copilot', 'hooks', 'wakii.json'),
         { Stop: [{ powershell: stale }] },
         { version: 1 }
       ),
@@ -541,7 +541,7 @@ describe.skipIf(process.platform !== 'win32')('Windows managed hook payload deli
     vi.stubEnv('COPILOT_HOME', undefined)
     writeFileSync(join(home, '.cmd_aliases.cmd'), '@echo autorun-noise\r\n', 'utf8')
     expect(new CopilotHookService().install().state).toBe('installed')
-    const [command] = readEvent(join(home, '.copilot', 'hooks', 'orca.json'), 'PreToolUse')
+    const [command] = readEvent(join(home, '.copilot', 'hooks', 'wakii.json'), 'PreToolUse')
     if (!command) {
       throw new Error('Missing managed Copilot PreToolUse command')
     }

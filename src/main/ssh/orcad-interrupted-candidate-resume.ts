@@ -50,7 +50,7 @@ export async function resumeInterruptedOrcadCandidate(
       verdict: 'live',
       code: ORCAD_RECOVERY_CHANGED_STATE_CODE,
       reason:
-        `An older Orca left version ${transaction.candidateVersion} running without finishing ` +
+        `An older Wakii left version ${transaction.candidateVersion} running without finishing ` +
         'its update, and did not record which app started it, so it was neither committed nor ' +
         'stopped. Recover to stop it, restore the prelaunch snapshot and restart the previous ' +
         'build; what it changed is discarded.'

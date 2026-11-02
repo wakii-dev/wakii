@@ -61,13 +61,13 @@ describe('terminal host boot check on a slice this host cannot run', () => {
   // No Mac runs a riscv64 binary, so this is the same path as an x64 slice without Rosetta.
   it('fails a release or CI build', async () => {
     await expect(
-      verifyPackagedMacTerminalHostBoots('/Orca.app', { arch: 'riscv64', required: true })
+      verifyPackagedMacTerminalHostBoots('/Wakii.app', { arch: 'riscv64', required: true })
     ).rejects.toThrow(/riscv64 cannot run on this/)
   })
 
   it('lets a local build skip it', async () => {
     await expect(
-      verifyPackagedMacTerminalHostBoots('/Orca.app', { arch: 'riscv64', required: false })
+      verifyPackagedMacTerminalHostBoots('/Wakii.app', { arch: 'riscv64', required: false })
     ).resolves.toBeUndefined()
   })
 })

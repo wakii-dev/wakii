@@ -157,7 +157,7 @@ export async function checkPluginEditorEntry(
         issue('editor_missing_file', `${path} does not exist in the plugin`, at)
       } else if (message.includes('artifact limit')) {
         const mib = cap / 1024 / 1024
-        issue('editor_too_large', `${path} is over the ${mib} MiB Orca loads for this file`, at)
+        issue('editor_too_large', `${path} is over the ${mib} MiB Wakii loads for this file`, at)
       } else {
         issue('editor_import', `${path} ${message}`, at)
       }

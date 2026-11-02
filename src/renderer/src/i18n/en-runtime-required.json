@@ -40,7 +40,7 @@
       "scanTimedOut": "Session scan timed out after {{seconds}}s — the machine may be busy. Refresh to try again.",
       "scanTimedOutOnSshHost": "Session scan timed out after {{seconds}}s on this SSH host. Refresh to try again.",
       "scannerBusy": "Too many session scans in flight. Wait a moment, then refresh.",
-      "scannerMissing": "The session scanner is missing from this Orca install. Reinstalling Orca restores it.",
+      "scannerMissing": "The session scanner is missing from this Wakii install. Reinstalling Wakii restores it.",
       "scannerPaused": "Session scanning paused after repeated failures. Refresh to try again.",
       "scannerStopped": "The session scanner stopped unexpectedly. Refresh to try again.",
       "scopePathsTruncated": "Only the first {{limit}} project paths were scanned.",
@@ -49,9 +49,9 @@
       "wslDistroNotRunning": "WSL transcript files are unavailable because WSL distro '{{distro}}' is not running. Open a terminal in it to start it.",
       "wslDistroUnverifiable": "WSL transcript files are unavailable because WSL didn't answer whether '{{distro}}' is running. Try again shortly.",
       "wslSessionsFromLastScan": "WSL could not be checked; its sessions are from the last scan.",
-      "wslTranscriptFsCapacity": "WSL transcript discovery is temporarily unavailable because too many filesystem requests are already waiting. Try again shortly or restart Orca if the issue continues.",
-      "wslTranscriptFsProcessFailed": "WSL transcript files are temporarily unavailable because the filesystem helper process failed ({{detail}}). Try again shortly or restart Orca if the issue continues.",
-      "wslTranscriptFsSlow": "WSL transcript files are temporarily unavailable because filesystem access is taking too long. Try again shortly or restart Orca if the issue continues."
+      "wslTranscriptFsCapacity": "WSL transcript discovery is temporarily unavailable because too many filesystem requests are already waiting. Try again shortly or restart Wakii if the issue continues.",
+      "wslTranscriptFsProcessFailed": "WSL transcript files are temporarily unavailable because the filesystem helper process failed ({{detail}}). Try again shortly or restart Wakii if the issue continues.",
+      "wslTranscriptFsSlow": "WSL transcript files are temporarily unavailable because filesystem access is taking too long. Try again shortly or restart Wakii if the issue continues."
     }
   },
   "auto": {
@@ -461,7 +461,7 @@
         },
         "editor": {
           "save": {
-            "bytesUpdateRequired": "Saving binary files here requires a newer Orca server. Update the Orca server and try again.",
+            "bytesUpdateRequired": "Saving binary files here requires a newer Wakii server. Update the Wakii server and try again.",
             "notUtf8": {
               "refused": "This file isn't UTF-8 text, so it wasn't saved."
             },
@@ -838,7 +838,7 @@
                   "title": "{{provider}} authentication failed"
                 },
                 "auth_required": {
-                  "body": "{{provider}} must be connected in this environment before Orca can create a {{reviewLabel}}.",
+                  "body": "{{provider}} must be connected in this environment before Wakii can create a {{reviewLabel}}.",
                   "title": "Connect {{provider}}"
                 },
                 "base_missing": {
@@ -846,7 +846,7 @@
                   "title": "Base branch not on remote"
                 },
                 "cli": {
-                  "body": "Orca could not run {{provider}} CLI in this environment. Set it up here, then retry.",
+                  "body": "Wakii could not run {{provider}} CLI in this environment. Set it up here, then retry.",
                   "title": "{{provider}} CLI unavailable"
                 },
                 "default_branch": {
@@ -862,7 +862,7 @@
                   "title": "Commit changes first"
                 },
                 "fork": {
-                  "body": "Orca cannot create a {{reviewLabel}} from this fork head here.",
+                  "body": "Wakii cannot create a {{reviewLabel}} from this fork head here.",
                   "title": "Fork head unsupported"
                 },
                 "needs_sync": {
@@ -883,7 +883,7 @@
                 },
                 "skipped": {
                   "archived": {
-                    "body": "This repository is archived, so Orca is not refreshing {{reviewLabel}} status.",
+                    "body": "This repository is archived, so Wakii is not refreshing {{reviewLabel}} status.",
                     "title": "Repository archived"
                   },
                   "bare": {
@@ -891,20 +891,20 @@
                     "title": "Bare repository"
                   },
                   "disconnected": {
-                    "body": "This repository's execution host is disconnected, so Orca cannot refresh {{reviewLabel}} status.",
+                    "body": "This repository's execution host is disconnected, so Wakii cannot refresh {{reviewLabel}} status.",
                     "title": "Host disconnected"
                   },
                   "not_git": {
-                    "body": "Orca could not treat this folder as a Git repository for {{reviewLabel}} status.",
+                    "body": "Wakii could not treat this folder as a Git repository for {{reviewLabel}} status.",
                     "title": "Not a Git repository"
                   },
                   "remote": {
-                    "body": "Orca could not refresh {{reviewLabel}} status for this remote context. Retry after the host is available.",
+                    "body": "Wakii could not refresh {{reviewLabel}} status for this remote context. Retry after the host is available.",
                     "title": "Remote-only context"
                   }
                 },
                 "unsupported": {
-                  "body": "This repository provider does not support creating a {{reviewLabel}} from Orca.",
+                  "body": "This repository provider does not support creating a {{reviewLabel}} from Wakii.",
                   "title": "{{reviewLabelCap}} not supported here"
                 }
               },
@@ -1277,7 +1277,7 @@
           "import_theme_other": "Import {{value0}} Themes"
         },
         "agent-awake-copy": {
-          "modeDescriptionDefault": "Choose On, Agent, or Off. Agent mode stays awake while agents are working. Orca also asks this device to stay awake when the lid is closed, subject to its power policy.",
+          "modeDescriptionDefault": "Choose On, Agent, or Off. Agent mode stays awake while agents are working. Wakii also asks this device to stay awake when the lid is closed, subject to its power policy.",
           "modeDescriptionMac": "Choose On, Agent, or Off. Agent mode prevents idle sleep while agents work, so long runs finish with the lid open. Closing the lid still puts this Mac to sleep.",
           "modeDescriptionWindows": "Choose On, Agent, or Off. Agent mode stays awake while agents are working; lid-close behavior follows this device's power settings.",
           "modeTitle": "Keep computer awake",
@@ -1291,7 +1291,7 @@
         },
         "agent-status-hooks-copy": {
           "7707c15abb": "Agent status hooks",
-          "a68a642835": "Shows working, waiting, and done states in Orca. Turn off to remove Orca-managed hooks and stop reinstalling them."
+          "a68a642835": "Shows working, waiting, and done states in Wakii. Turn off to remove Wakii-managed hooks and stop reinstalling them."
         },
         "agents": {
           "search": {
@@ -1359,12 +1359,12 @@
           "permissionsRequired_other": "{{value0}} permissions required before agents can operate app windows."
         },
         "sshHostServer": {
-          "automationsLeftDisabled_one": "This host’s Orca server took over {{count}} automation but couldn’t turn it back on. Turn it on in Automations.",
-          "automationsLeftDisabled_other": "This host’s Orca server took over {{count}} automations but couldn’t turn them back on. Turn them on in Automations.",
-          "linkedProjects_one": "This host’s Orca server already had {{paths}}, so this desktop now uses the server’s copy. This desktop’s tabs and {{count}} automation there were not moved, and worktrees it created there show as external worktrees.",
-          "linkedProjects_other": "This host’s Orca server already had {{paths}}, so this desktop now uses the server’s copy. This desktop’s tabs and {{count}} automations there were not moved, and worktrees it created there show as external worktrees.",
-          "olderTerminals_one": "{{count}} terminal started by an older version of Orca is still running on this host, and it doesn’t stop on its own. Close it in that version of Orca or end it on the host, then reconnect.",
-          "olderTerminals_other": "{{count}} terminals started by an older version of Orca are still running on this host, and they don’t stop on their own. Close them in that version of Orca or end them on the host, then reconnect.",
+          "automationsLeftDisabled_one": "This host’s Wakii server took over {{count}} automation but couldn’t turn it back on. Turn it on in Automations.",
+          "automationsLeftDisabled_other": "This host’s Wakii server took over {{count}} automations but couldn’t turn them back on. Turn them on in Automations.",
+          "linkedProjects_one": "This host’s Wakii server already had {{paths}}, so this desktop now uses the server’s copy. This desktop’s tabs and {{count}} automation there were not moved, and worktrees it created there show as external worktrees.",
+          "linkedProjects_other": "This host’s Wakii server already had {{paths}}, so this desktop now uses the server’s copy. This desktop’s tabs and {{count}} automations there were not moved, and worktrees it created there show as external worktrees.",
+          "olderTerminals_one": "{{count}} terminal started by an older version of Wakii is still running on this host, and it doesn’t stop on its own. Close it in that version of Wakii or end it on the host, then reconnect.",
+          "olderTerminals_other": "{{count}} terminals started by an older version of Wakii are still running on this host, and they don’t stop on their own. Close them in that version of Wakii or end them on the host, then reconnect.",
           "terminalsElsewhere_one": "Runs the relay while {{count}} terminal another Wakii desktop or session opened on this host is running.",
           "terminalsElsewhere_other": "Runs the relay while {{count}} terminals another Wakii desktop or session opened on this host are running.",
           "terminalsLive_one": "Runs the relay until its {{count}} open terminal is closed, then moves to a managed server.",
@@ -2060,8 +2060,8 @@
           }
         },
         "BrowserLinkRoutingModifierSetting": {
-          "descriptionOrca": "Links open in your system browser. When enabled, {{chord}}+click opens one in Wakii's built-in browser instead.",
-          "titleOrca": "Hold Shift to open in Wakii"
+          "descriptionWakii": "Links open in your system browser. When enabled, {{chord}}+click opens one in Wakii's built-in browser instead.",
+          "titleWakii": "Hold Shift to open in Wakii"
         },
         "GeneralEditorSettingsSection": {
           "7fef986df3": "Sticky Scroll",
@@ -2074,13 +2074,13 @@
       },
       "sidebar": {
         "AddRemoteHostDialog": {
-          "sshImportSynced_one": "Added {{count}} host to Orca.",
-          "sshImportSynced_other": "Added {{count}} hosts to Orca.",
+          "sshImportSynced_one": "Added {{count}} host to Wakii.",
+          "sshImportSynced_other": "Added {{count}} hosts to Wakii.",
           "pairingCommand": "orca serve --pairing-address <host>",
           "pairingHelpPrefix": "Run",
           "sshConfigPickerBulkHint": "Bulk sync stays in Settings → SSH",
           "sshPersistenceDefault": "Remote terminals on this host stay alive until you end them or reset the relay.",
-          "sshConfigPickerInOrca": "In Wakii"
+          "sshConfigPickerInWakii": "In Wakii"
         },
         "AddRepoNestedImportStep": {
           "foundRepositories_one": "Found {{count}} repository in {{path}}.",
@@ -2092,18 +2092,18 @@
           "cf9d382ca1": "Import"
         },
         "DeleteWorktreeDialog": {
-          "removeBatchFolder_one": "Remove <target>{{count}} workspace</target> from Orca. Project folders on disk will not be deleted.",
-          "removeBatchFolder_other": "Remove <target>{{count}} workspaces</target> from Orca. Project folders on disk will not be deleted.",
+          "removeBatchFolder_one": "Remove <target>{{count}} workspace</target> from Wakii. Project folders on disk will not be deleted.",
+          "removeBatchFolder_other": "Remove <target>{{count}} workspaces</target> from Wakii. Project folders on disk will not be deleted.",
           "removeBatchGit_one": "Remove <target>{{count}} workspace</target> from git and delete its workspace folder.",
           "removeBatchGit_other": "Remove <target>{{count}} workspaces</target> from git and delete their workspace folders.",
-          "removeBatchMixed_one": "Remove <target>{{count}} workspace</target> from Orca. Git worktrees will also be removed from git and disk; folder workspaces will only remove the Orca workspace entry.",
-          "removeBatchMixed_other": "Remove <target>{{count}} workspaces</target> from Orca. Git worktrees will also be removed from git and disk; folder workspaces will only remove the Orca workspace entry.",
-          "removeWithChildrenFolder_one": "Remove <target/> and <descendants>{{count}} child workspace</descendants> from Orca. Project folders on disk will not be deleted.",
-          "removeWithChildrenFolder_other": "Remove <target/> and <descendants>{{count}} child workspaces</descendants> from Orca. Project folders on disk will not be deleted.",
+          "removeBatchMixed_one": "Remove <target>{{count}} workspace</target> from Wakii. Git worktrees will also be removed from git and disk; folder workspaces will only remove the Wakii workspace entry.",
+          "removeBatchMixed_other": "Remove <target>{{count}} workspaces</target> from Wakii. Git worktrees will also be removed from git and disk; folder workspaces will only remove the Wakii workspace entry.",
+          "removeWithChildrenFolder_one": "Remove <target/> and <descendants>{{count}} child workspace</descendants> from Wakii. Project folders on disk will not be deleted.",
+          "removeWithChildrenFolder_other": "Remove <target/> and <descendants>{{count}} child workspaces</descendants> from Wakii. Project folders on disk will not be deleted.",
           "removeWithChildrenGit_one": "Remove <target/> and <descendants>{{count}} child workspace</descendants> from git and delete their workspace folders.",
           "removeWithChildrenGit_other": "Remove <target/> and <descendants>{{count}} child workspaces</descendants> from git and delete their workspace folders.",
-          "removeWithChildrenMixed_one": "Remove <target/> and <descendants>{{count}} child workspace</descendants> from Orca. Git worktrees will also be removed from git and disk; folder workspaces will only remove the Orca workspace entry.",
-          "removeWithChildrenMixed_other": "Remove <target/> and <descendants>{{count}} child workspaces</descendants> from Orca. Git worktrees will also be removed from git and disk; folder workspaces will only remove the Orca workspace entry."
+          "removeWithChildrenMixed_one": "Remove <target/> and <descendants>{{count}} child workspace</descendants> from Wakii. Git worktrees will also be removed from git and disk; folder workspaces will only remove the Wakii workspace entry.",
+          "removeWithChildrenMixed_other": "Remove <target/> and <descendants>{{count}} child workspaces</descendants> from Wakii. Git worktrees will also be removed from git and disk; folder workspaces will only remove the Wakii workspace entry."
         },
         "DeleteWorktreeDirtyChangeHint": {
           "changeCount_one": "{{count}} uncommitted or untracked change",
@@ -2119,10 +2119,10 @@
           "moreChildren_other": "+{{count}} more"
         },
         "HostRemoveDialog": {
-          "alsoRemoveWorkspaces_one": "Also remove this workspace from Orca",
-          "alsoRemoveWorkspaces_other": "Also remove these {{count}} workspaces from Orca",
-          "hostKeepsWorkspaces_one": "Removes {{host}} and its credentials from this computer. Its {{count}} workspace stays in Orca — remote files are not touched.",
-          "hostKeepsWorkspaces_other": "Removes {{host}} and its credentials from this computer. Its {{count}} workspaces stay in Orca — remote files are not touched."
+          "alsoRemoveWorkspaces_one": "Also remove this workspace from Wakii",
+          "alsoRemoveWorkspaces_other": "Also remove these {{count}} workspaces from Wakii",
+          "hostKeepsWorkspaces_one": "Removes {{host}} and its credentials from this computer. Its {{count}} workspace stays in Wakii — remote files are not touched.",
+          "hostKeepsWorkspaces_other": "Removes {{host}} and its credentials from this computer. Its {{count}} workspaces stay in Wakii — remote files are not touched."
         },
         "HostSectionHeader": {
           "workspaceCount_one": "{{count}} workspace",
@@ -2233,8 +2233,8 @@
             "ref": {
               "suggestion": {
                 "toast": {
-                  "staleLocalBranch_one": "Your new worktree is current, but local {{branch}} is {{count}} commit behind, so AI diffs may compare to stale history. Let Orca keep it up to date automatically. Change this anytime in <settings>Settings › {{setting}}</settings>",
-                  "staleLocalBranch_other": "Your new worktree is current, but local {{branch}} is {{count}} commits behind, so AI diffs may compare to stale history. Let Orca keep it up to date automatically. Change this anytime in <settings>Settings › {{setting}}</settings>"
+                  "staleLocalBranch_one": "Your new worktree is current, but local {{branch}} is {{count}} commit behind, so AI diffs may compare to stale history. Let Wakii keep it up to date automatically. Change this anytime in <settings>Settings › {{setting}}</settings>",
+                  "staleLocalBranch_other": "Your new worktree is current, but local {{branch}} is {{count}} commits behind, so AI diffs may compare to stale history. Let Wakii keep it up to date automatically. Change this anytime in <settings>Settings › {{setting}}</settings>"
                 }
               }
             }
@@ -2248,8 +2248,8 @@
                 "0e0379f24a_other": "{{count}} branches kept",
                 "6310412304_one": "Review {{count}} Branch",
                 "6310412304_other": "Review {{count}} Branches",
-                "a3cdd9d9e6_one": "Git kept {{count}} local branch because it may contain unmerged commits. Kept branches do not retain workspace folders; their commits remain in the repository. Orca may continue freeing workspace disk space in the background.",
-                "a3cdd9d9e6_other": "Git kept {{count}} local branches because they may contain unmerged commits. Kept branches do not retain workspace folders; their commits remain in the repository. Orca may continue freeing workspace disk space in the background.",
+                "a3cdd9d9e6_one": "Git kept {{count}} local branch because it may contain unmerged commits. Kept branches do not retain workspace folders; their commits remain in the repository. Wakii may continue freeing workspace disk space in the background.",
+                "a3cdd9d9e6_other": "Git kept {{count}} local branches because they may contain unmerged commits. Kept branches do not retain workspace folders; their commits remain in the repository. Wakii may continue freeing workspace disk space in the background.",
                 "cea24c2b7d_one": "{{count}} workspace removed",
                 "cea24c2b7d_other": "{{count}} workspaces removed",
                 "d42f1f14e0_one": "Retry {{count}} Branch",
@@ -2273,7 +2273,7 @@
           "sparsePreviewMore_other": "{{preview}}, +{{count}} more"
         },
         "AddRepoHostSelector": {
-          "addRemoteHostTooltip": "Choose SSH for a machine you can log into, or remote server for an Wakii server.",
+          "addRemoteHostTooltip": "Choose SSH for a machine you can log into, or remote server for a Wakii server.",
           "local": "Local",
           "runtime": "Server",
           "ssh": "SSH"
@@ -2347,7 +2347,7 @@
         "WorktreeCardMeta": {
           "ae76907ca6": "Unlink {{value0}}",
           "eace1d2cf6": "neutral",
-          "openInOrcaBrowser": "Open in Wakii browser"
+          "openInWakiiBrowser": "Open in Wakii browser"
         },
         "WorktreeCardMetadataStatusBadges": {
           "29df45afa2": "MR"
@@ -2427,8 +2427,8 @@
           "nothing_other": "None of the {{count}} selected skills can be deleted from here."
         },
         "SkillFreshnessNudge": {
-          "title_one": "{{count}} installed Orca skill is out of date",
-          "title_other": "{{count}} installed Orca skills are out of date"
+          "title_one": "{{count}} installed Wakii skill is out of date",
+          "title_other": "{{count}} installed Wakii skills are out of date"
         },
         "SkillFreshnessUpdateDialog": {
           "current_one": "{{count}} skill is up to date",
@@ -2974,8 +2974,8 @@
       "terminal": {
         "pane": {
           "TerminalErrorToast": {
-            "hostTerminalCap": "The host is already running as many terminals as Orca allows. Close a terminal you no longer need, then try again.",
-            "ptyAllocationLimit": "Your system cannot allocate any more pty devices. Close some terminals you are not using, in Orca or another program, then try again.",
+            "hostTerminalCap": "The host is already running as many terminals as Wakii allows. Close a terminal you no longer need, then try again.",
+            "ptyAllocationLimit": "Your system cannot allocate any more pty devices. Close some terminals you are not using, in Wakii or another program, then try again.",
             "terminalProcessLimit": "Your system cannot start another terminal process. Close unused terminals or quit unused processes, then try again."
           },
           "terminal": {
@@ -3078,8 +3078,8 @@
         "setupHostExistingFolderTitle": "Set up {{value0}}",
         "setupKindFolder": "Folder",
         "setupKindGit": "Git repo",
-        "addRemoteOrcaServer": "Add Remote Wakii Server",
-        "addRemoteOrcaServerHint": "Pair another Wakii runtime"
+        "addRemoteWakiiServer": "Add Remote Wakii Server",
+        "addRemoteWakiiServerHint": "Pair another Wakii runtime"
       },
       "StarNagCard": {
         "68a41bc3aa": "Could not star with",
@@ -3498,8 +3498,8 @@
         "dropPartiallyAttached_other": "{{failureCount}} of {{count}} items could not be attached."
       },
       "useGlobalFileDrop": {
-        "nativeDropTempCopyFailed_one": "Orca couldn't copy {{count}} dropped file.",
-        "nativeDropTempCopyFailed_other": "Orca couldn't copy {{count}} dropped files."
+        "nativeDropTempCopyFailed_one": "Wakii couldn't copy {{count}} dropped file.",
+        "nativeDropTempCopyFailed_other": "Wakii couldn't copy {{count}} dropped files."
       },
       "ipc": {
         "events": {
@@ -3719,7 +3719,7 @@
         "tooLarge": "Extra arguments must be 4 KB or less.",
         "valueNotAllowed": "\"{{option}} {{value}}\" isn't allowed. {{agent}} extra arguments accept only \"{{option}} {{prefix}}<level>\"."
       },
-      "hostUpdateRequired": "Update Orca on this host to use extra arguments."
+      "hostUpdateRequired": "Update Wakii on this host to use extra arguments."
     },
     "runFailures": {
       "agentNeverStarted": "Automation agent never started after the prompt was submitted.",
@@ -3727,25 +3727,25 @@
       "automationChanged": "The automation changed before this run could launch.",
       "destinationChanged": "The automation destination changed before this run could launch.",
       "hooksReviewBlocked": "The agent is waiting for someone to review new or changed hooks (\"Hooks need review\"). Open this run and trust them, or remove them. Scheduled runs keep going and succeed once nothing needs review.",
-      "legacyTwinHosts": "This automation was saved before Orca tracked which host it runs on, and its project is on more than one host. Open the automation and pick the host it should run on.",
-      "missedGraceWindow": "This run was past its missed-run grace window when Orca next checked.",
-      "noDispatchHost": "No Orca window was available to launch the automation.",
+      "legacyTwinHosts": "This automation was saved before Wakii tracked which host it runs on, and its project is on more than one host. Open the automation and pick the host it should run on.",
+      "missedGraceWindow": "This run was past its missed-run grace window when Wakii next checked.",
+      "noDispatchHost": "No Wakii window was available to launch the automation.",
       "noRunnableHost": "This automation has no host to run on.",
       "projectPathChanged": "Project path for the selected automation host has changed.",
       "projectSetupMissing": "Project is not set up on the selected automation host anymore.",
-      "remoteSchedulingUnavailable": "Remote-server automation scheduling is not available from this Orca client yet. Run this automation on the remote server or update Orca when durable remote scheduling is available.",
+      "remoteSchedulingUnavailable": "Remote-server automation scheduling is not available from this Wakii client yet. Run this automation on the remote server or update Wakii when durable remote scheduling is available.",
       "repoDetached": "Repository is no longer attached to the selected automation host.",
       "repoUnavailable": "Repository for the selected automation host is no longer available.",
       "targetMissing": "The automation host is no longer registered, so this automation has nowhere to run.",
       "targetReplaced": "The automation host was removed and re-registered, so this automation must be re-adopted before it can run.",
       "targetSetupMismatch": "Automation run target no longer matches the selected project host setup.",
       "targetUnavailable": "Automation run target is no longer available.",
-      "unevaluableSchedule": "Orca could not evaluate this automation and skipped the occurrence.",
-      "watchTimedOut": "Orca stopped watching this run after 6h without a completion signal.",
-      "workspaceHostAmbiguous": "The automation workspace spans more than one host, so Orca cannot tell which one to run it on.",
+      "unevaluableSchedule": "Wakii could not evaluate this automation and skipped the occurrence.",
+      "watchTimedOut": "Wakii stopped watching this run after 6h without a completion signal.",
+      "workspaceHostAmbiguous": "The automation workspace spans more than one host, so Wakii cannot tell which one to run it on.",
       "wslDistroStopped": "The WSL distro {{distro}} is stopped, so this scheduled run did not start it. Start the distro or use Run now; later runs go ahead while it runs.",
-      "wslMoveInProgress": "This automation's project is moving to its WSL host, so Orca skipped this run. Runs resume when the move finishes.",
-      "wslMoveOwnedByHost": "This automation's project now runs on its WSL host, which runs this automation there. Orca no longer runs this local copy."
+      "wslMoveInProgress": "This automation's project is moving to its WSL host, so Wakii skipped this run. Runs resume when the move finishes.",
+      "wslMoveOwnedByHost": "This automation's project now runs on its WSL host, which runs this automation there. Wakii no longer runs this local copy."
     }
   },
   "browser": {
@@ -3773,7 +3773,7 @@
         "notAuthorized": "Not authorized",
         "profileNotFound": "Session profile not found.",
         "readFailed": "Could not read {{browser}} cookies.",
-        "safariFullDiskAccess": "macOS denied access to Safari cookies. Grant Full Disk Access to Orca in System Settings → Privacy & Security → Full Disk Access.",
+        "safariFullDiskAccess": "macOS denied access to Safari cookies. Grant Full Disk Access to Wakii in System Settings → Privacy & Security → Full Disk Access.",
         "serverRepaired": "This server was re-paired during the import. Try again."
       },
       "notice": {
@@ -3998,7 +3998,7 @@
       },
       "failureWords": {
         "accountSwitchInProgress": "{{agent}}'s setup is changing on this host. Try again after it finishes.",
-        "agentCommandNotRunnable": "{{agent}}'s Command in Settings → Agents must start with a program Orca can find. Variables, pipes and other shell syntax aren't supported; use the Environment setting for variables. Change it or reset it.",
+        "agentCommandNotRunnable": "{{agent}}'s Command in Settings → Agents must start with a program Wakii can find. Variables, pipes and other shell syntax aren't supported; use the Environment setting for variables. Change it or reset it.",
         "agentCommandNotSignedIn": "Sign in to {{agent}} with `{{loginCommand}}` on the computer running this chat.",
         "agentNotSignedIn": "Sign in to {{agent}}.",
         "answerUnconfirmed": "Your answer was recorded but the agent did not confirm it.",
@@ -4055,13 +4055,13 @@
         "fullAccessAsRoot": "{{agent}} won't use Full access while it runs as root. Choose another permission for {{agent}} in Settings → Agents for the computer running this chat, then start a new chat.",
         "historyInOtherAccount": "This chat's history is in another Claude account. Switch back to that account to continue it.",
         "historyTooLarge": "This conversation's history is too large to restore here.",
-        "hostFault": "Orca ran into a problem, so this didn't go through.",
-        "hostFaultTryAgain": "Orca ran into a problem, so this didn't go through. Try again.",
-        "hostRestarted": "Orca restarted before this message was sent.",
-        "hostStopped": "{{agent}} never finished starting, so Orca stopped it.",
+        "hostFault": "Wakii ran into a problem, so this didn't go through.",
+        "hostFaultTryAgain": "Wakii ran into a problem, so this didn't go through. Try again.",
+        "hostRestarted": "Wakii restarted before this message was sent.",
+        "hostStopped": "{{agent}} never finished starting, so Wakii stopped it.",
         "interactiveAgentNotSignedIn": "Sign in to {{agent}} by running `{{loginCommand}}` and using `{{slashCommand}}` on the computer running this chat.",
         "launchFolderMissing": "The folder this chat ran in no longer exists. Restore it to continue this chat.",
-        "launchPreparationFailed": "Orca couldn't prepare {{agent}} to start on the computer running this chat.",
+        "launchPreparationFailed": "Wakii couldn't prepare {{agent}} to start on the computer running this chat.",
         "managedAccountEnvOverride": "This Claude launch sets its own Anthropic sign-in variables. Remove them to use a managed Claude account.",
         "managedAccountUnsupported": "While a Claude account is added in WSL, Claude chats need a Windows Claude account.",
         "modelUnavailable": "{{agent}} couldn't use {{detail}}. Pick another model and send again.",
@@ -4085,7 +4085,7 @@
         "queueFull": "Too many messages were waiting for the agent, so this one was not sent.",
         "runCommandAgain": "Run /{{command}} again.",
         "runCommandWhenDone": "Run /{{command}} when it's done.",
-        "runtimeNotInstalled": "{{agent}} isn't installed on the computer running this chat. Install it from the chat in a current version of Orca.",
+        "runtimeNotInstalled": "{{agent}} isn't installed on the computer running this chat. Install it from the chat in a current version of Wakii.",
         "sendAgainToTryOnceMore": "Send your message again to try once more.",
         "sendToTryAgain": "Send your message to try again.",
         "sessionNotRestored": "{{agent}} couldn't reopen its earlier session, so this chat continues in a new one. {{agent}} doesn't remember the earlier messages.",
@@ -4106,7 +4106,7 @@
         "usageLimitWindowSession": "session",
         "usageLimitWindowWeekly": "weekly",
         "usageLimitWindowWeeklyModel": "weekly model",
-        "writeFailed": "Orca couldn't hand this message to the agent, so it was not sent.",
+        "writeFailed": "Wakii couldn't hand this message to the agent, so it was not sent.",
         "codexCliTooOld": "Codex {{installedVersion}} is too old for chats. Update to {{minimumVersion}} or newer."
       },
       "goalControl": {
@@ -4122,12 +4122,12 @@
         "continuedOutsideRewound": "Continued outside this chat. Earlier replies above are no longer in this conversation's history.",
         "historyItemTooLarge": "This part of the chat was too large to show.",
         "historyRepaired": "Part of this chat's history couldn't be loaded.",
-        "orcaStopCanContinue": "You can continue in this conversation.",
-        "orcaStopCrash": "Orca on {{machine}} stopped unexpectedly while this response was in progress.",
-        "orcaStopQuit": "Orca on {{machine}} was closed while this response was in progress.",
-        "orcaStopRemote": "Orca on {{machine}} stopped while this response was in progress.",
-        "orcaStopUnnamedServer": "the remote server",
-        "orcaStopUpdate": "Orca on {{machine}} restarted for an update while this response was in progress.",
+        "wakiiStopCanContinue": "You can continue in this conversation.",
+        "wakiiStopCrash": "Wakii on {{machine}} stopped unexpectedly while this response was in progress.",
+        "wakiiStopQuit": "Wakii on {{machine}} was closed while this response was in progress.",
+        "wakiiStopRemote": "Wakii on {{machine}} stopped while this response was in progress.",
+        "wakiiStopUnnamedServer": "the remote server",
+        "wakiiStopUpdate": "Wakii on {{machine}} restarted for an update while this response was in progress.",
         "plan": "Plan",
         "stoppedBeforeStart": "Stopped manually"
       },
@@ -4312,10 +4312,10 @@
         "attachmentExpired": "This attachment expired.",
         "backgroundTasksRunning": "Background tasks are still running.",
         "cancelNotSaved": "Couldn't cancel this question or approval.",
-        "cannotRunHere": "Orca can't run this agent in a chat here.",
-        "capacity": "Orca on the computer running this chat has hit a request limit. Update Orca there, then try again.",
-        "chatNotFound": "Orca can't find this chat.",
-        "chatSavedByNewerOrca": "This chat was saved by a newer Orca.",
+        "cannotRunHere": "Wakii can't run this agent in a chat here.",
+        "capacity": "Wakii on the computer running this chat has hit a request limit. Update Wakii there, then try again.",
+        "chatNotFound": "Wakii can't find this chat.",
+        "chatSavedByNewerWakii": "This chat was saved by a newer Wakii.",
         "clearAfterAnswer": "Answer the agent's question or approval, then run /clear.",
         "clearAfterRetry": "Retry your earlier message, then run /clear.",
         "clearAfterSending": "Your earlier message is still being sent. Run /clear once it has gone.",
@@ -4327,10 +4327,10 @@
         "continuationSuperseded": "This chat has moved on. Check the latest messages before continuing.",
         "conversationCleared": "This conversation has been cleared.",
         "goalsUnsupported": "This agent doesn't support goals.",
-        "historyUnavailable": "Orca couldn't open this chat's history right now.",
-        "historyUnreadable": "Orca couldn't read this chat's saved history.",
+        "historyUnavailable": "Wakii couldn't open this chat's history right now.",
+        "historyUnreadable": "Wakii couldn't read this chat's saved history.",
         "historyUnusable": "Unable to load this chat.",
-        "hostReconciling": "Orca is still checking on this chat after restarting.",
+        "hostReconciling": "Wakii is still checking on this chat after restarting.",
         "messageNotSaved": "Couldn't save your message.",
         "messageTooLarge": "It is over the 256 KB limit for one message.",
         "messagesUnsettled": "A message you sent earlier isn't confirmed yet.",
@@ -4347,7 +4347,7 @@
         "notDoneStopTasks": "The background tasks weren't stopped.",
         "openCurrentConversation": "Open the current conversation to continue.",
         "optionRejected": "The agent didn't accept this setting.",
-        "outcomeUnknown": "Orca couldn't confirm what happened. Check the chat.",
+        "outcomeUnknown": "Wakii couldn't confirm what happened. Check the chat.",
         "ownerUnproven": "The previous agent in this chat may still be running.",
         "pendingWork": "Wait for pending work and messages to finish before using this command.",
         "promptPending": "The agent is waiting for an answer to a question or approval.",
@@ -4355,14 +4355,14 @@
         "queueTooLarge": "Too much text is waiting in the queue.",
         "quitTerminalAgent": "Quit that agent to continue the chat here.",
         "reattachFile": "Remove it and attach it again.",
-        "recordFailed": "Orca couldn't save this to the chat's history.",
-        "recordUnreadable": "Orca couldn't read this chat's saved state.",
+        "recordFailed": "Wakii couldn't save this to the chat's history.",
+        "recordUnreadable": "Wakii couldn't read this chat's saved state.",
         "reopenChat": "Reopen the chat to check again.",
         "restartFailed": "The agent couldn't restart.",
         "runClearWhenDone": "Run /clear when it's done.",
         "runCompactWhenDone": "Run /compact when it's done.",
-        "savedByNewerOrca": "Chats were saved by a newer Orca.",
-        "sendOutcomeLost": "Orca couldn't confirm your message reached the agent. Check the chat, then send it again if needed.",
+        "savedByNewerWakii": "Chats were saved by a newer Wakii.",
+        "sendOutcomeLost": "Wakii couldn't confirm your message reached the agent. Check the chat, then send it again if needed.",
         "settleEarlierMessage": "Wait for your earlier message to go through, or retry it.",
         "shortenMessage": "Shorten or split it, then send it again.",
         "shrinkQueue": "Delete a queued message, or wait for one to go through, then try again.",
@@ -4371,10 +4371,10 @@
         "tryAgain": "Try again.",
         "tryAgainComposerSend": "Send it again.",
         "turnActive": "The agent is still responding.",
-        "unreachable": "Orca couldn't reach the agent.",
-        "unsupported": "This needs a newer Orca on the computer running this chat. Update Orca there, then try again.",
-        "updateOrcaToKeepUsing": "Update Orca to keep using them.",
-        "updateOrcaToOpenChat": "Update Orca to open it.",
+        "unreachable": "Wakii couldn't reach the agent.",
+        "unsupported": "This needs a newer Wakii on the computer running this chat. Update Wakii there, then try again.",
+        "updateWakiiToKeepUsing": "Update Wakii to keep using them.",
+        "updateWakiiToOpenChat": "Update Wakii to open it.",
         "waitForBackgroundTasks": "Wait for the background tasks to finish.",
         "waitForCommand": "Wait for the /compact or /clear to finish.",
         "waitForStart": "Wait for the agent to finish starting.",
@@ -4391,8 +4391,8 @@
     "onboarding": {
       "integrations": {
         "capabilities": {
-          "browseIssues": "Browse GitHub issues and pull requests in the Tasks view without leaving Orca",
-          "managePullRequests": "Read, comment on, and merge pull requests without leaving Orca",
+          "browseIssues": "Browse GitHub issues and pull requests in the Tasks view without leaving Wakii",
+          "managePullRequests": "Read, comment on, and merge pull requests without leaving Wakii",
           "reviewStatus": "See issue state, review status, and CI checks on every worktree",
           "startWorkspaceFromIssue": "Start a workspace from any GitHub issue or pull request, prefilled with its title and context"
         }
@@ -4536,7 +4536,7 @@
       "recipeNotFound": "Recipe not found: {{recipeId}}",
       "recipeResultMissing": "Recipe produced no JSON result.",
       "recipeResultNotJsonObject": "Recipe stdout must be one JSON object.",
-      "recipeResultPairingCodeInvalid": "Recipe result pairingCode is not a valid Orca pairing code.",
+      "recipeResultPairingCodeInvalid": "Recipe result pairingCode is not a valid Wakii pairing code.",
       "recipeResultProjectRootNotAbsolute": "Recipe result projectRoot must be an absolute runtime path.",
       "remoteRepoUnsupported": "Ephemeral VM recipes run on the local desktop host in v1.",
       "repoNotFound": "Repo not found: {{repoId}}",
@@ -4558,7 +4558,7 @@
   },
   "menu": {
     "quitApp": "Quit {{appName}}",
-    "exploreOrca": "Explore Wakii"
+    "exploreWakii": "Explore Wakii"
   },
   "pet": {
     "defaultLabels": {
@@ -4596,46 +4596,46 @@
   },
   "projectViews": {
     "error": {
-      "tooLargeCount_one": "This view has {{count}} item — too large to render in Orca. Narrow the view's filter on GitHub.",
-      "tooLargeCount_other": "This view has {{count}} items — too large to render in Orca. Narrow the view's filter on GitHub."
+      "tooLargeCount_one": "This view has {{count}} item — too large to render in Wakii. Narrow the view's filter on GitHub.",
+      "tooLargeCount_other": "This view has {{count}} items — too large to render in Wakii. Narrow the view's filter on GitHub."
     }
   },
   "resourceManager": {
     "pty": {
-      "localOwnedCount_one": "{{count}} Orca PTY on this computer",
-      "localOwnedCount_other": "{{count}} Orca PTYs on this computer"
+      "localOwnedCount_one": "{{count}} Wakii PTY on this computer",
+      "localOwnedCount_other": "{{count}} Wakii PTYs on this computer"
     }
   },
   "runtime": {
     "remoteServerPairingErrors": {
-      "alreadyPairedAddAgain": "This server is already paired as \"{{name}}\". To update its connection, add it again under Settings > Remote Orca Servers.",
+      "alreadyPairedAddAgain": "This server is already paired as \"{{name}}\". To update its connection, add it again under Settings > Remote Wakii Servers.",
       "alreadyPairedCloudIdentity": "This server is already paired as \"{{name}}\". The cloud workspace's server reuses that server's identity, so it was not saved.",
       "alreadyPairedCloudWorkspace": "This server is already paired as \"{{name}}\". It belongs to a cloud workspace, which pairs it again when it resumes.",
-      "alreadyPairedManagedDeployment": "This server is already paired as \"{{name}}\". Orca runs this server on an SSH host for you; its pairing cannot be replaced or removed here. To decommission it, run `orca environment stop --environment <name> --yes` or use Settings > Orca on your SSH hosts; for a host that is gone, run `orca environment forget --environment <name> --yes`.",
-      "alreadyPairedSshAccessChangePending": "This server is already paired as \"{{name}}\". This server's SSH access change didn't finish. Retry or cancel it under Settings > Remote Orca Servers > SSH access for paired servers before replacing its pairing or removing it.",
-      "alreadyPairedSshAccessLinked": "This server is already paired as \"{{name}}\". Unlink this server's SSH access under Settings > Remote Orca Servers > SSH access for paired servers before replacing its pairing or removing it.",
-      "alreadyPairedUnreadable": "This server is already paired as \"{{name}}\", whose saved settings this version of Orca cannot read.",
-      "alreadyPairedWslHost": "This server is already paired as \"{{name}}\". Orca manages it as a WSL host, so its pairing cannot be replaced here.",
-      "hostSaveFailed": "Orca verified the host but could not save it. Check local settings storage and try again.",
-      "idNeedsNewerOrca": "A server with this id already exists in a format that needs a newer version of Orca.",
+      "alreadyPairedManagedDeployment": "This server is already paired as \"{{name}}\". Wakii runs this server on an SSH host for you; its pairing cannot be replaced or removed here. To decommission it, run `orca environment stop --environment <name> --yes` or use Settings > Wakii on your SSH hosts; for a host that is gone, run `orca environment forget --environment <name> --yes`.",
+      "alreadyPairedSshAccessChangePending": "This server is already paired as \"{{name}}\". This server's SSH access change didn't finish. Retry or cancel it under Settings > Remote Wakii Servers > SSH access for paired servers before replacing its pairing or removing it.",
+      "alreadyPairedSshAccessLinked": "This server is already paired as \"{{name}}\". Unlink this server's SSH access under Settings > Remote Wakii Servers > SSH access for paired servers before replacing its pairing or removing it.",
+      "alreadyPairedUnreadable": "This server is already paired as \"{{name}}\", whose saved settings this version of Wakii cannot read.",
+      "alreadyPairedWslHost": "This server is already paired as \"{{name}}\". Wakii manages it as a WSL host, so its pairing cannot be replaced here.",
+      "hostSaveFailed": "Wakii verified the host but could not save it. Check local settings storage and try again.",
+      "idNeedsNewerWakii": "A server with this id already exists in a format that needs a newer version of Wakii.",
       "invalidPairingCode": "Invalid pairing code. Expected an orca://pair?... URL or bare pairing payload.",
-      "managedDeployment": "Orca runs this server on an SSH host for you; its pairing cannot be replaced or removed here. To decommission it, run `orca environment stop --environment <name> --yes` or use Settings > Orca on your SSH hosts; for a host that is gone, run `orca environment forget --environment <name> --yes`.",
+      "managedDeployment": "Wakii runs this server on an SSH host for you; its pairing cannot be replaced or removed here. To decommission it, run `orca environment stop --environment <name> --yes` or use Settings > Wakii on your SSH hosts; for a host that is gone, run `orca environment forget --environment <name> --yes`.",
       "nameTaken": "A server named \"{{name}}\" already exists.",
       "repairCloudWorkspace": "This server belongs to a cloud workspace, which pairs it again when it resumes.",
-      "repairSaveFailed": "Orca verified the server but could not save the new pairing. Check local settings storage and try again.",
-      "selfPairingCode": "This pairing code is for this Orca itself. Generate the code on the other computer instead.",
-      "sshAccessChangePending": "This server's SSH access change didn't finish. Retry or cancel it under Settings > Remote Orca Servers > SSH access for paired servers before replacing its pairing or removing it.",
-      "sshAccessLinked": "Unlink this server's SSH access under Settings > Remote Orca Servers > SSH access for paired servers before replacing its pairing or removing it."
+      "repairSaveFailed": "Wakii verified the server but could not save the new pairing. Check local settings storage and try again.",
+      "selfPairingCode": "This pairing code is for this Wakii itself. Generate the code on the other computer instead.",
+      "sshAccessChangePending": "This server's SSH access change didn't finish. Retry or cancel it under Settings > Remote Wakii Servers > SSH access for paired servers before replacing its pairing or removing it.",
+      "sshAccessLinked": "Unlink this server's SSH access under Settings > Remote Wakii Servers > SSH access for paired servers before replacing its pairing or removing it."
     }
   },
   "runtimeRpc": {
     "startupFailure": {
       "guidance": {
-        "addressInUse": "Another process may be holding the port. Restart Orca to try again.",
-        "invalidPath": "Orca's data folder may be missing, moved, or at a path that is too long. Restore it or use a shorter path, then restart Orca.",
-        "permissionDenied": "Orca couldn't write its runtime file. Check permissions on Orca's data folder, then restart.",
-        "storageUnavailable": "Your disk may be full or read-only. Free up space, then restart Orca.",
-        "unknown": "Restart Orca to try again."
+        "addressInUse": "Another process may be holding the port. Restart Wakii to try again.",
+        "invalidPath": "Wakii's data folder may be missing, moved, or at a path that is too long. Restore it or use a shorter path, then restart Wakii.",
+        "permissionDenied": "Wakii couldn't write its runtime file. Check permissions on Wakii's data folder, then restart.",
+        "storageUnavailable": "Your disk may be full or read-only. Free up space, then restart Wakii.",
+        "unknown": "Restart Wakii to try again."
       }
     }
   },
@@ -4803,16 +4803,16 @@
         "distroStopped": "{{distro}} stopped since the list was read. Choose Start and add to start it.",
         "distroUnverifiable": "WSL didn’t answer whether {{distro}} is running. Refresh the list, or add it from the dialog, which starts it if needed.",
         "notRegistered": "{{distro}} is not an installed WSL distro. Run {{command}} in a Windows terminal to see the installed ones, or reinstall it and try again.",
-        "sshManaged": "{{distro}} already runs the Orca server for “{{server}}”, which this computer reaches over SSH. Remove that server first; moving it to a WSL host isn’t supported yet.",
-        "wsl1": "{{distro}} runs WSL 1, which Orca no longer supports. Convert it to WSL 2 in a Windows terminal with: {{command}}"
+        "sshManaged": "{{distro}} already runs the Wakii server for “{{server}}”, which this computer reaches over SSH. Remove that server first; moving it to a WSL host isn’t supported yet.",
+        "wsl1": "{{distro}} runs WSL 1, which Wakii no longer supports. Convert it to WSL 2 in a Windows terminal with: {{command}}"
       },
       "statusDetails": {
-        "guestUnanswered": "The distro is running but didn’t answer Orca’s check.",
-        "orcadUnanswered": "Orca’s server in the distro didn’t answer.",
-        "peerCheckFailed": "Orca couldn’t ask the WSL host whether another Orca on this computer still uses it: {{detail}}",
-        "removalUnrecorded": "Orca couldn’t record what this Remove left running: {{detail}}",
-        "restartGaveUp_one": "Could not restart the Orca server in {{distro}} after {{count}} attempt",
-        "restartGaveUp_other": "Could not restart the Orca server in {{distro}} after {{count}} attempts",
+        "guestUnanswered": "The distro is running but didn’t answer Wakii’s check.",
+        "orcadUnanswered": "Wakii’s server in the distro didn’t answer.",
+        "peerCheckFailed": "Wakii couldn’t ask the WSL host whether another Wakii on this computer still uses it: {{detail}}",
+        "removalUnrecorded": "Wakii couldn’t record what this Remove left running: {{detail}}",
+        "restartGaveUp_one": "Could not restart the Wakii server in {{distro}} after {{count}} attempt",
+        "restartGaveUp_other": "Could not restart the Wakii server in {{distro}} after {{count}} attempts",
         "runningListUnavailable": "Windows didn’t report whether the distro is running.",
         "serviceUnconfirmed": "The WSL service did not confirm whether the distro runs."
       }
@@ -4826,12 +4826,12 @@
         "stackExistingReviewOtherBase": "An open pull request already exists for this branch but does not target the selected parent branch.",
         "stackGithubComOnly": "GitHub stacked pull requests are available only on GitHub.com.",
         "stackGithubOnly": "Stacked pull request creation is available only for GitHub repositories.",
-        "stackHeadAmbiguous": "Orca found multiple open pull requests for the current branch {{head}}.",
-        "stackParentAmbiguous": "Orca found multiple open pull requests for the parent branch {{base}}.",
+        "stackHeadAmbiguous": "Wakii found multiple open pull requests for the current branch {{head}}.",
+        "stackParentAmbiguous": "Wakii found multiple open pull requests for the parent branch {{base}}.",
         "stackParentClosed": "The selected parent belongs to a closed stack.",
         "stackParentMultipleStacks": "The selected parent pull request belongs to multiple stacks.",
         "stackParentNotTop": "Choose the top pull request in the stack as the base branch before adding another layer.",
-        "stackParentUnverified": "Orca could not verify the parent pull request. Retry in a moment.",
+        "stackParentUnverified": "Wakii could not verify the parent pull request. Retry in a moment.",
         "stackParentWithoutReview": "The parent branch {{base}} does not have an open pull request. Create that pull request first.",
         "stackRegistrationFailed": "The pull request was created, but GitHub could not add it to the stack. Retry to finish stack registration.",
         "stackRegistrationUnavailable": "The pull request was created, but GitHub stacks are not available for this repository.",
@@ -4908,7 +4908,7 @@
         "kimiSessionNotFound": "Kimi couldn't find the requested session. Use an existing session or start a new one.",
         "kimiSessionOccupied": "Kimi couldn't use this session because it is active in another client. Stop the session there or exit that client, then try again.",
         "kimiSessionOtherDirectory": "This Kimi session belongs to another directory. Resume it there or use a session created for this workspace.",
-        "kimiUnreadableOutput": "Kimi returned output Orca couldn't read. Try again.",
+        "kimiUnreadableOutput": "Kimi returned output Wakii couldn't read. Try again.",
         "noBranchChanges": "No branch changes to summarize.",
         "noModelForAgent": "No model is available for {{label}}.",
         "noStagedChanges": "No staged changes to summarize.",
@@ -4926,7 +4926,7 @@
         "sourceControlCustomCommandEmpty": "Custom command is empty. Add one in Settings -> Git -> Source Control AI.",
         "stagedChangesReadFailed": "Failed to read staged changes.",
         "timedOut": "Generation timed out after {{seconds}}s.",
-        "windowsBatchUnsafeArguments": "{{label}} runs through a Windows batch script that cannot take the multi-line prompt as an argument. Point Settings at the agent's executable, or use a custom command without {prompt} so Orca sends the prompt on stdin."
+        "windowsBatchUnsafeArguments": "{{label}} runs through a Windows batch script that cannot take the multi-line prompt as an argument. Point Settings at the agent's executable, or use a custom command without {prompt} so Wakii sends the prompt on stdin."
       }
     }
   },
@@ -4943,7 +4943,7 @@
   "tabHoverCard": {
     "namingFailure": {
       "errors": {
-        "agentNotRun": "Orca could not run the chat-name agent.",
+        "agentNotRun": "Wakii could not run the chat-name agent.",
         "antigravityFailed": "Antigravity could not name this chat. Try generating the name again.",
         "grokFailed": "Grok could not name this chat. Try generating the name again.",
         "noAgentAvailable": "No chat-name agent can run in this workspace.",
@@ -4988,31 +4988,31 @@
     "failure": {
       "channelUnsupportedPlatform": "{{channel}} builds are produced only for macOS and Windows.",
       "invalidReleaseTag": "\"{{tag}}\" is not a valid release tag.",
-      "linuxPackageExternallyManaged": "This copy of Orca is managed by your system package manager, so Orca cannot install updates itself. Update Orca through your distribution instead.",
-      "linuxPackageHashMismatch": "The downloaded package no longer matches the verified release, so Orca will not hand it to a package manager. Download the update again, or get it from the official release page.",
-      "linuxPackageInvalidPath": "The downloaded package is not at a usable path, so Orca cannot build a safe install command. Show the package and install it with your package manager.",
-      "linuxPackageManualInstall": "Quit Orca before running the system package install command.",
-      "linuxPackageMarkerUnusable": "Orca could not verify the installed Linux package format, so it will not install this update automatically. Download the update from the official release page and install it manually.",
-      "linuxPackageMetadataUnusable": "The downloaded package metadata could not be verified. Quit Orca before downloading and installing the update from the official release page.",
+      "linuxPackageExternallyManaged": "This copy of Wakii is managed by your system package manager, so Wakii cannot install updates itself. Update Wakii through your distribution instead.",
+      "linuxPackageHashMismatch": "The downloaded package no longer matches the verified release, so Wakii will not hand it to a package manager. Download the update again, or get it from the official release page.",
+      "linuxPackageInvalidPath": "The downloaded package is not at a usable path, so Wakii cannot build a safe install command. Show the package and install it with your package manager.",
+      "linuxPackageManualInstall": "Quit Wakii before running the system package install command.",
+      "linuxPackageMarkerUnusable": "Wakii could not verify the installed Linux package format, so it will not install this update automatically. Download the update from the official release page and install it manually.",
+      "linuxPackageMetadataUnusable": "The downloaded package metadata could not be verified. Quit Wakii before downloading and installing the update from the official release page.",
       "linuxPackageMissing": "The downloaded package is no longer in the update cache. Download the update again, or get it from the official release page.",
-      "linuxPackageNoPackageManager": "No supported package manager was found in the system directories, so Orca cannot build a safe install command. Show the package and install it with your package manager.",
-      "linuxPackageNoSudo": "No sudo command was found in the system directories, so Orca cannot build a safe install command. Show the package and install it with your package manager.",
+      "linuxPackageNoPackageManager": "No supported package manager was found in the system directories, so Wakii cannot build a safe install command. Show the package and install it with your package manager.",
+      "linuxPackageNoSudo": "No sudo command was found in the system directories, so Wakii cannot build a safe install command. Show the package and install it with your package manager.",
       "linuxPackageNotRegular": "The downloaded package is no longer a valid file in the update cache. Download the update again, or get it from the official release page.",
-      "linuxPackageReadFailed": "Orca could not read the downloaded package. Download the update again, or get it from the official release page.",
+      "linuxPackageReadFailed": "Wakii could not read the downloaded package. Download the update again, or get it from the official release page.",
       "rateLimitedInMinute": "GitHub rate limit reached. Try again in about a minute.",
-      "rateLimitedInMinuteSignedOut": "GitHub rate limit reached. Try again in about a minute, or run `gh auth login` so Orca can use your account's higher limit.",
-      "rateLimitedInMinutesSignedOut_one": "GitHub rate limit reached. Try again in about {{count}} minute, or run `gh auth login` so Orca can use your account's higher limit.",
-      "rateLimitedInMinutesSignedOut_other": "GitHub rate limit reached. Try again in about {{count}} minutes, or run `gh auth login` so Orca can use your account's higher limit.",
+      "rateLimitedInMinuteSignedOut": "GitHub rate limit reached. Try again in about a minute, or run `gh auth login` so Wakii can use your account's higher limit.",
+      "rateLimitedInMinutesSignedOut_one": "GitHub rate limit reached. Try again in about {{count}} minute, or run `gh auth login` so Wakii can use your account's higher limit.",
+      "rateLimitedInMinutesSignedOut_other": "GitHub rate limit reached. Try again in about {{count}} minutes, or run `gh auth login` so Wakii can use your account's higher limit.",
       "rateLimitedInMinutes_one": "GitHub rate limit reached. Try again in about {{count}} minute.",
       "rateLimitedInMinutes_other": "GitHub rate limit reached. Try again in about {{count}} minutes.",
       "rateLimitedSoon": "GitHub rate limit reached. Try again in a few minutes.",
-      "rateLimitedSoonSignedOut": "GitHub rate limit reached. Try again in a few minutes, or run `gh auth login` so Orca can use your account's higher limit.",
+      "rateLimitedSoonSignedOut": "GitHub rate limit reached. Try again in a few minutes, or run `gh auth login` so Wakii can use your account's higher limit.",
       "releaseListFailed": "Could not list {{channel}} builds (HTTP {{status}}).",
       "releaseListUnreadable": "Could not read the {{channel}} release list.",
       "releaseNotReady": "A newer release isn't available for this device yet. Check again later.",
       "releaseRepoNotFound": "No releases repository found at {{repo}}.",
       "unknownReleaseChannel": "Unknown release channel \"{{channel}}\".",
-      "unsignedDevChannel": "{{channel}} builds are unsigned, and this signed build only installs updates signed by Orca's publisher. Download the installer from the release page and run it once — updates work normally from there, including back to Stable.",
+      "unsignedDevChannel": "{{channel}} builds are unsigned, and this signed build only installs updates signed by Wakii's publisher. Download the installer from the release page and run it once — updates work normally from there, including back to Stable.",
       "updateServerUnreachable": "Couldn't reach the update server. Try again in a few minutes."
     }
   },
@@ -5066,6 +5066,6 @@
     "pathHelp": "One repository-relative directory per line. Spaces within a path are preserved."
   },
   "tray": {
-    "openOrca": "Open Wakii"
+    "openWakii": "Open Wakii"
   }
 }

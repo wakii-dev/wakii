@@ -31,7 +31,7 @@ type SshTargetListProps = {
 
 function groupTitle(group: SshTargetGroup): React.JSX.Element {
   if (group.id === 'manual') {
-    return <>{translate('auto.components.settings.SshTargetList.addedInOrca', 'Added in Orca')}</>
+    return <>{translate('auto.components.settings.SshTargetList.addedInWakii', 'Added in Orca')}</>
   }
   return <>{translate('auto.components.settings.SshTargetList.fromConfig', 'From ~/.ssh/config')}</>
 }

@@ -157,7 +157,7 @@ describe.skipIf(process.platform === 'win32')(
         refusal: { code: 'session_caller_not_live', message: `Agent session ${SESSION} has ended.` }
       })
       expect(await status(false)).toContain(
-        '\norcaSessionId: none (refused: session_caller_not_live)'
+        '\nwakiiSessionId: none (refused: session_caller_not_live)'
       )
     })
 

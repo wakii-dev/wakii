@@ -25,7 +25,7 @@ export function failLoadOnUnloadableJournal(sessionId: string, load: JournalLoad
     throw journalOpenRefusalError(
       new AgentSessionJournalError(
         'journal_read_only',
-        `journal of ${sessionId} holds a newer Orca's row at sequence ${load.newer.sequence}`
+        `journal of ${sessionId} holds a newer Wakii's row at sequence ${load.newer.sequence}`
       )
     )
   }

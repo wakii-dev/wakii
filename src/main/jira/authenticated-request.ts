@@ -12,7 +12,7 @@ import {
 } from '../../shared/fetch-response-body'
 
 // Electron's Chrome UA triggers Atlassian XSRF rejection on token-authenticated writes; no-check does not bypass it.
-const JIRA_API_USER_AGENT = 'Orca'
+const JIRA_API_USER_AGENT = 'Wakii'
 
 export type JiraClientForSite = {
   site: JiraSite

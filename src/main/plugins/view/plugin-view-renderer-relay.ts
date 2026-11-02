@@ -41,7 +41,7 @@ export function requestPluginViewFromRenderer(
     }
     const timer = setTimeout(
       () =>
-        finish({ error: new Error('Orca did not answer in time; is its window still loading?') }),
+        finish({ error: new Error('Wakii did not answer in time; is its window still loading?') }),
       timeoutMs
     )
     timer.unref?.()

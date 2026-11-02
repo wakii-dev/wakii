@@ -5,7 +5,7 @@ import {
 } from '../../../shared/linear/issue-view-resume-state'
 
 // Keep per-device layout local; older hosts’ strict ui.set schemas can discard all taskResumeState when this field is unknown.
-const STORAGE_KEY = 'orca.linear.issue-view.v1'
+const STORAGE_KEY = 'wakii.linear.issue-view.v1'
 
 export function loadLinearIssueView(): LinearIssueViewResumeState {
   try {

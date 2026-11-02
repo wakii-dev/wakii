@@ -147,7 +147,7 @@ export async function downloadWebStoreCrx(
   }
 }
 
-/** The store's listing icon as a data URL for Orca's prompt (the renderer CSP blocks remote images). */
+/** The store's listing icon as a data URL for Wakii's prompt (the renderer CSP blocks remote images). */
 export async function fetchWebStoreIconDataUrl(
   iconUrl: string,
   fetcher: Fetcher = fetchWithElectronManualRedirects

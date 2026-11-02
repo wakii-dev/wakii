@@ -67,16 +67,22 @@ const SENTENCES: Record<AgentSessionWriteNoticeSentence, () => string> = {
   historyUnavailable: () =>
     translate('components.native-chat.writeNotice.historyUnavailable', COPY.historyUnavailable),
   savedByNewerOrca: () =>
-    translate('components.native-chat.writeNotice.savedByNewerOrca', COPY.savedByNewerOrca),
+    translate('components.native-chat.writeNotice.savedByNewerWakii', COPY.savedByNewerOrca),
   updateOrcaToKeepUsing: () =>
     translate(
-      'components.native-chat.writeNotice.updateOrcaToKeepUsing',
+      'components.native-chat.writeNotice.updateWakiiToKeepUsing',
       COPY.updateOrcaToKeepUsing
     ),
   chatSavedByNewerOrca: () =>
-    translate('components.native-chat.writeNotice.chatSavedByNewerOrca', COPY.chatSavedByNewerOrca),
+    translate(
+      'components.native-chat.writeNotice.chatSavedByNewerWakii',
+      COPY.chatSavedByNewerOrca
+    ),
   updateOrcaToOpenChat: () =>
-    translate('components.native-chat.writeNotice.updateOrcaToOpenChat', COPY.updateOrcaToOpenChat),
+    translate(
+      'components.native-chat.writeNotice.updateWakiiToOpenChat',
+      COPY.updateOrcaToOpenChat
+    ),
   unsupported: () => translate('components.native-chat.writeNotice.unsupported', COPY.unsupported),
   notAvailable: () =>
     translate('components.native-chat.writeNotice.notAvailable', COPY.notAvailable),

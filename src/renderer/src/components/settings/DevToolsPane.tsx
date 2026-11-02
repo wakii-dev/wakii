@@ -148,9 +148,9 @@ function OrcaCloudDevSubsection(): React.JSX.Element {
     <section className="space-y-3">
       <div className="flex items-start justify-between gap-3">
         <SettingsSubsectionHeader
-          title={translate('auto.components.settings.DevToolsPane.orcaCloud', 'Orca Cloud')}
+          title={translate('auto.components.settings.DevToolsPane.wakiiCloud', 'Orca Cloud')}
           description={translate(
-            'auto.components.settings.DevToolsPane.orcaCloudDescription',
+            'auto.components.settings.DevToolsPane.wakiiCloudDescription',
             'Dev-only preview of first-party cloud sign-in. Hidden in production; in dev it also appears in the sidebar account switcher once ORCA_CLOUD_API_URL and ORCA_CLOUD_CLIENT_ID are set.'
           )}
         />
@@ -162,18 +162,18 @@ function OrcaCloudDevSubsection(): React.JSX.Element {
       {configured ? (
         <div className="space-y-2">
           <p className="text-xs text-muted-foreground">
-            {translate('auto.components.settings.DevToolsPane.orcaCloudStatus', 'Status')}:{' '}
+            {translate('auto.components.settings.DevToolsPane.wakiiCloudStatus', 'Status')}:{' '}
             <span className="font-medium text-foreground">{authStatus?.state}</span>
           </p>
           <div className="flex flex-wrap gap-2">
             {connected ? (
               <Button type="button" variant="outline" size="sm" onClick={() => void signOut()}>
-                {translate('auto.components.settings.DevToolsPane.orcaCloudSignOut', 'Sign out')}
+                {translate('auto.components.settings.DevToolsPane.wakiiCloudSignOut', 'Sign out')}
               </Button>
             ) : (
               <OrcaSignInButton variant="outline" size="sm">
                 {translate(
-                  'auto.components.settings.DevToolsPane.orcaCloudConnect',
+                  'auto.components.settings.DevToolsPane.wakiiCloudConnect',
                   'Connect profile'
                 )}
               </OrcaSignInButton>
@@ -181,7 +181,7 @@ function OrcaCloudDevSubsection(): React.JSX.Element {
             {connected ? null : <OrcaSignInWaitNotice className="basis-full" />}
             <Button type="button" variant="ghost" size="sm" onClick={() => void refresh()}>
               {translate(
-                'auto.components.settings.DevToolsPane.orcaCloudRefresh',
+                'auto.components.settings.DevToolsPane.wakiiCloudRefresh',
                 'Refresh status'
               )}
             </Button>
@@ -191,7 +191,7 @@ function OrcaCloudDevSubsection(): React.JSX.Element {
         <p className="text-xs text-muted-foreground">
           {authStatus?.setupMessage ??
             translate(
-              'auto.components.settings.DevToolsPane.orcaCloudNotConfigured',
+              'auto.components.settings.DevToolsPane.wakiiCloudNotConfigured',
               'Set ORCA_CLOUD_API_URL and ORCA_CLOUD_CLIENT_ID to preview Orca Cloud sign-in in this dev build.'
             )}
         </p>

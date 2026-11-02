@@ -19,7 +19,7 @@ export function seedNewOrcaProfileTelemetryConsent(
     return
   }
   if (!isProfileStateSqliteAvailable()) {
-    throw new Error('Creating profile state requires the bundled Orca runtime.')
+    throw new Error('Creating profile state requires the bundled Wakii runtime.')
   }
   const admission = acquireProfileStateRuntimeAdmission(userDataPath)
   try {

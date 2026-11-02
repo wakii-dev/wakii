@@ -32,7 +32,7 @@ export async function markPluginSavedFileAsDownloaded(
       const seconds = Math.floor(deps.now() / 1000).toString(16)
       await deps.runProcess({
         program: '/usr/bin/xattr',
-        args: ['-w', 'com.apple.quarantine', `0083;${seconds};Orca;`, filePath],
+        args: ['-w', 'com.apple.quarantine', `0083;${seconds};Wakii;`, filePath],
         timeoutMs: 5_000,
         maxOutputBytes: 64 * 1024
       })

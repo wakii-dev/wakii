@@ -51,7 +51,7 @@ export async function syncDelegatedPhoneGrants(
   if (!result.success) {
     throw new RemoteRuntimeClientError(
       'invalid_runtime_response',
-      'Remote Orca runtime returned an invalid delegated device sync.'
+      'Remote Wakii runtime returned an invalid delegated device sync.'
     )
   }
   return {

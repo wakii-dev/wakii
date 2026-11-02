@@ -89,7 +89,7 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-describe('orca.document.session', () => {
+describe('wakii.document.session', () => {
   it('is feature-detectable and resolves only after hello and the first document', async () => {
     const { orca, fromHost } = mountShell('editor')
     expect('session' in orca.document!).toBe(true)

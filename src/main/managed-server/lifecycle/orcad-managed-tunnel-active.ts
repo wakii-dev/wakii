@@ -81,14 +81,14 @@ export function resolveManagedTunnelBinding(
   const targetStore = dependencies.getTargetStore()
   const connectionManager = dependencies.getConnectionManager()
   if (!targetStore || !connectionManager) {
-    throw new Error('SSH is unavailable on this client; this host’s Orca server is unverifiable.')
+    throw new Error('SSH is unavailable on this client; this host’s Wakii server is unverifiable.')
   }
   const target = targetStore.getTarget(deployment.sshTargetId)
   if (!target || target.generation !== deployment.sshTargetGeneration) {
-    throw new Error('The SSH registration for this host’s Orca server was removed or re-created.')
+    throw new Error('The SSH registration for this host’s Wakii server was removed or re-created.')
   }
   if (getManagedOrcadFenceEnvironmentId(target) !== environment.id) {
-    throw new Error('The SSH target is no longer owned by this host’s Orca server.')
+    throw new Error('The SSH target is no longer owned by this host’s Wakii server.')
   }
   return { deployment, targetStore, connectionManager, target }
 }
@@ -144,7 +144,7 @@ export function recordActiveOrcadTunnel(
 /** Superseded builds must not report success. */
 class OrcadTunnelSupersededError extends Error {
   constructor() {
-    super('Orca SSH tunnel setup was superseded.')
+    super('Wakii SSH tunnel setup was superseded.')
     this.name = 'OrcadTunnelSupersededError'
   }
 }

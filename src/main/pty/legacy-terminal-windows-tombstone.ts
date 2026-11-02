@@ -63,7 +63,7 @@ for %%P in ("%orca_clean_path:;=" "%") do (
 )
 :orca_candidates_walked
 if not defined orca_real (
-  echo Orca compatibility wrapper could not locate __ORCA_COMMAND__ on PATH. 1>&2
+  echo Wakii compatibility wrapper could not locate __ORCA_COMMAND__ on PATH. 1>&2
   exit /b 127
 )
 :run

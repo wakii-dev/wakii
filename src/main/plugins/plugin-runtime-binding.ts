@@ -42,7 +42,7 @@ export function pluginRuntimeDelegate(
   }
 }
 
-/** Binds the plugin host to main's runtime: its delegate, and the hooks Orca's own code runs. */
+/** Binds the plugin host to main's runtime: its delegate, and the hooks Wakii's own code runs. */
 export function bindPluginRuntime(
   service: PluginService,
   runtime: OrcaRuntimeService,

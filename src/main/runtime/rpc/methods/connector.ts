@@ -95,7 +95,7 @@ export const CONNECTOR_METHODS = [
         deliveryId
       )
   }),
-  // `orca connector reply`: the calling pane names its cloud conversation and turn; Orca Cloud posts it.
+  // `wakii connector reply`: the calling pane names its cloud conversation and turn; Orca Cloud posts it.
   defineMethod({
     name: 'connector.reply',
     permission: 'workspace',

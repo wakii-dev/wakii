@@ -5,7 +5,7 @@ import { ORCA_LAYOUT_OWNER_IS_MAIN } from '../../../shared/layout-owner-switch'
 import type { AppState } from '@/store/types'
 import type { HeldDrawnTabs } from '@/store/workspace-layout-frame-held-tabs'
 
-const STORAGE_KEY = 'orca.desktop-created-server-tabs.v1'
+const STORAGE_KEY = 'wakii.desktop-created-server-tabs.v1'
 
 type Entry = { environmentId: string; worktreeId: string; ids: Set<string> }
 

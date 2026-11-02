@@ -12,7 +12,7 @@ import { useAppStore } from '../store'
 import { translate } from '@/i18n/i18n'
 import { localizedKeybindingTitle } from '@/components/settings/keybinding-title-copy'
 
-const STORAGE_PREFIX = 'orca.terminalShortcutCapturedNotice.'
+const STORAGE_PREFIX = 'wakii.terminalShortcutCapturedNotice.'
 const NOTICE_DURATION_MS = 20_000
 
 function hasShownNotice(actionId: KeybindingActionId): boolean {

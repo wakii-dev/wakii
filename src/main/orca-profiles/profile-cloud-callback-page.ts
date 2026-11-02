@@ -14,7 +14,7 @@ export const ORCA_CLOUD_CALLBACK_SUCCESS_PAGE = `<!doctype html>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light dark">
-    <title>Signed in to Orca</title>
+    <title>Signed in to Wakii</title>
     <style>
       :root {
         --background: #fff;
@@ -81,7 +81,7 @@ export const ORCA_CLOUD_CALLBACK_SUCCESS_PAGE = `<!doctype html>
           <path d="m5 12 4 4L19 6"></path>
         </svg>
       </div>
-      <h1>Signed in to Orca</h1>
+      <h1>Signed in to Wakii</h1>
       <p>You can close this tab and return to the app.</p>
     </main>
   </body>

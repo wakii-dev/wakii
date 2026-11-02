@@ -64,7 +64,7 @@ export async function shootPluginChrome(
         })
       }
       if (!reply.panel) {
-        throw new Error(`Orca did not report where its ${region} is drawn.`)
+        throw new Error(`Wakii did not report where its ${region} is drawn.`)
       }
       const image = await capturePluginPanelPng(contents, reply.panel.rect)
       const logged = deps

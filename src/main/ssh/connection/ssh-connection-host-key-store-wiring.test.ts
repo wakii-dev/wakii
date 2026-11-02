@@ -87,7 +87,7 @@ beforeEach(() => {
   presentedHostKey = VALID_ED25519_HOST_KEY
   hostKeyAccepted = undefined
   profileDir = mkdtempSync(join(tmpdir(), 'orca-ssh-store-'))
-  initSshHostKeyStoreFile(join(profileDir, 'orca.json'))
+  initSshHostKeyStoreFile(join(profileDir, 'wakii.json'))
 })
 
 afterEach(() => {

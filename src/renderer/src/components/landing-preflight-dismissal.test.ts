@@ -117,7 +117,7 @@ describe('isPreflightIssueDismissed', () => {
   })
 
   it('treats a corrupt stored record as not dismissed', () => {
-    localStorage.setItem('orca.preflightBanner.dismissed.gh', '{ not json')
+    localStorage.setItem('wakii.preflightBanner.dismissed.gh', '{ not json')
     expect(isPreflightIssueDismissed('gh', [gitlabRepo('b')])).toBe(false)
   })
 })

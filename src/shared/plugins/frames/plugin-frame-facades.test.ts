@@ -44,7 +44,7 @@ function mountShell() {
   return { orca, requests, answer, push }
 }
 
-describe('window.orca.plugin', () => {
+describe('window.wakii.plugin', () => {
   it('asks the worker through plugin.request and resolves with its output', async () => {
     const { orca, requests, answer } = mountShell()
     const todos = orca.plugin.request('todos.list', { done: false }, { timeoutMs: 999_999 })

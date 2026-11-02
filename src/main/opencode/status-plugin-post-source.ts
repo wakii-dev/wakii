@@ -1,7 +1,7 @@
 export function getStatusPluginPostSource(hookPathname: string): string[] {
   return [
     'async function post(hookEventName, extraProperties) {',
-    '  // Refresh endpoint coordinates per post after Orca restarts; per-PTY identity stays in process.env.',
+    '  // Refresh endpoint coordinates per post after Wakii restarts; per-PTY identity stays in process.env.',
     '  const coords = resolveHookCoords();',
     '  const paneKey = process.env.ORCA_PANE_KEY;',
     '  if (!coords.port || !coords.token || !paneKey) return false;',
@@ -38,7 +38,7 @@ export function getStatusPluginPostSource(hookPathname: string): string[] {
     '    });',
     '    return response.ok;',
     '  } catch {',
-    '    // Orca/loopback failures must never fail the agent run.',
+    '    // Wakii/loopback failures must never fail the agent run.',
     '    return false;',
     '  } finally {',
     '    clearTimeout(timeout);',

@@ -70,7 +70,7 @@ type PtySpawnHostEnvArgs = {
   launchAgent: TuiAgent | undefined
   command: string | undefined
   resumeProviderSession: AgentProviderSessionMetadata | undefined
-  /** The lane's spawn env before Orca's host env. */
+  /** The lane's spawn env before Wakii's host env. */
   env: Record<string, string> | undefined
   cwd: string | undefined
   shellOverride: string | undefined

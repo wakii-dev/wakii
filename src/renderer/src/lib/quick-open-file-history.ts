@@ -5,7 +5,7 @@ import type { OpenFile } from '@/store/slices/editor/types/open-file'
 import { normalizeRuntimePathForComparison } from '../../../shared/cross-platform-path'
 import { resolveWorktreeOperationRoute } from './worktree-operation-route'
 
-const STORAGE_KEY = 'orca.quick-open-history.v1'
+const STORAGE_KEY = 'wakii.quick-open-history.v1'
 const EMPTY_HISTORY: readonly string[] = []
 const MAX_HISTORY_SCOPES = 64
 const MAX_HISTORY_FILES = 100

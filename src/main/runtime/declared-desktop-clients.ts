@@ -2,7 +2,7 @@ import type { OrcadPeerDesktopsResult } from '../../shared/orcad-peer-desktops-c
 import { sanitizeDeviceLabel } from '../../shared/device-key-proof'
 import type { DeviceEntry } from './device-entry'
 
-const UNNAMED_DESKTOP = 'another Orca'
+const UNNAMED_DESKTOP = 'another Wakii'
 // Lost contact isn't proof an Orca left: a closed control socket still counts while it reconnects.
 export const DECLARED_CLIENT_RECONNECT_GRACE_MS = 60_000
 

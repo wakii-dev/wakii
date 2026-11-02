@@ -1,6 +1,6 @@
 /** Observable state for components panels: reads during a render subscribe that render. */
 
-const ATOM = Symbol.for('orca.declarative.atom')
+const ATOM = Symbol.for('wakii.declarative.atom')
 
 /** Where a keyed atom's value survives: `memory` (this panel run), `plugin`, `workspace`, or
  *  `storage`: the plugin's own storage under the atom's key, shared with its worker. */

@@ -31,7 +31,7 @@ export type StoredWebRuntimeEnvironment = Omit<PublicKnownRuntimeEnvironment, 'e
   }[]
 }
 
-const ENVIRONMENT_STORAGE_KEY = 'orca.web.runtimeEnvironment.v1'
+const ENVIRONMENT_STORAGE_KEY = 'wakii.web.runtimeEnvironment.v1'
 
 // Why memory: a session-only pairing's code must not outlive the page (#17399).
 let sessionEnvironment: StoredWebRuntimeEnvironment | null = null

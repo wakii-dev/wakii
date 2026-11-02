@@ -30,7 +30,7 @@ export function machineKeyOf(input: string): string {
 export function namedMachineHome(host: RemoteHostPlatform, name: string): OrcadMachineHomeDecision {
   if (!MACHINE_NAME.test(name)) {
     throw new Error(
-      `${ORCA_MACHINE_NAME_ENV} is set to "${name.slice(0, 80)}", which Orca can't use. Use 1-64 ` +
+      `${ORCA_MACHINE_NAME_ENV} is set to "${name.slice(0, 80)}", which Wakii can't use. Use 1-64 ` +
         "letters, digits, '.', '_' or '-', starting with a letter or digit, then reconnect."
     )
   }

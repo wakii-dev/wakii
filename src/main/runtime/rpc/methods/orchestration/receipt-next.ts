@@ -3,11 +3,11 @@ import type { OrcaRuntimeService } from '../../../orca-runtime'
 import { projectWorkerListFleet } from './worker/worker-list-projection'
 
 // Only an empty check sees the whole mailbox, so only it says to stop.
-const AWAIT_WAKE = "Orca wakes you when workers report; end your turn when you're done."
+const AWAIT_WAKE = "Wakii wakes you when workers report; end your turn when you're done."
 const FINISH_MAILBOX = 'Finish the rest of your mail.'
 const MORE_MAIL = 'More mail is waiting: run check again.'
 const AWAIT_WORKER_REPORTS =
-  'Orca wakes you when a worker reports. Once every worker you need is started, end your turn. Do not poll.'
+  'Wakii wakes you when a worker reports. Once every worker you need is started, end your turn. Do not poll.'
 export const WORKER_DONE_RECORDED_NEXT = 'Recorded. End your turn.'
 
 const ReadyWorkerStart = z.looseObject({

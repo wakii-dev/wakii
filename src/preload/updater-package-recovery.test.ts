@@ -59,13 +59,13 @@ describe('native preload linux package recovery methods', () => {
     const api = await loadApi()
     invoke.mockResolvedValueOnce({
       command: "sudo apt install -- '/cache/orca.deb'",
-      packageFileName: 'orca.deb'
+      packageFileName: 'wakii.deb'
     })
     invoke.mockClear()
 
     await expect(api.updater.getLinuxPackageInstallInstructions()).resolves.toEqual({
       command: "sudo apt install -- '/cache/orca.deb'",
-      packageFileName: 'orca.deb'
+      packageFileName: 'wakii.deb'
     })
 
     expect(invoke.mock.calls).toEqual([['updater:getLinuxPackageInstallInstructions']])

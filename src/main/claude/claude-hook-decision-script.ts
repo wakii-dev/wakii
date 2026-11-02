@@ -1,7 +1,7 @@
 import { CLAUDE_PRE_TOOL_USE_DECISION } from '../agent-hooks/agent-tool-plugin-hooks'
 
 /**
- * Lets Claude Code's PreToolUse hook print Orca's answer (plugins' `agent.tool.before`) instead of
+ * Lets Claude Code's PreToolUse hook print Wakii's answer (plugins' `agent.tool.before`) instead of
  * a fixed `{}`. Every other event still prints `{}` before it posts, as permission hooks need. The
  * answer is printed only when it is a PreToolUse decision; a timeout, an error or no answer prints
  * `{}`, so the tool call proceeds as if Orca were not there.

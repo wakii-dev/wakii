@@ -28,7 +28,7 @@ import {
   hostQuickOpenHistoryScope
 } from './wsl-move-renderer-store-keys'
 
-const APPLIED_STORAGE_KEY = 'orca.wsl-move.renderer-rewrites.v1'
+const APPLIED_STORAGE_KEY = 'wakii.wsl-move.renderer-rewrites.v1'
 const MAX_APPLIED_MARKERS = 2_048
 
 // Loaded only when a move exists, so a profile without one never pays for these modules.

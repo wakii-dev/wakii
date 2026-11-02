@@ -122,7 +122,7 @@ describe('sweeping across worktrees', () => {
     const stale = selectStaleDevBundleDirs({
       bundles,
       currentDir: null,
-      processTable: `/usr/bin/foo ${live.dir}/Orca.app/Contents/MacOS/Electron`,
+      processTable: `/usr/bin/foo ${live.dir}/Wakii.app/Contents/MacOS/Electron`,
       nowMs: Date.now()
     })
     expect(stale).toEqual([bundles.find((bundle) => bundle.dir.endsWith('idle'))!.dir])

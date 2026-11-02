@@ -85,14 +85,16 @@ export function installedElectronCandidates(
       ...(environment.LOCALAPPDATA
         ? [joinPath(environment.LOCALAPPDATA, 'Programs', 'Wakii', 'Wakii.exe')]
         : []),
-      ...(environment.ProgramFiles ? [joinPath(environment.ProgramFiles, 'Wakii', 'Wakii.exe')] : [])
+      ...(environment.ProgramFiles
+        ? [joinPath(environment.ProgramFiles, 'Wakii', 'Wakii.exe')]
+        : [])
     ]
   }
   return [
     joinPath(homePath, '.local', 'bin', 'orca-ide'),
     '/usr/local/bin/orca-ide',
     '/usr/bin/orca-ide',
-    '/opt/Orca/orca-ide'
+    '/opt/Wakii/orca-ide'
   ]
 }
 

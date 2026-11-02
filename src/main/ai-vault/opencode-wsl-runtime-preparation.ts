@@ -101,7 +101,7 @@ async function prepare(distro: string): Promise<OpenCodeWslRuntime> {
     .map((directory) => join(directory, OPENCODE_SQLITE_READER_FILENAME))
     .find(existsSync)
   if (!reader) {
-    throw new Error('The bundled WSL SQLite reader is missing. Reinstall Orca to repair it.')
+    throw new Error('The bundled WSL SQLite reader is missing. Reinstall Wakii to repair it.')
   }
   const hasDatabase = await run({
     script: [

@@ -132,7 +132,7 @@ function failed(reply: PluginViewReply): PluginCliError | null {
         reason: reply.code,
         nextSteps:
           reply.code === PLUGIN_VIEW_NO_WORKSPACE_CODE
-            ? ['Open a workspace in Orca, then run this again.']
+            ? ['Open a workspace in Wakii, then run this again.']
             : []
       })
 }
@@ -141,7 +141,7 @@ export function createPluginViewDesktop(deps: PluginViewDesktopDeps): PluginView
   const requireContents = (): WebContents => {
     const contents = deps.rendererContents()
     if (!contents || contents.isDestroyed()) {
-      throw new Error('Orca has no open window to show the plugin in; open one, then try again.')
+      throw new Error('Wakii has no open window to show the plugin in; open one, then try again.')
     }
     return contents
   }
@@ -242,7 +242,7 @@ export function createPluginViewDesktop(deps: PluginViewDesktopDeps): PluginView
             }
             const drawn = reply.ok ? reply.panel : undefined
             if (!drawn) {
-              throw new Error('Orca did not report where the panel is drawn.')
+              throw new Error('Wakii did not report where the panel is drawn.')
             }
             const guest =
               drawn.ui === 'html'

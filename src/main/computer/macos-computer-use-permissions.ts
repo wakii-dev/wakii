@@ -143,7 +143,7 @@ async function openComputerUsePermissionsAsync(
 
   const helperAppPath = resolveMacOSComputerUseAppPath()
   if (!helperAppPath) {
-    throw new RuntimeClientError('accessibility_error', 'Orca Computer Use.app was not found')
+    throw new RuntimeClientError('accessibility_error', 'Wakii Computer Use.app was not found')
   }
   // Wait out a reset before reading status, so this Open never sees pre-reset grants.
   while (resetInProgress) {
@@ -158,7 +158,7 @@ async function openComputerUsePermissionsAsync(
     // An error rather than launchedHelper: false, which clients render as "setup complete".
     throw new RuntimeClientError(
       'accessibility_error',
-      'Computer Use setup was cancelled because permissions were reset or Orca is quitting'
+      'Computer Use setup was cancelled because permissions were reset or Wakii is quitting'
     )
   }
 
@@ -217,7 +217,7 @@ async function resetComputerUsePermissionsAsync(): Promise<ComputerUsePermission
 
   const helperAppPath = resolveMacOSComputerUseAppPath()
   if (!helperAppPath) {
-    throw new RuntimeClientError('accessibility_error', 'Orca Computer Use.app was not found')
+    throw new RuntimeClientError('accessibility_error', 'Wakii Computer Use.app was not found')
   }
 
   const unavailableReason = resolveComputerUseHelperUnavailableReason()
@@ -272,5 +272,5 @@ function nextPermissionStep(
   if (!missing) {
     return null
   }
-  return `Grant ${missing.id === 'accessibility' ? 'Accessibility' : 'Screen Recording'} to Orca Computer Use, then retry get-app-state.`
+  return `Grant ${missing.id === 'accessibility' ? 'Accessibility' : 'Screen Recording'} to Wakii Computer Use, then retry get-app-state.`
 }

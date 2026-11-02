@@ -20,7 +20,7 @@ export function setupFailed(
   error: unknown,
   empty: boolean
 ): Promise<HostServerOnConnectResult> {
-  console.warn('[ssh] Managed Orca server setup failed:', error)
+  console.warn('[ssh] Managed Wakii server setup failed:', error)
   reportHostServerSetupError(deps.report, target, trace, error)
   if (isSshSessionStartFailure(error)) {
     return sshSessionStartFailed(target, deps, empty, error)
@@ -54,7 +54,7 @@ export function deferred(
   result: { code: string; reason: string },
   empty: boolean
 ): Promise<HostServerOnConnectResult> {
-  console.warn(`[ssh] Managed Orca server setup deferred (${result.code}):`, result.reason)
+  console.warn(`[ssh] Managed Wakii server setup deferred (${result.code}):`, result.reason)
   const unavailable = classifyOrcadHostUnavailable({ code: result.code })
   return unfinished(target, deps, unavailable, empty, 'deferred', { detail: result.reason })
 }
@@ -72,7 +72,7 @@ async function unfinished(
     await (empty ? deps.abandonDeploy(target) : deps.abandonConversion(target))
   } catch (error) {
     // Retain fences when staging/registration leaves destination state unproven.
-    console.warn('[ssh] The managed Orca server setup keeps its fence:', error)
+    console.warn('[ssh] The managed Wakii server setup keeps its fence:', error)
   }
   // Re-read the journal: abort may have released the fence or discovered commit.
   const held = !empty && !unavailable && deps.hasUnfinishedConversion(target)

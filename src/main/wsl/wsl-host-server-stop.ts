@@ -69,14 +69,14 @@ export async function stopWslHostServer(steps: WslHostServerStopSteps): Promise<
   }
   if (peers.kind === 'unsupported') {
     console.warn(
-      '[wsl-hosts] This WSL host’s server predates the shared-host check; removing it ends its terminals for every Orca using it.'
+      '[wsl-hosts] This WSL host’s server predates the shared-host check; removing it ends its terminals for every Wakii using it.'
     )
   }
   let leftovers: WslHostTerminalLeftover[] = []
   try {
     leftovers = await steps.endTerminals()
   } catch (error) {
-    problems.push(`Orca couldn’t list the host’s terminals: ${errorMessage(error)}`)
+    problems.push(`Wakii couldn’t list the host’s terminals: ${errorMessage(error)}`)
   }
   // PTY close is not shell-exit proof; wait for zero-session census.
   let census = await steps.census()
@@ -105,10 +105,10 @@ export async function stopWslHostServer(steps: WslHostServerStopSteps): Promise<
   const result = await steps.decommission(census, servingRuntimeId)
   if (result.outcome === 'refused') {
     provenLive ||= result.verdict === 'live'
-    problems.push(`Orca’s server kept running: ${result.reason}`)
+    problems.push(`Wakii’s server kept running: ${result.reason}`)
   } else if (result.retirement !== 'retired') {
     provenLive ||= result.retirement === 'live'
-    problems.push('Orca’s server stopped, but its terminal daemon is still running.')
+    problems.push('Wakii’s server stopped, but its terminal daemon is still running.')
   }
   return problems.length === 0
     ? { stopped: true }
@@ -182,7 +182,7 @@ export function decommissionWslHostOrcad(
           verdict: 'unverifiable',
           code: 'orcad_wsl_host_serving_instance_unproven',
           reason:
-            'the orcad this computer was connected to is not the one the distro records as active, so Orca could not prove it stopped.'
+            'the orcad this computer was connected to is not the one the distro records as active, so Wakii could not prove it stopped.'
         }
       }
     }

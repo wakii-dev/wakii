@@ -80,7 +80,7 @@ export function PluginCardAction({
     return (
       <span className="text-xs whitespace-nowrap text-status-warning-text">
         {translate(
-          'auto.components.settings.PluginManagerRows.needsOrca',
+          'auto.components.settings.PluginManagerRows.needsWakii',
           'Needs Orca {{value0}}',
           {
             value0: needsOrca

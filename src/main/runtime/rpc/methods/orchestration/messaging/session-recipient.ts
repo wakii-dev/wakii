@@ -43,7 +43,7 @@ export function readSessionRecipient(
       ? { sessionId, address: formatOrcaSessionAddress(sessionId) }
       : {
           code: CODES.unknown,
-          message: `${recipient} does not name an Orca session ID. No message was sent.`
+          message: `${recipient} does not name a Wakii session ID. No message was sent.`
         }
   }
   const sessionId = isOrcaSessionId(recipient) ? recipient : null
@@ -67,7 +67,7 @@ export function refuseUndeliverableSessionRecipient(
   if (!store) {
     return {
       code: CODES.unknown,
-      message: `Agent session ${sessionId} cannot be verified: this Orca is not running its agent-session host. ${noEffect}`
+      message: `Agent session ${sessionId} cannot be verified: this Wakii is not running its agent-session host. ${noEffect}`
     }
   }
   const found = lookupOrcaAgentSession(store, sessionId)
@@ -77,7 +77,7 @@ export function refuseUndeliverableSessionRecipient(
   if (found.kind === 'unknown') {
     return {
       code: CODES.unknown,
-      message: `No Orca agent session ${sessionId} exists on this host. ${noEffect}`
+      message: `No Wakii agent session ${sessionId} exists on this host. ${noEffect}`
     }
   }
   const reach = structuredSessionMailReach(store, found.record, db)
@@ -111,13 +111,13 @@ function providerIdRefusal(
   store: AgentSessionRecordReader | null,
   noEffect = 'No message was sent.'
 ): SessionRecipientRefusal {
-  // The conversation's Orca session ID, which a `/clear`ed session keeps; not the live session's.
+  // The conversation's Wakii session ID, which a `/clear`ed session keeps; not the live session's.
   const root = isOrcaSessionId(orcaSessionId)
     ? canonicalOrcaSessionId(orcaSessionId, store)
     : orcaSessionId
   const address = `${ORCA_SESSION_ADDRESS_PREFIX}${root}`
   return {
     code: CODES.providerId,
-    message: `${id} is the provider's own session id, which changes on /clear. This session's Orca session ID is ${address}; address it by that instead. ${noEffect}`
+    message: `${id} is the provider's own session id, which changes on /clear. This session's Wakii session ID is ${address}; address it by that instead. ${noEffect}`
   }
 }

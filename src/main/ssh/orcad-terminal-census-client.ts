@@ -82,7 +82,7 @@ export async function requestOrcadTerminalCensus(
           !status.ok ||
           !status.result.capabilities?.includes(ORCAD_TERMINAL_CENSUS_RUNTIME_CAPABILITY)
         ) {
-          throw new Error('This host’s Orca server does not report a terminal census.')
+          throw new Error('This host’s Wakii server does not report a terminal census.')
         }
       },
       undefined,

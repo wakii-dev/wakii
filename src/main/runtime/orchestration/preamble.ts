@@ -39,11 +39,11 @@ function isSessionHandle(handle: string): boolean {
 function dispatchIdentityLines(params: PreambleParams): string {
   return [
     isSessionHandle(params.coordinatorHandle)
-      ? `Your coordinator's Orca session ID is: ${params.coordinatorHandle}`
+      ? `Your coordinator's Wakii session ID is: ${params.coordinatorHandle}`
       : `Your coordinator's terminal handle is: ${params.coordinatorHandle}`,
     `Your task ID is: ${params.taskId}`,
     ...(isSessionHandle(params.workerHandle)
-      ? [`Your Orca session ID is: ${params.workerHandle}`]
+      ? [`Your Wakii session ID is: ${params.workerHandle}`]
       : [])
   ].join('\n')
 }
@@ -61,7 +61,7 @@ export function buildDispatchPreamble(params: PreambleParams): string {
   })
 
   // Use one-line recipes across POSIX/PowerShell/cmd; fence comments and use plain reasons to avoid misleading Chat rendering (STA-8200).
-  const header = `You are working inside Orca, a multi-agent IDE. You are a dispatched worker.
+  const header = `You are working inside Wakii, a multi-agent IDE. You are a dispatched worker.
 ${dispatchIdentityLines(params)}
 
 The coordinator cannot see this ${surface}, so reach it only with the \`${cli} orchestration\`
@@ -79,7 +79,7 @@ ${
 
 `
     : ''
-}  # Ask the coordinator, then end your turn; Orca wakes you with the answer.
+}  # Ask the coordinator, then end your turn; Wakii wakes you with the answer.
   # Never use a local question prompt such as AskUserQuestion; the
   # coordinator cannot see or answer it.
   ${cli} orchestration ask --from ${params.workerHandle} --question "<your question>"
@@ -153,7 +153,7 @@ do NOT run a sleep/poll loop, and do NOT keep calling
 \`${cli} orchestration check\`.
 
 Exit the shell after completion. Bare-shell workers have no idle agent prompt
-for Orca to reuse.`
+for Wakii to reuse.`
   }
 
   return `=== AFTER YOU SEND worker_done ===

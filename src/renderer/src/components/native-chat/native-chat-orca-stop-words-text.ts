@@ -7,17 +7,17 @@ import {
 
 const PIECES: Record<NativeChatOrcaStopCopyId, (machine: string | undefined) => string> = {
   update: (machine) =>
-    translate('components.native-chat.notices.orcaStopUpdate', COPY.update, { machine }),
+    translate('components.native-chat.notices.wakiiStopUpdate', COPY.update, { machine }),
   quit: (machine) =>
-    translate('components.native-chat.notices.orcaStopQuit', COPY.quit, { machine }),
+    translate('components.native-chat.notices.wakiiStopQuit', COPY.quit, { machine }),
   crash: (machine) =>
-    translate('components.native-chat.notices.orcaStopCrash', COPY.crash, { machine }),
+    translate('components.native-chat.notices.wakiiStopCrash', COPY.crash, { machine }),
   remote: (machine) =>
-    translate('components.native-chat.notices.orcaStopRemote', COPY.remote, { machine }),
+    translate('components.native-chat.notices.wakiiStopRemote', COPY.remote, { machine }),
   canContinue: () =>
-    translate('components.native-chat.notices.orcaStopCanContinue', COPY.canContinue),
+    translate('components.native-chat.notices.wakiiStopCanContinue', COPY.canContinue),
   unnamedServer: () =>
-    translate('components.native-chat.notices.orcaStopUnnamedServer', COPY.unnamedServer)
+    translate('components.native-chat.notices.wakiiStopUnnamedServer', COPY.unnamedServer)
 }
 
 export const sayNativeChatOrcaStopTranslated: NativeChatOrcaStopSay = (id, machine) =>

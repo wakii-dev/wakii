@@ -83,7 +83,7 @@ export async function resolveManagedOrcadTunnelPort(input: OrcadTunnelPortInput)
   } catch (error) {
     // Post-forward identity validation still detects a wrong server when falling back.
     console.warn(
-      '[ssh] Could not read the managed Orca server port; trying the preferred one:',
+      '[ssh] Could not read the managed Wakii server port; trying the preferred one:',
       error
     )
     return access.remotePort

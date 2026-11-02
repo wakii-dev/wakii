@@ -15,7 +15,7 @@ import { SHELL_READY_MARKER_ESCAPED } from './local-pty-shell-ready-marker'
 import { BASH_WSL_CWD_REPORT_BLOCK } from '../../wsl-shell-cwd-report'
 
 export function getBashShellReadyRcfileContent(): string {
-  return `# Orca bash shell-ready wrapper
+  return `# Wakii bash shell-ready wrapper
 ${BASH_FEATURE_CHANNEL_BLOCK}
 ${SHELL_STARTUP_IDENTITY_MARKER_BLOCK}
 # Consume feature selection before startup files can inherit it into children.
@@ -44,12 +44,12 @@ __orca_restore_agent_teams_path() {
 __orca_restore_agent_teams_path
 ${ORCA_CLI_POSIX_PATH_RESTORE}
 ${WSL_MANAGED_CLI_PATH_RESTORE}
-# Restore Orca-managed config after user startup files may override it.
+# Restore Wakii-managed config after user startup files may override it.
 [[ -n "\${ORCA_OPENCODE_CONFIG_DIR:-}" ]] && export OPENCODE_CONFIG_DIR="\${ORCA_OPENCODE_CONFIG_DIR}"
 ${MANAGED_DATA_ACCOUNT_POSIX_RESTORE}
 [[ -n "\${ORCA_MIMOCODE_CONFIG_DIR:-}" ]] && export MIMOCODE_CONFIG_DIR="\${ORCA_MIMOCODE_CONFIG_DIR}"
 ${getPosixOmpShellWrapper()}
-# Profile scripts must not replace Orca's runtime CODEX_HOME.
+# Profile scripts must not replace Wakii's runtime CODEX_HOME.
 [[ -n "\${ORCA_CODEX_HOME:-}" ]] && export CODEX_HOME="\${ORCA_CODEX_HOME}"
 ${getPosixCodexShellLaunchPreflight() + getPosixClaudeShellFunction()}
 ${BASH_WSL_CWD_REPORT_BLOCK}

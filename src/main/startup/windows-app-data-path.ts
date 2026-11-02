@@ -18,7 +18,7 @@ export function deriveWindowsAppDataPath(env: NodeJS.ProcessEnv): string {
     return win32.join(userProfile, 'AppData', 'Roaming')
   }
   throw new Error(
-    'Orca could not find the Windows roaming AppData folder: Windows did not report it, and neither APPDATA nor USERPROFILE is set.'
+    'Wakii could not find the Windows roaming AppData folder: Windows did not report it, and neither APPDATA nor USERPROFILE is set.'
   )
 }
 

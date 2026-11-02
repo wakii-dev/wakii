@@ -55,7 +55,7 @@ export function splitPanePendingError(tabId: string, leafId: string): TerminalSp
       tabId,
       splitMayStillComplete: true,
       nextSteps: [
-        `Do not split again. With an orca CLI that has --retry-split, re-run the same command with --retry-split ${leafId} to wait for this pane and get its handle.`,
+        `Do not split again. With a orca CLI that has --retry-split, re-run the same command with --retry-split ${leafId} to wait for this pane and get its handle.`,
         LIST_BEFORE_SPLITTING
       ]
     }
@@ -64,7 +64,7 @@ export function splitPanePendingError(tabId: string, leafId: string): TerminalSp
 
 export function splitRetryUnknownError(tabId: string, leafId: string): TerminalSplitOutcomeError {
   return new TerminalSplitOutcomeError(
-    `This Orca host has no record of split ${leafId} from this terminal; it was not split again.`,
+    `This Wakii host has no record of split ${leafId} from this terminal; it was not split again.`,
     { splitId: leafId, tabId, splitMayStillComplete: false, nextSteps: [LIST_BEFORE_SPLITTING] }
   )
 }

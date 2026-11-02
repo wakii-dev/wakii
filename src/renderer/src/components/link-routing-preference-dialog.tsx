@@ -26,7 +26,7 @@ type LinkRoutingPreferenceDialogRequest = {
   resolve: (openInOrca: boolean) => void
 }
 
-const PREVIEW_STORAGE_KEY = 'orca.previewLinkRoutingPreferenceDialog'
+const PREVIEW_STORAGE_KEY = 'wakii.previewLinkRoutingPreferenceDialog'
 const PREVIEW_DEFAULT_STORAGE_KEY = `${PREVIEW_STORAGE_KEY}.default`
 
 function displayHostForUrl(url: string | undefined): string | null {
@@ -183,7 +183,7 @@ export function LinkRoutingPreferenceDialogProvider({
               <div className="space-y-1">
                 <p>
                   {translate(
-                    'auto.components.link.routing.preference.dialog.orca.note',
+                    'auto.components.link.routing.preference.dialog.wakii.note',
                     'Wakii can use imported cookies for logged-in sites.'
                   )}
                 </p>
@@ -227,11 +227,11 @@ export function LinkRoutingPreferenceDialogProvider({
             <Button autoFocus onClick={() => settleActiveRequest(true)}>
               {openLinksInAppDefault
                 ? translate(
-                    'auto.components.link.routing.preference.dialog.keep.orca.button',
+                    'auto.components.link.routing.preference.dialog.keep.wakii.button',
                     'Keep Wakii'
                   )
                 : translate(
-                    'auto.components.link.routing.preference.dialog.orca.button',
+                    'auto.components.link.routing.preference.dialog.wakii.button',
                     'Open in Wakii'
                   )}
             </Button>

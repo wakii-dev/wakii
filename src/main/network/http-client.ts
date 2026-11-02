@@ -28,7 +28,7 @@ export function requirePartitionSession(partition: string, providerLabel: string
   const client = getMainHttpClient()
   if (!client.partitionSession) {
     throw new Error(
-      `${providerLabel} usage from a session cookie needs the Orca desktop app and is not available on this server`
+      `${providerLabel} usage from a session cookie needs the Wakii desktop app and is not available on this server`
     )
   }
   return client.partitionSession(partition)

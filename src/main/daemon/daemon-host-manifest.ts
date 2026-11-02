@@ -42,11 +42,11 @@ export type DaemonHostSources = {
 }
 
 export function daemonHostProcessPackageDir(sources: DaemonHostSources): string {
-  return join(sources.resourcesPath, 'node_modules', '@orca', 'process-host')
+  return join(sources.resourcesPath, 'node_modules', '@wakii', 'process-host')
 }
 
 export function daemonHostWindowsRegistryDir(sources: DaemonHostSources): string {
-  return join(sources.resourcesPath, 'node_modules', '@orca', 'windows-registry')
+  return join(sources.resourcesPath, 'node_modules', '@wakii', 'windows-registry')
 }
 
 function daemonHostNodePtyDir(sources: DaemonHostSources): string {

@@ -22,7 +22,10 @@ import { computeTranslatedness } from '../../../../config/scripts/locale-transla
 
 // Re-baselined after the 2026-11-02 upstream sync: upstream key renames/removals
 // reset translated coverage to 14,962. The vi-1 sweep translates and ratchets up.
-const SF2_SHIP_TRANSLATED_COUNT = 14_962
+// Re-baselined 14,962 → 14,959 by Rebrand Tier 2 (03/11): merging duplicate brand-key
+// variants (HEAD carried both orca-* and wakii-* siblings for 8 keys; values were
+// identical post-rename) removed 8 en leaves. No translated content lost.
+const SF2_SHIP_TRANSLATED_COUNT = 14_959
 
 describe('vi translatedness ratchet', () => {
   it('never drops below the SF-2 ship baseline', () => {

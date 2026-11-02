@@ -17,11 +17,11 @@ vi.mock('@/store', () => ({ useAppStore: { getState: () => ({}) } }))
 const UNC_ROOT = '\\\\wsl.localhost\\Ubuntu\\home\\u\\proj'
 const LOCAL_ID = `repo-1::${UNC_ROOT}`
 const HOST_ID = 'repo-1::/home/u/proj'
-const QUICK_OPEN = 'orca.quick-open-history.v1'
-const PDF = 'orca.pdf.scale-preferences.v1'
-const CSV = 'orca.csv.column-widths.v1'
-const NOTEBOOKS = 'orca.notebookPythonEnvironments'
-const APPLIED = 'orca.wsl-move.renderer-rewrites.v1'
+const QUICK_OPEN = 'wakii.quick-open-history.v1'
+const PDF = 'wakii.pdf.scale-preferences.v1'
+const CSV = 'wakii.csv.column-widths.v1'
+const NOTEBOOKS = 'wakii.notebookPythonEnvironments'
+const APPLIED = 'wakii.wsl-move.renderer-rewrites.v1'
 
 const localRoute = { executionHostId: 'local', runtimeEnvironmentId: null }
 const hostRoute = { executionHostId: 'runtime:wsl-env', runtimeEnvironmentId: 'wsl-env' }

@@ -45,16 +45,16 @@ export const createOrcaProfilesAuthActions: StateCreator<
         })
         if (result.status === 'created') {
           toast.success(
-            translate('auto.store.slices.orca.profiles.319d7cf39b', 'Cloud profile created')
+            translate('auto.store.slices.wakii.profiles.319d7cf39b', 'Cloud profile created')
           )
         } else if (result.status === 'reconnect-required') {
           toast.error(
-            translate('auto.store.slices.orca.profiles.d6e764e7db', 'Reconnect this profile')
+            translate('auto.store.slices.wakii.profiles.d6e764e7db', 'Reconnect this profile')
           )
         } else if (result.status === 'failed') {
           toast.error(
             translate(
-              'auto.store.slices.orca.profiles.f0c9e11a6d',
+              'auto.store.slices.wakii.profiles.f0c9e11a6d',
               'Failed to create cloud profile'
             ),
             { description: result.error }
@@ -64,7 +64,10 @@ export const createOrcaProfilesAuthActions: StateCreator<
       } catch (err) {
         console.error('Failed to create Wakii cloud profile:', err)
         toast.error(
-          translate('auto.store.slices.orca.profiles.f0c9e11a6d', 'Failed to create cloud profile'),
+          translate(
+            'auto.store.slices.wakii.profiles.f0c9e11a6d',
+            'Failed to create cloud profile'
+          ),
           {
             description: err instanceof Error ? err.message : String(err)
           }
@@ -95,13 +98,13 @@ export const createOrcaProfilesAuthActions: StateCreator<
           appliedConnectAttempt = attempt
           if (!alreadyConnected) {
             toast.success(
-              translate('auto.store.slices.orca.profiles.9fcb07a796', 'Profile connected')
+              translate('auto.store.slices.wakii.profiles.9fcb07a796', 'Profile connected')
             )
           }
         } else if (result.status === 'unconfigured') {
           toast.error(
             translate(
-              'auto.store.slices.orca.profiles.8b8fa73174',
+              'auto.store.slices.wakii.profiles.8b8fa73174',
               'Wakii Cloud sign-in is not configured'
             ),
             {
@@ -110,7 +113,7 @@ export const createOrcaProfilesAuthActions: StateCreator<
           )
         } else if (result.status === 'timed-out' && !alreadyConnected) {
           toast.error(
-            translate('auto.store.slices.orca.profiles.signInTimedOut', 'Sign-in timed out')
+            translate('auto.store.slices.wakii.profiles.signInTimedOut', 'Sign-in timed out')
           )
         } else if (
           result.status === 'failed' &&
@@ -118,7 +121,7 @@ export const createOrcaProfilesAuthActions: StateCreator<
           result.auth.state !== 'connected'
         ) {
           toast.error(
-            translate('auto.store.slices.orca.profiles.33290e88ed', 'Failed to connect profile'),
+            translate('auto.store.slices.wakii.profiles.33290e88ed', 'Failed to connect profile'),
             { description: result.error }
           )
         }
@@ -130,7 +133,7 @@ export const createOrcaProfilesAuthActions: StateCreator<
           get().orcaProfileAuthStatus?.state !== 'connected'
         ) {
           toast.error(
-            translate('auto.store.slices.orca.profiles.33290e88ed', 'Failed to connect profile'),
+            translate('auto.store.slices.wakii.profiles.33290e88ed', 'Failed to connect profile'),
             {
               description: err instanceof Error ? err.message : String(err)
             }
@@ -154,12 +157,12 @@ export const createOrcaProfilesAuthActions: StateCreator<
         })
         if (result.status === 'reconnect-required') {
           toast.error(
-            translate('auto.store.slices.orca.profiles.d6e764e7db', 'Reconnect this profile')
+            translate('auto.store.slices.wakii.profiles.d6e764e7db', 'Reconnect this profile')
           )
         } else if (result.status === 'failed') {
           toast.error(
             translate(
-              'auto.store.slices.orca.profiles.2f6c78a039',
+              'auto.store.slices.wakii.profiles.2f6c78a039',
               'Failed to refresh profile auth'
             ),
             { description: result.error }
@@ -169,7 +172,10 @@ export const createOrcaProfilesAuthActions: StateCreator<
       } catch (err) {
         console.error('Failed to refresh Wakii profile auth:', err)
         toast.error(
-          translate('auto.store.slices.orca.profiles.2f6c78a039', 'Failed to refresh profile auth'),
+          translate(
+            'auto.store.slices.wakii.profiles.2f6c78a039',
+            'Failed to refresh profile auth'
+          ),
           {
             description: err instanceof Error ? err.message : String(err)
           }
@@ -190,15 +196,18 @@ export const createOrcaProfilesAuthActions: StateCreator<
         })
         if (result.auth.state !== 'connected') {
           toast.success(
-            translate('auto.store.slices.orca.profiles.a37b5e6d37', 'Signed out of profile')
+            translate('auto.store.slices.wakii.profiles.a37b5e6d37', 'Signed out of profile')
           )
         }
         return result
       } catch (err) {
         console.error('Failed to sign out of Wakii profile:', err)
-        toast.error(translate('auto.store.slices.orca.profiles.83600521e7', 'Failed to sign out'), {
-          description: err instanceof Error ? err.message : String(err)
-        })
+        toast.error(
+          translate('auto.store.slices.wakii.profiles.83600521e7', 'Failed to sign out'),
+          {
+            description: err instanceof Error ? err.message : String(err)
+          }
+        )
         return null
       }
     },
@@ -217,12 +226,12 @@ export const createOrcaProfilesAuthActions: StateCreator<
         })
         if (result.status === 'reconnect-required') {
           toast.error(
-            translate('auto.store.slices.orca.profiles.d6e764e7db', 'Reconnect this profile')
+            translate('auto.store.slices.wakii.profiles.d6e764e7db', 'Reconnect this profile')
           )
         } else if (result.status === 'failed') {
           toast.error(
             translate(
-              'auto.store.slices.orca.profiles.76deec8f58',
+              'auto.store.slices.wakii.profiles.76deec8f58',
               'Failed to switch organization'
             ),
             { description: result.error }
@@ -232,7 +241,7 @@ export const createOrcaProfilesAuthActions: StateCreator<
       } catch (err) {
         console.error('Failed to switch Wakii profile org:', err)
         toast.error(
-          translate('auto.store.slices.orca.profiles.76deec8f58', 'Failed to switch organization'),
+          translate('auto.store.slices.wakii.profiles.76deec8f58', 'Failed to switch organization'),
           {
             description: err instanceof Error ? err.message : String(err)
           }

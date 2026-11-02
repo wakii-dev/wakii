@@ -22,7 +22,7 @@ import {
 // Allow the full proxy handshake: avoiding repeats is the route's purpose.
 export const SYSTEM_SSH_LOOPBACK_ROUTE_LISTEN_TIMEOUT_MS = 60_000
 export const SYSTEM_SSH_LOOPBACK_ROUTE_PROBE_TIMEOUT_MS = 15_000
-const LOOPBACK_ROUTE_PROBE_MARKER = 'ORCA-SYSTEM-SSH-LOOPBACK-OK'
+const LOOPBACK_ROUTE_PROBE_MARKER = 'WAKII-SYSTEM-SSH-LOOPBACK-OK'
 
 export type SystemSshLoopbackRoute = {
   args: SystemSshLoopbackRouteArgs

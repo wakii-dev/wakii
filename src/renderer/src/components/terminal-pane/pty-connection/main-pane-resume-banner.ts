@@ -10,7 +10,7 @@ import type { PtyConnectResult } from '../pty-transport-types'
 type Outcomes = Record<string, TerminalPaneResumeOutcome>
 
 // Why session storage: a reload reattaches the same start, which showed its banner already.
-const SHOWN_STARTS_KEY = 'orca.mainPaneResumeBannersShown'
+const SHOWN_STARTS_KEY = 'wakii.mainPaneResumeBannersShown'
 /** This document's shown starts, for when session storage is unavailable. */
 const shownHere = new Set<string>()
 

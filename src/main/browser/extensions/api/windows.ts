@@ -178,7 +178,7 @@ export function registerWindowsNamespace(): void {
       remove: defineBrowserExtensionMethod(z.tuple([windowIdSchema]), (caller, windowId) => {
         const entry = requireWindow(caller, windowId)
         if (entry.isMain) {
-          throw new BrowserExtensionApiError("Extensions cannot close Orca's main window")
+          throw new BrowserExtensionApiError("Extensions cannot close Wakii's main window")
         }
         entry.window.close()
       })

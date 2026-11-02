@@ -108,18 +108,18 @@ export async function resolveOrchestrationSessionCaller(
   const claimed: unknown = evidence?.agentSessionId
   if (route?.pairedDeviceId !== undefined) {
     throw hostBoundary(
-      'This request reached Orca from a paired client, and an Orca session ID identifies a caller only on the host that runs that session.'
+      'This request reached Wakii from a paired client, and a Wakii session ID identifies a caller only on the host that runs that session.'
     )
   }
   if (evidence?.host) {
     throw hostBoundary(
-      `This command ran in ${evidence.host.kind === 'ssh' ? 'an SSH' : 'a WSL'} environment, and an Orca session ID identifies a caller only on the host that runs that session.`
+      `This command ran in ${evidence.host.kind === 'ssh' ? 'an SSH' : 'a WSL'} environment, and a Wakii session ID identifies a caller only on the host that runs that session.`
     )
   }
   if (typeof claimed !== 'string' || !isOrcaSessionId(claimed)) {
     throw new OrchestrationError(
       CODES.unknown,
-      'The caller named an ID that is not an Orca session ID. No effects were applied.',
+      'The caller named an ID that is not a Wakii session ID. No effects were applied.',
       NO_EFFECTS
     )
   }
@@ -157,7 +157,7 @@ async function readSessionRecord(
   if (!store) {
     throw new OrchestrationError(
       CODES.notLive,
-      `Agent session ${sessionId} cannot be verified: this Orca is not running its agent-session host. No effects were applied.`,
+      `Agent session ${sessionId} cannot be verified: this Wakii is not running its agent-session host. No effects were applied.`,
       NO_EFFECTS
     )
   }
@@ -168,13 +168,13 @@ async function readSessionRecord(
   if (found.kind === 'provider-id') {
     throw new OrchestrationError(
       CODES.providerId,
-      `${sessionId} is the provider's own session id, which changes on /clear. This session's Orca session ID is ${ORCA_SESSION_ADDRESS_PREFIX}${found.orcaSessionId}; set ${ORCA_AGENT_SESSION_ID_ENV}=${found.orcaSessionId} instead. No effects were applied.`,
+      `${sessionId} is the provider's own session id, which changes on /clear. This session's Wakii session ID is ${ORCA_SESSION_ADDRESS_PREFIX}${found.orcaSessionId}; set ${ORCA_AGENT_SESSION_ID_ENV}=${found.orcaSessionId} instead. No effects were applied.`,
       { ...NO_EFFECTS, orcaSessionId: found.orcaSessionId }
     )
   }
   throw new OrchestrationError(
     CODES.unknown,
-    `No Orca agent session ${sessionId} exists on this host. No effects were applied.`,
+    `No Wakii agent session ${sessionId} exists on this host. No effects were applied.`,
     NO_EFFECTS
   )
 }
@@ -182,7 +182,7 @@ async function readSessionRecord(
 function assertSessionCanAct(sessionId: string, record: AgentSessionRecord, method: string): void {
   if (!structuredWorkerHostScope(record.location)) {
     throw hostBoundary(
-      `Agent session ${sessionId} runs on another host, and an Orca session ID identifies a caller only on the host that runs that session.`
+      `Agent session ${sessionId} runs on another host, and a Wakii session ID identifies a caller only on the host that runs that session.`
     )
   }
   const { lease } = record

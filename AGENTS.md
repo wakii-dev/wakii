@@ -166,3 +166,29 @@ Merging `origin/main` into `wakii-dev` has broken releases three times running (
 7. **Fork surface gate (team-chat, 31/10)**: `src/shared/plugins/workers/plugin-host-api.ts` lets panels call `storage.get`/`storage.set` (`WORKER_AND_PANEL`) — upstream's table is WORKER_ONLY and the separate v0 facade table (`src/shared/plugins/plugin-host-api.ts`, not yet wired) already says `panel: true`. If upstream touches either table, keep the panel surface for storage on the workers table (or migrate to the facade once it is wired) and re-run `plugin-host-methods.test.ts` + `plugin-host-runtime.test.ts` + a live panel poll check.
 
 CI runs nowhere except the two build workflows above (owner request): there are no PR checks, no unit-test or e2e workflows. This battery is the only gate before pushing a sync or feature merge to `wakii-dev`, and packaging gates in the release build are the only automated nets after it.
+
+# Rebrand Wakii — never-touch list
+
+Khi rebrand Orca → Wakii, các định danh kỹ thuật sau GIỮ NGUYÊN qua mọi đợt sync upstream — không đổi tên, không "rebrand cho đủ":
+
+- `ORCA_*` environment variables (ví dụ `ORCA_BACKGROUND_LAUNCH`, `ORCA_E2E_*`)
+- `@orca/*` package imports (`@orca/process-host`, …)
+- appId `com.stablyai.orca`
+- protocol `orca://` (passthrough — i18n giữ nguyên list hiện có)
+- feed/update domain `stablyai` (appId chain + update feed)
+- first-party product domain `onorca.dev` + `app.orca.dev` (updater feed, cloud auth, artifacts API)
+- orcad family: daemon identifiers/paths/env (`orcad`, `OrcadHost*`, `ORCAD_*`, `.orcad`)
+- data/config paths & filenames: `~/.orca`, `.orca/`, `.cache/orca`, `orca.yaml`, `orca-plugin.json`, `orca-marketplace.json`, `orca.d.ts`
+- CLI binary/command refs (binary chua rename — tier sau): `orca`, `orca-ide`, `orca-cli`, `orca.cmd/exe/sh`, backticked `orca` trong prose, `orca <subcommand>` (serve/account/worktree/terminal/orchestration/plugin/profile/environment/browser/status), `ORCA skills get …`, `orca.panels.*`, `orca:<channel>` event names
+- wire/protocol values: bare `'orca'` (provider, clientInfo, approvalEnforcement, journal keys), `X-Orca-Agent-Hook-Token` header, `'opened-in-orca'` enum, `com.orca.*` native messaging, `orca.localhost`/`@orca.local` dev identity, `app_starred_orca` telemetry
+- external brand `GNOME Orca`; PowerShell `Get-Orca*` helpers; legacy profile markers `# BEGIN/END ORCA AGENT STATUS HOOKS`
+- CLI prose do commit Tier 1 (`566d5c2f0a8`) da Wakii-hoa co chu dich (`use Wakii from`, `Wakii launcher`, `non-Wakii command`...) — giu theo HEAD, khong "revert ho"
+- lowercase `orca` don le trong locale values = CLI refs (brand luon viet hoa Orca/Wakii)
+
+Chạy gate trước khi commit rebrand:
+
+```sh
+node scripts/rebrand-verify.mjs
+```
+
+Exit 0 = GREEN (0 vi phạm brand + productName = `Wakii` + README đủ 5 marker team-workflow); exit 1 kèm chi tiết file:line = RED. Allowlist trong script đồng bộ với list trên — sửa list thì sửa cả hai nơi.

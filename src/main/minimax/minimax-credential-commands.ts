@@ -83,7 +83,7 @@ export function saveMiniMaxSessionCookieCredential(
   // Cookie acquisition requires a desktop browser session; refuse unusable credentials elsewhere.
   if (getMainHttpClient().partitionSession === undefined) {
     throw new Error(
-      'MiniMax session cookies need the Orca desktop app on this computer. Save an API key instead.'
+      'MiniMax session cookies need the Wakii desktop app on this computer. Save an API key instead.'
     )
   }
   saveMiniMaxSessionCookie(cookie)

@@ -29,7 +29,7 @@ export function deliverQuestionAnswer(
   }
 }
 
-const ASKED_QUESTION_NEXT = 'End your turn; Orca wakes you with the answer.'
+const ASKED_QUESTION_NEXT = 'End your turn; Wakii wakes you with the answer.'
 
 /** The question is recorded and stays pending; its answer arrives as Dispatch mail. */
 export function askedQuestionReceipt(

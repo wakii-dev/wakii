@@ -21,7 +21,7 @@ const installations = new Map<string, ManagedRuntimeInstallation>()
 function installationFor(agent: string, runtime: OrcaRuntimeService): ManagedRuntimeInstallation {
   const spec = acpLaunchSpecFor(agent)
   if (!spec?.managedRuntime) {
-    throw new Error(`Orca installs no runtime for ${agent}.`)
+    throw new Error(`Wakii installs no runtime for ${agent}.`)
   }
   const dataDirectory = getProfileUserDataPath()
   const releases = spec.managedRuntime.root(dataDirectory)

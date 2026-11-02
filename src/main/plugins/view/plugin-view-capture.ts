@@ -157,7 +157,7 @@ export async function capturePluginPanelPng(
     ? await contents.capturePage(target, HIDDEN_CAPTURE)
     : await captureUntilDrawn(contents, target, wait)
   if (image.isEmpty()) {
-    throw new Error('Orca drew nothing to capture; try again once its window has loaded.')
+    throw new Error('Wakii drew nothing to capture; try again once its window has loaded.')
   }
   image = atSize(image, target.width, target.height)
   if (guest && !guest.contents.isDestroyed()) {

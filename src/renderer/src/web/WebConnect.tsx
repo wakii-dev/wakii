@@ -125,7 +125,7 @@ export default function WebConnect({
             <p className="mt-1 text-sm leading-5 text-muted-foreground">
               {translate(
                 'auto.web.WebConnect.3affe7de3a',
-                'Paste a pairing URL from an Wakii server that this browser can reach.'
+                'Paste a pairing URL from a Wakii server that this browser can reach.'
               )}
             </p>
           </div>

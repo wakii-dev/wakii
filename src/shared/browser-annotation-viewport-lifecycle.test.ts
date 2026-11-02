@@ -48,7 +48,7 @@ describe('browser annotation guest document lifecycle', () => {
     guest.window.dispatchEvent(new guest.window.Event('beforeunload'))
 
     expect(guest.markerHosts()).toBe(0)
-    expect(Reflect.has(guest.context, '__orcaBrowserAnnotationViewportBridge')).toBe(false)
+    expect(Reflect.has(guest.context, '__wakiiBrowserAnnotationViewportBridge')).toBe(false)
     expect(guest.cancelAnimationFrame).toHaveBeenCalledWith(17)
     guest.requestAnimationFrame.mockClear()
     guest.window.dispatchEvent(new guest.window.Event('scroll'))

@@ -30,7 +30,7 @@ describe('remote pairing address', () => {
     ['10.0.0.8', 'lan'],
     ['fd7a:115c:a1e0::1', 'lan'],
     ['fe80::1', 'lan'],
-    ['orca.example.com', 'public'],
+    ['wakii.example.com', 'public'],
     ['devbox', 'custom']
   ] as const)('classifies %s as %s', (hostname, expected) => {
     expect(classifyRemotePairingHostname(hostname)).toBe(expected)
@@ -41,7 +41,7 @@ describe('remote pairing address', () => {
       ok: true,
       value: {
         pairing: expect.objectContaining({ endpoint: 'wss://orca.example.com/runtime' }),
-        displayEndpoint: 'orca.example.com',
+        displayEndpoint: 'wakii.example.com',
         endpointKind: 'public'
       }
     })

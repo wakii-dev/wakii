@@ -30,7 +30,7 @@ export function assertProfileStateCanInitialize(options: ProfileStateRecoveryLoc
   assertNoRetainedProfileStateExports(options)
   if (!existsSync(options.dataFile) && hasStateBackup(options.dataFile)) {
     throw new ProfileStateAuthorityBootstrapError(
-      `Legacy profile JSON is missing while its .bak.0–.bak.4 backups remain. Stop Orca and restore a selected backup to ${options.dataFile} before reopening.`
+      `Legacy profile JSON is missing while its .bak.0–.bak.4 backups remain. Stop Wakii and restore a selected backup to ${options.dataFile} before reopening.`
     )
   }
 }
@@ -52,7 +52,7 @@ export class ProfileStateRecoveryRequiredError extends Error {
   ) {
     super(
       repairableSections
-        ? `Damaged profile sections: ${profileStateSectionLabels(repairableSections.map(({ domain }) => domain)).join(', ')}; run \`orca profile state rollback --repair --profile-id ${options.profileId}\` to replace only those sections from backups`
+        ? `Damaged profile sections: ${profileStateSectionLabels(repairableSections.map(({ domain }) => domain)).join(', ')}; run \`wakii profile state rollback --repair --profile-id ${options.profileId}\` to replace only those sections from backups`
         : `SQLite profile state could not be read; choose a retained backup or JSON export to recover the profile`,
       { cause }
     )

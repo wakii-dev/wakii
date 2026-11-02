@@ -28,7 +28,7 @@ const LOGS_HINT =
 
 function requestNextStep(code: PluginErrorCode, name: string): string {
   if (code === 'unknown_method') {
-    return `Register it in the worker with orca.panels.handle('${name}', …); a save restarts the worker with the new handlers.`
+    return `Register it in the worker with wakii.panels.handle('${name}', …); a save restarts the worker with the new handlers.`
   }
   if (code === 'timeout') {
     return 'The handler did not answer in time; pass a larger --timeout-ms (at most 120000) or make it answer sooner.'
@@ -77,7 +77,7 @@ export async function requestPluginDevPanelHandler(input: {
   if (!plugin.manifest.main) {
     throw new PluginCliError('invalid_argument', `${key} has no worker to answer ${name}.`, {
       nextSteps: [
-        'Add "main" (a trusted-worker plugin) whose activate(orca) calls orca.panels.handle; `orca plugin create --template worker-panel` scaffolds one.'
+        'Add "main" (a trusted-worker plugin) whose activate(wakii) calls wakii.panels.handle; `orca plugin create --template worker-panel` scaffolds one.'
       ]
     })
   }

@@ -52,7 +52,7 @@ export async function spawnNativeDaemonPty(args: {
   cols: number
   rows: number
   windowsFallbackAttempts: WindowsShellSpawnAttempt[]
-  /** The primary shell's argv is Orca's interactive default, so a respawn cannot repeat a command. */
+  /** The primary shell's argv is Wakii's interactive default, so a respawn cannot repeat a command. */
   primaryArgsRespawnSafe?: boolean
   signal?: AbortSignal
   assertCreateAllowed?: () => void

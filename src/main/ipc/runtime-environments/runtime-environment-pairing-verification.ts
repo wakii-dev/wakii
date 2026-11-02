@@ -195,7 +195,7 @@ function classifyPairingVerificationError(error: unknown, endpoint: string): Rem
       return {
         ok: false,
         kind: 'host-identity-mismatch',
-        message: `Orca reached ${endpoint}, but that host does not match this access link.`
+        message: `Wakii reached ${endpoint}, but that host does not match this access link.`
       }
     }
     if (error.pairingStage === 'runtime') {
@@ -229,6 +229,6 @@ function unreachableHostResult(endpoint: string): RemotePairingFailure {
   return {
     ok: false,
     kind: 'host-unreachable',
-    message: `Cannot reach Orca at ${endpoint}. Confirm the other host is running and reachable.`
+    message: `Cannot reach Wakii at ${endpoint}. Confirm the other host is running and reachable.`
   }
 }

@@ -56,7 +56,7 @@ const ACCOUNT_METHOD_DEFINITIONS = [
     params: HostAccountLaunchEnvParams,
     handler: async (params, { runtime, clientKind }) => {
       if (clientKind === 'mobile') {
-        throw new Error('Only the Orca desktop that owns this host can set its accounts.')
+        throw new Error('Only the Wakii desktop that owns this host can set its accounts.')
       }
       runtime.setHostAccountLaunchEnv(params)
       return {}

@@ -25,27 +25,27 @@ export function resolveBundledOrcadRuntime(directory: string): string | null {
     return null
   }
   if (!hasTarget) {
-    throw new OrcadBundledRuntimeError('The bundled Orca runtime target is missing')
+    throw new OrcadBundledRuntimeError('The bundled Wakii runtime target is missing')
   }
   if (!hasMarker) {
-    throw new OrcadBundledRuntimeError('The bundled Orca runtime reference is missing')
+    throw new OrcadBundledRuntimeError('The bundled Wakii runtime reference is missing')
   }
   const target = readFileSync(targetPath, 'utf8').trim()
   // Compat targets use the same Node version built for older glibc.
   const asset = nodeRuntimeAsset(target)
   if (!asset) {
-    throw new OrcadBundledRuntimeError(`The bundled Orca runtime target is invalid: ${target}`)
+    throw new OrcadBundledRuntimeError(`The bundled Wakii runtime target is invalid: ${target}`)
   }
   const executableSha256 = readFileSync(markerPath, 'utf8').trim()
   // Validate the exact runtime pin: this marker becomes a path segment.
   if (executableSha256 !== asset.executableSha256) {
     throw new OrcadBundledRuntimeError(
-      `The bundled Orca runtime reference does not name Node ${NODE_RUNTIME_PIN.version}`
+      `The bundled Wakii runtime reference does not name Node ${NODE_RUNTIME_PIN.version}`
     )
   }
   const runtime = join(directory, ...orcadNodeRuntimeRelativePath(target, executableSha256))
   if (!existsSync(runtime)) {
-    throw new OrcadBundledRuntimeError('The bundled Orca runtime is missing')
+    throw new OrcadBundledRuntimeError('The bundled Wakii runtime is missing')
   }
   return runtime
 }
@@ -62,16 +62,16 @@ export function isRunningAsBundledOrcadRuntime(directory: string): boolean {
 /** Reject substituted runtimes before opening profile state. */
 export function assertOrcadServerRuntime(): void {
   if (Number(process.versions.node.split('.')[0]) < 24) {
-    throw new OrcadBundledRuntimeError('The Orca server requires Node.js 24 or newer')
+    throw new OrcadBundledRuntimeError('The Wakii server requires Node.js 24 or newer')
   }
   const directory = resolveBundledOrcadSlot()
   const runtime = resolveBundledOrcadRuntime(directory)
   if (runtime && !isRunningAsBundledOrcadRuntime(directory)) {
-    throw new OrcadBundledRuntimeError('Start the Orca server with its bundled Node.js runtime')
+    throw new OrcadBundledRuntimeError('Start the Wakii server with its bundled Node.js runtime')
   }
   if (runtime && process.versions.node !== NODE_RUNTIME_PIN.version) {
     throw new OrcadBundledRuntimeError(
-      `The bundled Orca runtime must be Node ${NODE_RUNTIME_PIN.version}`
+      `The bundled Wakii runtime must be Node ${NODE_RUNTIME_PIN.version}`
     )
   }
 }
@@ -90,7 +90,7 @@ export function handoffToBundledOrcad(): boolean {
   if (realpathSync(process.execPath) === realpathSync(runtime)) {
     if (process.versions.node !== NODE_RUNTIME_PIN.version) {
       throw new OrcadBundledRuntimeError(
-        `The bundled Orca runtime must be Node ${NODE_RUNTIME_PIN.version}`
+        `The bundled Wakii runtime must be Node ${NODE_RUNTIME_PIN.version}`
       )
     }
     return false

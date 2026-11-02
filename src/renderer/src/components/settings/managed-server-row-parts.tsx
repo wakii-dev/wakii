@@ -64,7 +64,7 @@ export function ManagedServerDetailLines({
     <div className="space-y-0.5 text-xs text-muted-foreground">
       <p>
         {translate(
-          'auto.components.settings.managedServers.row.orcaVersion',
+          'auto.components.settings.managedServers.row.wakiiVersion',
           'Orca on this host: {{version}}',
           {
             version: managedServerVersionLabel(status, statusError)
@@ -309,7 +309,7 @@ export function ManagedServerMenuItems({
       <DropdownMenuItem disabled={disabled} onSelect={() => void run('update')}>
         <ArrowUpCircle />
         {translate(
-          'auto.components.settings.managedServers.row.updateOrcaOnHost',
+          'auto.components.settings.managedServers.row.updateWakiiOnHost',
           'Update Orca on this host'
         )}
       </DropdownMenuItem>

@@ -8,7 +8,7 @@ import type { RemoteHostPlatform } from '../../ssh/ssh-remote-platform'
 /** Lets a caller that knows the host kind add its own fix; the message is the one SSH shows. */
 export class OrcadHostGlibcUnsupportedError extends OrcadHostUnsupportedError {
   constructor(target: string, glibc: string) {
-    super(`No Orca runtime supports ${target} with glibc ${glibc}.`)
+    super(`No Wakii runtime supports ${target} with glibc ${glibc}.`)
   }
 }
 

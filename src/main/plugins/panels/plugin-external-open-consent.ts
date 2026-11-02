@@ -48,7 +48,7 @@ export async function confirmPluginExternalOpen(input: {
   // A sheet on a hidden or minimized window would wait, unseen, forever.
   if (input.window.isDestroyed() || !input.window.isVisible() || input.window.isMinimized()) {
     input.log?.(
-      `shell.openExternal(${host}): not opened; Orca's window is hidden, so nobody can confirm it`
+      `shell.openExternal(${host}): not opened; Wakii's window is hidden, so nobody can confirm it`
     )
     return 'unavailable'
   }

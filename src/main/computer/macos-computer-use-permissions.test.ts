@@ -20,7 +20,7 @@ const permissionStatusTempDir = '/tmp/orca-computer-use-permissions-test'
 const helperAppPath = '/Applications/Orca Computer Use.app'
 const helperInfoPlistPath = join(helperAppPath, 'Contents', 'Info.plist')
 
-const plistBuddyStdout = vi.hoisted(() => ({ value: 'com.example.orca.computer-use\n' }))
+const plistBuddyStdout = vi.hoisted(() => ({ value: 'com.example.wakii.computer-use\n' }))
 let monotonicOffset = 0
 const gate = vi.hoisted((): { current: PermissionStatusGate | null } => ({ current: null }))
 
@@ -239,7 +239,7 @@ describe('openComputerUsePermissions', () => {
       platform: 'darwin',
       helperAppPath: '/Applications/Orca Computer Use.app',
       helperUnavailableReason: null,
-      bundleId: 'com.example.orca.computer-use',
+      bundleId: 'com.example.wakii.computer-use',
       permissions: [
         { id: 'accessibility', status: 'not-granted' },
         { id: 'screenshots', status: 'not-granted' }
@@ -253,12 +253,12 @@ describe('openComputerUsePermissions', () => {
     )
     expect(spawn).toHaveBeenCalledWith(
       '/usr/bin/tccutil',
-      ['reset', 'Accessibility', 'com.example.orca.computer-use'],
+      ['reset', 'Accessibility', 'com.example.wakii.computer-use'],
       throughChokepoint
     )
     expect(spawn).toHaveBeenCalledWith(
       '/usr/bin/tccutil',
-      ['reset', 'ScreenCapture', 'com.example.orca.computer-use'],
+      ['reset', 'ScreenCapture', 'com.example.wakii.computer-use'],
       throughChokepoint
     )
     // Keep resets asynchronous so helper commands cannot block the main process.

@@ -18,7 +18,7 @@ describe('web keybindings preload API', () => {
     const navigation = 'worktree.navigateDown'
     const aliases = ['Mod+Shift+J', 'Mod+Alt+Y']
     const seed = (value: unknown) =>
-      storage.setItem('orca.web.keybindings.v1', JSON.stringify(value))
+      storage.setItem('wakii.web.keybindings.v1', JSON.stringify(value))
     const effective = async () =>
       getEffectiveKeybindingsForAction(toggle, 'darwin', (await api.keybindings.reload()).overrides)
     await api.keybindings.setAction({ actionId: navigation, bindings: aliases })
@@ -41,11 +41,11 @@ describe('web keybindings preload API', () => {
       keybindings: { [navigation]: ['Mod+Alt+Y'], [toggle]: ['Mod+Alt+Y'] },
       platforms: { darwin: { [navigation]: [] } }
     })
-    const unchanged = storage.getItem('orca.web.keybindings.v1')
+    const unchanged = storage.getItem('wakii.web.keybindings.v1')
     await expect(
       api.keybindings.setAction({ actionId: navigation, bindings: null })
     ).rejects.toThrow('conflicts')
-    expect(storage.getItem('orca.web.keybindings.v1')).toBe(unchanged)
+    expect(storage.getItem('wakii.web.keybindings.v1')).toBe(unchanged)
     seed({ keybindings: { [navigation]: ['Mod+Shift+J', 'Mod+P'] } })
     expect((await api.keybindings.reload()).overrides).toEqual({})
     expect(await effective()).toEqual(['Mod+Shift+J'])
@@ -74,7 +74,7 @@ describe('web keybindings preload API', () => {
     })
 
     expect(updated.overrides['worktree.palette']).toEqual(['Ctrl+Alt+J'])
-    expect(storage.getItem('orca.web.keybindings.v1')).toContain('worktree.palette')
+    expect(storage.getItem('wakii.web.keybindings.v1')).toContain('worktree.palette')
 
     const disabled = await api.keybindings.setAction({
       actionId: 'worktree.palette',

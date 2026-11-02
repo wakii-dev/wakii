@@ -37,7 +37,7 @@ export function handleMainProcessPreflightFailure(error: unknown, exitCode = 1):
       const message =
         formatProfileStateStartupFailure(error, translateMain) ??
         (error instanceof Error ? error.message : String(error))
-      dialog.showErrorBox(translateMain('startupFailure.title', 'Orca could not start'), message)
+      dialog.showErrorBox(translateMain('startupFailure.title', 'Wakii could not start'), message)
     } catch (dialogError) {
       console.warn('[startup] Could not show startup failure:', dialogError)
     } finally {

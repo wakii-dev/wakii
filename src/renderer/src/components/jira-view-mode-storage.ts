@@ -1,7 +1,7 @@
 export type JiraViewMode = 'list' | 'board'
 
 // Device-local, like the Jira list columns, rather than synced through ui.set.
-const STORAGE_KEY = 'orca.jira.view-mode.v1'
+const STORAGE_KEY = 'wakii.jira.view-mode.v1'
 
 export function loadJiraViewMode(): JiraViewMode {
   try {

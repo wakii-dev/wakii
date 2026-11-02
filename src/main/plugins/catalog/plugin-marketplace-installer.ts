@@ -155,7 +155,7 @@ export class PluginMarketplaceInstaller {
     const blockedReason =
       listing.blockedByKillList?.reason ?? this.blockedPluginReason(preview.pluginKey)
     if (blockedReason) {
-      return { ok: false, error: `plugin is blocked by Orca's safety list: ${blockedReason}` }
+      return { ok: false, error: `plugin is blocked by Wakii's safety list: ${blockedReason}` }
     }
     const incompatible = this.releaseCompatibilityError(listing)
     if (incompatible) {

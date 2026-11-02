@@ -66,7 +66,7 @@ export const antigravityChatAccount = {
     }
     if (!(await antigravityBrowserHelperWorks())) {
       throw new AntigravitySignInSentence(
-        "Antigravity's sign-in link can't be captured on this host. Restart Orca and try again."
+        "Antigravity's sign-in link can't be captured on this host. Restart Wakii and try again."
       )
     }
     await folder.prepare?.(env)

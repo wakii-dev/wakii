@@ -58,7 +58,7 @@ export type StartPluginWorkerOptions = {
   entryPath: string
   grantedCapabilities: readonly PluginCapabilityKind[]
   executeHostCall: PluginWorkerHostCallExecutor
-  /** `orca.panels.post` from this worker, already shape-checked. */
+  /** `wakii.panels.post` from this worker, already shape-checked. */
   onPanelPost?: (post: PluginWorkerPanelPost) => void
   log: PluginWorkerLogSink
   readyTimeoutMs?: number

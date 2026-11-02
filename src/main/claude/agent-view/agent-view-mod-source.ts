@@ -82,7 +82,7 @@ export function register(on) {
     configDir = await $.env.get('CLAUDE_CONFIG_DIR') || await $.env.get('ORCA_CLAUDE_CONFIG_DIR')
     if (!configDir) return result
     endedSessionId = undefined
-    await $.command.register({ name: 'orca-agent-view', description: 'Open the agent selected in Orca', immediate: true })
+    await $.command.register({ name: 'orca-agent-view', description: 'Open the agent selected in Wakii', immediate: true })
     void announce($)
     $.clock.every(5000, () => announce($))
     return result

@@ -10,12 +10,12 @@ function getUserDataDir(): string {
   }
   const home = homedir()
   if (platform() === 'darwin') {
-    return join(home, 'Library', 'Application Support', 'Orca')
+    return join(home, 'Library', 'Application Support', 'Wakii')
   }
   if (platform() === 'win32') {
-    return join(process.env.APPDATA ?? home, 'Orca')
+    return join(process.env.APPDATA ?? home, 'Wakii')
   }
-  return join(home, '.config', 'Orca')
+  return join(home, '.config', 'Wakii')
 }
 
 export function getLogsDirectory(): string {

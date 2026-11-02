@@ -229,7 +229,7 @@ export function mockEditorHost(
   run(frameWindow, frameDocument, { language: options.locale ?? 'en-US' })
   const orca: unknown = Object.getOwnPropertyDescriptor(frameWindow, 'orca')?.value
   if (!isMockEditorFrameApi(orca)) {
-    throw new Error('orca/testing: the frame shell did not define window.orca')
+    throw new Error('orca/testing: the frame shell did not define window.wakii')
   }
   Object.defineProperty(globalThis, 'orca', { value: orca, configurable: true, writable: true })
 

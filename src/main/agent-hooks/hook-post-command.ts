@@ -14,7 +14,7 @@ export function buildPosixAgentHookPostCommand(
   const indent = options.indent ?? '  '
   // Names the decision format the script prints; absent, Orca never waits on plugins.
   const decision = options.decisionHeaderVar
-    ? [`  ${indent}-H "X-Orca-Hook-Decision: \${${options.decisionHeaderVar}:-}" \\`]
+    ? [`  ${indent}-H "X-Wakii-Hook-Decision: \${${options.decisionHeaderVar}:-}" \\`]
     : []
   return [
     `if [ "\${ORCA_AGENT_HOOK_TRANSPORT:-}" = "${ORCA_HOOK_RAW_JSON_TRANSPORT}" ] && command -v base64 >/dev/null 2>&1 && command -v tr >/dev/null 2>&1; then`,
@@ -25,9 +25,9 @@ export function buildPosixAgentHookPostCommand(
     `  ${indent}--noproxy "127.0.0.1" \\`,
     `  ${indent}-H "Content-Type: application/json" \\`,
     `  ${indent}-H "X-Orca-Agent-Hook-Token: \${ORCA_AGENT_HOOK_TOKEN}" \\`,
-    `  ${indent}-H "X-Wakii-Agent-Hook-Meta-Encoding: base64" \\`,
-    `  ${indent}-H "X-Wakii-Agent-Hook-Meta: \${orca_hook_metadata}" \\`,
-    `  ${indent}-H "X-Orca-Agent-Process: \${orca_agent_process:-}" \\`,
+    `  ${indent}-H "X-Orca-Agent-Hook-Meta-Encoding: base64" \\`,
+    `  ${indent}-H "X-Orca-Agent-Hook-Meta: \${orca_hook_metadata}" \\`,
+    `  ${indent}-H "X-Wakii-Agent-Process: \${orca_agent_process:-}" \\`,
     ...decision,
     `  ${indent}--data-binary @-`,
     'else',

@@ -49,7 +49,7 @@ export function openWritableProfileStateDatabase(
     opened.db.close()
     throw new ProfileStateDatabaseOpenError(
       'newer-schema',
-      'This profile requires a newer version of Orca'
+      'This profile requires a newer version of Wakii'
     )
   }
   return opened

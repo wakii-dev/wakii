@@ -302,13 +302,13 @@ describe('agent model visibility across persisted UI consumers', () => {
           () => ui.get(),
           () => ui.recordFeatureInteraction(FEATURE_INTERACTION_IDS[0])
         ]) {
-          window.localStorage.setItem('orca.web.ui.v1', JSON.stringify({ showAgentModels: local }))
+          window.localStorage.setItem('wakii.web.ui.v1', JSON.stringify({ showAgentModels: local }))
           const snapshot = await read()
           expect(snapshot.sidebarWidth).toBe(365)
           act(() => useAppStore.getState().hydratePersistedUI(snapshot))
           expectVisibleModels(local !== false)
           expect(
-            JSON.parse(window.localStorage.getItem('orca.web.ui.v1') ?? '{}').showAgentModels
+            JSON.parse(window.localStorage.getItem('wakii.web.ui.v1') ?? '{}').showAgentModels
           ).toBe(local !== false)
         }
       }

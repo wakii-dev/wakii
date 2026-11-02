@@ -191,7 +191,7 @@ export function requireActiveEnvironment(): StoredWebRuntimeEnvironment {
   webRuntimeState.activeEnvironment =
     webRuntimeState.activeEnvironment ?? readStoredWebRuntimeEnvironment()
   if (!webRuntimeState.activeEnvironment) {
-    throw new Error('Pair this web client with an Wakii server first.')
+    throw new Error('Pair this web client with a Wakii server first.')
   }
   return webRuntimeState.activeEnvironment
 }

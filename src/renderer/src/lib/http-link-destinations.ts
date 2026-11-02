@@ -94,7 +94,7 @@ export function httpLinkDirectClickDestination(
 export function httpLinkDestinationLabel(destination: HttpLinkDestination): string {
   return destination === 'orca'
     ? translate(
-        'auto.components.terminal.pane.TerminalLinkActionPopover.orcaBrowser',
+        'auto.components.terminal.pane.TerminalLinkActionPopover.wakiiBrowser',
         'Wakii Browser'
       )
     : translate(

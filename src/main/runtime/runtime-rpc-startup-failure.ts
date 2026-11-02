@@ -107,7 +107,7 @@ function createRuntimeRpcStartupFailureDialogOptions(error: unknown): MessageBox
     ),
     detail: translateMain(
       'runtimeRpc.startupFailure.detail',
-      'Wakii will continue to work, but commands such as orca status, orca terminal, and orchestration are unavailable for this session.\n\n{{guidance}}\n\nCause: {{cause}}',
+      'Wakii will continue to work, but commands such as wakii status, orca terminal, and orchestration are unavailable for this session.\n\n{{guidance}}\n\nCause: {{cause}}',
       { cause, guidance: translateMain(key, fallback) }
     )
   }

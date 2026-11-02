@@ -1,6 +1,6 @@
 export function getStatusPluginEndpointSource(): string[] {
   return [
-    "// Warn once per plugin process; Orca's own warning guards live in a different process.",
+    "// Warn once per plugin process; Wakii's own warning guards live in a different process.",
     'let warnedBadEndpoint = false;',
     '',
     '// Stat before parsing each post: streaming parts are frequent, endpoint rewrites are rare.',
@@ -46,7 +46,7 @@ export function getStatusPluginEndpointSource(): string[] {
     '}',
     '',
     'function resolveHookCoords() {',
-    '  // Prefer endpoint files: inherited environment coordinates become stale after Orca restarts.',
+    '  // Prefer endpoint files: inherited environment coordinates become stale after Wakii restarts.',
     '  const fileEnv = readEndpointFile() || {};',
     '  return {',
     '    port: fileEnv.ORCA_AGENT_HOOK_PORT || process.env.ORCA_AGENT_HOOK_PORT,',

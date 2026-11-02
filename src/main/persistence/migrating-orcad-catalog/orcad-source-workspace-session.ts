@@ -55,7 +55,7 @@ export type OrcadMigrationSourceWorkspaceSessionInspection = {
   leftBehindItems: string[]
 }
 
-const UNREADABLE_SESSION = 'saved tabs Orca could not read'
+const UNREADABLE_SESSION = 'saved tabs Wakii could not read'
 
 /** Unrecognized session shapes block the move rather than failing connection. */
 export function collectOrcadMigrationSourceWorkspaceSession(

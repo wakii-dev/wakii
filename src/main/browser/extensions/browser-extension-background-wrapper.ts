@@ -58,7 +58,7 @@ export function withBrowserExtensionApiConnectSource(policy: string): string {
 }
 
 /**
- * Points the extension's background worker at an Orca wrapper that loads Orca's API shim first,
+ * Points the extension's background worker at a Wakii wrapper that loads Wakii's API shim first,
  * then the extension's own script, untouched. Returns null when there is no worker to wrap.
  * Why beside the original: relative importScripts in a classic worker resolve against the
  * worker's own URL, so the wrapper must live in the same folder.
@@ -67,7 +67,7 @@ export function buildBrowserExtensionBackgroundWrapper(
   manifest: Manifest
 ): BrowserExtensionBackgroundWrapper | null {
   if (manifest.manifest_version !== 3) {
-    throw new Error('Orca supports Manifest V3 extensions only')
+    throw new Error('Wakii supports Manifest V3 extensions only')
   }
   const background = asRecord(manifest.background)
   const worker = background?.service_worker
@@ -107,6 +107,6 @@ export function buildBrowserExtensionBackgroundWrapper(
         : {})
     },
     wrapperPath,
-    wrapperSource: `// Written by Orca: its chrome.* additions, then this extension's own worker.\n${load}`
+    wrapperSource: `// Written by Wakii: its chrome.* additions, then this extension's own worker.\n${load}`
   }
 }

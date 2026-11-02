@@ -35,7 +35,7 @@ const FAILURE_REASONS: Partial<Record<UsageRateLimitFailureKind, string>> = {
 }
 
 const UNSUPPORTED_USAGE_COMMAND_REASON =
-  'Antigravity usage is not available. This version of the Antigravity CLI answers `/usage` as a prompt instead of a command, so Orca stopped asking rather than spend quota on it. Update `agy` and restart Orca.'
+  'Antigravity usage is not available. This version of the Antigravity CLI answers `/usage` as a prompt instead of a command, so Wakii stopped asking rather than spend quota on it. Update `agy` and restart Wakii.'
 
 // Latch unsupported after any model-turn response: discovering unsupported /usage spends quota, so never retry it for process lifetime.
 let usageCommandUnsupported = false

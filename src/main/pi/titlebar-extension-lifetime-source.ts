@@ -1,7 +1,7 @@
 export function getPiTitlebarLifetimeSourceLines(): string[] {
   return [
     '  // Factories share the process realm; retire old ownership before painting.',
-    "  const ownersKey = Symbol.for('orca.pi.titlebar.owners')",
+    "  const ownersKey = Symbol.for('wakii.pi.titlebar.owners')",
     '  const owners = globalThis[ownersKey] ??= new Map()',
     '  const paneKey = process.env.ORCA_PANE_KEY',
     '  let disposed = false',

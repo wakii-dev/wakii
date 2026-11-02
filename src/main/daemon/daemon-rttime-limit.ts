@@ -25,6 +25,6 @@ export function warnWhenRealtimeTimeoutIsZero(
     hint:
       'Terminals inherit a zero RLIMIT_RTTIME, so the kernel may kill their jobs (exit 137 or 152). ' +
       'Installing and enabling RealtimeKit (rtkit), then rebooting, often restores a nonzero limit; ' +
-      'if this keeps appearing, check the launcher, desktop session, or systemd unit (LimitRTTIME) that starts Orca.'
+      'if this keeps appearing, check the launcher, desktop session, or systemd unit (LimitRTTIME) that starts Wakii.'
   })
 }

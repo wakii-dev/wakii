@@ -260,7 +260,7 @@ function committedRefusal(): OrcadMigrationAbortResult {
   return {
     outcome: 'refused',
     code: 'orcad_migration_committed_source_cannot_be_released',
-    reason: 'This host’s Orca server already holds this migration; it can only move forward.'
+    reason: 'This host’s Wakii server already holds this migration; it can only move forward.'
   }
 }
 

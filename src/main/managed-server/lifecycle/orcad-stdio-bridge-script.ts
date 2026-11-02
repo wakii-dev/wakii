@@ -4,10 +4,10 @@ import { orcadPosixNodeRuntimeGlobs } from '../install/orcad-node-runtime-globs'
 
 export type OrcadStdioBridgeMode = 'raw' | 'base64'
 
-export const ORCAD_STDIO_BRIDGE_READY = 'ORCA-STDIO-BRIDGE READY'
+export const ORCAD_STDIO_BRIDGE_READY = 'WAKII-STDIO-BRIDGE READY'
 // Refused server ports do not mean the bridge runtime is missing.
-export const ORCAD_STDIO_BRIDGE_REFUSED = 'ORCA-STDIO-BRIDGE REFUSED'
-export const ORCAD_STDIO_BRIDGE_NO_NODE = 'ORCA-STDIO-BRIDGE NO_NODE'
+export const ORCAD_STDIO_BRIDGE_REFUSED = 'WAKII-STDIO-BRIDGE REFUSED'
+export const ORCAD_STDIO_BRIDGE_NO_NODE = 'WAKII-STDIO-BRIDGE NO_NODE'
 const HALF_CLOSE_GRACE_MS = 30_000
 
 const text = JSON.stringify

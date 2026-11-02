@@ -106,7 +106,7 @@ export async function shootPluginEditor(
   if (acts && deps.windowShown()) {
     throw new PluginCliError('invalid_argument', PLUGIN_SHOT_ACT_WINDOW_SHOWN_MESSAGE, {
       reason: 'window_shown',
-      nextSteps: ['Minimize or hide Orca, then run this again.']
+      nextSteps: ['Minimize or hide Wakii, then run this again.']
     })
   }
   const { colorScheme, themeReason } = pluginShotThemeDecision(
@@ -157,7 +157,7 @@ export async function shootPluginEditor(
       }
       const drawn = reply.panel
       if (!drawn) {
-        throw new Error('Orca did not report where the editor is drawn.')
+        throw new Error('Wakii did not report where the editor is drawn.')
       }
       // The guest isolates its own page, so its painting is kept awake here too.
       const guest = drawn.guestUrl

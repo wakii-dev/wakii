@@ -80,12 +80,12 @@ async function continueUnreadMail(
         runtime,
         db,
         dispatchId,
-        'Orca restarted while its follow-up was starting'
+        'Wakii restarted while its follow-up was starting'
       )
       return
     }
     // Interrupted before it placed an agent, so nothing runs and the start can be retried.
-    db.failWorkerStart(dispatchId, worker.stage, 'Orca restarted before this follow-up started.')
+    db.failWorkerStart(dispatchId, worker.stage, 'Wakii restarted before this follow-up started.')
   }
   if (custodyOf(db, dispatchId) === 'reported' && !hasNewUnreadFollowUpMail(db, dispatchId)) {
     // Kept marked, so the coordinator's next send carries it; another short Task would only repeat this one.
@@ -235,7 +235,7 @@ function noticeUnreadMailNotContinued(
       mailbox: () => dispatchReportMailbox(db, dispatch),
       describe: (task) => ({
         subject: 'Mail did not reach the finished worker',
-        body: `Orca could not continue the worker of ${task} with the mail it had not read before reporting: ${reason}. The mail is kept for your next send to dispatch:${dispatchId}.`
+        body: `Wakii could not continue the worker of ${task} with the mail it had not read before reporting: ${reason}. The mail is kept for your next send to dispatch:${dispatchId}.`
       }),
       payload: { dispatchId, reason }
     },

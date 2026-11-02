@@ -309,7 +309,7 @@ function AgentCapabilitySetupControls(props: {
             {props.setupBusyLabel ??
               (props.installAction?.kind === 'replace'
                 ? translate(
-                    'auto.components.settings.AgentSkillSetupPanel.replaceWithOrcaCopy',
+                    'auto.components.settings.AgentSkillSetupPanel.replaceWithWakiiCopy',
                     "Replace with Orca's copy"
                   )
                 : props.installAction?.kind === 'run' && props.installAction.changes

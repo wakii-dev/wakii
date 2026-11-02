@@ -24,7 +24,7 @@ export type AutomationRunTerminalObserver = {
 
 export function describeStrandedAutomationRun(run: AutomationRun): string {
   if (run.status === 'pending') {
-    return 'Orca stopped before this manual run could launch.'
+    return 'Wakii stopped before this manual run could launch.'
   }
   if (run.status === 'dispatching') {
     return 'Wakii stopped before this run reported that its agent started.'

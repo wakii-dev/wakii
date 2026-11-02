@@ -40,7 +40,7 @@ export const ORCHESTRATION_CALLER_METHODS = [
       if (!isOrcaSessionId(params.sessionId)) {
         throw new OrchestrationError(
           CODES.unknown,
-          `${params.sessionId} is not an Orca session ID.`,
+          `${params.sessionId} is not a Wakii session ID.`,
           { effectsApplied: false }
         )
       }

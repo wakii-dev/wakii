@@ -159,7 +159,7 @@ export function describeOversizedOrcadMigrationPayload(
     .slice(0, 3)
     .map(({ words, bytes }) => `${words} (${formatKib(bytes)})`)
   return (
-    `This SSH host's saved state is too large to move to its Orca server (limit ` +
+    `This SSH host's saved state is too large to move to its Wakii server (limit ` +
     `${formatKib(limitBytes)}). Largest parts: ${largest.join(', ')}. ` +
     `Close tabs you no longer need or remove unused projects for this host, then reconnect. ` +
     `(${ORCAD_MIGRATION_MANIFEST_TOO_LARGE})`

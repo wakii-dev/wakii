@@ -296,7 +296,7 @@ export class ManagedDataAccountService {
       lstatSync(path).isSymbolicLink() ||
       !realpathSync(path).startsWith(realpathSync(this.root) + sep)
     ) {
-      throw new Error('Managed account path is outside Orca account storage.')
+      throw new Error('Managed account path is outside Wakii account storage.')
     }
   }
 

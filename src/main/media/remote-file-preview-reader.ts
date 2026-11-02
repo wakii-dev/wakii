@@ -9,7 +9,7 @@ const STAT_TIMEOUT_MS = 15_000
 const READ_CHUNK_TIMEOUT_MS = 20_000
 
 export const REMOTE_PREVIEW_UPDATE_REQUIRED_MESSAGE =
-  'Previewing this file requires a newer Orca on the paired machine. Update it and try again.'
+  'Previewing this file requires a newer Wakii on the paired machine. Update it and try again.'
 
 /** The pairing that minted a grant is gone; the grant can never answer again. */
 export class RemotePreviewPairingChangedError extends Error {}

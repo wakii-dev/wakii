@@ -69,7 +69,7 @@ function fixtureInstallerOptions(fixture: Awaited<ReturnType<typeof createPrivil
     isPackaged: false,
     userDataPath: fixture.userDataPath,
     appPath: fixture.appPath,
-    execPath: '/Applications/Orca.app/Contents/MacOS/Orca',
+    execPath: '/Applications/Wakii.app/Contents/MacOS/Wakii',
     commandPathOverride: fixture.commandPath,
     processPathEnv: fixture.protectedDirectory
   }
@@ -143,7 +143,7 @@ describe.skipIf(process.platform !== 'darwin' || process.getuid?.() === 0)(
       const oldCliPath = join(fixture.root, 'old', 'out', 'cli', 'index.js')
       await writeFile(
         fixture.commandPath,
-        buildUnixCliLauncher('/Applications/Old.app/Contents/MacOS/Orca', oldCliPath, 'user-data')
+        buildUnixCliLauncher('/Applications/Old.app/Contents/MacOS/Wakii', oldCliPath, 'user-data')
       )
       const foreignContent = 'foreign command written into the inspected inode'
       let raced = false
@@ -216,7 +216,7 @@ describe.skipIf(process.platform !== 'darwin' || process.getuid?.() === 0)(
 
     it('repairs an unreadable link to an older Orca launcher through the transaction', async () => {
       const fixture = await createPrivilegedFixture()
-      await symlink('/Applications/Old Orca.app/Contents/Resources/bin/orca', fixture.commandPath)
+      await symlink('/Applications/Old Wakii.app/Contents/Resources/bin/orca', fixture.commandPath)
       await lchmod(fixture.commandPath, 0o300)
       const commands: string[] = []
       const installer = new CliInstaller({

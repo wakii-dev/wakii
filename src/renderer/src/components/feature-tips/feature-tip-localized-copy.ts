@@ -18,12 +18,12 @@ const getFeatureTipCopyById = createLocalizedCatalog(
     },
     'orca-cli': {
       eyebrow: translate('featureTips.eyebrowTip', 'Tip'),
-      title: translate('featureTips.orcaCli.title', 'Let agents drive Orca with the Orca CLI'),
+      title: translate('featureTips.wakiiCli.title', 'Let agents drive Orca with the Orca CLI'),
       description: translate(
-        'featureTips.orcaCli.description',
+        'featureTips.wakiiCli.description',
         'Enable agents to coordinate child worktrees and communicate between worktrees.'
       ),
-      ctaLabel: translate('featureTips.orcaCli.cta', 'Install CLI & Skills')
+      ctaLabel: translate('featureTips.wakiiCli.cta', 'Install CLI & Skills')
     },
     'cmd-j-palette': {
       eyebrow: translate('featureTips.eyebrowTip', 'Tip'),

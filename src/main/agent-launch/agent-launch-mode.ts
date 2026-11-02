@@ -70,7 +70,7 @@ const DOWNGRADE_DETAIL: Record<AgentLaunchDowngradeReason, string> = {
   codex_on_windows: 'Codex has no structured session on Windows',
   structured_unsupported_on_host: 'the execution host cannot create one here',
   chat_runtime_not_installed:
-    "its chat runtime isn't installed on this host (install it from a new chat tab in Orca)"
+    "its chat runtime isn't installed on this host (install it from a new chat tab in Wakii)"
 }
 
 const BLOCKER_REASON: Record<StructuredNativeChatBlocker, AgentLaunchDowngradeReason> = {

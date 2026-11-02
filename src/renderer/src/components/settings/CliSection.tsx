@@ -154,7 +154,7 @@ export function CliSection({
         </h2>
         <p className="text-xs text-muted-foreground">
           {translate(
-            'auto.components.settings.CliSection.outsideOrcaDescription',
+            'auto.components.settings.CliSection.outsideWakiiDescription',
             'Wakii terminals already have `orca`. Turn this on to use `orca` from other terminals outside Wakii.'
           )}
         </p>

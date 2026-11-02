@@ -92,7 +92,7 @@ function changeSetting(
   value: { value: unknown } | null
 ): void {
   if (!(setting in CONTROLLABLE_DEFAULTS)) {
-    throw new BrowserExtensionApiError(`${setting} cannot be changed in Orca`)
+    throw new BrowserExtensionApiError(`${setting} cannot be changed in Wakii`)
   }
   const before = readProfile(caller)
   getBrowserExtensionProfileStateStore().update(

@@ -37,7 +37,7 @@ function operationError(status: string): string {
       )
     : translate(
         'auto.components.skills.SkillShareDialog.unconfigured',
-        'Connect an Wakii Cloud account before sharing.'
+        'Connect a Wakii Cloud account before sharing.'
       )
 }
 

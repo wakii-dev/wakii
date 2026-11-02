@@ -45,7 +45,7 @@ async function wakeStoppedManagedOrcadForTunnel(input: OrcadTunnelPortInput): Pr
     await wakeStoppedManagedOrcad(managedOrcadSlot(context, access.remotePort))
   } catch (error) {
     // Failed wake does not settle identity; reread and validate the resulting forward.
-    console.warn('[ssh] Could not start the managed Orca server behind a foreign answer:', error)
+    console.warn('[ssh] Could not start the managed Wakii server behind a foreign answer:', error)
   }
 }
 
@@ -112,7 +112,7 @@ export async function forwardToVerifiedOrcad(
       if (identity.verdict === 'unreachable') {
         // Unreachable servers may be down or starting; this is not proof of a foreign server.
         console.warn(
-          `[ssh] Managed Orca server did not answer through its tunnel: ${identity.detail}`
+          `[ssh] Managed Wakii server did not answer through its tunnel: ${identity.detail}`
         )
       }
       return forward
@@ -145,7 +145,7 @@ async function addCurrentForward(
   )
   if (args.localPort !== 0 && forward.localPort !== args.localPort) {
     await args.forwards.removeForwardAndWait(forward.id)
-    throw new Error('Managed Orca tunnel bound an unexpected local port.')
+    throw new Error('Managed Wakii tunnel bound an unexpected local port.')
   }
   if (!args.stillCurrent()) {
     await args.forwards.removeForwardAndWait(forward.id)

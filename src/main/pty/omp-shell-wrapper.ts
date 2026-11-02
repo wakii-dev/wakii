@@ -37,7 +37,7 @@ const OMP_SUBCOMMANDS = [
 
 export function getPosixOmpShellWrapper(): string {
   const subcommands = OMP_SUBCOMMANDS.map((value) => `'${value}'`).join('|')
-  return `# Why: OMP does not auto-load Orca's managed status extension; wrap only
+  return `# Why: OMP does not auto-load Wakii's managed status extension; wrap only
 # interactive launch invocations so subcommands such as \`omp config\` keep
 # their normal argv shape.
 __orca_omp_should_skip_extension() {
@@ -103,7 +103,7 @@ fi
 
 export function getPowerShellOmpShellWrapper(): string {
   const subcommands = OMP_SUBCOMMANDS.map((value) => `'${value}'`).join(', ')
-  return `# Why: OMP does not auto-load Orca's managed status extension; wrap only
+  return `# Why: OMP does not auto-load Wakii's managed status extension; wrap only
 # interactive launch invocations so subcommands such as \`omp config\` keep
 # their normal argv shape.
 function Global:__OrcaOmpShouldSkipExtension {

@@ -4,19 +4,19 @@ import { translateSearchKeyword } from './settings-search-keywords'
 
 export const getOrcaAccountSettingsSearchEntries = createLocalizedCatalog(() => [
   {
-    title: translate('auto.components.settings.orcaAccount.account', 'Wakii account'),
+    title: translate('auto.components.settings.wakiiAccount.account', 'Wakii account'),
     description: translate(
-      'auto.components.settings.orcaAccount.searchDescription',
+      'auto.components.settings.wakiiAccount.searchDescription',
       'Sign in or out of the account used by Artifacts and Wakii Relay.'
     ),
     keywords: [
-      ...translateSearchKeyword('auto.components.settings.orcaAccount.keywordAccount', 'account'),
-      ...translateSearchKeyword('auto.components.settings.orcaAccount.keywordLogin', 'login'),
-      ...translateSearchKeyword('auto.components.settings.orcaAccount.keywordLogout', 'logout'),
-      ...translateSearchKeyword('auto.components.settings.orcaAccount.keywordSignIn', 'sign in'),
-      ...translateSearchKeyword('auto.components.settings.orcaAccount.keywordSignOut', 'sign out'),
-      ...translateSearchKeyword('auto.components.settings.orcaAccount.keywordRelay', 'relay'),
-      ...translateSearchKeyword('auto.components.settings.orcaAccount.keywordCloud', 'cloud')
+      ...translateSearchKeyword('auto.components.settings.wakiiAccount.keywordAccount', 'account'),
+      ...translateSearchKeyword('auto.components.settings.wakiiAccount.keywordLogin', 'login'),
+      ...translateSearchKeyword('auto.components.settings.wakiiAccount.keywordLogout', 'logout'),
+      ...translateSearchKeyword('auto.components.settings.wakiiAccount.keywordSignIn', 'sign in'),
+      ...translateSearchKeyword('auto.components.settings.wakiiAccount.keywordSignOut', 'sign out'),
+      ...translateSearchKeyword('auto.components.settings.wakiiAccount.keywordRelay', 'relay'),
+      ...translateSearchKeyword('auto.components.settings.wakiiAccount.keywordCloud', 'cloud')
     ]
   }
 ])

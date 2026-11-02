@@ -6,11 +6,11 @@ import type { OrcadPeerMachine } from './orcad-lock-holder-locality'
 import { currentLinuxBootStartedAtMs } from '../persistence/profile-state/profile-state-access-identity'
 
 const CLONE_MACHINE_ID_HINT =
-  'Machines cloned from one image share /etc/machine-id, so Orca cannot tell them apart. If the Orca ' +
+  'Machines cloned from one image share /etc/machine-id, so Wakii cannot tell them apart. If the Wakii ' +
   'on the clone crashed, a normal start takes over once its lock goes 5 minutes without a heartbeat. ' +
   'On the clone, run `sudo rm /etc/machine-id && sudo systemd-machine-id-setup` and reboot it.'
 const CLONE_OWN_DATA_HINT =
-  'Or, on that machine only, give Orca its own data: for Orca-managed SSH servers set ' +
+  'Or, on that machine only, give Wakii its own data: for Wakii-managed SSH servers set ' +
   `${ORCA_MACHINE_NAME_ENV} where its non-interactive SSH logins read it (~/.zshenv, or above the ` +
   'interactive check in ~/.bashrc), guarded by a test that matches only that machine, since a ' +
   'shared home applies it everywhere; for `orca serve` set ORCA_USER_DATA.'

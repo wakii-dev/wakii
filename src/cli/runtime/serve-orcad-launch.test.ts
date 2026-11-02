@@ -17,8 +17,8 @@ function answering(stdout: string, code = 0): RunProcess {
 }
 
 const options = {
-  executable: '/Applications/Orca.app/Contents/MacOS/Orca',
-  appRoot: '/Applications/Orca.app/Contents/Resources/app.asar',
+  executable: '/Applications/Wakii.app/Contents/MacOS/Orca',
+  appRoot: '/Applications/Wakii.app/Contents/Resources/app.asar',
   userDataPath: '/Users/u/Library/Application Support/orca',
   usesMacUpdateHandoff: false
 }

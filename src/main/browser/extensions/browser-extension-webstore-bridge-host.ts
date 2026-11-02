@@ -138,7 +138,7 @@ async function dispatch(
       // Why: the store only asks to enable; turning extensions on or off stays in Settings.
       return enabled && isBrowserExtensionEnabledInProfile(frame.profileId, extensionId)
         ? {}
-        : { error: 'Turn extensions on or off in Orca Settings' }
+        : { error: 'Turn extensions on or off in Wakii Settings' }
     }
   }
 }

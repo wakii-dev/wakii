@@ -88,7 +88,7 @@ async function createWorktreeRunnerScript(args: {
       : undefined
   // Linked worktrees have .git files; resolve the per-worktree gitdir through Git.
   const runnerExtension = runnerShell.family === 'cmd' ? 'cmd' : 'sh'
-  const gitRelPath = `orca/${runnerBaseName}.${runnerExtension}`
+  const gitRelPath = `wakii/${runnerBaseName}.${runnerExtension}`
   // Read the link with the D1c Git router (if WSL Git made the worktree, host Git can't). A worktree
   // inside a distro never runs synchronous Git: that would be a synchronous wsl.exe on the main thread.
   const fromLink = isWslPath(worktreePath)

@@ -116,7 +116,7 @@ describe('marketplace provenance contracts', () => {
     ['stablyai.skills', true, true],
     ['community.orca-skills', true, false],
     ['community.skills', false, false],
-    ['orca.skills', true, false],
+    ['wakii.skills', true, false],
     ['orca-labs.skills', true, false],
     ['openai.skills', true, false],
     ['github.skills', true, false],

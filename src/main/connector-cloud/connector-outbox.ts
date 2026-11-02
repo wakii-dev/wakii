@@ -196,7 +196,7 @@ export class ConnectorOutboxSender<T> {
   private dropped(item: T | null): void {
     if (item !== null && !this.warned) {
       this.warned = true
-      console.warn('[connector] Orca Cloud refused an item that cannot be sent; dropped it')
+      console.warn('[connector] Wakii Cloud refused an item that cannot be sent; dropped it')
     }
   }
 

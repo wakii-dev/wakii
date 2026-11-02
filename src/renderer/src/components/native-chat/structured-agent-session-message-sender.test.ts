@@ -211,14 +211,16 @@ describe('structured agent session message sender', () => {
 
   it('gives back at once, with its own words, a send this client and the server cannot talk on', async () => {
     const blocked = Object.assign(
-      new Error('The selected Orca server is too old for this client. Update Orca on the server.'),
+      new Error(
+        'The selected Wakii server is too old for this client. Update Wakii on the server.'
+      ),
       { code: 'runtime_compat_block' }
     )
     mocks.compatible.mockRejectedValue(blocked)
     const a = send('a', { target: { kind: 'environment', environmentId: 'env-1' } })
     expect(await a.outcome).toBe('returned')
     const notice = getStructuredAgentSessionSendNotice(SESSION) ?? ''
-    expect(notice).toContain('The selected Orca server is too old for this client.')
+    expect(notice).toContain('The selected Wakii server is too old for this client.')
     expect(notice).toContain('was not sent')
     expect(notice).not.toContain("couldn't reach")
     expect(mocks.compatible).toHaveBeenCalledOnce()
@@ -268,7 +270,7 @@ describe('structured agent session message sender', () => {
     const a = send('a')
     expect(await a.outcome).toBe('returned')
     expect(getStructuredAgentSessionSendNotice(SESSION)).toContain(
-      "Orca couldn't open this chat's history right now."
+      "Wakii couldn't open this chat's history right now."
     )
     await vi.advanceTimersByTimeAsync(STRUCTURED_AGENT_SESSION_SEND_BUDGET_MS)
     expect(mocks.call.mock.calls.map((call) => call[1])).toEqual(['agentSession.history'])
@@ -292,9 +294,9 @@ describe('structured agent session message sender', () => {
     const a = send('a')
     expect(await a.outcome).toBe('unconfirmed')
     const notice = getStructuredAgentSessionSendNotice(SESSION) ?? ''
-    expect(notice).toContain("Orca couldn't confirm your message reached the agent")
+    expect(notice).toContain("Wakii couldn't confirm your message reached the agent")
     expect(notice.length).toBeGreaterThan(
-      "Orca couldn't confirm your message reached the agent. Check the chat, then send it again if needed."
+      "Wakii couldn't confirm your message reached the agent. Check the chat, then send it again if needed."
         .length
     )
     expect(notice).not.toContain('was not sent')
@@ -463,7 +465,7 @@ describe('structured agent session message sender', () => {
     mocks.call.mockRejectedValueOnce(new Error('connection closed'))
     expect(await send('a').outcome).toBe('unconfirmed')
     const line = getStructuredAgentSessionSendNotice(SESSION)
-    expect(line).toContain("Orca couldn't confirm your message reached the agent")
+    expect(line).toContain("Wakii couldn't confirm your message reached the agent")
     mocks.call.mockResolvedValue(refusedSend)
     expect(await send('notes', { callerKeepsText: true }).outcome).toBe('returned')
     expect(getStructuredAgentSessionSendNotice(SESSION)).toBe(line)
@@ -481,7 +483,7 @@ describe('structured agent session message sender', () => {
     expect(await send('a').outcome).toBe('returned')
     const notice = getStructuredAgentSessionSendNotice(SESSION) ?? ''
     expect(notice).toContain(
-      "Orca couldn't confirm whether the conversation went back to an earlier message."
+      "Wakii couldn't confirm whether the conversation went back to an earlier message."
     )
     expect(notice).toContain('Your message was not sent.')
     expect(notice).not.toContain('Check the chat')
@@ -510,7 +512,7 @@ describe('structured agent session message sender', () => {
     expect(phases()).toEqual([])
     expect(mocks.handBack).toHaveBeenCalledTimes(1)
     expect(getStructuredAgentSessionSendNotice(SESSION)).toContain(
-      "Orca couldn't confirm your message reached the agent"
+      "Wakii couldn't confirm your message reached the agent"
     )
     await vi.advanceTimersByTimeAsync(STRUCTURED_AGENT_SESSION_SEND_BUDGET_MS * 2)
     expect(sendCalls()).toBe(1)
@@ -551,7 +553,7 @@ describe('structured agent session message sender', () => {
       const a = send('a')
       expect(await a.outcome).toBe('unconfirmed')
       expect(getStructuredAgentSessionSendNotice(SESSION)).toContain(
-        "Orca couldn't confirm your message reached the agent"
+        "Wakii couldn't confirm your message reached the agent"
       )
     }
   )
@@ -624,7 +626,7 @@ describe('structured agent session message sender', () => {
     calls[0].reject(new Error('timeout'))
     expect(await a.outcome).toBe('unconfirmed')
     expect(getStructuredAgentSessionSendNotice(SESSION)).toContain(
-      "Orca couldn't confirm your message reached the agent. Check the chat"
+      "Wakii couldn't confirm your message reached the agent. Check the chat"
     )
     await vi.advanceTimersByTimeAsync(STRUCTURED_AGENT_SESSION_SEND_BUDGET_MS * 2)
     expect(sendCalls()).toBe(1)
@@ -836,7 +838,7 @@ describe('a send whose fate is unknown never freezes the chat', () => {
     const a = send('a')
     expect(await a.outcome).toBe('unconfirmed')
     expect(getStructuredAgentSessionSendNotice(SESSION)).toContain(
-      "Orca couldn't confirm your message reached the agent. Check the chat"
+      "Wakii couldn't confirm your message reached the agent. Check the chat"
     )
     const calls = deferredCalls()
     send('b')

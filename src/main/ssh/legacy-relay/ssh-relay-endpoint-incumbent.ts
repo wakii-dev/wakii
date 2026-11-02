@@ -36,8 +36,8 @@ export type RelayEndpointIncumbent = {
   holdersEnumerable: boolean
 }
 
-const PROBE_BEGIN = 'ORCA-INCUMBENT-BEGIN'
-const PROBE_END = 'ORCA-INCUMBENT-END'
+const PROBE_BEGIN = 'WAKII-INCUMBENT-BEGIN'
+const PROBE_END = 'WAKII-INCUMBENT-END'
 const CONNECT_PROBE_TIMEOUT_MS = 1000
 
 // Use ES5 for host-provided Node runtimes.

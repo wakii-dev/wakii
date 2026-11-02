@@ -71,7 +71,7 @@ function useComposedJiraListState() {
 afterEach(() => {
   cleanup()
   useAppStore.setState(originalState, true)
-  localStorage.removeItem('orca.jira.has-workspace.v1')
+  localStorage.removeItem('wakii.jira.has-workspace.v1')
 })
 beforeEach(() => {
   vi.resetAllMocks()
@@ -223,7 +223,7 @@ describe('repository-scoped Jira Tasks', () => {
   })
 
   it('keeps linked mode, saved filters, and the project override in the composed list state', async () => {
-    localStorage.removeItem('orca.jira.has-workspace.v1')
+    localStorage.removeItem('wakii.jira.has-workspace.v1')
     useAppStore.setState({
       settings: null,
       repos: [repo],

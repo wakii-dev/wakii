@@ -230,7 +230,7 @@ export const PLUGIN_METHODS = [
       const service = requirePluginService()
       await service.whenReady()
       if (!pluginFrameDevToolsForRpc) {
-        throw new Error('Plugin frame DevTools are only available in the Orca desktop app')
+        throw new Error('Plugin frame DevTools are only available in the Wakii desktop app')
       }
       return { pluginKey: params.pluginKey, opened: pluginFrameDevToolsForRpc(params.pluginKey) }
     }

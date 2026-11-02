@@ -296,7 +296,7 @@ export abstract class OrcaRuntimeWithResolveWorktreeRemovalTarget extends OrcaRu
     }
     const { leaf } = this.getLiveLeafForHandle(handle)
     if (!this.getAvailableAuthoritativeWindow() || !this.notifier?.setPaneTitle) {
-      throw new Error('Pane titles require a running Orca desktop with set-pane-title support')
+      throw new Error('Pane titles require a running Wakii desktop with set-pane-title support')
     }
     const normalizedTitle = title?.trim() || null
     if (!this.notifier.setPaneTitle(leaf.tabId, leaf.leafId, normalizedTitle)) {

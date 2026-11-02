@@ -136,7 +136,7 @@ export class ChromeWebStoreInstallFlow {
       return { value: 'manifest_error', error: 'Invalid manifest' }
     }
     if ('theme' in manifest || 'app' in manifest) {
-      return { value: 'unsupported_extension_type', error: 'Orca can install extensions only' }
+      return { value: 'unsupported_extension_type', error: 'Wakii can install extensions only' }
     }
     if (isDeprecatedManifestVersion(manifest)) {
       return { value: 'manifest_error', error: 'Manifest version 2 is no longer supported' }

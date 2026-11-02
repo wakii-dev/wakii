@@ -88,7 +88,7 @@ export const createOrcaProfilesSlice: StateCreator<AppState, [], [], OrcaProfile
     } catch (err) {
       console.error('Failed to create Wakii profile:', err)
       toast.error(
-        translate('auto.store.slices.orca.profiles.612f7f6861', 'Failed to create profile'),
+        translate('auto.store.slices.wakii.profiles.612f7f6861', 'Failed to create profile'),
         {
           description: err instanceof Error ? err.message : String(err)
         }
@@ -115,7 +115,7 @@ export const createOrcaProfilesSlice: StateCreator<AppState, [], [], OrcaProfile
       console.error('Failed to switch Wakii profile:', err)
       set({ orcaProfileSwitching: false })
       toast.error(
-        translate('auto.store.slices.orca.profiles.7d4bc516ee', 'Failed to switch profile'),
+        translate('auto.store.slices.wakii.profiles.7d4bc516ee', 'Failed to switch profile'),
         {
           description: err instanceof Error ? err.message : String(err)
         }
@@ -130,7 +130,7 @@ export const createOrcaProfilesSlice: StateCreator<AppState, [], [], OrcaProfile
       if (result.status === 'duplicate-target') {
         toast.error(
           translate(
-            'auto.store.slices.orca.profiles.f518e89aa5',
+            'auto.store.slices.wakii.profiles.f518e89aa5',
             'Project already exists in that profile'
           )
         )
@@ -142,7 +142,7 @@ export const createOrcaProfilesSlice: StateCreator<AppState, [], [], OrcaProfile
     } catch (err) {
       console.error('Failed to transfer Wakii profile project:', err)
       toast.error(
-        translate('auto.store.slices.orca.profiles.f03ae7f27b', 'Failed to transfer project'),
+        translate('auto.store.slices.wakii.profiles.f03ae7f27b', 'Failed to transfer project'),
         {
           description: err instanceof Error ? err.message : String(err)
         }

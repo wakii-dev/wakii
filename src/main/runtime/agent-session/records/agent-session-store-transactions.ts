@@ -71,7 +71,7 @@ function readOnlyStoreRefusal(): Error {
   return journalOpenRefusalError(
     new AgentSessionJournalError(
       'journal_read_only',
-      'the chat records were saved by a newer Orca; this host reads them and never writes'
+      'the chat records were saved by a newer Wakii; this host reads them and never writes'
     )
   )
 }

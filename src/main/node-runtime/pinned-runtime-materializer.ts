@@ -108,7 +108,7 @@ function unreachableArchiveError(
   const cause = errorMessage(error)
   return new DesktopDownloadUnreachableError(
     `This computer couldn't download ${archive.label} from ${archive.url} (${cause}). ` +
-      `Orca uploads ${archive.label} to the host from this computer, so the host doesn't need ` +
+      `Wakii uploads ${archive.label} to the host from this computer, so the host doesn't need ` +
       `internet access, but this computer must reach that address once. Check this computer's ` +
       `network connection or proxy and connect again, set a mirror in Settings > Advanced > ` +
       `Network > Node.js download mirror, or download that file on another machine ` +

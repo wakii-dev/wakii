@@ -26,7 +26,7 @@ export function prepareEphemeralVmCompatibilityPersistence(
   }
   listEphemeralVmRuntimes(args.userDataPath)
   const compatibility = {
-    instanceId: `orca-${randomUUID()}`,
+    instanceId: `wakii-${randomUUID()}`,
     createdAt: args.now ?? Date.now()
   }
   assertEphemeralVmRuntimeCheckoutModeCanPersist(args.userDataPath, {

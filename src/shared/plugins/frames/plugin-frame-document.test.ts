@@ -20,7 +20,7 @@ const isBytesDocument = (value: unknown): value is { content: { bytes: ArrayBuff
   'bytes' in value.content &&
   value.content.bytes instanceof ArrayBuffer
 
-describe('orca.document.get after applyEdit', () => {
+describe('wakii.document.get after applyEdit', () => {
   it('returns the accepted content at the version Orca sent', async () => {
     const { orca, fromHost } = mountShell('editor')
     const document = orca.document!
@@ -94,7 +94,7 @@ describe('orca.document.get after applyEdit', () => {
   })
 })
 
-describe('orca.document.onDidChange replay', () => {
+describe('wakii.document.onDidChange replay', () => {
   it('skips the replay for a subscription disposed before it runs', async () => {
     const { orca, fromHost } = mountShell('editor')
     fromHost(doc(1, 'a'))

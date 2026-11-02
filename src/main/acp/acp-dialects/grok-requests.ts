@@ -99,7 +99,7 @@ function questionRequest(params: unknown): AcpRequestPresentation {
 }
 
 const PLAN_SHOWN_FEEDBACK =
-  'Orca showed your plan to the user. Stop here and wait for their feedback or a request to implement it in a later turn.'
+  'Wakii showed your plan to the user. Stop here and wait for their feedback or a request to implement it in a later turn.'
 
 // Show the plan and abandon its approval gate so Grok waits for later user instructions.
 function settlePlanRequest(params: unknown): AcpRequestSettlement {

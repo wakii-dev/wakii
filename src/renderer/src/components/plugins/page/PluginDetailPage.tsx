@@ -190,14 +190,14 @@ export function PluginDetailPage({
       <Alert
         tone="warning"
         title={translate(
-          'auto.components.settings.PluginDetailPage.needsOrcaTitle',
+          'auto.components.settings.PluginDetailPage.needsWakiiTitle',
           'Needs Orca {{value0}} or later',
           {
             value0: entry.minimumOrca ?? ''
           }
         )}
         body={translate(
-          'auto.components.settings.PluginDetailPage.needsOrcaBody',
+          'auto.components.settings.PluginDetailPage.needsWakiiBody',
           'You have Orca {{value0}}.',
           {
             value0: orcaVersion ?? ''

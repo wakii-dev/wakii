@@ -89,7 +89,7 @@ describe('SshConnection', () => {
     )
   })
 
-  it('allows concurrent exec commands for system SSH with an Wakii ControlMaster socket', async () => {
+  it('allows concurrent exec commands for system SSH with a Wakii ControlMaster socket', async () => {
     getOrcaControlSocketPathMock.mockReturnValue('/tmp/orca-ssh-501/live-socket')
     vi.mocked(resolveWithSshG).mockResolvedValueOnce(createResolvedConfig())
     const conn = new SshConnection(createTarget({ configHost: 'fdpass-host' }), createCallbacks())
@@ -373,7 +373,7 @@ describe('SshConnection', () => {
   it('keeps a host pinned in the Orca key store on ssh2 when negotiation fails', async () => {
     const storeDir = mkdtempSync(join(tmpdir(), 'orca-ssh-pinned-store-'))
     try {
-      initSshHostKeyStoreFile(join(storeDir, 'orca.json'))
+      initSshHostKeyStoreFile(join(storeDir, 'wakii.json'))
       await trustHostKey({
         host: 'cert.example.com',
         port: 22,

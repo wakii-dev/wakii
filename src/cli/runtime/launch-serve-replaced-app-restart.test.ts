@@ -81,7 +81,7 @@ describe('serveOrcaApp restarts from a replaced app before any server starts', (
 
   beforeEach(async () => {
     root = await mkdtemp(join(tmpdir(), 'orca-serve-replaced-app-'))
-    app = join(root, 'Orca.app')
+    app = join(root, 'Wakii.app')
     await installApp(app, NEW)
     for (const key of ENV_KEYS) {
       savedEnv[key] = process.env[key]

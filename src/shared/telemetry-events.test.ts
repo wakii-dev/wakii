@@ -318,7 +318,7 @@ describe('daemon_lifecycle schema', () => {
     ]
     for (const base of bases) {
       for (const leak of [
-        { daemon_path: '/Users/alice/Orca.app' },
+        { daemon_path: '/Users/alice/Wakii.app' },
         { daemon_app_version: '1.4.129' },
         { live_session_count: 3 }
       ]) {

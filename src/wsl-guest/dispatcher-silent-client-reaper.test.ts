@@ -62,7 +62,7 @@ describe('RelayDispatcher silent-client reaper', () => {
     const clientId = dispatcher.attachClient(() => true)
     dispatcher.feedClient(
       clientId,
-      encodeJsonRpcFrame({ jsonrpc: '2.0', id: 1, method: 'orca.cli', params: {} }, 1, 0)
+      encodeJsonRpcFrame({ jsonrpc: '2.0', id: 1, method: 'wakii.cli', params: {} }, 1, 0)
     )
 
     vi.advanceTimersByTime(TIMEOUT_MS * 20)

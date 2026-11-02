@@ -93,7 +93,7 @@ it("shows the chat's own error and a composer error together, where one used to 
   act(() => {
     composerOnError()('sonnet-9 is not an available model for this chat session.')
   })
-  expect(screen.getByText("Orca couldn't open this chat's history right now.")).toBeTruthy()
+  expect(screen.getByText("Wakii couldn't open this chat's history right now.")).toBeTruthy()
   expect(screen.getByText('sonnet-9 is not an available model for this chat session.')).toBeTruthy()
   expect(document.querySelectorAll('[data-notice-kind="error"]')).toHaveLength(2)
 })

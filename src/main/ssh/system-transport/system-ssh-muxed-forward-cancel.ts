@@ -80,7 +80,7 @@ export async function cancelMuxedLocalForward(
     return false
   }
   console.warn(
-    `[ssh] Cancelled a forward a previous Orca left on 127.0.0.1:${localPort}, held by its ControlMaster`
+    `[ssh] Cancelled a forward a previous Wakii left on 127.0.0.1:${localPort}, held by its ControlMaster`
   )
   return true
 }

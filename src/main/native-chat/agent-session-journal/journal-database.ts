@@ -65,7 +65,7 @@ export function openJournalDatabase(dbPath: string): OpenJournalDatabase {
   try {
     if (stored !== 0 && stored < JOURNAL_DB_OLDEST_RELEASED_VERSION) {
       throw new JournalUnreleasedSchemaError(
-        `chat journal ${dbPath} uses unreleased schema ${stored}, written by an unreleased development build of Orca. Orca can't load its chats. Moving the file aside lets Orca start a new one, but that loses every chat's history, tabs and ownership records stored in it.`
+        `chat journal ${dbPath} uses unreleased schema ${stored}, written by an unreleased development build of Wakii. Wakii can't load its chats. Moving the file aside lets Wakii start a new one, but that loses every chat's history, tabs and ownership records stored in it.`
       )
     }
     configureJournalPragmas(probe, stored)

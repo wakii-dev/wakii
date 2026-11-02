@@ -15,7 +15,7 @@ export async function restoreJournalStore(
     throw journalOpenRefusalError(
       new AgentSessionJournalError(
         'journal_read_only',
-        `agent-session journal for ${host.identity.sessionId} is in a newer Orca's database`
+        `agent-session journal for ${host.identity.sessionId} is in a newer Wakii's database`
       )
     )
   }

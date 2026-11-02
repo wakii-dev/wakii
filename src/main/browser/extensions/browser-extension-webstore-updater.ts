@@ -258,7 +258,7 @@ export async function reviewHeldBrowserExtensionUpdate(
     }
     if (!samePermissionSummary(staged.access, held.access)) {
       await discardStagedWebStoreExtension(staged)
-      throw new Error('The update changed since Orca checked it; it will be offered again')
+      throw new Error('The update changed since Wakii checked it; it will be offered again')
     }
     await commitStagedWebStoreExtension(staged, null)
   })

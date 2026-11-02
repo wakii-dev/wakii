@@ -18,7 +18,7 @@ import { placeLaunchTarget } from './connector-places'
 
 /** One fixed line per source, so a resent start hashes to the same receipt. */
 export function connectorReplyInstructions(source: ConnectorSource): string {
-  return `(Sent from ${CONNECTOR_SOURCE_NAMES[source]}. To answer in the thread, run: orca connector reply --text "<your message>")`
+  return `(Sent from ${CONNECTOR_SOURCE_NAMES[source]}. To answer in the thread, run: wakii connector reply --text "<your message>")`
 }
 
 export type DispatchedDelivery = {

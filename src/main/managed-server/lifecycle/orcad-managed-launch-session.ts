@@ -73,7 +73,7 @@ export function restartManagedOrcadEnvironment(
   return withManagedOrcadLifecycle(userDataPath, selector, async ({ environment, deployment }) => {
     const context = await resolveLinkedOrcadContext(environment, deployment)
     if (!context.activationRecord.active) {
-      return { outcome: 'not-restarted', reason: 'This host has no activated Orca server.' }
+      return { outcome: 'not-restarted', reason: 'This host has no activated Wakii server.' }
     }
     const counts = updateTerminalCounts((options) =>
       collectManagedTerminalCensus(
@@ -112,7 +112,7 @@ export function restartManagedOrcadEnvironment(
         reason:
           wake.outcome === 'recovery-refused'
             ? wake.reason
-            : `This host’s Orca server stopped but did not start again (${wake.outcome}); reconnect to start it.`
+            : `This host’s Wakii server stopped but did not start again (${wake.outcome}); reconnect to start it.`
       }
     }
     // Restart may bind a different port than the existing forward.
@@ -132,7 +132,7 @@ export function restartManagedOrcadEnvironment(
       return {
         outcome: 'not-restarted',
         reason:
-          'This host’s Orca server restarted, but its terminals still belong to an SSH session ' +
+          'This host’s Wakii server restarted, but its terminals still belong to an SSH session ' +
           'that has ended: its terminal daemon was still running, or this connection opens a ' +
           'new SSH session for each command. Turn on SSH connection reuse for this host if ' +
           'it is off, then restart again.'
@@ -187,7 +187,7 @@ async function stopRetiringIdleDaemon(
   // Other clients may change the active slot; reread under the fence.
   const active = (await readOrcadActivationRecord(slot)).active
   if (!active) {
-    return { state: 'kept', reason: 'This host has no activated Orca server.' }
+    return { state: 'kept', reason: 'This host has no activated Wakii server.' }
   }
   const target = await readRemoteOrcadManagedStopTarget(slot, active)
   if (target.state === 'refused') {
@@ -206,7 +206,7 @@ async function stopRetiringIdleDaemon(
         state: 'daemon-kept',
         version: active,
         reason:
-          'This host’s Orca server restarted, but its terminal daemon kept running because a terminal ' +
+          'This host’s Wakii server restarted, but its terminal daemon kept running because a terminal ' +
           'was open at the stop, so terminals may still lack local network access.'
       }
     case 'unsettled':

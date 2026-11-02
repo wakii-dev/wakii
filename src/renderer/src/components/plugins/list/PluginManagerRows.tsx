@@ -253,7 +253,7 @@ export function installedPluginControls(
           <DropdownMenuItem disabled>
             <Trash2 />
             {translate(
-              'auto.components.settings.PluginManagerRows.bundledWithOrca',
+              'auto.components.settings.PluginManagerRows.bundledWithWakii',
               'Bundled with Orca'
             )}
           </DropdownMenuItem>

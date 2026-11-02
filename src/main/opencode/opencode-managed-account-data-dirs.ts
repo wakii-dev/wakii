@@ -1,7 +1,7 @@
 import { getManagedDataAccountService } from '../managed-data-accounts/service'
 import { resolveOpenCodeDataDirectory } from './opencode-data-directory'
 
-/** History must cover every account's store, not only the one Orca's own environment points at. */
+/** History must cover every account's store, not only the one Wakii's own environment points at. */
 export function managedOpenCodeAccountDataDirs(): string[] {
   try {
     return getManagedDataAccountService()

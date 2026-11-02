@@ -82,7 +82,7 @@ function writeManifest(name: string, path: string, extensionId: string): void {
     join(folder, `${name}.json`),
     JSON.stringify({
       name,
-      description: 'Orca test host',
+      description: 'Wakii test host',
       type: 'stdio',
       path,
       allowed_origins: [`chrome-extension://${extensionId}/`]
@@ -105,7 +105,7 @@ async function run(): Promise<void> {
   // Orca's main window, hidden; the worker opens the extension page as a popout of it.
   const host = new BrowserWindow({ show: false })
   trackBrowserExtensionMainWindow(host)
-  await host.loadURL('data:text/html,<title>orca</title>')
+  await host.loadURL('data:text/html,<title>wakii</title>')
 
   const extensionId = await browserExtensionIdForUnpackedFolder(fixtureExtensionDirectory)
   writeManifest('com.orca.echo', hosts.echo, extensionId)

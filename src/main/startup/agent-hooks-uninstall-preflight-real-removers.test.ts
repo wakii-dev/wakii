@@ -25,7 +25,7 @@ vi.mock(import('node:os'), async (importOriginal) => {
   return { ...actual, homedir: () => fixture.home }
 })
 
-const APP_ENVIRONMENT_SLOT = Symbol.for('orca.host.appEnvironment')
+const APP_ENVIRONMENT_SLOT = Symbol.for('wakii.host.appEnvironment')
 
 beforeEach(() => {
   fixture.home = mkdtempSync(join(tmpdir(), 'orca-uninstall-hooks-home-'))

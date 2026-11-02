@@ -8,7 +8,7 @@ import { ensurePrivateDir } from './daemon-private-file-modes'
 import { inspectMacProcessCodeIdentity } from './daemon-mac-code-identity'
 
 /** Plain Node helper packaged by config/scripts/macos-terminal-host-bundle.cjs. */
-export const MAC_TERMINAL_HOST_BUNDLE = 'Orca Terminal Host.app'
+export const MAC_TERMINAL_HOST_BUNDLE = 'Wakii Terminal Host.app'
 export const MAC_TERMINAL_HOST_EXECUTABLE = 'orca-terminal-host'
 export const MAC_DAEMON_COPY_PREFIX = 'terminal-host-'
 

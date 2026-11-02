@@ -48,7 +48,7 @@ afterEach(() => {
 })
 
 function readConfig(): Record<string, unknown> {
-  return JSON.parse(readFileSync(join(copilotHome, 'hooks', 'orca.json'), 'utf-8'))
+  return JSON.parse(readFileSync(join(copilotHome, 'hooks', 'wakii.json'), 'utf-8'))
 }
 
 function makeStaleManagedHookDefinition(): Record<string, unknown> {
@@ -69,7 +69,7 @@ describe('CopilotHookService', () => {
     const config = readConfig()
 
     expect(status.state).toBe('installed')
-    expect(status.configPath).toBe(join(copilotHome, 'hooks', 'orca.json'))
+    expect(status.configPath).toBe(join(copilotHome, 'hooks', 'wakii.json'))
     expect(config.version).toBe(1)
     const hooks = config.hooks as Record<string, unknown[]>
     expect(Object.keys(hooks).sort()).toEqual(
@@ -155,7 +155,7 @@ describe('CopilotHookService', () => {
 
     it('replaces the legacy .ps1 registration on install and keeps user hooks', () => {
       const legacyPath = join(tmpDir, '.orca', 'agent-hooks', 'copilot-hook.ps1')
-      const configPath = join(copilotHome, 'hooks', 'orca.json')
+      const configPath = join(copilotHome, 'hooks', 'wakii.json')
       mkdirSync(join(copilotHome, 'hooks'), { recursive: true })
       const userHook = { type: 'command', powershell: 'Write-Output user-hook', timeoutSec: 3 }
       const legacyHooks = Object.fromEntries(
@@ -223,7 +223,7 @@ describe('CopilotHookService', () => {
   })
 
   it('preserves user-authored hooks and sweeps stale managed entries', () => {
-    const configPath = join(copilotHome, 'hooks', 'orca.json')
+    const configPath = join(copilotHome, 'hooks', 'wakii.json')
     mkdirSync(join(copilotHome, 'hooks'), { recursive: true })
     writeFileSync(
       configPath,
@@ -255,7 +255,7 @@ describe('CopilotHookService', () => {
   })
 
   it('reports partial when stale managed hooks only exist under retired events', () => {
-    const configPath = join(copilotHome, 'hooks', 'orca.json')
+    const configPath = join(copilotHome, 'hooks', 'wakii.json')
     mkdirSync(join(copilotHome, 'hooks'), { recursive: true })
     writeFileSync(
       configPath,
@@ -281,7 +281,7 @@ describe('CopilotHookService', () => {
   it('reports partial when stale managed hooks remain alongside current hooks', () => {
     const service = new CopilotHookService()
     service.install()
-    const configPath = join(copilotHome, 'hooks', 'orca.json')
+    const configPath = join(copilotHome, 'hooks', 'wakii.json')
     const config = readConfig()
     const hooks = config.hooks as Record<string, unknown[]>
     hooks.UserPromptSubmit.push(makeStaleManagedHookDefinition())
@@ -295,7 +295,7 @@ describe('CopilotHookService', () => {
   })
 
   it('forces version 1 in the dedicated Copilot hook file', () => {
-    const configPath = join(copilotHome, 'hooks', 'orca.json')
+    const configPath = join(copilotHome, 'hooks', 'wakii.json')
     mkdirSync(join(copilotHome, 'hooks'), { recursive: true })
     writeFileSync(
       configPath,
@@ -313,7 +313,7 @@ describe('CopilotHookService', () => {
   })
 
   it('clears disableAllHooks in the dedicated Copilot hook file', () => {
-    const configPath = join(copilotHome, 'hooks', 'orca.json')
+    const configPath = join(copilotHome, 'hooks', 'wakii.json')
     mkdirSync(join(copilotHome, 'hooks'), { recursive: true })
     writeFileSync(
       configPath,
@@ -334,7 +334,7 @@ describe('CopilotHookService', () => {
   it('reports partial when the dedicated Copilot hook file is disabled', () => {
     const service = new CopilotHookService()
     service.install()
-    const configPath = join(copilotHome, 'hooks', 'orca.json')
+    const configPath = join(copilotHome, 'hooks', 'wakii.json')
     const config = readConfig()
     config.disableAllHooks = true
     writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`)
@@ -348,7 +348,7 @@ describe('CopilotHookService', () => {
   it('remove deletes only Wakii-managed Copilot hooks', () => {
     const service = new CopilotHookService()
     service.install()
-    const configPath = join(copilotHome, 'hooks', 'orca.json')
+    const configPath = join(copilotHome, 'hooks', 'wakii.json')
     const config = readConfig()
     const hooks = config.hooks as Record<string, unknown[]>
     hooks.UserPromptSubmit.unshift({ type: 'command', bash: 'echo user prompt' })
@@ -366,11 +366,11 @@ describe('CopilotHookService', () => {
     const status = new CopilotHookService().remove()
 
     expect(status.state).toBe('not_installed')
-    expect(existsSync(join(copilotHome, 'hooks', 'orca.json'))).toBe(false)
+    expect(existsSync(join(copilotHome, 'hooks', 'wakii.json'))).toBe(false)
   })
 
   it('remove leaves nested user hooks untouched when no managed hook is present', () => {
-    const configPath = join(copilotHome, 'hooks', 'orca.json')
+    const configPath = join(copilotHome, 'hooks', 'wakii.json')
     mkdirSync(join(copilotHome, 'hooks'), { recursive: true })
     const original = JSON.stringify(
       {
@@ -399,14 +399,14 @@ describe('CopilotHookService', () => {
 
   it('returns an error status for malformed JSON', () => {
     mkdirSync(join(copilotHome, 'hooks'), { recursive: true })
-    writeFileSync(join(copilotHome, 'hooks', 'orca.json'), '{not json')
+    writeFileSync(join(copilotHome, 'hooks', 'wakii.json'), '{not json')
 
     const status = new CopilotHookService().getStatus()
 
     expect(status).toEqual({
       agent: 'copilot',
       state: 'error',
-      configPath: join(copilotHome, 'hooks', 'orca.json'),
+      configPath: join(copilotHome, 'hooks', 'wakii.json'),
       managedHooksPresent: false,
       detail: 'Could not parse Copilot hooks/orca.json'
     })

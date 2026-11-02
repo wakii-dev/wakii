@@ -55,5 +55,5 @@ export function pluginPolicyBlockError(
   pluginKey: string
 ): string | null {
   const blocked = source.getPluginKillListEntry?.(pluginKey)
-  return blocked ? `Blocked by Orca's plugin safety list: ${blocked.reason}` : null
+  return blocked ? `Blocked by Wakii's plugin safety list: ${blocked.reason}` : null
 }

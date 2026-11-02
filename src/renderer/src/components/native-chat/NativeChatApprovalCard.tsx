@@ -159,7 +159,7 @@ export function NativeChatApprovalCard({
                 {newerSubject ? (
                   <p data-native-chat-approval-needs-newer-orca="true" className="break-words">
                     {translate(
-                      'components.native-chat.approval.needsNewerOrca',
+                      'components.native-chat.approval.needsNewerWakii',
                       'This request needs a newer version of Orca.'
                     )}
                   </p>

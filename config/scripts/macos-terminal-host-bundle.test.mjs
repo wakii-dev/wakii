@@ -126,18 +126,18 @@ describe('terminal host packaging config', () => {
     expect(electronBuilderConfig.mac.signIgnore).toEqual(
       expect.arrayContaining(macTerminalHostSignIgnore)
     )
-    const helper = '/out/mac-arm64/Orca.app/Contents/Helpers/Orca Terminal Host.app'
+    const helper = '/out/mac-arm64/Wakii.app/Contents/Helpers/Orca Terminal Host.app'
     expect(pattern.test(helper)).toBe(true)
     expect(pattern.test(`${helper}/Contents/MacOS/orca-terminal-host`)).toBe(true)
-    expect(pattern.test('/out/mac-arm64/Orca.app/Contents/Helpers/Orca Terminal Host.bundle')).toBe(
-      false
-    )
-    expect(pattern.test('/out/mac-arm64/Orca.app/Contents/Frameworks/Orca Helper.app')).toBe(false)
+    expect(
+      pattern.test('/out/mac-arm64/Wakii.app/Contents/Helpers/Orca Terminal Host.bundle')
+    ).toBe(false)
+    expect(pattern.test('/out/mac-arm64/Wakii.app/Contents/Frameworks/Orca Helper.app')).toBe(false)
   })
 
   it('packages the helper where the desktop looks for it', () => {
-    const paths = macTerminalHostPaths('/Orca.app')
-    expect(paths.bundle).toBe(join('/Orca.app', 'Contents', 'Helpers', MAC_TERMINAL_HOST_BUNDLE))
+    const paths = macTerminalHostPaths('/Wakii.app')
+    expect(paths.bundle).toBe(join('/Wakii.app', 'Contents', 'Helpers', MAC_TERMINAL_HOST_BUNDLE))
     expect(basename(paths.executable)).toBe(MAC_TERMINAL_HOST_EXECUTABLE)
   })
 })
@@ -148,7 +148,7 @@ describe.skipIf(process.platform !== 'darwin')('terminal host assembly', () => {
 
   beforeEach(() => {
     root = mkdtempSync(join(tmpdir(), 'orca-terminal-host-'))
-    appPath = join(root, 'Orca.app')
+    appPath = join(root, 'Wakii.app')
     const resources = join(appPath, 'Contents', 'Resources')
     const out = join(resources, 'app.asar.unpacked', 'out')
     mkdirSync(join(out, 'main', 'chunks'), { recursive: true })

@@ -285,12 +285,12 @@ function possiblyReusedPidError(
   processName: (pid: number) => string | null
 ): OrcadInstanceLockError {
   const name = processName(existing.pid)
-  const holder = existing.role === 'desktop' ? 'the Orca desktop app' : 'orcad'
+  const holder = existing.role === 'desktop' ? 'the Wakii desktop app' : 'orcad'
   return new OrcadInstanceLockError(
     'orcad_instance_lock_held',
     `The orcad instance lock at ${lockPath} names pid ${existing.pid}, which is still running ` +
       `(as ${name ? `"${name}"` : 'an unknown program'}). This lock, written by ${holder} at ` +
-      `${existing.acquiredAt}, does not record which boot it came from, so Orca cannot tell ` +
+      `${existing.acquiredAt}, does not record which boot it came from, so Wakii cannot tell ` +
       `whether that process is still ${holder} or an unrelated program that reused the PID. ` +
       `If you are sure ${holder} is not running for this data root, delete ${lockPath} and ` +
       'try again, or use a different ORCA_USER_DATA.'
@@ -306,7 +306,7 @@ function garbledLockIsAbandoned(lockPath: string): boolean {
 }
 
 function describeLockHolder(record: OrcadLockRecord): string {
-  return record.role === 'desktop' ? 'The Orca desktop app' : 'Another orcad'
+  return record.role === 'desktop' ? 'The Wakii desktop app' : 'Another orcad'
 }
 
 function makeLock(lockPath: string, record: OrcadLockRecord): OrcadInstanceLock {

@@ -179,14 +179,14 @@ export class PluginPanelBridge {
     return json.data
   }
 
-  /** `orca.panels.post`: dropped (and logged) past the plugin's size and rate budget. */
+  /** `wakii.panels.post`: dropped (and logged) past the plugin's size and rate budget. */
   onWorkerPost(pluginKey: string, post: PluginWorkerPanelPost): void {
     const budget = this.postBudget(pluginKey)
     const bytes = structuredCloneMessageBytes(post.payload ?? null, PLUGIN_PANEL_POST_MAX_BYTES)
     const refusal = budget.admit(this.deps.now?.() ?? Date.now(), bytes)
     if (refusal) {
       this.deps.log(pluginKey)(
-        `orca.panels.post("${post.event}") dropped: ${refusal === 'oversized' ? 'payload over 256 KiB' : 'too many posts'}`
+        `wakii.panels.post("${post.event}") dropped: ${refusal === 'oversized' ? 'payload over 256 KiB' : 'too many posts'}`
       )
       return
     }

@@ -1,5 +1,5 @@
 /** `Symbol.for` key of the hook the components runtime installs to learn served modules' maps. */
-export const PLUGIN_SOURCE_MAP_HOOK = 'orca.pluginSourceMap'
+export const PLUGIN_SOURCE_MAP_HOOK = 'wakii.pluginSourceMap'
 
 /**
  * Prepended to line 1 of a transpiled plugin module (so lines stay the source's): hands the

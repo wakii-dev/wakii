@@ -32,7 +32,7 @@ function getCopilotHome(): string {
 }
 
 function getConfigPath(): string {
-  return join(getCopilotHome(), 'hooks', 'orca.json')
+  return join(getCopilotHome(), 'hooks', 'wakii.json')
 }
 
 export class CopilotHookService {

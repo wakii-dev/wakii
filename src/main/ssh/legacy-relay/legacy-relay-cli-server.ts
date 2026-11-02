@@ -3,7 +3,7 @@
  * runtime, where that terminal's Dispatch and Run records live.
  * COMPAT(legacy-relay-bridge): revisit 2027-01-15.
  *
- * Gated per host by "Allow this host's orca CLI to control Orca" and read on every call. Calls run
+ * Gated per host by "Allow this host's orca CLI to control Wakii" and read on every call. Calls run
  * through a dispatcher that registers only the orchestration methods below, as a paired caller with
  * no grants (the desktop browser bridge's shape), after legacy-relay-cli-caller.ts bound them.
  */
@@ -50,17 +50,17 @@ const COMMANDS: ReadonlySet<string> = new Set(
 )
 
 export const LEGACY_RELAY_CLI_CONTROL_OFF =
-  'This terminal was started by an older version of Orca. Its orca orchestration commands reach ' +
-  'this desktop only when "Allow this host\'s orca CLI to control Orca" is on for this host in ' +
+  'This terminal was started by an older version of Wakii. Its orca orchestration commands reach ' +
+  'this desktop only when "Allow this host\'s orca CLI to control Wakii" is on for this host in ' +
   'Settings > SSH. Otherwise, run them in a new terminal on this host.'
 
 export const LEGACY_RELAY_CLI_UNSUPPORTED =
-  'This terminal was started by an older version of Orca, so only orca orchestration check, ' +
-  'inbox, send, ask and reply work in it. Run other orca commands in a new terminal on this host.'
+  'This terminal was started by an older version of Wakii, so only orca orchestration check, ' +
+  'inbox, send, ask and reply work in it. Run other wakii commands in a new terminal on this host.'
 
 const LEGACY_RELAY_CLI_HELP =
-  'This terminal was started by an older version of Orca. It runs orca orchestration check, ' +
-  'inbox, send, ask and reply; open a new terminal on this host for full orca help.'
+  'This terminal was started by an older version of Wakii. It runs orca orchestration check, ' +
+  'inbox, send, ask and reply; open a new terminal on this host for full wakii help.'
 
 type LegacyRelayCliServerDeps = {
   targetId: string

@@ -95,7 +95,7 @@ describe('a chat write the host refused', () => {
               ok: false,
               error: {
                 code: 'runtime_timeout',
-                message: 'Timed out waiting for the remote Orca runtime to respond.'
+                message: 'Timed out waiting for the remote Wakii runtime to respond.'
               },
               _meta: { runtimeId: 'runtime-1' }
             })
@@ -115,7 +115,7 @@ describe('a chat write the host refused', () => {
     })
 
     expect(mocks.toastError).toHaveBeenCalledWith(
-      "Orca couldn't confirm what happened. Check the chat."
+      "Wakii couldn't confirm what happened. Check the chat."
     )
   })
 
@@ -155,11 +155,11 @@ describe('a chat write the host refused', () => {
     })
 
     expect(mocks.toastError).toHaveBeenCalledExactlyOnceWith(
-      "Orca couldn't open this chat's history right now. The agent wasn't stopped. Try again."
+      "Wakii couldn't open this chat's history right now. The agent wasn't stopped. Try again."
     )
   })
 
-  it('says to update Orca for a Stop refused on a journal a newer Orca wrote', async () => {
+  it('says to update Wakii for a Stop refused on a journal a newer Wakii wrote', async () => {
     mocks.call.mockImplementation((_target, method) =>
       method === 'agentSession.options'
         ? Promise.resolve(OPTIONS)
@@ -167,7 +167,7 @@ describe('a chat write the host refused', () => {
             ok: false,
             refusal: {
               code: 'agent_session_journal_unreadable',
-              message: 'Chats were saved by a newer Orca. Update Orca to keep using them.',
+              message: 'Chats were saved by a newer Wakii. Update Wakii to keep using them.',
               details: { reason: 'journalWrittenByNewerOrca' }
             }
           })
@@ -186,7 +186,7 @@ describe('a chat write the host refused', () => {
     })
 
     expect(mocks.toastError).toHaveBeenCalledExactlyOnceWith(
-      "Chats were saved by a newer Orca. The agent wasn't stopped. Update Orca to keep using them."
+      "Chats were saved by a newer Wakii. The agent wasn't stopped. Update Wakii to keep using them."
     )
   })
 

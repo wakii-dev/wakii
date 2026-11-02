@@ -249,14 +249,14 @@
     "agents": {
       "codexTerminalServerIsolation": {
         "title": "Chạy mỗi terminal Codex trên server riêng",
-        "description": "Giữ trạng thái Orca và việc đóng tab hoạt động đúng. Tắt để dùng server chung của Codex và tổng quan agents của nó. Áp dụng cho terminal mới."
+        "description": "Giữ trạng thái Wakii và việc đóng tab hoạt động đúng. Tắt để dùng server chung của Codex và tổng quan agents của nó. Áp dụng cho terminal mới."
       }
     }
   },
   "menu": {
     "checkForUpdates": "Kiểm tra cập nhật...",
     "settings": "Cài đặt",
-    "exploreOrca": "Khám phá Wakii",
+    "exploreWakii": "Khám phá Wakii",
     "gettingStarted": "Bắt đầu với Wakii",
     "reportCrash": "Báo cáo sự cố...",
     "file": "Tệp",
@@ -281,18 +281,16 @@
     "help": "Trợ giúp",
     "paste": "Dán",
     "copy": "Sao chép",
-    "selectAll": "Chọn tất cả",
-    "exploreWakii": "Khám phá Wakii"
+    "selectAll": "Chọn tất cả"
   },
   "tray": {
-    "openOrca": "Mở Wakii",
+    "openWakii": "Mở Wakii",
     "quit": "Thoát",
     "minimizeNotice": {
       "body": "Wakii vẫn đang chạy trên khay hệ thống"
     },
     "activityWaiting": "Wakii - hoạt động đang chờ",
-    "activityWaitingSuffix": "hoạt động đang chờ đợi",
-    "openWakii": "Mở Wakii"
+    "activityWaitingSuffix": "hoạt động đang chờ đợi"
   },
   "worktreeJumpPalette": {
     "matchLabel": {
@@ -580,7 +578,7 @@
         "linear": {
           "37d36984d0": "Kết nối Linear đã được thay thế bằng một yêu cầu mới hơn."
         },
-        "orca": {
+        "wakii": {
           "profiles": {
             "612f7f6861": "Không tạo được hồ sơ",
             "319d7cf39b": "Đã tạo hồ sơ đám mây",
@@ -1805,11 +1803,9 @@
         "addHostHint": "Đăng ký máy khác hoặc máy chủ Wakii",
         "addSshHost": "Thêm máy chủ SSH",
         "addSshHostHint": "Sử dụng máy hiện có qua SSH",
-        "addRemoteOrcaServer": "Thêm máy chủ Wakii từ xa",
-        "addRemoteOrcaServerHint": "Ghép nối thời gian chạy Wakii khác",
-        "hostConnectionFailed": "Kết nối không thành công",
         "addRemoteWakiiServer": "Thêm máy chủ Wakii từ xa",
-        "addRemoteWakiiServerHint": "Ghép nối thời gian chạy Wakii khác"
+        "addRemoteWakiiServerHint": "Ghép nối thời gian chạy Wakii khác",
+        "hostConnectionFailed": "Kết nối không thành công"
       },
       "NewWorkspaceComposerModal": {
         "createWorktree": "Tạo worktree",
@@ -3295,7 +3291,7 @@
             "sourceRestoring": "Đang kết nối lại terminal này - đầu ra của nó đang được thiết lập lại. Phiên vẫn đang chạy.",
             "remoteTerminalClosed": "Thiết bị terminal từ xa đã bị đóng.",
             "terminalProcessLimit": "Hệ thống không khởi động được thêm tiến trình terminal nào. Đóng các terminal đang không dùng hoặc thoát tiến trình thừa rồi thử lại.",
-            "ptyAllocationLimit": "Hệ thống không cấp thêm thiết bị pty nào nữa. Đóng bớt terminal đang không dùng, trong Orca hoặc chương trình khác, rồi thử lại."
+            "ptyAllocationLimit": "Hệ thống không cấp thêm thiết bị pty nào nữa. Đóng bớt terminal đang không dùng, trong Wakii hoặc chương trình khác, rồi thử lại."
           },
           "TerminalProcessExitOverlay": {
             "capacityTitle": "Đã đạt đến giới hạn bảng điều khiển Git Bash",
@@ -3321,7 +3317,7 @@
             "switchTerminal": "Chuyển đổi terminal",
             "openTaskTerminal": "Mở terminal nhiệm vụ",
             "systemBrowser": "Trình duyệt hệ thống",
-            "orcaBrowser": "Trình duyệt Wakii",
+            "wakiiBrowser": "Trình duyệt Wakii",
             "terminalLinkSettings": "Cài đặt liên kết Terminal",
             "copyLink": "Sao chép liên kết",
             "copied": "Đã sao chép",
@@ -4088,7 +4084,7 @@
             "cursor": {
               "expired": {
                 "label": "Đăng nhập hết hạn",
-                "message": "Chạy cursor-agent login trong terminal trên máy đang chạy Orca rồi thử lại mức dùng."
+                "message": "Chạy cursor-agent login trong terminal trên máy đang chạy Wakii rồi thử lại mức dùng."
               },
               "plan": "Gói"
             },
@@ -5377,7 +5373,7 @@
           "79fd02cf5f": "Đường dẫn này đã được kiểm tra vào {{hostName}}.",
           "8851b77327": "Đường dẫn này đã được kiểm tra cục bộ."
         },
-        "OrcaYamlTrustDialog": {
+        "WakiiYamlTrustDialog": {
           "f3e2b868fb": "Chạy móc",
           "43b7bec4cd": "Đừng chạy",
           "c494b3ccb1": "TRONG",
@@ -5740,7 +5736,7 @@
           "eace1d2cf6": "trung lập",
           "dbe2d18972": "Hành động {{value0}} khác",
           "ae76907ca6": "Hủy liên kết {{value0}}",
-          "openInOrcaBrowser": "Mở trong trình duyệt Wakii",
+          "openInWakiiBrowser": "Mở trong trình duyệt Wakii",
           "ad25c3ff05": "Xem trên {{value0}}",
           "2c67730e07": "Mở ở Wakii",
           "e42941631a": "Xem trên Linear",
@@ -5773,8 +5769,7 @@
           "cliCreated": "Tạo bởi Wakii CLI",
           "jiraIssue": "Jira {{value0}}",
           "viewOnJira": "Xem trên Jira",
-          "linkedJira": "Jira đã liên kết {{value0}}",
-          "openInWakiiBrowser": "Mở trong trình duyệt Wakii"
+          "linkedJira": "Jira đã liên kết {{value0}}"
         },
         "WorktreeCardMetadataStatusBadges": {
           "fe188062a1": "Bang: Mở",
@@ -6352,7 +6347,7 @@
           "sshConfigPickerEmptyHint": "Thêm mục Máy chủ ở đó hoặc quay lại và nhập thông tin chi tiết theo cách thủ công.",
           "sshConfigPickerNoMatchHint": "Hãy thử bộ lọc khác hoặc quay lại và nhập thủ công.",
           "sshConfigPickerMoreResults": "Hiển thị {{value0}} kết quả phù hợp đầu tiên. Thu hẹp bộ lọc của bạn để tìm thêm.",
-          "sshConfigPickerInOrca": "ở Wakii",
+          "sshConfigPickerInWakii": "ở Wakii",
           "sshConfigPickerPreviouslyRemoved": "Đã xóa khỏi Wakii",
           "sshConfigPickerBulkHint": "Đồng bộ hóa hàng loạt vẫn ở trong Cài đặt → SSH",
           "sshConfigPickerBack": "Mặt sau",
@@ -6363,8 +6358,7 @@
           "sshConfigPickerAddAllEmpty": "Thêm tất cả vào Wakii",
           "identityFileFromConfigHint": "Mục đích để trống: Wakii sử dụng mọi khóa ~/.ssh/config để phân giải {{value0}}. Nhập một đường dẫn để chỉ sử dụng phím đó.",
           "sshConfigPickerRetry": "Thử lại",
-          "sshConfigPickerResolving": "Đọc…",
-          "sshConfigPickerInWakii": "ở Wakii"
+          "sshConfigPickerResolving": "Đọc…"
         },
         "ForgetSshWorkspaceDialog": {
           "reconnectFailed": "Kết nối lại không thành công",
@@ -7125,7 +7119,7 @@
           "6f894ef9c2": "Hiển thị trong Trình tìm kiếm",
           "cbe55e4d48": "Hiển thị trong Explorer",
           "9fd4023db0": "Hiển thị trong Trình quản lý tệp",
-          "outsideOrcaDescription": "Terminal của Orca đã có sẵn `orca`. Bật để dùng `orca` từ terminal khác bên ngoài Orca."
+          "outsideOrcaDescription": "Terminal của Wakii đã có sẵn `orca`. Bật để dùng `orca` từ terminal khác bên ngoài Wakii."
         },
         "CliSkillRuntimeSetup": {
           "04325573f8": "WSL",
@@ -8104,7 +8098,7 @@
           "c5a55a2d2e": "trình độ cao",
           "b5e3e77e89": "hoạt động",
           "0ce113fd7b": "Các tập lệnh cục bộ được lưu nhưng Nguồn tập lệnh chỉ được đặt thành orca.yaml.",
-          "7f78e5eea6": "Các tập lệnh cục bộ được lưu. Orca vẫn đang kiểm tra orca.yaml trước khi có thể đề xuất nên sử dụng nguồn tập lệnh nào.",
+          "7f78e5eea6": "Các tập lệnh cục bộ được lưu. Wakii vẫn đang kiểm tra orca.yaml trước khi có thể đề xuất nên sử dụng nguồn tập lệnh nào.",
           "2b6356e744": "Đã lưu",
           "81057d5f71": "Đang lưu...",
           "da37d6f10e": "Sao chép",
@@ -8356,7 +8350,7 @@
           "updateServer": "Cập nhật",
           "reviewServerUpdates": "Kiểm tra cập nhật máy chủ",
           "updatingServers": "Đang cập nhật máy chủ…",
-          "orcaVersion": "Wakii v{{value0}}",
+          "wakiiVersion": "Wakii v{{value0}}",
           "removeActiveServerBlocked": "Chọn một Máy chủ hoạt động khác trong Nâng cao trước khi xóa máy chủ này.",
           "removeActiveServerDescription": "Chọn một Máy chủ hoạt động khác trong Nâng cao trước khi xóa máy chủ này. Các phiên lưu trữ hiện tại được giữ nguyên.",
           "workflow": "Quy trình làm việc của máy chủ từ xa",
@@ -11302,13 +11296,13 @@
           "notificationPlayground": "Sân chơi thông báo",
           "notificationPlaygroundDescription": "Trình kích hoạt chỉ dành cho nhà phát triển để kiểm tra bố cục bánh mì nướng, hành động khôi phục và gói bản sao dài.",
           "devOnly": "Chỉ dành cho nhà phát triển",
-          "orcaCloud": "Đám mây Wakii",
-          "orcaCloudDescription": "Bản xem trước chỉ dành cho nhà phát triển về đăng nhập vào đám mây của bên thứ nhất. Ẩn trong sản xuất; trong dev, nó cũng xuất hiện trong trình chuyển đổi tài khoản sidebar sau khi ORCA_CLOUD_API_URL và ORCA_CLOUD_CLIENT_ID được đặt.",
-          "orcaCloudStatus": "Trạng thái",
-          "orcaCloudSignOut": "Đăng xuất",
-          "orcaCloudConnect": "Kết nối hồ sơ",
-          "orcaCloudRefresh": "Trạng thái làm mới",
-          "orcaCloudNotConfigured": "Đặt ORCA_CLOUD_API_URL và ORCA_CLOUD_CLIENT_ID để xem trước đăng nhập Orca Cloud trong bản dựng dành cho nhà phát triển này.",
+          "wakiiCloud": "Đám mây Wakii",
+          "wakiiCloudDescription": "Bản xem trước chỉ dành cho nhà phát triển về đăng nhập vào đám mây của bên thứ nhất. Ẩn trong sản xuất; trong dev, nó cũng xuất hiện trong trình chuyển đổi tài khoản sidebar sau khi ORCA_CLOUD_API_URL và ORCA_CLOUD_CLIENT_ID được đặt.",
+          "wakiiCloudStatus": "Trạng thái",
+          "wakiiCloudSignOut": "Đăng xuất",
+          "wakiiCloudConnect": "Kết nối hồ sơ",
+          "wakiiCloudRefresh": "Trạng thái làm mới",
+          "wakiiCloudNotConfigured": "Đặt ORCA_CLOUD_API_URL và ORCA_CLOUD_CLIENT_ID để xem trước đăng nhập Wakii Cloud trong bản dựng dành cho nhà phát triển này.",
           "deleteAnywayClicked": "Xóa Dù sao cũng đã nhấp"
         },
         "EphemeralVmRecipeRow": {
@@ -11419,7 +11413,7 @@
                 "tickets": "vé",
                 "issues": "vấn đề",
                 "skill": "kỹ năng",
-                "orcaLinear": "orca-linear"
+                "wakiiLinear": "orca-linear"
               }
             }
           }
@@ -11513,7 +11507,7 @@
         },
         "LinearAgentSkillPane": {
           "title": "Linear",
-          "description": "Cách Linear hoạt động trong Orca: duyệt các vấn đề, bắt đầu không gian làm việc được liên kết và cho phép các tổng đài viên cập nhật phiếu yêu cầu bằng /orca-Linear.",
+          "description": "Cách Linear hoạt động trong Wakii: duyệt các vấn đề, bắt đầu không gian làm việc được liên kết và cho phép các tổng đài viên cập nhật phiếu yêu cầu bằng /orca-Linear.",
           "skillTitle": "Kỹ năng Linear",
           "howToUse": "Lời nhắc ví dụ",
           "howToUseDescription": "Bấm vào một thẻ để sao chép lời nhắc. Sử dụng những thứ này trong worktree được liên kết Linear sau khi kỹ năng được cài đặt.",
@@ -11587,11 +11581,9 @@
         },
         "BrowserLinkRoutingModifierSetting": {
           "titleSystem": "Giữ phím Shift để mở trong trình duyệt web của bạn",
-          "titleOrca": "Giữ phím Shift để mở trong Wakii",
+          "titleWakii": "Giữ phím Shift để mở trong Wakii",
           "descriptionSystem": "Các liên kết mở trong Wakii, vì vậy {{chord}}+click sẽ gửi một liên kết tới trình duyệt hệ thống của bạn.",
-          "descriptionOrca": "Liên kết mở trong trình duyệt hệ thống của bạn. Thay vào đó, khi được bật, {{chord}}+click sẽ mở một tệp trong trình duyệt tích hợp của Wakii.",
-          "descriptionWakii": "Liên kết mở trong trình duyệt hệ thống của bạn. Thay vào đó, khi được bật, {{chord}}+click sẽ mở một tệp trong trình duyệt tích hợp của Wakii.",
-          "titleWakii": "Giữ phím Shift để mở trong Wakii"
+          "descriptionWakii": "Liên kết mở trong trình duyệt hệ thống của bạn. Thay vào đó, khi được bật, {{chord}}+click sẽ mở một tệp trong trình duyệt tích hợp của Wakii."
         },
         "BrowserTerminalLinkActionsSetting": {
           "title": "Số lần nhấp vào URL Terminal",
@@ -12050,7 +12042,7 @@
           "keywordMarkdown": "Markdown",
           "keywordUpload": "tải lên"
         },
-        "orcaAccount": {
+        "wakiiAccount": {
           "connected": "Đã kết nối",
           "reconnectRequired": "Phiên của bạn đã hết hạn. Đăng nhập lại để sử dụng các tính năng của đám mây.",
           "unavailable": "Đăng nhập Wakii không khả dụng trong bản dựng này.",
@@ -12177,7 +12169,7 @@
               "title": "Kết nối Bitbucket",
               "description": "Sử dụng thông tin xác thực Bitbucket Cloud để duyệt các pull request và trạng thái xây dựng. Wakii xác minh nó trước khi lưu.",
               "remoteRuntime": "Được lưu trữ trên máy này, không phải trên thời gian chạy từ xa đang hoạt động — thay vào đó hãy đặt ORCA_BITBucksET_* ở đó. Các biến môi trường luôn được ưu tiên hơn những gì bạn lưu ở đây.",
-              "environmentManaged": "Bitbucket đã được định cấu hình thông qua các biến môi trường ORCA_BITBUCKET_*, được ưu tiên. Bỏ đặt chúng để lưu thông tin xác thực trong Orca.",
+              "environmentManaged": "Bitbucket đã được định cấu hình thông qua các biến môi trường ORCA_BITBUCKET_*, được ưu tiên. Bỏ đặt chúng để lưu thông tin xác thực trong Wakii.",
               "authModeLabel": "Phương thức xác thực Bitbucket",
               "modeBasic": "Mã thông báo email và API",
               "modeToken": "Mã thông báo truy cập",
@@ -12207,9 +12199,9 @@
               "authModeToken": "Mã thông báo truy cập",
               "authModeBasic": "Mã thông báo email và API",
               "disconnect": "Ngắt kết nối Bitbucket",
-              "envManaged": "Được cấu hình thông qua các biến môi trường. Bỏ đặt các biến ORCA_BITBUCKET_* để quản lý thông tin xác thực này trong Orca.",
+              "envManaged": "Được cấu hình thông qua các biến môi trường. Bỏ đặt các biến ORCA_BITBUCKET_* để quản lý thông tin xác thực này trong Wakii.",
               "storedAuthFailed": "Thông tin xác thực Bitbucket đã lưu không thể xác thực. Chỉnh sửa hoặc kiểm tra xem mã thông báo vẫn có quyền truy cập pull request hay không.",
-              "storedCredential": "Đã lưu trong Orca trên máy này. Các biến môi trường ORCA_BITBUCKET_* được ưu tiên khi được đặt.",
+              "storedCredential": "Đã lưu trong Wakii trên máy này. Các biến môi trường ORCA_BITBUCKET_* được ưu tiên khi được đặt.",
               "notConfigured": "Kết nối tài khoản Bitbucket Cloud với mã thông báo API Atlassian hoặc mã thông báo truy cập. Các biến môi trường ORCA_BITBUCKET_* cũng hoạt động và được ưu tiên.",
               "disconnectFailed": "Không thể xóa thông tin xác thực Bitbucket đã lưu.",
               "statusLoadFailed": "Không thể kiểm tra thông tin xác thực Bitbucket đã lưu.",
@@ -12304,31 +12296,31 @@
             "keychain": "Keychain macOS (cursor-agent)",
             "cli": "Tệp xác thực Cursor CLI"
           },
-          "signedInGeneric": "Đã đăng nhập. Orca đọc phiên Cursor được lưu trên máy này.",
+          "signedInGeneric": "Đã đăng nhập. Wakii đọc phiên Cursor được lưu trên máy này.",
           "signedOutHelp": "Đăng nhập bằng Cursor IDE, hoặc chạy cursor-agent login trong terminal, rồi bấm Làm mới mức dùng ở đây.",
           "refreshUsage": "Làm mới mức dùng",
           "loading": "Đang tải…",
-          "expired": "Đăng nhập hết hạn — chạy cursor-agent login trên máy đang chạy Orca rồi bấm Làm mới mức dùng.",
+          "expired": "Đăng nhập hết hạn — chạy cursor-agent login trên máy đang chạy Wakii rồi bấm Làm mới mức dùng.",
           "planTotal": "Gói",
           "signedIn": "Đã đăng nhập",
           "usageDescription": "Cursor tính hai hạn mức đặt lại theo chu kỳ thanh toán, cộng chi tiêu vượt khi hết.",
           "dashboardLink": "Bảng điều khiển Cursor",
           "usageTitle": "Mức dùng gói hằng tháng",
           "signedOut": "Không tìm thấy phiên đăng nhập Cursor nào trên máy này",
-          "subtitle": "Hiện mức dùng gói hằng tháng của Cursor từ phiên đăng nhập sẵn trên máy này. Orca chỉ đọc — không bao giờ thay đổi đăng nhập Cursor của bạn.",
+          "subtitle": "Hiện mức dùng gói hằng tháng của Cursor từ phiên đăng nhập sẵn trên máy này. Wakii chỉ đọc — không bao giờ thay đổi đăng nhập Cursor của bạn.",
           "staleUsage": "Mức dùng lần biết cuối — lần làm mới gần nhất thất bại: {{reason}}",
           "resets": "Đặt lại {{when}}",
-          "signedInFrom": "Đã đăng nhập. Orca đọc phiên được lưu trong {{source}}.",
+          "signedInFrom": "Đã đăng nhập. Wakii đọc phiên được lưu trong {{source}}.",
           "noAllowance": "Cursor báo không còn hạn mức dùng nào cho tài khoản này.",
           "usageLabel": "Mức dùng",
           "title": "Cursor"
         },
         "agent-workspace-trust-copy": {
-          "title": "Tin cậy thư mục khi Orca khởi động agent",
-          "description": "Agents do Orca khởi động sẽ bỏ qua câu \"Bạn có tin cậy thư mục này?\", để hooks và cài đặt agent của dự án chạy ngay. Không bật, mỗi agent sẽ hỏi lần đầu chạy trong một thư mục. Agents chạy khi bạn không trôngchừng, như orchestration workers, automations và agents khởi từ điện thoại, sẽ đứng chờ câu hỏi đó đến khi bạn trả lời trong terminal của chúng. Thư mục đã tin cậy thì vẫn giữ tin cậy."
+          "title": "Tin cậy thư mục khi Wakii khởi động agent",
+          "description": "Agents do Wakii khởi động sẽ bỏ qua câu \"Bạn có tin cậy thư mục này?\", để hooks và cài đặt agent của dự án chạy ngay. Không bật, mỗi agent sẽ hỏi lần đầu chạy trong một thư mục. Agents chạy khi bạn không trôngchừng, như orchestration workers, automations và agents khởi từ điện thoại, sẽ đứng chờ câu hỏi đó đến khi bạn trả lời trong terminal của chúng. Thư mục đã tin cậy thì vẫn giữ tin cậy."
         },
         "UnsealedCredentialNotice": {
-          "body": "{{credential}} được lưu không mã hoá — hệ thống này không có keyring hệ điều hành mà Orca dùng được. Ai đọc được đĩa của bạn hoặc bản sao lưu đều đọc được thông tin xác thực. Cài và mở khoá gnome-keyring hoặc kwallet rồi lưu lại để niêm phong."
+          "body": "{{credential}} được lưu không mã hoá — hệ thống này không có keyring hệ điều hành mà Wakii dùng được. Ai đọc được đĩa của bạn hoặc bản sao lưu đều đọc được thông tin xác thực. Cài và mở khoá gnome-keyring hoặc kwallet rồi lưu lại để niêm phong."
         }
       },
       "right": {
@@ -14727,7 +14719,7 @@
                   "6d2b0a84e1": "Không có sẵn trong bản dựng này",
                   "notInstalled": "Chưa cài",
                   "needsMacAccess": "Cần quyền truy cập macOS",
-                  "requiresOrcaDesktop": "Cần Orca Desktop"
+                  "requiresOrcaDesktop": "Cần Wakii Desktop"
                 }
               }
             }
@@ -14752,8 +14744,8 @@
                       "2cf795433b": "Bắt đầu công việc trong nhiều repos",
                       "42525ba8a4": "Mang các kho lưu trữ chính của bạn vào Wakii để bạn có thể bắt đầu công việc của agent mà không cần tìm kiếm các thư mục.",
                       "workOnTwoTasks": "Làm hai việc cùng lúc",
-                      "agentSkillsName": "Trao cho agents các Orca skills",
-                      "agentSkillsDescription": "Cài các skills giúp agents điều khiển trình duyệt của Orca, điều khiển máy bạn, và phối hợp công việc nhiều bước."
+                      "agentSkillsName": "Trao cho agents các Wakii skills",
+                      "agentSkillsDescription": "Cài các skills giúp agents điều khiển trình duyệt của Wakii, điều khiển máy bạn, và phối hợp công việc nhiều bước."
                     }
                   }
                 }
@@ -15017,7 +15009,7 @@
                     "state": {
                       "35dea1ae12": "Kiểm soát Agent đã sẵn sàng.",
                       "c94ff11e91": "Không thể kiểm tra lại trạng thái thiết lập.",
-                      "skillNotInstalled": "Skill Orca CLI chưa được cài."
+                      "skillNotInstalled": "Skill Wakii CLI chưa được cài."
                     }
                   }
                 },
@@ -15040,7 +15032,7 @@
             "6d950431d2": "Trốn",
             "ebceac65a4": "Cài đặt",
             "3f003507f4": "Mở thiết lập đầy đủ trong Cài đặt",
-            "installSkillPrompt": "Cài skill Orca CLI khi bạn muốn agents điều khiển trình mô phỏng này."
+            "installSkillPrompt": "Cài skill Wakii CLI khi bạn muốn agents điều khiển trình mô phỏng này."
           },
           "MobileEmulatorAgentSetupGuideSteps": {
             "21f5687c07": "Kỹ năng Wakii CLI",
@@ -17023,7 +17015,7 @@
               "keep": {
                 "title": "Giữ liên kết terminal trong trình duyệt của Wakii?",
                 "description": "Hoặc sử dụng trình duyệt hệ thống của bạn theo mặc định.",
-                "orca": {
+                "wakii": {
                   "button": "Giữ Wakii"
                 }
               },
@@ -17032,7 +17024,7 @@
               "link": {
                 "label": "liên kết"
               },
-              "orca": {
+              "wakii": {
                 "note": "Wakii có thể sử dụng cookie đã nhập cho các trang đăng nhập.",
                 "button": "Mở ở Wakii"
               },
@@ -17215,7 +17207,7 @@
           "copy": "Sao chép"
         }
       },
-      "orca": {
+      "wakii": {
         "profiles": {
           "signout": {
             "confirm": {
@@ -17532,7 +17524,7 @@
       "web": {
         "preloadApi": {
           "cursorAccounts": {
-            "hostOnly": "Chi tiết đăng nhập Cursor chỉ đọc được trên máy đang chạy Orca."
+            "hostOnly": "Chi tiết đăng nhập Cursor chỉ đọc được trên máy đang chạy Wakii."
           }
         }
       }
@@ -18047,7 +18039,7 @@
         "error": {
           "title": "Không thể tải cuộc trò chuyện",
           "subtitle": "Bản ghi không thể đọc được. Chuyển trở lại terminal để tiếp tục làm việc.",
-          "retryingSubtitle": "Không đọc được bản ghi hội thoại. Orca vẫn tiếp tục thử tải nó."
+          "retryingSubtitle": "Không đọc được bản ghi hội thoại. Wakii vẫn tiếp tục thử tải nó."
         },
         "pairHost": "Ghép nối máy chủ để xem lịch sử trò chuyện của agent.",
         "notAgent": {
@@ -18173,17 +18165,17 @@
         "notDoneCommand": "Lệnh chưa chạy được.",
         "notDoneGoal": "Chưa đổi được mục tiêu.",
         "restartFailed": "Không khởi động lại được agent.",
-        "capacity": "Orca đã nhận quá nhiều yêu cầu trong ngày qua.",
-        "outcomeUnknown": "Orca không xác nhận được điều gì đã xảy ra. Kiểm tra lại chat.",
+        "capacity": "Wakii đã nhận quá nhiều yêu cầu trong ngày qua.",
+        "outcomeUnknown": "Wakii không xác nhận được điều gì đã xảy ra. Kiểm tra lại chat.",
         "questionChanged": "Câu hỏi này đã được trả lời hoặc đã thay đổi.",
-        "historyUnreadable": "Orca không đọc được lịch sử đã lưu của chat này.",
+        "historyUnreadable": "Wakii không đọc được lịch sử đã lưu của chat này.",
         "historyUnusable": "Không tải được chat này.",
-        "historyUnavailable": "Orca tạm không mở được lịch sử chat này.",
-        "savedByNewerOrca": "Các chat được lưu bởi Orca bản mới hơn.",
-        "updateOrcaToKeepUsing": "Cập nhật Orca để tiếp tục dùng chúng.",
-        "unsupported": "Bản Orca đang chạy chat này không hỗ trợ. Cập nhật Orca rồi thử lại.",
-        "unreachable": "Orca không kết nối được tới agent.",
-        "recordFailed": "Orca không ghi được vào lịch sử chat này.",
+        "historyUnavailable": "Wakii tạm không mở được lịch sử chat này.",
+        "savedByNewerWakii": "Các chat được lưu bởi Wakii bản mới hơn.",
+        "updateWakiiToKeepUsing": "Cập nhật Wakii để tiếp tục dùng chúng.",
+        "unsupported": "Bản Wakii đang chạy chat này không hỗ trợ. Cập nhật Wakii rồi thử lại.",
+        "unreachable": "Wakii không kết nối được tới agent.",
+        "recordFailed": "Wakii không ghi được vào lịch sử chat này.",
         "conversationCleared": "Hội thoại này đã được xoá.",
         "openCurrentConversation": "Mở hội thoại hiện tại để tiếp tục.",
         "clearUnfinished": "Lần /clear trước chưa hoàn tất.",
@@ -18202,14 +18194,14 @@
         "optionRejected": "Agent không nhận cài đặt này.",
         "goalsUnsupported": "Agent này không hỗ trợ mục tiêu.",
         "agentRefused": "Agent đã từ chối việc này.",
-        "ownerUnproven": "Orca chưa xác nhận được agent trước đó của chat này đã dừng.",
+        "ownerUnproven": "Wakii chưa xác nhận được agent trước đó của chat này đã dừng.",
         "reopenChat": "Mở lại chat để kiểm tra lần nữa.",
         "terminalAgentHoldsChat": "Chat này vẫn đang mở trong một agent terminal.",
         "quitTerminalAgent": "Thoát agent đó để tiếp tục chat ở đây.",
-        "hostReconciling": "Orca vẫn đang kiểm tra lại chat này sau khi khởi động lại.",
+        "hostReconciling": "Wakii vẫn đang kiểm tra lại chat này sau khi khởi động lại.",
         "waitMoment": "Chờ một chút.",
-        "recordUnreadable": "Orca không đọc được trạng thái đã lưu của chat này.",
-        "chatNotFound": "Bản Orca đang chạy chat này không có hồ sơ về nó.",
+        "recordUnreadable": "Wakii không đọc được trạng thái đã lưu của chat này.",
+        "chatNotFound": "Bản Wakii đang chạy chat này không có hồ sơ về nó.",
         "startNewChat": "Tạo chat mới để tiếp tục.",
         "tryAgain": "Thử lại."
       },
@@ -18234,7 +18226,7 @@
         "pausedSendFailed": "Chưa gửi được — bấm Gửi để thử lại.",
         "paused": "Tạm dừng",
         "queuePausedStopped": "Hàng đợi tạm dừng vì bạn đã ngắt",
-        "queuePausedRestarted": "Hàng đợi tạm dừng vì Orca khởi động lại",
+        "queuePausedRestarted": "Hàng đợi tạm dừng vì Wakii khởi động lại",
         "queuePausedCleared": "Hàng đợi tạm dừng sau khi bạn xoá hội thoại",
         "queuePaused": "Hàng đợi tạm dừng",
         "resume": "Tiếp tục"
@@ -18711,7 +18703,7 @@
       "demoHit4Age": "5n",
       "demoHit1Snippet": "Đã nâng [[login timeout]] lên 30s và thêm retry cho token refresh.",
       "demoHit1Title": "Sửa auth redirect hay lỗi",
-      "indexingDescription": "Orca đang đọc các bản ghi agent trước đây của bạn để bạn tìm kiếm được. Việc này có thể mất vài phút.",
+      "indexingDescription": "Wakii đang đọc các bản ghi agent trước đây của bạn để bạn tìm kiếm được. Việc này có thể mất vài phút.",
       "recent3Text": "Bản đầu tiên của ghi chú đây, chia theo khu vực.",
       "demoHit5Title": "Deploy staging thất bại",
       "demoHit3Title": "Cứng hoá auth e2e",
@@ -18876,10 +18868,10 @@
     "sessionSaveFailure": {
       "title": "Không lưu được phiên terminal",
       "capacity": "Thiết bị lưu terminal này báo đầy bộ nhớ hoặc vượt hạn mức. Giải phóng bớt dung lượng trên thiết bị đó rồi thử lại.",
-      "unknown": "Orca không lưu được trạng thái terminal. Thử lại. Nếu tiếp tục xảy ra, gửi log Orca cho hỗ trợ để tìm nguyên nhân."
+      "unknown": "Wakii không lưu được trạng thái terminal. Thử lại. Nếu tiếp tục xảy ra, gửi log Wakii cho hỗ trợ để tìm nguyên nhân."
     },
     "codexTerminalServerIsolationNotice": {
-      "title": "Orca nay chạy Codex không qua server dùng chung",
+      "title": "Wakii nay chạy Codex không qua server dùng chung",
       "description": "Điều này giúp trạng thái agent tin cậy hơn. Bạn có thể bật lại trong Cài đặt.",
       "openSettings": "Mở Cài đặt"
     }

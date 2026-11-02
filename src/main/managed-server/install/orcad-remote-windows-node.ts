@@ -38,7 +38,7 @@ export class OrcadWindowsCommandLineError extends Error {
   readonly code = ORCAD_WINDOWS_COMMAND_LINE_UNSAFE_CODE
   constructor(value: string) {
     super(
-      `Orca cannot pass ${JSON.stringify(value)} to node.exe on this Windows host: it contains ` +
+      `Wakii cannot pass ${JSON.stringify(value)} to node.exe on this Windows host: it contains ` +
         'a character cmd.exe or PowerShell would expand.'
     )
     this.name = 'OrcadWindowsCommandLineError'

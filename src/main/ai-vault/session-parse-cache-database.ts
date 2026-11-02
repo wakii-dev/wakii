@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS rows(
   session TEXT NOT NULL,
   -- Wall-clock ms the transcript was last parsed or found still on disk. Rows
   -- past an age are re-checked, which is what ends a row whose transcript was
-  -- deleted outside Orca.
+  -- deleted outside Wakii.
   seen_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS rows_seen_at ON rows(seen_at);

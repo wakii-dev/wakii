@@ -114,7 +114,7 @@ export function createStartingWorkerDispatch(
       if (prior?.task_id === task.id && prior.status === 'circuit_broken') {
         throw taskNotStartableError(
           this,
-          `Task ${task.id} failed ${prior.failure_count} times, so Orca will not retry it again (last error: ${prior.last_failure ?? 'unknown'}). Report the failure to the user instead of retrying.`,
+          `Task ${task.id} failed ${prior.failure_count} times, so Wakii will not retry it again (last error: ${prior.last_failure ?? 'unknown'}). Report the failure to the user instead of retrying.`,
           task,
           params.retryOf,
           prior.failure_count

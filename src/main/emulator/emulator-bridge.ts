@@ -295,7 +295,7 @@ export class EmulatorBridge {
     }
     throw new EmulatorError(
       'emulator_no_active',
-      'No active emulator for this worktree — use orca emulator attach or open the pane'
+      'No active emulator for this worktree — use wakii emulator attach or open the pane'
     )
   }
 

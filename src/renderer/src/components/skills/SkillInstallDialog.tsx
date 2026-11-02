@@ -89,7 +89,7 @@ export function SkillInstallDialog({
       setError(
         translate(
           'auto.components.skills.install.enterShareLink',
-          'Enter an Wakii skill share link.'
+          'Enter a Wakii skill share link.'
         )
       )
       return

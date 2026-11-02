@@ -24,7 +24,7 @@ const [providerCommand, ...providerArgs] = process.argv.slice(1)
 const ownerGone = () => process.ppid !== spec.ownerPid
 // Registered before the spawn, so a stop that lands while the provider starts still reaps it.
 for (const signal of ['SIGTERM', 'SIGINT', 'SIGHUP']) process.on(signal, () => stopProviderGroup(signal))
-// Orca can die before this runs; spawning then would start a provider nothing watches.
+// Wakii can die before this runs; spawning then would start a provider nothing watches.
 if (ownerGone()) process.exit(1)
 const childEnv = { ...process.env, ...spec.nodeEnv }
 delete childEnv.ORCA_PROVIDER_SUPERVISOR_SPEC
@@ -35,7 +35,7 @@ const exitWithSpawnFailure = (error, thrown) => {
   try { require('node:fs').writeSync(2, ${JSON.stringify(PROVIDER_SPAWN_FAILURE_MARKER)} + JSON.stringify(report) + '\\n') } catch {}
   process.exit(127)
 }
-// Orca opens the report channel only when it will keep the group's identity. Linux children
+// Wakii opens the report channel only when it will keep the group's identity. Linux children
 // inherit its fd, so /dev/null takes that slot and only this pid holds the channel.
 const reports = typeof process.send === 'function'
 const reportShield = reports ? require('node:fs').openSync('/dev/null', 'r') : null
@@ -51,7 +51,7 @@ try {
   // Node throws most spawn failures (ENOEXEC, ENOTDIR, ...) rather than emitting them.
   exitWithSpawnFailure(error, true)
 }
-// With the group's identity in Orca, a SIGKILL of this pid cannot orphan the group.
+// With the group's identity in Wakii, a SIGKILL of this pid cannot orphan the group.
 if (reports) {
   try { require('node:fs').closeSync(reportShield) } catch {}
   const disconnect = () => { try { process.disconnect() } catch {} }

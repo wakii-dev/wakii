@@ -35,7 +35,7 @@ export async function buildOnBindableLocalPort<T>(
       return build()
     }
     console.warn(
-      `[ssh] Moving the tunnel to this host’s Orca server from local port ${saved} to ${localPort}: ${error.message}`
+      `[ssh] Moving the tunnel to this host’s Wakii server from local port ${saved} to ${localPort}: ${error.message}`
     )
     moveManagedOrcadLocalPort(userDataPath, environmentId, localPort)
     // Like a repair, the rebind retires transports and status owners still dialing the old port.

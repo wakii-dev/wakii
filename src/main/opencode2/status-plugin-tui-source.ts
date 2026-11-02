@@ -30,7 +30,7 @@ function paneStatusMemory(ctx) {
 
 async function setupOpenCode2Tui(ctx) {
   const noop = async () => {};
-  // Outside an Orca pane, post has no pane identity to report.
+  // Outside a Wakii pane, post has no pane identity to report.
   if (!process.env.ORCA_PANE_KEY) return noop;
   if (process.env.ORCA_OPENCODE_AGENT && process.env.ORCA_OPENCODE_AGENT !== ORCA_STATUS_AGENT) return noop;
   if (/^1\./.test(String(ctx.app?.version || "")) && !ctx.legacyOpenCodeTui) return noop;
@@ -242,7 +242,7 @@ async function setupOpenCode2Tui(ctx) {
         return;
       }
       if (event.type === "session.text.ended" && isOwned && sessionID === root && typeof properties.text === "string" && properties.text) {
-        // MessagePart implies Working in Orca and must not bury Needs input.
+        // MessagePart implies Working in Wakii and must not bury Needs input.
         if (memory.last.startsWith("waiting:")) return;
         const part = { role: "assistant", text: properties.text, messageID: properties.assistantMessageID, sessionID: root, factoryID };
         // Queue reply previews after this turn's start, prompt and Busy.
@@ -264,7 +264,7 @@ async function setupOpenCode2Tui(ctx) {
     const tick = setInterval(() => {
       try {
         publish();
-        // Ticks must request unchanged-level reposting when Orca restarts and moves the endpoint.
+        // Ticks must request unchanged-level reposting when Wakii restarts and moves the endpoint.
         if (++ticks % TUI_ENDPOINT_CHECK_TICKS === 0 && lastLevel && desiredFactoryID === factoryID && deliveredEndpointKey !== hookEndpointKey()) {
           const level = lastLevel;
           void enqueueLifecycle(() => deliver(level, false));

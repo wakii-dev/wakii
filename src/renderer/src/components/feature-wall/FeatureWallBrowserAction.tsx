@@ -246,7 +246,7 @@ function BrowserSkillInstallButton(): React.JSX.Element {
             )
           : installAction.kind === 'replace'
             ? translate(
-                'auto.components.settings.AgentSkillSetupPanel.replaceWithOrcaCopy',
+                'auto.components.settings.AgentSkillSetupPanel.replaceWithWakiiCopy',
                 "Replace with Orca's copy"
               )
             : installAction.kind === 'run' && installAction.changes

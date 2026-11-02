@@ -168,7 +168,7 @@ export abstract class UpdaterInstallExecution extends UpdaterMacInstallPreflight
             this.sendInstallFailureStatus({
               state: 'error',
               message:
-                'macOS has not finished preparing the update. Orca keeps serving and installs it once ready; restart the Orca service if it never does.',
+                'macOS has not finished preparing the update. Wakii keeps serving and installs it once ready; restart the Wakii service if it never does.',
               ...(pendingVersion ? { version: pendingVersion } : {}),
               retryable: false
             })

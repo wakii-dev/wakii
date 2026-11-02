@@ -284,7 +284,7 @@ describe.skipIf(process.platform === 'win32')('RuntimeClient', () => {
     expect(status.result.graph.state).toBe('unavailable')
   })
 
-  it('openOrca activates the app even when a desktop runtime is already reachable', async () => {
+  it('openWakii activates the app even when a desktop runtime is already reachable', async () => {
     const userDataPath = makeRuntimeClientFixture()
     const endpoint = join(userDataPath, 'runtime.sock')
     const server = createServer((socket) => {
@@ -321,7 +321,7 @@ describe.skipIf(process.platform === 'win32')('RuntimeClient', () => {
     expect(launchOrcaApp).toHaveBeenCalledOnce()
   })
 
-  it('openOrca waits for a reachable headless runtime to expose a desktop window', async () => {
+  it('openWakii waits for a reachable headless runtime to expose a desktop window', async () => {
     const userDataPath = makeRuntimeClientFixture()
     const endpoint = join(userDataPath, 'runtime.sock')
     let statusRequests = 0
@@ -362,7 +362,7 @@ describe.skipIf(process.platform === 'win32')('RuntimeClient', () => {
     expect(statusRequests).toBeGreaterThan(1)
   })
 
-  it('openOrca fails explicitly when the serve owner cannot promote safely', async () => {
+  it('openWakii fails explicitly when the serve owner cannot promote safely', async () => {
     const userDataPath = makeRuntimeClientFixture()
     const endpoint = join(userDataPath, 'runtime.sock')
     const server = createServer((socket) => {

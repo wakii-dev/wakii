@@ -91,9 +91,9 @@ export function formatProfileStateStartupFailure(
         ),
         translate(
           'profileState.startupFailure.repairCommand',
-          'Stop Orca, then run `{{command}}` to replace only the damaged parts from backups and keep everything else. Orca keeps a copy of the damaged file.',
+          'Stop Wakii, then run `{{command}}` to replace only the damaged parts from backups and keep everything else. Wakii keeps a copy of the damaged file.',
           {
-            command: `orca profile state rollback --repair --profile-id ${error.profileId}`
+            command: `wakii profile state rollback --repair --profile-id ${error.profileId}`
           }
         ),
         sqlitePath,
@@ -101,8 +101,8 @@ export function formatProfileStateStartupFailure(
           'profileState.startupFailure.restoreWholeBackup',
           'To restore a whole backup instead, run `{{exportsCommand}}`, then `{{rollbackCommand}}`.',
           {
-            exportsCommand: 'orca profile state exports',
-            rollbackCommand: 'orca profile state rollback --backup <id>'
+            exportsCommand: 'wakii profile state exports',
+            rollbackCommand: 'wakii profile state rollback --backup <id>'
           }
         )
       ].join('\n')
@@ -110,7 +110,7 @@ export function formatProfileStateStartupFailure(
     return [
       translate(
         'profileState.startupFailure.sqliteUnreadable',
-        'Orca cannot safely open the active profile because its SQLite state is unreadable.'
+        'Wakii cannot safely open the active profile because its SQLite state is unreadable.'
       ),
       translate('profileState.startupFailure.legacyJsonPath', 'Legacy JSON path: {{path}}', {
         path: error.dataFile
@@ -122,15 +122,15 @@ export function formatProfileStateStartupFailure(
       retainedExports,
       translate(
         'profileState.startupFailure.chooseRecoveryArtifact',
-        'Stop Orca, then run `{{command}}` and choose a known-good recovery artifact.',
-        { command: 'orca profile state exports' }
+        'Stop Wakii, then run `{{command}}` and choose a known-good recovery artifact.',
+        { command: 'wakii profile state exports' }
       ),
       translate(
         'profileState.startupFailure.restoreCommands',
         'Restore SQLite with `{{backupCommand}}`, or restore a JSON export with `{{revisionCommand}}`.',
         {
-          backupCommand: 'orca profile state rollback --backup <id>',
-          revisionCommand: 'orca profile state rollback --revision <revision>'
+          backupCommand: 'wakii profile state rollback --backup <id>',
+          revisionCommand: 'wakii profile state rollback --revision <revision>'
         }
       )
     ].join('\n')
@@ -140,7 +140,7 @@ export function formatProfileStateStartupFailure(
     return [
       translate(
         'profileState.startupFailure.authorityAmbiguous',
-        'Orca cannot safely choose a profile-state authority: {{detail}}',
+        'Wakii cannot safely choose a profile-state authority: {{detail}}',
         { detail: error.message }
       ),
       translate(
@@ -149,24 +149,24 @@ export function formatProfileStateStartupFailure(
       ),
       translate(
         'profileState.startupFailure.authorityCopyFirst',
-        'Stop Orca and copy the profile directory before choosing which state to keep.'
+        'Stop Wakii and copy the profile directory before choosing which state to keep.'
       ),
       translate(
         'profileState.startupFailure.authorityKeepJson',
         'To keep the current JSON, including edits from an older build, run `{{command}}`. This archives both copies and does not merge their contents.',
-        { command: 'orca profile state rollback --current-json' }
+        { command: 'wakii profile state rollback --current-json' }
       ),
       translate(
         'profileState.startupFailure.authorityInspect',
         'Run `{{command}}` to inspect retained recovery points.',
-        { command: 'orca profile state exports' }
+        { command: 'wakii profile state exports' }
       ),
       translate(
         'profileState.startupFailure.authorityRestore',
         'Use `{{backupCommand}}` or `{{revisionCommand}}` only after selecting the state you want to restore.',
         {
-          backupCommand: 'orca profile state rollback --backup <id>',
-          revisionCommand: 'orca profile state rollback --revision <revision>'
+          backupCommand: 'wakii profile state rollback --backup <id>',
+          revisionCommand: 'wakii profile state rollback --revision <revision>'
         }
       )
     ].join('\n')
@@ -184,19 +184,19 @@ export function formatProfileStateStartupFailure(
   if (failureClass === 'newer-schema') {
     return translate(
       'profileState.startupFailure.newerSchema',
-      'This profile was saved by a newer version of Orca. Open it with that version or a newer release. Your profile has not been changed.'
+      'This profile was saved by a newer version of Wakii. Open it with that version or a newer release. Your profile has not been changed.'
     )
   }
   if (failureClass === 'revision-conflict') {
     return translate(
       'profileState.startupFailure.revisionConflict',
-      'The active profile changed while Orca was starting. Close other Orca processes using this profile, then restart Orca.'
+      'The active profile changed while Wakii was starting. Close other Wakii processes using this profile, then restart Wakii.'
     )
   }
   if (failureClass === 'writer-unavailable') {
     return translate(
       'profileState.startupFailure.writerUnavailable',
-      'Orca could not start profile persistence. Restart Orca; if the problem continues, repair or reinstall this build.'
+      'Wakii could not start profile persistence. Restart Wakii; if the problem continues, repair or reinstall this build.'
     )
   }
 
@@ -211,16 +211,16 @@ export function profileStatePublicationFailureText(
   return [
     translate(
       'profileState.startupFailure.publicationUnavailable',
-      'Orca could not safely publish profile state in {{directory}}.',
+      'Wakii could not safely publish profile state in {{directory}}.',
       { directory }
     ),
     translate(
       'profileState.startupFailure.publicationNeedsHardLinks',
-      'This location must support hard links, and Orca needs permission to create them.'
+      'This location must support hard links, and Wakii needs permission to create them.'
     ),
     translate(
       'profileState.startupFailure.publicationMoveData',
-      'Close Orca and orcad before checking folder permissions or moving the complete Orca data directory to a writable local filesystem that supports hard links, such as APFS, NTFS, or ext4.'
+      'Close Wakii and orcad before checking folder permissions or moving the complete Wakii data directory to a writable local filesystem that supports hard links, such as APFS, NTFS, or ext4.'
     ),
     translate(
       'profileState.startupFailure.publicationKeepFiles',

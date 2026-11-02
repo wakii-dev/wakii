@@ -13,8 +13,8 @@ type FailureKind =
 const NEXT_STEPS: Record<FailureKind, string> = {
   'host-key':
     'SSH couldn’t confirm this host’s identity. Run ssh to this host in a terminal to see why and trust or update its key, then connect again.',
-  auth: 'The host didn’t accept any sign-in Orca offered. Check the user name and the key, ssh-agent or password for this host, then connect again.',
-  passphrase: 'Orca couldn’t unlock the SSH key. Check its passphrase, then connect again.',
+  auth: 'The host didn’t accept any sign-in Wakii offered. Check the user name and the key, ssh-agent or password for this host, then connect again.',
+  passphrase: 'Wakii couldn’t unlock the SSH key. Check its passphrase, then connect again.',
   refused:
     'Nothing accepted the SSH connection at this address. Check the host name and port, and that sshd is running on the host.',
   'host-name': 'The host name couldn’t be looked up. Check the name and your network connection.',

@@ -38,10 +38,10 @@ export function probeNotificationDelivery(): Promise<NotificationDeliveryProbeRe
   permissionDialogTriggeredThisSession = true
 
   const probe = new Notification({
-    title: translateMain('notifications.test.title', 'Orca notifications are on'),
+    title: translateMain('notifications.test.title', 'Wakii notifications are on'),
     body: translateMain(
       'notifications.permissionProbe.body',
-      'Orca will alert you when agents finish or terminals need attention.'
+      'Wakii will alert you when agents finish or terminals need attention.'
     ),
     silent: true
   })

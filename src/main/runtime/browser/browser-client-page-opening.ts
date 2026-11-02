@@ -42,7 +42,7 @@ export type BrowserClientPageCaller = { pairedDeviceId?: string; clientKind?: 'm
 export const DEFAULT_BROWSER_PROFILE_ID = 'default'
 
 export const BROWSER_HOST_UNAVAILABLE_MESSAGE =
-  "No paired Orca desktop is hosting browser pages for this server. On a desktop paired with it, open a browser tab in one of this server's workspaces, then retry. The desktop needs an Orca version that hosts this server's pages."
+  "No paired Wakii desktop is hosting browser pages for this server. On a desktop paired with it, open a browser tab in one of this server's workspaces, then retry. The desktop needs a Wakii version that hosts this server's pages."
 
 export async function createBrowserClientPage(
   host: BrowserClientPageOpeningHost,

@@ -99,7 +99,7 @@ export class PluginSecretsStore {
       return {
         ok: false,
         error:
-          'OS keyring is unavailable (Linux basic_text backend); secret not stored. Install and unlock gnome-keyring or kwallet, then restart Orca.'
+          'OS keyring is unavailable (Linux basic_text backend); secret not stored. Install and unlock gnome-keyring or kwallet, then restart Wakii.'
       }
     }
     const file = this.read()

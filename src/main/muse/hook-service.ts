@@ -99,7 +99,7 @@ function buildStatus(
       ...base,
       state: 'error',
       managedHooksPresent: false,
-      detail: 'Could not read Orca managed hooks file'
+      detail: 'Could not read Wakii managed hooks file'
     }
   }
   if (pointer !== managedHooksPath) {
@@ -110,10 +110,10 @@ function buildStatus(
       detail:
         pointer === undefined
           ? null
-          : `managed_hooks_path points at ${pointer}, not the Orca managed hooks file`
+          : `managed_hooks_path points at ${pointer}, not the Wakii managed hooks file`
     }
   }
-  const parsed = parseMuseSettingsText(managedText, 'Orca managed Muse hooks')
+  const parsed = parseMuseSettingsText(managedText, 'Wakii managed Muse hooks')
   const present = readManagedMuseHookEvents(parsed, getMuseManagedCommandMatcher())
   const missing = MUSE_HOOK_EVENTS.filter((event) => !present.has(event))
   const configuredEnv = Array.isArray(config.managed_hooks_env_vars)

@@ -120,7 +120,7 @@ function installApi(previewInstall: ReturnType<typeof vi.fn>) {
 
 async function inspectSkill(expectedDescription = 'A private skill'): Promise<void> {
   fireEvent.change(screen.getByLabelText('Orca skill link'), {
-    target: { value: 'https://app.orca.dev/skills/share/share_1' }
+    target: { value: 'https://app.wakii.dev/skills/share/share_1' }
   })
   fireEvent.click(screen.getByRole('button', { name: 'Inspect skill' }))
   await screen.findByText(expectedDescription)
@@ -424,7 +424,7 @@ describe('SkillInstallDialog', () => {
     ])
     await user.type(
       screen.getByRole('textbox', { name: 'Orca skill link' }),
-      'https://app.orca.dev/skills/share/share_1'
+      'https://app.wakii.dev/skills/share/share_1'
     )
     await user.keyboard('{Enter}')
     await screen.findByText('A private skill')
@@ -441,7 +441,7 @@ describe('SkillInstallDialog', () => {
     render(<SkillInstallDialog open onOpenChange={() => undefined} />)
 
     fireEvent.change(screen.getByLabelText('Orca skill link'), {
-      target: { value: 'https://app.orca.dev/skills/share/share_1' }
+      target: { value: 'https://app.wakii.dev/skills/share/share_1' }
     })
     fireEvent.click(screen.getByRole('button', { name: 'Inspect skill' }))
 

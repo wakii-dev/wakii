@@ -18,10 +18,10 @@ export function triggerStartupNotificationRegistration(store: Store): void {
   store.updateUI({ notificationPermissionRequested: true })
 
   const notification = new Notification({
-    title: translateMain('notifications.startupRegistration.title', 'Orca is ready to notify you'),
+    title: translateMain('notifications.startupRegistration.title', 'Wakii is ready to notify you'),
     body: translateMain(
       'notifications.startupRegistration.body',
-      'Allow notifications so Orca can alert you when agents finish or terminals need attention.'
+      'Allow notifications so Wakii can alert you when agents finish or terminals need attention.'
     )
   })
 

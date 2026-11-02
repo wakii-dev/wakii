@@ -48,7 +48,7 @@ const reasonCopy = {
   'outcome-unknown': () =>
     translate(
       'components.native-chat.rewind.outcomeUnknown',
-      "Orca couldn't confirm whether the conversation went back to an earlier message. It checks before your next message is sent."
+      "Wakii couldn't confirm whether the conversation went back to an earlier message. It checks before your next message is sent."
     )
 } satisfies Record<AgentSessionRewindReason, () => string>
 
@@ -58,7 +58,7 @@ export function nativeChatRewindReasonCopy(reason: string | undefined): string {
     ? reasonCopy[known]()
     : translate(
         'components.native-chat.rewind.refused',
-        "Orca couldn't go back to this message. Check the conversation before continuing."
+        "Wakii couldn't go back to this message. Check the conversation before continuing."
       )
 }
 
@@ -72,7 +72,7 @@ export function nativeChatRewindUnavailableCopy(): string {
 export function nativeChatRewindReturnedUnknownCopy(): string {
   return translate(
     'components.native-chat.rewind.outcomeUnknownReturned',
-    "Orca couldn't confirm whether the conversation went back to this message. Your message is back in the composer, and Orca checks the conversation before your next message is sent."
+    "Wakii couldn't confirm whether the conversation went back to this message. Your message is back in the composer, and Wakii checks the conversation before your next message is sent."
   )
 }
 

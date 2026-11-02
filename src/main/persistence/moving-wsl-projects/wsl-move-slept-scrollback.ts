@@ -64,7 +64,7 @@ export async function readSleptScrollback(
       console.warn('[wsl-move] Slept terminal history unreadable:', error)
       return {
         ...emptyWslMoveSleptScrollback(),
-        problems: ['saved terminal history Orca could not read']
+        problems: ['saved terminal history Wakii could not read']
       }
     })
 }
@@ -194,7 +194,7 @@ export async function readWslMoveSleptScrollbackFromHistory(
       // A checkpoint behind an unreadable log is older than the pane: moving it would lose the rest.
       if (detection.status === 'unreadable' || detection.hasUnreadableRecovery) {
         problems.push(
-          `saved terminal history Orca could not fully read for the tab ${tabName(leaf.tabId)}`
+          `saved terminal history Wakii could not fully read for the tab ${tabName(leaf.tabId)}`
         )
         continue
       }

@@ -40,7 +40,7 @@ export async function resolveWslWorktreeGitPath(
 
 function wslWorktreeGitPathError(worktreePath: string, cause?: unknown): Error {
   return new Error(
-    `Orca couldn't find this WSL worktree's Git folder to write its setup script. Check that ${worktreePath} is a Git worktree.`,
+    `Wakii couldn't find this WSL worktree's Git folder to write its setup script. Check that ${worktreePath} is a Git worktree.`,
     cause === undefined ? undefined : { cause }
   )
 }

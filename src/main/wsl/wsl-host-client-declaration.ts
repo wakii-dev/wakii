@@ -30,7 +30,7 @@ export function declareWslHostClient(
     .then((response) => {
       // An older server lacks the method; it then has no peer check, so nothing reads the tag.
       if (!response.ok && response.error.code !== 'method_not_found') {
-        console.warn('[wsl-hosts] The WSL host did not note this Orca:', response.error.message)
+        console.warn('[wsl-hosts] The WSL host did not note this Wakii:', response.error.message)
       }
     })
     .catch(() => {

@@ -42,7 +42,7 @@ export function renderJiraPromptTemplate(
     .trim()
 }
 
-const CUSTOM_TEMPLATE_KEY = 'orca.jira.copy-prompt-template.v1'
+const CUSTOM_TEMPLATE_KEY = 'wakii.jira.copy-prompt-template.v1'
 export function loadCustomJiraPromptTemplate(): string {
   try {
     return localStorage.getItem(CUSTOM_TEMPLATE_KEY) ?? '$jira-issue\n\n$other-prompt'

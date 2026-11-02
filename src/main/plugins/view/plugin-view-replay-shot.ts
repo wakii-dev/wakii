@@ -35,7 +35,7 @@ export async function shootPluginReplay(
       `The scenario's tree is invalid: ${parsed.error}`,
       {
         reason: 'invalid_tree',
-        nextSteps: ['`orca plugin check` shows what the panel draws and why Orca refuses it.']
+        nextSteps: ['`orca plugin check` shows what the panel draws and why Wakii refuses it.']
       }
     )
   }
@@ -69,7 +69,7 @@ export async function shootPluginReplay(
         })
       }
       if (!reply.panel) {
-        throw new Error('Orca did not report where the preview is drawn.')
+        throw new Error('Wakii did not report where the preview is drawn.')
       }
       const drawn = reply.panel
       const image = await capturePluginPanelPng(contents, drawn.rect)

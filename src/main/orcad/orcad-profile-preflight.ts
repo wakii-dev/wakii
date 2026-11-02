@@ -92,7 +92,7 @@ async function runStartupPreflightChild(directory: string, identity: string): Pr
   })
   if (result.code !== 0 || result.timedOut || result.outputTruncated) {
     const Failure = result.code === ORCAD_EXIT_CONFIGURATION ? OrcadBundledRuntimeError : Error
-    throw new Failure(`The bundled Orca runtime failed readiness: ${result.stderr}`)
+    throw new Failure(`The bundled Wakii runtime failed readiness: ${result.stderr}`)
   }
   try {
     parseOrcadProfilePreflight(result.stdout, nonce, ORCAD_NODE_RUNTIME_IDENTITY, identity)
@@ -123,7 +123,7 @@ export async function runOrcadProfilePreflight(
   try {
     artifactVersion = await readOrcadArtifactIdentity(directory)
   } catch (cause) {
-    throw new OrcadBundledRuntimeError('The bundled Orca artifacts are incomplete or altered', {
+    throw new OrcadBundledRuntimeError('The bundled Wakii artifacts are incomplete or altered', {
       cause
     })
   }
@@ -172,7 +172,7 @@ async function readInstalledVersion(directory: string): Promise<string> {
     )
   } catch (cause) {
     throw new OrcadBundledRuntimeError(
-      'The installed Orca artifact version is missing or invalid',
+      'The installed Wakii artifact version is missing or invalid',
       {
         cause
       }

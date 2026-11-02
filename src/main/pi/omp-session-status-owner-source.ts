@@ -22,7 +22,7 @@ export function getOmpSessionOwnerHandlerSourceLines(kind: PiAgentKind): string[
     '    // Child transcripts cannot become the pane resume root, even when their callbacks arrive first.',
     '    if (omp && current.parent) return false',
     '    // Keep ownership through module reload and shutdown while child sessions drain.',
-    "    const key = Symbol.for('orca.omp.status-session-owners')",
+    "    const key = Symbol.for('wakii.omp.status-session-owners')",
     '    let owners = Reflect.get(globalThis, key)',
     '    if (!(owners instanceof Map)) {',
     '      owners = new Map()',

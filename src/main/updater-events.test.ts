@@ -185,7 +185,7 @@ describe('registerAutoUpdaterHandlers linux package artifact tracking', () => {
       getLinuxPackageTypeMock.mockReturnValue(packageType)
       getLinuxRootPackageTypeMock.mockReturnValue(packageType)
       const { emit, context } = await register()
-      const fileName = packageType === 'deb' ? 'orca.deb' : 'orca.rpm'
+      const fileName = packageType === 'deb' ? 'wakii.deb' : 'wakii.rpm'
 
       emit(
         'update-downloaded',

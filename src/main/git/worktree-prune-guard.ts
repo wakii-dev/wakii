@@ -14,7 +14,7 @@ import { usesHostGitForWslLinkedWorktree } from './wsl-linked-worktree-git-routi
 
 /** Marks only the locks this module writes, so it never removes a user's own lock. */
 export const PRUNE_GUARD_LOCK_REASON =
-  'Orca: kept from a prune by the other Git (Windows or WSL), which cannot read this link.'
+  'Wakii: kept from a prune by the other Git (Windows or WSL), which cannot read this link.'
 
 // One lock-prune-unlock per repo at a time: an overlapping prune would outlive the other's unlock.
 const prunesByAdminRoot = new Map<string, Promise<void>>()

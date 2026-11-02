@@ -38,7 +38,7 @@ it('installs the 1.x object TUI entry and explicitly registers its file URL', ()
   writeOpenCodeTuiPlugin(plugins, 'orca-opencode-status.js', pluginSource)
   const entry = join(plugins, 'orca-opencode-status-tui', 'tui.js')
   expect(readFileSync(entry, 'utf8')).toContain('tui: setupLegacyOpenCodeTui')
-  expect(readFileSync(entry, 'utf8')).toContain('const orcaServerPlugin =')
+  expect(readFileSync(entry, 'utf8')).toContain('const wakiiServerPlugin =')
   expect(parse(readFileSync(join(configDir, 'tui.json'), 'utf8'))).toEqual({
     plugin: [pathToFileURL(entry).href]
   })

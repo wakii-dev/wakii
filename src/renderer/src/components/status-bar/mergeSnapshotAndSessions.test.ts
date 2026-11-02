@@ -76,7 +76,7 @@ describe('mergeSnapshotAndSessions', () => {
       id: 'browser-1',
       worktreeId: worktree.id,
       title: 'Wakii docs',
-      url: 'https://docs.orca.dev',
+      url: 'https://docs.wakii.dev',
       loading: false,
       faviconUrl: null,
       canGoBack: false,

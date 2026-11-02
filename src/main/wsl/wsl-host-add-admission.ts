@@ -27,7 +27,7 @@ export function wslHostAddRefusal(
 export const WSL_HOST_REMOVING_MESSAGE = 'This WSL host is being removed.'
 
 export function wslHostNotConnectedMessage(distro: string): string {
-  return `The WSL host ${distro} isn’t connected. If it’s stopped, click Start; otherwise open one of its projects or connect it in Settings → Remote Orca Servers.`
+  return `The WSL host ${distro} isn’t connected. If it’s stopped, click Start; otherwise open one of its projects or connect it in Settings → Remote Wakii Servers.`
 }
 
 export { wslHostStoppedMessage } from '../../shared/wsl-host-stopped-message'
@@ -48,7 +48,7 @@ export function wslHostUnavailableForPhoneMessage(distro: string): string {
 }
 
 export function wslHostRemovalPendingMessage(distro: string): string {
-  return `Orca didn’t finish removing the WSL host ${distro}. Remove it again in Settings → Remote Orca Servers, or connect it to keep it.`
+  return `Wakii didn’t finish removing the WSL host ${distro}. Remove it again in Settings → Remote Wakii Servers, or connect it to keep it.`
 }
 
 /**

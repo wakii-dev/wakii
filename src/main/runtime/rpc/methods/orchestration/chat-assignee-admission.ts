@@ -61,7 +61,7 @@ export function refuseChatSelfAssignment(args: {
   if (args.sessionId === args.coordinatorSessionId) {
     throw new OrchestrationError(
       'terminal_is_coordinator',
-      `${formatOrcaSessionAddress(args.sessionId)} is this coordinator's own Orca session ID. ${args.remedy}`
+      `${formatOrcaSessionAddress(args.sessionId)} is this coordinator's own Wakii session ID. ${args.remedy}`
     )
   }
 }

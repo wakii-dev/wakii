@@ -12,7 +12,7 @@ import {
   writeStoredRuntimeEnvironment
 } from './web-preload-api-test-harness'
 
-const SETTINGS_KEY = 'orca.web.settings.v1'
+const SETTINGS_KEY = 'wakii.web.settings.v1'
 
 async function loadSettings(stored: Record<string, unknown> | null) {
   const globals = installBrowserGlobals('Linux')

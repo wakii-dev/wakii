@@ -17,7 +17,7 @@ export type WorkspacePortExecutionHostDeps = {
 }
 
 export const SSH_PORT_SCAN_UNSUPPORTED_REASON =
-  "Port detection isn't available for direct SSH hosts yet. Move this project to an Orca server on this host to see its ports."
+  "Port detection isn't available for direct SSH hosts yet. Move this project to a Wakii server on this host to see its ports."
 
 function unavailable(executionHostId: string, reason: string): WorkspacePortHostScanResult {
   return {

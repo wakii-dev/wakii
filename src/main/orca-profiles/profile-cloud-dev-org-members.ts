@@ -26,8 +26,8 @@ function cleanEnvString(value: string | undefined, fallback: string): string {
 function devSelf(): OrcaOrgMember {
   return {
     userId: cleanEnvString(process.env.ORCA_CLOUD_DEV_USER_ID, 'dev-user'),
-    email: cleanEnvString(process.env.ORCA_CLOUD_DEV_EMAIL, 'dev@orca.local'),
-    displayName: cleanEnvString(process.env.ORCA_CLOUD_DEV_DISPLAY_NAME, 'Orca Dev'),
+    email: cleanEnvString(process.env.ORCA_CLOUD_DEV_EMAIL, 'dev@wakii.local'),
+    displayName: cleanEnvString(process.env.ORCA_CLOUD_DEV_DISPLAY_NAME, 'Wakii Dev'),
     role: 'owner'
   }
 }
@@ -38,14 +38,14 @@ function seedDevRoster(): DevOrgRoster {
       devSelf(),
       {
         userId: 'dev-teammate-1',
-        email: 'teammate@orca.local',
+        email: 'teammate@wakii.local',
         displayName: 'Dev Teammate',
         role: 'admin'
       },
       // Null user IDs exercise members who have not signed in yet.
-      { userId: null, email: 'invited-member@orca.local', displayName: undefined, role: 'member' }
+      { userId: null, email: 'invited-member@wakii.local', displayName: undefined, role: 'member' }
     ],
-    pendingInvites: [{ email: 'pending@orca.local', role: 'member', createdAt: Date.now() }]
+    pendingInvites: [{ email: 'pending@wakii.local', role: 'member', createdAt: Date.now() }]
   }
 }
 

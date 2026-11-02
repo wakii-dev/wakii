@@ -208,12 +208,12 @@ async function download(
   options: z.infer<typeof optionsSchema>
 ): Promise<number> {
   if (options.method === 'POST') {
-    throw new BrowserExtensionApiError('Orca downloads only with GET')
+    throw new BrowserExtensionApiError('Wakii downloads only with GET')
   }
   const saveAs = options.saveAs === true
   // Why only without saveAs: the save dialog asks before replacing a file itself.
   if (!saveAs && options.conflictAction !== undefined && options.conflictAction !== 'uniquify') {
-    throw new BrowserExtensionApiError('Orca saves downloads only with conflictAction "uniquify"')
+    throw new BrowserExtensionApiError('Wakii saves downloads only with conflictAction "uniquify"')
   }
   const filename = requestedFilename(options.filename)
   const url = resolveDownloadUrl(caller, options.url)

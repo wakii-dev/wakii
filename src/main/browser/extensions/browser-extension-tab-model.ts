@@ -44,7 +44,7 @@ export type BrowserExtensionTabEntry = {
   active: boolean
 }
 
-/** How long an extension's new tab waits for Orca's window and its restored workspaces. */
+/** How long an extension's new tab waits for Wakii's window and its restored workspaces. */
 const MAIN_WINDOW_WAIT_MS = 30_000
 
 let activeBrowserPageId: string | null = null
@@ -244,7 +244,7 @@ export function describeBrowserExtensionTab(
   }
 }
 
-/** Keeps Electron's native fields (url/title gated by its own permission check) and adds Orca's. */
+/** Keeps Electron's native fields (url/title gated by its own permission check) and adds Wakii's. */
 export function mergeNativeTab(
   nativeTab: Record<string, unknown>,
   entry: BrowserExtensionTabEntry
@@ -298,7 +298,7 @@ export async function openBrowserExtensionTab(
   // Why wait: extensions open tabs as they load (onInstalled), before Orca's window can take them.
   const mainWindow = profile ? await whenBrowserMainWindowReady(MAIN_WINDOW_WAIT_MS) : null
   if (!mainWindow || !profile) {
-    throw new BrowserExtensionApiError('Orca has no window to open a tab in')
+    throw new BrowserExtensionApiError('Wakii has no window to open a tab in')
   }
   const { browserPageId } = await createBrowserTabInRenderer(
     { getAuthoritativeWindow: () => mainWindow },

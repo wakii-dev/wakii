@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS runs (
   home_database         TEXT NOT NULL DEFAULT 'this_database',
   coordinator_handle    TEXT,
   coordinator_pane_key  TEXT,
-  -- Bare Orca session id the coordinator is addressed by, when it has one (today only structured
+  -- Bare Wakii session id the coordinator is addressed by, when it has one (today only structured
   -- sessions); for a /clear'd chat, its lineage root's.
   coordinator_orca_session_id TEXT,
   -- The consumer_generation coordinator_orca_session_id was written at; the id counts only while they

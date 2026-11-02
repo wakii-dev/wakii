@@ -200,7 +200,7 @@ export async function fetchCodexRateLimits(
     }
     return codexUnavailable(
       hasCodexStateDbBackfillRecoveryGivenUp(options.codexHomePath)
-        ? `Codex could not rebuild its session index in ${options.codexHomePath}; restart Orca to retry (a codex wrapper that sets CODEX_HOME can cause this)`
+        ? `Codex could not rebuild its session index in ${options.codexHomePath}; restart Wakii to retry (a codex wrapper that sets CODEX_HOME can cause this)`
         : 'Codex is rebuilding its session index; usage will refresh when recovery finishes',
       'error'
     )

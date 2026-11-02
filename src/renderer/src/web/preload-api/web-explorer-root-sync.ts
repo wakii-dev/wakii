@@ -5,7 +5,7 @@ import { callRuntimeResult } from './web-runtime-calls'
 
 type Roots = NonNullable<PairedUiState['explorerDisplayRootByWorktree']>
 type Updates = Parameters<PreloadApi['ui']['set']>[0]
-const PENDING_ROOTS_KEY = 'orca.web.pendingExplorerRoots.v1'
+const PENDING_ROOTS_KEY = 'wakii.web.pendingExplorerRoots.v1'
 
 /** Queues explorer-root writes per host until supported and acknowledged, surviving hydration and browser reloads. */
 export function createWebExplorerRootSync() {

@@ -70,7 +70,7 @@ export class OrcadManagedTunnelTransportProvider implements SshPortForwardProvid
       rememberOrcadTunnelTransport(options.connectionId, 'tcp_forward')
       return outcome
     }
-    console.warn(`[ssh] Managed Orca server tunnel takes the stdio bridge: ${outcome.failure}`)
+    console.warn(`[ssh] Managed Wakii server tunnel takes the stdio bridge: ${outcome.failure}`)
     return this.startBridge(conn, options, generation, outcome.failure)
   }
 
@@ -126,7 +126,7 @@ export class OrcadManagedTunnelTransportProvider implements SshPortForwardProvid
     this.bridgedGenerations.set(conn, generation)
     if (!this.dependencies.stdio.canHandle(conn)) {
       throw new Error(
-        `The tunnel to this host’s Orca server has no route: ${forwardFailure}, and there is no stdio bridge.`
+        `The tunnel to this host’s Wakii server has no route: ${forwardFailure}, and there is no stdio bridge.`
       )
     }
     // Closed/orphaned ssh -L processes may still hold the persisted port.

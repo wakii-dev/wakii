@@ -69,5 +69,5 @@ export function describeProjectRemovalRefusal(impact: ProjectRemovalImpact): str
   if (parts.length === 0) {
     return null
   }
-  return `This project has ${parts.join(' and ')}. Removing it detaches those terminals from Orca and deletes the saved workspace details. Re-run with --force to remove it anyway.`
+  return `This project has ${parts.join(' and ')}. Removing it detaches those terminals from Wakii and deletes the saved workspace details. Re-run with --force to remove it anyway.`
 }

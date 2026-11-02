@@ -109,8 +109,8 @@ export const MISSING_LINUX_DISPLAY_MESSAGE = [
 ].join('\n')
 
 export const MISSING_SERVE_DISPLAY_MESSAGE = [
-  'Orca serve needs an X display for its browser panes, and could not start its own.',
-  `Wayland alone is not enough. To let Orca start one, ${XVFB_INSTALL_GUIDANCE}`,
+  'Wakii serve needs an X display for its browser panes, and could not start its own.',
+  `Wayland alone is not enough. To let Wakii start one, ${XVFB_INSTALL_GUIDANCE}`,
   'Or set DISPLAY to a running X server.'
 ].join('\n')
 

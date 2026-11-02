@@ -12,7 +12,7 @@ describe('readServeInstallEvidence', () => {
 
   beforeEach(async () => {
     root = await mkdtemp(join(tmpdir(), 'orca-install-hold-'))
-    bundle = join(root, 'Orca.app')
+    bundle = join(root, 'Wakii.app')
     executable = join(bundle, 'Contents', 'MacOS', 'Orca')
     await mkdir(join(bundle, 'Contents', 'MacOS'), { recursive: true })
     await writeFile(executable, '')

@@ -208,7 +208,7 @@ describe('ProjectRoadmap', () => {
       expect(scroller.scrollLeft).toBe(123)
       fireEvent.click(screen.getByRole('button', { name: 'Year' }))
       expect(scroller.scrollLeft).not.toBe(123)
-      expect(window.localStorage.getItem('orca.githubProject.roadmapZoom')).toBe('year')
+      expect(window.localStorage.getItem('wakii.githubProject.roadmapZoom')).toBe('year')
     }
   )
 

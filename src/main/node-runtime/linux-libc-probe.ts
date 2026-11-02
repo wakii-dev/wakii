@@ -4,7 +4,7 @@ export type LinuxLibcFacts = { libc: 'glibc' | 'musl'; glibc: GlibcVersion | nul
 /** The host answered, but with no recognizable library evidence. */
 export class UnidentifiedHostLibcError extends Error {
   constructor() {
-    super('Could not identify the host C library for the bundled Orca runtime')
+    super('Could not identify the host C library for the bundled Wakii runtime')
     this.name = 'UnidentifiedHostLibcError'
   }
 }

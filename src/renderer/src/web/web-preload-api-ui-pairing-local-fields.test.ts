@@ -109,7 +109,7 @@ describe('web UI preload API pairing-local fields', () => {
 
       expect(runtimeCalls[0]).toEqual({ method: 'ui.set', params: { sidebarWidth: 280 } })
       await expect(globals.window.api.ui.get()).resolves.toMatchObject(browserLocal)
-      expect(JSON.parse(globals.storage.getItem('orca.web.ui.v1') ?? '{}')).toMatchObject(
+      expect(JSON.parse(globals.storage.getItem('wakii.web.ui.v1') ?? '{}')).toMatchObject(
         browserLocal
       )
     }

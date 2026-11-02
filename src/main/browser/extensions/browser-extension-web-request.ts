@@ -287,7 +287,7 @@ export function observeBrowserExtensionWebRequests(session: Electron.Session): v
   session.extensions.getAllExtensions().forEach(maybeObserve)
 }
 
-/** Extensions turned off: hand the session's request path back to Orca's own handlers alone. */
+/** Extensions turned off: hand the session's request path back to Wakii's own handlers alone. */
 export function stopObservingBrowserExtensionWebRequests(session: Electron.Session): void {
   removeBrowserSessionHeadersReceived(session)
   removeBrowserSessionRequestLifecycle(session)

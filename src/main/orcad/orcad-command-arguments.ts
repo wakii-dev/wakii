@@ -6,7 +6,7 @@ import { existsSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { WEB_CLIENT_INDEX_FILENAME } from '../../shared/bundled-web-client-root'
 
-export const ORCAD_USAGE = `orcad — the Orca runtime served without Electron.
+export const ORCAD_USAGE = `orcad — the Wakii runtime served without Electron.
 
 Usage: orcad [options]
 

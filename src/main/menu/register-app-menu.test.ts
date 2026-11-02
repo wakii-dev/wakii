@@ -27,7 +27,7 @@ vi.mock('electron', () => ({
     sendActionToFirstResponder: sendActionToFirstResponderMock
   },
   app: {
-    name: 'Orca'
+    name: 'Wakii'
   },
   webContents: {
     getFocusedWebContents: getFocusedWebContentsMock
@@ -99,7 +99,7 @@ describe('registerAppMenu', () => {
       getKeybindings: () => ({ 'app.settings': ['Mod+Comma'] })
     })
 
-    const submenu = getSubmenu(getTemplate(), isMac ? 'Orca' : 'File')
+    const submenu = getSubmenu(getTemplate(), isMac ? 'Wakii' : 'File')
     expect(submenu).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ label: `Settings\t${isMac ? '⌘,' : 'Ctrl+,'}` })
@@ -196,7 +196,7 @@ describe('registerAppMenu', () => {
     const options = buildMenuOptions()
     registerAppMenu(options)
 
-    const parentLabel = isMac ? 'Orca' : 'Help'
+    const parentLabel = isMac ? 'Wakii' : 'Help'
     const item = getSubmenu(getTemplate(), parentLabel).find(
       (entry) => entry.label === 'Check for Updates...'
     )
@@ -265,7 +265,7 @@ describe('registerAppMenu', () => {
   })
 
   it.each(['darwin', 'linux', 'win32'] as const)(
-    'routes Edit > Paste through Orca coordinated paste ownership on %s',
+    'routes Edit > Paste through Wakii coordinated paste ownership on %s',
     (platform) => {
       vi.spyOn(process, 'platform', 'get').mockReturnValue(platform)
       const send = vi.fn()
@@ -329,7 +329,7 @@ describe('registerAppMenu', () => {
     expect(send).not.toHaveBeenCalled()
   })
 
-  it('pastes into DevTools instead of the Orca pane when DevTools holds focus (#16285)', () => {
+  it('pastes into DevTools instead of the Wakii pane when DevTools holds focus (#16285)', () => {
     const send = vi.fn()
     const devToolsContents = { paste: vi.fn() }
     getFocusedWindowMock.mockReturnValue({ webContents: { send } })
@@ -345,7 +345,7 @@ describe('registerAppMenu', () => {
   })
 
   it.each(['darwin', 'linux', 'win32'] as const)(
-    'routes Edit selection actions through the focused Orca window on %s',
+    'routes Edit selection actions through the focused Wakii window on %s',
     (platform) => {
       vi.spyOn(process, 'platform', 'get').mockReturnValue(platform)
       const send = vi.fn()
@@ -461,7 +461,7 @@ describe('registerAppMenu', () => {
     registerAppMenu(buildMenuOptions())
 
     const template = getTemplate()
-    expect(template.find((item) => item.label === 'Orca')).toBeUndefined()
+    expect(template.find((item) => item.label === 'Wakii')).toBeUndefined()
 
     const fileLabels = getSubmenu(template, 'File').map((item) => item.label)
     expect(fileLabels).not.toContain(`Export as PDF...\t${isMac ? '⌘⇧E' : 'Ctrl+⇧+E'}`)
@@ -472,8 +472,8 @@ describe('registerAppMenu', () => {
     expect(helpLabels).toEqual(
       expect.arrayContaining([
         'Report Crash...',
-        'Getting Started with Orca',
-        'Explore Orca',
+        'Getting Started with Wakii',
+        'Explore Wakii',
         'Check for Updates...'
       ])
     )
@@ -483,7 +483,7 @@ describe('registerAppMenu', () => {
     registerAppMenu(buildMenuOptions())
 
     const template = getTemplate()
-    const appSubmenu = getSubmenu(template, 'Orca')
+    const appSubmenu = getSubmenu(template, 'Wakii')
     const appLabels = appSubmenu.map((item) => item.label)
     expect(appLabels).toEqual(expect.arrayContaining(['Check for Updates...', 'Settings']))
     expect(template.find((item) => item.label === 'File')).toBeUndefined()
@@ -491,17 +491,17 @@ describe('registerAppMenu', () => {
     expect(helpLabels).toEqual([
       'Report Crash...',
       undefined,
-      'Explore Orca',
-      'Getting Started with Orca'
+      'Explore Wakii',
+      'Getting Started with Wakii'
     ])
   })
 
-  it('routes Getting Started with Orca through its callback', () => {
+  it('routes Getting Started with Wakii through its callback', () => {
     const options = buildMenuOptions()
     registerAppMenu(options)
 
     const setupGuideItem = getSubmenu(getTemplate(), 'Help').find(
-      (entry) => entry.label === 'Getting Started with Orca'
+      (entry) => entry.label === 'Getting Started with Wakii'
     )
     expect(setupGuideItem?.accelerator).toBeUndefined()
 
@@ -517,7 +517,7 @@ describe('registerAppMenu', () => {
     registerAppMenu(options)
 
     const featureTourItem = getSubmenu(getTemplate(), 'Help').find(
-      (entry) => entry.label === 'Explore Orca'
+      (entry) => entry.label === 'Explore Wakii'
     )
     expect(featureTourItem?.accelerator).toBeUndefined()
 
@@ -570,7 +570,7 @@ describe('registerAppMenu', () => {
     expect(automationsItem?.type).toBe('checkbox')
     expect(automationsItem?.checked).toBe(false)
 
-    const mobileItem = appearanceSubmenu.find((item) => item.label === 'Show Orca Mobile Button')
+    const mobileItem = appearanceSubmenu.find((item) => item.label === 'Show Wakii Mobile Button')
     expect(mobileItem?.type).toBe('checkbox')
     expect(mobileItem?.checked).toBe(true)
 
@@ -596,7 +596,7 @@ describe('registerAppMenu', () => {
       .find((item) => item.label === 'Show Automations Button')
       ?.click?.({} as never, {} as never, {} as never)
     appearanceSubmenu
-      .find((item) => item.label === 'Show Orca Mobile Button')
+      .find((item) => item.label === 'Show Wakii Mobile Button')
       ?.click?.({} as never, {} as never, {} as never)
     appearanceSubmenu
       .find((item) => item.label === 'Show Titlebar App Name')
@@ -637,7 +637,7 @@ describe('registerAppMenu', () => {
     'keeps the native quit role unless the host supplies a quit handler (%s, #15537)',
     (platform) => {
       vi.spyOn(process, 'platform', 'get').mockReturnValue(platform)
-      const quitMenu = platform === 'darwin' ? 'Orca' : 'File'
+      const quitMenu = platform === 'darwin' ? 'Wakii' : 'File'
       const findQuit = (): Electron.MenuItemConstructorOptions | undefined =>
         getSubmenu(getTemplate(), quitMenu).find(
           (item) =>
@@ -652,7 +652,7 @@ describe('registerAppMenu', () => {
       registerAppMenu({ ...buildMenuOptions(), onQuit })
       const quit = findQuit()
       expect(quit?.role).toBeUndefined()
-      expect(quit?.label).toBe(platform === 'darwin' ? 'Quit Orca' : 'Exit')
+      expect(quit?.label).toBe(platform === 'darwin' ? 'Quit Wakii' : 'Exit')
       expect(quit?.accelerator).toBe(platform === 'win32' ? undefined : 'CmdOrCtrl+Q')
       const click: unknown = quit?.click
       if (typeof click === 'function') {
@@ -666,7 +666,7 @@ describe('registerAppMenu', () => {
     'offers Quit Completely directly above Quit only when a handler is supplied (%s)',
     (platform) => {
       vi.spyOn(process, 'platform', 'get').mockReturnValue(platform)
-      const quitMenu = platform === 'darwin' ? 'Orca' : 'File'
+      const quitMenu = platform === 'darwin' ? 'Wakii' : 'File'
       const label = 'Quit Completely...'
 
       registerAppMenu(buildMenuOptions())

@@ -36,7 +36,7 @@ export type PluginDevEmitService = PluginDevFolderLookup & {
 export type PluginDevEmitResult = {
   pluginKey: string
   event: PluginEventName
-  /** `panels`: open panels of this plugin that subscribed with `orca.on(event)`. */
+  /** `panels`: open panels of this plugin that subscribed with `wakii.on(event)`. */
   delivered: { worker: boolean; panels: number }
 }
 
@@ -47,7 +47,7 @@ function parseEventName(event: string): PluginEventName {
   const known = PLUGIN_EVENT_NAMES.find((name) => name === event)
   const resolved = known ?? PLUGIN_V1_EVENT_ALIASES.get(event)
   if (!resolved) {
-    throw new PluginCliError('invalid_argument', `${event} is not an Orca plugin event.`, {
+    throw new PluginCliError('invalid_argument', `${event} is not a Wakii plugin event.`, {
       events: [...PLUGIN_EVENT_NAMES],
       nextSteps: [`Pass one of: ${PLUGIN_EVENT_NAMES.join(', ')}.`]
     })
@@ -101,7 +101,7 @@ function skipError(
     case 'not-subscribed':
       return new PluginCliError('invalid_argument', `Nothing in ${key} listens for ${event}.`, {
         nextSteps: [
-          `A worker hears it with { "on": "${event}" } in contributes.events; an open panel hears it once it calls orca.on('${event}', …). Either needs the ${PLUGIN_EVENT_CAPABILITY[event]} capability.`
+          `A worker hears it with { "on": "${event}" } in contributes.events; an open panel hears it once it calls wakii.on('${event}', …). Either needs the ${PLUGIN_EVENT_CAPABILITY[event]} capability.`
         ]
       })
     case 'not-approved':
@@ -125,7 +125,7 @@ export function assertPluginSystemEnabled(service: {
   if (!service.options.isPluginSystemEnabled()) {
     throw new PluginCliError(
       PLUGIN_SYSTEM_DISABLED_CODE,
-      'Plugins are turned off on this Orca host.',
+      'Plugins are turned off on this Wakii host.',
       {
         nextSteps: ['Turn plugins on (Settings → Plugins, or `orca plugin system on`).']
       }

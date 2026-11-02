@@ -45,7 +45,7 @@ export async function orcadActivationFenceRefusal(
       }
     : {
         code: ORCAD_ACTIVATION_FENCE_BUSY_CODE,
-        reason: `Another run is changing this host’s Orca server, so the ${attempt} did not start. It is retried on a later connect.`
+        reason: `Another run is changing this host’s Wakii server, so the ${attempt} did not start. It is retried on a later connect.`
       }
 }
 

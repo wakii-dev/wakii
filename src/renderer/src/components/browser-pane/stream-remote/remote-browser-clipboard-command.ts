@@ -16,7 +16,7 @@ export type RemoteBrowserClipboardCommandResult = {
   tooLarge: boolean
 }
 
-const PENDING_CUT_KEY = `Symbol.for('orca.remoteBrowserPendingCut')`
+const PENDING_CUT_KEY = `Symbol.for('wakii.remoteBrowserPendingCut')`
 // Why: a reply over the runtime's frame budget fails, and over an E2EE channel closes the connection.
 const MAX_REPLY_BYTES = REMOTE_RPC_MAX_CONTENT_BYTES - 64 * 1024
 

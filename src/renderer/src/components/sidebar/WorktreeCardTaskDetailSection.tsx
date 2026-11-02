@@ -130,7 +130,7 @@ export function WorktreeCardTaskActions({
         <DropdownMenuItem onClick={() => onOpenIssueInBrowser(url)}>
           <Globe className="size-3.5" />
           {translate(
-            'auto.components.sidebar.WorktreeCardMeta.openInOrcaBrowser',
+            'auto.components.sidebar.WorktreeCardMeta.openInWakiiBrowser',
             'Open in Orca browser'
           )}
         </DropdownMenuItem>

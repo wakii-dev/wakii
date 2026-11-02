@@ -52,8 +52,8 @@ let quitting = false
 
 function sshMissingMessage(platform: NodeJS.Platform): string {
   return platform === 'win32'
-    ? 'Orca couldn’t find OpenSSH (ssh.exe) on this computer. Install “OpenSSH Client” in Windows Settings > System > Optional features, then try again.'
-    : 'Orca couldn’t find ssh on this computer. Install the OpenSSH client, then try again.'
+    ? 'Wakii couldn’t find OpenSSH (ssh.exe) on this computer. Install “OpenSSH Client” in Windows Settings > System > Optional features, then try again.'
+    : 'Wakii couldn’t find ssh on this computer. Install the OpenSSH client, then try again.'
 }
 
 function clampSize(value: unknown, fallback: number): number {

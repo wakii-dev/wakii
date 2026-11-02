@@ -56,7 +56,7 @@ function parseValues(resultPath: string): Record<string, string> {
 
 /** A second-prompt sentinel proves readiness; initial output quiescence only gates the first input. */
 export async function runZshPty(options: ZshPtyOptions): Promise<ZshPtyRun> {
-  const sentinel = '@@ORCA-PTY-READY@@'
+  const sentinel = '@@WAKII-PTY-READY@@'
   const workDir = mkdtempSync(join(tmpdir(), 'orca-zsh-pty-'))
   const resultPath = join(workDir, 'probe.txt')
   const timeoutMs = options.timeoutMs ?? 20_000

@@ -707,7 +707,7 @@ describe('language changes', () => {
     expect(builtMenuItems()[0].label).toBe('Orca DEV (language-test)')
     expect(composeAttentionMock).toHaveBeenCalled()
 
-    mainI18n.addResource('ja', 'translation', 'tray.openOrca', 'Orca を表示')
+    mainI18n.addResource('ja', 'translation', 'tray.openWakii', 'Orca を表示')
     rebuildSystemTrayMenu()
     flushTraySceneMutation()
     expect(builtMenuItems()[2].label).toBe('Orca を表示')

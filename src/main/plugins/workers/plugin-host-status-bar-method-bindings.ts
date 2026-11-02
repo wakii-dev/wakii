@@ -15,7 +15,7 @@ export const PLUGIN_STATUS_BAR_HANDLERS = {
     api['statusBar.update'],
     async ({ id, ...patch }, { pluginId, services }) => {
       if (!services.statusBar) {
-        throw new PluginHostCallError('unavailable', 'this Orca has no status bar')
+        throw new PluginHostCallError('unavailable', 'this Wakii has no status bar')
       }
       if (!services.statusBar.update(pluginId, id, patch)) {
         throw new PluginHostCallError(

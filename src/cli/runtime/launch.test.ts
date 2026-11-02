@@ -110,7 +110,7 @@ describe('serveOrcaApp', () => {
   beforeEach(() => {
     spawnMock.mockReset()
     spawnSyncMock.mockReset()
-    process.env.ORCA_APP_EXECUTABLE = '/Applications/Orca.app/Contents/MacOS/Orca'
+    process.env.ORCA_APP_EXECUTABLE = '/Applications/Wakii.app/Contents/MacOS/Orca'
     // Test Electron here; launch-serve-runtime.test.ts covers orcad selection.
     process.env.ORCA_SERVE_RUNTIME = 'electron'
     process.env.ORCA_USER_DATA_PATH = PROFILE
@@ -203,7 +203,7 @@ describe('serveOrcaApp', () => {
     async () => {
       const root = await mkdtemp(join(tmpdir(), 'orca-serve-update-'))
       temporaryDirectories.push(root)
-      const appPath = join(root, 'Orca.app')
+      const appPath = join(root, 'Wakii.app')
       const executable = join(appPath, 'Contents', 'MacOS', 'Orca')
       const infoPlistPath = join(appPath, 'Contents', 'Info.plist')
       const userDataPath = join(root, 'user-data')
@@ -272,7 +272,7 @@ describe('serveOrcaApp', () => {
     async () => {
       const root = await mkdtemp(join(tmpdir(), 'orca-serve-update-mismatch-'))
       temporaryDirectories.push(root)
-      const appPath = join(root, 'Orca.app')
+      const appPath = join(root, 'Wakii.app')
       const executable = join(appPath, 'Contents', 'MacOS', 'Orca')
       const userDataPath = join(root, 'user-data')
       await mkdir(join(appPath, 'Contents', 'MacOS'), { recursive: true })
@@ -326,7 +326,7 @@ describe('serveOrcaApp', () => {
     async () => {
       const root = await mkdtemp(join(tmpdir(), 'orca-serve-update-spawn-failure-'))
       temporaryDirectories.push(root)
-      const appPath = join(root, 'Orca.app')
+      const appPath = join(root, 'Wakii.app')
       const executable = join(appPath, 'Contents', 'MacOS', 'Orca')
       const userDataPath = join(root, 'user-data')
       await mkdir(join(appPath, 'Contents', 'MacOS'), { recursive: true })
@@ -374,7 +374,7 @@ describe('serveOrcaApp', () => {
       vi.useFakeTimers()
       const root = await mkdtemp(join(tmpdir(), 'orca-serve-update-no-readiness-'))
       temporaryDirectories.push(root)
-      const appPath = join(root, 'Orca.app')
+      const appPath = join(root, 'Wakii.app')
       const executable = join(appPath, 'Contents', 'MacOS', 'Orca')
       const userDataPath = join(root, 'user-data')
       await mkdir(join(appPath, 'Contents', 'MacOS'), { recursive: true })
@@ -441,7 +441,7 @@ describe('serveOrcaApp', () => {
     await expect(serveOrcaApp({ json: true })).resolves.toBe(0)
 
     expect(spawnMock).toHaveBeenCalledWith(
-      '/Applications/Orca.app/Contents/MacOS/Orca',
+      '/Applications/Wakii.app/Contents/MacOS/Orca',
       [PIN_PROFILE, '--serve', '--serve-json', ...HOST_SERVE_OZONE_SWITCHES],
       expect.objectContaining({
         cwd: resolve(__dirname, '../../..')
@@ -473,7 +473,7 @@ describe('serveOrcaApp', () => {
     ).resolves.toBe(0)
 
     expect(spawnMock).toHaveBeenCalledWith(
-      '/Applications/Orca.app/Contents/MacOS/Orca',
+      '/Applications/Wakii.app/Contents/MacOS/Orca',
       [
         PIN_PROFILE,
         '--serve',
@@ -613,7 +613,7 @@ describe('serveOrcaApp', () => {
     await expect(result).resolves.toBe(0)
 
     expect(spawnMock).toHaveBeenCalledWith(
-      '/Applications/Orca.app/Contents/MacOS/Orca',
+      '/Applications/Wakii.app/Contents/MacOS/Orca',
       [
         PIN_PROFILE,
         '--serve',

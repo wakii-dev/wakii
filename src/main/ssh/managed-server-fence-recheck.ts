@@ -59,7 +59,7 @@ export function scheduleManagedServerFenceRecheck(targetId: string, loop: FenceR
       return
     }
     const result = await loop.recheck().catch((error: unknown) => {
-      console.warn('[ssh] Could not recheck the managed Orca server:', error)
+      console.warn('[ssh] Could not recheck the managed Wakii server:', error)
       return null
     })
     if (stopped || !loop.stillCurrent()) {

@@ -24,5 +24,5 @@ export function pluginInstallTrustError(
     isOfficialMarketplaceGitSource(source.marketplace.url) &&
     isOfficialOrganizationGitSource(source.plugin.url)
     ? null
-    : `${pluginKey} uses a name reserved for official Orca plugins; Orca installs it only from its official catalog`
+    : `${pluginKey} uses a name reserved for official Wakii plugins; Wakii installs it only from its official catalog`
 }

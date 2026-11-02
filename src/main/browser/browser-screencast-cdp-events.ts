@@ -23,7 +23,7 @@ type BrowserScreencastMessageHandlerDeps = {
   bumpSnapshotGeneration: () => void
   /** True while guest frames must be dropped pending re-emulation. */
   observeGuestViewSize: (metadata: BrowserScreencastFrameMetadata) => boolean
-  /** The page's dialog Orca still holds; a CDP close can be a second frame's turned-away one. */
+  /** The page's dialog Wakii still holds; a CDP close can be a second frame's turned-away one. */
   openDialog: () => BrowserJavaScriptDialog | null
 }
 

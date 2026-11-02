@@ -171,7 +171,7 @@ export function createPluginWorkerOrcaApi(input: {
           throw new TypeError(`orca.hooks.on: unknown hook ${String(event)}`)
         }
         if (typeof handler !== 'function') {
-          throw new TypeError('orca.hooks.on needs a handler function')
+          throw new TypeError('wakii.hooks.on needs a handler function')
         }
         const handlers = tables.hooks.get(event) ?? new Set()
         tables.hooks.set(event, handlers)

@@ -17,7 +17,7 @@ const METHOD_NOT_FOUND = -32601
 const OWNER_RETRY_BUDGET_MS = 35_000
 
 export const REMOTE_CLI_UNAVAILABLE =
-  'This terminal was started by an older version of Orca, so orca commands are unavailable ' +
+  'This terminal was started by an older version of Wakii, so wakii commands are unavailable ' +
   'in it. Run them in a new terminal on this host.'
 
 export type LegacyRelayOwnerClaim = { ownerGeneration: number; ownerLease: string }
@@ -45,7 +45,7 @@ type LegacyRelayClientOptions = {
 export class LegacyRelayOwnerHeldError extends Error {
   readonly code = 'legacy_relay_owner_held'
   constructor() {
-    super('Another Orca client is attached to this relay')
+    super('Another Wakii client is attached to this relay')
   }
 }
 
@@ -136,12 +136,12 @@ export class LegacyRelayClient {
     // The old relay forwards `orca` commands run inside its terminals to its attached client;
     // without a server this says why instead of "Method not found".
     const closed = new AbortController()
-    mux.onRequest('orca.cli', (params) =>
+    mux.onRequest('wakii.cli', (params) =>
       cliServer
         ? cliServer.cli(params, closed.signal)
         : Promise.reject(new Error(REMOTE_CLI_UNAVAILABLE))
     )
-    mux.onRequest('orca.cli.postOutput', (params) =>
+    mux.onRequest('wakii.cli.postOutput', (params) =>
       cliServer
         ? cliServer.postOutput(params, closed.signal)
         : Promise.reject(new Error(REMOTE_CLI_UNAVAILABLE))

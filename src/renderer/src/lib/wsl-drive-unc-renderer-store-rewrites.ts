@@ -16,7 +16,7 @@ import {
   type WslDriveUncRendererKeys
 } from '../../../shared/wsl-drive-unc-renderer-store-keys'
 
-const APPLIED_STORAGE_KEY = 'orca.wsl-drive-unc.renderer-rewrites.v1'
+const APPLIED_STORAGE_KEY = 'wakii.wsl-drive-unc.renderer-rewrites.v1'
 const MAX_APPLIED_MARKERS = 256
 
 type StoreId = (typeof WSL_DRIVE_UNC_RENDERER_STORE_IDS)[number]

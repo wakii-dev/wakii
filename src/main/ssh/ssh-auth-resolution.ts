@@ -191,7 +191,7 @@ export function withSkippedIdentityFileDetail(
     return error
   }
   const detail = [...skipped].map(([keyPath, problem]) => `"${keyPath}" (${problem})`).join(', ')
-  error.message = `${error.message.replace(/\.$/, '')}. Orca skipped identity file ${detail}.`
+  error.message = `${error.message.replace(/\.$/, '')}. Wakii skipped identity file ${detail}.`
   return error
 }
 

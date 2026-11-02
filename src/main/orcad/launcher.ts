@@ -17,7 +17,7 @@ try {
     const entry = realpathSync(process.argv[1] ?? __filename)
     const server = join(dirname(entry), ORCAD_SERVER_ENTRY_FILENAME)
     if (createHash('sha256').update(readFileSync(server)).digest('hex') !== ORCAD_SERVER_SHA256) {
-      throw new Error('The Orca server does not match its launcher')
+      throw new Error('The Wakii server does not match its launcher')
     }
     loadServer = () => {
       enableManagedOrcadCompileCache(dirname(entry))

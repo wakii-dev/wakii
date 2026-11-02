@@ -62,7 +62,7 @@ async function writePackage(name: string, contents = PAYLOAD): Promise<string> {
 }
 
 function capture(overrides: Record<string, unknown> = {}): LinuxPackageArtifact | null {
-  const downloadedFile = (overrides.downloadedFile ?? path.join(downloadDir, 'orca.deb')) as string
+  const downloadedFile = (overrides.downloadedFile ?? path.join(downloadDir, 'wakii.deb')) as string
   return recovery.captureLinuxPackageArtifact({
     version: VERSION,
     files: [{ url: path.basename(downloadedFile), sha512: SHA512 }],
@@ -98,7 +98,7 @@ describe('captureLinuxPackageArtifact', () => {
     const artifact = {
       packageType: 'deb',
       version: VERSION,
-      path: path.join(downloadDir, 'orca.deb'),
+      path: path.join(downloadDir, 'wakii.deb'),
       sha512: SHA512
     } satisfies LinuxPackageArtifact
     expect(capture()).toEqual(artifact)
@@ -112,7 +112,7 @@ describe('captureLinuxPackageArtifact', () => {
   })
 
   it('requires an absolute downloaded path', () => {
-    capture({ downloadedFile: 'orca.deb' })
+    capture({ downloadedFile: 'wakii.deb' })
     expect(recovery.getTrackedLinuxPackageArtifact()).toBeNull()
   })
 
@@ -120,19 +120,21 @@ describe('captureLinuxPackageArtifact', () => {
     recovery.captureLinuxPackageArtifact({
       downloadedFile: 123,
       version: VERSION,
-      files: [{ url: 'orca.deb', sha512: SHA512 }]
+      files: [{ url: 'wakii.deb', sha512: SHA512 }]
     })
     expect(recovery.getTrackedLinuxPackageArtifact()).toBeNull()
   })
 
   it('requires the package extension to match the installed format', () => {
-    capture({ downloadedFile: path.join(downloadDir, 'orca.rpm') })
+    capture({ downloadedFile: path.join(downloadDir, 'wakii.rpm') })
     expect(recovery.getTrackedLinuxPackageArtifact()).toBeNull()
   })
 
   it('accepts an uppercase extension', () => {
     capture({ downloadedFile: path.join(downloadDir, 'Wakii.DEB') })
-    expect(recovery.getTrackedLinuxPackageArtifact()?.path).toBe(path.join(downloadDir, 'Wakii.DEB'))
+    expect(recovery.getTrackedLinuxPackageArtifact()?.path).toBe(
+      path.join(downloadDir, 'Wakii.DEB')
+    )
   })
 
   it('requires a non-empty string version', () => {
@@ -158,9 +160,9 @@ describe('captureLinuxPackageArtifact', () => {
   it('ignores entries for other files and formats', () => {
     capture({
       files: [
-        { url: 'orca.AppImage', sha512: 'other-appimage-digest' },
+        { url: 'wakii.AppImage', sha512: 'other-appimage-digest' },
         { url: 'orca-arm64.deb', sha512: 'other-arch-digest' },
-        { url: 'orca.deb', sha512: SHA512 }
+        { url: 'wakii.deb', sha512: SHA512 }
       ]
     })
     expect(recovery.getTrackedLinuxPackageArtifact()?.sha512).toBe(SHA512)
@@ -169,7 +171,7 @@ describe('captureLinuxPackageArtifact', () => {
   it('accepts duplicate entries that agree on the digest', () => {
     capture({
       files: [
-        { url: 'orca.deb', sha512: SHA512 },
+        { url: 'wakii.deb', sha512: SHA512 },
         { url: 'https://downloads.example.com/orca.deb', sha512: SHA512 }
       ]
     })
@@ -179,7 +181,7 @@ describe('captureLinuxPackageArtifact', () => {
   it('refuses an ambiguous basename with two different digests', () => {
     capture({
       files: [
-        { url: 'orca.deb', sha512: SHA512 },
+        { url: 'wakii.deb', sha512: SHA512 },
         { url: 'https://mirror.example.com/orca.deb', sha512: 'conflicting-digest' }
       ]
     })
@@ -187,34 +189,34 @@ describe('captureLinuxPackageArtifact', () => {
   })
 
   it('refuses an entry with a missing or non-string digest', () => {
-    capture({ files: [{ url: 'orca.deb' }] })
+    capture({ files: [{ url: 'wakii.deb' }] })
     expect(recovery.getTrackedLinuxPackageArtifact()).toBeNull()
-    capture({ files: [{ url: 'orca.deb', sha512: 42 }] })
+    capture({ files: [{ url: 'wakii.deb', sha512: 42 }] })
     expect(recovery.getTrackedLinuxPackageArtifact()).toBeNull()
   })
 
   it('refuses a digest that cannot decode to 64 bytes', () => {
     // Invalid release metadata must not arm recovery that blames the downloaded file.
     capture({
-      files: [{ url: 'orca.deb', sha512: createHash('sha256').update(PAYLOAD).digest('base64') }]
+      files: [{ url: 'wakii.deb', sha512: createHash('sha256').update(PAYLOAD).digest('base64') }]
     })
     expect(recovery.getTrackedLinuxPackageArtifact()).toBeNull()
   })
 
   it('refuses a digest with characters outside the base64 alphabet', () => {
     // Buffer.from silently drops invalid characters unless checked by a round trip.
-    capture({ files: [{ url: 'orca.deb', sha512: `${SHA512.slice(0, 4)}!${SHA512.slice(4)}` }] })
+    capture({ files: [{ url: 'wakii.deb', sha512: `${SHA512.slice(0, 4)}!${SHA512.slice(4)}` }] })
     expect(recovery.getTrackedLinuxPackageArtifact()).toBeNull()
   })
 
   it('refuses a digest that is not base64 at all', () => {
-    capture({ files: [{ url: 'orca.deb', sha512: 'not-a-digest' }] })
+    capture({ files: [{ url: 'wakii.deb', sha512: 'not-a-digest' }] })
     expect(recovery.getTrackedLinuxPackageArtifact()).toBeNull()
   })
 
   it('keeps a retained artifact when a later event carries a malformed digest', () => {
     capture()
-    expect(capture({ files: [{ url: 'orca.deb', sha512: 'not-a-digest' }] })).toBeNull()
+    expect(capture({ files: [{ url: 'wakii.deb', sha512: 'not-a-digest' }] })).toBeNull()
     expect(recovery.getTrackedLinuxPackageArtifact()?.sha512).toBe(SHA512)
   })
 
@@ -226,7 +228,7 @@ describe('captureLinuxPackageArtifact', () => {
   it('refuses a missing or non-array file list', () => {
     capture({ files: undefined })
     expect(recovery.getTrackedLinuxPackageArtifact()).toBeNull()
-    capture({ files: { url: 'orca.deb', sha512: SHA512 } })
+    capture({ files: { url: 'wakii.deb', sha512: SHA512 } })
     expect(recovery.getTrackedLinuxPackageArtifact()).toBeNull()
   })
 
@@ -250,16 +252,18 @@ describe('captureLinuxPackageArtifact', () => {
 
   it('keeps the retained artifact when a new download has no usable digest', () => {
     capture()
-    capture({ files: [{ url: 'orca.deb' }] })
-    expect(recovery.getTrackedLinuxPackageArtifact()?.path).toBe(path.join(downloadDir, 'orca.deb'))
+    capture({ files: [{ url: 'wakii.deb' }] })
+    expect(recovery.getTrackedLinuxPackageArtifact()?.path).toBe(
+      path.join(downloadDir, 'wakii.deb')
+    )
   })
 
   it('does not arm recovery from a download with no usable digest', () => {
-    capture({ files: [{ url: 'orca.deb' }] })
+    capture({ files: [{ url: 'wakii.deb' }] })
     capture({ files: [{ url: 'orca%ZZ.deb', sha512: SHA512 }] })
     capture({
       files: [
-        { url: 'orca.deb', sha512: SHA512 },
+        { url: 'wakii.deb', sha512: SHA512 },
         { url: 'https://mirror.example.com/orca.deb', sha512: 'conflicting-digest' }
       ]
     })
@@ -268,8 +272,10 @@ describe('captureLinuxPackageArtifact', () => {
 
   it('keeps the retained artifact when an unrelated download event arrives', () => {
     capture()
-    capture({ downloadedFile: path.join(downloadDir, 'orca.AppImage') })
-    expect(recovery.getTrackedLinuxPackageArtifact()?.path).toBe(path.join(downloadDir, 'orca.deb'))
+    capture({ downloadedFile: path.join(downloadDir, 'wakii.AppImage') })
+    expect(recovery.getTrackedLinuxPackageArtifact()?.path).toBe(
+      path.join(downloadDir, 'wakii.deb')
+    )
   })
 })
 
@@ -308,12 +314,12 @@ describe('clearTrackedLinuxPackageArtifact', () => {
 
 describePosix('resolveLinuxPackageInstallInstructions', () => {
   it('returns the built command and package file name for a verified package', async () => {
-    const filePath = await writePackage('orca.deb')
+    const filePath = await writePackage('wakii.deb')
     capture()
     await expect(recovery.resolveLinuxPackageInstallInstructions(recoveryFor())).resolves.toEqual({
       ok: true,
       command: 'installed command',
-      packageFileName: 'orca.deb'
+      packageFileName: 'wakii.deb'
     })
     expect(buildCommandMock).toHaveBeenCalledWith('deb', filePath)
   })
@@ -326,7 +332,7 @@ describePosix('resolveLinuxPackageInstallInstructions', () => {
   })
 
   it('reports missing when the recovery version does not match', async () => {
-    await writePackage('orca.deb')
+    await writePackage('wakii.deb')
     capture()
     await expect(
       recovery.resolveLinuxPackageInstallInstructions(recoveryFor({ version: '9.9.9' }))
@@ -334,7 +340,7 @@ describePosix('resolveLinuxPackageInstallInstructions', () => {
   })
 
   it('reports missing when the recovery package type does not match', async () => {
-    await writePackage('orca.deb')
+    await writePackage('wakii.deb')
     capture()
     await expect(
       recovery.resolveLinuxPackageInstallInstructions(recoveryFor({ packageType: 'rpm' }))
@@ -342,7 +348,7 @@ describePosix('resolveLinuxPackageInstallInstructions', () => {
   })
 
   it('reports missing when the package was deleted', async () => {
-    const filePath = await writePackage('orca.deb')
+    const filePath = await writePackage('wakii.deb')
     capture()
     await fsp.rm(filePath)
     await expect(recovery.resolveLinuxPackageInstallInstructions(recoveryFor())).resolves.toEqual({
@@ -352,7 +358,7 @@ describePosix('resolveLinuxPackageInstallInstructions', () => {
   })
 
   it('propagates a package-manager discovery failure', async () => {
-    await writePackage('orca.deb')
+    await writePackage('wakii.deb')
     capture()
     buildCommandMock.mockReturnValue({ ok: false, reason: 'no-sudo' })
     await expect(recovery.resolveLinuxPackageInstallInstructions(recoveryFor())).resolves.toEqual({
@@ -369,7 +375,7 @@ describePosix('resolveLinuxPackageInstallInstructions', () => {
 
 describePosix('digest validation', () => {
   it('rejects a package whose contents changed', async () => {
-    const filePath = await writePackage('orca.deb')
+    const filePath = await writePackage('wakii.deb')
     capture()
     await fsp.writeFile(filePath, 'tampered payload')
     await expect(recovery.resolveLinuxPackageInstallInstructions(recoveryFor())).resolves.toEqual({
@@ -379,10 +385,10 @@ describePosix('digest validation', () => {
   })
 
   it('rejects a well-formed digest that belongs to another file', async () => {
-    await writePackage('orca.deb')
+    await writePackage('wakii.deb')
     capture({
       files: [
-        { url: 'orca.deb', sha512: createHash('sha512').update('other payload').digest('base64') }
+        { url: 'wakii.deb', sha512: createHash('sha512').update('other payload').digest('base64') }
       ]
     })
     await expect(recovery.resolveLinuxPackageInstallInstructions(recoveryFor())).resolves.toEqual({
@@ -392,8 +398,8 @@ describePosix('digest validation', () => {
   })
 
   it('never hashes a package that a malformed digest failed to arm', async () => {
-    await writePackage('orca.deb')
-    capture({ files: [{ url: 'orca.deb', sha512: 'not-a-digest' }] })
+    await writePackage('wakii.deb')
+    capture({ files: [{ url: 'wakii.deb', sha512: 'not-a-digest' }] })
     await expect(recovery.resolveLinuxPackageInstallInstructions(recoveryFor())).resolves.toEqual({
       ok: false,
       reason: 'missing'
@@ -402,7 +408,7 @@ describePosix('digest validation', () => {
   })
 
   it.runIf(process.getuid?.() !== 0)('reports read-failed for an unreadable package', async () => {
-    const filePath = await writePackage('orca.deb')
+    const filePath = await writePackage('wakii.deb')
     capture()
     await fsp.chmod(filePath, 0o000)
     await expect(recovery.resolveLinuxPackageInstallInstructions(recoveryFor())).resolves.toEqual({
@@ -415,9 +421,9 @@ describePosix('digest validation', () => {
 
 describePosix('cache containment', () => {
   it('rejects a path that traverses out of the cache', async () => {
-    const filePath = path.join(outsideDir, 'orca.deb')
+    const filePath = path.join(outsideDir, 'wakii.deb')
     await fsp.writeFile(filePath, PAYLOAD)
-    capture({ downloadedFile: path.join(downloadDir, '..', '..', '..', 'outside', 'orca.deb') })
+    capture({ downloadedFile: path.join(downloadDir, '..', '..', '..', 'outside', 'wakii.deb') })
     await expect(recovery.resolveLinuxPackageInstallInstructions(recoveryFor())).resolves.toEqual({
       ok: false,
       reason: 'not-regular'
@@ -425,7 +431,7 @@ describePosix('cache containment', () => {
   })
 
   it('rejects a path outside the cache root', async () => {
-    const filePath = path.join(outsideDir, 'orca.deb')
+    const filePath = path.join(outsideDir, 'wakii.deb')
     await fsp.writeFile(filePath, PAYLOAD)
     capture({ downloadedFile: filePath })
     await expect(recovery.resolveLinuxPackageInstallInstructions(recoveryFor())).resolves.toEqual({
@@ -446,7 +452,7 @@ describePosix('cache containment', () => {
   })
 
   it('rejects a directory in place of the package', async () => {
-    await fsp.mkdir(path.join(downloadDir, 'orca.deb'))
+    await fsp.mkdir(path.join(downloadDir, 'wakii.deb'))
     capture()
     await expect(recovery.resolveLinuxPackageInstallInstructions(recoveryFor())).resolves.toEqual({
       ok: false,
@@ -456,7 +462,7 @@ describePosix('cache containment', () => {
 
   it('rejects a symlink to a real package inside the cache', async () => {
     await writePackage('real.deb')
-    const linkPath = path.join(downloadDir, 'orca.deb')
+    const linkPath = path.join(downloadDir, 'wakii.deb')
     await fsp.symlink(path.join(downloadDir, 'real.deb'), linkPath)
     capture()
     await expect(recovery.resolveLinuxPackageInstallInstructions(recoveryFor())).resolves.toEqual({
@@ -466,9 +472,9 @@ describePosix('cache containment', () => {
   })
 
   it('rejects a package whose parent symlink escapes the cache', async () => {
-    await fsp.writeFile(path.join(outsideDir, 'orca.deb'), PAYLOAD)
+    await fsp.writeFile(path.join(outsideDir, 'wakii.deb'), PAYLOAD)
     await fsp.symlink(outsideDir, path.join(cacheRoot, 'escape'))
-    capture({ downloadedFile: path.join(cacheRoot, 'escape', 'orca.deb') })
+    capture({ downloadedFile: path.join(cacheRoot, 'escape', 'wakii.deb') })
     await expect(recovery.resolveLinuxPackageInstallInstructions(recoveryFor())).resolves.toEqual({
       ok: false,
       reason: 'not-regular'
@@ -478,7 +484,7 @@ describePosix('cache containment', () => {
   it('rejects a subdirectory of the pending directory', async () => {
     const nested = path.join(downloadDir, 'nested')
     await fsp.mkdir(nested)
-    const filePath = path.join(nested, 'orca.deb')
+    const filePath = path.join(nested, 'wakii.deb')
     await fsp.writeFile(filePath, PAYLOAD)
     capture({ downloadedFile: filePath })
     await expect(recovery.resolveLinuxPackageInstallInstructions(recoveryFor())).resolves.toEqual({
@@ -491,7 +497,7 @@ describePosix('cache containment', () => {
     const homeCache = path.join(tempRoot, 'home')
     const homeDownloadDir = path.join(homeCache, '.cache', 'orca-updater', 'pending')
     await fsp.mkdir(homeDownloadDir, { recursive: true })
-    const filePath = path.join(homeDownloadDir, 'orca.deb')
+    const filePath = path.join(homeDownloadDir, 'wakii.deb')
     await fsp.writeFile(filePath, PAYLOAD)
     vi.stubEnv('XDG_CACHE_HOME', '')
     vi.spyOn(os, 'homedir').mockReturnValue(homeCache)
@@ -499,7 +505,7 @@ describePosix('cache containment', () => {
     await expect(recovery.resolveLinuxPackageInstallInstructions(recoveryFor())).resolves.toEqual({
       ok: true,
       command: 'installed command',
-      packageFileName: 'orca.deb'
+      packageFileName: 'wakii.deb'
     })
   })
 })
@@ -509,7 +515,7 @@ describePosix('pending-directory anchoring', () => {
   it('rejects a package in an attacker-owned directory under the cache root', async () => {
     const evilDir = path.join(cacheRoot, 'evil')
     await fsp.mkdir(evilDir)
-    const filePath = path.join(evilDir, 'orca.deb')
+    const filePath = path.join(evilDir, 'wakii.deb')
     await fsp.writeFile(filePath, PAYLOAD)
     capture({ downloadedFile: filePath })
     await expect(recovery.resolveLinuxPackageInstallInstructions(recoveryFor())).resolves.toEqual({
@@ -519,7 +525,7 @@ describePosix('pending-directory anchoring', () => {
   })
 
   it('rejects a package in the updater directory itself', async () => {
-    const filePath = path.join(updaterDir, 'orca.deb')
+    const filePath = path.join(updaterDir, 'wakii.deb')
     await fsp.writeFile(filePath, PAYLOAD)
     capture({ downloadedFile: filePath })
     await expect(recovery.resolveLinuxPackageInstallInstructions(recoveryFor())).resolves.toEqual({
@@ -531,7 +537,7 @@ describePosix('pending-directory anchoring', () => {
   it('rejects a pending directory buried deeper than one level under the cache root', async () => {
     const deepPending = path.join(cacheRoot, 'evil', 'nested', 'pending')
     await fsp.mkdir(deepPending, { recursive: true })
-    const filePath = path.join(deepPending, 'orca.deb')
+    const filePath = path.join(deepPending, 'wakii.deb')
     await fsp.writeFile(filePath, PAYLOAD)
     capture({ downloadedFile: filePath })
     await expect(recovery.resolveLinuxPackageInstallInstructions(recoveryFor())).resolves.toEqual({
@@ -541,11 +547,11 @@ describePosix('pending-directory anchoring', () => {
   })
 
   it('rejects a pending directory that is a symlink out of the cache', async () => {
-    await fsp.writeFile(path.join(outsideDir, 'orca.deb'), PAYLOAD)
+    await fsp.writeFile(path.join(outsideDir, 'wakii.deb'), PAYLOAD)
     const fakeUpdaterDir = path.join(cacheRoot, 'orca-updater-2')
     await fsp.mkdir(fakeUpdaterDir)
     await fsp.symlink(outsideDir, path.join(fakeUpdaterDir, 'pending'))
-    capture({ downloadedFile: path.join(fakeUpdaterDir, 'pending', 'orca.deb') })
+    capture({ downloadedFile: path.join(fakeUpdaterDir, 'pending', 'wakii.deb') })
     await expect(recovery.resolveLinuxPackageInstallInstructions(recoveryFor())).resolves.toEqual({
       ok: false,
       reason: 'not-regular'
@@ -555,31 +561,31 @@ describePosix('pending-directory anchoring', () => {
   it('accepts any updater directory name that holds the pending directory', async () => {
     const otherPending = path.join(cacheRoot, 'orca-updater-next', 'pending')
     await fsp.mkdir(otherPending, { recursive: true })
-    const filePath = path.join(otherPending, 'orca.deb')
+    const filePath = path.join(otherPending, 'wakii.deb')
     await fsp.writeFile(filePath, PAYLOAD)
     capture({ downloadedFile: filePath })
     await expect(recovery.resolveLinuxPackageInstallInstructions(recoveryFor())).resolves.toEqual({
       ok: true,
       command: 'installed command',
-      packageFileName: 'orca.deb'
+      packageFileName: 'wakii.deb'
     })
   })
 
   it('accepts a pending directory reached through a symlink that stays in the cache', async () => {
-    await writePackage('orca.deb')
+    await writePackage('wakii.deb')
     await fsp.symlink(updaterDir, path.join(cacheRoot, 'link-to-updater'))
-    capture({ downloadedFile: path.join(cacheRoot, 'link-to-updater', 'pending', 'orca.deb') })
+    capture({ downloadedFile: path.join(cacheRoot, 'link-to-updater', 'pending', 'wakii.deb') })
     await expect(recovery.resolveLinuxPackageInstallInstructions(recoveryFor())).resolves.toEqual({
       ok: true,
       command: 'installed command',
-      packageFileName: 'orca.deb'
+      packageFileName: 'wakii.deb'
     })
   })
 })
 
 describePosix('validation coalescing', () => {
   it('performs one hash pass for concurrent requests', async () => {
-    await writePackage('orca.deb')
+    await writePackage('wakii.deb')
     capture()
     const [first, second] = await Promise.all([
       recovery.resolveLinuxPackageInstallInstructions(recoveryFor()),
@@ -591,7 +597,7 @@ describePosix('validation coalescing', () => {
   })
 
   it('revalidates once the in-flight pass settles', async () => {
-    await writePackage('orca.deb')
+    await writePackage('wakii.deb')
     capture()
     await recovery.resolveLinuxPackageInstallInstructions(recoveryFor())
     await recovery.resolveLinuxPackageInstallInstructions(recoveryFor())
@@ -599,7 +605,7 @@ describePosix('validation coalescing', () => {
   })
 
   it('does not reuse an in-flight pass for a different artifact', async () => {
-    await writePackage('orca.deb')
+    await writePackage('wakii.deb')
     await writePackage('orca-next.deb')
     capture()
     const first = recovery.resolveLinuxPackageInstallInstructions(recoveryFor())
@@ -616,7 +622,7 @@ describePosix('validation coalescing', () => {
   })
 
   it('starts a fresh proof when the same package is captured again', async () => {
-    await writePackage('orca.deb')
+    await writePackage('wakii.deb')
     capture()
     const first = recovery.resolveLinuxPackageInstallInstructions(recoveryFor())
     capture()
@@ -629,7 +635,7 @@ describePosix('validation coalescing', () => {
 
 describePosix('resolveLinuxPackageRevealTarget', () => {
   it('returns the verified package path', async () => {
-    const filePath = await writePackage('orca.deb')
+    const filePath = await writePackage('wakii.deb')
     capture()
     await expect(recovery.resolveLinuxPackageRevealTarget(recoveryFor())).resolves.toEqual({
       ok: true,
@@ -638,7 +644,7 @@ describePosix('resolveLinuxPackageRevealTarget', () => {
   })
 
   it('rejects a package that fails validation', async () => {
-    const filePath = await writePackage('orca.deb')
+    const filePath = await writePackage('wakii.deb')
     capture()
     await fsp.writeFile(filePath, 'tampered payload')
     await expect(recovery.resolveLinuxPackageRevealTarget(recoveryFor())).resolves.toEqual({

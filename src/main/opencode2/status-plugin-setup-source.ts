@@ -19,7 +19,7 @@ export function getOpenCode2SetupSource(): string[] {
 // Non-session owners have no Idle ${EM_DASH} ignore known sentinels to avoid stranded blockers.
 const NON_SESSION_FORM_OWNERS = new Set(["global"]);
 
-// Normalize blockers once so server and TUI reports reach Orca in the same shape.
+// Normalize blockers once so server and TUI reports reach Wakii in the same shape.
 function translateOpenCode2Event(inputType, data) {
   let type = inputType;
   let properties = data || {};

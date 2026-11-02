@@ -27,7 +27,7 @@ export const getLinearAgentSkillPaneSearchEntries = createLocalizedCatalog(() =>
         'skill'
       ),
       ...translateSearchKeyword(
-        'auto.components.settings.linear.agent.skill.search.orcaLinear',
+        'auto.components.settings.linear.agent.skill.search.wakiiLinear',
         'orca-linear'
       )
     ]

@@ -1,7 +1,7 @@
 /** JSX element factory for the guest `orca` module. Elements are plain data until rendered. */
 
-export const ORCA_ELEMENT = Symbol.for('orca.declarative.element')
-export const Fragment = Symbol.for('orca.declarative.fragment')
+export const ORCA_ELEMENT = Symbol.for('wakii.declarative.element')
+export const Fragment = Symbol.for('wakii.declarative.fragment')
 
 export type OrcaProps = Record<string, unknown>
 /** Loosely typed on purpose: author-facing prop types live in the published `orca` typings. */

@@ -5,7 +5,7 @@ import type { RuntimeTerminalPresentation } from '../../shared/runtime-types'
 
 // Without a window, the missing piece the caller can supply is the workspace, so name that.
 const NO_WORKSPACE_OR_WINDOW_MESSAGE =
-  'No workspace was given or found for this terminal, and this Orca host has no open app window to create one in. Pass --worktree to choose a workspace. No terminal was created.'
+  'No workspace was given or found for this terminal, and this Wakii host has no open app window to create one in. Pass --worktree to choose a workspace. No terminal was created.'
 
 // Workspace-less creates target the window's current view, so only it can perform them.
 export async function createDesktopTerminal(

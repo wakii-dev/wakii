@@ -35,15 +35,15 @@ export function readLocalFullVersion(localDir: string): string {
   const versionFile = join(localDir, '.version')
   if (!existsSync(versionFile)) {
     throw new Error(
-      `Orca's local server build is missing its version marker at ${versionFile}. ` +
-        `This usually indicates a packaging or build problem; reinstall Orca.`
+      `Wakii's local server build is missing its version marker at ${versionFile}. ` +
+        `This usually indicates a packaging or build problem; reinstall Wakii.`
     )
   }
   const v = readFileSync(versionFile, 'utf-8').trim()
   if (!v) {
     throw new Error(
-      `Orca's local server version marker at ${versionFile} is empty. ` +
-        `This usually indicates a packaging or build problem; reinstall Orca.`
+      `Wakii's local server version marker at ${versionFile} is empty. ` +
+        `This usually indicates a packaging or build problem; reinstall Wakii.`
     )
   }
   return v

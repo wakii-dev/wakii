@@ -45,7 +45,7 @@ async function endClosedStructuredAgentSessionChild(
   await context.endExitedChild(sessionId, child, {
     expected: true,
     ...(closed === 'kill-delivered' ? { deathEvidenceKind: closed } : {}),
-    reason: 'closed by Orca',
+    reason: 'closed by Wakii',
     ...(unanswered ? { startupUnanswered: true } : {})
   })
   context.restartWitness?.stopped(sessionId)
@@ -55,7 +55,7 @@ export function previousExitUnverifiableRefusal(): AgentSessionWireRefusal {
   return refuse(
     'agent_session_ownership_unknown',
     { reason: 'previousExitUnverifiable', ownerVerdict: 'unverifiable' },
-    "Orca could not prove this chat's previous agent process exited."
+    "Wakii could not prove this chat's previous agent process exited."
   )
 }
 
@@ -86,7 +86,7 @@ export async function joinClosingStructuredAgentSessionChild(
     return { ok: true }
   }
   // This refusal is the only visible trace outside Stop’s own failure path.
-  context.deps.logger.warn("the agent's process did not exit after Orca stopped and killed it", {
+  context.deps.logger.warn("the agent's process did not exit after Wakii stopped and killed it", {
     scope: 'provider-close-unproven',
     sessionId
   })

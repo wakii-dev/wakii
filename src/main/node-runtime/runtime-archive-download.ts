@@ -54,7 +54,7 @@ export class ReleaseMismatchError extends Error {}
 /** Blame the release only for proven mismatch; transport failures remain network errors. */
 export function downloadFailureMessage(label: string, error: unknown): string {
   return error instanceof ReleaseMismatchError
-    ? `The ${label} download didn't match the release Orca expects, so nothing was installed. Updating Orca may fix this.`
+    ? `The ${label} download didn't match the release Wakii expects, so nothing was installed. Updating Wakii may fix this.`
     : `Couldn't download ${label}. Check your network connection or proxy, then try again.`
 }
 

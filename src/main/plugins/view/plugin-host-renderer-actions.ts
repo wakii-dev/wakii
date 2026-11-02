@@ -6,7 +6,7 @@ import {
 import type { PluginCommandAliasActionId } from '../../../shared/plugins/contributions/plugin-command-actions'
 import { PluginHostCallError } from '../workers/plugin-host-call-scope'
 
-/** What a worker's `editor.open` and `commands.run` ask of Orca's window. */
+/** What a worker's `editor.open` and `commands.run` ask of Wakii's window. */
 export type PluginHostRendererActions = {
   openFile(worktreeId: string, relativePath: string): Promise<void>
   runAction(action: PluginCommandAliasActionId): Promise<void>
@@ -28,7 +28,7 @@ export function setPluginHostRendererRequest(next: PluginHostRendererRequest | n
 async function ask(body: PluginViewRequestBody): Promise<void> {
   const pending = request?.(body) ?? null
   if (!pending) {
-    throw new PluginHostCallError('unavailable', 'Orca has no window open to do this in')
+    throw new PluginHostCallError('unavailable', 'Wakii has no window open to do this in')
   }
   const reply = await pending.catch((error: unknown) => {
     throw new PluginHostCallError(

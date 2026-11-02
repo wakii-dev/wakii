@@ -113,7 +113,7 @@ function assertAcceptedBranchChoice(
 ): void {
   if (record && deleteBranch !== undefined && record.deleteBranch !== deleteBranch) {
     throw new Error(
-      `Orca already accepted removal of ${record.worktreePath} with a different branch choice. That cleanup may already have run; check the branch before retrying.`
+      `Wakii already accepted removal of ${record.worktreePath} with a different branch choice. That cleanup may already have run; check the branch before retrying.`
     )
   }
 }

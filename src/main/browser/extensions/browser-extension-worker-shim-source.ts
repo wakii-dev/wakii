@@ -15,7 +15,7 @@ function readBundledScript(fileName: string): string {
       existsSync(candidate)
     )
     if (!path) {
-      throw new Error(`Orca’s ${fileName} is missing from this build`)
+      throw new Error(`Wakii’s ${fileName} is missing from this build`)
     }
     script = readFileSync(path, 'utf8')
     scripts.set(fileName, script)

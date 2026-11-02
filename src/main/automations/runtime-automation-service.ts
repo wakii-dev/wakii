@@ -84,7 +84,7 @@ export function createRuntimeAutomationService(input: {
             if (!receipt) {
               return {
                 status: 'dispatch_failed',
-                error: `${agent} could not confirm this run after Orca restarted. Open its workspace before running again.`
+                error: `${agent} could not confirm this run after Wakii restarted. Open its workspace before running again.`
               }
             }
             const target =

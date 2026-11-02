@@ -26,7 +26,7 @@ export function retrySshConnectionsAfterNetworkReturn(): void {
     timeoutMs: RESUME_PROBE_TIMEOUT_MS
   }).catch((err) => {
     console.warn(
-      `[ssh] Failed to recover a managed Orca tunnel after system resume: ${errorMessage(err)}`
+      `[ssh] Failed to recover a managed Wakii tunnel after system resume: ${errorMessage(err)}`
     )
   })
 }

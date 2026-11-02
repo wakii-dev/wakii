@@ -36,7 +36,7 @@ export async function getMacUpdateRunningInstances(
     killOnOutputLimit: true
   })
   if (result.code !== 0 || result.timedOut || result.outputTruncated) {
-    throw new Error('Could not check running Orca instances')
+    throw new Error('Could not check running Wakii instances')
   }
   return parseMacUpdateRunningInstances(result.stdout, currentPid)
 }

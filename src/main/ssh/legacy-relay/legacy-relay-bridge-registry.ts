@@ -52,7 +52,7 @@ export type LegacyRelayBridgeHost = {
   /** Absent: relay-era `orca` commands are refused, as before this host served them. */
   remoteCli?: {
     runtime: () => OrcaRuntimeService | null
-    /** The per-host "Allow this host's orca CLI to control Orca" switch. */
+    /** The per-host "Allow this host's orca CLI to control Wakii" switch. */
     allowed: (targetId: string) => boolean
   }
 }

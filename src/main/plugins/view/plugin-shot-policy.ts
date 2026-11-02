@@ -1,7 +1,7 @@
 import type { PluginViewColorScheme } from '../../../shared/plugins/view/plugin-view-protocol'
 
 export const PLUGIN_SHOT_VISIBLE_THEME_REASON =
-  'the Orca window is visible; capturing in the current theme so the app is not repainted'
+  'the Wakii window is visible; capturing in the current theme so the app is not repainted'
 
 /** `--theme` repaints the whole app, so it only applies while nobody can see the window. */
 export function pluginShotThemeDecision(
@@ -26,7 +26,7 @@ export function isPluginShotWindowShown(window: {
 }
 
 export const PLUGIN_SHOT_ACT_WINDOW_SHOWN_MESSAGE =
-  "shot --act needs Orca's window hidden or minimized, so it never clicks under the user"
+  "shot --act needs Wakii's window hidden or minimized, so it never clicks under the user"
 
 /** `--act` drives a components panel, and only while nobody can be using the window. */
 export function pluginShotActRefusal(
@@ -44,13 +44,13 @@ export function pluginShotActRefusal(
     ? {
         reason: 'window_shown',
         message: PLUGIN_SHOT_ACT_WINDOW_SHOWN_MESSAGE,
-        nextSteps: ['Minimize or hide Orca, then run this again.']
+        nextSteps: ['Minimize or hide Wakii, then run this again.']
       }
     : null
 }
 
 export const PLUGIN_SHOT_REPLAY_WINDOW_SHOWN_MESSAGE =
-  "shot --scenario draws its preview inside Orca's window, so it needs the window hidden or minimized"
+  "shot --scenario draws its preview inside Wakii's window, so it needs the window hidden or minimized"
 
 /** The preview is drawn over the window's own content, so only while nobody can see it. */
 export function pluginShotReplayRefusal(
@@ -61,7 +61,7 @@ export function pluginShotReplayRefusal(
         reason: 'window_shown',
         message: PLUGIN_SHOT_REPLAY_WINDOW_SHOWN_MESSAGE,
         nextSteps: [
-          'Minimize or hide Orca, then run this again; `orca plugin check` renders the same scenarios as text.'
+          'Minimize or hide Wakii, then run this again; `orca plugin check` renders the same scenarios as text.'
         ]
       }
     : null

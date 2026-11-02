@@ -9,7 +9,7 @@ export const CLAUDE_AGENT_VIEW_PLUGIN_FILES: Record<string, string> = {
   '.claude-plugin/plugin.json': JSON.stringify({
     name: CLAUDE_AGENT_VIEW_PLUGIN,
     version: '0.2.0',
-    description: 'Open Claude subagents from the Orca sidebar',
+    description: 'Open Claude subagents from the Wakii sidebar',
     author: { name: 'stablyai' },
     license: 'MIT'
   }),

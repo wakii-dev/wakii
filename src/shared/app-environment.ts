@@ -28,7 +28,7 @@ export type AppProcessMetric = {
 }
 
 /** Anchor to the realm via a global symbol so vi.resetModules cannot lose an environment installed before reimport. */
-const SLOT = Symbol.for('orca.host.appEnvironment')
+const SLOT = Symbol.for('wakii.host.appEnvironment')
 
 type Slot = { [SLOT]?: AppEnvironment | null }
 

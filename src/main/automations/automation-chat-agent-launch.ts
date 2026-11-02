@@ -95,7 +95,7 @@ async function launchChat(
     )
     if (result.prompt?.outcome !== 'journaled' && result.prompt?.outcome !== 'handed-to-terminal') {
       throw new AutomationRunLaunchError(
-        `${tuiAgentDisplayName(automation.agentId)} started, but Orca could not confirm this run's prompt. Open the run before trying again.`,
+        `${tuiAgentDisplayName(automation.agentId)} started, but Wakii could not confirm this run's prompt. Open the run before trying again.`,
         published ?? publishedLaunchTarget(runtime, result)
       )
     }

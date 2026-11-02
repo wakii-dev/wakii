@@ -17,5 +17,5 @@ export function checkServeUserDataPath(options: {
   if (isSameUserDataPath(expected, options.userDataPath, options.platform)) {
     return null
   }
-  return `[serve] orca serve chose the profile at ${expected}, but this launch resolved ${options.userDataPath}; refusing to start so it cannot touch another profile's running Orca.`
+  return `[serve] orca serve chose the profile at ${expected}, but this launch resolved ${options.userDataPath}; refusing to start so it cannot touch another profile's running Wakii.`
 }

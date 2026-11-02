@@ -30,7 +30,7 @@ export function runtimeSourceFence(request: RpcRequest, meta: RpcEnvelopeMeta): 
       request.id,
       meta,
       'runtime_source_unverifiable',
-      'This Orca does not know which profile it serves, so it cannot confirm it is the Orca that launched this terminal. Nothing was run.'
+      'This Wakii does not know which profile it serves, so it cannot confirm it is the Wakii that launched this terminal. Nothing was run.'
     )
   }
   if (sourceId !== parsed.data.sourceId || meta.runtimeId !== parsed.data.runtimeId) {
@@ -38,7 +38,7 @@ export function runtimeSourceFence(request: RpcRequest, meta: RpcEnvelopeMeta): 
       request.id,
       meta,
       'runtime_source_mismatch',
-      'This request was meant for another Orca (another profile or instance). Nothing was run. Open a new terminal from the Orca you want to control.'
+      'This request was meant for another Wakii (another profile or instance). Nothing was run. Open a new terminal from the Wakii you want to control.'
     )
   }
   return null

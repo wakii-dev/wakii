@@ -39,7 +39,7 @@ function isGitHubRestrictedShellProbeSuccess(
 
   // GitHub appends git:// advisory lines after the invalid-command line (issue #6988), so match the first line only.
   const firstLine = stderr.split('\n', 1)[0]?.trim()
-  if (firstLine !== 'Invalid command: echo ORCA-SYSTEM-SSH-OK') {
+  if (firstLine !== 'Invalid command: echo WAKII-SYSTEM-SSH-OK') {
     return false
   }
 
@@ -103,7 +103,7 @@ export function waitForSystemSshProbe(
           return
         }
         if (
-          (code === 0 && stdout.includes('ORCA-SYSTEM-SSH-OK')) ||
+          (code === 0 && stdout.includes('WAKII-SYSTEM-SSH-OK')) ||
           isGitHubRestrictedShellProbeSuccess(host.target, host.resolvedConfig(), code, stderr)
         ) {
           host.onConnected()

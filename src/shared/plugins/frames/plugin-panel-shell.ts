@@ -107,7 +107,7 @@ function frameApiScript(surface: PluginFrameSurface, transport: FrameTransport):
     }) : []
   }
   function on(name, fn) {
-    if (typeof fn !== 'function') throw new TypeError('orca.on needs a handler')
+    if (typeof fn !== 'function') throw new TypeError('wakii.on needs a handler')
     var set = listeners.get(name) || new Set()
     listeners.set(name, set)
     var entry = function (payload) { return fn(payload) }

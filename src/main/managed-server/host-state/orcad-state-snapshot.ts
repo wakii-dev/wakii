@@ -147,7 +147,7 @@ export function captureOrcadStateSnapshotCommand(
       `members=; for m in ${plainMemberWords()}; do`,
       'if [ -e "$root/$m" ] || [ -L "$root/$m" ]; then',
       'links=$(find "$root/$m" -type l -print 2>&1) && [ -z "$links" ] ||',
-      'snapshot_fail "$m holds a symbolic link or an entry Orca cannot read: $links";',
+      'snapshot_fail "$m holds a symbolic link or an entry Wakii cannot read: $links";',
       'members="$members $m"; fi; done;',
       // Set umask before directory creation so the whole snapshot is owner-only.
       'if [ -z "$members" ]; then echo EMPTY; else umask 077;',

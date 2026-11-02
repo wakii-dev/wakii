@@ -47,7 +47,7 @@ function requireTarget(claims: TargetClaims, targetId: string): SshTarget & { ge
 function sshAccessBlockerMessage(targetId: string, blocker: OrcadMigrationBlocker): string {
   switch (blocker.code) {
     case 'orcad_migration_dependent_state':
-      return `This SSH target is still used by saved Orca state: ${dependentStateSummary(blocker.dependencies)}. Remove it, or link SSH access through an SSH target with nothing saved.`
+      return `This SSH target is still used by saved Wakii state: ${dependentStateSummary(blocker.dependencies)}. Remove it, or link SSH access through an SSH target with nothing saved.`
     case 'orcad_migration_direct_ssh_repositories':
     case 'orcad_migration_direct_ssh_folder_workspaces':
       return 'This SSH target already has direct SSH projects. Remove them, or link SSH access through another SSH target.'

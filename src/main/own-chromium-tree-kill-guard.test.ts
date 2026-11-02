@@ -86,7 +86,7 @@ describe('refusing to tree-kill our own Chromium processes', () => {
     ['an empty pid set', new Set<number>()],
     ['the live pid set', undefined]
   ])(
-    'refuses an Wakii renderer from a daemon host with %s, because no Chromium descends from it',
+    'refuses a Wakii renderer from a daemon host with %s, because no Chromium descends from it',
     (_case, ownChromiumPids) => {
       // Daemon ancestry stops at the daemon PID; Chromium siblings fail that check without metrics.
       const rows = [...PROCESS_ROWS, { pid: DAEMON_PID, ppid: ORCA_MAIN_PID }]

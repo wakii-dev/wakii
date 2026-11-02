@@ -13,25 +13,25 @@ describe('classifyDaemonSpawnerPath', () => {
 
   it('classifies the installed app, the ShipIt staging area, and everything else', () => {
     expect(
-      classifyDaemonSpawnerPath('/Applications/Orca.app/Contents/MacOS/Orca', alwaysExists, null)
+      classifyDaemonSpawnerPath('/Applications/Wakii.app/Contents/MacOS/Orca', alwaysExists, null)
     ).toBe('applications')
     expect(
       classifyDaemonSpawnerPath(
-        '/private/Applications/Orca.app/Contents/MacOS/Orca',
+        '/private/Applications/Wakii.app/Contents/MacOS/Orca',
         alwaysExists,
         null
       )
     ).toBe('applications')
     expect(
       classifyDaemonSpawnerPath(
-        '/Users/a/Library/Caches/com.stablyai.orca.ShipIt/update.abc/Orca.app/Contents/MacOS/Orca',
+        '/Users/a/Library/Caches/com.stablyai.orca.ShipIt/update.abc/Wakii.app/Contents/MacOS/Orca',
         alwaysExists,
         null
       )
     ).toBe('updater-cache')
     expect(
       classifyDaemonSpawnerPath(
-        '/Users/a/Applications/Orca.app/Contents/MacOS/Orca',
+        '/Users/a/Applications/Wakii.app/Contents/MacOS/Orca',
         alwaysExists,
         null
       )
@@ -43,7 +43,7 @@ describe('classifyDaemonSpawnerPath', () => {
 
   it('reports a deleted spawner as missing and an unrecorded one as unknown', () => {
     expect(
-      classifyDaemonSpawnerPath('/Applications/Orca.app/Contents/MacOS/Orca', () => false, null)
+      classifyDaemonSpawnerPath('/Applications/Wakii.app/Contents/MacOS/Orca', () => false, null)
     ).toBe('missing')
     expect(classifyDaemonSpawnerPath(null, alwaysExists, null)).toBe('unknown')
   })
@@ -55,7 +55,7 @@ describe('classifyDaemonSpawnerPath', () => {
     expect(classifyDaemonSpawnerPath(copy, () => false, prefix)).toBe('missing')
     expect(classifyDaemonSpawnerPath(copy, alwaysExists, null)).toBe('other')
     expect(
-      classifyDaemonSpawnerPath('/Applications/Orca.app/Contents/MacOS/Orca', alwaysExists, prefix)
+      classifyDaemonSpawnerPath('/Applications/Wakii.app/Contents/MacOS/Orca', alwaysExists, prefix)
     ).toBe('applications')
   })
 })
@@ -106,7 +106,7 @@ describe('daemon_adopted / daemon_pty_cwd_denied schemas', () => {
 
   it('rejects leaked paths, versions, counts, and unknown enum values', () => {
     for (const leak of [
-      { spawner_exec_path: '/Users/alice/Library/Caches/ShipIt/Orca.app' },
+      { spawner_exec_path: '/Users/alice/Library/Caches/ShipIt/Wakii.app' },
       { app_version: '1.4.187' },
       { live_session_count: 3 },
       { cwd: '/Users/alice/Documents' }

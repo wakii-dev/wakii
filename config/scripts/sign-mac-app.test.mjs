@@ -12,7 +12,7 @@ it('preserves file-specific signing policy and retries with fresh options', asyn
   const calls = []
   const failure = new Error('timestamp service unavailable')
   const options = {
-    app: '/fixture/Orca.app',
+    app: '/fixture/Wakii.app',
     platform: 'darwin',
     type: 'distribution',
     identity: 'SIGNING_IDENTITY',

@@ -73,7 +73,7 @@ export async function followLaunchedServerPort(
     await rebuildOrcadManagedTunnel(userDataPath, environmentId)
   } catch (error) {
     // Server already launched; if tunnel rebuild fails, the next connect can forward its bound port.
-    console.warn('[ssh] Could not forward to the relaunched managed Orca server:', error)
+    console.warn('[ssh] Could not forward to the relaunched managed Wakii server:', error)
   }
 }
 

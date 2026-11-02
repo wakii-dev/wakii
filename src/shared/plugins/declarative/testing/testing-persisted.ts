@@ -1,6 +1,6 @@
 type Stored = { version: number; value: unknown }
 
-const STORED = Symbol.for('orca.testing.stored')
+const STORED = Symbol.for('wakii.testing.stored')
 export type StoredValue = { readonly [STORED]: true; version: number; value: unknown }
 
 /** A persisted value written by an older version of the panel, for testing `migrate`. */

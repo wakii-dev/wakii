@@ -26,7 +26,7 @@ function daemonEnvironmentDiagSuffix(): string {
   const systemVersion =
     (process as NodeJS.Process & { getSystemVersion?: () => string }).getSystemVersion?.() ||
     release()
-  return ` (orca: ${orca}, arch: ${process.arch}, platform: ${process.platform} ${systemVersion})`
+  return ` (wakii: ${orca}, arch: ${process.arch}, platform: ${process.platform} ${systemVersion})`
 }
 
 function formatMissingDaemonPathError(kind: 'helper' | 'cwd', path: string): DaemonProtocolError {

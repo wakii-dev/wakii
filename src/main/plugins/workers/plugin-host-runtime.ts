@@ -139,7 +139,7 @@ export function createPluginWorkerRuntime(
       // Why name it: `export function activate` is the usual slip, and Orca never calls it.
       throw new Error(
         typeof readExport(module, 'activate') === 'function'
-          ? `plugin entry ${input.mainEntry} exports activate by name, but Orca calls the default export: write \`export default function activate(orca)\``
+          ? `plugin entry ${input.mainEntry} exports activate by name, but Wakii calls the default export: write \`export default function activate(wakii)\``
           : `plugin entry ${input.mainEntry} has no default-exported activate function`
       )
     }

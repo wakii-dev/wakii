@@ -29,7 +29,7 @@ export async function resolveWorkerWorktreeCreationTarget(args: {
       if (error instanceof Error && error.message === 'selector_not_found') {
         throw new OrchestrationError(
           'invalid_argument',
-          `The dispatching terminal's workspace could not be resolved to a git worktree Orca manages, which --worktree ${requestedWorktree} needs; run from one, or pass --worktree new-top-level --repo <selector>.`
+          `The dispatching terminal's workspace could not be resolved to a git worktree Wakii manages, which --worktree ${requestedWorktree} needs; run from one, or pass --worktree new-top-level --repo <selector>.`
         )
       }
       throw error

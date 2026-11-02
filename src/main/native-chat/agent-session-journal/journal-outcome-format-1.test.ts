@@ -196,7 +196,7 @@ it('admits and decodes every declared shape as stored, and refuses one key more 
     expect(decoded).toEqual(value)
   }
   const [, key, item] = values[0] ?? []
-  const newer = JSON.stringify(item).replace('"orcaStop":{', '"orcaStop":{"later":1,')
+  const newer = JSON.stringify(item).replace('"wakiiStop":{', '"wakiiStop":{"later":1,')
   expect(admitOutcomeFormat1({ field: 'items', key: key ?? '', json: newer, deleted: false })).toBe(
     'unknown'
   )

@@ -26,11 +26,11 @@ export function OrcaProfileSignOutConfirmDialog({
       <DialogContent className="sm:max-w-[420px]">
         <DialogHeader>
           <DialogTitle>
-            {translate('auto.components.orca.profiles.signout.confirm.title', 'Sign out of Orca?')}
+            {translate('auto.components.wakii.profiles.signout.confirm.title', 'Sign out of Orca?')}
           </DialogTitle>
           <DialogDescription>
             {translate(
-              'auto.components.orca.profiles.signout.confirm.description',
+              'auto.components.wakii.profiles.signout.confirm.description',
               "Artifacts and Orca Relay will be unavailable until you sign in again. Your local projects and worktrees won't be affected."
             )}
           </DialogDescription>
@@ -43,11 +43,11 @@ export function OrcaProfileSignOutConfirmDialog({
             onClick={() => onOpenChange(false)}
             disabled={signingOut}
           >
-            {translate('auto.components.orca.profiles.signout.confirm.cancel', 'Cancel')}
+            {translate('auto.components.wakii.profiles.signout.confirm.cancel', 'Cancel')}
           </Button>
           <Button size="sm" onClick={onConfirm} disabled={signingOut}>
             {signingOut ? <Loader2 className="size-4 animate-spin" /> : null}
-            {translate('auto.components.orca.profiles.signout.confirm.action', 'Sign out')}
+            {translate('auto.components.wakii.profiles.signout.confirm.action', 'Sign out')}
           </Button>
         </DialogFooter>
       </DialogContent>

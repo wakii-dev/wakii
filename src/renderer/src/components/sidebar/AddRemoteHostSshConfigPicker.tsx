@@ -196,7 +196,7 @@ export function AddRemoteHostSshConfigPicker({
                       className="mt-0.5 shrink-0 border-emerald-500/40 text-[10.5px] text-emerald-400"
                     >
                       {translate(
-                        'auto.components.sidebar.AddRemoteHostDialog.sshConfigPickerInOrca',
+                        'auto.components.sidebar.AddRemoteHostDialog.sshConfigPickerInWakii',
                         'In Orca'
                       )}
                     </Badge>

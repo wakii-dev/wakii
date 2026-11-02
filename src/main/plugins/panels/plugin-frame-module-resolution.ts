@@ -13,7 +13,7 @@ export type PluginModuleSpecifierResolution =
 export type PluginFileExists = (relativePath: string) => Promise<boolean>
 
 const isOrcaSpecifier = (specifier: string): boolean =>
-  specifier === 'orca' || specifier.startsWith('orca/')
+  specifier === 'orca' || specifier.startsWith('wakii/')
 
 // Why kept: URLs are not bare names; the guest CSP decides whether they load.
 const isUrlSpecifier = (specifier: string): boolean => /^[a-z][a-z0-9+.-]*:/i.test(specifier)

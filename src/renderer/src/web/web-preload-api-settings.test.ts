@@ -18,14 +18,14 @@ describe('web settings preload API', () => {
   it('migrates first-work branch auto-rename on for stored legacy web settings once', async () => {
     const globals = installBrowserGlobals('Linux')
     globals.storage.setItem(
-      'orca.web.settings.v1',
+      'wakii.web.settings.v1',
       JSON.stringify({ autoRenameBranchFromWork: false })
     )
     const { installWebPreloadApi } = await import('./web-preload-api')
     installWebPreloadApi()
 
     const settings = await globals.window.api.settings.get()
-    const stored = JSON.parse(globals.storage.getItem('orca.web.settings.v1') ?? '{}') as {
+    const stored = JSON.parse(globals.storage.getItem('wakii.web.settings.v1') ?? '{}') as {
       autoRenameBranchFromWork?: boolean
       autoRenameBranchFromWorkDefaultedOn?: boolean
     }
@@ -38,12 +38,12 @@ describe('web settings preload API', () => {
 
   it('migrates inherited terminal bar cursor defaults for stored web settings once', async () => {
     const globals = installBrowserGlobals('Linux')
-    globals.storage.setItem('orca.web.settings.v1', JSON.stringify({ terminalCursorStyle: 'bar' }))
+    globals.storage.setItem('wakii.web.settings.v1', JSON.stringify({ terminalCursorStyle: 'bar' }))
     const { installWebPreloadApi } = await import('./web-preload-api')
     installWebPreloadApi()
 
     const settings = await globals.window.api.settings.get()
-    const stored = JSON.parse(globals.storage.getItem('orca.web.settings.v1') ?? '{}') as {
+    const stored = JSON.parse(globals.storage.getItem('wakii.web.settings.v1') ?? '{}') as {
       terminalCursorStyle?: string
       terminalCursorStyleDefaultedToBlock?: boolean
     }
@@ -57,7 +57,7 @@ describe('web settings preload API', () => {
   it('preserves terminal cursor choices after the web block-default migration', async () => {
     const globals = installBrowserGlobals('Linux')
     globals.storage.setItem(
-      'orca.web.settings.v1',
+      'wakii.web.settings.v1',
       JSON.stringify({
         terminalCursorStyle: 'bar',
         terminalCursorStyleDefaultedToBlock: true
@@ -115,7 +115,7 @@ describe('web settings preload API', () => {
     const { api, storage } = await installApi('Linux')
 
     const invalid = await api.settings.set({ terminalCursorStyle: 'beam' as never })
-    const invalidStored = JSON.parse(storage.getItem('orca.web.settings.v1') ?? '{}') as {
+    const invalidStored = JSON.parse(storage.getItem('wakii.web.settings.v1') ?? '{}') as {
       terminalCursorStyle?: string
       terminalCursorStyleDefaultedToBlock?: boolean
     }
@@ -126,7 +126,7 @@ describe('web settings preload API', () => {
 
     const valid = await api.settings.set({ terminalCursorStyle: 'bar' })
     expect(valid.terminalCursorStyle).toBe('bar')
-    expect(JSON.parse(storage.getItem('orca.web.settings.v1') ?? '{}').terminalCursorStyle).toBe(
+    expect(JSON.parse(storage.getItem('wakii.web.settings.v1') ?? '{}').terminalCursorStyle).toBe(
       'bar'
     )
   })
@@ -135,14 +135,14 @@ describe('web settings preload API', () => {
     // Web has an independent settings store; flipping constants cannot migrate persisted false (#10567).
     const globals = installBrowserGlobals('Linux')
     globals.storage.setItem(
-      'orca.web.settings.v1',
+      'wakii.web.settings.v1',
       JSON.stringify({ terminalAllowOsc52Clipboard: false })
     )
     const { installWebPreloadApi } = await import('./web-preload-api')
     installWebPreloadApi()
 
     const settings = await globals.window.api.settings.get()
-    const stored = JSON.parse(globals.storage.getItem('orca.web.settings.v1') ?? '{}') as {
+    const stored = JSON.parse(globals.storage.getItem('wakii.web.settings.v1') ?? '{}') as {
       terminalAllowOsc52Clipboard?: boolean
       terminalAllowOsc52ClipboardDefaultedOnForAllUsers?: boolean
     }
@@ -156,14 +156,14 @@ describe('web settings preload API', () => {
   it('arms the OSC 52 notice in the web UI store when the flip overrides a persisted off', async () => {
     const globals = installBrowserGlobals('Linux')
     globals.storage.setItem(
-      'orca.web.settings.v1',
+      'wakii.web.settings.v1',
       JSON.stringify({ terminalAllowOsc52Clipboard: false })
     )
     const { installWebPreloadApi } = await import('./web-preload-api')
     installWebPreloadApi()
 
     await globals.window.api.settings.get()
-    const storedUi = JSON.parse(globals.storage.getItem('orca.web.ui.v1') ?? '{}') as {
+    const storedUi = JSON.parse(globals.storage.getItem('wakii.web.ui.v1') ?? '{}') as {
       osc52ClipboardDefaultOnNoticePending?: boolean
     }
 
@@ -172,12 +172,12 @@ describe('web settings preload API', () => {
 
   it('does not arm the OSC 52 notice for a web profile with no persisted value', async () => {
     const globals = installBrowserGlobals('Linux')
-    globals.storage.setItem('orca.web.settings.v1', JSON.stringify({ terminalFontSize: 15 }))
+    globals.storage.setItem('wakii.web.settings.v1', JSON.stringify({ terminalFontSize: 15 }))
     const { installWebPreloadApi } = await import('./web-preload-api')
     installWebPreloadApi()
 
     await globals.window.api.settings.get()
-    const storedUi = JSON.parse(globals.storage.getItem('orca.web.ui.v1') ?? '{}') as {
+    const storedUi = JSON.parse(globals.storage.getItem('wakii.web.ui.v1') ?? '{}') as {
       osc52ClipboardDefaultOnNoticePending?: boolean
     }
 
@@ -190,7 +190,7 @@ describe('web settings preload API', () => {
     const { installWebPreloadApi } = await import('./web-preload-api')
     installWebPreloadApi()
     globals.storage.setItem(
-      'orca.web.settings.v1',
+      'wakii.web.settings.v1',
       JSON.stringify({ terminalAllowOsc52Clipboard: false })
     )
 
@@ -202,7 +202,7 @@ describe('web settings preload API', () => {
   it('preserves OSC 52 clipboard web opt-outs after migration', async () => {
     const globals = installBrowserGlobals('Linux')
     globals.storage.setItem(
-      'orca.web.settings.v1',
+      'wakii.web.settings.v1',
       JSON.stringify({
         terminalAllowOsc52Clipboard: false,
         terminalAllowOsc52ClipboardDefaultedOnForAllUsers: true
@@ -219,7 +219,7 @@ describe('web settings preload API', () => {
   it('preserves first-work branch auto-rename web opt-outs after migration', async () => {
     const globals = installBrowserGlobals('Linux')
     globals.storage.setItem(
-      'orca.web.settings.v1',
+      'wakii.web.settings.v1',
       JSON.stringify({
         autoRenameBranchFromWork: false,
         autoRenameBranchFromWorkDefaultedOn: true
@@ -229,7 +229,7 @@ describe('web settings preload API', () => {
     installWebPreloadApi()
 
     const settings = await globals.window.api.settings.get()
-    const stored = JSON.parse(globals.storage.getItem('orca.web.settings.v1') ?? '{}') as {
+    const stored = JSON.parse(globals.storage.getItem('wakii.web.settings.v1') ?? '{}') as {
       autoRenameBranchFromWork?: boolean
       autoRenameBranchFromWorkDefaultedOn?: boolean
     }
@@ -244,7 +244,7 @@ describe('web settings preload API', () => {
     const { api, storage } = await installApi('Linux')
 
     const settings = await api.settings.set({ autoRenameBranchFromWork: false })
-    const stored = JSON.parse(storage.getItem('orca.web.settings.v1') ?? '{}') as {
+    const stored = JSON.parse(storage.getItem('wakii.web.settings.v1') ?? '{}') as {
       autoRenameBranchFromWork?: boolean
       autoRenameBranchFromWorkDefaultedOn?: boolean
     }
@@ -284,7 +284,7 @@ describe('web settings preload API', () => {
     installWebPreloadApi()
 
     const settings = await globals.window.api.settings.get()
-    const stored = JSON.parse(globals.storage.getItem('orca.web.settings.v1') ?? '{}') as {
+    const stored = JSON.parse(globals.storage.getItem('wakii.web.settings.v1') ?? '{}') as {
       compactWorktreeCards?: boolean
     }
 
@@ -313,7 +313,7 @@ describe('web settings preload API', () => {
     const globals = installBrowserGlobals('Linux')
     writeStoredRuntimeEnvironment(globals.storage)
     globals.storage.setItem(
-      'orca.web.settings.v1',
+      'wakii.web.settings.v1',
       JSON.stringify({ worktreeVisibilityDefaults: { external: 'hide' } })
     )
     const { installWebPreloadApi } = await import('./web-preload-api')
@@ -338,7 +338,7 @@ describe('web settings preload API', () => {
       compactWorktreeCards: true,
       worktreeVisibilityDefaults: { external: 'hide' }
     })
-    expect(JSON.parse(globals.storage.getItem('orca.web.settings.v1') ?? '{}')).toMatchObject({
+    expect(JSON.parse(globals.storage.getItem('wakii.web.settings.v1') ?? '{}')).toMatchObject({
       compactWorktreeCards: true,
       worktreeVisibilityDefaults: { external: 'hide' }
     })
@@ -377,7 +377,7 @@ describe('web settings preload API', () => {
     const globals = installBrowserGlobals('Linux')
     writeStoredRuntimeEnvironment(globals.storage)
     globals.storage.setItem(
-      'orca.web.settings.v1',
+      'wakii.web.settings.v1',
       JSON.stringify({
         worktreeVisibilityDefaults: {
           external: 'show',
@@ -394,7 +394,8 @@ describe('web settings preload API', () => {
       sourcePreferences: { builtIn: { claude: 'hide' } }
     })
     expect(
-      JSON.parse(globals.storage.getItem('orca.web.settings.v1') ?? '{}').worktreeVisibilityDefaults
+      JSON.parse(globals.storage.getItem('wakii.web.settings.v1') ?? '{}')
+        .worktreeVisibilityDefaults
     ).toEqual({
       external: 'show',
       customSources: [{ id: 'local', rootPath: '/srv/local' }]
@@ -414,7 +415,8 @@ describe('web settings preload API', () => {
       sourcePreferences: { builtIn: { claude: 'show' } }
     })
     expect(
-      JSON.parse(globals.storage.getItem('orca.web.settings.v1') ?? '{}').worktreeVisibilityDefaults
+      JSON.parse(globals.storage.getItem('wakii.web.settings.v1') ?? '{}')
+        .worktreeVisibilityDefaults
     ).toEqual({
       external: 'show',
       customSources: [{ id: 'local', rootPath: '/srv/local' }]
@@ -459,7 +461,7 @@ describe('web settings preload API', () => {
     const globals = installBrowserGlobals('Linux')
     writeStoredRuntimeEnvironment(globals.storage)
     globals.storage.setItem(
-      'orca.web.settings.v1',
+      'wakii.web.settings.v1',
       JSON.stringify({ worktreeVisibilityDefaults: { external: 'hide' } })
     )
     const { installWebPreloadApi } = await import('./web-preload-api')
@@ -471,7 +473,8 @@ describe('web settings preload API', () => {
     })
 
     expect(
-      JSON.parse(globals.storage.getItem('orca.web.settings.v1') ?? '{}').worktreeVisibilityDefaults
+      JSON.parse(globals.storage.getItem('wakii.web.settings.v1') ?? '{}')
+        .worktreeVisibilityDefaults
     ).toEqual({ external: 'hide' })
   })
 
@@ -499,7 +502,7 @@ describe('web settings preload API', () => {
     const globals = installBrowserGlobals('Linux')
     writeStoredRuntimeEnvironment(globals.storage)
     globals.storage.setItem(
-      'orca.web.settings.v1',
+      'wakii.web.settings.v1',
       JSON.stringify({ worktreeVisibilityDefaults: { external: 'show' } })
     )
     const { installWebPreloadApi } = await import('./web-preload-api')
@@ -513,7 +516,7 @@ describe('web settings preload API', () => {
       })
     ).rejects.toThrow('offline')
 
-    expect(JSON.parse(globals.storage.getItem('orca.web.settings.v1') ?? '{}')).toMatchObject({
+    expect(JSON.parse(globals.storage.getItem('wakii.web.settings.v1') ?? '{}')).toMatchObject({
       terminalFontSize: 15,
       worktreeVisibilityDefaults: { external: 'show' }
     })
@@ -575,7 +578,7 @@ describe('web settings preload API', () => {
     installWebPreloadApi()
 
     const settings = await globals.window.api.settings.get()
-    const stored = JSON.parse(globals.storage.getItem('orca.web.settings.v1') ?? '{}') as {
+    const stored = JSON.parse(globals.storage.getItem('wakii.web.settings.v1') ?? '{}') as {
       experimentalNewWorktreeCardStyle?: boolean
     }
 
@@ -614,7 +617,7 @@ describe('web settings preload API', () => {
     installWebPreloadApi()
 
     const settings = await globals.window.api.settings.get()
-    const stored = JSON.parse(globals.storage.getItem('orca.web.settings.v1') ?? '{}') as {
+    const stored = JSON.parse(globals.storage.getItem('wakii.web.settings.v1') ?? '{}') as {
       minimaxGroupId?: string
       minimaxUsageModels?: string
       minimaxEndpoint?: string
@@ -688,7 +691,7 @@ describe('web settings preload API', () => {
 
     const settings = await globals.window.api.settings.set({ compactWorktreeCards: true })
 
-    const stored = JSON.parse(globals.storage.getItem('orca.web.settings.v1') ?? '{}') as {
+    const stored = JSON.parse(globals.storage.getItem('wakii.web.settings.v1') ?? '{}') as {
       compactWorktreeCards?: boolean
     }
 
@@ -769,7 +772,7 @@ describe('web settings preload API', () => {
       minimaxEndpoint: 'cn'
     })
 
-    const stored = JSON.parse(globals.storage.getItem('orca.web.settings.v1') ?? '{}') as {
+    const stored = JSON.parse(globals.storage.getItem('wakii.web.settings.v1') ?? '{}') as {
       minimaxGroupId?: string
       minimaxUsageModels?: string
       minimaxEndpoint?: string
@@ -886,7 +889,7 @@ describe('web settings preload API', () => {
       })
     ).rejects.toThrow('runtime unavailable')
 
-    const stored = JSON.parse(globals.storage.getItem('orca.web.settings.v1') ?? '{}') as {
+    const stored = JSON.parse(globals.storage.getItem('wakii.web.settings.v1') ?? '{}') as {
       prBotAuthorOverrides?: string[]
     }
     expect(stored.prBotAuthorOverrides).toBeUndefined()

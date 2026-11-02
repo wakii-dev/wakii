@@ -14,27 +14,27 @@ function accountStatusCopy(
   email: string | undefined
 ): string {
   if (state === 'connected') {
-    return email ?? translate('auto.components.settings.orcaAccount.connected', 'Connected')
+    return email ?? translate('auto.components.settings.wakiiAccount.connected', 'Connected')
   }
   if (state === 'reconnect-required') {
     return translate(
-      'auto.components.settings.orcaAccount.reconnectRequired',
+      'auto.components.settings.wakiiAccount.reconnectRequired',
       'Your session expired. Sign in again to use cloud features.'
     )
   }
   if (state === 'unconfigured') {
     return translate(
-      'auto.components.settings.orcaAccount.unavailable',
+      'auto.components.settings.wakiiAccount.unavailable',
       'Orca sign-in is unavailable in this build.'
     )
   }
   if (state === 'local') {
     return translate(
-      'auto.components.settings.orcaAccount.signedOut',
+      'auto.components.settings.wakiiAccount.signedOut',
       'Sign in to extend Orca with cloud features, including Artifacts and Orca Relay.'
     )
   }
-  return translate('auto.components.settings.orcaAccount.checking', 'Checking account status…')
+  return translate('auto.components.settings.wakiiAccount.checking', 'Checking account status…')
 }
 
 function AccountBenefit({
@@ -92,12 +92,12 @@ export function OrcaAccountSettingsPane(): React.JSX.Element {
             <div className="flex flex-wrap items-center gap-2">
               <p className="text-sm font-medium">
                 {authStatus?.cloud?.displayName?.trim() ||
-                  translate('auto.components.settings.orcaAccount.account', 'Orca account')}
+                  translate('auto.components.settings.wakiiAccount.account', 'Orca account')}
               </p>
               {connected ? (
                 <Badge variant="outline" className="text-[11px] text-muted-foreground">
                   <Check />
-                  {translate('auto.components.settings.orcaAccount.connected', 'Connected')}
+                  {translate('auto.components.settings.wakiiAccount.connected', 'Connected')}
                 </Badge>
               ) : null}
             </div>
@@ -113,13 +113,13 @@ export function OrcaAccountSettingsPane(): React.JSX.Element {
               disabled={signingOut}
               onClick={() => setSignOutOpen(true)}
             >
-              {translate('auto.components.settings.orcaAccount.signOut', 'Sign out')}
+              {translate('auto.components.settings.wakiiAccount.signOut', 'Sign out')}
             </Button>
           ) : (
             <OrcaSignInButton size="sm" disabled={!canConnect}>
               {authStatus?.state === 'reconnect-required'
-                ? translate('auto.components.settings.orcaAccount.signInAgain', 'Sign in again')
-                : translate('auto.components.settings.orcaAccount.signIn', 'Sign in to Orca')}
+                ? translate('auto.components.settings.wakiiAccount.signInAgain', 'Sign in again')
+                : translate('auto.components.settings.wakiiAccount.signIn', 'Sign in to Orca')}
             </OrcaSignInButton>
           )}
           {connected ? null : <OrcaSignInWaitNotice className="basis-full" />}
@@ -128,7 +128,7 @@ export function OrcaAccountSettingsPane(): React.JSX.Element {
         <div className="space-y-4 border-t border-border/60 pt-5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.05em] text-muted-foreground">
             {translate(
-              'auto.components.settings.orcaAccount.benefitsTitle',
+              'auto.components.settings.wakiiAccount.benefitsTitle',
               'Included with your account'
             )}
           </p>
@@ -138,20 +138,20 @@ export function OrcaAccountSettingsPane(): React.JSX.Element {
                 icon={Files}
                 className="md:pr-6"
                 title={translate(
-                  'auto.components.settings.orcaAccount.artifactsTitle',
+                  'auto.components.settings.wakiiAccount.artifactsTitle',
                   'Artifact sharing'
                 )}
                 description={translate(
-                  'auto.components.settings.orcaAccount.artifactsDescription',
+                  'auto.components.settings.wakiiAccount.artifactsDescription',
                   'Publish HTML and Markdown files, then manage every shared link from Orca.'
                 )}
               />
               <AccountBenefit
                 icon={Smartphone}
                 className="md:pl-6"
-                title={translate('auto.components.settings.orcaAccount.relayTitle', 'Orca Relay')}
+                title={translate('auto.components.settings.wakiiAccount.relayTitle', 'Orca Relay')}
                 description={translate(
-                  'auto.components.settings.orcaAccount.relayDescription',
+                  'auto.components.settings.wakiiAccount.relayDescription',
                   'Connect Orca Mobile to this desktop across cellular or any Wi-Fi.'
                 )}
               />
@@ -160,9 +160,12 @@ export function OrcaAccountSettingsPane(): React.JSX.Element {
             <AccountBenefit
               icon={BookOpen}
               className="border-t border-border/60 pt-5"
-              title={translate('auto.components.settings.orcaAccount.skillsTitle', 'Skill sharing')}
+              title={translate(
+                'auto.components.settings.wakiiAccount.skillsTitle',
+                'Skill sharing'
+              )}
               description={translate(
-                'auto.components.settings.orcaAccount.skillsDescription',
+                'auto.components.settings.wakiiAccount.skillsDescription',
                 'Share one skill or a whole set behind an unlisted link, and install them on any machine you use.'
               )}
             />

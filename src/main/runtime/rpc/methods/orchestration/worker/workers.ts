@@ -63,7 +63,7 @@ export async function startWorker(
     // Refused here, before any remote call: an Orca session ID names a chat only on its own host.
     throw new OrchestrationError(
       SESSION_CODES.hostBoundary,
-      `${params.terminal} names a chat by its Orca session ID, which identifies it only on the host that runs it. Run worker-start on that host. No effects were applied.`,
+      `${params.terminal} names a chat by its Wakii session ID, which identifies it only on the host that runs it. Run worker-start on that host. No effects were applied.`,
       { effectsApplied: false }
     )
   }

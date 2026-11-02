@@ -33,7 +33,7 @@ describe('relocateServeSupervisor', () => {
 
   beforeEach(async () => {
     root = await mkdtemp(join(tmpdir(), 'orca-supervisor-relocation-'))
-    resources = join(root, 'Orca.app', 'Contents', 'Resources')
+    resources = join(root, 'Wakii.app', 'Contents', 'Resources')
     appRoot = join(resources, 'app.asar.unpacked')
     userData = join(root, 'profile')
     await mkdir(join(appRoot, 'out', 'cli'), { recursive: true })
@@ -49,7 +49,7 @@ describe('relocateServeSupervisor', () => {
 
   const deps = (overrides: Partial<SupervisorRelocationDeps> = {}): SupervisorRelocationDeps => ({
     env: { ELECTRON_RUN_AS_NODE: '1' },
-    execPath: join(root, 'Orca.app', 'Contents', 'MacOS', 'Orca'),
+    execPath: join(root, 'Wakii.app', 'Contents', 'MacOS', 'Orca'),
     argv: ['/ignored/node', join(appRoot, 'out', 'cli', 'index.js'), 'serve', '--supervise'],
     appRoot,
     userDataPath: userData,
@@ -209,7 +209,7 @@ describe('relocateServeSupervisor', () => {
   describe('restartServeSupervisorIfReplaced', () => {
     const log = vi.fn()
     beforeEach(async () => {
-      await mkdir(join(root, 'Orca.app', 'Contents', 'MacOS'), { recursive: true })
+      await mkdir(join(root, 'Wakii.app', 'Contents', 'MacOS'), { recursive: true })
       await writeFile(deps().execPath, '')
       await chmod(deps().execPath, 0o755)
     })

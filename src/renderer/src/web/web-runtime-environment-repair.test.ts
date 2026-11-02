@@ -6,7 +6,7 @@ import {
   writeStoredRuntimeEnvironment
 } from './web-preload-api-test-harness'
 
-const ENVIRONMENT_KEY = 'orca.web.runtimeEnvironment.v1'
+const ENVIRONMENT_KEY = 'wakii.web.runtimeEnvironment.v1'
 const INSTALL_A = '11111111-1111-4111-8111-111111111111'
 const INSTALL_B = '22222222-2222-4222-8222-222222222222'
 

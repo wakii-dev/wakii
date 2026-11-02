@@ -11,7 +11,7 @@ describe('browser client host id argument', () => {
   // Keep the stamp before Electron's trailing --seatbelt-client and add a prefix-containing decoy; tail-only/substring readers otherwise pass fixtures but fail real macOS renderers.
   it('reads back the id it formatted, from the middle of a real argv', () => {
     const argv = [
-      '/Applications/Orca.app/Contents/MacOS/Orca',
+      '/Applications/Wakii.app/Contents/MacOS/Orca',
       '--type=renderer',
       `--wrapped-flag=${formatBrowserClientHostIdArgument('decoy')}`,
       '--enable-sandbox',

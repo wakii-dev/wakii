@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { buildPluginGuestShellHtml, type PluginFrameSurface } from './plugin-panel-shell'
 import { flush, mountShell, type FrameOrca } from './plugin-frame-shell-mount.test-fixture'
 
-describe('window.orca', () => {
+describe('window.wakii', () => {
   it('times out a call the host never answers, and bounds calls in flight', async () => {
     vi.useFakeTimers()
     try {
@@ -128,7 +128,7 @@ describe('window.orca', () => {
   })
 })
 
-describe('window.orca.document', () => {
+describe('window.wakii.document', () => {
   const doc = (version: number, text: string) => ({
     orca: 1,
     kind: 'evt',
@@ -278,7 +278,7 @@ describe('window.orca saveAs and locale', () => {
   })
 })
 
-describe('guest window.orca', () => {
+describe('guest window.wakii', () => {
   const guestScript = (surface: PluginFrameSurface = 'panel') =>
     buildPluginGuestShellHtml('<main></main>', surface)
       .match(/<script>\n([\s\S]*?)<\/script>/)?.[1]
@@ -319,7 +319,7 @@ describe('guest window.orca', () => {
 })
 
 describe('hello-orca example panel', () => {
-  it('talks to Orca only through window.orca', async () => {
+  it('talks to Orca only through window.wakii', async () => {
     const html = readFileSync(
       join(process.cwd(), 'examples', 'plugins', 'hello-orca', 'panel.html'),
       'utf8'

@@ -37,7 +37,7 @@ export async function ensureWslPinnedRuntime(
   if (glibc && isGlibcBelow(glibc, PINNED_NODE_GLIBC_FLOOR)) {
     throw new Error(
       `This WSL distro's glibc ${glibc.major}.${glibc.minor} is older than ` +
-        `${PINNED_NODE_GLIBC_FLOOR.major}.${PINNED_NODE_GLIBC_FLOOR.minor}, which Orca's Node runtime needs.`
+        `${PINNED_NODE_GLIBC_FLOOR.major}.${PINNED_NODE_GLIBC_FLOOR.minor}, which Wakii's Node runtime needs.`
     )
   }
   const target = `linux-${arch === 'x86_64' ? 'x64' : 'arm64'}-${libc}` as const
