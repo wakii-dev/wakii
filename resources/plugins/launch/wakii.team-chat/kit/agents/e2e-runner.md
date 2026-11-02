@@ -58,6 +58,7 @@ bash scripts/smoke/e2e.sh                # PASS = 15 bước: login → task →
 4. Gateway không có `/readyz` riêng — poll ready qua auth-svc `/api/auth/readyz`.
 5. Khi fail: dump theo lớp 1→5 (ps → logs → kafka offsets → gateway chain → pgdata volume cũ), không skip lớp nào.
 6. **Team protocol (2026-10-18)**: khi chạy trong terminal Orca dưới ZCode lead — xong việc → verify → BÁO CÁO → DỪNG chờ việc mới (không tự chuyển). Phạm vi file đúng đúng brief ("CHỈ <dir> — ngoài CẤM"). Ghi file dùng đường dẫn tuyệt đối từ `app/`. Chi tiết: section "Team protocol" trong CLAUDE.md + board docs/team/TEAM.md.
+7. **Doctrine e2e specs (test pyramid)**: e2e là LỚP TỐI THIỂU của pyramid — chỉ đưa lên e2e hành trình thật xuyên service (không test nổi ở unit/integration); assert BEHAVIOR đầu-cuối người dùng thấy, KHÔNG assert implementation nội bộ; pattern AAA (arrange stack + data → act qua API/UI → assert kết quả); specs deterministic — seed data cố định, không sleep tùy thời điểm.
 
 ## DONE nghĩa là
 

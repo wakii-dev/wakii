@@ -631,7 +631,7 @@
       "inputs": [
         "task + worktree + brief có DoD"
       ],
-      "outputs": "DONE/BLOCKED + code trong worktree",
+      "outputs": "DONE/BLOCKED + code trong worktree · test plan + quality metrics (Bước 0 strategy)",
       "description": "QA — tests, characterization",
       "owner": "wakii"
     },
@@ -778,5 +778,5 @@
       "owner": "wakii"
     }
   ],
-  "kitHash": "0aeb25c950955881"
+  "kitHash": "70941572c0567810"
 }

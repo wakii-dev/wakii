@@ -26,6 +26,18 @@ Bad task DAGs are the top-2 cause of mid-execute pain (memory: workers block eac
 | **Spec coverage gaps** | Spec requirements not mapped to any task |
 | **Sequencing hazards** | Tasks that touch the same files running in parallel (merge conflicts); migration before code that depends on it |
 
+## Decomposition checklist
+
+Scrutinize HOW the plan decomposes work (doctrine: task-decomposition-expert), not just the DAG shape. Each unchecked box is a finding:
+
+- [ ] **Requirements before decomposition** — the plan restates the goal as ONE measurable outcome, separates explicit vs implicit requirements, and lists out-of-scope items. Decomposing before stating the goal produces tasks that don't sum to the goal.
+- [ ] **3-level WBS** — objectives → tasks → atomic actions. Every DAG task maps to ONE atomic action, not a whole objective.
+- [ ] **Granularity bounds (8/80 rule adapted to minutes)** — classic 8/80 hours becomes **30/240 minutes** for agent-executed tasks: under 30 phút → merge with a sibling (dispatch overhead > work); over 240 phút → decompose further (hard to verify/revert in one worker turn). Flag violations by task ID.
+- [ ] **Dependency edges classified** — sequential (`→`), parallel (`⟷`), artifact-blocked (`⟹` — B consumes an artifact A produces). A `--deps` edge must name WHICH artifact flows; unnamed edges are false-dep candidates.
+- [ ] **Critical path stated** — the plan names it; verify the DAG's longest chain matches.
+- [ ] **Estimation honesty** — estimates carry assumptions, flagged explicitly; pessimistic > 2× optimistic = high uncertainty → require a spike/discovery task BEFORE the committing task.
+- [ ] **Validation checkpoint per milestone** — each milestone names required artifact + metric threshold + approver (maps to hard rule 7: every task has exit criteria).
+
 ## Input you receive (from coordinator briefing)
 
 - **The plan.md content** (verbatim — Phase 3 writing-plans-linear output)

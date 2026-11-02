@@ -37,6 +37,20 @@ Before defining tasks, map out which files will be created or modified and what 
 
 This structure informs the task decomposition. Each task should produce self-contained changes that make sense independently.
 
+## Decomposition Framework (7 steps)
+
+Before writing tasks, decompose the spec with this framework (doctrine: task-decomposition-expert, adapted for agent-executed plans):
+
+1. **Goal analysis** — restate the objective as ONE measurable outcome; separate explicit vs implicit requirements; list out-of-scope items.
+2. **Work breakdown structure** — 3 levels: objectives → tasks → atomic actions. Each DAG task = one atomic action.
+3. **Dependency mapping** — classify each edge: sequential (`→`), parallel (`⟷`), artifact-blocked (`⟹` — B consumes an artifact A produces). Identify the critical path.
+4. **Parallelism map** — group independent tasks into tiers (respect cap-4 in-flight workers); note owner role + duration estimate per task.
+5. **Effort & complexity** — estimate per task; flag every assumption explicitly instead of guessing silently.
+6. **Risk register** — top risks with mitigation; pessimistic > 2× optimistic estimate = high uncertainty → insert a spike/discovery task BEFORE the committing task.
+7. **Validation checkpoints** — one gate per milestone: required artifact + metric threshold + approver. Maps 1:1 to task exit criteria.
+
+**Granularity bounds (8/80 rule adapted to minutes):** the classic 8/80-hour rule for human teams becomes **30/240 minutes** for agent-executed tasks — an atomic task under 30 minutes merges with a sibling (dispatch overhead > work); over 240 minutes decomposes further (hard to verify/revert in one worker turn). Proper tasks (1–1.5 hours, per Task Scope Guidelines below) sit inside this window — the bounds catch outliers on both ends, they don't replace the minimum-size rule.
+
 ## Bite-Sized Task Granularity
 
 **Each step is one action (2-5 minutes):**
@@ -384,6 +398,7 @@ When multi-agent review is desired:
 - Complete code in every step — if a step changes code, show the code
 - Exact commands with expected output
 - Each task ≥ 1 hour of work (merge thin-slice tasks)
+- Decompose with the 7-step framework — atomic tasks within 30–240 minutes (8/80 rule adapted to minutes)
 - Linear subtasks are self-contained — full code inline, no "see plan file"
 - DRY, YAGNI, TDD, frequent commits
 - Post to Linear for team visibility
