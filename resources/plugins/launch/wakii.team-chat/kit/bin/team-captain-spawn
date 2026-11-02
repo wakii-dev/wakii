@@ -21,7 +21,7 @@ ORCA="${ORCA_BIN:-/opt/homebrew/bin/orca}"
 
 # Idempotent: captain đã ONLINE thì không làm gì (--force để ép dựng lại).
 if [ "$FORCE" -eq 0 ]; then
-  ALIVE=$(python3 - "$HOME/.claude/chat/.workers.json" "$ORCA" <<'PY'
+  ALIVE=$(python3 - "$HOME/.claude/chat/.workers.json" "$ORCA" "$ROOM" <<'PY'
 import json, subprocess, sys, os
 try: reg = json.load(open(sys.argv[1], encoding="utf-8"))
 except Exception: sys.exit(0)
