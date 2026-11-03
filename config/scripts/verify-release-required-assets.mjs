@@ -13,8 +13,8 @@ export function getRequiredReleaseAssetNames(tag) {
   return [
     'latest-mac.yml',
     'latest.yml',
-    'orca-windows-setup.exe',
-    'orca-windows-setup.exe.blockmap',
+    'wakii-windows-setup.exe',
+    'wakii-windows-setup.exe.blockmap',
     `Wakii-${version}-arm64.dmg`,
     `Wakii-${version}-x64.dmg`
   ]

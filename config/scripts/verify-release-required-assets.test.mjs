@@ -44,8 +44,8 @@ describe('getRequiredReleaseAssetNames', () => {
     const names = getRequiredReleaseAssetNames('v2.1.11')
     expect(names).toEqual(
       expect.arrayContaining([
-        'orca-windows-setup.exe',
-        'orca-windows-setup.exe.blockmap',
+        'wakii-windows-setup.exe',
+        'wakii-windows-setup.exe.blockmap',
         'latest-mac.yml',
         'latest.yml'
       ])
@@ -64,14 +64,14 @@ describe('extractManifestAssetNames', () => {
         [
           'files:',
           '  - url: Wakii-2.1.11-local.123.abc-arm64-mac.zip',
-          '  - url: https://example.com/downloads/orca-windows-setup.exe',
-          'path: orca-windows-setup.exe.blockmap'
+          '  - url: https://example.com/downloads/wakii-windows-setup.exe',
+          'path: wakii-windows-setup.exe.blockmap'
         ].join('\n')
       )
     ).toEqual([
       'Wakii-2.1.11-local.123.abc-arm64-mac.zip',
-      'orca-windows-setup.exe',
-      'orca-windows-setup.exe.blockmap'
+      'wakii-windows-setup.exe',
+      'wakii-windows-setup.exe.blockmap'
     ])
   })
 })

@@ -109,7 +109,7 @@ jobs:
         run: |
           node --input-type=module -e "
             const required = process.platform === 'win32'
-              ? ['orca-windows-setup.exe']
+              ? ['wakii-windows-setup.exe']
               : ['Wakii-' + process.env.RELEASE_VERSION + '-arm64.dmg']
             const deadline = Date.now() + 45 * 60 * 1000
             const repo = process.env.GITHUB_REPOSITORY
@@ -142,7 +142,7 @@ jobs:
               --pattern 'Wakii-*-arm64.dmg' --pattern 'Wakii-*-x64.dmg'
           else
             gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --clobber \
-              --pattern 'orca-windows-setup.exe'
+              --pattern 'wakii-windows-setup.exe'
           fi
           ls -la
 
@@ -169,7 +169,7 @@ jobs:
         shell: pwsh
         run: |
           $installDir = "$PWD\smoke-app"
-          Start-Process -FilePath ".\orca-windows-setup.exe" -ArgumentList "/S","/D=$installDir" -Wait
+          Start-Process -FilePath ".\wakii-windows-setup.exe" -ArgumentList "/S","/D=$installDir" -Wait
           $exe = Join-Path $installDir "Wakii.exe"
           $deadline = (Get-Date).AddMinutes(5)
           while (-not (Test-Path $exe)) {
