@@ -1626,6 +1626,13 @@ export default function activate(orca) {
     } catch { return [] }
   }
   const resolveRoomWorktree = async (room) => {
+    // (0) metadata worktree room ghi tường minh trong rooms.json — nguồn chuẩn nhất
+    // (đặt trước match-by-repo: endsWith('/'+repo) dính main checkout trước room worktree).
+    try {
+      const rooms = JSON.parse(await readFile(join(chatDir, 'rooms.json'), 'utf8'))
+      const meta = rooms[room] && rooms[room].worktree
+      if (meta) return meta
+    } catch { /* chưa có rooms.json */ }
     try {
       const reg = JSON.parse(await readFile(join(chatDir, '.workers.json'), 'utf8'))
       const wt = Object.values(reg).find((e) => e && e.room === room && e.worktree && e.name !== 'captain')?.worktree
@@ -1704,15 +1711,53 @@ export default function activate(orca) {
         lastCaptainCmdAt = ccReq.at
         const room = ccReq.room || 'general'
         orca.log('[wake] nhận lệnh wake room=' + room)
+        if (ccReq.action !== 'wake') {
+          // Adopt/release điều phối file thuần (.workers.json) — không cần spawn:
+          // CEO chọn terminal đang sống làm Captain, hoặc gỡ Captain hiện tại.
+          void (async () => {
+            try {
+              const roomsPath = join(chatDir, 'rooms.json')
+              const workersPath = join(chatDir, '.workers.json')
+              let reg = {}
+              try { reg = JSON.parse(await readFile(workersPath, 'utf8')) } catch { /* chưa có */ }
+              for (const pane of Object.keys(reg).filter((p) => reg[p] && reg[p].name === 'captain')) delete reg[pane]
+              let note = ''
+              if (ccReq.action === 'adopt' && /^term_[A-Za-z0-9-]+$/.test(ccReq.pane || '')) {
+                let wt = ''
+                try {
+                  const rooms = JSON.parse(await readFile(roomsPath, 'utf8'))
+                  wt = (rooms[room] && rooms[room].worktree) || ''
+                } catch { /* rooms.json chưa có */ }
+                reg[ccReq.pane] = { name: 'captain', worktree: wt, task: '', run: '', repo: 'team', room, at: Date.now() }
+                note = '🤝 Captain mới #' + room + ': ' + ccReq.pane + (wt ? ' — worktree ' + wt : '')
+              } else {
+                note = '🔓 Released Captain #' + room + ' — bấm 🔔 hoặc gửi tin để tự đánh thức.'
+              }
+              await mkdir(chatDir, { recursive: true })
+              await writeFile(workersPath, JSON.stringify(reg, null, 1))
+              aliveCache = { at: 0, panes: new Set() }
+              await appendLine({ from: 'system', role: 'system', channel: room, text: note }).catch(() => {})
+            } catch (e) { orca.log('[adopt] lỗi: ' + (e && e.message || e)) }
+          })()
+          await orca.host.call('storage.set', { key: 'team.chat.captainCmd', value: null }).catch(() => {})
+          return
+        }
         void (async () => {
           try {
-            // Worktree của room: (1) registration worker của room → (2) repo trong
-            // rooms.json khớp path worktree list → (3) worktree đầu tiên.
+            // Worktree của room: (1) metadata worktree trong rooms.json (nguồn chuẩn
+            // nhất — match-by-repo dính main checkout trước room worktree) → (2)
+            // registration worker của room → (3) repo khớp path worktree list.
             let wt = ''
             try {
-              const reg = JSON.parse(await readFile(join(chatDir, '.workers.json'), 'utf8'))
-              wt = Object.values(reg).find((e) => e && e.room === room && e.worktree && e.name !== 'captain')?.worktree || ''
-            } catch { /* chưa có registration */ }
+              const rooms = JSON.parse(await readFile(join(chatDir, 'rooms.json'), 'utf8'))
+              wt = (rooms[room] && rooms[room].worktree) || ''
+            } catch { /* chưa có rooms.json */ }
+            if (!wt) {
+              try {
+                const reg = JSON.parse(await readFile(join(chatDir, '.workers.json'), 'utf8'))
+                wt = Object.values(reg).find((e) => e && e.room === room && e.worktree && e.name !== 'captain')?.worktree || ''
+              } catch { /* chưa có registration */ }
+            }
             const orcaBin = process.env.ORCA_BIN || 'orca'
             if (!wt) {
               try {

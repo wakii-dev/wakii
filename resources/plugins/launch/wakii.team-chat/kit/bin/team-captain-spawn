@@ -5,6 +5,9 @@
 # (registration pane name==captain; router ưu tiên nguồn này).
 # Usage: team-captain-spawn [--repo <selector>] [--title <t>]
 set -u
+# Windows: stdout của orca --json là UTF-8 nhưng python3 mặc định decode theo
+# codepage (cp1258…) → UnicodeDecodeError, mất handle terminal giữa chừng.
+export PYTHONUTF8=1
 ORCA="${ORCA_BIN:-/opt/homebrew/bin/orca}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 REPO_SEL="" TITLE="Captain (always-online)" FORCE=0 ROOM=""
