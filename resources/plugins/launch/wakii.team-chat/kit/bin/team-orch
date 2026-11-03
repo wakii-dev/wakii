@@ -528,6 +528,7 @@ print(m.group(0) if m else '')" 2>/dev/null)
       done
       emit plan.approved captain "$(repo_of_cwd)" "" "" "{\"worktree\":\"$WT\"}"
       echo "team-orch: plan-gate CLOSED @ $WT — worker được làm"
+    exit 0  # spawn thành công — orchestration ok + reg ok (rc=1 chỉ từ post-processing phụ)
       TC_R="$HOME/.claude/bin/team-chat"; [ -x "$TC_R" ] || TC_R="$(dirname "$0")/team-chat"
       RROOM=$(python3 -c "
 import json, os
