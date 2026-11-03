@@ -4,7 +4,7 @@
 # Marker plan-gate: $TEAM_TASK_GATES_DIR/<base64url(worktreePath)>.json {taskId, planGateOpen}
 # Sync (T0): thuần CLI run-list/task-list/worker-list — không RPC.
 set -u
-ORCA="${ORCA_BIN:-/opt/homebrew/bin/orca}"
+ORCA="${ORCA_BIN:-$(command -v orca 2>/dev/null || echo /opt/homebrew/bin/orca)}"
 GATES_DIR="${TEAM_TASK_GATES_DIR:-$HOME/.claude/chat/.task-gates}"
 EVENTS="${TEAM_EVENTS_LOG:-$HOME/.claude/chat/team-events.jsonl}"
 CMD="${1:-}"; [ $# -gt 0 ] && shift
@@ -625,7 +625,7 @@ except Exception: live = set()
 if not live:
     print("reg-clean: terminal list rỗng/lỗi — HỦY, không dọn gì (chống xoá nhầm entry sống)")
     sys.exit(1)
-dead = [p for p in reg if p.startswith("term_") and p not in live]
+dead = [p for p in reg if p.startswith(("term_", "structworker_")) and p not in live]
 for p in dead: del reg[p]
 json.dump(reg, open(sys.argv[1], "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 print(f"reg-clean: bỏ {len(dead)} pane chết; còn {len(reg)} entry sống")

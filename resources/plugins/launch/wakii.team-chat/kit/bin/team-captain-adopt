@@ -6,7 +6,7 @@
 #   --room     room captain trực (mặc định: room đầu rooms.json hoặc general)
 #   --worktree worktree gắn kèm (mặc định: resolve theo room)
 set -u
-ORCA="${ORCA_BIN:-/opt/homebrew/bin/orca}"
+ORCA="${ORCA_BIN:-$(command -v orca 2>/dev/null || echo /opt/homebrew/bin/orca)}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 PANE="" ROOM="" WT=""
 while [ $# -gt 0 ]; do case "$1" in
