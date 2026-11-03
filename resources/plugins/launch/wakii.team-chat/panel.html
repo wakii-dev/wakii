@@ -1050,7 +1050,10 @@
       var byRoom = (r && r.value) || {}
       var s = byRoom[activeRoom] || { online: false }
       var paneInput = document.getElementById('captainPane')
-      if (paneInput && s.online && s.pane && !paneInput.value) paneInput.value = s.pane
+      // Luôn update theo room hiện tại (CEO 3/11: input giữ giá trị room cũ
+      // → Wake/Adopt dùng captain SAI room)
+      if (paneInput) paneInput.value = (s.online && s.pane) ? s.pane : ''
+
       if (s.online) {
         el.textContent = '🟢 Trực #' + activeRoom + ' — @ ' + (s.worktree || '?')
         el.style.color = '#6fcf97'
