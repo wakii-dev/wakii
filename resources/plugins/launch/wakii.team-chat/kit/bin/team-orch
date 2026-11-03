@@ -4,7 +4,7 @@
 # Marker plan-gate: $TEAM_TASK_GATES_DIR/<base64url(worktreePath)>.json {taskId, planGateOpen}
 # Sync (T0): thuần CLI run-list/task-list/worker-list — không RPC.
 set -u
-ORCA="${ORCA_BIN:-$(command -v orca 2>/dev/null || echo /opt/homebrew/bin/orca)}"
+ORCA="${ORCA_BIN:-/opt/homebrew/bin/orca}"
 GATES_DIR="${TEAM_TASK_GATES_DIR:-$HOME/.claude/chat/.task-gates}"
 EVENTS="${TEAM_EVENTS_LOG:-$HOME/.claude/chat/team-events.jsonl}"
 CMD="${1:-}"; [ $# -gt 0 ] && shift
@@ -90,7 +90,7 @@ def dig(o):
     if isinstance(o, dict):
         for k in ("terminal", "terminalHandle", "terminal_handle", "pane", "handle"):
             v = o.get(k)
-            if isinstance(v, str) and v.startswith(("term_", "structworker_")): return v
+            if isinstance(v, str) and v.startswith("term_"): return v
         for v in o.values():
             r = dig(v)
             if r: return r
@@ -306,11 +306,12 @@ PY
           ROOM_WT_REUSE=1  # A2: selector path: có sẵn trong PASS — lọc creation flags
           echo "team-orch: worker dùng CHUNG worktree room — $ROOM_WT"
         fi
-        # CANONICAL GRID (CEO ruling 2/11): mỗi spawn xếp LẠI cây ghế chuẩn
-        # 3-trên/3-dưới từ pane sống của room (captain ghế 1, workers theo thứ tự
-        # đăng ký, ghost cuối) — idempotent, không phụ thuộc lịch sử split/zombie.
-        # Truyền --grid <leaf-ids theo thứ tự ghế> cho app đặt proposedRoot.
-        GRID_SEATS=$(python3 - "$REG" "$ROOM_" "$CAP_PANE" "$ORCA" <<'PY' 2>/dev/null
+        # CANONICAL GRID (CEO ruling 2/11): mỗi ghế split từ ĐÚNG pane cha
+        # theo đúng hướng — 100% renderer split machinery có sẵn:
+        #   ghế 2,3: split dọc (vertical) từ ghế 1,2 → cạnh phải
+        #   ghế 4,5,6: split ngang (horizontal) từ ghế 1,2,3 → bên dưới
+        # Kết quả: 3 trên / 3 dưới, cột thẳng hàng.
+        SEAT_CFG=$(python3 - "$REG" "$ROOM_" "$CAP_PANE" "$ORCA" <<'PY' 2>/dev/null
 import json, subprocess, sys
 reg_p, room, cap, orca = sys.argv[1:5]
 try:
@@ -320,30 +321,38 @@ except Exception:
     sys.exit(0)
 try: reg = json.load(open(reg_p, encoding='utf-8'))
 except Exception: reg = {}
-cap_tab = terms.get(cap, {}).get('tabId')
-if not cap_tab: sys.exit(0)
+# thứ tự ghế: captain (1) → workers theo REG 'at' (2,3,4...) → ghost cuối
 room_panes = sorted((e.get('at', 0), p) for p, e in reg.items()
                     if isinstance(e, dict) and e.get('room') == room and p in terms)
 seats = [p for _, p in room_panes if p != cap]
 if cap in terms: seats = [cap] + seats
-seat_leaves = [terms[h]['leafId'] for h in seats if terms[h].get('leafId')]
-known = set(seat_leaves)
-for t in terms.values():
-    lf = t.get('leafId')
-    if t.get('tabId') == cap_tab and lf and lf not in known:
-        seat_leaves.append(lf)  # ghost trong tab → cuối danh sách, dễ thấy để đóng
-if not seat_leaves or len(seat_leaves) > 6: sys.exit(0)
-print(','.join(seat_leaves))
+# ghost (trong tab captain, không REG) → không tính là ghế, chỉ để biết tồn tại
+if len(seats) > 6: sys.exit(0)
+n = len(seats)  # pane hiện có = ghế đã chiếm
+if n < 1: sys.exit(0)
+# ghế MỚI (thứ n+1) split từ ghế nào, hướng nào:
+if n == 1:
+    # ghế 2: split ghế 1 dọc
+    print('vertical\t' + seats[0])
+elif n == 2:
+    # ghế 3: split ghế 2 dọc
+    print('vertical\t' + seats[1])
+elif n == 3:
+    # ghế 4: split ghế 1 ngang (xuống dưới)
+    print('horizontal\t' + seats[0])
+elif n == 4:
+    # ghế 5: split ghế 2 ngang
+    print('horizontal\t' + seats[1])
+elif n == 5:
+    # ghế 6: split ghế 3 ngang
+    print('horizontal\t' + seats[2])
+else:
+    sys.exit(0)  # đầy 6
 PY
 )
-        SPLIT_DIR=""; SPLIT_BASE="$CAP_PANE"
-        if [ -n "$GRID_SEATS" ]; then
-          SPLIT_ARGS=(--terminal "$SPLIT_BASE" --grid "$GRID_SEATS")
-          SPLIT_DIR="grid"
-        else
-          SPLIT_ARGS=(--terminal "$SPLIT_BASE" --direction vertical)
-          SPLIT_DIR="vertical-fallback"
-        fi
+        SPLIT_DIR=$(printf '%s' "$SEAT_CFG" | cut -f1); SPLIT_BASE=$(printf '%s' "$SEAT_CFG" | cut -f2)
+        [ -n "$SPLIT_DIR" ] && [ -n "$SPLIT_BASE" ] || { SPLIT_DIR="vertical"; SPLIT_BASE="$CAP_PANE"; }
+        SPLIT_ARGS=(--terminal "$SPLIT_BASE" --direction "$SPLIT_DIR")
         NEW_PANE=$("$ORCA" terminal split "${SPLIT_ARGS[@]}" \
                      --command "claude --dangerously-skip-permissions" --json 2>/dev/null \
                    | python3 -c 'import json,sys; print(json.load(sys.stdin)["result"]["split"]["handle"])' 2>/dev/null)
@@ -441,6 +450,7 @@ import json,sys
 try: print('\n'.join(t.get('handle','') for t in json.load(sys.stdin)['result']['terminals']))
 except Exception: pass
 " 2>/dev/null) 2>/dev/null | grep '^> ' | head -1 | cut -c3-)
+    [ -n "$PANE" ] || PANE="${TEAM_WORKER_PANE:-}"
     if [ -n "$PANE" ]; then
       reg_put "$PANE" "${NAME%%-*}" "$WT_PATH" "$TASK" "$RUN" "$REPO" "${ROOM_:-${REPO}-${NAME%%-*}}"
       echo "team-orch: đăng ký $PANE → ${NAME%%-*} (danh tính khóa theo pane)"
@@ -463,7 +473,6 @@ print(m.group(0) if m else '')" 2>/dev/null)
     emit worker.hired "${NAME%%-*}" "$REPO" "$RUN" "$TASK" '{"via":"team-orch"}'
     echo "$OUT"
     [ "$PLAN" -eq 1 ] && echo "team-orch: plan-gate OPEN @ $WT_PATH (worker phải post [PLAN] chờ duyệt)"
-    exit 0
     ;;
   gate-resolve)
     WT=""; PLAN=0; PASS=()
@@ -625,7 +634,7 @@ except Exception: live = set()
 if not live:
     print("reg-clean: terminal list rỗng/lỗi — HỦY, không dọn gì (chống xoá nhầm entry sống)")
     sys.exit(1)
-dead = [p for p in reg if p.startswith(("term_", "structworker_")) and p not in live]
+dead = [p for p in reg if p.startswith("term_") and p not in live]
 for p in dead: del reg[p]
 json.dump(reg, open(sys.argv[1], "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 print(f"reg-clean: bỏ {len(dead)} pane chết; còn {len(reg)} entry sống")
