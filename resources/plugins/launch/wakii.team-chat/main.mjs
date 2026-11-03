@@ -1730,6 +1730,11 @@ export default function activate(orca) {
                 } catch { /* rooms.json chưa có */ }
                 reg[ccReq.pane] = { name: 'captain', worktree: wt, task: '', run: '', repo: 'team', room, at: Date.now() }
                 note = '🤝 Captain mới #' + room + ': ' + ccReq.pane + (wt ? ' — worktree ' + wt : '')
+                // GỬI BRIEF vào terminal (CEO bug 3/11: adopt chỉ đăng ký mà
+                // không phân vai — terminal không biết mình là captain)
+                const orcaBin2 = process.env.ORCA_BIN || 'orca'
+                const brief = 'Bạn được CEO chỉ định làm CAPTAIN trực room #' + room + ' của Wakii team. HỢP ĐỒNG ĐẦY ĐỦ: ~/.claude/agents/captain.md — đọc NGAY (CHAT STYLE · PHÂN CÔNG cứng · Verify-first · Cleanup-on-done · Commit hygiene cấm trailer AI · HEARTBEAT · DISPATCH=CÓ CHỨNG CỨ · JOURNAL · BẢN GHẾ 6 chỗ). Mọi trả lời PHẢI kèm --channel ' + room + '. Điều phối: ~/.claude/bin/team-orch (feature-open/worker-start/gate-resolve/cleanup). Ngữ cảnh: ~/.claude/bin/team-chat read --last 15 --channel ' + room + '. Journal: ~/.claude/chat/notes/' + room + '.md. Worktree: ' + wt + '. Xác nhận bằng 1 tin team-chat (CHAT STYLE, vào room #' + room + ') rồi nằm chờ lệnh CEO.'
+                execFileCb(orcaBin2, ['terminal', 'send', '--terminal', ccReq.pane, '--text', brief, '--enter'], { timeout: 15000 }, () => {})
               } else {
                 note = '🔓 Released Captain #' + room + ' — bấm 🔔 hoặc gửi tin để tự đánh thức.'
               }
