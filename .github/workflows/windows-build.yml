@@ -33,6 +33,17 @@ jobs:
           [ -n "$TAG" ] || TAG="v$(node -p "require('./package.json').version")"
           echo "RELEASE_TAG=$TAG" >> "$GITHUB_ENV"
 
+      - name: Ensure release exists
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view "$RELEASE_TAG" --repo wakii-dev/wakii >/dev/null 2>&1 && exit 0
+          gh release create "$RELEASE_TAG" --repo wakii-dev/wakii \
+            --title "⚡ Wakii ${RELEASE_TAG#v}" \
+            --notes "Release ${RELEASE_TAG#v} — build tự động, note chi tiết cập nhật sau." \
+            --latest
+
       - uses: pnpm/action-setup@v4
 
       - uses: actions/setup-node@v4
