@@ -129,11 +129,11 @@ function respondWithNotReadyRelease({
   const atom = `<feed>${publishingIncident.atomTags
     .map(
       (tag) =>
-        `<entry><link rel="alternate" type="text/html" href="https://github.com/stablyai/orca/releases/tag/${tag}"/><title>${tag}</title></entry>`
+        `<entry><link rel="alternate" type="text/html" href="https://github.com/wakii-dev/wakii/releases/tag/${tag}"/><title>${tag}</title></entry>`
     )
     .join('')}</feed>`
   netFetchMock.mockImplementation((url: string, init?: { method?: string }) => {
-    if (url === 'https://github.com/stablyai/orca/releases.atom') {
+    if (url === 'https://github.com/wakii-dev/wakii/releases.atom') {
       return Promise.resolve({ ok: true, status: 200, text: () => Promise.resolve(atom) })
     }
     if (init?.method === 'HEAD' && assetStatus !== undefined) {
@@ -183,7 +183,7 @@ describe('updater check failure handling', () => {
       if (url.endsWith('/releases/latest')) {
         return new Response(null, {
           status: 302,
-          headers: { location: 'https://github.com/stablyai/orca/releases/tag/v1.0.51' }
+          headers: { location: 'https://github.com/wakii-dev/wakii/releases/tag/v1.0.51' }
         })
       }
       return new Response(

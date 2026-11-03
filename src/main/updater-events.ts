@@ -124,6 +124,7 @@ export function registerAutoUpdaterHandlers({
 
     // A transiently older offer must not discard the retained recovery package.
     linuxPackageRecovery.clearTrackedLinuxPackageArtifactForOtherVersion(info.version)
+    recordUpdaterLifecycle('update_available', { version: info.version })
 
     markUpdateAvailableEventPending(attemptId)
     void (async () => {

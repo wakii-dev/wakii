@@ -92,4 +92,17 @@ describe('updater externally managed Linux installs', () => {
 
     expect(autoUpdaterMock.downloadUpdate).toHaveBeenCalled()
   })
+
+  it('keeps Linux notify-only: background auto-download never runs there', async () => {
+    const platformSpy = vi.spyOn(process, 'platform', 'get').mockReturnValue('linux')
+    try {
+      const { updater } = await startUpdater({ packageType: 'deb', externallyManaged: false })
+      // Notify-only: no background download, no install-on-quit (deb/rpm are not 'non-root').
+      expect(autoUpdaterMock.autoDownload).toBe(false)
+      expect(autoUpdaterMock.autoInstallOnAppQuit).toBe(false)
+      void updater
+    } finally {
+      platformSpy.mockRestore()
+    }
+  })
 })

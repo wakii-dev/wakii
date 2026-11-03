@@ -112,11 +112,12 @@ vi.mock('electron-updater', () => ({
 }))
 
 vi.mock('./updater-prerelease-feed', () => ({
+  RELEASE_FEED_REPO: { owner: 'wakii-dev', repo: 'wakii' },
   fetchNewerReleaseTagsWithReadiness: vi
     .fn()
     .mockResolvedValue({ tags: ['v1.4.241'], state: 'ready' }),
   getReleaseDownloadUrl: (tag: string) =>
-    `https://github.com/stablyai/orca/releases/download/${tag}`
+    `https://github.com/wakii-dev/wakii/releases/download/${tag}`
 }))
 
 vi.mock('./electron-updater-loader', () => ({
@@ -583,7 +584,7 @@ describe('updater mac install handoff', () => {
       expect(send).toHaveBeenCalledWith(
         'updater:status',
         expect.objectContaining({
-          message: expect.stringMatching(/close the other Orca instances.*quit Orca/i)
+          message: expect.stringMatching(/close the other Wakii instances.*quit Wakii/i)
         })
       )
     }

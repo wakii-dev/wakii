@@ -13,6 +13,7 @@ import type {
   RemoteServerUpdateSupport
 } from '../../shared/remote-server-update'
 import { getLinuxPackageType } from '../linux-update-package-type'
+import { RELEASE_FEED_REPO } from '../updater-prerelease-feed'
 import { createUpdaterDiagnosticLogger } from '../linux-package-install-diagnostic'
 import { registerAutoUpdaterHandlers } from '../updater-events'
 import { getServeUpdateHandoffFailure } from '../serve-update-handoff'
@@ -143,7 +144,9 @@ export class UpdaterSetup extends UpdaterDownloadInstall {
 
     const autoUpdater = this.getAutoUpdater()
     configureMacShipItScheduling()
-    autoUpdater.autoDownload = false
+    // Option A: download in the background; install happens on quit (autoInstallOnAppQuit below), never mid-session.
+    // Linux stays notify-only: deb/rpm installs cannot self-update (externally managed) and AppImage users pick when to spend the download.
+    autoUpdater.autoDownload = process.platform !== 'linux'
     if (this.activeUpdateSource === 'release') {
       autoUpdater.allowDowngrade = false
       autoUpdater.disableDifferentialDownload = false
@@ -160,7 +163,7 @@ export class UpdaterSetup extends UpdaterDownloadInstall {
     if (this.activeUpdateSource === 'release') {
       autoUpdater.setFeedURL({
         provider: 'generic',
-        url: 'https://github.com/stablyai/orca/releases/latest/download'
+        url: `https://github.com/${RELEASE_FEED_REPO.owner}/${RELEASE_FEED_REPO.repo}/releases/latest/download`
       })
     }
     if (this.autoUpdaterInitialized) {

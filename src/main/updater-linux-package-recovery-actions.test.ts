@@ -75,6 +75,7 @@ vi.mock('./updater-nudge', () => ({
   shouldApplyNudge: vi.fn().mockReturnValue(false)
 }))
 vi.mock('./updater-prerelease-feed', () => ({
+  RELEASE_FEED_REPO: { owner: 'wakii-dev', repo: 'wakii' },
   fetchNewerReleaseTagsWithReadiness: vi.fn().mockResolvedValue({ tags: [], state: 'no-newer' }),
   getReleaseDownloadUrl: vi.fn(() => 'https://example.invalid/download')
 }))
@@ -107,7 +108,7 @@ const ARTIFACT = {
 }
 const MANUAL_INSTALL_STATUS = {
   state: 'error',
-  message: 'Quit Orca before running the system package install command.',
+  message: 'Quit Wakii before running the system package install command.',
   messageCode: 'linuxPackageManualInstall',
   recovery: {
     kind: 'linux-package-install',

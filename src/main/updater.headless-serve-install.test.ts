@@ -97,6 +97,7 @@ vi.mock('./updater-nudge', () => ({
   shouldApplyNudge: vi.fn().mockReturnValue(false)
 }))
 vi.mock('./updater-prerelease-feed', () => ({
+  RELEASE_FEED_REPO: { owner: 'wakii-dev', repo: 'wakii' },
   fetchNewerReleaseTagsWithReadiness: vi.fn().mockResolvedValue({
     tags: ['v1.0.61'],
     state: 'ready'
