@@ -2,5 +2,9 @@ minimumReleaseAge: 4320
 ignoreScripts: true
 allowBuilds: {}
 
+# GHSA-g3hv-75wg-m249 (DoS via crafted glob parts); eslint config-array pins ^10 so update can't reach 11.
+overrides:
+  minimatch@<11.0.1: '>=11.0.1'
+
 patchedDependencies:
   braces@3.0.3: ../patches/braces@3.0.3.patch
