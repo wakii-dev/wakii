@@ -189,6 +189,8 @@ const rpmElectronRuntimeDependencies = [
 // Mirror OS document extensions: CJS packager cannot import TS; keep startup/os-opened-documents.ts and NSIS hooks aligned.
 const MARKDOWN_FILE_EXTENSIONS = ['md', 'markdown', 'mdx']
 const TABULAR_FILE_EXTENSIONS = ['csv', 'tsv']
+// Mirror OS wakii extension: keep startup/os-opened-wakii-files.ts and NSIS WAKII_PROGID aligned (orca-installer-hooks.nsh).
+const WAKII_FILE_EXTENSIONS = ['wakii']
 
 // Config loads without unused Windows addons; beforePack enforces target natives. Only @vscode/windows-process-tree has os:win32; workspace links prove no binary exists.
 const windowsRuntimeResources = existsSync(
@@ -574,6 +576,14 @@ module.exports = {
         description: `${ext.toUpperCase()} Document`,
         role: 'Editor',
         rank: 'Alternate'
+      })),
+      // Rank Default: .wakii is this app's own format with no incumbent default (matches the NSIS registration).
+      ...WAKII_FILE_EXTENSIONS.map((ext) => ({
+        ext,
+        name: 'Wakii Mindmap',
+        description: 'Wakii Mindmap',
+        role: 'Editor',
+        rank: 'Default'
       }))
     ],
     icon: 'resources/build/icon.icns',

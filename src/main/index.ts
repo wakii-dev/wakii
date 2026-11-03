@@ -19,6 +19,11 @@ import { installMainProcessQuitHandlers } from './startup/main-process-quit'
 import { shouldActivateDesktopForSecondInstance } from './startup/single-instance-lock'
 import { resolveOsOpenedDocuments } from './startup/os-opened-documents'
 import {
+  filterUnchangedWakiiFiles,
+  recordDeliveredWakiiFiles,
+  resolveOpenedWakiiFiles
+} from './startup/os-opened-wakii-files'
+import {
   formatProfileStateStartupFailure,
   isDivergedProfileStateFailure,
   profileStateStartupFailureClass
@@ -68,6 +73,7 @@ function requestDesktopActivation(argv: readonly string[] = []): void {
     state.mainWindow?.webContents.send('ui:openPluginInstallLink', link)
   })
   state.osOpenedDocuments.capture(argv, publishOsOpenedDocuments)
+  state.osOpenedWakiiFiles.capture(argv, publishOsOpenedWakiiFiles)
   // Duplicate serve launches must not activate a desktop on a headless server (#11935).
   if (!shouldActivateDesktopForSecondInstance(argv)) {
     return
@@ -104,6 +110,40 @@ function publishOsOpenedDocuments(): void {
     .catch((error) => {
       state.osOpenedDocuments.restore(filePaths)
       console.warn('[os-open] Failed to resolve OS-opened documents:', error)
+    })
+}
+
+/**
+ * Decodes buffered OS-opened .wakii files and hands the payloads to a renderer that has
+ * proven it is listening. Main owns dedupe: same path + same content is skipped, changed
+ * content re-delivers (the tab refresh/focus layer arrives with the viewer slice).
+ */
+function publishOsOpenedWakiiFiles(): void {
+  const targetWindow = state.mainWindow
+  if (!state.wakiiFileOpenListenerReady || !targetWindow || targetWindow.isDestroyed()) {
+    return
+  }
+  // Why consumed before the await: a renderer pull racing this resolve must not take the same
+  // batch again. The restore() call hands it back if delivery turns out to be impossible.
+  const filePaths = state.osOpenedWakiiFiles.consume()
+  if (filePaths.length === 0) {
+    return
+  }
+  void resolveOpenedWakiiFiles(filePaths)
+    .then((resolved) => {
+      if (targetWindow.isDestroyed() || targetWindow.webContents.isDestroyed()) {
+        state.osOpenedWakiiFiles.restore(filePaths)
+        return
+      }
+      const changed = filterUnchangedWakiiFiles(resolved, state.wakiiDeliveredFileHashes)
+      for (const { payload } of changed) {
+        targetWindow.webContents.send('ui:openWakiiFile', payload)
+      }
+      recordDeliveredWakiiFiles(changed, state.wakiiDeliveredFileHashes)
+    })
+    .catch((error) => {
+      state.osOpenedWakiiFiles.restore(filePaths)
+      console.warn('[os-open] Failed to resolve OS-opened .wakii files:', error)
     })
 }
 
@@ -145,7 +185,15 @@ if (preflightReady) {
   })
   // macOS can deliver Open With before ready; claim only supported paths.
   app.on('open-file', (event, filePath) => {
-    if (!state.osOpenedDocuments.captureFilePaths([filePath], publishOsOpenedDocuments)) {
+    const claimedMarkdown = state.osOpenedDocuments.captureFilePaths(
+      [filePath],
+      publishOsOpenedDocuments
+    )
+    const claimedWakii = state.osOpenedWakiiFiles.captureFilePaths(
+      [filePath],
+      publishOsOpenedWakiiFiles
+    )
+    if (!claimedMarkdown && !claimedWakii) {
       return
     }
     event.preventDefault()
@@ -162,6 +210,7 @@ if (preflightReady) {
   state.pluginInstallLinks.capture(process.argv)
   // The first renderer pulls on mount; nothing listens this early.
   state.osOpenedDocuments.capture(process.argv)
+  state.osOpenedWakiiFiles.capture(process.argv)
   registerMainProcessIpcHandlers()
   installMainProcessQuitHandlers()
   void app.whenReady().then(async () => {
