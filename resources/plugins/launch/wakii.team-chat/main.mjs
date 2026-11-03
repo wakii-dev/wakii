@@ -1663,7 +1663,7 @@ export default function activate(orca) {
       const spawnBin = join(homeDir(), '.claude', 'bin', 'team-captain-spawn')
       const wt = await resolveRoomWorktree(room)
       const args = ['--room', room].concat(wt ? ['--repo', 'path:' + wt] : [])
-      await new Promise((res) => execFileCb(winBashBin(), [spawnBin].concat(args), { timeout: 120000 }, () => res()))
+      await new Promise((res) => execFileCb(winBashBin(), [spawnBin].concat(args), { timeout: 120000, env: { ...process.env, ORCA_BIN: orcaBin() } }, () => res()))
       aliveCache = { at: 0, panes: new Set() }
     } catch { /* wake best-effort */ } finally { wakingRooms.delete(room) }
   }
@@ -1775,7 +1775,7 @@ export default function activate(orca) {
             }
             const spawnBin = join(homeDir(), '.claude', 'bin', 'team-captain-spawn')
             orca.log('[wake] chạy ' + spawnBin + ' ORCA_BIN=' + (process.env.ORCA_BIN || '(không có)'))
-            await new Promise((res) => execFileCb(winBashBin(), [spawnBin, '--repo', 'path:' + wt], { timeout: 120000 }, (e, so, se) => { orca.log('[wake] spawn xong err=' + (e && e.message || 'null') + ' out=' + String(so).slice(0, 120)); res() }))
+            await new Promise((res) => execFileCb(winBashBin(), [spawnBin, '--repo', 'path:' + wt], { timeout: 120000, env: { ...process.env, ORCA_BIN: orcaBin() } }, (e, so, se) => { orca.log('[wake] spawn xong err=' + (e && e.message || 'null') + ' out=' + String(so).slice(0, 120)); res() }))
             await orca.host.call('notifications.show', {
               title: 'Wakii Team — Captain đã online',
               body: 'Terminal Captain gắn worktree ' + wt + ' (room #' + room + '). Kéo tab vào floating workspace nếu muốn — router theo handle.'
@@ -1856,7 +1856,7 @@ export default function activate(orca) {
                 // captain trực room, đứng trên worktree room
                 if (wtPath) {
                   const spawnBin = join(homeDir(), '.claude', 'bin', 'team-captain-spawn')
-                  execFileCb(winBashBin(), [spawnBin, '--room', room, '--repo', 'path:' + wtPath], { timeout: 120000 }, () => {})
+                  execFileCb(winBashBin(), [spawnBin, '--room', room, '--repo', 'path:' + wtPath], { timeout: 120000, env: { ...process.env, ORCA_BIN: orcaBin() } }, () => {})
                 }
               } catch (e) { orca.log('[create-room] lỗi: ' + (e && e.message || e)) }
             })()

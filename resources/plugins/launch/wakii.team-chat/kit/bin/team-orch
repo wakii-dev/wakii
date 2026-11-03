@@ -639,7 +639,7 @@ PY
       --task) TASK="$2"; shift 2 ;; --run) RUN="$2"; shift 2 ;; --repo) REPO="$2"; shift 2 ;;
       --room) ROOM="$2"; shift 2 ;; *) shift ;;
     esac; done
-    [ -n "$PANE" ] && [ -n "$NAME" ] && [ -n "$WTV" ] || { echo "register cần --pane + --name + --worktree" >&2; exit 2; }
+    [ -n "$PANE" ] && [ -n "$NAME" ] || { echo "register cần --pane + --name (--worktree tùy chọn)" >&2; exit 2; }
     reg_put "$PANE" "$NAME" "$WTV" "$TASK" "$RUN" "$REPO" "$ROOM"
     echo "→ đăng ký $PANE = $NAME @ $WTV"
     ;;
