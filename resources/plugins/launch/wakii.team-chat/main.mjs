@@ -1376,7 +1376,33 @@ export default function activate(orca) {
   //từ activate, không thì create-room đầu tiên ENOENT fail âm thầm.
   mkdir(chatDir, { recursive: true }).catch(() => {})
 
-  const readTail = async (limit = 500) => {
+  // FIFO 300 tin/room (CEO 3/11): đọc toàn bus, group theo room, giữ 300
+  // mới nhất mỗi room — tail tổng = ghép tất cả, sắp theo at.
+  const readTail = async () => {
+    try {
+      const raw = await readFile(chatLog, 'utf8')
+      const lines = raw.split('\n').filter((l) => l.trim())
+      if (!lines.length) return []
+      const byRoom = new Map()
+      for (const l of lines) {
+        try {
+          const m = JSON.parse(l)
+          const ch = m.channel || 'general'
+          if (!byRoom.has(ch)) byRoom.set(ch, [])
+          byRoom.get(ch).push(l)
+        } catch { /* skip dòng hỏng */ }
+      }
+      const result = []
+      for (const [, msgs] of byRoom) {
+        result.push(...msgs.slice(-300))
+      }
+      result.sort((a, b) => {
+        try { return JSON.parse(a).at - JSON.parse(b).at } catch { return 0 }
+      })
+      return result
+    } catch { return [] }
+  }
+  const _oldReadTail = async (limit = 500) => {
     try {
       const raw = await readFile(chatLog, 'utf8')
       return raw.split('\n').filter((l) => l.trim()).slice(-limit)
@@ -1914,7 +1940,8 @@ export default function activate(orca) {
           if (rcReq.action === 'create') {
             const room = String(rcReq.room || '').toLowerCase()
             const repo = String(rcReq.repo || 'team').toLowerCase()
-            if (!/^[a-z0-9][a-z0-9-]{1,40}$/.test(room)) throw new Error('tên room không hợp lệ')
+            room = String(room).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '')
+            if (!/^[a-z0-9][a-z0-9-]{0,40}$/.test(room)) throw new Error('tên room không hợp lệ (sau chuẩn hoá vẫn rỗng — dùng ký tự a-z 0-9)')
             if (rooms[room] && rooms[room].status !== 'deleted') throw new Error('room #' + room + ' đã tồn tại')
             const feature = room.includes('-') ? room.split('-').slice(1).join('-') : room
             rooms[room] = { feature, repo, run: '', status: 'open', createdAt: Date.now() }
@@ -2006,7 +2033,10 @@ export default function activate(orca) {
         lastTailLen = -1
         await orca.host.call('storage.set', { key: 'team.chat.roomCmd', value: null }).catch(() => {})
       }
-      const tail = await readTail()
+      // readTail trong try riêng (3/11: error từ router/send nuốt block →
+      // tail không update → CEO không send/nhận được chat)
+      let tail = []
+      try { tail = await readTail() } catch { /* best-effort */ }
       // So LAST LINE thay vì length (bug 2/11: bus > 200 dòng → readTail cap 200
       // → length không bao giờ đổi → panel đứng hình từ khi bus đầy).
       const lastSig = tail.length ? String(JSON.parse(tail[tail.length - 1]).at || 0) + ':' + String(JSON.parse(tail[tail.length - 1]).from || '') : ''
