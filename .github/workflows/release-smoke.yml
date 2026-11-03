@@ -1,0 +1,242 @@
+# Smoke a release-cut draft BEFORE publish: download the cut's own assets, boot the
+# packaged app headless, assert the startup milestone, then publish only on green.
+# A red smoke job keeps the release as a draft (the publish job never runs) and the
+# failure log is the captain ping.
+#
+# Trigger contract: GitHub fires no `release` event for draft releases, and
+# create-draft-release.mjs does not push the tag. The draft-first flow is therefore:
+#   1. cut the draft (config/scripts/create-draft-release.mjs)
+#   2. push the release tag (`git push wakii-dev v2.x.y`) — this run starts
+#   3. dispatch macos-build + windows-build if not already running
+# A tag pushed without a matching draft skips politely; publish uses GITHUB_TOKEN,
+# whose ref pushes do not retrigger workflows, so publishing cannot loop this run.
+name: Release smoke
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Release tag to smoke (default v<package.json version>)
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    permissions:
+      # The draft assert may PATCH a release back to draft; asset download reads only.
+      contents: write
+    outputs:
+      has-draft: ${{ steps.draft-gate.outputs.has-draft }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: wakii-dev
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Resolve release tag
+        shell: bash
+        run: |
+          TAG="${{ github.event.inputs.release_tag }}"
+          [ -n "$TAG" ] || TAG="${GITHUB_REF_NAME}"
+          [ -n "$TAG" ] || TAG="v$(node -p "require('./package.json').version")"
+          echo "RELEASE_TAG=$TAG" >> "$GITHUB_ENV"
+          echo "RELEASE_VERSION=${TAG#v}" >> "$GITHUB_ENV"
+
+      # Draft lookup uses the releases LIST: /releases/tags/<tag> 404s for drafts
+      # because the tag ref does not exist until publish.
+      - name: Draft gate (skip politely when the tag has no open draft)
+        id: draft-gate
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          STATE=$(node --input-type=module -e "
+            const res = await fetch('https://api.github.com/repos/' + process.env.GITHUB_REPOSITORY + '/releases?per_page=100', {
+              headers: { Authorization: 'Bearer ' + process.env.GH_TOKEN, Accept: 'application/vnd.github+json' }
+            })
+            const releases = await res.json()
+            const release = Array.isArray(releases) ? releases.find((r) => r.tag_name === process.env.RELEASE_TAG) : null
+            if (!release) { console.log('none'); process.exit(0) }
+            console.log(release.draft ? 'draft' : 'published')
+          ")
+          case "$STATE" in
+            draft)
+              echo "has-draft=true" >> "$GITHUB_OUTPUT"
+              echo "draft release $RELEASE_TAG found — smoking"
+              ;;
+            published)
+              echo "has-draft=false" >> "$GITHUB_OUTPUT"
+              echo "::warning::$RELEASE_TAG is already published — the smoke-before-publish gate was bypassed; skipping smoke"
+              ;;
+            *)
+              echo "has-draft=false" >> "$GITHUB_OUTPUT"
+              echo "::notice::no release exists for $RELEASE_TAG — nothing to smoke"
+              ;;
+          esac
+
+      - name: Assert release is still draft
+        if: steps.draft-gate.outputs.has-draft == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ env.RELEASE_TAG }}
+        run: node config/scripts/assert-github-release-is-draft.mjs "$TAG"
+
+      - name: Wait for release assets (build workflows may still be uploading)
+        if: steps.draft-gate.outputs.has-draft == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node --input-type=module -e "
+            const required = process.platform === 'win32'
+              ? ['orca-windows-setup.exe']
+              : ['Wakii-' + process.env.RELEASE_VERSION + '-arm64.dmg']
+            const deadline = Date.now() + 45 * 60 * 1000
+            const repo = process.env.GITHUB_REPOSITORY
+            while (true) {
+              const res = await fetch('https://api.github.com/repos/' + repo + '/releases?per_page=100', {
+                headers: { Authorization: 'Bearer ' + process.env.GH_TOKEN, Accept: 'application/vnd.github+json' }
+              })
+              const releases = await res.json()
+              const release = Array.isArray(releases) ? releases.find((r) => r.tag_name === process.env.RELEASE_TAG) : null
+              const names = new Set((release?.assets ?? []).map((a) => a.name))
+              const missing = required.filter((n) => !names.has(n))
+              if (missing.length === 0) { console.log('assets ready:', [...names].join(', ')); break }
+              if (Date.now() > deadline) {
+                console.error('::error::assets still missing after 45m: ' + missing.join(', '))
+                process.exit(1)
+              }
+              console.log('waiting for', missing.join(', '))
+              await new Promise((r) => setTimeout(r, 30_000))
+            }
+          "
+
+      - name: Download release assets
+        if: steps.draft-gate.outputs.has-draft == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --clobber \
+              --pattern 'Wakii-*-arm64.dmg' --pattern 'Wakii-*-x64.dmg'
+          else
+            gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --clobber \
+              --pattern 'orca-windows-setup.exe'
+          fi
+          ls -la
+
+      # Boot only the arm64 dmg (native to the runner); the x64 dmg gets a mount +
+      # bundle-structure check so its bytes are still exercised before publish.
+      - name: Mount dmg and extract app
+        if: runner.os == 'macOS' && steps.draft-gate.outputs.has-draft == 'true'
+        run: |
+          mkdir -p smoke-app
+          hdiutil attach -nobrowse -readonly "Wakii-$RELEASE_VERSION-arm64.dmg" | grep -o '/Volumes/.*' | head -1 > .volume-path
+          VOLUME="$(cat .volume-path)"
+          cp -R "$VOLUME/Wakii.app" smoke-app/Wakii.app
+          hdiutil detach "$VOLUME"
+          if ls Wakii-*-x64.dmg >/dev/null 2>&1; then
+            hdiutil attach -nobrowse -readonly "Wakii-$RELEASE_VERSION-x64.dmg" | grep -o '/Volumes/.*' | head -1 > .volume-path
+            VOLUME="$(cat .volume-path)"
+            file "$VOLUME/Wakii.app/Contents/MacOS/Wakii" | grep -q x86_64
+            hdiutil detach "$VOLUME"
+            echo "x64 dmg bundle structure OK (boot check covered by arm64 run)"
+          fi
+
+      - name: Install app silently (NSIS)
+        if: runner.os == 'Windows' && steps.draft-gate.outputs.has-draft == 'true'
+        shell: pwsh
+        run: |
+          $installDir = "$PWD\smoke-app"
+          Start-Process -FilePath ".\orca-windows-setup.exe" -ArgumentList "/S","/D=$installDir" -Wait
+          $exe = Join-Path $installDir "Wakii.exe"
+          $deadline = (Get-Date).AddMinutes(5)
+          while (-not (Test-Path $exe)) {
+            if ((Get-Date) -gt $deadline) { throw "installer did not produce $exe" }
+            Start-Sleep -Seconds 5
+          }
+          Write-Host "installed at $exe"
+
+      - name: Run packaged app smoke
+        if: steps.draft-gate.outputs.has-draft == 'true'
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            node config/scripts/smoke-packaged-app.mjs --app-dir=smoke-app/Wakii.app --screenshot=smoke-receipt.png
+          else
+            node config/scripts/smoke-packaged-app.mjs --app-dir=smoke-app --screenshot=smoke-receipt.png
+          fi
+
+      - name: Upload smoke receipt
+        if: ${{ !cancelled() && steps.draft-gate.outputs.has-draft == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-receipt-${{ matrix.os }}
+          path: smoke-receipt.png
+          if-no-files-found: warn
+
+  # Runs only when every matrix leg passed on an open draft. Reuses the release gate
+  # tools: the asset verify runs explicitly, then the publish tool flips complete
+  # drafts to published. Checks out the release tag so isTagBuiltFromCurrentRef holds
+  # even when wakii-dev has moved past the release commit.
+  publish:
+    needs: smoke
+    permissions:
+      contents: write
+    if: ${{ !cancelled() && needs.smoke.result == 'success' && needs.smoke.outputs.has-draft == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve release tag
+        run: echo "RELEASE_TAG=${{ github.event.inputs.release_tag || github.ref_name }}" >> "$GITHUB_ENV"
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.release_tag || github.ref_name }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Verify required release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: node config/scripts/verify-release-required-assets.mjs "$RELEASE_TAG"
+
+      - name: Publish complete draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: node config/scripts/publish-complete-draft-releases.mjs
+
+      - name: Assert release is published (fail loudly if the publish tool skipped it)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          IS_DRAFT=$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" --jq .draft)
+          if [ "$IS_DRAFT" != "false" ]; then
+            echo "::error::smoke passed but release $RELEASE_TAG is still a draft — publish tool skipped it"
+            exit 1
+          fi
+          echo "release $RELEASE_TAG published after green smoke"

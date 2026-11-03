@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
 import {
+  isForkReleaseCutDraft,
   isTagBuiltFromCurrentRef,
   isReleaseCutDraft,
   publishCompleteDraftReleases,
@@ -90,6 +91,46 @@ describe('isReleaseCutDraft', () => {
         draft: true,
         tag_name: 'v1.4.2-rc.7',
         author: { login: 'release-maintainer' }
+      })
+    ).toBe(false)
+  })
+})
+
+describe('isForkReleaseCutDraft', () => {
+  it('accepts owner-authored plain-version desktop drafts', () => {
+    expect(
+      isForkReleaseCutDraft({
+        draft: true,
+        tag_name: 'v2.1.11',
+        author: { login: 'wakii-dev' }
+      })
+    ).toBe(true)
+    expect(
+      isForkReleaseCutDraft({
+        draft: true,
+        tag_name: 'v2.1.11',
+        author: { login: 'github-actions[bot]' }
+      })
+    ).toBe(true)
+    expect(
+      isForkReleaseCutDraft({
+        draft: true,
+        tag_name: 'v2.1.11',
+        author: { login: 'release-maintainer' }
+      })
+    ).toBe(false)
+    expect(
+      isForkReleaseCutDraft({
+        draft: true,
+        tag_name: 'v2.1.11-rc.1',
+        author: { login: 'wakii-dev' }
+      })
+    ).toBe(false)
+    expect(
+      isForkReleaseCutDraft({
+        draft: false,
+        tag_name: 'v2.1.11',
+        author: { login: 'wakii-dev' }
       })
     ).toBe(false)
   })
@@ -192,6 +233,71 @@ describe('publishCompleteDraftReleases', () => {
             expect.objectContaining({
               method: 'PATCH',
               body: JSON.stringify({ draft: false, prerelease: true })
+            })
+          ]
+        ])
+      } finally {
+        fetch.mockRestore()
+      }
+    })
+  })
+
+  it('publishes complete fork-cut drafts as full releases', async () => {
+    await withGitRepo(async (repo) => {
+      commit(repo, 'release source')
+      git(repo, ['tag', 'v2.1.11'])
+      const release = {
+        id: 11,
+        draft: true,
+        tag_name: 'v2.1.11',
+        created_at: '2026-11-03T08:00:00Z',
+        author: { login: 'wakii-dev' },
+        assets: getRequiredReleaseAssetNames('v2.1.11').map((name, index) => ({
+          id: 1100 + index,
+          name,
+          state: 'uploaded',
+          size: 1
+        }))
+      }
+      const manifestUrls = new Map(
+        release.assets
+          .filter(({ name }) => name.startsWith('latest'))
+          .map(({ id }) => [
+            `https://api.github.com/repos/wakii-dev/wakii/releases/assets/${id}`,
+            ''
+          ])
+      )
+      const fetchImpl = vi.fn(async (url, options) => {
+        if (url === 'https://api.github.com/repos/wakii-dev/wakii/releases?per_page=100') {
+          return jsonResponse([release])
+        }
+        if (manifestUrls.has(url) && !options.method) {
+          return jsonResponse(manifestUrls.get(url))
+        }
+        if (
+          url === 'https://api.github.com/repos/wakii-dev/wakii/releases/11' &&
+          options.method === 'PATCH'
+        ) {
+          return jsonResponse({ tag_name: 'v2.1.11', draft: false })
+        }
+        throw new Error(`Unexpected release request: ${options.method ?? 'GET'} ${url}`)
+      })
+      const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(fetchImpl)
+      try {
+        const result = await publishCompleteDraftReleases({
+          repo: 'wakii-dev/wakii',
+          token: 'token',
+          fetchImpl,
+          isDraftBuiltFromCurrentRef: ({ tag }) => isTagBuiltFromCurrentRef(tag, { cwd: repo }),
+          log: vi.fn()
+        })
+        expect(result).toEqual({ published: ['v2.1.11'], skipped: [] })
+        expect(fetchImpl.mock.calls.filter(([, options]) => options.method === 'PATCH')).toEqual([
+          [
+            'https://api.github.com/repos/wakii-dev/wakii/releases/11',
+            expect.objectContaining({
+              method: 'PATCH',
+              body: JSON.stringify({ draft: false, prerelease: false })
             })
           ]
         ])

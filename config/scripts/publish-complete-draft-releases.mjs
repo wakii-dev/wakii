@@ -8,6 +8,9 @@ import { verifyRequiredReleaseAssets } from './verify-release-required-assets.mj
 const API_VERSION = '2022-11-28'
 const RELEASE_CUT_AUTHOR = 'github-actions[bot]'
 const DESKTOP_RC_TAG_PATTERN = /^v[0-9]+\.[0-9]+\.[0-9]+-rc\.[0-9]+$/
+// Fork cuts plain-version drafts locally (no -rc suffix), under the owner's login.
+const FORK_RELEASE_CUT_AUTHORS = new Set([RELEASE_CUT_AUTHOR, 'wakii-dev'])
+const FORK_RELEASE_TAG_PATTERN = /^v[0-9]+\.[0-9]+\.[0-9]+$/
 
 export function isReleaseCutDraft(release) {
   return (
@@ -15,6 +18,15 @@ export function isReleaseCutDraft(release) {
     release?.author?.login === RELEASE_CUT_AUTHOR &&
     typeof release?.tag_name === 'string' &&
     DESKTOP_RC_TAG_PATTERN.test(release.tag_name)
+  )
+}
+
+export function isForkReleaseCutDraft(release) {
+  return (
+    release?.draft === true &&
+    FORK_RELEASE_CUT_AUTHORS.has(release?.author?.login) &&
+    typeof release?.tag_name === 'string' &&
+    FORK_RELEASE_TAG_PATTERN.test(release.tag_name)
   )
 }
 
@@ -90,7 +102,7 @@ export async function publishCompleteDraftReleases({
 
   const releases = await fetchReleases(repo, token, fetchImpl)
   const candidates = releases
-    .filter(isReleaseCutDraft)
+    .filter((release) => isReleaseCutDraft(release) || isForkReleaseCutDraft(release))
     .sort((a, b) => new Date(a.created_at ?? 0).getTime() - new Date(b.created_at ?? 0).getTime())
 
   const published = []
