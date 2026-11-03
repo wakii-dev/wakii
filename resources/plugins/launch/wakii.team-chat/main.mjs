@@ -1605,6 +1605,118 @@ export default function activate(orca) {
       } }).catch(() => {})
     } catch { /* projects best-effort */ }
   }
+  // CAPTAIN SUPERVISOR (CEO 3/11): captain tự phục hồi — không cần CEO đánh thức.
+  // 3 lớp chạy mỗi tick (throttle 30s cho respawn/heal, 10 phút cho heartbeat):
+  //   1. REGISTRATION HEALER: pane sống + title "CAPTAIN" nhưng mất REG → re-register
+  //   2. DEATH DETECTOR: room open + captain pane chết → auto-respawn + brief
+  //   3. HEARTBEAT PING: captain im >10 phút → gửi ping giữ session tươi
+  let supervisorAt = 0
+  const supervisorRespawned = new Map() // room → timestamp (anti-spam 5')
+  const captainSupervisor = async () => {
+    try {
+      // Throttle: chạy tối đa mỗi 30s (heartbeat riêng 10 phút)
+      const now = Date.now()
+      const isHeartbeatTick = now - supervisorAt > 10 * 60 * 1000
+      if (!isHeartbeatTick && now - supervisorAt < 30000) return
+      supervisorAt = now
+
+      // Đọc registry + REG
+      let rooms = {}
+      try { rooms = JSON.parse(readFileSync(join(chatDir, 'rooms.json'), 'utf8')) } catch { return }
+      let reg = {}
+      try { reg = JSON.parse(readFileSync(join(chatDir, '.workers.json'), 'utf8')) } catch { /* */ }
+
+      // Terminal list
+      const orcaBin = process.env.ORCA_BIN || 'orca'
+      const listOut = await new Promise((res) => execFileCb(orcaBin, ['terminal', 'list', '--json'], { timeout: 15000 }, (e, o) => res(e ? '' : o)))
+      if (!listOut) return
+      const terms = JSON.parse(listOut).result.terminals
+      const byHandle = new Map(terms.map((t) => [t.handle, t]))
+
+      let dirty = false
+      const actions = []
+
+      for (const [roomId, roomEntry] of Object.entries(rooms)) {
+        if (!roomEntry || roomEntry.status !== 'open') continue
+        const wt = roomEntry.worktree || ''
+
+        // Tìm captain hiện tại trong REG
+        let capPane = ''
+        let capEntry = null
+        for (const [pane, e] of Object.entries(reg)) {
+          if (e && e.name === 'captain' && e.room === roomId) {
+            capPane = pane
+            capEntry = e
+            break
+          }
+        }
+
+        // LAYER 1: REGISTRATION HEALER
+        // Captain có REG nhưng pane chết → xoá REG entry
+        if (capPane && !byHandle.has(capPane)) {
+          delete reg[capPane]
+          dirty = true
+          capPane = ''
+          capEntry = null
+          actions.push('heal: xoá REG chết cho #' + roomId)
+        }
+
+        // Pane sống + title CAPTAIN + đúng room nhưng KHÔNG REG → re-register
+        if (!capPane) {
+          for (const [handle, t] of byHandle) {
+            const title = String(t.title || '')
+            if (title.toLowerCase().includes('captain') && title.toLowerCase().includes(roomId.toLowerCase().split('-')[0])) {
+              // Kiểm tra pane này không phải captain của room khác
+              const existingOther = Object.entries(reg).find(([p, e]) => e && e.name === 'captain' && p === handle && e.room !== roomId)
+              if (existingOther) continue
+              reg[handle] = { name: 'captain', worktree: wt, task: '', run: '', repo: roomEntry.repo || '', room: roomId, at: Date.now() }
+              dirty = true
+              capPane = handle
+              actions.push('heal: re-register ' + handle.slice(0, 14) + ' → captain #' + roomId)
+              break
+            }
+          }
+        }
+
+        // LAYER 2: DEATH DETECTOR — auto-respawn
+        if (!capPane && wt) {
+          // Anti-spam: không respawn lại nếu vừa respawn <5 phút
+          const lastRespawn = supervisorRespawned.get(roomId)
+          if (lastRespawn && now - lastRespawn < 5 * 60 * 1000) continue
+
+          supervisorRespawned.set(roomId, now)
+          actions.push('respawn: captain #' + roomId + ' chết → tự spawn')
+          const spawnBin = join(homeDir(), '.claude', 'bin', 'team-captain-spawn')
+          execFileCb('bash', [spawnBin, '--room', roomId, '--repo', 'path:' + wt], { timeout: 120000 }, () => {})
+          // Post tin hệ thống
+          appendLine({ from: 'system', role: 'system', channel: roomId,
+            text: '🔄 Captain Supervisor: captain pane đã chết — tự khởi động lại (worktree ' + wt + '). Journal + chat history đảm bảo không mất ngữ cảnh.' }).catch(() => {})
+        }
+
+        // LAYER 3: HEARTBEAT PING — captain im >10 phút
+        if (isHeartbeatTick && capPane && byHandle.has(capPane)) {
+          const t = byHandle.get(capPane)
+          const lastOut = t.lastOutputAt || 0
+          if (now - lastOut > 10 * 60 * 1000) {
+            execFileCb(orcaBin, ['terminal', 'send', '--terminal', capPane, '--text',
+              '[heartbeat] Captain còn đó không? Trả lời ngắn 1 tin team-chat vào room này.', '--enter'],
+              { timeout: 15000 }, () => {})
+            actions.push('ping: captain #' + roomId + ' im >10 phút')
+          }
+        }
+      }
+
+      if (dirty) {
+        writeFileSync(join(chatDir, '.workers.json'), JSON.stringify(reg, null, 1))
+      }
+      if (actions.length > 0) {
+        orca.log('[captain-supervisor] ' + actions.join(' | '))
+      }
+    } catch (e) {
+      try { orca.log('[captain-supervisor] lỗi: ' + (e && e.message || e)) } catch { /* */ }
+    }
+  }
+
   const publishTerminals = async () => {
     if (Date.now() - termsCache.at < 10000) return
     termsCache.at = Date.now()
@@ -1933,6 +2045,7 @@ export default function activate(orca) {
       void publishProjects()
       void publishMindmaps().catch(() => {})
       void watchWorkers().catch(() => {})
+      void captainSupervisor().catch(() => {})
       // Captain status cho settings panel: theo TỪNG room (room = worktree + captain trực).
       // Room-set tự tính mỗi tick (registry + kênh trong tail) — không phụ thuộc
       // biến chỉ cập nhật khi tail đổi (bug settings 🔴 dù captain online).
