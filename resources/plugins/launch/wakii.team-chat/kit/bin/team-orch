@@ -326,7 +326,16 @@ room_panes = sorted((e.get('at', 0), p) for p, e in reg.items()
                     if isinstance(e, dict) and e.get('room') == room and p in terms)
 seats = [p for _, p in room_panes if p != cap]
 if cap in terms: seats = [cap] + seats
-# ghost (trong tab captain, không REG) → không tính là ghế, chỉ để biết tồn tại
+# ghost cleanup: pane trong tab captain mà KHÔNG REG → đóng trước khi tính ghế
+cap_tab = terms.get(cap, {}).get('tabId')
+if cap_tab:
+    reg_panes = set(seats)
+    for h, t in terms.items():
+        if t.get('tabId') == cap_tab and h not in reg_panes and h != cap:
+            # ghost — đóng
+            subprocess.run([orca, 'terminal', 'close', '--terminal', h],
+                         capture_output=True, text=True, timeout=10)
+            terms.pop(h, None)
 if len(seats) > 6: sys.exit(0)
 n = len(seats)  # pane hiện có = ghế đã chiếm
 if n < 1: sys.exit(0)
@@ -351,7 +360,10 @@ else:
 PY
 )
         SPLIT_DIR=$(printf '%s' "$SEAT_CFG" | cut -f1); SPLIT_BASE=$(printf '%s' "$SEAT_CFG" | cut -f2)
-        [ -n "$SPLIT_DIR" ] && [ -n "$SPLIT_BASE" ] || { SPLIT_DIR="vertical"; SPLIT_BASE="$CAP_PANE"; }
+        if [ -z "$SPLIT_DIR" ] || [ -z "$SPLIT_BASE" ]; then
+          echo "TỪ CHỐI: grid đầy 6 ghế hoặc không tính được ghế — không split thêm" >&2
+          exit 4
+        fi
         SPLIT_ARGS=(--terminal "$SPLIT_BASE" --direction "$SPLIT_DIR")
         NEW_PANE=$("$ORCA" terminal split "${SPLIT_ARGS[@]}" \
                      --command "claude --dangerously-skip-permissions" --json 2>/dev/null \
@@ -360,7 +372,7 @@ PY
           if wait_agent_ready "$NEW_PANE" "$ORCA"; then
             :
           else
-            echo "team-orch: ⚠ agent chưa lên sau 60s — orchestration gõ task có thể trượt; theo dõi pane" >&2
+            echo "team-orch: ⚠ agent chưa lên sau 45s — orchestration gõ task có thể trượt; theo dõi pane" >&2
           fi
           SPLIT_PANE="$NEW_PANE"
           echo "team-orch: grid — worker pane $NEW_PANE ($SPLIT_DIR từ ${SPLIT_BASE%%-*}) trong tab captain"
