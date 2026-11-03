@@ -1775,7 +1775,7 @@ export default function activate(orca) {
             }
             const spawnBin = join(homeDir(), '.claude', 'bin', 'team-captain-spawn')
             orca.log('[wake] chạy ' + spawnBin + ' ORCA_BIN=' + (process.env.ORCA_BIN || '(không có)'))
-            await new Promise((res) => execFileCb(winBashBin(), [spawnBin, '--repo', 'path:' + wt], { timeout: 120000, env: { ...process.env, ORCA_BIN: orcaBin() } }, (e, so, se) => { orca.log('[wake] spawn xong err=' + (e && e.message || 'null') + ' out=' + String(so).slice(0, 120)); res() }))
+            await new Promise((res) => execFileCb(winBashBin(), [spawnBin, '--room', room, '--repo', 'path:' + wt], { timeout: 120000, env: { ...process.env, ORCA_BIN: orcaBin() } }, (e, so, se) => { orca.log('[wake] spawn xong err=' + (e && e.message || 'null') + ' out=' + String(so).slice(0, 120)); res() }))
             await orca.host.call('notifications.show', {
               title: 'Wakii Team — Captain đã online',
               body: 'Terminal Captain gắn worktree ' + wt + ' (room #' + room + '). Kéo tab vào floating workspace nếu muốn — router theo handle.'
