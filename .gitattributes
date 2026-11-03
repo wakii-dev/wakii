@@ -83,3 +83,6 @@
 
 # Skill-md test fixtures are byte-compared; CRLF checkout would double the CRs.
 *.skill-md.txt text eol=lf
+
+# Plugin resources: hash nhạy cảm line endings — force LF
+resources/plugins/launch/** text eol=lf

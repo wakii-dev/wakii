@@ -960,9 +960,20 @@
       document.getElementById('nrName').focus(); updateWtHint()
     }
   })
+  // Transliterate tiếng Việt → ASCII (thông báo → thong-bao) — CEO 3/11:
+  // user gõ "thông báo" → replace(/[^a-z0-9-]/g,'') XOÁ HẾT → tên rỗng → lỗi
+  function viToAscii(str) {
+    return str
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')  // decompose + bỏ diacritics
+      .replace(/đ/g, 'd').replace(/Đ/g, 'D')                // đ riêng
+      .toLowerCase()
+      .replace(/[^a-z0-9-]+/g, '-')                         // nhóm ký tự lạ → gạch nối
+      .replace(/^-+|-+$/g, '')                              // trim gạch nối
+      .replace(/-{2,}/g, '-')                               // bỏ gạch đôi
+  }
   function nrId() {
-    var r = (document.getElementById('nrRepo').value || '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '')
-    var n = (document.getElementById('nrName').value || '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '')
+    var r = viToAscii((document.getElementById('nrRepo').value || '').trim())
+    var n = viToAscii((document.getElementById('nrName').value || '').trim())
     return r ? r + '-' + n : n // repo bỏ trống → worker tự dùng worktree đang mở
   }
   // Path worktree dự kiến: <root>/<repo|current>/<tên> — hiện ngay khi gõ để
