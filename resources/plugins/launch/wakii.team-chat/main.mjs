@@ -1347,6 +1347,19 @@ export default function activate(orca) {
   // Command invoke là trigger đánh thức worker này (worker lazy-start);
   // activate() mới là nơi poller chat sống. Không có action declarative
   // "open panel" nên team.chat báo qua notification + trả trạng thái bus.
+  // Auto-activate on workspace.changed (CEO 3/11: plugin lazy-start means
+  // every app restart requires manually opening the panel; subscribing to
+  // workspace.changed ensures the plugin host activates this worker when the
+  // app restores workspaces on startup, keeping chat + captain supervisor alive.)
+  try {
+    if (orca.events && typeof orca.events.on === 'function') {
+      orca.events.on('workspace.changed', () => {
+        orca.log('[team-chat] workspace.changed event received')
+        void tick()
+      })
+    }
+  } catch { /* events API optional */ }
+
   orca.commands.register('panelWake', async () => ({ ok: true }))
   orca.commands.register('team.chat', async () => {
     const tail = await readTail(5)
