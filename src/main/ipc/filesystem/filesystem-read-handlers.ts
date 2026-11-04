@@ -12,12 +12,15 @@ import { sortDirEntries } from '../../../shared/file-name-sort'
 import { SshHostNotServedError } from '../../providers/ssh-host-not-served-error'
 import { resolveRegisteredWorktreePath } from '../registered-worktree-roots-cache'
 import type { LocalFileAccess } from '../../../shared/local-file-access'
+import type { WakiiFileOpenPayload } from '../../../shared/wakii-file-open-payload'
 import {
   resolveDesktopAuthorizedPath,
   resolveLocalFileRequestPath,
   resolveLocalListRequestPath
 } from '../local-file-access-resolution'
 import { isPathAbsentError } from './filesystem-path-containment'
+import { resolveAuthorizedPath } from './filesystem-auth'
+import { resolveOpenedWakiiFiles } from '../../startup/os-opened-wakii-files'
 import { listMarkdownDocuments } from '../markdown-documents'
 import { getLocalGitOptionsForRegisteredWorktree } from '../local-worktree-runtime-options'
 import { recordCrashBreadcrumb } from '../../crash-reporting/crash-breadcrumb-store'
@@ -124,6 +127,17 @@ export function registerFilesystemReadHandlers(context: FilesystemHandlerContext
         },
         { wake: args.wakeWslDistro === true }
       )
+    }
+  )
+
+  // Why: the explorer routes .wakii rows through main so the size cap + schema table run
+  // before anything reaches the renderer, and decode grants the path like the OS-open flow.
+  ipcMain.handle(
+    'fs:readWakiiDocument',
+    async (_event, args: { filePath: string }): Promise<WakiiFileOpenPayload> => {
+      const filePath = await resolveAuthorizedPath(args.filePath, store)
+      const [resolved] = await resolveOpenedWakiiFiles([filePath])
+      return resolved.payload
     }
   )
 

@@ -11,7 +11,7 @@ vi.mock('electron', () => ({
   }
 }))
 
-vi.mock('../filesystem-auth', () => ({
+vi.mock('./filesystem-auth', () => ({
   resolveAuthorizedPath: mocks.resolveAuthorizedPath
 }))
 
