@@ -541,6 +541,7 @@ except Exception: pass" 2>/dev/null)
       [ -n "$RROOM" ] && TEAM_CHAT_MACHINE=1 "$TC_R" send "✅ RECEIPT gate CLOSED @ ${WT##*/} — worker được làm (task ${TASK:-?})" --from system --role system --channel "$RROOM" >/dev/null 2>&1 || true
     fi
     echo "$OUT"
+    exit 0  # spawn thành công — rc từ post-processing phụ bị bỏ
     ;;
   cleanup)
     # cleanup --worktree <path> [--harvest <subdir> --dest <abs>] — worker rời + không ai hoạt động:
