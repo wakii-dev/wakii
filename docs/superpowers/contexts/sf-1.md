@@ -1,63 +1,42 @@
-# Context pack — LOCAL-5 sf-1 — story-doctor install-coverage (sidecar manifest)
+# Context pack — SF-1: Op `agent.launchFloating` phía app
 
-> BƯỚC-0: header phải chứa "LOCAL-5 sf-1". Sai → pack của story khác, DỪNG báo.
-> Pack ĐÃ ĐỒNG BỘ spec CHỐT (spec-critic 10/10) — nếu lệch spec, SPEC THẮNG.
+## Spec slice (from epic spec 2026-11-04-captain-floating-design.md)
 
-## Spec slice
-`story-doctor` chạy từ vị trí CÀI (`~/.claude/bin`) → `src==dst` → check bins PASS
-tautology (live 10/10: "PASS 60 bins" khi nguồn 59/cài 61). Chiều provides ∉ installed
-không được phát hiện; repair (04/10) PASS 9/9 nhưng không copy `story-pane-watch` —
-`run_install_kit` chết nếu không thấy kit source (~dòng 482) — máy chỉ-có-install
-không có tay copy (đúng kịch bản incident).
+Thêm op plugin `agent.launchFloating { agent, prompt? }` → main spawn terminal vào pseudo-worktree `global-floating-terminal`, trả handle ngay. Desktop-only. KHÔNG đụng renderer bridge, KHÔNG đụng layout ownership protocol.
 
-Fix (spec CHỐT): **sidecar manifest** `~/.claude/bin/.kit-provides.json` = JSON OBJECT
-`{provides:[names], srcKitRoot, kitHash}` do installKit ghi:
-- Ghi **VÔ ĐIỀU KIỆN TRƯỚC early-return marker-khớp** trong installKit (main.mjs
-  ~1275-1282) — ghi sau early-return = bị xoá và không bao giờ ghi lại; refresh MỖI install
-- `srcKitRoot` = đường kit source lúc install (repair có tay copy)
-- `check_bins`: kit.json vắng ở install dir → đọc sidecar: missing = provides ∉
-  installed → FAIL nêu tên; orphan = installed ∉ provides (2 chiều, hết tautology);
-  KHÔNG sidecar → **WARN fail-open** (KHÔNG PASS)
-- Tautology fixture: doctor đặt BÊN TRONG fake install root (`kit_root==root`, chạy
-  từ `<root>/bin/`) — chế độ kit-source chưa từng tautology, không phải mục tiêu
-- `--repair` 2 nhánh: `srcKitRoot` còn tồn tại + tree hash khớp sidecar → copy trực
-  tiếp bin thiếu (guard under_root + **chmod 755 SAU copy**); source mất/hash lệch →
-  **FAIL in lệnh cp hướng dẫn tay** — không im lặng (hành vi ĐÚNG cho máy không source)
+## Touch map (files + điểm cắt)
 
-## Touch map
-- `kit/bin/story-doctor` — check_bins (~268-292), cmd_repair
-- launcher `main.mjs` — installKit copy bins + ghi sidecar (~1275-1282)
-- `tests/story-doctor-tests.mjs` — fixture sandbox (21 DR giữ GREEN)
-- `tests/kit-verify-manifest.mjs` — không đụng (manifest không đổi)
-- rehash THỨ TỰ: bin → computeKitHash → kit.json → fingerprint CUỐI; ĐÚNG CÂY worktree
+| File | Thay đổi |
+|---|---|
+| `src/shared/plugins/workers/plugin-host-api-workspace-methods.ts` | Spec mới `agent.launchFloating` — params strictObject `{agent (isTuiAgent refine), title?, prompt? (TEXT_MAX)}`, result `{terminalId}`; capability `agent:launch`, `mutation: true`, `since: 4` (convention: workspace op hiện tại 3, `PLUGIN_HOST_API_MINOR` tự derive max — plugin-host-api.ts:324-326) |
+| `src/main/plugins/workers/plugin-host-workspace-method-bindings.ts` | Binding: `target: { kind: 'existing', worktree: 'global-floating-terminal' }` (bare constant — `isFloatingWorkspaceSelector` chấp nhận bare; floating-workspace-worktree.ts:11-14), `surface: 'terminal'`, `presentation: 'background'`, `launchSource: 'plugin'`; prompt delivery fire-and-forget với built-in composer-wait (pattern binding agent.launch dòng ~198-212 — delivery chờ composer tới 1 phút, KHÔNG nằm trong reply); `title` truyền qua intent nếu executor hỗ trợ (verify, không block) |
+| typings generate | `config/scripts/generate-plugin-author-typings` + API reference doc (`plugin-host-api-reference-doc.ts`) — commit output |
+| tests | **BẮT BUỘC:** (1) executor case **floating + surface 'terminal'** — CHƯA có test nào cho combo này (test 602 chỉ structured; đường production: preflight terminal → createTerminalAgent → `runtime.createTerminal('id:global-floating-terminal')`, agent-launch-surfaces.ts:142 + terminal-workspace-scope.ts:153-165); (2) binding test (`plugin-host-workspace-methods.test.ts`): target floating đúng constant, surface terminal, result parse; (3) title pass-through nếu intent hỗ trợ |
 
-## Interface contract
-- Sidecar: JSON object `{"provides":[...],"srcKitRoot":"<abs>","kitHash":"..."}`,
-  ghi atomic, ghi MỖI lần installKit copy bins (kể cả early-return path)
-- `check_bins` sidecar-mode: missing = provides ∉ installed; orphan = installed ∉
-  provides — orphan sidecar-mode = **WARN-only** (sidecar stale có thể che bin mới hợp lệ)
-- check_orphans **whitelist** `.kit-provides.json` (scanner hiện sẽ xoá nó)
-- uninstall_targets gồm sidecar
-- `core.filemode=false` → exec-bit qua `git update-index --chmod=+x`
+## ACCEPTANCE (user-visible — verifier Phase 5 kiểm theo đây)
 
-## Dep states
-- kit 2.21.0, provides 75, kitHash 788c9a11 (KHÔNG hardcode số — đổi theo rehash)
-- P0-1 (plan): task ĐẦU SF-1 = rehash trên tree sạch + kit-verify-manifest GREEN
-  TRƯỚC mọi edit khác
-- Suite kit chạy qua `pnpm test` (node trực tiếp chết trên máy này)
+**Harness chốt (plan-critic):** unit test gọi `pluginRuntimeRpc`/`RpcDispatcher` TRỰC TIẾP (headless mặc định, không cần plugin thật) + 1 lần smoke `orca serve` thủ công ghi kết quả trong gate report. KHÔNG đòi plugin thật (manifest capability là việc SF-2).
 
-## ACCEPTANCE (spec — đủ 6 + regression)
-1. Fixture: xoá 1 provides-bin khỏi fake install → doctor FAIL nêu đúng tên
-2. `--repair` có srcKitRoot hợp lệ → copy đủ + PASS; **variant KHÔNG-source → FAIL
-   in hướng dẫn tay (không PASS)**
-3. Fixture doctor BÊN TRONG root: có sidecar → phát hiện thiếu; KHÔNG sidecar →
-   WARN fail-open (không PASS)
-4. Sidecar refresh mỗi install (install 2 lần — value/mtime đúng)
-5. check_orphans không xoá sidecar (whitelist)
-6. Uninstall dọn sidecar
-7. Regression kit-source mode + suite GREEN
+1. Gọi `agent.launchFloating {agent:'claude'}` qua harness → trả `{terminalId}` không throw, terminal được tạo với worktree `global-floating-terminal` (surface **terminal**, KHÔNG phải structured — combo này phải có test mới).
+2. Headless mặc định của harness = chính là case headless: op **thành công** (main-owned qua `pluginRuntimeRpc` → `launchAgentOnHost`, KHÔNG qua renderer bridge); terminal floating hiện khi mở window. KHÔNG có requirement 'unavailable' — spec P0-1 đã chốt.
+3. Prompt truyền kèm → được deliver sau composer ready (composer-wait tới 1 phút, fire-and-forget sau reply).
+4. Suite related + `pnpm run tc:node` xanh; typings + API reference doc generated diff committed.
 
-## Boundary
-- KHÔNG đụng settings.json, hooks wiring, story-medic/medic flows
-- KHÔNG bump version (release lo)
-- KHÔNG đụng workfront-driver (writer khác giữ — SF driver đã tách khỏi story này)
+## Escalation khi test lộ bug executor thật (plan-critic)
+
+Test combo floating+terminal có thể fail trên code thật → SF-1 PHẢI fix executor trong worktree của mình (re-open), KHÔNG escalate sang SF-2. Chuỗi domino ghi trước cho coordinator: fix executor → contentHash plugin đổi (SF-2 rebase) → **re-consent lần nữa** sau release → re-verify live. KHÔNG né bằng cách skip test.
+
+## Boundary (KHÔNG làm)
+
+- KHÔNG sửa renderer (`plugin-view-*`, `launch-agent-in-new-tab`) — không cần ở B'.
+- KHÔNG đụng plugin wakii.team-chat (SF-2).
+- KHÔNG đổi executor/hydration — dùng đúng đường đã có (thêm TEST cho combo floating+terminal, không đổi code executor trừ khi test lộ bug thật).
+- KHÔNG thêm capability vào manifest team-chat (SF-2).
+
+## Facts đã verify (đừng re-derive)
+
+- Bare constant hoạt động: `isFloatingWorkspaceSelector` chấp nhận cả bare lẫn `id:` prefix (floating-workspace-worktree.ts:11-14) — bare là lựa chọn nhất quán với executor test, không phải điều kiện sống còn.
+- `resolveWorkspace` nhánh `existing` pass-through, không validate catalog (executor.ts:204-207).
+- Hydration: floating id nằm trong `validWorktreeIds` (workspace-terminal-hydration.ts:60) — tab main-spawned floating tự vào floating bucket.
+- Đường op đi qua `pluginRuntimeRpc` → `RpcDispatcher` → `launchAgentOnHost` (plugin-runtime-rpc.ts:25-53, runtime/rpc/methods/agent-launch.ts:296-328) — KHÔNG qua renderer `ask()`; spec scope 'desktop' không có runtime enforcement (chỉ doc generator đọc) → ghi trong spec summary, không dựa enforcement.
+- Test 602 chỉ chứng minh structured; floating + surface terminal CHƯA có test — SF-1 phải thêm (P1-3).

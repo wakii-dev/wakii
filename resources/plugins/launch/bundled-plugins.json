@@ -4,17 +4,7 @@
     {
       "pluginKey": "wakii.team-chat",
       "path": "wakii.team-chat",
-      "contentHash": "f5ad48402617de761d5f548bb155e551dd9cc92a413985cdff6b66d0ba931cc7"
-    },
-    {
-      "pluginKey": "stablyai.orca-github-vscode-theme",
-      "path": "stablyai.orca-github-vscode-theme",
-      "contentHash": "3a439e2de031531082b250a10c86fc1a243e5cede1accfb1f9d0709232e36f44"
-    },
-    {
-      "pluginKey": "stablyai.orca-vscode-default-themes",
-      "path": "stablyai.orca-vscode-default-themes",
-      "contentHash": "bff212b87d43dcc265155a45e55b7ed58aa25432fc8d081a3e4a5220a27345a1"
+      "contentHash": "e2fa116f052af4454a5411d782a3573785d659025f2e598cd1ba99a630c01ee3"
     }
   ]
 }
