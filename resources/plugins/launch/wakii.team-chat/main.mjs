@@ -1665,9 +1665,10 @@ export default function activate(orca) {
       let reg = {}
       try { reg = JSON.parse(readFileSync(join(chatDir, '.workers.json'), 'utf8')) } catch { /* */ }
 
-      // Terminal list
-      const orcaBin = process.env.ORCA_BIN || 'orca'
-      const listOut = await new Promise((res) => execFileCb(orcaBin, ['terminal', 'list', '--json'], { timeout: 15000 }, (e, o) => res(e ? '' : o)))
+      // Terminal list — KHÔNG đặt tên `orcaBin` ở đây: đè function orcaBin() của
+      // module làm Layer-2 respawn (orcaBin() env resolve) nổ TypeError chết im.
+      const orcaCli = process.env.ORCA_BIN || 'orca'
+      const listOut = await new Promise((res) => execFileCb(orcaCli, ['terminal', 'list', '--json'], { timeout: 15000 }, (e, o) => res(e ? '' : o)))
       if (!listOut) return
       const terms = JSON.parse(listOut).result.terminals
       const byHandle = new Map(terms.map((t) => [t.handle, t]))

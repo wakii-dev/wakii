@@ -4,17 +4,17 @@
     {
       "pluginKey": "wakii.team-chat",
       "path": "wakii.team-chat",
-      "contentHash": "ceb56ad340ff93c9c62576f161be0d41695bdbfb61522a61c1525aaa77ff9ecb"
+      "contentHash": "517e7ac4f887aaf5e11f2bb3189f1a5901e5ba9ed7c8345358893955d8613dbf"
     },
     {
       "pluginKey": "stablyai.orca-github-vscode-theme",
       "path": "stablyai.orca-github-vscode-theme",
-      "contentHash": "3a439e2de031531082b250a10c86fc1a243e5cede1accfb1f9d0709232e36f44"
+      "contentHash": "94523ab29dff6f67b3761c97a32588ddc153bd8b29c5cb1b732979e64c604eb7"
     },
     {
       "pluginKey": "stablyai.orca-vscode-default-themes",
       "path": "stablyai.orca-vscode-default-themes",
-      "contentHash": "bff212b87d43dcc265155a45e55b7ed58aa25432fc8d081a3e4a5220a27345a1"
+      "contentHash": "94523ab29dff6f67b3761c97a32588ddc153bd8b29c5cb1b732979e64c604eb7"
     }
   ]
 }
