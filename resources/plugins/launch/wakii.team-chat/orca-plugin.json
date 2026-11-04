@@ -50,6 +50,9 @@
       "kind": "agent:read"
     },
     {
+      "kind": "agent:launch"
+    },
+    {
       "kind": "terminal:send"
     },
     {
