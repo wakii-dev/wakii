@@ -1,0 +1,58 @@
+FI-87 SF-2 (plugin wake floating + Supervisor respawn floating) verify evidence
+Date: 2026-11-04
+HEAD: ba276568eb (feat(team-chat): wake Captain room khong-worktree qua agent.launchFloating)
+tdd: RED→GREEN — tests/wake-floating-race-tests.mjs viết trước, chạy thấy RED
+(wakeRoomCaptain is not a function), sau đó implement wakeRoomCaptain +
+floatingCaptainBrief + wire 2 đường wake → 23/23 GREEN.
+
+## Race unit test (exit criterion P1-2 — live không tái lập được race)
+node tests/wake-floating-race-tests.mjs → 23 passed, 0 failed, exit 0.
+Asserts: room không wt → launchFloating (agent claude, title 'Captain #general',
+brief qua prompt) + KHÔNG spawn bin; race 2 đường đồng thời → đúng 1 launch,
+đường thua null; room có wt → spawn bin path + không floating; in-flight clear
+finally (kể cả khi launch lỗi); brief ≤ TEXT_MAX 4096; in-flight theo room.
+
+## Suite related main.mjs
+- tests/kit-verify-manifest.mjs → 30 PASS / 0 FAIL (fingerprint mới khớp cây)
+- tests/kit-manifest-negative-tests.mjs → 68/68
+- tests/story-wakii-save-tests.mjs → 8/8
+- Pre-existing FAIL, đã xác nhận baseline HEAD sạch (git worktree tạm @e992a447e2)
+  fail Y HỆT → môi trường, không phải regression:
+  - story-doctor-tests (1 fail: DR1 hooks-manifests warn) — exit 1 cả baseline
+  - hooks-factpack-tests (fpf store vắng) — exit 1 cả baseline
+  - panel-canvas-guard-tests / panel-wakii-edit-tests — guard symbols
+    (renderGraph, inPanelConfirm…) vắng trong panel.html từ v2.24.0, cả baseline
+- `orca plugin test` fail 5 kit tests (team-identity, team-orch, team-chat-event,
+  plan-gate-guard; team-templates PASS) — baseline fail cùng cụm: exit 9009
+  "Edit phải exit 2, got 9009" = command-not-found trên Windows (thiếu python3/
+  unix tools máy này). Pre-existing env.
+- `orca plugin validate` → ok, access đã hiện "Start agents in your workspaces"
+  (capability agent:launch có hiệu lực).
+- `orca plugin check` (ORCA_BACKGROUND_LAUNCH=1) → exit 0.
+- Lint: oxlint skip resources/ (không nằm lint scope repo); pre-commit husky
+  (kit-rehash-check) PASS — kitHash giữ nguyên (kit/ không đổi), fingerprint
+  cập nhật cùng commit.
+
+## Rehash (bundled-plugins.json — chỉ entry wakii.team-chat)
+hashPackagedPluginTree('resources/plugins/launch/wakii.team-chat'):
+9651a8eaacb5df06… → 3a80468b20b3f72b1765f67312b35ef1e7bd5d49198aeea3ade6eac08e5014b1
+(kit.json kitHash KHÔNG đổi — kit/ nguyên vẹn theo boundary SF-2.)
+
+## Acceptance mapping (user-visible — SF-2 gate)
+1. Room không-worktree → agent.launchFloating (không rơi wts[0], không
+   team-captain-spawn), register worktree rỗng, brief qua prompt param
+   (composer-wait) — race test asserts 1-6 PASS.
+2. 🔔 khi Captain sống → no-op (alive-check registration + terminal list —
+   floating terminal có trong unscoped terminal list, floating-terminal-
+   inventory-ownership.test.ts:65-68); race 🔔+tin → chỉ 1 spawn — KHẲNG ĐỊNH
+   BẰNG race unit test (asserts 7-9).
+3. Kill Captain floating → Supervisor nhánh `!capPane && !wt` respawn qua
+   wakeCaptainFor trong ≤ 1 chu kỳ heal (tick 30s, anti-spam 5') — code path
+   unit-tested qua wakeRoomCaptain; live respawn verify ở SF-3.
+4. Room có worktree → spawn bin + toast cũ nguyên vẹn (race test asserts 10-12).
+5. Panel hint mới: "Captain room không worktree tự nằm trong Floating Workspace".
+
+## Boundary
+Không đụng kit bins, không touch src/, không release (SF-3), không merge dest.
+Lockfile pnpm-lock.yaml bị viết lại giữa run (pnpm-version-trap) → đã git
+restore về HEAD trước commit; tree sạch trừ 5 file trong commit.

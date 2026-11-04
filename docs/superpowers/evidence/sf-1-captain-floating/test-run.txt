@@ -1,0 +1,47 @@
+FI-87 SF-1 (op agent.launchFloating) verify evidence
+Date: 2026-11-04
+HEAD: 6601f5b0d8 (feat(plugins): them op agent.launchFloating)
+tdd: RED→GREEN — test trước (binding agent.launchFloating + executor combo floating+surface
+'terminal') chạy thấy FAIL (op unknown_method; executor test chốt routing terminal), sau đó implement
+spec + binding → 24/24 GREEN. (Ghi chú: executor test lần chạy đầu phải thêm presentation:
+'background' vào params để phản chiếu đúng call production của binding — không phải bug executor.)
+
+## Test suite (vitest, repo config — 2026-11-04)
+Command: pnpm vitest run --config config/vitest.config.ts
+  src/main/plugins/workers/plugin-host-workspace-methods.test.ts
+  src/main/runtime/rpc/methods/agent-launch-floating-workspace.test.ts
+Result: Test Files 2 passed (2) · Tests 24 passed (24) · Duration 59.77s
+
+Suite liên quan:
+  src/main/plugins/workers/plugin-host-methods.test.ts + src/shared/plugins/workers
+  → Test Files 2 passed (2) · Tests 31 passed (31)
+  src/shared/plugins/authoring/plugin-host-typings.test.ts
+  → 1/2 PASS; test "type-check a frame script..." FAIL ở BASELINE y hệt (stash-check xác nhận:
+  virtual __plugin__ file not-found trên Windows — pre-existing, không liên quan change).
+  Test "checks in the host typings generated" PASS (orca-host.d.ts regenerate khớp).
+
+## Typecheck
+Command: pnpm run tc:node
+Result: 15 lỗi TS2307 — TOÀN BỘ missing module môi trường (rolldown ×2, playwright ×11,
+@electron/asar ×1, @electron/asar packaged-cli ×1) trong file browser/config KHÔNG thuộc touch map.
+0 lỗi trong 6 file thay đổi. (Máy thiếu deps optional; không chạy pnpm install theo boundary.)
+
+## Lint
+npx oxlint trên 4 file src thay đổi → exit 0.
+(pnpm run check:code-quality:changed — đã dừng sau >5 phút không xong; thay thế: oxlint
+trực tiếp 4 file src exit 0 + pre-commit hook PASS cả 2 commit.)
+
+## Generated artifacts (cùng commit)
+- node config/scripts/generate-plugin-author-typings.mjs → resources/plugins/types/orca-host.d.ts (Host API 1.4)
+- pnpm generate:plugin-schemas → docs/reference/plugin-host-api.md (bảng + mục agent.launchFloating,
+  Host API 1.4). 4 file generator khác chỉ line-ending noise → đã restore, không commit.
+
+## Acceptance mapping
+1. Harness gọi op qua pluginRuntimeRpc headless → binding test assert target bare
+   'global-floating-terminal', surface 'terminal', result {terminalId} — PASS.
+   Executor test assert launch.handler với floating selector + surface 'terminal' + structured
+   preference ON → createTerminal('id:global-floating-terminal'), outcome kind 'terminal',
+   receipt reason 'requested' — PASS (KHÔNG rót xuống structured).
+2. Main-owned, không qua renderer bridge (binding chỉ dùng runtimeRpc) — đúng spec.
+3. Prompt kèm → call thứ 2 reuseTerminal + prompt delivery 'submit', fire-and-forget sau reply — PASS.
+4. Suite related xanh + tc:node sạch trên surface touched; generated diff committed.
