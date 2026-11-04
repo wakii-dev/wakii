@@ -1,0 +1,85 @@
+FI-92 SF-3 (release 2.2.5 + consent + verify live) verify evidence
+Date: 2026-11-04
+Build: Wakii 2.2.5.0 (wakii-dev @ c3484e74d3) — cài silent /S + relaunch detached OK
+(chạy trước turn này). Plugin consent state giữ trusted-worker từ 2.2.4 NHƯNG
+đổi content → fingerprint mới (mục 1 dưới).
+
+## Consent (acceptance 1)
+`orca plugin enable wakii.team-chat` → fingerprint ap1-56c2cc78049473ae91e7793bcd5e02da
+→ `--approve` xong: plugin list `running, trusted-worker`.
+Grants đúng manifest: agent:launch + events workspace.changed (auto-activate fix
+49e7bde82b có hiệu lực — log "[team-chat] workspace.changed event received").
+Lưu ý: build 2.2.5 chứa Fix A (ab3975addc orcaCli) + Fix B (b843e311e7 winBashBin
++ ORCA_BIN + rc log) + auto-activate — nguồn worktree sf-3 CŨ HƠN wakii-dev
+(pre-fix), verify bắn vào build đã cài, không phải source worktree.
+
+## Battery live (tin CEO = `team-chat send --role owner` — role 'ceo' KHÔNG nằm
+trong vocabulary router main.mjs:2139 `role==='owner'||/@captain/`; tin role 'ceo'
+bị bỏ qua im lặng — cả trên 2.2.4, hành vi cũ nguyên vẹn)
+
+1. Tin CEO → #general → Captain floating + ACK ≤ ~1 phút — PASS CÓ ĐIỀU KIỆN,
+   2 findings chặn ACK lần đầu (chi tiết findings cuối mục):
+   +11s tin → +14s 📡 ACK plugin + 💤 "tự đánh thức … Captain nổi trong Floating
+   Workspace" → log "[wake] room #general không worktree → captain floating"
+   (14:20:37, và lần 2 14:50:05 sau khi captains khác offline) → floating terminal
+   spawn `wt: NONE`, claude v2.1.317 bypass-permissions ON ở C:\Users\hoivk.
+   ACK thật của Captain ("✅ ACK — Captain #general (Floating Workspace) đã nhận
+   tin CEO mới nhất … Đã đọc hợp đồng captain.md") chỉ tới sau 2 can thiệp tay:
+   (i) seed trust `hasTrustDialogAccepted` cho C:/Users/hoivk trong ~/.claude.json;
+   (ii) tự gõ brief chuẩn (floatingCaptainBrief) vào composer — composer-wait của
+   binding đã drop prompt (claude boot > 1 phút).
+2. 🔔 khi Captain sống → no-op — FAIL (double-spawn):
+   captainCmd {action:'wake', room:'general'} (đường panel 🔔 dùng y hệt) → log
+   "[wake] nhận lệnh wake room=general" → alive-check captainEntries().find(room
+   === 'general' ∩ livePanes) MISS → spawn floating TRÙNG (terminal thứ 5).
+   Nguyên nhân gốc: Captain floating KHÔNG được đăng ký .workers.json — đường
+   worktree đăng ký qua `team-captain-spawn:110` (team-orch register), đường
+   floating return {floating, terminalId} mà KHÔNG register dù plugin CÓ
+   terminalId trong tay (main.mjs wakeRoomCaptain).
+3. Kill Captain floating → Supervisor respawn ≤ 1 tick 30s — FAIL:
+   kill cả 2 floating terminal 14:49→ theo dõi 4.5 phút: KHÔNG respawn, log im
+   (chỉ còn log wake cũ). Supervisor duyệt rooms.json (main.mjs captainSupervisor)
+   mà #general ∉ registry → Layer-2 không bao giờ quét room này; cộng REG rỗng
+   (finding 2) → Captain floating chết là chết hẳn. Đối chứng: 2 room CÓ worktree
+   (wakii-mindmap, ict-rsa-web-thuno) respawn đúng nhánh bin suốt battery
+   (log 13:24:41, 13:49:27, 13:52:51 heal+respawn; spawn rc=0) = Fix A/B live OK.
+4. Regression room có worktree (#ict-rsa-web-thuno) — PASS:
+   tin owner vào room → captain trực (đã respawn bởi supervisor) nhận forward,
+   KHÔNG floating spawn, KHÔNG wake log — nhánh grid nguyên vẹn; kèm bằng chứng
+   spawn bin sống ở mục 3 (respawn wt rc=0).
+5. App restart hydration + alive-check — chạy SAU commit này (restart giết
+   session), kết quả ở commit evidence kế tiếp.
+
+## Đã set up cho mục 5 (khai báo can thiệp tay)
+Floating Captain đang sống term_b4b6f95a + tự register REG
+(.workers.json: {name:'captain', worktree:'', room:'general'}) — mô phỏng
+điều kiện spec "Captain floating còn registration". Sau restart kỳ vọng:
+neu terminal sống qua daemon → alive-check thấy online, không spawn trùng;
+neu pane chết → Layer-1 heal xoá REG (room ∉ rooms.json nên KHÔNG tự respawn —
+đúng hành vi đã fail ở mục 3).
+
+## Findings (escalation sf-1.md — KHÔNG sửa code trong SF-3)
+F1 (P1): floating boot dính dialog folder-trust — agent-launchFloating không
+  seed trust (nhánh worktree tự xử) — Captain đầu tiên trên máy mới chết im.
+F2 (P1): brief composer-wait ≤1 phút drop khi claude boot chậm — Captain online
+  nhưng không brief (im lặng, không ACK, không register).
+F3 (P0 về mặt thiết kế wake): floating Captain không đăng ký REG → 🔔 luôn
+  double-spawn, watchdog/supervisor mù, kill = mất Captain vĩnh viễn (cộng
+  rooms.json scope ở mục 3). Fix gợi ý: wakeRoomCaptain register terminalId
+  (team-orch register --pane <terminalId> --worktree '' --room <room>) + nhánh
+  Layer-2 quét thêm captain REG room-đang-mở hoặc auto-add room no-worktree vào
+  registry. Race test SF-2 vẫn green vì test inject deps, không bắn vào registry
+  scope thật.
+
+## Release notes v2.2.5 (gh release edit — 3 mục bắt buộc)
+- consent cmd + fingerprint thật ap1-56c2cc… (đã verify live)
+- macOS: build + asset có mặt, CHƯA verify
+- rollback criterion: quay installer v2.2.1 (asset còn trên GitHub); code revert
+  qua story mới
+- bổ sung trạng thái verify trung thực: PASS (wake/ACK/regression/respawn-wt)
+  + ❌ 2 lỗi live (double-spawn, no-respawn room-ngoài-registry)
+
+## Boundary
+KHÔNG merge dest, KHÔNG redo release/cài. Can thiệp môi trường đã khai báo:
+approve consent, seed trust home dir, gõ brief tay 1 lần, register REG tay cho
+mục 5, kill các captain terminal mới-respawn (không có việc dở).
