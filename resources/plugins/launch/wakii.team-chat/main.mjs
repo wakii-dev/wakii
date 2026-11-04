@@ -1964,7 +1964,7 @@ export default function activate(orca) {
           let rooms = {}
           try { rooms = JSON.parse(await readFile(roomsPath, 'utf8')) } catch { /* chưa có */ }
           if (rcReq.action === 'create') {
-            const room = String(rcReq.room || '').toLowerCase()
+            let room = String(rcReq.room || '').toLowerCase()
             const repo = String(rcReq.repo || 'team').toLowerCase()
             room = String(room).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '')
             if (!/^[a-z0-9][a-z0-9-]{0,40}$/.test(room)) throw new Error('tên room không hợp lệ (sau chuẩn hoá vẫn rỗng — dùng ký tự a-z 0-9)')
