@@ -36,7 +36,10 @@ const storeMock = vi.hoisted<{ gitStatusHeadByWorktree: Record<string, string> }
   gitStatusHeadByWorktree: {}
 }))
 vi.mock('@/store', () => ({
-  useAppStore: (selector: (state: typeof storeMock) => unknown) => selector(storeMock)
+  useAppStore: Object.assign(
+    (selector: (state: typeof storeMock) => unknown) => selector(storeMock),
+    { getState: () => storeMock }
+  )
 }))
 
 vi.mock('@/i18n/i18n', () => ({
@@ -76,7 +79,8 @@ function createFakeModel() {
 const FAKE_LINE_HEIGHT_PX = 20
 
 function createFakeEditor(model = createFakeModel()) {
-  const cursorListeners: ((event: { position: { lineNumber: number; column: number } }) => void)[] = []
+  const cursorListeners: ((event: { position: { lineNumber: number; column: number } }) => void)[] =
+    []
   const scrollListeners: (() => void)[] = []
   const layoutListeners: (() => void)[] = []
   const disposers: ReturnType<typeof vi.fn>[] = []
