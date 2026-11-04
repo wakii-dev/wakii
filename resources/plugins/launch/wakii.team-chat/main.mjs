@@ -1724,7 +1724,9 @@ export default function activate(orca) {
           supervisorRespawned.set(roomId, now)
           actions.push('respawn: captain #' + roomId + ' chết → tự spawn')
           const spawnBin = join(homeDir(), '.claude', 'bin', 'team-captain-spawn')
-          execFileCb('bash', [spawnBin, '--room', roomId, '--repo', 'path:' + wt], { timeout: 120000 }, () => {})
+          execFileCb(winBashBin(), [spawnBin, '--room', roomId, '--repo', 'path:' + wt],
+            { timeout: 120000, env: { ...process.env, ORCA_BIN: orcaBin() } },
+            (e, so, se) => { orca.log('[captain-supervisor] spawn #' + roomId + ' rc=' + (e && e.code || 0) + ' out=' + String(so).slice(0, 100) + ' err=' + String(se).slice(0, 100)) })
           // Post tin hệ thống
           appendLine({ from: 'system', role: 'system', channel: roomId,
             text: '🔄 Captain Supervisor: captain pane đã chết — tự khởi động lại (worktree ' + wt + '). Journal + chat history đảm bảo không mất ngữ cảnh.' }).catch(() => {})
