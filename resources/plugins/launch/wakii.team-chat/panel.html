@@ -624,6 +624,7 @@
   }
 
   var activeRoom = 'general'
+  var captainPaneSyncedRoom = null
   var roomList = [{ id: 'general', status: 'open', msgs: 0 }]
   var readCount = {}
   var lastMsgs = []
@@ -1060,9 +1061,13 @@
       var byRoom = (r && r.value) || {}
       var s = byRoom[activeRoom] || { online: false }
       var paneInput = document.getElementById('captainPane')
-      // Luôn update theo room hiện tại (CEO 3/11: input giữ giá trị room cũ
-      // → Wake/Adopt dùng captain SAI room)
-      if (paneInput) paneInput.value = (s.online && s.pane) ? s.pane : ''
+      // Chỉ sync value khi ĐỔI room (CEO 3/11: input giữ giá trị room cũ
+      // → Wake/Adopt dùng captain SAI room). Giữa các poll thì KHÔNG đè —
+      // đè mỗi tick làm mất value user vừa chọn từ datalist / đang gõ.
+      if (paneInput && activeRoom !== captainPaneSyncedRoom) {
+        paneInput.value = (s.online && s.pane) ? s.pane : ''
+        captainPaneSyncedRoom = activeRoom
+      }
 
       if (s.online) {
         el.textContent = '🟢 Trực #' + activeRoom + ' — @ ' + (s.worktree || '?')
