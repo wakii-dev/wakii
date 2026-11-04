@@ -1029,10 +1029,20 @@
   document.querySelectorAll('button[title]').forEach(function (b) { b.setAttribute('data-tip', b.getAttribute('title')) })
 
   function refreshTerminalOptions() {
-    call('storage.get', { key: 'team.chat.terminals' }).then(function (r) {
+    Promise.all([
+      call('storage.get', { key: 'team.chat.terminals' }),
+      call('storage.get', { key: 'team.chat.rooms' })
+    ]).then(function (rs) {
       var dl = document.getElementById('termDatalist')
       if (!dl) return
-      var list = (r && r.value) || []
+      var list = (rs[0] && rs[0].value) || []
+      var roomList = (rs[1] && rs[1].value) || []
+      var meta = roomList.find(function (x) { return x.id === activeRoom })
+      var wt = ((meta && meta.meta && meta.meta.worktree) || '').replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase()
+      if (wt) list = list.filter(function (t) {
+        var p = (t.worktreePath || '').replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase()
+        return p === wt
+      })
       dl.innerHTML = ''
       list.forEach(function (t) {
         var o = document.createElement('option')

@@ -1750,7 +1750,7 @@ export default function activate(orca) {
       const orcaBin = process.env.ORCA_BIN || 'orca'
       const out = await new Promise((res) => execFileCb(orcaBin, ['terminal', 'list', '--json'], { timeout: 15000 }, (e, o) => res(e ? '' : o)))
       if (!out) return
-      const list = JSON.parse(out).result.terminals.map((t) => ({ handle: t.handle, title: (t.title || '').slice(0, 60) }))
+      const list = JSON.parse(out).result.terminals.map((t) => ({ handle: t.handle, title: (t.title || '').slice(0, 60), worktreePath: t.worktreePath || '' }))
       const sig = JSON.stringify(list)
       if (sig !== termsCache.sig) { termsCache.sig = sig; await orca.host.call('storage.set', { key: 'team.chat.terminals', value: list }).catch(() => {}) }
     } catch { /* best-effort */ }
