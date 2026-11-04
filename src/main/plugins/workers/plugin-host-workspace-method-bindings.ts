@@ -13,6 +13,7 @@ import type { PluginHostServices } from './plugin-host-method-bindings'
 import { PluginHostCallError } from './plugin-host-call-scope'
 import type { PluginHostRendererActions } from '../view/plugin-host-renderer-actions'
 import { folderWorkspaceKey, parseWorkspaceKey } from '../../../shared/workspace-scope'
+import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../shared/constants'
 
 /** The runtime RPC the `orca` CLI calls, run in process; rejects with the runtime's error.
  *  `beforeEffect` runs right before the runtime acts, after its own waits; a throw refuses it. */
@@ -207,6 +208,36 @@ export const PLUGIN_WORKSPACE_ACTION_HANDLERS = {
       }).catch((error: unknown) => {
         ctx.scope.log?.(
           `agent.launch: the prompt did not reach ${terminalId}: ${error instanceof Error ? error.message : String(error)}`
+        )
+      })
+    }
+    return { terminalId }
+  }),
+  'agent.launchFloating': bind(api['agent.launchFloating'], async (params, ctx) => {
+    // The floating sentinel takes its bare id; the runtime resolves it without a worktree record.
+    const worktree = FLOATING_TERMINAL_WORKTREE_ID
+    const answer = await effect(ctx, 'agent.launch', {
+      target: { kind: 'existing', worktree },
+      agent: params.agent,
+      // A terminal, so `terminal.read` and `terminal.sendText` reach the agent the call returns.
+      surface: 'terminal',
+      // A mod works beside the person: never take their focus.
+      presentation: 'background',
+      launchSource: 'plugin'
+    })
+    const terminalId = agentLaunchAnswer.parse(answer).outcome.handle
+    if (params.prompt) {
+      // Delivery waits for the agent's composer (up to a minute), longer than a host call may take.
+      void effect(ctx, 'agent.launch', {
+        target: { kind: 'existing', worktree },
+        agent: params.agent,
+        reuseTerminal: { handle: terminalId },
+        prompt: { text: params.prompt, delivery: 'submit' },
+        presentation: 'background',
+        launchSource: 'plugin'
+      }).catch((error: unknown) => {
+        ctx.scope.log?.(
+          `agent.launchFloating: the prompt did not reach ${terminalId}: ${error instanceof Error ? error.message : String(error)}`
         )
       })
     }

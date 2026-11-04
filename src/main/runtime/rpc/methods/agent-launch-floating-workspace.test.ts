@@ -146,4 +146,46 @@ describe('agent.launch with the real floating workspace resolver', () => {
       }
     })
   })
+
+  // A plugin host launch pins `surface: 'terminal'`; structured preference must not reroute it.
+  it.each(selectors)(
+    'forces the terminal surface for %s even when every agent prefers chats',
+    async (selector) => {
+      const runtime = new OrcaRuntimeService()
+      // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: these launch readers use only getSettings from the private store fixture.
+      vi.spyOn(runtime, 'requireStore').mockReturnValue({
+        getSettings: () => STRUCTURED_PREFERENCE
+      } as never)
+      const createSupport = vi.spyOn(runtime, 'getStructuredAgentSessionCreateSupport')
+      const createTerminal = vi.spyOn(runtime, 'createTerminal').mockResolvedValue({
+        handle: 'term_floating_terminal',
+        tabId: 'tab_floating_terminal',
+        worktreeId: FLOATING_TERMINAL_WORKTREE_ID,
+        title: 'Claude',
+        surface: 'background'
+      })
+
+      const result = await launch.handler(
+        launch.params.parse({
+          agent: 'codex',
+          target: { kind: 'existing', worktree: selector },
+          surface: 'terminal',
+          presentation: 'background'
+        }),
+        { runtime, ...CAPABLE_CLIENT }
+      )
+
+      expect(createSupport).not.toHaveBeenCalled()
+      expect(createStructuredSession).not.toHaveBeenCalled()
+      expect(createTerminal).toHaveBeenCalledExactlyOnceWith(
+        `id:${FLOATING_TERMINAL_WORKTREE_ID}`,
+        expect.objectContaining({ startupAgent: 'codex', presentation: 'background' })
+      )
+      expect(result).toMatchObject({
+        worktreeId: FLOATING_TERMINAL_WORKTREE_ID,
+        outcome: { kind: 'terminal', handle: 'term_floating_terminal' },
+        receipt: { mode: 'terminal', reason: 'requested' }
+      })
+    }
+  )
 })

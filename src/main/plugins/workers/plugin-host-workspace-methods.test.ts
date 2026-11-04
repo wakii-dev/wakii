@@ -211,6 +211,49 @@ describe('workspace host actions', () => {
     ).resolves.toMatchObject({ ok: false, code: 'invalid_params' })
   })
 
+  it('agent.launchFloating spawns the floating workspace terminal in the background', async () => {
+    const { rpc, calls } = runtime({ 'agent.launch': { outcome: { kind: 'terminal', handle: 'term-float' } } })
+    const outcome = await call('agent.launchFloating', { agent: 'claude' }, rpc)
+    expect(outcome).toEqual({ ok: true, value: { terminalId: 'term-float' } })
+    expect(calls[0]?.params).toEqual({
+      target: { kind: 'existing', worktree: 'global-floating-terminal' },
+      agent: 'claude',
+      surface: 'terminal',
+      presentation: 'background',
+      launchSource: 'plugin'
+    })
+  })
+
+  it('agent.launchFloating delivers the prompt after the reply and drops an unsupported title', async () => {
+    let deliver: (value: unknown) => void = () => {}
+    const calls: RecordedCall[] = []
+    const rpc: PluginRuntimeRpc = async (method, params) => {
+      calls.push({ method, params })
+      return calls.length === 1
+        ? { outcome: { kind: 'terminal', handle: 'term-float' } }
+        : new Promise((resolve) => (deliver = resolve))
+    }
+    const outcome = await call(
+      'agent.launchFloating',
+      { agent: 'codex', title: 'scout', prompt: 'look around' },
+      rpc
+    )
+    expect(outcome).toEqual({ ok: true, value: { terminalId: 'term-float' } })
+    expect(calls[0]?.params).not.toHaveProperty('title')
+    expect(calls[1]?.params).toMatchObject({
+      target: { kind: 'existing', worktree: 'global-floating-terminal' },
+      reuseTerminal: { handle: 'term-float' },
+      prompt: { text: 'look around', delivery: 'submit' }
+    })
+    deliver({ outcome: { kind: 'terminal', handle: 'term-float' } })
+    await expect(
+      call('agent.launchFloating', { agent: 'nope' }, rpc)
+    ).resolves.toMatchObject({ ok: false, code: 'invalid_params' })
+    await expect(
+      call('agent.launchFloating', { agent: 'claude', prompt: '' }, rpc)
+    ).resolves.toMatchObject({ ok: false, code: 'invalid_params' })
+  })
+
   it('refuses the effect when the plugin loses approval while the runtime prepares it', async () => {
     let revoked = false
     const scope: PluginHostCallScope = {

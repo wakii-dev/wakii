@@ -75,6 +75,16 @@ const agentLaunchResult = z.object({
   terminalId
 })
 
+const agentLaunchFloatingParams = z.strictObject({
+  /** An agent Orca knows: `claude`, `codex`, `gemini`, ... */
+  agent: z.string().min(1).max(64).refine(isTuiAgent, 'unknown agent'),
+  /** Reserved for naming the terminal; this Orca starts it unnamed. */
+  title: z.string().min(1).max(512).optional(),
+  /** Sent to the agent as its first message once its composer is ready. */
+  prompt: z.string().min(1).max(TEXT_MAX).optional()
+})
+const agentLaunchFloatingResult = z.object({ terminalId })
+
 /** A `/`-separated path inside the workspace: not absolute, no `..`, no drive letter. */
 export function isPluginWorkspaceRelativePath(path: string): boolean {
   const segments = path.split(/[\\/]/)
@@ -155,6 +165,17 @@ export const PLUGIN_WORKSPACE_ACTIONS_API = {
     surfaces: WORKER_ONLY,
     params: agentLaunchParams,
     result: agentLaunchResult
+  }),
+  'agent.launchFloating': spec({
+    summary:
+      "Starts an agent's CLI in a new terminal of Orca's floating workspace, in the background, and returns as soon as it starts; a `prompt` is sent once the agent is ready.",
+    since: 4,
+    scope: 'any-workspace',
+    capability: 'agent:launch',
+    mutation: true,
+    surfaces: WORKER_ONLY,
+    params: agentLaunchFloatingParams,
+    result: agentLaunchFloatingResult
   }),
   'editor.open': spec({
     summary:
