@@ -1705,6 +1705,17 @@ export default function activate(orca) {
         }
 
         // LAYER 2: DEATH DETECTOR — auto-respawn
+        if (!capPane && !wt) {
+          // Room không worktree → Captain floating: respawn qua agent.launchFloating
+          // (nhánh này thiếu thì Captain floating chết không bao giờ tự hồi).
+          const lastRespawn = supervisorRespawned.get(roomId)
+          if (lastRespawn && now - lastRespawn < 5 * 60 * 1000) continue
+          supervisorRespawned.set(roomId, now)
+          actions.push('respawn: captain #' + roomId + ' chết → floating')
+          void wakeCaptainFor(roomId).catch(() => {})
+          appendLine({ from: 'system', role: 'system', channel: roomId,
+            text: '🔄 Captain Supervisor: captain room không worktree đã chết — tự spawn lại trong Floating Workspace. Journal + chat history đảm bảo không mất ngữ cảnh.' }).catch(() => {})
+        }
         if (!capPane && wt) {
           // Anti-spam: không respawn lại nếu vừa respawn <5 phút
           const lastRespawn = supervisorRespawned.get(roomId)
@@ -1783,7 +1794,7 @@ export default function activate(orca) {
       const out = await new Promise((res) => execFileCb(orcaBin, ['worktree', 'list', '--json'], { timeout: 15000 }, (e, o) => res(e ? '' : o)))
       if (!out) return ''
       const wts = JSON.parse(out).result.worktrees.map((w) => String(w.path || '').replace(/\\/g, '/'))
-      return wts.find((p) => repo && p.endsWith('/' + repo)) || wts.find((p) => repo && p.includes(repo)) || wts[0] || ''
+      return wts.find((p) => repo && p.endsWith('/' + repo)) || wts.find((p) => repo && p.includes(repo)) || ''
     } catch { return '' }
   }
   const forwardTo = async (handle, msg) => {
@@ -1793,17 +1804,21 @@ export default function activate(orca) {
       enter: true
     })
   }
+  const spawnWorktreeCaptain = (room, wt) => new Promise((res) => {
+    const spawnBin = join(homeDir(), '.claude', 'bin', 'team-captain-spawn')
+    execFileCb(winBashBin(), [spawnBin, '--room', room, '--repo', 'path:' + wt], { timeout: 120000, env: { ...process.env, ORCA_BIN: orcaBin() } }, () => res())
+  })
   const wakingRooms = new Set()
   const wakeCaptainFor = async (room) => {
-    if (wakingRooms.has(room)) return
-    wakingRooms.add(room)
-    try {
-      const spawnBin = join(homeDir(), '.claude', 'bin', 'team-captain-spawn')
-      const wt = await resolveRoomWorktree(room)
-      const args = ['--room', room].concat(wt ? ['--repo', 'path:' + wt] : [])
-      await new Promise((res) => execFileCb(winBashBin(), [spawnBin].concat(args), { timeout: 120000, env: { ...process.env, ORCA_BIN: orcaBin() } }, () => res()))
-      aliveCache = { at: 0, panes: new Set() }
-    } catch { /* wake best-effort */ } finally { wakingRooms.delete(room) }
+    const r = await wakeRoomCaptain(room, {
+      inFlight: wakingRooms,
+      resolveWorktree: resolveRoomWorktree,
+      launchFloating: (params) => orca.host.call('agent.launchFloating', params),
+      spawnWorktree: spawnWorktreeCaptain,
+      log: (...a) => orca.log('[wake] ' + a.join(' ')),
+    }).catch(() => null)
+    if (r) aliveCache = { at: 0, panes: new Set() }
+    return r
   }
   const captainRoute = async (msg) => {
     try {
@@ -1816,7 +1831,7 @@ export default function activate(orca) {
              || entries.find((c) => live.has(c.pane))
       if (pick) { await forwardTo(pick.pane, msg); return }
       appendLine({ from: 'system', role: 'system', channel: room,
-        text: '💤 Captain#' + room + ' đang offline — tự đánh thức (gắn worktree room), dự kiến ~1 phút. Việc gấp chạy tay: ~/.claude/bin/team-captain-spawn --room ' + room }).catch(() => {})
+        text: '💤 Captain#' + room + ' đang offline — tự đánh thức (room không worktree → Captain nổi trong Floating Workspace), dự kiến ~1 phút. Việc gấp chạy tay: ~/.claude/bin/team-captain-spawn --room ' + room }).catch(() => {})
       void (async () => {
         try {
           await wakeCaptainFor(room)
@@ -1887,43 +1902,39 @@ export default function activate(orca) {
         }
         void (async () => {
           try {
-            // Worktree của room: (1) metadata worktree trong rooms.json (nguồn chuẩn
-            // nhất — match-by-repo dính main checkout trước room worktree) → (2)
-            // registration worker của room → (3) repo khớp path worktree list.
-            let wt = ''
-            try {
-              const rooms = JSON.parse(await readFile(join(chatDir, 'rooms.json'), 'utf8'))
-              wt = (rooms[room] && rooms[room].worktree) || ''
-            } catch { /* chưa có rooms.json */ }
-            if (!wt) {
-              try {
-                const reg = JSON.parse(await readFile(join(chatDir, '.workers.json'), 'utf8'))
-                wt = Object.values(reg).find((e) => e && e.room === room && e.worktree && e.name !== 'captain')?.worktree || ''
-              } catch { /* chưa có registration */ }
-            }
-            const orcaBin = process.env.ORCA_BIN || 'orca'
-            if (!wt) {
-              try {
-                const rooms = JSON.parse(await readFile(join(chatDir, 'rooms.json'), 'utf8'))
-                const repo = rooms[room] && rooms[room].repo
-                const out = await new Promise((res) => execFileCb(orcaBin, ['worktree', 'list', '--json'], (e, o) => res(e ? '' : o)))
-                const wts = JSON.parse(out).result.worktrees.map((w) => String(w.path || '').replace(/\\/g, '/'))
-                wt = wts.find((p) => repo && p.endsWith('/' + repo)) || wts.find((p) => repo && p.includes(repo)) || wts[0] || ''
-              } catch { /* list fail → fallback dưới */ }
-            }
-            orca.log('[wake] worktree=' + (wt || '(trống)'))
-            if (!wt) {
-              await orca.host.call('notifications.show', { title: 'Wakii Team — wake Captain thất bại', body: 'Không tìm thấy worktree nào cho room #' + room }).catch(() => {})
+            // Alive-check (registration + terminal list — floating terminal CÓ
+            // trong unscoped terminal list): Captain còn sống → no-op.
+            const entries = await captainEntries()
+            const live = await livePanes()
+            const alive = entries.find((c) => c.room === room && live.has(c.pane))
+            if (alive) {
+              orca.log('[wake] captain #' + room + ' còn sống (' + alive.pane + ') — no-op')
+              await orca.host.call('notifications.show', {
+                title: 'Wakii Team — Captain đang online',
+                body: 'Captain #' + room + ' còn sống — không spawn thêm.'
+              }).catch(() => {})
               return
             }
-            const spawnBin = join(homeDir(), '.claude', 'bin', 'team-captain-spawn')
-            orca.log('[wake] chạy ' + spawnBin + ' ORCA_BIN=' + (process.env.ORCA_BIN || '(không có)'))
-            await new Promise((res) => execFileCb(winBashBin(), [spawnBin, '--room', room, '--repo', 'path:' + wt], { timeout: 120000, env: { ...process.env, ORCA_BIN: orcaBin() } }, (e, so, se) => { orca.log('[wake] spawn xong err=' + (e && e.message || 'null') + ' out=' + String(so).slice(0, 120)); res() }))
-            await orca.host.call('notifications.show', {
-              title: 'Wakii Team — Captain đã online',
-              body: 'Terminal Captain gắn worktree ' + wt + ' (room #' + room + '). Kéo tab vào floating workspace nếu muốn — router theo handle.'
-            }).catch(() => {})
-          } catch { /* wake best-effort */ }
+            const r = await wakeCaptainFor(room)
+            if (!r) {
+              await orca.host.call('notifications.show', {
+                title: 'Wakii Team — đang đánh thức',
+                body: 'Captain #' + room + ' đang được đánh thức — bỏ qua lệnh trùng.'
+              }).catch(() => {})
+              return
+            }
+            if (r.floating) {
+              await orca.host.call('notifications.show', {
+                title: 'Wakii Team — Captain đã online',
+                body: 'Captain #' + room + ' nổi trong Floating Workspace (room không worktree) — không cần kéo tay.'
+              }).catch(() => {})
+            } else {
+              await orca.host.call('notifications.show', {
+                title: 'Wakii Team — Captain đã online',
+                body: 'Terminal Captain gắn worktree ' + r.wt + ' (room #' + room + '). Kéo tab vào floating workspace nếu muốn — router theo handle.'
+              }).catch(() => {})
+            }
+          } catch (e) { orca.log('[wake] lỗi: ' + ((e && e.message) || e)) }
         })()
         await orca.host.call('storage.set', { key: 'team.chat.captainCmd', value: null }).catch(() => {})
       }
@@ -2136,4 +2147,38 @@ export default function activate(orca) {
 
   orca.log('wakii.team-chat v1.0.0: chat bus sẵn sàng — ' + chatLog)
   return () => clearInterval(chatTimer)
+}
+
+// Brief Captain floating — đi qua param `prompt` của agent.launchFloating
+// (binding có composer-wait chờ agent ready tới 1 phút; KHÔNG send trần —
+// bug CEO 1/11: prompt rơi vào shell trống khi claude boot chậm).
+export function floatingCaptainBrief(room) {
+  return 'Bạn là CAPTAIN trực room #' + room + ' của Wakii team — terminal của bạn nằm trong Floating Workspace (không gắn worktree). HỢP ĐỒNG ĐẦY ĐỦ: ~/.claude/agents/captain.md — đọc NGAY (CHAT STYLE · PHÂN CÔNG cứng · Verify-first · Cleanup-on-done · Commit hygiene cấm trailer AI · HEARTBEAT · DISPATCH=CÓ CHỨNG CỨ · JOURNAL · BẢN GHẾ 6 chỗ). Mọi trả lời PHẢI kèm --channel ' + room + '. Điều phối: ~/.claude/bin/team-orch (feature-open/worker-start/gate-resolve/cleanup). Ngữ cảnh: ~/.claude/bin/team-chat read --last 15 --channel ' + room + '. Journal: ~/.claude/chat/notes/' + room + '.md. Xác nhận (ACK) bằng 1 tin team-chat vào room #' + room + ' rồi nằm chờ lệnh CEO.'
+}
+
+// Hai đường wake Captain (🔔 panel + tin CEO auto-wake) DÙNG CHUNG 1 in-flight
+// set: check-AND-set trước launch, clear trong finally → race chỉ spawn 1.
+// Room có worktree → team-captain-spawn; không → agent.launchFloating (op trả
+// handle ngay, brief composer-wait fire-and-forget phía binding).
+export async function wakeRoomCaptain(room, deps = {}) {
+  const {
+    inFlight = new Set(),
+    resolveWorktree = async () => '',
+    launchFloating = async () => ({}),
+    spawnWorktree = async () => {},
+    log = () => {},
+  } = deps
+  if (inFlight.has(room)) return null
+  inFlight.add(room)
+  try {
+    const wt = await resolveWorktree(room)
+    if (wt) {
+      log('spawn worktree captain #' + room + ' → ' + wt)
+      await spawnWorktree(room, wt)
+      return { wt }
+    }
+    log('room #' + room + ' không worktree → captain floating')
+    const r = await launchFloating({ agent: 'claude', title: 'Captain #' + room, prompt: floatingCaptainBrief(room) })
+    return { floating: true, terminalId: r && r.terminalId }
+  } finally { inFlight.delete(room) }
 }
