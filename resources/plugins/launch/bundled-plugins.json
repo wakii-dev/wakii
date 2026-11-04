@@ -9,12 +9,12 @@
     {
       "pluginKey": "stablyai.orca-github-vscode-theme",
       "path": "stablyai.orca-github-vscode-theme",
-      "contentHash": "94523ab29dff6f67b3761c97a32588ddc153bd8b29c5cb1b732979e64c604eb7"
+      "contentHash": "3a439e2de031531082b250a10c86fc1a243e5cede1accfb1f9d0709232e36f44"
     },
     {
       "pluginKey": "stablyai.orca-vscode-default-themes",
       "path": "stablyai.orca-vscode-default-themes",
-      "contentHash": "94523ab29dff6f67b3761c97a32588ddc153bd8b29c5cb1b732979e64c604eb7"
+      "contentHash": "bff212b87d43dcc265155a45e55b7ed58aa25432fc8d081a3e4a5220a27345a1"
     }
   ]
 }
