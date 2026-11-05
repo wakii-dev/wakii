@@ -89,6 +89,8 @@ export type GlobalSettings = GlobalSettingsBase & {
   editorStickyScroll?: boolean
   /** GitLens-lite inline blame on the cursor line of the file editor; defaults on. */
   editorInlineBlameEnabled?: boolean
+  /** GitLens-parity blame gutter for every line of the file editor; opt-in, defaults off. */
+  editorFileBlameEnabled?: boolean
   /** VS Code editor.cursorSmoothCaretAnimation parity for the file editor; defaults 'on'. */
   editorCursorSmoothCaretAnimation?: 'on' | 'explicit' | 'off'
   /** VS Code editor.renderWhitespace parity for the file editor; defaults 'selection'. */

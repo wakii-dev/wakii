@@ -2,7 +2,12 @@ import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
 import { configDefaults, defaultExclude, defineConfig } from 'vitest/config'
-import { UNIT_INCLUDE, UNIT_EXCLUDE, UNIT_SETUP_FILES } from './scripts/ci-unit-files.mjs'
+import {
+  UNIT_INCLUDE,
+  UNIT_EXCLUDE,
+  UNIT_SETUP_FILES,
+  PENDING_GITLENS_PARITY_SF_TESTS
+} from './scripts/ci-unit-files.mjs'
 import TimingSequencer from './scripts/ci-unit-sequencer.mjs'
 import RuntimeSequencer from './scripts/vitest-runtime-sequencer.mjs'
 import { getNodeRuntimeInclude } from './scripts/vitest-node-runtime-files.mjs'
@@ -73,7 +78,10 @@ const testOptions = {
   execArgv: ['--no-experimental-webstorage', '--expose-gc'],
   setupFiles: UNIT_SETUP_FILES.map((file) => resolve(file)),
   include: UNIT_INCLUDE,
-  exclude: balancedShards ? UNIT_EXCLUDE : defaultExclude,
+  exclude: [
+    ...(balancedShards ? UNIT_EXCLUDE : defaultExclude),
+    ...PENDING_GITLENS_PARITY_SF_TESTS
+  ],
   hookTimeout: 60_000,
   testTimeout: 30_000
 }

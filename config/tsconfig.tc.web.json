@@ -6,6 +6,8 @@
     "../src/renderer/src/components/status-bar/ClaudeSwitcherMenu.observation.test.tsx",
     "../src/renderer/src/components/status-bar/ClaudeSwitcherMenu.owner-lifetime.test.tsx",
     "../src/renderer/src/runtime/provider-account-observation.test-fixture.ts",
+    "../src/renderer/src/components/editor/use-monaco-file-blame.test.tsx",
+    "../src/shared/git-history-file-path.test.ts",
     "../src/shared/**/*.test.ts",
     "../src/shared/**/*.test.tsx",
     "../src/shared/**/*.spec.ts",

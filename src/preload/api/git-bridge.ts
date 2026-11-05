@@ -54,6 +54,11 @@ export const gitApi = {
   blame: (
     args: { worktreePath: string; connectionId?: string } & GitBlameOptions
   ): Promise<GitBlameResult> => ipcRenderer.invoke('git:blame', args),
+  commitMessageBody: (args: {
+    worktreePath: string
+    connectionId?: string
+    sha: string
+  }): Promise<string> => ipcRenderer.invoke('git:commitMessageBody', args),
   conflictOperation: (args: { worktreePath: string; connectionId?: string }) =>
     ipcRenderer.invoke('git:conflictOperation', args),
   mutationInFlight: (args: { worktreePath: string; connectionId?: string }) =>

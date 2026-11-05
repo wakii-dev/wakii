@@ -54,6 +54,17 @@ export const GitResolveConflict = GitFilePath.extend({
 // Fork: the CLI blame method takes just a worktree + path.
 export const GitBlame = GitFilePath
 
+// Fork: blame-previous (SF-1) walks to a parent revision via this optional
+// field. Full object id only — the executor re-checks before it hits a git
+// argv. Without the field here the RPC layer zod-strips `revision` before the
+// host ever sees it, silently disabling blame-previous on remote runtimes.
+export const GitBlameAtRevision = GitFilePath.extend({
+  revision: z
+    .string()
+    .regex(/^[0-9a-f]{40}(?:[0-9a-f]{24})?$/, 'Revision must be a full git object id')
+    .optional()
+})
+
 export const GitDiff = GitFilePath.extend({
   staged: z.boolean(),
   compareAgainstHead: z.boolean().optional(),

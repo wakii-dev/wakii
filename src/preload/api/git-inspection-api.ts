@@ -62,7 +62,15 @@ export type GitInspectionApi = {
     } & GitHistoryOptions
   ) => Promise<GitHistoryResult>
   /** Why optional: browser/web runtimes without the blame surface omit it; clients degrade silently. */
-  blame?: (args: { worktreePath: string; connectionId?: string } & GitBlameOptions) => Promise<GitBlameResult>
+  blame?: (
+    args: { worktreePath: string; connectionId?: string } & GitBlameOptions
+  ) => Promise<GitBlameResult>
+  /** Why optional: browser/web runtimes without the git-read IPC surface omit it; clients degrade to headline-only. */
+  commitMessageBody?: (args: {
+    worktreePath: string
+    connectionId?: string
+    sha: string
+  }) => Promise<string>
   conflictOperation: (args: {
     worktreePath: string
     connectionId?: string

@@ -15577,6 +15577,10 @@
         "InlineBlameSetting": {
           "683fd9af0f": "Inline Blame",
           "9142b8bc2f": "Show commit author, date and summary at the end of the current line in the file editor."
+        },
+        "FileBlameSetting": {
+          "563f0463d9": "File Blame",
+          "308f71ffa1": "Show blame for every line of the file in the editor gutter."
         }
       },
       "right": {
@@ -19610,6 +19614,30 @@
               "1f078da5df": "Commit",
               "6f3313de46": "Author",
               "2f33a41d63": "Date"
+            },
+            "hover": {
+              "card": {
+                "strings": {
+                  "a50716ea63": "View commit",
+                  "40fa6020df": "Blame previous",
+                  "0eae340db7": "Copy SHA",
+                  "90ad97b410": "committed",
+                  "3391c6e774": "Loading diff…",
+                  "8e4efd3b58": "Could not load the diff.",
+                  "9e1ebf17fd": "Diff is truncated — the file is too large.",
+                  "d100bd0ac1": "Binary file — no text diff.",
+                  "72ed431302": "Viewing blame at",
+                  "b82be82a58": "Back to HEAD"
+                }
+              }
+            }
+          },
+          "context": {
+            "menu": {
+              "strings": {
+                "99fa55520a": "Open File History",
+                "59d25cc797": "Toggle File Blame"
+              }
             }
           }
         }

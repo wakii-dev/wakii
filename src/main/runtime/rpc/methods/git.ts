@@ -2,7 +2,7 @@ import { defineMethod } from '../core'
 import { GIT_COMMIT_MESSAGE_GENERATION_METHODS } from './git-commit-message-generation-methods'
 import { GIT_DIFF_METHODS } from './git-diff-methods'
 import {
-  GitBlame,
+  GitBlameAtRevision,
   GitBranchCompare,
   GitBulkPaths,
   GitBulkStage,
@@ -89,10 +89,13 @@ export const GIT_METHODS = [
   }),
   defineMethod({
     name: 'git.blame',
-    params: GitBlame,
+    params: GitBlameAtRevision,
     permission: 'workspace',
     handler: async (params, { runtime }) =>
-      runtime.getRuntimeGitBlame(params.worktree, { filePath: params.filePath })
+      runtime.getRuntimeGitBlame(params.worktree, {
+        filePath: params.filePath,
+        ...(params.revision ? { revision: params.revision } : {})
+      })
   }),
   defineMethod({
     name: 'git.conflictOperation',

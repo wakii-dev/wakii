@@ -23,6 +23,14 @@ export const UNIT_SETUP_FILES = [
   'config/scripts/vitest-orcad-feature-readiness-reset.ts'
 ]
 
+// GitLens-parity SF-2/SF-3 acceptance tests: RED by design until those SFs are
+// implemented (docs/superpowers/specs/2026-11-04-gitlens-parity.md). Excluded
+// from discovery and the vitest suites, restored with the SF implementation.
+export const PENDING_GITLENS_PARITY_SF_TESTS = [
+  'src/renderer/src/components/editor/use-monaco-file-blame.test.tsx',
+  'src/shared/git-history-file-path.test.ts'
+]
+
 export const UNIT_EXCLUDE = [
   ...defaultExclude,
   'src/main/daemon/repro-13767-shell-ready-marker-lost-to-exec.test.ts',
@@ -66,7 +74,10 @@ export const UNIT_EXCLUDE = [
 ]
 
 export function discoverUnitFiles(root = process.cwd()) {
-  return globSync(UNIT_INCLUDE, { cwd: root, exclude: UNIT_EXCLUDE })
+  return globSync(UNIT_INCLUDE, {
+    cwd: root,
+    exclude: [...UNIT_EXCLUDE, ...PENDING_GITLENS_PARITY_SF_TESTS]
+  })
     .map((file) => file.replaceAll('\\', '/'))
     .sort()
 }

@@ -35,6 +35,7 @@
     "../src/wsl-guest/**/*",
     "../src/types/**/*"
   ],
+  "exclude": ["../src/shared/git-history-file-path.test.ts"],
   "compilerOptions": {
     "composite": true,
     "types": ["electron-vite/node"]

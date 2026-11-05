@@ -62,6 +62,8 @@ export type RuntimeGitContext = {
   worktreeId: string | null | undefined
   worktreePath: string
   connectionId?: string
+  /** Blame this revision instead of HEAD (blame-previous); only read by the blame client. */
+  blameRevision?: string
 }
 
 export type RuntimeGenerateCommitMessageOverrides = {

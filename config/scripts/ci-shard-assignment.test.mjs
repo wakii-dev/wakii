@@ -7,7 +7,7 @@ import { balanceFiles } from './ci-shard-assignment.mjs'
 import { discoverE2eFiles, planE2e, verifyE2eSelection } from './ci-e2e-shard-plan.mjs'
 import { parseTimingLog } from './ci-shard-timing-import.mjs'
 import TimingSequencer from './ci-unit-sequencer.mjs'
-import { UNIT_INCLUDE, UNIT_EXCLUDE } from './ci-unit-files.mjs'
+import { UNIT_INCLUDE, UNIT_EXCLUDE, PENDING_GITLENS_PARITY_SF_TESTS } from './ci-unit-files.mjs'
 import { getNodeRuntimeInclude } from './vitest-node-runtime-files.mjs'
 import { nodeRuntimePool } from './vitest-node-runtime-pool'
 
@@ -82,7 +82,8 @@ describe('timing-weighted shard selection', () => {
     expect(ordinary).toHaveLength(process.versions.bun ? 2 : 1)
     expect(measurement[0].test).toMatchObject({
       include: [measurementFile],
-      exclude: UNIT_EXCLUDE,
+      // The vitest config appends the pending GitLens-parity SF tests to every project.
+      exclude: [...UNIT_EXCLUDE, ...PENDING_GITLENS_PARITY_SF_TESTS],
       maxWorkers: 1,
       sequence: { groupOrder: 2 },
       env: { ORCA_VITEST_RUNTIME: process.versions.bun ? 'node-runtime' : 'node' },
@@ -92,7 +93,7 @@ describe('timing-weighted shard selection', () => {
     expect(paletteMeasurement).toHaveLength(1)
     expect(paletteMeasurement[0].test).toMatchObject({
       include: [paletteMeasurementFile],
-      exclude: UNIT_EXCLUDE,
+      exclude: [...UNIT_EXCLUDE, ...PENDING_GITLENS_PARITY_SF_TESTS],
       maxWorkers: 1,
       sequence: { groupOrder: 3 },
       env: { ORCA_VITEST_RUNTIME: process.versions.bun ? 'bun' : 'node' },

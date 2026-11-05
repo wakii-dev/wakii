@@ -1,9 +1,12 @@
 import { languages, type editor, type IRange, type IMarkdownString } from 'monaco-editor'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { getRuntimeGitBlame, isGitBlameSupportedForHost } from '@/runtime/runtime-git-blame-client'
 import {
-  getRuntimeGitBlame,
-  isGitBlameSupportedForHost
-} from '@/runtime/runtime-git-blame-client'
+  getRuntimeGitBlameAtRevision,
+  GitBlameRevisionUnsupportedError,
+  isGitBlamePreviousSupportedForHost
+} from '@/runtime/runtime-git-blame-previous-client'
+import type { RuntimeGitContext } from '@/runtime/runtime-git-client-context'
 import { useAppStore } from '@/store'
 import { requireRuntimeTargetForFileOwner } from '@/lib/file-owner-runtime-target'
 import type { GitBlameLine } from '../../../../shared/git-blame-types'
@@ -14,7 +17,11 @@ import {
   type BlameSkipReason,
   type HoverTextSink
 } from './git-blame-annotation-model'
-import { clearGitBlameCacheForFile, clearGitBlameCacheForWorktree, gitBlameCache } from './git-blame-cache'
+import {
+  clearGitBlameCacheForFile,
+  clearGitBlameCacheForWorktree,
+  gitBlameCache
+} from './git-blame-cache'
 import { getGitBlameStrings } from './git-blame-strings'
 
 // Re-exports keep the established import path for tests and future callers.
@@ -31,6 +38,26 @@ export type UseMonacoGitBlameArgs = {
   connectionId?: string | null
   content: string
   isDirty: boolean
+  /**
+   * GitLens-parity SF-1: when the hover card owns line hovers, the markdown
+   * hover for known blame lines stays silent — the card replaces it. The
+   * skip-reason markdown always answers.
+   */
+  suppressMarkdownHover?: boolean
+}
+
+/** Blame surface the hover overlay consumes (GitLens-parity SF-1). */
+export type MonacoGitBlameApi = {
+  /** The blame line painted at this editor line, if any. */
+  getBlameLineAt(lineNumber: number): GitBlameLine | undefined
+  /** Runtime context for lazy git reads (message body, commit diff); null outside a worktree. */
+  getRuntimeContext(): RuntimeGitContext | null
+  /** Non-null while the whole blame view walks a past revision. */
+  blameRevision: string | null
+  /** False once a host answered a revision request without the echo. */
+  blamePreviousSupported: boolean
+  requestBlamePrevious(previousHash: string): void
+  returnBlameToHead(): void
 }
 
 type BlameView = {
@@ -83,7 +110,7 @@ function viewFromResult(result: { lines: GitBlameLine[] }, isDirty: boolean): Bl
   }
 }
 
-export function useMonacoGitBlame(args: UseMonacoGitBlameArgs): void {
+export function useMonacoGitBlame(args: UseMonacoGitBlameArgs): MonacoGitBlameApi {
   const headSha = useAppStore((state) =>
     args.worktreeId ? state.gitStatusHeadByWorktree[args.worktreeId] : undefined
   )
@@ -93,6 +120,15 @@ export function useMonacoGitBlame(args: UseMonacoGitBlameArgs): void {
 
   const overlayRef = useRef<HTMLDivElement | null>(null)
   const viewRef = useRef<BlameView>({ lineByNumber: new Map(), skipReason: null, isDirty: false })
+  // A revision walk is bound to one file view: the key check resets it when a
+  // different file opens, without an adjust-state-on-prop-change effect.
+  const [revisionState, setRevisionState] = useState<{ key: string; revision: string | null }>({
+    key: '',
+    revision: null
+  })
+  const [revisionSupported, setRevisionSupported] = useState(true)
+  const viewKey = `${args.worktreeId ?? ''}\u0000${args.relativePath ?? ''}`
+  const blameRevision = revisionState.key === viewKey ? revisionState.revision : null
 
   // Keep the live view's dirty flag in sync so cursor repaints (imperative,
   // outside React) mark the annotation stale while the buffer has unsaved edits.
@@ -195,8 +231,12 @@ export function useMonacoGitBlame(args: UseMonacoGitBlameArgs): void {
     }
 
     // Cache key includes the clean buffer revision: a save (same HEAD, new
-    // content) invalidates; a revert to an already-blamed HEAD is a hit.
-    const cached = blameCache.get(worktreeId, relativePath, headSha, cleanRevision ?? '')
+    // content) invalidates; a revert to an already-blamed HEAD is a hit. A
+    // revision walk folds into the same slot so past-revision views cache apart.
+    const revisionKey = blameRevision
+      ? `${blameRevision}\u0000${cleanRevision ?? ''}`
+      : (cleanRevision ?? '')
+    const cached = blameCache.get(worktreeId, relativePath, headSha, revisionKey)
     if (cached) {
       viewRef.current = viewFromResult(cached, isDirty)
       paintHandlerRef.current(activeEditor, activeEditor.getPosition()?.lineNumber ?? 0)
@@ -211,16 +251,29 @@ export function useMonacoGitBlame(args: UseMonacoGitBlameArgs): void {
     }
 
     let requestAlive = true
-    getRuntimeGitBlame(context, relativePath)
+    const fetch = blameRevision
+      ? getRuntimeGitBlameAtRevision(context, relativePath, blameRevision)
+      : getRuntimeGitBlame(context, relativePath)
+    fetch
       .then((result) => {
         if (!requestAlive) {
           return
         }
-        blameCache.set(worktreeId, relativePath, headSha, result, cleanRevision ?? '')
+        blameCache.set(worktreeId, relativePath, headSha, result, revisionKey)
         viewRef.current = viewFromResult(result, isDirty)
         paintHandlerRef.current(activeEditor, activeEditor.getPosition()?.lineNumber ?? 0)
       })
-      .catch(() => {
+      .catch((error) => {
+        if (!requestAlive) {
+          return
+        }
+        if (error instanceof GitBlameRevisionUnsupportedError) {
+          // Echo contract failed: back to HEAD silently, never render HEAD data
+          // as if it were the old revision.
+          setRevisionState({ key: viewKey, revision: null })
+          setRevisionSupported(false)
+          return
+        }
         // Taxonomy is client-level: a host-unsupported answer was disabled
         // there; ordinary git failures skip this file silently while the
         // feature stays alive for the next HEAD change.
@@ -239,7 +292,8 @@ export function useMonacoGitBlame(args: UseMonacoGitBlameArgs): void {
     args.relativePath,
     headSha,
     cleanRevision,
-    activeRuntimeEnvironmentId
+    activeRuntimeEnvironmentId,
+    blameRevision
   ])
 
   // Overlay lifecycle + hover provider + subscriptions — one per editor mount.
@@ -273,6 +327,10 @@ export function useMonacoGitBlame(args: UseMonacoGitBlameArgs): void {
       const sink = createLiteralMarkdownSink()
       const line = position.lineNumber > 0 ? view.lineByNumber.get(position.lineNumber) : undefined
       if (line) {
+        if (args.suppressMarkdownHover) {
+          // The editorial hover card owns known-line hovers now.
+          return null
+        }
         appendGitBlameHover(sink, line, strings)
         return { contents: [sink], range: makeWholeLineRange(position.lineNumber) }
       }
@@ -310,5 +368,69 @@ export function useMonacoGitBlame(args: UseMonacoGitBlameArgs): void {
       overlay.remove()
       overlayRef.current = null
     }
-  }, [args.enabled, args.mountedEditor])
+  }, [args.enabled, args.mountedEditor, args.suppressMarkdownHover])
+
+  // Latest values behind a stable API object: the hover overlay registers
+  // editor listeners once and must not go stale after file switches.
+  const latestRef = useRef({ args, activeRuntimeEnvironmentId, revisionSupported })
+  latestRef.current = { args, activeRuntimeEnvironmentId, revisionSupported }
+
+  const api = useRef<MonacoGitBlameApi>({
+    getBlameLineAt: () => undefined,
+    getRuntimeContext: () => null,
+    blameRevision: null,
+    blamePreviousSupported: true,
+    requestBlamePrevious: () => undefined,
+    returnBlameToHead: () => undefined
+  }).current
+
+  api.getBlameLineAt = (lineNumber: number): GitBlameLine | undefined =>
+    lineNumber > 0 ? viewRef.current.lineByNumber.get(lineNumber) : undefined
+  api.getRuntimeContext = (): RuntimeGitContext | null => {
+    const { args: currentArgs, activeRuntimeEnvironmentId: envId } = latestRef.current
+    const { worktreeId, worktreePath } = currentArgs
+    if (!worktreeId || !worktreePath) {
+      return null
+    }
+    return {
+      target: requireRuntimeTargetForFileOwner(useAppStore.getState(), worktreeId, envId),
+      worktreeId,
+      worktreePath,
+      connectionId: currentArgs.connectionId ?? undefined
+    }
+  }
+  api.requestBlamePrevious = (previousHash: string): void => {
+    const {
+      args: currentArgs,
+      activeRuntimeEnvironmentId: envId,
+      revisionSupported: supported
+    } = latestRef.current
+    const worktreeId = currentArgs.worktreeId
+    if (!worktreeId || !supported) {
+      return
+    }
+    const context = {
+      target: requireRuntimeTargetForFileOwner(useAppStore.getState(), worktreeId, envId),
+      worktreeId,
+      worktreePath: currentArgs.worktreePath ?? '',
+      connectionId: currentArgs.connectionId ?? undefined
+    } as const
+    if (!isGitBlamePreviousSupportedForHost(context)) {
+      setRevisionSupported(false)
+      return
+    }
+    setRevisionState({ key: viewKey, revision: previousHash })
+  }
+  api.returnBlameToHead = (): void => {
+    setRevisionState({ key: viewKey, revision: null })
+  }
+
+  return {
+    getBlameLineAt: api.getBlameLineAt,
+    getRuntimeContext: api.getRuntimeContext,
+    blameRevision,
+    blamePreviousSupported: revisionSupported,
+    requestBlamePrevious: api.requestBlamePrevious,
+    returnBlameToHead: api.returnBlameToHead
+  }
 }
