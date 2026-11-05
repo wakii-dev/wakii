@@ -1981,11 +1981,11 @@ export default function activate(orca) {
             // chặn room (linh hoạt không block) — báo vào room để CEO biết.
             void (async () => {
               try {
-                const orcaBin = process.env.ORCA_BIN || 'orca'
+                const orcaCli = process.env.ORCA_BIN || 'orca'
                 // resolve repo path từ worktree list (match tên repo)
                 let repoPath = ''
                 try {
-                  const out = await new Promise((res) => execFileCb(orcaBin, ['worktree', 'list', '--json'], { timeout: 15000 }, (e, o) => res(e ? '' : o)))
+                  const out = await new Promise((res) => execFileCb(orcaCli, ['worktree', 'list', '--json'], { timeout: 15000 }, (e, o) => res(e ? '' : o)))
                   if (out) {
                     const wts = JSON.parse(out).result.worktrees.map((w) => String(w.path || '').replace(/\\/g, '/'))
                     // repo khớp tên → dùng; 'team' (bỏ trống) KHÔNG match mù theo
@@ -2009,7 +2009,7 @@ export default function activate(orca) {
                     // Branch mặc định của CLI là <branch-đang-đứng>/<tên> — repo có
                     // branch gốc dạng wakii-dev/main thì git cấm tạo wakii-dev/<tên>
                     // (ref conflict). Room dùng format chuẩn của repo: features/<feature>.
-                    const out = await new Promise((res) => execFileCb(orcaBin, ['worktree', 'create', '--repo', 'path:' + repoPath, '--name', feature, '--branch', 'features/' + feature, '--no-parent', '--json'], { timeout: 60000 }, (e, o, se) => {
+                    const out = await new Promise((res) => execFileCb(orcaCli, ['worktree', 'create', '--repo', 'path:' + repoPath, '--name', feature, '--branch', 'features/' + feature, '--no-parent', '--json'], { timeout: 60000 }, (e, o, se) => {
                       if (e) orca.log('[create-room] worktree create lỗi: ' + String(se || e.message || '').split('\n').filter(Boolean).slice(-2).join(' | ').slice(0, 300))
                       res(e ? '' : o)
                     }))
