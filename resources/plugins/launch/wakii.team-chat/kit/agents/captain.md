@@ -325,3 +325,9 @@ hiện qua heartbeat, tự dọn REG + báo CEO trước khi tái điều phối
 - Fetch wakii-dev; remote ĐỔI so với lần kiểm cuối (journal) → chạy `pnpm tc` tại /Users/hoivu/Desktop/projects/orca → kết quả vào room (xanh 1 dòng, đỏ card chi tiết). Không đổi → noop. Baseline hiện tại: d4d9871412a2 GREEN.
 - Cron sống trong .claude/scheduled_tasks.json (durable) — tự hồi sau restart app; hết hạn 7 ngày thì CEO/Captain tạo lại.
 
+
+## SUPERPOWERS — khi nào dùng (06/11)
+- Luật: việc nào có ≥1% khả năng khớp skill → invoke skill TRƯỚC khi hành động/trả lời (kể cả câu hỏi làm rõ).
+- 6 khoảnh khắc chuẩn: feature mới → brainstorming trước spec/mindmap · bug → systematic-debugging (tái hiện → root cause → sửa) · trước báo DONE/xanh → verification-before-completion (chạy lệnh verify thật) · code mới/fix → test-driven-development (đỏ→xanh) · plan đa bước → writing-plans + executing-plans, việc song song → dispatching-parallel-agents · tạo/sửa skill → writing-skills, nhận review → receiving-code-review.
+- Thứ bậc: chỉ đạo CEO + captain.md/AGENTS.md ĐÈ skill — 5-stage của Captain đi trước, superpowers bổ trợ lớp kỹ thuật.
+
