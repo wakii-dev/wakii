@@ -45,11 +45,9 @@ export const structuredSessionOpenFeedbackText = {
       'This chat is no longer on this host, so it cannot be reopened here.'
     ),
   hostCannotOpen: () =>
-    toast.error(
-      translate(
-        'auto.lib.activateAiVaultStructuredSession.hostCannotOpen',
-        "This chat can't be reopened until Wakii is updated."
-      )
+    translate(
+      'auto.lib.activateAiVaultStructuredSession.hostCannotOpen',
+      "This chat can't be reopened until Wakii is updated."
     )
 }
 

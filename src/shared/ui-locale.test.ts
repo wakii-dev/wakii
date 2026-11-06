@@ -4,9 +4,10 @@ import {
   normalizeSupportedUiLocale,
   detectUiLanguage,
   normalizeUiLocaleTag,
+  resolveUiLocale,
   shouldShowLanguageSwitcher
 } from './ui-locale'
-import { UI_LANGUAGE_GERMAN, UI_LANGUAGE_RUSSIAN, UI_LANGUAGE_SYSTEM, UI_LANGUAGE_VIETNAMESE } from './ui-language'
+import { UI_LANGUAGE_SYSTEM, UI_LANGUAGE_VIETNAMESE } from './ui-language'
 
 describe('ui-locale', () => {
   it('maps Traditional Chinese system locales to zh-Hant and keeps Simplified on zh', () => {

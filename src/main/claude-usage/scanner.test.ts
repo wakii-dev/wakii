@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { parseClaudeUsageFile, parseClaudeUsageRecord } from './transcript-record-parser'
 import { attributeClaudeUsageTurns } from './worktree-attribution'
+import { aggregateClaudeUsage } from './usage-aggregation'
 
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'

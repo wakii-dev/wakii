@@ -7,7 +7,7 @@ import type {
   LinuxPackageType,
   UpdaterMocks,
   UpdaterModuleFactories
-} from './updater-test-harness-types'
+} from '../../updater-test-harness-types'
 // Quitting re-stages Squirrel updates on macOS, so restart advice remains useful there.
 export const PRE_COMMIT_INSTALL_FAILURE =
   process.platform === 'darwin'

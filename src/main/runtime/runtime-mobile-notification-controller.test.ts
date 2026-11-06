@@ -9,7 +9,7 @@ import {
   setNotificationSettingsSupplier,
   setRuntimeDesktopSurface
 } from './runtime-desktop-surface'
-import type { ResolvedWorktree } from './runtime-worktree-path-identity'
+import type { ResolvedWorktree } from './workspaces/catalog/runtime-worktree-path-identity'
 import { OrchestrationDb } from './orchestration/db'
 import {
   scanWorktreeBracketMtimes,
@@ -18,7 +18,7 @@ import {
 import {
   RuntimeMobileNotificationController,
   type MobileNotificationDispatchEvent
-} from './runtime-mobile-notification-controller'
+} from './push/notifications/runtime-mobile-notification-controller'
 import { OrcaRuntimeService } from './orca-runtime'
 
 vi.mock('electron', () => ({

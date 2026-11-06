@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { gitExecFileAsync, gitExecFileAsyncBuffer, gitStreamStdout } from './runner'
-import { toLinuxPath } from '../../shared/wsl-paths'
+import { toLinuxPath, toWindowsWslPath } from '../../shared/wsl-paths'
 import { listWorktrees } from './worktrees/catalog/worktree-scan-cache'
 import { resetWslLinkedWorktreeGitRoutingForTests } from './command-runner/wsl-linked-worktree-git-routing'
 

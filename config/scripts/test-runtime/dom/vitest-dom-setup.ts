@@ -5,5 +5,5 @@ if (globalThis.document !== undefined) {
   await import('./happy-dom-offscreen-canvas')
   await import('./happy-dom-mutation-observer-retention')
   await import('./happy-dom-animation-cancel')
-  await import('./vitest-testing-library-setup')
+  await import('../../vitest-testing-library-setup')
 }

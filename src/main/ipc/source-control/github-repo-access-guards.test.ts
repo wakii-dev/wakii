@@ -35,8 +35,8 @@ vi.mock('../../github/client', () => mocks.client)
 
 vi.mock('../../github/client/fetch/orca-star', async (importOriginal) => ({
   ...(await importOriginal<typeof OrcaStarModule>()),
-  checkOrcaStarred: mocks.client.checkOrcaStarred,
-  starOrca: mocks.client.starOrca
+  checkOrcaStarred: mocks.client.checkWakiiStarred,
+  starOrca: mocks.client.starWakii
 }))
 
 vi.mock('../../github/client/fetch/authenticated-viewer', async (importOriginal) => ({

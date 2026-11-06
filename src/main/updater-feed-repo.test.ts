@@ -179,7 +179,7 @@ describe('packaged app-update.yml drives the prerelease feed URLs', () => {
       return Promise.resolve({ ok: false, status: 404, text: () => Promise.resolve('') })
     })
 
-    const { fetchNewerReleaseTags } = await import('./updater-prerelease-feed')
+    const { fetchNewerReleaseTags } = await import('./updater/releases/updater-prerelease-feed')
     const tags = await fetchNewerReleaseTags('1.4.221-local.1791128510716.8cc525456919', 1)
     expect(tags).toEqual(['v1.4.222'])
     expect(netFetchMock.mock.calls.some(([url]) => url === atomUrl)).toBe(true)

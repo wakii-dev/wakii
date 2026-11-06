@@ -2,7 +2,7 @@ import { homedir } from 'node:os'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
 import { OrcaRuntimeService } from '../../orca-runtime'
-import type { ResolvedWorktree } from '../../runtime-worktree-path-identity'
+import type { ResolvedWorktree } from '../../workspaces/catalog/runtime-worktree-path-identity'
 import { AGENT_LAUNCH_METHODS } from './agent-launch'
 import { CAPABLE_CLIENT, methodNamed, STRUCTURED_PREFERENCE } from './agent-launch.test-fixture'
 

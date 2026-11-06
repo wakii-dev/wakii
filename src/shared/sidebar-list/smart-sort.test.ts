@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Repo } from '../repo-types'
 import type { TerminalTab } from '../workspace-layout/terminal-tab-types'
 import type { Worktree } from '../worktree/types'
-import { buildWorktreeComparator } from './smart-sort'
+import { CREATE_GRACE_MS, buildWorktreeComparator, sortWorktreesSmart } from './smart-sort'
 import { buildAttentionByWorktree } from './smart-attention'
 import type { AgentStatusEntry } from '../agent-status/contracts/agent-status-types'
 import { makePaneKey } from '../workspace-layout/stable-pane-id'
@@ -106,6 +106,15 @@ function sortSmartAt(
     now
   )
   return [...worktrees].sort(buildWorktreeComparator('smart', repoMap, now, attention))
+}
+
+// Fixtures are NOW-relative; a real Date.now() clock would expire the create-grace window.
+function sortSmart(
+  worktrees: Worktree[],
+  tabsByWorktree: Record<string, TerminalTab[]>,
+  agentStatusByPaneKey: Record<string, AgentStatusEntry>
+): Worktree[] {
+  return sortSmartAt(NOW, worktrees, tabsByWorktree, agentStatusByPaneKey)
 }
 
 describe('smart sort — completed-agent eligibility clock', () => {

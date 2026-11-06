@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { OrchestrationDb } from '../../orchestration/db'
 import type { OrcaRuntimeService } from '../../orca-runtime'
-import type { ResolvedWorktree } from '../../runtime-worktree-path-identity'
+import type { ResolvedWorktree } from '../../workspaces/catalog/runtime-worktree-path-identity'
 import { resetSfStatusCacheForTests } from '../../../superpowers/story-linear-status'
 import {
   listStoriesForRuntime,

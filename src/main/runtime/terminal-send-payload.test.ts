@@ -3,7 +3,7 @@ import {
   buildTerminalSendPayload,
   maybeWrapTerminalSendTextForTuiAgent
 } from './terminal-send-payload'
-import { TERMINAL_INPUT_CHUNK_MAX_BYTES } from '../../shared/terminal-input'
+import { TERMINAL_INPUT_CHUNK_MAX_BYTES } from '../../shared/terminal/input/terminal-input'
 
 // Why: plugin terminal.sendText is the path panels use to reach agent TUIs. A
 // TUI submits on every newline, so multi-line prompt text must ride inside one

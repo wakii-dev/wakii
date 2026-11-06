@@ -5,7 +5,7 @@ import { OrcaRuntimeService } from '../orca-runtime'
 import { settledWriteStub } from '../../providers/settled-pty-write-stub'
 import { TERMINAL_METHODS } from './methods/terminal'
 import { getDefaultWorkspaceSession } from '../../../shared/constants'
-import type { WorkspaceSessionState } from '../../../shared/workspace-session-state-types'
+import type { WorkspaceSessionState } from '../../../shared/workspace-session/workspace-session-state-types'
 
 // Why (#59): the registry still knows the launchAgent while the pane is booting or
 // sits at a bare shell. A single-line send there must stay raw — wrapping put

@@ -9,8 +9,8 @@ import type { PluginHostServices } from './plugin-host-methods'
 import { PluginSecretsStore } from './plugin-secrets-store'
 import { PluginKvStore } from './plugin-storage-store'
 import type { PluginJsonValue } from '../../shared/plugins/workers/plugin-host-api'
-import type { TerminalInputKind } from '../../shared/terminal-input-kind'
-import type { RuntimeAgentPromptWriteOptions } from '../runtime/runtime-terminal-contracts'
+import type { TerminalInputKind } from '../../shared/terminal/input/terminal-input-kind'
+import type { RuntimeAgentPromptWriteOptions } from '../runtime/terminal/input/agent-prompt-write-options'
 import {
   describeAgentSessionPtyWriteRefusal,
   isAgentSessionPtyWriteRefusedError

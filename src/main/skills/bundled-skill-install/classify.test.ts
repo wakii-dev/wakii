@@ -1,8 +1,11 @@
-import { chmod } from 'node:fs/promises'
-import { join } from 'node:path'
+import { chmod, mkdir, writeFile } from 'node:fs/promises'
+import { basename, dirname, join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { bundledSkillTextDigest, classifyBundledSkillPath } from './classify'
 import { nativeBundledSkillFilesystem } from './filesystem'
+import { buildBundledSkillPlan } from './plan'
+import { bundledSkillSiblingKind } from './swap'
+import { isSkillStagingEntryName } from '../skill-delete/staging-names'
 import {
   makeSkillHome,
   NAME,
@@ -10,6 +13,7 @@ import {
   NEW_TEXT,
   OLD_TEXT,
   removeSkillHomes,
+  serviceInput,
   writeCopy
 } from './skill-home.test-support'
 

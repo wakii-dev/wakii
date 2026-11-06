@@ -9,7 +9,7 @@ import {
 import {
   RuntimeMobileNotificationController,
   type MobileNotificationDispatchEvent
-} from '../../runtime-mobile-notification-controller'
+} from '../../push/notifications/runtime-mobile-notification-controller'
 import { NOTIFICATION_METHODS } from './notifications'
 import type { RpcContext, RpcMethod } from '../core'
 

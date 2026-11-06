@@ -60,8 +60,8 @@ describe('released computer-use installation migration', () => {
       })
 
       const source = BUNDLED_SKILL_SOURCES.find((skill) => skill.name === NAME)
-      expect(await readFile(join(shared, 'SKILL.md'), 'utf8')).toBe(source?.text)
-      expect(await readFile(join(claude, 'SKILL.md'), 'utf8')).toBe(source?.text)
+      expect(await readFile(join(shared, 'SKILL.md'), 'utf8')).toBe(source?.files[0]?.text)
+      expect(await readFile(join(claude, 'SKILL.md'), 'utf8')).toBe(source?.files[0]?.text)
       const discovered = await discover()
       expect(discovered.skills).toHaveLength(supportsLinks ? 1 : 2)
       expect(discovered.skills.every((skill) => skill.name === NAME)).toBe(true)
@@ -87,7 +87,7 @@ describe('released computer-use installation migration', () => {
     if (!source) {
       throw new Error('Canonical skill is missing')
     }
-    await writeCopy(join(dirname(home.shared), NAME), source.text)
+    await writeCopy(join(dirname(home.shared), NAME), source.files[0]?.text ?? '')
     const result = await discoverSkills({
       homeDir: home.home,
       includeCwd: false,
