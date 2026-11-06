@@ -356,7 +356,7 @@ export function PluginDeclarativeView({
       <PluginDeclarativeHostServicesContext.Provider value={services}>
         <div
           ref={containerRef}
-          className="scrollbar-sleek flex h-full min-h-0 flex-col overflow-y-auto p-3 text-sm text-foreground"
+          className="scrollbar-sleek flex h-full min-h-0 flex-col overflow-x-hidden overflow-y-auto p-3 text-sm text-foreground"
         >
           {tree ? (
             <PluginDeclarativeNodeView
