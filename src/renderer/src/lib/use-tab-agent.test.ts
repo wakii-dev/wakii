@@ -11,7 +11,7 @@ import type {
   TerminalTab
 } from '../../../shared/workspace-layout/terminal-tab-types'
 import type { TerminalAgent } from '../../../shared/agent-status/identity/terminal-agent'
-import '../../../shared/tab-agent-from-signals'
+import { resolveTabAgentFromSignals } from '../../../shared/tab-agent-from-signals'
 import { useTabAgent } from './use-tab-agent'
 
 const initialAppState = useAppStore.getInitialState()

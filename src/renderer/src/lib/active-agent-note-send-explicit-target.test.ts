@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { sendNotesToActiveAgentSession } from './active-agent-note-send'
+import { activeAgentNotesSendFailureMessage } from './active-agent-note-send-result'
 import {
   createNoteSendAppState,
   LEAF_ID,

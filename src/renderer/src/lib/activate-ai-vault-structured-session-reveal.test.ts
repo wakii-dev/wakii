@@ -23,6 +23,7 @@ import {
   revealStructuredSession
 } from './activate-ai-vault-structured-session'
 import { STRUCTURED_AGENT_SESSION_REVEAL_RUNTIME_CAPABILITY } from '../../../shared/agent-session/structured-agent-session-surface-capabilities'
+import { RUNTIME_COMPAT_BLOCK_CODE } from '../runtime/runtime-protocol-compat'
 
 const target = { worktreeId: 'workspace-1', sessionId: 'session-1' }
 

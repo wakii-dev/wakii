@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { trackTerminalPaneSplit } from './feature-education-telemetry'
+import {
+  persistEmittedSetupGuideStepId,
+  readEmittedSetupGuideStepIds,
+  trackTerminalPaneSplit
+} from './feature-education-telemetry'
 
 const trackMock = vi.hoisted(() => vi.fn())
 

@@ -8,9 +8,6 @@ import type { ExecutionHostId } from '../../../../shared/execution-host'
 const NOW = 1_700_000_000_000
 const HOST_A_HOST_ID: ExecutionHostId = 'local'
 const HOST_B_HOST_ID: ExecutionHostId = 'ssh:ssh-1'
-const HOST_UNRESOLVED_MESSAGE =
-  'Wakii cannot tell which host owns this workspace. Refresh projects and review it again.'
-const WORKSPACE_GONE_MESSAGE = 'Workspace no longer exists.'
 
 const mockApi = {
   worktrees: {

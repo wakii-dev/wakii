@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import '../../../../shared/constants'
+import { getDefaultSettings } from '../../../../shared/constants'
 import type { Repo } from '../../../../shared/repo-types'
 import type { WslMovedProject } from '../../../../shared/wsl-move/wsl-moved-project'
 import { getSetupScriptPromptDismissalKey } from '../../lib/setup-script-prompt'

@@ -175,26 +175,6 @@ export function activateFloatingWorkspaceCyclableTab(
   }
 }
 
-function getNextFloatingWorkspaceTerminalTab(
-  visibleTabs: readonly TypeCyclableTab[],
-  active: TypeCyclableTab,
-  direction: number
-): TypeCyclableTab | null {
-  const terminalTabs = visibleTabs.filter((tab) => tab.type === 'terminal')
-  if (terminalTabs.length === 0) {
-    return null
-  }
-  const currentIndex = terminalTabs.findIndex((tab) => tab.id === active.id)
-  if (terminalTabs.length === 1 && currentIndex === 0 && active.type === 'terminal') {
-    return null
-  }
-  const normalizedCurrentIndex =
-    currentIndex === -1 && direction > 0 ? -1 : currentIndex === -1 ? 0 : currentIndex
-  return terminalTabs[
-    (normalizedCurrentIndex + direction + terminalTabs.length) % terminalTabs.length
-  ]
-}
-
 export function isFloatingWorkspacePanelVisible(
   doc: Pick<Document, 'querySelector'> = document
 ): boolean {

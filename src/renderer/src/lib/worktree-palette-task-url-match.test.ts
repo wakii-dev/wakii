@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import type { Repo } from '../../../shared/repo-types'
 import type { Worktree } from '../../../shared/worktree/types'
 import {
   matchWorktreePaletteTaskUrl,
@@ -26,6 +27,39 @@ function makeWorktree(overrides: Partial<Worktree> = {}): Worktree {
     sortOrder: 0,
     lastActivityAt: 0,
     ...overrides
+  }
+}
+
+const orcaRepo: Repo = {
+  id: 'repo-1',
+  path: '/repo/orca',
+  displayName: 'stablyai/orca',
+  badgeColor: '#22c55e',
+  addedAt: 0
+}
+
+/** Basename displayName: the common non-fork case, where only the remote identifies the repo. */
+function gitHubRepo(canonicalKey: string): Repo {
+  return {
+    ...orcaRepo,
+    displayName: 'orca',
+    gitRemoteIdentity: {
+      canonicalKey,
+      remoteName: 'origin',
+      remoteUrl: `git@${canonicalKey.replace('/', ':')}.git`
+    }
+  }
+}
+
+function gitLabRepo(canonicalKey: string): Repo {
+  return {
+    ...orcaRepo,
+    displayName: 'orca',
+    gitRemoteIdentity: {
+      canonicalKey,
+      remoteName: 'origin',
+      remoteUrl: `git@${canonicalKey.replace('/', ':')}.git`
+    }
   }
 }
 
@@ -198,7 +232,7 @@ describe('matchWorktreePaletteTaskUrl', () => {
   })
 
   it('normalizes host case, port, and owner case before comparing GitHub identities', () => {
-    const intent = parseCmdJTaskSourceUrl('https://GHE.Example.com:8443/StablyAI/Wakii/pull/12789')
+    const intent = parseCmdJTaskSourceUrl('https://GHE.Example.com:8443/StablyAI/Orca/pull/12789')
     expect(
       matchWorktreePaletteTaskUrl({
         worktree: makeWorktree({ linkedPR: 12789 }),

@@ -3,7 +3,7 @@ import { worktreeRemovalReplyTimeoutMs } from '../../../../shared/worktree/archi
 import type { AppState } from '../types'
 import type { RuntimeEnvironmentCallRequest } from '../../runtime/runtime-compatibility-test-fixture'
 import { makeWorktree } from './worktrees-slice-test-fixtures'
-import '../../../../shared/constants'
+import { getDefaultSettings } from '../../../../shared/constants'
 import {
   createTestStore,
   mockApi,

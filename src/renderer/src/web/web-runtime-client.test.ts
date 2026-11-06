@@ -13,6 +13,8 @@ import {
   encryptBytes as encryptSharedBytes
 } from '../../../shared/remote-runtime/e2ee/node/e2ee-crypto'
 import type { RuntimeRpcResponse } from '../../../shared/runtime-rpc-envelope'
+import type { PairedE2EEClientHandshake } from '../../../shared/remote-runtime/e2ee/paired-e2ee-client-handshake'
+import { SESSION_TAB_CLOSE_INTENT_RUNTIME_CAPABILITY } from '../../../shared/session-tabs-runtime-capabilities'
 import '../../../shared/protocol-version'
 
 const fakeSockets: FakeWebSocket[] = []
@@ -227,7 +229,7 @@ describe('WebRuntimeClient', () => {
       expect(fakeSockets).toHaveLength(2)
 
       client.close()
-      await expect(callPromise).rejects.toThrow('Remote Orca runtime connection closed.')
+      await expect(callPromise).rejects.toThrow('Remote Wakii runtime connection closed.')
     } finally {
       client.close()
       random.mockRestore()
