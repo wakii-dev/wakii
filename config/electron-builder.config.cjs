@@ -256,15 +256,10 @@ module.exports = {
   appId,
   productName: 'Wakii',
   // Fork: release notes thật cho update dialog — workflow export từ GitHub
-  // release (RELEASE_NOTES + RELEASE_NOTES_URL) trước khi electron-builder chạy.
-  // 26.x: notes sống trong releaseInfo — root releaseNotes/releaseNotesUrl đã
-  // bị xoá khỏi schema.
-  ...(process.env.RELEASE_NOTES || process.env.RELEASE_NOTES_URL
-    ? { releaseInfo: {
-        ...(process.env.RELEASE_NOTES ? { releaseNotes: process.env.RELEASE_NOTES } : {}),
-        ...(process.env.RELEASE_NOTES_URL ? { releaseNotesUrl: process.env.RELEASE_NOTES_URL } : {})
-      } }
-    : {}),
+  // release (RELEASE_NOTES) trước khi electron-builder chạy.
+  // 26.x: notes sống trong releaseInfo.releaseNotes; releaseNotesUrl đã bị xoá
+  // khỏi schema lẫn UpdateInfo (worker fix-config + CI lần 3 xác nhận) — drop.
+  ...(process.env.RELEASE_NOTES ? { releaseInfo: { releaseNotes: process.env.RELEASE_NOTES } } : {}),
   protocols: [{ name: 'Wakii', schemes: ['orca'] }],
   toolsets: { appimage: '1.0.3' },
   ...(devChannelBuildVersion
