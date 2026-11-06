@@ -1,6 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import { useAppStore } from '@/store'
-import { NOTIFICATION_CARD_STACK_HEIGHT_VAR } from '@/lib/notification-card-stack-height'
 import {
   NOTIFICATION_CARD_STACK_BOTTOM,
   NOTIFICATION_CARD_STACK_HEIGHT_VAR

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { SearchQueryRow } from './file-explorer/content-search/SearchQueryRow.tsx'
+import { SearchQueryRow } from './file-explorer/content-search/SearchQueryRow'
 import { visit, type ReactElementLike } from './file-explorer/tree/file-explorer-element-tree-test-harness'
 
 function readTestId(entry: ReactElementLike): string | undefined {

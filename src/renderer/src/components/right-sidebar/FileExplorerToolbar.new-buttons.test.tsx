@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { FileExplorerToolbar } from './file-explorer/panel/FileExplorerToolbar.tsx'
+import { FileExplorerToolbar } from './file-explorer/panel/FileExplorerToolbar'
 import { visit, type ReactElementLike } from './file-explorer/tree/file-explorer-element-tree-test-harness'
 
 function readTestId(entry: ReactElementLike): string | undefined {

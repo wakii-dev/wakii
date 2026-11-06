@@ -8,6 +8,7 @@ import type {
   SkillCloudVersion
 } from '../../../../shared/skill-cloud-contract'
 import { useAppStore } from '@/store'
+import { INSTALLED_AGENT_SKILLS_CHANGED_EVENT } from '@/hooks/installed-agent-skills-change-event'
 
 import { SkillInstallManagementDialog } from './SkillInstallManagementDialog'
 
@@ -160,6 +161,13 @@ function dateLabel(iso: string): string {
     month: 'short',
     day: 'numeric'
   }).format(new Date(iso))
+}
+
+const ROW_ACTION = /Reinstall|Use this version/
+
+async function openInstall(name = 'private-skill'): Promise<void> {
+  fireEvent.click(await screen.findByRole('button', { name: new RegExp(name) }))
+  await screen.findByRole('button', { name: ROW_ACTION })
 }
 
 beforeEach(() => {

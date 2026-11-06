@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { SkillCloudVersion } from '../../../../shared/skill-cloud-contract'
 import type { SkillInstallProgress } from '../../../../shared/skill-sharing-contract'
@@ -40,6 +41,49 @@ function version(): SkillCloudVersion {
       ],
       packageDigest: DIGEST
     }
+  }
+}
+
+function bundleVersion(): SkillCloudVersion {
+  const skill = (id: string, name: string) => ({
+    id,
+    name,
+    description: `${name} description`,
+    digest: DIGEST,
+    files: [
+      {
+        path: 'SKILL.md',
+        size: 1,
+        executable: false,
+        classification: 'text' as const,
+        sha256: DIGEST,
+        identitySha256: DIGEST
+      }
+    ]
+  })
+  return {
+    ...version(),
+    name: 'team-bundle',
+    description: 'Two private skills',
+    packageDigest: 'c'.repeat(64),
+    releaseNotes: 'Initial team bundle',
+    manifest: {
+      schemaVersion: 1,
+      packageId: 'pkg_1',
+      versionId: 'ver_1',
+      bundleName: 'team-bundle',
+      description: 'Two private skills',
+      createdAt: '2026-08-11T00:00:00.000Z',
+      skills: [skill('skill-alpha', 'alpha'), skill('skill-beta', 'beta')],
+      bundleDigest: 'c'.repeat(64)
+    }
+  }
+}
+
+function detectionApi(agents: string[]) {
+  return {
+    detectAgents: vi.fn().mockResolvedValue(agents),
+    detectRemoteAgents: vi.fn().mockResolvedValue(agents)
   }
 }
 

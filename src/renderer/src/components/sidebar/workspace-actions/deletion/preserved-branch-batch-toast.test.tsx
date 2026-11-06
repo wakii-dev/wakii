@@ -6,7 +6,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { toast } from 'sonner'
 import type { PreservedBranchCleanup } from '../../../../../../shared/git/branches/preserved-branch-cleanup'
 import PreservedBranchBatchReviewModal from './PreservedBranchBatchReviewModal'
-import { forceDeletePreservedBranchBatch } from './preserved-branch-batch-toast'
+import {
+  forceDeletePreservedBranchBatch,
+  showPreservedBranchBatchToast
+} from './preserved-branch-batch-toast'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -41,6 +44,17 @@ vi.mock('sonner', () => ({
 }))
 
 const mountedRoots: Root[] = []
+
+function renderToastBody(): HTMLElement {
+  const description = vi.mocked(toast.warning).mock.calls.at(-1)?.[1]
+    ?.description as React.ReactElement
+  const container = document.createElement('div')
+  document.body.appendChild(container)
+  const root = createRoot(container)
+  mountedRoots.push(root)
+  act(() => root.render(description))
+  return container
+}
 
 function renderReviewModal(branches: readonly PreservedBranchCleanup[]): void {
   mocks.state.activeModal = 'preserved-branch-review'

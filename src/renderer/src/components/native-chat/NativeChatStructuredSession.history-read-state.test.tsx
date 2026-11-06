@@ -4,7 +4,8 @@ import type * as LaunchRegistry from '@/lib/agent-session/launch/structured-agen
 import type * as LaunchOptions from '@/lib/agent-session/launch/structured-agent-session-launch-options'
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-
+import { TooltipProvider } from '@/components/ui/tooltip'
+import type { AgentJournalRenderItem } from '../../../../shared/agent-session/journal/agent-session-journal-types'
 import { NativeChatStructuredSession } from './NativeChatStructuredSession'
 
 const { mocks, moduleFactories, resetStructuredSessionMocks, launchModule } = await vi.hoisted(

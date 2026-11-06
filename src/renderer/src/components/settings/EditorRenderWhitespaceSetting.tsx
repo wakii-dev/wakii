@@ -1,8 +1,8 @@
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import { translate } from '@/i18n/i18n'
-import { SearchableSetting } from './section-layout/SearchableSetting.tsx'
+import { SearchableSetting } from './section-layout/SearchableSetting'
 import { Label } from '../ui/label'
-import { SettingsSegmentedControl } from './form-controls/SettingsFormControls.tsx'
+import { SettingsSegmentedControl } from './form-controls/SettingsFormControls'
 
 type EditorRenderWhitespaceSettingProps = {
   settings: GlobalSettings

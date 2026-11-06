@@ -1,15 +1,21 @@
 // @vitest-environment happy-dom
 import {
   mocks,
+  LOCAL_TARGET,
   answer,
   mutateWith,
   PROVISIONAL,
+  PUBLISHED_UNATTACHED,
   ATTACHED,
   REOPENED,
   renderOptions,
   descriptor,
   currentValue,
+  modelChoiceCount,
+  setOptionCalls,
   HOST_CATALOG,
+  SAVED_LIST,
+  SEED,
   tick
 } from './use-structured-agent-session-options.test-fixture'
 import type { AgentSessionOptionsResult } from '../../../../shared/agent-session/options/agent-session-options-result'

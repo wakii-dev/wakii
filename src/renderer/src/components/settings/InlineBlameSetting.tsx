@@ -1,7 +1,7 @@
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import { translate } from '@/i18n/i18n'
-import { SearchableSetting } from './section-layout/SearchableSetting.tsx'
-import { SettingsSwitchRow } from './form-controls/SettingsFormControls.tsx'
+import { SearchableSetting } from './section-layout/SearchableSetting'
+import { SettingsSwitchRow } from './form-controls/SettingsFormControls'
 
 const INLINE_BLAME_TITLE_KEY = 'auto.components.settings.InlineBlameSetting.683fd9af0f'
 const INLINE_BLAME_DESCRIPTION_KEY = 'auto.components.settings.InlineBlameSetting.9142b8bc2f'

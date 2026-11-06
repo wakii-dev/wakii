@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest'
 
 vi.mock('sonner', () => ({ toast: { error: vi.fn() } }))
@@ -14,7 +14,14 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import type { QueuedMessageCard } from '../../../../shared/agent-session/view/structured-agent-session-queued-cards'
 import { NativeChatQueuedMessageList } from './NativeChatQueuedMessageList'
 
-import type { StructuredAgentSessionQueuedMessagesController } from './use-structured-agent-session-queued-messages'
+import {
+  useStructuredAgentSessionQueuedMessages,
+  type StructuredAgentSessionQueuedMessagesController
+} from './use-structured-agent-session-queued-messages'
+import type {
+  AgentSessionQueuedMessage,
+  AgentSessionQueuePause
+} from '../../../../shared/agent-session/requests/agent-session-queued-message-wire'
 
 import type { AgentSessionFailureFact } from '../../../../shared/agent-session/failures/agent-session-failure'
 
@@ -77,6 +84,54 @@ function controller(
 }
 
 /** Use host-projected cards after Stop or /clear, when sends stay held. */
+function waitingDraft(
+  messageId: string,
+  position: number,
+  overrides: Partial<AgentSessionQueuedMessage> = {}
+): AgentSessionQueuedMessage {
+  return {
+    messageId,
+    position,
+    body: { kind: 'message', role: 'user', blocks: [{ type: 'text', text: `${messageId} text` }] },
+    state: 'waiting',
+    ...overrides
+  }
+}
+
+function renderHeldQueue(
+  queuedMessages: AgentSessionQueuedMessage[],
+  queuePause: AgentSessionQueuePause | null,
+  hasPendingPrompt = false
+) {
+  const mutate = vi.fn(async (..._call: [string, string, Record<string, unknown>]) => null)
+  function HeldQueue(): React.JSX.Element {
+    const owner = useStructuredAgentSessionQueuedMessages({
+      admit: () => null,
+      capturePresentation: () => () => true,
+      enabled: true,
+      queuedMessages,
+      queuePause,
+      submissions: [],
+      hasPendingPrompt,
+      isWorking: false,
+      composerScopeKey: undefined,
+      mutate: mutate,
+      editTransport: {
+        target: { kind: 'local' },
+        sessionId: 'session',
+        capable: false,
+        write: async () => ({ kind: 'dropped' })
+      }
+    })
+    return <NativeChatQueuedMessageList chatWorktreeId={null} controller={owner} />
+  }
+  const view = render(
+    <TooltipProvider delayDuration={0}>
+      <HeldQueue />
+    </TooltipProvider>
+  )
+  return { ...view, mutate }
+}
 
 afterEach(cleanup)
 

@@ -1,7 +1,7 @@
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import { translate } from '@/i18n/i18n'
-import { SearchableSetting } from './section-layout/SearchableSetting.tsx'
-import { SettingsSwitchRow } from './form-controls/SettingsFormControls.tsx'
+import { SearchableSetting } from './section-layout/SearchableSetting'
+import { SettingsSwitchRow } from './form-controls/SettingsFormControls'
 
 const STICKY_SCROLL_TITLE_KEY = 'auto.components.settings.GeneralEditorSettingsSection.7fef986df3'
 const STICKY_SCROLL_DESCRIPTION_KEY =

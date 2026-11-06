@@ -5,7 +5,11 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, describe, expect, it } from 'vitest'
 import { TEST_REPO, makeWorktree } from '@/store/slices/worktrees-slice-test-fixtures'
 import type { AiVaultSessionResumeTargetState } from '../session-actions/ai-vault-session-resume'
-import { useAiVaultExecutionHostScope } from './ai-vault-host-scope'
+import {
+  buildAiVaultHostScopeOptions,
+  buildRuntimeAiVaultHostScopeOptions,
+  useAiVaultExecutionHostScope
+} from './ai-vault-host-scope'
 import type { ExecutionHostId, ExecutionHostScope } from '../../../../../../shared/execution-host'
 
 type HostScopeResult = ReturnType<typeof useAiVaultExecutionHostScope>

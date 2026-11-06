@@ -1,17 +1,9 @@
 import type React from 'react'
-import { useCallback, useDeferredValue, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useAppStore } from '@/store/index'
 import { useFileSearchScope } from './useFileSearchScope'
 import { useActiveWorktree } from '@/store/selectors'
-import type {
-  SearchFileResult,
-  SearchMatch,
-  SearchResult
-} from '../../../../../../shared/code-search-types'
-import { buildSearchRows } from './search-rows'
-import { cancelRevealFrame, openMatchResult } from './search-match-open'
-import type { SearchQueryRowProps } from './SearchQueryRow'
-import type { SearchFiltersProps } from './SearchFilters'
+import { cancelRevealFrame } from './search-match-open'
 import type { FileSearchPanelModel } from '../../file-search-panel-model'
 import { useFileSearchRunner } from './useFileSearchRunner'
 import { useFileSearchHistory } from '../../use-file-search-history'

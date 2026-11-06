@@ -31,7 +31,7 @@ beforeEach(() => {
   uiSet.mockReset().mockResolvedValue(undefined)
   Object.assign(window, { api: { hooks: { check: hooksCheck }, ui: { set: uiSet } } })
   __resetTrustPromptChainForTests()
-  useAppStore.setState({ trustedOrcaHooks: {}, activeModal: 'none', modalData: {} })
+  useAppStore.setState({ trustedWakiiHooks: {}, activeModal: 'none', modalData: {} })
   container = document.createElement('div')
   document.body.appendChild(container)
   root = createRoot(container)
@@ -94,12 +94,12 @@ describe('OrcaYamlTrustDialog Always trust', () => {
     await approveWithAlwaysTrust()
     await expect(first).resolves.toBe('run')
 
-    expect(useAppStore.getState().trustedOrcaHooks['repo-1']).toEqual({
+    expect(useAppStore.getState().trustedWakiiHooks['repo-1']).toEqual({
       all: { approvedAt: expect.any(Number) },
       setup: { contentHash: expect.any(String), approvedAt: expect.any(Number) }
     })
     expect(uiSet).toHaveBeenLastCalledWith({
-      trustedOrcaHooks: useAppStore.getState().trustedOrcaHooks
+      trustedWakiiHooks: useAppStore.getState().trustedWakiiHooks
     })
 
     await expect(confirmSetup()).resolves.toBe('run')

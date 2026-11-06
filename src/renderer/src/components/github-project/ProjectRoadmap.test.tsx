@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 
 import type { ReactNode } from 'react'
-import { act, cleanup, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import ProjectRoadmap from './ProjectRoadmap'
 import { i18n, loadRendererUiLanguage, setRendererPluginLanguagePacks } from '@/i18n/i18n'
@@ -20,6 +20,12 @@ vi.mock('@/components/ui/tooltip', () => ({
   TooltipContent: ({ children }: { children: ReactNode }) => <div role="tooltip">{children}</div>
 }))
 
+const TITLE_FIELD: GitHubProjectField = {
+  kind: 'field',
+  id: 'f_title',
+  name: 'Title',
+  dataType: 'TITLE'
+}
 const START_FIELD: GitHubProjectField = {
   kind: 'field',
   id: 'f_start',

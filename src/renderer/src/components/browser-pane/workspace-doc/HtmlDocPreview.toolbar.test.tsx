@@ -12,8 +12,6 @@ import { acquireWebviewsDragPassthrough } from '@/components/browser-pane/host-g
 const confirmExternalLink = async (): Promise<boolean> => false
 
 const GRANT_ID = 'a'.repeat(32)
-// The draw-tool hint's own storage key; the hook that owns it keeps it private.
-const MARKUP_DRAW_HINT_SEEN_KEY = 'wakii.browser.markup-draw-hint-seen'
 const ENTRY_RELATIVE_PATH = 'docs/reports/index.html'
 const ABSOLUTE_PATH = '/repo/docs/reports/index.html'
 

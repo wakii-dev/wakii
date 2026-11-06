@@ -46,7 +46,6 @@ import {
   shouldShowViewFileAction
 } from './file-explorer-row-action-visibility'
 import { copyFileToOsClipboard, downloadRemoteFile } from './file-explorer-row-file-transfer'
-import { fileExplorerNodeTabRelativePath } from '../tree/file-explorer-directory-listing'
 
 const isMac = navigator.userAgent.includes('Mac')
 

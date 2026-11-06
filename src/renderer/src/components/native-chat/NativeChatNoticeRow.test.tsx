@@ -4,6 +4,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { projectStructuredItemsToNativeChat } from '../../../../shared/agent-session/view/structured-agent-session-projection'
 import type { AgentJournalStatusItem } from '../../../../shared/agent-session/journal/agent-session-journal-types'
+import { isAdmissibleAgentJournalItemBody } from '../../../../shared/agent-session/journal/agent-session-journal-schemas'
 
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { MessageRow } from './NativeChatMessageRow'
@@ -211,12 +212,14 @@ describe('the row a Wakii stop leaves', () => {
 
 describe('the row a usage limit leaves', () => {
   const resetsAt = new Date(2026, 9, 18, 15, 0).getTime()
-  const row = {
+  const row: AgentJournalStatusItem = {
     kind: 'status',
     tone: 'warning',
-    text: 'Claude hit its session limit. Send a message once it resets to continue.',
-    failure: { kind: 'usageLimitReached', usageLimit: { window: 'session', resetsAt } }
-  } as const
+    ...agentSessionFailureWords(
+      { kind: 'usageLimitReached', usageLimit: { window: 'session', resetsAt } },
+      { surface: 'row' }
+    )
+  }
 
   it('says when the limit resets in this clock, and offers Continue Now only once it has', () => {
     if (!isAdmissibleAgentJournalItemBody(row) || row.kind !== 'status') {
