@@ -30,6 +30,9 @@ ok(extra.length === 0, `"Trong code" thừa (không có trong bảng): ${extra.j
 // 3) Mọi identifier trỏ tới phải tồn tại thật
 const treeBlob = (() => {
   let blob = readFileSync(join(PLUGIN, 'main.mjs'), 'utf8')
+  // lib/ thêm vào blob (FI-98: main.mjs tách module — identifier domain sống ở lib/)
+  blob += '\n' + readFileSync(join(PLUGIN, 'lib', 'supervisor.mjs'), 'utf8')
+  blob += '\n' + readFileSync(join(PLUGIN, 'lib', 'router.mjs'), 'utf8')
   for (const sub of ['bin', 'agents', 'skills', 'tests']) {
     const walk = (dir) => {
       for (const ent of readdirSync(dir, { withFileTypes: true })) {

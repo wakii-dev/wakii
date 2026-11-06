@@ -21,15 +21,15 @@ Mỗi mục có dòng **Trong code** trỏ tới identifier thật (bin + hàm) 
 
 ## Trong code
 
-- **Captain** — `kit/agents/captain.md` + router `captainRoute` (`main.mjs`)
+- **Captain** — `kit/agents/captain.md` + router `captainRoute` (`lib/router.mjs`)
 - **Worker** — `team-orch worker-start` (`kit/bin/team-orch`)
-- **CEO** — role `owner` trong `send_msg` (`kit/bin/team-chat`) + router `[CEO→captain]` (`main.mjs`)
+- **CEO** — role `owner` trong `send_msg` (`kit/bin/team-chat`) + router `[CEO→captain]` (`lib/router.mjs`)
 - **Room** — `rooms.json` + `meta_note`/`--channel` (`kit/bin/team-chat`)
 - **REG** — `.workers.json` + `reg_put` (`kit/bin/team-orch`)
 - **RECEIPT** — chuỗi `✅ RECEIPT spawned` / `✅ RECEIPT gate CLOSED` (`kit/bin/team-orch`)
 - **Hand-back** — `team-chat done` (`kit/bin/team-chat`)
 - **BRIEF** — `team-session-brief` (`kit/bin/team-session-brief`) + `install_worker_hooks` BRIEF_BIN (`kit/bin/team-orch`)
-- **Heartbeat** — section HEARTBEAT (`kit/agents/captain.md`) + `captainSupervisor` (`main.mjs`)
-- **Churn** — `supervisorMisses`/`supervisorRespawned` (`main.mjs`) + commit `3d93504529`
+- **Heartbeat** — section HEARTBEAT (`kit/agents/captain.md`) + `captainSupervisor` (`lib/supervisor.mjs`)
+- **Churn** — `supervisorMisses`/`supervisorRespawned` (`lib/supervisor.mjs`) + commit `3d93504529`
 - **Dispatch** — `dispatch $DISPATCH_ID` trong RECEIPT (`kit/bin/team-orch`) + `dispatchId` (`kit/bin/story-coordinator-pass`)
 - **Ledger** — `ledger_dispatch`/`ledger_end` (`kit/bin/team-orch`) + dòng end trong `team-chat done` (`kit/bin/team-chat`) + đọc qua `kit/bin/team-usage`
