@@ -3,7 +3,7 @@ import type {
   GitHistoryResult
 } from '../../../../shared/git/history/git-history-types'
 import type { GitBlameOptions, GitBlameResult } from '../../../../shared/git-blame-types'
-import { getBlame as getGitBlame } from '../../git/blame'
+import { getBlame as getGitBlame } from '../../../git/blame'
 import type { GitMutationInFlight } from '../../../../shared/git/commands/git-mutation-in-flight'
 import { isGitWorktreeMutationInFlight } from '../../../git/command-runner/git-worktree-mutation-state'
 import type {

@@ -14,7 +14,7 @@ import {
   activateWakiiExplorerFile,
   isWakiiDocumentFileName,
   type WakiiExplorerViewerRoute
-} from '../file-explorer-wakii-open'
+} from '../../file-explorer-wakii-open'
 import { runtimeTargetEnvironmentId } from '@/runtime/runtime-client-target'
 import { fileExplorerNodeTabRelativePath } from '../tree/file-explorer-directory-listing'
 

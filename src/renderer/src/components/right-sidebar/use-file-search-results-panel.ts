@@ -1,7 +1,7 @@
 import { useCallback, useDeferredValue, useMemo, type RefObject } from 'react'
 import type { SearchFileResult, SearchMatch, SearchResult } from '../../../../shared/code-search-types'
-import { buildSearchRows, setAllSearchFilesCollapsed } from './search-rows'
-import { openMatchResult } from './search-match-open'
+import { buildSearchRows, setAllSearchFilesCollapsed } from './file-explorer/content-search/search-rows'
+import { openMatchResult } from './file-explorer/content-search/search-match-open'
 import type { FileSearchResultOwner } from '@/lib/file-search-result-owner'
 
 type ResultsPanelArgs = {

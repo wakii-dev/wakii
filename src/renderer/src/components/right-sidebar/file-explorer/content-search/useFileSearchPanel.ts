@@ -12,13 +12,13 @@ import { buildSearchRows } from './search-rows'
 import { cancelRevealFrame, openMatchResult } from './search-match-open'
 import type { SearchQueryRowProps } from './SearchQueryRow'
 import type { SearchFiltersProps } from './SearchFilters'
-import type { FileSearchPanelModel } from '../file-search-panel-model'
+import type { FileSearchPanelModel } from '../../file-search-panel-model'
 import { useFileSearchRunner } from './useFileSearchRunner'
-import { useFileSearchHistory } from './use-file-search-history'
+import { useFileSearchHistory } from '../../use-file-search-history'
 import { useFileSearchReplaceCancelGuard } from '../../use-file-search-replace-cancel'
-import { useFileSearchReplacePanel } from './use-file-search-replace-panel'
+import { useFileSearchReplacePanel } from '../../use-file-search-replace-panel'
 import { useFileSearchResultsPanel } from '../../use-file-search-results-panel'
-import { useFileSearchInputFocus } from './use-file-search-input-focus'
+import { useFileSearchInputFocus } from '../../use-file-search-input-focus'
 
 const EMPTY_COLLAPSED_FILES = new Set<string>()
 

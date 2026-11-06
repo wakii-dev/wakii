@@ -8,7 +8,7 @@ import {
   captureFileExplorerOperationGuard,
   getFileExplorerOperationOwner,
   getFileExplorerOwnerUnresolvedMessage
-} from './file-explorer-operation-owner'
+} from './file-explorer/navigation/file-explorer-operation-owner'
 
 // Undo rides the same owner guard + runtime IO as the confirmed replace, and
 // clears the stored op when the run completes so double-undo is impossible.

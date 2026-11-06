@@ -7,8 +7,8 @@ import {
 } from '../superpowers/gate-worktree-derivation'
 import type { OrchestrationDb } from './orchestration/db'
 import type { GateTransitionEvent } from './orchestration/db/decision-gates/decision-gate-store'
-import type { MobileNotificationDispatchEvent } from './runtime-mobile-notification-controller'
-import { runtimeWorktreeIdsEqual, type ResolvedWorktree } from './runtime-worktree-path-identity'
+import type { MobileNotificationDispatchEvent } from './push/notifications/runtime-mobile-notification-controller'
+import { runtimeWorktreeIdsEqual, type ResolvedWorktree } from './workspaces/catalog/runtime-worktree-path-identity'
 
 // Why: gate transitions must reach mobile clients as notifications. The listener is
 // registered per db instance from BOTH runtime attach points (getOrchestrationDb lazy

@@ -89,7 +89,7 @@ describe('buildReplaceAllIo — real runtime file clients', () => {
 
   it('stamps a self-write with the written content after a successful write', async () => {
     const { getRecentSelfWrite, clearSelfWrite } = await import(
-      '@/components/editor/editor-self-write-registry'
+      '@/components/editor/external-changes/editor-self-write-registry'
     )
     fsReadFile.mockResolvedValue({ content: 'foo bar', isBinary: false })
     fsStat.mockResolvedValue({ size: 7, isDirectory: false, mtime: 1 })

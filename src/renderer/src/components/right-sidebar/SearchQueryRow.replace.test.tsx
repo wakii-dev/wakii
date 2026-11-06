@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import { SearchQueryRow, type ReplaceDisabledReason } from './SearchQueryRow'
-import { visit, type ReactElementLike } from './file-explorer-element-tree-test-harness'
+import { SearchQueryRow, type ReplaceDisabledReason } from './file-explorer/content-search/SearchQueryRow.tsx'
+import { visit, type ReactElementLike } from './file-explorer/tree/file-explorer-element-tree-test-harness'
 
 function readTestId(entry: ReactElementLike): string | undefined {
   const testId = entry.props['data-testid']

@@ -6,7 +6,7 @@ import {
 } from './search-replace-all-runner'
 import type { SearchReplaceFlags } from './search-replace-engine'
 import type { SearchReplaceOp } from './search-replace-op'
-import type { FileExplorerOperationGuard, FileExplorerOperationRoute } from './file-explorer-operation-owner'
+import type { FileExplorerOperationGuard, FileExplorerOperationRoute } from './file-explorer/navigation/file-explorer-operation-owner'
 
 export type FileReplaceAllRunCallbacks = {
   begin: () => void

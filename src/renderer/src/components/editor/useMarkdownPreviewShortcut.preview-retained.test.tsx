@@ -7,7 +7,7 @@ import { act, cleanup, render } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { RefObject } from 'react'
 
-import { useMarkdownPreviewShortcut } from './useMarkdownPreviewShortcut'
+import { useMarkdownPreviewShortcut } from './view-mode/useMarkdownPreviewShortcut'
 
 vi.mock('@/store', () => ({
   useAppStore: (selector: (state: Record<string, unknown>) => unknown) =>

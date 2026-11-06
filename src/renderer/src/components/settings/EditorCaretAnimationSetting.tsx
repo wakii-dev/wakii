@@ -1,8 +1,8 @@
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import { translate } from '@/i18n/i18n'
-import { SearchableSetting } from './SearchableSetting'
+import { SearchableSetting } from './section-layout/SearchableSetting.tsx'
 import { Label } from '../ui/label'
-import { SettingsSegmentedControl } from './SettingsFormControls'
+import { SettingsSegmentedControl } from './form-controls/SettingsFormControls.tsx'
 
 type EditorCaretAnimationSettingProps = {
   settings: GlobalSettings

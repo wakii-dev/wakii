@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import { FileExplorerToolbar } from './FileExplorerToolbar'
-import { visit, type ReactElementLike } from './file-explorer-element-tree-test-harness'
+import { FileExplorerToolbar } from './file-explorer/panel/FileExplorerToolbar.tsx'
+import { visit, type ReactElementLike } from './file-explorer/tree/file-explorer-element-tree-test-harness'
 
 function readTestId(entry: ReactElementLike): string | undefined {
   const testId = entry.props['data-testid']

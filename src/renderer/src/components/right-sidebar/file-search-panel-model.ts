@@ -4,9 +4,9 @@ import type {
   SearchMatch,
   SearchResult
 } from '../../../../shared/code-search-types'
-import type { buildSearchRows } from './search-rows'
-import type { SearchQueryRowProps } from './SearchQueryRow'
-import type { SearchFiltersProps } from './SearchFilters'
+import type { buildSearchRows } from './file-explorer/content-search/search-rows'
+import type { SearchQueryRowProps } from './file-explorer/content-search/SearchQueryRow.tsx'
+import type { SearchFiltersProps } from './file-explorer/content-search/SearchFilters.tsx'
 import type { SearchReplacePreviewModalProps } from './search-replace-preview-modal'
 
 export type FileSearchResultsProps = {

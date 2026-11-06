@@ -11,9 +11,9 @@ import {
   captureFileExplorerOperationGuard,
   getFileExplorerOperationOwner,
   getFileExplorerOwnerUnresolvedMessage
-} from './file-explorer-operation-owner'
+} from './file-explorer/navigation/file-explorer-operation-owner'
 import type { FileSearchPanelModel } from './file-search-panel-model'
-import type { ReplaceDisabledReason } from './SearchQueryRow'
+import type { ReplaceDisabledReason } from './file-explorer/content-search/SearchQueryRow.tsx'
 
 type ReplacePanelArgs = {
   activeWorktreeId: string | null

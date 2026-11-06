@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { SearchReplacePreviewModal } from './search-replace-preview-modal'
 import type { ReplaceAllRunSummary } from './search-replace-all-runner'
-import { visit, type ReactElementLike } from './file-explorer-element-tree-test-harness'
+import { visit, type ReactElementLike } from './file-explorer/tree/file-explorer-element-tree-test-harness'
 
 vi.mock('../editor/editor-lazy-views', () => ({
   DiffViewer: (props: Record<string, unknown>) => ({

@@ -8,7 +8,7 @@ import {
   captureFileExplorerOperationGuard,
   getFileExplorerOperationOwner,
   getFileExplorerOwnerUnresolvedMessage
-} from './file-explorer-operation-owner'
+} from './file-explorer/navigation/file-explorer-operation-owner'
 import type { SearchReplaceFlags } from './search-replace-engine'
 import type { SearchFileResult } from '../../../../shared/code-search-types'
 
