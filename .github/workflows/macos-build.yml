@@ -86,7 +86,7 @@ jobs:
           pnpm run build:keyboard-layout-macos
           pnpm run build:notification-status-macos
           pnpm run ensure:electron-runtime
-          node config/scripts/build-mac-local.mjs
+          node config/scripts/desktop-distribution/macos/build-mac-local.mjs
 
       - name: Collect artifacts (arm64 + x64)
         run: |
