@@ -12,24 +12,29 @@ import { dirname, join } from 'node:path'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
-const PLUGIN_ROOT = dirname(fileURLToPath(import.meta.url))
+const PLUGIN_ROOT = dirname(dirname(fileURLToPath(import.meta.url))) // parent của tests/
 
 // ── Scanner ────────────────────────────────────────────────────────────────
 
 const IDENT = '[A-Za-z_$][\\w$]*'
-const DECL_RE = new RegExp('\\b(?:const|let)\\s+(' + IDENT + ')\\b', 'g')
+const DECL_RE = new RegExp('\\b(?:const|let|var)\\s+(' + IDENT + ')\\b', 'g')
+// destructuring shadow: `const { orcaBin } = cfg` / `const { a, ob: orcaBin = x }`
+const DESTRUCT_RE = new RegExp('\\b(?:const|let|var)\\s*\\{([^}]*)\\}', 'g')
 const FN_DECL_RE = new RegExp('\\bfunction\\s+(' + IDENT + ')\\b', 'g')
-const CALL_RE = new RegExp('(?<![.\\w$])(' + IDENT + ')\\s*\\(', 'g')
+const CALL_RE = new RegExp('(?<![.\\w$])(' + IDENT + ')\\s*(?:\\?\\s*\\.\\s*)?\\(', 'g')
 const KEYWORDS = new Set(['if', 'for', 'while', 'switch', 'catch', 'return', 'function', 'typeof', 'new', 'delete', 'void', 'in', 'of', 'do', 'else', 'await', 'yield', 'case', 'throw', 'instanceof'])
 
 // Bỏ comment + string/template/regex literal (giữ newline — line number không
-// trôi). Regex literal được phát hiện theo ký tự đứng trước '/'.
+// trôi). Regex literal được phát hiện theo ký tự đứng trước '/'. Template
+// `${...}` interpolation: TOÀN BỘ nội dung (kể cả brace) bị mask — scope
+// tracking không thấy brace trong expression (tránh desync, review P0); đổi
+// lại call thật trong `${}` không được scan (giới hạn có chủ đích, hiếm).
 function stripNonCode(src) {
   let out = ''
   let i = 0
   const n = src.length
   let mode = 'code'
-  const tplStack = []
+  const stack = [] // context: { type: 'tpl' } | { type: 'tplcode', depth }
   const regexPrecedes = () => {
     let j = i - 1
     while (j >= 0 && /\s/.test(out[j])) j--
@@ -44,6 +49,7 @@ function stripNonCode(src) {
     const c = src[i]
     const c2 = src[i + 1]
     if (mode === 'code') {
+      const inTplCode = stack.length > 0 && stack[stack.length - 1].type === 'tplcode'
       if (c === '/' && c2 === '/') { mode = 'line'; out += '  '; i += 2; continue }
       if (c === '/' && c2 === '*') { mode = 'block'; out += '  '; i += 2; continue }
       if (c === '/') {
@@ -52,8 +58,29 @@ function stripNonCode(src) {
       }
       if (c === "'") { mode = 'sq'; out += ' '; i += 1; continue }
       if (c === '"') { mode = 'dq'; out += ' '; i += 1; continue }
-      if (c === '`') { mode = 'tpl'; tplStack.push(0); out += ' '; i += 1; continue }
+      if (c === '`') { stack.push({ type: 'tpl' }); mode = 'tpl'; out += ' '; i += 1; continue }
+      if (c === '{') {
+        if (inTplCode) stack[stack.length - 1].depth++
+        out += inTplCode ? ' ' : c
+        i += 1; continue
+      }
+      if (c === '}') {
+        if (inTplCode) {
+          const top = stack[stack.length - 1]
+          if (top.depth === 0) { stack.pop(); mode = 'tpl' } // đóng ${...}
+          else top.depth--
+          out += ' '; i += 1; continue
+        }
+        out += c; i += 1; continue
+      }
       out += c; i += 1; continue
+    }
+    if (mode === 'tpl') {
+      if (c === '\\') { out += '  '; i += 2; continue }
+      if (c === '`') { stack.pop(); mode = 'code'; out += ' '; i += 1; continue }
+      if (c === '$' && c2 === '{') { stack.push({ type: 'tplcode', depth: 0 }); mode = 'code'; out += '  '; i += 2; continue }
+      if (c === '\n') out += c; else out += ' '
+      i += 1; continue
     }
     if (mode === 'line') {
       if (c === '\n') { mode = 'code'; out += c } else { out += ' ' }
@@ -83,11 +110,8 @@ function stripNonCode(src) {
       if (c === '\n') out += c; else out += ' '
       i += 1; continue
     }
-    // template literal — '${' mở code lồng, '}' đóng theo depth
-    if (c === '\\') { out += '  '; i += 2; continue }
-    if (c === '`' && tplStack[tplStack.length - 1] === 0) { tplStack.pop(); mode = 'code'; out += ' '; i += 1; continue }
-    if (c === '$' && c2 === '{') { tplStack.push(1); mode = 'code'; out += '  '; i += 2; continue }
-    if (c === '\n') out += c; else out += ' '
+    // mode không rơi vào nhánh nào (defensive) — thoát khỏi mode lạ
+    mode = 'code'
     i += 1
   }
   return out
@@ -137,11 +161,36 @@ export function scanSource(src) {
     return names
   }
 
+  // RHS của khai báo là giá trị function (factory/arrow/function) → alias hợp
+  // lệ, không phải bug shadow (review P2): `const log = makeLogger(); log("hi")`
+  const declRhsIsFn = (offset, name) => {
+    const seg = text.slice(offset, offset + 240)
+    const m = new RegExp('^(?:const|let|var)\\s+' + name + '\\s*=\\s*([^;\\n]{0,120})').exec(seg)
+    if (!m) return false
+    const rhs = m[1]
+    return /^\s*\(/.test(rhs) || /=>/.test(rhs) || /\bfunction\b/.test(rhs) || /^\s*async\b/.test(rhs) || /^\s*[\w$.]+\s*\(/.test(rhs)
+  }
+  // destructuring piece: binding là identifier CUỐI mỗi phần (key alias `ob: x` bind x)
+  const destructureNames = (pattern) => {
+    const names = []
+    for (const piece of pattern.split(',')) {
+      const id = new RegExp('(' + IDENT + ')\\s*(?:=[^=]*)?$').exec(piece.trim())
+      if (id && !KEYWORDS.has(id[1])) names.push({ name: id[1], offset: -1, isFnRhs: false })
+    }
+    return names
+  }
+
   // gom events theo offset
   {
     let match
     const re1 = new RegExp(DECL_RE.source, 'g')
-    while ((match = re1.exec(text))) events.push({ t: 'decl', name: match[1], offset: match.index })
+    while ((match = re1.exec(text))) {
+      events.push({ t: 'decl', name: match[1], offset: match.index, isFnRhs: declRhsIsFn(match.index, match[1]) })
+    }
+    const reD = new RegExp(DESTRUCT_RE.source, 'g')
+    while ((match = reD.exec(text))) {
+      for (const d of destructureNames(match[1])) events.push({ t: 'decl', name: d.name, offset: match.index, isFnRhs: false })
+    }
     const re2 = new RegExp(FN_DECL_RE.source, 'g')
     while ((match = re2.exec(text))) events.push({ t: 'fn', name: match[1], offset: match.index })
     const re3 = new RegExp(CALL_RE.source, 'g')
@@ -189,11 +238,12 @@ export function scanSource(src) {
       if (scopes.length === 0) moduleFns.add(ev.name)
       else scopes[scopes.length - 1].set(ev.name, 'function')
     } else if (ev.t === 'decl') {
-      if (scopes.length > 0) scopes[scopes.length - 1].set(ev.name, 'const-let')
+      if (scopes.length > 0) scopes[scopes.length - 1].set(ev.name, ev.isFnRhs ? 'const-fn' : 'const-let')
     } else if (ev.t === 'call') {
       const b = innermost(ev.name)
-      // const/let binding nào cũng nằm trong 1 scope đã push (root const trùng
-      // tên function là SyntaxError — không tồn tại), nên không cần check depth.
+      // const/let/var/destructure binding nào cũng nằm trong 1 scope đã push
+      // (root const trùng tên function là SyntaxError — không tồn tại), nên
+      // không cần check depth. const-fn = alias function hợp lệ → bỏ qua.
       if (b && b.kind === 'const-let' && moduleFns.has(ev.name)) {
         violations.push({ name: ev.name, declScopeDepth: b.scopeIdx, callLine: lineOf(ev.offset) })
       }
@@ -282,6 +332,82 @@ test('clean: arrow param destructuring với default không tạo false-positive
   assert.equal(scanSource(src).length, 0)
 })
 
+// ── Review fixes (FI-98 review task 1: P0 template desync + P1 destructure) ──
+
+test('fixture: shadow + call SAU template có interpolation vẫn bị bắt (P0 scope desync)', () => {
+  const src = [
+    'function orcaBin() { return "orca" }',
+    'function f() {',
+    '  const orcaBin = process.env.ORCA_BIN || "x"',
+    '  const m = `a${helper()}b ${x.y} c`',
+    '  return orcaBin()',
+    '}',
+  ].join('\n')
+  const v = scanSource(src)
+  assert.equal(v.length, 1, 'P0: scanner mất đóng ${} làm scope lệch → bỏ sót bug-class')
+  assert.equal(v[0].callLine, 5)
+})
+
+test('fixture: destructuring shadow `const { orcaBin } = cfg` → bị bắt (P1)', () => {
+  const src = [
+    'function orcaBin() { return "orca" }',
+    'function f(cfg) {',
+    '  const { orcaBin } = cfg',
+    '  return orcaBin()',
+    '}',
+  ].join('\n')
+  const v = scanSource(src)
+  assert.equal(v.length, 1)
+  assert.equal(v[0].name, 'orcaBin')
+})
+
+test('clean: key alias destructuring không flag key, chỉ binding', () => {
+  const src = [
+    'function orcaBin() { return "orca" }',
+    'function f(cfg) {',
+    '  const { orcaBin: ob } = cfg',
+    '  return orcaBin() + ob',
+    '}',
+  ].join('\n')
+  assert.equal(scanSource(src).length, 0)
+})
+
+test('clean: const giữ function-value (factory/arrow) là alias hợp lệ, không flag', () => {
+  const src = [
+    'function log() {}',
+    'function f() {',
+    '  const log2 = makeLogger()',
+    '  const log3 = (m) => m',
+    '  log2("hi")',
+    '  log3("hi")',
+    '  log()',
+    '}',
+  ].join('\n')
+  assert.equal(scanSource(src).length, 0)
+})
+
+test('fixture: optional call `orcaBin?.()` bị shadow vẫn bị bắt', () => {
+  const src = [
+    'function orcaBin() { return "orca" }',
+    'function f() {',
+    '  const orcaBin = process.env.ORCA_BIN || "x"',
+    '  return orcaBin?.()',
+    '}',
+  ].join('\n')
+  assert.equal(scanSource(src).length, 1)
+})
+
+test('fixture: `var orcaBin = ...` shadow cùng bug-class → bị bắt', () => {
+  const src = [
+    'function orcaBin() { return "orca" }',
+    'function f() {',
+    '  var orcaBin = process.env.ORCA_BIN || "x"',
+    '  return orcaBin()',
+    '}',
+  ].join('\n')
+  assert.equal(scanSource(src).length, 1)
+})
+
 // ── Audit thật: toàn bộ plugin source phải sạch ─────────────────────────────
 
 function auditFiles() {
@@ -295,13 +421,16 @@ function auditFiles() {
 
 test('plugin source sạch bug shadow (main.mjs + lib/*.mjs + build-directives.mjs)', () => {
   const bad = []
+  const scanned = []
   for (const f of auditFiles()) {
     const p = join(PLUGIN_ROOT, f)
     if (!existsSync(p)) continue
+    scanned.push(f)
     const src = readFileSync(p, 'utf8')
     for (const v of scanSource(src)) {
       bad.push(`${f}: gọi "${v.name}()" bị shadow local (scope depth ${v.declScopeDepth}) tại dòng ${v.callLine}`)
     }
   }
+  assert.ok(scanned.includes('main.mjs'), 'audit phải scan main.mjs — file thiếu thì guard trắng')
   assert.deepEqual(bad, [], 'Shadow violations:\n' + bad.join('\n'))
 })
