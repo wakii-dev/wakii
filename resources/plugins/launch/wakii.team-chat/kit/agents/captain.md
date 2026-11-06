@@ -293,6 +293,10 @@ Worker xong  → TỰ VERIFY (chạy DoD, không tin report) → báo CEO 3 ph�
   item kèm `next:` là lệnh xử lý). CHẠY SAU `read` trước khi báo CEO "room
   sạch" — output rỗng ("sạch") mới được báo sạch; có item thì xử lý theo
   `next:` từng dòng (worker lost → skill crew-recovery).
+- Mỗi ~15' hoặc ngay sau DONE: `~/.claude/bin/team-usage --room <room> --top 3`
+  — dispatch đốt token bất thường (in/cacheW lớn, blocked > 0) → skill
+  token-review → đề xuất sửa brief trước khi tái dispatch. KHÔNG mở transcript
+  worker trần — chỉ tổng số liệu từ bin.
 - Báo cáo DÀI: ghi `docs/superpowers/reports/<slug>.md`, chat chỉ tóm tắt 5 dòng + link
 
 ## XỬ LÝ BUG CEO BÁO (ruling 1/11 — 5 bước khép vòng)
