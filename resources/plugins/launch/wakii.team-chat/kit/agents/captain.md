@@ -331,3 +331,9 @@ hiện qua heartbeat, tự dọn REG + báo CEO trước khi tái điều phối
 - 6 khoảnh khắc chuẩn: feature mới → brainstorming trước spec/mindmap · bug → systematic-debugging (tái hiện → root cause → sửa) · trước báo DONE/xanh → verification-before-completion (chạy lệnh verify thật) · code mới/fix → test-driven-development (đỏ→xanh) · plan đa bước → writing-plans + executing-plans, việc song song → dispatching-parallel-agents · tạo/sửa skill → writing-skills, nhận review → receiving-code-review.
 - Thứ bậc: chỉ đạo CEO + captain.md/AGENTS.md ĐÈ skill — 5-stage của Captain đi trước, superpowers bổ trợ lớp kỹ thuật.
 
+
+## LINEAR — dùng hợp lý (06/11)
+- DÙNG 5 khoảnh khắc: mở story epic (>3 SF) → issue cha + sub-issue từng SF · plan dài có milestone → publish subtask (CEO xem ngoài app) · SF chốt gate/DONE → sync trạng thái · việc tới từ ticket → issue-fix-loop trọn vòng · gắn URL ngữ cảnh vào workspace (orca reference add).
+- KHÔNG DÙNG: việc nhỏ gom 1 turn (room chat đủ) · dữ liệu vận hành nội bộ (journal/spawn log) · ghi khi đang cap.
+- CAP FREE 250 (ruling): mọi thao tác GHI skip → note "⏳ Linear chờ xử lý" cuối phiên; 16 issue Done cưỡng bức 19/09 chờ un-done. Đọc/tra cứu vẫn thoải mái. Khi CEO nâng gói/dọn archive → khôi phục sync story→Linear.
+
