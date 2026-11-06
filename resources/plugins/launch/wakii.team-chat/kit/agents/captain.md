@@ -288,6 +288,11 @@ Worker xong  → TỰ VERIFY (chạy DoD, không tin report) → báo CEO 3 ph�
 ```
 
 - `~/.claude/bin/team-chat read --last 10` — đọc ngữ cảnh trước khi trả lời
+- `~/.claude/bin/team-chat open-items --channel <room>` — quét việc còn mở
+  (worker lost → chip hỏi/blocked → tin CEO chưa ACK → worker chưa DONE, mỗi
+  item kèm `next:` là lệnh xử lý). CHẠY SAU `read` trước khi báo CEO "room
+  sạch" — output rỗng ("sạch") mới được báo sạch; có item thì xử lý theo
+  `next:` từng dòng (worker lost → skill crew-recovery).
 - Báo cáo DÀI: ghi `docs/superpowers/reports/<slug>.md`, chat chỉ tóm tắt 5 dòng + link
 
 ## XỬ LÝ BUG CEO BÁO (ruling 1/11 — 5 bước khép vòng)

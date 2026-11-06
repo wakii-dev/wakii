@@ -6,6 +6,7 @@
 #   team-chat send "<text>" [--from <tên>] [--role captain|worker|owner|system] [--channel <kênh>]
 #   team-chat read  [--last N] [--channel <kênh>]     # in N tin mới nhất (default 20)
 #   team-chat tail  [-f] [--channel <kênh>]           # tin mới nhất; -f = theo dõi live
+#   team-chat open-items [--channel <kênh>]             # open items theo thứ tự xử lý, mỗi item có "next:"
 #   team-chat path                                      # in đường dẫn bus
 set -u
 LOG="${TEAM_CHAT_LOG:-$HOME/.claude/chat/team-chat.jsonl}"
@@ -193,6 +194,131 @@ for l in sys.stdin:
   read_msgs --last 5
 }
 
+# open-items — wake pattern (FI-96, port từ mate): quét bus + rooms.json +
+# .workers.json + team-events.jsonl, in open items theo THỨ TỰ XỬ LÝ, mỗi item
+# 1 dòng "next:" là lệnh cụ thể captain chạy. Thuần đọc, không ghi gì.
+# Thứ tự = mức chặn tiến độ: ①lost ②hỏi/blocked ③unack ④undone; cũ nhất trước.
+# ACK/DONE theo timestamp là xấp xỉ (bus chưa có ACK tường minh — spec FI-96).
+open_items() {
+  local channel=""
+  while [ $# -gt 0 ]; do case "$1" in
+    --channel) channel="$2"; shift 2 ;;
+    *) shift ;;
+  esac; done
+  python3 - "$LOG" "$HOME/.claude/chat/rooms.json" \
+    "${TEAM_WORKERS_REG:-$HOME/.claude/chat/.workers.json}" \
+    "${TEAM_EVENTS_LOG:-$HOME/.claude/chat/team-events.jsonl}" \
+    "${ORCA_BIN:-orca}" "$channel" <<'PY'
+import json, subprocess, sys, datetime
+bus, rooms_path, reg_path, events_path, orca_bin, channel = sys.argv[1:7]
+
+def load_json(path):
+    try: return json.load(open(path, encoding="utf-8"))
+    except Exception: return {}
+
+def read_lines(path):
+    try: return [l for l in open(path, encoding="utf-8") if l.strip()]
+    except FileNotFoundError: return []
+
+rooms = load_json(rooms_path)
+if not channel:
+    opens = [(v.get("createdAt", 0), k) for k, v in rooms.items()
+             if isinstance(v, dict) and v.get("status") == "open"]
+    channel = max(opens)[1] if opens else "general"
+
+msgs = []
+for l in read_lines(bus):
+    try: msgs.append(json.loads(l))
+    except Exception: continue  # dòng hỏng — bỏ qua, không chặn
+msgs = sorted((m for m in msgs if m.get("channel") == channel),
+              key=lambda m: m.get("at", 0))
+
+events = []
+for l in read_lines(events_path):
+    try: events.append(json.loads(l))
+    except Exception: continue
+done_task_ids = {ev.get("taskId") for ev in events
+                 if ev.get("kind") == "worker.done" and ev.get("taskId")}
+
+reg = load_json(reg_path)
+workers = sorted(((p, e) for p, e in reg.items() if isinstance(e, dict)),
+                 key=lambda kv: kv[1].get("at", 0))
+
+def hm(ms): return datetime.datetime.fromtimestamp((ms or 0) / 1000).strftime("%H:%M")
+
+items = []  # (cat, at, dòng in)
+lost_panes = set()
+def add(cat, at, line): items.append((cat, at, line))
+
+# ① LOST — registration có, pane chết (so terminal list như Supervisor Layer-1).
+# Fail-soft: không lấy được terminal list → bỏ qua loại lost (tránh false-positive respawn).
+panes = None
+for argv in ([orca_bin], ["bash", orca_bin]):  # Windows không exec shebang trực tiếp → fallback bash
+    try:
+        out = subprocess.run(argv + ["terminal", "list", "--json"], capture_output=True,
+                             text=True, encoding="utf-8", errors="replace", timeout=15).stdout
+        panes = {t.get("handle") for t in json.loads(out).get("result", {}).get("terminals", [])}
+        break
+    except Exception:
+        continue
+if panes is not None:
+    for pane, e in workers:
+        if not pane.startswith("term_") or not (e.get("room") in ("", None, channel)):
+            continue
+        if pane not in panes:
+            lost_panes.add(pane)
+            add(1, e.get("at", 0),
+                f"LOST worker '{e.get('name') or pane[:14]}' (pane chết, spawn {hm(e.get('at'))}, "
+                f"task {e.get('task') or '?'}) — next: verify worktree + respawn/adopt "
+                f"'{e.get('name') or pane[:14]}' theo skill crew-recovery")
+
+# ② HỎI/BLOCKED chip chưa trả lời (captain/owner chưa nhắn lại sau chip)
+for m in msgs:
+    txt = m.get("text", "")
+    kind = "HỎI" if txt.startswith("[HỎI]") else ("BLOCKED" if txt.startswith("BLOCKED") else "")
+    if not kind or m.get("role") == "owner":
+        continue  # chip của CEO đi qua loại UNACK
+    if not any(x.get("at", 0) > m.get("at", 0) and x.get("role") in ("captain", "owner")
+               for x in msgs):
+        add(2, m.get("at", 0),
+            f"{kind} từ {m.get('from', '?')} lúc {hm(m.get('at'))}: {txt[:60]} "
+            f"— next: trả lời chip (quyết của CEO hoặc ép hướng anti-grind)")
+
+# ③ UNACK — tin CEO/owner chưa có tin captain/worker nào sau đó
+for m in msgs:
+    if m.get("role") != "owner":
+        continue
+    if not any(x.get("at", 0) > m.get("at", 0) and x.get("role") in ("captain", "worker")
+               for x in msgs):
+        add(3, m.get("at", 0),
+            f"UNACK tin CEO {m.get('from', '?')} lúc {hm(m.get('at'))}: {m.get('text', '')[:60]} "
+            f"— next: ACK + nhận việc tin này")
+
+# ④ UNDONE — worker đăng ký chưa DONE (bus DONE từ tên worker sau spawn, hoặc event
+# worker.done). LOST đã subsume: pane chết đã flag ① thì không lặp lại ④.
+for pane, e in workers:
+    name = e.get("name") or ""
+    if (not name or name == "captain" or pane in lost_panes
+            or not pane.startswith("term_") or not (e.get("room") in ("", None, channel))):
+        continue
+    if any(m.get("from") == name and m.get("text", "").startswith("DONE")
+           and m.get("at", 0) >= e.get("at", 0) for m in msgs):
+        continue
+    if e.get("task") in done_task_ids:
+        continue
+    add(4, e.get("at", 0),
+        f"UNDONE worker '{name}' (spawn {hm(e.get('at'))}, task {e.get('task') or '?'}) "
+        f"— next: đang chạy thì heartbeat/đợi DONE; stall thì skill crew-recovery (state → peek)")
+
+items.sort(key=lambda t: (t[0], t[1]))
+if not items:
+    print(f"(room #{channel} sạch — không có open items)")
+else:
+    for i, (_, _, line) in enumerate(items, 1):
+        print(f"{i} {line}")
+PY
+}
+
 case "$CMD" in
   send)  [ $# -eq 0 ] && { echo "usage: team-chat send \"<text>\" [--from name] [--role r] [--channel c]" >&2; exit 2; }
          send_msg "$@" ;;
@@ -340,6 +466,7 @@ PY
   ;;
   read)  read_msgs "$@" ;;
   tail)  tail_msgs "$@" ;;
+  open-items) open_items "$@" ;;
   path)  echo "$LOG" ;;
-  *)     echo "usage: team-chat send|plan|done|ask|blocked|rooms|read|tail|event|path — hand-back 6 mục xem skills/team-workflow/TEMPLATES.md" >&2; exit 2 ;;
+  *)     echo "usage: team-chat send|plan|done|ask|blocked|rooms|read|tail|open-items|event|path — hand-back 6 mục xem skills/team-workflow/TEMPLATES.md" >&2; exit 2 ;;
 esac
