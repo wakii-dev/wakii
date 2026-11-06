@@ -64,6 +64,55 @@ e = reg.get(sys.argv[2])
 if e: print(json.dumps(e))
 PY
 }
+LEDGER_DIR="${TEAM_LEDGER_DIR:-$HOME/.claude/chat/ledger}"
+ledger_dispatch() { # pane name room task worktree dispatchId → ghi dòng dispatch + dò session jsonl mới nhất chưa claim
+  python3 - "$LEDGER_DIR" "$@" <<'PY'
+import datetime, json, os, re, sys, time
+ledger_dir, pane, name, room, task, wt, disp = sys.argv[1:8]
+home = os.environ.get("HOME") or os.path.expanduser("~")
+now = int(time.time() * 1000)
+line = {"v": 1, "kind": "dispatch", "pane": pane, "name": name, "room": room,
+        "task": task or "", "worktree": wt, "dispatchId": disp or "",
+        "session": "", "startedAt": now}
+proj = os.path.join(home, ".claude", "projects", re.sub(r"[\\/:]", "-", wt or ""))
+claimed = set()
+try:
+    for l in open(os.path.join(ledger_dir, room + ".jsonl"), encoding="utf-8"):
+        try:
+            e = json.loads(l)
+            if e.get("kind") == "dispatch" and e.get("session"): claimed.add(e["session"])
+        except Exception: continue
+except FileNotFoundError: pass
+cands = []
+try:
+    for f in os.listdir(proj):
+        if not f.endswith(".jsonl") or f in claimed: continue
+        with open(os.path.join(proj, f), encoding="utf-8", errors="replace") as fh:
+            for l in fh:
+                try: ts = json.loads(l).get("timestamp")
+                except Exception: continue
+                if ts:
+                    t = int(datetime.datetime.fromisoformat(ts.replace("Z", "+00:00")).timestamp() * 1000)
+                    if now - 150000 <= t <= now: cands.append((t, f))
+                    break
+except OSError: pass
+if cands: line["session"] = max(cands)[1][:-6]
+os.makedirs(ledger_dir, exist_ok=True)
+with open(os.path.join(ledger_dir, room + ".jsonl"), "a", encoding="utf-8") as fh:
+    fh.write(json.dumps(line, ensure_ascii=False) + "\n")
+PY
+}
+ledger_end() { # pane room → ghi endedAt (chỉ khi ledger room đã tồn tại — không dispatch thì không có gì đóng)
+  python3 - "$LEDGER_DIR" "$1" "$2" <<'PY'
+import json, os, sys, time
+ledger_dir, pane, room = sys.argv[1:4]
+path = os.path.join(ledger_dir, room + ".jsonl")
+if not room or not os.path.isfile(path): sys.exit(0)
+with open(path, "a", encoding="utf-8") as fh:
+    fh.write(json.dumps({"v": 1, "kind": "end", "pane": pane, "room": room,
+                         "endedAt": int(time.time() * 1000)}, ensure_ascii=False) + "\n")
+PY
+}
 rooms_reg() { # rooms_reg open <room> <feature> <repo> <run> | close <room> | list
   python3 - "$HOME/.claude/chat/rooms.json" "$@" <<'PY'
 import json, sys, os, time
@@ -472,6 +521,7 @@ except Exception: pass
 import sys, re
 m = re.search(r'ctx_[0-9a-f]{8,}', sys.stdin.read())
 print(m.group(0) if m else '')" 2>/dev/null)
+      ledger_dispatch "$PANE" "${NAME%%-*}" "${ROOM_:-${REPO}-${NAME%%-*}}" "$TASK" "$WT_PATH" "$DISPATCH_ID" 2>/dev/null || true
       TC_R="$HOME/.claude/bin/team-chat"; [ -x "$TC_R" ] || TC_R="$(dirname "$0")/team-chat"
       [ -n "${ROOM_:-}" ] && TEAM_CHAT_MACHINE=1 "$TC_R" send "✅ RECEIPT spawned ${NAME%%-*} @ ${PANE%%-*}${DISPATCH_ID:+ · dispatch $DISPATCH_ID}" --from system --role system --channel "$ROOM_" >/dev/null 2>&1 || true
     else
@@ -581,6 +631,7 @@ for pane, e in reg.items():
         print(pane); break
 PY
 )
+    [ -n "$CPANE" ] && [ -n "$CROOM" ] && ledger_end "$CPANE" "$CROOM" 2>/dev/null
     if [ -n "$CPANE" ]; then
       "$ORCA" terminal close --terminal "$CPANE" --json > /dev/null 2>&1 || true
       python3 - "$REG" "$CPANE" <<'PY'

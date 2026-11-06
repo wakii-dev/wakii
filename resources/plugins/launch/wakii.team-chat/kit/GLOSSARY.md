@@ -17,6 +17,7 @@ Mỗi mục có dòng **Trong code** trỏ tới identifier thật (bin + hàm) 
 | **Heartbeat** | Nhịp tin trạng thái captain gửi room ~5'/bước để CEO không mù; app-side là heartbeat tick của supervisor. | "ping" (peek là 1 lần, heartbeat là nhịp), "status spam" |
 | **Churn** | Vòng lặp chết–tái sinh worker/captain mỗi restart (orphan captain) — đã fix `3d93504529`: xoá REG cần chết 2 tick + REG >5', adopt trước spawn. | "restart loop", "flapping" |
 | **Dispatch** | 1 lần giao task cho worker qua orchestration (run → task → worker-start), có `dispatchId` trong RECEIPT. | "send", "spawn" (spawn là dựng pane, dispatch là giao task) |
+| **Ledger** | Sổ dispatch per room: `~/.claude/chat/ledger/<room>.jsonl` — dòng `dispatch` (pane, name, dispatchId, session jsonl, startedAt) khi worker-start, dòng `end` (endedAt) khi done/cleanup; nguồn số liệu token cho team-usage. | "log spawn" (đó là file spawn-*.log), "usage db" (ledger là JSONL thuần đọc ghi-append) |
 
 ## Trong code
 
@@ -31,3 +32,4 @@ Mỗi mục có dòng **Trong code** trỏ tới identifier thật (bin + hàm) 
 - **Heartbeat** — section HEARTBEAT (`kit/agents/captain.md`) + `captainSupervisor` (`main.mjs`)
 - **Churn** — `supervisorMisses`/`supervisorRespawned` (`main.mjs`) + commit `3d93504529`
 - **Dispatch** — `dispatch $DISPATCH_ID` trong RECEIPT (`kit/bin/team-orch`) + `dispatchId` (`kit/bin/story-coordinator-pass`)
+- **Ledger** — `ledger_dispatch`/`ledger_end` (`kit/bin/team-orch`) + dòng end trong `team-chat done` (`kit/bin/team-chat`) + đọc qua `kit/bin/team-usage`
