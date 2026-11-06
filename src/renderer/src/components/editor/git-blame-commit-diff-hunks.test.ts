@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { GitDiffResult } from '../../../../shared/git-diff-compare-types'
+import type { GitDiffResult } from '../../../../shared/git/diff/git-diff-compare-types'
 import { buildGitBlameFileDiff, GIT_BLAME_DIFF_MAX_LINES } from './git-blame-commit-diff-hunks'
 
 function textResult(original: string, modified: string): GitDiffResult {

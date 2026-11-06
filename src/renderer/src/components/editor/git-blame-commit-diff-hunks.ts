@@ -1,4 +1,4 @@
-import type { GitDiffResult } from '../../../../shared/git-diff-compare-types'
+import type { GitDiffResult } from '../../../../shared/git/diff/git-diff-compare-types'
 
 /** Cap: beyond this many lines the dialog shows a truncation notice, not a freeze. */
 export const GIT_BLAME_DIFF_MAX_LINES = 5_000
