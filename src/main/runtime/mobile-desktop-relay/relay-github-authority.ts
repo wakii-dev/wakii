@@ -49,7 +49,7 @@ export function verifyRelayedGitHubAuthority(args: {
       }
       const status = exactGitHubStatus.safeParse(reply)
       if (!status.success) {
- throw new Error('Unable to confirm the executing Wakii server. Try again.')
+        throw new Error('Unable to confirm the executing Wakii server. Try again.')
       }
       if (
         !status.data.result.capabilities?.includes(
@@ -66,7 +66,7 @@ export function verifyRelayedGitHubAuthority(args: {
         status.data.result.runtimeId !== bound.expectedRuntimeSource.runtimeId ||
         status.data.result.hostDescriptor?.installationId !== bound.expectedRuntimeSource.sourceId
       ) {
- throw new Error('The executing Wakii server changed. Try again.')
+        throw new Error('The executing Wakii server changed. Try again.')
       }
     })
 }

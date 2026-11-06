@@ -38,9 +38,9 @@ export function ensureWindowsRendererRuntimeFiles(isServeMode: boolean): boolean
     return true
   }
   const message =
- `Wakii's installation is incomplete: ${fileName} is missing, empty, or in use. ` +
- 'If Wakii is updating, wait for the installer to finish, then open Wakii again. ' +
- 'Otherwise, reinstall Wakii.'
+    `Wakii's installation is incomplete: ${fileName} is missing, empty, or in use. ` +
+    'If Wakii is updating, wait for the installer to finish, then open Wakii again. ' +
+    'Otherwise, reinstall Wakii.'
   console.error(`[startup] ${message}`)
   handleMainProcessPreflightFailure(new Error(message))
   return false

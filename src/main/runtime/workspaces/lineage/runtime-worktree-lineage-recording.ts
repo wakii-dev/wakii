@@ -41,7 +41,7 @@ export type WorktreeLineageRecordingResolution =
   | CrossStoreLineageResolution
   | { kind: 'none'; warnings: WorktreeLineageWarning[] }
 
-/** A parent in another Orca store; saved only in crossStoreLineageByChildKey. */
+/** A parent in another Wakii store; saved only in crossStoreLineageByChildKey. */
 export type CrossStoreLineageResolution = {
   kind: 'crossStore'
   parent: CrossStoreParentRef
@@ -200,7 +200,7 @@ function recordCrossStoreLineage(
           {
             code: 'LINEAGE_PARENT_CONTEXT_MISSING',
             message:
- 'Worktree created, but Wakii could not record its parent on another machine for this workspace.'
+              'Worktree created, but Wakii could not record its parent on another machine for this workspace.'
           }
         ]
   }

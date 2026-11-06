@@ -152,7 +152,7 @@ export function sendQueuedStructuredAgentMessage(
               refusal: refuse(
                 'execution_owner_reconciling',
                 { reason: 'mailOwnerUnconfirmed' },
- "Wakii can't confirm this queued mail is still owed to this chat."
+                "Wakii can't confirm this queued mail is still owed to this chat."
               )
             }
           }

@@ -137,7 +137,7 @@ export class MobileDesktopRelay {
                   : 'runtime_source_mismatch',
                 error instanceof Error
                   ? error.message
- : 'Unable to confirm the executing Wakii server.'
+                  : 'Unable to confirm the executing Wakii server.'
               )
             )
             if (reply) {

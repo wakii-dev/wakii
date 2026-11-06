@@ -11,7 +11,7 @@ import { AcpRpcError } from './acp-errors'
 export const ACP_FORM_ELICITATION_METHOD = 'elicitation/create'
 // OMP pairs each choice field `qN` with a free-text `qN__other`.
 const OTHER_SUFFIX = '__other'
- const NOT_SHOWN_ANSWER = `Not shown to the user: Wakii shows at most ${MAX_JOURNAL_GROUPED_PROMPT_QUESTIONS} questions at once. Ask again.`
+const NOT_SHOWN_ANSWER = `Not shown to the user: Wakii shows at most ${MAX_JOURNAL_GROUPED_PROMPT_QUESTIONS} questions at once. Ask again.`
 
 const choiceSchema = z.looseObject({
   const: z.string(),

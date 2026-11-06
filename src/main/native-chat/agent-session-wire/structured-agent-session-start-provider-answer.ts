@@ -23,17 +23,17 @@ export type OpenedProvider = StructuredAgentSessionProviderOpenResult & {
   acquisitionGeneration: string
 }
 
-/** Orca could not record or apply what the open answered; nothing about the agent says retry. */
+/** Wakii could not record or apply what the open answered; nothing about the agent says retry. */
 export function refusedStart(): AgentSessionStartFailure {
   return new AgentSessionStartFailure(
- new Error('Wakii could not record what the agent answered at its start'),
+    new Error('Wakii could not record what the agent answered at its start'),
     'never',
     agentSessionFailureFact('hostStopped')
   )
 }
 
 /** Reconcile uncertain rewind before delivery; persistent uncertainty fails startup with the
- *  adapter's verdict on its read, or as final when Orca's own reading failed. */
+ *  adapter's verdict on its read, or as final when Wakii's own reading failed. */
 export async function readRewindAtStart(
   context: StructuredAgentSessionProviderStartedContext,
   event: OpenedProvider,

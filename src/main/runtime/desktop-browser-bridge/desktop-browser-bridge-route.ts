@@ -72,7 +72,7 @@ export async function routeDesktopBrowserBridgeRpc(options: {
   if (params.expectUrl !== undefined && !options.registry.newestAttachmentEnforcesExpectUrl()) {
     throw new BrowserError(
       BROWSER_EXPECT_URL_UNSUPPORTED_CODE,
- 'The Wakii desktop sharing its browser cannot check --expect-url. Update Wakii on that desktop or drop the flag.'
+      'The Wakii desktop sharing its browser cannot check --expect-url. Update Wakii on that desktop or drop the flag.'
     )
   }
   const result = await options.registry.forward(

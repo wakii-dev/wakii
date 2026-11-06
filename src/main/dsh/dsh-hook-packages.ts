@@ -3,7 +3,7 @@ import { join } from 'node:path'
 
 import { isDefinitiveAbsence } from '../../shared/definitive-filesystem-absence'
 
-/** The package Orca's patch row names; DSH imports it from each profile. */
+/** The package Wakii's patch row names; DSH imports it from each profile. */
 export const DSH_HOOK_EXECUTOR_PACKAGE = '@deepseek-ai/dsh-hooks-claude-code'
 
 /** The DSH engine ships every executor peer except the hook protocol, so profiles must carry both. */
@@ -38,5 +38,5 @@ export function describeDshProfilesMissingHookPackages(dshHome: string): string 
     .map(({ profileDir, missing }) => `${profileDir} (missing ${missing.join(', ')})`)
     .join('; ')
   const install = DSH_HOOK_PACKAGES.map((pkg) => `${pkg}@<dsh version>`).join(' ')
- return `These DSH profiles cannot load Wakii's hooks, so their sessions send no events to Wakii: ${list}. Run \`pnpm add ${install}\` in each profile directory (npm latest is an older, incompatible line
+  return `These DSH profiles cannot load Wakii's hooks, so their sessions send no events to Wakii: ${list}. Run \`pnpm add ${install}\` in each profile directory (npm latest is an older, incompatible line).`
 }

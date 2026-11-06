@@ -255,7 +255,7 @@ async function request(
         !capabilities.includes(AUTOMATION_LAUNCH_SETUP_RUNTIME_CAPABILITY)
       ) {
         throw new Error(
- 'Update Wakii on the destination host to keep automation agent launch settings.'
+          'Update Wakii on the destination host to keep automation agent launch settings.'
         )
       }
       const unsupported = findUnsupportedMigrationBlobKind(requiredBlobs, capabilities)
