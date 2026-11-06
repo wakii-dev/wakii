@@ -264,7 +264,9 @@
   </details>
   <details class="set-sec" id="roomMetaSec" open>
     <summary id="roomMetaTitle">Room</summary>
+    <a id="rmLinearLink" target="_blank" rel="noopener" style="display:none;font-size:11px;margin-bottom:6px"></a>
     <input type="text" id="rmName" maxlength="40" placeholder="Tên hiển thị" style="margin-bottom:6px" />
+    <input type="text" id="rmLinearIssue" maxlength="300" placeholder="Linear issue (HOI-18 hoặc https://linear.app/.../issue/HOI-18) — 1 room ↔ 1 issue" style="margin-bottom:6px" />
     <input type="text" id="rmWorktree" maxlength="300" placeholder="Worktree path (vd /Users/hoivu/orca/projects/vocabulary)" style="margin-bottom:6px;font-family:ui-monospace,Menlo,monospace;font-size:12px" />
     <textarea id="rmDesc" maxlength="500" placeholder="Mô tả room — feature này làm gì, ai tham gia…"></textarea>
     <input type="text" id="rmTicket" maxlength="300" placeholder="Ticket (Linear/GitHub URL hoặc ID)" style="margin-bottom:6px" />
@@ -923,6 +925,12 @@
       var rn = document.createElement('span'); rn.className = 'rn'; rn.textContent = '#' + r.id
       var st = document.createElement('span'); st.className = 'st'
       st.textContent = r.status === 'closed' ? '🔒 đã đóng' : r.msgs + ' tin'
+      var lin = (r.meta && r.meta.linearIssue) ? String(r.meta.linearIssue) : ''
+      if (lin) {
+        var la = document.createElement('a'); la.className = 'st'; la.textContent = '🔗 ' + lin
+        if (/^https?:\/\//.test(lin)) { la.href = lin; la.target = '_blank'; la.rel = 'noopener' }
+        row.appendChild(la)
+      }
       var closeB = document.createElement('button'); closeB.type = 'button'; closeB.className = 'ibtn ghosty'
       closeB.textContent = r.status === 'closed' ? '🔓' : '🔒'
       closeB.title = r.status === 'closed' ? 'Mở lại room (giữ lịch sử)' : 'Đóng room — tab mờ, giữ lịch sử'
@@ -1120,7 +1128,7 @@
     if (h) h.textContent = 'có thay đổi chưa lưu'
   }
   function bindRoomMetaDirty() {
-    ;['rmName', 'rmWorktree', 'rmDesc', 'rmTicket', 'rmPlan', 'rmFiles', 'rmArtifacts', 'rmMindmap'].forEach(function (id) {
+    ;['rmName', 'rmLinearIssue', 'rmWorktree', 'rmDesc', 'rmTicket', 'rmPlan', 'rmFiles', 'rmArtifacts', 'rmMindmap'].forEach(function (id) {
       var el = document.getElementById(id)
       if (el && !el.__dirtyBound) { el.addEventListener('input', markRoomMetaDirty); el.__dirtyBound = true }
     })
@@ -1130,6 +1138,11 @@
     var m = (r && r.meta) || {}
     document.getElementById('roomMetaTitle').textContent = 'Room #' + activeRoom
     document.getElementById('rmName').value = m.name || ''
+    document.getElementById('rmLinearIssue').value = m.linearIssue || ''
+    var lin = m.linearIssue || ''
+    var linEl = document.getElementById('rmLinearLink')
+    if (lin) { if (/^https?:\/\//.test(lin)) linEl.href = lin; else linEl.removeAttribute('href'); linEl.textContent = '🔗 ' + lin; linEl.style.display = 'inline-block' }
+    else { linEl.removeAttribute('href'); linEl.style.display = 'none' }
     document.getElementById('rmWorktree').value = m.worktree || ''
     document.getElementById('rmDesc').value = m.description || ''
     document.getElementById('rmTicket').value = m.ticket || ''
@@ -1151,6 +1164,7 @@
       at: Date.now(), action: 'update', room: activeRoom,
       meta: {
         name: document.getElementById('rmName').value.trim(),
+        linearIssue: document.getElementById('rmLinearIssue').value.trim(),
         worktree: document.getElementById('rmWorktree').value.trim(),
         description: document.getElementById('rmDesc').value.trim(),
         ticket: document.getElementById('rmTicket').value.trim(),

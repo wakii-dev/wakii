@@ -276,10 +276,10 @@ export default function activate(orca) {
             })()
           } else if (rcReq.action === 'update') {
             // Metadata room do CEO định nghĩa trong settings: name/description/
-            // worktree/ticket/files/artifacts/plan/mindmap…
+            // worktree/ticket/files/artifacts/plan/mindmap/linearIssue (ruling CEO 06/11: 1 room ↔ 1 issue)…
             const meta = (rcReq.meta && typeof rcReq.meta === 'object') ? rcReq.meta : {}
             if (!rooms[rcReq.room]) rooms[rcReq.room] = { feature: rcReq.room, status: 'open', createdAt: Date.now() }
-            for (const k of ['name', 'description', 'worktree', 'ticket', 'files', 'artifacts', 'plan', 'mindmap', 'repo', 'run']) {
+            for (const k of ['name', 'description', 'worktree', 'ticket', 'linearIssue', 'files', 'artifacts', 'plan', 'mindmap', 'repo', 'run']) {
               if (meta[k] !== undefined) rooms[rcReq.room][k] = String(meta[k]).slice(0, 2000)
             }
             await writeFile(roomsPath, JSON.stringify(rooms, null, 1))

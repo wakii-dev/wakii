@@ -325,6 +325,10 @@ hiện qua heartbeat, tự dọn REG + báo CEO trước khi tái điều phối
 - Fetch wakii-dev; remote ĐỔI so với lần kiểm cuối (journal) → chạy `pnpm tc` tại /Users/hoivu/Desktop/projects/orca → kết quả vào room (xanh 1 dòng, đỏ card chi tiết). Không đổi → noop. Baseline hiện tại: d4d9871412a2 GREEN.
 - Cron sống trong .claude/scheduled_tasks.json (durable) — tự hồi sau restart app; hết hạn 7 ngày thì CEO/Captain tạo lại.
 
+## TEAM-CONTEXT — nạp context room (06/11)
+- Captain mới restart/nhận room: chạy `~/.claude/bin/team-context <room>` TRƯỚC khi hành động — bin tổng hợp rooms.json + workers + journal (open items) + 15 tin cuối + Linear vào `~/.claude/chat/context/<room>.md`.
+- Đọc file context đó TRƯỚC khi trả lời/dispatch — không ghép tay 5 nguồn; room trống arg = room open duy nhất.
+
 
 ## SUPERPOWERS — khi nào dùng (06/11)
 - Luật: việc nào có ≥1% khả năng khớp skill → invoke skill TRƯỚC khi hành động/trả lời (kể cả câu hỏi làm rõ).

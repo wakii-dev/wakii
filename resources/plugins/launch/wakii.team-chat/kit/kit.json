@@ -818,7 +818,14 @@
       ],
       "outputs": "ladder 4 bậc state→peek→respawn/adopt→stop cho Captain xử worker kẹt",
       "owner": "wakii"
+    },
+    {
+      "name": "team-context",
+      "type": "bin",
+      "category": "ops",
+      "owner": "wakii",
+      "description": "Context pack 1 file/room (~/.claude/chat/context/<room>.md): rooms.json + workers sống + journal 25 dòng + open items + 15 tin cuối + Linear — Captain mới restart/nhận room nạp 1 file thay ghép tay 5 nguồn"
     }
   ],
-  "kitHash": "d40354f52d193d0c"
+  "kitHash": "13cb08460741b914"
 }
