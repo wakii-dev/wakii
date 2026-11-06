@@ -1651,6 +1651,7 @@ export default function activate(orca) {
   //   3. HEARTBEAT PING: captain im >10 phút → gửi ping giữ session tươi
   let supervisorAt = 0
   const supervisorRespawned = new Map() // room → timestamp (anti-spam 5')
+  const supervisorMisses = new Map() // pane → {n, at} — chết phải xác nhận 2 tick + REG > 5 phút mới xoá
   const captainSupervisor = async () => {
     try {
       // Throttle: chạy tối đa mỗi 30s (heartbeat riêng 10 phút)
@@ -1691,34 +1692,66 @@ export default function activate(orca) {
           }
         }
 
-        // LAYER 1: REGISTRATION HEALER
-        // Captain có REG nhưng pane chết → xoá REG entry
+        if (capPane && byHandle.has(capPane)) {
+          supervisorMisses.delete(capPane)
+        }
+
+        // LAYER 1: REGISTRATION HEALER — chết phải xác nhận 2 tick liên tiếp
+        // ĐÚNG độ tuổi REG > 5 phút. Terminal list eventual-consistency: captain
+        // mới spawn chưa kịp xuất hiện là bị bỏ nhầm → churn orphan captain.
         if (capPane && !byHandle.has(capPane)) {
+          const miss = supervisorMisses.get(capPane) || { n: 0 }
+          miss.n++
+          miss.at = miss.at || now
+          supervisorMisses.set(capPane, miss)
+          const regAge = now - (capEntry.at || 0)
+          if (miss.n < 2 || regAge < 5 * 60 * 1000) {
+            continue
+          }
           delete reg[capPane]
+          supervisorMisses.delete(capPane)
           dirty = true
           capPane = ''
           capEntry = null
-          actions.push('heal: xoá REG chết cho #' + roomId)
+          actions.push('heal: xoá REG chết cho #' + roomId + ' (xác nhận ' + miss.n + ' tick, tuổi ' + Math.round(regAge / 60000) + ' phút)')
         }
 
-        // Pane sống + title CAPTAIN + đúng room nhưng KHÔNG REG → re-register
+        // Re-register: ưu tiên handle có worktreePath khớp room worktree;
+        // title-match chỉ là fallback cho room floating (không có worktree để so).
         if (!capPane) {
+          const normWt = wt.replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase()
           for (const [handle, t] of byHandle) {
-            const title = String(t.title || '')
-            if (title.toLowerCase().includes('captain') && title.toLowerCase().includes(roomId.toLowerCase().split('-')[0])) {
-              // Kiểm tra pane này không phải captain của room khác
-              const existingOther = Object.entries(reg).find(([p, e]) => e && e.name === 'captain' && p === handle && e.room !== roomId)
-              if (existingOther) continue
-              reg[handle] = { name: 'captain', worktree: wt, task: '', run: '', repo: roomEntry.repo || '', room: roomId, at: Date.now() }
-              dirty = true
-              capPane = handle
-              actions.push('heal: re-register ' + handle.slice(0, 14) + ' → captain #' + roomId)
-              break
-            }
+            if (reg[handle]) continue
+            const tPath = String(t.worktreePath || '').replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase()
+            const title = String(t.title || '').toLowerCase()
+            const wtMatch = normWt !== '' && tPath === normWt
+            const titleMatch = title.includes('captain') && title.includes(roomId.toLowerCase().split('-')[0])
+            if (!wtMatch && !titleMatch) continue
+            reg[handle] = { name: 'captain', worktree: wt, task: '', run: '', repo: roomEntry.repo || '', room: roomId, at: Date.now() }
+            supervisorMisses.delete(handle)
+            dirty = true
+            capPane = handle
+            actions.push('heal: re-register ' + handle.slice(0, 14) + ' → captain #' + roomId)
+            break
           }
         }
 
-        // LAYER 2: DEATH DETECTOR — auto-respawn
+        // LAYER 2: DEATH DETECTOR — ADOPT orphan trước, spawn là giải pháp cuối
+        if (!capPane && wt) {
+          const normWt = wt.replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase()
+          for (const [handle, t] of byHandle) {
+            if (reg[handle]) continue
+            const tPath = String(t.worktreePath || '').replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase()
+            if (tPath !== normWt) continue
+            if (!String(t.title || '').toLowerCase().includes('claude')) continue
+            reg[handle] = { name: 'captain', worktree: wt, task: '', run: '', repo: roomEntry.repo || '', room: roomId, at: Date.now() }
+            supervisorMisses.delete(handle)
+            dirty = true
+            capPane = handle
+            actions.push('adopt: orphan ' + handle.slice(0, 14) + ' → captain #' + roomId)
+            break
+          }
+        }
         if (!capPane && !wt) {
           // Room không worktree → Captain floating: respawn qua agent.launchFloating
           // (nhánh này thiếu thì Captain floating chết không bao giờ tự hồi).
