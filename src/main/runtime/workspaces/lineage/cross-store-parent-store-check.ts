@@ -10,13 +10,13 @@ export async function assertParentInAnotherStore(
   if (!own) {
     throw new RuntimeLineageError(
       'LINEAGE_PARENT_CONTEXT_MISSING',
-      "This Orca install's identity is unavailable, so it can't save a parent from another machine."
+ "This Wakii install's identity is unavailable, so it can't save a parent from another machine."
     )
   }
   if (parent.installationId === own) {
     throw new RuntimeLineageError(
       'LINEAGE_PARENT_CONTEXT_CONFLICT',
-      'That parent is in this Orca install. Choose it as a parent here instead.'
+ 'That parent is in this Wakii install. Choose it as a parent here instead.'
     )
   }
 }

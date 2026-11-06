@@ -135,7 +135,7 @@ export class RuntimeWorktreeLineageController {
       return {
         reason: conflict
           ? "this terminal's contexts name different workspaces."
-          : "Orca couldn't find this terminal's workspace."
+ : "Wakii couldn't find this terminal's workspace."
       }
     }
     const { parent, capture } = resolution
@@ -143,10 +143,10 @@ export class RuntimeWorktreeLineageController {
       return { reason: "a folder workspace can't parent a workspace on another machine yet." }
     }
     if (!parent.instanceId || !installationId) {
-      return { reason: "Orca couldn't confirm this workspace's identity." }
+ return { reason: "Wakii couldn't confirm this workspace's identity." }
     }
     if (!isCrossStoreInferredSource(capture.source)) {
-      return { reason: "Orca couldn't tell which workspace this command runs in." }
+ return { reason: "Wakii couldn't tell which workspace this command runs in." }
     }
     return {
       parent: { installationId, workspaceKey: parent.workspaceKey, instanceId: parent.instanceId },

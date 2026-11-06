@@ -323,7 +323,7 @@ async function crashLoopDetail(
       detail = await withOrcadLogTail(slot, slotDir, withLastFailure(message))
     }
   } catch (error) {
-    console.warn(`[ssh] Could not read the managed Orca server's log on ${hostLabel}:`, error)
+ console.warn(`[ssh] Could not read the managed Wakii server's log on ${hostLabel}:`, error)
   }
   console.warn(`[ssh] ${detail.split('\n')[0]}`)
   brake.setDetail(environmentId, detail)
@@ -332,7 +332,7 @@ async function crashLoopDetail(
 
 function crashLoopMessage(hostLabel: string, logPath: string): string {
   return (
-    `Orca stopped restarting its server on ${hostLabel}: it failed or exited unexpectedly ` +
+ `Wakii stopped restarting its server on ${hostLabel}: it failed or exited unexpectedly ` +
     `${MAX_FAILED_RUNS_PER_WINDOW} times in ${FAILED_RUN_WINDOW_MS / 60_000} minutes. ` +
     `Check ${logPath} on the host, fix the cause, then disconnect and reconnect the host to try again.`
   )

@@ -37,5 +37,5 @@ export function parseOrcadInstanceLockRecord(content: string): OrcadLockRecord |
 }
 
 export function describeLockHolder(record: OrcadLockRecord): string {
-  return record.role === 'desktop' ? 'The Orca desktop app' : 'Another orcad'
+ return record.role === 'desktop' ? 'The Wakii desktop app' : 'Another orcad'
 }

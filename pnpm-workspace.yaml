@@ -112,8 +112,6 @@ packageExtensions:
 overrides:
   hono@>=4.12.4 <4.13.11: 4.13.11
   dompurify@<3.4.17: 3.4.17
-  # GHSA-g3hv-75wg-m249 (DoS via crafted glob parts); @electron/asar chain pins ^3/^5/^9 so update can't reach 11.
-  minimatch@<11.0.1: '>=11.0.1'
   # Upstream markdown/math packages still require the vulnerable 0.16 line.
   katex@>=0.11.0 <0.18.2: 0.18.10
 

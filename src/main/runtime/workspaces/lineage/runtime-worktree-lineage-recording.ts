@@ -200,7 +200,7 @@ function recordCrossStoreLineage(
           {
             code: 'LINEAGE_PARENT_CONTEXT_MISSING',
             message:
-              'Worktree created, but Orca could not record its parent on another machine for this workspace.'
+ 'Worktree created, but Wakii could not record its parent on another machine for this workspace.'
           }
         ]
   }

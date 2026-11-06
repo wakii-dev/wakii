@@ -200,7 +200,7 @@ export class StructuredAgentSessionStartupAttempts {
   ): void {
     const tracked = this.tracking(sessionId, child)
     if (ended.failure) {
-      const cause = new Error(ended.reason ?? 'Orca stopped the agent while it started')
+ const cause = new Error(ended.reason ?? 'Wakii stopped the agent while it started')
       this.failed(sessionId, child, new AgentSessionStartFailure(cause, 'never', ended.failure))
     } else if (tracked && (ended.byOrca || !this.ownsOpen(sessionId, child))) {
       this.settle(sessionId, tracked, 'ended')

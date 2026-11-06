@@ -108,7 +108,7 @@ export class RelayedPhoneReplies {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         this.openRequests.delete(id)
-        reject(new Error('Timed out confirming the executing Orca server.'))
+ reject(new Error('Timed out confirming the executing Wakii server.'))
       }, timeoutMs)
       this.openRequests.set(id, {
         hostStreamIds: [],
@@ -119,7 +119,7 @@ export class RelayedPhoneReplies {
         },
         cancel: () => {
           clearTimeout(timer)
-          reject(new Error('The executing Orca server connection changed.'))
+ reject(new Error('The executing Wakii server connection changed.'))
         }
       })
       try {

@@ -26,7 +26,7 @@ export type OpenedProvider = StructuredAgentSessionProviderOpenResult & {
 /** Orca could not record or apply what the open answered; nothing about the agent says retry. */
 export function refusedStart(): AgentSessionStartFailure {
   return new AgentSessionStartFailure(
-    new Error('Orca could not record what the agent answered at its start'),
+ new Error('Wakii could not record what the agent answered at its start'),
     'never',
     agentSessionFailureFact('hostStopped')
   )

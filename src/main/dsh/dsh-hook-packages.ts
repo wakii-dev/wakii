@@ -38,5 +38,5 @@ export function describeDshProfilesMissingHookPackages(dshHome: string): string 
     .map(({ profileDir, missing }) => `${profileDir} (missing ${missing.join(', ')})`)
     .join('; ')
   const install = DSH_HOOK_PACKAGES.map((pkg) => `${pkg}@<dsh version>`).join(' ')
-  return `These DSH profiles cannot load Orca's hooks, so their sessions send no events to Orca: ${list}. Run \`pnpm add ${install}\` in each profile directory (npm latest is an older, incompatible line).`
+ return `These DSH profiles cannot load Wakii's hooks, so their sessions send no events to Wakii: ${list}. Run \`pnpm add ${install}\` in each profile directory (npm latest is an older, incompatible line
 }

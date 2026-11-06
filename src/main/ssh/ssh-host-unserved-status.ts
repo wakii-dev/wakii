@@ -53,13 +53,13 @@ const NODE_DOWNLOAD_BLOCKED_MESSAGES: Record<NodeDistMirrorAttempt, string> = {
 }
 
 const SETUP_REMEDY_MESSAGES: Record<SshHostServerSetupRemedy, string> = {
-  retry: 'Orca couldn’t start its server on this host. Try connecting again.',
+ retry: 'Wakii couldn’t start its server on this host. Try connecting again.',
   'free-host-space':
-    'This host doesn’t have enough free disk space for Orca to keep a backup of its server data while starting it. Free up space on the host, then connect again.',
+ 'This host doesn’t have enough free disk space for Wakii to keep a backup of its server data while starting it. Free up space on the host, then connect again.',
   'stop-unmanaged-runtime':
-    'An Orca server this app didn’t start still appears to be using this host’s Orca data. Stop it on the host, then connect again. This host’s Details, in Settings > SSH Hosts, names its process.',
+ 'An Wakii server this app didn’t start still appears to be using this host’s Wakii data. Stop it on the host, then connect again. This host’s Details, in Settings > SSH Hosts, names its process.',
   'see-details':
-    'Orca couldn’t start its server on this host. The cause is in this host’s Details, in Settings > SSH Hosts.'
+ 'Wakii couldn’t start its server on this host. The cause is in this host’s Details, in Settings > SSH Hosts.'
 }
 
 /** Reuse untranslated status wording for logs/clients without the catalog. */

@@ -25,11 +25,11 @@ export function remoteHelpers(
 ): Pick<WorkerStopReceipt, 'helpers' | 'warning' | 'helperStopError'> {
   if (!status.capabilities?.includes(ORCHESTRATION_WORKER_STOP_HELPERS_RUNTIME_CAPABILITY)) {
     return {
-      warning: `${serverName} runs an older Orca that leaves helpers this worker started there running; update it to stop them with the worker.`
+ warning: `${serverName} runs an older Wakii that leaves helpers this worker started there running; update it to stop them with the worker.`
     }
   }
   if (remote.helpers !== undefined && !Array.isArray(remote.helpers)) {
-    return { helperStopError: `${serverName} returned a helper list this Orca cannot read.` }
+ return { helperStopError: `${serverName} returned a helper list this Wakii cannot read.` }
   }
   const items = remote.helpers ?? []
   return items.length ? { helpers: items.map(readRemoteHelper) } : {}
@@ -45,7 +45,7 @@ function readRemoteHelper(item: unknown): HelperStopOutcome {
       dispatchId: 'unknown',
       creatorDispatchId: 'unknown',
       outcome: 'unconfirmed',
-      lastError: 'The host reported a helper this Orca cannot read.'
+ lastError: 'The host reported a helper this Wakii cannot read.'
     }
   }
   const outcome = HelperStopOutcome.shape.outcome.safeParse(helper.data.outcome)

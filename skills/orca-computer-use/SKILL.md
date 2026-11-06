@@ -1,5 +1,5 @@
 ---
-name: orca-computer-use
+name: computer-use
 description: >-
   Drives the GUI of a visible local app window through `orca computer`: accessibility
   tree, clicks, typing, menus, dialogs, and screenshots in native apps and external
@@ -9,7 +9,7 @@ description: >-
   for Orca's embedded browser (`orca-cli`).
 ---
 
-# Orca Computer Use
+# Computer Use
 
 This discovery stub loads the version-matched guide from the Orca executable used for this session.
 

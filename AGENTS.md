@@ -179,7 +179,7 @@ Khi rebrand Orca → Wakii, các định danh kỹ thuật sau GIỮ NGUYÊN qua
 - first-party product domain `onorca.dev` + `app.orca.dev` (updater feed, cloud auth, artifacts API)
 - orcad family: daemon identifiers/paths/env (`orcad`, `OrcadHost*`, `ORCAD_*`, `.orcad`)
 - data/config paths & filenames: `~/.orca`, `.orca/`, `.cache/orca`, `orca.yaml`, `orca-plugin.json`, `orca-marketplace.json`, `orca.d.ts`
-- CLI binary/command refs (binary chua rename — tier sau): `orca`, `orca-ide`, `orca-cli`, `orca.cmd/exe/sh`, backticked `orca` trong prose, `orca <subcommand>` (serve/account/worktree/terminal/orchestration/plugin/profile/environment/browser/status), `ORCA skills get …`, `orca.panels.*`, `orca:<channel>` event names
+- CLI binary/command refs (binary chua rename — tier sau): `orca`, `orca-ide`, `orca-cli`, `orca.cmd/exe/sh`, backticked `orca` trong prose, `orca <subcommand>` (serve/account/worktree/terminal/orchestration/plugin/profile/environment/browser/status/computer/vm), `ORCA skills get …`, `orca.panels.*`, `orca:<channel>` event names
 - wire/protocol values: bare `'orca'` (provider, clientInfo, approvalEnforcement, journal keys), `X-Orca-Agent-Hook-Token` header, `'opened-in-orca'` enum, `com.orca.*` native messaging, `orca.localhost`/`@orca.local` dev identity, `app_starred_orca` telemetry
 - external brand `GNOME Orca`; PowerShell `Get-Orca*` helpers; legacy profile markers `# BEGIN/END ORCA AGENT STATUS HOOKS`
 - CLI prose do commit Tier 1 (`566d5c2f0a8`) da Wakii-hoa co chu dich (`use Wakii from`, `Wakii launcher`, `non-Wakii command`...) — giu theo HEAD, khong "revert ho"

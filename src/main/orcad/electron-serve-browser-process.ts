@@ -204,7 +204,7 @@ export class ElectronServeBrowserProcess {
     ) {
       throw new BrowserError(
         BROWSER_EXPECT_URL_UNSUPPORTED_CODE,
-        'The installed Orca app that runs this server’s browser cannot check --expect-url. Update it or drop the flag.'
+ 'The installed Wakii app that runs this server’s browser cannot check --expect-url. Update it or drop the flag.'
       )
     }
     const worktreeId =
