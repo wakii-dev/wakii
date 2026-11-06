@@ -8,7 +8,7 @@ const build = (tag: string): ReleaseBuild => ({
   channel: 'hourly',
   name: null,
   publishedAt: null,
-  releaseUrl: `https://github.com/stablyai/orca-hourly/releases/tag/${tag}`,
+  releaseUrl: `https://github.com/wakii-dev/wakii/releases/tag/${tag}`,
   installerUrl: null
 })
 

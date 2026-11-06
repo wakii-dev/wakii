@@ -4,8 +4,8 @@ import { parse } from 'yaml'
 
 export type UpdaterFeedRepo = { owner: string; repo: string }
 
-// No packaged app-update.yml (dev/test) → upstream parity, như hành vi cũ.
-export const UPDATER_DEFAULT_FEED_REPO: UpdaterFeedRepo = { owner: 'stablyai', repo: 'orca' }
+// No packaged app-update.yml (dev/test) → fork feed, như releases thật của fork.
+export const UPDATER_DEFAULT_FEED_REPO: UpdaterFeedRepo = { owner: 'wakii-dev', repo: 'wakii' }
 
 export type UpdaterReleaseFeedUrls = {
   atomFeedUrl: string

@@ -44,10 +44,7 @@ function isHostUnsupportedError(error: unknown): boolean {
     // String code from the runtime dispatcher — NOT the relay path's -32601.
     return error.code === 'method_not_found'
   }
-  return (
-    error instanceof Error &&
-    error.message.includes(GIT_BLAME_UNSUPPORTED_HOST_MARKER)
-  )
+  return error instanceof Error && error.message.includes(GIT_BLAME_UNSUPPORTED_HOST_MARKER)
 }
 
 export async function getRuntimeGitBlame(
@@ -68,13 +65,18 @@ export async function getRuntimeGitBlame(
       return await blame({
         worktreePath: resolveLocalWorktreePath(context),
         connectionId: context.connectionId,
-        filePath
+        filePath,
+        ...(context.blameRevision ? { revision: context.blameRevision } : {})
       })
     }
     return await callRuntimeRpc<GitBlameResult>(
       target,
       'git.blame',
-      { worktree: toRuntimeWorktreeSelector(context.worktreeId), filePath },
+      {
+        worktree: toRuntimeWorktreeSelector(context.worktreeId),
+        filePath,
+        ...(context.blameRevision ? { revision: context.blameRevision } : {})
+      },
       { timeoutMs: 15_000 }
     )
   } catch (error) {

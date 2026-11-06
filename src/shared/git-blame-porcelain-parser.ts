@@ -81,7 +81,9 @@ export function parseGitBlamePorcelain(stdout: string, filePath: string): GitBla
       lines.push({
         lineNumber: startLine + offset,
         hash: sha,
-        abbreviatedHash: committed ? sha.slice(0, GIT_BLAME_UNCOMMITTED_HASH.length) : GIT_BLAME_UNCOMMITTED_HASH,
+        abbreviatedHash: committed
+          ? sha.slice(0, GIT_BLAME_UNCOMMITTED_HASH.length)
+          : GIT_BLAME_UNCOMMITTED_HASH,
         author: meta.author,
         authorTime: meta.authorTime,
         summary: meta.summary,
@@ -109,10 +111,22 @@ export async function loadGitBlameFromExecutor(
   cwd: string,
   options: GitBlameOptions
 ): Promise<GitBlameResult> {
+  // A revision reaches a git argv, so it must be a full object id — anything
+  // else (corrupt porcelain, tampered RPC param) is refused, never executed.
+  if (options.revision && !/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/.test(options.revision)) {
+    throw new Error('git blame: revision must be a full git object id')
+  }
   // Why `--end-of-options` + `--`: a hostile path must never parse as a git flag.
+  // A revision (sha from porcelain output) is pinned before the flags; old hosts
+  // simply never set it.
   const { stdout } = await git(
-    ['blame', '--porcelain', '--end-of-options', '--', options.filePath],
+    options.revision
+      ? ['blame', options.revision, '--porcelain', '--end-of-options', '--', options.filePath]
+      : ['blame', '--porcelain', '--end-of-options', '--', options.filePath],
     cwd
   )
-  return parseGitBlamePorcelain(stdout, options.filePath)
+  return {
+    ...parseGitBlamePorcelain(stdout, options.filePath),
+    ...(options.revision ? { revision: options.revision } : {})
+  }
 }

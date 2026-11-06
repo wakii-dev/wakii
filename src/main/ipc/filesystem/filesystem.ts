@@ -19,6 +19,8 @@ import { registerFilesystemGitRemoteHandlers } from './filesystem-git-remote-han
 import { registerFilesystemGitDiffHandlers } from './filesystem-git-diff-handlers'
 import { registerFilesystemGitIndexHandlers } from './filesystem-git-index-handlers'
 import { registerFilesystemGitUrlHandlers } from './filesystem-git-url-handlers'
+import { registerFilesystemGitBlameHandlers } from './filesystem-git-blame-handlers'
+import { registerFilesystemGitCommitMessageHandlers } from './filesystem-git-commit-message-handlers'
 
 export function registerFilesystemHandlers(
   store: Store,
@@ -44,5 +46,7 @@ export function registerFilesystemHandlers(
   registerFilesystemGitDiffHandlers(context)
   registerFilesystemGitIndexHandlers(context)
   registerFilesystemGitUrlHandlers(context)
+  registerFilesystemGitBlameHandlers(context)
+  registerFilesystemGitCommitMessageHandlers(context)
   registerLocalLogTailHandlers(store)
 }

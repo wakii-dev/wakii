@@ -28,6 +28,7 @@ export function registerFilesystemGitBlameHandlers(context: FilesystemHandlerCon
       return getBlame(worktreePath, {
         ...gitOptions,
         filePath,
+        ...(args.revision ? { revision: args.revision } : {}),
         admissionTier: 'interactive'
       })
     }

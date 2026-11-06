@@ -15,7 +15,9 @@
     "../src/renderer/src/components/terminal-pane/pty-agent-pane-launch.test.ts",
     "../src/renderer/src/components/github-item-dialog/load-item-details/work-item-details-target-contract.test.tsx",
     "../src/renderer/src/components/status-bar/ClaudeSwitcherMenu.owner-lifetime.test.tsx",
-    "../src/renderer/src/runtime/provider-account-observation.test-fixture.ts"
+    "../src/renderer/src/runtime/provider-account-observation.test-fixture.ts",
+    "../src/renderer/src/components/editor/use-monaco-file-blame.test.tsx",
+    "../src/shared/git-history-file-path.test.ts"
   ],
   "compilerOptions": {
     "composite": true,

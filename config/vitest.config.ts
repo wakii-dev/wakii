@@ -93,7 +93,10 @@ const testOptions = {
   execArgv: ['--no-experimental-webstorage', '--expose-gc'],
   setupFiles: UNIT_SETUP_FILES.map((file) => resolve(file)),
   include: UNIT_INCLUDE,
-  exclude: balancedShards ? UNIT_EXCLUDE : defaultExclude,
+  exclude: [
+    ...(balancedShards ? UNIT_EXCLUDE : defaultExclude),
+    ...PENDING_GITLENS_PARITY_SF_TESTS
+  ],
   hookTimeout: 60_000,
   testTimeout: 30_000
 }

@@ -5,9 +5,13 @@ import type { MarkdownDocument } from '../../../../shared/filesystem-entry-types
 import { useAppStore } from '@/store'
 import { getWorktreeMapFromState } from '@/store/selectors'
 import { getConnectionId } from '@/lib/connection-context'
-import { QUICK_OUTLINE_EDITOR_ATTRIBUTE, hasQuickOutlineSymbols } from '@/lib/quick-outline-editor-target'
+import {
+  QUICK_OUTLINE_EDITOR_ATTRIBUTE,
+  hasQuickOutlineSymbols
+} from '@/lib/quick-outline-editor-target'
 import { EditorBreadcrumbs } from './EditorBreadcrumbs'
 import { useMonacoGitBlame } from './use-monaco-git-blame'
+import { GitBlameEditorHoverOverlay } from './git-blame-editor-hover-overlay'
 import '@/lib/monaco-setup'
 import { monacoTypographyOptions } from '@/lib/editor-typography'
 import { useEditorTypography } from '@/hooks/use-editor-typography'
@@ -213,7 +217,9 @@ export default function MonacoEditor({
     worktreeId ? (getWorktreeMapFromState(s).get(worktreeId)?.path ?? null) : null
   )
 
-  useMonacoGitBlame({
+  // GitLens-parity SF-1: the editorial hover card replaces the markdown hover
+  // for known blame lines and owns the blame-previous / commit-dialog actions.
+  const blame = useMonacoGitBlame({
     enabled: inlineBlameEnabled && (settings?.editorInlineBlameEnabled ?? true),
     mountedEditor,
     worktreeId: worktreeId ?? null,
@@ -221,7 +227,8 @@ export default function MonacoEditor({
     relativePath,
     connectionId: worktreeId ? getConnectionId(worktreeId) : null,
     content,
-    isDirty
+    isDirty,
+    suppressMarkdownHover: true
   })
 
   const decorations = useMonacoEditorDecorations({
@@ -320,6 +327,11 @@ export default function MonacoEditor({
         />
       ) : null}
       <div className="relative min-h-0 flex-1">
+        <GitBlameEditorHoverOverlay
+          mountedEditor={mountedEditor}
+          blame={blame}
+          relativePath={relativePath}
+        />
         <MonacoMarkdownAnnotationOverlay
           shouldShowMarkdownAnnotations={annotations.shouldShowMarkdownAnnotations}
           commentPopover={annotations.commentPopover}
@@ -328,74 +340,74 @@ export default function MonacoEditor({
           setSelectionAnnotationTarget={annotations.setSelectionAnnotationTarget}
           onSubmitMarkdownComment={annotations.handleSubmitMarkdownComment}
         />
-      <Editor
-        key={modelUri}
-        height={renderedEditorHeight === null ? '100%' : `${renderedEditorHeight}px`}
-        language={language}
-        // Use defaultValue because Orca owns later content sync; controlled values would duplicate setValue.
-        defaultValue={content}
-        theme={monacoTheme}
-        onMount={handleMount}
-        options={{
-          dropIntoEditor: { enabled: false },
-          // This global option also affects diff and Peek; it is defense in depth, not protection from Monarch embedding recursion below the cap.
-          maxTokenizationLineLength: MAX_TOKENIZATION_LINE_LENGTH,
-          // Monaco 0.55 forcibly disables diff sub-editor minimaps; only file editors honor this setting.
-          // Why `?? true`: pre-hydration renders must not flash the minimap off before settings arrive.
-          minimap: { enabled: settings?.editorMinimapEnabled ?? true },
-          scrollBeyondLastLine: false,
-          ...PLUGIN_SYNTAX_EDITOR_OPTIONS,
-          ...buildFileEditorWordWrapOptions(editorWordWrap),
-          ...typographyOptions,
-          lineNumbers: 'on',
-          renderLineHighlight: 'line',
-          automaticLayout: true,
-          unicodeHighlight: {
-            ambiguousCharacters: language !== 'markdown',
-            invisibleCharacters: true
-          },
-          tabSize: 2,
-          readOnly,
-          scrollbar: autoHeight
-            ? {
-                vertical: autoHeightUsesInternalScroll ? 'auto' : 'hidden',
-                handleMouseWheel: autoHeightUsesInternalScroll
-              }
-            : undefined,
-          smoothScrolling: true,
-          // Why explicit: pin VS Code-parity caret/whitespace/suggest behavior on the file editor;
-          // defaults match today, explicit values guarantee they survive Monaco upgrades.
-          cursorSmoothCaretAnimation: settings?.editorCursorSmoothCaretAnimation ?? 'on',
-          renderWhitespace: settings?.editorRenderWhitespace ?? 'selection',
-          stickyScroll: { enabled: settings?.editorStickyScroll ?? false },
-          quickSuggestions: { other: 'on', comments: 'off', strings: 'off' },
-          wordBasedSuggestions: 'currentDocument',
-          snippetSuggestions: 'inline',
-          bracketPairColorization: { enabled: true },
-          padding: { top: 0 },
-          find: monacoFindOptions,
-          // Monaco owns rendered lines, so its selection clipboard must enforce the app opt-out independently of the global DOM hook.
-          selectionClipboard: settings?.primarySelectionMiddleClickPaste ?? isLinuxUserAgent()
-        }}
-        // Build a model URI because the React wrapper’s Uri.parse treats Windows drive letters as schemes.
-        path={modelUri}
-        // Orca owns cursor/scroll restoration; disable the wrapper’s competing view-state map.
-        saveViewState={false}
-        keepCurrentModel
-      />
+        <Editor
+          key={modelUri}
+          height={renderedEditorHeight === null ? '100%' : `${renderedEditorHeight}px`}
+          language={language}
+          // Use defaultValue because Orca owns later content sync; controlled values would duplicate setValue.
+          defaultValue={content}
+          theme={monacoTheme}
+          onMount={handleMount}
+          options={{
+            dropIntoEditor: { enabled: false },
+            // This global option also affects diff and Peek; it is defense in depth, not protection from Monarch embedding recursion below the cap.
+            maxTokenizationLineLength: MAX_TOKENIZATION_LINE_LENGTH,
+            // Monaco 0.55 forcibly disables diff sub-editor minimaps; only file editors honor this setting.
+            // Why `?? true`: pre-hydration renders must not flash the minimap off before settings arrive.
+            minimap: { enabled: settings?.editorMinimapEnabled ?? true },
+            scrollBeyondLastLine: false,
+            ...PLUGIN_SYNTAX_EDITOR_OPTIONS,
+            ...buildFileEditorWordWrapOptions(editorWordWrap),
+            ...typographyOptions,
+            lineNumbers: 'on',
+            renderLineHighlight: 'line',
+            automaticLayout: true,
+            unicodeHighlight: {
+              ambiguousCharacters: language !== 'markdown',
+              invisibleCharacters: true
+            },
+            tabSize: 2,
+            readOnly,
+            scrollbar: autoHeight
+              ? {
+                  vertical: autoHeightUsesInternalScroll ? 'auto' : 'hidden',
+                  handleMouseWheel: autoHeightUsesInternalScroll
+                }
+              : undefined,
+            smoothScrolling: true,
+            // Why explicit: pin VS Code-parity caret/whitespace/suggest behavior on the file editor;
+            // defaults match today, explicit values guarantee they survive Monaco upgrades.
+            cursorSmoothCaretAnimation: settings?.editorCursorSmoothCaretAnimation ?? 'on',
+            renderWhitespace: settings?.editorRenderWhitespace ?? 'selection',
+            stickyScroll: { enabled: settings?.editorStickyScroll ?? false },
+            quickSuggestions: { other: 'on', comments: 'off', strings: 'off' },
+            wordBasedSuggestions: 'currentDocument',
+            snippetSuggestions: 'inline',
+            bracketPairColorization: { enabled: true },
+            padding: { top: 0 },
+            find: monacoFindOptions,
+            // Monaco owns rendered lines, so its selection clipboard must enforce the app opt-out independently of the global DOM hook.
+            selectionClipboard: settings?.primarySelectionMiddleClickPaste ?? isLinuxUserAgent()
+          }}
+          // Build a model URI because the React wrapper’s Uri.parse treats Windows drive letters as schemes.
+          path={modelUri}
+          // Orca owns cursor/scroll restoration; disable the wrapper’s competing view-state map.
+          saveViewState={false}
+          keepCurrentModel
+        />
 
-      {toastNode}
-      <MonacoGutterContextMenu
-        open={gutterMenuOpen}
-        onOpenChange={setGutterMenuOpen}
-        point={gutterMenuPoint}
-        line={gutterMenuLine}
-        selection={gutterMenuSelection}
-        fileId={fileId}
-        filePath={filePath}
-        relativePath={relativePath}
-        worktreeId={worktreeId}
-      />
+        {toastNode}
+        <MonacoGutterContextMenu
+          open={gutterMenuOpen}
+          onOpenChange={setGutterMenuOpen}
+          point={gutterMenuPoint}
+          line={gutterMenuLine}
+          selection={gutterMenuSelection}
+          fileId={fileId}
+          filePath={filePath}
+          relativePath={relativePath}
+          worktreeId={worktreeId}
+        />
       </div>
     </div>
   )

@@ -12321,6 +12321,10 @@
         },
         "UnsealedCredentialNotice": {
           "body": "{{credential}} được lưu không mã hoá — hệ thống này không có keyring hệ điều hành mà Wakii dùng được. Ai đọc được đĩa của bạn hoặc bản sao lưu đều đọc được thông tin xác thực. Cài và mở khoá gnome-keyring hoặc kwallet rồi lưu lại để niêm phong."
+        },
+        "FileBlameSetting": {
+          "563f0463d9": "Đổ lỗi tệp",
+          "308f71ffa1": "Hiển thị blame cho mọi dòng của tệp trong lề trình chỉnh sửa."
         }
       },
       "right": {
@@ -15805,6 +15809,30 @@
               "1f078da5df": "Commit",
               "6f3313de46": "Tác giả",
               "2f33a41d63": "Ngày"
+            },
+            "hover": {
+              "card": {
+                "strings": {
+                  "a50716ea63": "Xem commit",
+                  "40fa6020df": "Đổ lỗi bản trước",
+                  "0eae340db7": "Sao chép SHA",
+                  "90ad97b410": "đã commit",
+                  "3391c6e774": "Đang tải diff…",
+                  "8e4efd3b58": "Không tải được diff.",
+                  "9e1ebf17fd": "Diff bị cắt ngắn — tệp quá lớn.",
+                  "d100bd0ac1": "Tệp nhị phân — không có diff văn bản.",
+                  "72ed431302": "Đang xem blame tại",
+                  "b82be82a58": "Về HEAD"
+                }
+              }
+            }
+          },
+          "context": {
+            "menu": {
+              "strings": {
+                "99fa55520a": "Mở lịch sử tệp",
+                "59d25cc797": "Bật/tắt file blame"
+              }
             }
           }
         },

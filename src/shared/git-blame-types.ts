@@ -8,6 +8,8 @@ export const GIT_BLAME_UNSUPPORTED_HOST_MARKER = 'git-blame-unsupported-host'
 export type GitBlameOptions = {
   /** Repo-relative (or worktree-relative) path of the file to blame. */
   filePath: string
+  /** Blame this revision instead of HEAD (blame-previous walk); optional, hosts may ignore it. */
+  revision?: string
 }
 
 export type GitBlameLine = {
@@ -30,4 +32,6 @@ export type GitBlameLine = {
 export type GitBlameResult = {
   filePath: string
   lines: GitBlameLine[]
+  /** Echoes a requested revision so clients can tell revision-aware hosts from older ones. */
+  revision?: string
 }

@@ -171,6 +171,11 @@
   --color-git-graph-lane-4: var(--git-graph-lane-4);
   --color-git-graph-lane-5: var(--git-graph-lane-5);
   --color-annotation-highlight: var(--annotation-highlight);
+  --color-avatar-foreground-on-lane: var(--avatar-foreground-on-lane);
+  --color-diff-added: var(--diff-added);
+  --color-diff-removed: var(--diff-removed);
+  --color-diff-added-background: var(--diff-added-background);
+  --color-diff-removed-background: var(--diff-removed-background);
   --shadow-floating: 0 10px 24px rgb(0 0 0 / 0.18);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -303,6 +308,7 @@
   --git-graph-lane-4: #40b0a6;
   --git-graph-lane-5: #b66dff;
   --annotation-highlight: #f59e0b;
+  --avatar-foreground-on-lane: rgb(255 255 255 / 0.92);
   --markdown-search-match: #facc15;
   --markdown-search-match-active: #fb923c;
   /* Split dividers must clear 3:1 against --card even before hover; --border is too faint. */
@@ -502,6 +508,12 @@
   --diff-removed-background: color-mix(in srgb, var(--diff-removed) 18%, transparent);
   --diff-removed-gutter: color-mix(in srgb, var(--diff-removed) 32%, transparent);
   --diff-removed-emphasis: color-mix(in srgb, var(--diff-removed) 20%, transparent);
+}
+
+/* Text on bright git-graph lanes reads dark (mockup B); other lanes keep white. */
+[data-avatar-lane='1'],
+[data-avatar-lane='4'] {
+  --avatar-foreground-on-lane: #171717;
 }
 
 .plugin-security-chrome {

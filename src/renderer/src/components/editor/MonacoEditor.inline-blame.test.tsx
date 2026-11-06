@@ -11,8 +11,18 @@ const storeRef = vi.hoisted((): CapturedProps => ({ current: {} }))
 const blameArgs = vi.hoisted((): { current: Record<string, unknown> | null } => ({ current: null }))
 
 vi.mock('./use-monaco-git-blame', () => ({
+  // SF-1: MonacoEditor consumes the blame api (hover card + context), so the
+  // mock returns the minimal surface the component reads.
   useMonacoGitBlame: (args: Record<string, unknown>) => {
     blameArgs.current = args
+    return {
+      getBlameLineAt: () => undefined,
+      getRuntimeContext: () => null,
+      blameRevision: null,
+      blamePreviousSupported: true,
+      requestBlamePrevious: vi.fn(),
+      returnBlameToHead: vi.fn()
+    }
   },
   clearGitBlameCacheForWorktree: vi.fn(),
   clearGitBlameCacheForFile: vi.fn()
@@ -73,11 +83,7 @@ function renderEditor(opts: RenderOpts = {}): { rerender: (opts: RenderOpts) => 
     worktreeId: 'wt-1'
   }
   const view = render(
-    <MonacoEditor
-      {...base}
-      inlineBlameEnabled={opts.inlineBlameEnabled}
-      isDirty={opts.isDirty}
-    />
+    <MonacoEditor {...base} inlineBlameEnabled={opts.inlineBlameEnabled} isDirty={opts.isDirty} />
   )
   return {
     rerender: (next: RenderOpts) => {

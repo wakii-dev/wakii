@@ -15220,6 +15220,10 @@
         "InlineBlameSetting": {
           "683fd9af0f": "Blame intégré",
           "9142b8bc2f": "Affiche l’auteur, la date et le résumé du commit à la fin de la ligne actuelle dans l’éditeur de fichiers."
+        },
+        "FileBlameSetting": {
+          "563f0463d9": "Blame de fichier",
+          "308f71ffa1": "Affiche le blame de chaque ligne du fichier dans la marge de l’éditeur."
         }
       },
       "right": {
@@ -19252,6 +19256,30 @@
               "1f078da5df": "Commit",
               "6f3313de46": "Auteur",
               "2f33a41d63": "Date"
+            },
+            "hover": {
+              "card": {
+                "strings": {
+                  "a50716ea63": "Voir le commit",
+                  "40fa6020df": "Blame le commit parent",
+                  "0eae340db7": "Copier le SHA",
+                  "90ad97b410": "commité",
+                  "3391c6e774": "Chargement du diff…",
+                  "8e4efd3b58": "Impossible de charger le diff.",
+                  "9e1ebf17fd": "Diff tronqué — le fichier est trop volumineux.",
+                  "d100bd0ac1": "Fichier binaire — pas de diff texte.",
+                  "72ed431302": "Blame en cours à",
+                  "b82be82a58": "Revenir à HEAD"
+                }
+              }
+            }
+          },
+          "context": {
+            "menu": {
+              "strings": {
+                "99fa55520a": "Ouvrir l’historique du fichier",
+                "59d25cc797": "Basculer le blame de fichier"
+              }
             }
           }
         }

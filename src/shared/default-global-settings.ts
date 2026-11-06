@@ -68,6 +68,8 @@ export function buildDefaultSettings(args: {
     // Why on: GitLens-lite inline blame is the core value of the feature; existing
     // profiles without the field also render it on (the renderer defaults to true).
     editorInlineBlameEnabled: true,
+    // Why off: the blame gutter is opt-in (GitLens-parity SF-2); inline blame stays the default surface.
+    editorFileBlameEnabled: false,
     // VS Code-parity file editor options; explicit so upgrades can't silently change them.
     editorCursorSmoothCaretAnimation: 'on',
     editorRenderWhitespace: 'selection',
