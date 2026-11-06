@@ -1,10 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { RuntimeRpcResponse } from '../../../shared/runtime-rpc-envelope'
-import {
-  installApi,
-  installBrowserGlobals,
-  writeStoredRuntimeEnvironment
-} from './web-preload-api-test-harness'
+
+import { installBrowserGlobals } from './web-preload-api-test-harness'
 
 describe('web Portuguese language migration', () => {
   beforeEach(() => {

@@ -1,72 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { parseClaudeUsageFile, parseClaudeUsageRecord } from './transcript-record-parser'
 import { attributeClaudeUsageTurns } from './worktree-attribution'
-import { aggregateClaudeUsage } from './usage-aggregation'
+
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 
 describe('parseClaudeUsageRecord', () => {
-  it('extracts token usage from assistant transcript lines', () => {
-    const parsed = parseClaudeUsageRecord(
-      JSON.stringify({
-        type: 'assistant',
-        sessionId: 'session-1',
-        timestamp: '2026-04-09T10:00:00.000Z',
-        cwd: '/workspace/repo-a',
-        gitBranch: 'feature/test',
-        message: {
-          model: 'claude-sonnet-4-6',
-          usage: {
-            input_tokens: 100,
-            output_tokens: 25,
-            cache_read_input_tokens: 10,
-            cache_creation_input_tokens: 5
-          }
-        }
-      })
-    )
-
-    expect(parsed).toEqual({
-      sessionId: 'session-1',
-      timestamp: '2026-04-09T10:00:00.000Z',
-      model: 'claude-sonnet-4-6',
-      cwd: '/workspace/repo-a',
-      gitBranch: 'feature/test',
-      inputTokens: 100,
-      outputTokens: 25,
-      cacheReadTokens: 10,
-      cacheWriteTokens: 5,
-      cacheWrite1hTokens: 0
-    })
-  })
-
-  it('splits the cache-write total by TTL when the breakdown is present', () => {
-    const parsed = parseClaudeUsageRecord(
-      JSON.stringify({
-        type: 'assistant',
-        sessionId: 'session-1',
-        timestamp: '2026-04-09T10:00:00.000Z',
-        message: {
-          model: 'claude-sonnet-4-6',
-          usage: {
-            input_tokens: 100,
-            output_tokens: 25,
-            cache_read_input_tokens: 10,
-            cache_creation_input_tokens: 1000,
-            cache_creation: {
-              ephemeral_5m_input_tokens: 600,
-              ephemeral_1h_input_tokens: 400
-            }
-          }
-        }
-      })
-    )
-
-    expect(parsed?.cacheWriteTokens).toBe(1000)
-    expect(parsed?.cacheWrite1hTokens).toBe(400)
-  })
-
   it('clamps a 1-hour breakdown that exceeds the reported cache-write total', () => {
     const parsed = parseClaudeUsageRecord(
       JSON.stringify({

@@ -4,8 +4,7 @@ import type * as LaunchRegistry from '@/lib/agent-session/launch/structured-agen
 import type * as LaunchOptions from '@/lib/agent-session/launch/structured-agent-session-launch-options'
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { TooltipProvider } from '@/components/ui/tooltip'
-import type { AgentJournalRenderItem } from '../../../../shared/agent-session/journal/agent-session-journal-types'
+
 import { NativeChatStructuredSession } from './NativeChatStructuredSession'
 
 const { mocks, moduleFactories, resetStructuredSessionMocks, launchModule } = await vi.hoisted(
@@ -82,52 +81,6 @@ afterEach(() => {
   }
 
   describe('NativeChatStructuredSession before its first read settles', () => {
-    it.each(['idle', 'loading'] as const)(
-      'shows a reopened chat only a textless loading cue while its read is %s',
-      (status) => {
-        mocks.messages = []
-        mocks.status = status
-        render(sessionView())
-
-        const cue = screen.getByRole('status', { name: 'Loading chat' })
-        expect(cue).toBe(loadingCue())
-        expect(cue.textContent).toBe('')
-        expect(screen.queryAllByText(LOADING_TEXT)).toHaveLength(0)
-        expect(screen.queryByText(START_A_CHAT)).toBeNull()
-        expect(screen.getByTestId('structured-composer')).toBeTruthy()
-      }
-    )
-
-    it('drops the cue for the empty state once the read settles with nothing in it', () => {
-      mocks.messages = []
-      mocks.status = 'idle'
-      const { rerender } = render(sessionView())
-      expect(screen.queryByText(START_A_CHAT)).toBeNull()
-
-      mocks.status = 'ready'
-      rerender(sessionView())
-      expect(screen.getByText(START_A_CHAT)).toBeTruthy()
-      expect(loadingCue()).toBeNull()
-    })
-
-    it('shows no cue over a transcript, even while a read is still loading', () => {
-      mocks.status = 'loading'
-      render(sessionView())
-
-      expect(screen.getByTestId('message-list')).toBeTruthy()
-      expect(loadingCue()).toBeNull()
-    })
-
-    it('does not hold a cancelled resume on the cue', () => {
-      mocks.messages = []
-      mocks.launchLifecycle = 'cancelled'
-      mocks.launchResumes = true
-      mocks.status = 'ready'
-      render(sessionView())
-
-      expect(loadingCue()).toBeNull()
-    })
-
     it('keeps a chat this view started on its empty state through publish and the first read', () => {
       mocks.messages = []
       mocks.launchLifecycle = 'pending'

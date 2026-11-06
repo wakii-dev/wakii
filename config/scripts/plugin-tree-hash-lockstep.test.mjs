@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest'
 import { hashPluginTree } from '../../src/main/plugins/plugin-content-hash'
 
 const require = createRequire(import.meta.url)
-const { hashPackagedPluginTree } = require('./verify-packaged-plugin-resources.cjs')
+const { hashPackagedPluginTree } = require('./desktop-distribution/runtime-verification/verify-packaged-plugin-resources.cjs')
 
 // Lockstep giữa 2 implementation hash cây plugin (TS runtime ↔ CJS build-time):
 // bất kỳ thay đổi walk/junk/seed/framing chỉ vào 1 bên → test này đỏ. Sửa một

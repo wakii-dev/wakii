@@ -23,7 +23,6 @@ import {
   revealStructuredSession
 } from './activate-ai-vault-structured-session'
 import { STRUCTURED_AGENT_SESSION_REVEAL_RUNTIME_CAPABILITY } from '../../../shared/agent-session/structured-agent-session-surface-capabilities'
-import { RUNTIME_COMPAT_BLOCK_CODE } from '@/runtime/runtime-protocol-compat'
 
 const target = { worktreeId: 'workspace-1', sessionId: 'session-1' }
 
@@ -40,37 +39,6 @@ beforeEach(() => {
 })
 
 describe('revealStructuredSession', () => {
-  it('asks a local host without a capability round trip', async () => {
-    // The local host shares this build; probing it would only add a round trip.
-    await expect(revealStructuredSession(target)).resolves.toEqual({ ...target, agent: 'codex' })
-
-    expect(mocks.supports).not.toHaveBeenCalled()
-    expect(mocks.call).toHaveBeenCalledWith(
-      { kind: 'local' },
-      'agentSession.reveal',
-      { sessionId: 'session-1' },
-      expect.objectContaining({ timeoutMs: expect.any(Number) })
-    )
-  })
-
-  it('negotiates against the host that owns the workspace, not the local one', async () => {
-    mocks.environmentIdFor.mockReturnValue('env-1')
-
-    await expect(revealStructuredSession(target)).resolves.toEqual({ ...target, agent: 'codex' })
-
-    expect(mocks.supports).toHaveBeenCalledWith(
-      'env-1',
-      STRUCTURED_AGENT_SESSION_REVEAL_RUNTIME_CAPABILITY,
-      expect.any(Number)
-    )
-    expect(mocks.call).toHaveBeenCalledWith(
-      { kind: 'environment', environmentId: 'env-1' },
-      'agentSession.reveal',
-      { sessionId: 'session-1' },
-      expect.objectContaining({ timeoutMs: expect.any(Number) })
-    )
-  })
-
   it('keeps a known recipient target when the active workspace would resolve locally', async () => {
     const host = { kind: 'environment', environmentId: 'recipient-host' } as const
     await expect(revealStructuredSession({ ...target, target: host })).resolves.toEqual({

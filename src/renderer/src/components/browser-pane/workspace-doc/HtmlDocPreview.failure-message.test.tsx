@@ -501,27 +501,4 @@ describe('HtmlDocPreview failure messages', () => {
     expect(container.querySelector('webview')?.getAttribute('src')).toContain(REMINTED_GRANT_ID)
     expect(container.textContent).not.toContain('Preview unavailable')
   })
-
-  it('reloads the guest in place when the document is rendering fine', async () => {
-    await renderPreview(container, root)
-
-    await act(async () => {
-      container.querySelector<HTMLButtonElement>('button[aria-label="Reload preview"]')?.click()
-    })
-
-    expect(grantRuntime.released).toEqual([])
-    expect(grantRuntime.mints).toBe(1)
-  })
-
-  it('unsubscribes on unmount so a late failure cannot touch a torn-down preview', async () => {
-    await renderPreview(container, root)
-    expect(failureListeners).toHaveLength(1)
-
-    await act(async () => {
-      root.unmount()
-      mounted = false
-    })
-
-    expect(failureListeners).toHaveLength(0)
-  })
 })

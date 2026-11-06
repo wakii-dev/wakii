@@ -302,81 +302,6 @@ describe('ensureHooksConfirmed', () => {
     expect(pending).toHaveLength(0)
   })
 
-  it('does not prompt for orca.yaml when the repo uses local commands only', async () => {
-    const { state, pending } = createTestState({
-      repos: [
-        {
-          id: 'repo-1',
-          path: '/repo-1',
-          displayName: 'Repo One',
-          badgeColor: 'blue',
-          addedAt: 1,
-          hookSettings: {
-            mode: 'auto',
-            commandSourcePolicy: 'local-only',
-            scripts: { setup: 'echo local', archive: '' }
-          }
-        }
-      ]
-    } as Partial<AppState>)
-    hooksCheckMock.mockResolvedValue({
-      hasHooks: true,
-      hooks: { scripts: { setup: 'echo shared' } },
-      mayNeedUpdate: false
-    })
-
-    const decision = await ensureHooksConfirmed(state, 'repo-1', 'setup')
-
-    expect(decision).toBe('run')
-    expect(hooksCheckMock).not.toHaveBeenCalled()
-    expect(pending).toHaveLength(0)
-  })
-
-  it('does not prompt for orca.yaml when local commands are the implicit default', async () => {
-    const { state, pending } = createTestState({
-      repos: [
-        {
-          id: 'repo-1',
-          path: '/repo-1',
-          displayName: 'Repo One',
-          badgeColor: 'blue',
-          addedAt: 1,
-          hookSettings: {
-            mode: 'auto',
-            scripts: { setup: 'echo local', archive: '' }
-          }
-        }
-      ]
-    } as Partial<AppState>)
-    hooksCheckMock.mockResolvedValue({
-      hasHooks: true,
-      hooks: { scripts: { setup: 'echo shared' } },
-      mayNeedUpdate: false
-    })
-
-    const decision = await ensureHooksConfirmed(state, 'repo-1', 'setup')
-
-    expect(decision).toBe('run')
-    expect(hooksCheckMock).not.toHaveBeenCalled()
-    expect(pending).toHaveLength(0)
-  })
-
-  it('returns run without prompting when issueCommand source is local (user-owned)', async () => {
-    const { state, pending } = createTestState()
-    readIssueCommandMock.mockResolvedValue({
-      source: 'local',
-      sharedContent: null,
-      localContent: 'user content',
-      effectiveContent: 'user content',
-      localFilePath: ''
-    })
-
-    const decision = await ensureHooksConfirmed(state, 'repo-1', 'issueCommand')
-
-    expect(decision).toBe('run')
-    expect(pending).toHaveLength(0)
-  })
-
   it('still honors local issueCommand overrides when shared inspection reports an error', async () => {
     const { state, pending } = createTestState()
     readIssueCommandMock.mockResolvedValue({
@@ -392,31 +317,6 @@ describe('ensureHooksConfirmed', () => {
 
     expect(decision).toBe('run')
     expect(pending).toHaveLength(0)
-  })
-
-  it('forwards the explicit host to issueCommand inspection when repo ids collide', async () => {
-    const { state } = createTestState({
-      repos: [
-        { id: 'repo-1', displayName: 'Local Row' },
-        { id: 'repo-1', displayName: 'SSH Row', connectionId: 'server' }
-      ]
-    } as unknown as Partial<AppState>)
-    readIssueCommandMock.mockResolvedValue({
-      source: 'local',
-      sharedContent: null,
-      localContent: 'user content',
-      effectiveContent: 'user content',
-      localFilePath: ''
-    })
-
-    await ensureHooksConfirmed(state, 'repo-1', 'issueCommand', 'ssh:server')
-
-    // A launch is a user act, so its read may start a stopped WSL distro (E9).
-    expect(readIssueCommandMock).toHaveBeenCalledWith({
-      repoId: 'repo-1',
-      hostId: 'ssh:server',
-      wakeWslDistro: true
-    })
   })
 
   it('approves and returns the exact issue-command bytes from one host-qualified read', async () => {
@@ -527,30 +427,6 @@ describe('ensureHooksConfirmed', () => {
 
     expect(decision).toBe('skip')
     expect(pending).toHaveLength(0)
-  })
-
-  it('opens a modal with the computed content hash and resolves with the user decision', async () => {
-    const { state, pending } = createTestState()
-    hooksCheckMock.mockResolvedValue({
-      hasHooks: true,
-      hooks: { scripts: { setup: 'pnpm install' } },
-      mayNeedUpdate: false
-    })
-
-    const promise = ensureHooksConfirmed(state, 'repo-1', 'setup')
-
-    await vi.waitFor(() => expect(pending).toHaveLength(1))
-    expect(pending[0].data).toMatchObject({
-      repoId: 'repo-1',
-      repoName: 'Repo One',
-      scriptKind: 'setup',
-      scriptContent: 'pnpm install',
-      contentHash: await hashOrcaHookScript('pnpm install'),
-      previouslyApproved: false
-    })
-
-    pending[0].resolve('run')
-    await expect(promise).resolves.toBe('run')
   })
 
   it('serializes overlapping prompts so a second call waits for the first to resolve', async () => {

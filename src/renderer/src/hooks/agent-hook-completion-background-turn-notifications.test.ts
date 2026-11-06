@@ -10,29 +10,10 @@ import {
 import type { AgentHookEventPayload } from '../../../shared/agent-hook-listener/listener-event'
 import { createTestStore, makeTab } from '../store/slices/store-test-helpers'
 import { buildRunningAgentChildRowModels } from '../../../shared/running-agent-child-rows'
-import { decodeAgentChildWorkViews } from '../../../shared/agent-status-child-work-view-wire'
-import { decodeAgentSubagentsField } from '../../../shared/agent-status-subagent-snapshot'
-import type { RuntimeWorktreeAgentRow } from '../../../shared/runtime-types'
-
-/** Inlined from the retired mobile wrapper: permissive catalog fields for hosts with no child roster. */
-function worktreeAgentChildRows(agent: RuntimeWorktreeAgentRow, live: boolean) {
-  return buildRunningAgentChildRowModels(
-    {
-      children: decodeAgentChildWorkViews(agent.children),
-      subagents: decodeAgentSubagentsField(agent.subagents)
-    },
-    {
-      parentEvidenceFresh: agent.subagentObservation === 'live',
-      transportObservation: live ? 'live' : 'unverifiable',
-      parentObservedAt: agent.updatedAt,
-      hostClockOffsetMs: 0
-    }
-  )
-}
-
-import type { ParsedAgentStatusPayload } from '../../../shared/agent-status-types'
-import { normalizeHookPayload } from '../../../shared/agent-hook-listener'
-import { makePaneKey } from '../../../shared/stable-pane-id'
+import { worktreeAgentChildRows } from '../../../../mobile/src/worktree/worktree-agent-child-rows'
+import type { ParsedAgentStatusPayload } from '../../../shared/agent-status/contracts/agent-status-types'
+import { normalizeHookPayload } from '../../../shared/agent-hook-listener/normalization/normalize-hook-payload'
+import { makePaneKey } from '../../../shared/workspace-layout/stable-pane-id'
 
 const dispatchTerminalNotification = vi.fn()
 const dispatchAgentHookTerminalLifecycle = vi.fn()

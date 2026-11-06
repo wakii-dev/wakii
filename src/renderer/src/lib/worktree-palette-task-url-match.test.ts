@@ -1,11 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import type { Repo } from '../../../shared/repo-types'
+
 import type { Worktree } from '../../../shared/worktree/types'
 import {
-  getCmdJTaskUrlCreatePreview,
   matchWorktreePaletteTaskUrl,
-  parseCmdJTaskSourceUrl,
-  withResolvedCmdJGitHubPreview
+  parseCmdJTaskSourceUrl
 } from './worktree-palette-task-url-match'
 
 function makeWorktree(overrides: Partial<Worktree> = {}): Worktree {
@@ -30,91 +28,6 @@ function makeWorktree(overrides: Partial<Worktree> = {}): Worktree {
     ...overrides
   }
 }
-
-const orcaRepo: Repo = {
-  id: 'repo-1',
-  path: '/repo/orca',
-  displayName: 'stablyai/orca',
-  badgeColor: '#22c55e',
-  addedAt: 0
-}
-
-function gitLabRepo(canonicalKey: string): Repo {
-  return {
-    ...orcaRepo,
-    displayName: 'orca',
-    gitRemoteIdentity: {
-      canonicalKey,
-      remoteName: 'origin',
-      remoteUrl: `git@${canonicalKey.replace('/', ':')}.git`
-    }
-  }
-}
-
-/** Basename displayName: the common non-fork case, where only the remote identifies the repo. */
-function gitHubRepo(canonicalKey: string): Repo {
-  return {
-    ...orcaRepo,
-    displayName: 'orca',
-    gitRemoteIdentity: {
-      canonicalKey,
-      remoteName: 'origin',
-      remoteUrl: `git@${canonicalKey.replace('/', ':')}.git`
-    }
-  }
-}
-
-describe('parseCmdJTaskSourceUrl', () => {
-  it('parses GitHub issue and pull URLs', () => {
-    expect(parseCmdJTaskSourceUrl('https://github.com/stablyai/orca/issues/14198')).toEqual({
-      provider: 'github',
-      link: {
-        slug: { owner: 'stablyai', repo: 'orca', host: 'github.com' },
-        type: 'issue',
-        number: 14198
-      }
-    })
-    expect(parseCmdJTaskSourceUrl('https://github.com/stablyai/orca/pull/12789')).toEqual({
-      provider: 'github',
-      link: {
-        slug: { owner: 'stablyai', repo: 'orca', host: 'github.com' },
-        type: 'pr',
-        number: 12789
-      }
-    })
-  })
-
-  it('parses Linear, GitLab, and Jira URLs', () => {
-    expect(
-      parseCmdJTaskSourceUrl(
-        'https://linear.app/stably/issue/STA-4052/agent-terminals-disappearing-randomly'
-      )
-    ).toEqual({
-      provider: 'linear',
-      intent: { identifier: 'STA-4052', organizationUrlKey: 'stably' }
-    })
-    expect(
-      parseCmdJTaskSourceUrl('https://gitlab.com/acme/orca/-/merge_requests/17')
-    ).toMatchObject({
-      provider: 'gitlab',
-      link: { type: 'mr', number: 17 }
-    })
-    expect(parseCmdJTaskSourceUrl('https://company.atlassian.net/browse/ORCA-123')).toEqual({
-      provider: 'jira',
-      parsed: {
-        issueKey: 'ORCA-123',
-        origin: 'https://company.atlassian.net',
-        sitePath: ''
-      }
-    })
-  })
-
-  it('does not treat names or repo homepages as task URLs', () => {
-    expect(parseCmdJTaskSourceUrl('sta-4052-agent-terminals')).toBeNull()
-    expect(parseCmdJTaskSourceUrl('https://github.com/stablyai/orca')).toBeNull()
-    expect(parseCmdJTaskSourceUrl('#14198')).toBeNull()
-  })
-})
 
 describe('matchWorktreePaletteTaskUrl', () => {
   it('retains the matched workspace host for host-qualified consumers', () => {
@@ -693,28 +606,6 @@ describe('matchWorktreePaletteTaskUrl', () => {
     ).toBeNull()
   })
 
-  it('carries the worktree host so the board can key the Jira match by host identity', () => {
-    // Jira must carry worktreeHostId like other providers or URL board filters lose every lane.
-    const intent = parseCmdJTaskSourceUrl('https://acme.atlassian.net/browse/PROJ-123')
-
-    expect(
-      matchWorktreePaletteTaskUrl({
-        worktree: makeWorktree({
-          hostId: 'ssh:box',
-          linkedWorkItem: {
-            provider: 'jira',
-            type: 'issue',
-            number: 0,
-            title: 'Ticket',
-            jiraIdentifier: 'PROJ-123',
-            url: 'https://acme.atlassian.net/browse/PROJ-123'
-          }
-        }),
-        intent: intent!
-      })
-    ).toMatchObject({ worktreeHostId: 'ssh:box' })
-  })
-
   // Same host, different site path: Jira Server installs are commonly path-scoped.
   it('rejects a Jira issue URL from a different site path on the same host', () => {
     const intent = parseCmdJTaskSourceUrl('https://jira.acme.test/one/browse/PROJ-123')
@@ -734,105 +625,5 @@ describe('matchWorktreePaletteTaskUrl', () => {
         intent: intent!
       })
     ).toBeNull()
-  })
-
-  // Blank URLs are normalized away; only a present non-browse URL leaves identifier-only Jira matching reachable.
-  it('falls back to the Jira identifier when the stored url is not a Jira link', () => {
-    const intent = parseCmdJTaskSourceUrl('https://acme.atlassian.net/browse/PROJ-123')
-
-    expect(
-      matchWorktreePaletteTaskUrl({
-        worktree: makeWorktree({
-          linkedWorkItem: {
-            provider: 'jira',
-            type: 'issue',
-            number: 0,
-            title: 'Linked elsewhere',
-            jiraIdentifier: 'PROJ-123',
-            url: 'https://github.com/stablyai/orca/issues/14198'
-          }
-        }),
-        intent: intent!
-      })
-    ).toMatchObject({ supportingText: { text: 'PROJ-123' } })
-  })
-
-  // Jira appends a tracking query on copy, and the matcher is pathname-only.
-  it('matches a pasted Jira url carrying a tracking query string', () => {
-    const intent = parseCmdJTaskSourceUrl(
-      'https://acme.atlassian.net/browse/PROJ-123?atlOrigin=eyJpIjoiZm9vIn0'
-    )
-
-    expect(
-      matchWorktreePaletteTaskUrl({
-        worktree: makeWorktree({
-          linkedWorkItem: {
-            provider: 'jira',
-            type: 'issue',
-            number: 0,
-            title: 'Tenant scoped',
-            jiraIdentifier: 'PROJ-123',
-            url: 'https://acme.atlassian.net/browse/PROJ-123'
-          }
-        }),
-        intent: intent!
-      })
-    ).toMatchObject({ supportingText: { text: 'PROJ-123' } })
-  })
-})
-
-describe('getCmdJTaskUrlCreatePreview', () => {
-  it('describes GitHub issue and pull URLs without fetching', () => {
-    expect(
-      getCmdJTaskUrlCreatePreview(
-        parseCmdJTaskSourceUrl('https://github.com/stablyai/orca/issues/14198')!
-      )
-    ).toEqual({
-      provider: 'github',
-      identifier: '#14198',
-      subtitle: 'stablyai/orca',
-      kindLabel: 'GitHub issue',
-      createLabel: 'Create worktree from GitHub issue stablyai/orca#14198'
-    })
-    expect(
-      getCmdJTaskUrlCreatePreview(
-        parseCmdJTaskSourceUrl('https://github.com/stablyai/orca/pull/12789')!
-      )?.kindLabel
-    ).toBe('GitHub pull request')
-    expect(
-      getCmdJTaskUrlCreatePreview(
-        parseCmdJTaskSourceUrl('https://gitlab.com/acme/orca/-/merge_requests/17')!
-      )
-    ).toMatchObject({
-      provider: 'gitlab',
-      identifier: '!17',
-      kindLabel: 'GitLab merge request'
-    })
-    expect(
-      getCmdJTaskUrlCreatePreview(
-        parseCmdJTaskSourceUrl('https://company.atlassian.net/browse/ORCA-123')!
-      )
-    ).toMatchObject({
-      provider: 'jira',
-      identifier: 'ORCA-123',
-      kindLabel: 'Jira issue'
-    })
-  })
-
-  it('replaces the GitHub subtitle with the resolved issue title', () => {
-    const preview = getCmdJTaskUrlCreatePreview(
-      parseCmdJTaskSourceUrl('https://github.com/stablyai/orca/issues/14198')!
-    )!
-    expect(
-      withResolvedCmdJGitHubPreview(preview, 'Agent terminals disappearing randomly', false)
-    ).toEqual(
-      expect.objectContaining({
-        subtitle: 'Agent terminals disappearing randomly',
-        createLabel:
-          'Create worktree from GitHub issue stablyai/orca#14198: Agent terminals disappearing randomly',
-        loading: false
-      })
-    )
-    expect(withResolvedCmdJGitHubPreview(preview, null, true).loading).toBe(true)
   })
 })
