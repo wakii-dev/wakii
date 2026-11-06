@@ -335,5 +335,5 @@ hiện qua heartbeat, tự dọn REG + báo CEO trước khi tái điều phối
 ## LINEAR — dùng hợp lý (06/11)
 - DÙNG 5 khoảnh khắc: mở story epic (>3 SF) → issue cha + sub-issue từng SF · plan dài có milestone → publish subtask (CEO xem ngoài app) · SF chốt gate/DONE → sync trạng thái · việc tới từ ticket → issue-fix-loop trọn vòng · gắn URL ngữ cảnh vào workspace (orca reference add).
 - KHÔNG DÙNG: việc nhỏ gom 1 turn (room chat đủ) · dữ liệu vận hành nội bộ (journal/spawn log) · ghi khi đang cap.
-- CAP FREE 250 (ruling): mọi thao tác GHI skip → note "⏳ Linear chờ xử lý" cuối phiên; 16 issue Done cưỡng bức 19/09 chờ un-done. Đọc/tra cứu vẫn thoải mái. Khi CEO nâng gói/dọn archive → khôi phục sync story→Linear.
+- KB (06/11): Linear GHI HOẠT ĐỘNG LẠI — issue KB = HOI-18 "Captain Activity Log"; Captain update comment định kỳ (mỗi mảng việc lớn + nhịp quan trọng). 16 issue Done cưỡng bức 19/09 vẫn chờ un-done. Nếu ghi lại fail rate-limit → quay policy skip + note.
 
