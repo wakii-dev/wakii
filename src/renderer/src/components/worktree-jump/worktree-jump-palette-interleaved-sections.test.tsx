@@ -6,15 +6,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type * as ReactI18Next from 'react-i18next'
 import type { Repo } from '../../../../shared/repo-types'
 import type { Tab, TabGroup } from '../../../../shared/tab-types'
-import type { TerminalTab } from '../../../../shared/terminal-tab-types'
+import type { TerminalTab } from '../../../../shared/workspace-layout/terminal-tab-types'
 import type { Worktree } from '../../../../shared/worktree/types'
 import { useAppStore } from '@/store/index'
 import type { AppState } from '@/store/types'
 import { encodePaletteIdentity } from '../../../../shared/palette-match/palette-ranking'
-import {
-  layoutMultiPrimaryPaletteSections,
-  orderMultiPrimaryPaletteItems
-} from '../cmd-j/palette-section-render-cap'
 import WorktreeJumpPalette from './WorktreeJumpPalette'
 
 vi.mock('react-i18next', async (importOriginal) => {
@@ -41,7 +37,7 @@ vi.mock('@/hooks/useSettingsNavigationMetadata', () => ({
   useSettingsNavigationMetadata: () => []
 }))
 
-vi.mock('@/components/sidebar/StatusIndicator', () => ({
+vi.mock('@/components/sidebar/workspace-card/surface/StatusIndicator', () => ({
   default: () => <span data-status-indicator="true" />
 }))
 
@@ -127,10 +123,6 @@ let setCommandQuery: ((next: string) => void) | null = null
 
 const WORKSPACE_TAB_ITEM_PREFIX = encodePaletteIdentity(['workspace-tab'])
 const WORKTREE_ITEM_PREFIX = encodePaletteIdentity(['worktree'])
-
-function workspaceTabItemId(worktreeId: string, tabId: string): string {
-  return encodePaletteIdentity(['workspace-tab', '', worktreeId, tabId])
-}
 
 function isWorkspaceTabItemId(id: string): boolean {
   return id.startsWith(WORKSPACE_TAB_ITEM_PREFIX)
@@ -275,39 +267,6 @@ async function renderPalette(overrides: Partial<AppState>): Promise<void> {
     testRoot.render(<WorktreeJumpPalette />)
   })
   await flushEffects()
-}
-
-function perfTabsPaletteProps(count: number): Partial<AppState> {
-  const tabIds = Array.from({ length: count }, (_, index) => `${index}`)
-  return {
-    worktreesByRepo: {
-      'repo-1': [
-        makeWorktree('wt-tabs', 'tab-host'),
-        ...Array.from({ length: 5 }, (_, index) =>
-          makeWorktree(`wt-${index}`, `improve-perf-${index}`)
-        )
-      ]
-    },
-    showSleepingWorkspaces: true,
-    ptyIdsByTabId: Object.fromEntries(tabIds.map((id) => [`term-${id}`, [`pty-${id}`]])),
-    tabsByWorktree: {
-      'wt-tabs': tabIds.map((id) => makeTerminalTab(`term-${id}`, 'wt-tabs', `Perf chat ${id}`))
-    },
-    unifiedTabsByWorktree: {
-      'wt-tabs': tabIds.map((id) =>
-        makeUnifiedTab(`tab-${id}`, 'wt-tabs', `term-${id}`, `Perf chat ${id}`)
-      )
-    },
-    groupsByWorktree: {
-      'wt-tabs': [
-        makeGroup(
-          'wt-tabs',
-          tabIds.map((id) => `tab-${id}`)
-        )
-      ]
-    },
-    activeGroupIdByWorktree: { 'wt-tabs': 'group-wt-tabs' }
-  } as Partial<AppState>
 }
 
 function getPrimaryRowsBySectionHeader(): { header: string; rowId: string }[] {

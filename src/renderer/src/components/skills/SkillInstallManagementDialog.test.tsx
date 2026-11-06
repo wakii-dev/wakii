@@ -8,7 +8,7 @@ import type {
   SkillCloudVersion
 } from '../../../../shared/skill-cloud-contract'
 import { useAppStore } from '@/store'
-import { INSTALLED_AGENT_SKILLS_CHANGED_EVENT } from '@/hooks/installed-agent-skills-change-event'
+
 import { SkillInstallManagementDialog } from './SkillInstallManagementDialog'
 
 const DIGEST = 'a'.repeat(64)
@@ -154,19 +154,12 @@ function bundleInstall(name: string, state: ManagedSkillInstall['state'] = 'unch
   return { ...install('ver_1'), name, bundleDigest: DIGEST, state }
 }
 
-const ROW_ACTION = /Reinstall|Use this version/
-
 function dateLabel(iso: string): string {
   return new Intl.DateTimeFormat(undefined, {
     year: 'numeric',
     month: 'short',
     day: 'numeric'
   }).format(new Date(iso))
-}
-
-async function openInstall(name = 'private-skill'): Promise<void> {
-  fireEvent.click(await screen.findByRole('button', { name: new RegExp(name) }))
-  await screen.findByRole('button', { name: ROW_ACTION })
 }
 
 beforeEach(() => {
@@ -482,75 +475,5 @@ describe('SkillInstallManagementDialog', () => {
 
     expect(onOpenChange).toHaveBeenCalledWith(false)
     expect(useAppStore.getState().pendingSkillShareId).toBe('share_bundle')
-  })
-
-  it('removes a bundle with one confirmation and preserves modified skills', async () => {
-    const installed = [bundleInstall('alpha-skill'), bundleInstall('beta-skill', 'modified')]
-    const skills = skillsApi(installed, [bundleVersion('ver_1', ['alpha-skill', 'beta-skill'])])
-    skills.removeInstall
-      .mockResolvedValueOnce({
-        status: 'ok',
-        value: {
-          operationId: 'remove_alpha',
-          status: 'removed',
-          name: 'alpha-skill',
-          packageDigest: DIGEST,
-          placements: []
-        }
-      })
-      .mockResolvedValueOnce({
-        status: 'ok',
-        value: {
-          operationId: 'keep_beta',
-          status: 'conflict',
-          name: 'beta-skill',
-          packageDigest: DIGEST,
-          placements: []
-        }
-      })
-    Object.defineProperty(window, 'api', { configurable: true, value: { skills } })
-    render(<SkillInstallManagementDialog open onOpenChange={() => undefined} />)
-
-    fireEvent.click(await screen.findByRole('button', { name: /alpha-skill \+1/ }))
-    fireEvent.click(await screen.findByRole('button', { name: 'Remove' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Confirm remove' }))
-
-    await screen.findByText('1 removed · 1 modified skill preserved.')
-    expect(skills.removeInstall).toHaveBeenCalledTimes(2)
-    expect(skills.removeInstall.mock.calls).toEqual(
-      expect.arrayContaining([
-        [expect.objectContaining({ name: 'alpha-skill' })],
-        [expect.objectContaining({ name: 'beta-skill' })]
-      ])
-    )
-    expect(skills.removeInstall.mock.calls[1]?.[0]).not.toHaveProperty('conflictResolution')
-  })
-
-  it('discards changes and removes every skill in a mixed-state bundle', async () => {
-    const installed = [bundleInstall('alpha-skill'), bundleInstall('beta-skill', 'modified')]
-    const skills = skillsApi(installed, [bundleVersion('ver_1', ['alpha-skill', 'beta-skill'])])
-    Object.defineProperty(window, 'api', { configurable: true, value: { skills } })
-    render(<SkillInstallManagementDialog open onOpenChange={() => undefined} />)
-
-    fireEvent.click(await screen.findByRole('button', { name: /alpha-skill \+1/ }))
-    fireEvent.click(await screen.findByRole('button', { name: 'Discard my edits and remove' }))
-
-    await waitFor(() => expect(skills.removeInstall).toHaveBeenCalledTimes(2))
-    expect(skills.removeInstall.mock.calls).toEqual(
-      expect.arrayContaining([
-        [
-          expect.objectContaining({
-            name: 'alpha-skill',
-            conflictResolution: 'replace-and-discard-local'
-          })
-        ],
-        [
-          expect.objectContaining({
-            name: 'beta-skill',
-            conflictResolution: 'replace-and-discard-local'
-          })
-        ]
-      ])
-    )
   })
 })

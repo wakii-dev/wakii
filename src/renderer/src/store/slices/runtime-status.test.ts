@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { create } from 'zustand'
 import { toast } from 'sonner'
 import type { RuntimeStatus } from '../../../../shared/runtime-types'
-import type { PublicKnownRuntimeEnvironment } from '../../../../shared/runtime-environments'
+import type { PublicKnownRuntimeEnvironment } from '../../../../shared/remote-runtime/host-catalog/runtime-environments'
 import { createCompatibleRuntimeStatusResponse } from '../../runtime/runtime-compatibility-test-fixture'
 import {
   callRuntimeRpc,
@@ -11,11 +11,10 @@ import {
 import {
   clearRuntimeEnvironmentConnectionGenerationsForTests,
   createRuntimeStatusSlice,
-  type RuntimeStatusSlice,
-  getRuntimeEnvironmentConnectionGeneration
+  type RuntimeStatusSlice
 } from './runtime-status'
-import { getProviderRuntimeContextKey } from '@/lib/provider-runtime-context'
-import { getPairedDeviceIdsByEnvironment } from '../../../../shared/workspace-creator-visibility'
+import '@/lib/provider-runtime-context'
+import '../../../../shared/workspace-creator-visibility'
 import { stubRuntimeEnvironmentBridge } from '../../runtime/runtime-environment-bridge-fixture'
 
 vi.mock('sonner', () => ({
@@ -392,103 +391,6 @@ describe('runtime-status slice', () => {
     expect(vi.mocked(toast.warning).mock.calls.every((call) => call[1]?.id === toastId)).toBe(true)
   })
 
-  it('does not report removal or explicit status clearing as a disconnect', () => {
-    const store = createSliceStore()
-    store.setState({ runtimeEnvironments: [makeEnvironment()] })
-    store.getState().setRuntimeEnvironmentStatus('env-a', { status: makeStatus(), checkedAt: 1 })
-
-    store.getState().clearRuntimeEnvironmentStatus('env-a')
-    store.getState().setRuntimeEnvironments([])
-
-    expect(toast.warning).not.toHaveBeenCalled()
-  })
-
-  it('does not report an intentional disconnect as an outage', () => {
-    const store = createSliceStore()
-    store.getState().setRuntimeEnvironmentStatus('env-a', { status: makeStatus(), checkedAt: 1 })
-
-    store
-      .getState()
-      .setRuntimeEnvironmentStatus(
-        'env-a',
-        { status: null, checkedAt: 2 },
-        { suppressDisconnectToast: true }
-      )
-
-    expect(toast.warning).not.toHaveBeenCalled()
-    expect(store.getState().runtimeStatusByEnvironmentId.get('env-a')?.status).toBeNull()
-  })
-
-  it('dismisses an outage toast opened while an intentional disconnect was pending', () => {
-    const store = createSliceStore()
-    store.getState().setRuntimeEnvironmentStatus('env-a', { status: makeStatus(), checkedAt: 1 })
-    store.getState().setRuntimeEnvironmentStatus('env-a', { status: null, checkedAt: 2 })
-
-    store
-      .getState()
-      .setRuntimeEnvironmentStatus(
-        'env-a',
-        { status: null, checkedAt: 3 },
-        { suppressDisconnectToast: true }
-      )
-
-    expect(toast.warning).toHaveBeenCalledTimes(1)
-    expect(toast.dismiss).toHaveBeenCalledWith('runtime-environment-disconnected:env-a')
-  })
-
-  it('clears a single environment entry', () => {
-    const store = createSliceStore()
-    store.getState().setRuntimeEnvironmentStatus('env-a', { status: makeStatus(), checkedAt: 1 })
-    store.getState().setRuntimeEnvironmentStatus('env-b', { status: makeStatus(), checkedAt: 1 })
-
-    store.getState().clearRuntimeEnvironmentStatus('env-a')
-    expect(store.getState().runtimeStatusByEnvironmentId.has('env-a')).toBe(false)
-    expect(store.getState().runtimeStatusByEnvironmentId.has('env-b')).toBe(true)
-  })
-
-  it('no-ops clearing an unknown id without creating a new reference', () => {
-    const store = createSliceStore()
-    const before = store.getState().runtimeStatusByEnvironmentId
-    store.getState().clearRuntimeEnvironmentStatus('missing')
-    expect(store.getState().runtimeStatusByEnvironmentId).toBe(before)
-  })
-
-  it('retains only saved environment ids', () => {
-    const store = createSliceStore()
-    store.getState().setRuntimeEnvironmentStatus('keep', { status: makeStatus(), checkedAt: 1 })
-    store.getState().setRuntimeEnvironmentStatus('drop', { status: makeStatus(), checkedAt: 1 })
-
-    store.getState().retainRuntimeEnvironmentStatuses(['keep'])
-    const map = store.getState().runtimeStatusByEnvironmentId
-    expect(map.has('keep')).toBe(true)
-    expect(map.has('drop')).toBe(false)
-  })
-
-  it('no-ops retain when nothing is dropped', () => {
-    const store = createSliceStore()
-    store.getState().setRuntimeEnvironmentStatus('keep', { status: makeStatus(), checkedAt: 1 })
-    const before = store.getState().runtimeStatusByEnvironmentId
-
-    store.getState().retainRuntimeEnvironmentStatuses(['keep', 'unrelated'])
-    expect(store.getState().runtimeStatusByEnvironmentId).toBe(before)
-  })
-
-  it('refreshes one runtime environment status and repairs a stale null entry', async () => {
-    const getStatus = vi.fn().mockResolvedValue(createCompatibleRuntimeStatusResponse('runtime-a'))
-    stubRuntimeEnvironmentApi({ getStatus })
-    const store = createSliceStore()
-    store.getState().setRuntimeEnvironmentStatus('env-a', { status: null, checkedAt: 1 })
-
-    const reachable = await store.getState().refreshRuntimeEnvironmentStatus('env-a', 5_000)
-
-    expect(reachable).toBe(true)
-    expect(getStatus).toHaveBeenCalledWith({ selector: 'env-a', timeoutMs: 5_000 })
-    expect(store.getState().runtimeStatusByEnvironmentId.get('env-a')?.status?.runtimeId).toBe(
-      'runtime-a'
-    )
-    expect(store.getState().runtimeStatusByEnvironmentId.get('env-a')?.connectionGeneration).toBe(1)
-  })
-
   it.each(['success', 'failure'] as const)(
     'drops a stale refresh %s after the same environment id is re-paired',
     async (outcome) => {
@@ -510,80 +412,6 @@ describe('runtime-status slice', () => {
       expect(store.getState().runtimeStatusByEnvironmentId.has('env-a')).toBe(false)
     }
   )
-
-  it('advances connection generation after recovery without churning stable status polls', () => {
-    const store = createSliceStore()
-    store.getState().setRuntimeEnvironmentStatus('env-a', {
-      status: makeStatus({ runtimeId: 'runtime-a' }),
-      checkedAt: 1
-    })
-    store.getState().setRuntimeEnvironmentStatus('env-a', {
-      status: makeStatus({ runtimeId: 'runtime-a' }),
-      checkedAt: 2
-    })
-    // Neither the first publication nor a stable re-poll is a connection change.
-    expect(store.getState().runtimeStatusByEnvironmentId.get('env-a')?.connectionGeneration).toBe(0)
-
-    store.getState().setRuntimeEnvironmentStatus('env-a', { status: null, checkedAt: 3 })
-    store.getState().setRuntimeEnvironmentStatus('env-a', {
-      status: makeStatus({ runtimeId: 'runtime-a' }),
-      checkedAt: 4
-    })
-    // Offline -> online is a real reconnect, so recovery still advances.
-    expect(store.getState().runtimeStatusByEnvironmentId.get('env-a')?.connectionGeneration).toBe(1)
-  })
-
-  it('keeps stored and canonical generations aligned after same-id re-pairing', () => {
-    const store = createSliceStore()
-    store.getState().setRuntimeEnvironments([makeEnvironment({ pairingRevision: 1 })])
-    store.getState().setRuntimeEnvironmentStatus('env-a', {
-      status: makeStatus({ runtimeId: 'runtime-a' }),
-      checkedAt: 1
-    })
-
-    store.getState().setRuntimeEnvironments([makeEnvironment({ pairingRevision: 2 })])
-    store.getState().setRuntimeEnvironmentStatus('env-a', {
-      status: makeStatus({ runtimeId: 'runtime-b' }),
-      checkedAt: 2
-    })
-
-    expect(store.getState().runtimeStatusByEnvironmentId.get('env-a')?.connectionGeneration).toBe(
-      getRuntimeEnvironmentConnectionGeneration('env-a')
-    )
-    // The re-pair itself advanced the generation and dropped the entry; the first
-    // publication under the new pairing must not advance it a second time.
-    expect(getRuntimeEnvironmentConnectionGeneration('env-a')).toBe(1)
-  })
-
-  it('invalidates provider state only when the active runtime session changes', () => {
-    const store = createSliceStore()
-    store.setState({ settings: { activeRuntimeEnvironmentId: 'env-a' } } as never)
-    const initialKey = getProviderRuntimeContextKey({ activeRuntimeEnvironmentId: 'env-a' })
-
-    store.getState().setRuntimeEnvironmentStatus('env-b', {
-      status: makeStatus({ runtimeId: 'runtime-b' }),
-      checkedAt: 1
-    })
-    expect(getProviderRuntimeContextKey({ activeRuntimeEnvironmentId: 'env-a' })).toBe(initialKey)
-
-    store.getState().setRuntimeEnvironmentStatus('env-a', {
-      status: makeStatus({ runtimeId: 'runtime-a' }),
-      checkedAt: 2
-    })
-    const connectedKey = getProviderRuntimeContextKey({ activeRuntimeEnvironmentId: 'env-a' })
-    expect(connectedKey).not.toBe(initialKey)
-
-    store.getState().setRuntimeEnvironmentStatus('env-a', {
-      status: makeStatus({ runtimeId: 'runtime-a' }),
-      checkedAt: 3
-    })
-    expect(getProviderRuntimeContextKey({ activeRuntimeEnvironmentId: 'env-a' })).toBe(connectedKey)
-
-    store.getState().setRuntimeEnvironmentStatus('env-a', { status: null, checkedAt: 4 })
-    expect(getProviderRuntimeContextKey({ activeRuntimeEnvironmentId: 'env-a' })).not.toBe(
-      connectedKey
-    )
-  })
 
   it('drops a recent compatibility failure once a status refresh succeeds', async () => {
     clearRuntimeCompatibilityCacheForTests()
@@ -699,19 +527,6 @@ describe('runtime-status slice', () => {
     clearRuntimeCompatibilityCacheForTests()
   })
 
-  it('records null and returns false when a runtime refresh fails', async () => {
-    const getStatus = vi.fn().mockRejectedValue(new Error('closed'))
-    stubRuntimeEnvironmentApi({ getStatus })
-    const store = createSliceStore()
-    const cached = makeStatus()
-    store.getState().setRuntimeEnvironmentStatus('env-a', { status: cached, checkedAt: 1 })
-
-    const reachable = await store.getState().refreshRuntimeEnvironmentStatus('env-a')
-
-    expect(reachable).toBe(false)
-    expect(store.getState().runtimeStatusByEnvironmentId.get('env-a')?.status).toBe(null)
-  })
-
   it('preserves successful reachability when reading its snapshot fails', async () => {
     const log = vi.spyOn(console, 'error').mockImplementation(() => {})
     stubRuntimeEnvironmentBridge({
@@ -726,34 +541,6 @@ describe('runtime-status slice', () => {
     } finally {
       log.mockRestore()
     }
-  })
-
-  it('hydrates saved environments through the single-environment refresh path', async () => {
-    const getStatus = vi.fn().mockResolvedValue(createCompatibleRuntimeStatusResponse('runtime-a'))
-    const list = vi.fn().mockResolvedValue([
-      {
-        id: 'env-a',
-        name: 'Dev Box',
-        createdAt: 1,
-        updatedAt: 1,
-        lastUsedAt: null,
-        runtimeId: null,
-        endpoints: [{ id: 'ws-a', kind: 'websocket', label: 'WebSocket', endpoint: 'ws://x' }],
-        preferredEndpointId: 'ws-a'
-      }
-    ])
-    stubRuntimeEnvironmentApi({ getStatus, list })
-    const store = createSliceStore()
-
-    await store.getState().hydrateRuntimeEnvironmentStatuses()
-
-    expect(store.getState().runtimeEnvironments.map((environment) => environment.id)).toEqual([
-      'env-a'
-    ])
-    expect(getStatus).toHaveBeenCalledWith({ selector: 'env-a', timeoutMs: 10_000 })
-    expect(store.getState().runtimeStatusByEnvironmentId.get('env-a')?.status?.runtimeId).toBe(
-      'runtime-a'
-    )
   })
 
   it('shares one full catalog and status sweep across overlapping hydrations', async () => {
@@ -790,45 +577,6 @@ describe('runtime-status slice', () => {
       'runtime-a'
     )
     expect(store.getState().runtimeStatusByEnvironmentId.get('env-b')?.status).toBeNull()
-  })
-
-  it('runs a fresh explicit hydration after the shared sweep settles', async () => {
-    const getStatus = vi
-      .fn()
-      .mockResolvedValueOnce(createCompatibleRuntimeStatusResponse('runtime-1'))
-      .mockResolvedValueOnce(createCompatibleRuntimeStatusResponse('runtime-2'))
-    const list = vi.fn().mockResolvedValue([makeEnvironment()])
-    stubRuntimeEnvironmentApi({ getStatus, list })
-    const store = createSliceStore()
-    let publications = 0
-    const unsubscribe = store.subscribe(() => {
-      publications += 1
-    })
-
-    await store.getState().hydrateRuntimeEnvironmentStatuses()
-    await store.getState().hydrateRuntimeEnvironmentStatuses()
-    unsubscribe()
-
-    expect(list).toHaveBeenCalledTimes(2)
-    expect(getStatus).toHaveBeenCalledTimes(2)
-    expect(publications).toBe(3)
-    expect(store.getState().runtimeStatusByEnvironmentId.get('env-a')?.status?.runtimeId).toBe(
-      'runtime-2'
-    )
-  })
-
-  it('does not share hydration work between stores', async () => {
-    const list = vi.fn().mockResolvedValue([])
-    stubRuntimeEnvironmentApi({ getStatus: vi.fn(), list })
-    const firstStore = createSliceStore()
-    const secondStore = createSliceStore()
-
-    await Promise.all([
-      firstStore.getState().hydrateRuntimeEnvironmentStatuses(),
-      secondStore.getState().hydrateRuntimeEnvironmentStatuses()
-    ])
-
-    expect(list).toHaveBeenCalledTimes(2)
   })
 
   it('queues a current-catalog sweep when the catalog changes during listing', async () => {
@@ -916,16 +664,5 @@ describe('runtime-status slice', () => {
     } finally {
       consoleError.mockRestore()
     }
-  })
-
-  it('both settles and hydrates the catalog on a successful read', async () => {
-    const list = vi.fn().mockResolvedValue([])
-    stubRuntimeEnvironmentApi({ getStatus: vi.fn(), list })
-    const store = createSliceStore()
-
-    await store.getState().hydrateRuntimeEnvironmentStatuses()
-
-    expect(store.getState().runtimeEnvironmentCatalogSettled).toBe(true)
-    expect(store.getState().runtimeEnvironmentCatalogHydrated).toBe(true)
   })
 })

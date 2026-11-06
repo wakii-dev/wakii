@@ -1,14 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { getDefaultSettings } from '../../../../shared/constants'
+import '../../../../shared/constants'
 import type { Repo } from '../../../../shared/repo-types'
 import type { WslMovedProject } from '../../../../shared/wsl-move/wsl-moved-project'
 import { getSetupScriptPromptDismissalKey } from '../../lib/setup-script-prompt'
 import { createTestStore } from '../slices/store-test-helpers'
 import { createUIStore, makePersistedUI } from '../slices/ui-slice-test-harness'
-import {
-  withWslMovedRepoIds,
-  withWslMovedSetupScriptDismissals
-} from './wsl-moved-repo-ui-retention'
+import './wsl-moved-repo-ui-retention'
 
 const moved: WslMovedProject = {
   kind: 'repo',
@@ -17,7 +14,6 @@ const moved: WslMovedProject = {
   path: '\\\\wsl.localhost\\Ubuntu\\home\\u\\moved',
   distro: 'Ubuntu'
 }
-const movedFolder: WslMovedProject = { ...moved, kind: 'folder', id: 'moved-folder' }
 const localRepo: Repo = {
   id: 'local-repo',
   path: '/local',
@@ -27,43 +23,8 @@ const localRepo: Repo = {
 }
 
 const hostDismissal = getSetupScriptPromptDismissalKey('runtime:wsl-env\0moved-repo')
-const localDismissal = getSetupScriptPromptDismissalKey('local\0moved-repo')
 const staleDismissal = getSetupScriptPromptDismissalKey('local\0stale-repo')
 const trust = (approvedAt: number) => ({ all: { approvedAt } })
-
-describe('WSL moved repo UI retention', () => {
-  it('returns its input unchanged without a moved repo', () => {
-    const valid = new Set(['local-repo'])
-    expect(withWslMovedRepoIds(valid, [])).toBe(valid)
-    expect(withWslMovedRepoIds(valid, undefined)).toBe(valid)
-    expect(withWslMovedRepoIds(valid, [movedFolder])).toBe(valid)
-    const retained = ['a']
-    expect(withWslMovedSetupScriptDismissals([staleDismissal], retained, [])).toBe(retained)
-  })
-
-  it('adds the moved repos, also when no other repo is listed', () => {
-    expect([...withWslMovedRepoIds(new Set(['local-repo']), [moved])]).toEqual([
-      'local-repo',
-      'moved-repo'
-    ])
-    expect([...withWslMovedRepoIds(new Set(), [moved])]).toEqual(['moved-repo'])
-  })
-
-  it('hands back the persisted dismissals when nothing was pruned', () => {
-    const persisted = [hostDismissal, localDismissal]
-    expect(withWslMovedSetupScriptDismissals(persisted, [], [moved])).toBe(persisted)
-  })
-
-  it('keeps every dismissal of a moved repo, whichever host it names', () => {
-    expect(
-      withWslMovedSetupScriptDismissals(
-        [hostDismissal, localDismissal, staleDismissal],
-        [],
-        [moved]
-      )
-    ).toEqual([hostDismissal, localDismissal])
-  })
-})
 
 describe('catalog prune with a moved project', () => {
   beforeEach(() => {

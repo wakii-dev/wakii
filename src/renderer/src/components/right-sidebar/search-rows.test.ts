@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildSearchRows, getNextMatchRowIndex, setAllSearchFilesCollapsed } from './search-rows'
+import { buildSearchRows, getNextMatchRowIndex, setAllSearchFilesCollapsed } from './file-explorer/content-search/search-rows'
 
 describe('buildSearchRows', () => {
   it('includes file headers and expanded matches in row order (summary is rendered separately)', () => {

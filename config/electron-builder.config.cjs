@@ -4,18 +4,18 @@ const { join, resolve } = require('node:path')
 const {
   MACOS_FOLDER_USAGE_DESCRIPTIONS,
   applyMacHelperFolderUsageDescriptions
-} = require('./scripts/macos-folder-usage-descriptions.cjs')
-const electronBuilderNativeRebuild = require('./scripts/electron-builder-native-rebuild.cjs')
+} = require('./scripts/desktop-distribution/macos/macos-folder-usage-descriptions.cjs')
+const electronBuilderNativeRebuild = require('./scripts/desktop-distribution/runtime-verification/electron-builder-native-rebuild.cjs')
 const {
   assertPackagedDaemonEntryExists,
   verifyPackagedDaemonEntryBoots,
   verifyPackagedMacTerminalHostBoots
-} = require('./scripts/verify-packaged-daemon-entry.cjs')
+} = require('./scripts/desktop-distribution/runtime-verification/verify-packaged-daemon-entry.cjs')
 const {
   buildMacTerminalHost,
   macTerminalHostSignIgnore,
   verifyMacTerminalHost
-} = require('./scripts/macos-terminal-host-bundle.cjs')
+} = require('./scripts/macos/terminal-host-bundle/macos-terminal-host-bundle.cjs')
 const {
   assertPackagedNativeVariantsInstalled,
   assertProcessHostOutputBuilt,
@@ -26,20 +26,27 @@ const {
 const {
   assertNoWindowsExecutablesInRuntimeNodeModules
 } = require('./packaged-windows-only-runtime-files.cjs')
-const { verifyLinuxGlibcFloor } = require('./scripts/verify-linux-glibc-floor.cjs')
+const {
+  verifyLinuxGlibcFloor
+} = require('./scripts/native-build/linux/verify-linux-glibc-floor.cjs')
 const {
   verifyPackagedWindowsAgentHook
-} = require('./scripts/verify-packaged-windows-agent-hook.cjs')
+} = require('./scripts/desktop-distribution/runtime-verification/verify-packaged-windows-agent-hook.cjs')
 const {
   ensureBundledWaylandClipboard,
   finalizePackagedWaylandClipboard
 } = require('./wayland-clipboard-resources.cjs')
-const { writeMacBuildCompatibility } = require('./scripts/mac-build-compatibility.cjs')
-const { verifyPackagedPluginResources } = require('./scripts/verify-packaged-plugin-resources.cjs')
+const {
+  writeMacBuildCompatibility
+} = require('./scripts/desktop-distribution/macos/mac-build-compatibility.cjs')
+const {
+  verifyPackagedPluginResources,
+  verifyPackagedPluginTypings
+} = require('./scripts/desktop-distribution/runtime-verification/verify-packaged-plugin-resources.cjs')
 const {
   assertPackagedServeSelectionEntry,
   assertPackagedWebClient
-} = require('./scripts/verify-packaged-serve-payload.cjs')
+} = require('./scripts/desktop-distribution/runtime-verification/verify-packaged-serve-payload.cjs')
 const {
   assertBundledRipgrepInstalled,
   bundledRipgrepExtraResources,
@@ -48,24 +55,32 @@ const {
 } = require('./bundled-ripgrep-resources.cjs')
 const {
   verifyPackagedWindowsNodePty
-} = require('./scripts/verify-packaged-node-pty-job-ownership.cjs')
+} = require('./scripts/desktop-distribution/runtime-verification/verify-packaged-node-pty-job-ownership.cjs')
 const {
   assertOrcadTemplateBuilt,
   finalizePackagedOrcadTemplate,
   orcadTemplateExtraResource,
   orcadTemplateNodeModulesExtraResource,
   orcadTemplateMacSignIgnore
-} = require('./scripts/packaged-orcad-template.cjs')
-const { verifySkillsCliRuntime } = require('./scripts/verify-skills-cli-runtime.cjs')
+} = require('./scripts/orcad-distribution/template/packaged-orcad-template.cjs')
+const {
+  verifySkillsCliRuntime
+} = require('./scripts/runtime-verification/skills-cli/verify-skills-cli-runtime.cjs')
 const { assertNotDarkBuild } = require('./dark-build-switches.cjs')
-const { verifyStaticAppImagePackage } = require('./scripts/static-appimage-package-contract.cjs')
+const {
+  verifyStaticAppImagePackage
+} = require('./scripts/desktop-distribution/appimage/static-appimage-package-contract.cjs')
 const {
   appImageNodeRuntimeFpmArgs,
   placeAppImageNodeRuntime,
   verifyAppImageNodeRuntimeServesPty
-} = require('./scripts/appimage-node-runtime.cjs')
-const { signWindowsUninstallerViaSignPath } = require('./scripts/windows-uninstaller-signing.cjs')
-const { buildMacShipItScheduling } = require('./scripts/macos-shipit-scheduling.cjs')
+} = require('./scripts/desktop-distribution/linux/appimage-node-runtime.cjs')
+const {
+  signWindowsUninstallerViaSignPath
+} = require('./scripts/desktop-distribution/windows/windows-uninstaller-signing.cjs')
+const {
+  buildMacShipItScheduling
+} = require('./scripts/desktop-distribution/macos/macos-shipit-scheduling.cjs')
 
 // Dev channels need release bundle ID/signature/notarization so Squirrel.Mac accepts updates and macOS retains app identity.
 const isMacHourly = process.env.ORCA_MAC_HOURLY === '1'
@@ -128,6 +143,12 @@ const bundledPluginResources = {
   from: 'resources/plugins/launch',
   to: 'plugins/launch'
 }
+// electron-builder always drops `*.d.ts` from app files, so `orca plugin types` reads these copies.
+const pluginAuthorTypingsResources = {
+  from: 'resources/plugins',
+  to: 'plugins',
+  filter: ['declarative/*.d.ts', 'types/*.d.ts']
+}
 // Packaged main/CLI/SSH/speech paths lack pnpm links; copy runtime closure so bare requires cannot fall through to checkout dependencies.
 // Ship only the 166KB emoji dataset used by worktree naming, not all 49MB of emojibase-data.
 const emojiShortcodeDatasetResource = {
@@ -140,6 +161,7 @@ const commonExtraResources = [
   orcadTemplateNodeModulesExtraResource,
   ...bundledRipgrepExtraResources,
   bundledPluginResources,
+  pluginAuthorTypingsResources,
   skillFreshnessResources,
   ...agentBrowserSkillResources,
   nativeChatVisualsResource,
@@ -189,8 +211,6 @@ const rpmElectronRuntimeDependencies = [
 // Mirror OS document extensions: CJS packager cannot import TS; keep startup/os-opened-documents.ts and NSIS hooks aligned.
 const MARKDOWN_FILE_EXTENSIONS = ['md', 'markdown', 'mdx']
 const TABULAR_FILE_EXTENSIONS = ['csv', 'tsv']
-// Mirror OS wakii extension: keep startup/os-opened-wakii-files.ts and NSIS WAKII_PROGID aligned (orca-installer-hooks.nsh).
-const WAKII_FILE_EXTENSIONS = ['wakii']
 
 // Config loads without unused Windows addons; beforePack enforces target natives. Only @vscode/windows-process-tree has os:win32; workspace links prove no binary exists.
 const windowsRuntimeResources = existsSync(
@@ -316,7 +336,7 @@ module.exports = {
   ],
   // Node-mode CLI/daemon/foreign SQLite reader/serve entries cannot read asar; unpack their shared/main dependencies too.
   // Keep out/package.json’s CommonJS boundary and remote CLI WebSocket/E2EE deps. Electron-only workers may stay packed.
-  // Renderer assets need real paths: swept temporary asar extracts are not recreated (#27976).
+  // Renderer/mobile-web assets need real paths: swept temporary asar extracts are not recreated (#27976).
   asarUnpack: [
     'out/package.json',
     'out/cli/**',
@@ -332,16 +352,13 @@ module.exports = {
     'out/main/gitlab/project-ref-parser.js',
     'out/main/grok/**',
     'out/main/hermes/**',
-    'out/main/asar-transparent-fs.js',
-    'out/main/macos-tree-clone.js',
+    'out/main/filesystem/asar-transparent-fs.js',
+    'out/main/filesystem/macos-tree-clone.js',
     'out/main/orca-profiles/profile-index-store.js',
     'out/main/persistence/profile-state/**',
     'out/main/plugins/plugin-authoring-checks.js',
-    // `orca plugin types` copies the author typings from here in Node mode.
-    'resources/plugins/declarative/orca*.d.ts',
     // `orca plugin test` and `orca plugin check` load the runtime, kit and hooks in Node.
     'resources/plugins/declarative/*.mjs',
-    'resources/plugins/types/*.d.ts',
     'out/main/skills/bundled-skill-install/cli-entry.js',
     'out/main/startup/http1-compatibility-marker.js',
     'out/main/daemon-entry.js',
@@ -356,6 +373,7 @@ module.exports = {
     'out/main/orcad/orcad-stale-lock-reclaim.js',
     'out/main/chunks/**',
     'out/renderer/**',
+
     'resources/**',
     'node_modules/ws/**',
     'node_modules/tweetnacl/**',
@@ -367,10 +385,11 @@ module.exports = {
       verifyStaticAppImagePackage(file, arch)
     }
   },
-  // electron-builder calls this with the context alone. The later parameters let a test
-  // point the guards at scratch assets instead of needing the repo's out/ built.
+  // electron-builder calls this with the context alone. The second parameter is the bundle root,
+  // so a test can point the guard at a scratch bundle instead of needing the repo's out/ built.
   beforePack: (
     context,
+    
     ensureWaylandClipboard = ensureBundledWaylandClipboard,
     orcadTemplateDir = join(__dirname, '..', orcadTemplateExtraResource.from)
   ) => {
@@ -467,6 +486,7 @@ module.exports = {
     }
     // Validate real electron-builder output so broken extraResources mappings fail before shipping.
     verifyPackagedPluginResources(resourcesDir)
+    verifyPackagedPluginTypings(resourcesDir)
     assertPackagedWebClient(resourcesDir)
     assertPackagedServeSelectionEntry(resourcesDir)
     finalizePackagedRipgrep(resourcesDir)
@@ -558,7 +578,7 @@ module.exports = {
     ]
   },
   nsis: {
-    artifactName: 'wakii-windows-setup.${ext}',
+    artifactName: 'orca-windows-setup.${ext}',
     shortcutName: '${productName}',
     uninstallDisplayName: '${productName}',
     createDesktopShortcut: 'always',
@@ -582,20 +602,14 @@ module.exports = {
         description: `${ext.toUpperCase()} Document`,
         role: 'Editor',
         rank: 'Alternate'
-      })),
-      // Rank Default: .wakii is this app's own format with no incumbent default (matches the NSIS registration).
-      ...WAKII_FILE_EXTENSIONS.map((ext) => ({
-        ext,
-        name: 'Wakii Mindmap',
-        description: 'Wakii Mindmap',
-        role: 'Editor',
-        rank: 'Default'
       }))
     ],
     icon: 'resources/build/icon.icns',
     entitlements: 'resources/build/entitlements.mac.plist',
     entitlementsInherit: 'resources/build/entitlements.mac.plist',
-    ...(isMacRelease ? { sign: resolve(__dirname, 'scripts/sign-mac-app.mjs') } : {}),
+    ...(isMacRelease
+      ? { sign: resolve(__dirname, './scripts/desktop-distribution/macos/sign-mac-app.mjs') }
+      : {}),
     signIgnore: [
       ...bundledRipgrepMacSignIgnore,
       ...orcadTemplateMacSignIgnore,
@@ -748,8 +762,8 @@ module.exports = {
   npmRebuild: true,
   publish: {
     provider: 'github',
-    owner: 'wakii-dev',
-    repo: devChannelRepo ?? 'wakii',
+    owner: 'stablyai',
+    repo: devChannelRepo ?? 'orca',
     // Keep main-repo releases draft until release-cut verifies all assets; early --publish always would expose missing Windows installers.
     releaseType: devChannelRepo ? 'prerelease' : 'draft'
   }
@@ -799,7 +813,7 @@ async function signMacComputerUseHelper(helperAppPath, packager) {
     throw new Error('Missing signing identity for Orca Computer Use helper app')
   }
   // Why: TCC grants attach to this nested app's code identity. Sign it before
-  // the outer Wakii.app is sealed so production builds preserve that identity.
+  // the outer Orca.app is sealed so production builds preserve that identity.
   execFileSync('codesign', codesignArgs(identity, helperAppPath), { stdio: 'inherit' })
   execFileSync('codesign', ['--verify', '--deep', '--strict', helperAppPath], {
     stdio: 'inherit'

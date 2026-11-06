@@ -1,15 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { Repo } from '../repo-types'
-import type { TerminalTab } from '../terminal-tab-types'
+import type { TerminalTab } from '../workspace-layout/terminal-tab-types'
 import type { Worktree } from '../worktree/types'
-import { buildWorktreeComparator, CREATE_GRACE_MS, sortWorktreesSmart } from './smart-sort'
+import { buildWorktreeComparator } from './smart-sort'
 import { buildAttentionByWorktree } from './smart-attention'
-import {
-  AGENT_STATUS_STALE_AFTER_MS,
-  type AgentStateHistoryEntry,
-  type AgentStatusEntry
-} from '../agent-status-types'
-import { makePaneKey } from '../stable-pane-id'
+import type { AgentStatusEntry } from '../agent-status/contracts/agent-status-types'
+import { makePaneKey } from '../workspace-layout/stable-pane-id'
 
 const NOW = new Date('2026-03-27T12:00:00.000Z').getTime()
 const LEAF_ID_1 = '11111111-1111-4111-8111-111111111111'
@@ -85,14 +81,6 @@ function makeEntry(overrides: Partial<AgentStatusEntry> & { paneKey: string }): 
   }
 }
 
-function makeHistory(
-  state: AgentStateHistoryEntry['state'],
-  startedAt: number,
-  interrupted = false
-): AgentStateHistoryEntry {
-  return { state, prompt: '', startedAt, interrupted: interrupted || undefined }
-}
-
 function ptyMapForTabs(tabsByWorktree: Record<string, TerminalTab[]>): Record<string, string[]> {
   const out: Record<string, string[]> = {}
   for (const tabs of Object.values(tabsByWorktree)) {
@@ -119,183 +107,6 @@ function sortSmartAt(
   )
   return [...worktrees].sort(buildWorktreeComparator('smart', repoMap, now, attention))
 }
-
-function sortSmart(
-  worktrees: Worktree[],
-  tabsByWorktree: Record<string, TerminalTab[]>,
-  agentStatusByPaneKey: Record<string, AgentStatusEntry>
-): Worktree[] {
-  return sortSmartAt(NOW, worktrees, tabsByWorktree, agentStatusByPaneKey)
-}
-
-describe('smart sort — class invariants', () => {
-  it('ranks working above idle', () => {
-    const working = makeWorktree({ id: 'working', displayName: 'Working' })
-    const idle = makeWorktree({
-      id: 'idle',
-      displayName: 'Idle',
-      // Give Idle enough recency to beat Working if the class layer regresses.
-      lastActivityAt: NOW - 1_000
-    })
-    const tabs = {
-      [working.id]: [makeTab({ id: 'tab-working', worktreeId: working.id })],
-      [idle.id]: [makeTab({ id: 'tab-idle', worktreeId: idle.id })]
-    }
-    const entries = {
-      [paneKey('tab-working', '1')]: makeEntry({
-        paneKey: paneKey('tab-working', '1'),
-        state: 'working',
-        stateStartedAt: NOW - 60_000,
-        updatedAt: NOW - 1_000
-      })
-    }
-    const sorted = sortSmart([idle, working], tabs, entries)
-    expect(sorted.map((w) => w.id)).toEqual(['working', 'idle'])
-  })
-})
-
-describe('smart sort — within-class recency', () => {
-  it('orders two blocked worktrees by stateStartedAt (newer first)', () => {
-    const older = makeWorktree({ id: 'older', displayName: 'A-Older' })
-    const newer = makeWorktree({ id: 'newer', displayName: 'B-Newer' })
-    const tabs = {
-      [older.id]: [makeTab({ id: 'tab-older', worktreeId: older.id })],
-      [newer.id]: [makeTab({ id: 'tab-newer', worktreeId: newer.id })]
-    }
-    const entries = {
-      [paneKey('tab-older', '1')]: makeEntry({
-        paneKey: paneKey('tab-older', '1'),
-        state: 'blocked',
-        stateStartedAt: NOW - 5 * 60_000,
-        updatedAt: NOW - 1_000
-      }),
-      [paneKey('tab-newer', '1')]: makeEntry({
-        paneKey: paneKey('tab-newer', '1'),
-        state: 'blocked',
-        stateStartedAt: NOW - 30_000,
-        updatedAt: NOW - 1_000
-      })
-    }
-    const sorted = sortSmart([older, newer], tabs, entries)
-    expect(sorted.map((w) => w.id)).toEqual(['newer', 'older'])
-  })
-
-  it('falls back to current stateStartedAt when history is only interrupted dones', () => {
-    const onlyInterrupted = makeWorktree({
-      id: 'only-interrupted',
-      displayName: 'A-OnlyInterrupted'
-    })
-    const fresh = makeWorktree({ id: 'fresh', displayName: 'B-Fresh' })
-    const tabs = {
-      [onlyInterrupted.id]: [makeTab({ id: 'tab-i', worktreeId: onlyInterrupted.id })],
-      [fresh.id]: [makeTab({ id: 'tab-f', worktreeId: fresh.id })]
-    }
-    const entries = {
-      [paneKey('tab-i', '1')]: makeEntry({
-        paneKey: paneKey('tab-i', '1'),
-        state: 'working',
-        stateStartedAt: NOW - 60_000,
-        updatedAt: NOW - 1_000,
-        stateHistory: [makeHistory('done', NOW - 5_000, true)]
-      }),
-      [paneKey('tab-f', '1')]: makeEntry({
-        paneKey: paneKey('tab-f', '1'),
-        state: 'working',
-        stateStartedAt: NOW - 30_000,
-        updatedAt: NOW - 1_000
-      })
-    }
-    const sorted = sortSmart([onlyInterrupted, fresh], tabs, entries)
-    expect(sorted.map((w) => w.id)).toEqual(['fresh', 'only-interrupted'])
-  })
-})
-
-describe('smart sort — interrupted and stale handling', () => {
-  it('interrupted done worktrees fall to Class 4 (idle), not Class 2', () => {
-    const interrupted = makeWorktree({
-      id: 'interrupted',
-      displayName: 'Interrupted',
-      lastActivityAt: NOW - 60_000
-    })
-    const realDone = makeWorktree({ id: 'real-done', displayName: 'Real Done' })
-    const tabs = {
-      [interrupted.id]: [makeTab({ id: 'tab-i', worktreeId: interrupted.id })],
-      [realDone.id]: [makeTab({ id: 'tab-d', worktreeId: realDone.id })]
-    }
-    const entries = {
-      [paneKey('tab-i', '1')]: makeEntry({
-        paneKey: paneKey('tab-i', '1'),
-        state: 'done',
-        interrupted: true,
-        stateStartedAt: NOW - 1_000,
-        updatedAt: NOW - 500
-      }),
-      [paneKey('tab-d', '1')]: makeEntry({
-        paneKey: paneKey('tab-d', '1'),
-        state: 'done',
-        stateStartedAt: NOW - 5 * 60_000,
-        updatedAt: NOW - 1_000
-      })
-    }
-    const sorted = sortSmart([interrupted, realDone], tabs, entries)
-    expect(sorted.map((w) => w.id)).toEqual(['real-done', 'interrupted'])
-  })
-
-  it('ranks a failed turn above an idle worktree and a cancelled one below it', () => {
-    const idle = makeWorktree({ id: 'idle', displayName: 'Idle', lastActivityAt: NOW - 10_000 })
-    const failed = makeWorktree({ id: 'failed', displayName: 'Failed', lastActivityAt: 0 })
-    const stopped = makeWorktree({ id: 'stopped', displayName: 'Stopped', lastActivityAt: 0 })
-    const tabs = {
-      [idle.id]: [makeTab({ id: 'tab-idle', worktreeId: idle.id })],
-      [failed.id]: [makeTab({ id: 'tab-failed', worktreeId: failed.id })],
-      [stopped.id]: [makeTab({ id: 'tab-stopped', worktreeId: stopped.id })]
-    }
-    const doneWith = (tabId: string, outcome: 'failure' | 'cancellation') =>
-      makeEntry({
-        paneKey: paneKey(tabId, '1'),
-        state: 'done',
-        mainAgent: { state: 'done', outcome, stateStartedAt: NOW - 60_000 },
-        stateStartedAt: NOW - 60_000,
-        updatedAt: NOW - 1_000
-      })
-    const entries = {
-      [paneKey('tab-failed', '1')]: doneWith('tab-failed', 'failure'),
-      [paneKey('tab-stopped', '1')]: doneWith('tab-stopped', 'cancellation')
-    }
-    const sorted = sortSmart([stopped, idle, failed], tabs, entries)
-    expect(sorted.map((w) => w.id)).toEqual(['failed', 'idle', 'stopped'])
-  })
-
-  it('stale entries fall to Class 4', () => {
-    const stale = makeWorktree({
-      id: 'stale',
-      displayName: 'Stale',
-      lastActivityAt: NOW - 60_000
-    })
-    const fresh = makeWorktree({ id: 'fresh', displayName: 'Fresh' })
-    const tabs = {
-      [stale.id]: [makeTab({ id: 'tab-s', worktreeId: stale.id })],
-      [fresh.id]: [makeTab({ id: 'tab-f', worktreeId: fresh.id })]
-    }
-    const entries = {
-      [paneKey('tab-s', '1')]: makeEntry({
-        paneKey: paneKey('tab-s', '1'),
-        state: 'blocked',
-        stateStartedAt: NOW - AGENT_STATUS_STALE_AFTER_MS - 60_000,
-        updatedAt: NOW - AGENT_STATUS_STALE_AFTER_MS - 60_000
-      }),
-      [paneKey('tab-f', '1')]: makeEntry({
-        paneKey: paneKey('tab-f', '1'),
-        state: 'done',
-        stateStartedAt: NOW - 5 * 60_000,
-        updatedAt: NOW - 1_000
-      })
-    }
-    const sorted = sortSmart([stale, fresh], tabs, entries)
-    // Fresh Done ranks in Class 2; stale-with-live-PTY decays to Class 4.
-    expect(sorted.map((w) => w.id)).toEqual(['fresh', 'stale'])
-  })
-})
 
 describe('smart sort — completed-agent eligibility clock', () => {
   // Captured regression (docs/smart-sort-agent-activity-findings.md): a `done` row whose

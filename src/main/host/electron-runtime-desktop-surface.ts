@@ -18,6 +18,18 @@ export const electronRuntimeDesktopSurface: RuntimeDesktopSurface = {
     new Notification({ title, body }).show()
     return true
   },
+  sendToRenderers: (channel, payload) => {
+    for (const window of BrowserWindow.getAllWindows()) {
+      if (window.isDestroyed()) {
+        continue
+      }
+      try {
+        window.webContents.send(channel, payload)
+      } catch {
+        // A renderer can disappear between isDestroyed() and send().
+      }
+    }
+  },
   findWindowById: (id) => BrowserWindow.fromId(id),
   isMainWindowFocused: () => {
     // Why first non-destroyed, not a stored ref: BrowserWindow instances are recreated

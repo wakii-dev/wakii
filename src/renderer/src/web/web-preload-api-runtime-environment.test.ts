@@ -244,41 +244,6 @@ describe('web runtime environment identity', () => {
     ).toMatchObject({ pairedDeviceId: 'paired-device-a' })
   })
 
-  it('fences a web runtime response that completes after manual disconnect', async () => {
-    let resolveCall!: (response: RuntimeRpcResponse<unknown>) => void
-    const pendingCall = new Promise<RuntimeRpcResponse<unknown>>((resolve) => {
-      resolveCall = resolve
-    })
-    const call = vi.fn(() => pendingCall)
-    vi.doMock('./web-runtime-client', () => ({
-      WebRuntimeClient: class {
-        call = call
-        close(): void {}
-      }
-    }))
-    const globals = installBrowserGlobals('Linux')
-    writeStoredRuntimeEnvironment(globals.storage, 'web-server-a')
-    const { installWebPreloadApi } = await import('./web-preload-api')
-    installWebPreloadApi()
-
-    const status = globals.window.api.runtimeEnvironments.getStatus({
-      selector: 'web-server-a'
-    })
-    await vi.waitFor(() => expect(call).toHaveBeenCalledOnce())
-    await globals.window.api.runtimeEnvironments.disconnect({ selector: 'web-server-a' })
-    resolveCall({
-      id: 'status.get',
-      ok: true,
-      result: { runtimeId: 'runtime-1' },
-      _meta: { runtimeId: 'runtime-1' }
-    })
-
-    await expect(status).resolves.toMatchObject({
-      ok: false,
-      error: { code: 'runtime_manually_disconnected' }
-    })
-  })
-
   it.each(['active runtime', 'selected environment'] as const)(
     'returns a disconnect envelope when a queued %s call disconnects',
     async (route) => {

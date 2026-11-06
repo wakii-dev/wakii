@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { DirCache, TreeNode } from './file-explorer-types'
-import { createVisibleFileExplorerRowProjection } from './useFileExplorerVisibleRowProjection'
+import type { DirCache, TreeNode } from './file-explorer/tree/file-explorer-types'
+import { createVisibleFileExplorerRowProjection } from './file-explorer/tree/useFileExplorerVisibleRowProjection'
 
 function row(relativePath: string, isDirectory = false, depth?: number): TreeNode {
   return {

@@ -33,7 +33,7 @@ function buildManagedBlock(managedHooksPath: string): string[] {
     START_MARKER,
     '- insert:',
     `    - id: ${MANAGED_ROW_ID}`,
-    "      name: '@deepseek-ai/dsh-hooks-claude-code'",
+    `      name: '${DSH_HOOK_EXECUTOR_PACKAGE}'`,
     '      config:',
     `        configPath: ${quoteYamlScalar(managedHooksPath)}`,
     END_MARKER

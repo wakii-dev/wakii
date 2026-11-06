@@ -53,7 +53,7 @@ const ALLOW_PATTERNS = [
   /\borca terminal\b/gi, // CLI command name
   /ORCA\s+(?:skills|serve|account|worktree|terminal|orchestration|plugin|profile|environment|browser|status|commands?)\b/g, // uppercase CLI invocations (skill text; \n literal phá \b)
   /\borca(?=\s+(?:--|-[a-z]))/g, // CLI invocations với flags
-  /\borca\s+(?:serve|account|worktree|terminal|orchestration|plugin|profile|environment|browser|status|command|commands|comandos|commandes|Befehle|lệnh)\b/gi, // CLI invocations & 'orca command(s)' prose
+  /\borca\s+(?:serve|account|worktree|terminal|orchestration|plugin|profile|environment|browser|status|computer|vm|command|commands|comandos|commandes|Befehle|lệnh)\b/gi, // CLI invocations & 'orca command(s)' prose
   /\borca(?:\.[\w-]+)+/g, // dotted CLI globals & channels (orca.panels.handle, orca:serve-ready)
   /# (?:BEGIN|END) ORCA AGENT STATUS HOOKS/g, // legacy profile block markers
   /[\w.-]*orca\.localhost[^\s"'`,;()[\]]*/gi, // dev localhost label domains

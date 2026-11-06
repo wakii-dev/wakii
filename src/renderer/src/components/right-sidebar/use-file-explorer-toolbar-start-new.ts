@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import type { TreeNode } from './file-explorer-types'
+import type { TreeNode } from './file-explorer/tree/file-explorer-types'
 
 export function useFileExplorerToolbarStartNew(
   worktreePath: string | null | undefined,

@@ -1,4 +1,4 @@
-import { quotePosixShellDoubleQuotedApostrophe } from '../../shared/shell-argument-quoting'
+import { quotePosixShellDoubleQuotedApostrophe } from '../../shared/shell/launch/shell-argument-quoting'
 import { quotePowerShellLiteral } from '../../shared/powershell-native-argument'
 
 const MANAGED_MARKER = '# Wakii managed WSL CLI launcher'

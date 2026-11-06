@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { FileExplorerOpenEditors } from './FileExplorerOpenEditors'
 import type { OpenEditorsEntry } from './file-explorer-open-editors'
-import { visit, type ReactElementLike } from './file-explorer-element-tree-test-harness'
+import { visit, type ReactElementLike } from './file-explorer/tree/file-explorer-element-tree-test-harness'
 
 const ENTRIES: OpenEditorsEntry[] = [
   {

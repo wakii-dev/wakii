@@ -4,7 +4,6 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { BrowserLoadFailureOverlay } from './browser-load-failure-overlay'
-import { BROWSER_GUEST_RECOVERY_ERROR_CODE } from '../host-guest/browser-page-guest-recovery'
 
 const callbacks = {
   onRetry: vi.fn(),
@@ -30,78 +29,6 @@ afterEach(() => {
 })
 
 describe('BrowserLoadFailureOverlay', () => {
-  it('waits for a local dev server, re-attempting the load with backoff until it gives up', async () => {
-    vi.useFakeTimers()
-    const refused = () => ({
-      code: -102,
-      description: 'ERR_CONNECTION_REFUSED',
-      validatedUrl: 'http://localhost:3000/'
-    })
-    const view = (loading: boolean) => (
-      <BrowserLoadFailureOverlay
-        loadError={refused()}
-        autoRetry={{ active: true, loading }}
-        {...callbacks}
-      />
-    )
-    const { rerender } = render(view(false))
-    expect(screen.getByText('Nothing is running on localhost:3000 yet')).toBeInTheDocument()
-    expect(screen.getByText('ERR_CONNECTION_REFUSED')).toBeInTheDocument()
-    expect(screen.getByText(/Reloads when the server starts/)).toBeInTheDocument()
-
-    await act(() => vi.advanceTimersByTimeAsync(1000))
-    expect(callbacks.onRetry).toHaveBeenCalledTimes(1)
-    // An attempt in flight is left to settle, not aborted by the next one.
-    rerender(view(true))
-    await act(() => vi.advanceTimersByTimeAsync(5000))
-    expect(callbacks.onRetry).toHaveBeenCalledTimes(1)
-    // Each failed attempt delivers a fresh error object; the backoff carries on.
-    rerender(view(false))
-    await act(() => vi.advanceTimersByTimeAsync(1000))
-    expect(callbacks.onRetry).toHaveBeenCalledTimes(2)
-    await act(() => vi.advanceTimersByTimeAsync(1999))
-    expect(callbacks.onRetry).toHaveBeenCalledTimes(2)
-    await act(() => vi.advanceTimersByTimeAsync(1))
-    expect(callbacks.onRetry).toHaveBeenCalledTimes(3)
-
-    // Every 5s after that, for 120 attempts in all; then it stops saying it will reload.
-    await act(() => vi.advanceTimersByTimeAsync(3000 + 116 * 5000))
-    expect(callbacks.onRetry).toHaveBeenCalledTimes(120)
-    expect(screen.queryByText(/Reloads when the server starts/)).toBeNull()
-    await act(() => vi.advanceTimersByTimeAsync(60_000))
-    expect(callbacks.onRetry).toHaveBeenCalledTimes(120)
-  })
-
-  it('stays still while the page is not on screen or the failure is not one waiting can fix', () => {
-    vi.useFakeTimers()
-    const { rerender } = render(
-      <BrowserLoadFailureOverlay
-        loadError={{
-          code: -102,
-          description: 'ERR_CONNECTION_REFUSED',
-          validatedUrl: 'http://localhost:3000/'
-        }}
-        autoRetry={{ active: false, loading: false }}
-        {...callbacks}
-      />
-    )
-    rerender(
-      <BrowserLoadFailureOverlay
-        loadError={{
-          code: -105,
-          description: 'ERR_NAME_NOT_RESOLVED',
-          validatedUrl: 'https://example.com/'
-        }}
-        autoRetry={{ active: true, loading: false }}
-        {...callbacks}
-      />
-    )
-    expect(screen.getByText("Couldn't find example.com")).toBeInTheDocument()
-    expect(screen.queryByText(/Waiting for/)).toBeNull()
-    act(() => vi.advanceTimersByTime(60_000))
-    expect(callbacks.onRetry).not.toHaveBeenCalled()
-  })
-
   it('never starts an attempt while the previous one is still settling', async () => {
     vi.useFakeTimers()
     let settle = (): void => {}

@@ -4,6 +4,7 @@ import type { TabGroup } from '../../../shared/tab-types'
 import { getGroupVisibleTabOrder } from '@/components/tab-bar/group-tab-order'
 import {
   getNextTabAcrossAllTypes,
+  getNextTerminalCycleTab,
   getNextTabWithinActiveType,
   getPreviousRecentTab,
   type TabCycleType,
@@ -289,7 +290,7 @@ export function switchFloatingWorkspaceTab(
 
   const next =
     mode === 'terminal'
-      ? getNextFloatingWorkspaceTerminalTab(visibleTabs, active, direction)
+      ? getNextTerminalCycleTab(visibleTabs, active, direction)
       : mode === 'all-types'
         ? getNextTabAcrossAllTypes({
             tabs: visibleTabs,

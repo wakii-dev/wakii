@@ -1,12 +1,12 @@
 import {
   isTerminalInputTooLargeWithYield,
   TERMINAL_INPUT_TOO_LARGE_ERROR
-} from '../../shared/terminal-input'
+} from '../../shared/terminal/input/terminal-input'
 import {
   buildAgentPromptPasteBytes,
   sanitizeAgentPromptText
-} from '../../shared/agent-prompt-injection'
-import { isTuiAgent } from '../../shared/tui-agent-config'
+} from '../../shared/agent-launch/startup/agent-prompt-injection'
+import { isTuiAgent } from '../../shared/agent-launch/catalog/tui-agent-config'
 
 export function buildTerminalSendPayload(action: {
   text?: string

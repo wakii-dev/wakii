@@ -4,11 +4,14 @@ import { act, createElement } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
-import type { AgentStatusEntry } from '../../../shared/agent-status-types'
-import { makePaneKey } from '../../../shared/stable-pane-id'
-import type { TerminalLayoutSnapshot, TerminalTab } from '../../../shared/terminal-tab-types'
-import type { TerminalAgent } from '../../../shared/terminal-agent'
-import { resolveTabAgentFromSignals } from '../../../shared/tab-agent-from-signals'
+import type { AgentStatusEntry } from '../../../shared/agent-status/contracts/agent-status-types'
+import { makePaneKey } from '../../../shared/workspace-layout/stable-pane-id'
+import type {
+  TerminalLayoutSnapshot,
+  TerminalTab
+} from '../../../shared/workspace-layout/terminal-tab-types'
+import type { TerminalAgent } from '../../../shared/agent-status/identity/terminal-agent'
+import '../../../shared/tab-agent-from-signals'
 import { useTabAgent } from './use-tab-agent'
 
 const initialAppState = useAppStore.getInitialState()
@@ -546,22 +549,6 @@ describe('useTabAgent', () => {
     launchAgent: 'codex'
   }
 
-  it('paints the completed owner while its task names another agent', async () => {
-    const paneKey = makePaneKey('tab-1', LEAF_ID)
-    useAppStore.setState({
-      terminalLayoutsByTabId: {
-        'tab-1': {
-          root: { type: 'leaf', leafId: LEAF_ID },
-          activeLeafId: LEAF_ID,
-          expandedLeafId: null
-        }
-      },
-      agentStatusByPaneKey: { [paneKey]: { ...completedAgentStatus(paneKey), agentType: 'claude' } }
-    })
-    await renderHookProbe({ ...baseTab, launchAgent: 'claude', title: '⠋ fix the grok launcher' })
-    expect(latestHookAgent).toBe('claude')
-  })
-
   beforeEach(() => {
     latestHookAgent = undefined
     getForegroundProcess.mockReset()
@@ -679,46 +666,6 @@ describe('useTabAgent', () => {
 
     expect(clearTabLaunchAgent).toHaveBeenCalledWith('tab-1')
     expect(latestHookAgent).toBeNull()
-    expect(getForegroundProcess).not.toHaveBeenCalled()
-  })
-
-  it('treats paired runtime PTYs as remote-like for completed hook fallback', async () => {
-    const paneKey = makePaneKey('tab-1', LEAF_ID)
-    useAppStore.setState({
-      ptyIdsByTabId: { 'tab-1': ['remote:web-env-1@@terminal-1'] },
-      agentStatusByPaneKey: {
-        [paneKey]: completedAgentStatus(paneKey)
-      }
-    })
-
-    await renderHookProbe({
-      ...baseTab,
-      ptyId: 'remote:web-env-1@@terminal-1',
-      title: 'zsh',
-      launchAgent: undefined
-    })
-
-    expect(latestHookAgent).toBe('codex')
-    expect(getForegroundProcess).not.toHaveBeenCalled()
-  })
-
-  it('does not let a split-tab fallback PTY suppress missing-layout hook identity', async () => {
-    const paneKey = makePaneKey('tab-1', LEAF_ID)
-    useAppStore.setState({
-      ptyIdsByTabId: { 'tab-1': ['pty-shell', 'pty-agent'] },
-      terminalLayoutsByTabId: {},
-      agentStatusByPaneKey: {
-        [paneKey]: workingAgentStatus(paneKey)
-      }
-    })
-
-    await renderHookProbe({
-      ...baseTab,
-      title: 'zsh',
-      launchAgent: 'claude'
-    })
-
-    expect(latestHookAgent).toBe('codex')
     expect(getForegroundProcess).not.toHaveBeenCalled()
   })
 

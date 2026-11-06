@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { collectDevChannelPackagingProblems } from './verify-dev-channel-packaging.mjs'
+import { collectDevChannelPackagingProblems } from '../desktop-distribution/channel-policy/verify-dev-channel-packaging.mjs'
 
 const require = createRequire(import.meta.url)
 const CONFIG_PATH = resolve(import.meta.dirname, '../electron-builder.config.cjs')

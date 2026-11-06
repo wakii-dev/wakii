@@ -1,4 +1,4 @@
-import { recordSelfWrite, clearSelfWrite, SELF_WRITE_REMOTE_TTL_MS } from '@/components/editor/editor-self-write-registry'
+import { recordSelfWrite, clearSelfWrite, SELF_WRITE_REMOTE_TTL_MS } from '@/components/editor/external-changes/editor-self-write-registry'
 import {
   readRuntimeFileContent
 } from '@/runtime/runtime-file-read-client'

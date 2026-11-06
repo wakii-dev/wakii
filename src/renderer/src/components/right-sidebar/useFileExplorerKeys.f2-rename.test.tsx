@@ -3,9 +3,9 @@
 import { act, cleanup, render } from '@testing-library/react'
 import { useRef } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { createFileExplorerRowProjection } from './file-explorer-row-projection'
-import type { TreeNode } from './file-explorer-types'
-import { useFileExplorerKeys } from './useFileExplorerKeys'
+import { createFileExplorerRowProjection } from './file-explorer/tree/file-explorer-row-projection'
+import type { TreeNode } from './file-explorer/tree/file-explorer-types'
+import { useFileExplorerKeys } from './file-explorer/selection/useFileExplorerKeys'
 
 const mocks = vi.hoisted(() => ({
   keybindings: {} as Record<string, unknown>

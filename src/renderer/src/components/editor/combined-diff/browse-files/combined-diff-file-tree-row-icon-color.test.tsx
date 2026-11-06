@@ -3,7 +3,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { GitStatusEntry } from '../../../../../../shared/git-status-types'
+import type { GitStatusEntry } from '../../../../../../shared/git/status/git-status-types'
 
 vi.mock('@/store', () => ({ useAppStore: { getState: () => ({}) } }))
 vi.mock('@/lib/worktree-runtime-owner', () => ({

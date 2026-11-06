@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { SearchFileResult } from '../../../../shared/code-search-types'
 import { executeFileReplaceAll } from './search-replace-run-execute'
-import type { FileExplorerOperationGuard } from './file-explorer-operation-owner'
+import type { FileExplorerOperationGuard } from './file-explorer/navigation/file-explorer-operation-owner'
 
 const FLAGS = { caseSensitive: false, wholeWord: false, useRegex: false }
 
