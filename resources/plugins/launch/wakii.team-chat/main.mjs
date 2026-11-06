@@ -19,36 +19,9 @@ import { accessSync, readFileSync, existsSync, mkdirSync, readdirSync, cpSync, r
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 const execFileAsync = promisify(execFileCb)
-
-// Resolve the PRODUCTION orca binary explicitly. Why: when running inside the
-// dev app's plugin worker, PATH puts the DEV wrapper script first
-// (~/Documents/orca/out/bin/orca) which breaks outside its module context
-// ("Cannot find module ..."). The production binary is self-contained.
-function orcaBin() {
-  const isWin = process.platform === 'win32'
-  const candidates = isWin ? [
-    // Windows: binary sống cạnh app resources (exe + bin/orca.exe); ALSO the
-    // app's own executable path is unusable — resolve from process.execPath.
-    join(dirname(process.execPath), 'resources', 'bin', 'orca.exe'),
-    join(process.env.LOCALAPPDATA || '', 'Programs', 'orca', 'resources', 'bin', 'orca.exe')
-  ] : [
-    '/opt/homebrew/bin/orca',
-    '/usr/local/bin/orca',
-    '/Applications/Wakii.app/Contents/Resources/bin/orca',
-    '/Applications/Orca.app/Contents/Resources/bin/orca'
-  ]
-  for (const c of candidates) {
-    try { if (c) accessSync(c); else continue; return c } catch { continue }
-  }
-  return 'orca' // fallback to PATH (production app context)
-}
-
-// Windows GUI processes have USERPROFILE but often no HOME (the app scrubs
-// worker env to an allowlist that may carry only one of the two) — always
-// resolve the user root through this instead of process.env.HOME directly.
-function homeDir() {
-  return process.env.HOME || process.env.USERPROFILE || ''
-}
+import { orcaBin, winBashBin } from './lib/orca-cli-bin.mjs'
+import { homeDir, chatDir, chatLog, readTail, appendLine } from './lib/bus.mjs'
+import { createRegistry } from './lib/registry.mjs'
 
 const SKILL = 'orca-superpowers-workflow'
 const {
@@ -643,14 +616,6 @@ export function assertCapability(name, catalog = kitBinCatalog()) {
 // cũng KHÔNG được: bash interpret file, shebang thành comment → JS/python vỡ
 // (thật: "line 2: syntax error near '('"). Sniff shebang, ghép đúng interpreter:
 // node/python → thẳng interpreter; bash/sh → Git bash (fallback Program Files).
-let winBashCache = null
-function winBashBin() {
-  if (winBashCache) return winBashCache
-  const pf = process.env['ProgramFiles'] || 'C:\\Program Files'
-  const cand = join(pf, 'Git', 'bin', 'bash.exe')
-  winBashCache = existsSync(cand) ? cand : 'bash'
-  return winBashCache
-}
 function kitSpawnArgv(binPath, args) {
   if (process.platform !== 'win32') return [binPath, args]
   if (extname(binPath)) return [binPath, args]
@@ -1378,43 +1343,8 @@ export default function activate(orca) {
   })
 
   // ── Team Chat bus (HOI-16): log JSONL là nguồn sự thật duy nhất ──────────
-  // ~/.claude/chat/team-chat.jsonl — mọi thành viên ghi/đọc cùng format:
-  //   {"at":<ms>,"from":"<tên>","role":"captain|worker|owner|system","channel":"<kênh>","text":"..."}
-  // Panel → storage 'team.chat.send' (single slot) → poller append file + xoá slot.
-  // CLI (Captain/workers) → bin team-chat append thẳng file.
+  // bus + registry đã tách sang lib/ (FI-98 SF-D) — main chỉ còn wiring.
   // Outbound: poller refresh storage 'team.chat.tail' (500 tin cuối) mỗi 2s cho panel.
-  const chatDir = join(homeDir(), '.claude', 'chat')
-  const chatLog = join(chatDir, 'team-chat.jsonl')
-  //appendLine mới mkdir — roomCmd/mirrorRoster ghi thẳng nên dir phải có sẵn
-  //từ activate, không thì create-room đầu tiên ENOENT fail âm thầm.
-  mkdir(chatDir, { recursive: true }).catch(() => {})
-
-  // FIFO 300 tin/room (CEO 3/11): đọc toàn bus, group theo room, giữ 300
-  // mới nhất mỗi room — tail tổng = ghép tất cả, sắp theo at.
-  const readTail = async () => {
-    try {
-      const raw = await readFile(chatLog, 'utf8')
-      const lines = raw.split('\n').filter((l) => l.trim())
-      if (!lines.length) return []
-      const byRoom = new Map()
-      for (const l of lines) {
-        try {
-          const m = JSON.parse(l)
-          const ch = m.channel || 'general'
-          if (!byRoom.has(ch)) byRoom.set(ch, [])
-          byRoom.get(ch).push(l)
-        } catch { /* skip dòng hỏng */ }
-      }
-      const result = []
-      for (const [, msgs] of byRoom) {
-        result.push(...msgs.slice(-300))
-      }
-      result.sort((a, b) => {
-        try { return JSON.parse(a).at - JSON.parse(b).at } catch { return 0 }
-      })
-      return result
-    } catch { return [] }
-  }
   const _oldReadTail = async (limit = 500) => {
     try {
       const raw = await readFile(chatLog, 'utf8')
@@ -1424,17 +1354,16 @@ export default function activate(orca) {
     }
   }
 
-  const appendLine = async (msg) => {
-    await mkdir(chatDir, { recursive: true })
-    const line = JSON.stringify({
-      at: Date.now(),
-      from: String(msg.from || 'unknown').slice(0, 40),
-      role: String(msg.role || 'system').slice(0, 12),
-      channel: String(msg.channel || 'general').slice(0, 32),
-      text: String(msg.text || '').slice(0, 4000)
-    })
-    await appendFile(chatLog, line + '\n')
-  }
+  const {
+    mirrorRoster,
+    livePanes,
+    invalidateAliveCache,
+    publishTerminals,
+    captainEntries,
+    publishMindmaps,
+    publishProjects,
+    resolveRoomWorktree,
+  } = createRegistry(orca)
 
   let lastSendAt = 0
   let lastTailLen = -1
@@ -1442,28 +1371,6 @@ export default function activate(orca) {
   // Captain luôn online (CEO ruling 1/11): poller là router — mọi tin của
   // Owner/@captain được ACK ngay vào room + chuyển tiếp vào terminal Captain
   // (claude thật) nếu đã cấu hình storage 'team.captain.terminal' = handle.
-  // Mirror roster + settings (panel settings ghi storage) ra file cho
-  // Captain/bins/CLI đọc: ~/.claude/chat/roster.json {ceo, concurrency, members}
-  let rosterMirror = ''
-  const mirrorRoster = async () => {
-    try {
-      const [nm, ro, st] = await Promise.all([
-        orca.host.call('storage.get', { key: 'team.chat.name' }).catch(() => null),
-        orca.host.call('storage.get', { key: 'team.chat.roster' }).catch(() => null),
-        orca.host.call('storage.get', { key: 'team.chat.settings' }).catch(() => null)
-      ])
-      const data = {
-        ceo: (nm && nm.value) || 'CEO',
-        concurrency: (st && st.value && st.value.concurrency) || 3,
-        members: (ro && Array.isArray(ro.value)) ? ro.value : []
-      }
-      const s = JSON.stringify(data)
-      if (s !== rosterMirror) {
-        rosterMirror = s
-        await writeFile(join(chatDir, 'roster.json'), s + '\n')
-      }
-    } catch { /* mirror best-effort */ }
-  }
   let lastRoomCmdAt = 0
   let lastCaptainCmdAt = 0
   let captainSeenAt = Date.now()
@@ -1485,58 +1392,6 @@ export default function activate(orca) {
   }
   let lastCaptainSig = ''
   let roomListSeen = []
-  // ── Captain room-scoped: mỗi room = 1 worktree + 1 captain trực ──
-  let aliveCache = { at: 0, panes: new Set() }
-  const livePanes = async () => {
-    if (Date.now() - aliveCache.at < 20000) return aliveCache.panes
-    let panes = new Set()
-    try {
-      const orcaBin = process.env.ORCA_BIN || 'orca'
-      const out = await new Promise((res) => execFileCb(orcaBin, ['terminal', 'list', '--json'], { timeout: 15000 }, (e, o) => res(e ? '' : o)))
-      if (out) for (const t of JSON.parse(out).result.terminals) panes.add(t.handle)
-    } catch { /* list fail → rỗng để wake */ }
-    aliveCache = { at: Date.now(), panes }
-    return panes
-  }
-  let termsCache = { at: 0, sig: '' }
-  // .wakii live embed trong chat room: metadata.mindmap (path, ghi bởi team-chat
-  // mindmap) → đọc file (cache theo mtime) → publish slot để panel render cây
-  // tương tác ngay trong room; file đổi là card cập nhật theo.
-  // .wakii live embed trong chat room: metadata.mindmap (path, ghi bởi team-chat
-  // mindmap) → đọc file (cache theo mtime) → publish slot để panel render cây
-  // tương tác ngay trong room; file đổi là card cập nhật theo. Toàn bộ
-  // best-effort: embed fail (file thiếu, host từ chối…) KHÔNG được làm chết poller.
-  const mmCache = new Map()
-  const publishMindmaps = async () => {
-    try {
-      let rooms = {}
-      try { rooms = JSON.parse(readFileSync(join(chatDir, 'rooms.json'), 'utf8')) } catch { return }
-      const out = {}
-      for (const [room, e] of Object.entries(rooms)) {
-        const p = e && e.mindmap
-        if (typeof p !== 'string' || !p.endsWith('.wakii')) continue
-        const abs = p.startsWith('/') ? p : join(String(e.worktree || ''), p)
-        if (!abs.startsWith('/')) continue
-        let st
-        try {
-          st = statSync(abs)
-        } catch { continue }
-        const c = mmCache.get(room)
-        if (c && c.mtime === st.mtimeMs && c.size === st.size) { out[room] = c.data; continue }
-        const raw = readFileSync(abs, 'utf8')
-        const tree = raw.split('\n').filter((l) => !l.startsWith('#')).join('\n').trim()
-        const data = { path: p, abs, mtime: st.mtimeMs, tree }
-        mmCache.set(room, { mtime: st.mtimeMs, size: st.size, data })
-        out[room] = data
-      }
-      if (Object.keys(out).length || mmCache.size) {
-        await orca.host.call('storage.set', { key: 'team.chat.mindmaps', value: out }).catch(() => {})
-      }
-    } catch (e) {
-      try { orca.log('wakii.team-chat mindmaps LỖI (best-effort): ' + ((e && e.message) || e)) } catch {}
-    }
-  }
-
   // WATCHDOG (CEO 1/11): worker pane chết/im lặng không còn âm thầm — poller
   // so REG với terminal list + lastOutputAt, post tin ⚠️ vào room (mỗi sự kiện
   // 1 lần) và dọn REG chết. Best-effort: lỗi không được giết poller.
@@ -1579,71 +1434,6 @@ export default function activate(orca) {
   // current project / select project — hết cảnh gõ tay repo rồi fallback "team").
   // current = worktree của terminal active mới nhất; items = repo duy nhất từ
   // worktree list. Throttle 60s như terminals.
-  let projectsAt = 0
-  const publishProjects = async () => {
-    try {
-      if (Date.now() - projectsAt < 60000) return
-      projectsAt = Date.now()
-      const out = await new Promise((res) => execFileCb(orcaBin(), ['worktree', 'list', '--json'], { timeout: 15000 }, (e, o) => res(e ? '' : o)))
-      if (!out) return
-      const wts = JSON.parse(out).result.worktrees
-      const items = []
-      const seen = new Set()
-      for (const w of wts) {
-        // Chuẩn hoá \ → / để match /workspaces/ và tách tên trên cả path Windows.
-        const p = String(w.path || '').replace(/\\/g, '/')
-        if (!p.startsWith('/') && !/^[a-z]:/i.test(p)) continue
-        const m = p.match(/\/workspaces\/([^/]+)\//)
-        const name = m ? m[1] : (p.split('/').filter(Boolean).slice(-1)[0] || p)
-        if (seen.has(name)) continue
-        seen.add(name)
-        items.push({ name, path: m ? p.slice(0, p.indexOf('/workspaces/')) : p })
-      }
-      let current = ''
-      let currentPath = ''
-      // Ưu tiên FOCUS (CEO ruling 2/11): workspace.readContext trả workspace
-      // đang focus + terminal ids — project default = project của terminal
-      // CEO đang focus, không phải terminal "ồn nhất".
-      try {
-        const ctx = await orca.host.call('workspace.readContext').catch(() => null)
-        const ft = ctx && ctx.value && Array.isArray(ctx.value.terminals) && ctx.value.terminals[0]
-        if (ft) {
-          const tOut2 = await new Promise((res) => execFileCb(orcaBin(), ['terminal', 'list', '--json'], { timeout: 15000 }, (e, o) => res(e ? '' : o)))
-          if (tOut2) {
-            const t2 = JSON.parse(tOut2).result.terminals.find((x) => x.handle === ft.handle || x.handle === ft)
-            const w2 = t2 && String(t2.worktreePath || '').replace(/\\/g, '/')
-            if (w2) {
-              const m2 = w2.match(/\/workspaces\/([^/]+)\//)
-              current = m2 ? m2[1] : (w2.split('/').filter(Boolean).slice(-1)[0] || '')
-              currentPath = w2
-            }
-          }
-        }
-      } catch { /* focus best-effort */ }
-      if (!current) {
-        try {
-          const tOut = await new Promise((res) => execFileCb(orcaBin(), ['terminal', 'list', '--json'], { timeout: 15000 }, (e, o) => res(e ? '' : o)))
-          if (tOut) {
-            const terms = JSON.parse(tOut).result.terminals
-            const withWt = terms.filter((t) => t.worktreePath).sort((a, b) => (b.lastOutputAt || 0) - (a.lastOutputAt || 0))
-            const wt = withWt[0] && String(withWt[0].worktreePath).replace(/\\/g, '/')
-            if (wt) {
-              const mm = wt.match(/\/workspaces\/([^/]+)\//)
-              current = mm ? mm[1] : (wt.split('/').filter(Boolean).slice(-1)[0] || '')
-              currentPath = wt
-            }
-          }
-        } catch { /* current best-effort — fallback heuristic */ }
-      }
-      await orca.host.call('storage.set', { key: 'team.chat.projects', value: {
-        current,
-        currentPath,
-        // root workspaces để panel ghép path worktree dự kiến khi gõ room name
-        root: join(homeDir(), 'orca', 'workspaces').replace(/\\/g, '/'),
-        items
-      } }).catch(() => {})
-    } catch { /* projects best-effort */ }
-  }
   // CAPTAIN SUPERVISOR (CEO 3/11): captain tự phục hồi — không cần CEO đánh thức.
   // 3 lớp chạy mỗi tick (throttle 30s cho respawn/heal, 10 phút cho heartbeat):
   //   1. REGISTRATION HEALER: pane sống + title "CAPTAIN" nhưng mất REG → re-register
@@ -1803,49 +1593,6 @@ export default function activate(orca) {
     }
   }
 
-  const publishTerminals = async () => {
-    if (Date.now() - termsCache.at < 10000) return
-    termsCache.at = Date.now()
-    try {
-      const orcaBin = process.env.ORCA_BIN || 'orca'
-      const out = await new Promise((res) => execFileCb(orcaBin, ['terminal', 'list', '--json'], { timeout: 15000 }, (e, o) => res(e ? '' : o)))
-      if (!out) return
-      const list = JSON.parse(out).result.terminals.map((t) => ({ handle: t.handle, title: (t.title || '').slice(0, 60), worktreePath: t.worktreePath || '' }))
-      const sig = JSON.stringify(list)
-      if (sig !== termsCache.sig) { termsCache.sig = sig; await orca.host.call('storage.set', { key: 'team.chat.terminals', value: list }).catch(() => {}) }
-    } catch { /* best-effort */ }
-  }
-  const captainEntries = async () => {
-    try {
-      const reg = JSON.parse(await readFile(join(homeDir(), '.claude', 'chat', '.workers.json'), 'utf8'))
-      return Object.entries(reg)
-        .filter(([, e]) => e && e.name === 'captain')
-        .map(([pane, e]) => ({ pane, room: e.room || null, worktree: e.worktree || '' }))
-    } catch { return [] }
-  }
-  const resolveRoomWorktree = async (room) => {
-    // (0) metadata worktree room ghi tường minh trong rooms.json — nguồn chuẩn nhất
-    // (đặt trước match-by-repo: endsWith('/'+repo) dính main checkout trước room worktree).
-    try {
-      const rooms = JSON.parse(await readFile(join(chatDir, 'rooms.json'), 'utf8'))
-      const meta = rooms[room] && rooms[room].worktree
-      if (meta) return meta
-    } catch { /* chưa có rooms.json */ }
-    try {
-      const reg = JSON.parse(await readFile(join(chatDir, '.workers.json'), 'utf8'))
-      const wt = Object.values(reg).find((e) => e && e.room === room && e.worktree && e.name !== 'captain')?.worktree
-      if (wt) return wt
-    } catch { /* chưa có registration */ }
-    try {
-      const rooms = JSON.parse(await readFile(join(chatDir, 'rooms.json'), 'utf8'))
-      const repo = rooms[room] && rooms[room].repo
-      const orcaBin = process.env.ORCA_BIN || 'orca'
-      const out = await new Promise((res) => execFileCb(orcaBin, ['worktree', 'list', '--json'], { timeout: 15000 }, (e, o) => res(e ? '' : o)))
-      if (!out) return ''
-      const wts = JSON.parse(out).result.worktrees.map((w) => String(w.path || '').replace(/\\/g, '/'))
-      return wts.find((p) => repo && p.endsWith('/' + repo)) || wts.find((p) => repo && p.includes(repo)) || ''
-    } catch { return '' }
-  }
   const forwardTo = async (handle, msg) => {
     await orca.host.call('terminal.sendText', {
       terminalId: handle,
@@ -1866,7 +1613,7 @@ export default function activate(orca) {
       spawnWorktree: spawnWorktreeCaptain,
       log: (...a) => orca.log('[wake] ' + a.join(' ')),
     }).catch(() => null)
-    if (r) aliveCache = { at: 0, panes: new Set() }
+    if (r) invalidateAliveCache()
     return r
   }
   const captainRoute = async (msg) => {
@@ -1942,7 +1689,7 @@ export default function activate(orca) {
               }
               await mkdir(chatDir, { recursive: true })
               await writeFile(workersPath, JSON.stringify(reg, null, 1))
-              aliveCache = { at: 0, panes: new Set() }
+              invalidateAliveCache()
               await appendLine({ from: 'system', role: 'system', channel: room, text: note }).catch(() => {})
             } catch (e) { orca.log('[adopt] lỗi: ' + (e && e.message || e)) }
           })()
