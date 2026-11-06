@@ -50,8 +50,8 @@ describe('buildUpdaterReleaseFeedUrls', () => {
     ).toBe(false)
   })
 
-  it('defaults to upstream so dev and test behavior is unchanged', () => {
-    expect(UPDATER_DEFAULT_FEED_REPO).toEqual({ owner: 'stablyai', repo: 'orca' })
+  it('defaults to the fork feed so dev and test behavior matches real releases', () => {
+    expect(UPDATER_DEFAULT_FEED_REPO).toEqual({ owner: 'wakii-dev', repo: 'wakii' })
   })
 })
 
