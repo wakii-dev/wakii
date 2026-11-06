@@ -6,7 +6,8 @@ import { configDefaults, defaultExclude, defineConfig } from 'vitest/config'
 import {
   UNIT_INCLUDE,
   UNIT_EXCLUDE,
-  UNIT_SETUP_FILES
+  UNIT_SETUP_FILES,
+  PENDING_GITLENS_PARITY_SF_TESTS
 } from './scripts/ci/unit-selection/dependency-graph/ci-unit-files.mjs'
 import TimingSequencer from './scripts/ci/sharding/ci-unit-sequencer.mjs'
 import RuntimeSequencer from './scripts/test-runtime/execution-policy/vitest-runtime-sequencer.mjs'

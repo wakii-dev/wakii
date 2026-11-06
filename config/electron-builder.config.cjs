@@ -257,8 +257,14 @@ module.exports = {
   productName: 'Wakii',
   // Fork: release notes thật cho update dialog — workflow export từ GitHub
   // release (RELEASE_NOTES + RELEASE_NOTES_URL) trước khi electron-builder chạy.
-  ...(process.env.RELEASE_NOTES ? { releaseNotes: process.env.RELEASE_NOTES } : {}),
-  ...(process.env.RELEASE_NOTES_URL ? { releaseNotesUrl: process.env.RELEASE_NOTES_URL } : {}),
+  // 26.x: notes sống trong releaseInfo — root releaseNotes/releaseNotesUrl đã
+  // bị xoá khỏi schema.
+  ...(process.env.RELEASE_NOTES || process.env.RELEASE_NOTES_URL
+    ? { releaseInfo: {
+        ...(process.env.RELEASE_NOTES ? { releaseNotes: process.env.RELEASE_NOTES } : {}),
+        ...(process.env.RELEASE_NOTES_URL ? { releaseNotesUrl: process.env.RELEASE_NOTES_URL } : {})
+      } }
+    : {}),
   protocols: [{ name: 'Wakii', schemes: ['orca'] }],
   toolsets: { appimage: '1.0.3' },
   ...(devChannelBuildVersion
@@ -541,9 +547,11 @@ module.exports = {
     // auto-update bị từ chối "wrong publisher". Không set publisherName + tắt
     // verify cho MỌI channel của fork (upstream giữ nó cho bản ký của họ).
     signtoolOptions: {
-      sign: signWindowsUninstallerViaSignPath,
-      verifyUpdateCodeSignature: false
+      sign: signWindowsUninstallerViaSignPath
     },
+    // verifyUpdateCodeSignature là prop cấp win (WindowsConfiguration) — đặt
+    // trong signtoolOptions làm schema 26.15.3 từ chối cả khối (CI v2.2.9 vỡ).
+    verifyUpdateCodeSignature: false,
     extraResources: [
       ...commonExtraResources,
       ...windowsRuntimeResources,
