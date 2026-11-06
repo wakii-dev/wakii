@@ -786,7 +786,19 @@
       ],
       "outputs": "UI 1:1 với design — tokens main.css + primitives shadcn, đã qua design-system gate review trước PR",
       "owner": "wakii"
+    },
+    {
+      "name": "crew-recovery",
+      "type": "skill",
+      "category": "ops",
+      "inputs": [
+        "worker im lặng",
+        "pane chết",
+        "tin ⚠️ watchdog"
+      ],
+      "outputs": "ladder 4 bậc state→peek→respawn/adopt→stop cho Captain xử worker kẹt",
+      "owner": "wakii"
     }
   ],
-  "kitHash": "4ae0b6c175f52e18"
+  "kitHash": "1397039a65f20431"
 }

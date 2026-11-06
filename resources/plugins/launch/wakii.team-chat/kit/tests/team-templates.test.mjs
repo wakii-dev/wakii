@@ -103,5 +103,18 @@ for (const marker of ['[PLAN]', 'DONE', 'BLOCKED', '📡', '[CEO→captain]', '�
   ok(tpl.includes(marker), 'TEMPLATES.md thiếu marker: ' + marker)
 }
 
+// 7) hand-back 6 mục (FI-95 SF-A): --deviations/--open/--next optional,
+//    thiếu thì output dừng ở ③ — không ép ④⑥
+r = run(['done', 'Y.md', '--did', 'làm', '--test', 'cat', '--evidence', 'ok',
+  '--deviations', 'đổi chỗ file', '--open', 'chưa test dark', '--next', 'test dark trước khi ship'])
+ok(r.status === 0, 'done 6 mục exit 0: ' + r.stderr)
+m = lastLine()
+ok(/④ Deviations: đổi chỗ file ⑤ Still open: chưa test dark ⑥ For-next-crew: test dark trước khi ship$/.test(m.text),
+  'done đủ ⑥ mục: ' + m.text)
+r = run(['done', 'Z.md', '--did', 'làm', '--test', 'cat', '--evidence', 'ok'])
+ok(r.status === 0, 'done 3 mục vẫn chấp nhận: ' + r.stderr)
+m = lastLine()
+ok(!/[④⑤⑥]/.test(m.text), 'done thiếu ④⑤⑥ thì output không có mục rỗng: ' + m.text)
+
 rmSync(root, { recursive: true, force: true })
-console.log('team-templates: 6 nhóm PASS (plan · done-enforce · done-format · blocked · identity · TEMPLATES.md)')
+console.log('team-templates: 7 nhóm PASS (plan · done-enforce · done-format · blocked · identity · TEMPLATES.md · hand-back-6-mục)')

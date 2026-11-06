@@ -281,19 +281,28 @@ $SHOT_}" --role worker ${TPL_PASS[@]+"${TPL_PASS[@]}"} ;;
            echo "usage: team-chat review \"<scope>\" --checked \"<đã xem+chạy test gì>\" --findings \"<phát hiện>\" --verdict ok|cần-sửa" >&2
            echo "REVIEW phải đủ 3 phần + verdict hợp lệ (ok|cần-sửa) — review suông không bằng chứng bị trả lại." >&2; exit 2; }
          send_msg "[REVIEW] $SCOPE_R — ① Đã kiểm: $CHK_ ② Phát hiện: $FND_ ③ Phán quyết: $VERDICT_" --role worker ${TPL_PASS[@]+"${TPL_PASS[@]}"} ;;
-  done)  # team-chat done "<task>" --did .. --test .. --evidence .. → DONE 3 phần (bắt buộc đủ 3)
-         TID=""; DID=""; TST=""; EVD=""; TPL_PASS=()
+  done)  # team-chat done "<task>" --did .. --test .. --evidence ..
+         #   [--deviations "lệch spec"] [--open "chưa xong"] [--next "cho worker kế"]
+         # → DONE hand-back 6 mục: ①②③ bắt buộc, ④⑤⑥ optional (hand-back mate).
+         TID=""; DID=""; TST=""; EVD=""; DEV=""; OPN=""; NXT=""; TPL_PASS=()
          TID="$1"; shift
          while [ $# -gt 0 ]; do case "$1" in
            --did) DID="$2"; shift 2 ;;
            --test) TST="$2"; shift 2 ;;
            --evidence) EVD="$2"; shift 2 ;;
+           --deviations) DEV="$2"; shift 2 ;;
+           --open) OPN="$2"; shift 2 ;;
+           --next) NXT="$2"; shift 2 ;;
            *) TPL_PASS+=("$1"); shift ;;
          esac; done
          [ -n "$TID" ] && [ -n "$DID" ] && [ -n "$TST" ] && [ -n "$EVD" ] || {
-           echo "usage: team-chat done \"<task>\" --did \"<đã làm>\" --test \"<cách test>\" --evidence \"<bằng chứng>\"" >&2
+           echo "usage: team-chat done \"<task>\" --did \"<đã làm>\" --test \"<cách test>\" --evidence \"<bằng chứng>\" [--deviations d] [--open o] [--next n]" >&2
            echo "DONE phải ĐỦ 3 phần (hiến pháp §0.0) — thiếu là bị trả lại." >&2; exit 2; }
-         send_msg "DONE $TID — ① Đã làm: $DID ② Cách test: $TST ③ Bằng chứng: $EVD" --role worker ${TPL_PASS[@]+"${TPL_PASS[@]}"} ;;
+         HB=""
+         [ -n "$DEV" ] && HB="$HB ④ Deviations: $DEV"
+         [ -n "$OPN" ] && HB="$HB ⑤ Still open: $OPN"
+         [ -n "$NXT" ] && HB="$HB ⑥ For-next-crew: $NXT"
+         send_msg "DONE $TID — ① Đã làm: $DID ② Cách test: $TST ③ Bằng chứng: $EVD$HB" --role worker ${TPL_PASS[@]+"${TPL_PASS[@]}"} ;;
   ask)   # team-chat ask "<dòng 'N. câu? (a) .. (b) ..'>" → form hỏi CEO — panel hiện chip bấm
          case "$1" in -*) echo "usage: team-chat ask \"1. Câu hỏi? (a) lựa chọn (b) lựa chọn\" (mỗi câu 1 dòng)" >&2; exit 2 ;; esac
          [ $# -eq 0 ] && { echo "usage: team-chat ask \"<câu hỏi + options>\"" >&2; exit 2; }
@@ -332,5 +341,5 @@ PY
   read)  read_msgs "$@" ;;
   tail)  tail_msgs "$@" ;;
   path)  echo "$LOG" ;;
-  *)     echo "usage: team-chat send|plan|done|ask|blocked|rooms|read|tail|event|path — templates xem skills/team-workflow/TEMPLATES.md" >&2; exit 2 ;;
+  *)     echo "usage: team-chat send|plan|done|ask|blocked|rooms|read|tail|event|path — hand-back 6 mục xem skills/team-workflow/TEMPLATES.md" >&2; exit 2 ;;
 esac
