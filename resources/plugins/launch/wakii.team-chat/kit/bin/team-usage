@@ -1,0 +1,141 @@
+#!/bin/bash
+# team-usage — token usage per dispatch từ ledger room (FI-97 SF-C, port usage ledger của mate).
+# Nguồn: ~/.claude/chat/ledger/<room>.jsonl (team-orch ghi dispatch + session, done/cleanup ghi endedAt)
+#   → đọc session jsonl Claude Code (~/.claude/projects/<munged-cwd>/<session>.jsonl), cộng usage
+#   trong cửa sổ [startedAt, endedAt|now] của từng dispatch.
+# Thuần đọc — không ghi gì, không state riêng (parity team-who).
+#
+# Usage:
+#   team-usage --room <room> [--top N]     # dispatch đốt token nhiều nhất (rank = in+out+cacheW), default top 10
+#   team-usage --why <pane>                # 1 pane: task, window, tokens, round-trips, blocked/hỏi/DONE từ bus
+set -u
+LEDGER_DIR="${TEAM_LEDGER_DIR:-$HOME/.claude/chat/ledger}"
+ROOM=""; TOP=10; WHY=""
+while [ $# -gt 0 ]; do case "$1" in
+  --room) ROOM="$2"; shift 2 ;;
+  --top) TOP="$2"; shift 2 ;;
+  --why) WHY="$2"; shift 2 ;;
+  *) echo "team-usage: flag lạ '$1' — dùng --room <r> [--top N] | --why <pane>" >&2; exit 2 ;;
+esac; done
+
+python3 - "$LEDGER_DIR" "$ROOM" "$TOP" "$WHY" \
+  "${TEAM_CHAT_LOG:-$HOME/.claude/chat/team-chat.jsonl}" <<'PY'
+import datetime, json, os, re, sys
+
+ledger_dir, room_arg, top, why, bus_path = sys.argv[1:6]
+top = int(top)
+home = os.environ.get("HOME") or os.path.expanduser("~")  # Windows expanduser ưu tiên USERPROFILE — HOME phải thắng (fixture/kit sandbox)
+
+def load_json(path):
+    try: return json.load(open(path, encoding="utf-8"))
+    except Exception: return {}
+
+def munge(path):  # C:\a\b → C--a-b (munge cwd của Claude Code projects dir)
+    return re.sub(r"[\\/:]", "-", path)
+
+def ts_ms(iso):
+    try: return int(datetime.datetime.fromisoformat(iso.replace("Z", "+00:00")).timestamp() * 1000)
+    except Exception: return None
+
+def hm_dur(ms):
+    if ms is None or ms < 0: return "?"
+    m, s = divmod(int(ms / 1000), 60)
+    return f"{m}m{s:02d}s" if m else f"{s}s"
+
+def read_ledger(room):
+    disp, ends = [], {}
+    try:
+        for l in open(os.path.join(ledger_dir, room + ".jsonl"), encoding="utf-8"):
+            try: e = json.loads(l)
+            except Exception: continue
+            if e.get("kind") == "dispatch": disp.append(e)
+            elif e.get("kind") == "end" and e.get("pane"):
+                ends[e["pane"]] = max(ends.get(e["pane"], 0), e.get("endedAt", 0))
+    except FileNotFoundError: pass
+    return disp, ends
+
+def session_usage(worktree, session, started, ended):
+    t = {"in": 0, "out": 0, "cacheR": 0, "cacheW": 0, "msgs": 0}
+    if not session: return t
+    path = os.path.join(home, ".claude", "projects", munge(worktree or ""), session + ".jsonl")
+    try:
+        for l in open(path, encoding="utf-8", errors="replace"):
+            try: m = json.loads(l)
+            except Exception: continue
+            ts = ts_ms(m.get("timestamp") or "")
+            if ts is None or not (started <= ts <= ended): continue
+            u = (m.get("message") or {}).get("usage")
+            if m.get("type") == "assistant" and isinstance(u, dict):
+                t["in"] += u.get("input_tokens", 0)
+                t["out"] += u.get("output_tokens", 0)
+                t["cacheR"] += u.get("cache_read_input_tokens", 0)
+                t["cacheW"] += u.get("cache_creation_input_tokens", 0)
+                t["msgs"] += 1
+    except OSError: pass
+    return t
+
+def room_default():
+    rooms = load_json(os.path.join(home, ".claude", "chat", "rooms.json"))
+    opens = [(v.get("createdAt", 0), k) for k, v in rooms.items()
+             if isinstance(v, dict) and v.get("status") == "open"]
+    return max(opens)[1] if opens else "general"
+
+if why:
+    hits = []  # (room, dispatch, ended)
+    try: files = sorted(os.listdir(ledger_dir))
+    except FileNotFoundError: files = []
+    for f in files:
+        if not f.endswith(".jsonl"): continue
+        r = f[:-6]
+        disp, ends = read_ledger(r)
+        for d in disp:
+            if d.get("pane") == why:
+                hits.append((r, d, ends.get(why)))
+    if not hits:
+        print(f"(không có dispatch nào của pane {why} trong ledger — room chưa ghi hoặc pane sai)")
+        sys.exit(0)
+    now = int(datetime.datetime.now().timestamp() * 1000)
+    name = hits[-1][1].get("name") or ""
+    for r, d, end in hits:
+        ended = end if end and end >= d["startedAt"] else now
+        u = session_usage(d.get("worktree"), d.get("session"), d["startedAt"], ended)
+        total = u["in"] + u["out"] + u["cacheW"]
+        print(f"room=#{r} pane={why} name={name} dispatch={d.get('dispatchId') or '-'} task={d.get('task') or '-'}")
+        print(f"  window={hm_dur(ended - d['startedAt'])} ({ended - d['startedAt']}ms) session={d.get('session') or '(không định danh)'}")
+        print(f"  tokens: in={u['in']} out={u['out']} cacheR={u['cacheR']} cacheW={u['cacheW']} total(in+out+cacheW)={total}")
+        print(f"  round-trips={u['msgs']} (1 round-trip = 1 message assistant có usage)")
+    bus = {"BLOCKED": 0, "HỎI": 0, "DONE": 0}
+    try:
+        for l in open(bus_path, encoding="utf-8"):
+            try: m = json.loads(l)
+            except Exception: continue
+            if name and m.get("from") == name and any(
+                    m.get("at", 0) >= d["startedAt"] for _, d, _ in hits):
+                txt = m.get("text", "")
+                if txt.startswith("BLOCKED"): bus["BLOCKED"] += 1
+                elif txt.startswith("[HỎI]"): bus["HỎI"] += 1
+                elif txt.startswith("DONE"): bus["DONE"] += 1
+    except FileNotFoundError: pass
+    print(f"  bus: BLOCKED={bus['BLOCKED']} hỏi={bus['HỎI']} done={bus['DONE']}")
+    print("  → tổng số liệu trên là đầu vào cho skill token-review (đề xuất sửa brief) — không mở transcript trần")
+    sys.exit(0)
+
+room = room_arg or room_default()
+disp, ends = read_ledger(room)
+if not disp:
+    print(f"(ledger #{room} trống — chưa có dispatch nào được ghi; team-orch worker-start sẽ ghi)")
+    sys.exit(0)
+now = int(datetime.datetime.now().timestamp() * 1000)
+rows = []
+for d in disp:
+    ended = ends.get(d.get("pane"), 0)
+    ended = ended if ended >= d["startedAt"] else now
+    u = session_usage(d.get("worktree"), d.get("session"), d["startedAt"], ended)
+    rows.append((u["in"] + u["out"] + u["cacheW"], u, d, ended - d["startedAt"]))
+rows.sort(key=lambda r: -r[0])
+print(f"#room {room} — rank theo in+out+cacheW (cacheR rẻ, hiển thị riêng) — top {min(top, len(rows))}/{len(rows)} dispatch")
+for i, (total, u, d, dur) in enumerate(rows[:top], 1):
+    print(f"{i} {d.get('name') or '?':12.12} total={total} in={u['in']} out={u['out']} "
+          f"cacheR={u['cacheR']} cacheW={u['cacheW']} msgs={u['msgs']} dur={hm_dur(dur)} "
+          f"task={d.get('task') or '-'} dispatch={d.get('dispatchId') or '-'} pane={d.get('pane') or '-'}")
+PY

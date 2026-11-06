@@ -699,6 +699,22 @@
       "description": "Guard G3.5 — chặn-sắt trước khi Captain duyệt [PLAN]; fence theo worktree path"
     },
     {
+      "name": "team-usage",
+      "type": "bin",
+      "category": "ops",
+      "owner": "wakii",
+      "description": "Token usage per dispatch từ ledger room (~/.claude/chat/ledger/<room>.jsonl): --top N đắt nhất, --why <pane> phân tích round-trip/blocked — dẫn xuất thuần từ session jsonl, cấm state riêng"
+    },
+    {
+      "name": "token-review",
+      "type": "skill",
+      "category": "ops",
+      "inputs": ["team-usage --top thấy dispatch đốt token bất thường", "blocked/hỏi nhiều quanh 1 worker", "trước khi tái dispatch cùng task"],
+      "outputs": "đề xuất sửa context pack/brief cho dispatch kế — KHÔNG mở transcript trần",
+      "description": "Token review Captain-centric (port triết lý mate): usage đắt → giả thuyết → sửa brief, không phê worker",
+      "owner": "wakii"
+    },
+    {
       "name": "team-who",
       "type": "bin",
       "category": "ops",
@@ -800,5 +816,5 @@
       "owner": "wakii"
     }
   ],
-  "kitHash": "cd06d2921b56c953"
+  "kitHash": "da0804524cb62e7b"
 }
