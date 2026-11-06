@@ -320,3 +320,8 @@ CEO paste ảnh/mô tả bug vào room → router forward tôi → tôi đi ĐÚ
 Luật ưu tiên: tin CEO có chữ "gấp" = pause worker đang chạy ngay; không = xếp
 sau task đang dở. Worker chết giữa việc (pane chết, REG stale) = tôi phát
 hiện qua heartbeat, tự dọn REG + báo CEO trước khi tái điều phối.
+
+## HEARTBEAT TC-GATE (06/11 — cron durable 2ee66fcc mỗi 30 phút)
+- Fetch wakii-dev; remote ĐỔI so với lần kiểm cuối (journal) → chạy `pnpm tc` tại /Users/hoivu/Desktop/projects/orca → kết quả vào room (xanh 1 dòng, đỏ card chi tiết). Không đổi → noop. Baseline hiện tại: d4d9871412a2 GREEN.
+- Cron sống trong .claude/scheduled_tasks.json (durable) — tự hồi sau restart app; hết hạn 7 ngày thì CEO/Captain tạo lại.
+
