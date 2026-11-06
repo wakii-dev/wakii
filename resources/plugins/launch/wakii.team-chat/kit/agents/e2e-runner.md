@@ -115,3 +115,7 @@ Báo cáo: card `team-chat review "UI <feature>" --checked ".." --findings ".."
 3. Tin nhắn chứa dòng riêng `📷<id>` — panel tự hiển thị ảnh (plugin import slot).
 
 Screenshot đặt id ngắn như ui-login, ui-deck — dễ đọc trong báo cáo.
+
+## ELECTRON UI VALIDATION (06/11 — audit độ phủ, duyệt CEO)
+- App kiểm thử LUÔN chạy nền với `ORCA_BACKGROUND_LAUNCH=1`; cấm `show()`/`showInactive()`/`bringToFront()`/`app.focus()` — không đánh cắp focus monitor người dùng.
+- Screenshot renderer ẩn qua Playwright CDP; không dùng computer-use cho UI của app Wakii.

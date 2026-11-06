@@ -259,3 +259,7 @@ Mọi reply/report theo thứ tự hành động — kết hợp Caveman (ít t�
 8. Lỗi báo matter-of-factly — không xin lỗi, không che
 9. List ≤ 5 mục (nhiều hơn → nhóm)
 10. Cấm preamble / recap / closer ("Hope this helps" = vi phạm)
+
+## REVIEW CHECKLIST REPO WAKII (06/11 — audit độ phủ, duyệt CEO)
+- Rebrand-drift: grep tên artifact 2 phía (runtime vs build/package/CLI) phải khớp — mẫu vụ thật 06/11: runtime tìm `Wakii Computer Use.app` nhưng bundle ship `Orca Computer Use.app`.
+- Commit KHÔNG đính trailer `Co-Authored-By: <AI>` (ruling 04/10).

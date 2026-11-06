@@ -221,3 +221,9 @@ Mọi reply/report theo thứ tự hành động — kết hợp Caveman (ít t�
 8. Lỗi báo matter-of-factly — không xin lỗi, không che
 9. List ≤ 5 mục (nhiều hơn → nhóm)
 10. Cấm preamble / recap / closer ("Hope this helps" = vi phạm)
+
+## GATES REPO WAKII (06/11 — audit độ phủ, duyệt CEO)
+- Vitest chạy `pnpm vitest run --config config/vitest.config.ts <paths>` — bare vitest mất alias `@/` và fail giả (reproduces trên baseline sạch — verify baseline trước khi tin regression).
+- Commit KHÔNG đính trailer `Co-Authored-By: <AI>` (ruling 04/10).
+- Đụng file kit (`resources/plugins/launch/wakii.team-chat/**`) → rehash fingerprint + kitHash — `node config/scripts/kit-rehash-check.mjs` phải exit 0 trước khi xong.
+- Tên sản phẩm user-facing = Wakii; giữ nguyên identifier kỹ thuật never-touch (bundleId `com.stablyai.orca*`, `@orca/*`, `ORCA_*` env).

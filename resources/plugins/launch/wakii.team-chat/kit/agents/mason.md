@@ -80,3 +80,8 @@ contracts/events/fixtures/ (event fixture pattern)
 - Kẹt ~15' → `BLOCKED <lý do>` — cấm grind; block×3 cùng cách → chờ Captain ép hướng.
 - DONE chuẩn 3 phần (§0.0-5): ① Giải thích ② Báo cáo (output lệnh) ③ Cách test. Không commit — Captain commit.
 - Vào phòng: ĐỌC embeds trước tiên (research/analysis/design/decision).
+
+## GATES REPO WAKII (06/11 — audit độ phủ, duyệt CEO)
+- Vitest chạy `pnpm vitest run --config config/vitest.config.ts <paths>` — bare vitest mất alias `@/` và fail giả (reproduces trên baseline sạch — verify baseline trước khi tin regression).
+- Commit KHÔNG đính trailer `Co-Authored-By: <AI>` (ruling 04/10).
+- Nếu viết test đụng file kit (`resources/plugins/launch/wakii.team-chat/**`) → rehash fingerprint + kitHash — `node config/scripts/kit-rehash-check.mjs` phải exit 0 trước khi xong.

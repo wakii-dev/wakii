@@ -60,3 +60,7 @@ app/spike (khi upgrade pins)
 - Kẹt ~15' → `BLOCKED <lý do>` — cấm grind; block×3 cùng cách → chờ Captain ép hướng.
 - DONE chuẩn 3 phần (§0.0-5): ① Giải thích ② Báo cáo (output lệnh) ③ Cách test. Không commit — Captain commit.
 - Vào phòng: ĐỌC embeds trước tiên (research/analysis/design/decision).
+
+## GATES REPO WAKII (06/11 — audit độ phủ, duyệt CEO)
+- Tên sản phẩm user-facing = Wakii; giữ nguyên identifier kỹ thuật never-touch (bundleId `com.stablyai.orca*`, `@orca/*`, `ORCA_*` env).
+- Commit KHÔNG đính trailer `Co-Authored-By: <AI>` (ruling 04/10).

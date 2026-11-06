@@ -709,7 +709,11 @@
       "name": "token-review",
       "type": "skill",
       "category": "ops",
-      "inputs": ["team-usage --top thấy dispatch đốt token bất thường", "blocked/hỏi nhiều quanh 1 worker", "trước khi tái dispatch cùng task"],
+      "inputs": [
+        "team-usage --top thấy dispatch đốt token bất thường",
+        "blocked/hỏi nhiều quanh 1 worker",
+        "trước khi tái dispatch cùng task"
+      ],
       "outputs": "đề xuất sửa context pack/brief cho dispatch kế — KHÔNG mở transcript trần",
       "description": "Token review Captain-centric (port triết lý mate): usage đắt → giả thuyết → sửa brief, không phê worker",
       "owner": "wakii"
@@ -816,5 +820,5 @@
       "owner": "wakii"
     }
   ],
-  "kitHash": "d0062d2674ffa4d6"
+  "kitHash": "0998843823e18938"
 }
