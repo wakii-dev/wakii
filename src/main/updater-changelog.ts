@@ -10,7 +10,10 @@ type ChangelogEntry = {
   releaseNotesUrl: string
 }
 
-const CHANGELOG_URL = 'https://onorca.dev/changelog'
+// Fork KHÔNG dùng what's-new feed của upstream (onorca.dev) — card rich-content
+// của upstream trỏ link sai cho bản fork. Fork đưa release notes thật vào
+// latest.yml qua RELEASE_NOTES/RELEASE_NOTES_URL (workflow export từ release).
+const CHANGELOG_URL = ''
 
 function isValidEntry(entry: ChangelogEntry): boolean {
   return (
@@ -29,6 +32,9 @@ export async function fetchChangelog(
   incomingVersion: string,
   localVersion: string
 ): Promise<ChangelogData | null> {
+  if (!CHANGELOG_URL) {
+    return null
+  }
   const res = await net.fetch('https://onorca.dev/whats-new/changelog.json', {
     signal: AbortSignal.timeout(5000)
   })

@@ -235,6 +235,10 @@ const ORCA_MAC_TEAM_ID = '6CX3WHS9HZ'
 module.exports = {
   appId,
   productName: 'Wakii',
+  // Fork: release notes thật cho update dialog — workflow export từ GitHub
+  // release (RELEASE_NOTES + RELEASE_NOTES_URL) trước khi electron-builder chạy.
+  ...(process.env.RELEASE_NOTES ? { releaseNotes: process.env.RELEASE_NOTES } : {}),
+  ...(process.env.RELEASE_NOTES_URL ? { releaseNotesUrl: process.env.RELEASE_NOTES_URL } : {}),
   protocols: [{ name: 'Wakii', schemes: ['orca'] }],
   toolsets: { appimage: '1.0.3' },
   ...(devChannelBuildVersion
@@ -512,12 +516,14 @@ module.exports = {
     executableName: 'Orca',
     // SignPath signs Windows installers after packaging, so set release publisherName explicitly.
     // Unsigned dev channels omit it or updater signature checks reject dev updates and return to stable.
-    // Sign hook signs nothing: it relays transient NSIS uninstaller files to CI SignPath; unset relay env leaves local/dev builds inert.
+    // Fork builds are UNSIGNED (no SignPath): publisherName trong app-update.yml
+    // bắt electron-updater verify chữ ký theo 'SignPath Foundation' → mọi
+    // auto-update bị từ chối "wrong publisher". Không set publisherName + tắt
+    // verify cho MỌI channel của fork (upstream giữ nó cho bản ký của họ).
     signtoolOptions: {
       sign: signWindowsUninstallerViaSignPath,
-      ...(isWinDevChannel ? {} : { publisherName: 'SignPath Foundation' })
+      verifyUpdateCodeSignature: false
     },
-    ...(isWinDevChannel ? { verifyUpdateCodeSignature: false } : {}),
     extraResources: [
       ...commonExtraResources,
       ...windowsRuntimeResources,

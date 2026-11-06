@@ -44,6 +44,17 @@ jobs:
             --notes "Release ${RELEASE_TAG#v} — build tự động, note chi tiết cập nhật sau." \
             --latest
 
+      - name: Export release notes for updater
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          {
+            echo "RELEASE_NOTES<<NOTES_EOF"
+            gh release view "$RELEASE_TAG" --repo wakii-dev/wakii --json body --jq .body
+            echo "NOTES_EOF"
+            gh release view "$RELEASE_TAG" --repo wakii-dev/wakii --json url --jq .url | sed 's/^/RELEASE_NOTES_URL=/'
+          } >> "$GITHUB_ENV"
+
       - name: Select Xcode 16
         run: |
           ls /Applications | grep Xcode
