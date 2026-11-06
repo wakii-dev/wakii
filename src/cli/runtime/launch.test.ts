@@ -3,6 +3,7 @@ import { mkdir, mkdtemp, readFile, rename, rm, writeFile } from 'node:fs/promise
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { headlessServeOzonePlatformSwitches } from '../../shared/headless-serve-ozone-platform'
 import { encodePairingOffer } from '../../shared/remote-runtime/pairing/pairing'
 import { PAIRING_OFFER_VERSION } from '../../shared/remote-runtime/pairing/mobile-relay-pairing-offer'
 import {
@@ -24,6 +25,7 @@ vi.mock('child_process', () => ({
   spawnSync: spawnSyncMock
 }))
 import { serveOrcaApp } from './launch'
+import { getExecutableAppArgs, stripElectronRunAsNode } from './orca-app-executable'
 
 class FakeChildProcess extends EventEmitter {
   stdout = new EventEmitter()
@@ -71,6 +73,8 @@ const SSH_RECIPE_JSON = JSON.stringify({
 const INVALID_SSH_RECIPE_JSON = SSH_RECIPE_JSON.replace('/workspace/repo', 'relative/repo')
 const IGNORED_NON_RECIPE_STDOUT = '[serve] ignored non-recipe stdout'
 const PROFILE = resolve('/profiles/serve')
+const PIN_PROFILE = `--user-data-dir=${PROFILE}`
+const HOST_SERVE_OZONE_SWITCHES = headlessServeOzonePlatformSwitches(process.platform)
 
 function startRecipeJsonServer() {
   const child = new FakeChildProcess()

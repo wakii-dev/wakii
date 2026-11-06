@@ -8,10 +8,13 @@ import { tmpdir } from 'node:os'
 import type { WorktreeLineage } from '../../../shared/worktree/lineage-types'
 import type { WorktreeMeta } from '../../../shared/worktree/meta-types'
 import { makeWorktreeMeta, store } from './orca-runtime-test-fixtures.spec'
-import type { HostWorktreeTarget } from '../../../shared/worktree/host-qualified-identity'
+import { REPO_SEARCH_REFS_MAX_LIMIT } from '../../../shared/repo-search-limits'
+import {
+  hostWorktreeTarget,
+  type HostWorktreeTarget
+} from '../../../shared/worktree/host-qualified-identity'
 
 describe('OrcaRuntimeService', () => {
-  it('rejects local lineage updates when Wakii worktree identity is missing', async () => {
   it('rejects invalid positive limits for bounded list commands', async () => {
     const runtime = new OrcaRuntimeService(store)
 

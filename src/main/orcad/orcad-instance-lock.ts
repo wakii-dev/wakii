@@ -283,33 +283,3 @@ function garbledLockIsAbandoned(lockPath: string): boolean {
     return false
   }
 }
-
-function describeLockHolder(record: OrcadLockRecord): string {
-  return record.role === 'desktop' ? 'The Wakii desktop app' : 'Another orcad'
-}
-
-function makeLock(lockPath: string, record: OrcadLockRecord): OrcadInstanceLock {
-  let released = false
-  const stopHeartbeat = startOrcadLockHeartbeat(lockPath)
-  return {
-    path: lockPath,
-    record,
-    release: () => {
-      if (released) {
-        return
-      }
-      released = true
-      stopHeartbeat()
-      // Re-read ownership before unlinking so a successor’s live runtime cannot be unlocked.
-      const current = parseOrcadInstanceLockRecord(readBoundedLockFile(lockPath) ?? '')
-      if (!current || current.nonce !== record.nonce) {
-        return
-      }
-      try {
-        unlinkSync(lockPath)
-      } catch {
-        // Dead-PID leftovers can be reclaimed on the next start.
-      }
-    }
-  }
-}

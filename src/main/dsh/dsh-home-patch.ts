@@ -1,5 +1,7 @@
 /** Edit only Orca's marker-delimited region in the user-owned YAML patch layer. */
 
+import { DSH_HOOK_EXECUTOR_PACKAGE } from './dsh-hook-packages'
+
 const START_MARKER = '# >>> orca-managed-dsh-hooks (managed by Wakii; do not edit) >>>'
 const END_MARKER = '# <<< orca-managed-dsh-hooks <<<'
 

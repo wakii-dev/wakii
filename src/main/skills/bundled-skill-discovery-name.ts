@@ -37,7 +37,9 @@ export async function withoutBundledSkillCompatibilityCopies<T extends Discovere
         nativeBundledSkillFilesystem,
         skill.directoryPath,
         source,
-        bundledSkillTextDigest(Buffer.from(source.text))
+        bundledSkillTextDigest(
+          Buffer.from(source.files.find((file) => file.path === 'SKILL.md')?.text ?? '', 'utf8')
+        )
       )
       if (classified.folderClass === 'released' || classified.folderClass === 'current') {
         continue
