@@ -95,7 +95,7 @@ describe('MacOSNativeProviderClient paste validation', () => {
     providers.length = 0
     mkdtempSyncMock.mockImplementation((prefix: string) => `${prefix}${sockets.length}`)
     resolveMacOSComputerUseExecutablePathMock.mockReturnValue(
-      '/Applications/Orca Computer Use.app/Contents/MacOS/orca-computer-use-macos'
+      '/Applications/Wakii Computer Use.app/Contents/MacOS/orca-computer-use-macos'
     )
     spawnMock.mockImplementation(() => {
       const provider = new FakeProvider()

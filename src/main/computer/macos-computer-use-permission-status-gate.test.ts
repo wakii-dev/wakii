@@ -14,7 +14,7 @@ vi.mock('./macos-computer-use-permissions', () => ({
 function statusWith(accessibility: ComputerUsePermissionStatus): ComputerUsePermissionStatusResult {
   return {
     platform: 'darwin',
-    helperAppPath: '/Applications/Orca Computer Use.app',
+    helperAppPath: '/Applications/Wakii Computer Use.app',
     helperUnavailableReason: null,
     permissions: [
       { id: 'accessibility', status: accessibility },

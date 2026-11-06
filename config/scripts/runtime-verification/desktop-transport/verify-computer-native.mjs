@@ -160,7 +160,7 @@ function verifyMacOSHelperApp() {
     'computer-use-macos',
     '.build',
     'release',
-    'Orca Computer Use.app'
+    'Wakii Computer Use.app'
   )
   if (!existsSync(appPath)) {
     console.error(

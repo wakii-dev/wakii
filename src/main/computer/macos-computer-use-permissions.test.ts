@@ -17,7 +17,7 @@ import {
 const resolveHelperAppPathMock = vi.hoisted(() => vi.fn())
 const resolveHelperExecutablePathMock = vi.hoisted(() => vi.fn())
 const permissionStatusTempDir = '/tmp/orca-computer-use-permissions-test'
-const helperAppPath = '/Applications/Orca Computer Use.app'
+const helperAppPath = '/Applications/Wakii Computer Use.app'
 const helperInfoPlistPath = join(helperAppPath, 'Contents', 'Info.plist')
 
 const plistBuddyStdout = vi.hoisted(() => ({ value: 'com.example.wakii.computer-use\n' }))
@@ -72,7 +72,7 @@ describe('openComputerUsePermissions', () => {
     resolveHelperAppPathMock.mockReset()
     resolveHelperExecutablePathMock.mockReset()
     resolveHelperExecutablePathMock.mockReturnValue(
-      '/Applications/Orca Computer Use.app/Contents/MacOS/orca-computer-use-macos'
+      '/Applications/Wakii Computer Use.app/Contents/MacOS/orca-computer-use-macos'
     )
     vi.mocked(mkdtemp).mockResolvedValue(permissionStatusTempDir)
     vi.mocked(stat).mockResolvedValue({} as Awaited<ReturnType<typeof stat>>)
@@ -90,11 +90,11 @@ describe('openComputerUsePermissions', () => {
   })
 
   it('does not launch the setup helper when all permissions are granted', async () => {
-    resolveHelperAppPathMock.mockReturnValue('/Applications/Orca Computer Use.app')
+    resolveHelperAppPathMock.mockReturnValue('/Applications/Wakii Computer Use.app')
 
     await expect(openComputerUsePermissions()).resolves.toEqual({
       platform: 'darwin',
-      helperAppPath: '/Applications/Orca Computer Use.app',
+      helperAppPath: '/Applications/Wakii Computer Use.app',
       permissionId: undefined,
       openedSettings: false,
       launchedHelper: false,
@@ -106,18 +106,18 @@ describe('openComputerUsePermissions', () => {
     })
     expect(spawn).not.toHaveBeenCalledWith(
       '/usr/bin/open',
-      ['-n', '/Applications/Orca Computer Use.app', '--args', '--permissions'],
+      ['-n', '/Applications/Wakii Computer Use.app', '--args', '--permissions'],
       { detached: true, stdio: 'ignore' }
     )
   })
 
   it('launches the helper app in permissions mode', async () => {
-    resolveHelperAppPathMock.mockReturnValue('/Applications/Orca Computer Use.app')
+    resolveHelperAppPathMock.mockReturnValue('/Applications/Wakii Computer Use.app')
     mockPermissionStatus('{"accessibility":"granted","screenshots":"not-granted"}')
 
     await expect(openComputerUsePermissions()).resolves.toEqual({
       platform: 'darwin',
-      helperAppPath: '/Applications/Orca Computer Use.app',
+      helperAppPath: '/Applications/Wakii Computer Use.app',
       permissionId: undefined,
       openedSettings: false,
       launchedHelper: true,
@@ -126,7 +126,7 @@ describe('openComputerUsePermissions', () => {
         { id: 'accessibility', status: 'granted' },
         { id: 'screenshots', status: 'not-granted' }
       ],
-      nextStep: 'Grant Screen Recording to Orca Computer Use, then retry get-app-state.'
+      nextStep: 'Grant Screen Recording to Wakii Computer Use, then retry get-app-state.'
     })
     expect(spawnSync).toHaveBeenCalledWith(
       '/usr/bin/pkill',
@@ -140,18 +140,18 @@ describe('openComputerUsePermissions', () => {
     )
     expect(spawn).toHaveBeenCalledWith(
       '/usr/bin/open',
-      ['-n', '/Applications/Orca Computer Use.app', '--args', '--permissions'],
+      ['-n', '/Applications/Wakii Computer Use.app', '--args', '--permissions'],
       { detached: true, stdio: 'ignore' }
     )
   })
 
   it('launches a targeted permission helper flow', async () => {
-    resolveHelperAppPathMock.mockReturnValue('/Applications/Orca Computer Use.app')
+    resolveHelperAppPathMock.mockReturnValue('/Applications/Wakii Computer Use.app')
     mockPermissionStatus('{"accessibility":"not-granted","screenshots":"not-granted"}')
 
     await expect(openComputerUsePermissions('accessibility')).resolves.toEqual({
       platform: 'darwin',
-      helperAppPath: '/Applications/Orca Computer Use.app',
+      helperAppPath: '/Applications/Wakii Computer Use.app',
       permissionId: 'accessibility',
       openedSettings: true,
       launchedHelper: true,
@@ -160,22 +160,22 @@ describe('openComputerUsePermissions', () => {
         { id: 'accessibility', status: 'not-granted' },
         { id: 'screenshots', status: 'not-granted' }
       ],
-      nextStep: 'Grant Accessibility to Orca Computer Use, then retry get-app-state.'
+      nextStep: 'Grant Accessibility to Wakii Computer Use, then retry get-app-state.'
     })
     expect(spawn).toHaveBeenCalledWith(
       '/usr/bin/open',
-      ['-n', '/Applications/Orca Computer Use.app', '--args', '--permission', 'accessibility'],
+      ['-n', '/Applications/Wakii Computer Use.app', '--args', '--permission', 'accessibility'],
       { detached: true, stdio: 'ignore' }
     )
   })
 
   it('launches a targeted permission helper even when that permission is already granted', async () => {
-    resolveHelperAppPathMock.mockReturnValue('/Applications/Orca Computer Use.app')
+    resolveHelperAppPathMock.mockReturnValue('/Applications/Wakii Computer Use.app')
     mockPermissionStatus('{"accessibility":"granted","screenshots":"not-granted"}')
 
     await expect(openComputerUsePermissions('accessibility')).resolves.toEqual({
       platform: 'darwin',
-      helperAppPath: '/Applications/Orca Computer Use.app',
+      helperAppPath: '/Applications/Wakii Computer Use.app',
       permissionId: 'accessibility',
       openedSettings: true,
       launchedHelper: true,
@@ -184,11 +184,11 @@ describe('openComputerUsePermissions', () => {
         { id: 'accessibility', status: 'granted' },
         { id: 'screenshots', status: 'not-granted' }
       ],
-      nextStep: 'Grant Screen Recording to Orca Computer Use, then retry get-app-state.'
+      nextStep: 'Grant Screen Recording to Wakii Computer Use, then retry get-app-state.'
     })
     expect(spawn).toHaveBeenCalledWith(
       '/usr/bin/open',
-      ['-n', '/Applications/Orca Computer Use.app', '--args', '--permission', 'accessibility'],
+      ['-n', '/Applications/Wakii Computer Use.app', '--args', '--permission', 'accessibility'],
       { detached: true, stdio: 'ignore' }
     )
   })
@@ -215,21 +215,21 @@ describe('openComputerUsePermissions', () => {
     resolveHelperAppPathMock.mockReturnValue(null)
 
     await expect(openComputerUsePermissions()).rejects.toThrow(
-      'Orca Computer Use.app was not found'
+      'Wakii Computer Use.app was not found'
     )
   })
 
   it('throws when the helper executable is missing during setup', async () => {
-    resolveHelperAppPathMock.mockReturnValue('/Applications/Orca Computer Use.app')
+    resolveHelperAppPathMock.mockReturnValue('/Applications/Wakii Computer Use.app')
     resolveHelperExecutablePathMock.mockReturnValue(null)
 
     await expect(openComputerUsePermissions('accessibility')).rejects.toThrow(
-      '/Applications/Orca Computer Use.app/Contents/MacOS/orca-computer-use-macos was not found'
+      '/Applications/Wakii Computer Use.app/Contents/MacOS/orca-computer-use-macos was not found'
     )
   })
 
   it('resets stale macOS TCC grants for the helper bundle id', async () => {
-    resolveHelperAppPathMock.mockReturnValue('/Applications/Orca Computer Use.app')
+    resolveHelperAppPathMock.mockReturnValue('/Applications/Wakii Computer Use.app')
     vi.mocked(readFile).mockResolvedValueOnce(
       '{"accessibility":"not-granted","screenshots":"not-granted"}'
     )
@@ -237,7 +237,7 @@ describe('openComputerUsePermissions', () => {
 
     await expect(resetComputerUsePermissions()).resolves.toEqual({
       platform: 'darwin',
-      helperAppPath: '/Applications/Orca Computer Use.app',
+      helperAppPath: '/Applications/Wakii Computer Use.app',
       helperUnavailableReason: null,
       bundleId: 'com.example.wakii.computer-use',
       permissions: [

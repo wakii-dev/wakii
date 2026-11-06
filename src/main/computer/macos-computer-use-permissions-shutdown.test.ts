@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('node:child_process', () => ({ spawn: mocks.spawn, spawnSync: mocks.spawnSync }))
 vi.mock('./macos-native-provider-paths', () => ({
-  resolveMacOSComputerUseAppPath: () => '/Applications/Orca Computer Use.app'
+  resolveMacOSComputerUseAppPath: () => '/Applications/Wakii Computer Use.app'
 }))
 vi.mock('./macos-computer-use-permission-status', () => ({
   getComputerUsePermissionStatus: vi.fn(),
@@ -27,7 +27,7 @@ vi.mock('../macos-permissions/macos-tcc-reset', () => ({
 
 const denied: ComputerUsePermissionStatusResult = {
   platform: 'darwin',
-  helperAppPath: '/Applications/Orca Computer Use.app',
+  helperAppPath: '/Applications/Wakii Computer Use.app',
   helperUnavailableReason: null,
   permissions: [
     { id: 'accessibility', status: 'not-granted' },
