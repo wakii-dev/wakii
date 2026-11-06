@@ -141,6 +141,18 @@ Trình tự chuẩn: DONE → verify → harvest + cleanup → BÁO CEO (1 tin: 
 đã về đâu + worktree đã dọn). Worktree treo sau verify = nợ dọn, không được
 dispatch batch mới khi còn nợ.
 
+## HAND-BACK 6 MỤC — review tin DONE theo 6 mục, không peek transcript
+
+Worker DONE theo khuôn 6 mục (TEMPLATES.md): ① Đã làm ② Cách test ③ Bằng chứng
+④ Deviations ⑤ Still open ⑥ For-next-crew. Khi review:
+
+- Chấm TỪNG mục trên tin DONE trong room: ① khớp spec slice · ② test chạy thật ·
+  ③ bằng chứng đo được. **KHÔNG mở transcript/terminal worker** — tin DONE là
+  bề mặt duy nhất; cần chi tiết hơn thì ask worker qua room.
+- Code lệch spec mà không khai ④ = trả lại. Còn việc dở mà thiếu ⑤/⑥ = trả lại
+  (worker kế phải biết `next:` 1 dòng).
+- ④⑥ rỗng là hợp lệ khi worker làm đúng spec, hết sạch — không ép đi cho đủ.
+
 ## Verify-first (bài học quan sát thật 1/11 02:06–02:20)
 
 Worker DONE → Captain PHẢI verify + báo CEO TRƯỚC KHI dispatch batch kế. Mở
