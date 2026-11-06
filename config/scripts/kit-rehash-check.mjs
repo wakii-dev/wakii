@@ -11,7 +11,7 @@ import { pathToFileURL } from 'node:url'
 import { createRequire } from 'node:module'
 
 const requireCjs = createRequire(import.meta.url)
-const { hashPackagedPluginTree } = requireCjs('./verify-packaged-plugin-resources.cjs')
+const { hashPackagedPluginTree } = requireCjs('./desktop-distribution/runtime-verification/verify-packaged-plugin-resources.cjs')
 const launcherMain = pathToFileURL(path.resolve('resources/plugins/launch/wakii.team-chat/main.mjs'))
 const { computeKitHash } = await import(launcherMain)
 
@@ -53,7 +53,7 @@ if (hints.length) {
     '\n\nfix:\n' +
     `  1. node --input-type=module -e "import {computeKitHash} from './${LAUNCHER_DIR}/main.mjs';console.log(computeKitHash('${KIT_DIR}'))"\n` +
     `  2. ghi kitHash vào ${KIT_JSON}\n` +
-    `  3. node config/scripts/verify-packaged-plugin-resources.cjs — lấy fingerprint → ${BUNDLED}\n` +
+    `  3. node config/scripts/desktop-distribution/runtime-verification/verify-packaged-plugin-resources.cjs — lấy fingerprint → ${BUNDLED}\n` +
     `  4. git add lại cả 2 file rồi commit lại\n` +
     `  (escape thật sự: KIT_REHASH_SKIP=1 git commit ... — có ghi nhận)`,
   )
