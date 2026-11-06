@@ -319,8 +319,17 @@ async function buildBundledSources(manifest, ledger) {
     '}\n\n' +
     '// oxfmt-ignore\n' +
     'export const BUNDLED_SKILL_SOURCES: readonly BundledSkillSource[] = [\n' +
-    `${sources.map((source) => `  ${JSON.stringify(source)}`).join(',\n')}\n]\n`
+    `${sources
+      .map((source) => `  ${JSON.stringify(source)}`)
+      .map((line) => wakiiizeProse(line))
+      .join(',\n')}\n]\n`
   )
+}
+
+// Fork rebrand: skill prose ships Wakii-hoa (giống bundled-skill-sources.ts tại 4a915b66),
+// CLI refs giữ nguyên: 'ORCA skills get' + lowercase orca + orca-compounds là never-touch.
+function wakiiizeProse(line) {
+  return line.replace(/\bORCA\b(?! skills)/g, 'WAKII').replace(/\bOrca\b/g, 'Wakii')
 }
 
 // Why: on a PR merge ref HEAD^1 is the base; locally, the merge base with main.
