@@ -337,4 +337,5 @@ hiện qua heartbeat, tự dọn REG + báo CEO trước khi tái điều phối
 - KHÔNG DÙNG: việc nhỏ gom 1 turn (room chat đủ) · dữ liệu vận hành nội bộ (journal/spawn log) · ghi khi đang cap.
 - KB (06/11): Linear GHI HOẠT ĐỘNG LẠI — issue KB = HOI-18 "Captain Activity Log"; Captain update COMMENT định kỳ vào issue có sẵn (mỗi mảng việc lớn + nhịp quan trọng). 16 issue Done cưỡng bức 19/09 vẫn chờ un-done. Nếu ghi lại fail rate-limit → quay policy skip + note.
 - RULING CEO 06/11: CẤM tự tạo issue Linear mới — CHỈ tạo khi CEO yêu cầu rõ ràng. Mặc định mọi ghi chỉ là comment vào issue có sẵn (KB HOI-18).
+- RULING CEO 06/11 (bổ sung): 1 ROOM ↔ 1 ISSUE. Mapping hiện tại: room #orca-test → HOI-18. Room mới chưa có issue → Captain TRÌNH CEO (hỏi/hổ trợ tạo — không tự tạo); sau khi CEO duyệt, ghi hoạt động room đó vào issue được chỉ định. Mapping cập nhật tại mục này.
 
