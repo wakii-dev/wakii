@@ -31,7 +31,7 @@ afterEach(async () => {
 
 async function copy(name: string): Promise<string> {
   const directory = join(root, name)
-  await mkdir(join(directory, 'app.noindex', 'Orca Terminal Host.app'), { recursive: true })
+  await mkdir(join(directory, 'app.noindex', 'Wakii Terminal Host.app'), { recursive: true })
   return directory
 }
 
@@ -70,7 +70,7 @@ it.each([
 
 it('unregisters an unused copy from LaunchServices, then deletes it', async () => {
   const directory = await copy('terminal-host-old')
-  const bundle = join(directory, 'app.noindex', 'Orca Terminal Host.app')
+  const bundle = join(directory, 'app.noindex', 'Wakii Terminal Host.app')
   let bundleExistedAtUnregister = false
   run.mockImplementation(async (spec) => {
     if (spec.program === LSREGISTER) {

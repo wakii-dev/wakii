@@ -10,7 +10,7 @@ import {
 } from 'node:fs'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { basename, join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 const require = createRequire(new URL('../../macos-terminal-host-bundle.test.mjs', import.meta.url))
@@ -20,9 +20,14 @@ const {
   daemonBareRequires,
   findMacTerminalHostInfoProblems,
   findUnresolvedDaemonRequires,
+  lipoArchsToNodeArchs,
   macTerminalHostPaths,
+  macTerminalHostSignIgnore,
   parseBuildVersionMinos
 } = require('./macos/terminal-host-bundle/macos-terminal-host-bundle.cjs')
+const { macCommandPrefixForArch } = require(
+  './desktop-distribution/runtime-verification/verify-packaged-daemon-entry.cjs'
+)
 const electronBuilderConfig = require('../electron-builder.config.cjs')
 
 const usageDescriptions = electronBuilderConfig.mac.extendInfo
@@ -76,19 +81,19 @@ describe('terminal host packaging config', () => {
     expect(electronBuilderConfig.mac.signIgnore).toEqual(
       expect.arrayContaining(macTerminalHostSignIgnore)
     )
-    const helper = '/out/mac-arm64/Wakii.app/Contents/Helpers/Orca Terminal Host.app'
+    const helper = '/out/mac-arm64/Wakii.app/Contents/Helpers/Wakii Terminal Host.app'
     expect(pattern.test(helper)).toBe(true)
     expect(pattern.test(`${helper}/Contents/MacOS/orca-terminal-host`)).toBe(true)
     expect(
-      pattern.test('/out/mac-arm64/Wakii.app/Contents/Helpers/Orca Terminal Host.bundle')
+      pattern.test('/out/mac-arm64/Wakii.app/Contents/Helpers/Wakii Terminal Host.bundle')
     ).toBe(false)
-    expect(pattern.test('/out/mac-arm64/Wakii.app/Contents/Frameworks/Orca Helper.app')).toBe(false)
+    expect(pattern.test('/out/mac-arm64/Wakii.app/Contents/Frameworks/Wakii Helper.app')).toBe(false)
   })
 
   it('packages the helper where the desktop looks for it', () => {
     const paths = macTerminalHostPaths('/Wakii.app')
-    expect(paths.bundle).toBe(join('/Wakii.app', 'Contents', 'Helpers', MAC_TERMINAL_HOST_BUNDLE))
-    expect(basename(paths.executable)).toBe(MAC_TERMINAL_HOST_EXECUTABLE)
+    expect(paths.bundle).toBe(join('/Wakii.app', 'Contents', 'Helpers', 'Wakii Terminal Host.app'))
+    expect(basename(paths.executable)).toBe('orca-terminal-host')
   })
 })
 
@@ -132,7 +137,7 @@ describe.skipIf(process.platform !== 'darwin')('terminal host assembly', () => {
       info
     })
     expect(paths).toEqual(macTerminalHostPaths(appPath))
-    expect(paths.bundle).toBe(join(appPath, 'Contents', 'Helpers', 'Orca Terminal Host.app'))
+    expect(paths.bundle).toBe(join(appPath, 'Contents', 'Helpers', 'Wakii Terminal Host.app'))
     expect(readFileSync(paths.executable, 'utf8')).toBe('pinned-node')
     expect(statSync(paths.executable).mode & 0o777).toBe(0o755)
     expect(statSync(paths.spawnHelper).mode & 0o777).toBe(0o755)

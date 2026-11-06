@@ -50,7 +50,7 @@ describe('classifyDaemonSpawnerPath', () => {
 
   it("classifies Orca's private stable copy from the recorded spawner path", () => {
     const prefix = '/Users/alice/Library/Application Support/Orca/daemon-host/macos/terminal-host-'
-    const copy = `${prefix}0f3c/app.noindex/Orca Terminal Host.app/Contents/MacOS/orca-terminal-host`
+    const copy = `${prefix}0f3c/app.noindex/Wakii Terminal Host.app/Contents/MacOS/orca-terminal-host`
     expect(classifyDaemonSpawnerPath(copy, alwaysExists, prefix)).toBe('stable-copy')
     expect(classifyDaemonSpawnerPath(copy, () => false, prefix)).toBe('missing')
     expect(classifyDaemonSpawnerPath(copy, alwaysExists, null)).toBe('other')
