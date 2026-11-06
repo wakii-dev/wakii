@@ -3,8 +3,8 @@ import type { GitBlameOptions, GitBlameResult } from '../../../shared/git-blame-
 import { getBlame } from '../../git/blame'
 import { requireReachableGitRoute } from '../../providers/execution-host-provider-dispatch'
 import { getConnectionExecutionHostId } from '../../../shared/execution-host'
-import { resolveRegisteredWorktreePath } from '../registered-worktree-roots-cache'
-import { validateGitRelativeFilePath } from './filesystem-path-containment'
+import { resolveRegisteredWorktreePath } from '../worktrees/removal/registered-worktree-roots-cache'
+import { validateGitRelativeFilePath } from './access/filesystem-path-containment'
 import { getLocalGitOptionsForRegisteredWorktree } from '../local-worktree-runtime-options'
 import type { FilesystemHandlerContext } from './filesystem-handler-context'
 
