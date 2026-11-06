@@ -1,13 +1,26 @@
 {
-  "manifestVersion": 1,
+  "manifestVersion": 2,
   "id": "team-chat",
   "publisher": "wakii",
   "name": "Wakii Team Chat",
   "version": "1.0.0",
   "description": "Khung chat cho team agent (Captain + workers + Owner): message bus JSONL (~/.claude/chat/team-chat.jsonl) + panel trong app. Kế thừa superpowers-launcher: vẫn tự cài story-team-kit làm toolbox của Captain (HOI-15/HOI-16).",
+  "execution": "trusted-worker",
   "engines": {
-    "orca": ">=1.4.0"
+    "orca": ">=1.4.248"
   },
+  "icon": "images/icon.png",
+  "cover": {
+    "path": "images/cover.png",
+    "alt": "Panel Wakii Team Chat: dải room phía trên và luồng tin nhắn Captain, workers và CEO"
+  },
+  "screenshots": [
+    {
+      "path": "images/team-chat-panel.png",
+      "alt": "Panel Team Chat với các room #general, #orca-test, tin nhắn dạng [PLAN] và [HỎI]",
+      "caption": "Team Chat: room tabs + message bus"
+    }
+  ],
   "pluginApi": 1,
   "main": "main.mjs",
   "contributes": {
@@ -15,25 +28,22 @@
       {
         "id": "team-chat",
         "title": "Team Chat",
-        "icon": "message-circle",
+        "icon": "agent",
         "entry": "panel.html"
       }
     ],
     "commands": [
       {
         "id": "team.chat",
-        "title": "Team: Mở Team Chat",
-        "context": "global"
+        "title": "Team: Mở Team Chat"
       },
       {
         "id": "team.doctor",
-        "title": "Team: Kit Doctor (toolbox health)",
-        "context": "global"
+        "title": "Team: Kit Doctor (toolbox health)"
       },
       {
         "id": "panelWake",
-        "title": "Team: (nội bộ) panel wake",
-        "context": "global"
+        "title": "Team: (nội bộ) panel wake"
       }
     ],
     "events": [

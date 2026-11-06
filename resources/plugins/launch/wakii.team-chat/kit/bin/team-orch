@@ -271,7 +271,12 @@ PY
       (
         "$0" worker-start ${PASS[@]+"${PASS[@]}"} > "$LOGF" 2>&1
         rc=$?
-        if [ "$rc" -ne 0 ]; then
+        # Đánh giá theo BẰNG CHỨNG, không tin rc mù quáng (CEO 06/11: rc=1 từ
+        # post-processing phụ smear thành THẤT BẠI giả dù log có ok:true).
+        # Thành công = log có đăng ký worker.hired; chỉ ok:false / không đăng ký = thất bại thật.
+        if [ "$rc" -ne 0 ] && grep -q 'worker.hired' "$LOGF" 2>/dev/null; then
+          echo "team-orch: rc=$rc nhưng log có worker.hired — spawn THÀNH CÔNG (rc từ post-processing phụ)" >> "$LOGF"
+        elif [ "$rc" -ne 0 ]; then
           tail -5 "$LOGF" > "$LOGF.tail" 2>/dev/null
           REASON=$(tail -3 "$LOGF" 2>/dev/null | tr '\n' ' ' | cut -c1-200)
           TEAM_CHAT_MACHINE=1 "$HOME/.claude/bin/team-chat" send "⚠️ spawn nền THẤT BẠI — worker ${NAME%%-*} rc=$rc: ${REASON:-log rỗng} | log: $LOGF" --from system --role system --channel "${ROOM_:-general}" >/dev/null 2>&1 || true
@@ -534,7 +539,10 @@ print(m.group(0) if m else '')" 2>/dev/null)
     fi
     emit worker.hired "${NAME%%-*}" "$REPO" "$RUN" "$TASK" '{"via":"team-orch"}'
     echo "$OUT"
-    [ "$PLAN" -eq 1 ] && echo "team-orch: plan-gate OPEN @ $WT_PATH (worker phải post [PLAN] chờ duyệt)"
+    if [ "$PLAN" -eq 1 ]; then
+      echo "team-orch: plan-gate OPEN @ $WT_PATH (worker phải post [PLAN] chờ duyệt)"
+    fi
+    exit 0  # spawn ok — rc post-processing phụ ([ ] khi PLAN=0) không smear thành fail
     ;;
   gate-resolve)
     WT=""; PLAN=0; PASS=()
@@ -578,7 +586,6 @@ print(m.group(0) if m else '')" 2>/dev/null)
       done
       emit plan.approved captain "$(repo_of_cwd)" "" "" "{\"worktree\":\"$WT\"}"
       echo "team-orch: plan-gate CLOSED @ $WT — worker được làm"
-    exit 0  # spawn thành công — orchestration ok + reg ok (rc=1 chỉ từ post-processing phụ)
       TC_R="$HOME/.claude/bin/team-chat"; [ -x "$TC_R" ] || TC_R="$(dirname "$0")/team-chat"
       RROOM=$(python3 -c "
 import json, os
@@ -591,7 +598,7 @@ except Exception: pass" 2>/dev/null)
       [ -n "$RROOM" ] && TEAM_CHAT_MACHINE=1 "$TC_R" send "✅ RECEIPT gate CLOSED @ ${WT##*/} — worker được làm (task ${TASK:-?})" --from system --role system --channel "$RROOM" >/dev/null 2>&1 || true
     fi
     echo "$OUT"
-    exit 0  # spawn thành công — rc từ post-processing phụ bị bỏ
+    exit 0  # gate resolved — rc post-processing phụ không smear thành fail
     ;;
   cleanup)
     # cleanup --worktree <path> [--harvest <subdir> --dest <abs>] — worker rời + không ai hoạt động:

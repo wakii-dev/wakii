@@ -86,3 +86,8 @@
 
 # Plugin resources: hash nhạy cảm line endings — force LF
 resources/plugins/launch/** text eol=lf
+# Plugin images are binary; the blanket rule above would corrupt their bytes on commit/checkout.
+/resources/plugins/**/*.png -text
+/resources/plugins/**/*.jpg -text
+/resources/plugins/**/*.jpeg -text
+/resources/plugins/**/*.webp -text
