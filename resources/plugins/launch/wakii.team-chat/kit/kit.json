@@ -825,7 +825,27 @@
       "category": "ops",
       "owner": "wakii",
       "description": "Context pack 1 file/room (~/.claude/chat/context/<room>.md): rooms.json + workers sống + journal 25 dòng + open items + 15 tin cuối + Linear — Captain mới restart/nhận room nạp 1 file thay ghép tay 5 nguồn"
+    },
+    {
+      "name": "frontend-design",
+      "type": "skill",
+      "category": "knowledge",
+      "inputs": [
+        "xây UI mới hoặc reshaping UI hiện có"
+      ],
+      "outputs": "guidance thị giác độc nhất — plan token, typography, tránh mẫu AI sáo mòn",
+      "owner": "wakii"
+    },
+    {
+      "name": "ui-ux-pro-max",
+      "type": "skill",
+      "category": "knowledge",
+      "inputs": [
+        "task UI/UX: plan/build/design/review — website, dashboard, mobile app"
+      ],
+      "outputs": "50 styles · 21 palettes · 50 font pairings · 9 stacks (React/Next/Tailwind/shadcn…)",
+      "owner": "wakii"
     }
   ],
-  "kitHash": "13cb08460741b914"
+  "kitHash": "307cc0f557d2f944"
 }
