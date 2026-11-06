@@ -7,6 +7,9 @@ import { dirname, join } from 'node:path'
 // (~/Documents/orca/out/bin/orca) which breaks outside its module context
 // ("Cannot find module ..."). The production binary is self-contained.
 export function orcaBin() {
+  // Env override trước (baseline closures đọc `process.env.ORCA_BIN || 'orca'` —
+  // refactor FI-98 phải giữ semantics, review tasks-2-5 P1).
+  if (process.env.ORCA_BIN) return process.env.ORCA_BIN
   const isWin = process.platform === 'win32'
   const candidates = isWin ? [
     // Windows: binary sống cạnh app resources (exe + bin/orca.exe); ALSO the

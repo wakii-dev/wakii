@@ -99,6 +99,8 @@ export default function activate(orca) {
   let lastRoomCmdAt = 0
   let lastCaptainCmdAt = 0
   let captainSeenAt = Date.now()
+  let lastOwnerCommandAt = 0
+  let stalledNotified = false
   let lastCaptainSig = ''
   let roomListSeen = []
   const tick = async () => {
