@@ -1,10 +1,11 @@
 ---
 name: rule-authoring
-version: 1.0.0
+version: 1.1.0
 description: >-
   Hướng dẫn tạo rule chuẩn ECC cho scope team hoặc per-project: cấu trúc 5 chủ đề,
   frontmatter `paths:` bắt buộc, tờ khai báo rules/projects/<project>.json, đăng ký
-  index, quy tắc nội dung chống trùng lặp. Use khi: "tạo rule", "thêm rule ECC",
+  qua `wakii.yaml` (section `rules.declaration`), quy tắc nội dung chống trùng lặp.
+  Use khi: "tạo rule", "thêm rule ECC",
   "rule cho project X", "ghi luật coding thành rule", "tờ khai báo rule", hoặc
   Captain review rule mới trước khi merge.
 ---
@@ -81,12 +82,24 @@ Thêm entry tờ mới khi có project mới; sau khi tạo/sửa tờ: validate
 mọi entry `applicable` trỏ đến thư mục tồn tại dưới `rules/` (hoặc đúng slug
 overlay) — tờ trỏ thư mục chết thì rule load im lặng, không báo lỗi cho ai.
 
+Project điểm vào tờ qua file `wakii.yaml` ở root repo — không có `wakii.yaml`
+(hoặc thiếu section `rules`) → agents fallback tờ mẫu trong `rules/projects/`
+(xem mục 4).
+
 ## 4. Đăng ký
 
+- `wakii.yaml` ở root — project có tờ riêng thì khai báo qua section rules:
+
+  ```yaml
+  rules:
+    declaration: rules/projects/<project>.json
+  ```
+
+  Thiếu file/section này → crew fallback tờ mẫu `rules/projects/`.
 - `rules/README.md` — thêm dòng bảng glob → rule (scope team-wide) và ghi nhận
   tờ khai báo mới trong mục Projects.
 - Kit skill `rules-index` (bảng glob team-wide cho crew) — cập nhật bảng cùng
-  nội dung khi rule là team-wide; rule per-project chỉ cần tờ + README.
+  nội dung khi rule là team-wide; rule per-project chỉ cần wakii.yaml + tờ + README.
 
 ## 5. Quy tắc nội dung
 
@@ -104,7 +117,8 @@ overlay) — tờ trỏ thư mục chết thì rule load im lặng, không báo 
    (thư mục `rules/<project>/` + tờ khai báo); chủ đề nào trong 5 chủ đề.
 2. Viết rule: 1 ý tưởng + ví dụ WRONG/CORRECT; grep `rules/` trước để không trùng.
 3. Frontmatter `paths:` glob chuẩn + dòng "extends common" nếu mở rộng common.
-4. Đăng ký: `rules/README.md` (bảng glob + mục Projects nếu tờ mới) + kit
-   `rules-index` nếu team-wide.
+4. Đăng ký: `wakii.yaml` (`rules.declaration` trỏ tờ mới nếu project chưa có) +
+   `rules/README.md` (bảng glob + mục Projects nếu tờ mới) + kit `rules-index`
+   nếu team-wide.
 5. Review Captain: đúng nơi, đúng frontmatter, không trùng, tờ JSON validate
    pass — rồi mới tính là DONE.

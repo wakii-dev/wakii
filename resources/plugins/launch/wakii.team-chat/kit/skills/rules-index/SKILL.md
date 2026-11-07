@@ -15,6 +15,20 @@ Lớp phủ fork: `rules/wakii-overlay.md` — áp cho MỌI file.
    KHÔNG bao giờ đọc cả 39 file vào context.
 3. Review code: diff vi phạm rule nào trong `rules/` phải cite `file:line`.
 
+## Tờ khai báo per-project — `wakii.yaml`
+
+Project có file `wakii.yaml` ở root với section:
+
+```yaml
+rules:
+  declaration: rules/projects/<project>.json
+```
+
+→ đọc ĐÚNG tờ khai báo đó (path tương đối root) thay vì đoán: chỉ load các thư mục
+rule trong `applicable` của tờ + `extraGlobs` của nó (overlay vẫn áp mọi file).
+Không có `wakii.yaml` (hoặc thiếu section `rules`) → fallback tờ mẫu trong
+`rules/projects/` — tờ nào có glob khớp file đang sửa thì load tờ đó.
+
 ## Bảng glob → rule
 
 | File đang sửa | Đọc |
