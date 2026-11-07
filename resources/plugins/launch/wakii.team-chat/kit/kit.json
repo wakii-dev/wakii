@@ -867,7 +867,17 @@
       ],
       "outputs": "ranh giới process/IPC + quy tắc preload expose trắng + quy trình debug renderer ẩn ORCA_BACKGROUND_LAUNCH + CDP + bảng bẫy thật (keyboard, keychain, session leak)",
       "owner": "wakii"
+    },
+    {
+      "name": "fe-self-verify",
+      "type": "skill",
+      "category": "knowledge",
+      "inputs": [
+        "task FE có phần visual sắp xong, trước khi báo DONE UI"
+      ],
+      "outputs": "vòng tự kiểm: tab Orca + screenshot đọc ảnh + DONE kèm evidence",
+      "owner": "wakii"
     }
   ],
-  "kitHash": "36197856e280d8ae"
+  "kitHash": "59275fc7e2e6d436"
 }
