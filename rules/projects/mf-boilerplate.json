@@ -1,0 +1,6 @@
+{
+  "project": "mf-boilerplate",
+  "applicable": ["common", "typescript", "react", "web"],
+  "extraGlobs": ["app/**", "platform/**"],
+  "overlay": "wakii-overlay.md"
+}

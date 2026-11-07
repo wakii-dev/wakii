@@ -36,3 +36,13 @@ grep -A5 '^paths:' rules/typescript/coding-style.md
 Tải lại per-file qua contents API (giữ LF/UTF-8 nguyên bản), rồi rehash kit nếu file nào
 nằm trong plugin launcher đã đóng gói. Overlay và README là file riêng — không bao giờ
 sửa file ECC gốc.
+
+## Projects — tờ khai báo rule per-project (1 room ↔ 1 issue; project ↔ tờ)
+
+| Project | Tờ khai báo | Applicable |
+|---|---|---|
+| Wakii desktop | `rules/projects/wakii-desktop.json` | common, typescript, react, web, swift, python, overlay |
+| MF boilerplate | `rules/projects/mf-boilerplate.json` | common, typescript, react, web (+ extraGlobs app/**, platform/**) |
+| Wakii site | `rules/projects/wakii-site.json` | common, web |
+
+Agent mở project nào → đọc tờ khai báo tương ứng → load đúng bộ rule theo applicable.

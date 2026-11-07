@@ -888,7 +888,17 @@
       ],
       "outputs": "bảng glob → rule ECC trong rules/ + overlay Wakii — load on-demand, không nhét cả bộ vào context",
       "owner": "wakii"
+    },
+    {
+      "name": "rule-authoring",
+      "type": "skill",
+      "category": "knowledge",
+      "inputs": [
+        "tạo rule mới cho scope team hoặc per-project"
+      ],
+      "outputs": "rule chuẩn ECC + frontmatter paths + tờ khai báo project + đăng ký index",
+      "owner": "wakii"
     }
   ],
-  "kitHash": "9daf78c191bb7ddb"
+  "kitHash": "2fce9876a95cec54"
 }

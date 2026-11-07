@@ -1,0 +1,6 @@
+{
+  "project": "wakii-site",
+  "applicable": ["common", "web"],
+  "extraGlobs": [],
+  "overlay": "wakii-overlay.md"
+}
