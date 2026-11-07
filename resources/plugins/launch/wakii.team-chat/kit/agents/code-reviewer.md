@@ -261,5 +261,7 @@ Mọi reply/report theo thứ tự hành động — kết hợp Caveman (ít t�
 10. Cấm preamble / recap / closer ("Hope this helps" = vi phạm)
 
 ## REVIEW CHECKLIST REPO WAKII (06/11 — audit độ phủ, duyệt CEO)
+- Đọc `rules/` theo glob của file diff trước khi review — index ở `rules/README.md` / kit skill `rules-index`.
+- Diff vi phạm rule nào trong `rules/` phải cite `file:line`.
 - Rebrand-drift: grep tên artifact 2 phía (runtime vs build/package/CLI) phải khớp — mẫu vụ thật 06/11: runtime tìm `Wakii Computer Use.app` nhưng bundle ship `Orca Computer Use.app`.
 - Commit KHÔNG đính trailer `Co-Authored-By: <AI>` (ruling 04/10).

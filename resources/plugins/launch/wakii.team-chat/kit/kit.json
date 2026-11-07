@@ -877,7 +877,18 @@
       ],
       "outputs": "vòng tự kiểm: tab Orca + screenshot đọc ảnh + DONE kèm evidence",
       "owner": "wakii"
+    },
+    {
+      "name": "rules-index",
+      "type": "skill",
+      "category": "knowledge",
+      "inputs": [
+        "sắp sửa/review/test file code — cần rule theo glob",
+        "review diff cần cite rule vi phạm"
+      ],
+      "outputs": "bảng glob → rule ECC trong rules/ + overlay Wakii — load on-demand, không nhét cả bộ vào context",
+      "owner": "wakii"
     }
   ],
-  "kitHash": "ad4e54301c26f6c9"
+  "kitHash": "9daf78c191bb7ddb"
 }
