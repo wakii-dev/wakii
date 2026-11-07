@@ -614,6 +614,17 @@
       "owner": "wakii"
     },
     {
+      "name": "mobile-dev",
+      "type": "agent",
+      "category": "execution",
+      "inputs": [
+        "task + worktree + brief có DoD"
+      ],
+      "outputs": "DONE/BLOCKED + code trong worktree",
+      "description": "Mobile dev — app Flutter, Dart code, widget tests, build + test emulator/device",
+      "owner": "wakii"
+    },
+    {
       "name": "forge",
       "type": "agent",
       "category": "infra",
@@ -956,5 +967,5 @@
       "owner": "wakii"
     }
   ],
-  "kitHash": "267467569c28e9f1"
+  "kitHash": "8d21879082adb1b9"
 }
