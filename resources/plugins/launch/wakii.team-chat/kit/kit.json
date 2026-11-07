@@ -898,7 +898,18 @@
       ],
       "outputs": "rule chuẩn ECC + frontmatter paths + tờ khai báo project + đăng ký index",
       "owner": "wakii"
+    },
+    {
+      "name": "test-authoring",
+      "type": "skill",
+      "category": "knowledge",
+      "inputs": [
+        "viết acceptance test RED có chủ đích trong repo wakii",
+        "review test worker bàn giao"
+      ],
+      "outputs": "quy trình test tên theo hành vi + mock seam vi.hoisted/vi.mock + checklist infra vitest hiện hành + RED-on-baseline phân loại + pattern PENDING SF sau",
+      "owner": "wakii"
     }
   ],
-  "kitHash": "39ee847cb58d0a33"
+  "kitHash": "32dbd3463ad7b02d"
 }

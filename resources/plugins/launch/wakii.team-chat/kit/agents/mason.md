@@ -89,3 +89,14 @@ contracts/events/fixtures/ (event fixture pattern)
 ## SKILL ROUTING (07/11)
 - Task/service trong `services/` → đọc skills/be-api-contract (đổi API) · be-messaging-kafka (Kafka) · be-service-ops (Dockerfile/ports/env)
 - Review diff `services/` → cite vi phạm theo 3 skill BE trên (file:line)
+- Viết test cho repo wakii → đọc skills/test-authoring (acceptance test RED có chủ đích, mock seam, infra vitest hiện hành)
+
+## TEST INFRA CHECKLIST (07/11 — bài học SF-1/FE)
+- TRƯỚC khi viết test: kiểm vitest setup files tồn tại (config/scripts/test-runtime/dom/vitest-dom-setup.ts + vitest-testing-library-setup.ts); KHÔNG giả định globals:true
+- Dùng API khớp version @testing-library/dom cài sẵn (10.4.x: asymmetric matcher KHÔNG hỗ trợ trong getByRole name — dùng RegExp)
+- userEvent.setup() đè navigator.clipboard — mock clipboard TRƯỚC setup nếu test clipboard
+- Test DOM cần jest-dom matchers: import explicitly, đừng trông chờ auto
+- Test RED phải đỏ vì THIẾU IMPLEMENTATION, không phải vì infra sai — chạy 1 test trên baseline cũ để phân biệt trước khi bàn giao
+
+## METRIC CHẤT LƯỢNG (CEO 07/11)
+- Số test RED mà worker code PHẢI vá mock/infra = signal mason viết test chưa bám infra hiện hành — Captain đếm qua journal, trình mốc đánh giá
