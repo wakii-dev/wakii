@@ -20529,6 +20529,13 @@
         "finished": "Geçici orkestrasyon çalışanı tamamlandı · {{countdown}} içinde kapanır",
         "keepOpen": "Açık tut"
       }
+    },
+    "RepositoryRulesSection": {
+      "title": "Kural bildirimi",
+      "description": "Projenin kural bildirim dosyasının yolu (depoya göre göreli, örn. rules/projects/my-project.json). Ajanlar işaret edilen kuralları yükler; boşsa rules/projects/ içindeki örnek dosyalara düşer.",
+      "keywordRules": "kurallar",
+      "keywordDeclaration": "kural bildirimi",
+      "placeholder": "rules/projects/…"
     }
   },
   "dashboardPopout": {

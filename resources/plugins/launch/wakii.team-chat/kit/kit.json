@@ -786,7 +786,48 @@
       ],
       "outputs": "UI 1:1 với design — tokens main.css + primitives shadcn, đã qua design-system gate review trước PR",
       "owner": "wakii"
+    },
+    {
+      "name": "fe-self-verify",
+      "type": "skill",
+      "category": "knowledge",
+      "inputs": [
+        "task FE có phần visual sắp xong",
+        "dev server MF/Storybook per worktree"
+      ],
+      "outputs": "vòng tự kiểm UI: server chung → orca tab → orca screenshot → đọc ảnh → sửa → chụp lại; DONE UI phải kèm screenshot",
+      "owner": "wakii"
+    },
+    {
+      "name": "team-context",
+      "type": "bin",
+      "category": "ops",
+      "owner": "wakii",
+      "description": "Context pack 1 file/room (~/.claude/chat/context/<room>.md): rooms.json + workers sống + journal 25 dòng + open items + 15 tin cuối + Linear — Captain mới restart/nhận room nạp 1 file thay ghép tay 5 nguồn"
+    },
+    {
+      "name": "rule-authoring",
+      "type": "skill",
+      "category": "knowledge",
+      "inputs": [
+        "tạo/thêm rule ECC team-wide hoặc per-project",
+        "tờ khai báo rules/projects/<project>.json cho project mới"
+      ],
+      "outputs": "quy trình 5 bước tạo rule chuẩn ECC: scope → viết (1 ý tưởng + ví dụ) → frontmatter paths + link common → đăng ký README/projects/rules-index → review Captain",
+      "owner": "wakii"
+    },
+    {
+      "name": "rules-index",
+      "type": "skill",
+      "category": "knowledge",
+      "inputs": [
+        "sắp sửa/review/test file code — cần rule theo glob",
+        "review diff cần cite rule vi phạm",
+        "project có rulesDeclaration trong Project Setting — load rule theo tờ đó"
+      ],
+      "outputs": "bảng glob → rule ECC trong rules/ + overlay Wakii — load on-demand, không nhét cả bộ vào context; project có rulesDeclaration trong setting thì ưu tiên tờ đó (orca repo show --json), không có thì fallback tờ mẫu rules/projects/",
+      "owner": "wakii"
     }
   ],
-  "kitHash": "1e065edba26cd7d0"
+  "kitHash": "40bce8321bba99de"
 }

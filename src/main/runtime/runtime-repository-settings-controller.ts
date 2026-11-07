@@ -49,6 +49,7 @@ type RepositoryUpdates = Partial<
     | 'worktreeVisibilitySourcePreferences'
     | 'projectGroupId'
     | 'projectGroupOrder'
+    | 'rulesDeclaration'
   >
 > & {
   sourceControlAi?: Repo['sourceControlAi'] | null
@@ -103,6 +104,9 @@ export class RuntimeRepositorySettingsController {
     const sanitizedUpdates = omitUndefined(updates)
     if ('worktreeBasePath' in updates && updates.worktreeBasePath === undefined) {
       sanitizedUpdates.worktreeBasePath = undefined
+    }
+    if ('rulesDeclaration' in updates && updates.rulesDeclaration === undefined) {
+      sanitizedUpdates.rulesDeclaration = undefined
     }
     if (
       'externalWorktreeDiscoverySuppressedAt' in updates &&

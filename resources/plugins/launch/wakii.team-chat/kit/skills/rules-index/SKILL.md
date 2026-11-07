@@ -1,0 +1,46 @@
+---
+name: rules-index
+description: Chỉ mục rule coding ECC trong rules/ của repo (nguồn affaan-m/ECC, MIT) + overlay Wakii. Use khi sắp sửa, review, hoặc viết test cho file code — đọc rule có glob khớp file TRƯỚC khi sửa; KHÔNG nhét cả bộ rule vào context.
+---
+
+# rules-index — load rule theo glob, on-demand
+
+Rule sống ở `rules/` ở root repo (cấu trúc ECC NGUYÊN BẢN — không sửa file gốc, dễ update upstream).
+Lớp phủ fork: `rules/wakii-overlay.md` — áp cho MỌI file.
+
+## Quy tắc
+
+1. **Đụng file nào → đọc rule có glob khớp TRƯỚC khi sửa.**
+2. Load on-demand theo bảng — chỉ đọc đúng thư mục khớp + `common/` của chủ đề tương ứng + overlay.
+   KHÔNG bao giờ đọc cả 39 file vào context.
+3. Review code: diff vi phạm rule nào trong `rules/` phải cite `file:line`.
+
+## Tờ khai báo per-project — ưu tiên setting
+
+Project có `rulesDeclaration` trong Project Setting của Wakii (tờ khai báo
+`rules/projects/<project>.json`) thì ưu tiên tờ đó:
+
+```sh
+orca repo show --repo "path:$(pwd)" --json | grep rulesDeclaration
+```
+
+- Có `rulesDeclaration` → đọc đúng tờ JSON nó trỏ tới (đường dẫn tương đối từ repo
+  root) và load theo `applicable` + `extraGlobs` của tờ — bỏ bảng glob team-wide
+  dưới đây cho project đó.
+- Không có (trống/absent) → fallback bảng glob team-wide + các tờ mẫu
+  `rules/projects/` như thường lệ.
+
+## Bảng glob → rule
+
+| File đang sửa | Đọc |
+|---|---|
+| `*.ts` `*.tsx` `*.js` `*.jsx` | `rules/typescript/` (5 file) |
+| `*.tsx` `*.jsx`, `components/**`, `hooks/**`, `use-*.ts(x)` | `rules/react/` (cộng `rules/typescript/` nếu là TS) |
+| `*.css` `*.scss` `*.html` `*.vue` `*.svelte`, UI components | `rules/web/` (7 file — có `design-quality` + `performance`) |
+| `*.swift` `Package.swift` | `rules/swift/` (5 file) |
+| `*.py` `*.pyi` (FastAPI: `app/**`, `*_api.py`) | `rules/python/` (6 file — có `fastapi`) |
+| Mọi file | `rules/common/` (10 file) + `rules/wakii-overlay.md` |
+
+Frontmatter `paths:` là nguồn thật — grep khi phân vân: `grep -A5 '^paths:' rules/typescript/coding-style.md`
+
+Chi tiết xem: `rules/README.md`.

@@ -1,0 +1,155 @@
+#!/bin/bash
+# team-context — context pack 1 file/room cho Captain (hướng A, CEO duyệt 06/11).
+# Tổng hợp 5 nguồn room vào ~/.claude/chat/context/<room>.md — Captain mới
+# restart/nhận room nạp 1 file thay ghép tay 5 nguồn. Thuần đọc, không ghi state.
+#
+# Usage:
+#   team-context <room>    # room trống = room duy nhất đang open
+set -u
+CHAT="${TEAM_CHAT_DIR:-$HOME/.claude/chat}"
+
+usage() { echo "usage: team-context <room>   # room trống = room duy nhất đang open"; exit 2; }
+
+[ $# -gt 1 ] && usage
+ROOM="${1:-}"
+
+# Room trống → room open duy nhất; không duy nhất thì liệt kê để người chạy chọn.
+if [ -z "$ROOM" ]; then
+  ROOM=$(python3 - "$CHAT/rooms.json" <<'PY' 2>/dev/null
+import json, sys
+try: reg = json.load(open(sys.argv[1], encoding="utf-8"))
+except Exception: raise SystemExit(1)
+opens = sorted((v.get("createdAt", 0), k) for k, v in reg.items()
+               if isinstance(v, dict) and v.get("status") == "open")
+if len(opens) == 1: print(opens[0][1])
+PY
+) || ROOM=""
+  if [ -z "$ROOM" ]; then
+    echo "LỖI: không xác định room tự động (cần đúng 1 room open) — chỉ định rõ: team-context <room>." >&2
+    echo "Room đang open:" >&2
+    python3 - "$CHAT/rooms.json" <<'PY' >&2 2>/dev/null
+import json, sys
+try: reg = json.load(open(sys.argv[1], encoding="utf-8"))
+except Exception: raise SystemExit(0)
+for k, v in reg.items():
+    if isinstance(v, dict) and v.get("status") == "open": print(f"  {k}")
+PY
+    exit 1
+  fi
+fi
+
+# Room phải có trong registry — thiếu là báo lỗi rõ, không sinh file nửa vời.
+if ! python3 - "$CHAT/rooms.json" "$ROOM" <<'PY' 2>/dev/null
+import json, sys
+try: reg = json.load(open(sys.argv[1], encoding="utf-8"))
+except Exception: raise SystemExit(1)
+raise SystemExit(0 if isinstance(reg.get(sys.argv[2]), dict) else 1)
+PY
+then
+  echo "LỖI: room '$ROOM' không có trong $CHAT/rooms.json — xem tên room đúng: team-chat read --last 5." >&2
+  exit 1
+fi
+
+OUT="$CHAT/context/$ROOM.md"
+mkdir -p "$CHAT/context"
+
+python3 - "$CHAT" "$ROOM" "$OUT" <<'PY'
+import datetime, json, os, sys
+
+chat, room, out_path = sys.argv[1], sys.argv[2], sys.argv[3]
+now = datetime.datetime.now().strftime("%d/%m %H:%M")
+lines = [f"# Context pack — #{room}", f"_(team-context sinh {now} — đọc thứ tự từ trên xuống)_", ""]
+
+# 1. Room state (rooms.json) — linearIssue là field mới, đọc optional.
+info = {}
+try:
+    reg = json.load(open(os.path.join(chat, "rooms.json"), encoding="utf-8"))
+    if isinstance(reg.get(room), dict):
+        info = reg[room]
+except Exception:
+    pass
+lines.append("## 1. Room state (rooms.json)")
+if info:
+    for f in ("feature", "repo", "status", "worktree", "mindmap"):
+        lines.append(f"- {f}: {info.get(f) or '(trống)'}")
+    issue = info.get("linearIssue")
+    lines.append(f"- Linear: {issue} — activity log của room post vào đây" if issue
+                 else "- Linear: (chưa set)")
+else:
+    lines.append("(trống)")
+lines.append("")
+
+# 2. Worker đang sống của room (.workers.json).
+lines.append("## 2. Worker đang sống (.workers.json)")
+try:
+    workers = json.load(open(os.path.join(chat, ".workers.json"), encoding="utf-8"))
+except Exception:
+    workers = {}
+mine = [(k, v) for k, v in workers.items()
+        if isinstance(v, dict) and v.get("room") == room]
+if mine:
+    for handle, w in mine:
+        task = f" · task {w['task']}" if w.get("task") else ""
+        lines.append(f"- {w.get('name', '?')} — {handle}{task}")
+else:
+    lines.append("(trống)")
+lines.append("")
+
+# 3. Journal — 25 dòng cuối + open items còn mở (liệt kê).
+lines.append("## 3. Journal — notes room")
+note_path = os.path.join(chat, "notes", f"{room}.md")
+tail, open_items = [], []
+try:
+    with open(note_path, encoding="utf-8") as f:
+        all_lines = [l.rstrip() for l in f if l.strip()]
+    tail = all_lines[-25:]
+    open_items = [l for l in all_lines if l.lstrip().startswith("- [ ]")]
+except FileNotFoundError:
+    pass
+if tail:
+    lines.extend(tail)
+else:
+    lines.append("(trống)")
+lines.append("")
+lines.append(f"**Open items còn mở: {len(open_items)}**")
+lines.extend(open_items or ["(không có)"])
+lines.append("")
+
+# 4. 15 tin cuối của room trên bus chat.
+lines.append(f"## 4. Chat — 15 tin cuối #{room} (team-chat.jsonl)")
+msgs = []
+try:
+    with open(os.path.join(chat, "team-chat.jsonl"), encoding="utf-8") as f:
+        for raw in f:
+            try:
+                m = json.loads(raw)
+            except Exception:
+                continue
+            if m.get("channel") == room:
+                msgs.append(m)
+except FileNotFoundError:
+    pass
+if msgs:
+    ts = datetime.datetime.fromtimestamp
+    for m in msgs[-15:]:
+        t = ts(m.get("at", 0) / 1000).strftime("%H:%M")
+        text = " ".join(str(m.get("text", "")).split())[:120]
+        lines.append(f"{t} {m.get('from', '?')}({m.get('role', '?')}): {text}")
+else:
+    lines.append("(trống)")
+lines.append("")
+
+# 5. Linear — activity log room post vào issue.
+issue = info.get("linearIssue")
+lines.append("## 5. Linear")
+lines.append(f"Linear: {issue} — activity log của room post vào đây" if issue
+             else "(chưa set) — room chưa gắn Linear issue")
+lines.append("")
+lines.append("→ Captain: nạp file này vào context trước khi hành động.")
+
+with open(out_path, "w", encoding="utf-8") as f:
+    f.write("\n".join(lines) + "\n")
+PY
+status=$?
+[ $status -ne 0 ] && { echo "LỖI: tổng hợp nguồn thất bại (exit $status)." >&2; exit $status; }
+echo "Đã ghi $OUT — nạp file này vào context trước khi hành động."

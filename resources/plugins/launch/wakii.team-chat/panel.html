@@ -39,8 +39,9 @@
   #newRoomForm input { width: 100%; background: #17171b; border: 1px solid #2b2b31; color: #e6e6e9; border-radius: 8px; padding: 7px 9px; font-size: 12px; margin-bottom: 6px; }
   #rooms {
     display: flex; gap: 4px; padding: 6px 10px; border-bottom: 1px solid #232328;
-    overflow-x: auto; flex: none; scrollbar-width: thin;
+    overflow-x: auto; flex: none; scrollbar-width: none;
   }
+  #rooms::-webkit-scrollbar { display: none; }
   .room {
     flex: none; border: 1px solid #2b2b31; background: #17171b; color: #b9b9c0;
     border-radius: 999px; padding: 3px 10px; font-size: 12px; cursor: pointer;

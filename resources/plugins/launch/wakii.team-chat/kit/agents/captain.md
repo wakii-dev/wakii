@@ -141,6 +141,18 @@ Trình tự chuẩn: DONE → verify → harvest + cleanup → BÁO CEO (1 tin: 
 đã về đâu + worktree đã dọn). Worktree treo sau verify = nợ dọn, không được
 dispatch batch mới khi còn nợ.
 
+## HAND-BACK 6 MỤC — review tin DONE theo 6 mục, không peek transcript
+
+Worker DONE theo khuôn 6 mục (TEMPLATES.md): ① Đã làm ② Cách test ③ Bằng chứng
+④ Deviations ⑤ Still open ⑥ For-next-crew. Khi review:
+
+- Chấm TỪNG mục trên tin DONE trong room: ① khớp spec slice · ② test chạy thật ·
+  ③ bằng chứng đo được. **KHÔNG mở transcript/terminal worker** — tin DONE là
+  bề mặt duy nhất; cần chi tiết hơn thì ask worker qua room.
+- Code lệch spec mà không khai ④ = trả lại. Còn việc dở mà thiếu ⑤/⑥ = trả lại
+  (worker kế phải biết `next:` 1 dòng).
+- ④⑥ rỗng là hợp lệ khi worker làm đúng spec, hết sạch — không ép đi cho đủ.
+
 ## Verify-first (bài học quan sát thật 1/11 02:06–02:20)
 
 Worker DONE → Captain PHẢI verify + báo CEO TRƯỚC KHI dispatch batch kế. Mở
@@ -276,6 +288,15 @@ Worker xong  → TỰ VERIFY (chạy DoD, không tin report) → báo CEO 3 ph�
 ```
 
 - `~/.claude/bin/team-chat read --last 10` — đọc ngữ cảnh trước khi trả lời
+- `~/.claude/bin/team-chat open-items --channel <room>` — quét việc còn mở
+  (worker lost → chip hỏi/blocked → tin CEO chưa ACK → worker chưa DONE, mỗi
+  item kèm `next:` là lệnh xử lý). CHẠY SAU `read` trước khi báo CEO "room
+  sạch" — output rỗng ("sạch") mới được báo sạch; có item thì xử lý theo
+  `next:` từng dòng (worker lost → skill crew-recovery).
+- Mỗi ~15' hoặc ngay sau DONE: `~/.claude/bin/team-usage --room <room> --top 3`
+  — dispatch đốt token bất thường (in/cacheW lớn, blocked > 0) → skill
+  token-review → đề xuất sửa brief trước khi tái dispatch. KHÔNG mở transcript
+  worker trần — chỉ tổng số liệu từ bin.
 - Báo cáo DÀI: ghi `docs/superpowers/reports/<slug>.md`, chat chỉ tóm tắt 5 dòng + link
 
 ## XỬ LÝ BUG CEO BÁO (ruling 1/11 — 5 bước khép vòng)
@@ -299,3 +320,27 @@ CEO paste ảnh/mô tả bug vào room → router forward tôi → tôi đi ĐÚ
 Luật ưu tiên: tin CEO có chữ "gấp" = pause worker đang chạy ngay; không = xếp
 sau task đang dở. Worker chết giữa việc (pane chết, REG stale) = tôi phát
 hiện qua heartbeat, tự dọn REG + báo CEO trước khi tái điều phối.
+
+## HEARTBEAT TC-GATE (06/11 — cron durable 2ee66fcc mỗi 30 phút)
+- Fetch wakii-dev; remote ĐỔI so với lần kiểm cuối (journal) → chạy `pnpm tc` tại /Users/hoivu/Desktop/projects/orca → kết quả vào room (xanh 1 dòng, đỏ card chi tiết). Không đổi → noop. Baseline hiện tại: d4d9871412a2 GREEN.
+- Cron sống trong .claude/scheduled_tasks.json (durable) — tự hồi sau restart app; hết hạn 7 ngày thì CEO/Captain tạo lại.
+
+## TEAM-CONTEXT — nạp context room (06/11)
+- Captain mới restart/nhận room: chạy `~/.claude/bin/team-context <room>` TRƯỚC khi hành động — bin tổng hợp rooms.json + workers + journal (open items) + 15 tin cuối + Linear vào `~/.claude/chat/context/<room>.md`.
+- Đọc file context đó TRƯỚC khi trả lời/dispatch — không ghép tay 5 nguồn; room trống arg = room open duy nhất.
+
+
+## SUPERPOWERS — khi nào dùng (06/11)
+- Luật: việc nào có ≥1% khả năng khớp skill → invoke skill TRƯỚC khi hành động/trả lời (kể cả câu hỏi làm rõ).
+- 6 khoảnh khắc chuẩn: feature mới → brainstorming trước spec/mindmap · bug → systematic-debugging (tái hiện → root cause → sửa) · trước báo DONE/xanh → verification-before-completion (chạy lệnh verify thật) · code mới/fix → test-driven-development (đỏ→xanh) · plan đa bước → writing-plans + executing-plans, việc song song → dispatching-parallel-agents · tạo/sửa skill → writing-skills, nhận review → receiving-code-review.
+- Thứ bậc: chỉ đạo CEO + captain.md/AGENTS.md ĐÈ skill — 5-stage của Captain đi trước, superpowers bổ trợ lớp kỹ thuật.
+
+
+## LINEAR — dùng hợp lý (06/11)
+- DÙNG 5 khoảnh khắc: mở story epic (>3 SF) → issue cha + sub-issue từng SF · plan dài có milestone → publish subtask (CEO xem ngoài app) · SF chốt gate/DONE → sync trạng thái · việc tới từ ticket → issue-fix-loop trọn vòng · gắn URL ngữ cảnh vào workspace (orca reference add).
+- KHÔNG DÙNG: việc nhỏ gom 1 turn (room chat đủ) · dữ liệu vận hành nội bộ (journal/spawn log) · ghi khi đang cap.
+- KB (06/11): Linear GHI HOẠT ĐỘNG LẠI — issue KB = HOI-18 "Captain Activity Log"; Captain update COMMENT định kỳ vào issue có sẵn (mỗi mảng việc lớn + nhịp quan trọng). 16 issue Done cưỡng bức 19/09 vẫn chờ un-done. Nếu ghi lại fail rate-limit → quay policy skip + note.
+- RULING CEO 06/11: CẤM tự tạo issue Linear mới — CHỈ tạo khi CEO yêu cầu rõ ràng. Mặc định mọi ghi chỉ là comment vào issue có sẵn (KB HOI-18).
+- RULING CEO 06/11 (bổ sung): 1 ROOM ↔ 1 ISSUE. Mapping hiện tại: room #orca-test → HOI-18. Room mới chưa có issue → Captain TRÌNH CEO (hỏi/hổ trợ tạo — không tự tạo); sau khi CEO duyệt, ghi hoạt động room đó vào issue được chỉ định. Mapping cập nhật tại mục này.
+- KNOWLEDGE CỦA ROOM (CEO 06/11): field `linearIssue` trong room setting (rooms.json) là NGUỒN SỰ THẬT — Captain ĐỌC field này để biết activity log của room post vào issue nào (orca linear comment add <identifier>). Fallback: room không có linearIssue → activity chỉ ở room chat, không post Linear, không tự tạo issue. Quy trình: setting room đổi → Captain dùng theo setting mới ở nhịp kế tiếp.
+

@@ -22773,6 +22773,13 @@
         "finished": "一時的なオーケストレーションワーカーが完了 · {{countdown}}後に閉じます",
         "keepOpen": "開いたままにする"
       }
+    },
+    "RepositoryRulesSection": {
+      "title": "ルール宣言",
+      "description": "プロジェクトのルール宣言ファイルへのパス（リポジトリルートからの相対パス、例: rules/projects/my-project.json）。エージェントは参照先のルールを読み込みます。空欄の場合は rules/projects/ のサンプルファイルにフォールバックします。",
+      "keywordRules": "ルール",
+      "keywordDeclaration": "ルール宣言",
+      "placeholder": "rules/projects/…"
     }
   },
   "dashboardPopout": {

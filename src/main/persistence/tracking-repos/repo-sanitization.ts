@@ -64,6 +64,10 @@ export function sanitizeForkSyncMode(value: unknown): Repo['forkSyncMode'] | und
   return value === 'ask' || value === 'safe-auto' || value === 'off' ? value : undefined
 }
 
+export function sanitizeRulesDeclaration(value: unknown): Repo['rulesDeclaration'] | undefined {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined
+}
+
 export function sanitizeRepoUpdatesForPersistence<
   T extends Partial<
     Pick<
@@ -78,6 +82,7 @@ export function sanitizeRepoUpdatesForPersistence<
       | 'defaultJiraProject'
       | 'customWorktreeVisibilitySources'
       | 'worktreeVisibilitySourcePreferences'
+      | 'rulesDeclaration'
     >
   > & {
     ghAccount?: GhAccountBinding | null
@@ -146,6 +151,13 @@ export function sanitizeRepoUpdatesForPersistence<
       delete sanitized.forkSyncMode
     } else {
       sanitized.forkSyncMode = forkSyncMode
+    }
+  }
+  if ('rulesDeclaration' in sanitized && sanitized.rulesDeclaration !== undefined) {
+    if (typeof sanitized.rulesDeclaration === 'string') {
+      sanitized.rulesDeclaration = sanitized.rulesDeclaration.trim() || undefined
+    } else {
+      delete sanitized.rulesDeclaration
     }
   }
   // Null explicitly clears ghAccount; only malformed shapes are discarded.

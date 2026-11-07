@@ -21233,6 +21233,13 @@
         "finished": "Временный воркер оркестрации завершён · Закроется через {{countdown}}",
         "keepOpen": "Оставить открытым"
       }
+    },
+    "RepositoryRulesSection": {
+      "title": "Декларация правил",
+      "description": "Путь к листу декларации правил проекта относительно корня репозитория (например, rules/projects/my-project.json). Агенты загружают правила, на которые он указывает; пусто — используются образцы в rules/projects/.",
+      "keywordRules": "правила",
+      "keywordDeclaration": "декларация правил",
+      "placeholder": "rules/projects/…"
     }
   },
   "dashboardPopout": {

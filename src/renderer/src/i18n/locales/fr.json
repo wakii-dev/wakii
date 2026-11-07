@@ -23585,6 +23585,13 @@
         "finished": "Worker temporaire d’orchestration terminé · Fermeture dans {{countdown}}",
         "keepOpen": "Garder ouvert"
       }
+    },
+    "RepositoryRulesSection": {
+      "title": "Déclaration des règles",
+      "description": "Chemin de la feuille de déclaration de règles du projet, relatif à la racine du dépôt (par ex. rules/projects/my-project.json). Les agents chargent les règles qu’elle désigne ; vide, repli sur les feuilles d’exemple dans rules/projects/.",
+      "keywordRules": "règles",
+      "keywordDeclaration": "déclaration de règles",
+      "placeholder": "rules/projects/…"
     }
   },
   "dashboardPopout": {

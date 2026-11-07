@@ -22760,6 +22760,13 @@
         "finished": "임시 오케스트레이션 워커 완료 · {{countdown}} 후 닫힘",
         "keepOpen": "열어 두기"
       }
+    },
+    "RepositoryRulesSection": {
+      "title": "규칙 선언",
+      "description": "프로젝트의 규칙 선언 시트 경로(저장소 루트 기준 상대 경로, 예: rules/projects/my-project.json). 에이전트가 가리키는 규칙을 로드하며, 비워 두면 rules/projects/의 샘플 시트로 대체됩니다.",
+      "keywordRules": "규칙",
+      "keywordDeclaration": "규칙 선언",
+      "placeholder": "rules/projects/…"
     }
   },
   "dashboardPopout": {

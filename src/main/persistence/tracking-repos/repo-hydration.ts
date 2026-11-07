@@ -11,7 +11,8 @@ import {
   sanitizeForkSyncMode,
   sanitizeGitRemoteIdentity,
   sanitizeRepoProjectHostSetupMethod,
-  sanitizeRepoUpstream
+  sanitizeRepoUpstream,
+  sanitizeRulesDeclaration
 } from './repo-sanitization'
 import {
   normalizeCustomWorktreeVisibilitySources,
@@ -34,6 +35,7 @@ export function hydrateRepo(repo: Repo, gitUsernameCache: ReadonlyMap<string, st
     sourceControlAi: rawSourceControlAi,
     projectHostSetupMethod: rawProjectHostSetupMethod,
     forkSyncMode: rawForkSyncMode,
+    rulesDeclaration: rawRulesDeclaration,
     ghAccount: rawGhAccount,
     defaultJiraProject: rawDefaultJiraProject,
     customWorktreeVisibilitySources: rawCustomWorktreeVisibilitySources,
@@ -47,6 +49,7 @@ export function hydrateRepo(repo: Repo, gitUsernameCache: ReadonlyMap<string, st
   const sourceControlAi = normalizeRepoSourceControlAiOverrides(rawSourceControlAi)
   const projectHostSetupMethod = sanitizeRepoProjectHostSetupMethod(rawProjectHostSetupMethod)
   const forkSyncMode = sanitizeForkSyncMode(rawForkSyncMode)
+  const rulesDeclaration = sanitizeRulesDeclaration(rawRulesDeclaration)
   const ghAccount = normalizeGhAccountBinding(rawGhAccount)
   const defaultJiraProject = normalizeJiraProjectReference(rawDefaultJiraProject)
   const customWorktreeVisibilitySources = normalizeCustomWorktreeVisibilitySources(
@@ -72,6 +75,7 @@ export function hydrateRepo(repo: Repo, gitUsernameCache: ReadonlyMap<string, st
     ...(sourceControlAi !== undefined ? { sourceControlAi } : {}),
     ...(projectHostSetupMethod !== undefined ? { projectHostSetupMethod } : {}),
     ...(forkSyncMode !== undefined ? { forkSyncMode } : {}),
+    ...(rulesDeclaration !== undefined ? { rulesDeclaration } : {}),
     ...(ghAccount ? { ghAccount } : {}),
     ...(defaultJiraProject !== undefined ? { defaultJiraProject } : {}),
     ...(customWorktreeVisibilitySources !== undefined ? { customWorktreeVisibilitySources } : {}),

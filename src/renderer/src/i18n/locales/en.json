@@ -24024,6 +24024,13 @@
         "finished": "Temporary orchestration worker finished · Closes in {{countdown}}",
         "keepOpen": "Keep open"
       }
+    },
+    "RepositoryRulesSection": {
+      "title": "Rules Declaration",
+      "description": "Path of the per-project rules declaration sheet, relative to the repo root (for example rules/projects/my-project.json). Agents load the rules it points to; empty falls back to the sample sheets in rules/projects/.",
+      "keywordRules": "rules",
+      "keywordDeclaration": "rules declaration",
+      "placeholder": "rules/projects/…"
     }
   },
   "dashboardPopout": {

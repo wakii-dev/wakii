@@ -1,0 +1,6 @@
+{
+  "project": "wakii-desktop",
+  "applicable": ["common", "typescript", "react", "web", "swift", "python", "wakii-overlay"],
+  "extraGlobs": [],
+  "overlay": "wakii-overlay.md"
+}

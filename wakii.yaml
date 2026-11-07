@@ -1,0 +1,3 @@
+# Wakii project config — rules
+rules:
+  declaration: rules/projects/wakii-desktop.json

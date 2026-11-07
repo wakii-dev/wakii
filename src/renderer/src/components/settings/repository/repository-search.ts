@@ -46,6 +46,21 @@ export function getRepositoryPaneSearchEntries(
       ]
     },
     {
+      title: translate('components.RepositoryRulesSection.title', 'Rules Declaration'),
+      description: translate(
+        'components.RepositoryRulesSection.description',
+        'Path of the per-project rules declaration sheet, relative to the repo root (for example rules/projects/my-project.json). Agents load the rules it points to; empty falls back to the sample sheets in rules/projects/.'
+      ),
+      keywords: [
+        repo.displayName,
+        ...translateSearchKeyword('components.RepositoryRulesSection.keywordRules', 'rules'),
+        ...translateSearchKeyword(
+          'components.RepositoryRulesSection.keywordDeclaration',
+          'rules declaration'
+        )
+      ]
+    },
+    {
       title: translate('auto.components.settings.repository.search.7e1e456a95', 'Display Name'),
       description: translate(
         'auto.components.settings.repository.search.883aad2801',

@@ -50,6 +50,9 @@ export function sanitizeRepoUpdate(updates: RepoUpdate): RepoUpdate {
   if ('worktreeBasePath' in sanitized && sanitized.worktreeBasePath !== undefined) {
     sanitized.worktreeBasePath = sanitized.worktreeBasePath.trim() || undefined
   }
+  if ('rulesDeclaration' in sanitized && sanitized.rulesDeclaration !== undefined) {
+    sanitized.rulesDeclaration = sanitized.rulesDeclaration.trim() || undefined
+  }
   if (
     'forkSyncMode' in sanitized &&
     sanitized.forkSyncMode !== undefined &&

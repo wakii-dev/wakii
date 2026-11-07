@@ -23,6 +23,7 @@ import { RepositoryIconPicker } from './identity/RepositoryIconPicker'
 import { getRepositoryPaneSearchEntries } from './repository-search'
 import { RepositoryHostSetupsSection } from './execution/RepositoryHostSetupsSection'
 import { RepoSettingsDraftInput } from './RepositorySettingsDraftInput'
+import { RepositoryRulesSection } from './RepositoryRulesSection'
 import { RepositoryForkSyncSection } from './identity/RepositoryForkSyncSection'
 import { RepositoryGitHubAccountSection } from './RepositoryGitHubAccountSection'
 import { translate } from '@/i18n/i18n'
@@ -170,6 +171,7 @@ export function RepositoryPane({
     translate('auto.components.settings.repository.search.7e1e456a95', 'Display Name'),
     translate('auto.components.settings.repository.search.b24f00294a', 'Project Icon'),
     translate('components.RepositoryJiraProjectSection.title', 'Default Jira project'),
+    translate('components.RepositoryRulesSection.title', 'Rules Declaration'),
     translate('auto.components.settings.repository.search.githubAccount', 'GitHub Account'),
     translate(
       'auto.components.settings.repository.search.keepForkUpToDate',
@@ -299,6 +301,12 @@ export function RepositoryPane({
 
         <RepositoryJiraProjectSection
           key={`${selectedHostId}:${repo.id}`}
+          repo={repo}
+          updateRepo={updateSelectedRepo}
+          forceVisible={forceFullPaneForRepoMatch}
+        />
+
+        <RepositoryRulesSection
           repo={repo}
           updateRepo={updateSelectedRepo}
           forceVisible={forceFullPaneForRepoMatch}

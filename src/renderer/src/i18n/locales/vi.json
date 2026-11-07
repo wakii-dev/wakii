@@ -18589,6 +18589,13 @@
     },
     "agentChildRow": {
       "ended": "Đã kết thúc"
+    },
+    "RepositoryRulesSection": {
+      "title": "Khai báo rules",
+      "description": "Đường dẫn tờ khai báo rules của project, tương đối từ repo root (ví dụ rules/projects/my-project.json). Agent load rule mà tờ trỏ tới; để trống thì fallback các tờ mẫu trong rules/projects/.",
+      "keywordRules": "rules",
+      "keywordDeclaration": "khai báo rules",
+      "placeholder": "rules/projects/…"
     }
   },
   "dashboardPopout": {
