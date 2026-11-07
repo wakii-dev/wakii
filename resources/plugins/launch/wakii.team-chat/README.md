@@ -135,6 +135,9 @@ Directive strings are mirrored in `directives.json` (single source of truth), `p
 3. Consent to the three capabilities above.
 4. The "Superpowers" panel appears in the activity bar; the seven commands appear in the command palette.
 
+## Optional machine-level: caveman official installer
+Kit vendor caveman/ponytail **skills** (xem `kit/skills/caveman*`, `ponytail*`) — hooks máy-level (settings.json, statusline) không đi kèm. Máy nào muốn hooks/statusline chạy thêm: `claude plugin install caveman` (official installer), ponytail tương tự qua plugin market.
+
 **Reinstall after any edit.** Orca stores plugin content by content-hash under `~/Library/Application Support/orca/plugins/<id>/`; the install flow re-hashes and updates the `current` pointer. Editing source files does **not** update the running plugin.
 
 ## Files

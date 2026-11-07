@@ -1,7 +1,7 @@
 {
   "name": "story-team-kit",
-  "version": "2.25.2",
-  "description": "10-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới. 31/10: team-chat bus + team-workflow skill (HOI-15/16).",
+  "version": "2.26.0",
+  "description": "10-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới. 31/10: team-chat bus + team-workflow skill (HOI-15/16). 07/11: team-lookout danger-scan pre-check + team-orch multi-provider --provider (mượn 2 mảnh OMC).",
   "requires": {
     "claude-code": ">=2.0",
     "external": {
@@ -688,6 +688,13 @@
       "description": "umbrella họ team-*: team chat/orch/who/retro — §Đ1a"
     },
     {
+      "name": "team-lookout",
+      "type": "bin",
+      "category": "ops",
+      "owner": "wakii",
+      "description": "Danger-scan briefing + workspace TRƯỚC dispatch unattended (mượn ý omc lookout scan): destructive cmd/secret=high, scope-ngoài-worktree+thiếu-tiêu-chỉ-kiểm-chứng=medium; --strict exit 1 khi có high; --json {findings,exit_code} cho team-orch"
+    },
+    {
       "name": "team-orch",
       "type": "bin",
       "category": "ops",
@@ -965,7 +972,100 @@
       ],
       "outputs": "trả lời/confirm nghiệp vụ kèm nguồn KB (hoặc 'chưa nắm, đang hỏi CEO') + user story + criteria Gherkin đo được; KHÔNG ĐOÁN — chưa hiểu hỏi CEO",
       "owner": "wakii"
+    },
+    {
+      "name": "caveman",
+      "type": "skill",
+      "category": "knowledge",
+      "inputs": [
+        "caveman mode",
+        "/caveman",
+        "'be brief'",
+        "worker cần voice terse"
+      ],
+      "outputs": "voice terse mọi response — answer first, fluff die, technical fact giữ nguyên; dừng bằng 'stop caveman'/'normal mode'",
+      "owner": "wakii"
+    },
+    {
+      "name": "caveman-compress",
+      "type": "skill",
+      "category": "knowledge",
+      "inputs": [
+        "memory file dày (CLAUDE.md, todo) cần nén"
+      ],
+      "outputs": "file nén caveman format tiết kiệm input tokens + backup đọc được (gọi model provider đã cấu hình)",
+      "owner": "wakii"
+    },
+    {
+      "name": "lean-build",
+      "type": "skill",
+      "category": "execution",
+      "inputs": [
+        "feature work mới có rủi ro overbuild",
+        "product slice/integration"
+      ],
+      "outputs": "build phạm vi hẹp: reuse repo trước, scope chặt, stop condition ghi rõ trước khi code",
+      "owner": "wakii"
+    },
+    {
+      "name": "surgical-patch",
+      "type": "skill",
+      "category": "execution",
+      "inputs": [
+        "bug fix",
+        "behavior change nhỏ"
+      ],
+      "outputs": "patch ở layer hẹp nhất chịu trách nhiệm — regression proof + giữ behavior lân cận + test đúng phạm vi",
+      "owner": "wakii"
+    },
+    {
+      "name": "verify-and-stop",
+      "type": "skill",
+      "category": "execution",
+      "inputs": [
+        "công việc đã làm cần proof acceptance",
+        "completion check",
+        "gate run cuối"
+      ],
+      "outputs": "chứng minh acceptance conditions bằng lệnh chạy thật, KHÔNG mở rộng phạm vi; xong thì dừng",
+      "owner": "wakii"
+    },
+    {
+      "name": "investigate-first",
+      "type": "skill",
+      "category": "execution",
+      "inputs": [
+        "failure mơ hồ",
+        "hành vi intermittent",
+        "performance regression"
+      ],
+      "outputs": "chẩn đoán trước khi sửa: hypotheses xếp hạng theo evidence, mỗi hypothesis có phép thử",
+      "owner": "wakii"
+    },
+    {
+      "name": "ponytail",
+      "type": "skill",
+      "category": "knowledge",
+      "inputs": [
+        "task code bất kỳ (viết/sửa/refactor/review/chọn dependency)",
+        "'be lazy'",
+        "'simplest solution'"
+      ],
+      "outputs": "lười senior dev: diff nhỏ nhất giải trọn bài, không abstraction/config không ai hỏi; kèm dòng skip/risk cuối reply",
+      "owner": "wakii"
+    },
+    {
+      "name": "ponytail-audit",
+      "type": "skill",
+      "category": "review",
+      "inputs": [
+        "'audit this codebase'",
+        "'find bloat'",
+        "'what can I delete'"
+      ],
+      "outputs": "báo cáo one-shot xếp hạng: bug, lỗ hổng, rủi ro load, code rủi ro thiếu test, path chậm, cái nên xoá/gộp/split",
+      "owner": "wakii"
     }
   ],
-  "kitHash": "8d21879082adb1b9"
+  "kitHash": "2c1cf84f3e937ce0"
 }

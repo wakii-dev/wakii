@@ -1,0 +1,145 @@
+#!/bin/bash
+# team-lookout — danger-scan briefing + workspace TRƯỚC dispatch unattended (mượn ý `omc lookout scan`).
+# Báo findings/severity; Captain dùng làm pre-check trước worker-start chạy nền.
+# Dùng: team-lookout scan --brief <file|text> [--json] [--strict] [--cwd <dir>]
+#   --strict → exit 1 khi có finding high. Non-strict luôn exit 0 (chỉ báo cáo).
+#   JSON: {findings:[{severity,rule,message,line}],exit_code} — machine-readable cho team-orch.
+set -u
+CMD="${1:-}"; [ $# -gt 0 ] && shift
+usage() {
+  cat <<'EOF'
+team-lookout — danger-scan briefing + workspace trước dispatch unattended
+
+Dùng: team-lookout scan --brief <file|text> [--json] [--strict] [--cwd <dir>]
+
+  --brief   đường dẫn file briefing HOẶC chuỗi text briefing
+  --json    in JSON {findings,exit_code} (machine-readable)
+  --strict  exit 1 khi có finding severity=high
+  --cwd     worktree gốc để so scope path (mặc định: cwd hiện tại)
+
+Exit: 0 sạch/có findings-thấp (non-strict) · 1 strict mà có high · 2 sai cú pháp
+EOF
+}
+[ "$CMD" = "scan" ] || { usage >&2; exit 2; }
+BRIEF="" JSON=0 STRICT=0 CWD="$(pwd)"
+while [ $# -gt 0 ]; do case "$1" in
+  --brief) BRIEF="$2"; shift 2 ;; --json) JSON=1; shift ;; --strict) STRICT=1; shift ;; --cwd) CWD="$2"; shift 2 ;;
+  *) echo "team-lookout: flag lạ: $1 (xem: team-lookout help)" >&2; exit 2 ;;
+esac; done
+[ -n "$BRIEF" ] || { echo "team-lookout: thiếu --brief <file|text>" >&2; exit 2; }
+[ -d "$CWD" ] || { echo "team-lookout: --cwd không tồn tại: $CWD" >&2; exit 2; }
+python3 - "$BRIEF" "$JSON" "$STRICT" "$CWD" <<'PY'
+import json, os, re, subprocess, sys
+
+brief, as_json, strict, cwd = sys.argv[1], sys.argv[2] == "1", sys.argv[3] == "1", sys.argv[4]
+
+# --brief: file có thật thì đọc, không thì coi là text trần
+if os.path.isfile(brief):
+    try:
+        text = open(brief, encoding="utf-8", errors="replace").read()
+        src = brief
+    except OSError as e:
+        print(f"team-lookout: không đọc được file brief: {e}", file=sys.stderr); sys.exit(2)
+else:
+    text, src = brief, "(text)"
+
+findings = []
+def add(sev, rule, line_no, msg):
+    findings.append({"severity": sev, "rule": rule,
+                     "message": f"dòng {line_no}: {msg}" if line_no else msg, "line": line_no or None})
+
+lines = text.splitlines()
+home = os.path.expanduser("~")
+
+# ── Rule 1: destructive-command (high) — rm -rf / force-push / reset --hard ──
+for i, ln in enumerate(lines, 1):
+    m = re.search(r"\brm\s+((?:-{1,2}[\w-]+(?:\s+|$))+)", ln)
+    if m and "r" in m.group(1).replace("-", "") and "f" in m.group(1).replace("-", ""):
+        add("high", "destructive-command", i, f"rm đệ quy + force: {ln.strip()[:120]}")
+    if re.search(r"\bpush\b[^;\n]*(--force(?!-with-lease)\b|\s-f(?:\s|$))", ln):
+        add("high", "destructive-command", i, f"force-push: {ln.strip()[:120]}")
+    if re.search(r"\bgit\s+reset\s+--hard\b", ln):
+        add("high", "destructive-command", i, f"git reset --hard: {ln.strip()[:120]}")
+    if re.search(r"curl\s+[^|\n]*\|\s*(?:ba|z)?sh\b", ln):
+        add("high", "supply-chain-install", i, f"pipe thẳng vào shell: {ln.strip()[:120]}")
+
+# ── Rule 2: secret-in-brief (high) — token/key lộ trong briefing ──
+SECRET_PATTERNS = [
+    (r"-----BEGIN [A-Z ]*PRIVATE KEY-----", "private key PEM"),
+    (r"\b(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{20,}\b", "GitHub token (gh?_)"),
+    (r"\bgithub_pat_[A-Za-z0-9_]{20,}\b", "GitHub fine-grained PAT"),
+    (r"\bsk-(?:ant-)?[A-Za-z0-9_-]{20,}\b", "API key sk-…"),
+    (r"\bAKIA[0-9A-Z]{16}\b", "AWS access key"),
+    (r"\bxox[baprs]-[A-Za-z0-9-]{10,}\b", "Slack token"),
+    (r"\bAIza[0-9A-Za-z_-]{35}\b", "Google API key"),
+    (r"(?i)\b(?:api[_-]?key|token|secret|password)\s*[=:]\s*[\"']?[A-Za-z0-9_\-./+]{16,}", "credential gán giá trị trần"),
+]
+for i, ln in enumerate(lines, 1):
+    for pat, what in SECRET_PATTERNS:
+        if re.search(pat, ln):
+            add("high", "secret-in-brief", i, f"nghi ngờ {what} — redact trước khi dispatch")
+
+# ── Rule 3: scope-outside-worktree (medium) — path tuyệt đối ngoài worktree ──
+IGNORE_PREFIXES = ("/tmp", "/private/tmp", "/var", "/usr", "/opt", "/etc", "/bin",
+                   "/sbin", "/Applications", "/System", "/Library", "/dev", "/cores")
+seen_scope = set()
+for i, ln in enumerate(lines, 1):
+    for p in re.findall(r"(?:~(?:/[\w.@+-]+)+|/[\w.@+-]+(?:/[\w.@+-]+)+)", ln):
+        p = os.path.expanduser(p)
+        if p in seen_scope: continue
+        if not p.startswith("/"): continue
+        if any(p.startswith(x + "/" if not x.endswith("/") else x) for x in IGNORE_PREFIXES): continue
+        if p.startswith(home + "/.claude") or p.startswith(home + "/.cache"): continue
+        if p.startswith(home) and not os.path.realpath(cwd).startswith(home):
+            continue  # cwd ngoài home — so scope tương đối bỏ qua
+        if not p.startswith(os.path.realpath(cwd) + "/"):
+            seen_scope.add(p)
+            add("medium", "scope-outside-worktree", i, f"path ngoài worktree {cwd}: {p}")
+
+# ── Rule 4: unattended-no-verify-criteria (medium) — brief thiếu tiêu chí kiểm chứng ──
+VERIFY_HINTS = re.compile(
+    r"(?i)verify|test|kiểm (?:chứng|thử)|tiêu chí|xác (?:minh|nhận)|acceptance|success criteria"
+    r"|exit 0|gate|DONE khi|hoàn thành khi|acceptance criteria|bằng chứng|evidence")
+if not VERIFY_HINTS.search(text):
+    add("medium", "unattended-no-verify-criteria", None,
+        "brief không có tiêu chí kiểm chứng nào — run unattended cần mốc verify rõ ràng")
+
+# ── Rule 5: workspace-dirty (low) — thay đổi chưa commit có thể bị đè ──
+try:
+    st = subprocess.run(["git", "-C", cwd, "status", "--porcelain"],
+                        capture_output=True, text=True, timeout=10)
+    dirty = [l for l in st.stdout.splitlines() if l.strip()]
+    if st.returncode == 0 and dirty:
+        add("low", "workspace-dirty", None,
+            f"workspace có {len(dirty)} thay đổi chưa commit — run unattended có thể đè")
+except (OSError, subprocess.TimeoutExpired):
+    pass
+
+order = {"high": 0, "medium": 1, "low": 2}
+findings.sort(key=lambda f: order[f["severity"]])
+counts = {s: sum(1 for f in findings if f["severity"] == s) for s in order}
+has_high = counts["high"] > 0
+exit_code = 1 if (strict and has_high) else 0
+
+if as_json:
+    print(json.dumps({
+        "brief": src,
+        "summary": counts,
+        "findings": [{k: v for k, v in f.items() if v is not None} for f in findings],
+        "exit_code": exit_code,
+    }, ensure_ascii=False))
+else:
+    icon = "🔴" if has_high else ("🟡" if findings else "🟢")
+    print(f"team-lookout {icon} brief={src} — {len(findings)} finding "
+          f"(high={counts['high']} medium={counts['medium']} low={counts['low']})")
+    for f in findings:
+        print(f"[{f['severity'].upper():6}] {f['rule']}: {f['message']}")
+    if not findings:
+        print("✓ sạch — an toàn để dispatch unattended")
+    elif strict and has_high:
+        print("⛔ --strict: có finding HIGH — KHÔNG dispatch, xử lý trước")
+    elif strict:
+        print("✓ --strict: không có finding high — qua")
+
+sys.exit(exit_code)
+PY

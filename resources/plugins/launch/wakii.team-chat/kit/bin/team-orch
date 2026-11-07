@@ -25,11 +25,11 @@ emit() { # kind actor repo run task data
 
 # Đợi agent TUI sẵn sàng TRƯỚC khi gõ prompt (CEO bug 1/11: prompt rơi vào
 # shell trống khi claude boot chậm). Sẵn sàng = output pane có dấu hiệu TUI.
-wait_agent_ready() { # $1=pane $2=orca_bin → 0 khi sẵn sàng, 1 sau ~60s
+wait_agent_ready() { # $1=pane $2=orca_bin [$3=regex TUI của provider] → 0 khi sẵn sàng, 1 sau ~60s
   local i out
   for i in $(seq 1 20); do
     out=$("$2" terminal read --terminal "$1" 2>/dev/null | tail -14)
-    if printf '%s' "$out" | grep -qE 'Claude Code|✻|╭|⏺|Esc to interrupt|no auto-accept'; then
+    if printf '%s' "$out" | grep -qE "${3:-Claude Code|✻|╭|⏺|Esc to interrupt|no auto-accept}"; then
       return 0
     fi
     sleep 3
@@ -43,14 +43,16 @@ repo_of_cwd() { # repoId từ worktree hiện tại qua app — đơn giản ho�
 
 # ── Registration pane→worker (P0-2): nguồn sự thật cho danh tính + brief ──
 REG="${TEAM_WORKERS_REG:-$HOME/.claude/chat/.workers.json}"
-reg_put() { # pane name worktree task run repo room
+reg_put() { # pane name worktree task run repo room [provider]
   python3 - "$REG" "$@" <<'PY'
 import json, sys, os, time
 path, pane, name, wt, task, run, repo, room = sys.argv[1:9]
+provider = sys.argv[9] if len(sys.argv) > 9 else "claude"
 try: reg = json.load(open(path, encoding="utf-8"))
 except Exception: reg = {}
 reg[pane] = {"name": name, "worktree": wt, "task": task, "run": run,
-             "repo": repo, "room": room, "at": int(time.time() * 1000)}
+             "repo": repo, "room": room, "provider": provider,
+             "at": int(time.time() * 1000)}
 os.makedirs(os.path.dirname(path), exist_ok=True)
 json.dump(reg, open(path, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 PY
@@ -207,10 +209,13 @@ case "$CMD" in
   worker-start)
     # Flags của orchestration phải qua nguyên vẹn; mình chỉ bóc thêm giá trị cho marker/events.
     PLAN=0 WT="" NAME="worker" TASK="" REPO="" RUN="" RUN_SET=0 ROOM_FLAG=""; PASS=()
+    PROVIDER=""; DRY_RUN=0
     while [ $# -gt 0 ]; do case "$1" in
       --require-plan-approval) PLAN=1; shift ;;
       --room) ROOM_FLAG="$2"; shift 2 ;;  # local: room của worker — không qua orchestration
       --background) BG_SPAWN=1; shift ;;  # local: spawn nền — không chặn turn captain
+      --provider) PROVIDER="$2"; shift 2 ;;  # local: claude|codex|gemini|cursor — không qua orchestration
+      --dry-run) DRY_RUN=1; shift ;;  # local: in JSON plan mà không spawn
       --name) NAME="$2"; PASS+=("$1" "$2"); shift 2 ;;
       --worktree) WT="$2"; PASS+=("$1" "$2"); shift 2 ;;
       --task) TASK="$2"; PASS+=("$1" "$2"); shift 2 ;;
@@ -218,6 +223,34 @@ case "$CMD" in
       --run) RUN="$2"; RUN_SET=1; PASS+=("$1" "$2"); shift 2 ;;
       *) PASS+=("$1"); shift ;;
     esac; done
+    # ── Provider (mượn ý `omc team N:provider`): pane worker chạy CLI của provider
+    # đã chọn THAY vì claude, cùng REG/worktree/brief flow. Preflight fail-loud:
+    # CLI thiếu → lỗi RÕ tên provider + hướng dẫn cài, KHÔNG fallback im lặng.
+    PROVIDER="${PROVIDER:-claude}"
+    case "$PROVIDER" in
+      claude) PROVIDER_CLI="claude"; PROVIDER_CMD="claude --dangerously-skip-permissions"
+              PROVIDER_TUI='Claude Code|✻|╭|⏺|Esc to interrupt|no auto-accept'
+              PROVIDER_INSTALL="đã có sẵn (claude-code)" ;;
+      codex)  PROVIDER_CLI="codex"; PROVIDER_CMD="codex --dangerously-bypass-approvals-and-sandbox"
+              PROVIDER_TUI='Codex|OpenAI|╭|⏺|esc to interrupt|no sandbox'
+              PROVIDER_INSTALL="npm i -g @openai/codex && codex login" ;;
+      gemini) PROVIDER_CLI="gemini"; PROVIDER_CMD="gemini --yolo"
+              PROVIDER_TUI='Gemini|gemini-cli|╭|⏺'
+              PROVIDER_INSTALL="npm i -g @google/gemini-cli && gemini (OAuth lần đầu)" ;;
+      cursor) PROVIDER_CLI="cursor-agent"; PROVIDER_CMD="cursor-agent"
+              PROVIDER_TUI='cursor|Cursor|agent|╭|⏺'
+              PROVIDER_INSTALL="npm i -g @cursor/agent && cursor-agent login" ;;
+      *) echo "TỪ CHỐI: --provider '$PROVIDER' không hỗ trợ — chọn: claude | codex | gemini | cursor" >&2; exit 2 ;;
+    esac
+    command -v "$PROVIDER_CLI" >/dev/null 2>&1 || {
+      echo "TỪ CHỐI: provider '$PROVIDER' cần CLI '$PROVIDER_CLI' — CHƯA CÀI. Cài: $PROVIDER_INSTALL. Không fallback về claude." >&2
+      exit 2
+    }
+    if [ "$DRY_RUN" -eq 1 ]; then  # test dispatch không spawn: in plan JSON rồi dừng
+      printf '{"dry_run":true,"provider":"%s","cli":"%s","command":"%s","installed":true,"worker":"%s"}\n' \
+        "$PROVIDER" "$PROVIDER_CLI" "$PROVIDER_CMD" "${NAME%%-*}"
+      exit 0
+    fi
     # CEO ruling: 1 room tối đa 3 worker (terminal grid 3). Đếm worker cùng
     # room (theo pane đăng ký + terminal còn sống) — vượt thì từ chối thẳng.
     if [ -n "${ORCA_AGENT_PANE:-}" ]; then
@@ -269,7 +302,7 @@ PY
       # rc!=0 → tin ⚠️ CÓ LÝ DO (tail log) vào room. KHÔNG nuốt lỗi.
       LOGF="$HOME/.claude/chat/spawn-${NAME%%-*}-$(date +%s).log"
       (
-        "$0" worker-start ${PASS[@]+"${PASS[@]}"} > "$LOGF" 2>&1
+        "$0" worker-start ${PASS[@]+"${PASS[@]}"} --provider "$PROVIDER" > "$LOGF" 2>&1
         rc=$?
         # Đánh giá theo BẰNG CHỨNG, không tin rc mù quáng (CEO 06/11: rc=1 từ
         # post-processing phụ smear thành THẤT BẠI giả dù log có ok:true).
@@ -420,10 +453,10 @@ PY
         fi
         SPLIT_ARGS=(--terminal "$SPLIT_BASE" --direction "$SPLIT_DIR")
         NEW_PANE=$("$ORCA" terminal split "${SPLIT_ARGS[@]}" \
-                     --command "claude --dangerously-skip-permissions" --json 2>/dev/null \
+                     --command "$PROVIDER_CMD" --json 2>/dev/null \
                    | python3 -c 'import json,sys; print(json.load(sys.stdin)["result"]["split"]["handle"])' 2>/dev/null)
         if [ -n "$NEW_PANE" ]; then
-          if wait_agent_ready "$NEW_PANE" "$ORCA"; then
+          if wait_agent_ready "$NEW_PANE" "$ORCA" "$PROVIDER_TUI"; then
             :
           else
             echo "team-orch: ⚠ agent chưa lên sau 45s — orchestration gõ task có thể trượt; theo dõi pane" >&2
@@ -462,12 +495,12 @@ PY
     [ "$HAS_JSON" -eq 1 ] || ARGS+=(--json)
     [ -n "$SPLIT_PANE" ] && ARGS+=(--terminal "$SPLIT_PANE")
     # A2-nốt (agent_unconfigured 2/11): KHÔNG có --terminal nào đính →
-    # orchestration tự TẠO terminal mới → bắt buộc --agent; mặc định claude
-    # (cùng agent đường split dùng). Có --terminal (user hoặc split) thì bỏ qua.
+    # orchestration tự TẠO terminal mới → bắt buộc --agent; mặc định theo
+    # --provider (claude giữ nguyên behavior cũ). Có --terminal thì bỏ qua.
     HAS_T=0; for a in ${ARGS[@]+"${ARGS[@]}"}; do [ "$a" = "--terminal" ] && HAS_T=1; done
     if [ "$HAS_T" -eq 0 ]; then
       HAS_AGENT=0; for a in ${ARGS[@]+"${ARGS[@]}"}; do [ "$a" = "--agent" ] && HAS_AGENT=1; done
-      [ "$HAS_AGENT" -eq 0 ] && ARGS+=(--agent claude)
+      [ "$HAS_AGENT" -eq 0 ] && ARGS+=(--agent "$PROVIDER")
     fi
     OUT=$("$ORCA" orchestration "$CMD" "${ARGS[@]}" 2>&1) || {
       if [ -n "$SPLIT_PANE" ]; then
@@ -477,7 +510,7 @@ PY
         [ "$HAS_JSON" -eq 1 ] || ARGS+=(--json)
         # A2-nốt: pane split đã đóng — không --terminal → cần --agent cho terminal mới
         HAS_AGENT=0; for a in ${ARGS[@]+"${ARGS[@]}"}; do [ "$a" = "--agent" ] && HAS_AGENT=1; done
-        [ "$HAS_AGENT" -eq 0 ] && ARGS+=(--agent claude)
+        [ "$HAS_AGENT" -eq 0 ] && ARGS+=(--agent "$PROVIDER")
         OUT=$("$ORCA" orchestration "$CMD" "${ARGS[@]}" 2>&1) || { echo "$OUT"; exit 1; }
       else
         echo "$OUT"; exit 1
@@ -518,7 +551,7 @@ except Exception: pass
 " 2>/dev/null) 2>/dev/null | grep '^> ' | head -1 | cut -c3-)
     [ -n "$PANE" ] || PANE="${TEAM_WORKER_PANE:-}"
     if [ -n "$PANE" ]; then
-      reg_put "$PANE" "${NAME%%-*}" "$WT_PATH" "$TASK" "$RUN" "$REPO" "${ROOM_:-${REPO}-${NAME%%-*}}"
+      reg_put "$PANE" "${NAME%%-*}" "$WT_PATH" "$TASK" "$RUN" "$REPO" "${ROOM_:-${REPO}-${NAME%%-*}}" "$PROVIDER"
       echo "team-orch: đăng ký $PANE → ${NAME%%-*} (danh tính khóa theo pane)"
       # RECEIPT (CEO 2/11): bin tự post sự thật vào room — captain chỉ được
       # relay số liệu từ tin này, không tự khai "đã spawn" (gốc lỗi claim-trống).
@@ -537,7 +570,7 @@ print(m.group(0) if m else '')" 2>/dev/null)
       printf '{"taskId":"%s","planGateOpen":true,"worktreePath":"%s"}\n' "$TASK" "$WT_PATH" > "$(marker "$WT_PATH")"
       emit plan.gate.open captain "$REPO" "$RUN" "$TASK" "{\"worktree\":\"$WT_PATH\"}"
     fi
-    emit worker.hired "${NAME%%-*}" "$REPO" "$RUN" "$TASK" '{"via":"team-orch"}'
+    emit worker.hired "${NAME%%-*}" "$REPO" "$RUN" "$TASK" "{\"provider\":\"$PROVIDER\",\"via\":\"team-orch\"}"
     echo "$OUT"
     if [ "$PLAN" -eq 1 ]; then
       echo "team-orch: plan-gate OPEN @ $WT_PATH (worker phải post [PLAN] chờ duyệt)"
@@ -713,15 +746,15 @@ print(f"reg-clean: bỏ {len(dead)} pane chết; còn {len(reg)} entry sống")
 PY
     ;;
   register)
-    # register --pane <handle> --name <n> --worktree <path> [--task --run --repo --room]
-    PANE="" NAME="" WTV="" TASK="" RUN="" REPO="" ROOM="general"
+    # register --pane <handle> --name <n> --worktree <path> [--task --run --repo --room --provider]
+    PANE="" NAME="" WTV="" TASK="" RUN="" REPO="" ROOM="general" PROVIDER="claude"
     while [ $# -gt 0 ]; do case "$1" in
       --pane) PANE="$2"; shift 2 ;; --name) NAME="$2"; shift 2 ;; --worktree) WTV="$2"; shift 2 ;;
       --task) TASK="$2"; shift 2 ;; --run) RUN="$2"; shift 2 ;; --repo) REPO="$2"; shift 2 ;;
-      --room) ROOM="$2"; shift 2 ;; *) shift ;;
+      --room) ROOM="$2"; shift 2 ;; --provider) PROVIDER="$2"; shift 2 ;; *) shift ;;
     esac; done
     [ -n "$PANE" ] && [ -n "$NAME" ] || { echo "register cần --pane + --name (--worktree tùy chọn)" >&2; exit 2; }
-    reg_put "$PANE" "$NAME" "$WTV" "$TASK" "$RUN" "$REPO" "$ROOM"
+    reg_put "$PANE" "$NAME" "$WTV" "$TASK" "$RUN" "$REPO" "$ROOM" "$PROVIDER"
     echo "→ đăng ký $PANE = $NAME @ $WTV"
     ;;
   unregister)
