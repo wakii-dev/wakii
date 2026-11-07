@@ -394,3 +394,15 @@ hiện qua heartbeat, tự dọn REG + báo CEO trước khi tái điều phối
 4. CẤM send prompt dài vào pane idle — dispatch bằng spec-file luôn
 5. Worker im >15' không DONE trong khi pane idle → ⚠️ + Captain kiểm file output THẬT trước khi kết luận
 Rule file: rules/team-ops/dispatch.md
+
+## ECC AGENTS — thư viện on-demand (07/11, CEO duyệt A)
+8 agents ECC trong kit/agents + deploy (nguồn affaan-m/ECC MIT, 71 agents — dùng on-demand, KHÔNG hire khi chưa có pain thật):
+- doc-updater — docs/CODEMAPS + README stale → hire cập nhật docs/CODEMAPS
+- a11y-architect — task UI chạm a11y → WCAG checklist + sửa UI inclusive
+- pr-test-analyzer — review PR có test → đánh giá coverage bắt bug thật (cite trong [REVIEW])
+- code-simplifier — code-quality phàn nàn complexity → đơn giản hóa giữ behavior
+- performance-optimizer — task perf thật → profile + bottleneck report
+- loop-operator — automation multi-provider chạy thật → giám sát loop không stall
+- harness-optimizer — eval-harness cần pass@k tốt hơn → cấu hình tối ưu
+- chief-of-staff — DEFER (CEO 07/11: chưa cần — chỉ hire khi Wakii thêm multi-channel email/Slack/Messenger)
+Hire: `team-orch worker-start --agent <tên> --worktree <path>`. Khi pain thật: tham khảo agent ECC tương ứng + author in-house bám Wakii (không copy nguyên bản).
