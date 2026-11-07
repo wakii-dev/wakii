@@ -20,6 +20,48 @@ const RETIRED_SKILL_DIRS = [
   'web-design-guidelines',
 ]
 
+// Multi-home phân phối kit skills (CEO): kit skills vào homes của MỌI agent CLI
+// phát hiện trên máy — format SKILL.md là chuẩn chung, mapping global path theo
+// skills.sh (vercel-labs/skills docs/agents.md). Claude home đã cài ở copy loop
+// chính. Detect home không tồn tại → skip im lặng; lỗi 1 home không chặn home khác.
+export function agentSkillsHomeTargets(userHome) {
+  return [
+    { detect: join(userHome, '.codex'), target: join(userHome, '.agents', 'skills') }, // Codex/Zed/Cline/Pi dùng chung ~/.agents
+    { detect: join(userHome, '.agents'), target: join(userHome, '.agents', 'skills') },
+    { detect: join(userHome, '.gemini'), target: join(userHome, '.gemini', 'skills') },
+    { detect: join(userHome, '.gemini', 'config'), target: join(userHome, '.gemini', 'config', 'skills') }, // Antigravity
+    { detect: join(userHome, '.cursor'), target: join(userHome, '.cursor', 'skills') },
+    { detect: join(userHome, '.copilot'), target: join(userHome, '.copilot', 'skills') },
+    { detect: join(userHome, '.kiro'), target: join(userHome, '.kiro', 'skills') },
+    { detect: join(userHome, '.config', 'opencode'), target: join(userHome, '.config', 'opencode', 'skills') },
+    { detect: join(userHome, '.codeium', 'windsurf'), target: join(userHome, '.codeium', 'windsurf', 'skills') },
+    { detect: join(userHome, '.config', 'agents'), target: join(userHome, '.config', 'agents', 'skills') }, // Universal/Amp/Replit
+  ]
+}
+
+export function installKitSkillsToAgentHomes(userHome, kitRoot, log = () => {}) {
+  const src = join(kitRoot, 'skills')
+  if (!existsSync(src)) return []
+  const done = []
+  const seen = new Set()
+  for (const { detect, target } of agentSkillsHomeTargets(userHome)) {
+    if (!existsSync(detect) || seen.has(target)) continue
+    seen.add(target)
+    try {
+      mkdirSync(target, { recursive: true })
+      for (const ent of readdirSync(src, { withFileTypes: true })) {
+        const to = join(target, ent.name)
+        rmSync(to, { recursive: true, force: true })
+        cpSync(join(src, ent.name), to, { recursive: true })
+      }
+      done.push(target)
+    } catch (e) {
+      log(`story-team-kit: agent home ${target} install skip — ${e && e.message}`)
+    }
+  }
+  return done
+}
+
 export function installKit(orca, { root, kitRoot: kitRootOverride } = {}) {
   try {
     const kitRoot = kitRootOverride || KIT_ROOT
@@ -68,6 +110,13 @@ export function installKit(orca, { root, kitRoot: kitRootOverride } = {}) {
       writeFileSync(scTmp, JSON.stringify(sidecar, null, 2) + '\n')
       renameSync(scTmp, scPath)
     } catch { /* sidecar chỉ phục vụ story-doctor — không chặn install */ }
+    // Multi-home kit skills (CEO multi-home): chạy MỖI activate trước early-return
+    // — home bị xoá/tạo mới vẫn được refresh. root override (test harness temp
+    // dir) → KHÔNG đụng home thật của user.
+    if (!root) {
+      const homes = installKitSkillsToAgentHomes(homeDir(), kitRoot, (m) => orca.log(m))
+      if (homes.length) orca.log(`story-team-kit: kit skills đa home → ${homes.length} agent home`)
+    }
     if (existsSync(marker) && readFileSync(marker, 'utf8').trim() === expectedMarker && installedKitIntact(claude, kitRoot)) return true
     for (const name of ['skills', 'agents', 'bin']) {
       const src = join(kitRoot, name)
