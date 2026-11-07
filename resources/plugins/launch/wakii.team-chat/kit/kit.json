@@ -1,7 +1,7 @@
 {
   "name": "story-team-kit",
-  "version": "2.26.0",
-  "description": "10-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới. 31/10: team-chat bus + team-workflow skill (HOI-15/16). 07/11: team-lookout danger-scan pre-check + team-orch multi-provider --provider (mượn 2 mảnh OMC).",
+  "version": "2.27.0",
+  "description": "10-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới. 31/10: team-chat bus + team-workflow skill (HOI-15/16). 07/11: team-lookout danger-scan pre-check + team-orch multi-provider --provider (mượn 2 mảnh OMC). 07/11: 4 skill pattern mattpocock in-house — ba-grilling (phỏng vấn design tree), session-handoff, ba-questionnaire (batch tuần CEO), ba-teach-workspace (KB pattern teach) + captain WAIT-WHAT.",
   "requires": {
     "claude-code": ">=2.0",
     "external": {
@@ -1065,7 +1065,51 @@
       ],
       "outputs": "báo cáo one-shot xếp hạng: bug, lỗ hổng, rủi ro load, code rủi ro thiếu test, path chậm, cái nên xoá/gộp/split",
       "owner": "wakii"
+    },
+    {
+      "name": "ba-grilling",
+      "type": "skill",
+      "category": "knowledge",
+      "inputs": [
+        "Captain cần CEO chốt nghiệp vụ/decisions",
+        "BA thiếu kiến thức nghiệp vụ"
+      ],
+      "outputs": "rounds card [HỎI] đầy frontier, mỗi câu kèm đề xuất; frontier rỗng + confirm shared understanding rồi mới hành động",
+      "owner": "wakii"
+    },
+    {
+      "name": "session-handoff",
+      "type": "skill",
+      "category": "execution",
+      "inputs": [
+        "Captain restart/chuyển session",
+        "bàn giao worker/room"
+      ],
+      "outputs": "handoff doc ($TMPDIR||/tmp): trạng thái · next steps · suggested skills · redact secrets; tham chiếu path, không trùng specs/KB/rules",
+      "owner": "wakii"
+    },
+    {
+      "name": "ba-questionnaire",
+      "type": "skill",
+      "category": "knowledge",
+      "inputs": [
+        "BA gom open questions KB gửi CEO batch tuần (mô hình C)"
+      ],
+      "outputs": "questionnaire chuẩn most-important-first, nhóm theo theme, nhắm GAP recipient; trả lời về → đóng open question trong KB",
+      "owner": "wakii"
+    },
+    {
+      "name": "ba-teach-workspace",
+      "type": "skill",
+      "category": "knowledge",
+      "inputs": [
+        "BA bắt đầu học project/đề tài mới",
+        "session học định kỳ",
+        "insight cần ghi để session kế tiếp"
+      ],
+      "outputs": "teach workspace cạnh KB project: MISSION.md + learning-records ADR + reference cheat sheets + zone of proximal development",
+      "owner": "wakii"
     }
   ],
-  "kitHash": "2c1cf84f3e937ce0"
+  "kitHash": "a98dd0b2bbeedbd8"
 }

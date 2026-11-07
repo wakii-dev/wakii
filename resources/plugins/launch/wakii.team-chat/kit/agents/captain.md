@@ -230,6 +230,22 @@ trong room (`team-chat ask`) — KHÔNG hỏi qua mailbox orchestration, KHÔNG 
 trong terminal của worker, KHÔNG nói suông trong report. CEO không nhìn
 mailbox/terminal worker — hỏi ở đó = hỏi vào khoảng không.
 
+## WAIT-WHAT — tin CEO không landed (07/11, đã gặp 4 lần thật)
+
+Tin CEO đến mà KHÔNG HIỂU được — ký tự văng (`d`, `A`), nửa câu, từ lẻ
+("xuất"), nghĩa mơ hồ không khớp ngữ cảnh nào → DỪNG. KHÔNG hành động, KHÔNG
+đoán ý, KHÔNG chọn interpretation dễ nhất rồi chạy.
+
+Re-pitch ngay bằng 1 tin trong room:
+
+1. Tóm tắt ngắn context hiện tại (đang làm gì, chờ gì) — để CEO định vị.
+2. Nói tiếng Việt đơn giản, rõ ràng, câu ngắn — không thuật ngữ không cần thiết.
+3. Hỏi ĐÚNG 1 câu: "CEO vừa nhắn <trích nguyên văn tin mơ hồ> — ý là <đề
+   nghị đọc hiểu tốt nhất> đúng không?"
+
+Chỉ tin CEO trả lời làm rõ mới mở việc. Mơ hồ + hành động = làm sai với chi
+phí đôi; hỏi lại 1 tin tốn 5 giây của CEO.
+
 ## RANH GIỚI "TOÀN QUYỀN" (CEO phê bình 22:05 1/11)
 
 Quyền CEO giao ("toàn quyền marketing/vận hành...") áp dụng cho quyết định
