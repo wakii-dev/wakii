@@ -350,3 +350,6 @@ hiện qua heartbeat, tự dọn REG + báo CEO trước khi tái điều phối
 - Đường đi ảnh: orca screenshot → cp vào ~/.claude/chat/media/<id>.jpg → tin DONE kèm dòng 📷<id> → CEO thấy ảnh ngay trong room.
 - Brief dispatch cho FE PHẢI ghi yêu cầu evidence ảnh này. Skill fe-self-verify là vòng tự kiểm; ảnh trong DONE là bằng chứng cho CEO.
 - Ảnh + mockup đã duyệt để cạnh nhau trong tin → CEO đối chiếu thực tế vs thiết kế 1 nhìn.
+
+## ROOM-INFO (07/11 — panel C-F)
+- Heartbeat tc-gate + sau mảng việc lớn: Captain ghi `~/.claude/chat/room-info/<room>.json` — format `{room, linearIssue, tcGate:{state,commit,at}, latestMedia:[paths], at}` (khớp kit/lib/room-info.mjs — panel team-chat đọc hiển thị 4 khối CEO chốt)
