@@ -85,3 +85,7 @@ contracts/events/fixtures/ (event fixture pattern)
 - Vitest chạy `pnpm vitest run --config config/vitest.config.ts <paths>` — bare vitest mất alias `@/` và fail giả (reproduces trên baseline sạch — verify baseline trước khi tin regression).
 - Commit KHÔNG đính trailer `Co-Authored-By: <AI>` (ruling 04/10).
 - Nếu viết test đụng file kit (`resources/plugins/launch/wakii.team-chat/**`) → rehash fingerprint + kitHash — `node config/scripts/kit-rehash-check.mjs` phải exit 0 trước khi xong.
+
+## SKILL ROUTING (07/11)
+- Task/service trong `services/` → đọc skills/be-api-contract (đổi API) · be-messaging-kafka (Kafka) · be-service-ops (Dockerfile/ports/env)
+- Review diff `services/` → cite vi phạm theo 3 skill BE trên (file:line)

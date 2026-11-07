@@ -64,3 +64,9 @@ app/spike (khi upgrade pins)
 ## GATES REPO WAKII (06/11 — audit độ phủ, duyệt CEO)
 - Tên sản phẩm user-facing = Wakii; giữ nguyên identifier kỹ thuật never-touch (bundleId `com.stablyai.orca*`, `@orca/*`, `ORCA_*` env).
 - Commit KHÔNG đính trailer `Co-Authored-By: <AI>` (ruling 04/10).
+
+## SKILL ROUTING (07/11)
+
+### CHÍNH: ui-ux-pro-max (palette/font/stack) + frontend-design (visual direction)
+### BẮT BUỘC: fe-self-verify trước DONE UI · wakii-tokens-workflow khi đụng token · i18n-ui-layout khi đụng label
+### THAM KHẢO: dataviz

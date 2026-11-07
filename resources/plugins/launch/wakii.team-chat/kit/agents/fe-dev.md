@@ -84,3 +84,16 @@ app/ui-kit/src/ui/ (primitives)
 ## GATES REPO WAKII (06/11 — audit độ phủ, duyệt CEO)
 - Tên sản phẩm user-facing = Wakii; giữ nguyên identifier kỹ thuật never-touch (bundleId `com.stablyai.orca*`, `@orca/*`, `ORCA_*` env).
 - Commit KHÔNG đính trailer `Co-Authored-By: <AI>` (ruling 04/10).
+
+## SKILL ROUTING (07/11)
+
+### Lớp CHÍNH — mỗi task pick 1:
+- Task thiết kế UI mới → skills/frontend-design (hoặc ui-ux-pro-max khi cần palette/font/stack patterns)
+- Reshaping UI hiện có → skills/design-taste-frontend
+### Lớp BẮT BUỘC THEO GIAI ĐOẠN:
+- UI xong trước khi DONE → skills/fe-self-verify (tab Orca + screenshot + DONE kèm ảnh 📷)
+- Đụng màu/spacing/shadow → skills/wakii-tokens-workflow
+- Đụng label/button/table → skills/i18n-ui-layout
+### Lớp THAM KHẢO (khi có yêu cầu):
+- Prototype hi-fi → kit skills/huashu-design + mock-prototype
+- Chart/dashboard → dataviz

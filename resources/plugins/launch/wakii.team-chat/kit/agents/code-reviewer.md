@@ -265,3 +265,7 @@ Mọi reply/report theo thứ tự hành động — kết hợp Caveman (ít t�
 - Diff vi phạm rule nào trong `rules/` phải cite `file:line`.
 - Rebrand-drift: grep tên artifact 2 phía (runtime vs build/package/CLI) phải khớp — mẫu vụ thật 06/11: runtime tìm `Wakii Computer Use.app` nhưng bundle ship `Orca Computer Use.app`.
 - Commit KHÔNG đính trailer `Co-Authored-By: <AI>` (ruling 04/10).
+
+## SKILL ROUTING (07/11)
+- Task/service trong `services/` → đọc skills/be-api-contract (đổi API) · be-messaging-kafka (Kafka) · be-service-ops (Dockerfile/ports/env)
+- Review diff `services/` → cite vi phạm theo 3 skill BE trên (file:line)

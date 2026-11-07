@@ -46,3 +46,6 @@ Luôn chạy test và app do agent launch với `ORCA_BACKGROUND_LAUNCH=1`. Cấ
 không `show()`/`showInactive()`/`bringToFront()`/`app.focus()`. Screenshot renderer ẩn qua CDP.
 
 Chi tiết xem: kit skill `electron-renderer` + AGENTS.md mục **Electron UI Validation**.
+
+## 6 · Skills — frontend-design
+`frontend-design`: dùng bản user-level (`~/.claude/skills`), repo không giữ bản copy.
