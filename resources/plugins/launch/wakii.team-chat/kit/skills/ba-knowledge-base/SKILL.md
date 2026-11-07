@@ -31,7 +31,7 @@ questions**, KHÔNG điền cho khít.
 
 ## 2. Format KB — 1 file/project
 
-Vị trí đề xuất: `~/.claude/chat/kb/<project>.md`. Cấu trúc bắt buộc:
+Vị trí đề xuất: `docs/knowledge/<project>.md`. Cấu trúc bắt buộc:
 
 ```markdown
 # KB — <project>
