@@ -845,7 +845,29 @@
       ],
       "outputs": "50 styles · 21 palettes · 50 font pairings · 9 stacks (React/Next/Tailwind/shadcn…)",
       "owner": "wakii"
+    },
+    {
+      "name": "wakii-tokens-workflow",
+      "type": "skill",
+      "category": "knowledge",
+      "inputs": [
+        "UI task đụng renderer component",
+        "review về restyle/hex hardcode"
+      ],
+      "outputs": "map token↔tình huống + quy trình thêm token (main.css :root/.dark/@theme inline) + checklist dark/light parity + anti-patterns, dẫn nguồn STYLEGUIDE/main.css",
+      "owner": "wakii"
+    },
+    {
+      "name": "electron-renderer",
+      "type": "skill",
+      "category": "knowledge",
+      "inputs": [
+        "task đụng main/preload/renderer hoặc IPC",
+        "cần verify UI Electron không steal focus"
+      ],
+      "outputs": "ranh giới process/IPC + quy tắc preload expose trắng + quy trình debug renderer ẩn ORCA_BACKGROUND_LAUNCH + CDP + bảng bẫy thật (keyboard, keychain, session leak)",
+      "owner": "wakii"
     }
   ],
-  "kitHash": "d2075667c151c8e0"
+  "kitHash": "36197856e280d8ae"
 }
