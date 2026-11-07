@@ -46,3 +46,8 @@ sửa file ECC gốc.
 | Wakii site | `rules/projects/wakii-site.json` | common, web |
 
 Agent mở project nào → đọc tờ khai báo tương ứng → load đúng bộ rule theo applicable.
+
+## Team ops
+| Rule | Áp dụng |
+|---|---|
+| `team-ops/dispatch.md` | Quy trình điều phối worker — 5 điều chống spawn-fail/báo-nhầm (07/11) |

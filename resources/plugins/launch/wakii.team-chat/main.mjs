@@ -19,6 +19,8 @@ import { readFile, writeFile, mkdir, stat } from 'node:fs/promises'
 import { extname, join } from 'node:path'
 import { orcaBin, winBashBin } from './lib/orca-cli-bin.mjs'
 import { homeDir, chatDir, chatLog, readTail, appendLine } from './lib/bus.mjs'
+import { linearState } from './kit/lib/linear-state.mjs'
+import { parseMindmap } from './kit/lib/mindmap-parse.mjs'
 import { createRegistry } from './lib/registry.mjs'
 import { createWake } from './lib/wake.mjs'
 import { createSupervisor } from './lib/supervisor.mjs'
@@ -176,6 +178,58 @@ export default function activate(orca) {
           await orca.host.call('storage.delete', { key: 'team.chat.roomInfo.img.' + old + '.' + k }).catch(() => {})
         }
       }
+    }
+  }
+  // Room status C/D/E (lane UI 08/11): slot 'team.chat.roomStatus' — (c) linear
+  // (kit/lib/linear-state — fail-open; lib chỉ cache thành công nên throttle tự
+  // 60s tránh spawn mỗi tick khi Linear lỗi), (d) mindmap (kit/lib/mindmap-parse —
+  // path rooms.json meta, tương đối ghép worktree room), (e) tcGate (room-info
+  // JSON). Slot media 'team.chat.roomInfo' ở trên giữ nguyên.
+  const roomStatusState = { lastSig: '', linearTry: {} }
+  const linearIdentifierOf = (v) => {
+    const s = v && typeof v === 'object' ? (v.identifier || v.key || '') : v
+    if (typeof s !== 'string') return ''
+    const m = s.match(/([A-Z][A-Z0-9]+-\d+)/)
+    return m ? m[1] : ''
+  }
+  const MINDMAP_MAX_NODES = 400
+  const capMindmapTree = (node, counter) => {
+    if (!node || counter.n >= MINDMAP_MAX_NODES) return null
+    counter.n++
+    return { text: node.text, depth: node.depth, children: (node.children || []).map((c) => capMindmapTree(c, counter)).filter(Boolean) }
+  }
+  const publishRoomStatus = async (roomSet, roomsReg) => {
+    const byRoom = {}
+    for (const r of roomSet) {
+      const meta = (roomsReg && roomsReg[r]) || {}
+      let info = null
+      try { info = JSON.parse(await readFile(join(chatDir, 'room-info', r + '.json'), 'utf8')) } catch { /* room chưa có room-info */ }
+      // (c) Linear: issue id ưu tiên room meta, fallback room-info JSON
+      const issueId = linearIdentifierOf(meta.linearIssue) || (info ? linearIdentifierOf(info.linearIssue) : '')
+      let lin = null
+      if (issueId) {
+        const t = roomStatusState.linearTry[issueId]
+        if (t && Date.now() - t.at < 60_000 && t.value.state === 'unavailable') lin = t.value
+        else { lin = linearState(issueId); roomStatusState.linearTry[issueId] = { at: Date.now(), value: lin } }
+      }
+      // (d) Mindmap: path room meta, tương đối → ghép worktree room
+      let mm = null
+      const mmRaw = meta.mindmap || (info && info.mindmap && info.mindmap.path) || ''
+      if (mmRaw) {
+        let p = String(mmRaw)
+        if (!p.startsWith('/') && !/^[A-Za-z]:[\\/]/.test(p)) p = join(meta.worktree || '', p)
+        const tree = parseMindmap(p)
+        if (tree) mm = { path: p, tree: capMindmapTree(tree, { n: 0 }) }
+      }
+      // (e) tcGate: Captain heartbeat ghi room-info JSON
+      const g = info && info.tcGate && typeof info.tcGate === 'object' ? info.tcGate : null
+      const tcGate = g ? { state: String(g.state ?? g.status ?? ''), commit: String(g.commit ?? g.baseline ?? ''), at: String(g.at ?? g.checkedAt ?? '') } : null
+      if (lin || mm || tcGate) byRoom[r] = { linear: lin, mindmap: mm, tcGate: tcGate }
+    }
+    const sig = JSON.stringify(byRoom)
+    if (sig !== roomStatusState.lastSig) {
+      roomStatusState.lastSig = sig
+      await orca.host.call('storage.set', { key: 'team.chat.roomStatus', value: byRoom }).catch(() => {})
     }
   }
   const tick = async () => {
@@ -444,6 +498,7 @@ export default function activate(orca) {
         const sig = JSON.stringify(byRoom)
         if (sig !== lastCaptainSig) { lastCaptainSig = sig; await orca.host.call('storage.set', { key: 'team.chat.captain', value: byRoom }).catch(() => {}) }
         void publishRoomInfo(roomSet).catch((e) => orca.log('[room-info] lỗi: ' + ((e && e.message) || e)))
+        void publishRoomStatus(roomSet, roomsReg).catch((e) => orca.log('[room-status] lỗi: ' + ((e && e.message) || e)))
       } catch (e) { orca.log('[captain-status] lỗi: ' + (e && e.message || e)) }
       void mirrorRoster()
       // Router Captain: quét tin mới từ outside (owner/@captain) kể từ lần trước.

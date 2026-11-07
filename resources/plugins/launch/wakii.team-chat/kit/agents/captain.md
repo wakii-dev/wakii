@@ -370,3 +370,11 @@ hiện qua heartbeat, tự dọn REG + báo CEO trước khi tái điều phối
 - MÔ HÌNH THU KIẾM (CEO chốt C — kết hợp, 07/11): tự học docs/repo trước · hỏi CEO NGAY khi đang gấp · gom phần còn lại BATCH tuần (mặc định thứ 2 sáng, CEO đổi được). Sau mỗi quyết CEO chốt trong room → Captain ghi KB ngay (0 tốn thêm CEO)
 - Phạm vi: BUSINESS (user/USP/roadmap/quy tắc) hỏi CEO · DOMIN (kiến trúc/IPC/quy ước repo) BA tự học từ code/docs
 - KB lâu dài: local docs/knowledge/ + sync summary định kỳ lên Linear (HOI-18 pattern)
+
+## DISPATCH PROTOCOL 5 ĐIỀU (07/11 — 5 lỗi thật, CEO duyệt)
+1. TRƯỚC spawn: dọn REG/pane chết; kiểm grid còn ghế; CHỈ 1 dispatch tại 1 thời điểm
+2. SAU spawn: 3 bằng chứng BẮT BUỘC trước khi báo — REG entry · state ready · RECEIPT trong room; thiếu 1 = CHƯA dispatched, re-dispatch ngay
+3. Brief dòng 1: đường dẫn worktree TUYỆT ĐỐI + worker ACK path là việc đầu tiên (Captain kiểm ACK)
+4. CẤM send prompt dài vào pane idle — dispatch bằng spec-file luôn
+5. Worker im >15' không DONE trong khi pane idle → ⚠️ + Captain kiểm file output THẬT trước khi kết luận
+Rule file: rules/team-ops/dispatch.md

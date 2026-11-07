@@ -1,10 +1,10 @@
 {
-  "version": 1,
-  "plugins": [
-    {
-      "pluginKey": "wakii.team-chat",
-      "path": "wakii.team-chat",
-      "contentHash": "ca957fd131eccff9e3123dda00914986b27a57ce89a63f655f99192b614c2829"
-    }
-  ]
+ "version": 1,
+ "plugins": [
+  {
+   "pluginKey": "wakii.team-chat",
+   "path": "wakii.team-chat",
+   "contentHash": "ac774cade14b829a65095deb495695a0b6a4f019b1d37bd0ee891c1dadf1aa5d"
+  }
+ ]
 }
