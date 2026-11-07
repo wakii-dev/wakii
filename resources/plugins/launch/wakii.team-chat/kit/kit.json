@@ -974,6 +974,90 @@
       "owner": "wakii"
     },
     {
+      "name": "a11y-architect",
+      "type": "agent",
+      "category": "review",
+      "inputs": [
+        "UI component/design-system cần audit accessibility",
+        "design mới cần check WCAG trước build"
+      ],
+      "outputs": "audit WCAG 2.2 (Web + Native) + fixes cho inclusive UX",
+      "description": "Accessibility Architect — WCAG 2.2, dùng chủ động khi thiết kế UI/design system/audit UX",
+      "owner": "wakii"
+    },
+    {
+      "name": "code-simplifier",
+      "type": "agent",
+      "category": "execution",
+      "inputs": [
+        "code mới sửa gần đây cần dọn",
+        "scope refactor chỉ định"
+      ],
+      "outputs": "code refactored rõ ràng/dễ maintain, behavior giữ nguyên",
+      "description": "Simplify + refine code cho clarity/consistency, focus code vừa sửa",
+      "owner": "wakii"
+    },
+    {
+      "name": "doc-updater",
+      "type": "agent",
+      "category": "execution",
+      "inputs": [
+        "codemaps/docs cần cập nhật theo code mới",
+        "README/guides cần cập nhật"
+      ],
+      "outputs": "docs/CODEMAPS/* + README/guides cập nhật khớp code",
+      "description": "Documentation + codemap specialist — backing /update-codemaps, /update-docs",
+      "owner": "wakii"
+    },
+    {
+      "name": "harness-optimizer",
+      "type": "agent",
+      "category": "execution",
+      "inputs": [
+        "cấu hình agent-harness local cần cải thiện reliability/cost",
+        "eval dataset để grading pass@k/pass^k"
+      ],
+      "outputs": "harness config tối ưu theo eval-driven grading (eval-harness skill)",
+      "description": "Cải thiện agent-harness config reliability + cost bằng eval-driven grading",
+      "owner": "wakii"
+    },
+    {
+      "name": "loop-operator",
+      "type": "agent",
+      "category": "ops",
+      "inputs": [
+        "agent loop tự động cần vận hành/giám sát",
+        "loop stall/intervention cần xử lý an toàn"
+      ],
+      "outputs": "loop vận hành + progress monitor + intervention an toàn khi stall",
+      "description": "Vận hành agent loop tự động, monitor progress, intervene an toàn khi loop kẹt",
+      "owner": "wakii"
+    },
+    {
+      "name": "performance-optimizer",
+      "type": "agent",
+      "category": "execution",
+      "inputs": [
+        "code path chậm/bottleneck cần tối ưu",
+        "bundle size/memory/render cần phân tích"
+      ],
+      "outputs": "phân tích bottleneck + tối ưu hiệu năng (profiling, memory leak, render, algorithm)",
+      "description": "Performance analysis + optimization — dùng chủ động khi nghi bottleneck",
+      "owner": "wakii"
+    },
+    {
+      "name": "pr-test-analyzer",
+      "type": "agent",
+      "category": "review",
+      "inputs": [
+        "PR diff cần review test coverage",
+        "test suite cần đánh giá behavioral coverage"
+      ],
+      "outputs": "review chất lượng + độ phủ test PR, nhấn behavioral coverage + prevention bug thật",
+      "description": "Review test coverage PR — chất lượng + completeness",
+      "owner": "wakii"
+    },
+    {
       "name": "caveman",
       "type": "skill",
       "category": "knowledge",
@@ -1111,5 +1195,5 @@
       "owner": "wakii"
     }
   ],
-  "kitHash": "a98dd0b2bbeedbd8"
+  "kitHash": "377e200185f867a3"
 }
