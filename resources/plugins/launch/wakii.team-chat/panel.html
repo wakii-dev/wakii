@@ -226,6 +226,19 @@
   }
   .ghost { background: #26262c; font-weight: 400; }
   .hint { font-size: 11px; color: #6d6d75; margin-top: 6px; }
+  /* Evidence mới nhất của room (F — CEO 07/11): strip mỏng trên #messages */
+  #evidence {
+    display: none; align-items: center; gap: 8px; padding: 6px 14px; flex: none;
+    border-bottom: 1px solid #232328; background: #131318; cursor: pointer; min-width: 0;
+  }
+  #evidence img { width: 64px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid #3a3a42; display: block; flex: none; }
+  #evidence .ev-lb { font-size: 11px; color: #8b8b93; min-width: 0; }
+  #evidence .ev-lb b { color: #b9b9c0; font-weight: 600; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #evLightbox {
+    position: fixed; inset: 0; background: rgba(8,8,10,.86); display: none;
+    align-items: center; justify-content: center; z-index: 60; cursor: zoom-out;
+  }
+  #evLightbox img { max-width: 92%; max-height: 92%; border-radius: 8px; border: 1px solid #3a3a42; }
 </style>
 </head>
 <body>
@@ -235,7 +248,9 @@
   <button id="kebab" title="Cài đặt">⋮</button>
 </header>
 <div id="rooms"></div>
+<div id="evidence" title="Bấm để xem ảnh lớn"></div>
 <div id="messages"><div id="empty">Chưa có tin nhắn trong khung này.</div></div>
+<div id="evLightbox"><img alt="Evidence" /></div>
 <div class="composer">
   <input id="text" placeholder="Nhắn với room đang mở…" autocomplete="off" />
   <button id="send" type="button">Gửi</button>
@@ -656,7 +671,7 @@
       b.addEventListener('click', function () {
         activeRoom = r.id
         readCount[r.id] = roomList.find(function (x) { return x.id === r.id }).msgs || 0
-        render(lastMsgs); renderRooms()
+        render(lastMsgs); renderRooms(); renderEvidence()
         call('storage.set', { key: 'team.chat.ui.activeRoom', value: activeRoom }).catch(function () {})
       })
       roomsEl.appendChild(b)
@@ -726,10 +741,12 @@
     Promise.all([
       call('storage.get', { key: 'team.chat.tail' }),
       call('storage.get', { key: 'team.chat.mindmaps' }).catch(function () { return null }),
-      call('storage.get', { key: 'team.chat.projects' }).catch(function () { return null })
+      call('storage.get', { key: 'team.chat.projects' }).catch(function () { return null }),
+      call('storage.get', { key: 'team.chat.roomInfo' }).catch(function () { return null })
     ]).then(function (rs) {
       var r = rs[0]
       window.mmLive = (rs[1] && rs[1].value) || {}
+      window.roomInfo = (rs[3] && rs[3].value) || {}
       var projR = rs[2] && rs[2].value
       if (projR) {
         window.projects = projR
@@ -755,6 +772,8 @@
       lastMsgs = all
       document.getElementById('live').classList.remove('off')
       if (sig !== lastRenderedSig) { lastRenderedSig = sig; render(all, outbox.slice()) }
+      var evSig = activeRoom + '|' + JSON.stringify(window.roomInfo || {})
+      if (evSig !== lastEvSig) { lastEvSig = evSig; renderEvidence() }
       call('storage.get', { key: 'team.chat.rooms' }).then(function (rr) {
         var list = (rr && rr.value) || null
         if (Array.isArray(list) && list.length) roomList = list
@@ -861,6 +880,50 @@
       imgCache[id] = du
       el.src = du
       lastRenderedSig = '' // ảnh về rồi — vẽ lại 1 lần cho chỗ giữ
+    }).catch(function () {})
+  }
+
+  // ── Evidence mới nhất của room (F — CEO 07/11): worker publish meta slot
+  // team.chat.roomInfo + ảnh chunked team.chat.roomInfo.img.<room>[.k]; strip
+  // mỏng trên #messages, click mở lightbox trong panel (không thoát ra ngoài).
+  var evStrip = document.getElementById('evidence')
+  var evLightbox = document.getElementById('evLightbox')
+  var evCache = {} // room → { sig: 'path|mtime', dataUrl }
+  var lastEvSig = ''
+  evLightbox.addEventListener('click', function () { evLightbox.style.display = 'none' })
+  evStrip.addEventListener('click', function () {
+    var hit = evCache[activeRoom]
+    if (!hit) return
+    evLightbox.firstChild.src = hit.dataUrl
+    evLightbox.style.display = 'flex'
+  })
+  function renderEvidence() {
+    var info = (window.roomInfo || {})[activeRoom]
+    evStrip.style.display = info ? 'flex' : 'none'
+    if (!info) return
+    var name = String(info.path || '').split(/[\\/]/).pop()
+    evStrip.innerHTML = ''
+    var th = document.createElement('img'); th.alt = name
+    var lb = document.createElement('div'); lb.className = 'ev-lb'
+    var b = document.createElement('b'); b.textContent = '📷 Evidence mới nhất · ' + name
+    var s = document.createElement('span'); s.textContent = fmt(info.at)
+    lb.appendChild(b); lb.appendChild(s)
+    evStrip.appendChild(th); evStrip.appendChild(lb)
+    var sig = info.path + '|' + info.mtime
+    if (evCache[activeRoom] && evCache[activeRoom].sig === sig) { th.src = evCache[activeRoom].dataUrl; return }
+    call('storage.get', { key: 'team.chat.roomInfo.img.' + activeRoom }).then(function (r) {
+      var mf = r && r.value
+      if (!mf || !mf.chunks) return
+      var parts = []
+      for (var i = 0; i < mf.chunks; i++) parts.push(call('storage.get', { key: 'team.chat.roomInfo.img.' + activeRoom + '.' + i }).catch(function () { return null }))
+      Promise.all(parts).then(function (cs) {
+        var b64 = ''
+        for (var i = 0; i < cs.length; i++) b64 += (cs[i] && cs[i].value && cs[i].value.part) || ''
+        if (!b64) return
+        var du = 'data:' + (mf.mime || 'image/png') + ';base64,' + b64
+        evCache[activeRoom] = { sig: sig, dataUrl: du }
+        th.src = du
+      })
     }).catch(function () {})
   }
 

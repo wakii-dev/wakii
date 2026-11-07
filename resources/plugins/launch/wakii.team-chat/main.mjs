@@ -15,8 +15,8 @@
 // wiring + tick poller. Exports cũ được re-export giữ tương thích tests +
 // kit-rehash-check (import computeKitHash từ main.mjs).
 import { execFile as execFileCb } from 'node:child_process'
-import { readFile, writeFile, mkdir } from 'node:fs/promises'
-import { resolve } from 'node:path'
+import { readFile, writeFile, mkdir, stat } from 'node:fs/promises'
+import { extname, join } from 'node:path'
 import { orcaBin, winBashBin } from './lib/orca-cli-bin.mjs'
 import { homeDir, chatDir, chatLog, readTail, appendLine } from './lib/bus.mjs'
 import { createRegistry } from './lib/registry.mjs'
@@ -103,6 +103,81 @@ export default function activate(orca) {
   let stalledNotified = false
   let lastCaptainSig = ''
   let roomListSeen = []
+  // Room info evidence (CEO 07/11 — F): Captain ghi ~/.claude/chat/room-info/<room>.json
+  // (format kit/lib/room-info.mjs công bố — đọc tolerant: ảnh mới nhất lấy
+  // screenshot.path hoặc latestMedia[0], đường ~ mở rộng về home). Panel không
+  // đọc được file → worker publish slot meta 'team.chat.roomInfo' + slot ảnh
+  // chunked 'team.chat.roomInfo.img.<room>[.k]' (dataUrl base64; slot host cap
+  // 256KB — mẫu team.chat.img.*). Re-publish chỉ khi mtime+size đổi; slot room
+  // biến mất được xoá (storage total cap 5MB).
+  const roomInfoState = { lastMetaSig: '', pubImg: {} } // pubImg[room] = { sig, chunks }
+  const MEDIA_MIME = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.webp': 'image/webp' }
+  const MEDIA_CHUNK_CHARS = 240000
+  const MEDIA_MAX_FILE_BYTES = 900 * 1024
+  const roomInfoMediaPath = (info) => {
+    const raw = info && info.screenshot && info.screenshot.path
+      ? String(info.screenshot.path)
+      : (info && Array.isArray(info.latestMedia) && info.latestMedia.length ? String(info.latestMedia[0]) : '')
+    if (!raw) return ''
+    let p = raw
+    if (p === '~') p = homeDir()
+    else if (p.startsWith('~/')) p = join(homeDir(), p.slice(2))
+    else if (!p.startsWith('/')) p = join(chatDir, p)
+    return p
+  }
+  const roomInfoAt = (info, fallbackMs) => {
+    const t = info && info.screenshot && info.screenshot.capturedAt ? Date.parse(info.screenshot.capturedAt)
+      : info && info.updatedAt ? Date.parse(info.updatedAt) : NaN
+    return Number.isNaN(t) ? fallbackMs : t
+  }
+  const publishRoomInfo = async (roomSet) => {
+    const infoByRoom = {}
+    for (const r of roomSet) {
+      let info = null
+      try { info = JSON.parse(await readFile(join(chatDir, 'room-info', r + '.json'), 'utf8')) } catch { /* room chưa có evidence */ }
+      if (!info || typeof info !== 'object' || Array.isArray(info)) continue
+      const p = roomInfoMediaPath(info)
+      if (!p) continue
+      let st = null
+      try { st = await stat(p) } catch { continue }
+      if (!st.isFile()) continue
+      infoByRoom[r] = { path: p, at: roomInfoAt(info, Math.round(st.mtimeMs)), mtime: Math.round(st.mtimeMs), size: st.size }
+    }
+    const metaSig = JSON.stringify(infoByRoom)
+    if (metaSig !== roomInfoState.lastMetaSig) {
+      roomInfoState.lastMetaSig = metaSig
+      await orca.host.call('storage.set', { key: 'team.chat.roomInfo', value: infoByRoom }).catch(() => {})
+    }
+    for (const [r, meta] of Object.entries(infoByRoom)) {
+      const sig = meta.mtime + ':' + meta.size
+      const pub = roomInfoState.pubImg[r]
+      if (pub && pub.sig === sig) continue
+      const mime = MEDIA_MIME[extname(meta.path).toLowerCase()]
+      let b64 = ''
+      if (mime && meta.size > 0 && meta.size <= MEDIA_MAX_FILE_BYTES) {
+        try { b64 = (await readFile(meta.path)).toString('base64') } catch { /* đọc lỗi → thử lại lần sau */ }
+      }
+      const chunks = b64 ? Math.ceil(b64.length / MEDIA_CHUNK_CHARS) : 0
+      await orca.host.call('storage.set', { key: 'team.chat.roomInfo.img.' + r, value: { at: meta.at, path: meta.path, mime: mime || '', chunks: chunks } }).catch(() => {})
+      for (let k = 0; k < chunks; k++) {
+        await orca.host.call('storage.set', { key: 'team.chat.roomInfo.img.' + r + '.' + k, value: { part: b64.slice(k * MEDIA_CHUNK_CHARS, (k + 1) * MEDIA_CHUNK_CHARS) } }).catch(() => {})
+      }
+      for (let k = chunks; k < (pub ? pub.chunks : 0); k++) {
+        await orca.host.call('storage.delete', { key: 'team.chat.roomInfo.img.' + r + '.' + k }).catch(() => {})
+      }
+      roomInfoState.pubImg[r] = { sig: b64 ? sig : sig + ':skip', chunks: chunks }
+    }
+    for (const old of Object.keys(roomInfoState.pubImg)) {
+      if (!infoByRoom[old]) {
+        const gone = roomInfoState.pubImg[old]
+        delete roomInfoState.pubImg[old]
+        await orca.host.call('storage.delete', { key: 'team.chat.roomInfo.img.' + old }).catch(() => {})
+        for (let k = 0; k < gone.chunks; k++) {
+          await orca.host.call('storage.delete', { key: 'team.chat.roomInfo.img.' + old + '.' + k }).catch(() => {})
+        }
+      }
+    }
+  }
   const tick = async () => {
     try {
       const stored = await orca.host.call('storage.get', { key: 'team.chat.send' })
@@ -368,6 +443,7 @@ export default function activate(orca) {
         }
         const sig = JSON.stringify(byRoom)
         if (sig !== lastCaptainSig) { lastCaptainSig = sig; await orca.host.call('storage.set', { key: 'team.chat.captain', value: byRoom }).catch(() => {}) }
+        void publishRoomInfo(roomSet).catch((e) => orca.log('[room-info] lỗi: ' + ((e && e.message) || e)))
       } catch (e) { orca.log('[captain-status] lỗi: ' + (e && e.message || e)) }
       void mirrorRoster()
       // Router Captain: quét tin mới từ outside (owner/@captain) kể từ lần trước.
