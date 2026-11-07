@@ -410,7 +410,7 @@ $SHOT_}" --role worker ${TPL_PASS[@]+"${TPL_PASS[@]}"} ;;
   done)  # team-chat done "<task>" --did .. --test .. --evidence ..
          #   [--deviations "lệch spec"] [--open "chưa xong"] [--next "cho worker kế"]
          # → DONE hand-back 6 mục: ①②③ bắt buộc, ④⑤⑥ optional (hand-back mate).
-         TID=""; DID=""; TST=""; EVD=""; DEV=""; OPN=""; NXT=""; TPL_PASS=()
+         TID=""; DID=""; TST=""; EVD=""; DEV=""; OPN=""; NXT=""; TPL_PASS=(); IMG_PASS=()
          TID="$1"; shift
          while [ $# -gt 0 ]; do case "$1" in
            --did) DID="$2"; shift 2 ;;
@@ -419,6 +419,7 @@ $SHOT_}" --role worker ${TPL_PASS[@]+"${TPL_PASS[@]}"} ;;
            --deviations) DEV="$2"; shift 2 ;;
            --open) OPN="$2"; shift 2 ;;
            --next) NXT="$2"; shift 2 ;;
+           --image) IMG_PASS+=("$2"); shift 2 ;;
            *) TPL_PASS+=("$1"); shift ;;
          esac; done
          [ -n "$TID" ] && [ -n "$DID" ] && [ -n "$TST" ] && [ -n "$EVD" ] || {
@@ -429,6 +430,18 @@ $SHOT_}" --role worker ${TPL_PASS[@]+"${TPL_PASS[@]}"} ;;
          [ -n "$OPN" ] && HB="$HB ⑤ Still open: $OPN"
          [ -n "$NXT" ] && HB="$HB ⑥ For-next-crew: $NXT"
          send_msg "DONE $TID — ① Đã làm: $DID ② Cách test: $TST ③ Bằng chứng: $EVD$HB" --role worker ${TPL_PASS[@]+"${TPL_PASS[@]}"}
+         # Ảnh evidence (--image <path>, lặp được): cp vào media dir với id hex khớp regex
+         # 📷([0-9a-f]{6,24}) của panel → panel lazy-fetch slot team.chat.img.<id> hiển thị m-img.
+         for img in ${IMG_PASS[@]+"${IMG_PASS[@]}"}; do
+           [ -f "$img" ] || { echo "team-chat done: --image không tồn tại, bỏ qua: $img" >&2; continue; }
+           ext="${img##*.}"; ext=$(printf "%s" "$ext" | tr "[:upper:]" "[:lower:]")
+           case "$ext" in jpg|jpeg|png|webp|gif) ;; *) ext="png" ;; esac
+           id=$(printf '%08x%04x' "$RANDOM" "$SECONDS")
+           MEDIA_DIR="${TEAM_MEDIA_DIR:-$HOME/.claude/chat/media}"
+           mkdir -p "$MEDIA_DIR"
+           cp "$img" "$MEDIA_DIR/$id.$ext"
+           send_msg "📷$id" --role worker ${TPL_PASS[@]+"${TPL_PASS[@]}"}
+         done
          # Ledger (FI-97): done của worker ghi endedAt vào ledger room — chỉ khi room đã có ledger.
          if [ -n "${ORCA_AGENT_PANE:-}" ]; then
            python3 - "${TEAM_WORKERS_REG:-$HOME/.claude/chat/.workers.json}" "${ORCA_AGENT_PANE}" "${TEAM_LEDGER_DIR:-$HOME/.claude/chat/ledger}" <<'PY' 2>/dev/null
