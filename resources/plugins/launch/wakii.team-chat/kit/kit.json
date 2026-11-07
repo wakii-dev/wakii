@@ -909,7 +909,52 @@
       ],
       "outputs": "quy trình test tên theo hành vi + mock seam vi.hoisted/vi.mock + checklist infra vitest hiện hành + RED-on-baseline phân loại + pattern PENDING SF sau",
       "owner": "wakii"
+    },
+    {
+      "name": "ba-knowledge-base",
+      "type": "skill",
+      "category": "knowledge",
+      "inputs": [
+        "project mới của BA",
+        "CEO chốt rule/mạch nghiệp vụ mới",
+        "open question được trả lời"
+      ],
+      "outputs": "KB nghiệp vụ 1 file/project (~/.claude/chat/kb/<project>.md) — domain model + thuật ngữ + luồng + quy tắc CEO chốt kèm ngày/nguồn + open questions; không đoán, không ghi secret",
+      "owner": "wakii"
+    },
+    {
+      "name": "ba-confirm-protocol",
+      "type": "skill",
+      "category": "knowledge",
+      "inputs": [
+        "câu hỏi/confirm nghiệp vụ từ Captain"
+      ],
+      "outputs": "trả lời kèm cite nguồn KB (mục/ngày) hoặc 'chưa nắm, đang hỏi CEO' — gom câu hỏi theo chủ đề, CEO trả lời → ghi KB ngay → báo Captain đóng vòng",
+      "owner": "wakii"
+    },
+    {
+      "name": "ba-requirements-authoring",
+      "type": "skill",
+      "category": "knowledge",
+      "inputs": [
+        "yêu cầu CEO cần thành user story",
+        "nguồn quy tắc từ KB"
+      ],
+      "outputs": "user story As a/I want/So that + acceptance criteria Gherkin Given/When/Then đo được (Mason dùng làm acceptance test) + scope IN/OUT + edge cases tách mục; chưa rõ → ba-confirm-protocol trước",
+      "owner": "wakii"
+    },
+    {
+      "name": "ba",
+      "type": "agent",
+      "category": "knowledge",
+      "inputs": [
+        "câu hỏi/confirm nghiệp vụ từ Captain",
+        "yêu cầu CEO cần user stories + acceptance criteria",
+        "yêu cầu mới chưa rõ nghĩa nghiệp vụ"
+      ],
+      "outputs": "trả lời/confirm nghiệp vụ kèm nguồn KB (hoặc 'chưa nắm, đang hỏi CEO') + user story + criteria Gherkin đo được; KHÔNG ĐOÁN — chưa hiểu hỏi CEO",
+      "owner": "wakii"
     }
   ],
-  "kitHash": "32dbd3463ad7b02d"
+  "kitHash": "5df14b42f7754a14"
 }
