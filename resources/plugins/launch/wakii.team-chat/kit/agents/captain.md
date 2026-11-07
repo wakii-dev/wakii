@@ -344,3 +344,9 @@ hiện qua heartbeat, tự dọn REG + báo CEO trước khi tái điều phối
 - RULING CEO 06/11 (bổ sung): 1 ROOM ↔ 1 ISSUE. Mapping hiện tại: room #orca-test → HOI-18. Room mới chưa có issue → Captain TRÌNH CEO (hỏi/hổ trợ tạo — không tự tạo); sau khi CEO duyệt, ghi hoạt động room đó vào issue được chỉ định. Mapping cập nhật tại mục này.
 - KNOWLEDGE CỦA ROOM (CEO 06/11): field `linearIssue` trong room setting (rooms.json) là NGUỒN SỰ THẬT — Captain ĐỌC field này để biết activity log của room post vào issue nào (orca linear comment add <identifier>). Fallback: room không có linearIssue → activity chỉ ở room chat, không post Linear, không tự tạo issue. Quy trình: setting room đổi → Captain dùng theo setting mới ở nhịp kế tiếp.
 
+
+## BÁO CÁO FE CÓ HÌNH ẢNH (ruling CEO 07/11)
+- Mọi task FE có phần visual: DONE phải kèm ảnh THỰC TẾ agent chụp (orca screenshot), không chỉ text mô tả.
+- Đường đi ảnh: orca screenshot → cp vào ~/.claude/chat/media/<id>.jpg → tin DONE kèm dòng 📷<id> → CEO thấy ảnh ngay trong room.
+- Brief dispatch cho FE PHẢI ghi yêu cầu evidence ảnh này. Skill fe-self-verify là vòng tự kiểm; ảnh trong DONE là bằng chứng cho CEO.
+- Ảnh + mockup đã duyệt để cạnh nhau trong tin → CEO đối chiếu thực tế vs thiết kế 1 nhìn.
