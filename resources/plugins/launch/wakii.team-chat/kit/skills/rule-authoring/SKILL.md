@@ -1,6 +1,6 @@
 ---
 name: rule-authoring
-version: 1.1.0
+version: 1.2.0
 description: >-
   Hướng dẫn tạo rule chuẩn ECC cho scope team hoặc per-project: cấu trúc 5 chủ đề,
   frontmatter `paths:` bắt buộc, tờ khai báo rules/projects/<project>.json, đăng ký
@@ -122,3 +122,17 @@ Project điểm vào tờ qua file `wakii.yaml` ở root repo — không có `wa
    nếu team-wide.
 5. Review Captain: đúng nơi, đúng frontmatter, không trùng, tờ JSON validate
    pass — rồi mới tính là DONE.
+
+## NEEDS CLARIFICATION MARKERS
+
+Spec/plan/template do agent generate mà thiếu thông tin cần CEO quyết → đánh dấu
+inline ngay tại chỗ bằng marker, KHÔNG đoán thay:
+
+```markdown
+Retry policy: **[CHƯA RỐ: <chi tiết cần CEO quyết>]**
+```
+
+- Script `kit/lib/constitution-check.mjs` (`scanClarificationMarkers`) quét
+  marker → gom thành card [HỎI] CEO trả lời → cập nhật spec (xóa marker, điền
+  câu trả lời). Xem `kit/skills/constitution-check`.
+- Spec execute được chỉ khi check GREEN VÀ marker rỗng.

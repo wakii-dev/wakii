@@ -1,7 +1,7 @@
 {
   "name": "story-team-kit",
-  "version": "2.27.0",
-  "description": "10-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới. 31/10: team-chat bus + team-workflow skill (HOI-15/16). 07/11: team-lookout danger-scan pre-check + team-orch multi-provider --provider (mượn 2 mảnh OMC). 07/11: 4 skill pattern mattpocock in-house — ba-grilling (phỏng vấn design tree), session-handoff, ba-questionnaire (batch tuần CEO), ba-teach-workspace (KB pattern teach) + captain WAIT-WHAT.",
+  "version": "2.28.0",
+  "description": "10-agent story team + graph memory cho orca-superpowers-workflow — portable install. Tự chứa đủ để chạy local.superpowers-launcher trên máy mới. 31/10: team-chat bus + team-workflow skill (HOI-15/16). 07/11: team-lookout danger-scan pre-check + team-orch multi-provider --provider (mượn 2 mảnh OMC). 07/11: 4 skill pattern mattpocock in-house — ba-grilling (phỏng vấn design tree), session-handoff, ba-questionnaire (batch tuần CEO), ba-teach-workspace (KB pattern teach) + captain WAIT-WHAT. 07/11: constitution-check lib + skill + marker [CHƯA RỐ] (mượn 2 pattern Spec Kit, CEO duyệt).",
   "requires": {
     "claude-code": ">=2.0",
     "external": {
@@ -1193,7 +1193,18 @@
       ],
       "outputs": "teach workspace cạnh KB project: MISSION.md + learning-records ADR + reference cheat sheets + zone of proximal development",
       "owner": "wakii"
+    },
+    {
+      "name": "constitution-check",
+      "type": "skill",
+      "category": "knowledge",
+      "inputs": [
+        "Spec/plan do agent generate cần validate trước khi execute",
+        "Spec thiếu thông tin cần CEO quyết"
+      ],
+      "outputs": "{valid, violations, markers} — vi phạm nguyên tắc bất invariant = RED + card [HỎI] từ marker [CHƯA RỐ] (script kit/lib/constitution-check.mjs)",
+      "owner": "wakii"
     }
   ],
-  "kitHash": "377e200185f867a3"
+  "kitHash": "9fb14aa04463a302"
 }

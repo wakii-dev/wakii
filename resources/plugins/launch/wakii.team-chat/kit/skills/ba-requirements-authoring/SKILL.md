@@ -80,3 +80,18 @@ Scenario: <tên tình huống>
 - `kit/skills/ba-confirm-protocol` — đường hỏi CEO cho mọi chỗ chưa rõ.
 - `kit/skills/ba-knowledge-base` — nguồn quy tắc để neo criteria.
 - `kit/agents/ba.md` — nhiệm vụ gốc của BA (Mason dùng criteria làm acceptance test).
+
+## NEEDS CLARIFICATION MARKERS
+
+Chưa đủ thông tin để viết story/criteria mà CEO chưa online → đánh dấu inline
+trong file spec bằng marker, KHÔNG đoán thay (RULE CỐT LÕI ở đầu file):
+
+```markdown
+Edge case thanh toán trễ: **[CHƯA RỐ: <chi tiết cần CEO quyết>]**
+```
+
+- Script `kit/lib/constitution-check.mjs` (`scanClarificationMarkers`) quét
+  marker → gom thành card [HỎI] CEO trả lời → cập nhật spec (xóa marker, điền
+  câu trả lời). Xem `kit/skills/constitution-check`.
+- Marker ≠ thay ba-confirm-protocol: marker là dấu trong file, protocol là
+  đường hỏi; marker sống đến khi câu hỏi đã qua protocol và có câu trả lời.
