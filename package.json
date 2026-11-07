@@ -10,6 +10,7 @@
   },
   "main": "./out/main/index.js",
   "scripts": {
+    "kit:rehash-check": "node config/scripts/kit-rehash-check.mjs",
     "check:dependencies": "pnpm run build:packages && node config/scripts/dependency-security/audit-tools/check-dependency-security.mjs",
     "install:release": "pnpm install --frozen-lockfile --cpu=current,x64,arm64",
     "audit:perf": "oxlint --config config/oxlint-performance-audit.json --format json src",

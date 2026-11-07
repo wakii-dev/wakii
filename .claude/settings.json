@@ -1,11 +1,37 @@
 {
   "extraKnownMarketplaces": {
     "orca-agent-plugins": {
-      "source": { "source": "directory", "path": "./config/agent-plugins" }
+      "source": {
+        "source": "directory",
+        "path": "./config/agent-plugins"
+      }
     }
   },
   "enabledPlugins": {
     "orca-typescript@orca-agent-plugins": true,
     "typescript-lsp@claude-plugins-official": false
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/hoivu/.claude/bin/story-guard-plan-gate"
+          }
+        ],
+        "matcher": "Edit|Write|NotebookEdit|Bash"
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/hoivu/.claude/bin/team-session-brief"
+          }
+        ]
+      }
+    ]
   }
 }
