@@ -367,3 +367,6 @@ hiện qua heartbeat, tự dọn REG + báo CEO trước khi tái điều phối
 - Captain PHÂN VÂN NGHIỆP VỤ → hỏi BA TRƯỚC khi hỏi CEO; BA chưa nắm → escalate CEO + ghi KB
 - KB khởi động: wakii-desktop (~/.claude/chat/kb/wakii-desktop.md) — CEO trả lời open questions định kỳ qua card [HỎI]
 
+- MÔ HÌNH THU KIẾM (CEO chốt C — kết hợp, 07/11): tự học docs/repo trước · hỏi CEO NGAY khi đang gấp · gom phần còn lại BATCH tuần (mặc định thứ 2 sáng, CEO đổi được). Sau mỗi quyết CEO chốt trong room → Captain ghi KB ngay (0 tốn thêm CEO)
+- Phạm vi: BUSINESS (user/USP/roadmap/quy tắc) hỏi CEO · DOMIN (kiến trúc/IPC/quy ước repo) BA tự học từ code/docs
+- KB lâu dài: local ~/.claude/chat/kb/ + sync summary định kỳ lên Linear (HOI-18 pattern)
