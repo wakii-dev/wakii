@@ -458,6 +458,42 @@ with open(path, "a", encoding="utf-8") as fh:
 PY
          fi
          ;;
+  report)  # team-chat report "<scope>" --period <daily|weekly|release> --done .. --pending .. --blocked .. [--metrics ..] [--image <path>...]
+         # → [REPORT] định kỳ: tổng hợp hoàn thành/đang làm/kẹt + số liệu — Chief trình CEO (batch).
+         RSC="$1"; shift
+         PERIOD=""; DN=""; PEND=""; BLK=""; MET=""; TPL_PASS=(); IMG_PASS=()
+         while [ $# -gt 0 ]; do case "$1" in
+           --period) PERIOD="$2"; shift 2 ;;
+           --done) DN="$2"; shift 2 ;;
+           --pending) PEND="$2"; shift 2 ;;
+           --blocked) BLK="$2"; shift 2 ;;
+           --metrics) MET="$2"; shift 2 ;;
+           --image) IMG_PASS+=("$2"); shift 2 ;;
+           *) shift ;;
+         esac; done
+         [ -n "$RSC" ] && [ -n "$PERIOD" ] && [ -n "$DN" ] || {
+           echo "usage: team-chat report "<scope>" --period <daily|weekly|release> --done "<hoàn thành>" [--pending p] [--blocked b] [--metrics m] [--image path]" >&2
+           echo "REPORT phải đủ scope + period + done — thiếu là bị trả lại." >&2; exit 2; }
+         case "$PERIOD" in daily|weekly|release) ;; *)
+           echo "team-chat report: --period chỉ nhận daily|weekly|release" >&2; exit 2 ;; esac
+         HB=""
+         [ -n "$PEND" ] && HB="$HB
+🔄 Đang làm: $PEND"
+         [ -n "$BLK" ] && HB="$HB
+⛔ Kẹt/chờ: $BLK"
+         [ -n "$MET" ] && HB="$HB
+📊 Số liệu: $MET"
+         send_msg "[REPORT] $RSC ($PERIOD) — ✅ Hoàn thành: $DN$HB" --role captain ${TPL_PASS[@]+"${TPL_PASS[@]}"}
+         for img in ${IMG_PASS[@]+"${IMG_PASS[@]}"}; do
+           [ -f "$img" ] || { echo "team-chat report: --image không tồn tại, bỏ qua: $img" >&2; continue; }
+           ext="${img##*.}"; ext=$(printf "%s" "$ext" | tr "[:upper:]" "[:lower:]")
+           case "$ext" in jpg|jpeg|png|webp|gif) ;; *) ext="png" ;; esac
+           id=$(printf '%08x%04x' "$RANDOM" "$SECONDS")
+           MEDIA_DIR="${TEAM_MEDIA_DIR:-$HOME/.claude/chat/media}"
+           mkdir -p "$MEDIA_DIR"
+           cp "$img" "$MEDIA_DIR/$id.$ext"
+           send_msg "📷$id" --role captain ${TPL_PASS[@]+"${TPL_PASS[@]}"}
+         done ;;
   ask)   # team-chat ask "<dòng 'N. câu? (a) .. (b) ..'>" → form hỏi CEO — panel hiện chip bấm
          case "$1" in -*) echo "usage: team-chat ask \"1. Câu hỏi? (a) lựa chọn (b) lựa chọn\" (mỗi câu 1 dòng)" >&2; exit 2 ;; esac
          [ $# -eq 0 ] && { echo "usage: team-chat ask \"<câu hỏi + options>\"" >&2; exit 2; }
