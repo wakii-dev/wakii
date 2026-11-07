@@ -449,7 +449,7 @@ describe('Store', () => {
         repo,
         write
       )
-    ).rejects.toThrow('The project changed while Orca was checking it')
+    ).rejects.toThrow('The project changed while Wakii was checking it')
     expect(write).not.toHaveBeenCalled()
   })
 
@@ -747,5 +747,43 @@ describe('Store', () => {
     store.flush()
     const reloaded = await createStore()
     expect(reloaded.getRepo('r1')!.issueSourcePreference).toBeUndefined()
+  })
+
+  it('updateRepo persists a rules declaration and clears it on undefined', async () => {
+    const store = await createStore()
+    store.addRepo(makeRepo())
+
+    store.updateRepo({ id: 'r1' }, { rulesDeclaration: '  rules/projects/wakii-desktop.json  ' })
+    expect(store.getRepo('r1')!.rulesDeclaration).toBe('rules/projects/wakii-desktop.json')
+
+    store.updateRepo({ id: 'r1' }, { rulesDeclaration: undefined })
+    expect(store.getRepo('r1')!.rulesDeclaration).toBeUndefined()
+
+    store.flush()
+    const reloaded = await createStore()
+    expect(reloaded.getRepo('r1')!.rulesDeclaration).toBeUndefined()
+  })
+
+  it('updateRepo clears on blank rules declarations and drops non-string values', async () => {
+    const store = await createStore()
+    store.addRepo(makeRepo({ rulesDeclaration: 'rules/projects/keep.json' }))
+
+    store.updateRepo({ id: 'r1' }, { rulesDeclaration: '   ' })
+    expect(store.getRepo('r1')!.rulesDeclaration).toBeUndefined()
+
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: intentionally feeds a non-string to assert the sanitizer drops it.
+    store.updateRepo({ id: 'r1' }, { rulesDeclaration: 42 as never })
+    expect(store.getRepo('r1')!.rulesDeclaration).toBeUndefined()
+  })
+
+  it('getRepo does not expose invalid persisted rules declarations', async () => {
+    writeDataFile({
+      ...getDefaultPersistedState(testState.dir),
+      repos: [makeRepo({ rulesDeclaration: '   ' })]
+    })
+
+    const store = await createStore()
+
+    expect(store.getRepo('r1')!.rulesDeclaration).toBeUndefined()
   })
 })

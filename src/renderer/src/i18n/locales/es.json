@@ -23331,6 +23331,13 @@
         "finished": "Trabajador temporal de orquestación finalizado · Se cierra en {{countdown}}",
         "keepOpen": "Mantener abierto"
       }
+    },
+    "RepositoryRulesSection": {
+      "title": "Declaración de reglas",
+      "description": "Ruta de la hoja de declaración de reglas del proyecto, relativa a la raíz del repo (por ejemplo rules/projects/my-project.json). Los agentes cargan las reglas que indica; vacío recurre a las hojas de ejemplo en rules/projects/.",
+      "keywordRules": "reglas",
+      "keywordDeclaration": "declaración de reglas",
+      "placeholder": "rules/projects/…"
     }
   },
   "dashboardPopout": {

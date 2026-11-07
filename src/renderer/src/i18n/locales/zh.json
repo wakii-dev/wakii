@@ -22774,6 +22774,13 @@
         "finished": "临时编排工作代理已完成 · {{countdown}}后关闭",
         "keepOpen": "保持打开"
       }
+    },
+    "RepositoryRulesSection": {
+      "title": "规则声明",
+      "description": "项目规则声明文件的路径（相对仓库根目录，例如 rules/projects/my-project.json）。智能体加载其指向的规则；留空则回退到 rules/projects/ 中的示例文件。",
+      "keywordRules": "规则",
+      "keywordDeclaration": "规则声明",
+      "placeholder": "rules/projects/…"
     }
   },
   "dashboardPopout": {

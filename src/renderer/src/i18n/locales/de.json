@@ -20545,6 +20545,13 @@
         "finished": "Temporärer Orchestrierungs-Worker abgeschlossen · Schließt in {{countdown}}",
         "keepOpen": "Offen halten"
       }
+    },
+    "RepositoryRulesSection": {
+      "title": "Rules-Deklaration",
+      "description": "Pfad der Regeldeklaration des Projekts, relativ zum Repo-Root (z. B. rules/projects/my-project.json). Agenten laden die Regeln, auf die die Datei verweist; leer fällt sie auf die Beispieldateien in rules/projects/ zurück.",
+      "keywordRules": "Regeln",
+      "keywordDeclaration": "Rules-Deklaration",
+      "placeholder": "rules/projects/…"
     }
   },
   "dashboardPopout": {

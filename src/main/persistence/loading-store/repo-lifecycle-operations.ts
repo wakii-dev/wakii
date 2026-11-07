@@ -184,6 +184,7 @@ export class RepoLifecycleOperations {
         | 'projectGroupId'
         | 'projectGroupOrder'
         | 'projectHostSetupMethod'
+        | 'rulesDeclaration'
       >
     > & {
       externalWorktreeVisibility?: Repo['externalWorktreeVisibility'] | null

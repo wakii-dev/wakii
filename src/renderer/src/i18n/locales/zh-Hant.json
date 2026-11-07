@@ -20231,6 +20231,13 @@
         "finished": "暫時的協作工作者已完成 · {{countdown}}後關閉",
         "keepOpen": "保持開啟"
       }
+    },
+    "RepositoryRulesSection": {
+      "title": "規則宣告",
+      "description": "專案規則宣告檔案的路徑（相對儲存庫根目錄，例如 rules/projects/my-project.json）。代理載入其指向的規則；留空則回退到 rules/projects/ 中的範例檔案。",
+      "keywordRules": "規則",
+      "keywordDeclaration": "規則宣告",
+      "placeholder": "rules/projects/…"
     }
   },
   "dashboardPopout": {

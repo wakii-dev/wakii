@@ -96,6 +96,8 @@ export type Repo = {
   projectGroupOrder?: number
   /** Repo-specific source-control AI overrides. Missing fields inherit global settings. */
   sourceControlAi?: RepoSourceControlAiOverrides
+  /** Path (relative to the repo root) of the per-project rules declaration sheet, e.g. `rules/projects/<project>.json`. Absent = agents fall back to the sample sheets in `rules/projects/`. */
+  rulesDeclaration?: string
   /** Transitional source for ProjectHostSetup.setupMethod while Repo remains compatibility storage. */
   projectHostSetupMethod?: RepoProjectHostSetupMethod
   /** Local row a WSL host now owns, kept for a downgrade; set only by the mover's retention pass. */

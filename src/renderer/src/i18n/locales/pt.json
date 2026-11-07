@@ -21515,6 +21515,13 @@
         "finished": "Worker temporário de orquestração concluído · Fecha em {{countdown}}",
         "keepOpen": "Manter aberto"
       }
+    },
+    "RepositoryRulesSection": {
+      "title": "Declaração de regras",
+      "description": "Caminho da folha de declaração de regras do projeto, relativo à raiz do repositório (por exemplo rules/projects/my-project.json). Os agentes carregam as regras indicadas; vazio recorre às folhas de exemplo em rules/projects/.",
+      "keywordRules": "regras",
+      "keywordDeclaration": "declaração de regras",
+      "placeholder": "rules/projects/…"
     }
   },
   "csv": {

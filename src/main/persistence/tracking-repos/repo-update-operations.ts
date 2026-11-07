@@ -112,6 +112,7 @@ export class RepoUpdatePersistenceOperations {
         | 'projectGroupId'
         | 'projectGroupOrder'
         | 'projectHostSetupMethod'
+        | 'rulesDeclaration'
       >
     > & {
       externalWorktreeVisibility?: Repo['externalWorktreeVisibility'] | null
@@ -194,6 +195,10 @@ export class RepoUpdatePersistenceOperations {
     if ('worktreeBasePath' in sanitizedUpdates && sanitizedUpdates.worktreeBasePath === undefined) {
       delete repo.worktreeBasePath
       delete sanitizedUpdates.worktreeBasePath
+    }
+    if ('rulesDeclaration' in sanitizedUpdates && sanitizedUpdates.rulesDeclaration === undefined) {
+      delete repo.rulesDeclaration
+      delete sanitizedUpdates.rulesDeclaration
     }
     if (
       'externalWorktreeVisibility' in sanitizedUpdates &&

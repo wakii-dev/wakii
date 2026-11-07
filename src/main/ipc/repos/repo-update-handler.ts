@@ -7,6 +7,7 @@ import { isFolderRepo } from '../../../shared/repo-kind'
 import type { ExecutionHostId } from '../../../shared/execution-host'
 import { getRepoExecutionHostId, normalizeExecutionHostId } from '../../../shared/execution-host'
 import { normalizeRepoBadgeColor } from '../../../shared/repo-badge-color'
+import { sanitizeRulesDeclaration } from '../../persistence/tracking-repos/repo-sanitization'
 import { sanitizeRepoIcon } from '../../../shared/repo-icon'
 import { normalizeGhAccountBinding } from '../../../shared/github/account-binding'
 import type { GhAccountBinding } from '../../../shared/github/account-binding'
@@ -54,6 +55,7 @@ export function registerRepoUpdateHandler(mainWindow: BrowserWindow, store: Stor
             | 'worktreeVisibilitySourcePreferences'
             | 'projectGroupId'
             | 'projectGroupOrder'
+            | 'rulesDeclaration'
           >
         > & {
           externalWorktreeVisibility?: Repo['externalWorktreeVisibility'] | null
@@ -88,6 +90,15 @@ export function registerRepoUpdateHandler(mainWindow: BrowserWindow, store: Stor
         updates.forkSyncMode !== 'off'
       ) {
         delete updates.forkSyncMode
+      }
+      // Blank or non-string declarations must not clobber a saved path; trim so relative paths stay clean.
+      if ('rulesDeclaration' in updates && updates.rulesDeclaration !== undefined) {
+        const declaration = sanitizeRulesDeclaration(updates.rulesDeclaration)
+        if (declaration === undefined) {
+          delete updates.rulesDeclaration
+        } else {
+          updates.rulesDeclaration = declaration
+        }
       }
       // Null clears the binding; malformed values must not become account selections.
       if ('ghAccount' in updates) {
