@@ -353,3 +353,10 @@ hiện qua heartbeat, tự dọn REG + báo CEO trước khi tái điều phối
 
 ## ROOM-INFO (07/11 — panel C-F)
 - Heartbeat tc-gate + sau mảng việc lớn: Captain ghi `~/.claude/chat/room-info/<room>.json` — format `{room, linearIssue, tcGate:{state,commit,at}, latestMedia:[paths], at}` (khớp kit/lib/room-info.mjs — panel team-chat đọc hiển thị 4 khối CEO chốt)
+
+## FE WORKFLOW (07/11 — đánh giá lại, CEO chốt)
+- Vòng chuẩn task FE: fe-self-verify (tab Orca + screenshot tự đọc) → DONE PHẢI kèm ảnh 📷 vào room → code-reviewer cite rules.
+- Task FE THẬT kế tiếp = test case vòng mới — đo 3 chỉ số: DONE có ảnh · số vòng sửa sau screenshot · CEO duyệt lại mấy lần.
+- 2 lỗ đã biết (chờ bịt): dev server dùng chung chưa test song song · preview build (tạm dùng ảnh evidence).
+- Mảng rules: đóng băng + đo 2 tuần (mốc 21/11 — rules-cited ≥5 giữ / <2 thu hẹp / ambiguous mới xử lý ngay).
+
