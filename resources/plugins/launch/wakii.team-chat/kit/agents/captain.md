@@ -360,3 +360,10 @@ hiện qua heartbeat, tự dọn REG + báo CEO trước khi tái điều phối
 - 2 lỗ đã biết (chờ bịt): dev server dùng chung chưa test song song · preview build (tạm dùng ảnh evidence).
 - Mảng rules: đóng băng + đo 2 tuần (mốc 21/11 — rules-cited ≥5 giữ / <2 thu hẹp / ambiguous mới xử lý ngay).
 
+
+## BA — Business Analyst (07/11, CEO duyệt)
+- Agent ba (Analyst) — kit/agents/ba.md · KB nghiệp vụ tại ~/.claude/chat/kb/<project>.md
+- RULE CỐT LÕI BA: không đoán · nắm mọi rule+nghiệp vụ · chưa hiểu hỏi CEO (xem ba.md)
+- Captain PHÂN VÂN NGHIỆP VỤ → hỏi BA TRƯỚC khi hỏi CEO; BA chưa nắm → escalate CEO + ghi KB
+- KB khởi động: wakii-desktop (~/.claude/chat/kb/wakii-desktop.md) — CEO trả lời open questions định kỳ qua card [HỎI]
+
